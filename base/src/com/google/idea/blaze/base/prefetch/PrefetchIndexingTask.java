@@ -39,6 +39,14 @@ public final class PrefetchIndexingTask extends DumbModeTask {
                     .queueTask(new PrefetchIndexingTask(task, taskName)));
   }
 
+  public static Future<?> submitPrefetchingTaskAndWait(
+      Project project, Future<?> task, String taskName) {
+    TransactionGuard.submitTransaction(
+        project,
+        () -> DumbService.getInstance(project).queueTask(new PrefetchIndexingTask(task, taskName)));
+    return task;
+  }
+
   private final Future<?> future;
   private final String taskName;
   private final long startTimeMillis;

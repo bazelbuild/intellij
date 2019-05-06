@@ -24,10 +24,9 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JsIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.sync.SyncCache;
-import com.google.idea.blaze.base.sync.libraries.BlazeExternalSyntheticLibrary;
+import com.google.idea.blaze.base.sync.libraries.BlazeExternalLibraryProvider;
+import com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -39,46 +38,36 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
 
-class BlazeJavascriptAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvider {
+class BlazeJavascriptAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvider
+    implements BlazeExternalLibraryProvider {
   private static final BoolExperiment useJavascriptAdditionalLibraryRootsProvider =
       new BoolExperiment("use.javascript.additional.library.roots.provider4", true);
 
   @Override
   public Collection<SyntheticLibrary> getAdditionalProjectLibraries(Project project) {
-    SyntheticLibrary library = getLibrary(project);
-    return library != null && !library.getSourceRoots().isEmpty()
-        ? ImmutableList.of(library)
-        : ImmutableList.of();
+    return ExternalLibraryManager.getInstance(project).getLibrary(getClass());
   }
 
-  @Nullable
-  static SyntheticLibrary getLibrary(Project project) {
+  @Override
+  public String getLibraryName() {
+    return "JavaScript Libraries";
+  }
+
+  @Override
+  public ImmutableList<File> getLibraryFiles(Project project, BlazeProjectData projectData) {
     if (!useJavascriptAdditionalLibraryRootsProvider.getValue()) {
-      return null;
-    }
-    return SyncCache.getInstance(project)
-        .get(
-            BlazeJavascriptAdditionalLibraryRootsProvider.class,
-            BlazeJavascriptAdditionalLibraryRootsProvider::getLibrary);
-  }
-
-  @Nullable
-  private static SyntheticLibrary getLibrary(Project project, BlazeProjectData projectData) {
-    ImmutableList<File> files = getLibraryFiles(project, projectData);
-    return files.isEmpty()
-        ? null
-        : new BlazeExternalSyntheticLibrary(project, "JavaScript Libraries", files);
-  }
-
-  private static ImmutableList<File> getLibraryFiles(
-      Project project, BlazeProjectData projectData) {
-    if (!projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.JAVASCRIPT)) {
       return ImmutableList.of();
     }
     ImportRoots importRoots = ImportRoots.forProjectSafe(project);
-    if (importRoots == null) {
+    return importRoots != null
+        ? getLibraryFiles(project, projectData, importRoots)
+        : ImmutableList.of();
+  }
+
+  static ImmutableList<File> getLibraryFiles(
+      Project project, BlazeProjectData projectData, ImportRoots importRoots) {
+    if (!JavascriptPrefetchFileSource.languageActive(projectData.getWorkspaceLanguageSettings())) {
       return ImmutableList.of();
     }
     Set<String> jsExtensions = JavascriptPrefetchFileSource.getJavascriptExtensions();

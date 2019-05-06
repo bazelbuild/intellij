@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.javascript;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager;
 import com.google.idea.blaze.typescript.BlazeTypeScriptAdditionalLibraryRootsProvider;
 import com.intellij.lang.javascript.psi.resolve.JSElementResolveScopeProvider;
 import com.intellij.lang.javascript.psi.resolve.JSResolveScopeProvider;
@@ -28,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -42,10 +45,13 @@ class BlazeJavascriptResolveScopeProvider implements JSElementResolveScopeProvid
     if (!Blaze.isBlazeProject(project)) {
       return null;
     }
-    SyntheticLibrary jsLibrary = BlazeJavascriptAdditionalLibraryRootsProvider.getLibrary(project);
-    SyntheticLibrary tsLibrary = BlazeTypeScriptAdditionalLibraryRootsProvider.getLibrary(project);
-    if ((jsLibrary == null || jsLibrary.getSourceRoots().isEmpty())
-        && (tsLibrary == null || tsLibrary.getSourceRoots().isEmpty())) {
+    ExternalLibraryManager manager = ExternalLibraryManager.getInstance(project);
+    List<SyntheticLibrary> libraries =
+        ImmutableList.<SyntheticLibrary>builder()
+            .addAll(manager.getLibrary(BlazeJavascriptAdditionalLibraryRootsProvider.class))
+            .addAll(manager.getLibrary(BlazeTypeScriptAdditionalLibraryRootsProvider.class))
+            .build();
+    if (libraries.isEmpty()) {
       return null;
     }
     GlobalSearchScope baseScope = getBaseScope(element);
@@ -56,8 +62,7 @@ class BlazeJavascriptResolveScopeProvider implements JSElementResolveScopeProvid
       @Override
       public boolean contains(VirtualFile file) {
         return super.contains(file)
-            || (jsLibrary != null && jsLibrary.contains(file))
-            || (tsLibrary != null && tsLibrary.contains(file));
+            || libraries.stream().anyMatch(library -> library.contains(file));
       }
     };
   }
