@@ -29,10 +29,14 @@ public final class PrefetchIndexingTask extends DumbModeTask {
 
   private static final Logger logger = Logger.getInstance(PrefetchIndexingTask.class);
 
+  /** Runs the given prefetching task asynchronously, in 'dumb mode'. */
   public static void submitPrefetchingTask(Project project, Future<?> task, String taskName) {
-    TransactionGuard.submitTransaction(
-        project,
-        () -> DumbService.getInstance(project).queueTask(new PrefetchIndexingTask(task, taskName)));
+    TransactionGuard.getInstance()
+        .submitTransactionLater(
+            project,
+            () ->
+                DumbService.getInstance(project)
+                    .queueTask(new PrefetchIndexingTask(task, taskName)));
   }
 
   private final Future<?> future;
