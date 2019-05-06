@@ -262,6 +262,7 @@
         implementation="com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandler$PendingTargetProgramRunner"
         order="first"/>
     <consoleFilterProvider implementation="com.google.idea.blaze.base.run.filter.GenericFileMessageFilter$Provider"/>
+    <consoleFilterProvider implementation="com.google.idea.blaze.base.run.filter.TestLogFilter$Provider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
