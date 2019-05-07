@@ -54,6 +54,7 @@ import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.intellij.openapi.project.Project;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -296,12 +297,11 @@ public final class BlazeJavaWorkspaceImporter {
 
   @Nullable
   private String findSourceVersion(TargetMap targetMap) {
-    for (TargetIdeInfo target : targetMap.targets()) {
-      if (target.getJavaToolchainIdeInfo() != null) {
-        return target.getJavaToolchainIdeInfo().getSourceVersion();
-      }
-    }
-    return null;
+    return targetMap.targets().stream()
+        .filter(t -> t.getJavaToolchainIdeInfo() != null)
+        .map(t -> t.getJavaToolchainIdeInfo().getSourceVersion())
+        .max(Comparator.naturalOrder())
+        .orElse(null);
   }
 
   private static class WorkspaceBuilder {
