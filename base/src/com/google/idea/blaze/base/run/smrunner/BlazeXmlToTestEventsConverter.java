@@ -373,8 +373,9 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
    * Remove any duplicate copy of the brief error message from the detailed error content (generally
    * including a stack trace).
    */
-  private static String pruneErrorMessage(String message, String content) {
-    return content.replace(message, "");
+  @Nullable
+  private static String pruneErrorMessage(String message, @Nullable String content) {
+    return content != null ? content.replace(message, "") : null;
   }
 
   private static TestFailedEvent getTestFailedEvent(

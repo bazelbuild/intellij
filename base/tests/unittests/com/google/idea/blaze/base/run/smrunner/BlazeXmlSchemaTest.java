@@ -157,6 +157,23 @@ public class BlazeXmlSchemaTest {
         .containsExactly("testCase1", "testCase2", "testCase3", "testCase4");
   }
 
+  @Test
+  public void testErrorWithoutErrorContent() {
+    TestSuite parsed =
+        parseXml(
+            "<?xml version='1.0' encoding='UTF-8'?>",
+            "<testsuites>",
+            "  <testsuite name='com.google.ConfigTest' tests='1' failures='0' errors='1'>",
+            "    <testcase name='testCase1' status='run' duration='55' time='55'>",
+            "<error message='exited with error code 1'></error>",
+            "    </testcase>",
+            "  </testsuite>",
+            "</testsuites>");
+
+    TestCase testCase = parsed.testSuites.get(0).testCases.get(0);
+    assertThat(BlazeXmlSchema.getErrorContent(testCase.errors.get(0))).isNull();
+  }
+
   private static TestSuite parseXml(String... lines) {
     InputStream stream =
         new ByteArrayInputStream(Joiner.on('\n').join(lines).getBytes(StandardCharsets.UTF_8));

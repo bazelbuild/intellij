@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlAnyElement;
@@ -160,7 +161,11 @@ public class BlazeXmlSchema {
     public ErrorOrFailureOrSkipped skipped;
   }
 
+  @Nullable
   static String getErrorContent(ErrorOrFailureOrSkipped err) {
+    if (err.content == null) {
+      return null;
+    }
     return err.content.stream()
         .filter(Objects::nonNull)
         .map(Object::toString)
