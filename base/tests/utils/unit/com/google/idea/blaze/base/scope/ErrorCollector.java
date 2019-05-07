@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.scope;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -44,8 +45,8 @@ public class ErrorCollector implements OutputSink<IssueOutput> {
   }
 
   public void assertIssueContaining(String s) {
-    assertThat(issues.stream().anyMatch((issue) -> issue.getMessage().contains(s)))
-        .named("Issues must contain: " + s)
+    assertWithMessage("Issues must contain: " + s)
+        .that(issues.stream().anyMatch((issue) -> issue.getMessage().contains(s)))
         .isTrue();
   }
 }
