@@ -18,17 +18,18 @@ package com.google.idea.blaze.golang.resolve;
 import com.goide.project.GoPackageFactory;
 import com.goide.psi.GoFile;
 import com.goide.psi.impl.GoPackage;
+import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import java.io.File;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
@@ -64,14 +65,17 @@ class BlazeGoPackageFactory implements GoPackageFactory {
       if (target.getGoIdeInfo() == null) {
         continue;
       }
-      Label libraryLabel = target.getGoIdeInfo().getLibraryLabel();
-      if (libraryLabel != null) {
-        TargetIdeInfo libraryTarget = targetMap.get(TargetKey.forPlainTarget(libraryLabel));
-        if (libraryTarget != null && libraryTarget.getGoIdeInfo() != null) {
-          target = libraryTarget;
-        }
-      }
-      String importPath = target.getGoIdeInfo().getImportPath();
+      String importPath =
+          target.getGoIdeInfo().getLibraryLabels().stream()
+              .map(TargetKey::forPlainTarget)
+              .map(targetMap::get)
+              .filter(Objects::nonNull)
+              .map(TargetIdeInfo::getGoIdeInfo)
+              .filter(Objects::nonNull)
+              .map(GoIdeInfo::getImportPath)
+              .filter(Objects::nonNull)
+              .findFirst()
+              .orElse(target.getGoIdeInfo().getImportPath());
       if (importPath == null) {
         continue;
       }

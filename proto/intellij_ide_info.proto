@@ -120,8 +120,9 @@ message PyIdeInfo {
 message GoIdeInfo {
   repeated ArtifactLocation sources = 1;
   string import_path = 2;
-  string library_label = 3;  // only for go_test / go_appengine_test
+  string library_label = 3 [deprecated = true];
   string library_kind = 4 [deprecated = true];
+  repeated string library_labels = 5;
 }
 
 message JsIdeInfo {

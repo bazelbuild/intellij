@@ -350,24 +350,19 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     if go_semantics:
         import_path = go_semantics.get_import_path(ctx)
 
-    # TODO(chaorenl): remove library_kind, default library_label to None instead of target label
-    # after corresponding plugin change is live
-    library_label = str(target.label)
-    library_kind = ctx.rule.kind
-    if ((ctx.rule.kind == "go_test" or ctx.rule.kind == "go_appengine_test") and
-        getattr(ctx.rule.attr, "library", None) != None):
-        library = ctx.rule.attr.library
-        library_label = str(library.label)
-        if hasattr(library, "intellij_info"):
-            library_kind = library.intellij_info.kind
-        else:
-            library_kind = "go_library"
+    library_labels = []
+    if ctx.rule.kind == "go_test" or ctx.rule.kind == "go_appengine_test":
+        if getattr(ctx.rule.attr, "library", None) != None:
+            library_labels = [str(ctx.rule.attr.library.label)]
+        elif getattr(ctx.rule.attr, "embed", None) != None:
+            library_labels = [str(library.label) for library in ctx.rule.attr.embed]
 
     ide_info["go_ide_info"] = struct_omit_none(
         sources = [artifact_location(f) for f in sources],
         import_path = import_path,
-        library_label = library_label,
-        library_kind = library_kind,
+        # TODO(chaorenl): deprecated, remove after plugin update
+        library_label = library_labels[0] if library_labels else None,
+        library_labels = library_labels,
     )
 
     compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])

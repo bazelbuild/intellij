@@ -108,7 +108,7 @@ public class BlazeGoImportResolverTest extends BlazeIntegrationTestCase {
                         GoIdeInfo.builder()
                             .addSource(src("library/foo_private_test.go"))
                             .setImportPath("github.com/user/library/foo_private_test")
-                            .setLibraryLabel("//library:foo")))
+                            .addLibraryLabel("//library:foo")))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(src("library/BUILD"))
@@ -120,7 +120,7 @@ public class BlazeGoImportResolverTest extends BlazeIntegrationTestCase {
                         GoIdeInfo.builder()
                             .addSource(src("library/foo_private2_test.go"))
                             .setImportPath("github.com/user/library/foo_private2_test")
-                            .setLibraryLabel("//library:foo")))
+                            .addLibraryLabel("//library:foo")))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setBuildFile(src("library/BUILD"))

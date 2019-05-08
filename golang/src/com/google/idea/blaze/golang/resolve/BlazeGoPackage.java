@@ -152,12 +152,17 @@ public class BlazeGoPackage extends GoPackage {
   private static Multimap<Label, GoIdeInfo> buildLibraryToTestMap(BlazeProjectData projectData) {
     TargetMap targetMap = projectData.getTargetMap();
     ImmutableMultimap.Builder<Label, GoIdeInfo> builder = ImmutableMultimap.builder();
-    targetMap.targets().stream()
-        .filter(t -> t.getKind().getLanguageClass() == LanguageClass.GO)
-        .filter(t -> t.getKind().getRuleType() == RuleType.TEST)
-        .filter(t -> t.getGoIdeInfo() != null)
-        .filter(t -> t.getGoIdeInfo().getLibraryLabel() != null)
-        .forEach(t -> builder.put(t.getGoIdeInfo().getLibraryLabel(), t.getGoIdeInfo()));
+    for (TargetIdeInfo target : targetMap.targets()) {
+      if (target.getKind().getLanguageClass() != LanguageClass.GO
+          || target.getKind().getRuleType() != RuleType.TEST
+          || target.getGoIdeInfo() == null
+          || target.getGoIdeInfo().getLibraryLabels().isEmpty()) {
+        continue;
+      }
+      for (Label label : target.getGoIdeInfo().getLibraryLabels()) {
+        builder.put(label, target.getGoIdeInfo());
+      }
+    }
     return builder.build();
   }
 
