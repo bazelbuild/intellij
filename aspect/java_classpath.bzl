@@ -1,7 +1,7 @@
 """An aspect which extracts the runtime classpath from a java target."""
 
 load(
-    ":intellij_info_impl.bzl",
+    ":artifacts.bzl",
     "artifact_location",
 )
 
