@@ -316,10 +316,12 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
                         buildResultHelper.getArtifactsForOutputGroup(
                             aspectStrategy.getAspectOutputGroup()));
 
+                // if targets are built with multiple configurations, just take the first one
+                // TODO(brendandouglas): choose a consistent configuration instead
                 ImmutableMap<Label, FastBuildBlazeData> blazeData =
                     ideInfoFiles.stream()
                         .map(aspectStrategy::readFastBuildBlazeData)
-                        .collect(toImmutableMap(FastBuildBlazeData::label, i -> i));
+                        .collect(toImmutableMap(FastBuildBlazeData::label, i -> i, (i, j) -> i));
                 return BuildOutput.create(deployJar, blazeData);
               } catch (GetArtifactsException e) {
                 throw new RuntimeException("Blaze failure building deploy jar: " + e.getMessage());
