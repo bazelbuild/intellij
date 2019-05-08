@@ -28,8 +28,6 @@ import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
-import com.android.tools.idea.run.tasks.ApplyChangesTask;
-import com.android.tools.idea.run.tasks.ApplyCodeChangesTask;
 import com.android.tools.idea.run.tasks.DebugConnectorTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
@@ -38,6 +36,7 @@ import com.android.tools.idea.run.ui.CodeSwapAction;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.android.run.ApplyChangesCompat;
 import com.google.idea.blaze.android.run.DeployTaskCompat;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProvider;
@@ -156,9 +155,10 @@ public class BlazeAndroidBinaryNormalBuildRunContext implements BlazeAndroidRunC
 
       // Set the appropriate action based on which deployment we're doing.
       if (Boolean.TRUE.equals(env.getCopyableUserData(ApplyChangesAction.KEY))) {
-        return ImmutableList.of(new ApplyChangesTask(project, packages.build()));
+        return ImmutableList.of(ApplyChangesCompat.newApplyChangesTask(project, packages.build()));
       } else if (Boolean.TRUE.equals(env.getCopyableUserData(CodeSwapAction.KEY))) {
-        return ImmutableList.of(new ApplyCodeChangesTask(project, packages.build()));
+        return ImmutableList.of(
+            ApplyChangesCompat.newApplyCodeChangesTask(project, packages.build()));
       }
     }
     return ImmutableList.of(DeployTaskCompat.createDeployTask(project, launchOptions, apks));
