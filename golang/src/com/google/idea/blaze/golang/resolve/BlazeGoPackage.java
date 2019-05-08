@@ -47,6 +47,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.golang.GoBlazeRules.RuleTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -54,6 +55,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.Processor;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -243,6 +245,24 @@ public class BlazeGoPackage extends GoPackage {
               .collect(Collectors.toList());
     }
     return cachedGoFiles;
+  }
+
+  /**
+   * Override {@link GoPackage#processFiles(Processor)} to work on specific files instead of by
+   * directory.
+   */
+  @Override
+  public boolean processFiles(Processor<? super PsiFile> processor) {
+    if (!isValid()) {
+      return true;
+    }
+    for (PsiFile file : files()) {
+      ProgressIndicatorProvider.checkCanceled();
+      if (!processor.process(file)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
