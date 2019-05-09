@@ -34,9 +34,12 @@
     <RemoteOutputsCacheProvider implementation="com.google.idea.blaze.golang.sync.GoPrefetchFileSource"/>
     <TestContextProvider implementation="com.google.idea.blaze.golang.run.producers.GoTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.golang.run.producers.GoBinaryContextProvider"/>
+    <BlazeCommandRunConfigurationHandlerProvider
+        implementation="com.google.idea.blaze.golang.run.BlazeGoRunConfigurationHandlerProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <programRunner implementation="com.google.idea.blaze.golang.run.BlazeGoDebugRunner"/>
     <documentationProvider implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver$GoPackageDocumentationProvider"/>
     <additionalLibraryRootsProvider implementation="com.google.idea.blaze.golang.sync.BlazeGoAdditionalLibraryRootsProvider"/>
   </extensions>
