@@ -99,12 +99,30 @@ def _parse_major_version(api_version):
 
 
 def _strip_build_number(api_version):
-  """Removes the build number component from a full api version string."""
-  match = re.match(r"^([A-Z]+-)?([0-9]+)(\.[0-9]+){2}$", api_version)
-  if match:
-    return api_version[:match.start(3)]
-  # if there aren't exactly 3 version number components, just leave it unchanged
-  return api_version
+  """Removes the build number component from a full api version string.
+
+  If there are more than 2 version number components, return the first 2
+  components.
+
+  Some IDEs do not report their full build version to JetBrains, so plugins
+  built against a version with more components may not be discoverable even in
+  a compatible IDE version.
+
+  Args:
+    api_version: A version string containing the main version and build number.
+
+  Returns:
+    The first two components of the version string.
+
+  Raise:
+    ValueError: An incorrectly formatted version string.
+  """
+  if re.match(r"^([A-Z]+-)?([0-9]+)(\.[0-9]+)+$", api_version):
+    return ".".join(api_version.split(".")[:2])
+  else:
+    raise ValueError("Unsupported API version %s - the version must be of " %
+                     api_version +
+                     "the form <alphanum>.<num>, with at least two components.")
 
 
 def main():
@@ -145,6 +163,9 @@ def main():
     if idea_plugin.getElementsByTagName("idea-version"):
       raise ValueError("idea-version element already present")
 
+    # We strip the product code and build number to enable making a single
+    # plugin build that would work on multiple IDEs. That is, the 'intellij'
+    # plugin zip can be loaded in any JetBrains IDE.
     idea_version_build_element = _strip_build_number(
         _strip_product_code(api_version))
 
