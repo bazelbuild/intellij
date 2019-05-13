@@ -116,7 +116,7 @@ public class BlazeBuildTargetSharder {
     }
 
     return new ShardedTargetsResult(
-        shardTargets(expandedTargets.singleTargets, getTargetShardSize(projectViewSet)),
+        shardTargets(project, expandedTargets.singleTargets, getTargetShardSize(projectViewSet)),
         expandedTargets.buildResult);
   }
 
@@ -173,9 +173,10 @@ public class BlazeBuildTargetSharder {
 
   @SuppressWarnings("unchecked")
   @VisibleForTesting
-  static ShardedTargetList shardTargets(List<TargetExpression> targets, int shardSize) {
+  static ShardedTargetList shardTargets(
+      Project project, List<TargetExpression> targets, int shardSize) {
     ImmutableList<ImmutableList<Label>> batches =
-        BuildBatchingService.batchTargets(canonicalizeTargets(targets), shardSize);
+        BuildBatchingService.batchTargets(project, canonicalizeTargets(targets), shardSize);
     return new ShardedTargetList((ImmutableList) batches);
   }
 
@@ -202,7 +203,7 @@ public class BlazeBuildTargetSharder {
   static class LexicographicTargetSharder implements BuildBatchingService {
     @Override
     public ImmutableList<ImmutableList<Label>> calculateTargetBatches(
-        Set<Label> targets, int suggestedShardSize) {
+        Project project, Set<Label> targets, int suggestedShardSize) {
       List<Label> sorted =
           ImmutableList.sortedCopyOf(Comparator.comparing(Label::toString), targets);
       return Lists.partition(sorted, suggestedShardSize).stream()

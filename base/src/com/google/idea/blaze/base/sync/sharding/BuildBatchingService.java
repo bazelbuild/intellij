@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync.sharding;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
@@ -46,7 +47,7 @@ public interface BuildBatchingService {
    */
   @Nullable
   ImmutableList<ImmutableList<Label>> calculateTargetBatches(
-      Set<Label> targets, int suggestedShardSize);
+      Project project, Set<Label> targets, int suggestedShardSize);
 
   /**
    * Given a list of individual, un-excluded blaze targets (no wildcard target patterns), returns a
@@ -56,9 +57,9 @@ public interface BuildBatchingService {
    * else falling back to returning a single batch.
    */
   static ImmutableList<ImmutableList<Label>> batchTargets(
-      Set<Label> targets, int suggestedShardSize) {
+      Project project, Set<Label> targets, int suggestedShardSize) {
     return Arrays.stream(EP_NAME.getExtensions())
-        .map(s -> s.calculateTargetBatches(targets, suggestedShardSize))
+        .map(s -> s.calculateTargetBatches(project, targets, suggestedShardSize))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(ImmutableList.of(ImmutableList.copyOf(targets)));

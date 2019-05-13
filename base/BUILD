@@ -203,6 +203,9 @@ java_library(
         "src/com/google/idea/blaze/base/sync/sharding/BuildBatchingService.java",
     ],
     neverlink = 1,
+    exports = [
+        ":label_api",
+    ],
     deps = [
         ":label_api",
         "//intellij_platform_sdk:jsr305",
