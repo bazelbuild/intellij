@@ -19,8 +19,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2019_1",
     build_file = "@//intellij_platform_sdk:BUILD.idea",
-    sha256 = "600bfa4e334d7a03162a04deb9849be210cd34318efd76d83473171f221a8d27",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/191.6707.61/ideaIC-191.6707.61.zip",
+    sha256 = "e045751adabe2837203798270e1dc173128fe3e607e3025d4f8110c7ed4cc499",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2019.1.2/ideaIC-2019.1.2.zip",
 )
 
 # The plugin api for IntelliJ UE 2018.3. This is required to run UE-specific
@@ -258,9 +258,9 @@ http_archive(
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(
     name = "io_bazel_rules_scala",
+    sha256 = "ce767b0dc892fc6a15e008a76ac540e848ae2e080242f0f8b2de940f7d047e7b",
     strip_prefix = "rules_scala-7bc18d07001cbfd425c6761c8384c4e982d25a2b",
     type = "zip",
-    sha256 = "ce767b0dc892fc6a15e008a76ac540e848ae2e080242f0f8b2de940f7d047e7b",
     url = "https://github.com/bazelbuild/rules_scala/archive/7bc18d07001cbfd425c6761c8384c4e982d25a2b.zip",
 )
 
@@ -277,10 +277,10 @@ scala_register_toolchains()
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(
     name = "io_bazel_rules_kotlin",
-    url = "https://github.com/bazelbuild/rules_kotlin/archive/cab5eaffc2012dfe46260c03d6419c0d2fa10be0.zip",
-    type = "zip",
     sha256 = "f1293902a15397a10957e866f133dcd027a0a6d21eae8c4fb7557f010add8a09",
     strip_prefix = "rules_kotlin-cab5eaffc2012dfe46260c03d6419c0d2fa10be0",
+    type = "zip",
+    url = "https://github.com/bazelbuild/rules_kotlin/archive/cab5eaffc2012dfe46260c03d6419c0d2fa10be0.zip",
 )
 
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
