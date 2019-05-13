@@ -450,6 +450,7 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
             cxxopts = []
             conlyopts = []
         feature_configuration = cc_common.configure_features(
+            ctx = ctx,
             cc_toolchain = cpp_toolchain,
             requested_features = ctx.features,
             unsupported_features = ctx.disabled_features + UNSUPPORTED_FEATURES,
