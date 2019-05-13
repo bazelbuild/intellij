@@ -1,7 +1,9 @@
+#!/usr/bin/python
 """Packages plugin files into a zip archive."""
 
 import argparse
-import time
+import os
+import stat
 import zipfile
 
 try:
@@ -24,17 +26,13 @@ def pairwise(t):
 
 def main():
   args = parser.parse_args()
-
-  # zipfile cannot be coaxed into putting a custom timestamp into the zip files,
-  # and we cannot modify the timestamp of the file itself (because it's a CAS
-  # entry on Forge). Therefore, we replace time.localtime().
-  time.localtime = lambda _: [2000, 1, 1, 0, 0, 0, 0, 0, 0]
-
-  outfile = zipfile.ZipFile(args.output, "w", zipfile.ZIP_DEFLATED)
-  for exec_path, zip_path in pairwise(args.files_to_zip):
-    outfile.write(exec_path, zip_path)
-  outfile.close()
-
+  with zipfile.ZipFile(args.output, "w") as outfile:
+    for exec_path, zip_path in pairwise(args.files_to_zip):
+      with open(exec_path) as input_file:
+        zipinfo = zipfile.ZipInfo(zip_path, (2000, 1, 1, 0, 0, 0))
+        filemode = stat.S_IMODE(os.fstat(input_file.fileno()).st_mode)
+        zipinfo.external_attr = filemode << 16
+        outfile.writestr(zipinfo, input_file.read(), zipfile.ZIP_DEFLATED)
 
 if __name__ == "__main__":
   main()

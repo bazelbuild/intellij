@@ -271,6 +271,8 @@ def output_path(f, repackaged_files_data):
         fail("Invalid strip_prefix '%s': path actually starts with '%s'" % (strip_prefix, old_path))
 
     stripped = old_path[len(strip_prefix):].strip("/")
+    if stripped == "":
+        return "%s/%s" % (prefix, f.basename)
     return "%s/%s/%s" % (prefix, stripped, f.basename)
 
 def _plugin_deploy_zip_impl(ctx):
