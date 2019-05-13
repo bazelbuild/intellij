@@ -354,6 +354,7 @@ final class SyncPhaseCoordinator {
           .setStartTime(startTime)
           .setTotalClockTime(Duration.between(startTime, Instant.now()));
       EventLoggingService.getInstance().log(stats.build());
+      context.output(new StatusOutput("Sync finished"));
       outputTimingSummary(context, stats.getCurrentTimedEvents());
 
     } catch (Throwable e) {
