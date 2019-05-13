@@ -22,7 +22,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 
-/** Performs a full sync. This is like an incremental sync with some additional invalidation. */
+/**
+ * Performs a full sync. Unlike an incremental sync, this completely wipes all previous project
+ * data, starting from scratch.
+ *
+ * <p>It should only be needed to manually work around bugs in incremental sync.
+ */
 public class FullSyncProjectAction extends BlazeProjectAction {
 
   @Override
