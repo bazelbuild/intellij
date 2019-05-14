@@ -109,7 +109,7 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-3.4-mac",
+    name = "android-studio-3.5-mac",
     values = {
         "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-3.4",
