@@ -416,6 +416,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BinaryContextProvider" interface="com.google.idea.blaze.base.run.producers.BinaryContextProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.HeuristicTestIdentifier" interface="com.google.idea.blaze.base.run.producers.HeuristicTestIdentifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.RemoteOutputsCacheProvider" interface="com.google.idea.blaze.base.filecache.RemoteOutputsCache$OutputsProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.VcsStateListener" interface="com.google.idea.blaze.base.vcs.VcsSyncListener"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">

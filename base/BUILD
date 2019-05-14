@@ -99,6 +99,19 @@ java_library(
     ],
 )
 
+# self-contained VCS state listener API, exposed so other plugins can optionally depend on it
+java_library(
+    name = "vcs_sync_listener_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/vcs/VcsSyncListener.java",
+    ],
+    neverlink = 1,
+    visibility = ["//visibility:public"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
 # neverlink library exposed so other plugins can optionally depend on it
 java_library(
     name = "workspace_path_resolver_api",
