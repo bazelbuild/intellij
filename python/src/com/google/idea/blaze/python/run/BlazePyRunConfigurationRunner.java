@@ -310,7 +310,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       try {
         BuildResult result = buildOperation.get();
         if (result.status != BuildResult.Status.SUCCESS) {
-          throw new ExecutionException("Blaze failure building debug binary");
+          throw new ExecutionException("Bazel failure building debug binary");
         }
       } catch (InterruptedException | CancellationException e) {
         buildOperation.cancel(true);
