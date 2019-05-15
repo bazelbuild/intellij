@@ -52,7 +52,7 @@
     <SyncPlugin implementation="com.google.idea.blaze.java.sync.BlazeJavaSyncPlugin"/>
     <PsiFileProvider implementation="com.google.idea.blaze.java.psi.JavaPsiFileProvider" />
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.java.run.BlazeJavaRunConfigurationHandlerProvider"/>
-    <BlazeUserSettingsContributor implementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettingsContributor$BlazeJavaUserSettingsProvider"/>
+    <SettingsUiContributor implementation="com.google.idea.blaze.java.settings.BlazeJavaUserSettingsConfigurable$UiContributor"/>
     <FileCache implementation="com.google.idea.blaze.java.libraries.JarCache$FileCacheAdapter"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.java.sync.JavaPrefetchFileSource"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.java.run.BlazeJavaTestEventsHandler"/>

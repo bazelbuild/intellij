@@ -158,7 +158,7 @@
     <projectService serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleView"/>
     <fileTypeFactory implementation="com.google.idea.blaze.base.plugin.BlazeFileTypeFactory" />
 
-    <applicationConfigurable instance="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable"
+    <applicationConfigurable instance="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable"
                          id ="blaze.view" />
 
     <projectService serviceInterface="com.google.idea.blaze.base.sync.data.BlazeProjectDataManager"
@@ -391,7 +391,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildSystemProvider" interface="com.google.idea.blaze.base.bazel.BuildSystemProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildifierBinaryProvider" interface="com.google.idea.blaze.base.buildmodifier.BuildifierBinaryProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeCommandRunConfigurationHandlerProvider" interface="com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.BlazeUserSettingsContributor" interface="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsContributor$Provider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.SettingsUiContributor" interface="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable$UiContributor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazePsiDirectoryRootNodeNameModifier" interface="com.google.idea.blaze.base.treeview.BlazePsiDirectoryRootNodeNameModifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FileCache" interface="com.google.idea.blaze.base.filecache.FileCache"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TestTargetHeuristic" interface="com.google.idea.blaze.base.run.TestTargetHeuristic"/>
@@ -471,6 +471,7 @@
     <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.OutsideProjectTestContextProvider"/>
     <OutputArtifactParser implementation="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser$LocalFileParser"/>
     <BuildBatchingService implementation="com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder$LexicographicTargetSharder" order="last"/>
+    <SettingsUiContributor implementation="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable$UiContributor" order="first" id="base"/>
   </extensions>
 
 </idea-plugin>

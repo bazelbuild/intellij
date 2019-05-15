@@ -19,17 +19,30 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.SearchableOptionsHelper;
-import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsContributor;
+import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.ui.JBUI;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 /** Contributes java-specific settings. */
-public class BlazeJavaUserSettingsContributor implements BlazeUserSettingsContributor {
-  private JCheckBox useJarCache;
+class BlazeJavaUserSettingsConfigurable implements UnnamedConfigurable {
+
+  static class UiContributor implements BlazeUserSettingsCompositeConfigurable.UiContributor {
+    @Override
+    public UnnamedConfigurable getConfigurable(SearchableOptionsHelper helper) {
+      return new BlazeJavaUserSettingsConfigurable(helper);
+    }
+  }
+
+  private final JPanel panel;
+  private final JCheckBox useJarCache;
   private final ImmutableList<JCheckBox> components;
 
-  BlazeJavaUserSettingsContributor() {
+  private BlazeJavaUserSettingsConfigurable(SearchableOptionsHelper helper) {
     useJarCache = new JCheckBox();
     useJarCache.setText(
         String.format(
@@ -37,6 +50,7 @@ public class BlazeJavaUserSettingsContributor implements BlazeUserSettingsContri
             Blaze.defaultBuildSystemName()));
 
     components = ImmutableList.of(useJarCache);
+    panel = setupUi(helper);
   }
 
   @Override
@@ -58,18 +72,20 @@ public class BlazeJavaUserSettingsContributor implements BlazeUserSettingsContri
   }
 
   @Override
-  public int getRowCount() {
-    return components.size();
+  public JComponent createComponent() {
+    return panel;
   }
 
-  @Override
-  public int addComponents(JPanel panel, SearchableOptionsHelper helper, int rowi) {
-    for (JCheckBox contributedComponent : components) {
-      helper.registerLabelText(contributedComponent.getText(), true);
+  private JPanel setupUi(SearchableOptionsHelper helper) {
+    JPanel panel = new JPanel();
+    panel.setLayout(new GridLayoutManager(components.size(), 2, JBUI.emptyInsets(), -1, -1));
+    for (int i = 0; i < components.size(); i++) {
+      JCheckBox component = components.get(i);
+      helper.registerLabelText(component.getText(), true);
       panel.add(
-          contributedComponent,
+          component,
           new GridConstraints(
-              rowi++,
+              i,
               0,
               1,
               2,
@@ -83,13 +99,6 @@ public class BlazeJavaUserSettingsContributor implements BlazeUserSettingsContri
               0,
               false));
     }
-    return rowi;
-  }
-
-  static class BlazeJavaUserSettingsProvider implements BlazeUserSettingsContributor.Provider {
-    @Override
-    public BlazeUserSettingsContributor getContributor() {
-      return new BlazeJavaUserSettingsContributor();
-    }
+    return panel;
   }
 }

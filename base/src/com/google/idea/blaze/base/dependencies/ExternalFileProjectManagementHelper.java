@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -159,7 +160,7 @@ public class ExternalFileProjectManagementHelper
           BlazeUserSettings.getInstance().setShowAddFileToProjectNotification(false);
           ShowSettingsUtilImpl.showSettingsDialog(
               project,
-              BlazeUserSettingsConfigurable.ID,
+              BlazeUserSettingsCompositeConfigurable.ID,
               BlazeUserSettingsConfigurable.SHOW_ADD_FILE_TO_PROJECT_LABEL_TEXT);
         });
 
