@@ -28,7 +28,6 @@ import com.intellij.usages.impl.rules.FileGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
 import javax.annotation.Nullable;
-import javax.swing.Icon;
 
 /**
  * Allows us to customize the filename string in the 'find usages' dialog, rather than displaying
@@ -60,18 +59,18 @@ public class BuildFileGroupingRuleProvider implements FileStructureGroupRuleProv
       if (!(usage instanceof UsageInFile)) {
         return null;
       }
-      final VirtualFile virtualFile = ((UsageInFile) usage).getFile();
-      if (virtualFile.getFileType() != BuildFileType.INSTANCE) {
-        return null;
+      VirtualFile vf = ((UsageInFile) usage).getFile();
+      if (vf == null || vf.getFileType() != BuildFileType.INSTANCE) {
+        return super.getParentGroupFor(usage, targets);
       }
-      return new FileUsageGroup(project, virtualFile) {
+      return new FileUsageGroup(project, vf) {
         String name;
 
         @Override
         public void update() {
+          super.update();
           if (isValid()) {
-            super.update();
-            name = BuildFile.getBuildFileString(project, virtualFile.getPath());
+            name = BuildFile.getBuildFileString(project, vf.getPath());
           }
         }
 
@@ -83,11 +82,6 @@ public class BuildFileGroupingRuleProvider implements FileStructureGroupRuleProv
         @Override
         public String getText(UsageView view) {
           return name;
-        }
-
-        @Override
-        public Icon getIcon(boolean isOpen) {
-          return null; // already shown by default usage group (which we can't remove...)
         }
       };
     }
