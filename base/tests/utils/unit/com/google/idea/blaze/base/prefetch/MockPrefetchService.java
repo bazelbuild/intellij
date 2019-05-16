@@ -38,4 +38,7 @@ public class MockPrefetchService implements PrefetchService {
       Project project, ProjectViewSet projectViewSet, @Nullable BlazeProjectData blazeProjectData) {
     return Futures.immediateFuture(null);
   }
+
+  @Override
+  public void clearPrefetchCache() {}
 }

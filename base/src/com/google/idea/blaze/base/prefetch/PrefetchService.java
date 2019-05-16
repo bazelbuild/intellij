@@ -43,4 +43,10 @@ public interface PrefetchService {
 
   ListenableFuture<?> prefetchProjectFiles(
       Project project, ProjectViewSet projectViewSet, @Nullable BlazeProjectData blazeProjectData);
+
+  /**
+   * If this prefetch service ignores recently-prefetched files, this instructs it to clear that
+   * 'time since last prefetch' cache.
+   */
+  void clearPrefetchCache();
 }

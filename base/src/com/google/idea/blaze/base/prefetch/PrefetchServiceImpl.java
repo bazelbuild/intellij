@@ -57,6 +57,11 @@ public class PrefetchServiceImpl implements PrefetchService {
   }
 
   @Override
+  public void clearPrefetchCache() {
+    fileToLastFetchTimeMillis.clear();
+  }
+
+  @Override
   public ListenableFuture<?> prefetchFiles(
       Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes) {
     return prefetchFiles(ImmutableSet.of(), files, refetchCachedFiles, fetchFileTypes);

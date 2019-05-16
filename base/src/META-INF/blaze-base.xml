@@ -419,7 +419,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BinaryContextProvider" interface="com.google.idea.blaze.base.run.producers.BinaryContextProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.HeuristicTestIdentifier" interface="com.google.idea.blaze.base.run.producers.HeuristicTestIdentifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.RemoteOutputsCacheProvider" interface="com.google.idea.blaze.base.filecache.RemoteOutputsCache$OutputsProvider"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.VcsStateListener" interface="com.google.idea.blaze.base.vcs.VcsSyncListener"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.VcsSyncListener" interface="com.google.idea.blaze.base.vcs.VcsSyncListener"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -471,6 +471,7 @@
     <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.OutsideProjectTestContextProvider"/>
     <OutputArtifactParser implementation="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser$LocalFileParser"/>
     <BuildBatchingService implementation="com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder$LexicographicTargetSharder" order="last"/>
+    <VcsSyncListener implementation="com.google.idea.blaze.base.prefetch.PrefetchVcsSyncListener"/>
     <SettingsUiContributor implementation="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable$UiContributor" order="first" id="base"/>
   </extensions>
 
