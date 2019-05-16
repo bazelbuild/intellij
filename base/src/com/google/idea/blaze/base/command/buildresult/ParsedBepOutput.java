@@ -26,6 +26,7 @@ import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.NamedSetOfFilesId;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.NamedSetOfFiles;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,7 +49,7 @@ final class ParsedBepOutput {
   static ParsedBepOutput parseBepArtifacts(InputStream bepStream) throws IOException {
     BuildEventStreamProtos.BuildEvent event;
     Map<String, String> configIdToMnemonic = new HashMap<>();
-    Map<String, BuildEventStreamProtos.NamedSetOfFiles> fileSets = new LinkedHashMap<>();
+    Map<String, NamedSetOfFiles> fileSets = new LinkedHashMap<>();
     Map<String, String> fileSetConfigs = new HashMap<>();
     ImmutableSetMultimap.Builder<String, String> outputGroupToFileSets =
         ImmutableSetMultimap.builder();
@@ -85,7 +86,7 @@ final class ParsedBepOutput {
         default: // continue
       }
     }
-
+    fillInTransitiveFileSetConfigs(fileSets, fileSetConfigs);
     Map<String, FileSet> filesMap = new LinkedHashMap<>();
     fileSets.forEach((id, files) -> filesMap.put(id, new FileSet(files, fileSetConfigs.get(id))));
     return new ParsedBepOutput(
@@ -98,11 +99,33 @@ final class ParsedBepOutput {
         .collect(Collectors.toList());
   }
 
+  /**
+   * BEP explicitly lists the configuration mnemonics of top-level file sets. This method fills in a
+   * file set ID to mnemonic map for the transitive closure.
+   */
+  private static void fillInTransitiveFileSetConfigs(
+      Map<String, NamedSetOfFiles> fileSets, Map<String, String> fileSetConfigs) {
+    Queue<String> toVisit = Queues.newArrayDeque();
+    toVisit.addAll(fileSetConfigs.keySet());
+    while (!toVisit.isEmpty()) {
+      String setId = toVisit.remove();
+      String config = fileSetConfigs.get(setId);
+      fileSets.get(setId).getFileSetsList().stream()
+          .map(NamedSetOfFilesId::getId)
+          .filter(s -> !fileSetConfigs.containsKey(s))
+          .forEach(
+              child -> {
+                fileSetConfigs.put(child, config);
+                toVisit.add(child);
+              });
+    }
+  }
+
   private static class FileSet {
-    private final BuildEventStreamProtos.NamedSetOfFiles namedSet;
+    private final NamedSetOfFiles namedSet;
     private final String configuration;
 
-    FileSet(BuildEventStreamProtos.NamedSetOfFiles namedSet, String configuration) {
+    FileSet(NamedSetOfFiles namedSet, String configuration) {
       this.namedSet = namedSet;
       this.configuration = configuration;
     }
