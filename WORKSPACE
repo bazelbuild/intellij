@@ -188,8 +188,8 @@ jvm_maven_import_external(
 
 jvm_maven_import_external(
     name = "mockito",
-    artifact = "org.mockito:mockito-all:1.9.5",
-    artifact_sha256 = "b2a63307d1dce3aa1623fdaacb2327a4cd7795b0066f31bf542b1e8f2683239e",
+    artifact = "org.mockito:mockito-core:1.10.19",
+    artifact_sha256 = "d5831ee4f71055800821a34a3051cf1ed5b3702f295ffebd50f65fb5d81a71b8",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["http://central.maven.org/maven2"],
 )
