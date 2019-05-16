@@ -101,7 +101,7 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
 
     registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);
 
-    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
+    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     importSettingsManager.setImportSettings(
         new BlazeImportSettings("", "", "", "", BuildSystem.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);

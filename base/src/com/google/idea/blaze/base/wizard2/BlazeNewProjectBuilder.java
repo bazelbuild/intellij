@@ -203,6 +203,7 @@ public final class BlazeNewProjectBuilder {
     } catch (IOException e) {
       throw new BlazeProjectCommitException("Could not create project view file", e);
     }
+    BlazeImportSettingsManager.setPendingProjectSettings(getImportSettings());
   }
 
   /**
@@ -214,16 +215,17 @@ public final class BlazeNewProjectBuilder {
     EventLoggingService.getInstance()
         .logEvent(getClass(), "blaze-project-created", ImmutableMap.copyOf(userSettings.values));
 
-    BlazeImportSettings importSettings =
-        new BlazeImportSettings(
-            workspaceRoot.directory().getPath(),
-            projectName,
-            projectDataDirectory,
-            projectViewFile.getPath(),
-            getBuildSystem());
-
-    BlazeImportSettingsManager.getInstance(project).setImportSettings(importSettings);
+    BlazeImportSettingsManager.getInstance(project).setImportSettings(getImportSettings());
     PluginDependencyHelper.addDependencyOnSyncPlugin(project);
     // Initial sync of the project happens in BlazeSyncStartupActivity
+  }
+
+  private BlazeImportSettings getImportSettings() {
+    return new BlazeImportSettings(
+        workspaceRoot.directory().getPath(),
+        projectName,
+        projectDataDirectory,
+        projectViewFile.getPath(),
+        getBuildSystem());
   }
 }

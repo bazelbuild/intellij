@@ -55,7 +55,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
     fileSystem = new PartialMockLocalFileSystem();
     applicationServices.register(VirtualFileSystemProvider.class, () -> fileSystem);
-    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
+    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     BlazeImportSettings importSettings =
         new BlazeImportSettings("/root", "", "", "", BuildSystem.Bazel);
     workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);

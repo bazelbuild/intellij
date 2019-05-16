@@ -56,7 +56,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
     ep.registerExtension(new IncludeRootFlagsProcessor.Provider());
     ep.registerExtension(new SysrootFlagsProcessor.Provider());
 
-    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
+    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     BlazeImportSettings importSettings =
         new BlazeImportSettings("/root", "", "", "", BuildSystem.Bazel);
     importSettingsManager.setImportSettings(importSettings);

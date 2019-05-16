@@ -82,7 +82,7 @@ public class BlazeAndroidModelTest extends BlazeTestCase {
     projectServices.register(
         BlazeProjectDataManager.class, new BlazeProjectDataManagerImpl(project));
 
-    BlazeImportSettingsManager manager = new BlazeImportSettingsManager();
+    BlazeImportSettingsManager manager = new BlazeImportSettingsManager(project);
     manager.setImportSettings(new BlazeImportSettings("", "", "", "", BuildSystem.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, manager);
     projectServices.register(JvmPsiConversionHelper.class, new JvmPsiConversionHelperImpl());

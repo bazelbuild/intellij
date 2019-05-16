@@ -139,7 +139,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     BlazeExecutor blazeExecutor = new MockBlazeExecutor();
     applicationServices.register(BlazeExecutor.class, blazeExecutor);
 
-    projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
+    projectServices.register(
+        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     MockFileOperationProvider mockFileOperationProvider = new MockFileOperationProvider();

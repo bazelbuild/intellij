@@ -102,7 +102,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     ep.registerExtension(new CppBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
-    projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
+    projectServices.register(
+        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     BuildSystemProvider buildSystemProvider = new BazelBuildSystemProvider();
     registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
         .registerExtension(buildSystemProvider);

@@ -27,9 +27,15 @@ import javax.annotation.Nullable;
 @State(name = "BlazeImportSettings", storages = @Storage(file = StoragePathMacros.WORKSPACE_FILE))
 public class BlazeImportSettingsManager implements PersistentStateComponent<BlazeImportSettings> {
 
+  @Nullable private static volatile BlazeImportSettings pendingProjectSettings;
+
   @Nullable private BlazeImportSettings importSettings;
 
-  public BlazeImportSettingsManager() {}
+  private final Project project;
+
+  public BlazeImportSettingsManager(Project project) {
+    this.project = project;
+  }
 
   public static BlazeImportSettingsManager getInstance(Project project) {
     return ServiceManager.getService(project, BlazeImportSettingsManager.class);
@@ -48,10 +54,28 @@ public class BlazeImportSettingsManager implements PersistentStateComponent<Blaz
 
   @Nullable
   public BlazeImportSettings getImportSettings() {
-    return importSettings;
+    if (importSettings != null) {
+      return importSettings;
+    }
+    BlazeImportSettings pending = pendingProjectSettings;
+    if (pending != null && pending.getProjectName().equals(project.getName())) {
+      return pending;
+    }
+    return null;
   }
 
   public void setImportSettings(BlazeImportSettings importSettings) {
     this.importSettings = importSettings;
+    // also clear any possibly pending settings
+    pendingProjectSettings = null;
+  }
+
+  /**
+   * A hacky way to set BlazeImportSettings for a project which is currently being created. Some
+   * project components rely on this being available, so it needs to be set prior to project
+   * creation.
+   */
+  public static void setPendingProjectSettings(BlazeImportSettings importSettings) {
+    pendingProjectSettings = importSettings;
   }
 }

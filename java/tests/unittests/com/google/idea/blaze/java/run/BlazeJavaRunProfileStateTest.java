@@ -72,7 +72,8 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
-    projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
+    projectServices.register(
+        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     ExperimentService experimentService = new MockExperimentService();

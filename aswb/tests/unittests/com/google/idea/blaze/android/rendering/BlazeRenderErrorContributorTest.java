@@ -116,7 +116,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     kindProvider.registerExtension(new AndroidBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
-    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
+    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     BlazeImportSettings settings = new BlazeImportSettings("", "", "", "", BuildSystem.Blaze);
     importSettingsManager.setImportSettings(settings);
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);

@@ -45,7 +45,8 @@ public class BlazeCommandRunConfigurationCommonStateTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
-    projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
+    projectServices.register(
+        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(DUMMY_IMPORT_SETTINGS);
 
     state = new BlazeCommandRunConfigurationCommonState(Blaze.getBuildSystem(project));

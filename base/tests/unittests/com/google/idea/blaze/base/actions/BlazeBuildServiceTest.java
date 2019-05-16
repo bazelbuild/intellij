@@ -61,7 +61,7 @@ public class BlazeBuildServiceTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
-    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager();
+    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     importSettingsManager.setImportSettings(
         new BlazeImportSettings("", "", "", "", BuildSystem.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);

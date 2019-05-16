@@ -107,7 +107,8 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
     projectServices.register(PsiManager.class, new MockPsiManager(project));
-    projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
+    projectServices.register(
+        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
 
     BuildSystemProvider buildSystemProvider = new BazelBuildSystemProvider();
     registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)

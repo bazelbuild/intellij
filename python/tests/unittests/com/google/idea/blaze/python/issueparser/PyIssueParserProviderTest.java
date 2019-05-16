@@ -47,7 +47,8 @@ public class PyIssueParserProviderTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
 
-    projectServices.register(BlazeImportSettingsManager.class, new BlazeImportSettingsManager());
+    projectServices.register(
+        BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     BlazeImportSettings importSettings =
         new BlazeImportSettings("root", "", "", "", BuildSystem.Bazel);
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(importSettings);
