@@ -112,6 +112,9 @@ public final class BlazeJUnitTestFilterFlags {
   @Nullable
   public static String testFilterForClassesAndMethods(
       Map<PsiClass, Collection<Location<?>>> methodsPerClass) {
+    if (methodsPerClass.isEmpty()) {
+      return null;
+    }
     // Note: this could be incorrect if there are no JUnit4 classes in this sample, but some in the
     // java_test target they're run from.
     JUnitVersion version =

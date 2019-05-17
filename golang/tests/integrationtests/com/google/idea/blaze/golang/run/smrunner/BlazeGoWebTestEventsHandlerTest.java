@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.goide.psi.GoFile;
 import com.goide.psi.GoFunctionDeclaration;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -31,13 +32,14 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.run.smrunner.BlazeWebTestEventsHandler;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.google.idea.blaze.golang.GoBlazeRules.RuleTypes;
 import com.intellij.execution.Location;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -47,11 +49,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link BlazeGoTestEventsHandler}. */
+/** Integration tests for {@link BlazeWebTestEventsHandler} with Go. */
 @RunWith(JUnit4.class)
-public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
+public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
 
-  private final BlazeGoTestEventsHandler handler = new BlazeGoTestEventsHandler();
+  private final BlazeWebTestEventsHandler handler = new BlazeWebTestEventsHandler();
 
   @Test
   public void testSuiteLocationResolvesToBuildRule() {
@@ -59,7 +61,13 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
         TargetMapBuilder.builder()
             .addTarget(
                 TargetIdeInfo.builder()
-                    .setLabel("//foo/bar:foo_test")
+                    .setLabel("//foo/bar:foo_test_chrome-linux")
+                    .setKind("web_test")
+                    .setBuildFile(src("foo/bar/BUILD"))
+                    .addDependency("//foo/bar:foo_test_wrapped_test"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//foo/bar:foo_test_wrapped_test")
                     .setKind("go_test")
                     .setBuildFile(src("foo/bar/BUILD"))
                     .addSource(src("foo/bar/foo_test.go"))
@@ -97,12 +105,13 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
         (BuildFile)
             workspace.createPsiFile(
                 new WorkspacePath("foo/bar/BUILD"),
-                "go_test(",
+                "go_web_test_suite(",
                 "    name = 'foo_test',",
                 "    srcs = [",
                 "        'foo_test.go',",
                 "        'bar_test.go',",
                 "    ],",
+                "    browsers = ['//testing/web/browsers:chrome-linux'],",
                 ")");
 
     FuncallExpression buildRule =
@@ -111,7 +120,9 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
 
     String url =
         handler.suiteLocationUrl(
-            Label.create("//foo/bar:foo_test"), RuleTypes.GO_TEST.getKind(), "foo_test");
+            Label.create("//foo/bar:foo_test_chrome-linux"),
+            RuleTypes.WEB_TEST.getKind(),
+            "foo_test");
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
     assertThat(location.getPsiElement()).isEqualTo(buildRule);
@@ -123,7 +134,13 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
         TargetMapBuilder.builder()
             .addTarget(
                 TargetIdeInfo.builder()
-                    .setLabel("//foo/bar:foo_test")
+                    .setLabel("//foo/bar:foo_test_chrome-linux")
+                    .setKind("web_test")
+                    .setBuildFile(src("foo/bar/BUILD"))
+                    .addDependency("//foo/bar:foo_test_wrapped_test"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//foo/bar:foo_test_wrapped_test")
                     .setKind("go_test")
                     .setBuildFile(src("foo/bar/BUILD"))
                     .addSource(src("foo/bar/foo_test.go"))
@@ -153,14 +170,17 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
 
     workspace.createFile(
         new WorkspacePath("foo/bar/BUILD"),
-        "go_test(",
+        "go_web_test_suite(",
         "    name = 'foo_test',",
         "    srcs = ['foo_test.go'],",
+        "    browsers = ['//testing/web/browsers:chrome-linux'],",
         ")");
 
     String url =
         handler.suiteLocationUrl(
-            Label.create("//foo/bar:foo_test"), RuleTypes.GO_TEST.getKind(), "foo_test");
+            Label.create("//foo/bar:foo_test_chrome-linux"),
+            RuleTypes.WEB_TEST.getKind(),
+            "foo_test");
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
     assertThat(location.getPsiElement()).isEqualTo(goFile);
@@ -172,7 +192,13 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
         TargetMapBuilder.builder()
             .addTarget(
                 TargetIdeInfo.builder()
-                    .setLabel("//:foo_test")
+                    .setLabel("//:foo_test_chrome-linux")
+                    .setKind("web_test")
+                    .setBuildFile(src("BUILD"))
+                    .addDependency("//:foo_test_wrapped_test"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//:foo_test_wrapped_test")
                     .setKind("go_test")
                     .setBuildFile(src("BUILD"))
                     .addSource(src("foo_test.go"))
@@ -200,14 +226,15 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
 
     workspace.createFile(
         new WorkspacePath("BUILD"),
-        "go_test(",
+        "go_web_test_suite(",
         "    name = 'foo_test',",
         "    srcs = ['foo_test.go'],",
+        "    browsers = ['//testing/web/browsers:chrome-linux'],",
         ")");
 
     String url =
         handler.suiteLocationUrl(
-            Label.create("//:foo_test"), RuleTypes.GO_TEST.getKind(), "foo_test");
+            Label.create("//:foo_test_chrome-linux"), RuleTypes.WEB_TEST.getKind(), "foo_test");
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
     assertThat(location.getPsiElement()).isEqualTo(goFile);
@@ -219,7 +246,13 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
         TargetMapBuilder.builder()
             .addTarget(
                 TargetIdeInfo.builder()
-                    .setLabel("//foo/bar:foo_test")
+                    .setLabel("//foo/bar:foo_test_chrome-linux")
+                    .setKind("web_test")
+                    .setBuildFile(src("foo/bar/BUILD"))
+                    .addDependency("//foo/bar:foo_test_wrapped_test"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//foo/bar:foo_test_wrapped_test")
                     .setKind("go_test")
                     .setBuildFile(src("foo/bar/BUILD"))
                     .addSource(src("foo/bar/foo_test.go"))
@@ -248,9 +281,10 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
 
     workspace.createFile(
         new WorkspacePath("foo/bar/BUILD"),
-        "go_test(",
+        "go_web_test_suite(",
         "    name = 'foo_test',",
         "    srcs = ['foo_test.go'],",
+        "    browsers = ['//testing/web/browsers:chrome-linux'],",
         ")");
 
     GoFunctionDeclaration function =
@@ -259,14 +293,83 @@ public class BlazeGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
 
     String url =
         handler.testLocationUrl(
-            Label.create("//foo/bar:foo_test"),
-            RuleTypes.GO_TEST.getKind(),
+            Label.create("//foo/bar:foo_test_chrome-linux"),
+            RuleTypes.WEB_TEST.getKind(),
             "foo_test",
             "TestFoo",
             null);
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
     assertThat(location.getPsiElement()).isEqualTo(function);
+  }
+
+  @Test
+  public void testMultipleBrowsers() {
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//foo/bar:foo_test_chrome-linux")
+                    .setKind("web_test")
+                    .setBuildFile(src("foo/bar/BUILD"))
+                    .addDependency("//foo/bar:foo_test_wrapped_test"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//foo/bar:foo_test_firefox-linux")
+                    .setKind("web_test")
+                    .setBuildFile(src("foo/bar/BUILD"))
+                    .addDependency("//foo/bar:foo_test_wrapped_test"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//foo/bar:foo_test_wrapped_test")
+                    .setKind("go_test")
+                    .setBuildFile(src("foo/bar/BUILD"))
+                    .addSource(src("foo/bar/foo_test.go"))
+                    .setGoInfo(
+                        GoIdeInfo.builder()
+                            .addSource(src("foo/bar/foo_test.go"))
+                            .setImportPath("google3/foo/bar/foo")))
+            .build();
+
+    registerProjectService(
+        BlazeProjectDataManager.class,
+        new MockBlazeProjectDataManager(
+            MockBlazeProjectDataBuilder.builder(workspaceRoot)
+                .setTargetMap(targetMap)
+                .setWorkspaceLanguageSettings(
+                    new WorkspaceLanguageSettings(
+                        WorkspaceType.GO, ImmutableSet.of(LanguageClass.GO)))
+                .build()));
+
+    GoFile goFile =
+        (GoFile)
+            workspace.createPsiFile(
+                new WorkspacePath("foo/bar/foo_test.go"),
+                "package foo",
+                "import \"testing\"",
+                "func TestFoo(t *testing.T) {}");
+
+    workspace.createFile(
+        new WorkspacePath("foo/bar/BUILD"),
+        "go_web_test_suite(",
+        "    name = 'foo_test',",
+        "    srcs = ['foo_test.go',],",
+        "    browsers = [",
+        "        '//testing/web/browsers:chrome-linux'",
+        "        '//testing/web/browsers:firefox-linux'",
+        "    ],",
+        ")");
+
+    for (String browser : ImmutableList.of("chrome", "firefox")) {
+      String url =
+          handler.suiteLocationUrl(
+              Label.create("//foo/bar:foo_test_" + browser + "-linux"),
+              RuleTypes.WEB_TEST.getKind(),
+              "foo_test");
+      Location<?> location = getLocation(url);
+      assertThat(location).isNotNull();
+      assertThat(location.getPsiElement()).isEqualTo(goFile);
+    }
   }
 
   @Nullable

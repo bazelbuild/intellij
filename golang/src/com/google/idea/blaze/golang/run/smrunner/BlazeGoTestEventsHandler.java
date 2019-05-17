@@ -52,8 +52,10 @@ public class BlazeGoTestEventsHandler implements BlazeTestEventsHandler {
     String filter =
         testLocations.stream()
             .map(Location::getPsiElement)
-            .filter(psi -> psi instanceof GoFunctionOrMethodDeclaration)
-            .map(psi -> ((GoFunctionOrMethodDeclaration) psi).getName())
+            .filter(GoFunctionOrMethodDeclaration.class::isInstance)
+            .map(GoFunctionOrMethodDeclaration.class::cast)
+            .map(GoFunctionOrMethodDeclaration::getName)
+            .distinct()
             .map(name -> "^" + name + "$")
             .reduce((a, b) -> a + "|" + b)
             .orElse(null);
