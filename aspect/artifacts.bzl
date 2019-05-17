@@ -14,7 +14,7 @@ def artifacts_from_target_list_attr(ctx, attr_name):
     return [
         artifact_location(f)
         for target in getattr(ctx.rule.attr, attr_name, [])
-        for f in target.files
+        for f in target.files.to_list()
     ]
 
 def artifact_location(f):
