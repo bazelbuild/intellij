@@ -62,7 +62,7 @@ def _fast_build_info_impl(target, ctx):
             java_info["annotation_processor_class_names"] = annotation_processing.processor_classnames
             java_info["annotation_processor_classpath"] = [
                 artifact_location(t)
-                for t in annotation_processing.processor_classpath
+                for t in annotation_processing.processor_classpath.to_list()
             ]
         info["java_info"] = struct_omit_none(**java_info)
     if hasattr(target, "android"):

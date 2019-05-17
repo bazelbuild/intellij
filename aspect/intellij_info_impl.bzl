@@ -679,7 +679,7 @@ def divide_java_sources(ctx):
     if hasattr(ctx.rule.attr, "srcs"):
         srcs = ctx.rule.attr.srcs
         for src in srcs:
-            for f in src.files:
+            for f in src.files.to_list():
                 if f.basename.endswith(".java"):
                     if f.is_source:
                         java_sources.append(f)
@@ -818,7 +818,10 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     export_deps = []
     if JavaInfo in target:
         transitive_exports = target[JavaInfo].transitive_exports
-        export_deps = [make_dep_from_label(label, COMPILE_TIME) for label in transitive_exports]
+        export_deps = [
+            make_dep_from_label(label, COMPILE_TIME)
+            for label in transitive_exports.to_list()
+        ]
 
         # Empty android libraries export all their dependencies.
         if ctx.rule.kind == "android_library":
