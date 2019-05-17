@@ -23,9 +23,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.util.pico.DefaultPicoContainer;
@@ -65,27 +63,15 @@ public class TestUtils {
     if (oldApplication == null) {
       Disposer.register(
           parentDisposable,
-          new Disposable() {
-            @Override
-            public void dispose() {
+          () ->
               new ApplicationManager() {
                 {
                   ourApplication = null;
                 }
-              };
-            }
-          });
+              });
     }
 
-    ApplicationManager.setApplication(
-        instance,
-        new Getter<FileTypeRegistry>() {
-          @Override
-          public FileTypeRegistry get() {
-            return FileTypeManager.getInstance();
-          }
-        },
-        parentDisposable);
+    ApplicationManager.setApplication(instance, FileTypeManager::getInstance, parentDisposable);
     instance.registerService(EncodingManager.class, EncodingManagerImpl.class);
   }
 
