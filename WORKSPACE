@@ -234,14 +234,25 @@ jvm_maven_import_external(
     server_urls = ["http://central.maven.org/maven2"],
 )
 
+http_archive(
+    name = "bazel_skylib",
+    url = "https://github.com/bazelbuild/bazel-skylib/releases/download/0.8.0/bazel-skylib.0.8.0.tar.gz",
+    sha256 = "2ef429f5d7ce7111263289644d233707dba35e39696377ebab8b0bc701f7818e",
+)
+
 # LICENSE: The Apache Software License, Version 2.0
 # proto_library rules implicitly depend on @com_google_protobuf//:protoc
 http_archive(
     name = "com_google_protobuf",
-    sha256 = "9510dd2afc29e7245e9e884336f848c8a6600a14ae726adb6befdb4f786f0be2",
-    strip_prefix = "protobuf-3.6.1.3",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.6.1.3.zip"],
+    sha256 = "d82eb0141ad18e98de47ed7ed415daabead6d5d1bef1b8cccb6aa4d108a9008f",
+    strip_prefix = "protobuf-b4f193788c9f0f05d7e0879ea96cd738630e5d51",
+    # Commit from 2019-05-15, update to protobuf 3.8 when available.
+    url = "https://github.com/protocolbuffers/protobuf/archive/b4f193788c9f0f05d7e0879ea96cd738630e5d51.tar.gz",
 )
+
+load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+
+protobuf_deps()
 
 # LICENSE: The Apache Software License, Version 2.0
 # java_proto_library rules implicitly depend on @com_google_protobuf_java//:java_toolchain
@@ -249,9 +260,9 @@ http_archive(
 # required).
 http_archive(
     name = "com_google_protobuf_java",
-    sha256 = "9510dd2afc29e7245e9e884336f848c8a6600a14ae726adb6befdb4f786f0be2",
-    strip_prefix = "protobuf-3.6.1.3",
-    urls = ["https://github.com/protocolbuffers/protobuf/archive/v3.6.1.3.zip"],
+    sha256 = "d82eb0141ad18e98de47ed7ed415daabead6d5d1bef1b8cccb6aa4d108a9008f",
+    strip_prefix = "protobuf-b4f193788c9f0f05d7e0879ea96cd738630e5d51",
+    url = "https://github.com/protocolbuffers/protobuf/archive/b4f193788c9f0f05d7e0879ea96cd738630e5d51.tar.gz",
 )
 
 # BEGIN-EXTERNAL-SCALA
