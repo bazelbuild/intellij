@@ -17,15 +17,16 @@ package com.google.idea.common.experiments;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 
+import com.google.common.base.StandardSystemProperty;
+import com.google.idea.testing.IntellijRule;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -34,16 +35,23 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class FeatureRolloutExperimentTest {
 
-  private static final String USERNAME_PROPERTY = "user.name";
+  private static final String USERNAME_PROPERTY = StandardSystemProperty.USER_NAME.key();
+
+  @Rule public IntellijRule intellij = new IntellijRule();
 
   private String initialUserName;
-  private FeatureRolloutExperiment mockExperiment;
+  private MockExperimentService experimentService;
+  private FeatureRolloutExperiment rolloutExperiment;
 
   @Before
   public void setUp() {
     initialUserName = System.getProperty(USERNAME_PROPERTY);
-    mockExperiment = spy(new FeatureRolloutExperiment("feature.name.for.canary.rollout"));
     InternalDevFlag.markUserAsInternalDev(false);
+
+    experimentService = new MockExperimentService();
+    intellij.registerApplicationService(ExperimentService.class, experimentService);
+
+    rolloutExperiment = new FeatureRolloutExperiment("feature.name.for.canary.rollout");
   }
 
   @After
@@ -56,7 +64,7 @@ public class FeatureRolloutExperimentTest {
   }
 
   private void setFeatureRolloutPercentage(int percentage) {
-    doReturn(percentage).when(mockExperiment).getRolloutPercentage();
+    experimentService.setFeatureRolloutExperiment(rolloutExperiment, percentage);
   }
 
   @Test
@@ -107,13 +115,30 @@ public class FeatureRolloutExperimentTest {
   }
 
   @Test
-  public void testAlwaysEnabledForDevs() {
+  public void testAlwaysDisabledIfInvalidRolloutPercentage() throws Exception {
     List<String> userNames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
             .collect(Collectors.toList());
 
+    setFeatureRolloutPercentage(-1);
+    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+
+    setFeatureRolloutPercentage(101);
+    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+
+    setFeatureRolloutPercentage(200);
+    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+  }
+
+  @Test
+  public void testAlwaysEnabledForDevs() {
+    List<String> userNames =
+        Stream.generate(FeatureRolloutExperimentTest::generateUsername)
+            .limit(10000)
+            .collect(Collectors.toList());
     InternalDevFlag.markUserAsInternalDev(true);
+
     setFeatureRolloutPercentage(0);
     assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
 
@@ -122,11 +147,38 @@ public class FeatureRolloutExperimentTest {
 
     setFeatureRolloutPercentage(100);
     assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
+
+    setFeatureRolloutPercentage(-1);
+    assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
+  }
+
+  @Test
+  public void testNotAlwaysEnabledWhenDevMarkerDisabled() {
+    List<String> userNames =
+        Stream.generate(FeatureRolloutExperimentTest::generateUsername)
+            .limit(10000)
+            .collect(Collectors.toList());
+    InternalDevFlag.markUserAsInternalDev(true);
+    experimentService.setExperiment(InternalDevFlag.disableInternalDevMarker, true);
+
+    setFeatureRolloutPercentage(0);
+    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+
+    setFeatureRolloutPercentage(20);
+    long matchCount = userNames.stream().filter(this::isEnabled).count();
+    assertThat(matchCount).isAtLeast(1900L);
+    assertThat(matchCount).isAtMost(2100L);
+
+    setFeatureRolloutPercentage(100);
+    assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
+
+    setFeatureRolloutPercentage(-1);
+    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
   }
 
   private boolean isEnabled(String userName) {
     System.setProperty(USERNAME_PROPERTY, userName);
-    return mockExperiment.isEnabled();
+    return rolloutExperiment.isEnabled();
   }
 
   private static final Random random = new Random(12345);

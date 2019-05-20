@@ -33,8 +33,10 @@ intellij_unit_test_suite(
     test_package_root = "com.google.idea.common.experiments",
     deps = [
         ":experiments",
+        ":unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//testing:lib",
         "@junit//jar",
     ],
 )

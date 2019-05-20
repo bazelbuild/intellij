@@ -44,8 +44,7 @@ public class FeatureRolloutExperiment extends Experiment {
    *
    * <p>If the experiment value is outside the range [0, 100], 0 is returned.
    */
-  @VisibleForTesting
-  int getRolloutPercentage() {
+  private int getRolloutPercentage() {
     int percentage =
         ExperimentService.getInstance().getExperimentInt(getKey(), /* defaultValue= */ 0);
     return percentage < 0 || percentage > 100 ? 0 : percentage;
