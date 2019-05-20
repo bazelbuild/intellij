@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -56,9 +57,15 @@ import javax.annotation.Nullable;
  */
 final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
 
+  private static final BoolExperiment enabled =
+      new BoolExperiment("source.jar.redirect.enabled", false);
+
   @Nullable
   @Override
   public PsiFile getFileNavigationElement(ClsFileImpl file) {
+    if (!enabled.getValue()) {
+      return null;
+    }
     return CachedValuesManager.getCachedValue(
         file,
         () -> {
