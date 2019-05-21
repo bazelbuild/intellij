@@ -60,7 +60,7 @@ public class FeatureRolloutExperiment extends Experiment {
    */
   @VisibleForTesting
   static int getUserHash(String key) {
-    String userName = System.getProperty("user.name");
+    String userName = ExperimentUsernameProvider.getUsername();
     if (userName == null) {
       return 99;
     }

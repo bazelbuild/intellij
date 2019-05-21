@@ -50,6 +50,7 @@ public final class InternalDevFlag {
   // # TODO(grl): make this private once FileWatcherSwitch is gone.
   @Deprecated
   public static boolean isInternalDevMarkerSupported() {
-    return !disableInternalDevMarker.getValue();
+    return !disableInternalDevMarker.getValue()
+        && !ExperimentUsernameProvider.isUsernameOverridden();
   }
 }
