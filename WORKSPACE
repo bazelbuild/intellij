@@ -157,8 +157,8 @@ http_archive(
 http_archive(
     name = "android_studio_3_5",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio",
-    sha256 = "d430cea9af20f6e859cc9e43a0b83834c0566f51e6d5e0faa64881cc8505e144",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/3.5.0.13/android-studio-ide-191.5529924-linux.tar.gz",
+    sha256 = "8e4189cf6fba94911e28bb1253f98a796295d6db325c468cf7a36b1b2ae8c2ff",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/3.5.0.14/android-studio-ide-191.5549111-linux.tar.gz",
 )
 
 # LICENSE: Common Public License 1.0
@@ -236,8 +236,8 @@ jvm_maven_import_external(
 
 http_archive(
     name = "bazel_skylib",
-    url = "https://github.com/bazelbuild/bazel-skylib/releases/download/0.8.0/bazel-skylib.0.8.0.tar.gz",
     sha256 = "2ef429f5d7ce7111263289644d233707dba35e39696377ebab8b0bc701f7818e",
+    url = "https://github.com/bazelbuild/bazel-skylib/releases/download/0.8.0/bazel-skylib.0.8.0.tar.gz",
 )
 
 # LICENSE: The Apache Software License, Version 2.0
