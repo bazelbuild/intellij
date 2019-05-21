@@ -18,8 +18,8 @@ package com.google.idea.common.experiments;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import com.google.common.base.StandardSystemProperty;
 import com.google.idea.testing.IntellijRule;
+import com.intellij.util.SystemProperties;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -35,17 +35,13 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class FeatureRolloutExperimentTest {
 
-  private static final String USERNAME_PROPERTY = StandardSystemProperty.USER_NAME.key();
-
   @Rule public IntellijRule intellij = new IntellijRule();
 
-  private String initialUserName;
   private MockExperimentService experimentService;
   private FeatureRolloutExperiment rolloutExperiment;
 
   @Before
   public void setUp() {
-    initialUserName = System.getProperty(USERNAME_PROPERTY);
     InternalDevFlag.markUserAsInternalDev(false);
 
     experimentService = new MockExperimentService();
@@ -56,11 +52,7 @@ public class FeatureRolloutExperimentTest {
 
   @After
   public void tearDown() {
-    if (initialUserName != null) {
-      System.setProperty(USERNAME_PROPERTY, initialUserName);
-    } else {
-      System.clearProperty(USERNAME_PROPERTY);
-    }
+    SystemProperties.setTestUserName(null); // Reset to real username
   }
 
   private void setFeatureRolloutPercentage(int percentage) {
@@ -69,92 +61,133 @@ public class FeatureRolloutExperimentTest {
 
   @Test
   public void testUserHashesInCorrectRange() {
-    List<String> userNames =
+    List<String> usernames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
             .collect(Collectors.toList());
 
-    for (String userName : userNames) {
-      int percentage = FeatureRolloutExperiment.getUserHash(userName);
-      assertWithMessage(userName).that(percentage).isLessThan(100);
-      assertWithMessage(userName).that(percentage).isAtLeast(0);
+    for (String username : usernames) {
+      int percentage = rolloutExperiment.getUserHash(username);
+      assertWithMessage(username).that(percentage).isLessThan(100);
+      assertWithMessage(username).that(percentage).isAtLeast(0);
     }
   }
 
+  @Test
+  public void testUserHashIsSameForEqualUsernameAndExperiment() {
+    rolloutExperiment = new FeatureRolloutExperiment("rollout.experiment.one");
+    FeatureRolloutExperiment equalExperiment =
+        new FeatureRolloutExperiment("rollout.experiment.one");
+
+    List<String> usernames =
+        Stream.generate(FeatureRolloutExperimentTest::generateUsername)
+            .limit(10000)
+            .collect(Collectors.toList());
+
+    for (String username : usernames) {
+      int percentage = rolloutExperiment.getUserHash(username);
+      assertWithMessage(username)
+          .that(percentage)
+          .isEqualTo(rolloutExperiment.getUserHash(username));
+      assertWithMessage(username).that(percentage).isEqualTo(equalExperiment.getUserHash(username));
+    }
+  }
+
+  @Test
+  public void testUserHashForSameUserDependsOnExperimentKey() {
+    rolloutExperiment = new FeatureRolloutExperiment("rollout.experiment.one");
+    FeatureRolloutExperiment differentExperiment =
+        new FeatureRolloutExperiment("rollout.experiment.two");
+
+    List<String> usernames =
+        Stream.generate(FeatureRolloutExperimentTest::generateUsername)
+            .limit(10000)
+            .collect(Collectors.toList());
+
+    long differenceCount =
+        usernames.stream()
+            .filter(
+                username ->
+                    rolloutExperiment.getUserHash(username)
+                        != differentExperiment.getUserHash(username))
+            .count();
+    assertThat(differenceCount).isAtLeast(9800L);
+  }
+
   /**
-   * Test that for some set of 'random' userNames, approximately the expected proportion of users
+   * Test that for some set of 'random' usernames, approximately the expected proportion of users
    * have the feature enabled.
    */
   @Test
   public void testRolloutPercentageApproximatelyCorrect() {
-    List<String> userNames =
+    List<String> usernames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
             .collect(Collectors.toList());
 
     setFeatureRolloutPercentage(0);
-    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().noneMatch(this::isEnabled)).isTrue();
 
     setFeatureRolloutPercentage(100);
-    assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().allMatch(this::isEnabled)).isTrue();
 
     setFeatureRolloutPercentage(2);
-    long matchCount = userNames.stream().filter(this::isEnabled).count();
+    long matchCount = usernames.stream().filter(this::isEnabled).count();
     assertThat(matchCount).isAtLeast(150L);
     assertThat(matchCount).isAtMost(250L);
 
     setFeatureRolloutPercentage(20);
-    matchCount = userNames.stream().filter(this::isEnabled).count();
+    matchCount = usernames.stream().filter(this::isEnabled).count();
     assertThat(matchCount).isAtLeast(1900L);
     assertThat(matchCount).isAtMost(2100L);
 
     setFeatureRolloutPercentage(50);
-    matchCount = userNames.stream().filter(this::isEnabled).count();
+    matchCount = usernames.stream().filter(this::isEnabled).count();
     assertThat(matchCount).isAtLeast(4900L);
     assertThat(matchCount).isAtMost(5100L);
   }
 
   @Test
-  public void testAlwaysDisabledIfInvalidRolloutPercentage() throws Exception {
-    List<String> userNames =
+  public void testAlwaysDisabledIfInvalidRolloutPercentage() {
+    List<String> usernames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
             .collect(Collectors.toList());
 
     setFeatureRolloutPercentage(-1);
-    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().noneMatch(this::isEnabled)).isTrue();
 
     setFeatureRolloutPercentage(101);
-    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().noneMatch(this::isEnabled)).isTrue();
 
     setFeatureRolloutPercentage(200);
-    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().noneMatch(this::isEnabled)).isTrue();
   }
 
   @Test
   public void testAlwaysEnabledForDevs() {
-    List<String> userNames =
+    List<String> usernames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
             .collect(Collectors.toList());
     InternalDevFlag.markUserAsInternalDev(true);
 
     setFeatureRolloutPercentage(0);
-    assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().allMatch(this::isEnabled)).isTrue();
 
     setFeatureRolloutPercentage(20);
-    assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().allMatch(this::isEnabled)).isTrue();
 
     setFeatureRolloutPercentage(100);
-    assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().allMatch(this::isEnabled)).isTrue();
 
     setFeatureRolloutPercentage(-1);
-    assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().allMatch(this::isEnabled)).isTrue();
   }
 
   @Test
   public void testNotAlwaysEnabledWhenDevMarkerDisabled() {
-    List<String> userNames =
+    List<String> usernames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
             .collect(Collectors.toList());
@@ -162,22 +195,22 @@ public class FeatureRolloutExperimentTest {
     experimentService.setExperiment(InternalDevFlag.disableInternalDevMarker, true);
 
     setFeatureRolloutPercentage(0);
-    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().noneMatch(this::isEnabled)).isTrue();
 
     setFeatureRolloutPercentage(20);
-    long matchCount = userNames.stream().filter(this::isEnabled).count();
+    long matchCount = usernames.stream().filter(this::isEnabled).count();
     assertThat(matchCount).isAtLeast(1900L);
     assertThat(matchCount).isAtMost(2100L);
 
     setFeatureRolloutPercentage(100);
-    assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().allMatch(this::isEnabled)).isTrue();
 
     setFeatureRolloutPercentage(-1);
-    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+    assertThat(usernames.stream().noneMatch(this::isEnabled)).isTrue();
   }
 
-  private boolean isEnabled(String userName) {
-    System.setProperty(USERNAME_PROPERTY, userName);
+  private boolean isEnabled(String username) {
+    SystemProperties.setTestUserName(username);
     return rolloutExperiment.isEnabled();
   }
 

@@ -15,7 +15,7 @@
  */
 package com.google.idea.common.experiments;
 
-import com.google.common.base.StandardSystemProperty;
+import com.intellij.util.SystemProperties;
 import javax.annotation.Nullable;
 
 /**
@@ -33,7 +33,7 @@ final class ExperimentUsernameProvider {
   @Nullable
   static String getUsername() {
     String override = usernameOverride.getValue();
-    return override != null ? override : StandardSystemProperty.USER_NAME.value();
+    return override != null ? override : SystemProperties.getUserName();
   }
 
   static boolean isUsernameOverridden() {
