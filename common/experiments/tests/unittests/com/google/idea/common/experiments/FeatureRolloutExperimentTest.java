@@ -75,10 +75,51 @@ public class FeatureRolloutExperimentTest {
             .collect(Collectors.toList());
 
     for (String userName : userNames) {
-      int percentage = FeatureRolloutExperiment.getUserHash(userName);
+      int percentage = rolloutExperiment.getUserHash(userName);
       assertWithMessage(userName).that(percentage).isLessThan(100);
       assertWithMessage(userName).that(percentage).isAtLeast(0);
     }
+  }
+
+  @Test
+  public void testUserHashIsSameForEqualUsernameAndExperiment() {
+    rolloutExperiment = new FeatureRolloutExperiment("rollout.experiment.one");
+    FeatureRolloutExperiment equalExperiment =
+        new FeatureRolloutExperiment("rollout.experiment.one");
+
+    List<String> userNames =
+        Stream.generate(FeatureRolloutExperimentTest::generateUsername)
+            .limit(10000)
+            .collect(Collectors.toList());
+
+    for (String userName : userNames) {
+      int percentage = rolloutExperiment.getUserHash(userName);
+      assertWithMessage(userName)
+          .that(percentage)
+          .isEqualTo(rolloutExperiment.getUserHash(userName));
+      assertWithMessage(userName).that(percentage).isEqualTo(equalExperiment.getUserHash(userName));
+    }
+  }
+
+  @Test
+  public void testUserHashForSameUserDependsOnExperimentKey() {
+    rolloutExperiment = new FeatureRolloutExperiment("rollout.experiment.one");
+    FeatureRolloutExperiment differentExperiment =
+        new FeatureRolloutExperiment("rollout.experiment.two");
+
+    List<String> userNames =
+        Stream.generate(FeatureRolloutExperimentTest::generateUsername)
+            .limit(10000)
+            .collect(Collectors.toList());
+
+    long differenceCount =
+        userNames.stream()
+            .filter(
+                userName ->
+                    rolloutExperiment.getUserHash(userName)
+                        != differentExperiment.getUserHash(userName))
+            .count();
+    assertThat(differenceCount).isAtLeast(9800L);
   }
 
   /**
@@ -115,7 +156,7 @@ public class FeatureRolloutExperimentTest {
   }
 
   @Test
-  public void testAlwaysDisabledIfInvalidRolloutPercentage() throws Exception {
+  public void testAlwaysDisabledIfInvalidRolloutPercentage() {
     List<String> userNames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)

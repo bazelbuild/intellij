@@ -16,6 +16,7 @@
 package com.google.idea.common.experiments;
 
 import com.google.common.annotations.VisibleForTesting;
+import javax.annotation.Nullable;
 
 /**
  * An experiment controlling gradual rollout of a feature. The experiment value must be an integer
@@ -34,8 +35,7 @@ public class FeatureRolloutExperiment extends Experiment {
     if (InternalDevFlag.isInternalDev()) {
       return true;
     }
-    int rolloutPercentage = getRolloutPercentage();
-    return getUserHash(getKey()) < rolloutPercentage;
+    return getUserHash(ExperimentUsernameProvider.getUsername()) < getRolloutPercentage();
   }
 
   /**
@@ -51,20 +51,19 @@ public class FeatureRolloutExperiment extends Experiment {
   }
 
   /**
-   * Returns an integer between 0 and 99, inclusive, based on a hash of the 'user.name' system
-   * property and the feature key. If the rollout percentage is greater than this value, the feature
-   * will be enabled for this user.
+   * Returns an integer between 0 and 99, inclusive, based on a hash of the feature key and
+   * username. If the rollout percentage is greater than this value, the feature will be enabled for
+   * this user.
    *
-   * <p>If no username is found returns 99 (meaning the feature will be inactive, unless it's set to
-   * 100% rollout).
+   * <p>If {@code userName} is null, returns 99 (meaning the feature will be inactive, unless it's
+   * set to 100% rollout).
    */
   @VisibleForTesting
-  static int getUserHash(String key) {
-    String userName = ExperimentUsernameProvider.getUsername();
+  int getUserHash(@Nullable String userName) {
     if (userName == null) {
       return 99;
     }
-    int hash = (userName + key).hashCode();
+    int hash = (userName + getKey()).hashCode();
     return Math.abs(hash) % 100;
   }
 }
