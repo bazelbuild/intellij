@@ -16,6 +16,7 @@
 package com.google.idea.testing;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.StandardSystemProperty;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -186,7 +187,7 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
       tmpDir = new File(baseTmpDir).getAbsoluteFile();
 
       // .. Add username
-      String username = System.getProperty("user.name");
+      String username = StandardSystemProperty.USER_NAME.value();
       username = username.replace('/', '_');
       username = username.replace('\\', '_');
       username = username.replace('\000', '_');
