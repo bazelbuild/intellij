@@ -284,7 +284,7 @@ def _plugin_deploy_zip_impl(ctx):
     for target in ctx.attr.srcs:
         data = target[repackaged_files_data]
         input_files = depset(transitive = [input_files, data.files])
-        for f in data.files:
+        for f in data.files.to_list():
             exec_path_to_zip_path[f.path] = output_path(f, data)
 
     args = []
