@@ -16,8 +16,10 @@
 package com.google.idea.blaze.android.sync.model;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.BlazeLibrary;
@@ -151,6 +153,12 @@ public final class BlazeResourceLibrary extends BlazeLibrary {
 
     // OrderRootType.SOURCES is used for source roots for libraries not resource
     // In an aar library, path to resource directory should be tag with OrderRootType.CLASSES
-    libraryModel.addRoot(pathToUrl(artifactLocationDecoder.decode(root)), OrderRootType.CLASSES);
+    libraryModel.addRoot(
+        pathToUrl(
+            Preconditions.checkNotNull(
+                OutputArtifactResolver.resolve(project, artifactLocationDecoder, root),
+                "Fail to find file %s",
+                root.getRelativePath())),
+        OrderRootType.CLASSES);
   }
 }

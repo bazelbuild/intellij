@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.rendering;
 
 import static com.android.SdkConstants.ANDROID_MANIFEST_XML;
 
+import com.android.internal.util.Preconditions;
 import com.android.tools.idea.rendering.HtmlLinkManager;
 import com.android.tools.idea.rendering.RenderErrorContributor;
 import com.android.tools.idea.rendering.RenderLogger;
@@ -30,6 +31,7 @@ import com.google.common.collect.SortedSetMultimap;
 import com.google.common.collect.TreeMultimap;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -177,7 +179,13 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
       return;
     }
 
-    File manifest = decoder.decode(target.getAndroidIdeInfo().getManifest());
+    ArtifactLocation maniftestArtifactLocation = target.getAndroidIdeInfo().getManifest();
+
+    File manifest =
+        Preconditions.checkNotNull(
+            OutputArtifactResolver.resolve(project, decoder, maniftestArtifactLocation),
+            "Fail to find file %s",
+            maniftestArtifactLocation.getRelativePath());
     if (manifest.getName().equals(ANDROID_MANIFEST_XML)) {
       return;
     }
@@ -299,7 +307,11 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
 
   private HtmlBuilder addTargetLink(
       HtmlBuilder builder, TargetIdeInfo target, ArtifactLocationDecoder decoder) {
-    File buildFile = decoder.decode(target.getBuildFile());
+    File buildFile =
+        Preconditions.checkNotNull(
+            OutputArtifactResolver.resolve(project, decoder, target.getBuildFile()),
+            "Fail to find file %s",
+            target.getBuildFile().getRelativePath());
     int line =
         ApplicationManager.getApplication()
             .runReadAction(

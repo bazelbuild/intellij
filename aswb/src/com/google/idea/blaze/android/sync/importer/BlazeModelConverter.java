@@ -38,11 +38,13 @@ import com.android.projectmodel.ProjectType;
 import com.android.projectmodel.SelectiveResourceFolder;
 import com.android.projectmodel.SourceSet;
 import com.android.sdklib.AndroidVersion;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.projectsystem.TransitiveClosureClassFileFinder;
 import com.google.idea.blaze.android.sync.importer.aggregators.DependencyUtil;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -72,6 +74,7 @@ import org.jetbrains.annotations.Nullable;
 
 /** Converts the data structures produced by blaze sync into a project model data types. */
 public final class BlazeModelConverter {
+  private final Project project;
   private final ModelCache cache = new ModelCache();
   private final BlazeImportInput importInput;
   private final PathMap<BlazeContentEntry> sourceDirectoryForPath;
@@ -91,6 +94,7 @@ public final class BlazeModelConverter {
       ProjectViewSet projectViewSet,
       BlazeProjectData projectData) {
     this(
+        project,
         projectData.getSyncState().get(BlazeAndroidSyncData.class).androidSdkPlatform,
         projectData.getSyncState().get(BlazeJavaSyncData.class),
         BlazeImportInput.forProject(project, workspaceRoot, projectViewSet, projectData),
@@ -98,10 +102,12 @@ public final class BlazeModelConverter {
   }
 
   public BlazeModelConverter(
+      Project project,
       AndroidSdkPlatform androidSdkPlatform,
       BlazeJavaSyncData javaSyncData,
       BlazeImportInput importInput,
       BlazeInfo blazeInfo) {
+    this.project = project;
     this.importInput = importInput;
 
     sourceDirectoryForPath =
@@ -176,7 +182,13 @@ public final class BlazeModelConverter {
     // Decode the location, convert it to a PathString, and de-dupe it.
     return cache.computeIfAbsent(
         location,
-        (ArtifactLocation loc) -> new PathString(importInput.artifactLocationDecoder.decode(loc)));
+        (ArtifactLocation loc) ->
+            new PathString(
+                Preconditions.checkNotNull(
+                    OutputArtifactResolver.resolve(
+                        project, importInput.artifactLocationDecoder, loc),
+                    "Fail to find file %s",
+                    loc.getRelativePath())));
   }
 
   public List<PathString> decode(Collection<ArtifactLocation> locations) {
@@ -220,14 +232,7 @@ public final class BlazeModelConverter {
     return cache.computeIfAbsent(toDedupe, (it) -> it);
   }
 
-  /**
-   * Returns the target as a list of {@link ExternalLibrary}.
-   *
-   * @param resourcesAsFakeLibraries if true, each resource folder will be returned as a separate
-   *     library. If false, all resources will be attached as resources of the same library.
-   *     Returning false will result in libraries closer to the shape they were declared in.
-   *     Returning true prevents the same resource folder from appearing twice in different targets.
-   */
+  /** Returns the target as a list of {@link ExternalLibrary}. */
   private List<ExternalLibrary> getTargetAsExternalLibraries(TargetIdeInfo info) {
     TargetKey key = info.getKey();
     String libraryAddress = key.toString();

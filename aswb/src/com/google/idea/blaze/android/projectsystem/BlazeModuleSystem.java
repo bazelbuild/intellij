@@ -28,14 +28,18 @@ import com.android.tools.idea.projectsystem.DependencyManagementException;
 import com.android.tools.idea.projectsystem.DependencyType;
 import com.android.tools.idea.projectsystem.NamedModuleTemplate;
 import com.android.tools.idea.projectsystem.SampleDataDirectoryProvider;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.npw.project.BlazeAndroidModuleTemplate;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -50,6 +54,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
+import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -78,6 +83,7 @@ import org.jetbrains.annotations.TestOnly;
 @SuppressWarnings("NullableProblems")
 public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFinder {
   private Module module;
+  private final Project project;
   private SampleDataDirectoryProvider sampleDataDirectoryProvider;
   private BlazeClassFileFinder classFileFinder;
   private final boolean isWorkspaceModule;
@@ -94,6 +100,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
 
   private BlazeModuleSystem(Module module) {
     this.module = module;
+    this.project = module.getProject();
     classFileFinder = BlazeClassFileFinderFactory.createBlazeClassFileFinder(module);
     sampleDataDirectoryProvider = new BlazeSampleDataDirectoryProvider(module);
     isWorkspaceModule = BlazeDataStorage.WORKSPACE_MODULE_NAME.equals(module.getName());
@@ -150,7 +157,6 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   @Override
   public void registerDependency(GradleCoordinate coordinate, DependencyType type) {
     assert type == DependencyType.IMPLEMENTATION : "Unsupported dependency type in Blaze: " + type;
-    Project project = module.getProject();
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
@@ -180,8 +186,13 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
           true);
     } else {
       // If not, just the build file is good enough.
+      ArtifactLocation buildFile = targetIdeInfo.getBuildFile();
       File buildIoFile =
-          blazeProjectData.getArtifactLocationDecoder().decode(targetIdeInfo.getBuildFile());
+          Preconditions.checkNotNull(
+              OutputArtifactResolver.resolve(
+                  project, blazeProjectData.getArtifactLocationDecoder(), buildFile),
+              "Fail to find file %s",
+              buildFile.getRelativePath());
       VirtualFile buildVirtualFile = VfsUtils.resolveVirtualFile(buildIoFile);
       if (buildVirtualFile != null) {
         fileEditorManager.openFile(buildVirtualFile, true);
@@ -276,7 +287,6 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
    */
   @Override
   public List<Module> getResourceModuleDependencies() {
-    Project project = module.getProject();
     AndroidResourceModuleRegistry resourceModuleRegistry =
         AndroidResourceModuleRegistry.getInstance(project);
 
@@ -299,7 +309,6 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
 
   @Override
   public Collection<Library> getResolvedDependentLibraries() {
-    Project project = module.getProject();
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
@@ -319,8 +328,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
               ProjectViewManager.getInstance(project).getProjectViewSet(), blazeProjectData)) {
         if (library instanceof AarLibrary) {
           libraries.add(
-              externalLibraryInterner.intern(
-                  toExternalLibrary((AarLibrary) library, decoder, project)));
+              externalLibraryInterner.intern(toExternalLibrary((AarLibrary) library, decoder)));
         } else if (library instanceof BlazeResourceLibrary) {
           libraries.add(
               externalLibraryInterner.intern(
@@ -359,14 +367,20 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
       if (aarLibraries != null && aarLibraries.containsKey(libraryKey)) {
         libraries.add(
             externalLibraryInterner.intern(
-                toExternalLibrary(aarLibraries.get(libraryKey), decoder, project)));
+                toExternalLibrary(aarLibraries.get(libraryKey), decoder)));
       }
     }
     return libraries.build();
   }
-  private static ExternalLibrary toExternalLibrary(
+
+  private ExternalLibrary toExternalLibrary(
       BlazeResourceLibrary library, ArtifactLocationDecoder decoder) {
-    PathString resFolder = new PathString(decoder.decode(library.root));
+    PathString resFolder =
+        new PathString(
+            Preconditions.checkNotNull(
+                OutputArtifactResolver.resolve(project, decoder, library.root),
+                "Fail to find file %s",
+                library.root));
     List<PathString> resources =
         library.resources.isEmpty()
             ? null
@@ -375,14 +389,20 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
                 .collect(Collectors.toList());
     return new ExternalLibrary(library.key.toString())
         .withManifestFile(
-            library.manifest == null ? null : new PathString(decoder.decode(library.manifest)))
+            library.manifest == null
+                ? null
+                : new PathString(
+                    Preconditions.checkNotNull(
+                        OutputArtifactResolver.resolve(project, decoder, library.manifest),
+                        "Fail to find file %s",
+                        library.manifest.getRelativePath())))
         .withResFolder(new SelectiveResourceFolder(resFolder, resources));
   }
 
-  private static ExternalLibrary toExternalLibrary(
-      AarLibrary library, ArtifactLocationDecoder decoder, Project project) {
-    PathString aarFile = new PathString(decoder.decode(library.aarArtifact));
-    PathString resFolder = library.getResFolder(project);
+  private ExternalLibrary toExternalLibrary(AarLibrary library, ArtifactLocationDecoder decoder) {
+    UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
+    PathString aarFile = new PathString(unpackedAars.getAarDir(decoder, library));
+    PathString resFolder = new PathString(unpackedAars.getResourceDirectory(decoder, library));
     return new ExternalLibrary(library.key.toString())
         .withLocation(aarFile)
         .withManifestFile(
@@ -391,12 +411,12 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
         .withSymbolFile(resFolder == null ? null : resFolder.getParentOrRoot().resolve("R.txt"));
   }
 
-  private static ExternalLibrary toExternalLibrary(
+  private ExternalLibrary toExternalLibrary(
       BlazeJarLibrary library, ArtifactLocationDecoder decoder) {
     return new ExternalLibrary(library.key.toString())
         .withClassJars(
             ImmutableList.of(
-                new PathString(decoder.decode(library.libraryArtifact.jarForIntellijLibrary()))));
+                new PathString(JarCache.getInstance(project).getCachedJar(decoder, library))));
   }
 
   @Override

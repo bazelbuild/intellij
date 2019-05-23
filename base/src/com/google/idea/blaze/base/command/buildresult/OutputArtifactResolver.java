@@ -30,7 +30,6 @@ import javax.annotation.Nullable;
 
 /** Helper class for resolving {@link OutputArtifact}s to local files. */
 public final class OutputArtifactResolver {
-
   /**
    * Resolve a collection of {@link ArtifactLocation} to local files, skipping those for which a
    * local file can't be found.

@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -90,10 +91,12 @@ class BlazeCreateResourceUtils {
             syncData.importResult.androidResourceModules) {
 
           Collection<File> resources =
-              artifactLocationDecoder.decodeAll(androidResourceModule.resources);
+              OutputArtifactResolver.resolveAll(
+                  project, artifactLocationDecoder, androidResourceModule.resources);
 
           Collection<File> transitiveResources =
-              artifactLocationDecoder.decodeAll(androidResourceModule.transitiveResources);
+              OutputArtifactResolver.resolveAll(
+                  project, artifactLocationDecoder, androidResourceModule.transitiveResources);
 
           // labelsRelatedToContext should include deps,
           // but as a first pass we only check the rules themselves

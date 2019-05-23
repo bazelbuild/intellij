@@ -25,10 +25,12 @@ import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,19 +54,19 @@ class GeneratedResourceClassifier {
   private final ImmutableSortedMap<ArtifactLocation, Integer> interestingDirectories;
 
   GeneratedResourceClassifier(
+      Project project,
       Collection<ArtifactLocation> generatedResourceLocations,
       ArtifactLocationDecoder artifactLocationDecoder,
       ListeningExecutorService executorService) {
     FileOperationProvider fileOperationProvider = FileOperationProvider.getInstance();
     List<ListenableFuture<GenResourceClassification>> jobs =
-        generatedResourceLocations
-            .stream()
+        generatedResourceLocations.stream()
             .map(
                 location ->
                     executorService.submit(
                         () ->
                             classifyLocation(
-                                location, artifactLocationDecoder, fileOperationProvider)))
+                                project, location, artifactLocationDecoder, fileOperationProvider)))
             .collect(Collectors.toList());
 
     ImmutableSortedMap.Builder<ArtifactLocation, Integer> interesting =
@@ -130,10 +132,12 @@ class GeneratedResourceClassifier {
   }
 
   private static GenResourceClassification classifyLocation(
+      Project project,
       ArtifactLocation artifactLocation,
       ArtifactLocationDecoder artifactLocationDecoder,
       FileOperationProvider fileOperationProvider) {
-    File resDirectory = artifactLocationDecoder.decode(artifactLocation);
+    File resDirectory =
+        OutputArtifactResolver.resolve(project, artifactLocationDecoder, artifactLocation);
     File[] children = fileOperationProvider.listFiles(resDirectory);
     if (children == null) {
       return GenResourceClassification.uninteresting(artifactLocation, 0);

@@ -17,18 +17,31 @@ package com.google.idea.blaze.android.sync;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
+import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
+import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
+import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Adds the resource directories outside our source roots to prefetch. */
-public class AndroidPrefetchFileSource implements PrefetchFileSource {
+public class AndroidPrefetchFileSource
+    implements PrefetchFileSource, RemoteOutputsCache.OutputsProvider {
   @Override
   public void addFilesToPrefetch(
       Project project,
@@ -45,7 +58,9 @@ public class AndroidPrefetchFileSource implements PrefetchFileSource {
     }
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
     files.addAll(
-        artifactLocationDecoder.decodeAll(
+        OutputArtifactResolver.resolveAll(
+            project,
+            artifactLocationDecoder,
             syncData.importResult.resourceLibraries.values().stream()
                 .map(resourceLibrary -> resourceLibrary.root)
                 .collect(Collectors.toList())));
@@ -54,5 +69,36 @@ public class AndroidPrefetchFileSource implements PrefetchFileSource {
   @Override
   public Set<String> prefetchFileExtensions() {
     return ImmutableSet.of("xml");
+  }
+
+  @Override
+  public List<ArtifactLocation> selectOutputsToCache(
+      RemoteOutputArtifacts outputs,
+      TargetMap targetMap,
+      WorkspaceLanguageSettings languageSettings) {
+    return targetMap.targets().stream()
+        .map(AndroidPrefetchFileSource::getAndroidSources)
+        .flatMap(Collection::stream)
+        .distinct()
+        .filter(ArtifactLocation::isGenerated)
+        .collect(Collectors.toList());
+  }
+
+  private static Collection<ArtifactLocation> getAndroidSources(TargetIdeInfo target) {
+    Set<ArtifactLocation> fileSet = new HashSet<>();
+
+    AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
+    if (androidIdeInfo != null) {
+      ArtifactLocation manifest = androidIdeInfo.getManifest();
+      if (manifest != null) {
+        fileSet.add(manifest);
+      }
+      fileSet.addAll(androidIdeInfo.getResources());
+      for (AndroidResFolder androidResFolder : androidIdeInfo.getResFolders()) {
+        fileSet.add(androidResFolder.getRoot());
+      }
+    }
+
+    return fileSet;
   }
 }

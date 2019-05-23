@@ -234,6 +234,15 @@ public class UnpackedAars {
   /** Returns the res/ directory corresponding to an unpacked AAR file. */
   @Nullable
   public File getResourceDirectory(ArtifactLocationDecoder decoder, AarLibrary library) {
+    File aarDir = getAarDir(decoder, library);
+    if (aarDir == null) {
+      return aarDir;
+    }
+    return new File(aarDir, SdkConstants.FD_RES);
+  }
+
+  @Nullable
+  public File getAarDir(ArtifactLocationDecoder decoder, AarLibrary library) {
     InMemoryState inMemoryState = this.inMemoryState;
     OutputArtifact artifact = decoder.resolveOutput(library.aarArtifact);
     if (inMemoryState == null) {
@@ -243,7 +252,7 @@ public class UnpackedAars {
     if (!inMemoryState.projectOutputs.containsKey(cacheKey)) {
       return null;
     }
-    return new File(aarDirForKey(cacheKey), SdkConstants.FD_RES);
+    return aarDirForKey(cacheKey);
   }
 
   private File aarDirForKey(String key) {

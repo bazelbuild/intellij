@@ -56,6 +56,7 @@ public class GeneratedResourceWarnings {
     if (!nonWhitelistedLocations.isEmpty()) {
       GeneratedResourceClassifier classifier =
           new GeneratedResourceClassifier(
+              project,
               nonWhitelistedLocations,
               artifactLocationDecoder,
               BlazeExecutor.getInstance().getExecutor());

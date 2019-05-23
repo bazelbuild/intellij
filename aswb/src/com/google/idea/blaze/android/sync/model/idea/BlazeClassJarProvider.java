@@ -22,12 +22,15 @@ import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.idea.res.ResourceClassRegistry;
 import com.android.tools.idea.res.ResourceIdManager;
 import com.android.tools.idea.res.ResourceRepositoryManager;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.ResourceRepositoryManagerCompat;
 import com.google.idea.blaze.android.projectsystem.BlazeClassFileFinder;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -85,8 +88,13 @@ public class BlazeClassJarProvider implements ClassJarProvider {
       JavaIdeInfo javaIdeInfo = dependencyTarget.getJavaIdeInfo();
       if (javaIdeInfo != null) {
         for (LibraryArtifact jar : javaIdeInfo.getJars()) {
-          if (jar.getClassJar() != null && jar.getClassJar().isSource()) {
-            results.add(decoder.decode(jar.getClassJar()));
+          ArtifactLocation classJar = jar.getClassJar();
+          if (classJar != null && classJar.isSource()) {
+            results.add(
+                Preconditions.checkNotNull(
+                    OutputArtifactResolver.resolve(project, decoder, classJar),
+                    "Fail to find file %s",
+                    classJar.getRelativePath()));
           }
         }
       }

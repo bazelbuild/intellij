@@ -37,6 +37,7 @@ import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
 import com.google.idea.blaze.android.sync.sdk.SdkUtil;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -74,6 +75,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
@@ -139,7 +141,12 @@ public class BlazeAndroidProjectStructureSyncer {
       LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
 
       Collection<File> resources =
-          blazeProjectData.getArtifactLocationDecoder().decodeAll(androidResourceModule.resources);
+          OutputArtifactResolver.resolveAll(
+                  project,
+                  blazeProjectData.getArtifactLocationDecoder(),
+                  androidResourceModule.resources)
+              .stream()
+              .collect(Collectors.toList());
       // Remove existing resource roots to silence the duplicate content root error.
       // We can only do this if we have cyclic resource dependencies, since otherwise we risk
       // breaking dependencies within this resource module.
@@ -283,6 +290,7 @@ public class BlazeAndroidProjectStructureSyncer {
         newModule,
         moduleDirectory,
         manifestFileForAndroidTarget(
+            project,
             blazeProjectData.getArtifactLocationDecoder(),
             target.getAndroidIdeInfo(),
             moduleDirectory),
@@ -363,13 +371,16 @@ public class BlazeAndroidProjectStructureSyncer {
       AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
       assert androidIdeInfo != null;
 
-      List<File> resources = artifactLocationDecoder.decodeAll(androidResourceModule.resources);
+      List<File> resources =
+          OutputArtifactResolver.resolveAll(
+              project, artifactLocationDecoder, androidResourceModule.resources);
       updateModuleFacetInMemoryState(
           project,
           androidSdkPlatform,
           module,
           moduleDirectoryForAndroidTarget(workspaceRoot, target),
           manifestFileForAndroidTarget(
+              project,
               artifactLocationDecoder,
               androidIdeInfo,
               moduleDirectoryForAndroidTarget(workspaceRoot, target)),
@@ -401,6 +412,7 @@ public class BlazeAndroidProjectStructureSyncer {
           module,
           moduleDirectoryForAndroidTarget(workspaceRoot, target),
           manifestFileForAndroidTarget(
+              project,
               artifactLocationDecoder,
               androidIdeInfo,
               moduleDirectoryForAndroidTarget(workspaceRoot, target)),
@@ -422,12 +434,13 @@ public class BlazeAndroidProjectStructureSyncer {
   }
 
   private static File manifestFileForAndroidTarget(
+      Project project,
       ArtifactLocationDecoder artifactLocationDecoder,
       AndroidIdeInfo androidIdeInfo,
       File moduleDirectory) {
     ArtifactLocation manifestArtifactLocation = androidIdeInfo.getManifest();
     return manifestArtifactLocation != null
-        ? artifactLocationDecoder.decode(manifestArtifactLocation)
+        ? OutputArtifactResolver.resolve(project, artifactLocationDecoder, manifestArtifactLocation)
         : new File(moduleDirectory, "AndroidManifest.xml");
   }
 
@@ -449,31 +462,6 @@ public class BlazeAndroidProjectStructureSyncer {
         manifest,
         resourceJavaPackage,
         ImmutableList.of(),
-        configAndroidJava8Libs);
-  }
-
-  /**
-   * Updates the library resources module with android info only when user do not want to create aar
-   * library for module.
-   */
-  private static void updateLibraryResourcesModuleFacetInMemoryState(
-      Project project,
-      WorkspaceRoot workspaceRoot,
-      Module workspaceModule,
-      AndroidSdkPlatform androidSdkPlatform,
-      Collection<File> resources,
-      boolean configAndroidJava8Libs) {
-    File moduleDirectory = workspaceRoot.directory();
-    File manifest = new File(workspaceRoot.directory(), "AndroidManifest.xml");
-    String resourceJavaPackage = ":android-resources";
-    updateModuleFacetInMemoryState(
-        project,
-        androidSdkPlatform,
-        workspaceModule,
-        moduleDirectory,
-        manifest,
-        resourceJavaPackage,
-        resources,
         configAndroidJava8Libs);
   }
 

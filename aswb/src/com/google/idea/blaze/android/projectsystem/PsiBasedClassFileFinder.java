@@ -21,9 +21,12 @@ import com.android.tools.idea.projectsystem.ClassFileFinderUtil;
 import com.android.tools.idea.res.ResourceClassRegistry;
 import com.android.tools.idea.res.ResourceIdManager;
 import com.android.tools.idea.res.ResourceRepositoryManager;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.idea.blaze.android.ResourceRepositoryManagerCompat;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -151,7 +154,13 @@ public class PsiBasedClassFileFinder implements BlazeClassFileFinder {
           continue;
         }
 
-        File classJarFile = projectData.getArtifactLocationDecoder().decode(jar.getClassJar());
+        ArtifactLocation classJar = jar.getClassJar();
+        File classJarFile =
+            Preconditions.checkNotNull(
+                OutputArtifactResolver.resolve(
+                    project, projectData.getArtifactLocationDecoder(), classJar),
+                "Fail to find file %s",
+                classJar.getRelativePath());
         VirtualFile classJarVF =
             VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
 
@@ -208,8 +217,13 @@ public class PsiBasedClassFileFinder implements BlazeClassFileFinder {
       return null;
     }
 
+    ArtifactLocation classJarArtifactLocation = blazeLibrary.libraryArtifact.getClassJar();
     File classJarFile =
-        projectData.getArtifactLocationDecoder().decode(blazeLibrary.libraryArtifact.getClassJar());
+        Preconditions.checkNotNull(
+            OutputArtifactResolver.resolve(
+                project, projectData.getArtifactLocationDecoder(), classJarArtifactLocation),
+            "Fail to find file %s",
+            classJarArtifactLocation.getRelativePath());
     VirtualFile classJar =
         VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
     if (classJar == null) {

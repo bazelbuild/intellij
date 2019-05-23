@@ -17,8 +17,11 @@ package com.google.idea.blaze.android.projectsystem;
 
 import com.android.SdkConstants;
 import com.android.tools.idea.project.ModuleBasedClassFileFinder;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -101,7 +104,8 @@ public class TransitiveClosureClassFileFinder extends ModuleBasedClassFileFinder
     List<LibraryArtifact> jarsToSearch = Lists.newArrayList(target.getJavaIdeInfo().getJars());
     jarsToSearch.addAll(
         TransitiveDependencyMap.getInstance(module.getProject())
-            .getTransitiveDependencies(target.getKey()).stream()
+            .getTransitiveDependencies(target.getKey())
+            .stream()
             .map(targetMap::get)
             .filter(Objects::nonNull)
             .flatMap(TransitiveClosureClassFileFinder::getNonResourceJars)
@@ -112,7 +116,13 @@ public class TransitiveClosureClassFileFinder extends ModuleBasedClassFileFinder
       if (jar.getClassJar() == null || jar.getClassJar().isSource()) {
         continue;
       }
-      File classJarFile = decoder.decode(jar.getClassJar());
+
+      ArtifactLocation classJar = jar.getClassJar();
+      File classJarFile =
+          Preconditions.checkNotNull(
+              OutputArtifactResolver.resolve(module.getProject(), decoder, classJar),
+              "Fail to find file %s",
+              classJar.getRelativePath());
       VirtualFile classJarVF =
           VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
       if (classJarVF == null) {
