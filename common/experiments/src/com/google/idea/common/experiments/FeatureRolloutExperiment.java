@@ -16,13 +16,15 @@
 package com.google.idea.common.experiments;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
  * An experiment controlling gradual rollout of a feature. The experiment value must be an integer
  * between 0 and 100, indicating the percentage of users for whom the feature should be active.
  *
- * <p>If no experiment value is found, it will always default to disabled.
+ * <p>If no experiment value is found, it will default to disabled. It will always be enabled for
+ * internal plugin developers, unless the experiment value is set to the string "disabled".
  */
 public class FeatureRolloutExperiment extends Experiment {
 
@@ -32,6 +34,11 @@ public class FeatureRolloutExperiment extends Experiment {
 
   /** Returns true if the feature should be enabled for this user. */
   public boolean isEnabled() {
+    if (Objects.equals(
+        ExperimentService.getInstance().getExperimentString(getKey(), /* defaultValue= */ null),
+        "disabled")) {
+      return false;
+    }
     if (InternalDevFlag.isInternalDev()) {
       return true;
     }

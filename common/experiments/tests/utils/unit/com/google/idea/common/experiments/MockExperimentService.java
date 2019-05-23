@@ -30,6 +30,10 @@ public class MockExperimentService implements ExperimentService {
   @Override
   public void endExperimentScope() {}
 
+  public void setExperimentRaw(String key, Object value) {
+    experiments.put(key, value);
+  }
+
   public void setExperiment(BoolExperiment experiment, boolean value) {
     experiments.put(experiment.getKey(), value);
   }
@@ -50,7 +54,7 @@ public class MockExperimentService implements ExperimentService {
   @Nullable
   public String getExperimentString(String key, @Nullable String defaultValue) {
     if (experiments.containsKey(key)) {
-      return (String) experiments.get(key);
+      return experiments.get(key).toString();
     }
     return defaultValue;
   }

@@ -209,6 +209,21 @@ public class FeatureRolloutExperimentTest {
     assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
   }
 
+  @Test
+  public void testAlwaysDisabledWhenExplicitlyDisabled() {
+    List<String> userNames =
+        Stream.generate(FeatureRolloutExperimentTest::generateUsername)
+            .limit(10000)
+            .collect(Collectors.toList());
+    experimentService.setExperimentRaw(rolloutExperiment.getKey(), "disabled");
+
+    InternalDevFlag.markUserAsInternalDev(false);
+    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+
+    InternalDevFlag.markUserAsInternalDev(true);
+    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
+  }
+
   private boolean isEnabled(String userName) {
     SystemProperties.setTestUserName(userName);
     return rolloutExperiment.isEnabled();
