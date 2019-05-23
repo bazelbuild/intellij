@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager;
 import com.google.idea.blaze.typescript.BlazeTypeScriptAdditionalLibraryRootsProvider;
+import com.intellij.lang.javascript.dialects.TypeScriptLanguageDialect;
 import com.intellij.lang.javascript.psi.resolve.JSElementResolveScopeProvider;
 import com.intellij.lang.javascript.psi.resolve.JSResolveScopeProvider;
 import com.intellij.lang.javascript.psi.resolve.JSResolveUtil;
@@ -47,10 +48,10 @@ class BlazeJavascriptResolveScopeProvider implements JSElementResolveScopeProvid
     }
     ExternalLibraryManager manager = ExternalLibraryManager.getInstance(project);
     List<SyntheticLibrary> libraries =
-        ImmutableList.<SyntheticLibrary>builder()
-            .addAll(manager.getLibrary(BlazeJavascriptAdditionalLibraryRootsProvider.class))
-            .addAll(manager.getLibrary(BlazeTypeScriptAdditionalLibraryRootsProvider.class))
-            .build();
+        ImmutableList.copyOf(
+            element.getLanguage() instanceof TypeScriptLanguageDialect
+                ? manager.getLibrary(BlazeTypeScriptAdditionalLibraryRootsProvider.class)
+                : manager.getLibrary(BlazeJavascriptAdditionalLibraryRootsProvider.class));
     if (libraries.isEmpty()) {
       return null;
     }
