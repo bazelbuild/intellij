@@ -43,7 +43,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -82,17 +81,11 @@ public class BlazeConsoleView implements Disposable {
             /* viewer= */ false,
             /* usePredefinedFilters= */ false);
 
-    Disposer.register(this, consoleView);
-
-    // setup filters after project creation is complete and BlazeImportSettings have been set
-    StartupManager.getInstance(project).registerPostStartupActivity(this::initializeFilters);
-  }
-
-  private void initializeFilters() {
     consoleView.addMessageFilter(customFilters);
     addWrappedPredefinedFilters();
     // add target filter last, so it doesn't override other links containing a target string
     consoleView.addMessageFilter(new BlazeTargetFilter(false));
+    Disposer.register(this, consoleView);
   }
 
   public static BlazeConsoleView getInstance(Project project) {
