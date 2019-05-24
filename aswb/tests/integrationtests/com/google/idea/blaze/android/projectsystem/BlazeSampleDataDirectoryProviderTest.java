@@ -19,16 +19,11 @@ import static com.android.SdkConstants.FD_SAMPLE_DATA;
 import static com.android.tools.idea.util.FileExtensions.toPathString;
 import static com.android.tools.idea.util.FileExtensions.toVirtualFile;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_binary;
 
 import com.android.ide.common.util.PathString;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
-import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -60,23 +55,7 @@ public class BlazeSampleDataDirectoryProviderTest extends BlazeAndroidIntegratio
     workspaceDir = workspace.createDirectory(new WorkspacePath("com/google/example"));
     resDir = workspace.createFile(new WorkspacePath("com/google/example/res"));
 
-    setTargetMap(
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setLabel("//com/google/example:main")
-                    .setKind(AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind())
-                    .setJavaInfo(JavaIdeInfo.builder())
-                    .setAndroidInfo(
-                        AndroidIdeInfo.builder()
-                            .setResourceJavaPackage("com.google.example.main")
-                            .setGenerateResourceClass(true)
-                            .addResource(
-                                ArtifactLocation.builder()
-                                    .setRelativePath("com/google/example/res")
-                                    .setIsSource(true)
-                                    .build())))
-            .build());
+    setTargetMap(android_binary("//com/google/example:main").res("res"));
     runFullBlazeSync();
 
     ModuleManager moduleManager = ModuleManager.getInstance(getProject());
