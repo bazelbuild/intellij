@@ -79,6 +79,10 @@ public final class RemoteOutputArtifacts implements SyncData<ProjectData.RemoteO
     return new RemoteOutputArtifacts(ImmutableMap.copyOf(map));
   }
 
+  public boolean isEmpty() {
+    return remoteOutputArtifacts.isEmpty();
+  }
+
   /**
    * Looks for a {@link RemoteOutputArtifact} with a given genfiles-relative path, returning the
    * first such match, or null if none can be found.

@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -93,6 +94,7 @@ public class JarCache {
     }
   }
 
+  private final Project project;
   private final File cacheDir;
 
   @Nullable private volatile InMemoryState inMemoryState = null;
@@ -102,6 +104,7 @@ public class JarCache {
   public JarCache(Project project) {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    this.project = project;
     this.cacheDir = getCacheDir(importSettings);
   }
 
@@ -110,9 +113,11 @@ public class JarCache {
   }
 
   private boolean updateEnabled() {
+    // force-enable the jar cache if syncing remotely
     this.enabled =
-        BlazeJavaUserSettings.getInstance().getUseJarCache()
-            && !ApplicationManager.getApplication().isUnitTestMode();
+        !ApplicationManager.getApplication().isUnitTestMode()
+            && (BlazeJavaUserSettings.getInstance().getUseJarCache()
+                || Blaze.getBuildSystemProvider(project).syncingRemotely());
     return enabled;
   }
 
@@ -155,9 +160,11 @@ public class JarCache {
 
   private void refresh(BlazeContext context, @Nullable BlazeProjectData projectData) {
     InMemoryState inMemoryState = this.inMemoryState;
+    RemoteOutputArtifacts previousOutputs = RemoteOutputArtifacts.fromProjectData(projectData);
     if (inMemoryState == null
         || inMemoryState.projectOutputs.values().stream()
-            .anyMatch(a -> a instanceof RemoteOutputArtifact)) {
+            .anyMatch(a -> a instanceof RemoteOutputArtifact)
+        || !previousOutputs.isEmpty()) {
       // if we have remote artifacts, only refresh during sync
       return;
     }
@@ -305,7 +312,11 @@ public class JarCache {
     inMemoryState = null;
   }
 
-  /** Gets the cached file for a jar. If it doesn't exist, we return the file from the library. */
+  /**
+   * Gets the cached file for a jar. If it doesn't exist, we return the file from the library, or
+   * null if that also can't be accessed locally.
+   */
+  @Nullable
   public File getCachedJar(ArtifactLocationDecoder decoder, BlazeJarLibrary library) {
     boolean enabled = isEnabled();
     OutputArtifact artifact =
@@ -317,7 +328,11 @@ public class JarCache {
     return getCacheFile(cacheKey).orElseGet(() -> getFallbackFile(artifact));
   }
 
-  /** Gets the cached file for a source jar. */
+  /**
+   * Gets the cached file for a source jar. If it doesn't exist, we return the file from the
+   * library, or null if that also can't be accessed locally.
+   */
+  @Nullable
   public File getCachedSourceJar(ArtifactLocationDecoder decoder, ArtifactLocation sourceJar) {
     boolean enabled = isEnabled();
     OutputArtifact artifact = decoder.resolveOutput(sourceJar);
@@ -337,10 +352,11 @@ public class JarCache {
   }
 
   /** The file to return if there's no locally cached version. */
+  @Nullable
   private static File getFallbackFile(OutputArtifact output) {
     if (output instanceof RemoteOutputArtifact) {
       // TODO(brendandouglas): copy locally on the fly?
-      throw new RuntimeException("The jar cache must be enabled when syncing remotely");
+      return null;
     }
     return ((LocalFileOutputArtifact) output).getFile();
   }

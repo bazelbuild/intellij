@@ -46,7 +46,6 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.util.PackagePrefixCalculator;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
@@ -65,8 +64,6 @@ import javax.annotation.Nullable;
  * module and its Blaze {@link ArtifactLocation} list.
  */
 public final class SourceDirectoryCalculator {
-
-  private static final Logger logger = Logger.getInstance(SourceDirectoryCalculator.class);
 
   private static final Splitter PACKAGE_SPLITTER = Splitter.on('.');
   private static final Splitter PATH_SPLITTER = Splitter.on('/');
@@ -243,8 +240,7 @@ public final class SourceDirectoryCalculator {
         }
       }
     } catch (ExecutionException | InterruptedException e) {
-      logger.error(e);
-      throw new IllegalStateException("Could not read sources");
+      throw new IllegalStateException("Could not read sources", e);
     }
 
     // Sort source roots into their respective directories

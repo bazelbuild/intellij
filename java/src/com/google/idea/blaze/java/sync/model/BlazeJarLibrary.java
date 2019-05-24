@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.libraries.AttachedSourceJarManager;
 import com.google.idea.blaze.java.libraries.JarCache;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -33,6 +34,9 @@ import javax.annotation.concurrent.Immutable;
 /** An immutable reference to a .jar required by a rule. */
 @Immutable
 public final class BlazeJarLibrary extends BlazeLibrary {
+
+  private static final Logger logger = Logger.getInstance(BlazeJarLibrary.class);
+
   public final LibraryArtifact libraryArtifact;
 
   public BlazeJarLibrary(LibraryArtifact libraryArtifact) {
@@ -63,7 +67,11 @@ public final class BlazeJarLibrary extends BlazeLibrary {
       Library.ModifiableModel libraryModel) {
     JarCache jarCache = JarCache.getInstance(project);
     File jar = jarCache.getCachedJar(artifactLocationDecoder, this);
-    libraryModel.addRoot(pathToUrl(jar), OrderRootType.CLASSES);
+    if (jar != null) {
+      libraryModel.addRoot(pathToUrl(jar), OrderRootType.CLASSES);
+    } else {
+      logger.error("No local jar file found for " + libraryArtifact.jarForIntellijLibrary());
+    }
 
     AttachedSourceJarManager sourceJarManager = AttachedSourceJarManager.getInstance(project);
     if (!sourceJarManager.hasSourceJarAttached(key)) {
