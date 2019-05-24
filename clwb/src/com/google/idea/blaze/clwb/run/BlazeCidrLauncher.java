@@ -37,17 +37,13 @@ import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
-import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
-import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
-import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.clion.CPPToolSetWithHomeAndSeparators;
 import com.google.idea.sdkcompat.clion.GDBDriverConfigurationAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
@@ -63,27 +59,18 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.PathUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.cidr.cpp.execution.CLionRunParameters;
-import com.jetbrains.cidr.cpp.toolchains.CPPDebugger;
-import com.jetbrains.cidr.cpp.toolchains.CPPToolSet;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
-import com.jetbrains.cidr.cpp.toolchains.CPPToolchains.Toolchain;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
 import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
-import com.jetbrains.cidr.execution.debugger.CidrDebuggerPathManager;
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
 import com.jetbrains.cidr.execution.testing.CidrLauncher;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
-import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment.PrepareFor;
-import com.jetbrains.cidr.toolchains.OSType;
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
@@ -94,17 +81,6 @@ import javax.annotation.Nullable;
  * uses the Google Test infrastructure for presenting test results.
  */
 public final class BlazeCidrLauncher extends CidrLauncher {
-
-  private static final NotNullLazyValue<String> GDBSERVER_WRAPPER =
-      new NotNullLazyValue<String>() {
-        @Override
-        protected String compute() {
-          String jarPath = PathUtil.getJarPathForClass(BlazeCidrLauncher.class);
-          File pluginrootDirectory = new File(jarPath).getParentFile().getParentFile();
-          return new File(pluginrootDirectory, "gdb/gdbserver").getPath();
-        }
-      };
-
   private final Project project;
   private final BlazeCommandRunConfiguration configuration;
   private final BlazeCidrRunConfigState handlerState;
@@ -113,36 +89,6 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
   private static final String DISABLE_BAZEL_GOOGLETEST_FILTER_WARNING =
       "bazel.test_filter.googletest_update";
-
-  private static final BoolExperiment useRemoteDebugging =
-      new BoolExperiment("cc.remote.debugging", true);
-
-  private static final BoolExperiment useRemoteDebuggingWrapper =
-      new BoolExperiment("cc.remote.debugging.wrapper", true);
-
-  // These flags are used when debugging cc_binary targets when remote debugging
-  // is enabled (cc.remote.debugging)
-  private static final ImmutableList<String> EXTRA_FLAGS_FOR_DEBUG_RUN =
-      ImmutableList.of(
-          "--compilation_mode=dbg",
-          "--strip=never",
-          "--copt=-g",
-          "--dynamic_mode=off",
-          "--fission=yes");
-
-  // These flags are used when debugging cc_test targets when remote debugging
-  // is enabled (cc.remote.debugging)
-  private static final ImmutableList<String> EXTRA_FLAGS_FOR_DEBUG_TEST =
-      ImmutableList.of(
-          "--compilation_mode=dbg",
-          "--strip=never",
-          "--copt=-g",
-          "--dynamic_mode=off",
-          "--fission=yes",
-          "--test_timeout=3600",
-          BlazeFlags.NO_CACHE_TEST_RESULTS,
-          BlazeFlags.EXCLUSIVE_TEST_EXECUTION,
-          BlazeFlags.DISABLE_TEST_SHARDING);
 
   BlazeCidrLauncher(
       BlazeCommandRunConfiguration configuration,
@@ -245,49 +191,6 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         });
   }
 
-  static ImmutableList<String> getExtraFlagsForDebugging(RunConfigurationState state) {
-    if (!(state instanceof BlazeCidrRunConfigState)) {
-      return ImmutableList.of();
-    }
-    BlazeCidrRunConfigState handlerState = (BlazeCidrRunConfigState) state;
-    BlazeCommandName commandName = handlerState.getCommandState().getCommand();
-    ImmutableList.Builder<String> builder = ImmutableList.builder();
-
-    if (useRemoteDebuggingWrapper.getValue()) {
-      String runUnderOption =
-          String.format(
-              "--run_under='%s' gdbserver --once localhost:%d --target",
-              GDBSERVER_WRAPPER.getValue(), handlerState.getDebugPortState().port);
-      builder.add(runUnderOption);
-    } else {
-      String runUnderOption =
-          String.format(
-              "--run_under=gdbserver --once localhost:%d", handlerState.getDebugPortState().port);
-      builder.add(runUnderOption);
-    }
-    if (BlazeCommandName.RUN.equals(commandName)) {
-      builder.addAll(EXTRA_FLAGS_FOR_DEBUG_RUN);
-      return builder.build();
-    }
-    if (BlazeCommandName.TEST.equals(commandName)) {
-      builder.addAll(EXTRA_FLAGS_FOR_DEBUG_TEST);
-      return builder.build();
-    }
-    return ImmutableList.of();
-  }
-
-  static boolean shouldUseGdbserver() {
-    // Mac does not have gdbserver, so use the old gdb method for debugging
-    if (SystemInfo.isMac) {
-      return false;
-    }
-    // gdbserver wrapper is in shell script
-    if (SystemInfo.isWindows) {
-      return false;
-    }
-    return useRemoteDebugging.getValue();
-  }
-
   @Override
   public CidrDebugProcess createDebugProcess(CommandLineState state, XDebugSession session)
       throws ExecutionException {
@@ -303,7 +206,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     File workspaceRootDirectory = workspaceRoot.directory();
 
-    if (!shouldUseGdbserver()) {
+    if (!BlazeGDBServerProvider.shouldUseGdbserver()) {
 
       File workingDir =
           new File(runner.executableToDebug + ".runfiles", workspaceRootDirectory.getName());
@@ -338,7 +241,9 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       return new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder());
     }
 
-    List<String> extraDebugFlags = getExtraFlagsForDebugging(handlerState);
+    CPPToolchains.Toolchain toolchainForDebugger = BlazeGDBServerProvider.getToolchain(project);
+    List<String> extraDebugFlags =
+        BlazeGDBServerProvider.getFlagsForDebugging(toolchainForDebugger, handlerState);
 
     ProcessHandler targetProcess = createProcess(state, extraDebugFlags, true);
 
@@ -356,77 +261,11 @@ public final class BlazeCidrLauncher extends CidrLauncher {
             ImmutableList.of(
                 new CidrRemotePathMapping("/proc/self/cwd", workspaceRootDirectory.getParent())));
 
-    CPPToolchains.Toolchain toolchainForDebugger =
-        new Toolchain(OSType.getCurrent()) {
-          private final CPPToolSet blazeToolSet = new BlazeToolSet(workspaceRootDirectory);
-
-          @Override
-          public CPPToolSet getToolSet() {
-            return blazeToolSet;
-          }
-        };
-
-    ToolchainUtils.setDebuggerToDefault(toolchainForDebugger);
-
     DebuggerDriverConfiguration debuggerDriverConfiguration =
         new GDBDriverConfigurationAdapter(project, toolchainForDebugger);
 
     return new BlazeCidrRemoteDebugProcess(
         targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder());
-  }
-
-  /**
-   * There is currently no way to override the working directory for the debug process when we
-   * create it. By creating a CPPToolSet, we have an opportunity to alter the commandline before it
-   * launches. See https://youtrack.jetbrains.com/issue/CPP-8362
-   */
-  private static class BlazeToolSet extends CPPToolSetWithHomeAndSeparators {
-    private BlazeToolSet(File workingDirectory) {
-      super(Kind.MINGW, workingDirectory);
-    }
-
-    @Override
-    public String readVersion() {
-      return "no version";
-    }
-
-    @Override
-    public String checkVersion(String s) {
-      return null;
-    }
-
-    @Override
-    public File getGDBPath() {
-      Toolchain toolchain = ToolchainUtils.getToolchain();
-      if (toolchain.getDebuggerKind() == CPPDebugger.Kind.BUNDLED_GDB) {
-        return CidrDebuggerPathManager.getBundledGDBBinary();
-      }
-
-      String gdbPath = toolchain.getCustomGDBExecutablePath();
-      if (gdbPath == null) {
-        return CidrDebuggerPathManager.getBundledGDBBinary();
-      }
-      File gdbFile = new File(gdbPath);
-      if (!gdbFile.exists()) {
-        return CidrDebuggerPathManager.getBundledGDBBinary();
-      }
-      return gdbFile;
-    }
-
-    @Override
-    public void prepareEnvironment(
-        GeneralCommandLine cl, PrepareFor prepareFor, List<CPPToolSet.Option> options)
-        throws ExecutionException {
-      super.prepareEnvironment(cl, prepareFor, options);
-      if (prepareFor.equals(PrepareFor.RUN)) {
-        cl.setWorkDirectory(super.getHome());
-      }
-    }
-
-    @Override
-    public boolean supportsDebugger(CPPDebugger.Kind kind) {
-      return kind == CPPDebugger.Kind.CUSTOM_GDB;
-    }
   }
 
   /** Get the correct test prefix for blaze/bazel */

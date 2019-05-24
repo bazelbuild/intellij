@@ -39,6 +39,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
+import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
 import java.io.File;
 import java.util.List;
@@ -98,7 +99,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
         BuildResultHelperProvider.forFiles(env.getProject(), file -> true)) {
 
       List<String> extraDebugFlags;
-      if (!BlazeCidrLauncher.shouldUseGdbserver()) {
+      if (!BlazeGDBServerProvider.shouldUseGdbserver()) {
         extraDebugFlags =
             ImmutableList.of(
                 "--compilation_mode=dbg",
@@ -108,8 +109,11 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                 "--dynamic_mode=off",
                 "--fission=yes");
       } else {
+        CPPToolchains.Toolchain toolchainForDebugger =
+            BlazeGDBServerProvider.getToolchain(configuration.getProject());
         extraDebugFlags =
-            BlazeCidrLauncher.getExtraFlagsForDebugging(configuration.getHandler().getState());
+            BlazeGDBServerProvider.getFlagsForDebugging(
+                toolchainForDebugger, configuration.getHandler().getState());
       }
 
       ListenableFuture<BuildResult> buildOperation =
