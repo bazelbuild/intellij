@@ -18,14 +18,18 @@ package com.google.idea.common.experiments;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 final class ExperimentsUtil {
 
   private static final HashFunction HASHER = Hashing.sha512();
+  private static final Map<String, String> hashCache = new ConcurrentHashMap<>();
 
   private ExperimentsUtil() {}
 
   static String hashExperimentName(String name) {
-    return HASHER.hashString(name, StandardCharsets.UTF_8).toString();
+    return hashCache.computeIfAbsent(
+        name, s -> HASHER.hashString(s, StandardCharsets.UTF_8).toString());
   }
 }

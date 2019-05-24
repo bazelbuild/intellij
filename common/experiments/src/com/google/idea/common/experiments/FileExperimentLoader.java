@@ -38,30 +38,24 @@ final class FileExperimentLoader extends HashingExperimentLoader {
 
   private final File file;
 
-  private volatile boolean refresh = true;
-
-  private ImmutableMap<String, String> experiments = ImmutableMap.of();
+  private volatile ImmutableMap<String, String> experiments = ImmutableMap.of();
 
   FileExperimentLoader(String filename) {
     this.file = new File(filename);
   }
 
-  @SuppressWarnings("unchecked") // Properties is Map<Object, Object>, we cast to strings
   @Override
-  ImmutableMap<String, String> getUnhashedExperiments() {
+  public ImmutableMap<String, String> getUnhashedExperiments() {
+    return experiments;
+  }
 
-    if (!refresh) {
-      return experiments;
-    }
-
-    logger.info("loading experiments file " + file);
-
-    refresh = false;
-
+  @SuppressWarnings("unchecked") // Properties is Map<Object, Object>, we cast to strings
+  private void reloadExperiments() {
     if (!file.exists()) {
       experiments = ImmutableMap.of();
-      return experiments;
+      return;
     }
+    logger.info("loading experiments file " + file);
 
     try (InputStream fis = new FileInputStream(file);
         BufferedInputStream bis = new BufferedInputStream(fis)) {
@@ -71,8 +65,6 @@ final class FileExperimentLoader extends HashingExperimentLoader {
     } catch (IOException e) {
       logger.warn("Could not load experiments from file: " + file, e);
     }
-
-    return experiments;
   }
 
   @Override
@@ -92,6 +84,7 @@ final class FileExperimentLoader extends HashingExperimentLoader {
         .getMessageBus()
         .connect()
         .subscribe(VirtualFileManager.VFS_CHANGES, new RefreshExperimentsListener());
+    reloadExperiments();
   }
 
   private class RefreshExperimentsListener implements BulkFileListener {
@@ -100,7 +93,7 @@ final class FileExperimentLoader extends HashingExperimentLoader {
     public void after(List<? extends VFileEvent> events) {
       if (events.stream().anyMatch(this::isExperimentsFile)) {
         logger.info("Scheduling experiments file refresh on " + file);
-        refresh = true;
+        ApplicationManager.getApplication().executeOnPooledThread(() -> reloadExperiments());
       }
     }
 

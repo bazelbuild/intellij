@@ -19,8 +19,14 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.mock.MockApplication;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Disposer;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -28,6 +34,19 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link ExperimentServiceImpl}. */
 @RunWith(JUnit4.class)
 public class ExperimentServiceImplTest {
+
+  private Disposable testDisposable;
+
+  @Before
+  public void setup() {
+    testDisposable = Disposer.newDisposable();
+    ApplicationManager.setApplication(new MockApplication(testDisposable), testDisposable);
+  }
+
+  @After
+  public final void tearDown() {
+    Disposer.dispose(testDisposable);
+  }
 
   @Test
   public void testBooleanPropertyTrue() {
@@ -100,29 +119,6 @@ public class ExperimentServiceImplTest {
   }
 
   @Test
-  public void testDataIsReloadedWhenNotInAScope() throws Exception {
-    MapExperimentLoader experimentLoader = new MapExperimentLoader();
-    ExperimentService experimentService = new ExperimentServiceImpl(experimentLoader);
-    assertThat(experimentService.getExperimentString("test.property", "default"))
-        .isEqualTo("default");
-    experimentLoader.map.put("test.property", "hello");
-    assertThat(experimentService.getExperimentString("test.property", "default"))
-        .isEqualTo("hello");
-  }
-
-  @Test
-  public void testDataIsFrozenWheninAScope() throws Exception {
-    MapExperimentLoader experimentLoader = new MapExperimentLoader();
-    ExperimentService experimentService = new ExperimentServiceImpl(experimentLoader);
-    experimentService.startExperimentScope();
-    assertThat(experimentService.getExperimentString("test.property", "default"))
-        .isEqualTo("default");
-    experimentLoader.map.put("test.property", "hello");
-    assertThat(experimentService.getExperimentString("test.property", "default"))
-        .isEqualTo("default");
-  }
-
-  @Test
   public void testDataIsReloadedAgainWhenLeavingAScope() throws Exception {
     MapExperimentLoader experimentLoader = new MapExperimentLoader();
     ExperimentService experimentService = new ExperimentServiceImpl(experimentLoader);
@@ -157,9 +153,9 @@ public class ExperimentServiceImplTest {
     assertThat(experimentService.getExperimentString("test.property", "default"))
         .isEqualTo("default");
     experimentService.startExperimentScope();
-    experimentService.endExperimentScope();
-    experimentService.endExperimentScope();
     experimentLoader.map.put("test.property", "hello");
+    experimentService.endExperimentScope();
+    experimentService.endExperimentScope();
     assertThat(experimentService.getExperimentString("test.property", "default"))
         .isEqualTo("hello");
   }

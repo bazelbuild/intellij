@@ -19,13 +19,18 @@ import static com.google.idea.common.experiments.ExperimentsUtil.hashExperimentN
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Alarm;
+import com.intellij.util.Alarm.ThreadToUse;
 import com.intellij.util.SystemProperties;
 import java.io.File;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -42,9 +47,14 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
   private static final String USER_EXPERIMENT_OVERRIDES_FILE =
       SystemProperties.getUserHome() + File.separator + ".intellij-experiments";
 
+  private static final Duration REFRESH_FREQUENCY = Duration.ofMinutes(5);
+
+  private final Alarm alarm =
+      new Alarm(ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private final List<ExperimentLoader> services;
-  private volatile Map<String, String> experiments;
-  private int experimentScopeCounter = 0;
+  private final AtomicInteger experimentScopeCounter = new AtomicInteger(0);
+
+  private volatile Map<String, String> experiments = ImmutableMap.of();
 
   public ExperimentServiceImpl(String pluginName) {
     this(
@@ -56,6 +66,11 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
   @VisibleForTesting
   ExperimentServiceImpl(ExperimentLoader... loaders) {
     services = ImmutableList.copyOf(loaders);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      refreshExperiments();
+    } else {
+      scheduleRefresh(Duration.ZERO);
+    }
   }
 
   @Override
@@ -89,34 +104,48 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
   }
 
   @Override
-  public synchronized void startExperimentScope() {
-    if (++experimentScopeCounter > 0) {
-      experiments = getAllExperiments();
+  public void startExperimentScope() {
+    if (experimentScopeCounter.getAndIncrement() == 0) {
+      // synchronously update experiments and keep them fixed for the duration of the scope
+      refreshExperiments();
     }
   }
 
   @Override
-  public synchronized void endExperimentScope() {
-    if (--experimentScopeCounter <= 0) {
-      logger.assertTrue(experimentScopeCounter == 0);
-      experiments = null;
+  public void endExperimentScope() {
+    int counter = experimentScopeCounter.decrementAndGet();
+    logger.assertTrue(counter >= 0);
+    if (counter <= 0 && ApplicationManager.getApplication().isUnitTestMode()) {
+      refreshExperiments();
     }
   }
 
-  private Map<String, String> getAllExperiments() {
-    Map<String, String> experiments = this.experiments;
-    if (experiments != null) {
-      return experiments;
-    } else {
-      return services
-          .stream()
-          .flatMap(service -> service.getExperiments().entrySet().stream())
-          .collect(
-              Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first));
+  private void scheduleRefresh(Duration delay) {
+    if (alarm.isDisposed()) {
+      return;
     }
+    alarm.addRequest(
+        () -> {
+          try {
+            if (experimentScopeCounter.get() <= 0) {
+              refreshExperiments();
+            }
+          } finally {
+            scheduleRefresh(REFRESH_FREQUENCY);
+          }
+        },
+        delay.toMillis());
+  }
+
+  private void refreshExperiments() {
+    experiments =
+        services.stream()
+            .flatMap(service -> service.getExperiments().entrySet().stream())
+            .collect(
+                Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first));
   }
 
   private String getExperiment(String key) {
-    return getAllExperiments().get(hashExperimentName(key));
+    return experiments.get(hashExperimentName(key));
   }
 }
