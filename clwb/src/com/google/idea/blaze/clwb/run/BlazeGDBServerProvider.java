@@ -132,8 +132,11 @@ public class BlazeGDBServerProvider {
     if (useRemoteDebuggingWrapper.getValue()) {
       String runUnderOption =
           String.format(
-              "--run_under='%s' '%s' --once localhost:%d --target",
-              GDBSERVER_WRAPPER.getValue(), gdbServerPath, handlerState.getDebugPortState().port);
+              "--run_under='%s' '%s' '%s' --once localhost:%d --target",
+              "bash",
+              GDBSERVER_WRAPPER.getValue(),
+              gdbServerPath,
+              handlerState.getDebugPortState().port);
       builder.add(runUnderOption);
     } else {
       String runUnderOption =
