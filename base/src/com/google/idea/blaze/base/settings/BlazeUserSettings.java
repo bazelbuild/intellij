@@ -66,8 +66,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private FocusBehavior showBlazeProblemsViewOnSync = FocusBehavior.ALWAYS;
   private FocusBehavior showBlazeConsoleOnRun = FocusBehavior.ALWAYS;
   private FocusBehavior showProblemsViewOnRun = FocusBehavior.NEVER;
-  @Deprecated private boolean suppressConsoleForRunAction = false;
-  @Deprecated private boolean showProblemsViewForRunAction = false;
   private boolean resyncAutomatically = false;
   private boolean resyncOnProtoChanges = false;
   private boolean syncStatusPopupShown = false;
@@ -91,16 +89,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   @Override
   public void loadState(BlazeUserSettings state) {
     XmlSerializerUtil.copyBean(state, this);
-    // migrate the old settings, then reset them to the defaults
-    // TODO(brendandouglas): remove the old settings in September 2018
-    if (suppressConsoleForRunAction) {
-      showBlazeConsoleOnRun = FocusBehavior.NEVER;
-      suppressConsoleForRunAction = false;
-    }
-    if (showProblemsViewForRunAction) {
-      showProblemsViewOnRun = FocusBehavior.ALWAYS;
-      showProblemsViewForRunAction = false;
-    }
   }
 
   public void setResyncAutomatically(boolean resyncAutomatically) {
@@ -154,42 +142,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setShowProblemsViewOnRun(FocusBehavior showProblemsViewForRunAction) {
     this.showProblemsViewOnRun = showProblemsViewForRunAction;
-  }
-
-  /**
-   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
-   *     {@link #getShowBlazeConsoleOnRun} instead.
-   */
-  @Deprecated
-  public boolean getSuppressConsoleForRunAction() {
-    return suppressConsoleForRunAction;
-  }
-
-  /**
-   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
-   *     {@link #setShowBlazeConsoleOnRun} instead.
-   */
-  @Deprecated
-  public void setSuppressConsoleForRunAction(boolean suppressConsoleForRunAction) {
-    this.suppressConsoleForRunAction = suppressConsoleForRunAction;
-  }
-
-  /**
-   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
-   *     {@link #getShowProblemsViewOnRun} instead.
-   */
-  @Deprecated
-  public boolean getShowProblemsViewForRunAction() {
-    return showProblemsViewForRunAction;
-  }
-
-  /**
-   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
-   *     {@link #setShowProblemsViewOnRun} instead.
-   */
-  @Deprecated
-  public void setShowProblemsViewForRunAction(boolean showProblemsViewForRunAction) {
-    this.showProblemsViewForRunAction = showProblemsViewForRunAction;
   }
 
   public boolean getSyncStatusPopupShown() {
