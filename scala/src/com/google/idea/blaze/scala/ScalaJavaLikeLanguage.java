@@ -41,9 +41,8 @@ public class ScalaJavaLikeLanguage implements JavaLikeLanguage {
 
   @Override
   public ImmutableSet<Kind> getHandledTestKinds() {
-    return Kind.getKindsForLanguage(LanguageClass.SCALA).stream()
-        .filter(k -> k.getRuleType().equals(RuleType.TEST))
-        .collect(toImmutableSet());
+    // handled by BlazeScalaTestEventsHandler
+    return ImmutableSet.of();
   }
 
   @Override
