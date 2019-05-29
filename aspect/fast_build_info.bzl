@@ -40,7 +40,6 @@ def _fast_build_info_impl(target, ctx):
         if hasattr(toolchain, "tools"):
             javac_jars = [artifact_location(f) for f in toolchain.tools.to_list()]
         info["java_toolchain_info"] = struct_omit_none(
-            javac_jar = artifact_location(toolchain.javac_jar),
             javac_jars = javac_jars,
             source_version = toolchain.source_version,
             target_version = toolchain.target_version,
