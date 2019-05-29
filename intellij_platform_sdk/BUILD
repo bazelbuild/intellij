@@ -95,6 +95,13 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-3.6",
+    values = {
+        "define": "ij_product=android-studio-3.6",
+    },
+)
+
+config_setting(
     name = "android-studio-3.5",
     values = {
         "define": "ij_product=android-studio-3.5",
