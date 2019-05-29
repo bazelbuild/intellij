@@ -51,7 +51,7 @@ class ProjectViewAutoSyncProvider implements AutoSyncProvider {
   @Nullable
   @Override
   public BlazeSyncParams getAutoSyncParamsForFile(Project project, VirtualFile modifiedFile) {
-    if (!BlazeUserSettings.getInstance().getResyncAutomatically()
+    if (!AutoSyncSettings.getInstance().autoSyncOnBuildChanges
         || !isSyncSensitiveFile(project, modifiedFile)) {
       return null;
     }

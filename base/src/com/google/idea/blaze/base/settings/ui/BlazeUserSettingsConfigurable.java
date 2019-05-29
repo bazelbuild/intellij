@@ -65,8 +65,6 @@ public class BlazeUserSettingsConfigurable implements UnnamedConfigurable {
       new ComboBox<>(FocusBehavior.values());
   private final ComboBox<FocusBehavior> showProblemsViewOnRun =
       new ComboBox<>(FocusBehavior.values());
-  private JCheckBox resyncOnBuildFileChanges;
-  private JCheckBox resyncOnProtoChanges;
   private JCheckBox collapseProjectView;
   private JCheckBox formatBuildFilesOnSave;
   private JCheckBox showAddFileToProjectNotification;
@@ -84,8 +82,6 @@ public class BlazeUserSettingsConfigurable implements UnnamedConfigurable {
     settings.setShowProblemsViewOnSync((FocusBehavior) showProblemsViewOnSync.getSelectedItem());
     settings.setShowBlazeConsoleOnRun((FocusBehavior) showBlazeConsoleOnRun.getSelectedItem());
     settings.setShowProblemsViewOnRun((FocusBehavior) showProblemsViewOnRun.getSelectedItem());
-    settings.setResyncAutomatically(resyncOnBuildFileChanges.isSelected());
-    settings.setResyncOnProtoChanges(resyncOnProtoChanges.isSelected());
     settings.setCollapseProjectView(collapseProjectView.isSelected());
     settings.setFormatBuildFilesOnSave(formatBuildFilesOnSave.isSelected());
     settings.setShowAddFileToProjectNotification(showAddFileToProjectNotification.isSelected());
@@ -100,8 +96,6 @@ public class BlazeUserSettingsConfigurable implements UnnamedConfigurable {
     showProblemsViewOnSync.setSelectedItem(settings.getShowProblemsViewOnSync());
     showBlazeConsoleOnRun.setSelectedItem(settings.getShowBlazeConsoleOnRun());
     showProblemsViewOnRun.setSelectedItem(settings.getShowProblemsViewOnRun());
-    resyncOnBuildFileChanges.setSelected(settings.getResyncAutomatically());
-    resyncOnProtoChanges.setSelected(settings.getResyncOnProtoChanges());
     collapseProjectView.setSelected(settings.getCollapseProjectView());
     formatBuildFilesOnSave.setSelected(settings.getFormatBuildFilesOnSave());
     showAddFileToProjectNotification.setSelected(settings.getShowAddFileToProjectNotification());
@@ -116,8 +110,6 @@ public class BlazeUserSettingsConfigurable implements UnnamedConfigurable {
         || showProblemsViewOnSync.getSelectedItem() != settings.getShowProblemsViewOnSync()
         || showBlazeConsoleOnRun.getSelectedItem() != settings.getShowBlazeConsoleOnRun()
         || showProblemsViewOnRun.getSelectedItem() != settings.getShowProblemsViewOnRun()
-        || resyncOnBuildFileChanges.isSelected() != settings.getResyncAutomatically()
-        || resyncOnProtoChanges.isSelected() != settings.getResyncOnProtoChanges()
         || collapseProjectView.isSelected() != settings.getCollapseProjectView()
         || formatBuildFilesOnSave.isSelected() != settings.getFormatBuildFilesOnSave()
         || showAddFileToProjectNotification.isSelected()
@@ -136,7 +128,7 @@ public class BlazeUserSettingsConfigurable implements UnnamedConfigurable {
   }
 
   private JPanel setupUi(SearchableOptionsHelper helper) {
-    final int totalRowSize = 10;
+    final int totalRowSize = 8;
     int rowi = 0;
 
     JPanel panel = new JPanel();
@@ -160,44 +152,7 @@ public class BlazeUserSettingsConfigurable implements UnnamedConfigurable {
             false));
     panel.add(new JSeparator(SwingConstants.HORIZONTAL), defaultNoGrowConstraints(rowi++, 0, 1, 2));
 
-    String text = "Automatically re-sync project when BUILD files change";
-    resyncOnBuildFileChanges = helper.createSearchableCheckBox(text, true);
-    resyncOnBuildFileChanges.setSelected(false);
-    panel.add(
-        resyncOnBuildFileChanges,
-        new GridConstraints(
-            rowi++,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_NORTHWEST,
-            GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    text = "Automatically re-sync project when proto files change";
-    resyncOnProtoChanges = helper.createSearchableCheckBox(text, true);
-    panel.add(
-        resyncOnProtoChanges,
-        new GridConstraints(
-            rowi++,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_NORTHWEST,
-            GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    text = "Collapse project view directory roots";
+    String text = "Collapse project view directory roots";
     collapseProjectView = helper.createSearchableCheckBox(text, true);
     collapseProjectView.setSelected(false);
     panel.add(

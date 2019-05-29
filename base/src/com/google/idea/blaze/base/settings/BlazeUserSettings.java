@@ -91,6 +91,11 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     XmlSerializerUtil.copyBean(state, this);
   }
 
+  /**
+   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
+   *     {@link AutoSyncSettings} instead.
+   */
+  @Deprecated
   public void setResyncAutomatically(boolean resyncAutomatically) {
     this.resyncAutomatically = resyncAutomatically;
   }
@@ -98,16 +103,28 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   /**
    * Whether we should re-sync on changes to BUILD and project view files.
    *
-   * <p>TODO(brendandouglas): change name and migrate settings.
+   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
+   *     {@link AutoSyncSettings} instead.
    */
+  @Deprecated
   public boolean getResyncAutomatically() {
     return resyncAutomatically;
   }
 
+  /**
+   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
+   *     {@link AutoSyncSettings} instead.
+   */
+  @Deprecated
   public void setResyncOnProtoChanges(boolean resyncOnProtoChanges) {
     this.resyncOnProtoChanges = resyncOnProtoChanges;
   }
 
+  /**
+   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
+   *     {@link AutoSyncSettings} instead.
+   */
+  @Deprecated
   public boolean getResyncOnProtoChanges() {
     return resyncOnProtoChanges;
   }

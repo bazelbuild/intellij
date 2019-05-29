@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -60,7 +59,7 @@ class ProtoAutoSyncProvider implements AutoSyncProvider {
   @Nullable
   @Override
   public BlazeSyncParams getAutoSyncParamsForFile(Project project, VirtualFile modifiedFile) {
-    if (!BlazeUserSettings.getInstance().getResyncOnProtoChanges()
+    if (!AutoSyncSettings.getInstance().autoSyncOnProtoChanges
         || !isSyncSensitiveFile(project, modifiedFile)) {
       return null;
     }

@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.autosync.AutoSyncSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -37,7 +38,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
   }
 
   private static void runSync(Project project, BlazeImportSettings importSettings) {
-    if (BlazeUserSettings.getInstance().getResyncAutomatically()
+    if (AutoSyncSettings.getInstance().autoSyncOnBuildChanges
         || !hasProjectData(project, importSettings)) {
       BlazeSyncManager.getInstance(project).incrementalProjectSync();
     } else {

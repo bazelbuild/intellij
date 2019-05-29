@@ -19,7 +19,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -52,7 +51,7 @@ class BuildFileAutoSyncProvider implements AutoSyncProvider {
   @Nullable
   @Override
   public BlazeSyncParams getAutoSyncParamsForFile(Project project, VirtualFile modifiedFile) {
-    if (!BlazeUserSettings.getInstance().getResyncAutomatically()
+    if (!AutoSyncSettings.getInstance().autoSyncOnBuildChanges
         || !isSyncSensitiveFile(project, modifiedFile)) {
       return null;
     }
