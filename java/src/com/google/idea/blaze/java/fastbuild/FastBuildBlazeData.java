@@ -223,15 +223,10 @@ public abstract class FastBuildBlazeData {
     }
 
     static JavaToolchainInfo fromProto(FastBuildInfo.JavaToolchainInfo javaToolchainInfo) {
-      ImmutableList<ArtifactLocation> javacJars;
-      if (javaToolchainInfo.getJavacJarsCount() > 0) {
-        javacJars =
-            javaToolchainInfo.getJavacJarsList().stream()
-                .map(ArtifactLocation::fromProto)
-                .collect(toImmutableList());
-      } else {
-        javacJars = ImmutableList.of(ArtifactLocation.fromProto(javaToolchainInfo.getJavacJar()));
-      }
+      ImmutableList<ArtifactLocation> javacJars =
+          javaToolchainInfo.getJavacJarsList().stream()
+              .map(ArtifactLocation::fromProto)
+              .collect(toImmutableList());
       return create(
           javacJars, javaToolchainInfo.getSourceVersion(), javaToolchainInfo.getTargetVersion());
     }

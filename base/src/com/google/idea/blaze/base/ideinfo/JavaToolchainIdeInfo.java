@@ -36,18 +36,10 @@ public final class JavaToolchainIdeInfo
   }
 
   static JavaToolchainIdeInfo fromProto(IntellijIdeInfo.JavaToolchainIdeInfo proto) {
-    ImmutableList<ArtifactLocation> javacJars;
-    if (proto.getJavacJarsCount() > 0) {
-      javacJars =
-          proto.getJavacJarsList().stream()
-              .map(ArtifactLocation::fromProto)
-              .collect(toImmutableList());
-    } else {
-      javacJars =
-          proto.hasJavacJar()
-              ? ImmutableList.of(ArtifactLocation.fromProto(proto.getJavacJar()))
-              : ImmutableList.of();
-    }
+    ImmutableList<ArtifactLocation> javacJars =
+        proto.getJavacJarsList().stream()
+            .map(ArtifactLocation::fromProto)
+            .collect(toImmutableList());
     return new JavaToolchainIdeInfo(proto.getSourceVersion(), proto.getTargetVersion(), javacJars);
   }
 
