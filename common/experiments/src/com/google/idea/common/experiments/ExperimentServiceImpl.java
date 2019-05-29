@@ -68,8 +68,6 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
     services = ImmutableList.copyOf(loaders);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       refreshExperiments();
-    } else {
-      scheduleRefresh(Duration.ZERO);
     }
   }
 
@@ -78,6 +76,8 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       services.forEach(ExperimentLoader::initialize);
     }
+    // refresh experiments synchronously; some callers require a valid initial state on startup
+    refreshExperiments();
   }
 
   @Override

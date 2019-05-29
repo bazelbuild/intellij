@@ -69,6 +69,8 @@ final class FileExperimentLoader extends HashingExperimentLoader {
 
   @Override
   public void initialize() {
+    // first read the file synchronously -- experiment checks on startup require this
+    reloadExperiments();
     // set up VFS listener asynchronously, to prevent cyclic dependencies if initialization involves
     // experiment checks (b/118813939)
     ApplicationManager.getApplication().executeOnPooledThread(this::doInitialize);
@@ -84,7 +86,6 @@ final class FileExperimentLoader extends HashingExperimentLoader {
         .getMessageBus()
         .connect()
         .subscribe(VirtualFileManager.VFS_CHANGES, new RefreshExperimentsListener());
-    reloadExperiments();
   }
 
   private class RefreshExperimentsListener implements BulkFileListener {
