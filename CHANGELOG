@@ -1,3 +1,7 @@
+v2019.05.29
+===========
+* CLion: Fix debugging with bundled GDB
+
 v2019.05.13
 ===========
 * Bug fixes and internal cleanup.
