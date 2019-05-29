@@ -33,7 +33,16 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
 import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.intellij.execution.RunCanceledByUserException;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ui.UIUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -143,10 +152,11 @@ public abstract class TestContext implements RunConfigurationContext {
    * <p>A {@link BlazeCommandRunConfiguration} will be produced synchronously, then filled in later
    * when the full context is known.
    */
-  private static class PendingContextTestContext extends TestContext
+  private static class PendingAsyncTestContext extends TestContext
       implements PendingRunConfigurationContext {
+    private static final Logger logger = Logger.getInstance(PendingAsyncTestContext.class);
 
-    private static PendingContextTestContext fromTargetFuture(
+    private static PendingAsyncTestContext fromTargetFuture(
         ImmutableSet<ExecutorType> supportedExecutors,
         ListenableFuture<TargetInfo> target,
         PsiElement sourceElement,
@@ -165,7 +175,7 @@ public abstract class TestContext implements RunConfigurationContext {
                 return new KnownTargetTestContext(t, sourceElement, blazeFlags, description);
               },
               MoreExecutors.directExecutor());
-      return new PendingContextTestContext(
+      return new PendingAsyncTestContext(
           supportedExecutors, future, progressMessage, sourceElement, blazeFlags, description);
     }
 
@@ -173,7 +183,7 @@ public abstract class TestContext implements RunConfigurationContext {
     private final ListenableFuture<RunConfigurationContext> future;
     private final String progressMessage;
 
-    private PendingContextTestContext(
+    private PendingAsyncTestContext(
         ImmutableSet<ExecutorType> supportedExecutors,
         ListenableFuture<RunConfigurationContext> future,
         String progressMessage,
@@ -182,18 +192,8 @@ public abstract class TestContext implements RunConfigurationContext {
         @Nullable String description) {
       super(sourceElement, blazeFlags, description);
       this.supportedExecutors = supportedExecutors;
-      this.future = PendingRunConfigurationContext.recursivelyResolveContext(future);
+      this.future = recursivelyResolveContext(future);
       this.progressMessage = progressMessage;
-    }
-
-    @Override
-    public ListenableFuture<RunConfigurationContext> getFuture() {
-      return future;
-    }
-
-    @Override
-    public String getProgressMessage() {
-      return progressMessage;
     }
 
     @Override
@@ -202,8 +202,44 @@ public abstract class TestContext implements RunConfigurationContext {
     }
 
     @Override
+    public boolean isDone() {
+      return future.isDone();
+    }
+
+    @Override
+    public void resolve(
+        ExecutionEnvironment env, BlazeCommandRunConfiguration config, Runnable rerun)
+        throws com.intellij.execution.ExecutionException {
+      waitForFutureUnderProgressDialog(env.getProject());
+      rerun.run();
+    }
+
+    @Override
     boolean setupTarget(BlazeCommandRunConfiguration config) {
-      return config.setPendingContext(this);
+      config.setPendingContext(this);
+      if (future.isDone()) {
+        // set it up synchronously, and return the result
+        return doSetupPendingContext(config);
+      } else {
+        future.addListener(() -> doSetupPendingContext(config), MoreExecutors.directExecutor());
+        return true;
+      }
+    }
+
+    private boolean doSetupPendingContext(BlazeCommandRunConfiguration config) {
+      try {
+        RunConfigurationContext context = getFutureHandlingErrors();
+        boolean success = context.setupRunConfiguration(config);
+        if (success) {
+          config.clearPendingContext();
+          return true;
+        }
+      } catch (RunCanceledByUserException | NoRunConfigurationFoundException e) {
+        // silently ignore
+      } catch (com.intellij.execution.ExecutionException e) {
+        logger.warn(e);
+      }
+      return false;
     }
 
     @Override
@@ -222,6 +258,84 @@ public abstract class TestContext implements RunConfigurationContext {
     @Override
     boolean matchesTarget(BlazeCommandRunConfiguration config) {
       return getSourceElementString().equals(config.getContextElementString());
+    }
+
+    /**
+     * Returns a future with all currently-unknown details of this configuration context resolved.
+     *
+     * <p>Handles the case where there are nested {@link PendingAsyncTestContext}s.
+     */
+    private static ListenableFuture<RunConfigurationContext> recursivelyResolveContext(
+        ListenableFuture<RunConfigurationContext> future) {
+      return Futures.transformAsync(
+          future,
+          c ->
+              c instanceof PendingAsyncTestContext
+                  ? recursivelyResolveContext(((PendingAsyncTestContext) c).future)
+                  : Futures.immediateFuture(c),
+          MoreExecutors.directExecutor());
+    }
+
+    /**
+     * Waits for the run configuration to be configured, displaying a progress dialog if necessary.
+     *
+     * @throws com.intellij.execution.ExecutionException if the run configuration is not
+     *     successfully configured
+     */
+    private void waitForFutureUnderProgressDialog(Project project)
+        throws com.intellij.execution.ExecutionException {
+      if (future.isDone()) {
+        getFutureHandlingErrors();
+      }
+      // The progress indicator must be created on the UI thread.
+      ProgressWindow indicator =
+          UIUtil.invokeAndWaitIfNeeded(
+              () ->
+                  new BackgroundableProcessIndicator(
+                      project,
+                      progressMessage,
+                      PerformInBackgroundOption.ALWAYS_BACKGROUND,
+                      "Cancel",
+                      "Cancel",
+                      /* cancellable= */ true));
+
+      indicator.setIndeterminate(true);
+      indicator.start();
+      indicator.addStateDelegate(
+          new AbstractProgressIndicatorExBase() {
+            @Override
+            public void cancel() {
+              super.cancel();
+              future.cancel(true);
+            }
+          });
+      try {
+        getFutureHandlingErrors();
+      } finally {
+        if (indicator.isRunning()) {
+          indicator.stop();
+          indicator.processFinish();
+        }
+      }
+    }
+
+    private RunConfigurationContext getFutureHandlingErrors()
+        throws com.intellij.execution.ExecutionException {
+      try {
+        RunConfigurationContext result = future.get();
+        if (result == null) {
+          throw new NoRunConfigurationFoundException("Run configuration setup failed.");
+        }
+        if (result instanceof FailedPendingRunConfiguration) {
+          throw new NoRunConfigurationFoundException(
+              ((FailedPendingRunConfiguration) result).errorMessage);
+        }
+        return result;
+      } catch (InterruptedException e) {
+        throw new RunCanceledByUserException();
+      } catch (ExecutionException e) {
+        throw new com.intellij.execution.ExecutionException(e);
+      }
     }
   }
 
@@ -336,7 +450,7 @@ public abstract class TestContext implements RunConfigurationContext {
     public TestContext build() {
       if (contextFuture != null) {
         Preconditions.checkState(targetFuture == null && target == null);
-        return new PendingContextTestContext(
+        return new PendingAsyncTestContext(
             supportedExecutors,
             contextFuture,
             "Resolving test context",
@@ -348,7 +462,7 @@ public abstract class TestContext implements RunConfigurationContext {
       if (target != null) {
         return new KnownTargetTestContext(target, sourceElement, blazeFlags.build(), description);
       }
-      return PendingContextTestContext.fromTargetFuture(
+      return PendingAsyncTestContext.fromTargetFuture(
           supportedExecutors, targetFuture, sourceElement, blazeFlags.build(), description);
     }
   }

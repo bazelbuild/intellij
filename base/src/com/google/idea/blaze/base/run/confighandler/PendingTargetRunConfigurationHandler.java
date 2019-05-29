@@ -99,7 +99,7 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
       ExecutorType type = ExecutorType.fromExecutorId(executorId);
       PendingRunConfigurationContext pendingContext = config.getPendingContext();
       return pendingContext != null
-          && !pendingContext.getFuture().isDone()
+          && !pendingContext.isDone()
           && pendingContext.supportedExecutors().contains(type);
     }
 
@@ -115,8 +115,7 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
           .executeOnPooledThread(
               () -> {
                 try {
-                  waitForFuture(env);
-                  reRunConfiguration(env);
+                  resolveContext(env);
                 } catch (ExecutionException e) {
                   ExecutionUtil.handleExecutionError(env, e);
                 }
@@ -165,14 +164,21 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
     }
   }
 
-  /** Pop up a progress dialog, and wait until the blaze target future is done. */
-  private static void waitForFuture(ExecutionEnvironment env) throws ExecutionException {
+  private static void resolveContext(ExecutionEnvironment env) throws ExecutionException {
     BlazeCommandRunConfiguration config = BlazeCommandRunConfigurationRunner.getConfiguration(env);
     PendingRunConfigurationContext pendingContext = config.getPendingContext();
     if (pendingContext == null) {
       return;
     }
-    PendingRunConfigurationContext.waitForFutureUnderProgressDialog(
-        env.getProject(), pendingContext);
+    pendingContext.resolve(
+        env,
+        config,
+        () -> {
+          try {
+            reRunConfiguration(env);
+          } catch (ExecutionException e) {
+            ExecutionUtil.handleExecutionError(env, e);
+          }
+        });
   }
 }

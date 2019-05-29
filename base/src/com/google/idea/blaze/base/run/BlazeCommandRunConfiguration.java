@@ -33,12 +33,10 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.run.PendingRunConfigurationContext.NoRunConfigurationFoundException;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider.TargetState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
@@ -52,7 +50,6 @@ import com.google.idea.blaze.base.ui.UiUtil;
 import com.google.idea.sdkcompat.run.RunConfigurationBaseCompat;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.ModuleRunProfile;
@@ -130,43 +127,18 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
    */
   @Nullable private volatile PendingRunConfigurationContext pendingContext;
 
-  /**
-   * Set up a run configuration with a not-yet-known target pattern. Returns false if the pending
-   * context is known to be invalid.
-   */
-  public boolean setPendingContext(PendingRunConfigurationContext pendingContext) {
+  /** Set up a run configuration with a not-yet-known target pattern. */
+  public void setPendingContext(PendingRunConfigurationContext pendingContext) {
     this.pendingContext = pendingContext;
     this.targetPattern = null;
     this.targetKindString = null;
     this.contextElementString = pendingContext.getSourceElementString();
     updateHandler();
     EventLoggingService.getInstance().logEvent(getClass(), "async-run-config");
-    if (pendingContext.getFuture().isDone()) {
-      // set it up synchronously, and return the result
-      return doSetupPendingContext(pendingContext);
-    } else {
-      pendingContext
-          .getFuture()
-          .addListener(() -> doSetupPendingContext(pendingContext), MoreExecutors.directExecutor());
-      return true;
-    }
   }
 
-  private boolean doSetupPendingContext(PendingRunConfigurationContext pendingContext) {
-    try {
-      RunConfigurationContext context =
-          PendingRunConfigurationContext.getFutureHandlingErrors(pendingContext);
-      boolean success = context.setupRunConfiguration(this);
-      if (success) {
-        this.pendingContext = null;
-        return true;
-      }
-    } catch (RunCanceledByUserException | NoRunConfigurationFoundException e) {
-      // silently ignore
-    } catch (ExecutionException e) {
-      logger.warn(e);
-    }
-    return false;
+  public void clearPendingContext() {
+    this.pendingContext = null;
   }
 
   /**
@@ -175,7 +147,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
    */
   boolean pendingSetupFailed() {
     PendingRunConfigurationContext pendingContext = this.pendingContext;
-    if (pendingContext == null || !pendingContext.getFuture().isDone()) {
+    if (pendingContext == null || !pendingContext.isDone()) {
       return false;
     }
     if (targetPattern == null) {
@@ -391,7 +363,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     }
     handler.checkConfiguration();
     PendingRunConfigurationContext pendingContext = this.pendingContext;
-    if (pendingContext != null && !pendingContext.getFuture().isDone()) {
+    if (pendingContext != null && !pendingContext.isDone()) {
       return;
     }
     if (Strings.isNullOrEmpty(targetPattern)) {

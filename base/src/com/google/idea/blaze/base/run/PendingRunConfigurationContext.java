@@ -16,19 +16,10 @@
 package com.google.idea.blaze.base.run;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunCanceledByUserException;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
-import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.project.Project;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.ui.UIUtil;
 
 /**
  * Used when we don't yet know all the configuration details, but want to provide a 'run/debug'
@@ -53,7 +44,7 @@ public interface PendingRunConfigurationContext extends RunConfigurationContext 
    */
   class FailedPendingRunConfiguration implements RunConfigurationContext {
     private final PsiElement psi;
-    final String errorMessage;
+    public final String errorMessage;
 
     public FailedPendingRunConfiguration(PsiElement psi, String errorMessage) {
       this.psi = psi;
@@ -76,86 +67,24 @@ public interface PendingRunConfigurationContext extends RunConfigurationContext 
     }
   }
 
-  ListenableFuture<RunConfigurationContext> getFuture();
-
-  String getProgressMessage();
-
   ImmutableSet<ExecutorType> supportedExecutors();
 
   /**
-   * Returns a future with all currently-unknown details of this configuration context resolved.
-   *
-   * <p>Handles the case where there are nested {@link PendingRunConfigurationContext}s.
+   * Returns true if this is an asynchronous {@link PendingRunConfigurationContext} that had been
+   * resolved in the background. A {@link PendingRunConfigurationContext} that requires user action
+   * will always return false until {@link #resolve}d.
    */
-  static ListenableFuture<RunConfigurationContext> recursivelyResolveContext(
-      ListenableFuture<RunConfigurationContext> future) {
-    return Futures.transformAsync(
-        future,
-        c ->
-            c instanceof PendingRunConfigurationContext
-                ? recursivelyResolveContext(((PendingRunConfigurationContext) c).getFuture())
-                : Futures.immediateFuture(c),
-        MoreExecutors.directExecutor());
-  }
+  boolean isDone();
 
   /**
-   * Waits for the run configuration to be configured, displaying a progress dialog if necessary.
+   * Finish resolving the {@link PendingRunConfigurationContext}. Called when the user actually
+   * tries to run the configuration. Block with a progress message if necessary.
    *
-   * @throws ExecutionException if the run configuration is not successfully configured
+   * @param config will be updated if {@link PendingRunConfigurationContext} is resolved
+   *     successfully.
+   * @param rerun will be called after resolving is finished to continue running the real
+   *     configuration.
    */
-  static void waitForFutureUnderProgressDialog(
-      Project project, PendingRunConfigurationContext pendingContext) throws ExecutionException {
-    if (pendingContext.getFuture().isDone()) {
-      getFutureHandlingErrors(pendingContext);
-    }
-    // The progress indicator must be created on the UI thread.
-    ProgressWindow indicator =
-        UIUtil.invokeAndWaitIfNeeded(
-            () ->
-                new BackgroundableProcessIndicator(
-                    project,
-                    pendingContext.getProgressMessage(),
-                    PerformInBackgroundOption.ALWAYS_BACKGROUND,
-                    "Cancel",
-                    "Cancel",
-                    /* cancellable= */ true));
-
-    indicator.setIndeterminate(true);
-    indicator.start();
-    indicator.addStateDelegate(
-        new AbstractProgressIndicatorExBase() {
-          @Override
-          public void cancel() {
-            super.cancel();
-            pendingContext.getFuture().cancel(true);
-          }
-        });
-    try {
-      getFutureHandlingErrors(pendingContext);
-    } finally {
-      if (indicator.isRunning()) {
-        indicator.stop();
-        indicator.processFinish();
-      }
-    }
-  }
-
-  static RunConfigurationContext getFutureHandlingErrors(
-      PendingRunConfigurationContext pendingContext) throws ExecutionException {
-    try {
-      RunConfigurationContext result = pendingContext.getFuture().get();
-      if (result == null) {
-        throw new NoRunConfigurationFoundException("Run configuration setup failed.");
-      }
-      if (result instanceof FailedPendingRunConfiguration) {
-        throw new NoRunConfigurationFoundException(
-            ((FailedPendingRunConfiguration) result).errorMessage);
-      }
-      return result;
-    } catch (InterruptedException e) {
-      throw new RunCanceledByUserException();
-    } catch (java.util.concurrent.ExecutionException e) {
-      throw new ExecutionException(e);
-    }
-  }
+  void resolve(ExecutionEnvironment env, BlazeCommandRunConfiguration config, Runnable rerun)
+      throws ExecutionException;
 }
