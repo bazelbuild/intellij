@@ -73,6 +73,7 @@ java_library(
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-3.4": glob(["sdkcompat/as34/**/*.java"]),
         "android-studio-3.5": glob(["sdkcompat/as35/**/*.java"]),
+        "android-studio-3.6": glob(["sdkcompat/as36/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     deps = [
@@ -90,10 +91,7 @@ java_library(
 
 intellij_unit_test_suite(
     name = "unit_tests",
-    srcs = glob(["tests/unittests/**/*.java"]) + select_for_plugin_api({
-        "android-studio-3.4": glob(["tests/unittests_3_4/**/*.java"]),
-        "android-studio-3.5": glob(["tests/unittests_3_4/**/*.java"]),
-    }),
+    srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.android",
     deps = [
         ":aswb_lib",
@@ -123,10 +121,7 @@ intellij_integration_test_suite(
     srcs = glob(
         ["tests/integrationtests/**/*.java"],
         exclude = ["tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java"],
-    ) + select_for_plugin_api({
-        "android-studio-3.4": glob(["tests/integrationtests_3_4/**/*.java"]),
-        "android-studio-3.5": glob(["tests/integrationtests_3_4/**/*.java"]),
-    }),
+    ),
     platform_prefix = "AndroidStudio",
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",
