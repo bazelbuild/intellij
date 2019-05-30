@@ -34,12 +34,16 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
 
   private static final String KOTLIN_PLUGIN_ID = "org.jetbrains.kotlin";
   private static final String ANDROID_PLUGIN_ID = "org.jetbrains.android";
+  private static final String GRADLE_PLUGIN_ID = "org.jetbrains.plugins.gradle";
+  private static final String JUNIT_PLUGIN_ID = "JUnit";
 
   private static final ImmutableList<String> KOTLIN_PRODUCERS =
       ImmutableList.of(
           "org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer");
+          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinTestMethodGradleConfigurationProducer");
 
   private static final ImmutableList<String> ANDROID_PRODUCERS =
       ImmutableList.of(
@@ -50,6 +54,27 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
           "com.android.tools.idea.testartifacts.junit.TestMethodAndroidConfigurationProducer",
           "com.android.tools.idea.testartifacts.junit.TestPackageAndroidConfigurationProducer",
           "com.android.tools.idea.testartifacts.junit.TestPatternConfigurationProducer");
+
+  private static final ImmutableList<String> GRADLE_PRODUCERS =
+      ImmutableList.of(
+          "org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer",
+          "org.jetbrains.plugins.gradle.execution.test.runner.AllInDirectoryGradleConfigurationProducer",
+          "org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer",
+          "org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer",
+          "org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer",
+          "org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer",
+          "org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer");
+
+  /**
+   * JUnit producers which are optionally present (may require specific SDK versions).
+   *
+   * <p>#api183: update; move common ones to JAVA_PRODUCERS
+   */
+  private static final ImmutableList<String> OPTIONAL_JUNIT_PRODUCERS =
+      ImmutableList.of(
+          "com.intellij.execution.junit.AbstractAllInDirectoryConfigurationProducer",
+          "com.intellij.execution.junit.UniqueIdConfigurationProducer",
+          "com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer");
 
   private static final ImmutableList<Class<? extends RunConfigurationProducer<?>>> JAVA_PRODUCERS =
       ImmutableList.of(
@@ -111,6 +136,8 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
         .addAll(JAVA_PRODUCERS)
         .addAll(getProducers(KOTLIN_PLUGIN_ID, KOTLIN_PRODUCERS))
         .addAll(getProducers(ANDROID_PLUGIN_ID, ANDROID_PRODUCERS))
+        .addAll(getProducers(GRADLE_PLUGIN_ID, GRADLE_PRODUCERS))
+        .addAll(getProducers(JUNIT_PLUGIN_ID, OPTIONAL_JUNIT_PRODUCERS))
         .build()
         .forEach(producerService::addIgnoredProducer);
   }
