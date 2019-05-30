@@ -17,7 +17,6 @@ package com.google.idea.blaze.android.rendering;
 
 import static com.android.SdkConstants.ANDROID_MANIFEST_XML;
 
-import com.android.internal.util.Preconditions;
 import com.android.tools.idea.rendering.HtmlLinkManager;
 import com.android.tools.idea.rendering.RenderErrorContributor;
 import com.android.tools.idea.rendering.RenderLogger;
@@ -25,6 +24,7 @@ import com.android.tools.idea.rendering.RenderResult;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
 import com.android.tools.idea.ui.designer.EditorDesignSurface;
 import com.android.utils.HtmlBuilder;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SortedSetMultimap;
