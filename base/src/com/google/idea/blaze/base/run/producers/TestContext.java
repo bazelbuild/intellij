@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.PendingRunConfigurationContext;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
-import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -396,7 +395,6 @@ public abstract class TestContext implements RunConfigurationContext {
     private final ImmutableSet<ExecutorType> supportedExecutors;
     private ListenableFuture<RunConfigurationContext> contextFuture = null;
     private ListenableFuture<TargetInfo> targetFuture = null;
-    private TargetInfo target = null;
     private final ImmutableList.Builder<BlazeFlagsModification> blazeFlags =
         ImmutableList.builder();
     private String description = null;
@@ -412,21 +410,12 @@ public abstract class TestContext implements RunConfigurationContext {
     }
 
     public Builder setTarget(ListenableFuture<TargetInfo> future) {
-      if (future.isDone()) {
-        TargetInfo target = FuturesUtil.getIgnoringErrors(future);
-        if (target != null) {
-          this.target = target;
-        } else {
-          this.targetFuture = future;
-        }
-      } else {
-        this.targetFuture = future;
-      }
+      this.targetFuture = future;
       return this;
     }
 
     public Builder setTarget(TargetInfo target) {
-      this.target = target;
+      this.targetFuture = Futures.immediateFuture(target);
       return this;
     }
 
@@ -449,7 +438,7 @@ public abstract class TestContext implements RunConfigurationContext {
 
     public TestContext build() {
       if (contextFuture != null) {
-        Preconditions.checkState(targetFuture == null && target == null);
+        Preconditions.checkState(targetFuture == null);
         return new PendingAsyncTestContext(
             supportedExecutors,
             contextFuture,
@@ -458,10 +447,7 @@ public abstract class TestContext implements RunConfigurationContext {
             blazeFlags.build(),
             description);
       }
-      Preconditions.checkState(targetFuture == null ^ target == null);
-      if (target != null) {
-        return new KnownTargetTestContext(target, sourceElement, blazeFlags.build(), description);
-      }
+      Preconditions.checkState(targetFuture != null);
       return PendingAsyncTestContext.fromTargetFuture(
           supportedExecutors, targetFuture, sourceElement, blazeFlags.build(), description);
     }
