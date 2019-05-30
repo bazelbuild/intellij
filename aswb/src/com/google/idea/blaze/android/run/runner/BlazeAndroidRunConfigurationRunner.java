@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -73,19 +74,19 @@ public final class BlazeAndroidRunConfigurationRunner
   private final BlazeAndroidRunContext runContext;
   private final BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager;
   private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
-  private final int runConfigId;
+  private final RunConfiguration runConfig;
 
   public BlazeAndroidRunConfigurationRunner(
       Module module,
       BlazeAndroidRunContext runContext,
       BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager,
       BlazeAndroidRunConfigurationDebuggerManager debuggerManager,
-      int runConfigId) {
+      RunConfiguration runConfig) {
     this.module = module;
     this.runContext = runContext;
     this.deployTargetManager = deployTargetManager;
     this.debuggerManager = debuggerManager;
-    this.runConfigId = runConfigId;
+    this.runConfig = runConfig;
   }
 
   @Override
@@ -101,13 +102,19 @@ public final class BlazeAndroidRunConfigurationRunner
 
     boolean isDebug = executor instanceof DefaultDebugExecutor;
     AndroidSessionInfo info =
-        AndroidSessionInfoCompat.findOldSession(
-            project, null, runConfigId, env.getExecutionTarget());
+        AndroidSessionInfoCompat.findOldSession(project, null, runConfig, env.getExecutionTarget());
 
     BlazeAndroidDeviceSelector deviceSelector = runContext.getDeviceSelector();
     BlazeAndroidDeviceSelector.DeviceSession deviceSession =
         deviceSelector.getDevice(
-            project, facet, deployTargetManager, executor, env, info, isDebug, runConfigId);
+            project,
+            facet,
+            deployTargetManager,
+            executor,
+            env,
+            info,
+            isDebug,
+            runConfig.getUniqueID());
     if (deviceSession == null) {
       return null;
     }

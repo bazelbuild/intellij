@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.run;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -31,6 +32,7 @@ public class AndroidSessionInfoCompat {
       ProcessHandler processHandler,
       RunContentDescriptor descriptor,
       int uniqueId,
+      RunConfiguration runConfiguration,
       ExecutionEnvironment env) {
     return new AndroidSessionInfo(
         processHandler,
@@ -45,8 +47,9 @@ public class AndroidSessionInfoCompat {
   public static AndroidSessionInfo findOldSession(
       Project project,
       @Nullable Executor executor,
-      int runConfigId,
+      RunConfiguration runConfiguration,
       ExecutionTarget executionTarget) {
-    return AndroidSessionInfo.findOldSession(project, executor, runConfigId, executionTarget);
+    return AndroidSessionInfo.findOldSession(
+        project, executor, runConfiguration.getUniqueID(), executionTarget);
   }
 }

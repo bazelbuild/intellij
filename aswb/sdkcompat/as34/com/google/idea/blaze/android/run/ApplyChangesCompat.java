@@ -17,7 +17,10 @@ package com.google.idea.blaze.android.run;
 
 import com.android.tools.idea.run.tasks.ApplyChangesTask;
 import com.android.tools.idea.run.tasks.ApplyCodeChangesTask;
+import com.android.tools.idea.run.ui.ApplyChangesAction;
+import com.android.tools.idea.run.ui.CodeSwapAction;
 import com.google.common.collect.ImmutableMap;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.List;
@@ -42,5 +45,23 @@ public class ApplyChangesCompat {
   public static ApplyCodeChangesTask newApplyCodeChangesTask(
       Project project, ImmutableMap<String, List<File>> packages) {
     return new ApplyCodeChangesTask(project, packages);
+  }
+
+  /**
+   * Returns whether the env requests the apply changes action.
+   *
+   * <p>#api3.5
+   */
+  public static boolean isApplyChanges(ExecutionEnvironment env) {
+    return Boolean.TRUE.equals(env.getCopyableUserData(ApplyChangesAction.KEY));
+  }
+
+  /**
+   * Returns whether the env requests the apply code changes action.
+   *
+   * <p>#api3.5
+   */
+  public static boolean isApplyCodeChanges(ExecutionEnvironment env) {
+    return Boolean.TRUE.equals(env.getCopyableUserData(CodeSwapAction.KEY));
   }
 }

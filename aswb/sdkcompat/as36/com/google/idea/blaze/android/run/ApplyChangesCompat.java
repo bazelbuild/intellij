@@ -18,8 +18,7 @@ package com.google.idea.blaze.android.run;
 import com.android.tools.idea.deploy.DeploymentConfiguration;
 import com.android.tools.idea.run.tasks.ApplyChangesTask;
 import com.android.tools.idea.run.tasks.ApplyCodeChangesTask;
-import com.android.tools.idea.run.ui.ApplyChangesAction;
-import com.android.tools.idea.run.ui.CodeSwapAction;
+import com.android.tools.idea.run.util.SwapInfo;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
@@ -58,7 +57,8 @@ public class ApplyChangesCompat {
    * <p>#api3.5
    */
   public static boolean isApplyChanges(ExecutionEnvironment env) {
-    return Boolean.TRUE.equals(env.getCopyableUserData(ApplyChangesAction.KEY));
+    SwapInfo swapInfo = env.getUserData(SwapInfo.SWAP_INFO_KEY);
+    return swapInfo != null && swapInfo.getType() == SwapInfo.SwapType.APPLY_CHANGES;
   }
 
   /**
@@ -67,6 +67,7 @@ public class ApplyChangesCompat {
    * <p>#api3.5
    */
   public static boolean isApplyCodeChanges(ExecutionEnvironment env) {
-    return Boolean.TRUE.equals(env.getCopyableUserData(CodeSwapAction.KEY));
+    SwapInfo swapInfo = env.getUserData(SwapInfo.SWAP_INFO_KEY);
+    return swapInfo != null && swapInfo.getType() == SwapInfo.SwapType.APPLY_CODE_CHANGES;
   }
 }

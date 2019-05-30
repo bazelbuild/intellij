@@ -21,6 +21,7 @@ import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -65,8 +66,11 @@ public class BlazeAndroidTestProgramRunner extends DefaultProgramRunner {
           (runProfile instanceof RunConfigurationBase)
               ? ((RunConfigurationBase) runProfile).getUniqueID()
               : -1;
+      RunConfiguration runConfiguration =
+          (runProfile instanceof RunConfiguration) ? (RunConfiguration) runProfile : null;
       AndroidSessionInfo sessionInfo =
-          AndroidSessionInfoCompat.create(processHandler, descriptor, uniqueId, env);
+          AndroidSessionInfoCompat.create(
+              processHandler, descriptor, uniqueId, runConfiguration, env);
       processHandler.putUserData(AndroidSessionInfo.KEY, sessionInfo);
     }
 

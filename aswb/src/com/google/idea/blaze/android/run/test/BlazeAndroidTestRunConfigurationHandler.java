@@ -157,7 +157,7 @@ public class BlazeAndroidTestRunConfigurationHandler
         runContext,
         getCommonState().getDeployTargetManager(),
         getCommonState().getDebuggerManager(),
-        configuration.getUniqueID());
+        configuration);
   }
 
   private BlazeAndroidRunContext createRunContext(

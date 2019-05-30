@@ -21,6 +21,7 @@ import com.android.ddmlib.ClientData;
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.AndroidDebugState;
 import com.android.tools.idea.run.AndroidProcessText;
+import com.android.tools.idea.run.AndroidRunConfiguration;
 import com.android.tools.idea.run.AndroidRunConfigurationBase;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.android.tools.idea.run.ApkProvisionException;
@@ -37,6 +38,7 @@ import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RemoteConnection;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -221,9 +223,15 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
         runProfile instanceof AndroidRunConfigurationBase
             ? ((AndroidRunConfigurationBase) runProfile).getUniqueID()
             : -1;
+    RunConfiguration runConfiguration =
+        runProfile instanceof AndroidRunConfiguration ? (AndroidRunConfiguration) runProfile : null;
     AndroidSessionInfo value =
         AndroidSessionInfoCompat.create(
-            debugProcessHandler, debugDescriptor, uniqueId, currentLaunchInfo.env);
+            debugProcessHandler,
+            debugDescriptor,
+            uniqueId,
+            runConfiguration,
+            currentLaunchInfo.env);
     debugProcessHandler.putUserData(AndroidSessionInfo.KEY, value);
     debugProcessHandler.putUserData(AndroidSessionInfo.ANDROID_DEBUG_CLIENT, client);
     debugProcessHandler.putUserData(

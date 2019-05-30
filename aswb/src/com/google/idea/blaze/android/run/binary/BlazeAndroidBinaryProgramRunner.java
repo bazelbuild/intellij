@@ -22,6 +22,7 @@ import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.
 import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor;
 import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -69,8 +70,13 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
           (runProfile instanceof RunConfigurationBase)
               ? ((RunConfigurationBase) runProfile).getUniqueID()
               : -1;
+      RunConfiguration runConfiguration =
+          (runProfile instanceof RunConfiguration) ? (RunConfiguration) runProfile : null;
       AndroidSessionInfo sessionInfo =
-          AndroidSessionInfoCompat.create(processHandler, descriptor, uniqueId, env);
+          AndroidSessionInfoCompat.create(
+              processHandler, descriptor, uniqueId, runConfiguration, env);
+
+      // #api3.5: not needed (along with the "uniqueId" calculation once 3.6 is in stable)
       processHandler.putUserData(AndroidSessionInfo.KEY, sessionInfo);
     }
 

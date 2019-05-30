@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.run;
 
-import com.android.tools.idea.fd.InstantRunUtils;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.Executor;
@@ -35,21 +34,21 @@ public class AndroidSessionInfoCompat {
       int uniqueId,
       RunConfiguration runConfiguration,
       ExecutionEnvironment env) {
-    return new AndroidSessionInfo(
+    return AndroidSessionInfo.create(
         processHandler,
         descriptor,
-        uniqueId,
+        runConfiguration,
         env.getExecutor().getId(),
         env.getExecutor().getActionName(),
-        InstantRunUtils.isInstantRunEnabled(env));
+        env.getExecutionTarget());
   }
 
   // #api3.5
   public static AndroidSessionInfo findOldSession(
       Project project,
       @Nullable Executor executor,
-      RunConfiguration runConfig,
+      RunConfiguration runConfiguration,
       ExecutionTarget executionTarget) {
-    return AndroidSessionInfo.findOldSession(project, executor, runConfig.getUniqueID());
+    return AndroidSessionInfo.findOldSession(project, executor, runConfiguration, executionTarget);
   }
 }
