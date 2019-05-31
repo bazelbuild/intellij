@@ -234,9 +234,6 @@
         implementation="com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer"
         order="first" id="testContextProducer"/>
     <runConfigurationProducer
-        implementation="com.google.idea.blaze.base.run.producers.BlazeWebTestConfigurationProducer"
-        order="first, before testContextProducer"/>
-    <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.BinaryContextRunConfigurationProducer"
         order="first"/>
     <projectService serviceInterface="com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider"

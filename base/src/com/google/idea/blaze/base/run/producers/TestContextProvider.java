@@ -37,12 +37,4 @@ public interface TestContextProvider {
    */
   @Nullable
   RunConfigurationContext getTestContext(ConfigurationContext context);
-
-  /**
-   * Returns true if the provider handles test targets which can be wrapped by web_tests. Defaults
-   * to false.
-   */
-  default boolean webTestCompatible() {
-    return false;
-  }
 }

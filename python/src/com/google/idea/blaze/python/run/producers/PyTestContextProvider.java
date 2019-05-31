@@ -48,12 +48,6 @@ import javax.annotation.Nullable;
 
 /** Producer for run configurations related to python test classes in Blaze. */
 class PyTestContextProvider implements TestContextProvider {
-
-  @Override
-  public boolean webTestCompatible() {
-    return true;
-  }
-
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {

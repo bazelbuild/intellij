@@ -55,7 +55,7 @@ public abstract class TestContext implements RunConfigurationContext {
   final ImmutableList<BlazeFlagsModification> blazeFlags;
   @Nullable final String description;
 
-  private TestContext(
+  TestContext(
       PsiElement sourceElement,
       ImmutableList<BlazeFlagsModification> blazeFlags,
       @Nullable String description) {
@@ -120,10 +120,10 @@ public abstract class TestContext implements RunConfigurationContext {
   /** Returns true if the run configuration target matches this {@link TestContext}. */
   abstract boolean matchesTarget(BlazeCommandRunConfiguration config);
 
-  private static class KnownTargetTestContext extends TestContext {
+  static class KnownTargetTestContext extends TestContext {
     final TargetInfo target;
 
-    private KnownTargetTestContext(
+    KnownTargetTestContext(
         TargetInfo target,
         PsiElement sourceElement,
         ImmutableList<BlazeFlagsModification> blazeFlags,
@@ -171,7 +171,12 @@ public abstract class TestContext implements RunConfigurationContext {
                   return new FailedPendingRunConfiguration(
                       sourceElement, String.format("No %s target found.", buildSystem));
                 }
-                return new KnownTargetTestContext(t, sourceElement, blazeFlags, description);
+                RunConfigurationContext context =
+                    PendingWebTestContext.findWebTestContext(
+                        supportedExecutors, t, sourceElement, blazeFlags, description);
+                return context != null
+                    ? context
+                    : new KnownTargetTestContext(t, sourceElement, blazeFlags, description);
               },
               MoreExecutors.directExecutor());
       return new PendingAsyncTestContext(
@@ -230,7 +235,11 @@ public abstract class TestContext implements RunConfigurationContext {
         RunConfigurationContext context = getFutureHandlingErrors();
         boolean success = context.setupRunConfiguration(config);
         if (success) {
-          config.clearPendingContext();
+          if (config.getPendingContext() == this) {
+            // remove this pending context from the config since it is done
+            // however, if context became the new pending context, leave it alone
+            config.clearPendingContext();
+          }
           return true;
         }
       } catch (RunCanceledByUserException | NoRunConfigurationFoundException e) {

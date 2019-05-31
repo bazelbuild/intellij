@@ -51,11 +51,6 @@ class JavaTestContextProvider implements TestContextProvider {
     return fromClass(testClass);
   }
 
-  @Override
-  public boolean webTestCompatible() {
-    return true;
-  }
-
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {

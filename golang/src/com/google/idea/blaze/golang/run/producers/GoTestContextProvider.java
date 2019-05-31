@@ -31,12 +31,6 @@ import com.intellij.psi.PsiFile;
 import javax.annotation.Nullable;
 
 class GoTestContextProvider implements TestContextProvider {
-
-  @Override
-  public boolean webTestCompatible() {
-    return true;
-  }
-
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {

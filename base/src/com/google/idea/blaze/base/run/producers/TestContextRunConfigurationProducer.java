@@ -38,17 +38,11 @@ import javax.annotation.Nullable;
 public class TestContextRunConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
 
-  private final boolean onlyWebTestCompatible;
   private final Key<CachedValue<RunConfigurationContext>> cacheKey =
       Key.create(TestContextRunConfigurationProducer.class.getName() + "@" + this.hashCode());
 
   public TestContextRunConfigurationProducer() {
-    this(false);
-  }
-
-  TestContextRunConfigurationProducer(boolean onlyWebTestCompatible) {
     super(BlazeCommandRunConfigurationType.getInstance());
-    this.onlyWebTestCompatible = onlyWebTestCompatible;
   }
 
   @Nullable
@@ -73,7 +67,6 @@ public class TestContextRunConfigurationProducer
   @Nullable
   private RunConfigurationContext doFindTestContext(ConfigurationContext context) {
     return Arrays.stream(TestContextProvider.EP_NAME.getExtensions())
-        .filter(p -> !onlyWebTestCompatible || p.webTestCompatible())
         .map(p -> p.getTestContext(context))
         .filter(Objects::nonNull)
         .findFirst()
