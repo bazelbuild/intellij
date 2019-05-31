@@ -32,6 +32,7 @@ public class AutoSyncSettings implements PersistentStateComponent<AutoSyncSettin
   public boolean onlyAutoSyncWhenSyncingRemotely = true;
   public boolean autoSyncOnBuildChanges = false;
   public boolean autoSyncOnProtoChanges = false;
+  public boolean autoSyncOnVcsSync = false;
 
   public static AutoSyncSettings getInstance() {
     return ServiceManager.getService(AutoSyncSettings.class);
@@ -77,6 +78,7 @@ public class AutoSyncSettings implements PersistentStateComponent<AutoSyncSettin
               Boolean.toString(settings.onlyAutoSyncWhenSyncingRemotely))
           .put("autoSyncOnBuildChanges", Boolean.toString(settings.autoSyncOnBuildChanges))
           .put("autoSyncOnProtoChanges", Boolean.toString(settings.autoSyncOnProtoChanges))
+          .put("autoSyncOnVcsSync", Boolean.toString(settings.autoSyncOnVcsSync))
           .build();
     }
   }

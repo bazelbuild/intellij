@@ -43,10 +43,12 @@ public class AutoSyncSettingsConfigurable implements UnnamedConfigurable {
 
   private final JCheckBox resyncOnBuildFileChanges;
   private final JCheckBox resyncOnProtoChanges;
+  private final JCheckBox resyncOnVcsSync;
 
   private AutoSyncSettingsConfigurable(SearchableOptionsHelper helper) {
     resyncOnBuildFileChanges = helper.createSearchableCheckBox("BUILD file changes", true);
     resyncOnProtoChanges = helper.createSearchableCheckBox("Proto changes", true);
+    resyncOnVcsSync = helper.createSearchableCheckBox("VCS sync", true);
     panel = setupUi(helper);
   }
 
@@ -55,6 +57,7 @@ public class AutoSyncSettingsConfigurable implements UnnamedConfigurable {
     AutoSyncSettings settings = AutoSyncSettings.getInstance();
     settings.autoSyncOnBuildChanges = resyncOnBuildFileChanges.isSelected();
     settings.autoSyncOnProtoChanges = resyncOnProtoChanges.isSelected();
+    settings.autoSyncOnVcsSync = resyncOnVcsSync.isSelected();
   }
 
   @Override
@@ -62,13 +65,15 @@ public class AutoSyncSettingsConfigurable implements UnnamedConfigurable {
     AutoSyncSettings settings = AutoSyncSettings.getInstance();
     resyncOnBuildFileChanges.setSelected(settings.autoSyncOnBuildChanges);
     resyncOnProtoChanges.setSelected(settings.autoSyncOnProtoChanges);
+    resyncOnVcsSync.setSelected(settings.autoSyncOnVcsSync);
   }
 
   @Override
   public boolean isModified() {
     AutoSyncSettings settings = AutoSyncSettings.getInstance();
     return resyncOnBuildFileChanges.isSelected() != settings.autoSyncOnBuildChanges
-        || resyncOnProtoChanges.isSelected() != settings.autoSyncOnProtoChanges;
+        || resyncOnProtoChanges.isSelected() != settings.autoSyncOnProtoChanges
+        || resyncOnVcsSync.isSelected() != settings.autoSyncOnVcsSync;
   }
 
   @Override
@@ -82,7 +87,8 @@ public class AutoSyncSettingsConfigurable implements UnnamedConfigurable {
     panel.setBorder(IdeBorderFactory.createTitledBorder("Auto sync on:", /* hasIndent= */ true));
 
     panel.add(
-        UiUtil.createBox(resyncOnBuildFileChanges, resyncOnProtoChanges), BorderLayout.CENTER);
+        UiUtil.createBox(resyncOnBuildFileChanges, resyncOnProtoChanges, resyncOnVcsSync),
+        BorderLayout.CENTER);
 
     return panel;
   }

@@ -472,6 +472,7 @@
     <OutputArtifactParser implementation="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser$LocalFileParser"/>
     <BuildBatchingService implementation="com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder$LexicographicTargetSharder" order="last"/>
     <VcsSyncListener implementation="com.google.idea.blaze.base.prefetch.PrefetchVcsSyncListener"/>
+    <VcsSyncListener implementation="com.google.idea.blaze.base.sync.autosync.VcsAutoSyncProvider"/>
     <SettingsUiContributor implementation="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable$UiContributor" order="first" id="base"/>
     <SettingsUiContributor implementation="com.google.idea.blaze.base.sync.autosync.AutoSyncSettingsConfigurable$UiContributor"/>
   </extensions>

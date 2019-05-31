@@ -74,8 +74,8 @@ public class BlazeSyncManager {
       case STARTUP:
         return false;
       case FULL:
-      case INCREMENTAL:
         return true;
+      case INCREMENTAL:
       case PARTIAL:
         return !syncParams.backgroundSync;
     }

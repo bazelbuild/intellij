@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2019 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.sync;
+package com.google.idea.blaze.base.sync.autosync;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.vcs.VcsSyncListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 
-/** Syncs the project upon startup. */
-public class BlazeSyncStartupActivity implements StartupActivity {
+/**
+ * Optionally kicks off an automatic project-wide sync when changes to the base VCS commit are
+ * detected.
+ */
+class VcsAutoSyncProvider implements VcsSyncListener {
 
   @Override
-  public void runActivity(Project project) {
-    if (Blaze.isBlazeProject(project)) {
-      runSync(project);
+  public void onVcsSync(Project project) {
+    if (Blaze.isBlazeProject(project) && AutoSyncSettings.getInstance().autoSyncOnVcsSync) {
+      AutoSyncHandler.getInstance(project).queueIncrementalSync(syncParams());
     }
   }
 
-  private static void runSync(Project project) {
-    BlazeSyncManager.getInstance(project).requestProjectSync(startupSyncParams());
-  }
-
-  private static BlazeSyncParams startupSyncParams() {
-    return new BlazeSyncParams.Builder("Sync Project", SyncMode.STARTUP)
+  private static BlazeSyncParams syncParams() {
+    return new BlazeSyncParams.Builder(AutoSyncProvider.AUTO_SYNC_TITLE, SyncMode.INCREMENTAL)
         .addProjectViewTargets(true)
         .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+        .setBackgroundSync(true)
         .build();
   }
 }

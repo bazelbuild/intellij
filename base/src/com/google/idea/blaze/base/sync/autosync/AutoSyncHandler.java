@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.autosync;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -39,6 +40,8 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileMoveEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -51,6 +54,10 @@ class AutoSyncHandler implements ProjectComponent {
       new BoolExperiment("blaze.auto.sync.enabled", true);
 
   private static Logger logger = Logger.getInstance(AutoSyncHandler.class);
+
+  static AutoSyncHandler getInstance(Project project) {
+    return project.getComponent(AutoSyncHandler.class);
+  }
 
   private final PendingChangesHandler<VirtualFile> pendingChangesHandler =
       new PendingChangesHandler<VirtualFile>(/* delayMillis= */ 2000) {
@@ -82,14 +89,22 @@ class AutoSyncHandler implements ProjectComponent {
         .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileFocusListener());
   }
 
+  /**
+   * Kicks off an automatic incremental sync, clearing the auto-sync queue.
+   *
+   * <p>TODO(brendandouglas): move to a Topic-based push model.
+   */
+  void queueIncrementalSync(BlazeSyncParams syncParams) {
+    pendingChangesHandler.clearQueue();
+    queueSync(syncParams);
+  }
+
   private void handleFileChange(VirtualFile file) {
     boolean setDirty = false;
     for (AutoSyncProvider provider : AutoSyncProvider.EP_NAME.getExtensions()) {
       if (provider.isSyncSensitiveFile(project, file)) {
         setDirty = true;
-        if (autoSyncEnabled.getValue()) {
-          queueChangedFile(file);
-        }
+        queueChangedFile(file);
       }
     }
     if (setDirty) {
@@ -113,12 +128,26 @@ class AutoSyncHandler implements ProjectComponent {
         autoSyncParams = combineSyncParams(autoSyncParams, getSyncParams(provider, file));
       }
     }
-    if (autoSyncParams == null) {
-      return;
+    if (autoSyncParams != null) {
+      queueSync(autoSyncParams);
     }
-    logger.info("Automatic sync queued");
-    EventLoggingService.getInstance().logEvent(getClass(), "auto-sync");
-    BlazeSyncManager.getInstance(project).requestProjectSync(autoSyncParams);
+  }
+
+  private void queueSync(BlazeSyncParams syncParams) {
+    // all auto-syncs must have the 'backgroundSync' flag
+    syncParams = BlazeSyncParams.Builder.copy(syncParams).setBackgroundSync(true).build();
+    logSync(syncParams);
+    BlazeSyncManager.getInstance(project).requestProjectSync(syncParams);
+  }
+
+  private void logSync(BlazeSyncParams syncParams) {
+    Map<String, String> data = new HashMap<>();
+    data.put("syncMode", syncParams.syncMode.toString());
+    if (syncParams.syncMode == SyncMode.PARTIAL) {
+      data.put("targets", Joiner.on(',').join(syncParams.targetExpressions));
+    }
+    EventLoggingService.getInstance().logEvent(getClass(), "auto-sync", data);
+    logger.info("Automatic sync queued: " + syncParams.syncMode);
   }
 
   @Nullable
@@ -168,7 +197,7 @@ class AutoSyncHandler implements ProjectComponent {
       // cancel any pending auto-syncs if we're doing a project-wide sync
       if (!Blaze.getBuildSystemProvider(project).syncingRemotely()
           && (syncMode == SyncMode.INCREMENTAL || syncMode == SyncMode.FULL)) {
-        project.getComponent(AutoSyncHandler.class).pendingChangesHandler.clearQueue();
+        AutoSyncHandler.getInstance(project).pendingChangesHandler.clearQueue();
       }
     }
   }
@@ -177,22 +206,31 @@ class AutoSyncHandler implements ProjectComponent {
     @Override
     public void propertyChanged(VirtualFilePropertyEvent event) {
       if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
-        handleFileChange(event.getFile());
+        handleFileEvent(event);
       }
     }
 
     @Override
     public void fileCreated(VirtualFileEvent event) {
-      handleFileChange(event.getFile());
+      handleFileEvent(event);
     }
 
     @Override
     public void fileMoved(VirtualFileMoveEvent event) {
-      handleFileChange(event.getFile());
+      handleFileEvent(event);
     }
 
     @Override
     public void contentsChanged(VirtualFileEvent event) {
+      handleFileEvent(event);
+    }
+
+    private void handleFileEvent(VirtualFileEvent event) {
+      if (event.getRequestor() == null) {
+        // ignore events originating externally -- these are usually covered by
+        // VcsAutoSyncProvider, and we don't want to trigger endless auto-syncs from VCS syncs
+        return;
+      }
       handleFileChange(event.getFile());
     }
   }
