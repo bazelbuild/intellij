@@ -34,6 +34,10 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncListener
         implementation="com.google.idea.blaze.typescript.BlazeTypeScriptConfigServiceImpl$Updater"/>
+    <TestContextProvider
+        implementation="com.google.idea.blaze.javascript.run.producers.JavascriptTestContextProvider"/>
+    <TestTargetHeuristic
+        implementation="com.google.idea.blaze.javascript.run.producers.JavascriptTestTargetHeuristic"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">
