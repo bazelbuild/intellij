@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.producers.AllInPackageBlazeConfigurationProducer;
+import com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -41,10 +41,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link AllInPackageBlazeConfigurationProducer}. */
+/** Integration tests for {@link AllInPackageTestContextProvider}. */
 @RunWith(JUnit4.class)
-public class AllInPackageBlazeConfigurationProducerTest
-    extends BlazeRunConfigurationProducerTestCase {
+public class AllInPackageTestContextProviderTest extends BlazeRunConfigurationProducerTestCase {
 
   private ErrorCollector errorCollector;
   private BlazeContext context;
@@ -86,13 +85,13 @@ public class AllInPackageBlazeConfigurationProducerTest
     assertThat(configurations).hasSize(1);
 
     ConfigurationFromContext fromContext = configurations.get(0);
-    assertThat(fromContext.isProducedBy(AllInPackageBlazeConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
     assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test/...:all"));
+        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:all"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 
@@ -104,7 +103,7 @@ public class AllInPackageBlazeConfigurationProducerTest
 
     ConfigurationContext context = createContextFromPsi(directory);
 
-    AllInPackageBlazeConfigurationProducer producer = new AllInPackageBlazeConfigurationProducer();
+    TestContextRunConfigurationProducer producer = new TestContextRunConfigurationProducer();
     assertThat(producer.createConfigurationFromContext(context)).isNull();
   }
 }

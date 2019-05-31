@@ -237,9 +237,6 @@
         implementation="com.google.idea.blaze.base.run.producers.BlazeWebTestConfigurationProducer"
         order="first, before testContextProducer"/>
     <runConfigurationProducer
-        implementation="com.google.idea.blaze.base.run.producers.AllInPackageBlazeConfigurationProducer"
-        order="first"/>
-    <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.BinaryContextRunConfigurationProducer"
         order="first"/>
     <projectService serviceInterface="com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider"
@@ -471,6 +468,7 @@
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.sync.autosync.AutoSyncSettings$SettingsLogger" order="after BlazeUserSettingsLogger"/>
     <TargetKindProvider implementation="com.google.idea.blaze.base.model.primitives.GenericBlazeRules"/>
     <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.OutsideProjectTestContextProvider"/>
+    <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.AllInPackageTestContextProvider"/>
     <OutputArtifactParser implementation="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser$LocalFileParser"/>
     <BuildBatchingService implementation="com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder$LexicographicTargetSharder" order="last"/>
     <VcsSyncListener implementation="com.google.idea.blaze.base.prefetch.PrefetchVcsSyncListener"/>

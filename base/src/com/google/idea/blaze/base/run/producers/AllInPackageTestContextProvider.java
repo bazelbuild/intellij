@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2019 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,7 @@ import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -31,40 +28,16 @@ import java.io.File;
 import javax.annotation.Nullable;
 
 /** Runs all tests in a single selected blaze package directory. */
-public class AllInPackageBlazeConfigurationProducer
-    extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
-
-  public AllInPackageBlazeConfigurationProducer() {
-    super(BlazeCommandRunConfigurationType.getInstance());
-  }
-
-  @Override
-  protected boolean doSetupConfigFromContext(
-      BlazeCommandRunConfiguration configuration,
-      ConfigurationContext context,
-      Ref<PsiElement> sourceElement) {
-    RunConfigurationContext testContext = getTestContext(context);
-    if (testContext == null) {
-      return false;
-    }
-    sourceElement.set(testContext.getSourceElement());
-    return testContext.setupRunConfiguration(configuration);
-  }
-
-  @Override
-  protected boolean doIsConfigFromContext(
-      BlazeCommandRunConfiguration configuration, ConfigurationContext context) {
-    RunConfigurationContext testContext = getTestContext(context);
-    return testContext != null && testContext.matchesRunConfiguration(configuration);
-  }
+class AllInPackageTestContextProvider implements TestContextProvider {
 
   @Nullable
-  private static RunConfigurationContext getTestContext(ConfigurationContext context) {
-    WorkspaceRoot root = WorkspaceRoot.fromProject(context.getProject());
+  @Override
+  public RunConfigurationContext getTestContext(ConfigurationContext context) {
     PsiElement location = context.getPsiLocation();
     if (!(location instanceof PsiDirectory)) {
       return null;
     }
+    WorkspaceRoot root = WorkspaceRoot.fromProject(context.getProject());
     PsiDirectory dir = (PsiDirectory) location;
     if (!isInWorkspace(root, dir)) {
       return null;
@@ -81,7 +54,7 @@ public class AllInPackageBlazeConfigurationProducer
       return null;
     }
     return RunConfigurationContext.fromKnownTarget(
-        TargetExpression.allFromPackageRecursive(packagePath), BlazeCommandName.TEST, dir);
+        TargetExpression.allFromPackageNonRecursive(packagePath), BlazeCommandName.TEST, dir);
   }
 
   @Nullable
