@@ -78,6 +78,9 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
     }
     // refresh experiments synchronously; some callers require a valid initial state on startup
     refreshExperiments();
+
+    // then kick off the periodic refresh task
+    scheduleRefresh(REFRESH_FREQUENCY);
   }
 
   @Override
