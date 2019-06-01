@@ -28,6 +28,7 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.transactions.Transactions;
 import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
@@ -49,7 +50,7 @@ import javax.annotation.Nullable;
 public class BlazeAttachSourceProvider implements AttachSourcesProvider {
 
   private static final BoolExperiment attachAutomatically =
-      new BoolExperiment("blaze.attach.source.jars.automatically.2", true);
+      new BoolExperiment("blaze.attach.source.jars.automatically.3", true);
 
   @Override
   public Collection<AttachSourcesAction> getActions(
@@ -95,12 +96,13 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
     // background.
     if (attachAutomatically.getValue()) {
       ActionCallback callback = new ActionCallback().doWhenDone(() -> navigateToSource(psiFile));
-      Transactions.submitTransaction(
-          project,
-          () -> {
-            attachSources(project, blazeProjectData, librariesToAttachSourceTo);
-            callback.setDone();
-          });
+      TransactionGuard.getInstance()
+          .submitTransactionLater(
+              project,
+              () -> {
+                attachSources(project, blazeProjectData, librariesToAttachSourceTo);
+                callback.setDone();
+              });
       return ImmutableList.of();
     }
 
@@ -120,13 +122,12 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
           public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
             ActionCallback callback =
                 new ActionCallback().doWhenDone(() -> navigateToSource(psiFile));
-            ApplicationManager.getApplication()
-                .getInvokator()
-                .invokeLater(
-                    () -> {
-                      attachSources(project, blazeProjectData, librariesToAttachSourceTo);
-                      callback.setDone();
-                    });
+            Transactions.submitTransaction(
+                project,
+                () -> {
+                  attachSources(project, blazeProjectData, librariesToAttachSourceTo);
+                  callback.setDone();
+                });
             return callback;
           }
         });
