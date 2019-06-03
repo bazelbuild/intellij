@@ -34,9 +34,15 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper;
+import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
+import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -74,23 +80,13 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
       if (resolver == null) {
         continue;
       }
-      PsiElement psi = resolver.get(psiManager);
+      PsiElement psi = PyUtil.turnDirIntoInit(resolver.get(psiManager));
       if (psi == null) {
         continue;
       }
       PsiFile file = psi.getContainingFile();
       if (file != null) {
         quickFix.addImport(psi, file, candidate.removeLastComponent());
-        continue;
-      }
-      // If import string is a package then find "__init__.py".
-      PsiElement child = psi.getFirstChild();
-      if (child == null) {
-        continue;
-      }
-      PsiFile pkgFile = child.getContainingFile();
-      if (pkgFile != null) {
-        quickFix.addImport(psi, pkgFile, candidate.removeLastComponent());
       }
     }
   }
