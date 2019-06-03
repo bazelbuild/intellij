@@ -27,6 +27,7 @@
         implementation="com.google.idea.blaze.scala.run.producers.ScalaSpecs2TestContextProvider"
         order="before JavaTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.scala.run.producers.ScalaBinaryContextProvider"/>
+    <SyncStatusContributor implementation="com.google.idea.blaze.scala.sync.ScalaSyncStatusContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
