@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.google.idea.blaze.base.run.producers.TestContext;
 import com.google.idea.blaze.base.run.producers.TestContextProvider;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.lang.javascript.frameworks.gcl.JSGclModuleReference;
 import com.intellij.lang.javascript.psi.JSCallExpression;
 import com.intellij.lang.javascript.psi.JSExpression;
 import com.intellij.lang.javascript.psi.JSExpressionStatement;
@@ -105,35 +106,78 @@ class JavascriptTestContextProvider implements TestContextProvider {
    * and call the imported symbol as a top level statement.
    */
   private static boolean isClosureTestSuite(JSFile file) {
-    JSVariable testSuite = null;
+    PsiElement testSuite = null;
     for (PsiElement element : file.getChildren()) {
-      if (testSuite == null && element instanceof JSVarStatement) {
-        JSVariable variable = PsiTreeUtil.getChildOfType(element, JSVariable.class);
-        if (Optional.ofNullable(variable)
-            .map(v -> PsiTreeUtil.getChildOfType(v, JSCallExpression.class))
-            .filter(call -> Objects.equals(call.getMethodExpression().getText(), "goog.require"))
-            .map(JSCallExpression::getArguments)
-            .filter(arguments -> arguments.length == 1)
-            .map(arguments -> arguments[0])
-            .filter(JSLiteralExpression.class::isInstance)
-            .map(JSLiteralExpression.class::cast)
-            .filter(literal -> Objects.equals(literal.getStringValue(), "goog.testing.testSuite"))
-            .isPresent()) {
-          testSuite = variable;
-        }
-      } else if (testSuite != null && element instanceof JSExpressionStatement) {
-        JSVariable finalTestSuite = testSuite;
-        if (Optional.ofNullable(PsiTreeUtil.getChildOfType(element, JSCallExpression.class))
-            .map(JSCallExpression::getMethodExpression)
-            .map(JSExpression::getReference)
-            .map(PsiReference::resolve)
-            .filter(reference -> reference == finalTestSuite)
-            .isPresent()) {
+      if (testSuite == null) {
+        testSuite = findTestSuiteReference(element);
+      } else {
+        if (isTestSuiteCalled(testSuite, element)) {
           return true;
         }
       }
     }
     return false;
+  }
+
+  @Nullable
+  private static PsiElement findTestSuiteReference(PsiElement element) {
+    if (element instanceof JSVarStatement) {
+      // variable assignment might be
+      // testSuite = goog.require('goog.testing.testSuite')
+      JSVariable variable = PsiTreeUtil.getChildOfType(element, JSVariable.class);
+      if (variable != null && isImportingTestSuite(variable)) {
+        return variable;
+      }
+    } else if (element instanceof JSExpressionStatement) {
+      // expression statement might be
+      // goog.require('goog.testing.testSuite')
+      if (isImportingTestSuite(element)) {
+        JSLiteralExpression literal =
+            PsiTreeUtil.findChildOfType(element, JSLiteralExpression.class);
+        // this should be 'goog.testing.testSuite'
+        if (literal == null) {
+          return null;
+        }
+        for (PsiReference reference : literal.getReferences()) {
+          if (reference instanceof JSGclModuleReference) {
+            // this should be testSuite, and should resolve to the function
+            return reference.resolve();
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isTestSuiteCalled(PsiElement testSuite, PsiElement element) {
+    if (!(element instanceof JSExpressionStatement)) {
+      return false;
+    }
+    JSCallExpression call = PsiTreeUtil.getChildOfType(element, JSCallExpression.class);
+    if (call == null) {
+      return false;
+    }
+    PsiReference reference = call.getMethodExpression().getReference();
+    if (reference == null) {
+      return false;
+    }
+    return reference.resolve() == testSuite;
+  }
+
+  private static boolean isImportingTestSuite(PsiElement element) {
+    JSCallExpression call = PsiTreeUtil.getChildOfType(element, JSCallExpression.class);
+    if (call == null || !Objects.equals(call.getMethodExpression().getText(), "goog.require")) {
+      return false;
+    }
+    JSExpression[] arguments = call.getArguments();
+    if (arguments.length != 1) {
+      return false;
+    }
+    if (!(arguments[0] instanceof JSLiteralExpression)) {
+      return false;
+    }
+    JSLiteralExpression literal = (JSLiteralExpression) arguments[0];
+    return Objects.equals(literal.getStringValue(), "goog.testing.testSuite");
   }
 
   private static String getTestFilter(PsiFile file) {

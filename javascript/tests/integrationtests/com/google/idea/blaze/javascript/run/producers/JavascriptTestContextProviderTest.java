@@ -65,6 +65,31 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
   }
 
   @Test
+  public void testOldStyleClosureTestSuite() {
+    createAndIndexFile(
+        WorkspacePath.createIfValid("javascript/closure/testing/testsuite.js"),
+        "goog.provide('goog.testing.testSuite');",
+        "goog.setTestOnly('goog.testing.testSuite');",
+        "goog.testing.testSuite = function(obj, opt_options) {}");
+
+    PsiFile jsTestFile =
+        configure(
+            ImmutableList.of("chrome-linux"),
+            "goog.require('goog.testing.testSuite');",
+            "goog.testing.testSuite({",
+            "  testFoo() {},",
+            "});");
+
+    ConfigurationContext context = createContextFromPsi(jsTestFile);
+    ConfigurationFromContext configurationFromContext = getConfigurationFromContext(context);
+
+    BlazeCommandRunConfiguration configuration = getBlazeRunConfiguration(configurationFromContext);
+    assertThat(configuration.getTargetKind()).isEqualTo(RuleTypes.WEB_TEST.getKind());
+    assertThat(configuration.getTarget())
+        .isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test_chrome-linux"));
+  }
+
+  @Test
   public void testTopLevelFunctions() {
     PsiFile jsTestFile = configure(ImmutableList.of("chrome-linux"), "function testFoo() {}");
 
