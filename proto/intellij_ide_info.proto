@@ -184,6 +184,11 @@ message TargetIdeInfo {
   repeated string features = 6;
   TestInfo test_info = 7;
 
+  // The time this target was most recently synced, in milliseconds since epoch.
+  // Not provided by the aspect directly; instead filled in by the plugin during
+  // sync.
+  int64 sync_time_millis = 20;
+
   JavaIdeInfo java_ide_info = 100;
   JavaToolchainIdeInfo java_toolchain_ide_info = 101;
 
