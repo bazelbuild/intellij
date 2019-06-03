@@ -230,7 +230,13 @@ final class SyncPhaseCoordinator {
       SaveUtil.saveAllFiles();
       onSyncStart(project, context, params.syncMode);
       if (params.syncMode == SyncMode.STARTUP) {
-        finishSync(params, startTime, context, SyncResult.SUCCESS, SyncStats.builder());
+        finishSync(
+            params,
+            startTime,
+            context,
+            ProjectViewManager.getInstance(project).getProjectViewSet(),
+            SyncResult.SUCCESS,
+            SyncStats.builder());
         return;
       }
       BlazeSyncBuildResult buildResult = BuildPhaseSyncTask.runBuildPhase(project, params, context);
@@ -244,7 +250,13 @@ final class SyncPhaseCoordinator {
       }
     } catch (Throwable e) {
       logSyncError(context, e);
-      finishSync(params, startTime, context, SyncResult.FAILURE, SyncStats.builder());
+      finishSync(
+          params,
+          startTime,
+          context,
+          ProjectViewManager.getInstance(project).getProjectViewSet(),
+          SyncResult.FAILURE,
+          SyncStats.builder());
     }
   }
 
@@ -318,7 +330,14 @@ final class SyncPhaseCoordinator {
     } catch (Throwable e) {
       logSyncError(context, e);
     } finally {
-      finishSync(updateTask.syncParams, updateTask.startTime, context, syncResult, stats);
+      SyncProjectState projectState = updateTask.buildResult.getProjectState();
+      finishSync(
+          updateTask.syncParams,
+          updateTask.startTime,
+          context,
+          projectState != null ? projectState.getProjectViewSet() : null,
+          syncResult,
+          stats);
     }
   }
 
@@ -332,19 +351,20 @@ final class SyncPhaseCoordinator {
       BlazeSyncParams syncParams,
       Instant startTime,
       BlazeContext context,
+      @Nullable ProjectViewSet projectViewSet,
       SyncResult syncResult,
       SyncStats.Builder stats) {
     try {
       if (syncResult.successful()) {
-        ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-        BlazeProjectData blazeProjectData =
+        Preconditions.checkNotNull(projectViewSet);
+        BlazeProjectData projectData =
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
         if (syncParams.syncMode != SyncMode.NO_BUILD) {
           stats.addTimedEvents(
               updateInMemoryState(
-                  project, context, projectViewSet, blazeProjectData, syncParams.syncMode));
+                  project, context, projectViewSet, projectData, syncParams.syncMode));
         }
-        onSyncComplete(project, context, projectViewSet, blazeProjectData, syncParams, syncResult);
+        onSyncComplete(project, context, projectViewSet, projectData, syncParams, syncResult);
       }
       stats
           .setSyncMode(syncParams.syncMode)
