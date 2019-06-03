@@ -42,4 +42,7 @@ public interface FileCache {
 
   /** Called after a build operation to refresh any updated files. */
   void refreshFiles(Project project, BlazeContext context);
+
+  /** Called after project open to deserialize the cache state. */
+  void initialize(Project project, BlazeProjectData projectData, ProjectViewSet projectViewSet);
 }

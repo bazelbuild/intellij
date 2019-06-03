@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import java.util.Arrays;
 import javax.annotation.Nullable;
 
 /** Static helper methods to update file caches. */
@@ -62,5 +63,12 @@ public class FileCaches {
               }
               LocalFileSystem.getInstance().refresh(true);
             });
+  }
+
+  /** Called after project open to deserialize the cache state. */
+  public static void initialize(
+      Project project, BlazeProjectData projectData, ProjectViewSet projectViewSet) {
+    Arrays.stream(FileCache.EP_NAME.getExtensions())
+        .forEach(c -> c.initialize(project, projectData, projectViewSet));
   }
 }

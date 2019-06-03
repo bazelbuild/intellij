@@ -148,12 +148,9 @@ public class JarCache {
     // TODO(brendandouglas): add a mechanism for removing missing files for partial syncs
     boolean removeMissingFiles = syncMode == SyncMode.INCREMENTAL;
 
-    InMemoryState inMemoryState = readState(projectViewSet, projectData);
-    this.inMemoryState = inMemoryState;
-
     refresh(
         context,
-        inMemoryState,
+        readState(projectViewSet, projectData),
         RemoteOutputArtifacts.fromProjectData(oldProjectData),
         removeMissingFiles);
   }
@@ -230,6 +227,7 @@ public class JarCache {
     }
   }
 
+  /** Deserialize state from disk, setting {@link #inMemoryState}. */
   private InMemoryState readState(ProjectViewSet projectViewSet, BlazeProjectData projectData) {
     List<LibraryArtifact> jarLibraries =
         BlazeLibraryCollector.getLibraries(projectViewSet, projectData).stream()
@@ -248,7 +246,9 @@ public class JarCache {
         newOutputs.put(cacheKeyForSourceJar(srcJar), srcJar);
       }
     }
-    return new InMemoryState(ImmutableMap.copyOf(newOutputs));
+    InMemoryState state = new InMemoryState(ImmutableMap.copyOf(newOutputs));
+    this.inMemoryState = state;
+    return state;
   }
 
   private Collection<ListenableFuture<?>> copyLocally(Map<String, OutputArtifact> updated) {
@@ -397,6 +397,14 @@ public class JarCache {
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       getInstance(project).refresh(context, projectData);
+    }
+
+    @Override
+    public void initialize(
+        Project project, BlazeProjectData projectData, ProjectViewSet projectViewSet) {
+      JarCache cache = getInstance(project);
+      cache.updateEnabled();
+      cache.readState(projectViewSet, projectData);
     }
   }
 }

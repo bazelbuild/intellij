@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.prefetch;
 
+import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -32,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import javax.annotation.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 /** Run prefetching on project open, prior to initial indexing step. */
 public class PrefetchProjectInitializer implements ApplicationComponent {
@@ -62,9 +64,19 @@ public class PrefetchProjectInitializer implements ApplicationComponent {
     if (!Blaze.isBlazeProject(project)) {
       return;
     }
-    RemoteOutputsCache.getInstance(project).initialize();
     BlazeProjectData projectData = getBlazeProjectData(project);
     ProjectViewSet projectViewSet = getProjectViewSet(project);
+    PrefetchIndexingTask.submitPrefetchingTask(
+        project,
+        PooledThreadExecutor.INSTANCE.submit(
+            () -> {
+              RemoteOutputsCache.getInstance(project).initialize();
+              if (projectViewSet != null) {
+                FileCaches.initialize(project, projectData, projectViewSet);
+              }
+            }),
+        "Reading local caches");
+
     if (projectViewSet == null) {
       return;
     }

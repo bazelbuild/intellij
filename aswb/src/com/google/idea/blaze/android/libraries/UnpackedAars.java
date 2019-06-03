@@ -141,12 +141,9 @@ public class UnpackedAars {
 
     // TODO(brendandouglas): add a mechanism for removing missing files for partial syncs
     boolean removeMissingFiles = syncMode == SyncMode.INCREMENTAL;
-    InMemoryState inMemoryState = readState(projectViewSet, projectData);
-    this.inMemoryState = inMemoryState;
-
     refresh(
         context,
-        inMemoryState,
+        readState(projectViewSet, projectData),
         RemoteOutputArtifacts.fromProjectData(oldProjectData),
         removeMissingFiles);
   }
@@ -325,8 +322,15 @@ public class UnpackedAars {
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       getInstance(project).refresh(context, projectData);
     }
+
+    @Override
+    public void initialize(
+        Project project, BlazeProjectData projectData, ProjectViewSet projectViewSet) {
+      getInstance(project).readState(projectViewSet, projectData);
+    }
   }
 
+  /** Deserialize state from disk, setting {@link #inMemoryState}. */
   private InMemoryState readState(ProjectViewSet projectViewSet, BlazeProjectData projectData) {
     Collection<BlazeLibrary> libraries =
         BlazeLibraryCollector.getLibraries(projectViewSet, projectData);
@@ -351,7 +355,9 @@ public class UnpackedAars {
       }
       outputs.put(cacheKeyForAar(aar), new AarAndJar(aar, jar));
     }
-    return new InMemoryState(ImmutableMap.copyOf(outputs));
+    InMemoryState state = new InMemoryState(ImmutableMap.copyOf(outputs));
+    this.inMemoryState = state;
+    return state;
   }
 
   private static final String STAMP_FILE_NAME = "aar.timestamp";
