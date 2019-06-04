@@ -180,8 +180,8 @@ jvm_maven_import_external(
 
 jvm_maven_import_external(
     name = "truth",
-    artifact = "com.google.truth:truth:0.30",
-    artifact_sha256 = "f4a4c5e69c4994b750ce3ee80adbb2b7150fe39f057d7dff89832c8ca3af512e",
+    artifact = "com.google.truth:truth:0.45",
+    artifact_sha256 = "0f7dced2a16e55a77e44fc3ff9c5be98d4bf4bb30abc18d78ffd735df950a69f",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["http://central.maven.org/maven2"],
 )
