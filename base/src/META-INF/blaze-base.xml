@@ -104,6 +104,7 @@
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="HelpMenu"/>
       <group id ="Blaze.SyncMenuGroup" text="_Sync" popup="true">
         <reference id="Blaze.IncrementalSyncProject"/>
+        <reference id="Blaze.FullSyncProject"/>
         <reference id="Blaze.SyncWorkingSet"/>
         <reference id="Blaze.PartialSync"/>
         <reference id="Blaze.UpdateDirectories"/>
