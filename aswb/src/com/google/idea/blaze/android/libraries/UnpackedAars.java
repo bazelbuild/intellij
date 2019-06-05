@@ -238,18 +238,27 @@ public class UnpackedAars {
     return new File(aarDir, SdkConstants.FD_RES);
   }
 
+  /** Returns the res/ directory corresponding to an unpacked AAR file. */
   @Nullable
-  public File getAarDir(ArtifactLocationDecoder decoder, AarLibrary library) {
+  public File getResourceDirectory(String cacheKey) {
+    File aarDir = getAarDir(cacheKey);
+    return aarDir == null ? aarDir : new File(aarDir, SdkConstants.FD_RES);
+  }
+
+  @Nullable
+  public File getAarDir(String cacheKey) {
     InMemoryState inMemoryState = this.inMemoryState;
-    OutputArtifact artifact = decoder.resolveOutput(library.aarArtifact);
-    if (inMemoryState == null) {
-      return null;
-    }
-    String cacheKey = cacheKeyForAar(artifact);
-    if (!inMemoryState.projectOutputs.containsKey(cacheKey)) {
+    if (inMemoryState == null || !inMemoryState.projectOutputs.containsKey(cacheKey)) {
       return null;
     }
     return aarDirForKey(cacheKey);
+  }
+
+  @Nullable
+  public File getAarDir(ArtifactLocationDecoder decoder, AarLibrary library) {
+    OutputArtifact artifact = decoder.resolveOutput(library.aarArtifact);
+    String cacheKey = cacheKeyForAar(artifact);
+    return getAarDir(cacheKey);
   }
 
   private File aarDirForKey(String key) {
@@ -286,11 +295,14 @@ public class UnpackedAars {
   }
 
   private static String cacheKeyForAar(OutputArtifact aar) {
-    return cacheKeyInternal(aar) + SdkConstants.DOT_AAR;
+    return cacheKeyForAar(aar.getKey());
   }
 
-  private static String cacheKeyInternal(OutputArtifact output) {
-    String key = output.getKey();
+  public static String cacheKeyForAar(String key) {
+    return cacheKeyInternal(key) + SdkConstants.DOT_AAR;
+  }
+
+  private static String cacheKeyInternal(String key) {
     String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(key));
     return name + "_" + Integer.toHexString(key.hashCode());
   }

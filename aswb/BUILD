@@ -120,8 +120,23 @@ intellij_integration_test_suite(
     name = "normal_integration_tests",
     srcs = glob(
         ["tests/integrationtests/**/*.java"],
-        exclude = ["tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java"],
-    ),
+        exclude = [
+            "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",
+            "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
+            "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
+        ],
+    ) + select_for_plugin_api({
+        "default": [],
+        # These two tests are not compatible with 3.4. Remove this selection when latest point to 3.5
+        "android-studio-3.5": [
+            "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
+            "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
+        ],
+        "android-studio-3.6": [
+            "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
+            "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
+        ],
+    }),
     platform_prefix = "AndroidStudio",
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",

@@ -22,8 +22,11 @@ import static org.mockito.Mockito.when;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sdk.MockBlazeSdkProvider;
 import com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
+import com.google.idea.blaze.base.sync.JdepsFileWriter;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -40,8 +43,15 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
     return false;
   }
 
+  @Override
+  protected final BuildSystem buildSystem() {
+    return BuildSystem.Bazel;
+  }
+
   public void setTargetMap(NbTargetBuilder... builders) {
-    setTargetMap(targetMap(builders));
+    TargetMap targetMap = targetMap(builders);
+    setTargetMap(targetMap);
+    JdepsFileWriter.writeDefaultJdepsFiles(workspace, targetMap);
   }
 
   public static void mockSdk(String targetHash, String sdkName) {

@@ -107,9 +107,7 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
         targetMap(
             android_library("//java/com/google:lib")
                 .java_toolchain_version("8")
-                .manifest("AndroidManifest.xml")
                 .res("res/values/strings.xml")
-                .res_java_package("com.google")
                 .src("Source.java", "Other.java"));
 
     setTargetMap(targetMap);

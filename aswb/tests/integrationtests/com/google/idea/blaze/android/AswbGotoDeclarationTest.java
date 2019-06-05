@@ -16,13 +16,23 @@
 package com.google.idea.blaze.android;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.android.targetmapbuilder.NbAarTarget.aar_import;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_library;
 
+import com.android.tools.idea.res.AarResourceRepositoryCache;
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
+import com.google.idea.blaze.android.libraries.UnpackedAars;
+import com.google.idea.blaze.android.targetmapbuilder.NbAarTarget;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.io.URLUtil;
+import java.io.File;
 import org.jetbrains.android.dom.wrappers.LazyValueResourceElementWrapper;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +50,11 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
         "  //java/com/foo/gallery/activities:activities",
         "android_sdk_platform: android-27");
     mockSdk("android-27", "Android 27 SDK");
+  }
+
+  @After
+  public void clearAarCache() {
+    AarResourceRepositoryCache.getInstance().clear();
   }
 
   @Test
@@ -75,23 +90,12 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
         android_library("//java/com/foo/gallery/activities:activities")
             .src("MainActivity.java")
             .dep("//java/com/foo/libs:libs")
-            .res_java_package("com.foo.gallery.activities")
             .res("res"),
-        android_library("//java/com/foo/libs:libs").res_java_package("com.foo.libs").res("res"));
+        android_library("//java/com/foo/libs:libs").res("res"));
     runFullBlazeSync();
 
     testFixture.configureFromExistingVirtualFile(mainActivity);
-    int referenceIndex =
-        testFixture.getEditor().getDocument().getText().indexOf("R.style.Base_Highlight");
-
-    PsiElement foundElement =
-        GotoDeclarationAction.findTargetElement(
-            getProject(), testFixture.getEditor(), referenceIndex);
-    foundElement = LazyValueResourceElementWrapper.computeLazyElement(foundElement);
-
-    assertThat(foundElement).isNotNull();
-    assertThat(foundElement.getContainingFile()).isNotNull();
-    assertThat(foundElement.getContainingFile().getVirtualFile()).isEqualTo(stylesXml);
+    assertGotoDeclarationOpensFile("R.style.Base_Highlight", stylesXml);
   }
 
   @Test
@@ -122,19 +126,167 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
     setTargetMap(
         android_library("//java/com/foo/gallery/activities:activities")
             .src("MainActivity.java")
-            .res_java_package("com.foo.gallery.activities")
             .res("res"));
     runFullBlazeSync();
 
     testFixture.configureFromExistingVirtualFile(mainActivity);
-    int referenceIndex = testFixture.getEditor().getDocument().getText().indexOf("R.menu.settings");
+    assertGotoDeclarationOpensFile("R.menu.settings", settingsXml);
+  }
 
+  @Test
+  public void gotoDeclaration_fromSrcToAarResources() {
+    VirtualFile mainActivity =
+        workspace.createFile(
+            new WorkspacePath("java/com/foo/gallery/activities/MainActivity.java"),
+            "package com.foo.gallery.activities",
+            "import android.app.Activity;",
+            "public class MainActivity extends Activity {",
+            "  public void referenceResources() {",
+            "    System.out.println(R.color.aarColor);",
+            "    System.out.println(R.layout.activity_aar);",
+            "  }",
+            "}");
+
+    NbAarTarget aarTarget =
+        aar_import("//third_party/aar:lib_aar")
+            .aar("lib_aar.aar")
+            .generated_jar("classes_and_libs_merged.jar");
+
+    File aarLibraryFile =
+        AarLibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
+            .src(
+                "res/layout/activity_aar.xml",
+                ImmutableList.of(
+                    "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
+                    "<RelativeLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"",
+                    "    xmlns:tools=\"http://schemas.android.com/tools\"",
+                    "    android:layout_width=\"fill_parent\"",
+                    "    android:layout_height=\"fill_parent\"",
+                    "    android:paddingLeft=\"16dp\"",
+                    "    android:paddingRight=\"16dp\"",
+                    "    tools:context=\".MainActivity\" >",
+                    "</RelativeLayout>"))
+            .src(
+                "res/values/colors.xml",
+                ImmutableList.of(
+                    "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
+                    "<resources>",
+                    "    <color name=\"aarColor\">#ffffff</color>",
+                    "</resources>"))
+            .build();
+
+    setTargetMap(
+        android_library("//java/com/foo/gallery/activities:activities")
+            .src("MainActivity.java")
+            .dep("//third_party/aar:lib_aar")
+            .res("res"),
+        aarTarget);
+    runFullBlazeSync();
+    VirtualFile aarColorXml = getResourceFile(aarLibraryFile, "values/colors.xml");
+    VirtualFile aarLayoutXml = getResourceFile(aarLibraryFile, "layout/activity_aar.xml");
+    testFixture.configureFromExistingVirtualFile(mainActivity);
+    assertGotoDeclarationOpensFile("R.color.aarColor", aarColorXml);
+    assertGotoDeclarationOpensFile("R.layout.activity_aar", aarLayoutXml);
+  }
+
+  @Test
+  public void gotoDeclaration_fromResourceToAarResources() {
+    VirtualFile colorXml =
+        workspace.createFile(
+            new WorkspacePath("java/com/foo/gallery/activities/res/values/colors.xml"),
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
+            "<resources>",
+            "    <color name=\"primaryColor\">@color/aarColor</color>",
+            "</resources>");
+
+    NbAarTarget aarTarget =
+        aar_import("//third_party/aar:lib_aar")
+            .aar("lib_aar.aar")
+            .generated_jar("classes_and_libs_merged.jar");
+    File aarLibraryFile =
+        AarLibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
+            .src(
+                "res/values/colors.xml",
+                ImmutableList.of(
+                    "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
+                    "<resources>",
+                    "    <color name=\"aarColor\">#ffffff</color>",
+                    "</resources>"))
+            .build();
+
+    setTargetMap(
+        android_library("//java/com/foo/gallery/activities:activities")
+            .dep("//third_party/aar:lib_aar")
+            .res("res"),
+        aarTarget);
+    runFullBlazeSync();
+
+    VirtualFile aarColorXml = getResourceFile(aarLibraryFile, "values/colors.xml");
+
+    testFixture.configureFromExistingVirtualFile(colorXml);
+    assertGotoDeclarationOpensFile("@color/aarColor", aarColorXml);
+  }
+
+  @Test
+  public void gotoDeclaration_fromAarResourceToAarResources() {
+    workspace.createDirectory(new WorkspacePath("java/com/foo/gallery/activities"));
+    NbAarTarget aarTarget =
+        aar_import("//third_party/aar:lib_aar")
+            .aar("lib_aar.aar")
+            .generated_jar("classes_and_libs_merged.jar");
+    File aarLibraryFile =
+        AarLibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
+            .src(
+                "res/values/colors.xml",
+                ImmutableList.of(
+                    "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
+                    "<resources>",
+                    "    <color name=\"baseColor\">#000000</color>",
+                    "    <color name=\"colorPrimary\">#008577</color>",
+                    "    <color name=\"colorPrimaryDark\">@color/baseColor</color>",
+                    "    <string name=\"app_name\">My Application</string>",
+                    "    <style name=\"AppTheme\">",
+                    "        <item name=\"android:textColor\">@color/colorPrimary</item>",
+                    "    </style>",
+                    "</resources>"))
+            .build();
+
+    setTargetMap(
+        android_library("//java/com/foo/gallery/activities:activities")
+            .dep("//third_party/aar:lib_aar")
+            .res("res"),
+        aarTarget);
+    runFullBlazeSync();
+
+    VirtualFile aarColorXml = getResourceFile(aarLibraryFile, "values/colors.xml");
+    testFixture.configureFromExistingVirtualFile(aarColorXml);
+    assertGotoDeclarationOpensFile("@color/baseColor", aarColorXml);
+    // b/120106463
+    // assertGotoDeclarationOpensFile("@color/colorPrimary", aarColorXml);
+  }
+
+  private void assertGotoDeclarationOpensFile(String highLightElement, VirtualFile expectedFile) {
+    int referenceIndex = testFixture.getEditor().getDocument().getText().indexOf(highLightElement);
     PsiElement foundElement =
-        GotoDeclarationAction.findTargetElement(
-            getProject(), testFixture.getEditor(), referenceIndex);
+        LazyValueResourceElementWrapper.computeLazyElement(
+            GotoDeclarationAction.findTargetElement(
+                getProject(), testFixture.getEditor(), referenceIndex));
 
     assertThat(foundElement).isNotNull();
     assertThat(foundElement.getContainingFile()).isNotNull();
-    assertThat(foundElement.getContainingFile().getVirtualFile()).isEqualTo(settingsXml);
+    assertThat(foundElement.getContainingFile().getVirtualFile()).isEqualTo(expectedFile);
+  }
+
+  private VirtualFile getResourceFile(File aarLibraryFile, String relativePathToResourceFile) {
+    UnpackedAars unpackedAars = UnpackedAars.getInstance(getProject());
+    String cacheKey = unpackedAars.cacheKeyForAar(aarLibraryFile.getAbsolutePath());
+    File resourceDir = UnpackedAars.getInstance(getProject()).getResourceDirectory(cacheKey);
+    return VirtualFileManager.getInstance()
+        .findFileByUrl(
+            URLUtil.FILE_PROTOCOL
+                + URLUtil.SCHEME_SEPARATOR
+                + resourceDir.getPath()
+                + File.separator
+                + relativePathToResourceFile);
   }
 }
