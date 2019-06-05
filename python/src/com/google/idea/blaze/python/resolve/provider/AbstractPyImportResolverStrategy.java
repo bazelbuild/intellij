@@ -35,6 +35,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import java.io.File;
 import java.util.Collection;
@@ -74,7 +75,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
       if (resolver == null) {
         continue;
       }
-      PsiElement psi = resolver.get(psiManager);
+      PsiElement psi = PyUtil.turnDirIntoInit(resolver.get(psiManager));
       if (psi == null) {
         continue;
       }
