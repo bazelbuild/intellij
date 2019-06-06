@@ -59,4 +59,10 @@ class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
   public String getDisplayName() {
     return ID;
   }
+
+  @Override
+  public boolean shouldBeDefault() {
+    // TODO b/134190522 Set as default again when blaze native debugger works.
+    return false;
+  }
 }
