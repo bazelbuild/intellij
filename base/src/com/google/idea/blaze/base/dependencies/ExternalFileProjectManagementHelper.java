@@ -161,7 +161,7 @@ public class ExternalFileProjectManagementHelper
           ShowSettingsUtilImpl.showSettingsDialog(
               project,
               BlazeUserSettingsCompositeConfigurable.ID,
-              BlazeUserSettingsConfigurable.SHOW_ADD_FILE_TO_PROJECT_LABEL_TEXT);
+              BlazeUserSettingsConfigurable.SHOW_ADD_FILE_TO_PROJECT_OPTION.label());
         });
 
     targetsFuture.addListener(

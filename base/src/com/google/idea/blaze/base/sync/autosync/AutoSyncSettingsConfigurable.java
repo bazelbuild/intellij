@@ -15,11 +15,14 @@
  */
 package com.google.idea.blaze.base.sync.autosync;
 
-import com.google.idea.blaze.base.settings.SearchableOptionsHelper;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable;
 import com.google.idea.blaze.base.ui.UiUtil;
+import com.google.idea.common.settings.SearchableOption;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.components.JBCheckBox;
 import java.awt.BorderLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -34,10 +37,31 @@ public class AutoSyncSettingsConfigurable implements UnnamedConfigurable {
    */
   static class UiContributor implements BlazeUserSettingsCompositeConfigurable.UiContributor {
     @Override
-    public UnnamedConfigurable getConfigurable(SearchableOptionsHelper helper) {
-      return new AutoSyncSettingsConfigurable(helper);
+    public UnnamedConfigurable getConfigurable() {
+      return new AutoSyncSettingsConfigurable();
+    }
+
+    @Override
+    public ImmutableCollection<SearchableOption> getSearchableOptions() {
+      return ImmutableList.of(
+          AUTO_SYNC_OPTION,
+          RESYNC_ON_BUILD_FILE_CHANGES_OPTION,
+          RESYNC_ON_PROTO_CHANGES_OPTION,
+          RESYNC_ON_VCS_SYNC_OPTION);
     }
   }
+
+  private static final SearchableOption AUTO_SYNC_OPTION =
+      SearchableOption.forLabel("Auto sync on:");
+  private static final SearchableOption RESYNC_ON_BUILD_FILE_CHANGES_OPTION =
+      SearchableOption.forLabel("BUILD file changes");
+  private static final SearchableOption RESYNC_ON_PROTO_CHANGES_OPTION =
+      SearchableOption.forLabel("Proto changes");
+  private static final SearchableOption RESYNC_ON_VCS_SYNC_OPTION =
+      SearchableOption.withLabel("VCS sync")
+          .addTags("Piper", "switch")
+          .addTags("Fig", "update", "rebase")
+          .build();
 
   private final JPanel panel;
 
@@ -45,11 +69,11 @@ public class AutoSyncSettingsConfigurable implements UnnamedConfigurable {
   private final JCheckBox resyncOnProtoChanges;
   private final JCheckBox resyncOnVcsSync;
 
-  private AutoSyncSettingsConfigurable(SearchableOptionsHelper helper) {
-    resyncOnBuildFileChanges = helper.createSearchableCheckBox("BUILD file changes", true);
-    resyncOnProtoChanges = helper.createSearchableCheckBox("Proto changes", true);
-    resyncOnVcsSync = helper.createSearchableCheckBox("VCS sync", true);
-    panel = setupUi(helper);
+  private AutoSyncSettingsConfigurable() {
+    resyncOnBuildFileChanges = new JBCheckBox(RESYNC_ON_BUILD_FILE_CHANGES_OPTION.label());
+    resyncOnProtoChanges = new JBCheckBox(RESYNC_ON_PROTO_CHANGES_OPTION.label());
+    resyncOnVcsSync = new JBCheckBox(RESYNC_ON_VCS_SYNC_OPTION.label());
+    panel = setupUi();
   }
 
   @Override
@@ -81,10 +105,10 @@ public class AutoSyncSettingsConfigurable implements UnnamedConfigurable {
     return panel;
   }
 
-  private JPanel setupUi(SearchableOptionsHelper helper) {
+  private JPanel setupUi() {
     JPanel panel = new JPanel(new BorderLayout(0, 10));
-    helper.registerLabelText("Auto sync", true);
-    panel.setBorder(IdeBorderFactory.createTitledBorder("Auto sync on:", /* hasIndent= */ true));
+    panel.setBorder(
+        IdeBorderFactory.createTitledBorder(AUTO_SYNC_OPTION.label(), /* hasIndent= */ true));
 
     panel.add(
         UiUtil.createBox(resyncOnBuildFileChanges, resyncOnProtoChanges, resyncOnVcsSync),

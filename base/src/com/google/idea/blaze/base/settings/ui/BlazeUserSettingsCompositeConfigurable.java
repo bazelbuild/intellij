@@ -17,8 +17,12 @@ package com.google.idea.blaze.base.settings.ui;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
+import com.google.common.collect.ImmutableCollection;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.SearchableOptionsHelper;
+import com.google.idea.common.settings.SearchableOption;
+import com.google.idea.common.settings.SearchableOptionHelper;
+import com.intellij.ide.ui.search.SearchableOptionContributor;
+import com.intellij.ide.ui.search.SearchableOptionProcessor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -38,10 +42,13 @@ public class BlazeUserSettingsCompositeConfigurable
     ExtensionPointName<UiContributor> EP_NAME =
         ExtensionPointName.create("com.google.idea.blaze.SettingsUiContributor");
 
-    UnnamedConfigurable getConfigurable(SearchableOptionsHelper helper);
+    UnnamedConfigurable getConfigurable();
+
+    ImmutableCollection<SearchableOption> getSearchableOptions();
   }
 
   public static final String ID = "blaze.view";
+  private static final String DISPLAY_NAME = Blaze.defaultBuildSystemName() + " Settings";
 
   @Override
   public String getId() {
@@ -50,7 +57,7 @@ public class BlazeUserSettingsCompositeConfigurable
 
   @Override
   public String getDisplayName() {
-    return Blaze.defaultBuildSystemName() + " Settings";
+    return DISPLAY_NAME;
   }
 
   @Override
@@ -67,9 +74,18 @@ public class BlazeUserSettingsCompositeConfigurable
 
   @Override
   protected List<UnnamedConfigurable> createConfigurables() {
-    SearchableOptionsHelper helper = new SearchableOptionsHelper(this);
     return Arrays.stream(UiContributor.EP_NAME.getExtensions())
-        .map(c -> c.getConfigurable(helper))
+        .map(UiContributor::getConfigurable)
         .collect(toImmutableList());
+  }
+
+  static class BlazeUserSettingsSearchableOptionContributor extends SearchableOptionContributor {
+    @Override
+    public void processOptions(SearchableOptionProcessor processor) {
+      SearchableOptionHelper helper = new SearchableOptionHelper(ID, DISPLAY_NAME);
+      Arrays.stream(UiContributor.EP_NAME.getExtensions())
+          .flatMap(uiContributor -> uiContributor.getSearchableOptions().stream())
+          .forEach(helper::registerOption);
+    }
   }
 }

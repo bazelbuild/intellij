@@ -28,6 +28,7 @@ java_library(
         "//common/concurrency",
         "//common/experiments",
         "//common/formatter",
+        "//common/settings",
         "//common/transactions",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",

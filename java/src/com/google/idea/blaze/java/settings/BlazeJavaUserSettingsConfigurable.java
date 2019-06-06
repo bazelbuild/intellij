@@ -16,10 +16,11 @@
 package com.google.idea.blaze.java.settings;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.SearchableOptionsHelper;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable;
+import com.google.idea.common.settings.SearchableOption;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -33,24 +34,33 @@ class BlazeJavaUserSettingsConfigurable implements UnnamedConfigurable {
 
   static class UiContributor implements BlazeUserSettingsCompositeConfigurable.UiContributor {
     @Override
-    public UnnamedConfigurable getConfigurable(SearchableOptionsHelper helper) {
-      return new BlazeJavaUserSettingsConfigurable(helper);
+    public UnnamedConfigurable getConfigurable() {
+      return new BlazeJavaUserSettingsConfigurable();
+    }
+
+    @Override
+    public ImmutableCollection<SearchableOption> getSearchableOptions() {
+      return ImmutableList.of(USE_JAR_CACHE_OPTION);
     }
   }
+
+  private static final SearchableOption USE_JAR_CACHE_OPTION =
+      SearchableOption.forLabel(
+          String.format(
+              "Use a local jar cache."
+                  + " More robust, but we can miss %s changes made outside the IDE.",
+              Blaze.defaultBuildSystemName()));
 
   private final JPanel panel;
   private final JCheckBox useJarCache;
   private final ImmutableList<JCheckBox> components;
 
-  private BlazeJavaUserSettingsConfigurable(SearchableOptionsHelper helper) {
+  private BlazeJavaUserSettingsConfigurable() {
     useJarCache = new JCheckBox();
-    useJarCache.setText(
-        String.format(
-            "Use a local jar cache. More robust, but we can miss %s changes made outside the IDE.",
-            Blaze.defaultBuildSystemName()));
+    useJarCache.setText(USE_JAR_CACHE_OPTION.label());
 
     components = ImmutableList.of(useJarCache);
-    panel = setupUi(helper);
+    panel = setupUi();
   }
 
   @Override
@@ -76,12 +86,11 @@ class BlazeJavaUserSettingsConfigurable implements UnnamedConfigurable {
     return panel;
   }
 
-  private JPanel setupUi(SearchableOptionsHelper helper) {
+  private JPanel setupUi() {
     JPanel panel = new JPanel();
     panel.setLayout(new GridLayoutManager(components.size(), 2, JBUI.emptyInsets(), -1, -1));
     for (int i = 0; i < components.size(); i++) {
       JCheckBox component = components.get(i);
-      helper.registerLabelText(component.getText(), true);
       panel.add(
           component,
           new GridConstraints(
