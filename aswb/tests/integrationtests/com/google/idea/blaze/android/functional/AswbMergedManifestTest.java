@@ -25,6 +25,9 @@ import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.IdeaSourceProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,6 +45,28 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
         "  //java/com/example/...:all",
         "android_sdk_platform: android-27");
     mockSdk("android-27", "Android 27 SDK");
+  }
+
+  @Test
+  public void manifestBelongsToResourceModule() {
+    VirtualFile manifest =
+        workspace.createFile(new WorkspacePath("java/com/example/target/AndroidManifest.xml"));
+    setTargetMap(
+        android_binary("//java/com/example/target:target")
+            .manifest("//java/com/example/target/AndroidManifest.xml")
+            .res("res"));
+    runFullBlazeSync();
+
+    Module targetResourceModule =
+        ModuleManager.getInstance(getProject()).findModuleByName("java.com.example.target.target");
+    assertThat(targetResourceModule).isNotNull();
+    AndroidFacet targetFacet = AndroidFacet.getInstance(targetResourceModule);
+    assertThat(targetFacet).isNotNull();
+
+    // Verify the mapping from resource module to manifest.
+    assertThat(IdeaSourceProvider.getManifestFiles(targetFacet)).containsExactly(manifest);
+    // Verify the mapping from manifest back to resource module.
+    assertThat(AndroidFacet.getInstance(manifest, getProject())).isEqualTo(targetFacet);
   }
 
   /**

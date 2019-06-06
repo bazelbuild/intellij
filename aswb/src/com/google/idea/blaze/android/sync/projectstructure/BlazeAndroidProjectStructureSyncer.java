@@ -70,12 +70,12 @@ import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
@@ -139,20 +139,25 @@ public class BlazeAndroidProjectStructureSyncer {
       assert module != null;
       ModifiableRootModel modifiableRootModel = moduleEditor.editModule(module);
       LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
+      ArtifactLocationDecoder artifactLocationDecoder =
+          blazeProjectData.getArtifactLocationDecoder();
+      File moduleDirectory =
+          moduleDirectoryForAndroidTarget(WorkspaceRoot.fromProject(project), target);
 
-      Collection<File> resources =
-          OutputArtifactResolver.resolveAll(
-                  project,
-                  blazeProjectData.getArtifactLocationDecoder(),
-                  androidResourceModule.resources)
-              .stream()
-              .collect(Collectors.toList());
+      ArrayList<File> newRoots =
+          new ArrayList<>(
+              OutputArtifactResolver.resolveAll(
+                  project, artifactLocationDecoder, androidResourceModule.resources));
+      newRoots.add(
+          manifestFileForAndroidTarget(
+              project, artifactLocationDecoder, androidIdeInfo, moduleDirectory));
+
       // Remove existing resource roots to silence the duplicate content root error.
       // We can only do this if we have cyclic resource dependencies, since otherwise we risk
       // breaking dependencies within this resource module.
-      resources.removeAll(existingRoots);
-      existingRoots.addAll(resources);
-      ResourceModuleContentRootCustomizer.setupContentRoots(modifiableRootModel, resources);
+      newRoots.removeAll(existingRoots);
+      existingRoots.addAll(newRoots);
+      ResourceModuleContentRootCustomizer.setupContentRoots(modifiableRootModel, newRoots);
 
       modifiableRootModel.addModuleOrderEntry(workspaceModule);
       ++totalOrderEntries;
