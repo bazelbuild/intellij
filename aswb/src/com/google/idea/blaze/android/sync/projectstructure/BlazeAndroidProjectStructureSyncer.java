@@ -148,9 +148,12 @@ public class BlazeAndroidProjectStructureSyncer {
           new ArrayList<>(
               OutputArtifactResolver.resolveAll(
                   project, artifactLocationDecoder, androidResourceModule.resources));
-      newRoots.add(
+      File manifest =
           manifestFileForAndroidTarget(
-              project, artifactLocationDecoder, androidIdeInfo, moduleDirectory));
+              project, artifactLocationDecoder, androidIdeInfo, moduleDirectory);
+      if (manifest != null) {
+        newRoots.add(manifest);
+      }
 
       // Remove existing resource roots to silence the duplicate content root error.
       // We can only do this if we have cyclic resource dependencies, since otherwise we risk
@@ -438,6 +441,7 @@ public class BlazeAndroidProjectStructureSyncer {
     return workspaceRoot.fileForPath(target.getKey().getLabel().blazePackage());
   }
 
+  @Nullable
   private static File manifestFileForAndroidTarget(
       Project project,
       ArtifactLocationDecoder artifactLocationDecoder,
