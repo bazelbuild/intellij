@@ -488,7 +488,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
               // remove previously synced targets which are now unsupported
               for (TargetKey key : ImmutableSet.copyOf(state.ideInfoToTargetKey.values())) {
                 TargetIdeInfo target = targetMap.get(key);
-                if (shouldIgnoreTarget(languageSettings, importRoots, target, ignoredLanguages)) {
+                if (target != null
+                    && shouldIgnoreTarget(
+                        languageSettings, importRoots, target, ignoredLanguages)) {
                   state.ideInfoToTargetKey.inverse().remove(key);
                   targetMap.remove(key);
                 }
