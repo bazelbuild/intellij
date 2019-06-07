@@ -447,6 +447,7 @@
     <RunConfigurationFactory implementation="com.google.idea.blaze.base.run.BlazeBuildTargetRunConfigurationFactory" order="last"/>
     <AspectStrategy implementation="com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyBazel" order="last"/>
     <FileStringParser implementation="com.google.idea.blaze.base.run.filter.StandardFileResolver" order="last"/>
+    <BlazeTestEventsHandler implementation="com.google.idea.blaze.base.run.smrunner.BlazeWebTestEventsHandler"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.base.run.smrunner.BlazeGenericTestEventsHandler" order="last"/>
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.DirectorySection$DirectoriesProjectViewDefaultValueProvider"/>
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.base.projectview.section.sections.TargetSection$TargetsProjectViewDefaultValueProvider"/>

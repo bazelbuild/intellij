@@ -88,18 +88,28 @@ public final class BlazeGoTestLocator implements SMTestLocator {
       }
     }
     // More than one source file or we failed to get one source file, we'll point to the rule.
-    PsiElement rule =
-        BuildReferenceManager.getInstance(project).resolveLabel(target.getKey().getLabel());
-    if (!(rule instanceof FuncallExpression)) {
-      return ImmutableList.of();
+    PsiElement rule = getTargetRule(project, target.getKey().getLabel());
+    return rule != null ? ImmutableList.of(new PsiLocation<>(rule)) : null;
+  }
+
+  @Nullable
+  private static PsiElement getTargetRule(Project project, Label label) {
+    BuildReferenceManager buildReferenceManager = BuildReferenceManager.getInstance(project);
+    PsiElement rule = buildReferenceManager.resolveLabel(label);
+    if (rule instanceof FuncallExpression) {
+      Kind kind = ((FuncallExpression) rule).getRuleKind();
+      return kind != null
+              && kind.getLanguageClass().equals(LanguageClass.GO)
+              && kind.getRuleType().equals(RuleType.TEST)
+          ? rule
+          : null;
     }
-    Kind kind = ((FuncallExpression) rule).getRuleKind();
-    if (kind != null
-        && kind.getLanguageClass().equals(LanguageClass.GO)
-        && kind.getRuleType().equals(RuleType.TEST)) {
-      return ImmutableList.of(new PsiLocation<>(rule));
-    }
-    return ImmutableList.of();
+    // couldn't find the rule, this might be from a web_test
+    String targetName = label.targetName().toString();
+    return rule == null && targetName.endsWith("_wrapped_test")
+        ? buildReferenceManager.resolveLabel(
+            label.withTargetName(targetName.substring(0, targetName.lastIndexOf("_wrapped_test"))))
+        : null;
   }
 
   /**
