@@ -25,6 +25,11 @@ public class IntExperiment extends Experiment {
   }
 
   public int getValue() {
-    return ExperimentService.getInstance().getExperimentInt(getKey(), defaultValue);
+    return ExperimentService.getInstance().getExperimentInt(this, defaultValue);
+  }
+
+  @Override
+  public String getLogValue() {
+    return String.valueOf(getValue());
   }
 }

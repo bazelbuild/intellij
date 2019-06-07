@@ -15,6 +15,7 @@
  */
 package com.google.idea.common.experiments;
 
+import com.google.common.collect.ImmutableMap;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -22,7 +23,7 @@ import javax.annotation.Nullable;
 /** Used for tests. */
 public class MockExperimentService implements ExperimentService {
 
-  private Map<String, Object> experiments = new HashMap<>();
+  private final Map<String, Object> experiments = new HashMap<>();
 
   @Override
   public void startExperimentScope() {}
@@ -39,9 +40,9 @@ public class MockExperimentService implements ExperimentService {
   }
 
   @Override
-  public boolean getExperiment(String key, boolean defaultValue) {
-    if (experiments.containsKey(key)) {
-      return (Boolean) experiments.get(key);
+  public boolean getExperiment(Experiment experiment, boolean defaultValue) {
+    if (experiments.containsKey(experiment.getKey())) {
+      return (Boolean) experiments.get(experiment.getKey());
     }
     return defaultValue;
   }
@@ -52,9 +53,9 @@ public class MockExperimentService implements ExperimentService {
 
   @Override
   @Nullable
-  public String getExperimentString(String key, @Nullable String defaultValue) {
-    if (experiments.containsKey(key)) {
-      return experiments.get(key).toString();
+  public String getExperimentString(Experiment experiment, @Nullable String defaultValue) {
+    if (experiments.containsKey(experiment.getKey())) {
+      return experiments.get(experiment.getKey()).toString();
     }
     return defaultValue;
   }
@@ -68,10 +69,15 @@ public class MockExperimentService implements ExperimentService {
   }
 
   @Override
-  public int getExperimentInt(String key, int defaultValue) {
-    if (experiments.containsKey(key)) {
-      return (Integer) experiments.get(key);
+  public int getExperimentInt(Experiment experiment, int defaultValue) {
+    if (experiments.containsKey(experiment.getKey())) {
+      return (Integer) experiments.get(experiment.getKey());
     }
     return defaultValue;
+  }
+
+  @Override
+  public ImmutableMap<String, Experiment> getAllQueriedExperiments() {
+    throw new UnsupportedOperationException("MockExperimentService#getAllQueriedExperiments");
   }
 }

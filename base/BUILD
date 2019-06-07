@@ -175,6 +175,7 @@ java_library(
     ],
     neverlink = 1,
     deps = [
+        "//common/experiments",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
     ],

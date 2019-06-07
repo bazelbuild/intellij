@@ -35,7 +35,7 @@ public class FeatureRolloutExperiment extends Experiment {
   /** Returns true if the feature should be enabled for this user. */
   public boolean isEnabled() {
     if (Objects.equals(
-        ExperimentService.getInstance().getExperimentString(getKey(), /* defaultValue= */ null),
+        ExperimentService.getInstance().getExperimentString(this, /* defaultValue= */ null),
         "disabled")) {
       return false;
     }
@@ -45,6 +45,11 @@ public class FeatureRolloutExperiment extends Experiment {
     return getUserHash(ExperimentUsernameProvider.getUsername()) < getRolloutPercentage();
   }
 
+  @Override
+  public String getLogValue() {
+    return String.valueOf(isEnabled());
+  }
+
   /**
    * Returns an integer between 0 and 100, inclusive, indicating the percentage of users for whom
    * this feature should be enabled.
@@ -52,8 +57,7 @@ public class FeatureRolloutExperiment extends Experiment {
    * <p>If the experiment value is outside the range [0, 100], 0 is returned.
    */
   private int getRolloutPercentage() {
-    int percentage =
-        ExperimentService.getInstance().getExperimentInt(getKey(), /* defaultValue= */ 0);
+    int percentage = ExperimentService.getInstance().getExperimentInt(this, /* defaultValue= */ 0);
     return percentage < 0 || percentage > 100 ? 0 : percentage;
   }
 

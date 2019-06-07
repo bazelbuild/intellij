@@ -16,7 +16,7 @@
 package com.google.idea.common.experiments;
 
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static com.google.idea.common.experiments.ExperimentsUtil.hashExperimentName;
+import static com.google.idea.common.experiments.ExperimentNameHashes.hashExperimentName;
 
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;

@@ -26,6 +26,11 @@ public class StringExperiment extends Experiment {
 
   @Nullable
   public String getValue() {
-    return ExperimentService.getInstance().getExperimentString(getKey(), null);
+    return ExperimentService.getInstance().getExperimentString(this, null);
+  }
+
+  @Override
+  public String getLogValue() {
+    return String.valueOf(getValue());
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.idea.common.experiments;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ApplicationManager;
 import javax.annotation.Nullable;
 
@@ -26,18 +27,21 @@ public interface ExperimentService {
   }
 
   /** Returns an experiment if it exists, else defaultValue */
-  boolean getExperiment(String key, boolean defaultValue);
+  boolean getExperiment(Experiment experiment, boolean defaultValue);
 
   /** Returns a string-valued experiment if it exists, else defaultValue. */
   @Nullable
-  String getExperimentString(String key, @Nullable String defaultValue);
+  String getExperimentString(Experiment experiment, @Nullable String defaultValue);
 
   /** Returns an int-valued experiment if it exists, else defaultValue. */
-  int getExperimentInt(String key, int defaultValue);
+  int getExperimentInt(Experiment experiment, int defaultValue);
 
   /** Starts an experiment scope. During an experiment scope, experiments won't be reloaded. */
   void startExperimentScope();
 
   /** Ends an experiment scope. */
   void endExperimentScope();
+
+  /** Returns all experiments queried through this service. */
+  ImmutableMap<String, Experiment> getAllQueriedExperiments();
 }

@@ -35,6 +35,10 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ExperimentServiceImplTest {
 
+  private static final BoolExperiment BOOL_EXPERIMENT = new BoolExperiment("test.property", false);
+  private static final StringExperiment STRING_EXPERIMENT = new StringExperiment("test.property");
+  private static final IntExperiment INT_EXPERIMENT = new IntExperiment("test.property", 0);
+
   private Disposable testDisposable;
 
   @Before
@@ -51,126 +55,128 @@ public class ExperimentServiceImplTest {
   @Test
   public void testBooleanPropertyTrue() {
     ExperimentService experimentService =
-        new ExperimentServiceImpl(new MapExperimentLoader("test.property", "1"));
-    assertThat(experimentService.getExperiment("test.property", false)).isTrue();
+        new ExperimentServiceImpl(new MapExperimentLoader(BOOL_EXPERIMENT.getKey(), "1"));
+    assertThat(experimentService.getExperiment(BOOL_EXPERIMENT, false)).isTrue();
   }
 
   @Test
   public void testBooleanPropertyFalse() {
     ExperimentService experimentService =
-        new ExperimentServiceImpl(new MapExperimentLoader("test.property", "0"));
-    assertThat(experimentService.getExperiment("test.property", true)).isFalse();
+        new ExperimentServiceImpl(new MapExperimentLoader(BOOL_EXPERIMENT.getKey(), "0"));
+    assertThat(experimentService.getExperiment(BOOL_EXPERIMENT, true)).isFalse();
   }
 
   @Test
   public void testBooleanPropertyReturnsDefaultWhenMissing() {
     ExperimentService experimentService = new ExperimentServiceImpl(new MapExperimentLoader());
-    assertThat(experimentService.getExperiment("test.notthere", true)).isTrue();
+    assertThat(experimentService.getExperiment(BOOL_EXPERIMENT, true)).isTrue();
   }
 
   @Test
   public void testStringProperty() {
     ExperimentService experimentService =
-        new ExperimentServiceImpl(new MapExperimentLoader("test.property", "hi"));
-    assertThat(experimentService.getExperimentString("test.property", null)).isEqualTo("hi");
+        new ExperimentServiceImpl(new MapExperimentLoader(STRING_EXPERIMENT.getKey(), "hi"));
+    assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, null)).isEqualTo("hi");
   }
 
   @Test
   public void testStringPropertyReturnsDefaultWhenMissing() {
     ExperimentService experimentService = new ExperimentServiceImpl(new MapExperimentLoader());
-    assertThat(experimentService.getExperimentString("test.property", "bye")).isEqualTo("bye");
+    assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, "bye")).isEqualTo("bye");
   }
 
   @Test
   public void testFirstLoaderOverridesSecond() {
     ExperimentService experimentService =
         new ExperimentServiceImpl(
-            new MapExperimentLoader("test.property", "1"),
-            new MapExperimentLoader("test.property", "0"));
-    assertThat(experimentService.getExperiment("test.property", false)).isTrue();
+            new MapExperimentLoader(BOOL_EXPERIMENT.getKey(), "1"),
+            new MapExperimentLoader(BOOL_EXPERIMENT.getKey(), "0"));
+    assertThat(experimentService.getExperiment(BOOL_EXPERIMENT, false)).isTrue();
   }
 
   @Test
   public void testOnlyInSecondLoader() {
     ExperimentService experimentService =
         new ExperimentServiceImpl(
-            new MapExperimentLoader(), new MapExperimentLoader("test.property", "1"));
-    assertThat(experimentService.getExperiment("test.property", false)).isTrue();
+            new MapExperimentLoader(), new MapExperimentLoader(BOOL_EXPERIMENT.getKey(), "1"));
+    assertThat(experimentService.getExperiment(BOOL_EXPERIMENT, false)).isTrue();
   }
 
   @Test
   public void testIntProperty() {
     ExperimentService experimentService =
-        new ExperimentServiceImpl(new MapExperimentLoader("test.property", "10"));
-    assertThat(experimentService.getExperimentInt("test.property", 0)).isEqualTo(10);
+        new ExperimentServiceImpl(new MapExperimentLoader(INT_EXPERIMENT.getKey(), "10"));
+    assertThat(experimentService.getExperimentInt(INT_EXPERIMENT, 0)).isEqualTo(10);
   }
 
   @Test
   public void testIntPropertyDefaultValue() {
     ExperimentService experimentService = new ExperimentServiceImpl(new MapExperimentLoader());
-    assertThat(experimentService.getExperimentInt("test.property", 100)).isEqualTo(100);
+    assertThat(experimentService.getExperimentInt(INT_EXPERIMENT, 100)).isEqualTo(100);
   }
 
   @Test
   public void testIntPropertyThatDoesntParseReturnsDefaultValue() {
     ExperimentService experimentService =
-        new ExperimentServiceImpl(new MapExperimentLoader("test.property", "hello"));
-    assertThat(experimentService.getExperimentInt("test.property", 111)).isEqualTo(111);
+        new ExperimentServiceImpl(new MapExperimentLoader(INT_EXPERIMENT.getKey(), "hello"));
+    assertThat(experimentService.getExperimentInt(INT_EXPERIMENT, 111)).isEqualTo(111);
   }
 
   @Test
-  public void testDataIsReloadedAgainWhenLeavingAScope() throws Exception {
+  public void testDataIsReloadedAgainWhenLeavingAScope() {
     MapExperimentLoader experimentLoader = new MapExperimentLoader();
     ExperimentService experimentService = new ExperimentServiceImpl(experimentLoader);
     experimentService.startExperimentScope();
-    assertThat(experimentService.getExperimentString("test.property", "default"))
+    assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, "default"))
         .isEqualTo("default");
-    experimentLoader.map.put("test.property", "hello");
+    experimentLoader.map.put(STRING_EXPERIMENT.getKey(), "hello");
     experimentService.endExperimentScope();
-    assertThat(experimentService.getExperimentString("test.property", "default"))
+    assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, "default"))
         .isEqualTo("hello");
   }
 
   @Test
-  public void testEnterTwoScopesButOnlyLeaveOne() throws Exception {
+  public void testEnterTwoScopesButOnlyLeaveOne() {
     MapExperimentLoader experimentLoader = new MapExperimentLoader();
     ExperimentService experimentService = new ExperimentServiceImpl(experimentLoader);
     experimentService.startExperimentScope();
-    assertThat(experimentService.getExperimentString("test.property", "default"))
+    assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, "default"))
         .isEqualTo("default");
     experimentService.startExperimentScope();
     experimentService.endExperimentScope();
-    experimentLoader.map.put("test.property", "hello");
-    assertThat(experimentService.getExperimentString("test.property", "default"))
+    experimentLoader.map.put(STRING_EXPERIMENT.getKey(), "hello");
+    assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, "default"))
         .isEqualTo("default");
   }
 
   @Test
-  public void testEnterAndLeaveTwoScopes() throws Exception {
+  public void testEnterAndLeaveTwoScopes() {
     MapExperimentLoader experimentLoader = new MapExperimentLoader();
     ExperimentService experimentService = new ExperimentServiceImpl(experimentLoader);
     experimentService.startExperimentScope();
-    assertThat(experimentService.getExperimentString("test.property", "default"))
+    assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, "default"))
         .isEqualTo("default");
     experimentService.startExperimentScope();
-    experimentLoader.map.put("test.property", "hello");
+    experimentLoader.map.put(STRING_EXPERIMENT.getKey(), "hello");
     experimentService.endExperimentScope();
     experimentService.endExperimentScope();
-    assertThat(experimentService.getExperimentString("test.property", "default"))
+    assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, "default"))
         .isEqualTo("hello");
   }
 
   @Test
-  public void testLeaveAndEnterRefreshes() throws Exception {
+  public void testLeaveAndEnterRefreshes() {
     MapExperimentLoader experimentLoader = new MapExperimentLoader();
-    experimentLoader.map.put("test.property", "one");
+    experimentLoader.map.put(STRING_EXPERIMENT.getKey(), "one");
     ExperimentService experimentService = new ExperimentServiceImpl(experimentLoader);
     experimentService.startExperimentScope();
-    assertThat(experimentService.getExperimentString("test.property", "default")).isEqualTo("one");
-    experimentLoader.map.put("test.property", "two");
+    assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, "default"))
+        .isEqualTo("one");
+    experimentLoader.map.put(STRING_EXPERIMENT.getKey(), "two");
     experimentService.endExperimentScope();
     experimentService.startExperimentScope();
-    assertThat(experimentService.getExperimentString("test.property", "default")).isEqualTo("two");
+    assertThat(experimentService.getExperimentString(STRING_EXPERIMENT, "default"))
+        .isEqualTo("two");
   }
 
   private static class MapExperimentLoader extends HashingExperimentLoader {

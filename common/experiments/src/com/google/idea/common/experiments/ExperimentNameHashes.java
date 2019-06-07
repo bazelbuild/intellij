@@ -21,12 +21,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-final class ExperimentsUtil {
+final class ExperimentNameHashes {
 
   private static final HashFunction HASHER = Hashing.sha512();
   private static final Map<String, String> hashCache = new ConcurrentHashMap<>();
 
-  private ExperimentsUtil() {}
+  private ExperimentNameHashes() {}
 
   static String hashExperimentName(String name) {
     return hashCache.computeIfAbsent(

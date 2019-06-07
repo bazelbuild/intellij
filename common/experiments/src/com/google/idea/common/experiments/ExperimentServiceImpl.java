@@ -15,8 +15,6 @@
  */
 package com.google.idea.common.experiments;
 
-import static com.google.idea.common.experiments.ExperimentsUtil.hashExperimentName;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -30,6 +28,7 @@ import java.io.File;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -55,6 +54,7 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
   private final AtomicInteger experimentScopeCounter = new AtomicInteger(0);
 
   private volatile Map<String, String> experiments = ImmutableMap.of();
+  private final Map<String, Experiment> queriedExperiments = new ConcurrentHashMap<>();
 
   public ExperimentServiceImpl(String pluginName) {
     this(
@@ -83,25 +83,30 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
     scheduleRefresh(REFRESH_FREQUENCY);
   }
 
+  private String getExperiment(Experiment experiment) {
+    queriedExperiments.putIfAbsent(experiment.getKey(), experiment);
+    return experiments.get(ExperimentNameHashes.hashExperimentName(experiment.getKey()));
+  }
+
   @Override
-  public boolean getExperiment(String key, boolean defaultValue) {
-    String property = getExperiment(key);
+  public boolean getExperiment(Experiment experiment, boolean defaultValue) {
+    String property = getExperiment(experiment);
     return property != null ? property.equals("1") : defaultValue;
   }
 
   @Override
-  public String getExperimentString(String key, @Nullable String defaultValue) {
-    String property = getExperiment(key);
+  public String getExperimentString(Experiment experiment, @Nullable String defaultValue) {
+    String property = getExperiment(experiment);
     return property != null ? property : defaultValue;
   }
 
   @Override
-  public int getExperimentInt(String key, int defaultValue) {
-    String property = getExperiment(key);
+  public int getExperimentInt(Experiment experiment, int defaultValue) {
+    String property = getExperiment(experiment);
     try {
       return property != null ? Integer.parseInt(property) : defaultValue;
     } catch (NumberFormatException e) {
-      logger.warn("Could not parse int for experiment: " + key, e);
+      logger.warn("Could not parse int for experiment: " + experiment.getKey(), e);
       return defaultValue;
     }
   }
@@ -148,7 +153,8 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
                 Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first));
   }
 
-  private String getExperiment(String key) {
-    return experiments.get(hashExperimentName(key));
+  @Override
+  public ImmutableMap<String, Experiment> getAllQueriedExperiments() {
+    return ImmutableMap.copyOf(queriedExperiments);
   }
 }

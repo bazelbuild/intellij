@@ -16,7 +16,7 @@
 package com.google.idea.common.experiments;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.common.experiments.ExperimentsUtil.hashExperimentName;
+import static com.google.idea.common.experiments.ExperimentNameHashes.hashExperimentName;
 
 import org.junit.After;
 import org.junit.Before;

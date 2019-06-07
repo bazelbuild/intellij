@@ -26,4 +26,7 @@ public abstract class Experiment {
   public String getKey() {
     return key;
   }
+
+  /** Returns a string representation of the experiment value for logging. */
+  public abstract String getLogValue();
 }
