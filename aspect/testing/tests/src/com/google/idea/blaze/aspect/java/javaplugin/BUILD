@@ -25,8 +25,8 @@ java_test(
         "//aspect/testing:guava",
         "//aspect/testing/rules:IntellijAspectTest",
         "//aspect/testing/rules:intellij_aspect_test_fixture_java_proto",
+        "//intellij_platform_sdk:test_libs",
         "//proto:intellij_ide_info_java_proto",
         "@junit//jar",
-        "@truth//jar",
     ],
 )
