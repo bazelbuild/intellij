@@ -53,6 +53,7 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -302,6 +303,30 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
     }
 
     return resourceModule.transitiveResourceDependencies.stream()
+        .map(resourceModuleRegistry::getModule)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+  }
+
+  // @Override #api 3.5
+  public List<Module> getDirectResourceModuleDependents() {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(module.getProject()).getBlazeProjectData();
+    if (projectData == null) {
+      return Collections.emptyList();
+    }
+
+    AndroidResourceModuleRegistry resourceModuleRegistry =
+        AndroidResourceModuleRegistry.getInstance(module.getProject());
+    TargetKey resourceModuleKey = resourceModuleRegistry.getTargetKey(module);
+    if (resourceModuleKey == null) {
+      return Collections.emptyList();
+    }
+
+    return ReverseDependencyMap.get(module.getProject()).get(resourceModuleKey).stream()
+        .map(projectData.getTargetMap()::get)
+        .filter(Objects::nonNull)
+        .map(TargetIdeInfo::getKey)
         .map(resourceModuleRegistry::getModule)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
