@@ -474,7 +474,6 @@
     <VcsSyncListener implementation="com.google.idea.blaze.base.prefetch.PrefetchVcsSyncListener"/>
     <VcsSyncListener implementation="com.google.idea.blaze.base.sync.autosync.VcsAutoSyncProvider"/>
     <SettingsUiContributor implementation="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable$UiContributor" order="first" id="base"/>
-    <SettingsUiContributor implementation="com.google.idea.blaze.base.sync.autosync.AutoSyncSettingsConfigurable$UiContributor"/>
   </extensions>
 
 </idea-plugin>

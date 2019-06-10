@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  * Provides support for detecting when sync-sensitive files have changed, and both updating the sync
  * status and optionally kicking off a partial sync.
  */
-interface AutoSyncProvider {
+public interface AutoSyncProvider {
 
   ExtensionPointName<AutoSyncProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.AutoSyncProvider");

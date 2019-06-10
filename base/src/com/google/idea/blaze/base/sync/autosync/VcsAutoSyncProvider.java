@@ -16,9 +16,6 @@
 package com.google.idea.blaze.base.sync.autosync;
 
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.sync.BlazeSyncParams;
-import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.vcs.VcsSyncListener;
 import com.intellij.openapi.project.Project;
 
@@ -31,15 +28,7 @@ class VcsAutoSyncProvider implements VcsSyncListener {
   @Override
   public void onVcsSync(Project project) {
     if (Blaze.isBlazeProject(project) && AutoSyncSettings.getInstance().autoSyncOnVcsSync) {
-      AutoSyncHandler.getInstance(project).queueIncrementalSync(syncParams());
+      AutoSyncHandler.getInstance(project).queueIncrementalSync();
     }
-  }
-
-  private static BlazeSyncParams syncParams() {
-    return new BlazeSyncParams.Builder(AutoSyncProvider.AUTO_SYNC_TITLE, SyncMode.INCREMENTAL)
-        .addProjectViewTargets(true)
-        .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
-        .setBackgroundSync(true)
-        .build();
   }
 }

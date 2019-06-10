@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncListener;
@@ -48,14 +49,14 @@ import javax.annotation.Nullable;
  * Listens for changes to files in the current project, and both updates the sync 'dirty' status and
  * kicks off automatic syncs in response, where appropriate.
  */
-class AutoSyncHandler implements ProjectComponent {
+public class AutoSyncHandler implements ProjectComponent {
 
   private static final BoolExperiment autoSyncEnabled =
       new BoolExperiment("blaze.auto.sync.enabled", true);
 
   private static Logger logger = Logger.getInstance(AutoSyncHandler.class);
 
-  static AutoSyncHandler getInstance(Project project) {
+  public static AutoSyncHandler getInstance(Project project) {
     return project.getComponent(AutoSyncHandler.class);
   }
 
@@ -94,9 +95,15 @@ class AutoSyncHandler implements ProjectComponent {
    *
    * <p>TODO(brendandouglas): move to a Topic-based push model.
    */
-  void queueIncrementalSync(BlazeSyncParams syncParams) {
+  public void queueIncrementalSync() {
     pendingChangesHandler.clearQueue();
-    queueSync(syncParams);
+    BlazeSyncParams params =
+        new BlazeSyncParams.Builder(AutoSyncProvider.AUTO_SYNC_TITLE, SyncMode.INCREMENTAL)
+            .addProjectViewTargets(true)
+            .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+            .setBackgroundSync(true)
+            .build();
+    queueSync(params);
   }
 
   private void handleFileChange(VirtualFile file) {
