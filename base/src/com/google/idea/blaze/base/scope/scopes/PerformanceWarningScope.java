@@ -39,13 +39,15 @@ public class PerformanceWarningScope implements BlazeScope, OutputSink<Performan
       return;
     }
     context.output(new PrintOutput("\n===== PERFORMANCE WARNINGS =====\n"));
-    context.output(new PrintOutput("Your IDE isn't as fast as it could be."));
-    context.output(
-        new PrintOutput("You can turn these off via Blaze > Sync > Show Performance Warnings."));
+    context.output(new PrintOutput("Your IDE isn't as fast as it could be:"));
     context.output(new PrintOutput(""));
     for (PerformanceWarning output : outputs) {
       context.output(new PrintOutput(output.text));
     }
+    context.output(new PrintOutput(""));
+    context.output(
+        new PrintOutput(
+            "You can toggle these messages via Blaze > Sync > Show Performance Warnings."));
   }
 
   @Override
