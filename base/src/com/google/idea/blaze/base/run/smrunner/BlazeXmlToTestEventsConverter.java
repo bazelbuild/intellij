@@ -318,7 +318,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     }
   }
 
-  private static boolean isIgnored(TestCase test) {
+  static boolean isIgnored(TestCase test) {
     if (test.skipped != null) {
       return true;
     }

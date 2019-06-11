@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.run.smrunner.BlazeXmlSchema.TestSuite;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
@@ -100,5 +101,11 @@ public class BlazeWebTestEventsHandler implements BlazeTestEventsHandler {
         + label
         + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER
         + name;
+  }
+
+  @Override
+  public boolean ignoreSuite(Label label, @Nullable Kind kind, TestSuite suite) {
+    return BlazeTestEventsHandler.super.ignoreSuite(label, kind, suite)
+        && suite.testCases.stream().allMatch(BlazeXmlToTestEventsConverter::isIgnored);
   }
 }
