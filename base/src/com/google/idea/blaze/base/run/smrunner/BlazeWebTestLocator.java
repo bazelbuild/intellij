@@ -42,13 +42,12 @@ import javax.annotation.Nullable;
  */
 class BlazeWebTestLocator implements SMTestLocator {
   static final BlazeWebTestLocator INSTANCE = new BlazeWebTestLocator();
-  static final String WEB_TEST_PROTOCOL = "blaze:web:test";
 
   @Override
   @SuppressWarnings("rawtypes")
   public List<Location> getLocation(
       String protocol, String path, Project project, GlobalSearchScope scope) {
-    if (!Objects.equals(protocol, WEB_TEST_PROTOCOL)) {
+    if (!Objects.equals(protocol, BlazeWebTestEventsHandler.WEB_TEST_PROTOCOL)) {
       return ImmutableList.of();
     }
     BlazeProjectData projectData =

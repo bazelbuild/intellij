@@ -29,6 +29,9 @@
     <projectService serviceInterface="com.intellij.lang.typescript.tsconfig.TypeScriptConfigService"
         serviceImplementation="com.google.idea.blaze.typescript.DelegatingTypeScriptConfigService"
         overrides="true"/>
+    <runLineMarkerContributor
+        implementationClass="com.google.idea.blaze.javascript.run.producers.BlazeJavaScriptTestRunLineMarkerContributor"
+        language="JavaScript"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">

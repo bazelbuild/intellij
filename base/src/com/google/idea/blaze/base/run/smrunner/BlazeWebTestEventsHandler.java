@@ -37,6 +37,8 @@ import javax.annotation.Nullable;
  * underlying {@link BlazeTestEventsHandler}.
  */
 public class BlazeWebTestEventsHandler implements BlazeTestEventsHandler {
+  public static final String WEB_TEST_PROTOCOL = "blaze:web:test";
+
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
     return kind == RuleTypes.WEB_TEST.getKind();
@@ -80,7 +82,7 @@ public class BlazeWebTestEventsHandler implements BlazeTestEventsHandler {
       String parentSuite,
       String name,
       @Nullable String className) {
-    return BlazeWebTestLocator.WEB_TEST_PROTOCOL
+    return WEB_TEST_PROTOCOL
         + URLUtil.SCHEME_SEPARATOR
         + label
         + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER
@@ -93,7 +95,7 @@ public class BlazeWebTestEventsHandler implements BlazeTestEventsHandler {
 
   @Override
   public String suiteLocationUrl(Label label, @Nullable Kind kind, String name) {
-    return BlazeWebTestLocator.WEB_TEST_PROTOCOL
+    return WEB_TEST_PROTOCOL
         + URLUtil.SCHEME_SEPARATOR
         + label
         + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER
