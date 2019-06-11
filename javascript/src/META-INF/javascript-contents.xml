@@ -38,6 +38,8 @@
         implementation="com.google.idea.blaze.javascript.run.producers.JavascriptTestContextProvider"/>
     <TestTargetHeuristic
         implementation="com.google.idea.blaze.javascript.run.producers.JavascriptTestTargetHeuristic"/>
+    <BlazeTestEventsHandler
+        implementation="com.google.idea.blaze.javascript.run.smrunner.BlazeJavascriptTestEventsHandler"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">

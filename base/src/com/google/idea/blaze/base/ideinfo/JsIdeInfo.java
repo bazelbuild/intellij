@@ -50,8 +50,8 @@ public final class JsIdeInfo implements ProtoWrapper<IntellijIdeInfo.JsIdeInfo> 
   public static class Builder {
     private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
 
-    public Builder addSources(Iterable<ArtifactLocation> sources) {
-      this.sources.addAll(sources);
+    public Builder addSource(ArtifactLocation source) {
+      this.sources.add(source);
       return this;
     }
 
