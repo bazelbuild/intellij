@@ -62,7 +62,13 @@ _generate_test_suite = rule(
     outputs = {"out": "%{name}.java"},
 )
 
-def intellij_unit_test_suite(name, srcs, test_package_root, class_rules = [], **kwargs):
+def intellij_unit_test_suite(
+        name,
+        srcs,
+        test_package_root,
+        class_rules = [],
+        size = "medium",
+        **kwargs):
     """Creates a java_test rule comprising all valid test classes in the specified srcs.
 
     Only classes ending in "Test.java" will be recognized.
@@ -71,6 +77,8 @@ def intellij_unit_test_suite(name, srcs, test_package_root, class_rules = [], **
       name: name of this rule.
       srcs: the test classes.
       test_package_root: only tests under this package root will be run.
+      class_rules: JUnit class rules to apply to these tests.
+      size: the test size.
       **kwargs: Any other args to be passed to the java_test.
     """
     suite_class_name = name + "TestSuite"
@@ -97,6 +105,7 @@ def intellij_unit_test_suite(name, srcs, test_package_root, class_rules = [], **
     )
     native.java_test(
         name = name,
+        size = size,
         srcs = srcs + [suite_class_name],
         data = data,
         jvm_flags = jvm_flags,
