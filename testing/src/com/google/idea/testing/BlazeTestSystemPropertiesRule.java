@@ -16,7 +16,6 @@
 package com.google.idea.testing;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.StandardSystemProperty;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -45,11 +44,11 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
   }
 
   /** The absolute path to the runfiles directory. */
-  private static final String RUNFILES_PATH = getUserValue("TEST_SRCDIR");
+  private static final String RUNFILES_PATH = TestUtils.getUserValue("TEST_SRCDIR");
 
   /** Sets up the necessary system properties for running IntelliJ tests via blaze/bazel. */
   private static void configureSystemProperties() throws IOException {
-    File sandbox = new File(getTmpDirFile(), "_intellij_test_sandbox");
+    File sandbox = new File(TestUtils.getTmpDirFile(), "_intellij_test_sandbox");
 
     setSandboxPath("idea.home.path", new File(sandbox, "home"));
     setSandboxPath("idea.config.path", new File(sandbox, "config"));
@@ -164,56 +163,5 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
     if (System.getProperty(property) == null) {
       System.setProperty(property, value);
     }
-  }
-
-  /**
-   * Gets directory that should be used for all files created during testing.
-   *
-   * <p>This method will return a directory that's common to all tests run within the same <i>build
-   * target</i>.
-   *
-   * @return standard file, for example the File representing "/tmp/zogjones/foo_unittest/".
-   */
-  private static File getTmpDirFile() {
-    File tmpDir;
-
-    // Flag value specified in environment?
-    String tmpDirStr = getUserValue("TEST_TMPDIR");
-    if ((tmpDirStr != null) && (tmpDirStr.length() > 0)) {
-      tmpDir = new File(tmpDirStr);
-    } else {
-      // Fallback default $TEMP/$USER/tmp/$TESTNAME
-      String baseTmpDir = System.getProperty("java.io.tmpdir");
-      tmpDir = new File(baseTmpDir).getAbsoluteFile();
-
-      // .. Add username
-      String username = StandardSystemProperty.USER_NAME.value();
-      username = username.replace('/', '_');
-      username = username.replace('\\', '_');
-      username = username.replace('\000', '_');
-      tmpDir = new File(tmpDir, username);
-      tmpDir = new File(tmpDir, "tmp");
-    }
-
-    // Ensure tmpDir exists
-    if (!tmpDir.isDirectory()) {
-      tmpDir.mkdirs();
-    }
-    return tmpDir;
-  }
-
-  /**
-   * Returns the value for system property <code>name</code>, or if that is not found the value of
-   * the user's environment variable <code>name</code>. If neither is found, null is returned.
-   *
-   * @param name the name of property to get
-   * @return the value of the property or null if it is not found
-   */
-  private static String getUserValue(String name) {
-    String propValue = System.getProperty(name);
-    if (propValue == null) {
-      return System.getenv(name);
-    }
-    return propValue;
   }
 }
