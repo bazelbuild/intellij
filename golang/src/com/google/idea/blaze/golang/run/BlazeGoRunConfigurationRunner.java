@@ -33,9 +33,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.ideinfo.ImportPathReplacer;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -119,12 +116,10 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
 
   /** Converts to the native go plugin debug configuration state */
   static class BlazeGoDummyDebugProfileState implements RunProfileState {
-    private final BlazeCommandRunConfiguration configuration;
     private final BlazeCommandRunConfigurationCommonState state;
 
     BlazeGoDummyDebugProfileState(BlazeCommandRunConfiguration configuration)
         throws ExecutionException {
-      this.configuration = configuration;
       this.state =
           configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
       if (this.state == null) {
@@ -160,28 +155,12 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       if (projectData == null) {
         throw new ExecutionException("Project data not found. Please run blaze sync.");
       }
-      Label label = (Label) configuration.getTarget();
-      TargetKey key = TargetKey.forPlainTarget(label);
-      TargetIdeInfo target = projectData.getTargetMap().get(key);
-      String importPath =
-          target != null
-                  && target.getGoIdeInfo() != null
-                  && target.getGoIdeInfo().getImportPath() != null
-              ? target.getGoIdeInfo().getImportPath()
-              : ImportPathReplacer.fixImportPath(null, label, configuration.getTargetKind());
-      if (importPath == null) {
-        throw new ExecutionException(
-            "Can't resolve go target import path. "
-                + "Add the target to your project and re-run blaze sync.");
-      }
-
       GoApplicationConfiguration nativeConfig =
           (GoApplicationConfiguration)
               GoApplicationRunConfigurationType.getInstance()
                   .getConfigurationFactories()[0]
                   .createTemplateConfiguration(project, RunManager.getInstance(project));
       nativeConfig.setKind(Kind.PACKAGE);
-      nativeConfig.setPackage(importPath);
       // prevents binary from being deleted by
       // GoBuildingRunningState$ProcessHandler#processTerminated
       nativeConfig.setOutputDirectory(executable.binary.getParent());
