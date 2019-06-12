@@ -74,9 +74,10 @@ class BlazeGoAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvid
           WorkspacePath path = workspaceRoot.workspacePathForSafe(f);
           return path == null || !importRoots.containsWorkspacePath(path);
         };
-    return projectData.getTargetMap().targets().stream()
-        .filter(t -> t.getGoIdeInfo() != null)
-        .flatMap(t -> BlazeGoPackage.getSourceFiles(t, project, projectData).stream())
+    // don't use sync cache, because
+    // 1. this is used during sync before project data is saved
+    // 2. the roots provider is its own cache
+    return BlazeGoPackage.getUncachedTargetToFileMap(project, projectData).values().stream()
         .filter(isExternal)
         .filter(f -> f.getName().endsWith(".go"))
         .distinct()

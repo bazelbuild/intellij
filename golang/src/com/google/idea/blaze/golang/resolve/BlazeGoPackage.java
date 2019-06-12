@@ -20,13 +20,11 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import com.goide.psi.GoFile;
 import com.goide.psi.impl.GoPackage;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimap;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
@@ -46,6 +44,7 @@ import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.golang.GoBlazeRules.RuleTypes;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -79,7 +78,8 @@ import javax.annotation.Nullable;
  * Exactly one {@link BlazeGoPackage} per go rule.
  */
 public class BlazeGoPackage extends GoPackage {
-  private static final String GO_LIBRARY_TO_TEST_MAP_KEY = "BlazeGoLibraryToTestMap";
+  private static final Logger logger = Logger.getInstance(BlazeGoPackage.class);
+  private static final String GO_TARGET_TO_FILE_MAP_KEY = "BlazeGoTargetToFileMap";
 
   private final String importPath;
   private final Label label;
@@ -94,7 +94,7 @@ public class BlazeGoPackage extends GoPackage {
         project,
         importPath,
         replaceProtoLibrary(project, projectData, target.getKey()).getLabel(),
-        getSourceFiles(target, project, projectData));
+        getTargetToFileMap(project, projectData).get(target.getKey().getLabel()));
   }
 
   static BlazeGoPackage create(
@@ -123,16 +123,41 @@ public class BlazeGoPackage extends GoPackage {
         .orElse(targetKey);
   }
 
-  public static ImmutableSet<File> getSourceFiles(
-      TargetIdeInfo target, Project project, BlazeProjectData projectData) {
-    if (target.getGoIdeInfo() == null) {
-      return ImmutableSet.of();
+  static ImmutableMultimap<Label, File> getTargetToFileMap(
+      Project project, BlazeProjectData projectData) {
+    ImmutableMultimap<Label, File> map =
+        SyncCache.getInstance(project)
+            .get(GO_TARGET_TO_FILE_MAP_KEY, BlazeGoPackage::getUncachedTargetToFileMap);
+    if (map == null) {
+      logger.error("Unexpected null target to file map from SyncCache.");
+      return getUncachedTargetToFileMap(project, projectData);
     }
+    return map;
+  }
+
+  public static ImmutableMultimap<Label, File> getUncachedTargetToFileMap(
+      Project project, BlazeProjectData projectData) {
+    ImmutableMultimap<Label, GoIdeInfo> libraryToTestMap = buildLibraryToTestMap(projectData);
+    ImmutableMultimap.Builder<Label, File> builder = ImmutableMultimap.builder();
+    for (TargetIdeInfo target : projectData.getTargetMap().targets()) {
+      if (target.getGoIdeInfo() == null) {
+        continue;
+      }
+      builder.putAll(
+          target.getKey().getLabel(),
+          getSourceFiles(target, project, projectData, libraryToTestMap));
+    }
+    return builder.build();
+  }
+
+  private static ImmutableSet<File> getSourceFiles(
+      TargetIdeInfo target,
+      Project project,
+      BlazeProjectData projectData,
+      ImmutableMultimap<Label, GoIdeInfo> libraryToTestMap) {
     if (target.getKind() == RuleTypes.GO_WRAP_CC.getKind()) {
       return getWrapCcGoFiles(project, projectData, target);
     }
-    Multimap<Label, GoIdeInfo> libraryToTestMap =
-        Preconditions.checkNotNull(getLibraryToTestMap(project));
     return Stream.concat(
             Stream.of(target.getGoIdeInfo()),
             libraryToTestMap.get(target.getKey().getLabel()).stream())
@@ -143,13 +168,8 @@ public class BlazeGoPackage extends GoPackage {
         .collect(toImmutableSet());
   }
 
-  @Nullable
-  private static Multimap<Label, GoIdeInfo> getLibraryToTestMap(Project project) {
-    return SyncCache.getInstance(project)
-        .get(GO_LIBRARY_TO_TEST_MAP_KEY, (p, projectData) -> buildLibraryToTestMap(projectData));
-  }
-
-  private static Multimap<Label, GoIdeInfo> buildLibraryToTestMap(BlazeProjectData projectData) {
+  private static ImmutableMultimap<Label, GoIdeInfo> buildLibraryToTestMap(
+      BlazeProjectData projectData) {
     TargetMap targetMap = projectData.getTargetMap();
     ImmutableMultimap.Builder<Label, GoIdeInfo> builder = ImmutableMultimap.builder();
     for (TargetIdeInfo target : targetMap.targets()) {

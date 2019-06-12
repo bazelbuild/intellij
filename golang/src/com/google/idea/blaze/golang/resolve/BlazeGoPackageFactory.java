@@ -18,11 +18,13 @@ package com.google.idea.blaze.golang.resolve;
 import com.goide.project.GoPackageFactory;
 import com.goide.psi.GoFile;
 import com.goide.psi.impl.GoPackage;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -61,6 +63,8 @@ class BlazeGoPackageFactory implements GoPackageFactory {
       Project project, BlazeProjectData projectData) {
     TargetMap targetMap = projectData.getTargetMap();
     ConcurrentMap<File, String> map = new ConcurrentHashMap<>();
+    ImmutableMultimap<Label, File> targetToFile =
+        BlazeGoPackage.getTargetToFileMap(project, projectData);
     for (TargetIdeInfo target : targetMap.targets()) {
       if (target.getGoIdeInfo() == null) {
         continue;
@@ -79,7 +83,7 @@ class BlazeGoPackageFactory implements GoPackageFactory {
       if (importPath == null) {
         continue;
       }
-      for (File file : BlazeGoPackage.getSourceFiles(target, project, projectData)) {
+      for (File file : targetToFile.get(target.getKey().getLabel())) {
         map.putIfAbsent(file, importPath);
       }
     }
