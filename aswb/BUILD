@@ -77,6 +77,7 @@ java_library(
     }),
     resources = glob(["resources/**/*"]),
     deps = [
+        ":neverlinked_jpda-jdi",
         "//base",
         "//common/concurrency",
         "//common/experiments",
@@ -201,6 +202,13 @@ intellij_plugin(
         "//skylark:plugin_library",
         "//terminal:plugin_library",
     ],
+)
+
+# This is provided by the IDE at runtime
+java_library(
+    name = "neverlinked_jpda-jdi",
+    neverlink = 1,
+    exports = ["//third_party:jpda-jdi"],
 )
 
 repackaged_files(

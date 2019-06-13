@@ -42,6 +42,7 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.android.run.producers.BlazeFilterAndroidTestRunConfigurationProducer"
         order="first"/>
+    <debugger.positionManagerFactory implementation="com.google.idea.blaze.android.run.JetifiedSupportLibCompatibilityPositionManager$Factory"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.android.actions">
