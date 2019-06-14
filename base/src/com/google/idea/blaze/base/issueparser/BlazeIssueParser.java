@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.issueparser;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -185,8 +186,8 @@ public class BlazeIssueParser {
               + ":([0-9]+)" // line number
               + "(?::([0-9]+))?" // optional column number
               + "(?::| -)? " // colon or hyphen separator
-              + "(fatal error|error|warning|note)" // message type
-              + "(?: [^:]+)?: " // optional error code
+              + "(?i:(fatal error|error|warning|note))" // message type (case insensitive)
+              + "(?:[^:-]+)?[:-] " // optional error code with colon or hyphen separator
               + "(.*)$"); // message
       this.project = project;
     }
@@ -205,7 +206,7 @@ public class BlazeIssueParser {
     }
 
     private static IssueOutput.Category messageCategory(String messageType) {
-      switch (messageType) {
+      switch (Ascii.toLowerCase(messageType)) {
         case "warning":
           return IssueOutput.Category.WARNING;
         case "note":
