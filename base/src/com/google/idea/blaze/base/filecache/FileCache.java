@@ -44,5 +44,5 @@ public interface FileCache {
   void refreshFiles(Project project, BlazeContext context);
 
   /** Called after project open to deserialize the cache state. */
-  void initialize(Project project, BlazeProjectData projectData, ProjectViewSet projectViewSet);
+  void initialize(Project project);
 }

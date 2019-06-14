@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
@@ -58,6 +59,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -92,7 +94,8 @@ public class UnpackedAars {
 
   private final File cacheDir;
 
-  @Nullable private volatile InMemoryState inMemoryState = null;
+  /** The state of the cache as of the last call to {@link #readFileState}. */
+  private volatile ImmutableMap<String, File> cacheState = ImmutableMap.of();
 
   public static UnpackedAars getInstance(Project project) {
     return ServiceManager.getService(project, UnpackedAars.class);
@@ -114,20 +117,6 @@ public class UnpackedAars {
     }
   }
 
-  /** In-memory state representing the currently-cached files their corresponding artifacts. */
-  private static class InMemoryState {
-    private final ImmutableMap<String, AarAndJar> projectOutputs;
-
-    InMemoryState(ImmutableMap<String, AarAndJar> projectOutputs) {
-      this.projectOutputs = projectOutputs;
-    }
-
-    ImmutableMap<String, OutputArtifact> getAarOutputs() {
-      return projectOutputs.entrySet().stream()
-          .collect(toImmutableMap(Map.Entry::getKey, e -> e.getValue().aar));
-    }
-  }
-
   void onSync(
       BlazeContext context,
       ProjectViewSet projectViewSet,
@@ -143,25 +132,16 @@ public class UnpackedAars {
     boolean removeMissingFiles = syncMode == SyncMode.INCREMENTAL;
     refresh(
         context,
-        readState(projectViewSet, projectData),
+        projectViewSet,
+        projectData,
         RemoteOutputArtifacts.fromProjectData(oldProjectData),
         removeMissingFiles);
   }
 
-  private void refresh(BlazeContext context, @Nullable BlazeProjectData projectData) {
-    InMemoryState inMemoryState = this.inMemoryState;
-    if (inMemoryState == null
-        || inMemoryState.projectOutputs.values().stream()
-            .anyMatch(a -> a.aar instanceof RemoteOutputArtifact)) {
-      // if we have remote artifacts, only refresh during sync
-      return;
-    }
-    refresh(context, inMemoryState, RemoteOutputArtifacts.fromProjectData(projectData), false);
-  }
-
   private void refresh(
       BlazeContext context,
-      InMemoryState inMemoryState,
+      ProjectViewSet viewSet,
+      BlazeProjectData projectData,
       RemoteOutputArtifacts previousOutputs,
       boolean removeMissingFiles) {
     FileOperationProvider fileOpProvider = FileOperationProvider.getInstance();
@@ -174,24 +154,26 @@ public class UnpackedAars {
       }
     }
 
-    ImmutableMap<String, File> cacheFiles = readCachedFiles();
+    ImmutableMap<String, File> cacheFiles = readFileState();
+    ImmutableMap<String, AarAndJar> projectState = getArtifactsToCache(viewSet, projectData);
+    ImmutableMap<String, OutputArtifact> aarOutputs =
+        projectState.entrySet().stream()
+            .collect(toImmutableMap(Map.Entry::getKey, e -> e.getValue().aar));
     try {
+
       Set<String> updatedKeys =
-          FileCacheDiffer.findUpdatedOutputs(
-                  inMemoryState.getAarOutputs(), cacheFiles, previousOutputs)
-              .keySet();
+          FileCacheDiffer.findUpdatedOutputs(aarOutputs, cacheFiles, previousOutputs).keySet();
 
       Set<String> removedKeys = new HashSet<>();
       if (removeMissingFiles) {
         removedKeys =
-            cacheFiles.entrySet().stream()
-                .filter(e -> !inMemoryState.projectOutputs.containsKey(e.getKey()))
-                .map(Map.Entry::getKey)
+            cacheFiles.keySet().stream()
+                .filter(file -> !projectState.containsKey(file))
                 .collect(toImmutableSet());
       }
 
-      // Update cache files, and remove files if required.
-      List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(inMemoryState, updatedKeys));
+      // update cache files, and remove files if required
+      List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(projectState, updatedKeys));
       if (removeMissingFiles) {
         futures.addAll(deleteCacheEntries(removedKeys));
       }
@@ -209,20 +191,23 @@ public class UnpackedAars {
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
       logger.warn("Unpacked AAR synchronization didn't complete", e);
+    } finally {
+      // update the in-memory record of which files are cached
+      readFileState();
     }
   }
 
   /** Returns the merged jar derived from an AAR, in the unpacked AAR directory. */
   public File getClassJar(ArtifactLocationDecoder decoder, AarLibrary library) {
-    InMemoryState inMemoryState = this.inMemoryState;
+    ImmutableMap<String, File> cacheState = this.cacheState;
     OutputArtifact artifact =
         decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
-    if (inMemoryState == null) {
+    if (cacheState.isEmpty()) {
       return getFallbackFile(artifact);
     }
     String cacheKey = cacheKeyForAar(decoder.resolveOutput(library.aarArtifact));
     // check if it was actually cached
-    if (!inMemoryState.projectOutputs.containsKey(cacheKey)) {
+    if (!cacheState.containsKey(cacheKey)) {
       return getFallbackFile(artifact);
     }
     return jarFileForKey(cacheKey);
@@ -247,8 +232,8 @@ public class UnpackedAars {
 
   @Nullable
   public File getAarDir(String cacheKey) {
-    InMemoryState inMemoryState = this.inMemoryState;
-    if (inMemoryState == null || !inMemoryState.projectOutputs.containsKey(cacheKey)) {
+    ImmutableMap<String, File> cacheState = this.cacheState;
+    if (!cacheState.containsKey(cacheKey)) {
       return null;
     }
     return aarDirForKey(cacheKey);
@@ -291,7 +276,7 @@ public class UnpackedAars {
         logger.warn("Failed to clear unpacked AAR directory: " + cacheDir, e);
       }
     }
-    inMemoryState = null;
+    cacheState = ImmutableMap.of();
   }
 
   private static String cacheKeyForAar(OutputArtifact aar) {
@@ -330,20 +315,34 @@ public class UnpackedAars {
 
     @Override
     public void refreshFiles(Project project, BlazeContext context) {
+      ProjectViewSet viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-      getInstance(project).refresh(context, projectData);
+      if (viewSet == null || projectData == null || !projectData.getRemoteOutputs().isEmpty()) {
+        // if we have remote artifacts, only refresh during sync
+        return;
+      }
+      getInstance(project)
+          .refresh(
+              context,
+              viewSet,
+              projectData,
+              projectData.getRemoteOutputs(),
+              /* removeMissingFiles= */ false);
     }
 
     @Override
-    public void initialize(
-        Project project, BlazeProjectData projectData, ProjectViewSet projectViewSet) {
-      getInstance(project).readState(projectViewSet, projectData);
+    public void initialize(Project project) {
+      getInstance(project).readFileState();
     }
   }
 
-  /** Deserialize state from disk, setting {@link #inMemoryState}. */
-  private InMemoryState readState(ProjectViewSet projectViewSet, BlazeProjectData projectData) {
+  /**
+   * Returns a map from cache key to {@link AarAndJar}, for all the artifacts which should be
+   * cached.
+   */
+  private static ImmutableMap<String, AarAndJar> getArtifactsToCache(
+      ProjectViewSet projectViewSet, BlazeProjectData projectData) {
     Collection<BlazeLibrary> libraries =
         BlazeLibraryCollector.getLibraries(projectViewSet, projectData);
     List<AarLibrary> aarLibraries =
@@ -367,9 +366,7 @@ public class UnpackedAars {
       }
       outputs.put(cacheKeyForAar(aar), new AarAndJar(aar, jar));
     }
-    InMemoryState state = new InMemoryState(ImmutableMap.copyOf(outputs));
-    this.inMemoryState = state;
-    return state;
+    return ImmutableMap.copyOf(outputs);
   }
 
   private static final String STAMP_FILE_NAME = "aar.timestamp";
@@ -381,30 +378,30 @@ public class UnpackedAars {
    * <p>We use a stamp file instead of the directory itself to stash the timestamp. Directory
    * timestamps are bit more brittle and can change whenever an operation is done to a child of the
    * directory.
+   *
+   * <p>Also sets the in-memory @link #cacheState}.
    */
-  private ImmutableMap<String, File> readCachedFiles() {
+  private ImmutableMap<String, File> readFileState() {
     FileOperationProvider ops = FileOperationProvider.getInstance();
     // Go through all of the aar directories, and get the stamp file.
     File[] unpackedAarDirectories = ops.listFiles(cacheDir);
     if (unpackedAarDirectories == null) {
       return ImmutableMap.of();
     }
-    Map<String, File> cachedFiles = new HashMap<>();
-    for (File aarDirectory : unpackedAarDirectories) {
-      cachedFiles.put(aarDirectory.getName(), new File(aarDirectory, STAMP_FILE_NAME));
-    }
-    return ImmutableMap.copyOf(cachedFiles);
+    ImmutableMap<String, File> cachedFiles =
+        Arrays.stream(unpackedAarDirectories)
+            .collect(toImmutableMap(File::getName, dir -> new File(dir, STAMP_FILE_NAME)));
+    cacheState = cachedFiles;
+    return cachedFiles;
   }
 
   private Collection<ListenableFuture<?>> copyLocally(
-      InMemoryState inMemoryState, Set<String> updatedKeys) {
+      ImmutableMap<String, AarAndJar> toCache, Set<String> updatedKeys) {
     FileOperationProvider ops = FileOperationProvider.getInstance();
     List<ListenableFuture<?>> futures = new ArrayList<>();
     updatedKeys.forEach(
         key ->
-            futures.add(
-                FetchExecutor.EXECUTOR.submit(
-                    () -> copyLocally(ops, inMemoryState.projectOutputs.get(key)))));
+            futures.add(FetchExecutor.EXECUTOR.submit(() -> copyLocally(ops, toCache.get(key)))));
     return futures;
   }
 

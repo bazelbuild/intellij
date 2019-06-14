@@ -86,7 +86,8 @@ public final class FileCacheDiffer {
       return shouldUpdateLocal(
           (LocalFileOutputArtifact) newOutput, cachedFiles.get(key), timestamps);
     }
-    return shouldUpdateRemote((RemoteOutputArtifact) newOutput, previousOutputs);
+    return !cachedFiles.containsKey(key)
+        || shouldUpdateRemote((RemoteOutputArtifact) newOutput, previousOutputs);
   }
 
   private static boolean shouldUpdateRemote(

@@ -72,7 +72,7 @@ public class PrefetchProjectInitializer implements ApplicationComponent {
             () -> {
               RemoteOutputsCache.getInstance(project).initialize();
               if (projectViewSet != null) {
-                FileCaches.initialize(project, projectData, projectViewSet);
+                FileCaches.initialize(project);
               }
             }),
         "Reading local caches");

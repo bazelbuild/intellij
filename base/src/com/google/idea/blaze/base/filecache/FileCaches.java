@@ -66,9 +66,7 @@ public class FileCaches {
   }
 
   /** Called after project open to deserialize the cache state. */
-  public static void initialize(
-      Project project, BlazeProjectData projectData, ProjectViewSet projectViewSet) {
-    Arrays.stream(FileCache.EP_NAME.getExtensions())
-        .forEach(c -> c.initialize(project, projectData, projectViewSet));
+  public static void initialize(Project project) {
+    Arrays.stream(FileCache.EP_NAME.getExtensions()).forEach(c -> c.initialize(project));
   }
 }

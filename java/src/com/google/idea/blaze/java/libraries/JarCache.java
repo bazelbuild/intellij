@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.io.FileSizeScanner;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -85,19 +86,11 @@ public class JarCache {
 
   private static final Logger logger = Logger.getInstance(JarCache.class);
 
-  /** In-memory state representing the currently-cached files their corresponding artifacts. */
-  private static class InMemoryState {
-    private final ImmutableMap<String, OutputArtifact> projectOutputs;
-
-    InMemoryState(ImmutableMap<String, OutputArtifact> projectOutputs) {
-      this.projectOutputs = projectOutputs;
-    }
-  }
-
   private final Project project;
   private final File cacheDir;
 
-  @Nullable private volatile InMemoryState inMemoryState = null;
+  /** The state of the cache as of the last call to {@link #readFileState}. */
+  private volatile ImmutableMap<String, File> cacheState = ImmutableMap.of();
 
   private boolean enabled;
 
@@ -121,13 +114,17 @@ public class JarCache {
     return enabled;
   }
 
-  private ImmutableMap<String, File> readCachedFiles() {
+  /** Returns the currently cached files, as well as setting {@link #cacheState}. */
+  private ImmutableMap<String, File> readFileState() {
     FileOperationProvider ops = FileOperationProvider.getInstance();
     File[] files =
         cacheDir.listFiles((dir, name) -> ops.isFile(new File(dir, name)) && name.endsWith(".jar"));
-    return files == null
-        ? ImmutableMap.of()
-        : Arrays.stream(files).collect(toImmutableMap(File::getName, f -> f));
+    ImmutableMap<String, File> cacheState =
+        files == null
+            ? ImmutableMap.of()
+            : Arrays.stream(files).collect(toImmutableMap(File::getName, f -> f));
+    this.cacheState = cacheState;
+    return cacheState;
   }
 
   private void onSync(
@@ -150,27 +147,16 @@ public class JarCache {
 
     refresh(
         context,
-        readState(projectViewSet, projectData),
+        projectViewSet,
+        projectData,
         RemoteOutputArtifacts.fromProjectData(oldProjectData),
         removeMissingFiles);
   }
 
-  private void refresh(BlazeContext context, @Nullable BlazeProjectData projectData) {
-    InMemoryState inMemoryState = this.inMemoryState;
-    RemoteOutputArtifacts previousOutputs = RemoteOutputArtifacts.fromProjectData(projectData);
-    if (inMemoryState == null
-        || inMemoryState.projectOutputs.values().stream()
-            .anyMatch(a -> a instanceof RemoteOutputArtifact)
-        || !previousOutputs.isEmpty()) {
-      // if we have remote artifacts, only refresh during sync
-      return;
-    }
-    refresh(context, inMemoryState, RemoteOutputArtifacts.fromProjectData(projectData), false);
-  }
-
   private void refresh(
       BlazeContext context,
-      InMemoryState inMemoryState,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData projectData,
       RemoteOutputArtifacts previousOutputs,
       boolean removeMissingFiles) {
     if (!enabled) {
@@ -184,22 +170,23 @@ public class JarCache {
       }
     }
 
-    ImmutableMap<String, File> cachedFiles = readCachedFiles();
+    ImmutableMap<String, OutputArtifact> projectState =
+        getArtifactsToCache(projectViewSet, projectData);
+    ImmutableMap<String, File> cachedFiles = readFileState();
     try {
       Map<String, OutputArtifact> updated =
-          FileCacheDiffer.findUpdatedOutputs(
-              inMemoryState.projectOutputs, cachedFiles, previousOutputs);
+          FileCacheDiffer.findUpdatedOutputs(projectState, cachedFiles, previousOutputs);
 
       List<File> removed = new ArrayList<>();
       if (removeMissingFiles) {
         removed =
             cachedFiles.entrySet().stream()
-                .filter(e -> !inMemoryState.projectOutputs.containsKey(e.getKey()))
+                .filter(e -> !projectState.containsKey(e.getKey()))
                 .map(Map.Entry::getValue)
                 .collect(toImmutableList());
       }
 
-      // Update cache files, and remove files if required.
+      // update cache files, and remove files if required
       List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(updated));
       if (removeMissingFiles) {
         futures.addAll(deleteCacheFiles(removed));
@@ -224,11 +211,17 @@ public class JarCache {
     } catch (ExecutionException e) {
       logger.warn("Jar Cache synchronization didn't complete", e);
       IssueOutput.warn("Jar Cache synchronization didn't complete").submit(context);
+    } finally {
+      // update the in-memory record of which files are cached
+      readFileState();
     }
   }
 
-  /** Deserialize state from disk, setting {@link #inMemoryState}. */
-  private InMemoryState readState(ProjectViewSet projectViewSet, BlazeProjectData projectData) {
+  /**
+   * Returns a map from cache key to OutputArtifact, for all the artifacts which should be cached.
+   */
+  private static ImmutableMap<String, OutputArtifact> getArtifactsToCache(
+      ProjectViewSet projectViewSet, BlazeProjectData projectData) {
     List<LibraryArtifact> jarLibraries =
         BlazeLibraryCollector.getLibraries(projectViewSet, projectData).stream()
             .filter(library -> library instanceof BlazeJarLibrary)
@@ -246,9 +239,7 @@ public class JarCache {
         newOutputs.put(cacheKeyForSourceJar(srcJar), srcJar);
       }
     }
-    InMemoryState state = new InMemoryState(ImmutableMap.copyOf(newOutputs));
-    this.inMemoryState = state;
-    return state;
+    return ImmutableMap.copyOf(newOutputs);
   }
 
   private Collection<ListenableFuture<?>> copyLocally(Map<String, OutputArtifact> updated) {
@@ -309,7 +300,7 @@ public class JarCache {
         Future<?> possiblyIgnoredError = FileUtil.asyncDelete(Lists.newArrayList(cacheFiles));
       }
     }
-    inMemoryState = null;
+    cacheState = ImmutableMap.of();
   }
 
   /**
@@ -344,11 +335,7 @@ public class JarCache {
   }
 
   private Optional<File> getCacheFile(String cacheKey) {
-    InMemoryState state = inMemoryState;
-    if (state == null || !state.projectOutputs.containsKey(cacheKey)) {
-      return Optional.empty();
-    }
-    return Optional.of(cacheFileForKey(cacheKey));
+    return Optional.ofNullable(cacheState.get(cacheKey));
   }
 
   /** The file to return if there's no locally cached version. */
@@ -394,17 +381,27 @@ public class JarCache {
 
     @Override
     public void refreshFiles(Project project, BlazeContext context) {
+      ProjectViewSet viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-      getInstance(project).refresh(context, projectData);
+      if (viewSet == null || projectData == null || !projectData.getRemoteOutputs().isEmpty()) {
+        // if we have remote artifacts, only refresh during sync
+        return;
+      }
+      getInstance(project)
+          .refresh(
+              context,
+              viewSet,
+              projectData,
+              projectData.getRemoteOutputs(),
+              /* removeMissingFiles= */ false);
     }
 
     @Override
-    public void initialize(
-        Project project, BlazeProjectData projectData, ProjectViewSet projectViewSet) {
+    public void initialize(Project project) {
       JarCache cache = getInstance(project);
       cache.updateEnabled();
-      cache.readState(projectViewSet, projectData);
+      cache.readFileState();
     }
   }
 }

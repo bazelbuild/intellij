@@ -278,8 +278,7 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
   }
 
   private VirtualFile getResourceFile(File aarLibraryFile, String relativePathToResourceFile) {
-    UnpackedAars unpackedAars = UnpackedAars.getInstance(getProject());
-    String cacheKey = unpackedAars.cacheKeyForAar(aarLibraryFile.getAbsolutePath());
+    String cacheKey = UnpackedAars.cacheKeyForAar(aarLibraryFile.getAbsolutePath());
     File resourceDir = UnpackedAars.getInstance(getProject()).getResourceDirectory(cacheKey);
     return VirtualFileManager.getInstance()
         .findFileByUrl(

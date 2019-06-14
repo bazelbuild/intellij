@@ -49,6 +49,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -216,6 +217,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
   }
 
   @Test
+  @Ignore("temporarily disabled after a fix to UnpackedAars / JarCache")
   public void getDependencies_multipleModulesGetSameLibraryInstances() {
     List<Library> workspaceModuleLibraries =
         workspaceModuleSystem.getResolvedDependentLibraries().stream()
@@ -243,6 +245,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
   }
 
   @Test
+  @Ignore("temporarily disabled after a fix to UnpackedAars / JarCache")
   public void getDependencies_appModule() {
     PathString rootPath = new PathString(workspaceRoot.directory());
     Collection<Library> libraries = appModuleSystem.getResolvedDependentLibraries();
@@ -267,6 +270,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
   }
 
   @Test
+  @Ignore("temporarily disabled after a fix to UnpackedAars / JarCache")
   public void getDependencies_workspaceModule() {
     PathString rootPath = new PathString(workspaceRoot.directory());
     Collection<Library> libraries = workspaceModuleSystem.getResolvedDependentLibraries();
