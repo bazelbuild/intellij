@@ -29,11 +29,13 @@ import com.android.projectmodel.SelectiveResourceFolder;
 import com.android.tools.idea.projectsystem.GoogleMavenArtifactId;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
 import com.google.idea.blaze.android.projectsystem.MavenArtifactLocator;
 import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
 import com.google.idea.blaze.android.targetmapbuilder.BlazeInfoData;
+import com.google.idea.blaze.android.targetmapbuilder.NbAarTarget;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -49,7 +51,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -122,6 +123,19 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
 
     BlazeInfoData info =
         BlazeInfoData.builder().setBlazeExecutablesRootPath("bazel-out/crosstool/bin").build();
+    NbAarTarget aarTarget =
+        aar_import(aarFile, info)
+            .aar("lib_aar.aar")
+            .generated_jar("_aar/an_aar/classes_and_libs_merged.jar");
+    AarLibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
+        .src(
+            "res/values/colors.xml",
+            ImmutableList.of(
+                "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
+                "<resources>",
+                "    <color name=\"aarColor\">#ffffff</color>",
+                "</resources>"))
+        .build();
     setTargetMap(
         android_binary(main)
             .source_jar("app.jar")
@@ -134,9 +148,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
                 "//third_party/quantum/res",
                 ImmutableList.of("values/strings.xml", "values/attrs.xml", "layout/menu.xml")),
         java_library(guava).source_jar("//third_party/guava-21.jar"),
-        aar_import(aarFile, info)
-            .aar("lib_aar.aar")
-            .generated_jar("_aar/an_aar/classes_and_libs_merged.jar"),
+        aarTarget,
         android_library(recyclerView).res("res"),
         android_library(intermediateDependency).res("res").dep(constraintLayout),
         android_library(constraintLayout).res("res"));
@@ -217,7 +229,6 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
   }
 
   @Test
-  @Ignore("temporarily disabled after a fix to UnpackedAars / JarCache")
   public void getDependencies_multipleModulesGetSameLibraryInstances() {
     List<Library> workspaceModuleLibraries =
         workspaceModuleSystem.getResolvedDependentLibraries().stream()
@@ -245,7 +256,6 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
   }
 
   @Test
-  @Ignore("temporarily disabled after a fix to UnpackedAars / JarCache")
   public void getDependencies_appModule() {
     PathString rootPath = new PathString(workspaceRoot.directory());
     Collection<Library> libraries = appModuleSystem.getResolvedDependentLibraries();
@@ -270,7 +280,6 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
   }
 
   @Test
-  @Ignore("temporarily disabled after a fix to UnpackedAars / JarCache")
   public void getDependencies_workspaceModule() {
     PathString rootPath = new PathString(workspaceRoot.directory());
     Collection<Library> libraries = workspaceModuleSystem.getResolvedDependentLibraries();
