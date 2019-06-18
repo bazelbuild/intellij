@@ -21,9 +21,12 @@ import static com.intellij.patterns.PlatformPatterns.psiFile;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuiltInNamesProvider;
 import com.google.idea.blaze.base.lang.buildfile.lexer.BuildToken;
 import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
+import com.google.idea.blaze.base.lang.buildfile.livetemplates.RulesTemplates;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFileWithCustomCompletion;
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
@@ -36,11 +39,16 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProvider;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ProcessingContext;
 import icons.BlazeIcons;
+import javax.annotation.Nullable;
 
 /** Completes built-in blaze function names. */
 public class BuiltInFunctionCompletionContributor extends CompletionContributor {
@@ -83,15 +91,33 @@ public class BuiltInFunctionCompletionContributor extends CompletionContributor 
               CompletionParameters parameters,
               ProcessingContext context,
               CompletionResultSet result) {
+            Project project = parameters.getPosition().getProject();
             ImmutableSet<String> builtInNames =
-                BuiltInNamesProvider.getBuiltInFunctionNames(parameters.getPosition().getProject());
+                BuiltInNamesProvider.getBuiltInFunctionNames(project);
+            BuildLanguageSpec spec =
+                BuildLanguageSpecProvider.getInstance().getLanguageSpec(project);
             for (String ruleName : builtInNames) {
               result.addElement(
                   LookupElementBuilder.create(ruleName)
                       .withIcon(BlazeIcons.BuildRule)
-                      .withInsertHandler(ParenthesesInsertHandler.getInstance(true)));
+                      .withInsertHandler(getInsertHandler(ruleName, spec)));
             }
           }
         });
+  }
+
+  private static InsertHandler<LookupElement> getInsertHandler(
+      String ruleName, @Nullable BuildLanguageSpec spec) {
+    if (spec == null) {
+      return ParenthesesInsertHandler.getInstance(true);
+    }
+    return RulesTemplates.templateForRule(ruleName, spec)
+        .map(BuiltInFunctionCompletionContributor::createTemplateInsertHandler)
+        .orElse(ParenthesesInsertHandler.getInstance(true));
+  }
+
+  private static InsertHandler<LookupElement> createTemplateInsertHandler(Template t) {
+    return (context, item) ->
+        TemplateManager.getInstance(context.getProject()).startTemplate(context.getEditor(), t);
   }
 }

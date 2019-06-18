@@ -18,7 +18,9 @@ package com.google.idea.blaze.base.lang.buildfile.completion;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.devtools.build.lib.query2.proto.proto2api.Build.Attribute.Discriminator;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.AttributeDefinition;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
@@ -28,6 +30,7 @@ import com.google.idea.testing.ServiceHelper;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import javax.annotation.Nullable;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +51,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
 
   @Test
   public void testSimpleTopLevelCompletion() {
-    setRules("java_library", "android_binary");
+    setRules("rule_one", "rule_two");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "");
 
@@ -56,42 +59,38 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
     editorTest.setCaretPosition(editor, 0, 0);
 
     String[] completionItems = editorTest.getCompletionItemsAsStrings();
-    assertThat(completionItems).asList().containsAllOf("android_binary", "java_library");
+    assertThat(completionItems).asList().containsAllOf("rule_one", "rule_two");
     assertFileContents(file, "");
   }
 
   @Test
   public void testUniqueTopLevelCompletion() {
-    setRules("java_library", "android_binary");
+    setRules("rule_one", "rule_two");
 
-    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "java_libra");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "rule_o");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-    editorTest.setCaretPosition(editor, 0, "java_libra".length());
+    editorTest.setCaretPosition(editor, 0, "rule_o".length());
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).isNull();
-
-    assertFileContents(file, "java_library()");
-    editorTest.assertCaretPosition(editor, 0, "java_library(".length());
   }
 
   @Test
   public void testSkylarkNativeCompletion() {
-    setRules("java_library", "android_binary");
+    setRules("rule_one", "rule_two");
 
     BuildFile file =
-        createBuildFile(
-            new WorkspacePath("build_defs.bzl"), "def function():", "  native.java_libra");
+        createBuildFile(new WorkspacePath("build_defs.bzl"), "def function():", "  native.rule_o");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-    editorTest.setCaretPosition(editor, 1, "  native.java_libra".length());
+    editorTest.setCaretPosition(editor, 1, "  native.rule_o".length());
 
     LookupElement[] completionItems = testFixture.completeBasic();
     assertThat(completionItems).isNull();
 
-    assertFileContents(file, "def function():", "  native.java_library()");
-    editorTest.assertCaretPosition(editor, 1, "  native.java_library(".length());
+    assertFileContents(file, "def function():", "  native.rule_one()");
+    editorTest.assertCaretPosition(editor, 1, "  native.rule_one(".length());
   }
 
   @Test
@@ -101,9 +100,9 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
         BuiltInSymbolCompletionContributor.class,
         getTestRootDisposable());
 
-    setRules("java_library", "android_binary");
+    setRules("rule_one", "rule_two");
 
-    String[] contents = {"java_library(", "    name = \"lib\"", ""};
+    String[] contents = {"rule_one(", "    name = \"lib\"", ""};
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), contents);
 
@@ -117,19 +116,19 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
 
   @Test
   public void testNoCompletionInComment() {
-    setRules("java_library", "android_binary");
+    setRules("rule_one", "rule_two");
 
-    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "#java");
+    BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "#rule");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-    editorTest.setCaretPosition(editor, 0, "#java".length());
+    editorTest.setCaretPosition(editor, 0, "#rule".length());
 
     assertThat(editorTest.getCompletionItemsAsStrings()).isEmpty();
   }
 
   @Test
   public void testNoCompletionAfterInteger() {
-    setRules("java_library", "android_binary");
+    setRules("rule_one", "rule_two");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "1");
 
@@ -153,12 +152,41 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
     editorTest.assertCaretPosition(editor, 0, "licenses(".length());
   }
 
+  @Test
+  public void testMandatoryAttributesTemplate() {
+    setRuleWithAttributes(
+        "rule_with_attrs",
+        ImmutableMap.of(
+            "name", new AttributeDefinition("name", Discriminator.STRING, true, null, null),
+            "attr1", new AttributeDefinition("attr1", Discriminator.INTEGER, true, null, null),
+            "attr2", new AttributeDefinition("attr2", Discriminator.INTEGER, false, null, null)));
+
+    PsiFile file = testFixture.configureByText("BUILD", "rule_with<caret>");
+    editorTest.completeIfUnique();
+
+    assertFileContents(file, "rule_with_attrs(", "    name = \"\",", "    attr1 = ,", ")");
+  }
+
+  @Test
+  public void testParenthesesCompletionWhenTemplatesNotApplicable() {
+    setRules("abc_rule");
+
+    PsiFile file = testFixture.configureByText("BUILD", "ab<caret>");
+    editorTest.completeIfUnique();
+
+    assertFileContents(file, "abc_rule()");
+  }
+
   private void setRules(String... ruleNames) {
     ImmutableMap.Builder<String, RuleDefinition> rules = ImmutableMap.builder();
     for (String name : ruleNames) {
       rules.put(name, new RuleDefinition(name, ImmutableMap.of(), null));
     }
     specProvider.setRules(rules.build());
+  }
+
+  private void setRuleWithAttributes(String name, ImmutableMap<String, AttributeDefinition> attrs) {
+    specProvider.setRules(ImmutableMap.of(name, new RuleDefinition(name, attrs, null)));
   }
 
   private static class MockBuildLanguageSpecProvider implements BuildLanguageSpecProvider {
