@@ -21,19 +21,13 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.Nullable;
 
 /** Simple implementation of RuleDefinition, from build.proto */
 public class RuleDefinition implements ProtoWrapper<Build.RuleDefinition> {
-  /**
-   * In previous versions of blaze/bazel, this wasn't included in the proto. All other documented
-   * attributes seem to be.
-   */
-  private static final AttributeDefinition NAME_ATTRIBUTE =
-      new AttributeDefinition("name", Build.Attribute.Discriminator.STRING, true, null, null);
 
   private final String name;
   private final ImmutableMap<String, AttributeDefinition> attributes;
@@ -53,12 +47,16 @@ public class RuleDefinition implements ProtoWrapper<Build.RuleDefinition> {
   }
 
   public static RuleDefinition fromProto(Build.RuleDefinition proto) {
-    Map<String, AttributeDefinition> attributes = new HashMap<>();
+    Map<String, AttributeDefinition> attributes = new LinkedHashMap<>();
     for (Build.AttributeDefinition attr : proto.getAttributeList()) {
       attributes.put(attr.getName(), AttributeDefinition.fromProto(attr));
     }
-    if (!attributes.containsKey("name")) {
-      attributes.put(NAME_ATTRIBUTE.getName(), NAME_ATTRIBUTE);
+    AttributeDefinition nameDef = attributes.get("name");
+    if (nameDef != null && !nameDef.isMandatory()) {
+      // blaze isn't correctly marking the 'name' attribute as mandatory
+      attributes.put(
+          "name",
+          AttributeDefinition.fromProto(nameDef.toProto().toBuilder().setMandatory(true).build()));
     }
     attributes =
         attributes.entrySet().stream()

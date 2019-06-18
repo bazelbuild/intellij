@@ -103,6 +103,14 @@ public class AttributeDefinition
     if (isMandatory() != other.isMandatory()) {
       return isMandatory() ? -1 : 1;
     }
+    // 'name' always goes first if present
+    if (getName().equals("name")) {
+      return other.getName().equals("name") ? 0 : -1;
+    }
+    if (other.getName().equals("name")) {
+      return 1;
+    }
+
     return getName().compareTo(other.getName());
   }
 }
