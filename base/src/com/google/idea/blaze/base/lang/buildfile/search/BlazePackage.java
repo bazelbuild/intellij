@@ -198,24 +198,33 @@ public class BlazePackage {
         Blaze.buildSystemName(buildFile.getProject()), buildFile.getPackageLabel());
   }
 
+  /**
+   * Depth-first search for blaze packages underneath (non-strict) the given directory which satisfy
+   * the give predicate.
+   */
   public static boolean hasBlazePackageChild(
-      PsiDirectory directory, Predicate<PsiDirectory> searchDirectory) {
+      PsiDirectory directory, Predicate<PsiDirectory> searchDirectory, int maxDepth) {
     BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(directory.getProject());
-    return hasBlazePackageChild(searchDirectory, buildSystemProvider, directory);
+    return hasBlazePackageChild(searchDirectory, buildSystemProvider, directory, maxDepth, 0);
   }
 
   private static boolean hasBlazePackageChild(
       Predicate<PsiDirectory> searchDirectory,
       BuildSystemProvider buildSystemProvider,
-      PsiDirectory directory) {
+      PsiDirectory directory,
+      int maxDepth,
+      int depth) {
     if (!searchDirectory.test(directory)) {
       return false;
     }
     if (buildSystemProvider.findBuildFileInDirectory(directory.getVirtualFile()) != null) {
       return true;
     }
+    if (++depth > maxDepth) {
+      return false;
+    }
     for (PsiDirectory child : directory.getSubdirectories()) {
-      if (hasBlazePackageChild(searchDirectory, buildSystemProvider, child)) {
+      if (hasBlazePackageChild(searchDirectory, buildSystemProvider, child, maxDepth, depth)) {
         return true;
       }
     }

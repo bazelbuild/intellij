@@ -41,9 +41,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link AllInPackageTestContextProvider}. */
+/** Integration tests for {@link AllUnderDirectoryTestContextProvider}. */
 @RunWith(JUnit4.class)
-public class AllInPackageTestContextProviderTest extends BlazeRunConfigurationProducerTestCase {
+public class AllUnderDirectoryTestContextProviderTest
+    extends BlazeRunConfigurationProducerTestCase {
 
   private ErrorCollector errorCollector;
   private BlazeContext context;
@@ -91,7 +92,31 @@ public class AllInPackageTestContextProviderTest extends BlazeRunConfigurationPr
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
     assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:all"));
+        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test/...:all"));
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+  }
+
+  @Test
+  public void testProducedFromPsiDirectoryWithPackageChild() {
+    setProjectView(
+        "directories:", "  java/com/google/test", "targets:", "  //java/com/google/test:lib");
+    PsiDirectory directory =
+        workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
+    workspace.createPsiFile(
+        new WorkspacePath("java/com/google/test/child/BUILD"), "java_test(name='unit_tests'");
+
+    ConfigurationContext context = createContextFromPsi(directory);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    assertThat(configurations).hasSize(1);
+
+    ConfigurationFromContext fromContext = configurations.get(0);
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config.getTarget())
+        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test/...:all"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 

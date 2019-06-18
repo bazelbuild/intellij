@@ -15,20 +15,37 @@
  */
 package com.google.idea.blaze.base.run.producers;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import java.io.File;
 import javax.annotation.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
-/** Runs all tests in a single selected blaze package directory. */
-class AllInPackageTestContextProvider implements TestContextProvider {
+/**
+ * Runs all tests underneath the selected directory. Ignores directories without child blaze
+ * packages.
+ */
+class AllUnderDirectoryTestContextProvider implements TestContextProvider {
+
+  private static final ListeningExecutorService EXECUTOR =
+      ApplicationManager.getApplication().isUnitTestMode()
+          ? MoreExecutors.newDirectExecutorService()
+          : MoreExecutors.listeningDecorator(PooledThreadExecutor.INSTANCE);
+
+  private static final int MAX_DEPTH_TO_SEARCH = 8;
 
   @Nullable
   @Override
@@ -42,9 +59,24 @@ class AllInPackageTestContextProvider implements TestContextProvider {
     if (!isInWorkspace(root, dir)) {
       return null;
     }
-    // only check if the directory itself is a blaze package
-    // TODO(brendandouglas): otherwise check off the EDT, and return PendingRunConfigurationContext?
-    return BlazePackage.isBlazePackage(dir) ? fromDirectory(root, dir) : null;
+    // quick check if the directory itself is a blaze package, otherwise check the subdirectories
+    // recursively, asynchronously
+    if (BlazePackage.isBlazePackage(dir)) {
+      return fromDirectory(root, dir);
+    }
+    ListenableFuture<RunConfigurationContext> future =
+        EXECUTOR.submit(
+            () ->
+                ReadAction.compute(
+                    () ->
+                        BlazePackage.hasBlazePackageChild(
+                                dir, d -> isInWorkspace(root, d), MAX_DEPTH_TO_SEARCH)
+                            ? fromDirectory(root, dir)
+                            : null));
+    return TestContext.builder(dir, ExecutorType.DEBUG_SUPPORTED_TYPES)
+        .setContextFuture(future)
+        .setDescription(String.format("all under directory '%s'", dir.getName()))
+        .build();
   }
 
   @Nullable
@@ -54,7 +86,7 @@ class AllInPackageTestContextProvider implements TestContextProvider {
       return null;
     }
     return RunConfigurationContext.fromKnownTarget(
-        TargetExpression.allFromPackageNonRecursive(packagePath), BlazeCommandName.TEST, dir);
+        TargetExpression.allFromPackageRecursive(packagePath), BlazeCommandName.TEST, dir);
   }
 
   @Nullable
