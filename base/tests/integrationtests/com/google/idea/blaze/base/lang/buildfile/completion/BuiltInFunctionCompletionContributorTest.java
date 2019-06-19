@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.lang.buildfile.completion;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.blaze.base.lang.buildfile.livetemplates.RulesTemplates.srcsDepsExperiment;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Attribute.Discriminator;
@@ -27,8 +26,6 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguag
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.common.experiments.ExperimentService;
-import com.google.idea.common.experiments.MockExperimentService;
 import com.google.idea.testing.ServiceHelper;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
@@ -181,10 +178,6 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
 
   @Test
   public void testSrcsDepsTemplate() {
-    MockExperimentService experimentService = new MockExperimentService();
-    registerApplicationComponent(ExperimentService.class, experimentService);
-    experimentService.setFeatureRolloutExperiment(srcsDepsExperiment, 100);
-
     setRuleWithAttributes(
         "haskell_binary",
         ImmutableMap.of(

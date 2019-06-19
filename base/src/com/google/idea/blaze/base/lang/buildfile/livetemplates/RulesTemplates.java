@@ -20,7 +20,6 @@ import static com.google.idea.blaze.base.lang.buildfile.validation.AttributeType
 import static com.google.idea.blaze.base.lang.buildfile.validation.AttributeTypeGroups.STRING_TYPES;
 import static com.google.idea.blaze.base.lang.buildfile.validation.AttributeTypeGroups.uniqueTypesOfGroup;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -28,7 +27,7 @@ import com.google.devtools.build.lib.query2.proto.proto2api.Build;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.AttributeDefinition;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
-import com.google.idea.common.experiments.FeatureRolloutExperiment;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import java.util.Optional;
@@ -61,9 +60,8 @@ public final class RulesTemplates {
     TYPE_TO_WRAP = Maps.immutableEnumMap(mapping.build());
   }
 
-  @VisibleForTesting
-  public static final FeatureRolloutExperiment srcsDepsExperiment =
-      new FeatureRolloutExperiment("blaze.base.lang.buildfile.livetemplates.SrcsDepsTemplate");
+  private static final BoolExperiment srcsDepsExperiment =
+      new BoolExperiment("blaze.SrcsDepsTemplate", true);
 
   private static final ImmutableList<String> FREQUENT_ATTRIBUTES = ImmutableList.of("srcs", "deps");
 
@@ -84,7 +82,7 @@ public final class RulesTemplates {
     ImmutableMap<String, AttributeDefinition> attributes = ruleDef.getAttributes();
     ImmutableMap<String, AttributeDefinition> requiredAttributes = ruleDef.getMandatoryAttributes();
     requiredAttributes.values().forEach(d -> addAttributeToTemplate(template, d));
-    if (srcsDepsExperiment.isEnabled()) {
+    if (srcsDepsExperiment.getValue()) {
       FREQUENT_ATTRIBUTES.stream()
           .filter(a -> attributes.containsKey(a) && !requiredAttributes.containsKey(a))
           .map(attributes::get)
