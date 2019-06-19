@@ -15,6 +15,11 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.validation;
 
+import static com.google.idea.blaze.base.lang.buildfile.validation.AttributeTypeGroups.DICT_TYPES;
+import static com.google.idea.blaze.base.lang.buildfile.validation.AttributeTypeGroups.INTEGER_TYPES;
+import static com.google.idea.blaze.base.lang.buildfile.validation.AttributeTypeGroups.LIST_TYPES;
+import static com.google.idea.blaze.base.lang.buildfile.validation.AttributeTypeGroups.STRING_TYPES;
+
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Attribute.Discriminator;
@@ -35,36 +40,6 @@ import java.util.EnumSet;
  * We err on the side of avoiding spurious errors.
  */
 class BuildElementValidation {
-
-  private static final EnumSet<Build.Attribute.Discriminator> LIST_TYPES =
-      EnumSet.of(
-          Discriminator.STRING_LIST,
-          Discriminator.DISTRIBUTION_SET,
-          Discriminator.LABEL_LIST,
-          Discriminator.OUTPUT_LIST,
-          Discriminator.FILESET_ENTRY_LIST,
-          Discriminator.INTEGER_LIST,
-          Discriminator.LICENSE,
-          Discriminator.SELECTOR_LIST);
-
-  private static final EnumSet<Build.Attribute.Discriminator> DICT_TYPES =
-      EnumSet.of(
-          Discriminator.LABEL_LIST_DICT,
-          Discriminator.LABEL_KEYED_STRING_DICT,
-          Discriminator.STRING_DICT,
-          Discriminator.STRING_LIST_DICT,
-          Discriminator.LABEL_DICT_UNARY);
-
-  private static final EnumSet<Build.Attribute.Discriminator> STRING_TYPES =
-      EnumSet.of(
-          Discriminator.STRING,
-          Discriminator.LABEL,
-          Discriminator.OUTPUT,
-          Discriminator.BOOLEAN,
-          Discriminator.TRISTATE);
-
-  private static final EnumSet<Build.Attribute.Discriminator> INTEGER_TYPES =
-      EnumSet.of(Discriminator.INTEGER, Discriminator.BOOLEAN, Discriminator.TRISTATE);
 
   // This enum list is duplicated several times through Bazel source code. In some places there are
   // additional items not covered here. Don't show spurious errors when more items are added.

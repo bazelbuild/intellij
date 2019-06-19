@@ -15,15 +15,57 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.livetemplates;
 
+import static com.google.idea.blaze.base.lang.buildfile.validation.AttributeTypeGroups.DICT_TYPES;
+import static com.google.idea.blaze.base.lang.buildfile.validation.AttributeTypeGroups.LIST_TYPES;
+import static com.google.idea.blaze.base.lang.buildfile.validation.AttributeTypeGroups.STRING_TYPES;
+import static com.google.idea.blaze.base.lang.buildfile.validation.AttributeTypeGroups.uniqueTypesOfGroup;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
+import com.google.idea.blaze.base.lang.buildfile.language.semantics.AttributeDefinition;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpec;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
+import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import java.util.Optional;
 
 /** Class that provides templates for some build rules. */
 public final class RulesTemplates {
+
+  private static final class Wrap {
+    final String left;
+    final String right;
+
+    Wrap(String left, String right) {
+      this.left = left;
+      this.right = right;
+    }
+
+    static final Wrap EMPTY = new Wrap("", "");
+    static final Wrap QUOTES = new Wrap("\"", "\"");
+    static final Wrap SQUARE_BRACKETS = new Wrap("[", "]");
+    static final Wrap CURLY_BRACKETS = new Wrap("{", "}");
+  }
+
+  private static final ImmutableMap<Build.Attribute.Discriminator, Wrap> TYPE_TO_WRAP;
+
+  static {
+    ImmutableMap.Builder<Build.Attribute.Discriminator, Wrap> mapping = ImmutableMap.builder();
+    uniqueTypesOfGroup(LIST_TYPES).forEach(t -> mapping.put(t, Wrap.SQUARE_BRACKETS));
+    uniqueTypesOfGroup(DICT_TYPES).forEach(t -> mapping.put(t, Wrap.CURLY_BRACKETS));
+    uniqueTypesOfGroup(STRING_TYPES).forEach(t -> mapping.put(t, Wrap.QUOTES));
+    TYPE_TO_WRAP = Maps.immutableEnumMap(mapping.build());
+  }
+
+  @VisibleForTesting
+  public static final FeatureRolloutExperiment srcsDepsExperiment =
+      new FeatureRolloutExperiment("blaze.base.lang.buildfile.livetemplates.SrcsDepsTemplate");
+
+  private static final ImmutableList<String> FREQUENT_ATTRIBUTES = ImmutableList.of("srcs", "deps");
 
   private RulesTemplates() {}
 
@@ -33,32 +75,35 @@ public final class RulesTemplates {
     if (ruleDef == null || ruleDef.getMandatoryAttributes().isEmpty()) {
       return Optional.empty();
     }
-    return Optional.of(allMandatoryVariablesTemplate(ruleDef));
+    return Optional.of(mandatoryAndFrequentArgumentsTemplate(ruleDef));
   }
 
-  private static Template allMandatoryVariablesTemplate(RuleDefinition ruleDef) {
+  private static Template mandatoryAndFrequentArgumentsTemplate(RuleDefinition ruleDef) {
     TemplateImpl template = new TemplateImpl("", "");
     template.addTextSegment("(");
-    ruleDef
-        .getMandatoryAttributes()
-        .forEach(
-            (a, d) -> {
-              if (d.getType() == Build.Attribute.Discriminator.STRING) {
-                template.addTextSegment("\n    " + a + " = \"");
-                addVariableToTemplate(template, a);
-                template.addTextSegment("\",");
-              } else {
-                template.addTextSegment("\n    " + a + " = ");
-                addVariableToTemplate(template, a);
-                template.addTextSegment(",");
-              }
-            });
+    ImmutableMap<String, AttributeDefinition> attributes = ruleDef.getAttributes();
+    ImmutableMap<String, AttributeDefinition> requiredAttributes = ruleDef.getMandatoryAttributes();
+    requiredAttributes.values().forEach(d -> addAttributeToTemplate(template, d));
+    if (srcsDepsExperiment.isEnabled()) {
+      FREQUENT_ATTRIBUTES.stream()
+          .filter(a -> attributes.containsKey(a) && !requiredAttributes.containsKey(a))
+          .map(attributes::get)
+          .forEach(d -> addAttributeToTemplate(template, d));
+    }
     template.addEndVariable();
     template.addTextSegment("\n)");
     return template;
   }
 
-  private static void addVariableToTemplate(TemplateImpl template, String variableName) {
+  private static void addAttributeToTemplate(Template template, AttributeDefinition attribute) {
+    String name = attribute.getName();
+    Wrap wrap = TYPE_TO_WRAP.getOrDefault(attribute.getType(), Wrap.EMPTY);
+    template.addTextSegment("\n    " + name + " = " + wrap.left);
+    addVariableToTemplate(template, name);
+    template.addTextSegment(wrap.right + ",");
+  }
+
+  private static void addVariableToTemplate(Template template, String variableName) {
     template.addVariable(
         variableName,
         /* expression= */ null,
