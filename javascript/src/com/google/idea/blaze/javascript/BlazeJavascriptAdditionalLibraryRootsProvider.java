@@ -74,7 +74,10 @@ class BlazeJavascriptAdditionalLibraryRootsProvider extends AdditionalLibraryRoo
     Predicate<ArtifactLocation> isJs =
         (location) -> {
           String extension = Files.getFileExtension(location.getRelativePath());
-          return jsExtensions.contains(extension);
+          // jspb_proto_library has directories in their sources instead of the jspb.js files that
+          // they're supposed to present. however, the directories also work as library roots
+          return (extension.isEmpty() && location.getRelativePath().endsWith("_jspb"))
+              || jsExtensions.contains(extension);
         };
     Predicate<ArtifactLocation> isExternal =
         (location) -> {
