@@ -15,17 +15,13 @@
  */
 package com.google.idea.blaze.golang.sync;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.OutputsProvider;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -34,28 +30,19 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 /** Declare that go files should be prefetched. */
-public class GoPrefetchFileSource
-    implements PrefetchFileSource, RemoteOutputsCache.OutputsProvider {
+public class GoPrefetchFileSource implements PrefetchFileSource, OutputsProvider {
 
   @Override
-  public List<ArtifactLocation> selectOutputsToCache(
-      RemoteOutputArtifacts outputs,
-      TargetMap targetMap,
-      WorkspaceLanguageSettings languageSettings) {
-    if (!languageSettings.isLanguageActive(LanguageClass.GO)) {
-      return ImmutableList.of();
-    }
-    return targetMap.targets().stream()
-        .filter(t -> t.getGoIdeInfo() != null)
-        .map(TargetIdeInfo::getGoIdeInfo)
-        .map(GoIdeInfo::getSources)
-        .flatMap(Collection::stream)
-        .filter(ArtifactLocation::isGenerated)
-        .collect(toImmutableList());
+  public boolean isActive(WorkspaceLanguageSettings languageSettings) {
+    return languageSettings.isLanguageActive(LanguageClass.GO);
+  }
+
+  @Override
+  public Collection<ArtifactLocation> selectAllRelevantOutputs(TargetIdeInfo target) {
+    return target.getGoIdeInfo() != null ? target.getGoIdeInfo().getSources() : ImmutableList.of();
   }
 
   @Override

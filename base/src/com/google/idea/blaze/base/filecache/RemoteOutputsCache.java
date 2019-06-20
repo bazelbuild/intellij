@@ -28,7 +28,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.OutputsProvider;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -40,7 +42,6 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
@@ -60,6 +61,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -69,21 +71,6 @@ import javax.annotation.Nullable;
  * <p>Cache files have a hash appended to their name to allow matching to the original artifact.
  */
 public final class RemoteOutputsCache {
-
-  public static final ExtensionPointName<OutputsProvider> EP_NAME =
-      ExtensionPointName.create("com.google.idea.blaze.RemoteOutputsCacheProvider");
-
-  /**
-   * An extension point for individual languages to provide the list of output artifacts which
-   * should be locally cached.
-   */
-  public interface OutputsProvider {
-    /** Returns a list of remote output artifacts which should be locally cached. */
-    List<ArtifactLocation> selectOutputsToCache(
-        RemoteOutputArtifacts outputs,
-        TargetMap targetMap,
-        WorkspaceLanguageSettings languageSettings);
-  }
 
   public static RemoteOutputsCache getInstance(Project project) {
     return ServiceManager.getService(project, RemoteOutputsCache.class);
@@ -126,15 +113,26 @@ public final class RemoteOutputsCache {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
+    List<OutputsProvider> providers =
+        Arrays.stream(OutputsProvider.EP_NAME.getExtensions())
+            .filter(p -> p.isActive(languageSettings))
+            .collect(toImmutableList());
+
     Set<RemoteOutputArtifact> toCache =
-        Arrays.stream(EP_NAME.getExtensions())
-            .flatMap(e -> e.selectOutputsToCache(outputs, targetMap, languageSettings).stream())
-            .filter(ArtifactLocation::isGenerated)
+        targetMap.targets().stream()
+            .flatMap(t -> artifactsToCache(providers, t))
             .distinct()
             .map(outputs::findRemoteOutput)
             .filter(Objects::nonNull)
             .collect(toImmutableSet());
     updateCache(context, toCache, previousOutputs);
+  }
+
+  private static Stream<ArtifactLocation> artifactsToCache(
+      List<OutputsProvider> providers, TargetIdeInfo target) {
+    return providers.stream()
+        .flatMap(p -> p.selectOutputsToCache(target).stream())
+        .filter(ArtifactLocation::isGenerated);
   }
 
   private void updateCache(

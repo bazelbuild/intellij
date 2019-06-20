@@ -15,17 +15,20 @@
  */
 package com.google.idea.blaze.android.sync;
 
+import static java.util.stream.Collectors.toList;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
-import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.OutputsProvider;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -35,13 +38,12 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /** Adds the resource directories outside our source roots to prefetch. */
-public class AndroidPrefetchFileSource
-    implements PrefetchFileSource, RemoteOutputsCache.OutputsProvider {
+public class AndroidPrefetchFileSource implements PrefetchFileSource, OutputsProvider {
+
   @Override
   public void addFilesToPrefetch(
       Project project,
@@ -63,7 +65,7 @@ public class AndroidPrefetchFileSource
             artifactLocationDecoder,
             syncData.importResult.resourceLibraries.values().stream()
                 .map(resourceLibrary -> resourceLibrary.root)
-                .collect(Collectors.toList())));
+                .collect(toList())));
   }
 
   @Override
@@ -72,33 +74,74 @@ public class AndroidPrefetchFileSource
   }
 
   @Override
-  public List<ArtifactLocation> selectOutputsToCache(
-      RemoteOutputArtifacts outputs,
-      TargetMap targetMap,
-      WorkspaceLanguageSettings languageSettings) {
-    return targetMap.targets().stream()
-        .map(AndroidPrefetchFileSource::getAndroidSources)
-        .flatMap(Collection::stream)
-        .distinct()
-        .filter(ArtifactLocation::isGenerated)
-        .collect(Collectors.toList());
+  public boolean isActive(WorkspaceLanguageSettings languageSettings) {
+    return languageSettings.isLanguageActive(LanguageClass.ANDROID);
   }
 
-  private static Collection<ArtifactLocation> getAndroidSources(TargetIdeInfo target) {
+  @Override
+  public Collection<ArtifactLocation> selectAllRelevantOutputs(TargetIdeInfo target) {
+    if (target.getJavaToolchainIdeInfo() != null) {
+      return target.getJavaToolchainIdeInfo().getJavacJars();
+    }
+    if (target.getAndroidSdkIdeInfo() != null) {
+      return ImmutableList.of(target.getAndroidSdkIdeInfo().getAndroidJar());
+    }
+    if (target.getAndroidAarIdeInfo() != null) {
+      return ImmutableList.of(target.getAndroidAarIdeInfo().getAar());
+    }
+
+    if (target.getAndroidIdeInfo() == null) {
+      return ImmutableList.of();
+    }
+    AndroidIdeInfo androidInfo = target.getAndroidIdeInfo();
+
+    ImmutableList.Builder<ArtifactLocation> list = ImmutableList.builder();
+    androidInfo.getResFolders().forEach(f -> addArtifact(list, f.getRoot()));
+    addLibrary(list, androidInfo.getResourceJar());
+    addLibrary(list, androidInfo.getIdlJar());
+    addArtifact(list, androidInfo.getManifest());
+    return list.build();
+  }
+
+  private static void addLibrary(
+      ImmutableList.Builder<ArtifactLocation> list, @Nullable LibraryArtifact library) {
+    if (library != null) {
+      addArtifact(list, library.getInterfaceJar());
+      addArtifact(list, library.getClassJar());
+      library.getSourceJars().forEach(j -> addArtifact(list, j));
+    }
+  }
+
+  private static void addArtifact(
+      ImmutableList.Builder<ArtifactLocation> list, @Nullable ArtifactLocation artifact) {
+    if (artifact != null) {
+      list.add(artifact);
+    }
+  }
+
+  @Override
+  public Collection<ArtifactLocation> selectOutputsToCache(TargetIdeInfo target) {
+    // other outputs are handled separately to RemoteOutputsCache
+    if (target.getJavaToolchainIdeInfo() != null) {
+      return target.getJavaToolchainIdeInfo().getJavacJars();
+    }
+    if (target.getAndroidIdeInfo() != null) {
+      return getAndroidSources(target.getAndroidIdeInfo());
+    }
+    return ImmutableList.of();
+  }
+
+  private static Collection<ArtifactLocation> getAndroidSources(AndroidIdeInfo androidInfo) {
     Set<ArtifactLocation> fileSet = new HashSet<>();
 
-    AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
-    if (androidIdeInfo != null) {
-      ArtifactLocation manifest = androidIdeInfo.getManifest();
+    ArtifactLocation manifest = androidInfo.getManifest();
       if (manifest != null) {
         fileSet.add(manifest);
       }
-      fileSet.addAll(androidIdeInfo.getResources());
-      for (AndroidResFolder androidResFolder : androidIdeInfo.getResFolders()) {
+    fileSet.addAll(androidInfo.getResources());
+    for (AndroidResFolder androidResFolder : androidInfo.getResFolders()) {
         fileSet.add(androidResFolder.getRoot());
-      }
     }
-
     return fileSet;
   }
 }

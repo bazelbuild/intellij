@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.model;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableMap;
@@ -23,9 +25,17 @@ import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** A set of {@link RemoteOutputArtifact}s we want to retain a reference to between syncs. */
@@ -65,6 +75,10 @@ public final class RemoteOutputArtifacts implements SyncData<ProjectData.RemoteO
     return new RemoteOutputArtifacts(map.build());
   }
 
+  /**
+   * Merges this set of outputs with another set, returning a new {@link RemoteOutputArtifacts}
+   * instance.
+   */
   public RemoteOutputArtifacts appendNewOutputs(Set<RemoteOutputArtifact> outputs) {
     HashMap<String, RemoteOutputArtifact> map = new HashMap<>(remoteOutputArtifacts);
     // more recently built artifacts replace existing ones with the same path
@@ -77,6 +91,37 @@ public final class RemoteOutputArtifacts implements SyncData<ProjectData.RemoteO
           }
         });
     return new RemoteOutputArtifacts(ImmutableMap.copyOf(map));
+  }
+
+  /**
+   * Returns a new {@link RemoteOutputArtifacts} instance containing only the artifacts which should
+   * be tracked according to {@link OutputsProvider}.
+   */
+  public RemoteOutputArtifacts removeUntrackedOutputs(
+      TargetMap targets, WorkspaceLanguageSettings settings) {
+    List<OutputsProvider> providers =
+        Arrays.stream(OutputsProvider.EP_NAME.getExtensions())
+            .filter(p -> p.isActive(settings))
+            .collect(toImmutableList());
+    ImmutableMap<String, RemoteOutputArtifact> tracked =
+        targets.targets().stream()
+            .flatMap(t -> artifactsToTrack(providers, t))
+            .distinct()
+            .map(this::findRemoteOutput)
+            .filter(Objects::nonNull)
+            .distinct()
+            .collect(toImmutableMap(RemoteOutputArtifact::getRelativePath, o -> o));
+    return new RemoteOutputArtifacts(tracked);
+  }
+
+  private static Stream<ArtifactLocation> artifactsToTrack(
+      List<OutputsProvider> providers, TargetIdeInfo target) {
+    List<ArtifactLocation> list = new ArrayList<>();
+    for (OutputsProvider provider : providers) {
+      Collection<ArtifactLocation> outputs = provider.selectAllRelevantOutputs(target);
+      list.addAll(outputs);
+    }
+    return list.stream().filter(ArtifactLocation::isGenerated);
   }
 
   public boolean isEmpty() {

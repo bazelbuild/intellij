@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import java.util.Collection;
 import java.util.Objects;
 
 /** Represents the java_toolchain class */
@@ -107,7 +108,7 @@ public final class JavaToolchainIdeInfo
   public static class Builder {
     String sourceVersion;
     String targetVersion;
-    ImmutableList<ArtifactLocation> javacJars;
+    ImmutableList.Builder<ArtifactLocation> javacJars = ImmutableList.builder();
 
     public Builder setSourceVersion(String sourceVersion) {
       this.sourceVersion = sourceVersion;
@@ -119,13 +120,13 @@ public final class JavaToolchainIdeInfo
       return this;
     }
 
-    public Builder setJavacJars(ImmutableList<ArtifactLocation> javacJars) {
-      this.javacJars = javacJars;
+    public Builder addJavacJars(Collection<ArtifactLocation> javacJars) {
+      this.javacJars.addAll(javacJars);
       return this;
     }
 
     public JavaToolchainIdeInfo build() {
-      return new JavaToolchainIdeInfo(sourceVersion, targetVersion, javacJars);
+      return new JavaToolchainIdeInfo(sourceVersion, targetVersion, javacJars.build());
     }
   }
 }

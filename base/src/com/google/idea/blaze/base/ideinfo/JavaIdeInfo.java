@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
-import java.util.Collection;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -79,17 +78,21 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     return builder.build();
   }
 
+  public ImmutableList<ArtifactLocation> getSources() {
+    return sources;
+  }
+
   /**
    * The main jar(s) produced by this java rule.
    *
    * <p>Usually this will be a single jar, but java_imports support importing multiple jars.
    */
-  public Collection<LibraryArtifact> getJars() {
+  public ImmutableList<LibraryArtifact> getJars() {
     return jars;
   }
 
   /** A jar containing annotation processing. */
-  public Collection<LibraryArtifact> getGeneratedJars() {
+  public ImmutableList<LibraryArtifact> getGeneratedJars() {
     return generatedJars;
   }
 

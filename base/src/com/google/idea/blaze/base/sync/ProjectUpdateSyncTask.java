@@ -164,8 +164,12 @@ final class ProjectUpdateSyncTask {
     context.output(PrintOutput.log("Target map size: " + targetMap.targets().size()));
 
     RemoteOutputArtifacts oldRemoteState = RemoteOutputArtifacts.fromProjectData(oldProjectData);
+    // combine outputs map, then filter to remove out-of-date / unnecessary items
     RemoteOutputArtifacts newRemoteState =
-        oldRemoteState.appendNewOutputs(getTrackedRemoteOutputs(buildResult));
+        oldRemoteState
+            .appendNewOutputs(getTrackedRemoteOutputs(buildResult))
+            .removeUntrackedOutputs(targetMap, projectState.getLanguageSettings());
+
     syncStateBuilder.put(newRemoteState);
     ArtifactLocationDecoder artifactLocationDecoder =
         new ArtifactLocationDecoderImpl(

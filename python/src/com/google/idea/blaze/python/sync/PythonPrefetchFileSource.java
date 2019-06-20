@@ -15,18 +15,15 @@
  */
 package com.google.idea.blaze.python.sync;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
-import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.OutputsProvider;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
@@ -45,27 +42,19 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /** Causes python files to become prefetched. */
-public class PythonPrefetchFileSource
-    implements PrefetchFileSource, RemoteOutputsCache.OutputsProvider {
+public class PythonPrefetchFileSource implements PrefetchFileSource, OutputsProvider {
 
   private static final BoolExperiment prefetchAllPythonSources =
       new BoolExperiment("prefetch.all.py.sources", true);
 
   @Override
-  public List<ArtifactLocation> selectOutputsToCache(
-      RemoteOutputArtifacts outputs,
-      TargetMap targetMap,
-      WorkspaceLanguageSettings languageSettings) {
-    if (!languageSettings.isLanguageActive(LanguageClass.PYTHON)) {
-      return ImmutableList.of();
-    }
-    return targetMap.targets().stream()
-        .filter(t -> t.getPyIdeInfo() != null)
-        .map(TargetIdeInfo::getPyIdeInfo)
-        .map(PyIdeInfo::getSources)
-        .flatMap(Collection::stream)
-        .filter(ArtifactLocation::isGenerated)
-        .collect(toImmutableList());
+  public boolean isActive(WorkspaceLanguageSettings languageSettings) {
+    return languageSettings.isLanguageActive(LanguageClass.PYTHON);
+  }
+
+  @Override
+  public Collection<ArtifactLocation> selectAllRelevantOutputs(TargetIdeInfo target) {
+    return target.getPyIdeInfo() != null ? target.getPyIdeInfo().getSources() : ImmutableList.of();
   }
 
   @Override

@@ -80,7 +80,7 @@
         implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestContextProvider"
         order="after JavaTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.java.run.producers.JavaBinaryContextProvider"/>
-    <RemoteOutputsCacheProvider implementation="com.google.idea.blaze.java.sync.PackageManifestCacheProvider"/>
+    <OutputsProvider implementation="com.google.idea.blaze.java.sync.JavaOutputsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

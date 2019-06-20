@@ -15,17 +15,14 @@
  */
 package com.google.idea.blaze.dart;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
-import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.OutputsProvider;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
@@ -44,8 +41,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /** Declare that dart files should be prefetched. */
-public class DartPrefetchFileSource
-    implements PrefetchFileSource, RemoteOutputsCache.OutputsProvider {
+public class DartPrefetchFileSource implements PrefetchFileSource, OutputsProvider {
 
   private static final BoolExperiment prefetchAllDartSources =
       new BoolExperiment("prefetch.all.dart.sources", true);
@@ -53,18 +49,13 @@ public class DartPrefetchFileSource
   private static final ImmutableSet<String> FILE_EXTENSIONS = ImmutableSet.of("dart");
 
   @Override
-  public List<ArtifactLocation> selectOutputsToCache(
-      RemoteOutputArtifacts outputs,
-      TargetMap targetMap,
-      WorkspaceLanguageSettings languageSettings) {
-    if (!languageSettings.isLanguageActive(LanguageClass.DART)) {
-      return ImmutableList.of();
-    }
-    return targetMap.targets().stream()
-        .map(DartPrefetchFileSource::getDartSources)
-        .flatMap(Collection::stream)
-        .filter(ArtifactLocation::isGenerated)
-        .collect(toImmutableList());
+  public boolean isActive(WorkspaceLanguageSettings languageSettings) {
+    return languageSettings.isLanguageActive(LanguageClass.DART);
+  }
+
+  @Override
+  public Collection<ArtifactLocation> selectAllRelevantOutputs(TargetIdeInfo target) {
+    return getDartSources(target);
   }
 
   @Override
