@@ -19,6 +19,8 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,6 +37,9 @@ public interface RunConfigurationContext {
 
   /** Convert a {@link #getSourceElement()} into an uniquely identifiable string. */
   default String getSourceElementString() {
+    if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
+      return ReadAction.compute(this::getSourceElementString);
+    }
     PsiElement element = getSourceElement();
     if (element instanceof PsiFile) {
       return Optional.of((PsiFile) element)
