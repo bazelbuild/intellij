@@ -428,8 +428,8 @@
     <SyncListener implementation="com.google.idea.blaze.base.ideinfo.ProjectDataInterner$Updater"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.SimpleSyncListenerService"/>
     <SyncListener implementation="com.google.idea.blaze.base.sync.BlazeSyncModificationTracker$Updater"/>
-    <SyncListener implementation="com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager$Listener"/>
     <SyncPlugin implementation="com.google.idea.blaze.base.lang.buildfile.sync.BuildLangSyncPlugin"/>
+    <SyncPlugin implementation="com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager$SyncPlugin"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.command.BuildFlagsProviderImpl"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.run.coverage.CoverageBuildFlagsProvider"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandler"/>

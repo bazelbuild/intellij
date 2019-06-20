@@ -22,14 +22,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.PrefetchIndexingTask;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.sync.SyncListener;
-import com.google.idea.blaze.base.sync.SyncMode;
-import com.google.idea.blaze.base.sync.SyncResult;
+import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
@@ -37,8 +35,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.Disposer;
@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.annotation.Nullable;
 
 /** Updates {@link BlazeExternalSyntheticLibrary}s after sync and on frame activation. */
 public class ExternalLibraryManager {
@@ -82,8 +83,7 @@ public class ExternalLibraryManager {
         new FrameStateListener() {
           @Override
           public void onFrameActivated() {
-            ApplicationManager.getApplication()
-                .executeOnPooledThread(ExternalLibraryManager.this::updateLibraries);
+            ApplicationManager.getApplication().executeOnPooledThread(() -> updateLibraries(false));
           }
         };
     FrameStateManager.getInstance().addListener(listener);
@@ -111,31 +111,33 @@ public class ExternalLibraryManager {
       }
     }
     libraries = builder.build();
-    updateLibraries();
+    updateLibraries(true);
   }
 
-  private void updateLibraries() {
+  private void updateLibraries(boolean duringSync) {
     ImmutableMap<Class<? extends BlazeExternalLibraryProvider>, LibraryState> libraries =
         this.libraries;
     if (libraries.isEmpty()) {
       return;
     }
-    Future<?> future =
-        PrefetchIndexingTask.submitPrefetchingTaskAndWait(
-            project,
-            PrefetchService.getInstance()
-                .prefetchFiles(
-                    libraries.values().stream()
-                        .map(state -> state.files)
-                        .flatMap(Collection::stream)
-                        .collect(ImmutableList.toImmutableList()),
-                    false,
-                    false),
-            "Prefetching external library files");
-    try {
-      future.get();
-    } catch (InterruptedException | ExecutionException ignored) {
-      // ignored
+    if (!duringSync) {
+      Future<?> future =
+          PrefetchIndexingTask.submitPrefetchingTaskAndWait(
+              project,
+              PrefetchService.getInstance()
+                  .prefetchFiles(
+                      libraries.values().stream()
+                          .map(state -> state.files)
+                          .flatMap(Collection::stream)
+                          .collect(ImmutableList.toImmutableList()),
+                      false,
+                      false),
+              "Prefetching external library files");
+      try {
+        future.get();
+      } catch (InterruptedException | ExecutionException ignored) {
+        // ignored
+      }
     }
     boolean updated = false;
     for (LibraryState state : libraries.values()) {
@@ -151,7 +153,7 @@ public class ExternalLibraryManager {
         updated = true;
       }
     }
-    if (updated) {
+    if (!duringSync && updated) {
       reindexRoots();
     }
   }
@@ -169,23 +171,19 @@ public class ExternalLibraryManager {
                         .makeRootsChange(EmptyRunnable.INSTANCE, false, true)));
   }
 
-  static class Listener implements SyncListener {
+  static class SyncPlugin implements BlazeSyncPlugin {
     @Override
-    public void onSyncComplete(
+    public void updateProjectStructure(
         Project project,
         BlazeContext context,
-        BlazeImportSettings importSettings,
+        WorkspaceRoot workspaceRoot,
         ProjectViewSet projectViewSet,
         BlazeProjectData blazeProjectData,
-        SyncMode syncMode,
-        SyncResult syncResult) {
-      if (syncMode == SyncMode.NO_BUILD
-          && !ExternalLibraryManager.getInstance(project).libraries.isEmpty()) {
-        return;
-      }
-      ApplicationManager.getApplication()
-          .executeOnPooledThread(
-              () -> ExternalLibraryManager.getInstance(project).initialize(blazeProjectData));
+        @Nullable BlazeProjectData oldBlazeProjectData,
+        ModuleEditor moduleEditor,
+        Module workspaceModule,
+        ModifiableRootModel workspaceModifiableModel) {
+      ExternalLibraryManager.getInstance(project).initialize(blazeProjectData);
     }
   }
 }
