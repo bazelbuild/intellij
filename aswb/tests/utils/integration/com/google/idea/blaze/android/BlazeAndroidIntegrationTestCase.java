@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.android;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder.targetMap;
+import static com.google.idea.blaze.base.sync.data.BlazeDataStorage.WORKSPACE_MODULE_NAME;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -28,8 +30,14 @@ import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.JdepsFileWriter;
 import com.google.idea.blaze.base.sync.SyncMode;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.junit.Rule;
 
 /** Base class for integration tests that require an ASwB project setup. */
@@ -70,5 +78,29 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
             .addProjectViewTargets(true)
             .build());
     errorCollector.assertNoIssues();
+  }
+
+  protected Module getModule(String moduleName) {
+    Module module = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
+    assertThat(module).isNotNull();
+    return module;
+  }
+
+  protected Module getWorkspaceModule() {
+    return getModule(WORKSPACE_MODULE_NAME);
+  }
+
+  protected Set<Module> getModules(String... moduleNames) {
+    return Stream.of(moduleNames).map(this::getModule).collect(Collectors.toSet());
+  }
+
+  protected AndroidFacet getFacet(String moduleName) {
+    AndroidFacet facet = AndroidFacet.getInstance(getModule(moduleName));
+    assertThat(facet).isNotNull();
+    return facet;
+  }
+
+  protected AndroidFacet getWorkspaceFacet() {
+    return getFacet(WORKSPACE_MODULE_NAME);
   }
 }
