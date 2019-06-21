@@ -17,15 +17,9 @@ package com.google.idea.blaze.android.run;
 
 import com.android.tools.idea.project.AndroidProjectInfo;
 import com.android.tools.idea.run.ValidationError;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
-import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
@@ -33,7 +27,6 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
@@ -89,29 +82,6 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
     }
     if (facet.getConfiguration().getAndroidPlatform() == null) {
       errors.add(ValidationError.fatal(AndroidBundle.message("select.platform.error")));
-    }
-    return errors;
-  }
-
-  public static List<ValidationError> validateLabel(
-      @Nullable Label label, Project project, ImmutableList<Kind> kinds) {
-    List<ValidationError> errors = Lists.newArrayList();
-    if (label == null) {
-      errors.add(ValidationError.fatal("No target selected."));
-      return errors;
-    }
-    TargetInfo target = TargetFinder.findTargetInfo(project, label);
-    if (target == null) {
-      errors.add(
-          ValidationError.fatal(
-              String.format("No existing %s rule selected.", Blaze.buildSystemName(project))));
-    } else if (target.getKind() == null || !kinds.contains(target.getKind())) {
-      errors.add(
-          ValidationError.fatal(
-              String.format(
-                  "Selected %s rule is not one of: %s",
-                  Blaze.buildSystemName(project),
-                  kinds.stream().map(Kind::toString).collect(Collectors.joining(", ")))));
     }
     return errors;
   }

@@ -131,6 +131,22 @@ public class BlazeAndroidTestRunConfigurationHandler
       Executor executor, ExecutionEnvironment env) throws ExecutionException {
     Project project = env.getProject();
 
+    // This is a workaround for b/134587683
+    // Due to the way blaze run configuration editors update the underlying configuration state,
+    // it's possible for the configuration referenced in this handler to be out of date. This can
+    // cause tricky side-effects such as incorrect build target and target validation settings.
+    // Fortunately, the only field that can come out of sync is the target label and it's target
+    // kind. The handlers are designed to only handle their supported target kinds, so we can
+    // safely ignore all fields other than target label itself and extract an up to date target
+    // label from the execution environment.
+    // Validation of the updated target label is not needed here because:
+    // 1. The target kind is guaranteed to be an android binary kind or else this
+    //    specific handler will not be used.
+    // 2. Any other validation is done during edit-time of the run configuration before saving.
+    BlazeCommandRunConfiguration configFromEnv =
+        BlazeAndroidRunConfigurationHandler.getCommandConfig(env);
+    configuration.setTarget(configFromEnv.getTarget());
+
     Module module = getModule();
     AndroidFacet facet = module != null ? AndroidFacet.getInstance(module) : null;
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
@@ -190,13 +206,6 @@ public class BlazeAndroidTestRunConfigurationHandler
       errors.addAll(BlazeAndroidRunConfigurationValidationUtil.validateFacet(facet, module));
     }
     errors.addAll(configState.validate(facet));
-    errors.addAll(
-        BlazeAndroidRunConfigurationValidationUtil.validateLabel(
-            getLabel(),
-            configuration.getProject(),
-            ImmutableList.of(
-                AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind(),
-                AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind())));
     return errors;
   }
 

@@ -18,7 +18,11 @@ package com.google.idea.blaze.android.run;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.Nullable;
 
 /** Common interface for Blaze Android run configuration handlers. */
@@ -51,4 +55,21 @@ public interface BlazeAndroidRunConfigurationHandler extends BlazeCommandRunConf
    */
   @Nullable
   Label getLabel();
+
+  /** Extract {@link BlazeCommandRunConfiguration} from the execution environment. */
+  static BlazeCommandRunConfiguration getCommandConfig(ExecutionEnvironment env)
+      throws ExecutionException {
+    RunnerAndConfigurationSettings settings = env.getRunnerAndConfigurationSettings();
+    if (settings == null) {
+      throw new ExecutionException(
+          "Invalid run configuration. Is the project sync state out of date?");
+    }
+    RunConfiguration configFromEnv = settings.getConfiguration();
+    if (!(configFromEnv instanceof BlazeCommandRunConfiguration)) {
+      throw new ExecutionException(
+          "Invalid run configurations. Is the project sync state out of date?");
+    }
+
+    return (BlazeCommandRunConfiguration) configFromEnv;
+  }
 }
