@@ -41,15 +41,17 @@ public interface JavaLikeLanguage {
       ExtensionPointName.create("com.google.idea.blaze.JavaLikeLanguage");
 
   static Predicate<ArtifactLocation> getSourceFileMatcher() {
-    final Set<String> fileExtensions =
-        Arrays.stream(EP_NAME.getExtensions())
-            .map(JavaLikeLanguage::getFileExtensions)
-            .flatMap(Collection::stream)
-            .collect(Collectors.toSet());
+    final Set<String> fileExtensions = getAllFileExtension();
     return artifactLocation ->
-        fileExtensions
-            .stream()
+        fileExtensions.stream()
             .anyMatch(extension -> artifactLocation.getRelativePath().endsWith(extension));
+  }
+
+  static Set<String> getAllFileExtension() {
+    return Arrays.stream(EP_NAME.getExtensions())
+        .map(JavaLikeLanguage::getFileExtensions)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toSet());
   }
 
   static ImmutableSet<Kind> getAllDebuggableKinds() {

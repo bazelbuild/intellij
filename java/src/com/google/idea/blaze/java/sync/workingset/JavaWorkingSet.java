@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -47,19 +48,20 @@ public class JavaWorkingSet {
       WorkingSet workingSet,
       Predicate<String> buildFileNamePredicate) {
     Set<String> modifiedBuildFileRelativePaths = Sets.newHashSet();
-    Set<String> modifiedJavaFileRelativePaths = Sets.newHashSet();
+    Set<String> modifiedJavaLikeFileRelativePaths = Sets.newHashSet();
 
     for (WorkspacePath workspacePath :
         Iterables.concat(workingSet.addedFiles, workingSet.modifiedFiles)) {
       if (buildFileNamePredicate.test(workspaceRoot.fileForPath(workspacePath).getName())) {
         modifiedBuildFileRelativePaths.add(workspacePath.relativePath());
-      } else if (workspacePath.relativePath().endsWith(".java")) {
-        modifiedJavaFileRelativePaths.add(workspacePath.relativePath());
+      } else if (JavaLikeLanguage.getAllFileExtension().stream()
+          .anyMatch(fileExtension -> workspacePath.relativePath().endsWith(fileExtension))) {
+        modifiedJavaLikeFileRelativePaths.add(workspacePath.relativePath());
       }
     }
 
     this.modifiedBuildFileRelativePaths = modifiedBuildFileRelativePaths;
-    this.modifiedJavaFileRelativePaths = modifiedJavaFileRelativePaths;
+    this.modifiedJavaFileRelativePaths = modifiedJavaLikeFileRelativePaths;
   }
 
   public boolean isTargetInWorkingSet(TargetIdeInfo target) {
