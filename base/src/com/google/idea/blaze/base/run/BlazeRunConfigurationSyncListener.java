@@ -39,6 +39,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -91,7 +92,8 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
   private static void removeInvalidRunConfigurations(Project project) {
     RunManagerImpl manager = RunManagerImpl.getInstanceImpl(project);
     List<RunnerAndConfigurationSettings> toRemove =
-        manager.getConfigurationSettingsList(BlazeCommandRunConfigurationType.getInstance())
+        manager
+            .getConfigurationSettingsList(BlazeCommandRunConfigurationType.getInstance())
             .stream()
             .filter(s -> isInvalidRunConfig(s.getConfiguration()))
             .collect(Collectors.toList());
@@ -140,6 +142,7 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
     return changed;
   }
 
+  @SuppressWarnings("unchecked") // BlazeCommandRunConfiguration needs to be generified
   private static boolean addBlazeBeforeRunTask(BlazeCommandRunConfiguration config) {
     BeforeRunTaskProvider<?> provider =
         BlazeBeforeRunTaskProvider.getProvider(config.getProject(), BlazeBeforeRunTaskProvider.ID);
@@ -151,15 +154,17 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
       return false;
     }
     task.setEnabled(true);
-    RunConfigurationBaseCompat.addBeforeRunTask(config, task);
+
+    List<BeforeRunTask<?>> beforeRunTasks = new ArrayList<>(config.getBeforeRunTasks());
+    beforeRunTasks.add(task);
+    config.setBeforeRunTasks(beforeRunTasks);
+
     return true;
   }
 
   private static Set<File> getImportedRunConfigurations(
       ProjectViewSet projectViewSet, WorkspacePathResolver pathResolver) {
-    return projectViewSet
-        .listItems(RunConfigurationsSection.KEY)
-        .stream()
+    return projectViewSet.listItems(RunConfigurationsSection.KEY).stream()
         .map(pathResolver::resolveToFile)
         .collect(Collectors.toCollection(LinkedHashSet::new));
   }

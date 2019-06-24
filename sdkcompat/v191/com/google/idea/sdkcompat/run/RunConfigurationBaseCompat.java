@@ -18,22 +18,10 @@ package com.google.idea.sdkcompat.run;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfigurationBase;
-import java.util.ArrayList;
 import java.util.List;
 
 /** SDK Compat for {@link com.intellij.execution.configurations.RunConfigurationBase}. */
 public class RunConfigurationBaseCompat {
-  /**
-   * Adds the given task to the existing list of before run tasks in the given config.
-   *
-   * <p>#api182: generics added 2018.3, can be removed when we no longer support 2018.2.
-   */
-  public static void addBeforeRunTask(RunConfigurationBase config, BeforeRunTask<?> task) {
-    List<BeforeRunTask<?>> tasks = new ArrayList<>(config.getBeforeRunTasks());
-    tasks.add(task);
-    config.setBeforeRunTasks(tasks);
-  }
-
   /**
    * RunConfigurationBase#getBeforeRunTasks isn't reliable in 2018.1 -- it often returns an empty
    * list while the run configuration is being edited.
