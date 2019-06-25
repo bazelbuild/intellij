@@ -29,16 +29,12 @@ import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.openapi.compiler.ClassObject;
-import com.intellij.openapi.compiler.CompilationException;
+import com.google.idea.sdkcompat.java.CompatCompilerManagerImpl;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.MessageBus;
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -46,49 +42,23 @@ import java.util.Objects;
  *
  * <p>Necessary for stream evaluation.
  */
-public class BlazeCompilerManager extends CompilerManagerImpl {
+public class BlazeCompilerManager extends CompatCompilerManagerImpl {
   private static final BoolExperiment compileAgainstProjectClassJars =
       new BoolExperiment("compile.against.project.class.jars", true);
 
-  private final Project project;
-
   public BlazeCompilerManager(Project project, MessageBus messageBus) {
     super(project, messageBus);
-    this.project = project;
   }
 
   @Override
-  public Collection<ClassObject> compileJavaCode(
-      List<String> options,
-      Collection<File> platformCp,
-      Collection<File> classpath,
-      Collection<File> upgradeModulePath,
-      Collection<File> modulePath,
-      Collection<File> sourcePath,
-      Collection<File> files,
-      File outputDir)
-      throws IOException, CompilationException {
-    return super.compileJavaCode(
-        options,
-        platformCp,
-        updateClasspath(project, classpath),
-        upgradeModulePath,
-        modulePath,
-        sourcePath,
-        files,
-        outputDir);
-  }
-
-  private static Collection<File> updateClasspath(Project project, Collection<File> classpath) {
+  protected Collection<File> getAdditionalProjectJars(Project project) {
     if (!compileAgainstProjectClassJars.getValue() || !Blaze.isBlazeProject(project)) {
-      return classpath;
+      return ImmutableList.of();
     }
     Collection<File> projectClassJars =
         SyncCache.getInstance(project)
             .get(BlazeCompilerManager.class, BlazeCompilerManager::updateClasspath);
-    return projectClassJars != null
-        ? ImmutableList.<File>builder().addAll(classpath).addAll(projectClassJars).build()
-        : classpath;
+    return projectClassJars != null ? projectClassJars : ImmutableList.of();
   }
 
   private static Collection<File> updateClasspath(Project project, BlazeProjectData projectData) {
