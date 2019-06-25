@@ -15,8 +15,10 @@
  */
 package com.google.idea.blaze.base.sync;
 
-import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 
@@ -25,13 +27,20 @@ public class BlazeSyncStartupActivity implements StartupActivity {
 
   @Override
   public void runActivity(Project project) {
-    if (Blaze.isBlazeProject(project)) {
-      runSync(project);
+    BlazeImportSettings importSettings =
+        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    if (importSettings == null) {
+      return;
+    }
+    if (hasProjectData(project, importSettings)) {
+      BlazeSyncManager.getInstance(project).requestProjectSync(startupSyncParams());
+    } else {
+      BlazeSyncManager.getInstance(project).incrementalProjectSync();
     }
   }
 
-  private static void runSync(Project project) {
-    BlazeSyncManager.getInstance(project).requestProjectSync(startupSyncParams());
+  private static boolean hasProjectData(Project project, BlazeImportSettings importSettings) {
+    return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings) != null;
   }
 
   private static BlazeSyncParams startupSyncParams() {
