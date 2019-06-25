@@ -40,6 +40,8 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.Arrays;
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.event.HyperlinkEvent;
@@ -95,7 +97,7 @@ public class JUnitPluginDependencyWarning implements ApplicationComponent {
     MessageBusConnection connection = app.getMessageBus().connect(app);
     connection.subscribe(
         AppLifecycleListener.TOPIC,
-        new AppLifecycleListener.Adapter() {
+        new AppLifecycleListener() {
           @Override
           public void appStarting(@Nullable Project projectFromCommandLine) {
             // Adds an error item to the 'Event Log' tab.
@@ -103,8 +105,14 @@ public class JUnitPluginDependencyWarning implements ApplicationComponent {
             Transactions.submitTransactionAndWait(() -> Notifications.Bus.notify(notification));
           }
 
-          @Override
+          // @Override #api191
           public void appFrameCreated(String[] commandLineArgs, Ref<Boolean> willOpenProject) {
+            appFrameCreated(Arrays.asList(commandLineArgs), willOpenProject);
+          }
+
+          // @Override #api191
+          public void appFrameCreated(
+              List<String> commandLineArgs, Ref<? super Boolean> willOpenProject) {
             // Popup dialog in welcome screen.
             app.invokeLater(() -> showPopupNotification(message));
           }
