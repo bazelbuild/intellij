@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.cidr.SymbolTableProviderCompat;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -45,7 +46,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.jetbrains.cidr.lang.symbols.symtable.OCSymbolTablesBuildingActivity;
-import com.jetbrains.cidr.lang.symbols.symtable.SymbolTableProvider;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -137,7 +137,7 @@ public class BulkSymbolTableBuildingChangeListener implements BulkFileListener {
           modifiedFile = propEvent.getFile();
         }
       }
-      if (SymbolTableProvider.isSourceFile(modifiedFile)) {
+      if (SymbolTableProviderCompat.isSourceFile(project, modifiedFile)) {
         queueChange(modifiedFile);
       }
     }
