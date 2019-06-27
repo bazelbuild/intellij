@@ -27,9 +27,7 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -47,7 +45,6 @@ import com.google.idea.blaze.base.settings.ui.OpenProjectViewAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
-import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
@@ -235,23 +232,14 @@ class AddSourceToProjectHelper {
     // Finally, query the exact targets building this source file.
     // This is required to handle project targets which failed to build
     return Futures.transform(
-        SourceToTargetProvider.findTargetsBuildingSourceFile(
+        SourceToTargetHelper.findTargetsBuildingSourceFile(
             context.project, context.workspacePath.relativePath()),
         (Function<List<TargetInfo>, List<TargetInfo>>)
-            (List<TargetInfo> result) -> filterTargets(context, result),
+            (List<TargetInfo> result) ->
+                result == null || sourceInProjectTargets(context, fromTargetInfo(result))
+                    ? ImmutableList.of()
+                    : result,
         MoreExecutors.directExecutor());
-  }
-
-  /**
-   * Returns the list of targets not already in the project, which aren't known to be of an
-   * unsupported language.
-   */
-  private static List<TargetInfo> filterTargets(LocationContext context, List<TargetInfo> targets) {
-    if (sourceInProjectTargets(context, fromTargetInfo(targets))) {
-      return ImmutableList.of();
-    }
-    targets.removeIf(t -> !supportedTargetKind(t));
-    return targets;
   }
 
   /**
@@ -362,15 +350,6 @@ class AddSourceToProjectHelper {
       source = source.getParent();
     }
     return null;
-  }
-
-  private static boolean supportedTargetKind(TargetInfo target) {
-    Kind kind = target.getKind();
-    return kind != null && supportedLanguage(kind.getLanguageClass());
-  }
-
-  static boolean supportedLanguage(LanguageClass language) {
-    return LanguageSupport.languagesSupportedByCurrentIde().contains(language);
   }
 
   /** Returns the location context related to a source file to be added to the project. */

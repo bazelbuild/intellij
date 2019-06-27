@@ -213,8 +213,6 @@ public class WildcardTargetExpander {
             .addBlazeFlags("--output=label_kind")
             .addBlazeFlags(query);
 
-    ImmutableList.Builder<TargetExpression> output = ImmutableList.builder();
-
     // it's fine to include wildcards here; they're guaranteed not to clash with actual labels.
     Set<String> explicitTargets =
         targetPatterns.stream().map(TargetExpression::toString).collect(Collectors.toSet());
@@ -223,11 +221,13 @@ public class WildcardTargetExpander {
             ? t -> true
             : t -> handledRulesPredicate.test(t.ruleType) || explicitTargets.contains(t.label);
 
+    QueryResultLineProcessor outputProcessor = new QueryResultLineProcessor(filter);
+
     int retVal =
         ExternalTask.builder(workspaceRoot)
             .addBlazeCommand(builder.build())
             .context(context)
-            .stdout(LineProcessingOutputStream.of(new QueryResultLineProcessor(output, filter)))
+            .stdout(LineProcessingOutputStream.of(outputProcessor))
             .stderr(
                 LineProcessingOutputStream.of(
                     BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
@@ -235,7 +235,7 @@ public class WildcardTargetExpander {
             .run();
 
     BuildResult buildResult = BuildResult.fromExitCode(retVal);
-    return new ExpandedTargetsResult(output.build(), buildResult);
+    return new ExpandedTargetsResult(outputProcessor.getTargetLabels(), buildResult);
   }
 
   private static Predicate<String> handledRuleTypes(ProjectViewSet projectViewSet) {

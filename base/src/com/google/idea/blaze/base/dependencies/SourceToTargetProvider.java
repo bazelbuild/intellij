@@ -15,17 +15,15 @@
  */
 package com.google.idea.blaze.base.dependencies;
 
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.Future;
 
-/** Maps a source file to the blaze targets building that source file. */
+/**
+ * Maps a source file to appropriate blaze target(s) building that source file. Here 'appropriate'
+ * means for the purposes of syncing the given source file.
+ */
 public interface SourceToTargetProvider {
 
   ExtensionPointName<SourceToTargetProvider> EP_NAME =
@@ -33,21 +31,6 @@ public interface SourceToTargetProvider {
 
   static boolean hasProvider() {
     return EP_NAME.getExtensions().length != 0;
-  }
-
-  /**
-   * Returns the blaze targets provided by the first available {@link SourceToTargetProvider} able
-   * to handle the given source file, prioritizing any which are immediately available.
-   *
-   * <p>Future returns null if no provider was able to handle the given source file.
-   */
-  static ListenableFuture<List<TargetInfo>> findTargetsBuildingSourceFile(
-      Project project, String workspaceRelativePath) {
-    Iterable<Future<List<TargetInfo>>> futures =
-        Iterables.transform(
-            Arrays.asList(EP_NAME.getExtensions()),
-            f -> f.getTargetsBuildingSourceFile(project, workspaceRelativePath));
-    return FuturesUtil.getFirstFutureSatisfyingPredicate(futures, Objects::nonNull);
   }
 
   /**

@@ -31,7 +31,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-/** Locates blaze rules which build a given source file. */
+/**
+ * Searches through the transitive rdeps map for blaze rules of a certain type which build a given
+ * source file.
+ */
 public interface SourceToTargetFinder {
 
   ExtensionPointName<SourceToTargetFinder> EP_NAME =

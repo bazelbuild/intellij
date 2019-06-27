@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -68,12 +69,13 @@ public class ExternalFileProjectManagementHelper
 
   private final Set<File> suppressedFiles = new HashSet<>();
 
-  private static final ImmutableList<Class<? extends FileType>> IGNORED_FILE_TYPES =
+  private static final ImmutableList<String> IGNORED_FILE_TYPE_NAMES =
       ImmutableList.of(
-          PlainTextFileType.class,
-          UnknownFileType.class,
-          BuildFileType.class,
-          UserBinaryFileType.class);
+          "protobuf",
+          "prototext",
+          PlainTextFileType.INSTANCE.getName(),
+          UnknownFileType.INSTANCE.getName(),
+          BuildFileType.INSTANCE.getName());
 
   private final Project project;
 
@@ -88,17 +90,15 @@ public class ExternalFileProjectManagementHelper
 
   /** Whether the editor notification should be shown for this file type. */
   private static boolean supportedFileType(File file) {
-    LanguageClass languageClass =
+    LanguageClass language =
         LanguageClass.fromExtension(FileUtilRt.getExtension(file.getName()).toLowerCase());
-    if (languageClass != null && !AddSourceToProjectHelper.supportedLanguage(languageClass)) {
+    if (language != null && !LanguageSupport.languagesSupportedByCurrentIde().contains(language)) {
       return false;
     }
     FileType type = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
 
-    for (Class<? extends FileType> clazz : IGNORED_FILE_TYPES) {
-      if (clazz.isInstance(type)) {
-        return false;
-      }
+    if (IGNORED_FILE_TYPE_NAMES.contains(type.getName()) || type instanceof UserBinaryFileType) {
+      return false;
     }
     return true;
   }

@@ -20,7 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import org.junit.Test;
@@ -38,38 +39,39 @@ public class QueryResultLineProcessorTest extends BlazeTestCase {
 
   @Test
   public void testRecognizesStandardResultLines() {
-    ImmutableList.Builder<TargetExpression> output = ImmutableList.builder();
-    QueryResultLineProcessor processor = new QueryResultLineProcessor(output, x -> true);
+    QueryResultLineProcessor processor = new QueryResultLineProcessor(x -> true);
 
     processor.processLine("css_library rule //java/com/google/foo/styles:global");
     processor.processLine("java_library rule //java/com/google/bar/console:runtime_deps");
 
-    ImmutableList<TargetExpression> parsedTargets = output.build();
-    assertThat(parsedTargets)
+    ImmutableList<TargetInfo> targets = processor.getTargets();
+    assertThat(targets)
         .containsExactly(
-            TargetExpression.fromStringSafe("//java/com/google/foo/styles:global"),
-            TargetExpression.fromStringSafe("//java/com/google/bar/console:runtime_deps"));
+            TargetInfo.builder(Label.create("//java/com/google/foo/styles:global"), "css_library")
+                .build(),
+            TargetInfo.builder(
+                    Label.create("//java/com/google/bar/console:runtime_deps"), "java_library")
+                .build());
   }
 
   @Test
   public void testIgnoresNonRules() {
-    ImmutableList.Builder<TargetExpression> output = ImmutableList.builder();
-    QueryResultLineProcessor processor = new QueryResultLineProcessor(output, x -> true);
+    QueryResultLineProcessor processor = new QueryResultLineProcessor(x -> true);
 
     processor.processLine("generated file //java/com/google/foo:libthrowable_utils.jar");
     processor.processLine("source file //java/com/google/foo:BUILD");
     processor.processLine("package group //java/com/google/foo:packages");
 
-    assertThat(output.build()).isEmpty();
+    ImmutableList<TargetInfo> targets = processor.getTargets();
+    assertThat(targets).isEmpty();
   }
 
   @Test
   public void testFilterRuleTypes() {
     ImmutableSet<String> acceptedRuleTypes =
         ImmutableSet.of("java_library", "custom_type", "sh_test");
-    ImmutableList.Builder<TargetExpression> output = ImmutableList.builder();
     QueryResultLineProcessor processor =
-        new QueryResultLineProcessor(output, t -> acceptedRuleTypes.contains(t.ruleType));
+        new QueryResultLineProcessor(t -> acceptedRuleTypes.contains(t.ruleType));
 
     processor.processLine("css_library rule //java/com/google/foo/styles:global");
     processor.processLine("java_library rule //java/com/google/bar/console:runtime_deps");
@@ -78,11 +80,16 @@ public class QueryResultLineProcessorTest extends BlazeTestCase {
     processor.processLine("custom_type rule //java/com/google/bar/console:custom");
     processor.processLine("sh_test rule //java/com/google/bar/console:sh_test");
 
-    assertThat(output.build())
+    ImmutableList<TargetInfo> targets = processor.getTargets();
+    assertThat(targets)
         .containsExactly(
-            TargetExpression.fromStringSafe("//java/com/google/bar/console:runtime_deps"),
-            TargetExpression.fromStringSafe("//java/com/google/bar/console:custom"),
-            TargetExpression.fromStringSafe("//java/com/google/bar/console:sh_test"));
+            TargetInfo.builder(
+                    Label.create("//java/com/google/bar/console:runtime_deps"), "java_library")
+                .build(),
+            TargetInfo.builder(Label.create("//java/com/google/bar/console:custom"), "custom_type")
+                .build(),
+            TargetInfo.builder(Label.create("//java/com/google/bar/console:sh_test"), "sh_test")
+                .build());
   }
 
   @Test
@@ -91,10 +98,8 @@ public class QueryResultLineProcessorTest extends BlazeTestCase {
         ImmutableSet.of("java_library", "custom_type", "sh_test");
     ImmutableSet<String> explicitTargets = ImmutableSet.of("//java/com/google/foo/styles:global");
 
-    ImmutableList.Builder<TargetExpression> output = ImmutableList.builder();
     QueryResultLineProcessor processor =
         new QueryResultLineProcessor(
-            output,
             t -> explicitTargets.contains(t.label) || acceptedRuleTypes.contains(t.ruleType));
 
     processor.processLine("css_library rule //java/com/google/foo/styles:global");
@@ -104,11 +109,17 @@ public class QueryResultLineProcessorTest extends BlazeTestCase {
     processor.processLine("custom_type rule //java/com/google/bar/console:custom");
     processor.processLine("sh_test rule //java/com/google/bar/console:sh_test");
 
-    assertThat(output.build())
+    ImmutableList<TargetInfo> targets = processor.getTargets();
+    assertThat(targets)
         .containsExactly(
-            TargetExpression.fromStringSafe("//java/com/google/foo/styles:global"),
-            TargetExpression.fromStringSafe("//java/com/google/bar/console:runtime_deps"),
-            TargetExpression.fromStringSafe("//java/com/google/bar/console:custom"),
-            TargetExpression.fromStringSafe("//java/com/google/bar/console:sh_test"));
+            TargetInfo.builder(Label.create("//java/com/google/foo/styles:global"), "css_library")
+                .build(),
+            TargetInfo.builder(
+                    Label.create("//java/com/google/bar/console:runtime_deps"), "java_library")
+                .build(),
+            TargetInfo.builder(Label.create("//java/com/google/bar/console:custom"), "custom_type")
+                .build(),
+            TargetInfo.builder(Label.create("//java/com/google/bar/console:sh_test"), "sh_test")
+                .build());
   }
 }

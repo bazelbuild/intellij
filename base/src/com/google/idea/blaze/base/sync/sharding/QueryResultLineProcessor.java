@@ -15,17 +15,22 @@
  */
 package com.google.idea.blaze.base.sync.sharding;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** Collects the blaze targets output by 'blaze query --output label_kind "targets"' */
-class QueryResultLineProcessor implements LineProcessingOutputStream.LineProcessor {
+public class QueryResultLineProcessor implements LineProcessingOutputStream.LineProcessor {
 
-  static class RuleTypeAndLabel {
+  /** A rule name and target label output by 'blaze query'. */
+  public static class RuleTypeAndLabel {
     final String ruleType;
     final String label;
 
@@ -37,17 +42,12 @@ class QueryResultLineProcessor implements LineProcessingOutputStream.LineProcess
 
   private static final Pattern RULE_PATTERN = Pattern.compile("^([^\\s]*) rule ([^\\s]*)$");
 
-  private ImmutableList.Builder<TargetExpression> outputList;
+  private final ImmutableList.Builder<TargetInfo> outputList;
   private final Predicate<RuleTypeAndLabel> targetFilter;
 
-  /**
-   * @param outputList Parsed target expressions are added to this list
-   * @param targetFilter Ignore targets failing this predicate.
-   */
-  QueryResultLineProcessor(
-      ImmutableList.Builder<TargetExpression> outputList,
-      Predicate<RuleTypeAndLabel> targetFilter) {
-    this.outputList = outputList;
+  /** @param targetFilter Ignore targets failing this predicate. */
+  public QueryResultLineProcessor(Predicate<RuleTypeAndLabel> targetFilter) {
+    this.outputList = ImmutableList.builder();
     this.targetFilter = targetFilter;
   }
 
@@ -58,13 +58,22 @@ class QueryResultLineProcessor implements LineProcessingOutputStream.LineProcess
       return true;
     }
     String ruleType = match.group(1);
-    String label = match.group(2);
-    if (targetFilter.test(new RuleTypeAndLabel(ruleType, label))) {
-      TargetExpression target = TargetExpression.fromStringSafe(label);
-      if (target != null) {
-        outputList.add(target);
+    String labelString = match.group(2);
+    if (targetFilter.test(new RuleTypeAndLabel(ruleType, labelString))) {
+      Label label = Label.createIfValid(labelString);
+      if (label != null) {
+        outputList.add(TargetInfo.builder(label, ruleType).build());
       }
     }
     return true;
+  }
+
+  /** Returns all targets parsed to this point. */
+  public ImmutableList<TargetInfo> getTargets() {
+    return outputList.build();
+  }
+
+  public ImmutableList<TargetExpression> getTargetLabels() {
+    return outputList.build().stream().map(info -> info.label).collect(toImmutableList());
   }
 }
