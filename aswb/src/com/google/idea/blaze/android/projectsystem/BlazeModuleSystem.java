@@ -66,6 +66,8 @@ import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -448,5 +450,20 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   public Triple<List<GradleCoordinate>, List<GradleCoordinate>, String>
       analyzeDependencyCompatibility(List<GradleCoordinate> dependenciesToAdd) {
     return new Triple<>(Collections.emptyList(), dependenciesToAdd, "");
+  }
+
+  // #api3.5 @Override
+  public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
+    // Bazel projects have either a workspace module, or a resource module. In both cases, we just
+    // want to ignore the currently
+    // specified module level dependencies and use the global set of dependencies. This is because
+    // when we artificially split up the
+    // Java code (into workspace module) and resources (into a separate module each), we introduce a
+    // circular dependency, which essentially
+    // means that all modules end up depending on all other modules. If we expressed this circular
+    // dependency, IntelliJ blows up due to
+    // the large heavily connected dependency graph. Instead, we just redirect the scopes in the few
+    // places that we need.
+    return ProjectScope.getAllScope(module.getProject());
   }
 }
