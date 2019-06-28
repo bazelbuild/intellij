@@ -21,11 +21,13 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 
 class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
   public static final String ID = Blaze.defaultBuildSystemName();
+  private static final Logger log = Logger.getInstance(BlazeAutoAndroidDebugger.class);
   private final BlazeNativeAndroidDebugger nativeDebugger = new BlazeNativeAndroidDebugger();
 
   @Override
@@ -44,6 +46,7 @@ class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
   @Override
   public void attachToClient(Project project, Client client) {
     if (isNativeProject(project)) {
+      log.info("Project has native development enabled. Attaching native debugger.");
       nativeDebugger.attachToClient(project, client);
     } else {
       super.attachToClient(project, client);
