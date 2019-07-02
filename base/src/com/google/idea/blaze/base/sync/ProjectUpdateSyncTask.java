@@ -102,6 +102,7 @@ final class ProjectUpdateSyncTask {
   static List<TimedEvent> runProjectUpdatePhase(
       Project project,
       BlazeSyncParams params,
+      SyncProjectState projectState,
       BlazeSyncBuildResult buildPhaseResult,
       BlazeContext context) {
     if (!buildPhaseResult.isValid()) {
@@ -109,8 +110,7 @@ final class ProjectUpdateSyncTask {
     }
     SaveUtil.saveAllFiles();
     ProjectUpdateSyncTask task =
-        new ProjectUpdateSyncTask(
-            project, params, buildPhaseResult.getProjectState(), buildPhaseResult.getBuildResult());
+        new ProjectUpdateSyncTask(project, params, projectState, buildPhaseResult.getBuildResult());
     return task.runWithTiming(context);
   }
 

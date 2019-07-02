@@ -34,9 +34,7 @@ public abstract class BlazeSyncBuildResult {
    * project update phase.
    */
   public BlazeSyncBuildResult updateResult(BlazeSyncBuildResult nextResult) {
-    // take the most recent version of the project data, and combine the blaze build outputs
     return nextResult.toBuilder()
-        .setProjectState(nextResult.getProjectState())
         .setBuildResult(getBuildResult().updateOutputs(nextResult.getBuildResult()))
         .setBuildPhaseStats(
             ImmutableList.<BuildPhaseSyncStats>builder()
@@ -48,13 +46,8 @@ public abstract class BlazeSyncBuildResult {
 
   /** Returns false if this build result is incomplete or invalid. */
   public boolean isValid() {
-    return getProjectState() != null
-        && getBuildResult() != null
-        && getBuildResult().buildResult.status != Status.FATAL_ERROR;
+    return getBuildResult() != null && getBuildResult().buildResult.status != Status.FATAL_ERROR;
   }
-
-  @Nullable
-  public abstract SyncProjectState getProjectState();
 
   @Nullable
   public abstract BlazeBuildOutputs getBuildResult();
@@ -65,18 +58,11 @@ public abstract class BlazeSyncBuildResult {
     return new AutoValue_BlazeSyncBuildResult.Builder().setBuildPhaseStats(ImmutableList.of());
   }
 
-  private Builder toBuilder() {
-    return builder()
-        .setProjectState(getProjectState())
-        .setBuildPhaseStats(getBuildPhaseStats())
-        .setBuildResult(getBuildResult());
-  }
+  public abstract Builder toBuilder();
 
   /** A builder for {@link BlazeSyncBuildResult} objects. */
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setProjectState(SyncProjectState projectState);
-
     public abstract Builder setBuildResult(BlazeBuildOutputs buildResult);
 
     public abstract Builder setBuildPhaseStats(Iterable<BuildPhaseSyncStats> stats);

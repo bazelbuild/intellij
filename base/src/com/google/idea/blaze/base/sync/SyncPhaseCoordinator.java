@@ -96,22 +96,25 @@ final class SyncPhaseCoordinator {
   static class UpdatePhaseTask {
     final Instant startTime;
     final BlazeSyncParams syncParams;
+    @Nullable final SyncProjectState projectState;
     final BlazeSyncBuildResult buildResult;
     final SyncResult syncResult;
 
     UpdatePhaseTask(
         Instant startTime,
         BlazeSyncParams syncParams,
+        @Nullable SyncProjectState projectState,
         BlazeSyncBuildResult buildResult,
         SyncResult syncResult) {
       this.startTime = startTime;
       this.syncParams = syncParams;
+      this.projectState = projectState;
       this.buildResult = buildResult;
       this.syncResult = syncResult;
     }
 
     UpdatePhaseTask newTaskWithStartTime(Instant startTime) {
-      return new UpdatePhaseTask(startTime, syncParams, buildResult, syncResult);
+      return new UpdatePhaseTask(startTime, syncParams, projectState, buildResult, syncResult);
     }
 
     /** Combines this task with another task (relative input ordering is unimportant). */
@@ -125,9 +128,11 @@ final class SyncPhaseCoordinator {
       if (!second.syncResult.successful()) {
         return first;
       }
+      // take the most recent version of the project data, and combine the blaze build outputs
       return new UpdatePhaseTask(
           first.startTime,
           BlazeSyncParams.combine(first.syncParams, second.syncParams),
+          second.projectState,
           first.buildResult.updateResult(second.buildResult),
           SyncResult.combine(first.syncResult, second.syncResult));
     }
@@ -239,10 +244,16 @@ final class SyncPhaseCoordinator {
             SyncStats.builder());
         return;
       }
-      BlazeSyncBuildResult buildResult = BuildPhaseSyncTask.runBuildPhase(project, params, context);
+      SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context);
+      BlazeSyncBuildResult buildResult =
+          BuildPhaseSyncTask.runBuildPhase(project, params, projectState, context);
       UpdatePhaseTask task =
           new UpdatePhaseTask(
-              startTime, params, buildResult, syncResultFromBuildPhase(buildResult, context));
+              startTime,
+              params,
+              projectState,
+              buildResult,
+              syncResultFromBuildPhase(buildResult, context));
       if (singleThreaded) {
         updateProjectAndFinishSync(task, context);
       } else {
@@ -316,13 +327,17 @@ final class SyncPhaseCoordinator {
     SyncStats.Builder stats = SyncStats.builder();
     SyncResult syncResult = updateTask.syncResult;
     try {
-      fillInBuildStats(stats, updateTask.buildResult);
+      fillInBuildStats(stats, updateTask.projectState, updateTask.buildResult);
       if (!syncResult.successful()) {
         return;
       }
       List<TimedEvent> timedEvents =
           ProjectUpdateSyncTask.runProjectUpdatePhase(
-              project, updateTask.syncParams, updateTask.buildResult, context);
+              project,
+              updateTask.syncParams,
+              updateTask.projectState,
+              updateTask.buildResult,
+              context);
       stats.addTimedEvents(timedEvents);
       if (!context.shouldContinue()) {
         syncResult = context.isCancelled() ? SyncResult.CANCELLED : SyncResult.FAILURE;
@@ -330,7 +345,7 @@ final class SyncPhaseCoordinator {
     } catch (Throwable e) {
       logSyncError(context, e);
     } finally {
-      SyncProjectState projectState = updateTask.buildResult.getProjectState();
+      SyncProjectState projectState = updateTask.projectState;
       finishSync(
           updateTask.syncParams,
           updateTask.startTime,
@@ -428,8 +443,10 @@ final class SyncPhaseCoordinator {
     context.output(new StatusOutput(String.format("Syncing project: %s...", syncParams)));
   }
 
-  private static void fillInBuildStats(SyncStats.Builder stats, BlazeSyncBuildResult buildResult) {
-    SyncProjectState projectState = buildResult.getProjectState();
+  private static void fillInBuildStats(
+      SyncStats.Builder stats,
+      @Nullable SyncProjectState projectState,
+      BlazeSyncBuildResult buildResult) {
     if (projectState != null) {
       stats
           .setWorkspaceType(projectState.getLanguageSettings().getWorkspaceType())
