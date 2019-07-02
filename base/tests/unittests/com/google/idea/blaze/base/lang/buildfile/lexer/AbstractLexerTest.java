@@ -146,10 +146,14 @@ public abstract class AbstractLexerTest {
 
     // octal
     assertEquals("INT(5349) MINUS", values(tokens("012345-")));
+    assertEquals("INT(5349) MINUS", values(tokens("0o12345-")));
+    assertEquals("INT(63)", values(tokens("0O77")));
 
     // octal (bad)
     assertEquals("INT(0) MINUS", values(tokens("012349-")));
     assertEquals("invalid base-8 integer constant: 012349", lastError);
+    assertEquals("INT(0)", values(tokens("0o")));
+    assertEquals("invalid base-8 integer constant: 0o", lastError);
 
     // hexadecimal (uppercase)
     assertEquals("INT(1193055) MINUS", values(tokens("0X12345F-")));
