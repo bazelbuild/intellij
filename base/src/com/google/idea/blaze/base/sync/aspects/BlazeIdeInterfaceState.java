@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.SyncData;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -39,15 +38,12 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
   final ImmutableMap<String, ArtifactState> ideInfoFileState;
 
   final ImmutableBiMap<String, TargetKey> ideInfoFileToTargetKey;
-  final WorkspaceLanguageSettings workspaceLanguageSettings;
 
   private BlazeIdeInterfaceState(
       ImmutableMap<String, ArtifactState> ideInfoFileState,
-      BiMap<String, TargetKey> ideInfoFileToTargetKey,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
+      BiMap<String, TargetKey> ideInfoFileToTargetKey) {
     this.ideInfoFileState = ideInfoFileState;
     this.ideInfoFileToTargetKey = ImmutableBiMap.copyOf(ideInfoFileToTargetKey);
-    this.workspaceLanguageSettings = workspaceLanguageSettings;
   }
 
   private static BlazeIdeInterfaceState fromProto(ProjectData.BlazeIdeInterfaceState proto) {
@@ -58,9 +54,7 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
     if (proto.getIdeInfoFilesCount() == 0) {
       // handle older version of proto
       return new BlazeIdeInterfaceState(
-          ArtifactState.convertOldFormat(proto.getFileStateMap()),
-          targets,
-          WorkspaceLanguageSettings.fromProto(proto.getWorkspaceLanguageSettings()));
+          ArtifactState.convertOldFormat(proto.getFileStateMap()), targets);
     }
     ImmutableMap.Builder<String, ArtifactState> artifacts = ImmutableMap.builder();
     for (LocalFileOrOutputArtifact output : proto.getIdeInfoFilesList()) {
@@ -70,10 +64,7 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
       }
       artifacts.put(state.getKey(), state);
     }
-    return new BlazeIdeInterfaceState(
-        artifacts.build(),
-        targets,
-        WorkspaceLanguageSettings.fromProto(proto.getWorkspaceLanguageSettings()));
+    return new BlazeIdeInterfaceState(artifacts.build(), targets);
   }
 
   @Override
@@ -81,8 +72,7 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
     ProjectData.BlazeIdeInterfaceState.Builder proto =
         ProjectData.BlazeIdeInterfaceState.newBuilder()
             .putAllFileToTarget(
-                ProtoWrapper.map(ideInfoFileToTargetKey, Functions.identity(), TargetKey::toProto))
-            .setWorkspaceLanguageSettings(workspaceLanguageSettings.toProto());
+                ProtoWrapper.map(ideInfoFileToTargetKey, Functions.identity(), TargetKey::toProto));
     for (String key : ideInfoFileState.keySet()) {
       proto.addIdeInfoFiles(ideInfoFileState.get(key).serializeToProto());
     }
@@ -99,13 +89,12 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
     }
     BlazeIdeInterfaceState that = (BlazeIdeInterfaceState) o;
     return Objects.equals(ideInfoFileState, that.ideInfoFileState)
-        && Objects.equals(ideInfoFileToTargetKey, that.ideInfoFileToTargetKey)
-        && Objects.equals(workspaceLanguageSettings, that.workspaceLanguageSettings);
+        && Objects.equals(ideInfoFileToTargetKey, that.ideInfoFileToTargetKey);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(ideInfoFileState, ideInfoFileToTargetKey, workspaceLanguageSettings);
+    return Objects.hash(ideInfoFileState, ideInfoFileToTargetKey);
   }
 
   static Builder builder() {
@@ -115,11 +104,9 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
   static class Builder {
     ImmutableMap<String, ArtifactState> ideInfoFileState = null;
     BiMap<String, TargetKey> ideInfoToTargetKey = HashBiMap.create();
-    WorkspaceLanguageSettings workspaceLanguageSettings;
 
     BlazeIdeInterfaceState build() {
-      return new BlazeIdeInterfaceState(
-          ideInfoFileState, ideInfoToTargetKey, workspaceLanguageSettings);
+      return new BlazeIdeInterfaceState(ideInfoFileState, ideInfoToTargetKey);
     }
   }
 

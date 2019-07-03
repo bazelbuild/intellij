@@ -105,7 +105,7 @@ message LanguageSpecResult {
 message BlazeIdeInterfaceState {
   map<string, int64> file_state = 1 [deprecated = true];
   map<string, TargetKey> file_to_target = 2;
-  WorkspaceLanguageSettings workspace_language_settings = 3;
+  WorkspaceLanguageSettings workspace_language_settings = 3 [deprecated = true];
   reserved 4;
   repeated LocalFileOrOutputArtifact ide_info_files = 5;
 }
