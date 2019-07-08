@@ -328,7 +328,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         "go_appengine_library",
         "go_appengine_test",
     ]:
-        sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files]
+        sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files.to_list()]
         generated = [f for f in sources if not f.is_source]
     elif ctx.rule.kind == "go_wrap_cc":
         genfiles = target.files.to_list()
