@@ -50,11 +50,6 @@ final class JdepsState implements SyncData<ProjectData.JdepsState> {
   private static JdepsState fromProto(ProjectData.JdepsState proto) {
     ImmutableMap<String, TargetKey> targets =
         ProtoWrapper.map(proto.getFileToTargetMap(), Functions.identity(), TargetKey::fromProto);
-    if (proto.getJdepsFilesCount() == 0) {
-      // handle older version of proto
-      return new JdepsState(
-          ArtifactState.convertOldFormat(proto.getFileStateMap()), targets, parseJdepsMap(proto));
-    }
     ImmutableMap.Builder<String, ArtifactState> artifacts = ImmutableMap.builder();
     for (LocalFileOrOutputArtifact output : proto.getJdepsFilesList()) {
       ArtifactState state = ArtifactState.fromProto(output);

@@ -91,7 +91,7 @@ message TargetToJdepsMap {
 }
 
 message JdepsState {
-  map<string, int64> file_state = 1 [deprecated = true];
+  reserved 1;
   map<string, TargetKey> file_to_target = 2;
   TargetToJdepsMap target_to_jdeps = 3;
   repeated LocalFileOrOutputArtifact jdeps_files = 4;
@@ -103,9 +103,9 @@ message LanguageSpecResult {
 }
 
 message BlazeIdeInterfaceState {
-  map<string, int64> file_state = 1 [deprecated = true];
+  reserved 1;
   map<string, TargetKey> file_to_target = 2;
-  WorkspaceLanguageSettings workspace_language_settings = 3 [deprecated = true];
+  reserved 3;
   reserved 4;
   repeated LocalFileOrOutputArtifact ide_info_files = 5;
 }

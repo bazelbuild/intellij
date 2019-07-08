@@ -51,11 +51,6 @@ final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInter
         ImmutableBiMap.copyOf(
             ProtoWrapper.map(
                 proto.getFileToTargetMap(), Functions.identity(), TargetKey::fromProto));
-    if (proto.getIdeInfoFilesCount() == 0) {
-      // handle older version of proto
-      return new BlazeIdeInterfaceState(
-          ArtifactState.convertOldFormat(proto.getFileStateMap()), targets);
-    }
     ImmutableMap.Builder<String, ArtifactState> artifacts = ImmutableMap.builder();
     for (LocalFileOrOutputArtifact output : proto.getIdeInfoFilesList()) {
       ArtifactState state = ArtifactState.fromProto(output);
