@@ -15,26 +15,66 @@
  */
 package com.google.idea.blaze.base.model;
 
-import com.google.auto.value.AutoValue;
+import com.google.devtools.intellij.model.ProjectData;
+import com.google.devtools.intellij.model.ProjectData.TargetData;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceState;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Project data relating to targets and their generated outputs. */
-@AutoValue
-public abstract class ProjectTargetData {
+public final class ProjectTargetData implements ProtoWrapper<ProjectData.TargetData> {
 
-  public abstract TargetMap getTargetMap();
+  public final TargetMap targetMap;
+  @Nullable public final BlazeIdeInterfaceState ideInterfaceState;
+  public final RemoteOutputArtifacts remoteOutputs;
 
-  @Nullable
-  public abstract BlazeIdeInterfaceState getIdeInterfaceState();
-
-  public abstract RemoteOutputArtifacts getRemoteOutputs();
-
-  public static ProjectTargetData create(
+  public ProjectTargetData(
       TargetMap targetMap,
-      @Nullable BlazeIdeInterfaceState state,
+      @Nullable BlazeIdeInterfaceState ideInterfaceState,
       RemoteOutputArtifacts remoteOutputs) {
-    return new AutoValue_ProjectTargetData(targetMap, state, remoteOutputs);
+    this.targetMap = targetMap;
+    this.ideInterfaceState = ideInterfaceState;
+    this.remoteOutputs = remoteOutputs;
+  }
+
+  public static ProjectTargetData fromProto(ProjectData.TargetData proto) {
+    TargetMap targetMap = TargetMap.fromProto(proto.getTargetMap());
+    BlazeIdeInterfaceState ideInterfaceState =
+        proto.hasIdeInterfaceState()
+            ? BlazeIdeInterfaceState.fromProto(proto.getIdeInterfaceState())
+            : null;
+    RemoteOutputArtifacts remoteOutputs = RemoteOutputArtifacts.fromProto(proto.getRemoteOutputs());
+    return new ProjectTargetData(targetMap, ideInterfaceState, remoteOutputs);
+  }
+
+  @Override
+  public TargetData toProto() {
+    ProjectData.TargetData.Builder builder =
+        ProjectData.TargetData.newBuilder()
+            .setTargetMap(targetMap.toProto())
+            .setRemoteOutputs(remoteOutputs.toProto());
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setIdeInterfaceState, ideInterfaceState);
+    return builder.build();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ProjectTargetData that = (ProjectTargetData) o;
+    return targetMap.equals(that.targetMap)
+        && Objects.equals(ideInterfaceState, that.ideInterfaceState)
+        && remoteOutputs.equals(that.remoteOutputs);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(targetMap, ideInterfaceState, remoteOutputs);
   }
 }

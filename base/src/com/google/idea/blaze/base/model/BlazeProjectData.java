@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceState;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
@@ -39,7 +40,7 @@ import javax.annotation.concurrent.Immutable;
 /** The top-level object serialized to cache. */
 @Immutable
 public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazeProjectData> {
-  private final TargetMap targetMap;
+  private final ProjectTargetData targetData;
   private final BlazeInfo blazeInfo;
   private final BlazeVersionData blazeVersionData;
   private final WorkspacePathResolver workspacePathResolver;
@@ -48,14 +49,14 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
   private final SyncState syncState;
 
   public BlazeProjectData(
-      TargetMap targetMap,
+      ProjectTargetData targetData,
       BlazeInfo blazeInfo,
       BlazeVersionData blazeVersionData,
       WorkspacePathResolver workspacePathResolver,
       ArtifactLocationDecoder artifactLocationDecoder,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       SyncState syncState) {
-    this.targetMap = targetMap;
+    this.targetData = targetData;
     this.blazeInfo = blazeInfo;
     this.blazeVersionData = blazeVersionData;
     this.workspacePathResolver = workspacePathResolver;
@@ -70,23 +71,36 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
     BlazeInfo blazeInfo = BlazeInfo.fromProto(buildSystem, proto.getBlazeInfo());
     WorkspacePathResolver workspacePathResolver =
         WorkspacePathResolver.fromProto(proto.getWorkspacePathResolver());
-    SyncState syncState = SyncState.fromProto(proto.getSyncState());
-    RemoteOutputArtifacts remoteOutputs =
-        syncState.getOptional(RemoteOutputArtifacts.class).orElse(RemoteOutputArtifacts.EMPTY);
+    ProjectTargetData targetData = parseTargetData(proto);
     return new BlazeProjectData(
-        TargetMap.fromProto(proto.getTargetMap()),
+        targetData,
         blazeInfo,
         BlazeVersionData.fromProto(proto.getBlazeVersionData()),
         workspacePathResolver,
-        new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver, remoteOutputs),
+        new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver, targetData.remoteOutputs),
         WorkspaceLanguageSettings.fromProto(proto.getWorkspaceLanguageSettings()),
-        syncState);
+        SyncState.fromProto(proto.getSyncState()));
+  }
+
+  private static ProjectTargetData parseTargetData(ProjectData.BlazeProjectData proto) {
+    if (proto.hasTargetData()) {
+      return ProjectTargetData.fromProto(proto.getTargetData());
+    }
+    // handle older version of project data
+    TargetMap map = TargetMap.fromProto(proto.getTargetMap());
+    BlazeIdeInterfaceState ideInterfaceState =
+        BlazeIdeInterfaceState.fromProto(proto.getSyncState().getBlazeIdeInterfaceState());
+    RemoteOutputArtifacts remoteOutputs =
+        proto.getSyncState().hasRemoteOutputArtifacts()
+            ? RemoteOutputArtifacts.fromProto(proto.getSyncState().getRemoteOutputArtifacts())
+            : RemoteOutputArtifacts.EMPTY;
+    return new ProjectTargetData(map, ideInterfaceState, remoteOutputs);
   }
 
   @Override
   public ProjectData.BlazeProjectData toProto() {
     return ProjectData.BlazeProjectData.newBuilder()
-        .setTargetMap(targetMap.toProto())
+        .setTargetData(targetData.toProto())
         .setBlazeInfo(blazeInfo.toProto())
         .setBlazeVersionData(blazeVersionData.toProto())
         .setWorkspacePathResolver(workspacePathResolver.toProto())
@@ -95,8 +109,12 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
         .build();
   }
 
+  public ProjectTargetData getTargetData() {
+    return targetData;
+  }
+
   public TargetMap getTargetMap() {
-    return targetMap;
+    return targetData.targetMap;
   }
 
   public BlazeInfo getBlazeInfo() {
@@ -120,7 +138,7 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
   }
 
   public RemoteOutputArtifacts getRemoteOutputs() {
-    return syncState.getOptional(RemoteOutputArtifacts.class).orElse(RemoteOutputArtifacts.EMPTY);
+    return targetData.remoteOutputs;
   }
 
   public SyncState getSyncState() {
@@ -150,7 +168,7 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
       return false;
     }
     BlazeProjectData other = (BlazeProjectData) o;
-    return Objects.equals(targetMap, other.targetMap)
+    return Objects.equals(targetData, other.targetData)
         && Objects.equals(blazeInfo, other.blazeInfo)
         && Objects.equals(blazeVersionData, other.blazeVersionData)
         && Objects.equals(workspacePathResolver, other.workspacePathResolver)
@@ -162,7 +180,7 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
   @Override
   public int hashCode() {
     return Objects.hash(
-        targetMap,
+        targetData,
         blazeInfo,
         blazeVersionData,
         workspaceLanguageSettings,

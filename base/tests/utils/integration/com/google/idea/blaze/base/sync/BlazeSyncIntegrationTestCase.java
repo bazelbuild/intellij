@@ -271,7 +271,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeBuildOutputs buildResult,
         boolean mergeWithOldState,
         @Nullable BlazeProjectData oldProjectData) {
-      return ProjectTargetData.create(targetMap, null, RemoteOutputArtifacts.fromProjectData(null));
+      return new ProjectTargetData(targetMap, null, RemoteOutputArtifacts.fromProjectData(null));
     }
 
     @Override

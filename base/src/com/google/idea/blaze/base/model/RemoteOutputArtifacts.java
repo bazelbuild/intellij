@@ -25,6 +25,7 @@ import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -39,7 +40,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** A set of {@link RemoteOutputArtifact}s we want to retain a reference to between syncs. */
-public final class RemoteOutputArtifacts implements SyncData<ProjectData.RemoteOutputArtifacts> {
+public final class RemoteOutputArtifacts
+    implements ProtoWrapper<ProjectData.RemoteOutputArtifacts> {
 
   public static RemoteOutputArtifacts fromProjectData(@Nullable BlazeProjectData projectData) {
     return projectData == null ? EMPTY : projectData.getRemoteOutputs();
@@ -66,7 +68,7 @@ public final class RemoteOutputArtifacts implements SyncData<ProjectData.RemoteO
     return proto.build();
   }
 
-  private static RemoteOutputArtifacts fromProto(ProjectData.RemoteOutputArtifacts proto) {
+  public static RemoteOutputArtifacts fromProto(ProjectData.RemoteOutputArtifacts proto) {
     ImmutableMap.Builder<String, RemoteOutputArtifact> map = ImmutableMap.builder();
     proto.getArtifactsList().stream()
         .map(RemoteOutputArtifact::fromProto)
@@ -188,11 +190,6 @@ public final class RemoteOutputArtifacts implements SyncData<ProjectData.RemoteO
   }
 
   @Override
-  public void insert(ProjectData.SyncState.Builder builder) {
-    builder.setRemoteOutputArtifacts(toProto());
-  }
-
-  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -206,15 +203,5 @@ public final class RemoteOutputArtifacts implements SyncData<ProjectData.RemoteO
   @Override
   public int hashCode() {
     return Objects.hashCode(remoteOutputArtifacts);
-  }
-
-  static class Extractor implements SyncData.Extractor<RemoteOutputArtifacts> {
-    @Nullable
-    @Override
-    public RemoteOutputArtifacts extract(ProjectData.SyncState syncState) {
-      return syncState.hasRemoteOutputArtifacts()
-          ? RemoteOutputArtifacts.fromProto(syncState.getRemoteOutputArtifacts())
-          : null;
-    }
   }
 }

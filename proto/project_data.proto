@@ -194,6 +194,12 @@ message RemoteOutputArtifacts {
   repeated OutputArtifact artifacts = 1;
 }
 
+message TargetData {
+  TargetMap target_map = 1;
+  BlazeIdeInterfaceState ide_interface_state = 2;
+  RemoteOutputArtifacts remote_outputs = 3;
+}
+
 message SyncState {
   BlazeJavaSyncData blaze_java_sync_data = 1;
   BlazeAndroidSyncData blaze_android_sync_data = 2;
@@ -201,16 +207,17 @@ message SyncState {
   BlazeJavaSyncData blaze_scala_sync_data = 3;
   LanguageSpecResult language_spec_result = 4;
   JdepsState jdeps_state = 5;
-  BlazeIdeInterfaceState blaze_ide_interface_state = 6;
-  RemoteOutputArtifacts remote_output_artifacts = 7;
+  BlazeIdeInterfaceState blaze_ide_interface_state = 6 [deprecated = true];
+  RemoteOutputArtifacts remote_output_artifacts = 7 [deprecated = true];
 }
 
 message BlazeProjectData {
   reserved 1;
-  TargetMap target_map = 2;
+  TargetMap target_map = 2 [deprecated = true];
   BlazeInfo blaze_info = 3;
   BlazeVersionData blaze_version_data = 4;
   WorkspacePathResolver workspace_path_resolver = 5;
   WorkspaceLanguageSettings workspace_language_settings = 6;
   SyncState sync_state = 7;
+  TargetData target_data = 8;
 }

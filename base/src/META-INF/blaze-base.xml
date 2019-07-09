@@ -466,9 +466,7 @@
     <AutoSyncProvider implementation="com.google.idea.blaze.base.sync.autosync.BuildFileAutoSyncProvider"/>
     <AutoSyncProvider implementation="com.google.idea.blaze.base.sync.autosync.ProtoAutoSyncProvider"/>
     <WorkspacePathResolverExtractor implementation="com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl$Extractor"/>
-    <SyncDataExtractor implementation="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceState$Extractor"/>
     <SyncDataExtractor implementation="com.google.idea.blaze.base.lang.buildfile.sync.LanguageSpecResult$Extractor"/>
-    <SyncDataExtractor implementation="com.google.idea.blaze.base.model.RemoteOutputArtifacts$Extractor"/>
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.settings.BlazeUserSettings$SettingsLogger" id="BlazeUserSettingsLogger"/>
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.sync.autosync.AutoSyncSettings$SettingsLogger" order="after BlazeUserSettingsLogger"/>
     <TargetKindProvider implementation="com.google.idea.blaze.base.model.primitives.GenericBlazeRules"/>

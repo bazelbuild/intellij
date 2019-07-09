@@ -163,7 +163,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .appendNewOutputs(getTrackedRemoteOutputs(buildResult))
             .removeUntrackedOutputs(state.targetMap, projectState.getLanguageSettings());
 
-    return ProjectTargetData.create(state.targetMap, state.state, newRemoteOutputs);
+    return new ProjectTargetData(state.targetMap, state.state, newRemoteOutputs);
   }
 
   /** Returns the {@link RemoteOutputArtifact}s we want to track between syncs. */
@@ -196,9 +196,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     TargetMap oldTargetMap = oldProjectData != null ? oldProjectData.getTargetMap() : null;
     BlazeIdeInterfaceState prevState =
-        oldProjectData != null
-            ? oldProjectData.getSyncState().get(BlazeIdeInterfaceState.class)
-            : null;
+        oldProjectData != null ? oldProjectData.getTargetData().ideInterfaceState : null;
 
     Predicate<String> ideInfoPredicate = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE;
     Collection<OutputArtifact> files =
