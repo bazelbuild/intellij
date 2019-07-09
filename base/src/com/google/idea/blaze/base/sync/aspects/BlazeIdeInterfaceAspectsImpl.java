@@ -134,6 +134,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   @Override
+  @Nullable
   public ProjectTargetData updateTargetData(
       Project project,
       BlazeContext context,
@@ -151,6 +152,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             buildResult,
             mergeWithOldState,
             oldProjectData);
+    if (state == null) {
+      return null;
+    }
 
     RemoteOutputArtifacts oldRemoteOutputs = RemoteOutputArtifacts.fromProjectData(oldProjectData);
     // combine outputs map, then filter to remove out-of-date / unnecessary items
@@ -175,6 +179,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .collect(toImmutableSet());
   }
 
+  @Nullable
   private static TargetMapAndInterfaceState updateTargetMap(
       Project project,
       BlazeContext context,
@@ -212,7 +217,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       throw new ProcessCanceledException(e);
     } catch (ExecutionException e) {
       IssueOutput.error("Failed to diff aspect output files: " + e).submit(context);
-      return new TargetMapAndInterfaceState(oldTargetMap, prevState);
+      return null;
     }
 
     // if we're merging with the old state, no files are removed
@@ -238,7 +243,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .withProgressMessage("Reading IDE info result...")
             .run()
             .success()) {
-      return new TargetMapAndInterfaceState(oldTargetMap, prevState);
+      return null;
     }
 
     ListenableFuture<?> prefetchFuture =
@@ -250,7 +255,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .withProgressMessage("Reading IDE info result...")
         .run()
         .success()) {
-      return new TargetMapAndInterfaceState(oldTargetMap, prevState);
+      return null;
     }
 
     ImportRoots importRoots =
@@ -272,7 +277,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             mergeWithOldState,
             oldTargetMap);
     if (state == null) {
-      return new TargetMapAndInterfaceState(oldTargetMap, prevState);
+      return null;
     }
     // prefetch ide-resolve genfiles
     Scope.push(

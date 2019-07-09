@@ -41,6 +41,7 @@ public interface BlazeIdeInterface {
    *
    * @param mergeWithOldState If true, we overlay the given targets to the current rule map.
    */
+  @Nullable
   ProjectTargetData updateTargetData(
       Project project,
       BlazeContext context,
