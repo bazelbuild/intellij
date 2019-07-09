@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.aspects;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -56,7 +57,8 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.lang.AdditionalLanguagesHelper;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.model.SyncState;
+import com.google.idea.blaze.base.model.ProjectTargetData;
+import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -86,7 +88,6 @@ import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.NavigatableAdapter;
 import java.io.File;
@@ -132,15 +133,54 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         aspectStrategy);
   }
 
-  @Nullable
   @Override
-  public TargetMap updateTargetMap(
+  public ProjectTargetData updateTargetData(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       SyncProjectState projectState,
       BlazeBuildOutputs buildResult,
-      SyncState.Builder syncStateBuilder,
+      boolean mergeWithOldState,
+      @Nullable BlazeProjectData oldProjectData) {
+    TargetMapAndInterfaceState state =
+        updateTargetMap(
+            project,
+            context,
+            workspaceRoot,
+            projectState,
+            buildResult,
+            mergeWithOldState,
+            oldProjectData);
+
+    RemoteOutputArtifacts oldRemoteOutputs = RemoteOutputArtifacts.fromProjectData(oldProjectData);
+    // combine outputs map, then filter to remove out-of-date / unnecessary items
+    RemoteOutputArtifacts newRemoteOutputs =
+        oldRemoteOutputs
+            .appendNewOutputs(getTrackedRemoteOutputs(buildResult))
+            .removeUntrackedOutputs(state.targetMap, projectState.getLanguageSettings());
+
+    return ProjectTargetData.create(state.targetMap, state.state, newRemoteOutputs);
+  }
+
+  /** Returns the {@link RemoteOutputArtifact}s we want to track between syncs. */
+  private static ImmutableSet<RemoteOutputArtifact> getTrackedRemoteOutputs(
+      BlazeBuildOutputs buildOutput) {
+    // don't track remote intellij-info.txt outputs -- they're already tracked in
+    // BlazeIdeInterfaceState
+    Predicate<String> pathFilter = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE.negate();
+    return buildOutput.perOutputGroupArtifacts.values().stream()
+        .filter(a -> a instanceof RemoteOutputArtifact)
+        .map(a -> (RemoteOutputArtifact) a)
+        .filter(a -> pathFilter.test(a.getRelativePath()))
+        .collect(toImmutableSet());
+  }
+
+  private static TargetMapAndInterfaceState updateTargetMap(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      SyncProjectState projectState,
+      BlazeBuildOutputs buildResult,
       boolean mergeWithOldState,
       @Nullable BlazeProjectData oldProjectData) {
     // If there was a partial error, make a best-effort attempt to sync. Retain
@@ -148,6 +188,12 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     if (buildResult.buildResult.status == BuildResult.Status.BUILD_ERROR) {
       mergeWithOldState = true;
     }
+
+    TargetMap oldTargetMap = oldProjectData != null ? oldProjectData.getTargetMap() : null;
+    BlazeIdeInterfaceState prevState =
+        oldProjectData != null
+            ? oldProjectData.getSyncState().get(BlazeIdeInterfaceState.class)
+            : null;
 
     Predicate<String> ideInfoPredicate = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE;
     Collection<OutputArtifact> files =
@@ -158,11 +204,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .distinct()
             .collect(toImmutableList());
 
-    TargetMap oldTargetMap = oldProjectData != null ? oldProjectData.getTargetMap() : null;
-    BlazeIdeInterfaceState prevState =
-        oldProjectData != null
-            ? oldProjectData.getSyncState().get(BlazeIdeInterfaceState.class)
-            : null;
     ArtifactsDiff diff;
     try {
       diff =
@@ -171,7 +212,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       throw new ProcessCanceledException(e);
     } catch (ExecutionException e) {
       IssueOutput.error("Failed to diff aspect output files: " + e).submit(context);
-      return oldTargetMap;
+      return new TargetMapAndInterfaceState(oldTargetMap, prevState);
     }
 
     // if we're merging with the old state, no files are removed
@@ -197,7 +238,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .withProgressMessage("Reading IDE info result...")
             .run()
             .success()) {
-      return oldTargetMap;
+      return new TargetMapAndInterfaceState(oldTargetMap, prevState);
     }
 
     ListenableFuture<?> prefetchFuture =
@@ -209,7 +250,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .withProgressMessage("Reading IDE info result...")
         .run()
         .success()) {
-      return oldTargetMap;
+      return new TargetMapAndInterfaceState(oldTargetMap, prevState);
     }
 
     ImportRoots importRoots =
@@ -219,22 +260,19 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     BlazeConfigurationHandler configHandler =
         new BlazeConfigurationHandler(projectState.getBlazeInfo());
-    Ref<TargetMap> targetMapReference = Ref.create(oldTargetMap);
-    BlazeIdeInterfaceState state =
+    TargetMapAndInterfaceState state =
         updateState(
             project,
             context,
             prevState,
-            diff.getNewState(),
+            diff,
             configHandler,
             projectState.getLanguageSettings(),
             importRoots,
-            diff.getUpdatedOutputs(),
-            diff.getRemovedOutputs(),
             mergeWithOldState,
-            targetMapReference);
+            oldTargetMap);
     if (state == null) {
-      return oldTargetMap;
+      return new TargetMapAndInterfaceState(oldTargetMap, prevState);
     }
     // prefetch ide-resolve genfiles
     Scope.push(
@@ -249,8 +287,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   .collect(toImmutableList());
           prefetchGenfiles(context, resolveOutputs);
         });
-    syncStateBuilder.put(state);
-    return targetMapReference.get();
+    return state;
   }
 
   private static BlazeBuildOutputs runBlazeBuild(
@@ -348,6 +385,16 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     }
   }
 
+  private static class TargetMapAndInterfaceState {
+    private final TargetMap targetMap;
+    private final BlazeIdeInterfaceState state;
+
+    TargetMapAndInterfaceState(TargetMap targetMap, BlazeIdeInterfaceState state) {
+      this.targetMap = targetMap;
+      this.state = state;
+    }
+  }
+
   private static class TargetFilePair {
     private final OutputArtifact file;
     private final TargetIdeInfo target;
@@ -359,20 +406,18 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   @Nullable
-  private static BlazeIdeInterfaceState updateState(
+  private static TargetMapAndInterfaceState updateState(
       Project project,
       BlazeContext parentContext,
       @Nullable BlazeIdeInterfaceState prevState,
-      ImmutableMap<String, ArtifactState> fileState,
+      ArtifactsDiff fileState,
       BlazeConfigurationHandler configHandler,
       WorkspaceLanguageSettings languageSettings,
       ImportRoots importRoots,
-      List<OutputArtifact> newFiles,
-      Collection<ArtifactState> removedFiles,
       boolean mergeWithOldState,
-      Ref<TargetMap> targetMapReference) {
+      @Nullable TargetMap oldTargetMap) {
     AspectStrategy aspectStrategy = AspectStrategy.getInstance(Blaze.getBuildSystem(project));
-    Result<BlazeIdeInterfaceState> result =
+    Result<TargetMapAndInterfaceState> result =
         Scope.push(
             parentContext,
             context -> {
@@ -382,7 +427,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
               // ideally, we'd flush through a per-build sync time parsed from BEP. For now, though
               // just set an approximate, batched sync time.
               Instant syncTime = Instant.now();
-              Map<String, ArtifactState> nextFileState = new HashMap<>(fileState);
+              Map<String, ArtifactState> nextFileState = new HashMap<>(fileState.getNewState());
 
               // If we're not removing we have to merge the old state
               // into the new one or we'll miss file removes next time
@@ -394,14 +439,14 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
               state.ideInfoFileState = ImmutableMap.copyOf(nextFileState);
 
               Map<TargetKey, TargetIdeInfo> targetMap = Maps.newHashMap();
-              if (prevState != null && !targetMapReference.isNull()) {
-                targetMap.putAll(targetMapReference.get().map());
+              if (prevState != null && oldTargetMap != null) {
+                targetMap.putAll(oldTargetMap.map());
                 state.ideInfoToTargetKey.putAll(prevState.ideInfoFileToTargetKey);
               }
 
               // Update removed unless we're merging with the old state
               if (!mergeWithOldState) {
-                for (ArtifactState removed : removedFiles) {
+                for (ArtifactState removed : fileState.getRemovedOutputs()) {
                   TargetKey key = state.ideInfoToTargetKey.remove(removed.getKey());
                   if (key != null) {
                     targetMap.remove(key);
@@ -416,7 +461,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
               // Read protos from any new files
               List<ListenableFuture<TargetFilePair>> futures = Lists.newArrayList();
-              for (OutputArtifact file : newFiles) {
+              for (OutputArtifact file : fileState.getUpdatedOutputs()) {
                 futures.add(
                     executor.submit(
                         () -> {
@@ -472,7 +517,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   PrintOutput.log(
                       String.format(
                           "Loaded %d aspect files, total size %dkB",
-                          newFiles.size(), totalSizeLoaded.get() / 1024)));
+                          fileState.getUpdatedOutputs().size(), totalSizeLoaded.get() / 1024)));
               if (duplicateTargetLabels > 0) {
                 context.output(
                     new PerformanceWarning(
@@ -496,7 +541,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
               }
 
               // update sync time for unchanged targets
-              for (String artifactKey : fileState.keySet()) {
+              for (String artifactKey : fileState.getNewState().keySet()) {
                 TargetKey targetKey = state.ideInfoToTargetKey.get(artifactKey);
                 TargetIdeInfo target = targetKey != null ? targetMap.get(targetKey) : null;
                 if (target != null) {
@@ -509,8 +554,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                       languageSettings.getWorkspaceType()));
               warnIgnoredLanguages(project, context, ignoredLanguages);
 
-              targetMapReference.set(new TargetMap(ImmutableMap.copyOf(targetMap)));
-              return Result.of(state.build());
+              return Result.of(
+                  new TargetMapAndInterfaceState(
+                      new TargetMap(ImmutableMap.copyOf(targetMap)), state.build()));
             });
 
     if (result.error != null) {

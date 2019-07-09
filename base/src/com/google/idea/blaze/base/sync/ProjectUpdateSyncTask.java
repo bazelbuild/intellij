@@ -15,16 +15,13 @@
  */
 package com.google.idea.blaze.base.sync;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -32,6 +29,7 @@ import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -52,7 +50,6 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
@@ -87,7 +84,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /** Runs the 'project update' phase of sync, after the blaze build phase has completed. */
@@ -156,21 +152,21 @@ final class ProjectUpdateSyncTask {
   private void run(BlazeContext context) throws SyncCanceledException, SyncFailedException {
     SyncState.Builder syncStateBuilder = new SyncState.Builder();
 
-    TargetMap targetMap = updateTargetMap(context, oldProjectData, syncStateBuilder);
+    ProjectTargetData targetData = updateTargetMap(context, oldProjectData);
+    TargetMap targetMap = targetData.getTargetMap();
     if (targetMap == null) {
       context.setHasError();
       throw new SyncFailedException();
     }
+    if (targetData.getIdeInterfaceState() != null) {
+      syncStateBuilder.put(targetData.getIdeInterfaceState());
+    }
+    syncStateBuilder.put(targetData.getRemoteOutputs());
     context.output(PrintOutput.log("Target map size: " + targetMap.targets().size()));
 
     RemoteOutputArtifacts oldRemoteState = RemoteOutputArtifacts.fromProjectData(oldProjectData);
-    // combine outputs map, then filter to remove out-of-date / unnecessary items
-    RemoteOutputArtifacts newRemoteState =
-        oldRemoteState
-            .appendNewOutputs(getTrackedRemoteOutputs(buildResult))
-            .removeUntrackedOutputs(targetMap, projectState.getLanguageSettings());
+    RemoteOutputArtifacts newRemoteState = targetData.getRemoteOutputs();
 
-    syncStateBuilder.put(newRemoteState);
     ArtifactLocationDecoder artifactLocationDecoder =
         new ArtifactLocationDecoderImpl(
             projectState.getBlazeInfo(), projectState.getWorkspacePathResolver(), newRemoteState);
@@ -272,19 +268,6 @@ final class ProjectUpdateSyncTask {
     }
   }
 
-  /** Returns the {@link RemoteOutputArtifact}s we want to track between syncs. */
-  private static ImmutableSet<RemoteOutputArtifact> getTrackedRemoteOutputs(
-      BlazeBuildOutputs buildOutput) {
-    // don't track remote intellij-info.txt outputs -- they're already tracked in
-    // BlazeIdeInterfaceState
-    Predicate<String> pathFilter = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE.negate();
-    return buildOutput.perOutputGroupArtifacts.values().stream()
-        .filter(a -> a instanceof RemoteOutputArtifact)
-        .map(a -> (RemoteOutputArtifact) a)
-        .filter(a -> pathFilter.test(a.getRelativePath()))
-        .collect(toImmutableSet());
-  }
-
   private static void refreshVirtualFileSystem(
       BlazeContext context, BlazeProjectData blazeProjectData) {
     Scope.push(
@@ -330,11 +313,8 @@ final class ProjectUpdateSyncTask {
         });
   }
 
-  @Nullable
-  private TargetMap updateTargetMap(
-      BlazeContext parentContext,
-      @Nullable BlazeProjectData oldProjectData,
-      SyncState.Builder syncStateBuilder) {
+  private ProjectTargetData updateTargetMap(
+      BlazeContext parentContext, @Nullable BlazeProjectData oldProjectData) {
     boolean mergeWithOldState = !syncParams.addProjectViewTargets;
     return Scope.push(
         parentContext,
@@ -342,13 +322,12 @@ final class ProjectUpdateSyncTask {
           context.push(new TimingScope("ReadBuildOutputs", EventType.BlazeInvocation));
           context.output(new StatusOutput("Parsing build outputs..."));
           BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
-          return blazeIdeInterface.updateTargetMap(
+          return blazeIdeInterface.updateTargetData(
               project,
               context,
               workspaceRoot,
               projectState,
               buildResult,
-              syncStateBuilder,
               mergeWithOldState,
               oldProjectData);
         });

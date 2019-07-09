@@ -29,7 +29,8 @@ import com.google.idea.blaze.base.model.SyncData;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInterfaceState> {
+/** Sync state for aspect output files, and their mapping to targets. */
+public final class BlazeIdeInterfaceState implements SyncData<ProjectData.BlazeIdeInterfaceState> {
 
   /**
    * File strings here are any string uniquely identifying output artifacts. It's not used to

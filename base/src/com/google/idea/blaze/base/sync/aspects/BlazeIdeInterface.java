@@ -16,10 +16,9 @@
 package com.google.idea.blaze.base.sync.aspects;
 
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.model.SyncState;
+import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -38,19 +37,16 @@ public interface BlazeIdeInterface {
   }
 
   /**
-   * Parses the output intellij-info.txt files, updating the project's {@link TargetMap} and
-   * BlazeIdeInterfaceState accordingly.
+   * Parses the output intellij-info.txt files, returning an updated {@link ProjectTargetData}.
    *
    * @param mergeWithOldState If true, we overlay the given targets to the current rule map.
    */
-  @Nullable
-  TargetMap updateTargetMap(
+  ProjectTargetData updateTargetData(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       SyncProjectState projectState,
       BlazeBuildOutputs buildResult,
-      SyncState.Builder syncStateBuilder,
       boolean mergeWithOldState,
       @Nullable BlazeProjectData oldProjectData);
 
