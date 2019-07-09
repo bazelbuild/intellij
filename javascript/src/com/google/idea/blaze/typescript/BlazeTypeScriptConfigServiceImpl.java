@@ -30,7 +30,10 @@ import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
+import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.transactions.Transactions;
 import com.google.idea.sdkcompat.typescript.TypeScriptConfigServiceCompat;
+import com.intellij.lang.typescript.compiler.TypeScriptCompilerService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigsChangedListener;
@@ -39,6 +42,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -46,10 +52,14 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat {
+  private static final BoolExperiment restartTypeScriptService =
+      new BoolExperiment("restart.typescript.service", true);
+
   private final Project project;
   private final List<TypeScriptConfigsChangedListener> listeners;
 
   private ImmutableMap<VirtualFile, TypeScriptConfig> configs;
+  private int configsHash;
 
   BlazeTypeScriptConfigServiceImpl(Project project) {
     this.project = project;
@@ -59,9 +69,11 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
 
   void clear() {
     configs = ImmutableMap.of();
+    configsHash = Objects.hash();
   }
 
-  void update() {
+  /** @return whether there was a change to the typescript configs. */
+  boolean update() {
     configs =
         parseConfigs(project).stream()
             .collect(
@@ -69,6 +81,20 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
     for (TypeScriptConfigsChangedListener listener : listeners) {
       TypeScriptConfigServiceCompat.fireListener(listener, configs);
     }
+    int pathHash = Arrays.hashCode(configs.keySet().stream().map(VirtualFile::getPath).toArray());
+    long contentTimestamp =
+        configs.values().stream()
+            .map(TypeScriptConfig::getDependencies)
+            .flatMap(Collection::stream)
+            .map(VirtualFile::getModificationStamp)
+            .max(Comparator.naturalOrder())
+            .orElse(0L);
+    int newConfigsHash = Objects.hash(pathHash, contentTimestamp);
+    if (configsHash != newConfigsHash) {
+      configsHash = newConfigsHash;
+      return true;
+    }
+    return false;
   }
 
   private ImmutableList<TypeScriptConfig> parseConfigs(Project project) {
@@ -174,8 +200,12 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
           .getWorkspaceLanguageSettings()
           .isLanguageActive(LanguageClass.TYPESCRIPT)) {
         ((DelegatingTypeScriptConfigService) service).clear();
-      } else {
-        ((DelegatingTypeScriptConfigService) service).update();
+      } else if (syncMode != SyncMode.NO_BUILD) {
+        if (((DelegatingTypeScriptConfigService) service).update()
+            && restartTypeScriptService.getValue()) {
+          Transactions.submitTransactionAndWait(
+              () -> TypeScriptCompilerService.restartServices(project, false));
+        }
       }
     }
   }

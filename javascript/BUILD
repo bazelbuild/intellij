@@ -21,6 +21,7 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//common/transactions",
         "//sdkcompat",
         "//third_party/javascript",
         "//intellij_platform_sdk:plugin_api",
