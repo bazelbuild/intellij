@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package baz;
+
+message Msg {
+  string str = 1;
+}
