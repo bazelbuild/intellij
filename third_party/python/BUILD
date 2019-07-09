@@ -10,7 +10,6 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-2019.1": ["@python_2019_1//:python"],
         "intellij-ue-2019.1": ["@python_2019_1//:python"],
-        "clion-2018.3": ["@clion_2018_3//:python"],
         "clion-2019.1": ["@clion_2019_1//:python"],
         "clion-2019.2": ["@clion_2019_2//:python"],
         "android-studio-3.4": ["@python_2018_3//:python"],

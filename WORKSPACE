@@ -23,15 +23,6 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.1.2/ideaIU-2019.1.2.zip",
 )
 
-# The plugin api for CLion 2018.3. This is required to build CLwB,
-# and run integration tests.
-http_archive(
-    name = "clion_2018_3",
-    build_file = "@//intellij_platform_sdk:BUILD.clion",
-    sha256 = "963fb343272e5903ac7dc944cc64ea9541ab4c150cc4ea796dcb0fb613bff4fd",
-    url = "https://download.jetbrains.com/cpp/CLion-2018.3.4.tar.gz",
-)
-
 # The plugin api for CLion 2019.1. This is required to build CLwB,
 # and run integration tests.
 http_archive(
