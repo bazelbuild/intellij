@@ -38,10 +38,15 @@ public class BazelBinarySection {
     @Override
     @Nullable
     protected File parseItem(ProjectViewParser parser, ParseContext parseContext, String text) {
-      File file = new File(text);
-      if (text.isEmpty() || !file.isAbsolute()) {
-        parseContext.addError(errorMessage(text, "Specify an absolute file path"));
+      if (text.isEmpty()) {
+        parseContext.addError(errorMessage(text, "Specify a file path"));
         return null;
+      }
+      File file = new File(text);
+      if (!file.isAbsolute()) {
+        // If it's relative, the path will be rooted in the IntelliJ application directory and
+        // not the workspace root. So, relativize the path to workspace root here.
+        file = parseContext.getWorkspacePathResolver().resolveToFile(text);
       }
       if (!FileOperationProvider.getInstance().isFile(file)) {
         parseContext.addError(errorMessage(text, "Specified file doesn't exist"));
