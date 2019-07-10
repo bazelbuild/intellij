@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -24,6 +25,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import java.util.Collection;
+import java.util.function.Predicate;
 
 /** Manages syncing and its listeners. */
 public class BlazeSyncManager {
@@ -106,6 +108,12 @@ public class BlazeSyncManager {
             .addTargetExpressions(targetExpressions)
             .build();
     requestProjectSync(syncParams);
+  }
+
+  public void filterProjectTargets(Predicate<TargetKey> filter) {
+    StartupManager.getInstance(project)
+        .runWhenProjectIsInitialized(
+            () -> SyncPhaseCoordinator.getInstance(project).filterProjectTargets(filter));
   }
 
   /**

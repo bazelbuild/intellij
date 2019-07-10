@@ -28,8 +28,9 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Used by {@link SourceToTargetProvider} to map source files to blaze targets. Each instance
- * optionally filters and reorders the list of targets returned by {@link SourceToTargetProvider}.
+ * Used by {@link SourceToTargetProvider} to map source files to blaze targets which should be
+ * synced to resolve those source files. Each instance optionally filters and reorders the list of
+ * targets returned by {@link SourceToTargetProvider}.
  */
 public interface SourceToTargetFilteringStrategy {
 

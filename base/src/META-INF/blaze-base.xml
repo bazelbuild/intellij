@@ -83,6 +83,11 @@
         text="Sync Directories"
         icon="AllIcons.Nodes.Folder">
     </action>
+    <action id="Blaze.CleanProjectTargets"
+        class="com.google.idea.blaze.google3.sync.CleanProjectTargetsSyncAction"
+        text="Clean Project Targets"
+        icon="AllIcons.Actions.Refresh">
+    </action>
     <action id="Blaze.ExportRunConfigurations"
       class="com.google.idea.blaze.base.run.exporter.ExportRunConfigurationAction"
       text="Export Run Configurations"
