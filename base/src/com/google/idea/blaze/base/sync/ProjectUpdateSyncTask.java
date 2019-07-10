@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync;
 
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -38,11 +37,9 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
-import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin.ModuleEditor;
@@ -94,72 +91,76 @@ final class ProjectUpdateSyncTask {
   private static final BoolExperiment saveStateDuringRootsChange =
       new BoolExperiment("blaze.save.state.during.roots.change", true);
 
-  /** Runs the project update phase of sync, returning timing information for logging purposes. */
-  static List<TimedEvent> runProjectUpdatePhase(
+  /** Updates the project target map and related data, given the blaze build output. */
+  @Nullable
+  static ProjectTargetData updateTargetData(
       Project project,
-      BlazeSyncParams params,
+      BlazeSyncParams syncParams,
       SyncProjectState projectState,
-      BlazeSyncBuildResult buildPhaseResult,
-      BlazeContext context) {
-    if (!buildPhaseResult.isValid()) {
-      return ImmutableList.of();
-    }
+      BlazeBuildOutputs buildResult,
+      BlazeContext parentContext) {
+    boolean mergeWithOldState = !syncParams.addProjectViewTargets;
+    return Scope.push(
+        parentContext,
+        context -> {
+          context.push(new TimingScope("ReadBuildOutputs", EventType.BlazeInvocation));
+          context.output(new StatusOutput("Parsing build outputs..."));
+          BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
+          return blazeIdeInterface.updateTargetData(
+              project,
+              context,
+              WorkspaceRoot.fromProject(project),
+              projectState,
+              buildResult,
+              mergeWithOldState,
+              getOldProjectData(project, syncParams.syncMode));
+        });
+  }
+
+  /** Runs the project update phase of sync. */
+  static void runProjectUpdatePhase(
+      Project project,
+      SyncMode syncMode,
+      SyncProjectState projectState,
+      ProjectTargetData targetData,
+      BlazeContext context)
+      throws SyncCanceledException, SyncFailedException {
     SaveUtil.saveAllFiles();
     ProjectUpdateSyncTask task =
-        new ProjectUpdateSyncTask(project, params, projectState, buildPhaseResult.getBuildResult());
-    return task.runWithTiming(context);
+        new ProjectUpdateSyncTask(project, syncMode, projectState, targetData);
+    task.run(context);
   }
 
   private final Project project;
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
-  private final BlazeSyncParams syncParams;
+  private final SyncMode syncMode;
   private final SyncProjectState projectState;
-  private final BlazeBuildOutputs buildResult;
+  private final ProjectTargetData targetData;
   @Nullable private final BlazeProjectData oldProjectData;
 
   private ProjectUpdateSyncTask(
       Project project,
-      BlazeSyncParams params,
+      SyncMode syncMode,
       SyncProjectState projectState,
-      BlazeBuildOutputs buildResult) {
+      ProjectTargetData targetData) {
     this.project = project;
     this.importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
+    this.syncMode = syncMode;
     this.projectState = projectState;
-    this.syncParams = params;
-    this.buildResult = buildResult;
-    this.oldProjectData =
-        syncParams.syncMode == SyncMode.FULL
-            ? null
-            : BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    this.targetData = targetData;
+    this.oldProjectData = getOldProjectData(project, syncMode);
   }
 
-  private List<TimedEvent> runWithTiming(BlazeContext context) {
-    // run under a child context to capture all timing information before finalizing the stats
-    List<TimedEvent> timedEvents = new ArrayList<>();
-    SyncScope.push(
-        context,
-        childContext -> {
-          TimingScope timingScope = new TimingScope("Project update phase", EventType.Other);
-          timingScope.addScopeListener((events, totalTime) -> timedEvents.addAll(events));
-          childContext.push(timingScope);
-          run(childContext);
-        });
-    return timedEvents;
+  private static BlazeProjectData getOldProjectData(Project project, SyncMode syncMode) {
+    return syncMode == SyncMode.FULL
+        ? null
+        : BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
   }
 
   private void run(BlazeContext context) throws SyncCanceledException, SyncFailedException {
-    SyncState.Builder syncStateBuilder = new SyncState.Builder();
-
-    ProjectTargetData targetData = updateTargetData(context, oldProjectData);
-    if (targetData == null) {
-      context.setHasError();
-      throw new SyncFailedException();
-    }
     TargetMap targetMap = targetData.targetMap;
-    context.output(PrintOutput.log("Target map size: " + targetMap.targets().size()));
-
     RemoteOutputArtifacts oldRemoteState = RemoteOutputArtifacts.fromProjectData(oldProjectData);
     RemoteOutputArtifacts newRemoteState = targetData.remoteOutputs;
 
@@ -178,9 +179,10 @@ final class ProjectUpdateSyncTask {
                   projectState.getLanguageSettings(),
                   newRemoteState,
                   oldRemoteState,
-                  /* clearCache= */ syncParams.syncMode == SyncMode.FULL);
+                  /* clearCache= */ syncMode == SyncMode.FULL);
         });
 
+    SyncState.Builder syncStateBuilder = new SyncState.Builder();
     Scope.push(
         context,
         childContext -> {
@@ -198,7 +200,7 @@ final class ProjectUpdateSyncTask {
                 targetMap,
                 syncStateBuilder,
                 oldProjectData != null ? oldProjectData.getSyncState() : null,
-                syncParams.syncMode);
+                syncMode);
           }
         });
     if (context.isCancelled()) {
@@ -224,7 +226,7 @@ final class ProjectUpdateSyncTask {
         projectState.getProjectViewSet(),
         newProjectData,
         oldProjectData,
-        syncParams.syncMode);
+        syncMode);
     ListenableFuture<?> prefetch =
         PrefetchService.getInstance()
             .prefetchProjectFiles(project, projectState.getProjectViewSet(), newProjectData);
@@ -306,27 +308,6 @@ final class ProjectUpdateSyncTask {
             IssueOutput.warn("Failed to refresh file system").submit(childContext);
             logger.warn("Failed to refresh file system", e);
           }
-        });
-  }
-
-  @Nullable
-  private ProjectTargetData updateTargetData(
-      BlazeContext parentContext, @Nullable BlazeProjectData oldProjectData) {
-    boolean mergeWithOldState = !syncParams.addProjectViewTargets;
-    return Scope.push(
-        parentContext,
-        context -> {
-          context.push(new TimingScope("ReadBuildOutputs", EventType.BlazeInvocation));
-          context.output(new StatusOutput("Parsing build outputs..."));
-          BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
-          return blazeIdeInterface.updateTargetData(
-              project,
-              context,
-              workspaceRoot,
-              projectState,
-              buildResult,
-              mergeWithOldState,
-              oldProjectData);
         });
   }
 

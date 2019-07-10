@@ -15,12 +15,17 @@
  */
 package com.google.idea.blaze.base.model;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.devtools.intellij.model.ProjectData.TargetData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceState;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import java.util.Objects;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /** Project data relating to targets and their generated outputs. */
@@ -57,6 +62,19 @@ public final class ProjectTargetData implements ProtoWrapper<ProjectData.TargetD
             .setRemoteOutputs(remoteOutputs.toProto());
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setIdeInterfaceState, ideInterfaceState);
     return builder.build();
+  }
+
+  /**
+   * Filters this {@link ProjectTargetData}, keeping only the targets matching the given predicate.
+   */
+  public ProjectTargetData filter(
+      Predicate<TargetKey> targetsToKeep, WorkspaceLanguageSettings settings) {
+    TargetMap newTargets =
+        new TargetMap(ImmutableMap.copyOf(Maps.filterKeys(targetMap.map(), targetsToKeep::test)));
+    BlazeIdeInterfaceState newState =
+        ideInterfaceState != null ? ideInterfaceState.filter(targetsToKeep) : null;
+    RemoteOutputArtifacts newOutputs = remoteOutputs.removeUntrackedOutputs(newTargets, settings);
+    return new ProjectTargetData(newTargets, newState, newOutputs);
   }
 
   @Override

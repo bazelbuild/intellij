@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -51,6 +52,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -330,16 +332,26 @@ final class SyncPhaseCoordinator {
     SyncResult syncResult = updateTask.syncResult;
     try {
       fillInBuildStats(stats, updateTask.projectState, updateTask.buildResult);
-      if (!syncResult.successful()) {
+      if (!syncResult.successful() || !updateTask.buildResult.isValid()) {
         return;
       }
       List<TimedEvent> timedEvents =
-          ProjectUpdateSyncTask.runProjectUpdatePhase(
-              project,
-              updateTask.syncParams,
-              updateTask.projectState,
-              updateTask.buildResult,
-              context);
+          SyncScope.runWithTiming(
+              context,
+              childContext -> {
+                ProjectTargetData targetData = updateTargetData(updateTask, childContext);
+                if (targetData == null) {
+                  childContext.setHasError();
+                  throw new SyncFailedException();
+                }
+                ProjectUpdateSyncTask.runProjectUpdatePhase(
+                    project,
+                    updateTask.syncParams.syncMode,
+                    updateTask.projectState,
+                    targetData,
+                    childContext);
+              },
+              new TimingScope("Project update phase", EventType.Other));
       stats.addTimedEvents(timedEvents);
       if (!context.shouldContinue()) {
         syncResult = context.isCancelled() ? SyncResult.CANCELLED : SyncResult.FAILURE;
@@ -356,6 +368,12 @@ final class SyncPhaseCoordinator {
           syncResult,
           stats);
     }
+  }
+
+  @Nullable
+  private ProjectTargetData updateTargetData(UpdatePhaseTask task, BlazeContext context) {
+    return ProjectUpdateSyncTask.updateTargetData(
+        project, task.syncParams, task.projectState, task.buildResult.getBuildResult(), context);
   }
 
   /**

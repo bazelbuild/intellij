@@ -17,8 +17,11 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /** Helper methods to run scoped sync operations throwing checked exceptions. */
@@ -38,17 +41,23 @@ final class SyncScope {
     T execute(BlazeContext context) throws SyncFailedException, SyncCanceledException;
   }
 
-  /** Runs a scoped operation with the given {@link TimingScope} attached. */
-  static void runWithTiming(
+  /**
+   * Runs a scoped operation with the given {@link TimingScope} attached, returning the
+   * corresponding list of timed events.
+   */
+  static List<TimedEvent> runWithTiming(
       @Nullable BlazeContext parentContext,
       ScopedSyncOperation operation,
       TimingScope timingScope) {
+    List<TimedEvent> timedEvents = new ArrayList<>();
     ScopedSyncOperation withTiming =
         context -> {
+          timingScope.addScopeListener((events, totalTime) -> timedEvents.addAll(events));
           context.push(timingScope);
           operation.execute(context);
         };
     push(parentContext, withTiming);
+    return timedEvents;
   }
 
   /**
