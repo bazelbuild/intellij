@@ -44,7 +44,8 @@ public class BazelBinarySection {
       }
       File file = new File(text);
       if (!file.isAbsolute()) {
-        // Resolve relative path to workspace root.
+        // If it's relative, the path will be rooted in the IntelliJ application directory and
+        // not the workspace root. So, relativize the path to workspace root here.
         file = parseContext.getWorkspacePathResolver().resolveToFile(text);
       }
       if (!FileOperationProvider.getInstance().isFile(file)) {
