@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
@@ -77,6 +78,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
@@ -195,6 +197,29 @@ final class SyncPhaseCoordinator {
                         }));
   }
 
+  /**
+   * Filters the project targets as part of a coherent sync process, updating derived project data
+   * and sending notifications accordingly.
+   */
+  void filterProjectTargets(Predicate<TargetKey> filter) {
+    @SuppressWarnings("unused") // go/futurereturn-lsc
+    Future<?> possiblyIgnoredError =
+        ProgressiveTaskWithProgressIndicator.builder(project, "Filtering Project Targets")
+            .setExecutor(singleThreadedExecutor)
+            .submitTask(
+                indicator ->
+                    Scope.root(
+                        context -> {
+                          BlazeSyncParams syncParams =
+                              new BlazeSyncParams.Builder("Filtering targets", SyncMode.PARTIAL)
+                                  .setBackgroundSync(true)
+                                  .build();
+                          BlazeSyncParams params = finalizeSyncParams(syncParams, context);
+                          setupScopes(params, context, indicator, SyncPhase.ALL_PHASES);
+                          doFilterProjectTargets(params, filter, context);
+                        }));
+  }
+
   private BlazeSyncParams finalizeSyncParams(BlazeSyncParams params, BlazeContext context) {
     BlazeProjectData oldProjectData = getOldProjectData(context, params.syncMode);
     if (oldProjectData == null && params.syncMode != SyncMode.NO_BUILD) {
@@ -222,6 +247,60 @@ final class SyncPhaseCoordinator {
               "Couldn't load previously cached project data; full sync will be needed"));
     }
     return blazeProjectData;
+  }
+
+  private void doFilterProjectTargets(
+      BlazeSyncParams params, Predicate<TargetKey> filter, BlazeContext context) {
+    Instant startTime = Instant.now();
+    SyncResult syncResult = SyncResult.FAILURE;
+    SyncStats.Builder stats = SyncStats.builder();
+    try {
+      SaveUtil.saveAllFiles();
+      onSyncStart(project, context, params.syncMode);
+      BlazeProjectData oldProjectData = getOldProjectData(context, params.syncMode);
+      if (oldProjectData == null) {
+        String message = "Can't filter project targets: project has never been synced.";
+        context.output(PrintOutput.error(message));
+        IssueOutput.warn(message).submit(context);
+        return;
+      }
+
+      List<TimedEvent> timedEvents =
+          SyncScope.runWithTiming(
+              context,
+              childContext -> {
+                SyncProjectState projectState =
+                    ProjectStateSyncTask.collectProjectState(project, context);
+                if (projectState == null) {
+                  return;
+                }
+                ProjectTargetData targetData =
+                    oldProjectData
+                        .getTargetData()
+                        .filter(filter, projectState.getLanguageSettings());
+
+                fillInBuildStats(stats, projectState, /* buildResult= */ null);
+                ProjectUpdateSyncTask.runProjectUpdatePhase(
+                    project, params.syncMode, projectState, targetData, childContext);
+              },
+              new TimingScope("Filtering project targets", EventType.Other));
+      stats.addTimedEvents(timedEvents);
+      syncResult =
+          context.shouldContinue()
+              ? SyncResult.SUCCESS
+              : context.isCancelled() ? SyncResult.CANCELLED : SyncResult.FAILURE;
+
+    } catch (Throwable e) {
+      logSyncError(context, e);
+    } finally {
+      finishSync(
+          params,
+          startTime,
+          context,
+          ProjectViewManager.getInstance(project).getProjectViewSet(),
+          syncResult,
+          stats);
+    }
   }
 
   /**
@@ -466,19 +545,21 @@ final class SyncPhaseCoordinator {
   private static void fillInBuildStats(
       SyncStats.Builder stats,
       @Nullable SyncProjectState projectState,
-      BlazeSyncBuildResult buildResult) {
+      @Nullable BlazeSyncBuildResult buildResult) {
     if (projectState != null) {
       stats
           .setWorkspaceType(projectState.getLanguageSettings().getWorkspaceType())
           .setLanguagesActive(projectState.getLanguageSettings().getActiveLanguages());
     }
-    buildResult
-        .getBuildPhaseStats()
-        .forEach(
-            s -> {
-              stats.addBuildPhaseStats(s);
-              stats.addTimedEvents(s.timedEvents());
-            });
+    if (buildResult != null) {
+      buildResult
+          .getBuildPhaseStats()
+          .forEach(
+              s -> {
+                stats.addBuildPhaseStats(s);
+                stats.addTimedEvents(s.timedEvents());
+              });
+    }
   }
 
   private static List<TimedEvent> updateInMemoryState(
