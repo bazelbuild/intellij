@@ -175,9 +175,21 @@ java_binary(
     runtime_deps = [":jdk_tools_jar"],
 )
 
+# Getting tools.jar from @local_jdk//:langtools is deprecated. Instead,
+# copy tools.jar from @bazel_Tools//tools_jdk:current_java_runtime.
+# https://github.com/bazelbuild/bazel/issues/5594
+# https://stackoverflow.com/questions/53066974/how-can-i-use-the-jar-tool-with-bazel-v0-19
+genrule(
+    name = "jdk_tools_jar_cp",
+    cmd = "cp $(JAVABASE)/lib/tools.jar $@",
+    tools = ["@bazel_tools//tools/jdk:current_java_runtime"],
+    toolchains = ["@bazel_tools//tools/jdk:current_java_runtime"],
+    outs = ["tools.jar"]
+)
+
 java_import(
     name = "jdk_tools_jar",
-    jars = ["@local_jdk//:langtools"],
+    jars = [":tools.jar"]
 )
 
 java_binary(
