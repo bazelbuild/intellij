@@ -28,7 +28,7 @@ def main():
   args = parser.parse_args()
   with zipfile.ZipFile(args.output, "w") as outfile:
     for exec_path, zip_path in pairwise(args.files_to_zip):
-      with open(exec_path) as input_file:
+      with open(exec_path, mode = "r", encoding = "ISO-8859-1") as input_file:
         zipinfo = zipfile.ZipInfo(zip_path, (2000, 1, 1, 0, 0, 0))
         filemode = stat.S_IMODE(os.fstat(input_file.fileno()).st_mode)
         zipinfo.external_attr = filemode << 16
