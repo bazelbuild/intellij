@@ -23,15 +23,16 @@ public class BlazeIcons {
 
   private static final String BASE = "/";
 
-  public static final Icon Blaze = load("base/resources/icons/blaze.png"); // 16x16
+  public static final Icon Blaze = loadForBuildSystem("base/resources/icons", "logo.png"); // 16x16
   public static final Icon BlazeSlow = load("base/resources/icons/blaze_slow.png"); // 16x16
-  public static final Icon BlazeFailed = load("base/resources/icons/blaze_failed.png"); // 16x16
+  public static final Icon BlazeFailed =
+      loadForBuildSystem("base/resources/icons", "failed.png"); // 16x16
 
   public static final Icon BlazeRerun = load("base/resources/icons/blazeRerun.png"); // 16x16
 
   // This is just the Blaze icon scaled down to the size IJ wants for tool windows.
   public static final Icon BlazeToolWindow =
-      load("base/resources/icons/blazeToolWindow.png"); // 13x13
+      loadForBuildSystem("base/resources/icons", "tool_window.png"); // 13x13
 
   public static final Icon BazelLeaf = load("base/resources/icons/bazel_leaf.png"); // 16x16
 
@@ -44,5 +45,16 @@ public class BlazeIcons {
 
   private static Icon load(String path) {
     return IconLoader.getIcon(BASE + path, BlazeIcons.class);
+  }
+
+  private static Icon loadForBuildSystem(String path, String basename) {
+    return IconLoader.getIcon(
+        BASE
+            + path
+            + "/"
+            + com.google.idea.blaze.base.settings.Blaze.guessBuildSystemName().toLowerCase()
+            + "/"
+            + basename,
+        BlazeIcons.class);
   }
 }
