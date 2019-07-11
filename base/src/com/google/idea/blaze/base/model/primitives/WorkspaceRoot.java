@@ -74,36 +74,12 @@ public class WorkspaceRoot implements ProtoWrapper<String> {
     return directory;
   }
 
-  public WorkspacePath workspacePathFor(VirtualFile file) {
-    return workspacePathFor(file.getPath());
-  }
-
-  public boolean isInWorkspace(VirtualFile file) {
-    return isInWorkspace(file.getPath());
-  }
-
-  /**
-   * Returns the WorkspacePath for the given absolute file, if it's a child of this WorkspaceRoot
-   * and a valid WorkspacePath. Otherwise returns null.
-   */
-  @Nullable
-  public WorkspacePath workspacePathForSafe(File absoluteFile) {
-    if (!isInWorkspace(absoluteFile)) {
-      return null;
-    }
-    String path = absoluteFile.getPath();
-    if (directory.getPath().length() == path.length()) {
-      return new WorkspacePath("");
-    }
-    return WorkspacePath.createIfValid(path.substring(directory.getPath().length() + 1));
-  }
-
   public WorkspacePath workspacePathFor(File file) {
     return workspacePathFor(file.getPath());
   }
 
-  public boolean isInWorkspace(File file) {
-    return isInWorkspace(file.getPath());
+  public WorkspacePath workspacePathFor(VirtualFile file) {
+    return workspacePathFor(file.getPath());
   }
 
   private WorkspacePath workspacePathFor(String path) {
@@ -115,6 +91,43 @@ public class WorkspaceRoot implements ProtoWrapper<String> {
       return new WorkspacePath("");
     }
     return new WorkspacePath(path.substring(directory.getPath().length() + 1));
+  }
+
+  /**
+   * Returns the WorkspacePath for the given absolute file, if it's a child of this WorkspaceRoot
+   * and a valid WorkspacePath. Otherwise returns null.
+   */
+  @Nullable
+  public WorkspacePath workspacePathForSafe(File absoluteFile) {
+    return workspacePathForSafe(absoluteFile.getPath());
+  }
+
+  /**
+   * Returns the WorkspacePath for the given virtual file, if it's a child of this WorkspaceRoot and
+   * a valid WorkspacePath. Otherwise returns null.
+   */
+  @Nullable
+  public WorkspacePath workspacePathForSafe(VirtualFile file) {
+    return workspacePathForSafe(file.getPath());
+  }
+
+  @Nullable
+  private WorkspacePath workspacePathForSafe(String path) {
+    if (!isInWorkspace(path)) {
+      return null;
+    }
+    if (directory.getPath().length() == path.length()) {
+      return new WorkspacePath("");
+    }
+    return WorkspacePath.createIfValid(path.substring(directory.getPath().length() + 1));
+  }
+
+  public boolean isInWorkspace(File file) {
+    return isInWorkspace(file.getPath());
+  }
+
+  public boolean isInWorkspace(VirtualFile file) {
+    return isInWorkspace(file.getPath());
   }
 
   private boolean isInWorkspace(String path) {
