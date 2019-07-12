@@ -315,7 +315,7 @@ public class BlazeUserSettingsConfigurable implements UnnamedConfigurable {
 
     // blaze console settings
     JLabel label = new JBLabel(SHOW_CONSOLE_OPTION.label());
-    label.setFont(JBFont.create(label.getFont()).asBold());
+    label.setFont(JBFont.create(label.getFont(), /* tryToScale= */ false).asBold());
     panel.add(label, defaultNoGrowConstraints(0, 0, 1, 3));
     panel.add(new JBLabel(SHOW_ON_SYNC_OPTION.label()), defaultNoGrowConstraints(1, 0, 1, 1));
     panel.add(new JBLabel(SHOW_ON_RUN_OPTION.label()), defaultNoGrowConstraints(2, 0, 1, 1));
@@ -340,7 +340,7 @@ public class BlazeUserSettingsConfigurable implements UnnamedConfigurable {
 
     // problems view settings
     label = new JBLabel(SHOW_PROBLEMS_VIEW_OPTION.label());
-    label.setFont(JBFont.create(label.getFont()).asBold());
+    label.setFont(JBFont.create(label.getFont(), /* tryToScale= */ false).asBold());
     panel.add(label, defaultNoGrowConstraints(0, 3, 1, 3));
     panel.add(new JBLabel(SHOW_ON_SYNC_OPTION.label()), defaultNoGrowConstraints(1, 3, 1, 1));
     panel.add(new JBLabel(SHOW_ON_RUN_OPTION.label()), defaultNoGrowConstraints(2, 3, 1, 1));
