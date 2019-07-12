@@ -19,14 +19,12 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Strings;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
-import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
-import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.google.idea.blaze.base.sync.projectview.RelatedWorkspacePathFinder;
@@ -162,19 +160,14 @@ public class GenerateFromBuildFileSelectProjectViewOption implements BlazeSelect
 
     ListSection.Builder<DirectoryEntry> directorySectionBuilder =
         ListSection.builder(DirectorySection.KEY);
-    ListSection.Builder<TargetExpression> targetSectionBuilder =
-        ListSection.builder(TargetSection.KEY);
     workspacePaths.forEach(
         path -> {
           directorySectionBuilder.add(DirectoryEntry.include(path));
-          targetSectionBuilder.add(TargetExpression.allFromPackageRecursive(path));
         });
 
     return ProjectViewParser.projectViewToString(
         ProjectView.builder()
             .add(directorySectionBuilder)
-            .add(TextBlockSection.of(TextBlock.newLine()))
-            .add(targetSectionBuilder)
             .add(TextBlockSection.of(TextBlock.newLine()))
             .build());
   }
