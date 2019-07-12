@@ -70,7 +70,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean resyncOnProtoChanges = false;
   private boolean syncStatusPopupShown = false;
   private boolean expandSyncToWorkingSet = true;
-  private boolean deriveSyncTargetsFromDirectories = false;
   private boolean showPerformanceWarnings = false;
   private boolean collapseProjectView = true;
   private boolean formatBuildFilesOnSave = true;
@@ -178,14 +177,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     this.expandSyncToWorkingSet = expandSyncToWorkingSet;
   }
 
-  public boolean getDeriveSyncTargetsFromDirectories() {
-    return deriveSyncTargetsFromDirectories;
-  }
-
-  public void setDeriveSyncTargetsFromDirectories(boolean deriveSyncTargetsFromDirectories) {
-    this.deriveSyncTargetsFromDirectories = deriveSyncTargetsFromDirectories;
-  }
-
   public boolean getShowPerformanceWarnings() {
     return showPerformanceWarnings;
   }
@@ -263,9 +254,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
       builder.put("resyncAutomatically", Boolean.toString(settings.resyncAutomatically));
       builder.put("resyncOnProtoChanges", Boolean.toString(settings.resyncOnProtoChanges));
       builder.put("expandSyncToWorkingSet", Boolean.toString(settings.expandSyncToWorkingSet));
-      builder.put(
-          "deriveSyncTargetsFromDirectories",
-          Boolean.toString(settings.deriveSyncTargetsFromDirectories));
       builder.put("formatBuildFilesOnSave", Boolean.toString(settings.formatBuildFilesOnSave));
       builder.put(
           "showAddFileToProjectNotification",

@@ -34,6 +34,8 @@ public abstract class BuildPhaseSyncStats {
 
   public abstract boolean syncSharded();
 
+  public abstract boolean targetsDerivedFromDirectories();
+
   public abstract BuildResult buildResult();
 
   public abstract ImmutableList<TimedEvent> timedEvents();
@@ -45,6 +47,7 @@ public abstract class BuildPhaseSyncStats {
         .setTargets(ImmutableList.of())
         .setSyncFlags(new ArrayList<>())
         .setSyncSharded(false)
+        .setTargetsDerivedFromDirectories(false)
         .setBuildResult(BuildResult.FATAL_ERROR)
         .setTimedEvents(ImmutableList.of())
         .setTotalTime(Duration.ZERO);
@@ -57,6 +60,8 @@ public abstract class BuildPhaseSyncStats {
     public abstract Builder setSyncFlags(List<String> syncFlags);
 
     public abstract Builder setSyncSharded(boolean syncSharded);
+
+    public abstract Builder setTargetsDerivedFromDirectories(boolean targetsDerivedFromDirectories);
 
     public abstract Builder setBuildResult(BuildResult buildResult);
 

@@ -48,10 +48,6 @@
       class="com.google.idea.blaze.base.sync.actions.ExpandSyncToWorkingSetAction"
       text="Expand Sync to Working Set">
     </action>
-    <action id="Blaze.DeriveTargetsFromDirectories"
-        class="com.google.idea.blaze.base.sync.actions.DeriveSyncTargetsFromDirectoriesAction"
-        text="Derive Sync Targets From Project Directories">
-    </action>
     <action id="Blaze.ShowPerformanceWarnings"
       class="com.google.idea.blaze.base.sync.actions.ShowPerformanceWarningsToggleAction"
       text="Show Performance Warnings">
@@ -118,7 +114,6 @@
         <reference id="Blaze.PartialSync"/>
         <reference id="Blaze.UpdateDirectories"/>
         <reference id="Blaze.ExpandSyncToWorkingSet"/>
-        <reference id="Blaze.DeriveTargetsFromDirectories"/>
         <reference id="Blaze.ShowPerformanceWarnings"/>
       </group>
       <group id="Blaze.BuildMenuGroup" text="_Build" popup="true">
