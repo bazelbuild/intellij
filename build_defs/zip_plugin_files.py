@@ -6,6 +6,10 @@ import os
 import stat
 import zipfile
 
+# Keep this script executable from python2 in the host configuration.
+# Python2's open() does not have the "encoding" parameter.
+from io import open  # pylint: disable=redefined-builtin,g-bad-import-order,g-importing-member
+
 try:
   from itertools import izip  # pylint: disable=g-importing-member,g-import-not-at-top
 except ImportError:
@@ -28,7 +32,7 @@ def main():
   args = parser.parse_args()
   with zipfile.ZipFile(args.output, "w") as outfile:
     for exec_path, zip_path in pairwise(args.files_to_zip):
-      with open(exec_path) as input_file:
+      with open(exec_path, mode="rb") as input_file:
         zipinfo = zipfile.ZipInfo(zip_path, (2000, 1, 1, 0, 0, 0))
         filemode = stat.S_IMODE(os.fstat(input_file.fileno()).st_mode)
         zipinfo.external_attr = filemode << 16
