@@ -55,7 +55,7 @@ def _intellij_plugin_debug_target_aspect_impl(target, ctx):
     elif ctx.rule.kind == "_repackaged_files":
         data = target[repackaged_files_data]
         aspect_intellij_plugin_deploy_info = struct(
-            deploy_files = [_repackaged_deploy_file(f, data) for f in data.files],
+            deploy_files = [_repackaged_deploy_file(f, data) for f in data.files.to_list()],
             java_agent_deploy_files = [],
         )
 
@@ -64,7 +64,7 @@ def _intellij_plugin_debug_target_aspect_impl(target, ctx):
         files = depset(transitive = [files, data.files])
     else:
         aspect_intellij_plugin_deploy_info = struct(
-            deploy_files = [_flat_deploy_file(f) for f in target.files],
+            deploy_files = [_flat_deploy_file(f) for f in target.files.to_list()],
             java_agent_deploy_files = [],
         )
     return struct(
