@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.async.process;
 
+
 import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import java.io.File;
@@ -188,7 +189,7 @@ public interface ExternalTask {
       try {
         stream.close();
       } catch (IOException e) {
-        Throwables.propagate(e);
+        throw new RuntimeException(e);
       }
     }
 
@@ -199,12 +200,13 @@ public interface ExternalTask {
     }
 
     private int invokeCommand(BlazeContext context) {
-      String executingTasksText =
-          "Command: "
-              + Joiner.on(" ").join(command)
-              + SystemProperties.getLineSeparator();
+      String logMessage =
+          "Command: " + Joiner.on(" ").join(command) + SystemProperties.getLineSeparator();
 
-      context.output(PrintOutput.log(executingTasksText));
+      context.output(
+          PrintOutput.log(
+              StringUtil.shortenTextWithEllipsis(
+                  logMessage, /* maxLength= */ 1000, /* suffixLength= */ 0)));
 
       try {
         if (context.isEnding()) {
