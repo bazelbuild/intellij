@@ -48,6 +48,10 @@
       class="com.google.idea.blaze.base.sync.actions.ExpandSyncToWorkingSetAction"
       text="Expand Sync to Working Set">
     </action>
+    <action id="Blaze.DeriveTargetsFromDirectories"
+        class="com.google.idea.blaze.base.sync.actions.DeriveSyncTargetsFromDirectoriesAction"
+        text="Derive Sync Targets From Project Directories">
+    </action>
     <action id="Blaze.ShowPerformanceWarnings"
       class="com.google.idea.blaze.base.sync.actions.ShowPerformanceWarningsToggleAction"
       text="Show Performance Warnings">
@@ -114,6 +118,7 @@
         <reference id="Blaze.PartialSync"/>
         <reference id="Blaze.UpdateDirectories"/>
         <reference id="Blaze.ExpandSyncToWorkingSet"/>
+        <reference id="Blaze.DeriveTargetsFromDirectories"/>
         <reference id="Blaze.ShowPerformanceWarnings"/>
       </group>
       <group id="Blaze.BuildMenuGroup" text="_Build" popup="true">
@@ -408,6 +413,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeLibrarySorter" interface="com.google.idea.blaze.base.sync.libraries.BlazeLibrarySorter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildSystemVersionChecker" interface="com.google.idea.blaze.base.plugin.BuildSystemVersionChecker"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeIssueParserProvider" interface="com.google.idea.blaze.base.issueparser.BlazeIssueParserProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.DirectoryToTargetProvider" interface="com.google.idea.blaze.base.dependencies.DirectoryToTargetProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetProvider" interface="com.google.idea.blaze.base.dependencies.SourceToTargetProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetFilteringStrategy" interface="com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TargetFinder" interface="com.google.idea.blaze.base.run.targetfinder.TargetFinder"/>
@@ -463,6 +469,7 @@
     <BlazeConsoleLineProcessorProvider implementation="com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider$GeneralProvider"/>
     <TargetFinder implementation="com.google.idea.blaze.base.run.targetfinder.ProjectTargetFinder"/>
     <SourceToTargetFinder implementation="com.google.idea.blaze.base.run.testmap.ProjectSourceToTargetFinder"/>
+    <DirectoryToTargetProvider implementation="com.google.idea.blaze.base.dependencies.BlazeQueryDirectoryToTargetProvider" order="last"/>
     <SourceToTargetProvider implementation="com.google.idea.blaze.base.dependencies.BlazeQuerySourceToTargetProvider" order="last"/>
     <SourceToTargetFilteringStrategy implementation="com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy$IgnoredRules"/>
     <SourceToTargetFilteringStrategy implementation="com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy$SupportedLanguages"/>
