@@ -42,7 +42,14 @@ import javax.annotation.Nullable;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.util.AndroidUtils;
 
-/** Parses manifests from the project. */
+/**
+ * Parses manifests from the project.
+ *
+ * <p>Note: Manifests generated from android builds are not tracked by the VFS and are therefore not
+ * guaranteed to be up-to-date when accessed. {@link ManifestParser#refreshManifests(Collection)}
+ * must be used to keep the VFS up-to-date as soon as changes to generated manifest files occur.
+ * E.g. at the end of a android_binary build.
+ */
 public class ManifestParser {
   private static final Logger LOG = Logger.getInstance(ManifestParser.class);
   private final Project project;
@@ -52,10 +59,18 @@ public class ManifestParser {
     return ServiceManager.getService(project, ManifestParser.class);
   }
 
-  public ManifestParser(Project project) {
+  private ManifestParser(Project project) {
     this.project = project;
   }
 
+  /**
+   * Returns a possibly out-of-date manifest file.
+   *
+   * <p>The returned manifest is not guaranteed to be up-to-date for un-tracked manifest files. E.g.
+   * A manifest file generated as a part of the build process. {@link
+   * ManifestParser#refreshManifests(Collection)} can be used to refresh the files in attempt to
+   * keep it up-to-date until the last refresh.
+   */
   @Nullable
   public Manifest getManifest(File file) {
     if (!file.exists()) {
@@ -86,6 +101,13 @@ public class ManifestParser {
     return ReadAction.compute(() -> manifest.isValid());
   }
 
+  /**
+   * Refresh the VFS for given {@code manifestFiles} and block until the refresh is complete.
+   *
+   * <p>Note: This VFS refresh operation could block for a very long time depending on the number of
+   * queued VFS refreshes. The manifest is not guaranteed to be up-to-date until this method
+   * returns. {@see ManifestParser}
+   */
   public void refreshManifests(Collection<File> manifestFiles) {
     List<VirtualFile> manifestVirtualFiles =
         manifestFiles.stream()
