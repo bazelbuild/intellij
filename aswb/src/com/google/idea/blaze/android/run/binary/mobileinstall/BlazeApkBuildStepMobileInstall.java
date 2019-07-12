@@ -23,6 +23,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
+import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
@@ -52,6 +53,7 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
@@ -122,8 +124,6 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
                     ? "_incremental.deployinfo.pb"
                     : "_mi.deployinfo.pb";
 
-            BlazeApkDeployInfoProtoHelper deployInfoHelper =
-                new BlazeApkDeployInfoProtoHelper(project, blazeFlags);
             try (BuildResultHelper buildResultHelper =
                 BuildResultHelperProvider.forFiles(
                     project, fileName -> fileName.endsWith(deployInfoSuffix))) {
@@ -154,14 +154,21 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
               }
               try {
                 context.output(new StatusOutput("Reading deployment information..."));
+                BlazeApkDeployInfoProtoHelper deployInfoHelper =
+                    new BlazeApkDeployInfoProtoHelper(project, blazeFlags);
                 deployInfo = deployInfoHelper.readDeployInfo(context, buildResultHelper);
+                if (deployInfo == null) {
+                  IssueOutput.error("Could not read apk deploy info from build").submit(context);
+                }
+
+                context.output(new StatusOutput("Refreshing manifest files..."));
+                List<File> manifestFiles = deployInfo.getManifestFiles();
+                ManifestParser.getInstance(project).refreshManifests(manifestFiles);
+
               } catch (GetArtifactsException e) {
                 IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
                     .submit(context);
                 return null;
-              }
-              if (deployInfo == null) {
-                IssueOutput.error("Could not read apk deploy info from build").submit(context);
               }
               return null;
             }

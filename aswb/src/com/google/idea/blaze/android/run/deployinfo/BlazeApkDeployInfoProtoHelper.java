@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
-import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
@@ -34,7 +33,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -75,9 +73,6 @@ public class BlazeApkDeployInfoProtoHelper {
     }
     BlazeAndroidDeployInfo androidDeployInfo =
         new BlazeAndroidDeployInfo(project, new File(executionRoot), deployInfo);
-
-    List<File> manifestFiles = androidDeployInfo.getManifestFiles();
-    ManifestParser.getInstance(project).refreshManifests(manifestFiles);
 
     return androidDeployInfo;
   }

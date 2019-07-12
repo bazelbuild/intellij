@@ -19,6 +19,7 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -41,12 +42,15 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
+import java.io.File;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 
 /** Builds the APK using normal blaze build. */
@@ -103,8 +107,6 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
                     BlazeCommandName.BUILD);
             WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
-            BlazeApkDeployInfoProtoHelper deployInfoHelper =
-                new BlazeApkDeployInfoProtoHelper(project, buildFlags);
             try (BuildResultHelper buildResultHelper =
                 BuildResultHelperProvider.forFiles(
                     project, fileName -> fileName.endsWith(".deployinfo.pb"))) {
@@ -133,14 +135,21 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
                 return null;
               }
               try {
+                context.output(new StatusOutput("Reading deployment information..."));
+                BlazeApkDeployInfoProtoHelper deployInfoHelper =
+                    new BlazeApkDeployInfoProtoHelper(project, buildFlags);
                 deployInfo = deployInfoHelper.readDeployInfo(context, buildResultHelper);
+                if (deployInfo == null) {
+                  IssueOutput.error("Could not read apk deploy info from build").submit(context);
+                }
+
+                context.output(new StatusOutput("Refreshing manifest files..."));
+                List<File> manifestFiles = deployInfo.getManifestFiles();
+                ManifestParser.getInstance(project).refreshManifests(manifestFiles);
               } catch (GetArtifactsException e) {
                 IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
                     .submit(context);
                 return null;
-              }
-              if (deployInfo == null) {
-                IssueOutput.error("Could not read apk deploy info from build").submit(context);
               }
               return null;
             }
