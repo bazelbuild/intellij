@@ -45,15 +45,16 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
   }
 
   private static String getQueryString(ImportRoots directories) {
-    StringBuilder query = new StringBuilder();
-    query.append(
+    StringBuilder targets = new StringBuilder();
+    targets.append(
         directories.rootDirectories().stream()
             .map(w -> String.format("//%s/...", w))
             .collect(joining(" + ")));
     for (WorkspacePath excluded : directories.excludeDirectories()) {
-      query.append(String.format(" - //%s/...", excluded));
+      targets.append(String.format(" - //%s/...", excluded));
     }
-    return "'" + query + "'";
+    // exclude 'manual' targets, which shouldn't be built when expanding wildcard target patterns
+    return String.format("attr(\"tags\", \"^((?!manual).)*$\", %s)", targets);
   }
 
   /**

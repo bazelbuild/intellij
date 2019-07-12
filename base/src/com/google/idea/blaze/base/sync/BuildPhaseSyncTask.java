@@ -115,6 +115,14 @@ final class BuildPhaseSyncTask {
   private void doRun(BlazeContext context) throws SyncFailedException, SyncCanceledException {
     List<TargetExpression> targets = Lists.newArrayList();
     ProjectViewSet viewSet = projectState.getProjectViewSet();
+    if (syncParams.addWorkingSet && projectState.getWorkingSet() != null) {
+      Collection<? extends TargetExpression> workingSetTargets =
+          getWorkingSetTargets(viewSet, projectState.getWorkingSet());
+      if (!workingSetTargets.isEmpty()) {
+        targets.addAll(workingSetTargets);
+        printTargets(context, "working set", workingSetTargets);
+      }
+    }
     if (syncParams.addProjectViewTargets) {
       if (shouldDeriveSyncTargetsFromDirectories(viewSet)) {
         List<TargetExpression> fromDirs =
@@ -128,14 +136,6 @@ final class BuildPhaseSyncTask {
       if (!projectViewTargets.isEmpty()) {
         targets.addAll(projectViewTargets);
         printTargets(context, "project view targets", projectViewTargets);
-      }
-    }
-    if (syncParams.addWorkingSet && projectState.getWorkingSet() != null) {
-      Collection<? extends TargetExpression> workingSetTargets =
-          getWorkingSetTargets(viewSet, projectState.getWorkingSet());
-      if (!workingSetTargets.isEmpty()) {
-        targets.addAll(workingSetTargets);
-        printTargets(context, "working set", workingSetTargets);
       }
     }
     if (!syncParams.targetExpressions.isEmpty()) {
@@ -221,6 +221,9 @@ final class BuildPhaseSyncTask {
         ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
             .add(projectViewSet)
             .build();
+    if (importRoots.rootDirectories().isEmpty()) {
+      return ImmutableList.of();
+    }
     List<TargetInfo> targets =
         Scope.push(
             parentContext,
