@@ -23,11 +23,13 @@ import java.util.stream.Collectors;
 
 /** List of available sections. */
 public class Sections {
+  // list ordering is used when constructing default template (ProjectViewDefaultValueProvider)
   private static final List<SectionParser> PARSERS =
       Lists.newArrayList(
           TextBlockSection.PARSER,
           ImportSection.PARSER,
           DirectorySection.PARSER,
+          AutomaticallyDeriveTargetsSection.PARSER,
           TargetSection.PARSER,
           WorkspaceTypeSection.PARSER,
           AdditionalLanguagesSection.PARSER,

@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
@@ -59,6 +60,7 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /** Runs the 'blaze build' phase of sync. */
@@ -114,7 +116,7 @@ final class BuildPhaseSyncTask {
     List<TargetExpression> targets = Lists.newArrayList();
     ProjectViewSet viewSet = projectState.getProjectViewSet();
     if (syncParams.addProjectViewTargets) {
-      if (BlazeUserSettings.getInstance().getDeriveSyncTargetsFromDirectories()) {
+      if (shouldDeriveSyncTargetsFromDirectories(viewSet)) {
         List<TargetExpression> fromDirs =
             getTargetsFromDirectories(
                 project, context, viewSet, projectState.getLanguageSettings());
@@ -179,6 +181,13 @@ final class BuildPhaseSyncTask {
       }
       throw new SyncFailedException();
     }
+  }
+
+  private boolean shouldDeriveSyncTargetsFromDirectories(ProjectViewSet viewSet) {
+    Optional<Boolean> projectViewOverride =
+        viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY);
+    return projectViewOverride.orElse(
+        BlazeUserSettings.getInstance().getDeriveSyncTargetsFromDirectories());
   }
 
   private void printTargets(

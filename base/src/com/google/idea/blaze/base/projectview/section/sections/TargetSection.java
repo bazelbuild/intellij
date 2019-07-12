@@ -79,11 +79,8 @@ public class TargetSection {
       }
       ListSection.Builder<TargetExpression> builder = ListSection.builder(KEY);
       builder.add(
-          TextBlock.of("  # Add targets that reach the source code that you want to resolve here"));
-      if (buildSystem == BuildSystem.Bazel) {
-        builder.add(TextBlock.of("  # By default, we've added all targets in your workspace"));
-        builder.add(TargetExpression.fromStringSafe("//..."));
-      }
+          TextBlock.of(
+              "  # If source code isn't resolving, add additional targets that compile it here"));
       builder.add(TextBlock.newLine());
       return ProjectView.builder(topLevelProjectView).add(builder).build();
     }
