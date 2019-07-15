@@ -133,7 +133,12 @@ class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
     }
 
     // TODO: handle remote output artifacts, and not rely on blaze-out/blaze-bin location
-    File blazeBin = projectData.getBlazeInfo().getBlazeBinDirectory();
+    File blazeBin;
+    try {
+      blazeBin = projectData.getBlazeInfo().getBlazeBinDirectory().getCanonicalFile();
+    } catch (IOException e) {
+      return null;
+    }
     File tsconfigDirectory = new File(blazeBin, label.blazePackage().relativePath());
     // contains the actual content of the tsconfig
     File tsconfigEditor = new File(tsconfigDirectory, "tsconfig_editor.json");
