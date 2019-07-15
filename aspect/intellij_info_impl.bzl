@@ -823,10 +823,15 @@ def intellij_info_aspect_impl(target, ctx, semantics):
             for label in transitive_exports.to_list()
         ]
 
-        # Empty android libraries export all their dependencies.
         if ctx.rule.kind == "android_library":
+            # Empty android libraries export all their dependencies.
             if not hasattr(rule_attrs, "srcs") or not ctx.rule.attr.srcs:
                 export_deps = export_deps + compiletime_deps
+
+            # Starlark android libraries do not produce transitive_exports.
+            if not transitive_exports:
+                direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
+                export_deps = export_deps + make_deps(direct_exports, COMPILE_TIME)
         elif ctx.rule.kind == "aar_import":
             direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
             export_deps = export_deps + make_deps(direct_exports, COMPILE_TIME)
