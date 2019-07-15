@@ -26,7 +26,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.ui.FileSelectorWithStoredHistory;
-import com.google.idea.common.settings.SearchableOption;
+import com.google.idea.common.settings.SearchableText;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.IdeBorderFactory;
@@ -55,7 +55,7 @@ public class BlazeUserSettingsConfigurable implements UnnamedConfigurable {
     }
 
     @Override
-    public ImmutableCollection<SearchableOption> getSearchableOptions() {
+    public ImmutableCollection<SearchableText> getSearchableText() {
       return OPTIONS;
     }
   }
@@ -135,32 +135,32 @@ public class BlazeUserSettingsConfigurable implements UnnamedConfigurable {
     return panel;
   }
 
-  private static final SearchableOption TOOL_WINDOW_POPUP_BEHAVIOR_OPTION =
-      SearchableOption.withLabel("Tool window popup behavior")
+  private static final SearchableText TOOL_WINDOW_POPUP_BEHAVIOR_OPTION =
+      SearchableText.withLabel("Tool window popup behavior")
           .addTags("show", "automatic")
           .addTags(Blaze.defaultBuildSystemName(), "console")
           .addTags("problems", "view")
           .build();
-  private static final SearchableOption SHOW_CONSOLE_OPTION =
-      SearchableOption.forLabel(String.format("%s Console", Blaze.defaultBuildSystemName()));
-  private static final SearchableOption SHOW_PROBLEMS_VIEW_OPTION =
-      SearchableOption.forLabel("Problems View");
-  private static final SearchableOption SHOW_ON_SYNC_OPTION = SearchableOption.forLabel("On Sync:");
-  private static final SearchableOption SHOW_ON_RUN_OPTION =
-      SearchableOption.forLabel("For Run/Debug actions:");
+  private static final SearchableText SHOW_CONSOLE_OPTION =
+      SearchableText.forLabel(String.format("%s Console", Blaze.defaultBuildSystemName()));
+  private static final SearchableText SHOW_PROBLEMS_VIEW_OPTION =
+      SearchableText.forLabel("Problems View");
+  private static final SearchableText SHOW_ON_SYNC_OPTION = SearchableText.forLabel("On Sync:");
+  private static final SearchableText SHOW_ON_RUN_OPTION =
+      SearchableText.forLabel("For Run/Debug actions:");
 
-  private static final SearchableOption COLLAPSE_PROJECT_VIEW_OPTION =
-      SearchableOption.forLabel("Collapse project view directory roots");
-  private static final SearchableOption FORMAT_BUILD_FILES_ON_SAVE_OPTION =
-      SearchableOption.forLabel("Automatically format BUILD/Skylark files on file save");
-  public static final SearchableOption SHOW_ADD_FILE_TO_PROJECT_OPTION =
-      SearchableOption.forLabel("Show 'Add source to project' editor notifications");
-  private static final SearchableOption BLAZE_BINARY_PATH_OPTION =
-      SearchableOption.forLabel("Blaze binary location");
-  private static final SearchableOption BAZEL_BINARY_PATH_OPTION =
-      SearchableOption.forLabel("Bazel binary location");
+  private static final SearchableText COLLAPSE_PROJECT_VIEW_OPTION =
+      SearchableText.forLabel("Collapse project view directory roots");
+  private static final SearchableText FORMAT_BUILD_FILES_ON_SAVE_OPTION =
+      SearchableText.forLabel("Automatically format BUILD/Skylark files on file save");
+  public static final SearchableText SHOW_ADD_FILE_TO_PROJECT_OPTION =
+      SearchableText.forLabel("Show 'Add source to project' editor notifications");
+  private static final SearchableText BLAZE_BINARY_PATH_OPTION =
+      SearchableText.forLabel("Blaze binary location");
+  private static final SearchableText BAZEL_BINARY_PATH_OPTION =
+      SearchableText.forLabel("Bazel binary location");
 
-  private static final ImmutableList<SearchableOption> OPTIONS =
+  private static final ImmutableList<SearchableText> OPTIONS =
       ImmutableList.of(
           TOOL_WINDOW_POPUP_BEHAVIOR_OPTION,
           SHOW_CONSOLE_OPTION,

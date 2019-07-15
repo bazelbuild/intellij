@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable;
-import com.google.idea.common.settings.SearchableOption;
+import com.google.idea.common.settings.SearchableText;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -39,13 +39,13 @@ class BlazeJavaUserSettingsConfigurable implements UnnamedConfigurable {
     }
 
     @Override
-    public ImmutableCollection<SearchableOption> getSearchableOptions() {
+    public ImmutableCollection<SearchableText> getSearchableText() {
       return ImmutableList.of(USE_JAR_CACHE_OPTION);
     }
   }
 
-  private static final SearchableOption USE_JAR_CACHE_OPTION =
-      SearchableOption.forLabel(
+  private static final SearchableText USE_JAR_CACHE_OPTION =
+      SearchableText.forLabel(
           String.format(
               "Use a local jar cache."
                   + " More robust, but we can miss %s changes made outside the IDE.",
