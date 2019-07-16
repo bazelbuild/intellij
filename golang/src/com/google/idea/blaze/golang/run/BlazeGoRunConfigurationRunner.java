@@ -265,8 +265,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     }
 
     SaveUtil.saveAllFiles();
-    try (BuildResultHelper buildResultHelper =
-        BuildResultHelperProvider.forFiles(project, file -> true)) {
+    try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
       ImmutableList.Builder<String> flags = ImmutableList.builder();
       if (Blaze.getBuildSystem(project) == BuildSystem.Blaze) {
         // $ go tool compile
@@ -330,7 +329,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
           candidateFiles =
               LocalFileOutputArtifact.getLocalOutputFiles(
                       buildResultHelper.getBuildArtifactsForTarget(
-                          (Label) configuration.getTarget()))
+                          (Label) configuration.getTarget(), file -> true))
                   .stream()
                   .filter(File::canExecute)
                   .collect(Collectors.toList());

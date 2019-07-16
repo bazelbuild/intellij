@@ -105,9 +105,7 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
 
             BlazeApkDeployInfoProtoHelper deployInfoHelper =
                 new BlazeApkDeployInfoProtoHelper(project, buildFlags);
-            try (BuildResultHelper buildResultHelper =
-                BuildResultHelperProvider.forFiles(
-                    project, fileName -> fileName.endsWith(".deployinfo.pb"))) {
+            try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
 
               command
                   .addTargets(getTargetToBuild())
@@ -133,7 +131,11 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
                 return null;
               }
               try {
-                deployInfo = deployInfoHelper.readDeployInfo(context, buildResultHelper);
+                deployInfo =
+                    deployInfoHelper.readDeployInfo(
+                        context,
+                        buildResultHelper,
+                        fileName -> fileName.endsWith(".deployinfo.pb"));
               } catch (GetArtifactsException e) {
                 IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
                     .submit(context);

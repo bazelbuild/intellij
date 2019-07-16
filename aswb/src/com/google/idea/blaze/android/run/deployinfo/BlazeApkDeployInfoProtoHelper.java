@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /** Reads the deploy info from a build step. */
@@ -54,10 +55,12 @@ public class BlazeApkDeployInfoProtoHelper {
 
   @Nullable
   public BlazeAndroidDeployInfo readDeployInfo(
-      BlazeContext context, BuildResultHelper buildResultHelper) throws GetArtifactsException {
+      BlazeContext context, BuildResultHelper buildResultHelper, Predicate<String> pathFilter)
+      throws GetArtifactsException {
     File deployInfoFile =
         Iterables.getOnlyElement(
-            LocalFileOutputArtifact.getLocalOutputFiles(buildResultHelper.getBuildArtifacts()),
+            LocalFileOutputArtifact.getLocalOutputFiles(
+                buildResultHelper.getAllOutputArtifacts(pathFilter)),
             null);
     if (deployInfoFile == null) {
       return null;

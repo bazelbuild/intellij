@@ -222,7 +222,7 @@ public final class BuildPluginBeforeRunTaskProvider
                   }
 
                   try (BuildResultHelper buildResultHelper =
-                      BuildResultHelperProvider.forFiles(project, f -> true)) {
+                      BuildResultHelperProvider.create(project)) {
                     BlazeCommand command =
                         BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
                             .addTargets(config.getTarget())

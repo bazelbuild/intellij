@@ -95,8 +95,7 @@ public class ClassFileManifestBuilder {
     }
 
     SaveUtil.saveAllFiles();
-    try (BuildResultHelper buildResultHelper =
-        BuildResultHelperProvider.forFiles(project, file -> true)) {
+    try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
 
       ListenableFuture<BuildResult> buildOperation =
           BlazeBeforeRunCommandHelper.runBlazeCommand(
@@ -128,7 +127,7 @@ public class ClassFileManifestBuilder {
         jars =
             LocalFileOutputArtifact.getLocalOutputFiles(
                     buildResultHelper.getArtifactsForOutputGroup(
-                        JavaClasspathAspectStrategy.OUTPUT_GROUP))
+                        JavaClasspathAspectStrategy.OUTPUT_GROUP, file -> true))
                 .stream()
                 .filter(f -> f.getName().endsWith(".jar"))
                 .collect(toImmutableList());

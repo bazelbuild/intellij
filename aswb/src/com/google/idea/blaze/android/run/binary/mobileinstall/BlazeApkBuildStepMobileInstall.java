@@ -124,9 +124,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
 
             BlazeApkDeployInfoProtoHelper deployInfoHelper =
                 new BlazeApkDeployInfoProtoHelper(project, blazeFlags);
-            try (BuildResultHelper buildResultHelper =
-                BuildResultHelperProvider.forFiles(
-                    project, fileName -> fileName.endsWith(deployInfoSuffix))) {
+            try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
 
               command
                   .addTargets(label)
@@ -154,7 +152,11 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
               }
               try {
                 context.output(new StatusOutput("Reading deployment information..."));
-                deployInfo = deployInfoHelper.readDeployInfo(context, buildResultHelper);
+                deployInfo =
+                    deployInfoHelper.readDeployInfo(
+                        context,
+                        buildResultHelper,
+                        fileName -> fileName.endsWith(deployInfoSuffix));
               } catch (GetArtifactsException e) {
                 IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
                     .submit(context);

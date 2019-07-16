@@ -157,8 +157,7 @@ class GenerateDeployableJarTaskProvider
       RunConfiguration configuration, ExecutionEnvironment env, Label target)
       throws ExecutionException {
     Project project = env.getProject();
-    try (BuildResultHelper buildResultHelper =
-        BuildResultHelperProvider.forFiles(project, file -> true)) {
+    try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
 
       SaveUtil.saveAllFiles();
 
@@ -183,7 +182,8 @@ class GenerateDeployableJarTaskProvider
       }
 
       List<File> outputs =
-          LocalFileOutputArtifact.getLocalOutputFiles(buildResultHelper.getBuildArtifacts());
+          LocalFileOutputArtifact.getLocalOutputFiles(
+              buildResultHelper.getAllOutputArtifacts(file -> true));
       if (outputs.isEmpty()) {
         throw new ExecutionException(
             String.format("Failed to find deployable jar when building %s", target));

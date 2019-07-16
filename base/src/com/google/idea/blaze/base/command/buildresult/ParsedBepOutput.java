@@ -41,10 +41,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-/**
- * An intermediate data class representing blaze's build event protocol (BEP) output for a build.
- */
-final class ParsedBepOutput {
+/** A data class representing blaze's build event protocol (BEP) output for a build. */
+public final class ParsedBepOutput {
 
   static ParsedBepOutput parseBepArtifacts(InputStream bepStream) throws IOException {
     BuildEventStreamProtos.BuildEvent event;
@@ -155,14 +153,15 @@ final class ParsedBepOutput {
   }
 
   /** Returns all output artifacts of the build. */
-  ImmutableSet<OutputArtifact> getAllOutputArtifacts(Predicate<String> pathFilter) {
+  public ImmutableSet<OutputArtifact> getAllOutputArtifacts(Predicate<String> pathFilter) {
     ImmutableSet.Builder<OutputArtifact> outputs = ImmutableSet.builder();
     fileSets.values().forEach(s -> outputs.addAll(parseFiles(s, pathFilter)));
     return outputs.build();
   }
 
   /** Returns the set of artifacts directly produced by the given target. */
-  ImmutableSet<OutputArtifact> getArtifactsForTarget(Label label, Predicate<String> pathFilter) {
+  public ImmutableSet<OutputArtifact> getDirectArtifactsForTarget(
+      Label label, Predicate<String> pathFilter) {
     ImmutableSet.Builder<OutputArtifact> outputs = ImmutableSet.builder();
     Set<String> setIds = targetFileSets.get(label.toString());
     setIds.forEach(s -> outputs.addAll(parseFiles(fileSets.get(s), pathFilter)));
@@ -170,12 +169,32 @@ final class ParsedBepOutput {
   }
 
   /** Returns the set of artifacts in the given output groups. */
-  ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts(
+  public ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts(
       Predicate<String> pathFilter) {
     ImmutableListMultimap.Builder<String, OutputArtifact> builder = ImmutableListMultimap.builder();
     for (String group : outputGroupFileSets.keySet()) {
       Set<String> directSetIds = outputGroupFileSets.get(group);
       builder.putAll(group, traverseFileSetsTransitively(directSetIds, pathFilter));
+    }
+    return builder.build();
+  }
+
+  /** Returns the set of artifacts transitively produced by each target. */
+  public ImmutableListMultimap<Label, OutputArtifact> getPerTargetOutputArtifacts(
+      Predicate<String> outputGroupFilter) {
+    Set<String> directFileSets =
+        outputGroupFileSets.asMap().entrySet().stream()
+            .filter(e -> outputGroupFilter.test(e.getKey()))
+            .flatMap(e -> e.getValue().stream())
+            .collect(toImmutableSet());
+    ImmutableListMultimap.Builder<Label, OutputArtifact> builder = ImmutableListMultimap.builder();
+    for (String target : targetFileSets.keySet()) {
+      Set<String> directSetIds =
+          targetFileSets.get(target).stream()
+              .filter(directFileSets::contains)
+              .collect(toImmutableSet());
+      builder.putAll(
+          Label.create(target), traverseFileSetsTransitively(directSetIds, path -> true));
     }
     return builder.build();
   }

@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.List;
+import java.util.function.Predicate;
 
 /** Assists in getting build artifacts from a build operation. */
 public interface BuildResultHelper extends AutoCloseable {
@@ -31,12 +32,21 @@ public interface BuildResultHelper extends AutoCloseable {
   List<String> getBuildFlags();
 
   /**
+   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
+   * called once, after the build is complete.
+   */
+  ParsedBepOutput getBuildOutput() throws GetArtifactsException;
+
+  /**
    * Returns the build result. May only be called once, after the build is complete, or no artifacts
    * will be returned.
    *
    * @return The build artifacts from the build operation.
    */
-  ImmutableList<OutputArtifact> getBuildArtifacts() throws GetArtifactsException;
+  default ImmutableList<OutputArtifact> getAllOutputArtifacts(Predicate<String> pathFilter)
+      throws GetArtifactsException {
+    return getBuildOutput().getAllOutputArtifacts(pathFilter).asList();
+  }
 
   /**
    * Returns the build artifacts, filtering out all artifacts not directly produced by the specified
@@ -44,16 +54,18 @@ public interface BuildResultHelper extends AutoCloseable {
    *
    * <p>May only be called once, after the build is complete, or no artifacts will be returned.
    */
-  ImmutableList<OutputArtifact> getBuildArtifactsForTarget(Label target)
-      throws GetArtifactsException;
+  default ImmutableList<OutputArtifact> getBuildArtifactsForTarget(
+      Label target, Predicate<String> pathFilter) throws GetArtifactsException {
+    return getBuildOutput().getDirectArtifactsForTarget(target, pathFilter).asList();
+  }
 
   /**
    * Returns all build artifacts belonging to the given output groups. May only be called once,
    * after the build is complete, or no artifacts will be returned.
    */
-  default ImmutableList<OutputArtifact> getArtifactsForOutputGroup(String outputGroup)
-      throws GetArtifactsException {
-    return getPerOutputGroupArtifacts().get(outputGroup);
+  default ImmutableList<OutputArtifact> getArtifactsForOutputGroup(
+      String outputGroup, Predicate<String> pathFilter) throws GetArtifactsException {
+    return getBuildOutput().getPerOutputGroupArtifacts(pathFilter).get(outputGroup);
   }
 
   /**
@@ -61,8 +73,10 @@ public interface BuildResultHelper extends AutoCloseable {
    * groups). May only be called once, after the build is complete, or no artifacts will be
    * returned.
    */
-  ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts()
-      throws GetArtifactsException;
+  default ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts(
+      Predicate<String> pathFilter) throws GetArtifactsException {
+    return getBuildOutput().getPerOutputGroupArtifacts(pathFilter);
+  }
 
   @Override
   void close();

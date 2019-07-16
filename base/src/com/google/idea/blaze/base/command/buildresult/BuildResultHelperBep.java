@@ -15,10 +15,7 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedInputStream;
@@ -28,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 /**
  * Build event protocol implementation to get build results.
@@ -40,10 +36,8 @@ class BuildResultHelperBep implements BuildResultHelper {
 
   private static final Logger logger = Logger.getInstance(BuildResultHelperBep.class);
   private final File outputFile;
-  private final Predicate<String> fileFilter;
 
-  BuildResultHelperBep(Predicate<String> fileFilter) {
-    this.fileFilter = fileFilter;
+  BuildResultHelperBep() {
     outputFile = BuildEventProtocolUtils.createTempOutputFile();
   }
 
@@ -53,27 +47,9 @@ class BuildResultHelperBep implements BuildResultHelper {
   }
 
   @Override
-  public ImmutableList<OutputArtifact> getBuildArtifacts() throws GetArtifactsException {
-    return readResult(input -> BuildEventProtocolOutputReader.parseAllOutputs(input, fileFilter));
-  }
-
-  @Override
-  public ImmutableList<OutputArtifact> getBuildArtifactsForTarget(Label target)
-      throws GetArtifactsException {
-    return readResult(
-        input -> BuildEventProtocolOutputReader.parseArtifactsForTarget(input, target, fileFilter));
-  }
-
-  @Override
-  public ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts()
-      throws GetArtifactsException {
-    return readResult(
-        input -> BuildEventProtocolOutputReader.parsePerOutputGroupArtifacts(input, fileFilter));
-  }
-
-  private <V> V readResult(BepReader<V> readAction) throws GetArtifactsException {
+  public ParsedBepOutput getBuildOutput() throws GetArtifactsException {
     try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
-      return readAction.read(inputStream);
+      return BuildEventProtocolOutputReader.parseBepOutput(inputStream);
     } catch (IOException e) {
       logger.error(e);
       throw new GetArtifactsException(e.getMessage());
@@ -87,22 +63,16 @@ class BuildResultHelperBep implements BuildResultHelper {
     }
   }
 
-  private interface BepReader<V> {
-    V read(InputStream inputStream) throws IOException;
-  }
-
   static class Provider implements BuildResultHelperProvider {
 
     @Override
-    public Optional<BuildResultHelper> createForFiles(
-        Project project, Predicate<String> fileFilter) {
-      return Optional.of(new BuildResultHelperBep(fileFilter));
+    public Optional<BuildResultHelper> doCreate(Project project) {
+      return Optional.of(new BuildResultHelperBep());
     }
 
     @Override
-    public Optional<BuildResultHelper> createForFilesForSync(
-        Project project, BlazeInfo blazeInfo, Predicate<String> fileFilter) {
-      return Optional.of(new BuildResultHelperBep(fileFilter));
+    public Optional<BuildResultHelper> doCreateForSync(Project project, BlazeInfo blazeInfo) {
+      return Optional.of(new BuildResultHelperBep());
     }
   }
 }

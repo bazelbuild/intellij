@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.command.buildresult;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -43,37 +42,9 @@ public final class BuildEventProtocolOutputReader {
 
   private BuildEventProtocolOutputReader() {}
 
-  /**
-   * Returns all output artifacts listed in the BEP output that satisfy the specified predicate.
-   *
-   * @throws IOException if the BEP output file is incorrectly formatted
-   */
-  public static ImmutableList<OutputArtifact> parseAllOutputs(
-      InputStream inputStream, Predicate<String> fileFilter) throws IOException {
-    ParsedBepOutput output = ParsedBepOutput.parseBepArtifacts(inputStream);
-    return output.getAllOutputArtifacts(fileFilter).asList();
-  }
-
-  /**
-   * Returns all artifacts associated with the given target that satisfy the specified predicate.
-   *
-   * @throws IOException if the BEP output file is incorrectly formatted
-   */
-  public static ImmutableList<OutputArtifact> parseArtifactsForTarget(
-      InputStream inputStream, Label label, Predicate<String> fileFilter) throws IOException {
-    ParsedBepOutput output = ParsedBepOutput.parseBepArtifacts(inputStream);
-    return output.getArtifactsForTarget(label, fileFilter).asList();
-  }
-
-  /**
-   * Returns all output artifacts belonging to the given output group(s).
-   *
-   * @throws IOException if the BEP output file is incorrectly formatted
-   */
-  public static ImmutableListMultimap<String, OutputArtifact> parsePerOutputGroupArtifacts(
-      InputStream inputStream, Predicate<String> fileFilter) throws IOException {
-    ParsedBepOutput output = ParsedBepOutput.parseBepArtifacts(inputStream);
-    return output.getPerOutputGroupArtifacts(fileFilter);
+  /** Parses a BEP input stream, returning a {@link ParsedBepOutput}. */
+  public static ParsedBepOutput parseBepOutput(InputStream inputStream) throws IOException {
+    return ParsedBepOutput.parseBepArtifacts(inputStream);
   }
 
   /**

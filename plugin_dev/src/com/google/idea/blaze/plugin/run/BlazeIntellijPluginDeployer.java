@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.repackaged.TextFormat;
@@ -89,13 +90,10 @@ class BlazeIntellijPluginDeployer {
       throws GetArtifactsException {
     this.executionRoot = executionRoot;
     deployInfoFiles.clear();
-    for (File file :
-        LocalFileOutputArtifact.getLocalOutputFiles(
-            buildResultHelper.getBuildArtifactsForTarget(pluginTarget))) {
-      if (file.getName().endsWith(".intellij-plugin-debug-target-deploy-info")) {
-        deployInfoFiles.add(file);
-      }
-    }
+    ImmutableList<OutputArtifact> outputs =
+        buildResultHelper.getBuildArtifactsForTarget(
+            pluginTarget, file -> file.endsWith(".intellij-plugin-debug-target-deploy-info"));
+    deployInfoFiles.addAll(LocalFileOutputArtifact.getLocalOutputFiles(outputs));
   }
 
   /**
