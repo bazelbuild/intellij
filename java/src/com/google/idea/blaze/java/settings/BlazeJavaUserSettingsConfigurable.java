@@ -15,22 +15,18 @@
  */
 package com.google.idea.blaze.java.settings;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable;
+import com.google.idea.common.settings.AutoConfigurable;
+import com.google.idea.common.settings.ConfigurableSetting;
 import com.google.idea.common.settings.SearchableText;
+import com.google.idea.common.settings.SettingComponent.SimpleComponent;
 import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.ui.JBUI;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
 
 /** Contributes java-specific settings. */
-class BlazeJavaUserSettingsConfigurable implements UnnamedConfigurable {
+class BlazeJavaUserSettingsConfigurable extends AutoConfigurable {
 
   static class UiContributor implements BlazeUserSettingsCompositeConfigurable.UiContributor {
     @Override
@@ -40,74 +36,26 @@ class BlazeJavaUserSettingsConfigurable implements UnnamedConfigurable {
 
     @Override
     public ImmutableCollection<SearchableText> getSearchableText() {
-      return ImmutableList.of(USE_JAR_CACHE_OPTION);
+      return SearchableText.collect(SETTINGS);
     }
   }
 
-  private static final SearchableText USE_JAR_CACHE_OPTION =
-      SearchableText.forLabel(
-          String.format(
-              "Use a local jar cache."
-                  + " More robust, but we can miss %s changes made outside the IDE.",
-              Blaze.defaultBuildSystemName()));
+  private static final ConfigurableSetting<?, ?> USE_JAR_CACHE =
+      ConfigurableSetting.builder(BlazeJavaUserSettings::getInstance)
+          .label(
+              String.format(
+                  "Use a local jar cache."
+                      + " More robust, but we can miss %s changes made outside the IDE.",
+                  Blaze.defaultBuildSystemName()))
+          .getter(BlazeJavaUserSettings::getUseJarCache)
+          .setter(BlazeJavaUserSettings::setUseJarCache)
+          .componentFactory(SimpleComponent::createCheckBox);
 
-  private final JPanel panel;
-  private final JCheckBox useJarCache;
-  private final ImmutableList<JCheckBox> components;
+  private static final ImmutableList<ConfigurableSetting<?, ?>> SETTINGS =
+      ImmutableList.of(USE_JAR_CACHE);
 
   private BlazeJavaUserSettingsConfigurable() {
-    useJarCache = new JCheckBox();
-    useJarCache.setText(USE_JAR_CACHE_OPTION.label());
-
-    components = ImmutableList.of(useJarCache);
-    panel = setupUi();
+    super(SETTINGS);
   }
 
-  @Override
-  public void apply() {
-    BlazeJavaUserSettings settings = BlazeJavaUserSettings.getInstance();
-    settings.setUseJarCache(useJarCache.isSelected());
-  }
-
-  @Override
-  public void reset() {
-    BlazeJavaUserSettings settings = BlazeJavaUserSettings.getInstance();
-    useJarCache.setSelected(settings.getUseJarCache());
-  }
-
-  @Override
-  public boolean isModified() {
-    BlazeJavaUserSettings settings = BlazeJavaUserSettings.getInstance();
-    return !Objects.equal(useJarCache.isSelected(), settings.getUseJarCache());
-  }
-
-  @Override
-  public JComponent createComponent() {
-    return panel;
-  }
-
-  private JPanel setupUi() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridLayoutManager(components.size(), 2, JBUI.emptyInsets(), -1, -1));
-    for (int i = 0; i < components.size(); i++) {
-      JCheckBox component = components.get(i);
-      panel.add(
-          component,
-          new GridConstraints(
-              i,
-              0,
-              1,
-              2,
-              GridConstraints.ANCHOR_NORTHWEST,
-              GridConstraints.FILL_NONE,
-              GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-              GridConstraints.SIZEPOLICY_FIXED,
-              null,
-              null,
-              null,
-              0,
-              false));
-    }
-    return panel;
-  }
 }

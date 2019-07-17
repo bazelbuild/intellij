@@ -15,10 +15,16 @@
  */
 package com.google.idea.common.settings;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.AutoValue.CopyAnnotations;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.Immutable;
+import java.util.Collection;
+import java.util.stream.Stream;
 
 /** Text which can be searched for in the Settings dialog and 'Help → Find Action'. */
 @AutoValue
@@ -42,8 +48,14 @@ public abstract class SearchableText {
 
   /** Returns a builder for {@link SearchableText} with the given UI label. */
   public static Builder withLabel(String label) {
-    return new AutoValue_SearchableText.Builder().setLabel(label);
+    return builder().setLabel(label);
   }
+
+  static Builder builder() {
+    return new AutoValue_SearchableText.Builder();
+  }
+
+  abstract Builder toBuilder();
 
   /** A builder for {@link SearchableText}. */
   @AutoValue.Builder
@@ -65,5 +77,18 @@ public abstract class SearchableText {
     }
 
     public abstract SearchableText build();
+  }
+
+  /** Returns the {@link SearchableText} of the given settings and texts. */
+  public static ImmutableCollection<SearchableText> collect(
+      Collection<? extends ConfigurableSetting<?, ?>> settings, SearchableText... texts) {
+    return collect(settings, ImmutableList.copyOf(texts));
+  }
+
+  /** Returns the {@link SearchableText} of the given settings and texts. */
+  public static ImmutableCollection<SearchableText> collect(
+      Collection<? extends ConfigurableSetting<?, ?>> settings, Collection<SearchableText> texts) {
+    return Stream.concat(settings.stream().map(ConfigurableSetting::searchableText), texts.stream())
+        .collect(toImmutableList());
   }
 }
