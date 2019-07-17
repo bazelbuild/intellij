@@ -44,14 +44,14 @@ public abstract class ConfigurableSetting<ValueT, ComponentT extends SettingComp
   /** Returns a {@link Property} for accessing and modifying the setting. */
   abstract Property<ValueT> setting();
 
-  abstract Optional<Supplier<Boolean>> hideCondition();
+  abstract Optional<Supplier<Boolean>> visibilityRequirement();
 
   abstract ComponentFactory<ComponentT> componentFactory();
 
   /** Creates a {@link SettingComponent} for representing this setting in a UI. */
   final ComponentT createComponent() {
     ComponentT component = componentFactory().createComponent(label());
-    hideCondition().ifPresent(hide -> component.setEnabledAndVisible(!hide.get()));
+    visibilityRequirement().ifPresent(visible -> component.setEnabledAndVisible(visible.get()));
     return component;
   }
 
@@ -62,17 +62,20 @@ public abstract class ConfigurableSetting<ValueT, ComponentT extends SettingComp
   }
 
   /**
-   * Creates a {@link ConfigurableSetting} with the given text, setting property, condition for
-   * hiding, and {@link ComponentFactory}.
+   * Creates a {@link ConfigurableSetting} with the given text, setting property, requirement for
+   * visibility, and {@link ComponentFactory}.
    */
   public static <ValueT, ComponentT extends SettingComponent<ValueT>>
       ConfigurableSetting<ValueT, ComponentT> create(
           SearchableText searchableText,
           Property<ValueT> settingProperty,
-          @Nullable Supplier<Boolean> hideCondition,
+          @Nullable Supplier<Boolean> visibilityRequirement,
           ComponentFactory<ComponentT> componentFactory) {
     return new AutoValue_ConfigurableSetting<>(
-        searchableText, settingProperty, Optional.ofNullable(hideCondition), componentFactory);
+        searchableText,
+        settingProperty,
+        Optional.ofNullable(visibilityRequirement),
+        componentFactory);
   }
 
   /**
@@ -92,18 +95,18 @@ public abstract class ConfigurableSetting<ValueT, ComponentT extends SettingComp
     final SearchableText.Builder searchableTextBuilder;
     final Supplier<SettingsT> settingsProvider;
 
-    @Nullable Supplier<Boolean> hideCondition;
+    @Nullable Supplier<Boolean> visibilityRequirement;
 
     AbstractBuilder(Supplier<SettingsT> settingsProvider) {
       this.searchableTextBuilder = SearchableText.builder();
       this.settingsProvider = settingsProvider;
-      this.hideCondition = null;
+      this.visibilityRequirement = null;
     }
 
     AbstractBuilder(AbstractBuilder<SettingsT, ?> other) {
       this.searchableTextBuilder = other.searchableTextBuilder.build().toBuilder();
       this.settingsProvider = other.settingsProvider;
-      this.hideCondition = other.hideCondition;
+      this.visibilityRequirement = other.visibilityRequirement;
     }
 
     abstract BuilderT self();
@@ -124,16 +127,16 @@ public abstract class ConfigurableSetting<ValueT, ComponentT extends SettingComp
     }
 
     /**
-     * Sets a condition for hiding and disabling this setting in the UI.
+     * Sets a requirement which must be met for this setting to be visible and enabled in the UI.
      *
-     * <p>The condition will only be checked when the UI is created, not on subsequent updates.
+     * <p>The requirement will only be checked when the UI is created, not on subsequent updates.
      *
-     * @throws IllegalStateException if {@code hideIf} has already been called. Only one condition
-     *     is supported.
+     * @throws IllegalStateException if {@code requires} has already been called. Only one
+     *     requirement is supported.
      */
-    public BuilderT hideIf(Supplier<Boolean> hideCondition) {
-      checkState(this.hideCondition == null, "hideIf can only be called once");
-      this.hideCondition = hideCondition;
+    public BuilderT requires(Supplier<Boolean> visibilityRequirement) {
+      checkState(this.visibilityRequirement == null, "requires can only be called once");
+      this.visibilityRequirement = visibilityRequirement;
       return self();
     }
   }
@@ -201,7 +204,7 @@ public abstract class ConfigurableSetting<ValueT, ComponentT extends SettingComp
       return create(
           searchableTextBuilder.build(),
           Property.create(settingsProvider, getter, setter),
-          hideCondition,
+          visibilityRequirement,
           componentFactory);
     }
   }

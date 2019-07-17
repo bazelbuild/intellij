@@ -120,7 +120,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
       setting("Blaze binary location")
           .getter(BlazeUserSettings::getBlazeBinaryPath)
           .setter(BlazeUserSettings::setBlazeBinaryPath)
-          .hideIf(() -> !BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Blaze))
+          .requires(() -> BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Blaze))
           .componentFactory(fileSelector(BLAZE_BINARY_PATH_KEY, "Specify the blaze binary path"));
 
   public static final String BAZEL_BINARY_PATH_KEY = "bazel.binary.path";
@@ -128,7 +128,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
       setting("Bazel binary location")
           .getter(BlazeUserSettings::getBazelBinaryPath)
           .setter(BlazeUserSettings::setBazelBinaryPath)
-          .hideIf(() -> !BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Bazel))
+          .requires(() -> BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Bazel))
           .componentFactory(fileSelector(BAZEL_BINARY_PATH_KEY, "Specify the bazel binary path"));
 
   private static final ImmutableList<ConfigurableSetting<?, ?>> SETTINGS =
