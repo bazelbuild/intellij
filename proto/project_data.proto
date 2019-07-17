@@ -118,7 +118,6 @@ message LocalFileOrOutputArtifact {
 }
 
 // an output artifact which exists on the local file system
-// TODO(brendandouglas): phase out LocalFile in favor of OutputArtifact
 message LocalFile {
   // the absolute file path
   string path = 1;

@@ -47,7 +47,7 @@ public interface ArtifactState {
     }
     if (proto.hasArtifact()) {
       ProjectData.OutputArtifact output = proto.getArtifact();
-      return new GenericOutputState(
+      return new RemoteOutputState(
           output.getRelativePath(), output.getId(), output.getSyncStartTimeMillis());
     }
     return null;
@@ -97,16 +97,13 @@ public interface ArtifactState {
     }
   }
 
-  /**
-   * Serialization state related to arbitrary output artifacts, possible provided by a remote
-   * service.
-   */
-  class GenericOutputState implements ArtifactState {
+  /** Serialization state related to remotely-hosted output artifacts. */
+  class RemoteOutputState implements ArtifactState {
     private final String blazeOutPath;
     private final String id;
     private final long syncStartTimeMillis;
 
-    public GenericOutputState(String blazeOutPath, String id, long syncStartTimeMillis) {
+    public RemoteOutputState(String blazeOutPath, String id, long syncStartTimeMillis) {
       this.blazeOutPath = blazeOutPath;
       this.id = id;
       this.syncStartTimeMillis = syncStartTimeMillis;
@@ -119,10 +116,10 @@ public interface ArtifactState {
 
     @Override
     public boolean isMoreRecent(ArtifactState output) {
-      if (!(output instanceof GenericOutputState)) {
+      if (!(output instanceof RemoteOutputState)) {
         return true;
       }
-      GenericOutputState state = (GenericOutputState) output;
+      RemoteOutputState state = (RemoteOutputState) output;
       return !Objects.equals(id, state.id) && syncStartTimeMillis < state.syncStartTimeMillis;
     }
 
@@ -147,10 +144,10 @@ public interface ArtifactState {
       if (obj == this) {
         return true;
       }
-      if (!(obj instanceof GenericOutputState)) {
+      if (!(obj instanceof RemoteOutputState)) {
         return false;
       }
-      return blazeOutPath.equals(((GenericOutputState) obj).blazeOutPath);
+      return blazeOutPath.equals(((RemoteOutputState) obj).blazeOutPath);
     }
   }
 }
