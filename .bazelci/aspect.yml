@@ -3,12 +3,10 @@ platforms:
   ubuntu1604:
     build_flags:
       - --define=ij_product=intellij-beta
-      - --experimental_google_legacy_api
     build_targets:
       - //aspect:aspect_files
     test_flags:
       - --define=ij_product=intellij-beta
-      - --experimental_google_legacy_api
       - --test_output=errors
     test_targets:
       - //aspect/testing/...

@@ -4,7 +4,7 @@ platforms:
     build_flags:
       - --define=ij_product=intellij-beta
     build_targets:
-      - //ijwb:ijwb_bazel
+      - //ijwb/...
     test_flags:
       - --define=ij_product=intellij-beta
       - --test_output=errors

@@ -4,7 +4,7 @@ platforms:
     build_flags:
       - --define=ij_product=android-studio-beta
     build_targets:
-      - //aswb:aswb_bazel
+      - //aswb/...
     test_flags:
       - --define=ij_product=android-studio-beta
       - --test_output=errors

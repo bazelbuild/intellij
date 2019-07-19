@@ -4,7 +4,7 @@ platforms:
     build_flags:
       - --define=ij_product=clion-beta
     build_targets:
-      - //clwb:clwb_bazel
+      - //clwb/...
     test_flags:
       - --define=ij_product=clion-beta
       - --test_output=errors
