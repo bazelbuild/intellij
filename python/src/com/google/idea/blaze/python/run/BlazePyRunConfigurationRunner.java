@@ -24,10 +24,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -320,7 +320,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       List<File> candidateFiles;
       try {
         candidateFiles =
-            LocalFileOutputArtifact.getLocalOutputFiles(
+            BlazeArtifact.getLocalFiles(
                     buildResultHelper.getBuildArtifactsForTarget(
                         (Label) configuration.getTarget(), file -> true))
                 .stream()

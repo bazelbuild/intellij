@@ -18,7 +18,6 @@ package com.google.idea.blaze.java.sync.source;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -29,7 +28,7 @@ import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.JavaSourcePackage;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
@@ -74,8 +73,10 @@ public class PackageManifestReader {
     Map<OutputArtifact, TargetKey> fileToLabelMap = Maps.newHashMap();
     for (Map.Entry<TargetKey, ArtifactLocation> entry : javaPackageManifests.entrySet()) {
       TargetKey key = entry.getKey();
-      OutputArtifact artifact = decoder.resolveOutput(entry.getValue());
-      fileToLabelMap.put(Preconditions.checkNotNull(artifact), key);
+      BlazeArtifact artifact = decoder.resolveOutput(entry.getValue());
+      if (artifact instanceof OutputArtifact) {
+        fileToLabelMap.put((OutputArtifact) artifact, key);
+      }
     }
     ArtifactsDiff diff;
     try {
@@ -85,14 +86,13 @@ public class PackageManifestReader {
       throw new ProcessCanceledException(e);
     } catch (ExecutionException e) {
       context.setHasError();
-      IssueOutput.error("Updating package manifest files failed: " + e);
+      IssueOutput.error("Updating package manifest files failed: " + e).submit(context);
       throw new AssertionError("Unhandled exception", e);
     }
 
     ListenableFuture<?> fetchFuture =
         PrefetchService.getInstance()
-            .prefetchFiles(
-                LocalFileOutputArtifact.getLocalOutputFiles(diff.getUpdatedOutputs()), true, false);
+            .prefetchFiles(BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()), true, false);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchPackageManifests", EventType.Prefetching)
         .withProgressMessage("Reading package manifests...")

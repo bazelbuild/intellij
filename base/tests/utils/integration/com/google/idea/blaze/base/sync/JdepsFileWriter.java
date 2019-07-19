@@ -18,12 +18,11 @@ package com.google.idea.blaze.base.sync;
 import static org.junit.Assert.fail;
 
 import com.google.devtools.build.lib.view.proto.Deps;
-import com.google.idea.blaze.base.WorkspaceFileSystem;
+import com.google.idea.blaze.base.TestFileSystem;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,33 +36,36 @@ import java.util.stream.Stream;
  * for Java targets.
  */
 public class JdepsFileWriter {
-  private final WorkspaceFileSystem workspace;
+  private final TestFileSystem fileSystem;
 
-  public JdepsFileWriter(WorkspaceFileSystem workspace) {
-    this.workspace = workspace;
+  public JdepsFileWriter(TestFileSystem fileSystem) {
+    this.fileSystem = fileSystem;
   }
 
   /**
    * For each target in the given target map whose JavaIdeInfo specifies a path to a jdeps file,
    * this method constructs the appropriate jdeps proto for the target and writes it to that file.
    */
-  public static void writeDefaultJdepsFiles(WorkspaceFileSystem workspace, TargetMap targetMap) {
-    JdepsFileWriter jdepsFileWriter = new JdepsFileWriter(workspace);
-    targetMap.targets().forEach(target -> jdepsFileWriter.writeJdepsFile(target, targetMap));
+  public static void writeDefaultJdepsFiles(
+      String execRoot, TestFileSystem fileSystem, TargetMap targetMap) {
+    JdepsFileWriter jdepsFileWriter = new JdepsFileWriter(fileSystem);
+    targetMap
+        .targets()
+        .forEach(target -> jdepsFileWriter.writeJdepsFile(execRoot, targetMap, target));
   }
 
   /**
    * Constructs a jdeps proto for the given blaze target and writes it to the jdeps file specified
    * in the target's JavaIdeInfo.
    */
-  public void writeJdepsFile(TargetIdeInfo target, TargetMap targetMap) {
+  private void writeJdepsFile(String execRoot, TargetMap targetMap, TargetIdeInfo target) {
     if (target.getJavaIdeInfo() == null || target.getJavaIdeInfo().getJdepsFile() == null) {
       return;
     }
     Deps.Dependencies jdeps = getJdeps(targetMap, target);
+    ArtifactLocation jdepsArtifact = target.getJavaIdeInfo().getJdepsFile();
     VirtualFile jdepsFile =
-        workspace.createFile(
-            new WorkspacePath(target.getJavaIdeInfo().getJdepsFile().getRelativePath()));
+        fileSystem.createFile(execRoot + "/" + jdepsArtifact.getExecutionRootRelativePath());
     Application application = ApplicationManager.getApplication();
     application.invokeAndWait(
         () ->

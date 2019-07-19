@@ -15,12 +15,9 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.MustBeClosed;
-import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactState.LocalFileState;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -29,29 +26,20 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** A blaze output artifact which exists on the local file system. */
-public class LocalFileOutputArtifact implements OutputArtifact {
-
-  /**
-   * Filters out non-local output files.
-   *
-   * <p>Some callers will only ever accept local outputs (e.g. when debugging, and making use of
-   * runfiles directories).
-   */
-  public static ImmutableList<File> getLocalOutputFiles(Collection<OutputArtifact> outputs) {
-    return outputs.stream()
-        .filter(o -> o instanceof LocalFileOutputArtifact)
-        .map(o -> ((LocalFileOutputArtifact) o).getFile())
-        .collect(toImmutableList());
-  }
+public class LocalFileOutputArtifact implements OutputArtifact, LocalFileArtifact {
 
   private final File file;
+  private final String blazeOutRelativePath;
+  private final String configurationMnemonic;
 
-  public LocalFileOutputArtifact(File file) {
+  public LocalFileOutputArtifact(
+      File file, String blazeOutRelativePath, String configurationMnemonic) {
     this.file = file;
+    this.blazeOutRelativePath = blazeOutRelativePath;
+    this.configurationMnemonic = configurationMnemonic;
   }
 
   private long getLastModifiedTime() {
@@ -76,8 +64,13 @@ public class LocalFileOutputArtifact implements OutputArtifact {
   }
 
   @Override
-  public String getBlazeConfigurationMnemonic(BlazeConfigurationHandler handler) {
-    return handler.getConfigurationMnemonic(file);
+  public String getConfigurationMnemonic() {
+    return configurationMnemonic;
+  }
+
+  @Override
+  public String getRelativePath() {
+    return blazeOutRelativePath;
   }
 
   @Override
@@ -86,7 +79,7 @@ public class LocalFileOutputArtifact implements OutputArtifact {
     return new BufferedInputStream(new FileInputStream(file));
   }
 
-  @VisibleForTesting
+  @Override
   public File getFile() {
     return file;
   }
@@ -105,5 +98,10 @@ public class LocalFileOutputArtifact implements OutputArtifact {
   @Override
   public int hashCode() {
     return FileUtil.fileHashCode(file);
+  }
+
+  @Override
+  public String toString() {
+    return blazeOutRelativePath;
   }
 }

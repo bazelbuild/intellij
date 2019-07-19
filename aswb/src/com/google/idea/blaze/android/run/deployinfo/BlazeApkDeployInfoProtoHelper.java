@@ -20,9 +20,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
 import com.google.idea.blaze.android.manifest.ManifestParser;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -59,9 +59,7 @@ public class BlazeApkDeployInfoProtoHelper {
       throws GetArtifactsException {
     File deployInfoFile =
         Iterables.getOnlyElement(
-            LocalFileOutputArtifact.getLocalOutputFiles(
-                buildResultHelper.getAllOutputArtifacts(pathFilter)),
-            null);
+            BlazeArtifact.getLocalFiles(buildResultHelper.getAllOutputArtifacts(pathFilter)), null);
     if (deployInfoFile == null) {
       return null;
     }

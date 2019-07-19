@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.io;
 
 import com.google.errorprone.annotations.MustBeClosed;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,7 +35,7 @@ final class InputStreamProviderImpl implements InputStreamProvider {
 
   @Override
   @MustBeClosed
-  public BufferedInputStream forOutputArtifact(OutputArtifact output) throws IOException {
+  public BufferedInputStream forOutputArtifact(BlazeArtifact output) throws IOException {
     return output.getInputStream();
   }
 }

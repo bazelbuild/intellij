@@ -22,7 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
@@ -112,8 +112,7 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
     return ImmutableList.copyOf(outputGroups);
   }
 
-  public final IntellijIdeInfo.TargetIdeInfo readAspectFile(OutputArtifact file)
-      throws IOException {
+  public final IntellijIdeInfo.TargetIdeInfo readAspectFile(BlazeArtifact file) throws IOException {
     try (InputStream inputStream = file.getInputStream()) {
       IntellijIdeInfo.TargetIdeInfo.Builder builder = IntellijIdeInfo.TargetIdeInfo.newBuilder();
       TextFormat.Parser parser = TextFormat.Parser.newBuilder().setAllowUnknownFields(true).build();

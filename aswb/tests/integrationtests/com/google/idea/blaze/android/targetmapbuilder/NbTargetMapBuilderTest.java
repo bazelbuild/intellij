@@ -161,7 +161,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .addDependency("//java/com/google:dep")
                     .setJavaInfo(
                         JavaIdeInfo.builder()
-                            .setJdepsFile(source("java/com/google/lib.jdeps"))
+                            .setJdepsFile(gen("java/com/google/lib.jdeps"))
                             .addJar(
                                 LibraryArtifact.builder()
                                     .setClassJar(gen("import/import.generated_jar")))))
@@ -171,16 +171,13 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setLabel("//java/com/google:dep")
                     .setKind(JavaBlazeRules.RuleTypes.JAVA_LIBRARY.getKind())
                     .setJavaInfo(
-                        JavaIdeInfo.builder().setJdepsFile(source("java/com/google/dep.jdeps"))))
+                        JavaIdeInfo.builder().setJdepsFile(gen("java/com/google/dep.jdeps"))))
             .build();
 
     // New target map construction.
-    BlazeInfoData info =
-        BlazeInfoData.builder().setBlazeExecutablesRootPath("bazel-out/crosstool/bin").build();
-
     TargetMap newTargetMap =
         targetMap(
-            java_library("//java/com/google:lib", info)
+            java_library("//java/com/google:lib")
                 .src("ClassWithUniqueName1.java", "ClassWithUniqueName2.java")
                 .dep("//java/com/google:dep")
                 .generated_jar("//import/import.generated_jar"),
@@ -191,7 +188,6 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
 
   @Test
   public void testAarTargetMap() throws Exception {
-    String blazeExecutablesRootPath = "bazel-out/crosstool/bin";
     TargetMap oldTargetMap =
         TargetMapBuilder.builder()
             .addTarget(
@@ -207,17 +203,13 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                                 .build()))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
-                            .setJdepsFile(source("import/aar.jdeps"))
+                            .setJdepsFile(gen("import/aar.jdeps"))
                             .addJar(
                                 LibraryArtifact.builder().setClassJar(gen("import/classes.jar")))))
             .build();
 
-    // New target map construction.
-    BlazeInfoData info =
-        BlazeInfoData.builder().setBlazeExecutablesRootPath(blazeExecutablesRootPath).build();
-
     TargetMap newTargetMap =
-        targetMap(aar_import("//import:aar", info).aar("lib_aar.aar").generated_jar("classes.jar"));
+        targetMap(aar_import("//import:aar").aar("lib_aar.aar").generated_jar("classes.jar"));
 
     assertTargetMapEquivalence(newTargetMap, oldTargetMap);
   }
@@ -232,7 +224,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setBuildFile(source("import/BUILD"))
                     .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
                     .addSource(source("import/Lib.java"))
-                    .setJavaInfo(JavaIdeInfo.builder().setJdepsFile(source("import/liba.jdeps")))
+                    .setJavaInfo(JavaIdeInfo.builder().setJdepsFile(gen("import/liba.jdeps")))
                     .setAndroidInfo(AndroidIdeInfo.builder().setResourceJavaPackage("import"))
                     .addDependency("//import:import")
                     .addDependency("//import:import_android"))
@@ -242,7 +234,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setBuildFile(source("import/BUILD"))
                     .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
                     .addSource(source("import/Lib.java"))
-                    .setJavaInfo(JavaIdeInfo.builder().setJdepsFile(source("import/lib.jdeps")))
+                    .setJavaInfo(JavaIdeInfo.builder().setJdepsFile(gen("import/lib.jdeps")))
                     .setAndroidInfo(AndroidIdeInfo.builder().setResourceJavaPackage("import"))
                     .addDependency("//import:import")
                     .addDependency("//import:import_android"))
@@ -253,24 +245,21 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setKind(JavaBlazeRules.RuleTypes.JAVA_LIBRARY.getKind())
                     .setJavaInfo(
                         JavaIdeInfo.builder()
-                            .setJdepsFile(source("import/import.jdeps"))
+                            .setJdepsFile(gen("import/import.jdeps"))
                             .addJar(
                                 LibraryArtifact.builder().setClassJar(gen("import/import.jar")))))
             .build();
 
     // New target map construction.
-    BlazeInfoData info =
-        BlazeInfoData.builder().setBlazeExecutablesRootPath("bazel-out/crosstool/bin").build();
-
     TargetMap newTargetMap =
         targetMap(
-            android_library("//import:liba", info)
+            android_library("//import:liba")
                 .src("Lib.java")
                 .dep("//import:import", "//import:import_android"),
-            android_library("//import:lib", info)
+            android_library("//import:lib")
                 .src("Lib.java")
                 .dep("//import:import", "//import:import_android"),
-            java_library("//import:import", info).generated_jar("import.jar"));
+            java_library("//import:import").generated_jar("import.jar"));
 
     assertTargetMapEquivalence(newTargetMap, oldTargetMap);
   }
@@ -295,7 +284,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setBuildFile(source("java/com/google/BUILD"))
                     .setJavaInfo(
                         javaInfoWithJars("java/com/google/app.jar")
-                            .setJdepsFile(source("java/com/google/app.jdeps")))
+                            .setJdepsFile(gen("java/com/google/app.jdeps")))
                     .setAndroidInfo(
                         AndroidIdeInfo.builder()
                             .setManifestFile(source("java/com/google/AndroidManifest.xml"))
@@ -315,7 +304,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setBuildFile(source("third_party/individualLibrary/BUILD"))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
-                            .setJdepsFile(source("third_party/individualLibrary/values.jdeps")))
+                            .setJdepsFile(gen("third_party/individualLibrary/values.jdeps")))
                     .setAndroidInfo(
                         AndroidIdeInfo.builder()
                             .setManifestFile(
@@ -329,8 +318,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind())
                     .setBuildFile(source("third_party/quantum/BUILD"))
                     .setJavaInfo(
-                        JavaIdeInfo.builder()
-                            .setJdepsFile(source("third_party/quantum/values.jdeps")))
+                        JavaIdeInfo.builder().setJdepsFile(gen("third_party/quantum/values.jdeps")))
                     .setAndroidInfo(
                         AndroidIdeInfo.builder()
                             .setManifestFile(
@@ -353,7 +341,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setKind(JavaBlazeRules.RuleTypes.JAVA_LIBRARY.getKind())
                     .setJavaInfo(
                         javaInfoWithJars("third_party/guava-21.jar")
-                            .setJdepsFile(source("third_party/guava/java.jdeps"))))
+                            .setJdepsFile(gen("third_party/guava/java.jdeps"))))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel(aarFile)
@@ -362,7 +350,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setAndroidAarInfo(new AndroidAarIdeInfo(source("third_party/aar/lib_aar.aar")))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
-                            .setJdepsFile(source("third_party/aar/an_aar.jdeps"))
+                            .setJdepsFile(gen("third_party/aar/an_aar.jdeps"))
                             .addJar(
                                 LibraryArtifact.builder()
                                     .setClassJar(
@@ -376,7 +364,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setBuildFile(source("third_party/recyclerview/BUILD"))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
-                            .setJdepsFile(source("third_party/recyclerview/recyclerview.jdeps")))
+                            .setJdepsFile(gen("third_party/recyclerview/recyclerview.jdeps")))
                     .setAndroidInfo(
                         AndroidIdeInfo.builder()
                             .setManifestFile(source("third_party/recyclerview/AndroidManifest.xml"))
@@ -390,8 +378,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setBuildFile(source("java/com/google/intermediate/BUILD"))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
-                            .setJdepsFile(
-                                source("java/com/google/intermediate/intermediate.jdeps")))
+                            .setJdepsFile(gen("java/com/google/intermediate/intermediate.jdeps")))
                     .setAndroidInfo(
                         AndroidIdeInfo.builder()
                             .setManifestFile(
@@ -408,7 +395,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setJavaInfo(
                         JavaIdeInfo.builder()
                             .setJdepsFile(
-                                source("third_party/constraint_layout/constraint_layout.jdeps")))
+                                gen("third_party/constraint_layout/constraint_layout.jdeps")))
                     .setAndroidInfo(
                         AndroidIdeInfo.builder()
                             .setManifestFile(
@@ -419,8 +406,6 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
             .build();
 
     // New target map construction.
-    BlazeInfoData info =
-        BlazeInfoData.builder().setBlazeExecutablesRootPath("bazel-out/crosstool/bin").build();
     TargetMap newTargetMap =
         targetMap(
             android_binary(main)
@@ -435,7 +420,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     "//third_party/quantum/res",
                     ImmutableList.of("values/strings.xml", "values/attrs.xml", "layout/menu.xml")),
             java_library(guava).source_jar("//third_party/guava-21.jar"),
-            aar_import(aarFile, info)
+            aar_import(aarFile)
                 .aar("lib_aar.aar")
                 .generated_jar("_aar/an_aar/classes_and_libs_merged.jar"),
             android_library(recyclerView).res("res"),
@@ -459,9 +444,8 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
   }
 
   private static ArtifactLocation gen(String relativePath) {
-    String fakeGenRootExecutionPathFragment = "bazel-out/crosstool/bin";
     return ArtifactLocation.builder()
-        .setRootExecutionPathFragment(fakeGenRootExecutionPathFragment)
+        .setRootExecutionPathFragment(BlazeInfoData.DEFAULT.getRootExecutionPathFragment())
         .setRelativePath(relativePath)
         .setIsSource(false)
         .build();

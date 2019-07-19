@@ -20,13 +20,16 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.android.SdkConstants;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.filecache.FileCacheDiffer;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -108,10 +111,10 @@ public class UnpackedAars {
   }
 
   private static class AarAndJar {
-    private final OutputArtifact aar;
-    private final OutputArtifact jar;
+    private final BlazeArtifact aar;
+    private final BlazeArtifact jar;
 
-    AarAndJar(OutputArtifact aar, OutputArtifact jar) {
+    AarAndJar(BlazeArtifact aar, BlazeArtifact jar) {
       this.aar = aar;
       this.jar = jar;
     }
@@ -156,7 +159,7 @@ public class UnpackedAars {
 
     ImmutableMap<String, File> cacheFiles = readFileState();
     ImmutableMap<String, AarAndJar> projectState = getArtifactsToCache(viewSet, projectData);
-    ImmutableMap<String, OutputArtifact> aarOutputs =
+    ImmutableMap<String, BlazeArtifact> aarOutputs =
         projectState.entrySet().stream()
             .collect(toImmutableMap(Map.Entry::getKey, e -> e.getValue().aar));
     try {
@@ -200,8 +203,7 @@ public class UnpackedAars {
   /** Returns the merged jar derived from an AAR, in the unpacked AAR directory. */
   public File getClassJar(ArtifactLocationDecoder decoder, AarLibrary library) {
     ImmutableMap<String, File> cacheState = this.cacheState;
-    OutputArtifact artifact =
-        decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
+    BlazeArtifact artifact = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
     if (cacheState.isEmpty()) {
       return getFallbackFile(artifact);
     }
@@ -241,7 +243,7 @@ public class UnpackedAars {
 
   @Nullable
   public File getAarDir(ArtifactLocationDecoder decoder, AarLibrary library) {
-    OutputArtifact artifact = decoder.resolveOutput(library.aarArtifact);
+    BlazeArtifact artifact = decoder.resolveOutput(library.aarArtifact);
     String cacheKey = cacheKeyForAar(artifact);
     return getAarDir(cacheKey);
   }
@@ -259,12 +261,12 @@ public class UnpackedAars {
   }
 
   /** The file to return if there's no locally cached version. */
-  private static File getFallbackFile(OutputArtifact output) {
+  private static File getFallbackFile(BlazeArtifact output) {
     if (output instanceof RemoteOutputArtifact) {
       // TODO(brendandouglas): copy locally on the fly?
       throw new RuntimeException("The AAR cache must be enabled when syncing remotely");
     }
-    return ((LocalFileOutputArtifact) output).getFile();
+    return ((LocalFileArtifact) output).getFile();
   }
 
   private void clearCache() {
@@ -279,10 +281,23 @@ public class UnpackedAars {
     cacheState = ImmutableMap.of();
   }
 
-  private static String cacheKeyForAar(OutputArtifact aar) {
-    return cacheKeyForAar(aar.getKey());
+  private static String artifactKey(BlazeArtifact artifact) {
+    if (artifact instanceof OutputArtifact) {
+      return ((OutputArtifact) artifact).getKey();
+    }
+    if (artifact instanceof SourceArtifact) {
+      return ((SourceArtifact) artifact).getFile().getPath();
+    }
+    throw new RuntimeException("Unhandled BlazeArtifact type: " + artifact.getClass());
   }
 
+  private static String cacheKeyForAar(BlazeArtifact aar) {
+    return cacheKeyForAar(artifactKey(aar));
+  }
+
+  // TODO(one-studio): remove this method: tests should pass through a BlazeArtifact instead of
+  //  making assumptions about the artifact key format
+  @VisibleForTesting
   public static String cacheKeyForAar(String key) {
     return cacheKeyInternal(key) + SdkConstants.DOT_AAR;
   }
@@ -354,16 +369,8 @@ public class UnpackedAars {
     ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
     Map<String, AarAndJar> outputs = new HashMap<>();
     for (AarLibrary library : aarLibraries) {
-      OutputArtifact aar = decoder.resolveOutput(library.aarArtifact);
-      OutputArtifact jar = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
-      if (aar == null || jar == null) {
-        // this implies either the aar or jar are source artifacts, which should never happen
-        logger.warn(
-            String.format(
-                "Can't resolve AAR output artifacts:\n%s\n%s",
-                library.aarArtifact, library.libraryArtifact.jarForIntellijLibrary()));
-        continue;
-      }
+      BlazeArtifact aar = decoder.resolveOutput(library.aarArtifact);
+      BlazeArtifact jar = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
       outputs.put(cacheKeyForAar(aar), new AarAndJar(aar, jar));
     }
     return ImmutableMap.copyOf(outputs);
@@ -431,25 +438,25 @@ public class UnpackedAars {
       }
 
     } catch (IOException e) {
-      logger.warn(
-          String.format("Failed to extract AAR %s to %s", aarAndJar.aar.getKey(), aarDir), e);
+      logger.warn(String.format("Failed to extract AAR %s to %s", aarAndJar.aar, aarDir), e);
     }
   }
 
-  private void createStampFile(FileOperationProvider fileOps, File aarDir, OutputArtifact aar) {
+  private static void createStampFile(
+      FileOperationProvider fileOps, File aarDir, BlazeArtifact aar) {
     File stampFile = new File(aarDir, STAMP_FILE_NAME);
     try {
       stampFile.createNewFile();
-      if (!(aar instanceof LocalFileOutputArtifact)) {
+      if (!(aar instanceof LocalFileArtifact)) {
         // no need to set the timestamp for remote artifacts
         return;
       }
-      long sourceTime = fileOps.getFileModifiedTime(((LocalFileOutputArtifact) aar).getFile());
+      long sourceTime = fileOps.getFileModifiedTime(((LocalFileArtifact) aar).getFile());
       if (!fileOps.setFileModifiedTime(stampFile, sourceTime)) {
-        logger.warn("Failed to set AAR cache timestamp for " + aar.getKey());
+        logger.warn("Failed to set AAR cache timestamp for " + aar);
       }
     } catch (IOException e) {
-      logger.warn("Failed to set AAR cache timestamp for " + aar.getKey(), e);
+      logger.warn("Failed to set AAR cache timestamp for " + aar, e);
     }
   }
 
@@ -469,15 +476,15 @@ public class UnpackedAars {
         .collect(toImmutableList());
   }
 
-  /** Returns a locally-accessible file mirroring the contents of this {@link OutputArtifact}. */
-  private static File getOrCreateLocalFile(OutputArtifact artifact) throws IOException {
-    if (artifact instanceof LocalFileOutputArtifact) {
-      return ((LocalFileOutputArtifact) artifact).getFile();
+  /** Returns a locally-accessible file mirroring the contents of this {@link BlazeArtifact}. */
+  private static File getOrCreateLocalFile(BlazeArtifact artifact) throws IOException {
+    if (artifact instanceof LocalFileArtifact) {
+      return ((LocalFileArtifact) artifact).getFile();
     }
     File tmpFile =
         FileUtil.createTempFile(
             "local-aar-file",
-            Integer.toHexString(artifact.getKey().hashCode()),
+            Integer.toHexString(artifactKey(artifact).hashCode()),
             /* deleteOnExit= */ true);
     try (InputStream stream = artifact.getInputStream()) {
       Files.copy(stream, Paths.get(tmpFile.getPath()), StandardCopyOption.REPLACE_EXISTING);

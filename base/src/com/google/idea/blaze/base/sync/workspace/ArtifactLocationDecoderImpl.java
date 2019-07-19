@@ -15,8 +15,9 @@
  */
 package com.google.idea.blaze.base.sync.workspace;
 
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
@@ -41,15 +42,15 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
   }
 
   @Override
-  public OutputArtifact resolveOutput(ArtifactLocation artifact) {
+  public BlazeArtifact resolveOutput(ArtifactLocation artifact) {
     if (artifact.isMainWorkspaceSourceArtifact()) {
-      return new LocalFileOutputArtifact(decode(artifact));
+      return new SourceArtifact(decode(artifact));
     }
-    OutputArtifact remoteOutput = remoteOutputs.findRemoteOutput(artifact);
+    BlazeArtifact remoteOutput = remoteOutputs.findRemoteOutput(artifact);
     if (remoteOutput != null) {
       return remoteOutput;
     }
-    return new LocalFileOutputArtifact(decode(artifact));
+    return outputArtifactFromExecRoot(artifact);
   }
 
   @Override
@@ -89,5 +90,25 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
   @Override
   public int hashCode() {
     return Objects.hash(blazeInfo, pathResolver);
+  }
+
+  /**
+   * Derives a {@link LocalFileOutputArtifact} from a generated {@link ArtifactLocation} under
+   * blaze-out.
+   *
+   * <p>If the exec-root path is of an unexpected form, falls back to returning a {@link
+   * SourceArtifact}.
+   */
+  private BlazeArtifact outputArtifactFromExecRoot(ArtifactLocation location) {
+    // exec-root-relative path of the form 'blaze-out/mnemonic/genfiles/path'
+    String execRootPath = location.getExecutionRootRelativePath();
+    int ix1 = execRootPath.indexOf('/');
+    int ix2 = execRootPath.indexOf('/', ix1 + 1);
+    if (ix2 == -1) {
+      return new SourceArtifact(decode(location));
+    }
+    String blazeOutPath = execRootPath.substring(ix1 + 1);
+    String configMnemonic = execRootPath.substring(ix1 + 1, ix2);
+    return new LocalFileOutputArtifact(decode(location), blazeOutPath, configMnemonic);
   }
 }

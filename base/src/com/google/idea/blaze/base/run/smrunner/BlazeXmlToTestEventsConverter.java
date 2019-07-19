@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -122,13 +122,13 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   private static class ParsedTargetResults {
     private final Label label;
     private final Collection<BlazeTestResult> results;
-    private final List<OutputArtifact> outputFiles;
+    private final List<BlazeArtifact> outputFiles;
     private final List<TestSuite> targetSuites;
 
     ParsedTargetResults(
         Label label,
         Collection<BlazeTestResult> results,
-        List<OutputArtifact> outputFiles,
+        List<BlazeArtifact> outputFiles,
         List<TestSuite> targetSuites) {
       this.label = label;
       this.results = results;
@@ -140,10 +140,10 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   /** Parse all test XML files from a single test target. */
   private static ParsedTargetResults parseTestXml(
       Label label, Collection<BlazeTestResult> results) {
-    List<OutputArtifact> outputFiles = new ArrayList<>();
+    List<BlazeArtifact> outputFiles = new ArrayList<>();
     results.forEach(result -> outputFiles.addAll(result.getOutputXmlFiles()));
     List<TestSuite> targetSuites = new ArrayList<>();
-    for (OutputArtifact file : outputFiles) {
+    for (BlazeArtifact file : outputFiles) {
       try (InputStream input = file.getInputStream()) {
         targetSuites.add(BlazeXmlSchema.parse(input));
       } catch (Exception e) {
@@ -191,7 +191,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
 
   /** Return false if there's output XML which should be parsed. */
   private static boolean noUsefulOutput(
-      Collection<BlazeTestResult> results, List<OutputArtifact> outputFiles) {
+      Collection<BlazeTestResult> results, List<BlazeArtifact> outputFiles) {
     if (outputFiles.isEmpty()) {
       return true;
     }

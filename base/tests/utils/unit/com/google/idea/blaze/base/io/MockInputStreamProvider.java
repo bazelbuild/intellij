@@ -17,8 +17,8 @@ package com.google.idea.blaze.base.io;
 
 import static org.junit.Assert.fail;
 
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.intellij.util.containers.HashMap;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -63,9 +63,9 @@ public class MockInputStreamProvider implements InputStreamProvider {
   }
 
   @Override
-  public BufferedInputStream forOutputArtifact(OutputArtifact output) throws IOException {
-    if (output instanceof LocalFileOutputArtifact) {
-      return new BufferedInputStream(forFile(((LocalFileOutputArtifact) output).getFile()));
+  public BufferedInputStream forOutputArtifact(BlazeArtifact output) throws IOException {
+    if (output instanceof LocalFileArtifact) {
+      return new BufferedInputStream(forFile(((LocalFileArtifact) output).getFile()));
     }
     throw new RuntimeException("Unhandled output type: " + output.getClass());
   }

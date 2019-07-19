@@ -18,11 +18,11 @@ package com.google.idea.blaze.base.filecache;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.devtools.intellij.model.ProjectData.LocalFile;
 import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-/** Used to diff blaze {@link OutputArtifact}s from different builds. */
+/** Used to diff blaze {@link BlazeArtifact}s from different builds. */
 public interface ArtifactState {
 
   /**

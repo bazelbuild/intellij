@@ -21,7 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.view.proto.Deps;
 import com.google.idea.blaze.base.async.FutureUtil;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
@@ -111,9 +111,9 @@ public class JdepsFileReader {
 
     Map<OutputArtifact, TargetKey> fileToTargetMap = Maps.newHashMap();
     for (TargetIdeInfo target : targetsToLoad) {
-      OutputArtifact output = resolveJdepsOutput(decoder, target);
-      if (output != null) {
-        fileToTargetMap.put(output, target.getKey());
+      BlazeArtifact output = resolveJdepsOutput(decoder, target);
+      if (output instanceof OutputArtifact) {
+        fileToTargetMap.put((OutputArtifact) output, target.getKey());
       }
     }
 
@@ -125,8 +125,7 @@ public class JdepsFileReader {
     // TODO: handle prefetching for arbitrary OutputArtifacts
     ListenableFuture<?> fetchFuture =
         PrefetchService.getInstance()
-            .prefetchFiles(
-                LocalFileOutputArtifact.getLocalOutputFiles(diff.getUpdatedOutputs()), true, false);
+            .prefetchFiles(BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()), true, false);
     if (!FutureUtil.waitForFuture(context, fetchFuture)
         .timed("FetchJdeps", EventType.Prefetching)
         .withProgressMessage("Reading jdeps files...")
@@ -187,7 +186,7 @@ public class JdepsFileReader {
   }
 
   @Nullable
-  private static OutputArtifact resolveJdepsOutput(
+  private static BlazeArtifact resolveJdepsOutput(
       ArtifactLocationDecoder decoder, TargetIdeInfo target) {
     JavaIdeInfo javaIdeInfo = target.getJavaIdeInfo();
     if (javaIdeInfo == null || javaIdeInfo.getJdepsFile() == null) {

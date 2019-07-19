@@ -33,10 +33,10 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -306,14 +306,14 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
                           || aspectStrategy.getAspectOutputFilePredicate().test(file);
               try {
                 ImmutableList<File> deployJarArtifacts =
-                    LocalFileOutputArtifact.getLocalOutputFiles(
+                    BlazeArtifact.getLocalFiles(
                         buildResultHelper.getBuildArtifactsForTarget(
                             deployJarLabel, filePredicate));
                 checkState(deployJarArtifacts.size() == 1);
                 File deployJar = deployJarArtifacts.get(0);
 
                 ImmutableList<File> ideInfoFiles =
-                    LocalFileOutputArtifact.getLocalOutputFiles(
+                    BlazeArtifact.getLocalFiles(
                         buildResultHelper.getArtifactsForOutputGroup(
                             aspectStrategy.getAspectOutputGroup(), filePredicate));
 

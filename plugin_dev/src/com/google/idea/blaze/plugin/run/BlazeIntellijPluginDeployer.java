@@ -25,9 +25,9 @@ import com.google.common.collect.Maps;
 import com.google.devtools.intellij.plugin.IntellijPluginTargetDeployInfo.IntellijPluginDeployFile;
 import com.google.devtools.intellij.plugin.IntellijPluginTargetDeployInfo.IntellijPluginDeployInfo;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -93,7 +93,7 @@ class BlazeIntellijPluginDeployer {
     ImmutableList<OutputArtifact> outputs =
         buildResultHelper.getBuildArtifactsForTarget(
             pluginTarget, file -> file.endsWith(".intellij-plugin-debug-target-deploy-info"));
-    deployInfoFiles.addAll(LocalFileOutputArtifact.getLocalOutputFiles(outputs));
+    deployInfoFiles.addAll(BlazeArtifact.getLocalFiles(outputs));
   }
 
   /**

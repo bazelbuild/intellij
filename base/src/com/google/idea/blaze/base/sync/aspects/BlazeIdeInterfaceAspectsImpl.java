@@ -40,10 +40,11 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
@@ -231,7 +232,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     // prefetch remote outputs
     List<ListenableFuture<?>> futures = new ArrayList<>();
-    for (OutputArtifact file : diff.getUpdatedOutputs()) {
+    for (BlazeArtifact file : diff.getUpdatedOutputs()) {
       if (file instanceof RemoteOutputArtifact) {
         futures.add(FetchExecutor.EXECUTOR.submit(((RemoteOutputArtifact) file)::prefetch));
       }
@@ -247,8 +248,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     ListenableFuture<?> prefetchFuture =
         PrefetchService.getInstance()
-            .prefetchFiles(
-                LocalFileOutputArtifact.getLocalOutputFiles(diff.getUpdatedOutputs()), true, false);
+            .prefetchFiles(BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()), true, false);
     if (!FutureUtil.waitForFuture(context, prefetchFuture)
         .timed("FetchAspectOutput", EventType.Prefetching)
         .withProgressMessage("Reading IDE info result...")
@@ -493,7 +493,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 for (TargetFilePair targetFilePair : Futures.allAsList(futures).get()) {
                   if (targetFilePair.target != null) {
                     OutputArtifact file = targetFilePair.file;
-                    String config = file.getBlazeConfigurationMnemonic(configHandler);
+                    String config = file.getConfigurationMnemonic();
                     configurations.add(config);
                     TargetKey key = targetFilePair.target.getKey();
                     if (targetMap.putIfAbsent(key, targetFilePair.target) == null) {
@@ -711,8 +711,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     ImmutableList<File> files =
         artifacts.stream()
             .filter(a -> filter.test(a.getKey()))
-            .filter(o -> o instanceof LocalFileOutputArtifact)
-            .map(o -> ((LocalFileOutputArtifact) o).getFile())
+            .filter(o -> o instanceof LocalFileArtifact)
+            .map(o -> ((LocalFileArtifact) o).getFile())
             .collect(toImmutableList());
     if (files.isEmpty()) {
       return;

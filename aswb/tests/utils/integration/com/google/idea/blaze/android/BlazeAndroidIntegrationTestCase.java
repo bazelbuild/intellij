@@ -51,7 +51,7 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
   public void setTargetMap(NbTargetBuilder... builders) {
     TargetMap targetMap = targetMap(builders);
     setTargetMap(targetMap);
-    JdepsFileWriter.writeDefaultJdepsFiles(workspace, targetMap);
+    JdepsFileWriter.writeDefaultJdepsFiles(getExecRoot(), fileSystem, targetMap);
   }
 
   public static void mockSdk(String targetHash, String sdkName) {

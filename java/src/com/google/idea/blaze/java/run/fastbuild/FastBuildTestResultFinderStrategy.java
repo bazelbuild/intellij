@@ -18,7 +18,7 @@ package com.google.idea.blaze.java.run.fastbuild;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResult;
@@ -58,7 +58,7 @@ final class FastBuildTestResultFinderStrategy implements BlazeTestResultFinderSt
                 label,
                 kind,
                 TestStatus.NO_STATUS,
-                ImmutableSet.of(new LocalFileOutputArtifact(outputFile)))));
+                ImmutableSet.of(new SourceArtifact(outputFile)))));
   }
 
   @Override

@@ -22,7 +22,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.io.FileAttributeScanner;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
@@ -83,7 +83,7 @@ public abstract class ArtifactsDiff {
 
   private static ImmutableMap<String, ArtifactState> computeState(
       Collection<OutputArtifact> artifacts) throws InterruptedException, ExecutionException {
-    boolean hasLocalFiles = artifacts.stream().anyMatch(a -> a instanceof LocalFileOutputArtifact);
+    boolean hasLocalFiles = artifacts.stream().anyMatch(a -> a instanceof LocalFileArtifact);
     if (!hasLocalFiles) {
       return artifacts.stream()
           .collect(toImmutableMap(OutputArtifact::getKey, OutputArtifact::toArtifactState));

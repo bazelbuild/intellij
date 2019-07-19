@@ -71,16 +71,8 @@ import org.junit.Before;
 /** Sets up mocks required for integration tests of the blaze sync process. */
 public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestCase {
 
-  // blaze-info data
-  private static final String OUTPUT_BASE = "/output_base";
-  private static final String EXECUTION_ROOT = "/execroot/root";
-  private static final String OUTPUT_PATH = EXECUTION_ROOT + "/blaze-out";
-  private static final String BLAZE_BIN =
-      OUTPUT_PATH + "/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
-  private static final String BLAZE_GENFILES =
-      OUTPUT_PATH + "/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/genfiles";
-  private static final String BLAZE_TESTLOGS =
-      OUTPUT_PATH + "/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/testlogs";
+  private static final String DEFAULT_CONFIGURATION =
+      "gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild";
 
   private Disposable thisClassDisposable; // disposed prior to calling parent class's @After methods
   private MockProjectViewManager projectViewManager;
@@ -90,6 +82,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   @Nullable private ProjectModuleMocker moduleMocker; // this will be null for heavy test cases
 
   protected ErrorCollector errorCollector;
+  private String execRoot;
 
   @Before
   public void doSetup() {
@@ -109,14 +102,22 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
     fileSystem.createDirectory(projectDataDirectory.getPath() + "/.blaze/modules");
 
+    // absolute file paths depend on #isLightTestCase, so can't be determined statically
+    String outputBase = fileSystem.createDirectory("output_base").getPath();
+    execRoot = fileSystem.createDirectory("execroot/root").getPath();
+    String outputPath = execRoot + "/blaze-out";
+    String blazeBin = String.format("%s/%s/bin", outputPath, DEFAULT_CONFIGURATION);
+    String blazeGenfiles = String.format("%s/%s/genfiles", outputPath, DEFAULT_CONFIGURATION);
+    String blazeTestlogs = String.format("%s/%s/testlogs", outputPath, DEFAULT_CONFIGURATION);
+
     blazeInfoData.setResults(
         ImmutableMap.<String, String>builder()
-            .put(BlazeInfo.blazeBinKey(Blaze.getBuildSystem(getProject())), BLAZE_BIN)
-            .put(BlazeInfo.blazeGenfilesKey(Blaze.getBuildSystem(getProject())), BLAZE_GENFILES)
-            .put(BlazeInfo.blazeTestlogsKey(Blaze.getBuildSystem(getProject())), BLAZE_TESTLOGS)
-            .put(BlazeInfo.EXECUTION_ROOT_KEY, EXECUTION_ROOT)
-            .put(BlazeInfo.OUTPUT_BASE_KEY, OUTPUT_BASE)
-            .put(BlazeInfo.OUTPUT_PATH_KEY, OUTPUT_PATH)
+            .put(BlazeInfo.blazeBinKey(Blaze.getBuildSystem(getProject())), blazeBin)
+            .put(BlazeInfo.blazeGenfilesKey(Blaze.getBuildSystem(getProject())), blazeGenfiles)
+            .put(BlazeInfo.blazeTestlogsKey(Blaze.getBuildSystem(getProject())), blazeTestlogs)
+            .put(BlazeInfo.EXECUTION_ROOT_KEY, execRoot)
+            .put(BlazeInfo.OUTPUT_BASE_KEY, outputBase)
+            .put(BlazeInfo.OUTPUT_PATH_KEY, outputPath)
             .put(BlazeInfo.PACKAGE_PATH_KEY, workspaceRoot.toString())
             .build());
   }
@@ -149,6 +150,11 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
       }
     }
     return null;
+  }
+
+  /** The absolute file path for the execution root in the {@link TestFileSystem}. */
+  protected String getExecRoot() {
+    return execRoot;
   }
 
   protected static ArtifactLocation sourceRoot(String relativePath) {

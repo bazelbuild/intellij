@@ -162,12 +162,9 @@ public class NbTargetMapBuilderTest {
             .build();
 
     // New target map construction.
-    BlazeInfoData info =
-        BlazeInfoData.builder().setBlazeExecutablesRootPath("bazel-out/crosstool/bin").build();
-
     TargetMap newTargetMap =
         targetMap(
-            java_library("//java/com/google:lib", info)
+            java_library("//java/com/google:lib")
                 .src("ClassWithUniqueName1.java", "ClassWithUniqueName2.java")
                 .dep("//java/com/google:dep")
                 .generated_jar("//import/import.generated_jar"));
@@ -211,18 +208,15 @@ public class NbTargetMapBuilderTest {
             .build();
 
     // New target map construction.
-    BlazeInfoData info =
-        BlazeInfoData.builder().setBlazeExecutablesRootPath("bazel-out/crosstool/bin").build();
-
     TargetMap newTargetMap =
         targetMap(
-            android_library("//import:liba", info)
+            android_library("//import:liba")
                 .src("Lib.java")
                 .dep("//import:import", "//import:import_android"),
-            android_library("//import:lib", info)
+            android_library("//import:lib")
                 .src("Lib.java")
                 .dep("//import:import", "//import:import_android"),
-            java_library("//import:import", info).generated_jar("import.jar"));
+            java_library("//import:import").generated_jar("import.jar"));
 
     assertTargetMapEquivalence(newTargetMap, oldTargetMap);
   }
@@ -232,9 +226,8 @@ public class NbTargetMapBuilderTest {
   }
 
   private static ArtifactLocation gen(String relativePath) {
-    String fakeGenRootExecutionPathFragment = "bazel-out/crosstool/bin";
     return ArtifactLocation.builder()
-        .setRootExecutionPathFragment(fakeGenRootExecutionPathFragment)
+        .setRootExecutionPathFragment(BlazeInfoData.DEFAULT.getRootExecutionPathFragment())
         .setRelativePath(relativePath)
         .setIsSource(false)
         .build();

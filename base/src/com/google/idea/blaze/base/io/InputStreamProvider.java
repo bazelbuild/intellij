@@ -16,14 +16,14 @@
 package com.google.idea.blaze.base.io;
 
 import com.google.errorprone.annotations.MustBeClosed;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.intellij.openapi.components.ServiceManager;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-/** Provides input streams for files and {@link OutputArtifact}s. */
+/** Provides input streams for files and {@link BlazeArtifact}s. */
 public interface InputStreamProvider {
 
   static InputStreamProvider getInstance() {
@@ -33,5 +33,5 @@ public interface InputStreamProvider {
   InputStream forFile(File file) throws IOException;
 
   @MustBeClosed
-  BufferedInputStream forOutputArtifact(OutputArtifact output) throws IOException;
+  BufferedInputStream forOutputArtifact(BlazeArtifact output) throws IOException;
 }

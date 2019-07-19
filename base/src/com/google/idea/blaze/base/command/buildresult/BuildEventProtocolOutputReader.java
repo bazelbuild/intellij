@@ -53,28 +53,48 @@ public final class BuildEventProtocolOutputReader {
    * @throws IOException if the BEP {@link InputStream} is incorrectly formatted
    */
   public static BlazeTestResults parseTestResults(InputStream inputStream) throws IOException {
-    Map<String, Kind> labelToTargetKind = new HashMap<>();
+    Map<String, String> configIdToMnemonic = new HashMap<>();
+    Map<String, Kind> labelToKind = new HashMap<>();
+    Map<String, String> labelToMnemonic = new HashMap<>();
+    long startTimeMillis = 0L;
     ImmutableList.Builder<BlazeTestResult> results = ImmutableList.builder();
     BuildEventStreamProtos.BuildEvent event;
     while ((event = BuildEventStreamProtos.BuildEvent.parseDelimitedFrom(inputStream)) != null) {
       switch (event.getId().getIdCase()) {
+        case STARTED:
+          startTimeMillis = event.getStarted().getStartTimeMillis();
+          continue;
+        case CONFIGURATION:
+          configIdToMnemonic.put(
+              event.getId().getConfiguration().getId(), event.getConfiguration().getMnemonic());
+          continue;
         case TARGET_COMPLETED:
           String label = event.getId().getTargetCompleted().getLabel();
+          labelToMnemonic.put(
+              label,
+              configIdToMnemonic.get(
+                  event.getId().getTargetCompleted().getConfiguration().getId()));
           Kind kind = parseTargetKind(event.getCompleted().getTargetKind());
           if (kind != null) {
-            labelToTargetKind.put(label, kind);
+            labelToKind.put(label, kind);
           }
           continue;
         case TARGET_CONFIGURED:
           label = event.getId().getTargetConfigured().getLabel();
           kind = parseTargetKind(event.getConfigured().getTargetKind());
           if (kind != null) {
-            labelToTargetKind.put(label, kind);
+            labelToKind.put(label, kind);
           }
           continue;
         case TEST_RESULT:
           label = event.getId().getTestResult().getLabel();
-          results.add(parseTestResult(label, labelToTargetKind.get(label), event.getTestResult()));
+          results.add(
+              parseTestResult(
+                  label,
+                  labelToKind.get(label),
+                  labelToMnemonic.get(label),
+                  event.getTestResult(),
+                  startTimeMillis));
           continue;
         default: // continue
       }
@@ -91,10 +111,16 @@ public final class BuildEventProtocolOutputReader {
   }
 
   private static BlazeTestResult parseTestResult(
-      String label, @Nullable Kind kind, BuildEventStreamProtos.TestResult testResult) {
-    ImmutableSet<OutputArtifact> files =
+      String label,
+      @Nullable Kind kind,
+      @Nullable String mnemonic,
+      BuildEventStreamProtos.TestResult testResult,
+      long startTimeMillis) {
+    ImmutableSet<BlazeArtifact> files =
         testResult.getTestActionOutputList().stream()
-            .map(file -> parseTestFile(file, path -> path.endsWith(".xml")))
+            .map(
+                file ->
+                    parseTestFile(file, mnemonic, path -> path.endsWith(".xml"), startTimeMillis))
             .filter(Objects::nonNull)
             .collect(toImmutableSet());
     return BlazeTestResult.create(
@@ -109,9 +135,19 @@ public final class BuildEventProtocolOutputReader {
     return TestStatus.valueOf(protoStatus.name());
   }
 
-  /** TODO(b/118636150): don't assume test outputs are local files. */
   @Nullable
-  private static OutputArtifact parseTestFile(
+  private static BlazeArtifact parseTestFile(
+      BuildEventStreamProtos.File file,
+      @Nullable String mnemonic,
+      Predicate<String> fileFilter,
+      long startTimeMillis) {
+    if (mnemonic == null) {
+      return parseLocalFile(file, fileFilter);
+    }
+    return OutputArtifactParser.parseArtifact(file, mnemonic, fileFilter, startTimeMillis);
+  }
+
+  private static SourceArtifact parseLocalFile(
       BuildEventStreamProtos.File file, Predicate<String> fileFilter) {
     String uri = file.getUri();
     if (uri == null || !uri.startsWith(URLUtil.FILE_PROTOCOL)) {
@@ -119,7 +155,7 @@ public final class BuildEventProtocolOutputReader {
     }
     try {
       File f = new File(new URI(uri));
-      return fileFilter.test(f.getPath()) ? new LocalFileOutputArtifact(f) : null;
+      return fileFilter.test(f.getPath()) ? new SourceArtifact(f) : null;
     } catch (URISyntaxException | IllegalArgumentException e) {
       return null;
     }

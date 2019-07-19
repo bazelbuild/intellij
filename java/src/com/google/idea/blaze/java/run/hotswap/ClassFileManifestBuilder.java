@@ -21,10 +21,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -125,7 +125,7 @@ public class ClassFileManifestBuilder {
       ImmutableList<File> jars;
       try {
         jars =
-            LocalFileOutputArtifact.getLocalOutputFiles(
+            BlazeArtifact.getLocalFiles(
                     buildResultHelper.getArtifactsForOutputGroup(
                         JavaClasspathAspectStrategy.OUTPUT_GROUP, file -> true))
                 .stream()

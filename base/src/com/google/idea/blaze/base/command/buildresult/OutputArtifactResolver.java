@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -28,7 +29,7 @@ import java.util.Collection;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-/** Helper class for resolving {@link OutputArtifact}s to local files. */
+/** Helper class for resolving {@link BlazeArtifact}s to local files. */
 public final class OutputArtifactResolver {
   /**
    * Resolve a collection of {@link ArtifactLocation} to local files, skipping those for which a
@@ -53,9 +54,9 @@ public final class OutputArtifactResolver {
   }
 
   @Nullable
-  public static File resolve(Project project, OutputArtifact output) {
-    if (output instanceof LocalFileOutputArtifact) {
-      return ((LocalFileOutputArtifact) output).getFile();
+  public static File resolve(Project project, BlazeArtifact output) {
+    if (output instanceof LocalFileArtifact) {
+      return ((LocalFileArtifact) output).getFile();
     }
     Preconditions.checkState(output instanceof RemoteOutputArtifact);
     return RemoteOutputsCache.getInstance(project).resolveOutput((RemoteOutputArtifact) output);

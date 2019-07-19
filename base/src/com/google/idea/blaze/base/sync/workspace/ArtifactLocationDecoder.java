@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.workspace;
 
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import java.io.File;
 import java.util.Collection;
@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 /** Decodes intellij_ide_info.proto ArtifactLocation file paths */
 public interface ArtifactLocationDecoder {
 
-  /** @deprecated use {@link OutputArtifact} instead of {@link File}. */
+  /** @deprecated use {@link BlazeArtifact} instead of {@link File}. */
   @Deprecated
   File decode(ArtifactLocation artifactLocation);
 
@@ -38,14 +38,10 @@ public interface ArtifactLocationDecoder {
   @Nullable
   File resolveSource(ArtifactLocation artifact);
 
-  /**
-   * Returns a {@link LocalFileOutputArtifact} for source or locally-available output artifacts.
-   *
-   * <p>TODO(brendandouglas): clean up this API to better handle source artifacts.
-   */
-  OutputArtifact resolveOutput(ArtifactLocation artifact);
+  /** Returns a {@link BlazeArtifact} corresponding to the given {@link ArtifactLocation}. */
+  BlazeArtifact resolveOutput(ArtifactLocation artifact);
 
-  default List<OutputArtifact> resolveOutputs(Collection<ArtifactLocation> artifactLocations) {
+  default List<BlazeArtifact> resolveOutputs(Collection<ArtifactLocation> artifactLocations) {
     return artifactLocations.stream()
         .map(this::resolveOutput)
         .filter(Objects::nonNull)

@@ -18,8 +18,8 @@ package com.google.idea.blaze.base.filecache;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.io.ModifiedTimeScanner;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
@@ -37,10 +37,10 @@ import javax.annotation.Nullable;
 public final class FileCacheDiffer {
 
   /**
-   * Returns a map from cache key to OutputArtifact, containing only those outputs which need to be
+   * Returns a map from cache key to BlazeArtifact, containing only those outputs which need to be
    * updated in the cache.
    */
-  public static <O extends OutputArtifact> Map<String, O> findUpdatedOutputs(
+  public static <O extends BlazeArtifact> Map<String, O> findUpdatedOutputs(
       Map<String, O> newOutputs,
       Map<String, File> cachedFiles,
       RemoteOutputArtifacts previousOutputs)
@@ -53,21 +53,21 @@ public final class FileCacheDiffer {
   }
 
   private static ImmutableMap<File, Long> readTimestamps(
-      Map<String, ? extends OutputArtifact> newOutputs, Map<String, File> cachedFiles)
+      Map<String, ? extends BlazeArtifact> newOutputs, Map<String, File> cachedFiles)
       throws InterruptedException, ExecutionException {
     boolean timestampsRequired =
-        newOutputs.values().stream().anyMatch(a -> a instanceof LocalFileOutputArtifact);
+        newOutputs.values().stream().anyMatch(a -> a instanceof LocalFileArtifact);
     if (!timestampsRequired) {
       return ImmutableMap.of();
     }
     Set<File> relevantFiles = new HashSet<>();
-    for (Map.Entry<String, ? extends OutputArtifact> entry : newOutputs.entrySet()) {
-      OutputArtifact newOutput = entry.getValue();
-      boolean needsTimestamp = newOutput instanceof LocalFileOutputArtifact;
+    for (Map.Entry<String, ? extends BlazeArtifact> entry : newOutputs.entrySet()) {
+      BlazeArtifact newOutput = entry.getValue();
+      boolean needsTimestamp = newOutput instanceof LocalFileArtifact;
       if (!needsTimestamp) {
         continue;
       }
-      relevantFiles.add(((LocalFileOutputArtifact) newOutput).getFile());
+      relevantFiles.add(((LocalFileArtifact) newOutput).getFile());
       File cached = cachedFiles.get(entry.getKey());
       if (cached != null) {
         relevantFiles.add(cached);
@@ -78,13 +78,12 @@ public final class FileCacheDiffer {
 
   private static boolean shouldUpdate(
       String key,
-      OutputArtifact newOutput,
+      BlazeArtifact newOutput,
       RemoteOutputArtifacts previousOutputs,
       Map<File, Long> timestamps,
       Map<String, File> cachedFiles) {
-    if (newOutput instanceof LocalFileOutputArtifact) {
-      return shouldUpdateLocal(
-          (LocalFileOutputArtifact) newOutput, cachedFiles.get(key), timestamps);
+    if (newOutput instanceof LocalFileArtifact) {
+      return shouldUpdateLocal((LocalFileArtifact) newOutput, cachedFiles.get(key), timestamps);
     }
     return !cachedFiles.containsKey(key)
         || shouldUpdateRemote((RemoteOutputArtifact) newOutput, previousOutputs);
@@ -102,7 +101,7 @@ public final class FileCacheDiffer {
   }
 
   private static boolean shouldUpdateLocal(
-      LocalFileOutputArtifact newOutput, @Nullable File localFile, Map<File, Long> timestamps) {
+      LocalFileArtifact newOutput, @Nullable File localFile, Map<File, Long> timestamps) {
     Long oldTimestamp = localFile != null ? timestamps.get(localFile) : null;
     Long newTimestamp = timestamps.get(newOutput.getFile());
     // we should be comparing sync start time, not artifact creation time. For now, keep the

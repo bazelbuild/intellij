@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.targetmapbuilder;
 
-import static com.google.idea.blaze.android.targetmapbuilder.NbTargetMapUtils.makeSourceArtifact;
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetMapUtils.workspacePathForLabel;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -55,7 +54,13 @@ public class NbJavaTarget extends NbBaseTargetBuilder {
 
     // e.g. //java/com/google:app -> java/com/google/app.jdeps
     String jdepsPath = workspacePathForLabel(blazePackage, label.replace(":", "/") + ".jdeps");
-    javaIdeInfoBuilder.setJdepsFile(makeSourceArtifact(jdepsPath));
+    ArtifactLocation jdepsArtifact =
+        ArtifactLocation.builder()
+            .setRootExecutionPathFragment(blazeInfoData.getRootExecutionPathFragment())
+            .setRelativePath(jdepsPath)
+            .setIsSource(false)
+            .build();
+    javaIdeInfoBuilder.setJdepsFile(jdepsArtifact);
   }
 
   @Override
@@ -67,7 +72,7 @@ public class NbJavaTarget extends NbBaseTargetBuilder {
     String jarPath = workspacePathForLabel(blazePackage, jarLabel);
     ArtifactLocation jar =
         ArtifactLocation.builder()
-            .setRootExecutionPathFragment(blazeInfoData.getBlazeExecutablesRootPath())
+            .setRootExecutionPathFragment(blazeInfoData.getRootExecutionPathFragment())
             .setRelativePath(jarPath)
             .setIsSource(false)
             .build();

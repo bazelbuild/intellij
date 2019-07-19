@@ -22,9 +22,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.filecache.FileCacheDiffer;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -170,11 +172,11 @@ public class JarCache {
       }
     }
 
-    ImmutableMap<String, OutputArtifact> projectState =
+    ImmutableMap<String, BlazeArtifact> projectState =
         getArtifactsToCache(projectViewSet, projectData);
     ImmutableMap<String, File> cachedFiles = readFileState();
     try {
-      Map<String, OutputArtifact> updated =
+      Map<String, BlazeArtifact> updated =
           FileCacheDiffer.findUpdatedOutputs(projectState, cachedFiles, previousOutputs);
 
       List<File> removed = new ArrayList<>();
@@ -218,9 +220,9 @@ public class JarCache {
   }
 
   /**
-   * Returns a map from cache key to OutputArtifact, for all the artifacts which should be cached.
+   * Returns a map from cache key to BlazeArtifact, for all the artifacts which should be cached.
    */
-  private static ImmutableMap<String, OutputArtifact> getArtifactsToCache(
+  private static ImmutableMap<String, BlazeArtifact> getArtifactsToCache(
       ProjectViewSet projectViewSet, BlazeProjectData projectData) {
     List<LibraryArtifact> jarLibraries =
         BlazeLibraryCollector.getLibraries(projectViewSet, projectData).stream()
@@ -229,20 +231,20 @@ public class JarCache {
             .collect(Collectors.toList());
 
     ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
-    Map<String, OutputArtifact> newOutputs = new HashMap<>();
+    Map<String, BlazeArtifact> newOutputs = new HashMap<>();
     for (LibraryArtifact lib : jarLibraries) {
-      OutputArtifact jar = decoder.resolveOutput(lib.jarForIntellijLibrary());
+      BlazeArtifact jar = decoder.resolveOutput(lib.jarForIntellijLibrary());
       newOutputs.put(cacheKeyForJar(jar), jar);
 
       for (ArtifactLocation sourceJar : lib.getSourceJars()) {
-        OutputArtifact srcJar = decoder.resolveOutput(sourceJar);
+        BlazeArtifact srcJar = decoder.resolveOutput(sourceJar);
         newOutputs.put(cacheKeyForSourceJar(srcJar), srcJar);
       }
     }
     return ImmutableMap.copyOf(newOutputs);
   }
 
-  private Collection<ListenableFuture<?>> copyLocally(Map<String, OutputArtifact> updated) {
+  private Collection<ListenableFuture<?>> copyLocally(Map<String, BlazeArtifact> updated) {
     List<ListenableFuture<?>> futures = new ArrayList<>();
     updated.forEach(
         (key, artifact) ->
@@ -258,9 +260,9 @@ public class JarCache {
     return futures;
   }
 
-  private static void copyLocally(OutputArtifact output, File destination) throws IOException {
-    if (output instanceof LocalFileOutputArtifact) {
-      File source = ((LocalFileOutputArtifact) output).getFile();
+  private static void copyLocally(BlazeArtifact output, File destination) throws IOException {
+    if (output instanceof LocalFileArtifact) {
+      File source = ((LocalFileArtifact) output).getFile();
       Files.copy(
           Paths.get(source.getPath()),
           Paths.get(destination.getPath()),
@@ -310,8 +312,7 @@ public class JarCache {
   @Nullable
   public File getCachedJar(ArtifactLocationDecoder decoder, BlazeJarLibrary library) {
     boolean enabled = isEnabled();
-    OutputArtifact artifact =
-        decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
+    BlazeArtifact artifact = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
     if (!enabled) {
       return getFallbackFile(artifact);
     }
@@ -326,7 +327,7 @@ public class JarCache {
   @Nullable
   public File getCachedSourceJar(ArtifactLocationDecoder decoder, ArtifactLocation sourceJar) {
     boolean enabled = isEnabled();
-    OutputArtifact artifact = decoder.resolveOutput(sourceJar);
+    BlazeArtifact artifact = decoder.resolveOutput(sourceJar);
     if (!enabled) {
       return getFallbackFile(artifact);
     }
@@ -340,25 +341,35 @@ public class JarCache {
 
   /** The file to return if there's no locally cached version. */
   @Nullable
-  private static File getFallbackFile(OutputArtifact output) {
+  private static File getFallbackFile(BlazeArtifact output) {
     if (output instanceof RemoteOutputArtifact) {
       // TODO(brendandouglas): copy locally on the fly?
       return null;
     }
-    return ((LocalFileOutputArtifact) output).getFile();
+    return ((LocalFileArtifact) output).getFile();
   }
 
-  private static String cacheKeyInternal(OutputArtifact output) {
-    String key = output.getKey();
+  private static String cacheKeyInternal(BlazeArtifact output) {
+    String key = artifactKey(output);
     String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(key));
     return name + "_" + Integer.toHexString(key.hashCode());
   }
 
-  private static String cacheKeyForJar(OutputArtifact jar) {
+  private static String artifactKey(BlazeArtifact artifact) {
+    if (artifact instanceof OutputArtifact) {
+      return ((OutputArtifact) artifact).getKey();
+    }
+    if (artifact instanceof SourceArtifact) {
+      return ((SourceArtifact) artifact).getFile().getPath();
+    }
+    throw new RuntimeException("Unhandled BlazeArtifact type: " + artifact.getClass());
+  }
+
+  private static String cacheKeyForJar(BlazeArtifact jar) {
     return cacheKeyInternal(jar) + ".jar";
   }
 
-  private static String cacheKeyForSourceJar(OutputArtifact srcjar) {
+  private static String cacheKeyForSourceJar(BlazeArtifact srcjar) {
     return cacheKeyInternal(srcjar) + "-src.jar";
   }
 
