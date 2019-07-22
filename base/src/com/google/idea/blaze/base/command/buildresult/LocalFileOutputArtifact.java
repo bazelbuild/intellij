@@ -52,11 +52,6 @@ public class LocalFileOutputArtifact implements OutputArtifact, LocalFileArtifac
   }
 
   @Override
-  public String getKey() {
-    return file.getPath();
-  }
-
-  @Override
   @Nullable
   public ArtifactState toArtifactState() {
     long lastModifiedTime = getLastModifiedTime();
