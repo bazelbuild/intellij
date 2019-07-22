@@ -39,6 +39,8 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
@@ -157,6 +159,16 @@ public abstract class BlazeIntegrationTestCase {
 
   @After
   public final void tearDown() throws Exception {
+    if (!isLightTestCase()) {
+      // Workaround to avoid a platform race condition that occurs when we delete a VirtualDirectory
+      // whose children were affected by external file system events that RefreshQueue is still
+      // processing. We only need this for heavy test cases, since light test cases perform all file
+      // operations synchronously through an in-memory file system.
+      // See https://youtrack.jetbrains.com/issue/IDEA-218773
+      RefreshSession refreshSession = RefreshQueue.getInstance().createSession(false, true, null);
+      refreshSession.addFile(fileSystem.findFile(workspaceRoot.directory().getPath()));
+      refreshSession.launch();
+    }
     SyncCache.getInstance(getProject()).clear();
     runWriteAction(
         () -> {
