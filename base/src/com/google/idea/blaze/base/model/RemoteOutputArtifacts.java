@@ -22,6 +22,7 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -81,15 +82,20 @@ public final class RemoteOutputArtifacts
    * Merges this set of outputs with another set, returning a new {@link RemoteOutputArtifacts}
    * instance.
    */
-  public RemoteOutputArtifacts appendNewOutputs(Set<RemoteOutputArtifact> outputs) {
+  public RemoteOutputArtifacts appendNewOutputs(Set<OutputArtifact> outputs) {
     HashMap<String, RemoteOutputArtifact> map = new HashMap<>(remoteOutputArtifacts);
     // more recently built artifacts replace existing ones with the same path
     outputs.forEach(
         a -> {
           String key = a.getKey();
-          RemoteOutputArtifact other = map.get(key);
-          if (other == null || other.getSyncTimeMillis() < a.getSyncTimeMillis()) {
-            map.put(key, a);
+          if (!(a instanceof RemoteOutputArtifact)) {
+            map.remove(key);
+          } else {
+            RemoteOutputArtifact newOutput = (RemoteOutputArtifact) a;
+            RemoteOutputArtifact other = map.get(key);
+            if (other == null || other.getSyncTimeMillis() < newOutput.getSyncTimeMillis()) {
+              map.put(key, newOutput);
+            }
           }
         });
     return new RemoteOutputArtifacts(ImmutableMap.copyOf(map));

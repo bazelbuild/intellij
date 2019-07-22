@@ -162,21 +162,18 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     // combine outputs map, then filter to remove out-of-date / unnecessary items
     RemoteOutputArtifacts newRemoteOutputs =
         oldRemoteOutputs
-            .appendNewOutputs(getTrackedRemoteOutputs(buildResult))
+            .appendNewOutputs(getTrackedOutputs(buildResult))
             .removeUntrackedOutputs(state.targetMap, projectState.getLanguageSettings());
 
     return new ProjectTargetData(state.targetMap, state.state, newRemoteOutputs);
   }
 
-  /** Returns the {@link RemoteOutputArtifact}s we want to track between syncs. */
-  private static ImmutableSet<RemoteOutputArtifact> getTrackedRemoteOutputs(
-      BlazeBuildOutputs buildOutput) {
-    // don't track remote intellij-info.txt outputs -- they're already tracked in
+  /** Returns the {@link OutputArtifact}s we want to track between syncs. */
+  private static ImmutableSet<OutputArtifact> getTrackedOutputs(BlazeBuildOutputs buildOutput) {
+    // don't track intellij-info.txt outputs -- they're already tracked in
     // BlazeIdeInterfaceState
     Predicate<String> pathFilter = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE.negate();
     return buildOutput.perOutputGroupArtifacts.values().stream()
-        .filter(a -> a instanceof RemoteOutputArtifact)
-        .map(a -> (RemoteOutputArtifact) a)
         .filter(a -> pathFilter.test(a.getRelativePath()))
         .collect(toImmutableSet());
   }
