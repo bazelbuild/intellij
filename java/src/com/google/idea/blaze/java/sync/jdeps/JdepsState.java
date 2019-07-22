@@ -15,81 +15,113 @@
  */
 package com.google.idea.blaze.java.sync.jdeps;
 
-import com.google.common.base.Functions;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
-import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.devtools.intellij.model.ProjectData;
-import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.SyncData;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 final class JdepsState implements SyncData<ProjectData.JdepsState> {
 
-  final ImmutableMap<String, ArtifactState> artifactState;
-  final ImmutableMap<String, TargetKey> artifactToTargetMap;
+  @AutoValue
+  abstract static class JdepsData {
+    abstract TargetKey getTargetKey();
 
-  final ImmutableMap<TargetKey, List<String>> targetToJdeps;
+    abstract ImmutableList<String> getJdeps();
 
-  private JdepsState(
-      Map<String, ArtifactState> artifactState,
-      Map<String, TargetKey> artifactToTargetMap,
-      Map<TargetKey, List<String>> targetToJdeps) {
-    this.artifactState = ImmutableMap.copyOf(artifactState);
-    this.artifactToTargetMap = ImmutableMap.copyOf(artifactToTargetMap);
-    this.targetToJdeps = ImmutableMap.copyOf(targetToJdeps);
+    abstract ArtifactState getFile();
+
+    static JdepsData create(TargetKey targetKey, List<String> jdeps, ArtifactState file) {
+      return new AutoValue_JdepsState_JdepsData(targetKey, ImmutableList.copyOf(jdeps), file);
+    }
+  }
+
+  final ImmutableList<JdepsData> data;
+
+  private JdepsState(List<JdepsData> data) {
+    this.data = ImmutableList.copyOf(data);
+  }
+
+  Map<TargetKey, List<String>> getJdepsMap() {
+    return data.stream().collect(toImmutableMap(JdepsData::getTargetKey, JdepsData::getJdeps));
+  }
+
+  ImmutableMap<String, ArtifactState> getArtifactState() {
+    return data.stream()
+        .collect(toImmutableMap(s -> s.getFile().getKey(), s -> s.getFile(), (a, b) -> a));
+  }
+
+  private static JdepsState fromNewProto(ProjectData.TargetToJdepsMap proto) {
+    ImmutableList<JdepsData> data =
+        proto.getEntriesList().stream()
+            .map(
+                e ->
+                    JdepsData.create(
+                        TargetKey.fromProto(e.getKey()),
+                        ProtoWrapper.internStrings(e.getValueList()),
+                        ArtifactState.fromProto(e.getFile())))
+            .collect(toImmutableList());
+    return new JdepsState(data);
   }
 
   private static JdepsState fromProto(ProjectData.JdepsState proto) {
-    ImmutableMap<String, TargetKey> targets =
-        ProtoWrapper.map(proto.getFileToTargetMap(), Functions.identity(), TargetKey::fromProto);
-    ImmutableMap.Builder<String, ArtifactState> artifacts = ImmutableMap.builder();
-    for (LocalFileOrOutputArtifact output : proto.getJdepsFilesList()) {
-      ArtifactState state = ArtifactState.fromProto(output);
-      if (state == null) {
-        continue;
-      }
-      artifacts.put(state.getKey(), state);
+    if (proto.getFileToTargetCount() == 0) {
+      return fromNewProto(proto.getTargetToJdeps());
     }
-    return new JdepsState(artifacts.build(), targets, parseJdepsMap(proto));
-  }
 
-  private static ImmutableMap<TargetKey, List<String>> parseJdepsMap(ProjectData.JdepsState proto) {
-    ImmutableMap.Builder<TargetKey, List<String>> map = ImmutableMap.builder();
-    for (ProjectData.TargetToJdepsMap.Entry entry : proto.getTargetToJdeps().getEntriesList()) {
-      TargetKey key = TargetKey.fromProto(entry.getKey());
-      ImmutableList<String> value = ProtoWrapper.internStrings(entry.getValueList());
-      map.put(key, value);
+    // migrate from the old proto format
+    ImmutableMap<TargetKey, String> targetToArtifactKey =
+        proto.getFileToTargetMap().entrySet().stream()
+            .collect(
+                toImmutableMap(
+                    e -> TargetKey.fromProto(e.getValue()), Map.Entry::getKey, (a, b) -> a));
+    ImmutableMap<String, ArtifactState> artifacts =
+        proto.getJdepsFilesList().stream()
+            .map(ArtifactState::fromProto)
+            .filter(Objects::nonNull)
+            .collect(toImmutableMap(ArtifactState::getKey, s -> s, (a, b) -> a));
+    ImmutableList.Builder<JdepsData> data = ImmutableList.builder();
+    for (ProjectData.TargetToJdepsMap.Entry e : proto.getTargetToJdeps().getEntriesList()) {
+      TargetKey key = TargetKey.fromProto(e.getKey());
+      ImmutableList<String> jdeps = ProtoWrapper.internStrings(e.getValueList());
+      String artifactKey = targetToArtifactKey.get(key);
+      ArtifactState file = artifactKey != null ? artifacts.get(artifactKey) : null;
+      if (file != null) {
+        data.add(JdepsData.create(key, jdeps, file));
+      }
     }
-    return map.build();
+    return new JdepsState(data.build());
   }
 
   @Override
   public ProjectData.JdepsState toProto() {
-    ProjectData.TargetToJdepsMap.Builder targetToJdepsBuilder =
-        ProjectData.TargetToJdepsMap.newBuilder();
-    for (Map.Entry<TargetKey, List<String>> entry : targetToJdeps.entrySet()) {
-      IntellijIdeInfo.TargetKey key = entry.getKey().toProto();
-      List<String> value = entry.getValue();
-      targetToJdepsBuilder.addEntries(
-          ProjectData.TargetToJdepsMap.Entry.newBuilder().setKey(key).addAllValue(value));
-    }
-    ProjectData.JdepsState.Builder proto =
-        ProjectData.JdepsState.newBuilder()
-            .putAllFileToTarget(
-                ProtoWrapper.map(artifactToTargetMap, Functions.identity(), TargetKey::toProto))
-            .setTargetToJdeps(targetToJdepsBuilder.build());
-    for (String key : artifactState.keySet()) {
-      proto.addJdepsFiles(artifactState.get(key).serializeToProto());
-    }
-    return proto.build();
+    ProjectData.TargetToJdepsMap.Builder proto =
+        ProjectData.TargetToJdepsMap.newBuilder()
+            .addAllEntries(
+                data.stream()
+                    .map(
+                        s ->
+                            ProjectData.TargetToJdepsMap.Entry.newBuilder()
+                                .setKey(s.getTargetKey().toProto())
+                                .setFile(s.getFile().serializeToProto())
+                                .addAllValue(s.getJdeps())
+                                .build())
+                    .collect(toImmutableList()));
+    return ProjectData.JdepsState.newBuilder().setTargetToJdeps(proto).build();
   }
 
   @Override
@@ -101,14 +133,12 @@ final class JdepsState implements SyncData<ProjectData.JdepsState> {
       return false;
     }
     JdepsState that = (JdepsState) o;
-    return Objects.equals(artifactState, that.artifactState)
-        && Objects.equals(artifactToTargetMap, that.artifactToTargetMap)
-        && Objects.equals(targetToJdeps, that.targetToJdeps);
+    return Objects.equals(data, that.data);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(artifactState, artifactToTargetMap, targetToJdeps);
+    return Objects.hashCode(data);
   }
 
   static Builder builder() {
@@ -116,12 +146,15 @@ final class JdepsState implements SyncData<ProjectData.JdepsState> {
   }
 
   static class Builder {
-    Map<String, ArtifactState> artifactState = null;
-    Map<String, TargetKey> artifactToTargetMap = Maps.newHashMap();
-    Map<TargetKey, List<String>> targetToJdeps = Maps.newHashMap();
+    final ArrayList<JdepsData> list = new ArrayList<>();
 
     JdepsState build() {
-      return new JdepsState(artifactState, artifactToTargetMap, targetToJdeps);
+      return new JdepsState(list);
+    }
+
+    void removeArtifacts(Collection<ArtifactState> artifacts) {
+      Set<String> toRemove = artifacts.stream().map(a -> a.getKey()).collect(toImmutableSet());
+      list.removeIf(d -> toRemove.contains(d.getFile().getKey()));
     }
   }
 

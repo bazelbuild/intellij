@@ -86,15 +86,16 @@ message TargetToJdepsMap {
   message Entry {
     TargetKey key = 1;
     repeated string value = 2;
+    LocalFileOrOutputArtifact file = 3;
   }
   repeated Entry entries = 1;
 }
 
 message JdepsState {
   reserved 1;
-  map<string, TargetKey> file_to_target = 2;
+  map<string, TargetKey> file_to_target = 2 [deprecated = true];
   TargetToJdepsMap target_to_jdeps = 3;
-  repeated LocalFileOrOutputArtifact jdeps_files = 4;
+  repeated LocalFileOrOutputArtifact jdeps_files = 4 [deprecated = true];
 }
 
 message LanguageSpecResult {
