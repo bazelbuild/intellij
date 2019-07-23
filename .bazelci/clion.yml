@@ -1,12 +1,24 @@
 ---
-platforms:
-  ubuntu1604:
+tasks:
+  ubuntu1604-clion-beta:
+    platform: ubuntu1604
     build_flags:
       - --define=ij_product=clion-beta
     build_targets:
       - //clwb/...
     test_flags:
       - --define=ij_product=clion-beta
+      - --test_output=errors
+    test_targets:
+      - //:clwb_tests
+  ubuntu1604-clion-latest:
+    platform: ubuntu1604
+    build_flags:
+      - --define=ij_product=clion-latest
+    build_targets:
+      - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-latest
       - --test_output=errors
     test_targets:
       - //:clwb_tests

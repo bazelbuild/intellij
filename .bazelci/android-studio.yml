@@ -1,12 +1,24 @@
 ---
-platforms:
-  ubuntu1604:
+tasks:
+  ubuntu1604-android-studio-beta:
+    platform: ubuntu1604
     build_flags:
       - --define=ij_product=android-studio-beta
     build_targets:
       - //aswb/...
     test_flags:
       - --define=ij_product=android-studio-beta
+      - --test_output=errors
+    test_targets:
+      - //:aswb_tests
+  ubuntu1604-android-studio-latest:
+    platform: ubuntu1604
+    build_flags:
+      - --define=ij_product=android-studio-latest
+    build_targets:
+      - //aswb/...
+    test_flags:
+      - --define=ij_product=android-studio-latest
       - --test_output=errors
     test_targets:
       - //:aswb_tests
