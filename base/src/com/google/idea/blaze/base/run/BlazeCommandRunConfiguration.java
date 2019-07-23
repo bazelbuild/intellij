@@ -371,7 +371,9 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
           String.format(
               "You must specify a %s target expression.", Blaze.buildSystemName(getProject())));
     }
-    if (!targetPattern.startsWith("//")) {
+
+    // Target patterns can either start with // or @ for external repositories in Bazel.
+    if (!targetPattern.startsWith("//") && !targetPattern.startsWith("@")) {
       throw new RuntimeConfigurationError(
           "You must specify the full target expression, starting with //");
     }
