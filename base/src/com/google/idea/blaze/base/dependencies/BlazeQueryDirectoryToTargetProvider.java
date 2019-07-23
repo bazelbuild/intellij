@@ -20,7 +20,6 @@ import static java.util.stream.Collectors.joining;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -31,12 +30,16 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.sharding.QueryResultLineProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 import javax.annotation.Nullable;
 
 /** Runs a blaze query to derive a set of targets from the project's {@link ImportRoots}. */
 public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetProvider {
+
+  private static final Logger logger =
+      Logger.getInstance(BlazeQueryDirectoryToTargetProvider.class);
 
   @Override
   @Nullable
@@ -59,8 +62,8 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
   }
 
   /**
-   * Runs a herb query synchronously, returning an output list of {@link TargetInfo}, or null if the
-   * query failed.
+   * Runs a Blaze query synchronously, returning an output list of {@link TargetInfo}, or null if
+   * the query failed.
    */
   @Nullable
   private static ImmutableList<TargetInfo> runQuery(
@@ -68,6 +71,7 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
     BlazeCommand command =
         BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.QUERY)
             .addBlazeFlags("--output=label_kind")
+            .addBlazeFlags("--keep_going")
             .addBlazeFlags(query)
             .build();
 
@@ -77,10 +81,19 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
             .addBlazeCommand(command)
             .context(context)
             .stdout(LineProcessingOutputStream.of(outputProcessor))
-            .stderr(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))
+            .stderr(
+                LineProcessingOutputStream.of(
+                    line -> {
+                      // errors are expected, so limit logging to info level
+                      logger.info(line);
+                      return true;
+                    }))
             .build()
             .run();
-    if (retVal != 0) {
+    if (retVal != 0 && retVal != 3) {
+      // A return value of 3 indicates that the query completed, but there were some
+      // errors in the query, like querying a directory with no build files / no targets.
+      // Instead of returning null, we allow returning the parsed targets, if any.
       return null;
     }
     return outputProcessor.getTargets();
