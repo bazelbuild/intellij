@@ -20,7 +20,6 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -89,6 +88,7 @@ import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.NavigatableAdapter;
 import java.io.File;
@@ -173,7 +173,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     // don't track intellij-info.txt outputs -- they're already tracked in
     // BlazeIdeInterfaceState
     Predicate<String> pathFilter = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE.negate();
-    return buildOutput.perOutputGroupArtifacts.values().stream()
+    return buildOutput.getOutputGroupArtifacts(group -> true).stream()
         .filter(a -> pathFilter.test(a.getRelativePath()))
         .collect(toImmutableSet());
   }
@@ -199,9 +199,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     Predicate<String> ideInfoPredicate = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE;
     Collection<OutputArtifact> files =
-        buildResult.perOutputGroupArtifacts.entries().stream()
-            .filter(e -> e.getKey().startsWith(OutputGroup.INFO.prefix))
-            .map(Map.Entry::getValue)
+        buildResult
+            .getOutputGroupArtifacts(group -> group.startsWith(OutputGroup.INFO.prefix))
+            .stream()
             .filter(f -> ideInfoPredicate.test(f.getKey()))
             .distinct()
             .collect(toImmutableList());
@@ -281,11 +281,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         childContext -> {
           childContext.push(new TimingScope("GenfilesPrefetchBuildArtifacts", EventType.Other));
           ImmutableList<OutputArtifact> resolveOutputs =
-              buildResult.perOutputGroupArtifacts.entries().stream()
-                  .filter(e -> e.getKey().startsWith(OutputGroup.RESOLVE.prefix))
-                  .map(Map.Entry::getValue)
-                  .distinct()
-                  .collect(toImmutableList());
+              ImmutableList.copyOf(
+                  buildResult.getOutputGroupArtifacts(
+                      group -> group.startsWith(OutputGroup.RESOLVE.prefix)));
           prefetchGenfiles(context, resolveOutputs);
         });
     return state;
@@ -301,7 +299,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ShardedTargetList shardedTargets,
       AspectStrategy aspectStrategy) {
 
-    ImmutableListMultimap.Builder<String, OutputArtifact> outputs = ImmutableListMultimap.builder();
+    final Ref<BlazeBuildOutputs> combinedResult = new Ref<>();
+
     Function<Integer, String> progressMessage =
         count ->
             String.format(
@@ -318,12 +317,13 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   activeLanguages,
                   targets,
                   aspectStrategy);
-          outputs.putAll(result.perOutputGroupArtifacts);
+          combinedResult.set(
+              combinedResult.isNull() ? result : combinedResult.get().updateOutputs(result));
           return result.buildResult;
         };
     BuildResult result =
         shardedTargets.runShardedCommand(project, context, progressMessage, invocation);
-    return new BlazeBuildOutputs(outputs.build(), result);
+    return combinedResult.isNull() ? BlazeBuildOutputs.noOutputs(result) : combinedResult.get();
   }
 
   /**
@@ -369,18 +369,18 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
       BuildResult buildResult = BuildResult.fromExitCode(retVal);
       if (buildResult.status == Status.FATAL_ERROR) {
-        return new BlazeBuildOutputs(ImmutableListMultimap.of(), buildResult);
+        return BlazeBuildOutputs.noOutputs(buildResult);
       }
       return Scope.push(
           context,
           childContext -> {
             try {
               childContext.push(new TimingScope("ReadingBuildOutputs", EventType.Other));
-              return new BlazeBuildOutputs(
-                  buildResultHelper.getPerOutputGroupArtifacts(file -> true), buildResult);
+              return BlazeBuildOutputs.fromParsedBepOutput(
+                  buildResult, buildResultHelper.getBuildOutput());
             } catch (GetArtifactsException e) {
               IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
-              return new BlazeBuildOutputs(ImmutableListMultimap.of(), buildResult);
+              return BlazeBuildOutputs.noOutputs(buildResult);
             }
           });
     }

@@ -25,7 +25,6 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /** Parses output artifacts from the blaze build event protocol (BEP). */
@@ -38,10 +37,9 @@ public interface OutputArtifactParser {
   static OutputArtifact parseArtifact(
       BuildEventStreamProtos.File file,
       String configurationMnemonic,
-      Predicate<String> pathFilter,
       long syncStartTimeMillis) {
     return Arrays.stream(EP_NAME.getExtensions())
-        .map(p -> p.parse(file, configurationMnemonic, pathFilter, syncStartTimeMillis))
+        .map(p -> p.parse(file, configurationMnemonic, syncStartTimeMillis))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
@@ -51,7 +49,6 @@ public interface OutputArtifactParser {
   OutputArtifact parse(
       BuildEventStreamProtos.File file,
       String configurationMnemonic,
-      Predicate<String> pathFilter,
       long syncStartTimeMillis);
 
   /** The default implementation of {@link OutputArtifactParser}, for local, absolute file paths. */
@@ -61,7 +58,6 @@ public interface OutputArtifactParser {
     public OutputArtifact parse(
         BuildEventStreamProtos.File file,
         String configurationMnemonic,
-        Predicate<String> pathFilter,
         long syncStartTimeMillis) {
       String uri = file.getUri();
       if (uri == null || !uri.startsWith(URLUtil.FILE_PROTOCOL)) {
@@ -69,10 +65,8 @@ public interface OutputArtifactParser {
       }
       try {
         File f = new File(new URI(uri));
-        return pathFilter.test(f.getPath())
-            ? new LocalFileOutputArtifact(
-                f, getBlazeOutRelativePath(file, configurationMnemonic), configurationMnemonic)
-            : null;
+        return new LocalFileOutputArtifact(
+            f, getBlazeOutRelativePath(file, configurationMnemonic), configurationMnemonic);
       } catch (URISyntaxException | IllegalArgumentException e) {
         return null;
       }

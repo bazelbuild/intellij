@@ -30,6 +30,7 @@ import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.Nam
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -86,9 +87,10 @@ public final class ParsedBepOutput {
     }
     fillInTransitiveFileSetConfigs(fileSets, fileSetConfigs);
     Map<String, FileSet> filesMap = new LinkedHashMap<>();
-    fileSets.forEach((id, files) -> filesMap.put(id, new FileSet(files, fileSetConfigs.get(id))));
-    return new ParsedBepOutput(
-        startTimeMillis, filesMap, outputGroupToFileSets.build(), targetToFileSets.build());
+    final long startTimeMs = startTimeMillis;
+    fileSets.forEach(
+        (id, files) -> filesMap.put(id, new FileSet(files, fileSetConfigs.get(id), startTimeMs)));
+    return new ParsedBepOutput(filesMap, outputGroupToFileSets.build(), targetToFileSets.build());
   }
 
   private static List<String> getFileSets(BuildEventStreamProtos.OutputGroup group) {
@@ -121,16 +123,13 @@ public final class ParsedBepOutput {
 
   private static class FileSet {
     private final NamedSetOfFiles namedSet;
-    private final String configuration;
+    private final ImmutableList<OutputArtifact> parsedOutputs;
 
-    FileSet(NamedSetOfFiles namedSet, String configuration) {
+    FileSet(NamedSetOfFiles namedSet, String configuration, long startTimeMillis) {
       this.namedSet = namedSet;
-      this.configuration = configuration;
+      this.parsedOutputs = parseFiles(namedSet, configuration, startTimeMillis);
     }
   }
-
-  /** The start time of the build, in milliseconds since the epoch. */
-  private final long startTimeMillis;
 
   /** A map from file set ID to file set. */
   private final Map<String, FileSet> fileSets;
@@ -142,11 +141,9 @@ public final class ParsedBepOutput {
   private final SetMultimap<String, String> targetFileSets;
 
   private ParsedBepOutput(
-      long startTimeMillis,
       Map<String, FileSet> fileSets,
       ImmutableSetMultimap<String, String> outputGroupFileSets,
       ImmutableSetMultimap<String, String> targetFileSets) {
-    this.startTimeMillis = startTimeMillis;
     this.fileSets = fileSets;
     this.outputGroupFileSets = outputGroupFileSets;
     this.targetFileSets = targetFileSets;
@@ -154,21 +151,24 @@ public final class ParsedBepOutput {
 
   /** Returns all output artifacts of the build. */
   public ImmutableSet<OutputArtifact> getAllOutputArtifacts(Predicate<String> pathFilter) {
-    ImmutableSet.Builder<OutputArtifact> outputs = ImmutableSet.builder();
-    fileSets.values().forEach(s -> outputs.addAll(parseFiles(s, pathFilter)));
-    return outputs.build();
+    return fileSets.values().stream()
+        .map(s -> s.parsedOutputs)
+        .map(list -> filter(list, pathFilter))
+        .flatMap(List::stream)
+        .collect(toImmutableSet());
   }
 
   /** Returns the set of artifacts directly produced by the given target. */
   public ImmutableSet<OutputArtifact> getDirectArtifactsForTarget(
       Label label, Predicate<String> pathFilter) {
-    ImmutableSet.Builder<OutputArtifact> outputs = ImmutableSet.builder();
-    Set<String> setIds = targetFileSets.get(label.toString());
-    setIds.forEach(s -> outputs.addAll(parseFiles(fileSets.get(s), pathFilter)));
-    return outputs.build();
+    return targetFileSets.get(label.toString()).stream()
+        .map(s -> fileSets.get(s).parsedOutputs)
+        .map(list -> filter(list, pathFilter))
+        .flatMap(List::stream)
+        .collect(toImmutableSet());
   }
 
-  /** Returns the set of artifacts in the given output groups. */
+  /** Returns the artifacts in the given output groups. */
   public ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts(
       Predicate<String> pathFilter) {
     ImmutableListMultimap.Builder<String, OutputArtifact> builder = ImmutableListMultimap.builder();
@@ -179,7 +179,7 @@ public final class ParsedBepOutput {
     return builder.build();
   }
 
-  /** Returns the set of artifacts transitively produced by each target. */
+  /** Returns the artifacts transitively associated with each top-level target. */
   public ImmutableListMultimap<Label, OutputArtifact> getPerTargetOutputArtifacts(
       Predicate<String> outputGroupFilter) {
     Set<String> directFileSets =
@@ -213,7 +213,7 @@ public final class ParsedBepOutput {
     while (!toVisit.isEmpty()) {
       String setId = toVisit.remove();
       FileSet fileSet = fileSets.get(setId);
-      allFiles.addAll(parseFiles(fileSet, pathFilter));
+      allFiles.addAll(filter(fileSet.parsedOutputs, pathFilter));
       Set<String> children =
           fileSet.namedSet.getFileSetsList().stream()
               .map(NamedSetOfFilesId::getId)
@@ -225,12 +225,17 @@ public final class ParsedBepOutput {
     return allFiles.build();
   }
 
-  private ImmutableList<OutputArtifact> parseFiles(FileSet set, Predicate<String> pathFilter) {
-    return set.namedSet.getFilesList().stream()
-        .map(
-            f ->
-                OutputArtifactParser.parseArtifact(
-                    f, set.configuration, pathFilter, startTimeMillis))
+  private static ImmutableList<OutputArtifact> filter(
+      Collection<OutputArtifact> outputs, Predicate<String> pathFilter) {
+    return outputs.stream()
+        .filter(o -> pathFilter.test(o.getRelativePath()))
+        .collect(toImmutableList());
+  }
+
+  private static ImmutableList<OutputArtifact> parseFiles(
+      NamedSetOfFiles namedSet, String config, long startTimeMillis) {
+    return namedSet.getFilesList().stream()
+        .map(f -> OutputArtifactParser.parseArtifact(f, config, startTimeMillis))
         .filter(Objects::nonNull)
         .collect(toImmutableList());
   }

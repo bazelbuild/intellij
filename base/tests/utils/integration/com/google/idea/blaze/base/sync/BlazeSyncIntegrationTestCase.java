@@ -19,7 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
@@ -265,7 +264,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeInfo blazeInfo,
         ShardedTargetList shardedTargets,
         WorkspaceLanguageSettings workspaceLanguageSettings) {
-      return new BlazeBuildOutputs(ImmutableListMultimap.of(), BuildResult.SUCCESS);
+      return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
     }
 
     @Override

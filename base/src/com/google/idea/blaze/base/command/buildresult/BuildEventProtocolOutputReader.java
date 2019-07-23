@@ -144,7 +144,8 @@ public final class BuildEventProtocolOutputReader {
     if (mnemonic == null) {
       return parseLocalFile(file, fileFilter);
     }
-    return OutputArtifactParser.parseArtifact(file, mnemonic, fileFilter, startTimeMillis);
+    OutputArtifact output = OutputArtifactParser.parseArtifact(file, mnemonic, startTimeMillis);
+    return output == null || !fileFilter.test(output.getRelativePath()) ? null : output;
   }
 
   private static SourceArtifact parseLocalFile(

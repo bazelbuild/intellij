@@ -30,8 +30,8 @@ import javax.annotation.Nullable;
 public abstract class BlazeSyncBuildResult {
 
   /**
-   * Merges this {@link BlazeSyncBuildResult} with the results of a more recent build, prior to the
-   * project update phase.
+   * Merges this {@link BlazeSyncBuildResult} with the results of a more recent build (w.r.t build
+   * start time), prior to the project update phase.
    */
   public BlazeSyncBuildResult updateResult(BlazeSyncBuildResult nextResult) {
     return nextResult.toBuilder()
