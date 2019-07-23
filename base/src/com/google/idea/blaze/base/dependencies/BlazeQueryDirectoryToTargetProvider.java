@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -48,10 +49,10 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
     StringBuilder targets = new StringBuilder();
     targets.append(
         directories.rootDirectories().stream()
-            .map(w -> String.format("//%s/...", w))
+            .map(w -> TargetExpression.allFromPackageRecursive(w).toString())
             .collect(joining(" + ")));
     for (WorkspacePath excluded : directories.excludeDirectories()) {
-      targets.append(String.format(" - //%s/...", excluded));
+      targets.append(" - " + TargetExpression.allFromPackageRecursive(excluded).toString());
     }
     // exclude 'manual' targets, which shouldn't be built when expanding wildcard target patterns
     return String.format("attr(\"tags\", \"^((?!manual).)*$\", %s)", targets);
