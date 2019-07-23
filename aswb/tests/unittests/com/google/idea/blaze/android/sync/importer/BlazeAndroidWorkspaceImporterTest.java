@@ -46,6 +46,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -150,6 +151,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         registerExtensionPoint(Provider.EP_NAME, Provider.class);
     targetKindEp.registerExtension(new AndroidBlazeRules());
     targetKindEp.registerExtension(new JavaBlazeRules());
+    targetKindEp.registerExtension(new GenericBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
     context = new BlazeContext();

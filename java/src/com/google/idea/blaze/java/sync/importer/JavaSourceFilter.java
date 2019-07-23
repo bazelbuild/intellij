@@ -23,10 +23,12 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
+import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -112,9 +114,21 @@ public class JavaSourceFilter {
       ProjectViewTargetImportFilter importFilter,
       TargetIdeInfo target,
       Collection<ArtifactLocation> javaLikeSources) {
-    return importFilter.isSourceTarget(target)
-        && JavaLikeLanguage.canImportAsSource(target)
-        && anyNonGeneratedSources(javaLikeSources);
+    if (!importFilter.isSourceTarget(target)) {
+      return false;
+    }
+    return isJavaSourceTarget(target, javaLikeSources) || isJavaProtoTarget(target);
+  }
+
+  private static boolean isJavaSourceTarget(
+      TargetIdeInfo target, Collection<ArtifactLocation> javaLikeSources) {
+    return JavaLikeLanguage.canImportAsSource(target) && anyNonGeneratedSources(javaLikeSources);
+  }
+
+  static boolean isJavaProtoTarget(TargetIdeInfo target) {
+    return target.getJavaIdeInfo() != null
+        && (JavaBlazeRules.getJavaProtoLibraryKinds().contains(target.getKind())
+            || target.getKind().equals(GenericBlazeRules.RuleTypes.PROTO_LIBRARY.getKind()));
   }
 
   private static boolean anyNonGeneratedSources(Collection<ArtifactLocation> sources) {

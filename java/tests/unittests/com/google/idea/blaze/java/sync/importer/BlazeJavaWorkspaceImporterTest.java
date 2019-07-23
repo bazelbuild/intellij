@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.LibraryKey;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -128,6 +129,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     ep.registerExtension(new JavaBlazeRules());
     ep.registerExtension(new AndroidBlazeRules());
+    ep.registerExtension(new GenericBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
     BlazeExecutor blazeExecutor = new MockBlazeExecutor();
@@ -1071,6 +1073,42 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
     assertThat(result.libraries).isEmpty();
+  }
+
+  @Test
+  public void testJarsGeneratedFromProjectProtoLibrariesIncluded() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/apps/example"))))
+            .build();
+    TargetMapBuilder targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/apps/example:foo_java_proto")
+                    .setBuildFile(source("java/apps/example/BUILD"))
+                    .setKind("java_proto_library")
+                    .addDependency("//java/apps/example:foo_proto"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/apps/example:foo_proto")
+                    .setBuildFile(source("java/apps/example/BUILD"))
+                    .setKind("proto_library")
+                    .addSource(source("java/apps/example/foo.proto"))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setClassJar(gen("java/apps/example/foo.jar")))));
+
+    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
+    assertThat(
+            result.libraries.values().stream()
+                .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
+                .collect(Collectors.toList()))
+        .containsExactly("foo.jar");
   }
 
   @Test
