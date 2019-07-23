@@ -1,3 +1,8 @@
+v2019.07.22
+===========
+* Add a .bazelproject option to automatically derive the relevant bazel
+  targets from directories. This is enabled by default for new projects.
+
 v2019.07.08
 ===========
 * Bug fixes and internal cleanup.
