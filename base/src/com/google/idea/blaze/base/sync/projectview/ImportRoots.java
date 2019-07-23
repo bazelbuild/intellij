@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -31,7 +30,6 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.util.WorkspacePathUtil;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
@@ -94,10 +92,6 @@ public final class ImportRoots {
 
     public ImportRoots build() {
       ImmutableCollection<WorkspacePath> rootDirectories = rootDirectoriesBuilder.build();
-      if (buildSystem == BuildSystem.Bazel && hasWorkspaceRoot(rootDirectories)) {
-        excludeBuildSystemArtifacts();
-        excludeProjectDataSubDirectory();
-      }
       ImmutableSet<WorkspacePath> minimalExcludes =
           WorkspacePathUtil.calculateMinimalWorkspacePaths(excludeDirectoriesBuilder.build());
 
@@ -109,22 +103,6 @@ public final class ImportRoots {
           minimalRootDirectories,
           minimalExcludes,
           ProjectTargetsHelper.create(projectTargets.build()));
-    }
-
-    private void excludeBuildSystemArtifacts() {
-      for (String dir :
-          BuildSystemProvider.getBuildSystemProvider(buildSystem)
-              .buildArtifactDirectories(workspaceRoot)) {
-        excludeDirectoriesBuilder.add(new WorkspacePath(dir));
-      }
-    }
-
-    private void excludeProjectDataSubDirectory() {
-      excludeDirectoriesBuilder.add(new WorkspacePath(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY));
-    }
-
-    private static boolean hasWorkspaceRoot(ImmutableCollection<WorkspacePath> rootDirectories) {
-      return rootDirectories.stream().anyMatch(WorkspacePath::isWorkspaceRoot);
     }
   }
 
