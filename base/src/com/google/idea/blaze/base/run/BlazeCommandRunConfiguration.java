@@ -44,6 +44,7 @@ import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.ui.UiUtil;
@@ -371,10 +372,16 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
           String.format(
               "You must specify a %s target expression.", Blaze.buildSystemName(getProject())));
     }
+
     if (!targetPattern.startsWith("//")) {
-      throw new RuntimeConfigurationError(
-          "You must specify the full target expression, starting with //");
+      String errorMessage = "You must specify the full target expression, starting with //";
+      if (Blaze.getBuildSystem(getProject()) == BuildSystem.Bazel
+          && !targetPattern.startsWith("@")) {
+        errorMessage = "You must specify the full target expression, starting with // or @";
+      }
+      throw new RuntimeConfigurationError(errorMessage);
     }
+
     String error = TargetExpression.validate(targetPattern);
     if (error != null) {
       throw new RuntimeConfigurationError(error);
