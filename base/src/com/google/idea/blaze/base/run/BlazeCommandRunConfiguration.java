@@ -374,11 +374,11 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
     }
 
     if (!targetPattern.startsWith("//")) {
-      String errorMessage = "You must specify the full target expression, starting with //.";
+      String errorMessage = "You must specify the full target expression, starting with //";
       if (Blaze.getBuildSystem(getProject()) == BuildSystem.Bazel
           && !targetPattern.startsWith("@")) {
         // Target patterns can either start with // or @ for external repositories in Bazel.
-        errorMessage = "You must specify the full target expression, starting with // or @.";
+        errorMessage = "You must specify the full target expression, starting with // or @";
       }
       throw new RuntimeConfigurationError(errorMessage);
     }
