@@ -161,6 +161,10 @@ public class JdepsFileReader {
     if (oldState != null) {
       state.list.addAll(oldState.data);
     }
+    state.removeArtifacts(
+        diff.getUpdatedOutputs().stream()
+            .map(OutputArtifact::toArtifactState)
+            .collect(toImmutableList()));
     state.removeArtifacts(diff.getRemovedOutputs());
     for (Result result : Futures.allAsList(futures).get()) {
       if (result != null) {
