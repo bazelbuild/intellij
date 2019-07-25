@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
@@ -69,6 +70,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.Computable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -77,6 +79,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Updates the IDE's project structure. */
@@ -479,7 +482,7 @@ public class BlazeAndroidProjectStructureSyncer {
       AndroidSdkPlatform androidSdkPlatform,
       Module module,
       File moduleDirectory,
-      File manifest,
+      File manifestFile,
       String resourceJavaPackage,
       Collection<File> resources,
       boolean configAndroidJava8Libs) {
@@ -489,17 +492,30 @@ public class BlazeAndroidProjectStructureSyncer {
                 AndroidPathType.RES,
                 PathStringUtil.toPathStrings(resources),
                 AndroidPathType.MANIFEST,
-                Collections.singletonList(PathStringUtil.toPathString(manifest))));
+                Collections.singletonList(PathStringUtil.toPathString(manifestFile))));
     SourceProvider sourceProvider =
         SourceProviderUtil.toSourceProvider(sourceSet, module.getName());
+
+    String applicationId =
+        ApplicationManager.getApplication()
+            .runReadAction(
+                (Computable<String>)
+                    () -> {
+                      Manifest manifest =
+                          ManifestParser.getInstance(project).getManifest(manifestFile);
+                      if (manifest == null) {
+                        return resourceJavaPackage;
+                      }
+                      String packageName = manifest.getPackage().getValue();
+                      return packageName == null ? resourceJavaPackage : packageName;
+                    });
 
     BlazeAndroidModel androidModel =
         new BlazeAndroidModel(
             project,
             moduleDirectory,
             sourceProvider,
-            manifest,
-            resourceJavaPackage,
+            applicationId,
             androidSdkPlatform.androidMinSdkLevel,
             configAndroidJava8Libs);
     AndroidFacet facet = AndroidFacet.getInstance(module);

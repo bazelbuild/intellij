@@ -95,7 +95,7 @@ public class BlazeAndroidModelTest extends BlazeTestCase {
 
     projectServices.register(JavaPsiFacade.class, facade);
     module = new MockModule(() -> {});
-    model = new BlazeAndroidModel(project, null, mock(SourceProvider.class), null, "", 0, false);
+    model = new BlazeAndroidModel(project, null, mock(SourceProvider.class), null, 0, false);
   }
 
   @Test

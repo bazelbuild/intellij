@@ -24,7 +24,6 @@ import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.lint.detector.api.Desugaring;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.base.actions.BlazeBuildService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -43,7 +42,6 @@ import java.io.File;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -55,8 +53,7 @@ public class BlazeAndroidModel implements AndroidModel {
   private final File rootDirPath;
   private final SourceProvider sourceProvider;
   private final List<SourceProvider> sourceProviders; // Singleton list of sourceProvider
-  private final File moduleManifest;
-  private final String resourceJavaPackage;
+  private final String applicationId;
   private final int minSdkVersion;
   private boolean desugarJava8Libs;
 
@@ -65,16 +62,14 @@ public class BlazeAndroidModel implements AndroidModel {
       Project project,
       File rootDirPath,
       SourceProvider sourceProvider,
-      File moduleManifest,
-      String resourceJavaPackage,
+      String applicationId,
       int minSdkVersion,
       boolean desugarJava8Libs) {
     this.project = project;
     this.rootDirPath = rootDirPath;
     this.sourceProvider = sourceProvider;
     this.sourceProviders = ImmutableList.of(sourceProvider);
-    this.moduleManifest = moduleManifest;
-    this.resourceJavaPackage = resourceJavaPackage;
+    this.applicationId = applicationId;
     this.minSdkVersion = minSdkVersion;
     this.desugarJava8Libs = desugarJava8Libs;
   }
@@ -101,19 +96,7 @@ public class BlazeAndroidModel implements AndroidModel {
 
   @Override
   public String getApplicationId() {
-    // Run in a read action since otherwise, it might throw a read access exception.
-    return ApplicationManager.getApplication()
-        .runReadAction(
-            (Computable<String>)
-                () -> {
-                  Manifest manifest =
-                      ManifestParser.getInstance(project).getManifest(moduleManifest);
-                  if (manifest == null) {
-                    return resourceJavaPackage;
-                  }
-                  String packageName = manifest.getPackage().getValue();
-                  return packageName == null ? resourceJavaPackage : packageName;
-                });
+    return applicationId;
   }
 
   @Override
