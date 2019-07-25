@@ -15,34 +15,46 @@
  */
 package icons;
 
+import com.google.common.base.Ascii;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.IconLoader;
 import javax.swing.Icon;
 
 /** Class to manage icons used by the Blaze plugin. */
 public class BlazeIcons {
 
-  private static final String BASE = "/";
+  private static final String BASE = "/base/resources/icons/";
 
-  public static final Icon Blaze = load("base/resources/icons/blaze.png"); // 16x16
-  public static final Icon BlazeSlow = load("base/resources/icons/blaze_slow.png"); // 16x16
-  public static final Icon BlazeFailed = load("base/resources/icons/blaze_failed.png"); // 16x16
+  public static final Icon Logo = loadForBuildSystem("logo.png"); // 16x16
+  public static final Icon BazelLogo = load("bazel/logo.png"); // 16x16
+  public static final Icon BlazeSlow = load("blaze_slow.png"); // 16x16
+  public static final Icon Failed = loadForBuildSystem("failed.png"); // 16x16
 
-  public static final Icon BlazeRerun = load("base/resources/icons/blazeRerun.png"); // 16x16
+  public static final Icon BlazeRerun = load("blazeRerun.png"); // 16x16
 
   // This is just the Blaze icon scaled down to the size IJ wants for tool windows.
-  public static final Icon BlazeToolWindow =
-      load("base/resources/icons/blazeToolWindow.png"); // 13x13
-
-  public static final Icon BazelLeaf = load("base/resources/icons/bazel_leaf.png"); // 16x16
+  public static final Icon ToolWindow = loadForBuildSystem("tool_window.png"); // 13x13
 
   // Build file support icons
-  public static final Icon BuildFile = load("base/resources/icons/build_file.png"); // 16x16
-  public static final Icon BuildRule = load("base/resources/icons/build_rule.png"); // 16x16
+  public static final Icon BuildFile = load("build_file.png"); // 16x16
+  public static final Icon BuildRule = load("build_rule.png"); // 16x16
 
-  public static final Icon LightningOverlay =
-      load("base/resources/icons/lightningOverlay.png"); // 16x16
+  public static final Icon LightningOverlay = load("lightningOverlay.png"); // 16x16
 
   private static Icon load(String path) {
     return IconLoader.getIcon(BASE + path, BlazeIcons.class);
+  }
+
+  private static Icon loadForBuildSystem(String basename) {
+    // Guessing the build system name may result in an NPE if (e.g.) it was called from a
+    // unit-testing scenario where there aren't Application/ProjectManager instances yet.
+    if (ApplicationManager.getApplication() == null || ProjectManager.getInstance() == null) {
+      // Default to the blaze icons.
+      return load("blaze/" + basename);
+    } else {
+      return load(Ascii.toLowerCase(Blaze.guessBuildSystemName()) + "/" + basename);
+    }
   }
 }

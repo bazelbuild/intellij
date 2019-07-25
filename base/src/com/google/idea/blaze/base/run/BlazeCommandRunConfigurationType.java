@@ -75,7 +75,7 @@ public class BlazeCommandRunConfigurationType implements ConfigurationType {
   
   @Override
   public Icon getIcon() {
-    return BlazeIcons.Blaze;
+    return BlazeIcons.Logo;
   }
 
   

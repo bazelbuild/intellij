@@ -15,7 +15,7 @@
   -->
 <idea-plugin>
   <actions>
-    <action id="Blaze.ImportProject2" class="com.google.idea.blaze.base.wizard2.BlazeImportProjectAction" icon="BlazeIcons.Blaze">
+    <action id="Blaze.ImportProject2" class="com.google.idea.blaze.base.wizard2.BlazeImportProjectAction" icon="BlazeIcons.Logo">
       <add-to-group group-id="WelcomeScreen.QuickStart" />
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </action>
@@ -32,7 +32,7 @@
     <action id="Blaze.IncrementalSyncProject"
       class="com.google.idea.blaze.base.sync.actions.IncrementalSyncProjectAction"
       text="Sync Project with BUILD Files"
-      icon="BlazeIcons.Blaze">
+      icon="BlazeIcons.Logo">
     </action>
     <action id="Blaze.FullSyncProject"
       class="com.google.idea.blaze.base.sync.actions.FullSyncProjectAction"
@@ -42,7 +42,7 @@
     <action id="Blaze.SyncWorkingSet"
       class="com.google.idea.blaze.base.sync.actions.SyncWorkingSetAction"
       text="Sync Working Set"
-      icon="BlazeIcons.Blaze">
+      icon="BlazeIcons.Logo">
     </action>
     <action id="Blaze.ExpandSyncToWorkingSet"
       class="com.google.idea.blaze.base.sync.actions.ExpandSyncToWorkingSetAction"
@@ -76,7 +76,7 @@
     <action id="Blaze.PartialSync"
       class="com.google.idea.blaze.base.sync.actions.PartialSyncAction"
       text="Partially Sync File"
-      icon="BlazeIcons.Blaze">
+      icon="BlazeIcons.Logo">
     </action>
     <action id="Blaze.UpdateDirectories"
         class="com.google.idea.blaze.base.sync.actions.UpdateDirectoriesSyncAction"
@@ -96,7 +96,7 @@
     <action id="Blaze.OpenWorkspaceFile"
       class="com.google.idea.blaze.base.ide.OpenBlazeWorkspaceFileAction"
       text="Open Workspace File..."
-      icon="BlazeIcons.Blaze">
+      icon="BlazeIcons.Logo">
       <add-to-group group-id="FileOpenGroup" relative-to-action="OpenFile" anchor="after"/>
     </action>
 
@@ -154,7 +154,7 @@
                       anchor="bottom"
                       secondary="true"
                       conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"
-                      icon="BlazeIcons.BlazeToolWindow"
+                      icon="BlazeIcons.ToolWindow"
                       factoryClass="com.google.idea.blaze.base.console.BlazeConsoleToolWindowFactory"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleView"/>
     <fileTypeFactory implementation="com.google.idea.blaze.base.plugin.BlazeFileTypeFactory" />

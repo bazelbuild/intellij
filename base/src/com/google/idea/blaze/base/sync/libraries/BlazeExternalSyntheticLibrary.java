@@ -79,6 +79,6 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
 
   @Override
   public Icon getIcon(boolean unused) {
-    return BlazeIcons.Blaze;
+    return BlazeIcons.Logo;
   }
 }

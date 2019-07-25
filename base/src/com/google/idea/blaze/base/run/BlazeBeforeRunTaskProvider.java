@@ -57,13 +57,13 @@ public final class BlazeBeforeRunTaskProvider
   @Nullable
   @Override
   public Icon getIcon() {
-    return BlazeIcons.Blaze;
+    return BlazeIcons.Logo;
   }
 
   @Nullable
   @Override
   public Icon getTaskIcon(Task task) {
-    return BlazeIcons.Blaze;
+    return BlazeIcons.Logo;
   }
 
   @Override

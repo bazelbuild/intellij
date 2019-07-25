@@ -88,12 +88,12 @@ class GenerateDeployableJarTaskProvider
 
   @Override
   public Icon getIcon() {
-    return BlazeIcons.Blaze;
+    return BlazeIcons.Logo;
   }
 
   @Override
   public Icon getTaskIcon(GenerateDeployableJarTaskProvider.Task task) {
-    return BlazeIcons.Blaze;
+    return BlazeIcons.Logo;
   }
 
   @Override

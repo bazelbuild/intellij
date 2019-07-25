@@ -86,12 +86,12 @@ public final class BuildPluginBeforeRunTaskProvider
 
   @Override
   public Icon getIcon() {
-    return BlazeIcons.Blaze;
+    return BlazeIcons.Logo;
   }
 
   @Override
   public Icon getTaskIcon(Task task) {
-    return BlazeIcons.Blaze;
+    return BlazeIcons.Logo;
   }
 
   @Override

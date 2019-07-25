@@ -53,6 +53,6 @@ public class ProjectViewFileType extends LanguageFileType {
   @Override
   @Nullable
   public Icon getIcon() {
-    return BlazeIcons.Blaze;
+    return BlazeIcons.Logo;
   }
 }
