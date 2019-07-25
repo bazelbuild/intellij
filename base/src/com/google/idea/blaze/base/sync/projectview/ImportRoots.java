@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
@@ -65,6 +66,7 @@ public final class ImportRoots {
     private final ImmutableSet.Builder<WorkspacePath> excludeDirectoriesBuilder =
         ImmutableSet.builder();
     private final ImmutableList.Builder<TargetExpression> projectTargets = ImmutableList.builder();
+    private boolean deriveTargetsFromDirectories = false;
 
     private final WorkspaceRoot workspaceRoot;
     private final BuildSystem buildSystem;
@@ -79,6 +81,8 @@ public final class ImportRoots {
         add(entry);
       }
       projectTargets.addAll(projectViewSet.listItems(TargetSection.KEY));
+      deriveTargetsFromDirectories =
+          projectViewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
       return this;
     }
 
@@ -105,10 +109,16 @@ public final class ImportRoots {
       ImmutableSet<WorkspacePath> minimalRootDirectories =
           WorkspacePathUtil.calculateMinimalWorkspacePaths(rootDirectories, minimalExcludes);
 
-      return new ImportRoots(
-          minimalRootDirectories,
-          minimalExcludes,
-          ProjectTargetsHelper.create(projectTargets.build()));
+      ProjectDirectoriesHelper directories =
+          new ProjectDirectoriesHelper(minimalRootDirectories, minimalExcludes);
+
+      ProjectTargetsHelper targets =
+          deriveTargetsFromDirectories
+              ? ProjectTargetsHelper.createWithTargetsDerivedFromDirectories(
+                  projectTargets.build(), directories)
+              : ProjectTargetsHelper.create(projectTargets.build());
+
+      return new ImportRoots(directories, targets);
     }
 
     private void excludeBuildSystemArtifacts() {
@@ -128,62 +138,86 @@ public final class ImportRoots {
     }
   }
 
-  private final ImmutableCollection<WorkspacePath> rootDirectories;
-  private final ImmutableSet<WorkspacePath> excludeDirectories;
+  private final ProjectDirectoriesHelper projectDirectories;
   private final ProjectTargetsHelper projectTargets;
+
+  public static Builder builder(Project project) {
+    return new Builder(WorkspaceRoot.fromProject(project), Blaze.getBuildSystem(project));
+  }
 
   public static Builder builder(WorkspaceRoot workspaceRoot, BuildSystem buildSystem) {
     return new Builder(workspaceRoot, buildSystem);
   }
 
   private ImportRoots(
-      ImmutableCollection<WorkspacePath> rootDirectories,
-      ImmutableSet<WorkspacePath> excludeDirectories,
-      ProjectTargetsHelper projectTargets) {
-    this.rootDirectories = rootDirectories;
-    this.excludeDirectories = excludeDirectories;
+      ProjectDirectoriesHelper projectDirectories, ProjectTargetsHelper projectTargets) {
+    this.projectDirectories = projectDirectories;
     this.projectTargets = projectTargets;
   }
 
   public Collection<WorkspacePath> rootDirectories() {
-    return rootDirectories;
+    return projectDirectories.rootDirectories;
   }
 
   public Set<WorkspacePath> excludeDirectories() {
-    return excludeDirectories;
+    return projectDirectories.excludeDirectories;
   }
 
   /** Returns true if this rule should be imported as source. */
   public boolean importAsSource(Label label) {
-    return containsLabel(label);
-  }
-
-  private boolean containsLabel(Label label) {
     if (label.isExternal()) {
       return false;
     }
-    return containsWorkspacePath(label.blazePackage())
-        || (treatProjectTargetsAsSource.getValue() && projectTargets.isInProject(label));
+    return projectDirectories.containsWorkspacePath(label.blazePackage())
+        || (treatProjectTargetsAsSource.getValue() && targetInProject(label));
+  }
+
+  /**
+   * Returns true if this target is covered by the project view. Assumes wildcard target patterns
+   * (explicit or derived from directories) cover all targets in the relevant packages.
+   */
+  public boolean targetInProject(Label label) {
+    return projectTargets.targetInProject(label);
+  }
+
+  public boolean packageInProjectTargets(WorkspacePath packagePath) {
+    return projectTargets.packageInProject(packagePath);
   }
 
   public boolean containsWorkspacePath(WorkspacePath workspacePath) {
-    boolean included = false;
-    boolean excluded = false;
-    for (WorkspacePath rootDirectory : rootDirectories()) {
-      included = included || isSubdirectory(rootDirectory, workspacePath);
-    }
-    for (WorkspacePath excludeDirectory : excludeDirectories()) {
-      excluded = excluded || isSubdirectory(excludeDirectory, workspacePath);
-    }
-    return included && !excluded;
+    return projectDirectories.containsWorkspacePath(workspacePath);
   }
 
-  private static boolean isSubdirectory(WorkspacePath ancestor, WorkspacePath descendant) {
-    if (ancestor.isWorkspaceRoot()) {
-      return true;
+  static class ProjectDirectoriesHelper {
+    private final ImmutableSet<WorkspacePath> rootDirectories;
+    private final ImmutableSet<WorkspacePath> excludeDirectories;
+
+    @VisibleForTesting
+    ProjectDirectoriesHelper(
+        Collection<WorkspacePath> rootDirectories, Collection<WorkspacePath> excludeDirectories) {
+      this.rootDirectories = ImmutableSet.copyOf(rootDirectories);
+      this.excludeDirectories = ImmutableSet.copyOf(excludeDirectories);
     }
-    Path ancestorPath = FileSystems.getDefault().getPath(ancestor.relativePath());
-    Path descendantPath = FileSystems.getDefault().getPath(descendant.relativePath());
-    return descendantPath.startsWith(ancestorPath);
+
+    boolean containsWorkspacePath(WorkspacePath workspacePath) {
+      boolean included = false;
+      boolean excluded = false;
+      for (WorkspacePath rootDirectory : rootDirectories) {
+        included = included || isSubdirectory(rootDirectory, workspacePath);
+      }
+      for (WorkspacePath excludeDirectory : excludeDirectories) {
+        excluded = excluded || isSubdirectory(excludeDirectory, workspacePath);
+      }
+      return included && !excluded;
+    }
+
+    private static boolean isSubdirectory(WorkspacePath ancestor, WorkspacePath descendant) {
+      if (ancestor.isWorkspaceRoot()) {
+        return true;
+      }
+      Path ancestorPath = FileSystems.getDefault().getPath(ancestor.relativePath());
+      Path descendantPath = FileSystems.getDefault().getPath(descendant.relativePath());
+      return descendantPath.startsWith(ancestorPath);
+    }
   }
 }

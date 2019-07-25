@@ -18,9 +18,12 @@ package com.google.idea.blaze.base.sync.projectview;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots.ProjectDirectoriesHelper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -34,8 +37,12 @@ public class ProjectTargetsHelperTest extends BlazeTestCase {
     ProjectTargetsHelper helper =
         ProjectTargetsHelper.create(ImmutableList.of(TargetExpression.fromString("//foo:all")));
 
-    assertThat(helper.isInProject(Label.create("//foo:target"))).isTrue();
-    assertThat(helper.isInProject(Label.create("//bar:target"))).isFalse();
+    assertThat(helper.targetInProject(Label.create("//foo:target"))).isTrue();
+    assertThat(helper.targetInProject(Label.create("//bar:target"))).isFalse();
+
+    assertThat(helper.packageInProject(new WorkspacePath("foo"))).isTrue();
+    assertThat(helper.packageInProject(new WorkspacePath("foo/bar"))).isFalse();
+    assertThat(helper.packageInProject(new WorkspacePath("bar"))).isFalse();
   }
 
   @Test
@@ -43,9 +50,13 @@ public class ProjectTargetsHelperTest extends BlazeTestCase {
     ProjectTargetsHelper helper =
         ProjectTargetsHelper.create(ImmutableList.of(TargetExpression.fromString("//foo/...")));
 
-    assertThat(helper.isInProject(Label.create("//foo:target"))).isTrue();
-    assertThat(helper.isInProject(Label.create("//foo/bar/baz:target"))).isTrue();
-    assertThat(helper.isInProject(Label.create("//bar:target"))).isFalse();
+    assertThat(helper.targetInProject(Label.create("//foo:target"))).isTrue();
+    assertThat(helper.targetInProject(Label.create("//foo/bar/baz:target"))).isTrue();
+    assertThat(helper.targetInProject(Label.create("//bar:target"))).isFalse();
+
+    assertThat(helper.packageInProject(new WorkspacePath("foo"))).isTrue();
+    assertThat(helper.packageInProject(new WorkspacePath("foo/bar"))).isTrue();
+    assertThat(helper.packageInProject(new WorkspacePath("bar"))).isFalse();
   }
 
   @Test
@@ -53,9 +64,13 @@ public class ProjectTargetsHelperTest extends BlazeTestCase {
     ProjectTargetsHelper helper =
         ProjectTargetsHelper.create(ImmutableList.of(TargetExpression.fromString("//foo:target")));
 
-    assertThat(helper.isInProject(Label.create("//foo:target"))).isTrue();
-    assertThat(helper.isInProject(Label.create("//foo:other"))).isFalse();
-    assertThat(helper.isInProject(Label.create("//bar:target"))).isFalse();
+    assertThat(helper.targetInProject(Label.create("//foo:target"))).isTrue();
+    assertThat(helper.targetInProject(Label.create("//foo:other"))).isFalse();
+    assertThat(helper.targetInProject(Label.create("//bar:target"))).isFalse();
+
+    assertThat(helper.packageInProject(new WorkspacePath("foo"))).isFalse();
+    assertThat(helper.packageInProject(new WorkspacePath("foo/bar"))).isFalse();
+    assertThat(helper.packageInProject(new WorkspacePath("bar"))).isFalse();
   }
 
   @Test
@@ -68,7 +83,66 @@ public class ProjectTargetsHelperTest extends BlazeTestCase {
                 TargetExpression.fromString("-//bar:target"),
                 TargetExpression.fromString("//bar:all")));
 
-    assertThat(helper.isInProject(Label.create("//foo:target"))).isFalse();
-    assertThat(helper.isInProject(Label.create("//bar:target"))).isTrue();
+    assertThat(helper.targetInProject(Label.create("//foo:target"))).isFalse();
+    assertThat(helper.targetInProject(Label.create("//bar:target"))).isTrue();
+
+    assertThat(helper.packageInProject(new WorkspacePath("foo"))).isFalse();
+    assertThat(helper.packageInProject(new WorkspacePath("bar"))).isTrue();
+  }
+
+  @Test
+  public void testInferringTargetsFromDirectoriesSimple() throws Exception {
+    ProjectTargetsHelper helper =
+        ProjectTargetsHelper.createWithTargetsDerivedFromDirectories(
+            ImmutableList.of(),
+            new ProjectDirectoriesHelper(
+                /* rootDirectories= */ ImmutableList.of(new WorkspacePath("foo")),
+                /* excludeDirectories= */ ImmutableSet.of()));
+
+    assertThat(helper.targetInProject(Label.create("//foo:target"))).isTrue();
+    assertThat(helper.targetInProject(Label.create("//foo/bar:target"))).isTrue();
+    assertThat(helper.targetInProject(Label.create("//bar:target"))).isFalse();
+
+    assertThat(helper.packageInProject(new WorkspacePath("foo"))).isTrue();
+    assertThat(helper.packageInProject(new WorkspacePath("bar"))).isFalse();
+  }
+
+  @Test
+  public void testExplictTargetsOverrideInferredTargets() throws Exception {
+    ProjectTargetsHelper helper =
+        ProjectTargetsHelper.createWithTargetsDerivedFromDirectories(
+            ImmutableList.of(
+                TargetExpression.fromString("-//foo:target"),
+                TargetExpression.fromString("//bar:target")),
+            new ProjectDirectoriesHelper(
+                /* rootDirectories= */ ImmutableList.of(new WorkspacePath("foo")),
+                /* excludeDirectories= */ ImmutableSet.of(new WorkspacePath("bar"))));
+
+    assertThat(helper.targetInProject(Label.create("//foo:target"))).isFalse();
+    assertThat(helper.targetInProject(Label.create("//foo:other"))).isTrue();
+    assertThat(helper.targetInProject(Label.create("//foo/bar:target"))).isTrue();
+    assertThat(helper.targetInProject(Label.create("//bar:target"))).isTrue();
+    assertThat(helper.targetInProject(Label.create("//bar:other"))).isFalse();
+
+    assertThat(helper.packageInProject(new WorkspacePath("foo"))).isTrue();
+    assertThat(helper.packageInProject(new WorkspacePath("bar"))).isFalse();
+  }
+
+  @Test
+  public void testInferredTargetsWithExcludedSubdirectories() {
+    ProjectTargetsHelper helper =
+        ProjectTargetsHelper.createWithTargetsDerivedFromDirectories(
+            ImmutableList.of(),
+            new ProjectDirectoriesHelper(
+                /* rootDirectories= */ ImmutableList.of(new WorkspacePath("foo")),
+                /* excludeDirectories= */ ImmutableSet.of(new WorkspacePath("foo/bar"))));
+
+    assertThat(helper.targetInProject(Label.create("//foo:target"))).isTrue();
+    assertThat(helper.targetInProject(Label.create("//foo/bar:target"))).isFalse();
+    assertThat(helper.targetInProject(Label.create("//foo/other:target"))).isTrue();
+
+    assertThat(helper.packageInProject(new WorkspacePath("foo"))).isTrue();
+    assertThat(helper.packageInProject(new WorkspacePath("foo/bar"))).isFalse();
+    assertThat(helper.packageInProject(new WorkspacePath("foo/other"))).isTrue();
   }
 }

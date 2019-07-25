@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots.ProjectDirectoriesHelper;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -29,7 +31,13 @@ final class ProjectTargetsHelper {
 
   static ProjectTargetsHelper create(List<TargetExpression> projectTargets) {
     return new ProjectTargetsHelper(
-        projectTargets.stream().map(ProjectTarget::new).collect(toImmutableList()));
+        projectTargets.stream().map(ProjectTarget::new).collect(toImmutableList()), null);
+  }
+
+  static ProjectTargetsHelper createWithTargetsDerivedFromDirectories(
+      List<TargetExpression> projectTargets, ProjectDirectoriesHelper directories) {
+    return new ProjectTargetsHelper(
+        projectTargets.stream().map(ProjectTarget::new).collect(toImmutableList()), directories);
   }
 
   /**
@@ -38,18 +46,34 @@ final class ProjectTargetsHelper {
    */
   private final ImmutableList<ProjectTarget> reversedTargets;
 
-  private ProjectTargetsHelper(List<ProjectTarget> projectTargets) {
+  /** Non-null if we're auto-including targets derived from the project directories. */
+  @Nullable private final ProjectDirectoriesHelper directories;
+
+  private ProjectTargetsHelper(
+      List<ProjectTarget> projectTargets, @Nullable ProjectDirectoriesHelper directories) {
     this.reversedTargets = ImmutableList.copyOf(projectTargets).reverse();
+    this.directories = directories;
   }
 
-  boolean isInProject(Label label) {
+  /** Returns true if the entire package is covered by the project targets. */
+  boolean packageInProject(WorkspacePath packagePath) {
+    // the last target expression to cover this label overrides all previous expressions
+    for (ProjectTarget target : reversedTargets) {
+      if (target.coversPackage(packagePath)) {
+        return !target.isExcluded();
+      }
+    }
+    return directories != null && directories.containsWorkspacePath(packagePath);
+  }
+
+  boolean targetInProject(Label label) {
     // the last target expression to cover this label overrides all previous expressions
     for (ProjectTarget target : reversedTargets) {
       if (target.coversTarget(label)) {
         return !target.isExcluded();
       }
     }
-    return false;
+    return directories != null && directories.containsWorkspacePath(label.blazePackage());
   }
 
   private static class ProjectTarget {
@@ -71,8 +95,11 @@ final class ProjectTargetsHelper {
     }
 
     boolean coversTarget(Label label) {
-      return label.equals(unexcludedExpression)
-          || (wildcardPattern != null && wildcardPattern.coversPackage(label.blazePackage()));
+      return label.equals(unexcludedExpression) || coversPackage(label.blazePackage());
+    }
+
+    boolean coversPackage(WorkspacePath path) {
+      return wildcardPattern != null && wildcardPattern.coversPackage(path);
     }
   }
 }

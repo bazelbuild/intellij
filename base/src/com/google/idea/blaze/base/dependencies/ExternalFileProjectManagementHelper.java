@@ -121,16 +121,17 @@ public class ExternalFileProjectManagementHelper
     if (context == null) {
       return null;
     }
-    boolean alreadyBuilt = AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context);
     boolean inProjectDirectories = AddSourceToProjectHelper.sourceInProjectDirectories(context);
+    boolean alreadyBuilt = AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context);
     if (alreadyBuilt && inProjectDirectories) {
       return null;
     }
 
+    boolean addTargets = !alreadyBuilt && !AddSourceToProjectHelper.autoDeriveTargets(project);
     ListenableFuture<List<TargetInfo>> targetsFuture =
-        alreadyBuilt
-            ? Futures.immediateFuture(ImmutableList.of())
-            : AddSourceToProjectHelper.getTargetsBuildingSource(context);
+        addTargets
+            ? AddSourceToProjectHelper.getTargetsBuildingSource(context)
+            : Futures.immediateFuture(ImmutableList.of());
     if (targetsFuture == null) {
       return null;
     }

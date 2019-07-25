@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectView;
@@ -37,6 +36,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewEdit;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
+import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
@@ -61,7 +61,6 @@ import com.intellij.util.Consumer;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -73,6 +72,13 @@ class AddSourceToProjectHelper {
   private static final NotificationGroup NOTIFICATION_GROUP =
       new NotificationGroup(
           "Add source to project", NotificationDisplayType.BALLOON, /* logByDefault= */ true);
+
+  static boolean autoDeriveTargets(Project project) {
+    return ProjectViewManager.getInstance(project)
+        .getProjectViewSet()
+        .getScalarValue(AutomaticallyDeriveTargetsSection.KEY)
+        .orElse(false);
+  }
 
   /**
    * Given the workspace targets building a source file, updates the .blazeproject 'directories' and
@@ -153,7 +159,13 @@ class AddSourceToProjectHelper {
       return;
     }
     edit.apply();
-    BlazeSyncManager.getInstance(project).partialSync(targets);
+    // TODO(brendandouglas): support partially syncing a directory with the same query-based
+    // filtering
+    List<? extends TargetExpression> targetsToSync = targets;
+    if (autoDeriveTargets(project)) {
+      targetsToSync = ImmutableList.of(TargetExpression.allFromPackageRecursive(parentPath));
+    }
+    BlazeSyncManager.getInstance(project).partialSync(targetsToSync);
     notifySuccess(project, addDirectory ? parentPath : null, targets);
   }
 
@@ -225,8 +237,7 @@ class AddSourceToProjectHelper {
     }
     // early-out if source is trivially covered by project targets (e.g. because there's a wildcard
     // target pattern for the parent package)
-    List<TargetExpression> projectTargets = context.projectViewSet.listItems(TargetSection.KEY);
-    if (packageCoveredByWildcardPattern(projectTargets, context.blazePackage)) {
+    if (context.getImportRoots().packageInProjectTargets(context.blazePackage)) {
       return null;
     }
     // Finally, query the exact targets building this source file.
@@ -270,52 +281,17 @@ class AddSourceToProjectHelper {
     if (targetsBuildingSource.stream().anyMatch(context.syncData.getTargetMap()::contains)) {
       return true;
     }
-    List<TargetExpression> projectViewTargets = context.projectViewSet.listItems(TargetSection.KEY);
-    // treat excluded and included project targets identically
-    projectViewTargets =
-        projectViewTargets
-            .stream()
-            .map(AddSourceToProjectHelper::unexclude)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-    for (TargetKey target : targetsBuildingSource) {
-      Label label = target.getLabel();
-      if (projectViewTargets.contains(label)
-          || packageCoveredByWildcardPattern(projectViewTargets, label.blazePackage())) {
-        return true;
-      }
-    }
-    return false;
+    ImportRoots roots = context.getImportRoots();
+    return targetsBuildingSource.stream().anyMatch(t -> roots.targetInProject(t.getLabel()));
   }
 
   static boolean packageCoveredByProjectTargets(LocationContext context) {
-    List<TargetExpression> projectTargets = context.projectViewSet.listItems(TargetSection.KEY);
-    return packageCoveredByWildcardPattern(projectTargets, context.blazePackage);
-  }
-
-  private static boolean packageCoveredByWildcardPattern(
-      List<TargetExpression> projectTargets, WorkspacePath blazePackage) {
-    return projectTargets
-        .stream()
-        .map(WildcardTargetPattern::fromExpression)
-        .anyMatch(wildcard -> wildcard != null && wildcard.coversPackage(blazePackage));
-  }
-
-  @Nullable
-  private static TargetExpression unexclude(TargetExpression target) {
-    return target.isExcluded()
-        ? TargetExpression.fromStringSafe(target.toString().substring(1))
-        : target;
+    return context.getImportRoots().packageInProjectTargets(context.blazePackage);
   }
 
   /** Returns true if the source is already covered by the current .blazeproject directories. */
   static boolean sourceInProjectDirectories(LocationContext context) {
-    ImportRoots importRoots =
-        ImportRoots.builder(
-                WorkspaceRoot.fromProject(context.project), Blaze.getBuildSystem(context.project))
-            .add(context.projectViewSet)
-            .build();
-    return importRoots.containsWorkspacePath(context.workspacePath);
+    return context.getImportRoots().containsWorkspacePath(context.workspacePath);
   }
 
   @Nullable
@@ -399,6 +375,12 @@ class AddSourceToProjectHelper {
       this.file = file;
       this.workspacePath = workspacePath;
       this.blazePackage = blazePackage;
+    }
+
+    ImportRoots getImportRoots() {
+      return ImportRoots.builder(WorkspaceRoot.fromProject(project), Blaze.getBuildSystem(project))
+          .add(projectViewSet)
+          .build();
     }
   }
 }
