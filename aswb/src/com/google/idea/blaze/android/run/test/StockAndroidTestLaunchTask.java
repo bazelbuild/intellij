@@ -24,6 +24,7 @@ import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,9 +32,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.annotations.NotNull;
 
 final class StockAndroidTestLaunchTask implements LaunchTask {
@@ -144,13 +142,9 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
               (Computable<ImmutableList<String>>) () -> getRunnersFromManifest(deployInfo));
     }
 
-    Manifest manifest = deployInfo.getMergedManifest();
-    if (manifest != null) {
-      return ImmutableList.copyOf(
-          manifest.getInstrumentations().stream()
-              .map(instrumentation -> instrumentation.getInstrumentationClass().getStringValue())
-              .filter(Objects::nonNull)
-              .collect(Collectors.toList()));
+    ManifestParser.ParsedManifest parsedManifest = deployInfo.getMergedManifest();
+    if (parsedManifest != null) {
+      return ImmutableList.copyOf(parsedManifest.instrumentationClassNames);
     }
     return ImmutableList.of();
   }

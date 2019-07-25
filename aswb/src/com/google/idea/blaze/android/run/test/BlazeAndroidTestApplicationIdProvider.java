@@ -18,12 +18,9 @@ package com.google.idea.blaze.android.run.test;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.google.common.collect.Iterables;
+import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
-import javax.annotation.Nullable;
-import org.jetbrains.android.dom.manifest.Manifest;
 
 /** Application id provider for android_binary. */
 public class BlazeAndroidTestApplicationIdProvider implements ApplicationIdProvider {
@@ -36,37 +33,31 @@ public class BlazeAndroidTestApplicationIdProvider implements ApplicationIdProvi
   @Override
   public String getPackageName() throws ApkProvisionException {
     BlazeAndroidDeployInfo deployInfo = buildStep.getDeployInfo();
-    Manifest manifest = Iterables.getFirst(deployInfo.getAdditionalMergedManifests(), null);
-    if (manifest == null) {
+    ManifestParser.ParsedManifest parsedManifest =
+        Iterables.getFirst(deployInfo.getAdditionalMergedManifest(), null);
+    if (parsedManifest == null) {
       // The application may not have a separate package,
       // and can instead be in the same package as the tests.
       return getTestPackageName();
     }
-    String applicationId =
-        ApplicationManager.getApplication()
-            .runReadAction((Computable<String>) () -> manifest.getPackage().getValue());
-    if (applicationId == null) {
+    if (parsedManifest.packageName == null) {
       throw new ApkProvisionException("No application id in manifest under test");
     }
-    return applicationId;
+    return parsedManifest.packageName;
   }
 
-  @Nullable
   @Override
   public String getTestPackageName() throws ApkProvisionException {
     BlazeAndroidDeployInfo deployInfo = buildStep.getDeployInfo();
-    Manifest manifest = deployInfo.getMergedManifest();
-    if (manifest == null) {
+    ManifestParser.ParsedManifest parsedManifest = deployInfo.getMergedManifest();
+    if (parsedManifest == null) {
       throw new ApkProvisionException(
           "Could not find merged manifest: " + deployInfo.getMergedManifestFile());
     }
-    String applicationId =
-        ApplicationManager.getApplication()
-            .runReadAction((Computable<String>) () -> manifest.getPackage().getValue());
-    if (applicationId == null) {
+    if (parsedManifest.packageName == null) {
       throw new ApkProvisionException(
           "No application id in merged manifest: " + deployInfo.getMergedManifestFile());
     }
-    return applicationId;
+    return parsedManifest.packageName;
   }
 }

@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
-import com.google.idea.blaze.android.manifest.ManifestParser;
+import com.google.idea.blaze.android.manifest.ParsedManifestService;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
@@ -78,7 +78,7 @@ public class BlazeApkDeployInfoProtoHelper {
         new BlazeAndroidDeployInfo(project, new File(executionRoot), deployInfo);
 
     List<File> manifestFiles = androidDeployInfo.getManifestFiles();
-    ManifestParser.getInstance(project).refreshManifests(manifestFiles);
+    ParsedManifestService.getInstance(project).invalidateCachedManifests(manifestFiles);
 
     return androidDeployInfo;
   }

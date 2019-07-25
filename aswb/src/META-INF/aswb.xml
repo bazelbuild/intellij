@@ -27,7 +27,7 @@
     <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor" order="last"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
                         serviceImplementation="com.google.idea.blaze.android.plugin.AswbPlugin"/>
-    <projectService serviceImplementation="com.google.idea.blaze.android.manifest.ManifestParser"/>
+    <projectService serviceImplementation="com.google.idea.blaze.android.manifest.ParsedManifestService"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.projectsystem.ExternalLibraryInterner"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.libraries.UnpackedAars"/>
@@ -57,7 +57,7 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncPlugin"/>
     <SyncListener implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncListener"/>
-    <SyncListener implementation="com.google.idea.blaze.android.manifest.ManifestParser$ClearManifestParser"/>
+    <SyncListener implementation="com.google.idea.blaze.android.manifest.ParsedManifestService$ClearManifestParser"/>
     <SyncListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemSyncManager$SyncStatusPublisher"/>
     <JavaSyncAugmenter implementation="com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter"/>
     <FileCache implementation="com.google.idea.blaze.android.libraries.UnpackedAars$FileCacheAdapter"/>

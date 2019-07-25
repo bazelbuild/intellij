@@ -219,6 +219,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
       SyncMode syncMode) {
     BlazeAndroidProjectStructureSyncer.updateInMemoryState(
         project,
+        context,
         workspaceRoot,
         projectViewSet,
         blazeProjectData,

@@ -17,13 +17,7 @@ package com.google.idea.blaze.android.run.binary;
 
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.activity.ActivityLocator;
-import com.android.tools.idea.run.activity.DefaultActivityLocator;
 import com.google.idea.blaze.android.manifest.ManifestParser;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import java.io.File;
-import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,38 +25,23 @@ import org.jetbrains.annotations.NotNull;
  * it.
  */
 public class BlazeDefaultActivityLocator extends ActivityLocator {
-  private final Project project;
-  private final File mergedManifestFile;
+  private final ManifestParser.ParsedManifest manifest;
 
-  public BlazeDefaultActivityLocator(Project project, File mergedManifestFile) {
-    this.project = project;
-    this.mergedManifestFile = mergedManifestFile;
+  public BlazeDefaultActivityLocator(ManifestParser.ParsedManifest mergedManifestParsedManifest) {
+    this.manifest = mergedManifestParsedManifest;
   }
 
   @Override
   public void validate() throws ActivityLocatorException {}
 
-  @NotNull
   @Override
   public String getQualifiedActivityName(@NotNull IDevice device) throws ActivityLocatorException {
-    // Run in a read action since otherwise, it might throw a read access exception.
-    Manifest manifest =
-        ApplicationManager.getApplication()
-            .runReadAction(
-                (Computable<Manifest>)
-                    () -> ManifestParser.getInstance(project).getManifest(mergedManifestFile));
-
     if (manifest == null) {
       throw new ActivityLocatorException("Could not locate merged manifest");
     }
-    String activityName =
-        ApplicationManager.getApplication()
-            .runReadAction(
-                (Computable<String>)
-                    () -> DefaultActivityLocator.getDefaultLauncherActivityName(project, manifest));
-    if (activityName == null) {
+    if (manifest.defaultActivityClassName == null) {
       throw new ActivityLocatorException("Could not locate default activity to launch.");
     }
-    return activityName;
+    return manifest.defaultActivityClassName;
   }
 }

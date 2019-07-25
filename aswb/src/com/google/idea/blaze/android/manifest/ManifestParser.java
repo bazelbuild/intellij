@@ -15,121 +15,157 @@
  */
 package com.google.idea.blaze.android.manifest;
 
-import com.google.common.collect.Maps;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.sync.SyncListener;
-import com.google.idea.blaze.base.sync.SyncMode;
-import com.google.idea.blaze.base.sync.SyncResult;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
+import static com.android.SdkConstants.ANDROID_URI;
+import static com.android.SdkConstants.ATTR_NAME;
+import static com.android.xml.AndroidManifest.ATTRIBUTE_PACKAGE;
+import static com.android.xml.AndroidManifest.NODE_ACTIVITY;
+import static com.android.xml.AndroidManifest.NODE_ACTIVITY_ALIAS;
+import static com.android.xml.AndroidManifest.NODE_APPLICATION;
+import static com.android.xml.AndroidManifest.NODE_INSTRUMENTATION;
+
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.android.run.DefaultActivityLocatorCompat;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.io.IOException;
+import java.io.InputStream;
 import javax.annotation.Nullable;
-import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.android.util.AndroidUtils;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
 
-/**
- * Parses manifests from the project.
- *
- * <p>Note: Manifests generated from android builds are not tracked by the VFS and are therefore not
- * guaranteed to be up-to-date when accessed. {@link ManifestParser#refreshManifests(Collection)}
- * must be used to keep the VFS up-to-date as soon as changes to generated manifest files occur.
- * E.g. at the end of a android_binary build.
- */
+/** Parses manifests from input streams. */
 public class ManifestParser {
-  private static final Logger LOG = Logger.getInstance(ManifestParser.class);
-  private final Project project;
-  private Map<File, Manifest> manifestFileMap = Maps.newHashMap();
+  private static final Logger log = Logger.getInstance(ManifestParser.class);
 
   public static ManifestParser getInstance(Project project) {
     return ServiceManager.getService(project, ManifestParser.class);
   }
 
-  private ManifestParser(Project project) {
-    this.project = project;
+  /** Container class for common manifest attributes required by the blaze plugin. */
+  public static class ParsedManifest {
+    /**
+     * Package name of the application and should always be non-null in normal cases. A null package
+     * name indicates something went wrong when parsing the manifest. E.g. Invalid manifest.
+     */
+    @Nullable public final String packageName;
+
+    /**
+     * Fqcn of instrumentation classes. An empty list indicates there are no instrumentation classes
+     * declared.
+     */
+    public final ImmutableList<String> instrumentationClassNames;
+
+    /**
+     * Name of the default activity to launch during startup. A null default activity name indicates
+     * there isn't one present. This is common for testing and instrumentation APKs, where there
+     * isn't an activity to launch from the APK itself.
+     */
+    @Nullable public final String defaultActivityClassName;
+
+    public ParsedManifest(
+        @Nullable String packageName,
+        ImmutableList<String> instrumentationClassNames,
+        @Nullable String defaultActivityClassName) {
+      this.packageName = packageName;
+      this.instrumentationClassNames = instrumentationClassNames;
+      this.defaultActivityClassName = defaultActivityClassName;
+    }
   }
 
   /**
-   * Returns a possibly out-of-date manifest file.
+   * Returns parsed manifest from the given input stream. Returns null if the manifest is invalid.
    *
-   * <p>The returned manifest is not guaranteed to be up-to-date for un-tracked manifest files. E.g.
-   * A manifest file generated as a part of the build process. {@link
-   * ManifestParser#refreshManifests(Collection)} can be used to refresh the files in attempt to
-   * keep it up-to-date until the last refresh.
+   * <p>An invalid manifest is anything that could not be parsed by the parser, such as a malformed
+   * manifest.
    */
+  public static ParsedManifest parseManifestFromInputStream(InputStream inputStream)
+      throws IOException {
+    Element manifestRootElement = getManifestRootElementFromInputStream(inputStream);
+    if (manifestRootElement == null) {
+      return null;
+    }
+    return parseManifestElement(manifestRootElement);
+  }
+
   @Nullable
-  public Manifest getManifest(File file) {
-    if (!file.exists()) {
+  private static Element getManifestRootElementFromInputStream(InputStream input)
+      throws IOException {
+    try {
+      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+      dbf.setNamespaceAware(true);
+      DocumentBuilder db = dbf.newDocumentBuilder();
+      Document doc = db.parse(input);
+      return doc.getDocumentElement();
+    } catch (ParserConfigurationException e) {
+      log.warn("Error in manifest parser: " + e.getMessage());
+    } catch (SAXException e) {
+      log.warn("Could not parse manifest XML: " + e.getMessage());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ParsedManifest parseManifestElement(Element manifestRootElement) {
+    String packageName =
+        Strings.emptyToNull(manifestRootElement.getAttributeNS(null, ATTRIBUTE_PACKAGE));
+    if (packageName == null) {
+      return null; // Return early because a manifest with no package name is not a valid manifest.
+    }
+
+    ImmutableList.Builder<String> instrumentationClassNames = ImmutableList.builder();
+    ImmutableList.Builder<Element> activities = new ImmutableList.Builder<>();
+    ImmutableList.Builder<Element> activityAliases = new ImmutableList.Builder<>();
+    try {
+      Node node = manifestRootElement.getFirstChild();
+      while (node != null) {
+        if (node.getNodeType() == Node.ELEMENT_NODE) {
+          String nodeName = node.getNodeName();
+
+          if (NODE_APPLICATION.equals(nodeName)) {
+            // Extract <activity> and <activity-alias> elements from <application>
+            Node child = node.getFirstChild();
+            while (child != null) {
+              if (child.getNodeType() == Node.ELEMENT_NODE) {
+                String childNodeName = child.getNodeName();
+
+                if (NODE_ACTIVITY.equals(childNodeName)) {
+                  activities.add((Element) child);
+                } else if (NODE_ACTIVITY_ALIAS.equals(childNodeName)) {
+                  activityAliases.add((Element) child);
+                }
+              }
+              child = child.getNextSibling();
+            }
+          } else if (NODE_INSTRUMENTATION.equals(nodeName)) {
+            // Extract instrumentation class names from <instrumentation>
+            String name = ((Element) node).getAttributeNS(ANDROID_URI, ATTR_NAME);
+            if (name != null) {
+              instrumentationClassNames.add(name);
+            }
+          }
+        }
+
+        node = node.getNextSibling();
+      }
+    } catch (DOMException e) {
+      log.warn("Could not parse manifest XML: " + e.getMessage());
       return null;
     }
-    Manifest manifest = manifestFileMap.get(file);
-    // Note: The manifest may be invalid if the underlying VirtualFile is invalidated.
-    // Once invalid, it cannot become valid again, and must be reloaded.
-    if (manifest != null && isValid(manifest)) {
-      return manifest;
-    }
-    final VirtualFile virtualFile;
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    } else {
-      virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
-    }
-    if (virtualFile == null) {
-      LOG.error("Could not find manifest: " + file);
-      return null;
-    }
-    manifest = AndroidUtils.loadDomElement(project, virtualFile, Manifest.class);
-    manifestFileMap.put(file, manifest);
-    return manifest;
-  }
 
-  private static boolean isValid(Manifest manifest) {
-    return ReadAction.compute(() -> manifest.isValid());
-  }
+    String defaultActivityClassName =
+        DefaultActivityLocatorCompat.computeDefaultActivity(
+            DefaultActivityLocatorCompat.ActivityWrapper.get(
+                activities.build(), activityAliases.build()));
 
-  /**
-   * Refresh the VFS for given {@code manifestFiles} and block until the refresh is complete.
-   *
-   * <p>Note: This VFS refresh operation could block for a very long time depending on the number of
-   * queued VFS refreshes. The manifest is not guaranteed to be up-to-date until this method
-   * returns. {@see ManifestParser}
-   */
-  public void refreshManifests(Collection<File> manifestFiles) {
-    List<VirtualFile> manifestVirtualFiles =
-        manifestFiles.stream()
-            .map(file -> VfsUtil.findFileByIoFile(file, false))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-
-    VfsUtil.markDirtyAndRefresh(
-        false, false, false, ArrayUtil.toObjectArray(manifestVirtualFiles, VirtualFile.class));
-  }
-
-  static class ClearManifestParser implements SyncListener {
-    @Override
-    public void onSyncComplete(
-        Project project,
-        BlazeContext context,
-        BlazeImportSettings importSettings,
-        ProjectViewSet projectViewSet,
-        BlazeProjectData blazeProjectData,
-        SyncMode syncMode,
-        SyncResult syncResult) {
-      getInstance(project).manifestFileMap.clear();
-    }
+    return new ParsedManifest(
+        packageName, instrumentationClassNames.build(), defaultActivityClassName);
   }
 }
