@@ -287,23 +287,25 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     assertThat(projectPath.getMappedName()).isEqualTo("workspace");
     assertThat(projectPath.getMappings())
         .containsExactly(
-            "./tsconfig.runfiles/workspace/*",
             "../../../../../workspace/*",
             "../../../../../workspace/blaze-bin/*",
-            "../../*",
             "../../../../../workspace/blaze-genfiles/*",
-            "../../../genfiles/*");
+            "../../*",
+            "../../../genfiles/*",
+            "./tsconfig.runfiles/workspace/*")
+        .inOrder();
 
     JSModulePathSubstitution projectFooPath = paths.get(1);
     assertThat(projectFooPath.getMappedName()).isEqualTo("workspace/project/foo");
     assertThat(projectFooPath.getMappings())
         .containsExactly(
-            "./tsconfig.runfiles/workspace/project/foo/*",
             "../../../../../workspace/project/foo/*",
             "../../../../../workspace/blaze-bin/project/foo/*",
-            "../../project/foo/*",
             "../../../../../workspace/blaze-genfiles/project/foo/*",
-            "../../../genfiles/project/foo/*");
+            "../../project/foo/*",
+            "../../../genfiles/project/foo/*",
+            "./tsconfig.runfiles/workspace/project/foo/*")
+        .inOrder();
 
     assertThat(blazeConfig.getRootDirsFiles())
         .containsExactly(
