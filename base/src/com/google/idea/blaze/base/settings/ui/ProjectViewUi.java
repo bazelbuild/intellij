@@ -32,23 +32,17 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
-import com.intellij.openapi.editor.impl.EditorFactoryImpl;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.file.impl.FileManager;
-import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.LanguageTextField;
+import com.intellij.ui.LanguageTextField.SimpleDocumentCreator;
 import com.intellij.ui.components.JBLabel;
 import java.awt.Dimension;
 import java.awt.KeyboardFocusManager;
@@ -105,22 +99,9 @@ public class ProjectViewUi {
 
   private static EditorEx createEditor(String tooltip) {
     Project project = getProject();
-    LightVirtualFile virtualFile =
-        new LightVirtualFile("mockProjectViewFile", ProjectViewLanguage.INSTANCE, "");
-    final Document document =
-        ((EditorFactoryImpl) EditorFactory.getInstance()).createDocument(true);
-    ((DocumentImpl) document).setAcceptSlashR(true);
-    FileDocumentManagerImpl.registerDocument(document, virtualFile);
-
-    FileManager fileManager = ((PsiManagerEx) PsiManager.getInstance(project)).getFileManager();
-    fileManager.setViewProvider(virtualFile, fileManager.createFileViewProvider(virtualFile, true));
-
-    if (project.isDefault()) {
-      // Undo-redo doesn't work with the default project.
-      // Explicitly turn it off to avoid error dialogs.
-      UndoUtil.disableUndoFor(document);
-    }
-
+    Document document =
+        LanguageTextField.createDocument(
+            /* value= */ "", ProjectViewLanguage.INSTANCE, project, new SimpleDocumentCreator());
     EditorEx editor =
         (EditorEx)
             EditorFactory.getInstance()
