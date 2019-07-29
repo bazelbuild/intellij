@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.sharding.QueryResultLineProcessor;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.List;
@@ -44,7 +45,10 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
   @Override
   @Nullable
   public List<TargetInfo> doExpandDirectoryTargets(
-      Project project, ImportRoots directories, BlazeContext context) {
+      Project project,
+      ImportRoots directories,
+      WorkspacePathResolver pathResolver,
+      BlazeContext context) {
     return runQuery(project, getQueryString(directories), context);
   }
 

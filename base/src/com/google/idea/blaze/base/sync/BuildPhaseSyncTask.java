@@ -55,6 +55,7 @@ import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedT
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.sharding.SuggestBuildShardingNotification;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
@@ -126,7 +127,11 @@ final class BuildPhaseSyncTask {
         buildStats.setTargetsDerivedFromDirectories(true);
         List<TargetExpression> fromDirs =
             getTargetsFromDirectories(
-                project, context, viewSet, projectState.getLanguageSettings());
+                project,
+                context,
+                viewSet,
+                projectState.getWorkspacePathResolver(),
+                projectState.getLanguageSettings());
         targets.addAll(fromDirs);
         printTargets(context, "project view directories", fromDirs);
       }
@@ -202,6 +207,7 @@ final class BuildPhaseSyncTask {
       Project project,
       BlazeContext parentContext,
       ProjectViewSet projectViewSet,
+      WorkspacePathResolver pathResolver,
       WorkspaceLanguageSettings languageSettings)
       throws SyncFailedException {
     String fileBugSuggestion =
@@ -229,7 +235,7 @@ final class BuildPhaseSyncTask {
               // We don't want blaze build errors to fail the whole sync
               context.setPropagatesErrors(false);
               return DirectoryToTargetProvider.expandDirectoryTargets(
-                  project, importRoots, context);
+                  project, importRoots, pathResolver, context);
             });
     if (targets == null) {
       IssueOutput.error("Deriving targets from project directories failed." + fileBugSuggestion)
