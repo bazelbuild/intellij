@@ -206,9 +206,12 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
       WorkspaceLanguageSettings workspaceLanguageSettings) {
     boolean typescriptActive = workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT);
 
-    if (typescriptActive && !PlatformUtils.isIdeaUltimate() && !PlatformUtils.isCLion()) {
-      IssueOutput.error("IntelliJ Ultimate or CLion needed for TypeScript support.")
-          .submit(context);
+    if (typescriptActive && !isLanguageSupportedInIde()) {
+      String message =
+          Blaze.getBuildSystem(project) == BuildSystem.Blaze
+              ? "IntelliJ Ultimate or CLion needed for TypeScript support."
+              : "TypeScript support is not available in this IDE";
+      IssueOutput.error(message).submit(context);
       return false;
     }
 
