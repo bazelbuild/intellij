@@ -259,7 +259,9 @@ public class BlazeGoPackage extends GoPackage {
 
   @Override
   public Collection<PsiFile> files() {
-    if (cachedGoFiles == null || cachedGoFiles.stream().anyMatch(f -> !f.isValid())) {
+    if (cachedGoFiles == null
+        || cachedGoFiles.size() != files.size()
+        || cachedGoFiles.stream().anyMatch(f -> !f.isValid())) {
       PsiManager psiManager = PsiManager.getInstance(getProject());
       cachedGoFiles =
           files.stream()

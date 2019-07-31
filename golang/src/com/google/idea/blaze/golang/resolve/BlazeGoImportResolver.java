@@ -128,7 +128,6 @@ class BlazeGoImportResolver implements GoImportResolver {
     return doResolve(goPackage, reference.getIndex());
   }
 
-  @Nullable
   static ResolveResult[] doResolve(BlazeGoPackage goPackage, int index) {
     return Stream.of(goPackage)
         .map(BlazeGoPackage::getImportReferences)
