@@ -62,7 +62,7 @@ public class BlazeProblemsView {
     return ServiceManager.getService(project, BlazeProblemsView.class);
   }
 
-  private static final String TOOL_WINDOW_ID = "Blaze Problems";
+  private static final String TOOL_WINDOW_ID = "Bazel Problems";
   private static final EnumSet<ErrorTreeElementKind> ALL_MESSAGE_KINDS =
       EnumSet.allOf(ErrorTreeElementKind.class);
   private static final int MAX_ISSUES = 2000;
