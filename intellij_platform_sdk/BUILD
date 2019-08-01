@@ -45,6 +45,13 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2019.2",
+    values = {
+        "define": "ij_product=intellij-2019.2",
+    },
+)
+
+config_setting(
     name = "intellij-ue-2019.1",
     values = {
         "define": "ij_product=intellij-ue-2019.1",
