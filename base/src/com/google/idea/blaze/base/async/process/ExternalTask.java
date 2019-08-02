@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.async.process;
 
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
@@ -32,6 +31,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -201,7 +201,7 @@ public interface ExternalTask {
 
     private int invokeCommand(BlazeContext context) {
       String logMessage =
-          "Command: " + Joiner.on(" ").join(command) + SystemProperties.getLineSeparator();
+          "Command: " + ParametersListUtil.join(command) + SystemProperties.getLineSeparator();
 
       context.output(
           PrintOutput.log(
