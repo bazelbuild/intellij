@@ -32,6 +32,15 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.1.2/ideaIU-2019.1.2.zip",
 )
 
+# The plugin api for IntelliJ UE 2019.2. This is required to run UE-specific
+# integration tests.
+http_archive(
+    name = "intellij_ue_2019_2",
+    build_file = "@//intellij_platform_sdk:BUILD.ue",
+    sha256 = "c1a980c6eeb528ee731ed52a5821981466b9205713926748051ff08a4ce8cfaf",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.2/ideaIU-2019.2.zip",
+)
+
 # The plugin api for CLion 2019.1. This is required to build CLwB,
 # and run integration tests.
 http_archive(
