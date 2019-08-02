@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import java.io.File;
+import java.time.Instant;
 import java.util.Collection;
 import org.junit.Before;
 import org.junit.Test;
@@ -184,6 +185,35 @@ public class TestTargetHeuristicTest extends BlazeIntegrationTestCase {
         TestTargetHeuristic.chooseTestTargetForSourceFile(
             getProject(), null, source, targets, TestSize.SMALL);
     assertThat(match.label).isEqualTo(Label.create("//foo:test2"));
+  }
+
+  @Test
+  public void testMostRecentlySyncedTargetPreferred() {
+    File source = workspaceRoot.fileForPath(new WorkspacePath("java/com/foo/FooTest.java"));
+    Collection<TargetInfo> targets =
+        ImmutableList.of(
+            TargetIdeInfo.builder()
+                .setLabel("//foo:a")
+                .setKind("sh_test")
+                .setSyncTime(Instant.now().minusSeconds(5))
+                .build()
+                .toTargetInfo(),
+            TargetIdeInfo.builder()
+                .setLabel("//foo:b")
+                .setKind("sh_test")
+                .setSyncTime(Instant.now())
+                .build()
+                .toTargetInfo(),
+            TargetIdeInfo.builder()
+                .setLabel("//foo:c")
+                .setKind("sh_test")
+                .setSyncTime(null)
+                .build()
+                .toTargetInfo());
+    TargetInfo match =
+        TestTargetHeuristic.chooseTestTargetForSourceFile(
+            getProject(), null, source, targets, TestSize.SMALL);
+    assertThat(match.label).isEqualTo(Label.create("//foo:b"));
   }
 
   private static ArtifactLocation sourceRoot(String relativePath) {

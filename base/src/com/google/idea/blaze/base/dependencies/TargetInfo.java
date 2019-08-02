@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -33,6 +34,7 @@ public class TargetInfo {
   public final String kindString;
   @Nullable public final TestSize testSize;
   @Nullable public final String testClass;
+  @Nullable public final Instant syncTime;
   @Nullable private final ImmutableList<ArtifactLocation> sources;
 
   private TargetInfo(
@@ -40,11 +42,13 @@ public class TargetInfo {
       String kindString,
       @Nullable TestSize testSize,
       @Nullable String testClass,
+      @Nullable Instant syncTime,
       @Nullable ImmutableList<ArtifactLocation> sources) {
     this.label = label;
     this.kindString = kindString;
     this.testSize = testSize;
     this.testClass = testClass;
+    this.syncTime = syncTime;
     this.sources = sources;
   }
 
@@ -119,6 +123,7 @@ public class TargetInfo {
     private final String kindString;
     @Nullable private TestSize testSize;
     @Nullable private String testClass;
+    @Nullable private Instant syncTime;
     @Nullable private ImmutableList<ArtifactLocation> sources;
 
     private Builder(Label label, String kindString) {
@@ -136,13 +141,18 @@ public class TargetInfo {
       return this;
     }
 
+    public Builder setSyncTime(@Nullable Instant syncTime) {
+      this.syncTime = syncTime;
+      return this;
+    }
+
     public Builder setSources(ImmutableList<ArtifactLocation> sources) {
       this.sources = sources;
       return this;
     }
 
     public TargetInfo build() {
-      return new TargetInfo(label, kindString, testSize, testClass, sources);
+      return new TargetInfo(label, kindString, testSize, testClass, syncTime, sources);
     }
   }
 }

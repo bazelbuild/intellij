@@ -356,6 +356,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     return TargetInfo.builder(getKey().getLabel(), getKind().getKindString())
         .setTestSize(getTestIdeInfo() != null ? getTestIdeInfo().getTestSize() : null)
         .setTestClass(getJavaIdeInfo() != null ? getJavaIdeInfo().getTestClass() : null)
+        .setSyncTime(syncTime)
         .setSources(ImmutableList.copyOf(getSources()))
         .build();
   }
