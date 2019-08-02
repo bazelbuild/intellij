@@ -284,7 +284,9 @@ final class BuildPhaseSyncTask {
         parentContext,
         context -> {
           context.push(new TimingScope("BlazeBuild", EventType.BlazeInvocation));
-          context.output(new StatusOutput("Building blaze targets..."));
+          context.output(
+              new StatusOutput(
+                  "Building " + Blaze.getBuildSystem(project).getName() + " targets..."));
           // We don't want blaze build errors to fail the whole sync
           context.setPropagatesErrors(false);
 
