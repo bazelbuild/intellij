@@ -87,6 +87,20 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/7322/60398/python-ce-2019.1.191.6707.7.zip",
 )
 
+# Python plugin for IntelliJ CE 2019.2. Required at compile-time for python-specific features.
+http_archive(
+    name = "python_2019_2",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'python',",
+        "    jars = ['python-ce/lib/python-ce.jar'],",
+        "    visibility = ['//visibility:public'],",
+        ")",
+    ]),
+    sha256 = "c0d970d4b8034fbe1a1c705a59e2d6321ec032ae38c65535493dc1ec5c8aeec5",
+    url = "https://plugins.jetbrains.com/files/7322/66012/python-ce.zip",
+)
+
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
 http_archive(
     name = "go_2019_1",
@@ -101,6 +115,20 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/9568/59092/intellij-go-191.6014.8.104.zip",
 )
 
+# Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
+http_archive(
+    name = "go_2019_2",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'go',",
+        "    jars = glob(['intellij-go/lib/*.jar']),",
+        "    visibility = ['//visibility:public'],",
+        ")",
+    ]),
+    sha256 = "704593665da45a6ad1dcd86f53d3959c6b0803dc0b0773b1b23864e48c9af289",
+    url = "https://plugins.jetbrains.com/files/9568/66084/intellij-go-192.5728.86.268.zip",
+)
+
 # Scala plugin for IntelliJ CE 2019.1. Required at compile-time for scala-specific features.
 http_archive(
     name = "scala_2019_1",
@@ -113,6 +141,20 @@ http_archive(
     ]),
     sha256 = "e26f00ff697f30defb1d1968805cc3c95a31d0b1bef428cfc202ebd3e0c1076c",
     url = "https://plugins.jetbrains.com/files/1347/59108/scala-intellij-bin-2019.1.2.zip",
+)
+
+# Scala plugin for IntelliJ CE 2019.2. Required at compile-time for scala-specific features.
+http_archive(
+    name = "scala_2019_2",
+    build_file_content = "\n".join([
+        "java_import(",
+        "    name = 'scala',",
+        "    jars = glob(['Scala/lib/*.jar']),",
+        "    visibility = ['//visibility:public'],",
+        ")",
+    ]),
+    sha256 = "b895f9d46f4cc01bd040e6319574fad85bdc287366d4073e130ef7df49199aaa",
+    url = "https://plugins.jetbrains.com/files/1347/66462/scala-intellij-bin-2019.2.15.zip",
 )
 
 # The plugin api for Android Studio 3.4. This is required to build ASwB,

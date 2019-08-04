@@ -11,6 +11,8 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-2019.1": ["@intellij_ue_2019_1//:javascript"],
         "intellij-ue-2019.1": ["@intellij_ue_2019_1//:javascript"],
+        "intellij-2019.2": ["@intellij_ue_2019_2//:javascript"],
+        "intellij-ue-2019.2": ["@intellij_ue_2019_2//:javascript"],
         "clion-2019.1": ["@clion_2019_1//:javascript"],
         "clion-2019.2": ["@clion_2019_2//:javascript"],
         "default": [],
@@ -24,6 +26,8 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-2019.1": ["@intellij_ue_2019_1//:css"],
         "intellij-ue-2019.1": ["@intellij_ue_2019_1//:css"],
+        "intellij-2019.2": ["@intellij_ue_2019_2//:css"],
+        "intellij-ue-2019.2": ["@intellij_ue_2019_2//:css"],
         "clion-2019.1": ["@clion_2019_1//:css"],
         "clion-2019.2": ["@clion_2019_2//:css"],
         "default": [],
@@ -37,8 +41,10 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-2019.1": ["@intellij_ue_2019_1//:angular"],
         "intellij-ue-2019.1": ["@intellij_ue_2019_1//:angular"],
+        "intellij-2019.2": ["@intellij_ue_2019_2//:angular"],
+        "intellij-ue-2019.2": ["@intellij_ue_2019_2//:angular"],
         "clion-2019.1": ["@intellij_ue_2019_1//:angular"],
-        "clion-2019.2": [],  # TODO pending 2019.2 UE support
+        "clion-2019.2": ["@intellij_ue_2019_2//:angular"],
         "default": [],
     }),
 )

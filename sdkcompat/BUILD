@@ -26,6 +26,8 @@ java_library(
         "android-studio-3.6": ["//sdkcompat/v191"],
         "intellij-2019.1": ["//sdkcompat/v191"],
         "intellij-ue-2019.1": ["//sdkcompat/v191"],
+        "intellij-2019.2": ["//sdkcompat/v192"],
+        "intellij-ue-2019.2": ["//sdkcompat/v192"],
         "clion-2019.1": ["//sdkcompat/v191"],
         "clion-2019.2": ["//sdkcompat/v192"],
     }),

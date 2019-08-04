@@ -256,6 +256,7 @@ java_library(
         "clion-2019.1": ["@jsr305_annotations//jar"],
         "clion-2019.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2019.1": ["@jsr305_annotations//jar"],
+        "intellij-ue-2019.2": ["@jsr305_annotations//jar"],
         "default": [":plugin_api"],
     }),
 )
