@@ -13,12 +13,10 @@ java_import(
 
 java_import(
     name = "android_plugin",
-    jars = glob(
-        [
-            "android-studio/plugins/android/lib/*.jar",
-            "android-studio/plugins/android-ndk/lib/*.jar",
-        ],
-    ),
+    jars = glob([
+        "android-studio/plugins/android/lib/*.jar",
+        "android-studio/plugins/android-ndk/lib/*.jar",
+    ]),
 )
 
 java_import(
