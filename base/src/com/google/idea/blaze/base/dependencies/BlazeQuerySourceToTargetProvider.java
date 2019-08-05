@@ -25,11 +25,11 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.sharding.QueryResultLineProcessor;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
@@ -84,7 +84,7 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
             .addBlazeFlags(query)
             .build();
 
-    QueryResultLineProcessor outputProcessor = new QueryResultLineProcessor(t -> true);
+    BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(t -> true);
     int retVal =
         ExternalTask.builder(WorkspaceRoot.fromProject(project))
             .addBlazeCommand(command)

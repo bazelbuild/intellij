@@ -32,6 +32,8 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
+import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser.RuleTypeAndLabel;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -41,7 +43,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
-import com.google.idea.blaze.base.sync.sharding.QueryResultLineProcessor.RuleTypeAndLabel;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
@@ -221,7 +222,7 @@ public class WildcardTargetExpander {
             ? t -> true
             : t -> handledRulesPredicate.test(t.ruleType) || explicitTargets.contains(t.label);
 
-    QueryResultLineProcessor outputProcessor = new QueryResultLineProcessor(filter);
+    BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(filter);
 
     int retVal =
         ExternalTask.builder(workspaceRoot)

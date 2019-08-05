@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.sync.sharding;
+package com.google.idea.blaze.base.query;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
@@ -26,13 +26,16 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Collects the blaze targets output by 'blaze query --output label_kind "targets"' */
-public class QueryResultLineProcessor implements LineProcessingOutputStream.LineProcessor {
+/**
+ * A {@link LineProcessingOutputStream.LineProcessor} which collects the blaze targets output by
+ * 'blaze query --output=label_kind "targets"'
+ */
+public class BlazeQueryLabelKindParser implements LineProcessingOutputStream.LineProcessor {
 
   /** A rule name and target label output by 'blaze query'. */
   public static class RuleTypeAndLabel {
-    final String ruleType;
-    final String label;
+    public final String ruleType;
+    public final String label;
 
     private RuleTypeAndLabel(String ruleType, String label) {
       this.ruleType = ruleType;
@@ -46,7 +49,7 @@ public class QueryResultLineProcessor implements LineProcessingOutputStream.Line
   private final Predicate<RuleTypeAndLabel> targetFilter;
 
   /** @param targetFilter Ignore targets failing this predicate. */
-  public QueryResultLineProcessor(Predicate<RuleTypeAndLabel> targetFilter) {
+  public BlazeQueryLabelKindParser(Predicate<RuleTypeAndLabel> targetFilter) {
     this.outputList = ImmutableList.builder();
     this.targetFilter = targetFilter;
   }

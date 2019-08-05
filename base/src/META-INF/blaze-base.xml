@@ -225,6 +225,7 @@
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.ProblemsViewConfiguration"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.BlazeSyncModificationTracker"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.filecache.RemoteOutputsCache"/>
+    <projectService serviceImplementation="com.google.idea.blaze.base.query.MacroLineMarkerProvider$FileDataProvider"/>
     <configurationType implementation="com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType"/>
     <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.BlazeBuildFileRunConfigurationProducer"
@@ -260,6 +261,9 @@
         order="first"/>
     <consoleFilterProvider implementation="com.google.idea.blaze.base.run.filter.GenericFileMessageFilter$Provider"/>
     <consoleFilterProvider implementation="com.google.idea.blaze.base.run.filter.TestLogFilter$Provider"/>
+    <codeInsight.lineMarkerProvider
+        language="BUILD"
+        implementationClass="com.google.idea.blaze.base.query.MacroLineMarkerProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -406,6 +410,8 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.DirectoryToTargetProvider" interface="com.google.idea.blaze.base.dependencies.DirectoryToTargetProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetProvider" interface="com.google.idea.blaze.base.dependencies.SourceToTargetProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetFilteringStrategy" interface="com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.MacroTargetProvider"
+        interface="com.google.idea.blaze.base.query.MacroTargetProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TargetFinder" interface="com.google.idea.blaze.base.run.targetfinder.TargetFinder"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.SourceToTargetFinder" interface="com.google.idea.blaze.base.run.SourceToTargetFinder"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TestComparisonFailureParser" interface="com.google.idea.blaze.base.run.smrunner.TestComparisonFailureParser"/>
