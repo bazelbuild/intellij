@@ -1,3 +1,7 @@
+v2019.08.05
+===========
+* Bug fixes and internal cleanup.
+
 v2019.07.22
 ===========
 * Add a .bazelproject option to automatically derive the relevant bazel
