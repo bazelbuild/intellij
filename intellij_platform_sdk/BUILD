@@ -163,6 +163,7 @@ load(
 # There will be additional versions added in the future
 java_library(
     name = "plugin_api_internal",
+    visibility = ["//visibility:private"],
     exports = select_from_plugin_api_directory(
         android_studio = [
             ":sdk",
