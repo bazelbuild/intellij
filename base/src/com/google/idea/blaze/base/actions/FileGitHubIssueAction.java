@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
@@ -21,6 +22,8 @@ import java.net.URLEncoder;
 import org.jetbrains.annotations.Nullable;
 
 public final class FileGitHubIssueAction extends BlazeProjectAction {
+
+  private static final Logger logger = Logger.getInstance(FileGitHubIssueAction.class);
 
   private static final String BASE_URL = "https://github.com/bazelbuild/intellij/issues/new?";
 
@@ -47,7 +50,6 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
     } else {
       BrowserUtil.browse(buildGitHubUrl(project));
     }
-
   }
 
   @Nullable
@@ -92,15 +94,16 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
     } catch (UnsupportedEncodingException ex) {
       // If we can't manage to parse the body for some reason (e.g. weird SystemInfo
       // OS_NAME or OS_VERSION), just proceed and open up an empty GitHub issue form.
+      logger.error(ex);
       return null;
     }
 
     try {
       return new URL(BASE_URL + issueParameterBuilder);
     } catch (MalformedURLException ex) {
+      logger.error(ex);
       return null;
     }
-
   }
 
   private String getProductId() {
