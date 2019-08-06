@@ -21,6 +21,14 @@ import java.net.URL;
 import java.net.URLEncoder;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A {@link BlazeProjectAction} to open a GitHub issue with pre-filled information
+ * like the versions of the plugin, Bazel and the IDE.
+ *
+ * Read the
+ * <a href="https://help.github.com/en/articles/about-automation-for-issues-and-pull-requests-with-query-parameters">GitHub docs</a>
+ * for more information on issue automation.
+ */
 public final class FileGitHubIssueAction extends BlazeProjectAction {
 
   private static final Logger logger = Logger.getInstance(FileGitHubIssueAction.class);
@@ -34,7 +42,7 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
 
-    // TODO(jingwen): Find somewhere else to hide this from the Blaze plugin
+    // TODO(jingwen): Find somewhere else to hide this from the Blaze plugin.
     if (Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
       Messages.showErrorDialog(
           e.getProject(),
@@ -48,7 +56,7 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
       // If for some reason we can't construct the URL, attempt to open the issues page directly.
       BrowserUtil.browse(BASE_URL);
     } else {
-      BrowserUtil.browse(buildGitHubUrl(project));
+      BrowserUtil.browse(url);
     }
   }
 
