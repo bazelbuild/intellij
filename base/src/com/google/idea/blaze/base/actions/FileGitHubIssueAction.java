@@ -25,7 +25,7 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
 
   private static final Logger logger = Logger.getInstance(FileGitHubIssueAction.class);
 
-  private static final String BASE_URL = "https://github.com/bazelbuild/intellij/issues/new?";
+  private static final String BASE_URL = "https://github.com/bazelbuild/intellij/issues/new";
 
   private static final ImmutableList<String> BAZEL_PLUGIN_IDS =
       ImmutableList.of(
@@ -99,7 +99,7 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
     }
 
     try {
-      return new URL(BASE_URL + issueParameterBuilder);
+      return new URL(BASE_URL + "?" + issueParameterBuilder);
     } catch (MalformedURLException ex) {
       logger.error(ex);
       return null;
