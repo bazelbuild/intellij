@@ -61,7 +61,8 @@ public abstract class CompatCompilerManagerImpl extends CompilerManagerImpl {
         outputDir);
   }
 
-  private Collection<? extends File> updateClasspath(Project project, Collection<File> classpath) {
+  private Collection<? extends File> updateClasspath(
+      Project project, Collection<? extends File> classpath) {
     return ImmutableList.<File>builder()
         .addAll(classpath)
         .addAll(getAdditionalProjectJars(project))

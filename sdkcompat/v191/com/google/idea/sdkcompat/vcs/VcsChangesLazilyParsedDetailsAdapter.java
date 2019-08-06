@@ -17,6 +17,7 @@ package com.google.idea.sdkcompat.vcs;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
@@ -31,11 +32,28 @@ import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** #api182: adapter for changes to VcsChangesLazilyParsedDetails in 2018.3. */
+/** #api191: adapter for changes to VcsChangesLazilyParsedDetails in 2019.2. */
 public abstract class VcsChangesLazilyParsedDetailsAdapter<V extends VcsRevisionNumber>
     extends VcsChangesLazilyParsedDetails {
 
-  protected final V vcsRevisionNumber;
+  /** #api191: adapter for changes in 2019.2 */
+  public interface Helper<V extends VcsRevisionNumber> {
+    FileStatus renamedStatus();
+
+    ImmutableList<V> getParents(V revision);
+
+    Change createChange(
+        Project project,
+        VirtualFile root,
+        @Nullable String fileBefore,
+        @Nullable V revisionBefore,
+        @Nullable String fileAfter,
+        V revisionAfter,
+        FileStatus aStatus);
+  }
+
+  private final V revision;
+  private final Helper<V> helper;
 
   protected VcsChangesLazilyParsedDetailsAdapter(
       Project project,
@@ -47,9 +65,11 @@ public abstract class VcsChangesLazilyParsedDetailsAdapter<V extends VcsRevision
       String commitMessage,
       VcsUser author,
       long time,
-      List<List<FileStatusInfo>> reportedChanges) {
+      List<List<FileStatusInfo>> reportedChanges,
+      Helper<V> helper) {
     super(hash, parentsHashes, time, root, subject, author, commitMessage, author, time);
-    this.vcsRevisionNumber = vcsRevisionNumber;
+    this.revision = vcsRevisionNumber;
+    this.helper = helper;
     myChanges.set(
         reportedChanges.isEmpty()
             ? EMPTY_CHANGES
@@ -80,77 +100,57 @@ public abstract class VcsChangesLazilyParsedDetailsAdapter<V extends VcsRevision
         .collect(toImmutableList());
   }
 
-  protected abstract List<V> getParents(V revision);
-
-  protected abstract Change createChange(
-      Project project,
-      VirtualFile root,
-      @Nullable String fileBefore,
-      @Nullable V revisionBefore,
-      @Nullable String fileAfter,
-      V revisionAfter,
-      FileStatus aStatus);
-
-  protected abstract FileStatus renamedFileStatus();
-
   private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges {
+
     private UnparsedChanges(Project project, List<List<VcsFileStatusInfo>> changesOutput) {
       super(project, changesOutput);
     }
 
     @Override
     protected List<Change> parseStatusInfo(List<VcsFileStatusInfo> changes, int parentIndex) {
+      ImmutableList<V> parents = helper.getParents(revision);
+      V parentRevision = parents.isEmpty() ? null : parents.get(parentIndex);
       List<Change> result = ContainerUtil.newArrayList();
       for (VcsFileStatusInfo info : changes) {
         String filePath = info.getFirstPath();
-        V parentRevision =
-            getParents(vcsRevisionNumber).isEmpty()
-                ? null
-                : getParents(vcsRevisionNumber).get(parentIndex);
         switch (info.getType()) {
           case MODIFICATION:
             result.add(
-                createChange(
+                helper.createChange(
                     myProject,
                     getRoot(),
                     filePath,
                     parentRevision,
                     filePath,
-                    vcsRevisionNumber,
+                    revision,
                     FileStatus.MODIFIED));
             break;
           case NEW:
             result.add(
-                createChange(
-                    myProject,
-                    getRoot(),
-                    null,
-                    null,
-                    filePath,
-                    vcsRevisionNumber,
-                    FileStatus.ADDED));
+                helper.createChange(
+                    myProject, getRoot(), null, null, filePath, revision, FileStatus.ADDED));
             break;
           case DELETED:
             result.add(
-                createChange(
+                helper.createChange(
                     myProject,
                     getRoot(),
                     filePath,
                     parentRevision,
                     null,
-                    vcsRevisionNumber,
+                    revision,
                     FileStatus.DELETED));
             break;
           case MOVED:
             result.add(
-                createChange(
+                helper.createChange(
                     myProject,
                     getRoot(),
                     filePath,
                     parentRevision,
                     info.getSecondPath(),
-                    vcsRevisionNumber,
-                    renamedFileStatus()));
+                    revision,
+                    helper.renamedStatus()));
             break;
         }
       }

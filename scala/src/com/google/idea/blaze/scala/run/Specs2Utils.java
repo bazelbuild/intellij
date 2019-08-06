@@ -16,6 +16,7 @@
 package com.google.idea.blaze.scala.run;
 
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
+import com.google.idea.sdkcompat.scala.TestConfigurationUtilCompat;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import java.util.function.Predicate;
@@ -23,7 +24,6 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
-import org.jetbrains.plugins.scala.testingSupport.test.TestConfigurationUtil;
 import org.jetbrains.plugins.scala.testingSupport.test.structureView.TestNodeProvider;
 
 /** Common functions for handling specs2 test scopes/cases. */
@@ -56,8 +56,7 @@ public final class Specs2Utils {
 
   @Nullable
   public static String getSpecs2ScopeName(ScInfixExpr testScope) {
-    String scopeName =
-        TestConfigurationUtil.getStaticTestNameOrDefault(testScope.getFirstChild(), null, false);
+    String scopeName = getSpecs2TestName(testScope);
     if (scopeName == null) {
       return null;
     }
@@ -65,8 +64,9 @@ public final class Specs2Utils {
   }
 
   @Nullable
-  public static String getSpecs2TestName(ScInfixExpr testCase) {
-    return TestConfigurationUtil.getStaticTestNameOrDefault(testCase.getFirstChild(), null, false);
+  private static String getSpecs2TestName(ScInfixExpr testCase) {
+    return TestConfigurationUtilCompat.getStaticTestName(
+        testCase.getFirstChild(), /* allowSymbolLiterals= */ false);
   }
 
   @Nullable

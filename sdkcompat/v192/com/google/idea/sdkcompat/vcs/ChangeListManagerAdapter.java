@@ -21,11 +21,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import java.util.List;
-import java.util.Set;
 
 /** Compat for {@link ChangeListManager}. Remove when #api183 is no longer supported. */
 public class ChangeListManagerAdapter {
@@ -39,24 +36,6 @@ public class ChangeListManagerAdapter {
   /** Compat for test */
   @VisibleForTesting
   public abstract static class TestChangeListManagerAdapter extends ChangeListManager {
-
-    @Override // #api183: added in 2019.1
-    // This is harder to @SuppressWarnings("MissingOverride") since IgnoredFileDescriptor
-    // is a new type in 2019.1
-    public Set<IgnoredFileDescriptor> getPotentiallyIgnoredFiles() {
-      throw new UnsupportedOperationException("TestChangeListManager#getPotentiallyIgnoredFiles()");
-    }
-
-    @Override // #api183: added in 2019.1
-    public boolean isPotentiallyIgnoredFile(VirtualFile virtualFile) {
-      throw new UnsupportedOperationException("TestChangeListManager#isPotentiallyIgnoredFile()");
-    }
-
-    @Override // #api183: added in 2019.1
-    public boolean isVcsIgnoredFile(VirtualFile virtualFile) {
-      throw new UnsupportedOperationException("TestChangeListManager#isVcsIgnoredFile()");
-    }
-
     @Override // #api183: wildcard added to List<> in 2019.1
     public void commitChanges(LocalChangeList changeList, List<? extends Change> changes) {
       throw new UnsupportedOperationException("TestChangeListManager#commitChanges()");

@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.sdkcompat.java.CompatCompilerManagerImpl;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.MessageBus;
 import java.io.File;
