@@ -93,7 +93,7 @@ def _get_all_dep_targets(target, ctx):
     """Get all the targets mentioned in one of the _DEP_ATTRS attributes of the target"""
     targets = []
     for attr_name in _DEP_ATTRS:
-        attr_val = getattr(ctx.rule.attr, attr_name, default = None)
+        attr_val = getattr(ctx.rule.attr, attr_name, None)
         if not attr_val:
             continue
         attr_type = type(attr_val)

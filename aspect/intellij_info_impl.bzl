@@ -267,7 +267,7 @@ _SRCS_VERSION_MAPPING = {
 }
 
 def _get_python_srcs_version(ctx):
-    srcs_version = getattr(ctx.rule.attr, "srcs_version", default = "PY2AND3")
+    srcs_version = getattr(ctx.rule.attr, "srcs_version", "PY2AND3")
     return _SRCS_VERSION_MAPPING.get(srcs_version, default = SRC_PY2AND3)
 
 ##### Builders for individual parts of the aspect output
