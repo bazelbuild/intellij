@@ -16,7 +16,6 @@ java_import(
     jars = glob([
         "android-studio/plugins/android/lib/*.jar",
         "android-studio/plugins/android-ndk/lib/*.jar",
-        "android-studio/plugins/sdk-updates/lib/*.jar",
     ]),
 )
 
@@ -80,7 +79,6 @@ java_import(
             "android-studio/plugins/Groovy/lib/*.jar",
             "android-studio/plugins/java-i18n/lib/*.jar",
             "android-studio/plugins/junit/lib/*.jar",
-            "android-studio/plugins/ndk-workspace/lib/*.jar",
             "android-studio/plugins/properties/lib/*.jar",
             "android-studio/plugins/smali/lib/*.jar",
             "android-studio/plugins/IntelliLang/lib/*.jar",
