@@ -63,6 +63,7 @@ public class PendingWebTestContext extends TestContext implements PendingRunConf
    */
   @Nullable
   static RunConfigurationContext findWebTestContext(
+      Project project,
       ImmutableSet<ExecutorType> supportedExecutors,
       TargetInfo target,
       PsiElement sourceElement,
@@ -71,7 +72,7 @@ public class PendingWebTestContext extends TestContext implements PendingRunConf
     if (!findWebTestContext.getValue()) {
       return null;
     }
-    ImmutableList<TargetInfo> wrapperTests = getWebTestWrappers(sourceElement.getProject(), target);
+    ImmutableList<TargetInfo> wrapperTests = getWebTestWrappers(project, target);
     if (wrapperTests.isEmpty()) {
       return null;
     } else if (wrapperTests.size() == 1) {
