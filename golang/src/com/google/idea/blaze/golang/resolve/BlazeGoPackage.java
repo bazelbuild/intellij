@@ -61,7 +61,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -85,7 +84,6 @@ public class BlazeGoPackage extends GoPackage {
   private final String importPath;
   private final Label label;
   private final Collection<File> files;
-  @Nullable private transient Collection<PsiFile> cachedGoFiles;
   @Nullable private transient PsiElement cachedNavigable;
   @Nullable private transient PsiElement[] cachedImportReferences;
 
@@ -259,18 +257,7 @@ public class BlazeGoPackage extends GoPackage {
 
   @Override
   public Collection<PsiFile> files() {
-    if (cachedGoFiles == null || cachedGoFiles.stream().anyMatch(f -> !f.isValid())) {
-      PsiManager psiManager = PsiManager.getInstance(getProject());
-      cachedGoFiles =
-          files.stream()
-              .map(VfsUtils::resolveVirtualFile)
-              .filter(Objects::nonNull)
-              .map(psiManager::findFile)
-              .filter(GoFile.class::isInstance)
-              .map(GoFile.class::cast)
-              .collect(Collectors.toList());
-    }
-    return cachedGoFiles;
+    return GoFilesCache.getInstance(getProject()).getFiles(files);
   }
 
   /**
