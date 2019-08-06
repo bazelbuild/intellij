@@ -40,8 +40,14 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
       return;
     }
 
-    // Open the browser to the GitHub repository with pre-filled information.
-    BrowserUtil.browse(buildGitHubUrl(project));
+    URL url = buildGitHubUrl(project);
+    if (url == null) {
+      // If for some reason we can't construct the URL, attempt to open the issues page directly.
+      BrowserUtil.browse(BASE_URL);
+    } else {
+      BrowserUtil.browse(buildGitHubUrl(project));
+    }
+
   }
 
   @Nullable
@@ -82,22 +88,22 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
     }
 
     try {
-      issueParameterBuilder.append("&body=" + URLEncoder.encode(bodyParam.toString(), "UTF-8"));
+      issueParameterBuilder.append("body=" + URLEncoder.encode(bodyParam.toString(), "UTF-8"));
     } catch (UnsupportedEncodingException ex) {
-      ex.printStackTrace();
+      // If we can't manage to parse the body for some reason (e.g. weird SystemInfo
+      // OS_NAME or OS_VERSION), just proceed and open up an empty GitHub issue form.
+      return null;
     }
 
-    URL url = null;
     try {
-      url = new URL(BASE_URL + issueParameterBuilder);
+      return new URL(BASE_URL + issueParameterBuilder);
     } catch (MalformedURLException ex) {
-      ex.printStackTrace();
+      return null;
     }
 
-    return url;
   }
 
-  String getProductId() {
+  private String getProductId() {
     String platformPrefix = PlatformUtils.getPlatformPrefix();
 
     // IDEA Community Edition is "Idea", whereas IDEA Ultimate Edition is "idea". Let's make them
