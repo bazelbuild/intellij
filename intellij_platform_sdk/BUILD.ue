@@ -6,7 +6,7 @@ package(default_visibility = ["//visibility:public"])
 
 java_import(
     name = "sdk",
-    jars = glob(["lib/*.jar"]),
+    jars = glob(["lib/*.jar", "plugins/java/lib/*.jar"]),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
 )
