@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.ideinfo.TsIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.libraries.BlazeExternalLibraryProvider;
 import com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -40,8 +41,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import java.io.File;
 import java.util.Collection;
 import java.util.Objects;
-import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -81,20 +80,6 @@ public class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLib
     if (!projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return ImmutableList.of();
     }
-    Set<String> tsExtensions = TypeScriptPrefetchFileSource.getTypeScriptExtensions();
-    Predicate<ArtifactLocation> isTs =
-        (location) -> {
-          String extension = Files.getFileExtension(location.getRelativePath());
-          return tsExtensions.contains(extension);
-        };
-    Predicate<ArtifactLocation> isExternal =
-        (location) -> {
-          if (!location.isSource()) {
-            return true;
-          }
-          WorkspacePath workspacePath = WorkspacePath.createIfValid(location.getRelativePath());
-          return workspacePath == null || !importRoots.containsWorkspacePath(workspacePath);
-        };
     ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
     Stream<File> filesFromTargetMap =
         projectData.getTargetMap().targets().stream()
@@ -102,18 +87,40 @@ public class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLib
             .map(TargetIdeInfo::getTsIdeInfo)
             .map(TsIdeInfo::getSources)
             .flatMap(Collection::stream)
-            .filter(isTs)
-            .filter(isExternal)
+            .filter(BlazeTypeScriptAdditionalLibraryRootsProvider::isTypeScriptArtifact)
+            .filter(location -> isExternalArtifact(importRoots, location))
             .distinct()
             .map(a -> OutputArtifactResolver.resolve(project, decoder, a))
             .filter(Objects::nonNull);
+    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     Stream<File> filesFromTsConfig =
         moveTsconfigFilesToAdditionalLibrary.getValue()
             ? TypeScriptConfigService.Provider.getConfigFiles(project).stream()
                 .map(TypeScriptConfig::getFileList)
                 .flatMap(Collection::stream)
                 .map(VfsUtil::virtualToIoFile)
+                .filter(file -> isExternalFile(workspaceRoot, importRoots, file))
             : Stream.of();
+
     return Stream.concat(filesFromTargetMap, filesFromTsConfig).collect(toImmutableList());
+  }
+
+  private static boolean isTypeScriptArtifact(ArtifactLocation location) {
+    String extension = Files.getFileExtension(location.getRelativePath());
+    return TypeScriptPrefetchFileSource.getTypeScriptExtensions().contains(extension);
+  }
+
+  private static boolean isExternalArtifact(ImportRoots importRoots, ArtifactLocation location) {
+    if (!location.isSource()) {
+      return true;
+    }
+    WorkspacePath workspacePath = WorkspacePath.createIfValid(location.getRelativePath());
+    return workspacePath == null || !importRoots.containsWorkspacePath(workspacePath);
+  }
+
+  private static boolean isExternalFile(
+      WorkspaceRoot workspaceRoot, ImportRoots importRoots, File file) {
+    return !workspaceRoot.isInWorkspace(file)
+        || !importRoots.containsWorkspacePath(workspaceRoot.workspacePathFor(file));
   }
 }
