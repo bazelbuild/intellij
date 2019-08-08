@@ -25,18 +25,16 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.sdkcompat.openapi.HeadlessDataManagerAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.ide.DataManager;
-import com.intellij.idea.CommandLineApplication.MyDataManagerImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.MapDataContext;
@@ -59,23 +57,7 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
     // IntelliJ replaces the normal DataManager with a mock version in headless environments.
     // We rely on a functional DataManager in run configuration tests to recognize when multiple
     // psi elements are selected.
-    DataManager dataManager =
-        new MyDataManagerImpl() {
-          DataContext dataContext;
-
-          @Override
-          public <T> void saveInDataContext(
-              DataContext dataContext, Key<T> dataKey, @Nullable T data) {
-            this.dataContext = dataContext;
-            super.saveInDataContext(dataContext, dataKey, data);
-          }
-
-          @Override
-          public DataContext getDataContext() {
-            return dataContext != null ? dataContext : super.getDataContext();
-          }
-        };
-    registerApplicationComponent(DataManager.class, dataManager);
+    registerApplicationComponent(DataManager.class, new HeadlessDataManagerAdapter());
   }
 
   protected PsiFile createAndIndexFile(WorkspacePath path, String... contents) {
