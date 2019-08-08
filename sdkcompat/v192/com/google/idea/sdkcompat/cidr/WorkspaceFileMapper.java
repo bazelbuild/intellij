@@ -15,7 +15,16 @@
  */
 package com.google.idea.sdkcompat.cidr;
 
-import com.jetbrains.cidr.lang.workspace.OCWorkspaceFileMapper;
+import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
+import javax.annotation.Nullable;
 
-/** A marker interface present for making {@link OCWorkspaceFileMapper} available to #api183 */
-public interface WorkspaceFileMapper extends OCWorkspaceFileMapper {}
+/**
+ * A port of v191's OCWorkspaceFileMapper. #api191.
+ *
+ * <p>This API was introduced in v191, and removed in v192.
+ */
+public interface WorkspaceFileMapper {
+  @Nullable
+  VirtualFile map(File file);
+}

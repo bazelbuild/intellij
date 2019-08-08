@@ -57,8 +57,7 @@ public class OCWorkspaceModifiableModelAdapter {
       int serialVersion,
       CidrToolEnvironment toolEnvironment,
       WorkspaceFileMapper fileMapper) {
-    ImmutableList<String> issues =
-        collectCompilerSettingsInParallel(model, toolEnvironment, fileMapper);
+    ImmutableList<String> issues = collectCompilerSettingsInParallel(model, toolEnvironment);
     model.setClientVersion(serialVersion);
     model.preCommit();
     TransactionGuard.getInstance()
@@ -131,9 +130,7 @@ public class OCWorkspaceModifiableModelAdapter {
   }
 
   private static ImmutableList<String> collectCompilerSettingsInParallel(
-      OCWorkspaceImpl.ModifiableModel model,
-      CidrToolEnvironment toolEnvironment,
-      WorkspaceFileMapper fileMapper) {
+      OCWorkspaceImpl.ModifiableModel model, CidrToolEnvironment toolEnvironment) {
     CompilerInfoCache compilerInfoCache = new CompilerInfoCache();
     List<Future<List<Message>>> compilerSettingsTasks = new ArrayList<>();
     ExecutorService compilerSettingExecutor =
@@ -142,7 +139,7 @@ public class OCWorkspaceModifiableModelAdapter {
     for (OCResolveConfiguration.ModifiableModel config : model.getConfigurations()) {
       compilerSettingsTasks.add(
           OCWorkspaceImplUtilKt.collectCompilerSettingsAsync(
-              config, toolEnvironment, compilerInfoCache, fileMapper, compilerSettingExecutor));
+              config, toolEnvironment, compilerInfoCache, compilerSettingExecutor));
     }
     ImmutableList.Builder<String> issues = ImmutableList.builder();
     for (Future<List<Message>> task : compilerSettingsTasks) {
