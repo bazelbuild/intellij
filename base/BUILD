@@ -199,6 +199,8 @@ java_library(
 java_library(
     name = "dep_finder_api",
     srcs = [
+        "src/com/google/idea/blaze/base/dependencies/SourceToDependencyTargetHelper.java",
+        "src/com/google/idea/blaze/base/dependencies/SourceToDependencyTargetProvider.java",
         "src/com/google/idea/blaze/base/dependencies/SourceToTargetProvider.java",
         "src/com/google/idea/blaze/base/dependencies/TargetInfo.java",
         "src/com/google/idea/blaze/base/dependencies/TestSize.java",

@@ -425,6 +425,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.HeuristicTestIdentifier" interface="com.google.idea.blaze.base.run.producers.HeuristicTestIdentifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputsProvider" interface="com.google.idea.blaze.base.model.OutputsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.VcsSyncListener" interface="com.google.idea.blaze.base.vcs.VcsSyncListener"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.SourceToDependencyTargetProvider" interface="com.google.idea.blaze.base.dependencies.SourceToDependencyTargetProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -487,6 +488,7 @@
     <VcsSyncListener implementation="com.google.idea.blaze.base.prefetch.PrefetchVcsSyncListener"/>
     <VcsSyncListener implementation="com.google.idea.blaze.base.sync.autosync.VcsAutoSyncProvider"/>
     <SettingsUiContributor implementation="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable$UiContributor" order="first" id="base"/>
+    <SourceToDependencyTargetProvider implementation="com.google.idea.blaze.base.dependencies.BlazeSyncSourceToDependencyTargetProvider"/>
   </extensions>
 
 </idea-plugin>
