@@ -18,7 +18,7 @@ http_archive(
 # and run integration tests.
 http_archive(
     name = "intellij_ce_2019_2",
-    build_file = "@//intellij_platform_sdk:BUILD.idea",
+    build_file = "@//intellij_platform_sdk:BUILD.idea192",
     sha256 = "9567f2a88c9d4c4a0495208914f07bd2dace78dad0fee31fb9f8a4adab3cc437",
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2019.2/ideaIC-2019.2.zip",
 )
@@ -36,7 +36,7 @@ http_archive(
 # integration tests.
 http_archive(
     name = "intellij_ue_2019_2",
-    build_file = "@//intellij_platform_sdk:BUILD.ue",
+    build_file = "@//intellij_platform_sdk:BUILD.ue192",
     sha256 = "c1a980c6eeb528ee731ed52a5821981466b9205713926748051ff08a4ce8cfaf",
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.2/ideaIU-2019.2.zip",
 )

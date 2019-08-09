@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.search;
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -37,9 +38,18 @@ import javax.annotation.Nullable;
  */
 public class ExcludeBuildFilesScope extends UseScopeOptimizer {
 
+  // turn this off: it breaks refactoring support in 2019.2, and no longer seems necessary...
+  // perhaps whatever caused the IDE to reparse constantly has been fixed?
+  // #api191: remove this scope entirely if turning it off hasn't caused problems
+  private final BoolExperiment enabled =
+      new BoolExperiment("build.file.exclude.scope.enabled", false);
+
   @Nullable
   @Override
   public GlobalSearchScope getScopeToExclude(PsiElement element) {
+    if (!enabled.getValue()) {
+      return null;
+    }
     if (element instanceof PsiFileSystemItem) {
       return GlobalSearchScope.getScopeRestrictedByFileTypes(
           new EverythingGlobalScope(), BuildFileType.INSTANCE);

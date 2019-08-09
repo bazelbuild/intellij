@@ -27,11 +27,15 @@ import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -39,6 +43,18 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link JavaSourceFolderProvider} */
 @RunWith(JUnit4.class)
 public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
+
+  private Disposable thisClassDisposable; // disposed prior to calling parent class's @After methods
+
+  @Before
+  public void doSetup() {
+    thisClassDisposable = Disposer.newDisposable();
+  }
+
+  @After
+  public void doTearDown() {
+    Disposer.dispose(thisClassDisposable);
+  }
 
   @Test
   public void testInitializeSourceFolders() {
@@ -177,8 +193,14 @@ public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
   }
 
   private ContentEntry getContentEntry(VirtualFile root) {
-    return ModuleRootManager.getInstance(testFixture.getModule())
-        .getModifiableModel()
-        .addContentEntry(root);
+    ContentEntry entry =
+        ModuleRootManager.getInstance(testFixture.getModule())
+            .getModifiableModel()
+            .addContentEntry(root);
+    if (entry instanceof Disposable) {
+      // need to dispose the content entry and child disposables before the TestFixture is disposed
+      Disposer.register(thisClassDisposable, (Disposable) entry);
+    }
+    return entry;
   }
 }
