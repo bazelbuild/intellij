@@ -15,11 +15,21 @@
  */
 package com.google.idea.blaze.base.sync.libraries;
 
-import com.google.common.collect.ImmutableSet;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
+import com.google.common.collect.Sets;
+import com.google.idea.blaze.base.io.VfsUtils;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.roots.SyntheticLibrary;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import icons.BlazeIcons;
+import java.io.File;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -30,15 +40,29 @@ import javax.swing.Icon;
 public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
     implements ItemPresentation {
   private final String presentableText;
-  private volatile ImmutableSet<VirtualFile> files;
+  private final ConcurrentMap<File, Optional<VirtualFile>> virtualFilesMap;
+  private final Set<VirtualFile> validFiles;
 
   /**
+   * Constructs library with an initial set of valid {@link VirtualFile}s.
+   *
    * @param presentableText user-facing text used to name the library. It's also used to implement
    *     equals, hashcode -- there must only be one instance per value of this text
+   * @param files collection of files that this synthetic library is responsible for.
    */
-  BlazeExternalSyntheticLibrary(String presentableText) {
+  BlazeExternalSyntheticLibrary(String presentableText, Collection<File> files) {
     this.presentableText = presentableText;
-    this.files = ImmutableSet.of();
+    this.virtualFilesMap = new ConcurrentHashMap<>();
+    for (File file : files) {
+      this.virtualFilesMap.computeIfAbsent(
+          file, f -> Optional.of(f).map(VfsUtils::resolveVirtualFile).filter(VirtualFile::isValid));
+    }
+    this.validFiles =
+        Sets.newConcurrentHashSet(
+            this.virtualFilesMap.values().stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(toImmutableSet()));
   }
 
   @Nullable
@@ -47,15 +71,38 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
     return presentableText;
   }
 
-  void updateFiles(ImmutableSet<VirtualFile> files) {
-    this.files = files;
+  void updateFile(VirtualFile virtualFile) {
+    virtualFilesMap.computeIfPresent(
+        VfsUtil.virtualToIoFile(virtualFile),
+        (file, oldVirtualFile) -> {
+          validFiles.add(virtualFile);
+          return Optional.of(virtualFile);
+        });
+  }
+
+  void removeFile(VirtualFile virtualFile) {
+    virtualFilesMap.computeIfPresent(
+        VfsUtil.virtualToIoFile(virtualFile),
+        (file, oldVirtualFile) -> {
+          oldVirtualFile.ifPresent(validFiles::remove);
+          return Optional.empty();
+        });
+  }
+
+  void removeFile(VirtualFile directory, String name) {
+    virtualFilesMap.computeIfPresent(
+        new File(VfsUtil.virtualToIoFile(directory), name),
+        (file, oldVirtualFile) -> {
+          oldVirtualFile.ifPresent(validFiles::remove);
+          return Optional.empty();
+        });
   }
 
   @Override
-  public ImmutableSet<VirtualFile> getSourceRoots() {
+  public Set<VirtualFile> getSourceRoots() {
     // this must return a set, otherwise SyntheticLibrary#contains will create a new set each time
     // it's invoked (very frequently, on the EDT)
-    return files;
+    return validFiles;
   }
 
   @Override

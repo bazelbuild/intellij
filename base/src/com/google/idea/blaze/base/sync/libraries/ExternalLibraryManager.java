@@ -15,62 +15,45 @@
  */
 package com.google.idea.blaze.base.sync.libraries;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.io.VfsUtils;
+import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.prefetch.PrefetchIndexingTask;
-import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.ide.FrameStateListener;
-import com.intellij.ide.FrameStateManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.TransactionGuard;
-import com.intellij.openapi.application.WriteAction;
+import com.google.idea.blaze.base.sync.SyncListener;
+import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.sync.SyncResult;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SyntheticLibrary;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileEvent;
+import com.intellij.openapi.vfs.VirtualFileListener;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileMoveEvent;
 import java.io.File;
-import java.util.Collection;
+import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
-/** Updates {@link BlazeExternalSyntheticLibrary}s after sync and on frame activation. */
+/**
+ * External library manager that rebuilds {@link BlazeExternalSyntheticLibrary}s during sync, and
+ * updates individual {@link VirtualFile} entries in response to VFS events.
+ */
 public class ExternalLibraryManager {
-  private static final BoolExperiment reindexExternalSyntheticLibraryAfterUpdate =
-      new BoolExperiment("reindex.external.synthetic.library.after.update", true);
-
   private final Project project;
-  private volatile ImmutableMap<Class<? extends BlazeExternalLibraryProvider>, LibraryState>
+  private volatile boolean duringSync;
+  private volatile ImmutableMap<
+          Class<? extends BlazeExternalLibraryProvider>, BlazeExternalSyntheticLibrary>
       libraries;
-
-  private static class LibraryState {
-    BlazeExternalLibraryProvider provider;
-    BlazeExternalSyntheticLibrary library;
-    ImmutableList<File> files;
-
-    LibraryState(BlazeExternalLibraryProvider provider, ImmutableList<File> files) {
-      this.provider = provider;
-      this.library = new BlazeExternalSyntheticLibrary(provider.getLibraryName());
-      this.files = files;
-    }
-  }
 
   public static ExternalLibraryManager getInstance(Project project) {
     return ServiceManager.getService(project, ExternalLibraryManager.class);
@@ -78,99 +61,80 @@ public class ExternalLibraryManager {
 
   ExternalLibraryManager(Project project) {
     this.project = project;
+    this.duringSync = false;
     this.libraries = ImmutableMap.of();
-    FrameStateListener listener =
-        new FrameStateListener() {
-          @Override
-          public void onFrameActivated() {
-            ApplicationManager.getApplication().executeOnPooledThread(() -> updateLibraries(false));
-          }
-        };
-    FrameStateManager.getInstance().addListener(listener);
-    Disposer.register(project, () -> FrameStateManager.getInstance().removeListener(listener));
+    VirtualFileManager.getInstance()
+        .addVirtualFileListener(
+            new VirtualFileListener() {
+              @Override
+              public void fileCreated(VirtualFileEvent event) {
+                libraries.values().forEach(library -> library.updateFile(event.getFile()));
+              }
+
+              @Override
+              public void fileDeleted(VirtualFileEvent event) {
+                libraries.values().forEach(library -> library.removeFile(event.getFile()));
+              }
+
+              @Override
+              public void fileMoved(VirtualFileMoveEvent event) {
+                libraries
+                    .values()
+                    .forEach(
+                        library -> {
+                          library.updateFile(event.getFile());
+                          library.removeFile(event.getOldParent(), event.getFileName());
+                        });
+              }
+            },
+            project);
   }
 
-  public ImmutableList<SyntheticLibrary> getLibrary(
-      Class<? extends BlazeExternalLibraryProvider> providerClass) {
-    LibraryState state = libraries.get(providerClass);
-    return state != null ? ImmutableList.of(state.library) : ImmutableList.of();
+  @Nullable
+  public SyntheticLibrary getLibrary(Class<? extends BlazeExternalLibraryProvider> providerClass) {
+    return duringSync ? null : libraries.get(providerClass);
   }
 
   private void initialize(BlazeProjectData projectData) {
-    ImmutableMap.Builder<Class<? extends BlazeExternalLibraryProvider>, LibraryState> builder =
-        ImmutableMap.builder();
-    for (AdditionalLibraryRootsProvider provider :
-        AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
-      if (!(provider instanceof BlazeExternalLibraryProvider)) {
-        continue;
-      }
-      BlazeExternalLibraryProvider blazeProvider = (BlazeExternalLibraryProvider) provider;
-      ImmutableList<File> files = blazeProvider.getLibraryFiles(project, projectData);
-      if (!files.isEmpty()) {
-        builder.put(blazeProvider.getClass(), new LibraryState(blazeProvider, files));
-      }
-    }
-    libraries = builder.build();
-    updateLibraries(true);
+    this.libraries =
+        AdditionalLibraryRootsProvider.EP_NAME
+            .extensions()
+            .filter(BlazeExternalLibraryProvider.class::isInstance)
+            .map(BlazeExternalLibraryProvider.class::cast)
+            .map(
+                provider -> {
+                  ImmutableList<File> files = provider.getLibraryFiles(project, projectData);
+                  return !files.isEmpty()
+                      ? Maps.immutableEntry(
+                          provider.getClass(),
+                          new BlazeExternalSyntheticLibrary(provider.getLibraryName(), files))
+                      : null;
+                })
+            .filter(Objects::nonNull)
+            .collect(toImmutableMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
-  private void updateLibraries(boolean duringSync) {
-    ImmutableMap<Class<? extends BlazeExternalLibraryProvider>, LibraryState> libraries =
-        this.libraries;
-    if (libraries.isEmpty()) {
-      return;
+  /**
+   * Sync listener to prevent external libraries from being accessed during sync to avoid spamming
+   * {@link VirtualFile#isValid()} errors.
+   */
+  static class StartSyncListener implements SyncListener {
+    @Override
+    public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {
+      ExternalLibraryManager.getInstance(project).duringSync = true;
     }
-    if (!duringSync) {
-      Future<?> future =
-          PrefetchIndexingTask.submitPrefetchingTaskAndWait(
-              project,
-              PrefetchService.getInstance()
-                  .prefetchFiles(
-                      libraries.values().stream()
-                          .map(state -> state.files)
-                          .flatMap(Collection::stream)
-                          .collect(ImmutableList.toImmutableList()),
-                      false,
-                      false),
-              "Prefetching external library files");
-      try {
-        future.get();
-      } catch (InterruptedException | ExecutionException ignored) {
-        // ignored
-      }
-    }
-    boolean updated = false;
-    for (LibraryState state : libraries.values()) {
-      ImmutableSet<VirtualFile> updatedFiles =
-          state.files.stream()
-              .map(VfsUtils::resolveVirtualFile)
-              .filter(Objects::nonNull)
-              .filter(VirtualFile::isValid)
-              .collect(toImmutableSet());
-      BlazeExternalSyntheticLibrary library = state.library;
-      if (!updatedFiles.equals(library.getSourceRoots())) {
-        library.updateFiles(updatedFiles);
-        updated = true;
-      }
-    }
-    if (!duringSync && updated) {
-      reindexRoots();
+
+    @Override
+    public void afterSync(
+        Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
+      ExternalLibraryManager.getInstance(project).duringSync = false;
     }
   }
 
-  private void reindexRoots() {
-    if (!reindexExternalSyntheticLibraryAfterUpdate.getValue()) {
-      return;
-    }
-    TransactionGuard.submitTransaction(
-        project,
-        () ->
-            WriteAction.run(
-                () ->
-                    ProjectRootManagerEx.getInstanceEx(project)
-                        .makeRootsChange(EmptyRunnable.INSTANCE, false, true)));
-  }
-
+  /**
+   * Sync plugin to rebuild external libraries during sync to be included in the reindexing
+   * operation.
+   */
   static class SyncPlugin implements BlazeSyncPlugin {
     @Override
     public void updateProjectStructure(
@@ -183,7 +147,9 @@ public class ExternalLibraryManager {
         ModuleEditor moduleEditor,
         Module workspaceModule,
         ModifiableRootModel workspaceModifiableModel) {
-      ExternalLibraryManager.getInstance(project).initialize(blazeProjectData);
+      ExternalLibraryManager manager = ExternalLibraryManager.getInstance(project);
+      manager.initialize(blazeProjectData);
+      manager.duringSync = false;
     }
   }
 }

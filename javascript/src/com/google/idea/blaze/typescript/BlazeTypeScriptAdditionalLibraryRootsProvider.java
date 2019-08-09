@@ -28,15 +28,12 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.libraries.BlazeExternalLibraryProvider;
-import com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
-import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.vfs.VfsUtil;
 import java.io.File;
 import java.util.Collection;
@@ -47,25 +44,20 @@ import java.util.stream.Stream;
  * The tsconfig library only contains .d.ts files under tsconfig.runfiles. We need this to provide
  * the source .ts files so we can resolve to them.
  */
-public class BlazeTypeScriptAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvider
-    implements BlazeExternalLibraryProvider {
+public final class BlazeTypeScriptAdditionalLibraryRootsProvider
+    extends BlazeExternalLibraryProvider {
   static final BoolExperiment useTypeScriptAdditionalLibraryRootsProvider =
       new BoolExperiment("use.typescript.additional.library.roots.provider4", true);
   static final BoolExperiment moveTsconfigFilesToAdditionalLibrary =
       new BoolExperiment("move.tsconfig.files.to.additional.library", true);
 
   @Override
-  public Collection<SyntheticLibrary> getAdditionalProjectLibraries(Project project) {
-    return ExternalLibraryManager.getInstance(project).getLibrary(getClass());
-  }
-
-  @Override
-  public String getLibraryName() {
+  protected String getLibraryName() {
     return "TypeScript Libraries";
   }
 
   @Override
-  public ImmutableList<File> getLibraryFiles(Project project, BlazeProjectData projectData) {
+  protected ImmutableList<File> getLibraryFiles(Project project, BlazeProjectData projectData) {
     if (!useTypeScriptAdditionalLibraryRootsProvider.getValue()) {
       return ImmutableList.of();
     }

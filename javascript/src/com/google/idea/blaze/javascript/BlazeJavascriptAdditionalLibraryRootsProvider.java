@@ -26,36 +26,27 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.libraries.BlazeExternalLibraryProvider;
-import com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
-import com.intellij.openapi.roots.SyntheticLibrary;
 import java.io.File;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
-class BlazeJavascriptAdditionalLibraryRootsProvider extends AdditionalLibraryRootsProvider
-    implements BlazeExternalLibraryProvider {
+final class BlazeJavascriptAdditionalLibraryRootsProvider extends BlazeExternalLibraryProvider {
   private static final BoolExperiment useJavascriptAdditionalLibraryRootsProvider =
       new BoolExperiment("use.javascript.additional.library.roots.provider4", true);
 
   @Override
-  public Collection<SyntheticLibrary> getAdditionalProjectLibraries(Project project) {
-    return ExternalLibraryManager.getInstance(project).getLibrary(getClass());
-  }
-
-  @Override
-  public String getLibraryName() {
+  protected String getLibraryName() {
     return "JavaScript Libraries";
   }
 
   @Override
-  public ImmutableList<File> getLibraryFiles(Project project, BlazeProjectData projectData) {
+  protected ImmutableList<File> getLibraryFiles(Project project, BlazeProjectData projectData) {
     if (!useJavascriptAdditionalLibraryRootsProvider.getValue()) {
       return ImmutableList.of();
     }
