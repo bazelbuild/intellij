@@ -213,7 +213,7 @@ def get_aspect_ids(ctx, target):
 def _is_language_specific_proto_library(ctx, target):
     """Returns True if the target is a proto library with attached language-specific aspect."""
     return (ctx.rule.kind == "proto_library" and
-            (hasattr(target, "java") or hasattr(target, "aspect_proto_go_api_info")))
+            (JavaInfo in target or hasattr(target, "aspect_proto_go_api_info")))
 
 def make_target_key(label, aspect_ids):
     """Returns a TargetKey proto struct from a target."""
@@ -498,16 +498,12 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
 
 def get_java_provider(target):
     """Find a provider exposing java compilation/outputs data."""
-    if hasattr(target, "java"):
-        return target.java
+    if JavaInfo in target:
+        return target[JavaInfo]
     if hasattr(target, "scala"):
         return target.scala
     if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
         return target.kt
-
-    # TODO(brendandouglas): use JavaInfo preferentially
-    if JavaInfo in target:
-        return target[JavaInfo]
     return None
 
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -558,6 +554,91 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         resolve_files.append(jdeps_file)
 
     java_sources, gen_java_sources, srcjars = divide_java_sources(ctx)
+    """Updates Java-specific output groups, returns false if not a Java target."""
+    java = get_java_provider(target)
+    if not java or not hasattr(java, "outputs") or not java.outputs:
+        return False
+
+    java_semantics = semantics.java if hasattr(semantics, "java") else None
+    if java_semantics and java_semantics.skip_target(target, ctx):
+        return False
+
+    ide_info_files = []
+    sources = sources_from_target(ctx)
+    jars = [library_artifact(output) for output in java.outputs.jars]
+    class_jars = [output.class_jar for output in java.outputs.jars if output and output.class_jar]
+    output_jars = [jar for output in java.outputs.jars for jar in jars_from_output(output)]
+    resolve_files = output_jars
+    compile_files = class_jars
+
+    gen_jars = []
+    if (hasattr(java, "annotation_processing") and
+        java.annotation_processing and
+        java.annotation_processing.enabled):
+        gen_jars = [annotation_processing_jars(java.annotation_processing)]
+        resolve_files += [
+            jar
+            for jar in [
+                java.annotation_processing.class_jar,
+                java.annotation_processing.source_jar,
+            ]
+            if jar != None and not jar.is_source
+        ]
+        compile_files += [
+            jar
+            for jar in [java.annotation_processing.class_jar]
+            if jar != None and not jar.is_source
+        ]
+
+    jdeps = None
+    jdeps_file = None
+    if java_semantics and hasattr(java_semantics, "get_filtered_jdeps"):
+        jdeps_file = java_semantics.get_filtered_jdeps(target)
+    if jdeps_file == None and hasattr(java.outputs, "jdeps") and java.outputs.jdeps:
+        jdeps_file = java.outputs.jdeps
+    if jdeps_file:
+        jdeps = artifact_location(jdeps_file)
+        resolve_files.append(jdeps_file)
+
+    java_sources, gen_java_sources, srcjars = divide_java_sources(ctx)
+
+    if java_semantics:
+        srcjars = java_semantics.filter_source_jars(target, ctx, srcjars)
+
+    package_manifest = None
+    if java_sources:
+        package_manifest = build_java_package_manifest(ctx, target, java_sources, ".java-manifest")
+        ide_info_files += [package_manifest]
+
+    filtered_gen_jar = None
+    if java_sources and (gen_java_sources or srcjars):
+        filtered_gen_jar, filtered_gen_resolve_files = build_filtered_gen_jar(
+            ctx,
+            target,
+            java,
+            gen_java_sources,
+            srcjars,
+        )
+        resolve_files += filtered_gen_resolve_files
+
+    java_info = struct_omit_none(
+        sources = sources,
+        jars = jars,
+        jdeps = jdeps,
+        generated_jars = gen_jars,
+        package_manifest = artifact_location(package_manifest),
+        filtered_gen_jar = filtered_gen_jar,
+        main_class = getattr(ctx.rule.attr, "main_class", None),
+        test_class = getattr(ctx.rule.attr, "test_class", None),
+    )
+
+    ide_info["java_ide_info"] = java_info
+    ide_info_files += [ide_info_file]
+    update_set_in_dict(output_groups, "intellij-info-java", depset(ide_info_files))
+    update_set_in_dict(output_groups, "intellij-compile-java", depset(compile_files))
+    update_set_in_dict(output_groups, "intellij-resolve-java", depset(resolve_files))
+    return True
+
 
     if java_semantics:
         srcjars = java_semantics.filter_source_jars(target, ctx, srcjars)
@@ -958,5 +1039,5 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         attr_aspects = attr_aspects,
         fragments = ["cpp"],
         implementation = aspect_impl,
-        required_aspect_providers = [["java"], ["aspect_proto_go_api_info"], ["dart"]],
+        required_aspect_providers = [[JavaInfo], ["aspect_proto_go_api_info"], ["dart"]],
     )
