@@ -1,9 +1,26 @@
+/*
+ * Copyright 2019 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.google.idea.blaze.base.actions;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -21,7 +38,7 @@ import java.net.URLEncoder;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A an action to open a GitHub issue with pre-filled information like the versions of the
+ * An action to open a GitHub issue with pre-filled information like the versions of the
  * plugin, Bazel and the IDE.
  *
  * Read the
@@ -41,14 +58,25 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
 
   @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
-    int retVal =
-        ExternalTask.builder(WorkspaceRoot.fromProject(project))
-            .args("glogin", "-version")
-            .build()
-            .run();
+    // Hide and disable this action for Google-internal usage.
+    if (Blaze.defaultBuildSystem() == BuildSystem.Blaze || isCorpMachine(project)) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+  }
 
-    // Only show the menu bar reference if glogin doesn't exist.
-    e.getPresentation().setEnabledAndVisible(retVal != 0);
+  /**
+   * A rough heuristic to detect if the machine is a Google-corp machine by executing
+   * 'glogin -version'.
+   *
+   * @param project the IntelliJ project instance
+   * @return true if this is a Google-owned workstation.
+   */
+  private boolean isCorpMachine(Project project) {
+    int retVal = ExternalTask.builder(WorkspaceRoot.fromProject(project))
+        .args("glogin", "-version")
+        .build()
+        .run();
+    return retVal == 0;
   }
 
   @Override
@@ -95,14 +123,13 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
 
     // Get the plugin version.
     // e.g. Bazel plugin: 2019.07.23.0.3
-    for (IdeaPluginDescriptor plugin : PluginManager.getPlugins()) {
-      if (BAZEL_PLUGIN_IDS.contains(plugin.getPluginId().getIdString())) {
-        bodyParam.append(
-            String.format(
-                "%s plugin: %s%s\n",
-                plugin.getName(), plugin.getVersion(), plugin.isEnabled() ? "" : " (disabled)"));
-      }
-    }
+    IdeaPluginDescriptor plugin =
+        PluginManager.getPlugin(
+            PluginManager.getPluginByClassName(FileGitHubIssueAction.class.getName()));
+    bodyParam.append(
+        String.format(
+            "%s plugin: %s%s\n",
+            plugin.getName(), plugin.getVersion(), plugin.isEnabled() ? "" : " (disabled)"));
 
     // Get the Bazel version.
     // e.g. Bazel: 0.28.1

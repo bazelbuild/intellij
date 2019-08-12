@@ -129,7 +129,6 @@
       <group id="Blaze.MenuGroupsBookmark"/>
       <separator/>
       <reference id="Blaze.ExportRunConfigurations"/>
-      <separator/>
       <reference id="Blaze.FileGitHubIssueAction"/>
       <!--Add single menu items anchored after this bookmark-->
       <group id="Blaze.MenuFooter"/>
