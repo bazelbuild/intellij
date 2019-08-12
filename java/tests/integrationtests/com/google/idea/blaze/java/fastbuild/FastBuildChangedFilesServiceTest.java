@@ -29,11 +29,13 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.google.devtools.intellij.aspect.Common.ArtifactLocation;
 import com.google.devtools.intellij.aspect.FastBuildInfo;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService.ChangedSources;
@@ -49,6 +51,19 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link FastBuildChangedFilesService}. */
 @RunWith(JUnit4.class)
 public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
+
+  private static final String BLAZE_EXECROOT = "/blaze/execution-root";
+  private static final String BLAZE_BIN = BLAZE_EXECROOT + "/blaze-bin";
+  private static final String BLAZE_TESTLOGS = BLAZE_EXECROOT + "/testlog";
+  private static final BlazeInfo BLAZE_INFO =
+      BlazeInfo.create(
+          BuildSystem.Blaze,
+          ImmutableMap.of(
+              "blaze-bin", BLAZE_BIN,
+              "blaze-genfiles", BLAZE_EXECROOT + "/blaze-genfiles",
+              "blaze-testlogs", BLAZE_TESTLOGS,
+              "execution_root", BLAZE_EXECROOT,
+              "output_base", "/blaze/output-base"));
 
   private FastBuildChangedFilesService changedFilesService;
   private ArtifactLocationDecoder artifactLocationDecoder;
@@ -109,7 +124,8 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
     changedFilesService.newBuild(
         Label.create("//java:all_files"),
         Futures.immediateFuture(
-            BuildOutput.create(new File("deploy.jar"), /* blazeData= */ ImmutableMap.of())));
+            BuildOutput.create(
+                new File("deploy.jar"), /* blazeData= */ ImmutableMap.of(), BLAZE_INFO)));
 
     ChangedSources changedSources =
         changedFilesService.getAndResetChangedSources(Label.create("//java:all_files"));
@@ -124,7 +140,8 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
         BuildOutput.create(
             new File("deploy.jar"),
             ImmutableMap.of(
-                Label.create("//java:all_files"), sources("java/com/google/Hello.java").build()));
+                Label.create("//java:all_files"), sources("java/com/google/Hello.java").build()),
+            BLAZE_INFO);
     changedFilesService.newBuild(
         Label.create("//java:all_files"), Futures.immediateFuture(buildOutput));
 
@@ -141,7 +158,8 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
         BuildOutput.create(
             new File("deploy.jar"),
             ImmutableMap.of(
-                Label.create("//java:all_files"), sources("java/com/google/Hello.java").build()));
+                Label.create("//java:all_files"), sources("java/com/google/Hello.java").build()),
+            BLAZE_INFO);
     changedFilesService.newBuild(
         Label.create("//java:all_files"), Futures.immediateFuture(buildOutput));
 
@@ -166,7 +184,8 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
         BuildOutput.create(
             new File("deploy.jar"),
             ImmutableMap.of(
-                Label.create("//java:all_files"), sources("java/com/google/Hello.java").build())));
+                Label.create("//java:all_files"), sources("java/com/google/Hello.java").build()),
+            BLAZE_INFO));
 
     ChangedSources changedSources =
         changedFilesService.getAndResetChangedSources(Label.create("//java:all_files"));
@@ -182,7 +201,8 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
         BuildOutput.create(
             new File("deploy.jar"),
             ImmutableMap.of(
-                Label.create("//java:all_files"), sources("java/com/google/Hello.java").build()));
+                Label.create("//java:all_files"), sources("java/com/google/Hello.java").build()),
+            BLAZE_INFO);
     changedFilesService.newBuild(
         Label.create("//java:all_files"), Futures.immediateFuture(buildOutput));
 
@@ -210,7 +230,8 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
                     sources("a.java").setDependencies(deps("//b:b", "//c:c")).build(),
                 Label.create("//b:b"), sources("b.java").setDependencies(deps("//d:d")).build(),
                 Label.create("//c:c"), sources("c.java").setDependencies(deps("//b:b")).build(),
-                Label.create("//d:d"), sources("d.java").build()));
+                Label.create("//d:d"), sources("d.java").build()),
+            BLAZE_INFO);
     changedFilesService.newBuild(Label.create("//a:a"), Futures.immediateFuture(buildOutput));
 
     workspace.createFile(WorkspacePath.createIfValid("d.java"));
@@ -231,7 +252,8 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
             BuildOutput.create(
                 new File("deploy.jar"),
                 ImmutableMap.of(
-                    Label.create("//java:all_files"), sources("One.java", "Two.java").build()))));
+                    Label.create("//java:all_files"), sources("One.java", "Two.java").build()),
+                BLAZE_INFO)));
 
     workspace.createFile(WorkspacePath.createIfValid("One.java"));
     workspace.createFile(WorkspacePath.createIfValid("Three.java"));
@@ -256,7 +278,8 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
         BuildOutput.create(
             new File("deploy.jar"),
             ImmutableMap.of(
-                Label.create("//java:all_files"), sources("One.java", "Two.java").build())));
+                Label.create("//java:all_files"), sources("One.java", "Two.java").build()),
+            BLAZE_INFO));
 
     ChangedSources changedSources =
         changedFilesService.getAndResetChangedSources(Label.create("//java:all_files"));
@@ -274,7 +297,8 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
     BuildOutput buildOutput =
         BuildOutput.create(
             new File("deploy.jar"),
-            ImmutableMap.of(Label.create("//java:all_files"), sources(filenames).build()));
+            ImmutableMap.of(Label.create("//java:all_files"), sources(filenames).build()),
+            BLAZE_INFO);
     changedFilesService.newBuild(
         Label.create("//java:all_files"), Futures.immediateFuture(buildOutput));
 
@@ -300,7 +324,8 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
     buildOutput.set(
         BuildOutput.create(
             new File("deploy.jar"),
-            ImmutableMap.of(Label.create("//java:all_files"), sources(filenames).build())));
+            ImmutableMap.of(Label.create("//java:all_files"), sources(filenames).build()),
+            BLAZE_INFO));
 
     ChangedSources changedSources =
         changedFilesService.getAndResetChangedSources(Label.create("//java:all_files"));

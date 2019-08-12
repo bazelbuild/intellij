@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
@@ -82,10 +81,6 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
     checkState(targetData.javaInfo().isPresent(), "Couldn't find Java info for %s", target);
     JavaInfo targetJavaInfo = targetData.javaInfo().get();
 
-    BlazeInfo blazeInfo =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData().getBlazeInfo();
-    checkState(blazeInfo != null, "Couldn't find Blaze info.");
-
     // To emulate 'blaze test', the binary should be launched from something like
     // blaze-out/k8-opt/bin/path/to/package/MyLabel.runfiles/io_bazel
     String workspaceName = targetData.workspaceName();
@@ -128,7 +123,7 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
         .addEnvironmentVariable("USER", SystemProperties.getUserName())
         .addEnvironmentVariable(WORKSPACE_VARIABLE, workspaceName);
     addTestSizeVariables(commandBuilder, targetJavaInfo);
-    configureTestOutputs(project, commandBuilder, target, blazeInfo);
+    configureTestOutputs(project, commandBuilder, target, fastBuildInfo.blazeInfo());
 
     String tmpdir = System.getProperty("java.io.tmpdir");
     commandBuilder
@@ -141,7 +136,8 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
 
     for (FastBuildTestEnvironmentModifier modifier :
         FastBuildTestEnvironmentModifier.getModifiers(Blaze.getBuildSystem(project))) {
-      modifier.modify(commandBuilder, config.getTargetKind(), fastBuildInfo, blazeInfo);
+      modifier.modify(
+          commandBuilder, config.getTargetKind(), fastBuildInfo, fastBuildInfo.blazeInfo());
     }
 
     return commandBuilder.build();
