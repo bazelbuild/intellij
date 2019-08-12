@@ -38,13 +38,11 @@ public class AlwaysPresentPythonSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
-    // retained for backwards-compatibility
     return ImmutableList.of(WorkspaceType.PYTHON);
   }
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    // retained for backwards-compatibility
     return ImmutableSet.of(LanguageClass.PYTHON);
   }
 

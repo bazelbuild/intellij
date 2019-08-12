@@ -84,12 +84,6 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
-    // supported for legacy reasons, but otherwise ignored.
-    return ImmutableSet.of(LanguageClass.PYTHON);
-  }
-
-  @Override
-  public Set<LanguageClass> getAlwaysActiveLanguages() {
     return ImmutableSet.of(LanguageClass.PYTHON);
   }
 
@@ -102,7 +96,6 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
   @Nullable
   @Override
   public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
-    // left here for backwards compatibility -- python workspace types are deprecated.
     if (workspaceType == WorkspaceType.PYTHON && supportsPythonWorkspaceType()) {
       return PythonModuleTypeBase.getInstance();
     }

@@ -103,14 +103,6 @@ public interface BlazeSyncPlugin {
     return ImmutableList.of();
   }
 
-  /**
-   * @return The set of languages which are always active, regardless of which
-   *     'additional_languages' are requested.
-   */
-  default Set<LanguageClass> getAlwaysActiveLanguages() {
-    return ImmutableSet.of();
-  }
-
   /** Given the rule map, update the sync state for this plugin. Should not have side effects. */
   default void updateSyncState(
       Project project,

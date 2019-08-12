@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSect
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,14 +57,13 @@ public class LanguageSupport {
     WorkspaceType workspaceType =
         projectViewSet.getScalarValue(WorkspaceTypeSection.KEY).orElse(getDefaultWorkspaceType());
 
-    ImmutableSet.Builder<LanguageClass> activeLanguages =
+    ImmutableSet<LanguageClass> activeLanguages =
         ImmutableSet.<LanguageClass>builder()
             .addAll(workspaceType.getLanguages())
             .addAll(projectViewSet.listItems(AdditionalLanguagesSection.KEY))
-            .add(LanguageClass.GENERIC);
-    Arrays.stream(BlazeSyncPlugin.EP_NAME.getExtensions())
-        .forEach(plugin -> activeLanguages.addAll(plugin.getAlwaysActiveLanguages()));
-    return new WorkspaceLanguageSettings(workspaceType, activeLanguages.build());
+            .add(LanguageClass.GENERIC)
+            .build();
+    return new WorkspaceLanguageSettings(workspaceType, activeLanguages);
   }
 
   public static boolean validateLanguageSettings(
@@ -131,7 +129,6 @@ public class LanguageSupport {
     Set<LanguageClass> supportedLanguages = EnumSet.noneOf(LanguageClass.class);
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
       supportedLanguages.addAll(syncPlugin.getSupportedLanguagesInWorkspace(type));
-      supportedLanguages.addAll(syncPlugin.getAlwaysActiveLanguages());
     }
     supportedLanguages.add(LanguageClass.GENERIC);
     return supportedLanguages;
@@ -142,10 +139,6 @@ public class LanguageSupport {
     Set<LanguageClass> langs = LanguageSupport.supportedLanguagesForWorkspaceType(workspaceType);
     langs.removeAll(workspaceType.getLanguages());
     langs.remove(LanguageClass.GENERIC);
-
-    Arrays.stream(BlazeSyncPlugin.EP_NAME.getExtensions())
-        .forEach(plugin -> langs.removeAll(plugin.getAlwaysActiveLanguages()));
-
     return langs;
   }
 }
