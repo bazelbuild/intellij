@@ -37,7 +37,7 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
   }
 
   @Override
-  File getJavaBinFromLauncher(Label label, @Nullable Label javaLauncher) {
+  File getJavaBinFromLauncher(Label label, @Nullable Label javaLauncher, boolean swigdeps) {
     if (javaLauncher == null) {
       return STANDARD_JAVA_BINARY;
     } else {

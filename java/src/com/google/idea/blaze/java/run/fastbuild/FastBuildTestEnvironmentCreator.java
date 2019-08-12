@@ -64,7 +64,7 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
 
   abstract String getTestRunner();
 
-  abstract File getJavaBinFromLauncher(Label label, @Nullable Label javaLauncher);
+  abstract File getJavaBinFromLauncher(Label label, @Nullable Label javaLauncher, boolean swigdeps);
 
   GeneralCommandLine createCommandLine(
       Project project,
@@ -92,7 +92,8 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
     commandBuilder.setWorkingDirectory(workingDir.toFile());
 
     commandBuilder.setJavaBinary(
-        getJavaBinFromLauncher(target, getLauncher(fastBuildInfo).orElse(null)));
+        getJavaBinFromLauncher(
+            target, getLauncher(fastBuildInfo).orElse(null), getSwigdeps(fastBuildInfo)));
 
     if (debugPort > 0) {
       commandBuilder.addJvmArgument(
@@ -150,6 +151,15 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
     checkState(targetData.javaInfo().isPresent(), "Couldn't find Java info for target %s", label);
     JavaInfo javaInfo = targetData.javaInfo().get();
     return javaInfo.launcher();
+  }
+
+  private static boolean getSwigdeps(FastBuildInfo fastBuildInfo) {
+    Label label = fastBuildInfo.label();
+    FastBuildBlazeData targetData = fastBuildInfo.blazeData().get(label);
+    checkState(targetData != null, "Couldn't find data for target %s", label);
+    checkState(targetData.javaInfo().isPresent(), "Couldn't find Java info for target %s", label);
+    JavaInfo javaInfo = targetData.javaInfo().get();
+    return javaInfo.swigdeps();
   }
 
   // Bazel uses '/' for separators on Windows too (I haven't tested that, but see

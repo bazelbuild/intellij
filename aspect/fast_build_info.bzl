@@ -54,6 +54,7 @@ def _fast_build_info_impl(target, ctx):
             "test_class": getattr(ctx.rule.attr, "test_class", None),
             "test_size": getattr(ctx.rule.attr, "size", None),
             "launcher": launcher,
+            "swigdeps": getattr(ctx.rule.attr, "swigdeps", True),
             "jvm_flags": getattr(ctx.rule.attr, "jvm_flags", []),
         }
         annotation_processing = target[JavaInfo].annotation_processing
