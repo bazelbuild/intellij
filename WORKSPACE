@@ -283,10 +283,10 @@ http_archive(
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(
     name = "io_bazel_rules_scala",
-    sha256 = "ce767b0dc892fc6a15e008a76ac540e848ae2e080242f0f8b2de940f7d047e7b",
-    strip_prefix = "rules_scala-7bc18d07001cbfd425c6761c8384c4e982d25a2b",
+    sha256 = "ccd4693c5f5a302b8c145ce87792c6fca1cb956b94c15b569ddd0809f5f617d1",
+    strip_prefix = "rules_scala-96176ae9e0be8582918a5212a7d4b44d885db8f6",
     type = "zip",
-    url = "https://github.com/bazelbuild/rules_scala/archive/7bc18d07001cbfd425c6761c8384c4e982d25a2b.zip",
+    url = "https://github.com/bazelbuild/rules_scala/archive/96176ae9e0be8582918a5212a7d4b44d885db8f6.zip",
 )
 
 load("@io_bazel_rules_scala//scala:scala.bzl", "scala_repositories")
