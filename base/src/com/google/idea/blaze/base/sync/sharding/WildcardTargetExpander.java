@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
@@ -152,6 +153,7 @@ public class WildcardTargetExpander {
     ImmutableList<ImmutableList<TargetExpression>> shards =
         shardTargets(allTargets, BlazeBuildTargetSharder.PACKAGE_SHARD_SIZE);
     Predicate<String> handledRulesPredicate = handledRuleTypes(projectViewSet);
+    boolean excludeManualTargets = excludeManualTargets(project, projectViewSet);
     ExpandedTargetsResult output = null;
     for (int i = 0; i < shards.size(); i++) {
       List<TargetExpression> shard = shards.get(i);
@@ -160,7 +162,8 @@ public class WildcardTargetExpander {
               String.format(
                   "Expanding wildcard target patterns, shard %s of %s", i + 1, shards.size())));
       ExpandedTargetsResult result =
-          queryIndividualTargets(project, context, workspaceRoot, handledRulesPredicate, shard);
+          queryIndividualTargets(
+              project, context, workspaceRoot, handledRulesPredicate, shard, excludeManualTargets);
       output = output == null ? result : ExpandedTargetsResult.merge(output, result);
       if (output.buildResult.status == Status.FATAL_ERROR) {
         return output;
@@ -196,14 +199,31 @@ public class WildcardTargetExpander {
     return ImmutableList.copyOf(output);
   }
 
+  /**
+   * A workaround to optionally allow manual targets if the user has specified the
+   * '--build_manual_tests' flag in their .blazeproject file.
+   *
+   * <p>This is a gross hack, and only a partial workaround -- they could be using a different flag
+   * format, have the flag in their .blazerc, etc.
+   *
+   * <p>Ideally '--build_manual_tests', which itself is a hacky workaround (applies only to wildcard
+   * target pattern expansion) would work with blaze query.
+   */
+  private static boolean excludeManualTargets(Project project, ProjectViewSet projectView) {
+    return !BlazeFlags.blazeFlags(
+            project, projectView, BlazeCommandName.BUILD, BlazeInvocationContext.SYNC_CONTEXT)
+        .contains("--build_manual_tests");
+  }
+
   /** Runs a blaze query to expand the input target patterns to individual blaze targets. */
   private static ExpandedTargetsResult queryIndividualTargets(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       Predicate<String> handledRulesPredicate,
-      List<TargetExpression> targetPatterns) {
-    String query = queryString(targetPatterns);
+      List<TargetExpression> targetPatterns,
+      boolean excludeManualTargets) {
+    String query = queryString(targetPatterns, excludeManualTargets);
     if (query.isEmpty()) {
       // will be empty if there are no non-excluded targets
       return new ExpandedTargetsResult(ImmutableList.of(), BuildResult.SUCCESS);
@@ -244,7 +264,7 @@ public class WildcardTargetExpander {
         .getAvailableTargetKinds();
   }
 
-  private static String queryString(List<TargetExpression> targets) {
+  private static String queryString(List<TargetExpression> targets, boolean excludeManualTargets) {
     StringBuilder builder = new StringBuilder();
     for (TargetExpression target : targets) {
       boolean excluded = target.isExcluded();
@@ -269,8 +289,9 @@ public class WildcardTargetExpander {
     if (targetList.isEmpty()) {
       return targetList;
     }
-    // exclude 'manual' targets, which shouldn't be built when expanding wildcard target patterns
-    return String.format("attr('tags', '^((?!manual).)*$', %s)", targetList);
+    return excludeManualTargets
+        ? String.format("attr('tags', '^((?!manual).)*$', %s)", targetList)
+        : targetList;
   }
 
   private static String getBinaryPath(Project project) {

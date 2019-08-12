@@ -27,9 +27,9 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /** Identifies targets covered by the .blazeproject 'targets' section, as it's seen by blaze. */
-final class ProjectTargetsHelper {
+public final class ProjectTargetsHelper {
 
-  static ProjectTargetsHelper create(List<TargetExpression> projectTargets) {
+  public static ProjectTargetsHelper create(List<TargetExpression> projectTargets) {
     return new ProjectTargetsHelper(
         projectTargets.stream().map(ProjectTarget::new).collect(toImmutableList()), null);
   }
@@ -66,7 +66,7 @@ final class ProjectTargetsHelper {
     return directories != null && directories.containsWorkspacePath(packagePath);
   }
 
-  boolean targetInProject(Label label) {
+  public boolean targetInProject(Label label) {
     // the last target expression to cover this label overrides all previous expressions
     for (ProjectTarget target : reversedTargets) {
       if (target.coversTarget(label)) {

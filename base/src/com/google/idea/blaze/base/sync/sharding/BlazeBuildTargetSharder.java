@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.projectview.ProjectTargetsHelper;
 import com.google.idea.blaze.base.sync.sharding.WildcardTargetExpander.ExpandedTargetsResult;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.common.experiments.IntExperiment;
@@ -167,8 +168,22 @@ public class BlazeBuildTargetSharder {
         fullList.addAll(expanded);
       }
     }
-    return WildcardTargetExpander.expandToSingleTargets(
-        project, context, workspaceRoot, projectViewSet, fullList);
+    ExpandedTargetsResult result =
+        WildcardTargetExpander.expandToSingleTargets(
+            project, context, workspaceRoot, projectViewSet, fullList);
+
+    // finally add back any explicitly-specified, unexcluded single targets which may have been
+    // removed by the query (for example, because they have the 'manual' tag)
+    ProjectTargetsHelper helper = ProjectTargetsHelper.create(targets);
+    List<TargetExpression> singleTargets =
+        targets.stream()
+            .filter(t -> !t.isExcluded())
+            .filter(t -> !isWildcardPattern(t))
+            .filter(t -> t instanceof Label)
+            .filter(t -> helper.targetInProject((Label) t))
+            .collect(toImmutableList());
+    return ExpandedTargetsResult.merge(
+        result, new ExpandedTargetsResult(singleTargets, result.buildResult));
   }
 
   @SuppressWarnings("unchecked")
@@ -219,6 +234,10 @@ public class BlazeBuildTargetSharder {
         .map(WildcardTargetPattern::fromExpression)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
+  }
+
+  private static boolean isWildcardPattern(TargetExpression expr) {
+    return WildcardTargetPattern.fromExpression(expr) != null;
   }
 
   private BlazeBuildTargetSharder() {}
