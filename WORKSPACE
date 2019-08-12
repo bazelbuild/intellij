@@ -111,8 +111,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "6d80ede63ad301121a72b8b4ef93157ec3f546d23146234660587c9699eb0bf4",
-    url = "https://plugins.jetbrains.com/files/9568/59092/intellij-go-191.6014.8.104.zip",
+    sha256 = "815f59dcd5f7db019e224cdb85e67db99c8d5deb99721a73a36f710bda64be49",
+    url = "https://plugins.jetbrains.com/files/9568/62411/intellij-go-191.7141.44.205.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
