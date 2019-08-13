@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.references;
 
+import com.google.idea.blaze.base.lang.buildfile.completion.BuildLookupElement;
+import com.google.idea.blaze.base.lang.buildfile.completion.LabelRuleLookupElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
@@ -27,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiReferenceBase;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import javax.annotation.Nullable;

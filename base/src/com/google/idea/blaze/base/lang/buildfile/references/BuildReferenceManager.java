@@ -21,10 +21,12 @@ import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.completion.BuildLookupElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
@@ -198,8 +200,34 @@ public class BuildReferenceManager {
 
   @Nullable
   public BuildFile resolveBlazePackage(String workspaceRelativePath) {
+    return resolveBlazePackage("", workspaceRelativePath);
+  }
+
+  @Nullable
+  public BuildFile resolveBlazePackage(String externalWorkspace, String workspaceRelativePath) {
     workspaceRelativePath = StringUtil.trimStart(workspaceRelativePath, "//");
-    return resolveBlazePackage(WorkspacePath.createIfValid(workspaceRelativePath));
+
+    if (externalWorkspace == "") {
+      return resolveBlazePackage(WorkspacePath.createIfValid(workspaceRelativePath));
+    } else {
+      BlazeProjectData projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+      File external = projectData.getBlazeInfo().getExecutionRoot();
+      VirtualFile externalVf =
+          VirtualFileSystemProvider
+              .getInstance()
+              .getSystem()
+              .findFileByIoFile(external)
+              .findFileByRelativePath("external")
+              .findFileByRelativePath(externalWorkspace)
+              .findFileByRelativePath(workspaceRelativePath);
+
+      if (externalVf == null) {
+        return null;
+      }
+      VirtualFile buildFile = Blaze.getBuildSystemProvider(project).findBuildFileInDirectory(externalVf);
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(buildFile);
+      return psiFile instanceof BuildFile ? (BuildFile) psiFile : null;
+    }
   }
 
   @Nullable
