@@ -42,9 +42,9 @@ public final class SkylarkDebuggingUtils {
     if (!debuggingEnabled.getValue()) {
       return false;
     }
-    // currently turned off for bazel
+    // available in the earliest-supported version of bazel
     if (blazeVersion.buildSystem() != BuildSystem.Blaze) {
-      return false;
+      return true;
     }
     return !blazeVersion.blazeVersionIsKnown()
         || blazeVersion.blazeContainsCl(EARLIEST_SUPPORTED_BLAZE_CL);
