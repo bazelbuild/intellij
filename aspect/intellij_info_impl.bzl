@@ -740,7 +740,7 @@ def collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
     """Updates android_sdk-relevant groups, returns false if not an android_sdk target."""
     if ctx.rule.kind != "android_sdk":
         return False
-    android_jar_file = list(ctx.rule.attr.android_jar.files)[0]
+    android_jar_file = ctx.rule.attr.android_jar.files.to_list()[0]
     ide_info["android_sdk_ide_info"] = struct(
         android_jar = artifact_location(android_jar_file),
     )
@@ -753,7 +753,7 @@ def collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
         return False
     if not hasattr(ctx.rule.attr, "aar"):
         return False
-    aar_file = list(ctx.rule.attr.aar.files)[0]
+    aar_file = ctx.rule.attr.aar.files.to_list()[0]
     ide_info["android_aar_ide_info"] = struct(
         aar = artifact_location(aar_file),
     )
