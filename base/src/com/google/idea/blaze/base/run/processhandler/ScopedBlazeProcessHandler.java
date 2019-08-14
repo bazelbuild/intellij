@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.util.ProcessGroupUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
@@ -78,9 +79,10 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
       ScopedProcessHandlerDelegate scopedProcessHandlerDelegate)
       throws ExecutionException {
     super(
-        new GeneralCommandLine(command)
-            .withWorkDirectory(workspaceRoot.directory().getPath())
-            .withRedirectErrorStream(true));
+        ProcessGroupUtil.newProcessGroupFor(
+            new GeneralCommandLine(command)
+                .withWorkDirectory(workspaceRoot.directory().getPath())
+                .withRedirectErrorStream(true)));
 
     this.scopedProcessHandlerDelegate = scopedProcessHandlerDelegate;
     this.context = new BlazeContext();

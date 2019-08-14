@@ -42,6 +42,7 @@ import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.util.ProcessGroupUtil;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.python.PySdkUtils;
 import com.intellij.execution.ExecutionException;
@@ -172,7 +173,8 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
         @Override
         protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine)
             throws ExecutionException {
-          ProcessHandler handler = super.doCreateProcess(commandLine);
+          ProcessHandler handler =
+              super.doCreateProcess(ProcessGroupUtil.newProcessGroupFor(commandLine));
           if (handler instanceof KillableProcessHandler) {
             // SIGINT can cause the JVM to crash, when stopped at a breakpoint (IDEA-167432).
             ((KillableProcessHandler) handler).setShouldKillProcessSoftly(false);
