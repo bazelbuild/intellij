@@ -93,7 +93,6 @@ def intellij_unit_test_suite(
     jvm_flags.extend([
         "-Didea.classpath.index.enabled=false",
         "-Djava.awt.headless=true",
-        #        "-Didea.platform.prefix=" + platform_prefix,
         "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
     ])
 
@@ -122,7 +121,6 @@ def intellij_integration_test_suite(
         size = "medium",
         jvm_flags = [],
         runtime_deps = [],
-        platform_prefix = "Idea",
         required_plugins = None,
         **kwargs):
     """Creates a java_test rule comprising all valid test classes in the specified srcs.
@@ -140,9 +138,6 @@ def intellij_integration_test_suite(
       size: the test size.
       jvm_flags: extra flags to be passed to the test vm.
       runtime_deps: the required runtime_deps.
-      platform_prefix: Specifies the JetBrains product these tests are run against. Examples are
-          'Idea' (IJ CE), 'idea' (IJ UE), 'CLion', 'AndroidStudio'. See
-          com.intellij.util.PlatformUtils for other options.
       required_plugins: optional comma-separated list of plugin IDs. Integration tests will fail if
           these plugins aren't loaded at runtime.
       **kwargs: Any other args to be passed to the java_test.
@@ -175,7 +170,6 @@ def intellij_integration_test_suite(
     jvm_flags.extend([
         "-Didea.classpath.index.enabled=false",
         "-Djava.awt.headless=true",
-        "-Didea.platform.prefix=" + platform_prefix,
         "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
     ])
 

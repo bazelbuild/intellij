@@ -80,7 +80,6 @@ intellij_unit_test_suite(
 intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
-    platform_prefix = "",
     required_plugins = "com.google.idea.blaze.golang,org.jetbrains.plugins.go",
     test_package_root = "com.google.idea.blaze.golang",
     runtime_deps = [
