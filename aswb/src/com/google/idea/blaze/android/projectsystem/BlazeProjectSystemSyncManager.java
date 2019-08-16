@@ -58,9 +58,14 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
     return LastSyncResultCache.getInstance(project).lastSyncResult;
   }
 
-  @Override
+  // #api 3.6
   public ListenableFuture<SyncResult> syncProject(
       ProjectSystemSyncManager.SyncReason reason, boolean requireSourceGeneration) {
+    return syncProject(reason);
+  }
+
+  // @Override #api 3.6
+  public ListenableFuture<SyncResult> syncProject(ProjectSystemSyncManager.SyncReason reason) {
     SettableFuture<ProjectSystemSyncManager.SyncResult> syncResult = SettableFuture.create();
 
     if (BlazeSyncStatus.getInstance(project).syncInProgress()) {

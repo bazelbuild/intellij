@@ -28,6 +28,7 @@ import com.android.tools.idea.projectsystem.DependencyManagementException;
 import com.android.tools.idea.projectsystem.DependencyType;
 import com.android.tools.idea.projectsystem.NamedModuleTemplate;
 import com.android.tools.idea.projectsystem.SampleDataDirectoryProvider;
+import com.android.tools.idea.projectsystem.ScopeType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -90,6 +91,11 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   private SampleDataDirectoryProvider sampleDataDirectoryProvider;
   private BlazeClassFileFinder classFileFinder;
   private final boolean isWorkspaceModule;
+
+  // @Override #api 3.6
+  public Module getModule() {
+    return module;
+  }
 
   @TestOnly
   public static BlazeModuleSystem create(Module module) {
@@ -453,17 +459,14 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   }
 
   // #api3.5 @Override
-  public GlobalSearchScope getModuleWithDependenciesAndLibrariesScope(boolean includeTests) {
+  public GlobalSearchScope getResolveScope(ScopeType scopeType) {
     // Bazel projects have either a workspace module, or a resource module. In both cases, we just
-    // want to ignore the currently
-    // specified module level dependencies and use the global set of dependencies. This is because
-    // when we artificially split up the
-    // Java code (into workspace module) and resources (into a separate module each), we introduce a
-    // circular dependency, which essentially
-    // means that all modules end up depending on all other modules. If we expressed this circular
-    // dependency, IntelliJ blows up due to
-    // the large heavily connected dependency graph. Instead, we just redirect the scopes in the few
-    // places that we need.
+    // want to ignore the currently specified module level dependencies and use the global set of
+    // dependencies. This is because when we artificially split up the Java code (into workspace
+    // module) and resources (into a separate module each), we introduce a circular dependency,
+    // which essentially means that all modules end up depending on all other modules. If we
+    // expressed this circular dependency, IntelliJ blows up due to the large heavily connected
+    // dependency graph. Instead, we just redirect the scopes in the few places that we need.
     return ProjectScope.getAllScope(module.getProject());
   }
 }
