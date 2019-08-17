@@ -266,10 +266,27 @@ load("@build_bazel_integration_testing//tools:bazel_java_integration_test.bzl", 
 bazel_java_integration_test_deps(versions = [
     "0.28.1",
     "0.27.2",
-    #    "0.22.0",
-    #    "0.23.2",
-    #    "0.21.0",
 ])
+
+load("@build_bazel_integration_testing//tools:import.bzl", "bazel_external_dependency_archive")
+
+bazel_external_dependency_archive(
+    name = "integration_test_deps",
+    srcs = {
+        # Bazel 0.28.1, 0.27.2
+        "cc470e529fafb6165b5be3929ff2d99b38429b386ac100878687416603a67889": [
+            "https://mirror.bazel.build/bazel_coverage_output_generator/releases/coverage_output_generator-v1.0.zip",
+        ],
+        # Bazel 0.28.1
+        "96e223094a12c842a66db0bb7bb6866e88e26e678f045842911f9bd6b47161f5": [
+            "https://mirror.bazel.build/bazel_java_tools/releases/javac11/v4.0/java_tools_javac11_linux-v4.0.zip",
+        ],
+        # Bazel 0.27.2
+        "074d624fb34441df369afdfd454e75dba821d5d54932fcfee5ba598d17dc1b99": [
+            "https://mirror.bazel.build/bazel_java_tools/releases/javac11/v2.0/java_tools_javac11_linux-v2.0.zip",
+        ],
+    },
+)
 
 # LICENSE: The Apache Software License, Version 2.0
 # proto_library rules implicitly depend on @com_google_protobuf//:protoc

@@ -6,6 +6,10 @@ bazel_java_integration_test(
     data = [
         "//aspect:aspect_files",
     ],
+    external_deps = [
+        "@integration_test_deps",
+    ],
+    tags = ["block-network"],
     versions = [
         "0.28.1",
         "0.27.2",
