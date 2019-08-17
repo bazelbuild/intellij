@@ -254,6 +254,23 @@ http_archive(
     url = "https://github.com/bazelbuild/bazel-skylib/releases/download/0.8.0/bazel-skylib.0.8.0.tar.gz",
 )
 
+http_archive(
+    name = "build_bazel_integration_testing",
+    sha256 = "490554b98da4ce6e3e1e074e01b81e8440b760d4f086fccf50085a25528bf5cd",
+    strip_prefix = "bazel-integration-testing-922d2b04bfb9721ab14ff6d26d4a8a6ab847aa07",
+    url = "https://github.com/bazelbuild/bazel-integration-testing/archive/922d2b04bfb9721ab14ff6d26d4a8a6ab847aa07.zip",
+)
+
+load("@build_bazel_integration_testing//tools:bazel_java_integration_test.bzl", "bazel_java_integration_test_deps")
+
+bazel_java_integration_test_deps(versions = [
+    "0.28.1",
+    "0.27.2",
+    #    "0.22.0",
+    #    "0.23.2",
+    #    "0.21.0",
+])
+
 # LICENSE: The Apache Software License, Version 2.0
 # proto_library rules implicitly depend on @com_google_protobuf//:protoc
 http_archive(
