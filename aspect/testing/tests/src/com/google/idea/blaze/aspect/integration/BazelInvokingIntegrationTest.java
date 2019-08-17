@@ -10,6 +10,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+/**
+ * A Bazel-invoking integration test for the bundled IntelliJ aspect.
+ *
+ * These tests assert the end-to-end behavior of the plugin's aspect during a sync, and
+ * ensure that it generates the correct IDE info files.
+ */
 public class BazelInvokingIntegrationTest {
 
   private WorkspaceDriver driver = new WorkspaceDriver();
