@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.aspect.integration;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.getOutputGroups;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -23,12 +25,13 @@ import build.bazel.tests.integration.WorkspaceDriver;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyBazel;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -41,14 +44,15 @@ import org.junit.Test;
  */
 public class BazelInvokingIntegrationTest {
 
-  // Constant flags for wiring up the plugin aspect from the external @intellij_aspect
-  // repository.
+  // Flags for wiring up the plugin aspect from the external @intellij_aspect repository.
   public static final ImmutableList<String> ASPECT_FLAGS =
       ImmutableList.of(
+          AspectStrategyBazel.ASPECT_FLAG,
           String.format(
-              "--override_repository=intellij_aspect=%s/%s/aspect",
-              System.getenv("TEST_SRCDIR"), System.getenv("TEST_WORKSPACE")),
-          AspectStrategyBazel.ASPECT_FLAG);
+              "%s=%s/%s/aspect",
+              AspectStrategyBazel.OVERRIDE_REPOSITORY_FLAG,
+              System.getenv("TEST_SRCDIR"),
+              System.getenv("TEST_WORKSPACE")));
   private WorkspaceDriver driver = new WorkspaceDriver();
 
   @BeforeClass
@@ -71,27 +75,39 @@ public class BazelInvokingIntegrationTest {
     args.add("//foo:bar");
     args.add("--define=ij_product=intellij-latest");
     args.addAll(ASPECT_FLAGS);
-    args.add(getOutputGroupsFlag(OutputGroup.INFO, ImmutableList.of(LanguageClass.GENERIC)));
+    args.add(
+        getOutputGroupsFlag(
+            ImmutableList.of(OutputGroup.INFO), ImmutableList.of(LanguageClass.GENERIC)));
 
     BazelCommand cmd = driver.bazel(args.build()).runVerbose();
 
     assertEquals("return code is 0", 0, cmd.exitCode());
+
     // Bazel's output goes into stderr by default, even on success.
     assertTrue(
-        "stderr contains intellij-info.txt",
+        "stderr contains up-to-date message",
+        cmd.errorLines().stream().anyMatch(line -> line.endsWith("//foo:bar up-to-date:")));
+    assertTrue(
+        "stderr contains intellij-info.txt filename",
         cmd.errorLines().stream()
             .anyMatch(line -> line.endsWith(getIntelliJInfoTxtFilename("bar"))));
   }
 
   private String getIntelliJInfoTxtFilename(String targetName) {
+    // e.g. bar-97299.intellij-info.txt
+    // The hashCode() call here is the implementation function underlying the Starlark hash()
+    // function in used in intellij-info-impl.bzl.
     return String.format("%s-%s.intellij-info.txt", targetName, targetName.hashCode());
   }
 
   private String getOutputGroupsFlag(
-      OutputGroup outputGroup, List<LanguageClass> languageClassList) {
-    String outputGroups =
-        Joiner.on(',')
-            .join(AspectStrategy.getOutputGroups(outputGroup, new HashSet<>(languageClassList)));
-    return "--output_groups=" + outputGroups;
+      Collection<OutputGroup> outputGroups, Collection<LanguageClass> languageClassList) {
+    // e.g. --output_groups=intellij-info-generic,intellij-resolve-java,intellij-compile-java
+    Set<LanguageClass> languageClasses = new HashSet<>(languageClassList);
+    List<String> outputGroupNames =
+        outputGroups.stream()
+            .flatMap(g -> getOutputGroups(g, languageClasses).stream())
+            .collect(toImmutableList());
+    return "--output_groups=" + Joiner.on(',').join(outputGroupNames);
   }
 }

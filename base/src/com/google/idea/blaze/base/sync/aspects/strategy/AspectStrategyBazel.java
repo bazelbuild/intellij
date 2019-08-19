@@ -27,8 +27,13 @@ public class AspectStrategyBazel extends AspectStrategy {
 
   private AspectStrategyBazel() {}
 
+  // These flags are static constants for sharing between the implementation and tests.
   public static final String ASPECT_FLAG =
       "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect";
+
+  // In tests, the location of @intellij_aspect is not known at compile time.
+  public static final String OVERRIDE_REPOSITORY_FLAG =
+      "--override_repository=intellij_aspect";
 
   @Override
   public String getName() {
@@ -49,8 +54,7 @@ public class AspectStrategyBazel extends AspectStrategy {
   }
 
   private static String getAspectRepositoryOverrideFlag() {
-    return String.format(
-        "--override_repository=intellij_aspect=%s", findAspectDirectory().getPath());
+    return OVERRIDE_REPOSITORY_FLAG + "=" + findAspectDirectory().getPath();
   }
 
   @Override
