@@ -16,26 +16,17 @@
 package com.google.idea.blaze.base.sync.aspects;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.idea.blaze.base.command.buildresult.BepArtifactData;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
-import com.google.idea.blaze.base.model.primitives.Label;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
 
 /** The result of the blaze build sync step. */
 public class BlazeBuildOutputs {
@@ -46,54 +37,21 @@ public class BlazeBuildOutputs {
 
   public static BlazeBuildOutputs fromParsedBepOutput(
       BuildResult result, ParsedBepOutput parsedOutput) {
-    ImmutableListMultimap<String, OutputArtifact> outputGroupOutputs =
-        parsedOutput.getPerOutputGroupArtifacts(path -> true);
-    ImmutableListMultimap<Label, OutputArtifact> targetOutputArtifacts =
-        parsedOutput.getPerTargetOutputArtifacts(path -> true);
-
-    Map<String, ArtifactData.Builder> builders = new LinkedHashMap<>();
-    targetOutputArtifacts.forEach(
-        (label, output) ->
-            builders.compute(
-                output.getKey(),
-                (key, builder) -> {
-                  if (builder == null) {
-                    builder = new ArtifactData.Builder(output);
-                  }
-                  builder.targets.add(label);
-                  return builder;
-                }));
-    outputGroupOutputs.forEach(
-        (group, output) ->
-            builders.compute(
-                output.getKey(),
-                (key, builder) -> {
-                  if (builder == null) {
-                    builder = new ArtifactData.Builder(output);
-                  }
-                  builder.outputGroups.add(group);
-                  return builder;
-                }));
-    Map<String, ArtifactData> allOutputs =
-        builders.values().stream()
-            .map(ArtifactData.Builder::build)
-            .filter(Objects::nonNull)
-            .collect(toImmutableMap(a -> a.artifact.getKey(), a -> a, (a, b) -> a));
-    return new BlazeBuildOutputs(result, allOutputs);
+    return new BlazeBuildOutputs(result, parsedOutput.getFullArtifactData());
   }
 
   public final BuildResult buildResult;
 
-  private final ImmutableMap<String, ArtifactData> artifacts;
+  private final ImmutableMap<String, BepArtifactData> artifacts;
 
   /** The artifacts transitively associated with each top-level target. */
-  private final ImmutableSetMultimap<Label, OutputArtifact> perTargetArtifacts;
+  private final ImmutableSetMultimap<String, OutputArtifact> perTargetArtifacts;
 
-  private BlazeBuildOutputs(BuildResult buildResult, Map<String, ArtifactData> artifacts) {
+  private BlazeBuildOutputs(BuildResult buildResult, Map<String, BepArtifactData> artifacts) {
     this.buildResult = buildResult;
     this.artifacts = ImmutableMap.copyOf(artifacts);
 
-    ImmutableSetMultimap.Builder<Label, OutputArtifact> perTarget = ImmutableSetMultimap.builder();
+    ImmutableSetMultimap.Builder<String, OutputArtifact> perTarget = ImmutableSetMultimap.builder();
     artifacts.values().forEach(a -> a.topLevelTargets.forEach(t -> perTarget.put(t, a.artifact)));
     this.perTargetArtifacts = perTarget.build();
   }
@@ -109,15 +67,15 @@ public class BlazeBuildOutputs {
   public BlazeBuildOutputs updateOutputs(BlazeBuildOutputs nextOutputs) {
 
     // first combine common artifacts
-    Map<String, ArtifactData> combined = new LinkedHashMap<>(artifacts);
-    for (Map.Entry<String, ArtifactData> e : nextOutputs.artifacts.entrySet()) {
-      ArtifactData a = e.getValue();
+    Map<String, BepArtifactData> combined = new LinkedHashMap<>(artifacts);
+    for (Map.Entry<String, BepArtifactData> e : nextOutputs.artifacts.entrySet()) {
+      BepArtifactData a = e.getValue();
       combined.compute(e.getKey(), (k, v) -> v == null ? a : v.update(a));
     }
 
     // then iterate over targets, throwing away old data for rebuilt targets and updating output
     // data accordingly
-    for (Label target : perTargetArtifacts.keySet()) {
+    for (String target : perTargetArtifacts.keySet()) {
       if (!nextOutputs.perTargetArtifacts.containsKey(target)) {
         continue;
       }
@@ -130,7 +88,7 @@ public class BlazeBuildOutputs {
           continue;
         }
         // no longer output by this target; need to update target associations
-        ArtifactData data = combined.get(old.getKey());
+        BepArtifactData data = combined.get(old.getKey());
         if (data != null) {
           data = data.removeTargetAssociation(target);
         }
@@ -143,74 +101,5 @@ public class BlazeBuildOutputs {
     }
     return new BlazeBuildOutputs(
         BuildResult.combine(buildResult, nextOutputs.buildResult), combined);
-  }
-
-  /** All the relevant output data for a single {@link OutputArtifact}. */
-  private static final class ArtifactData {
-    private final OutputArtifact artifact;
-    /** The output groups this artifact belongs to. */
-    private final ImmutableSet<String> outputGroups;
-    /** The top-level targets this artifact is transitively associated with. */
-    private final ImmutableSet<Label> topLevelTargets;
-
-    private ArtifactData(
-        OutputArtifact artifact,
-        Collection<String> outputGroups,
-        Collection<Label> topLevelTargets) {
-      this.artifact = artifact;
-      this.outputGroups = ImmutableSet.copyOf(outputGroups);
-      this.topLevelTargets = ImmutableSet.copyOf(topLevelTargets);
-    }
-
-    @Override
-    public int hashCode() {
-      return artifact.getKey().hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof ArtifactData && artifact.equals(((ArtifactData) obj).artifact);
-    }
-
-    /** Returns null if this was the only top-level target the artifact was associated with. */
-    @Nullable
-    private ArtifactData removeTargetAssociation(Label target) {
-      List<Label> newTargets = new ArrayList<>(topLevelTargets);
-      newTargets.remove(target);
-      return newTargets.isEmpty()
-          ? null
-          : new ArtifactData(artifact, outputGroups, ImmutableList.copyOf(newTargets));
-    }
-
-    /** Combines this data with a newer version. */
-    private ArtifactData update(ArtifactData newer) {
-      Preconditions.checkState(artifact.getKey().equals(newer.artifact.getKey()));
-      return new ArtifactData(
-          newer.artifact,
-          ImmutableSet.<String>builder().addAll(outputGroups).addAll(newer.outputGroups).build(),
-          ImmutableSet.<Label>builder()
-              .addAll(topLevelTargets)
-              .addAll(newer.topLevelTargets)
-              .build());
-    }
-
-    private static class Builder {
-      final OutputArtifact artifact;
-      final List<String> outputGroups = new ArrayList<>();
-      final List<Label> targets = new ArrayList<>();
-
-      Builder(OutputArtifact artifact) {
-        this.artifact = artifact;
-      }
-
-      @Nullable
-      ArtifactData build() {
-        if (outputGroups.isEmpty() || targets.isEmpty()) {
-          return null;
-        }
-        return new ArtifactData(
-            artifact, ImmutableList.copyOf(outputGroups), ImmutableList.copyOf(targets));
-      }
-    }
   }
 }

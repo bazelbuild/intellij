@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.List;
 import java.util.function.Predicate;
@@ -65,17 +64,7 @@ public interface BuildResultHelper extends AutoCloseable {
    */
   default ImmutableList<OutputArtifact> getArtifactsForOutputGroup(
       String outputGroup, Predicate<String> pathFilter) throws GetArtifactsException {
-    return getBuildOutput().getPerOutputGroupArtifacts(pathFilter).get(outputGroup);
-  }
-
-  /**
-   * Returns all build artifacts split by output group (note artifacts may belong to multiple output
-   * groups). May only be called once, after the build is complete, or no artifacts will be
-   * returned.
-   */
-  default ImmutableListMultimap<String, OutputArtifact> getPerOutputGroupArtifacts(
-      Predicate<String> pathFilter) throws GetArtifactsException {
-    return getBuildOutput().getPerOutputGroupArtifacts(pathFilter);
+    return getBuildOutput().getOutputGroupArtifacts(outputGroup, pathFilter);
   }
 
   @Override

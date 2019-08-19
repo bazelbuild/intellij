@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArt
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactState.LocalFileState;
 import com.google.idea.blaze.base.io.FileOperationProvider;
-import com.intellij.openapi.util.io.FileUtil;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -92,7 +91,7 @@ public class LocalFileOutputArtifact implements OutputArtifact, LocalFileArtifac
 
   @Override
   public int hashCode() {
-    return FileUtil.fileHashCode(file);
+    return file.getPath().hashCode();
   }
 
   @Override
