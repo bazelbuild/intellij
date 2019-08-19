@@ -23,9 +23,12 @@ import com.intellij.ide.plugins.PluginManager;
 import java.io.File;
 import java.util.List;
 
-class AspectStrategyBazel extends AspectStrategy {
+public class AspectStrategyBazel extends AspectStrategy {
 
   private AspectStrategyBazel() {}
+
+  public static final String ASPECT_FLAG =
+      "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect";
 
   @Override
   public String getName() {
@@ -35,7 +38,7 @@ class AspectStrategyBazel extends AspectStrategy {
   @Override
   protected List<String> getAspectFlags() {
     return ImmutableList.of(
-        "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect",
+        ASPECT_FLAG,
         getAspectRepositoryOverrideFlag());
   }
 

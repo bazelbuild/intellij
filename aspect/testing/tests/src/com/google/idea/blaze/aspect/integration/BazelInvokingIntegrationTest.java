@@ -20,7 +20,15 @@ import static org.junit.Assert.assertTrue;
 
 import build.bazel.tests.integration.BazelCommand;
 import build.bazel.tests.integration.WorkspaceDriver;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyBazel;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -28,11 +36,19 @@ import org.junit.Test;
 /**
  * A Bazel-invoking integration test for the bundled IntelliJ aspect.
  *
- * These tests assert the end-to-end behavior of the plugin's aspect during a sync, and
- * ensure that it generates the correct IDE info files.
+ * <p>These tests assert the end-to-end behavior of the plugin's aspect during a sync, and ensure
+ * that it generates the correct IDE info files.
  */
 public class BazelInvokingIntegrationTest {
 
+  // Constant flags for wiring up the plugin aspect from the external @intellij_aspect
+  // repository.
+  public static final ImmutableList<String> ASPECT_FLAGS =
+      ImmutableList.of(
+          String.format(
+              "--override_repository=intellij_aspect=%s/%s/aspect",
+              System.getenv("TEST_SRCDIR"), System.getenv("TEST_WORKSPACE")),
+          AspectStrategyBazel.ASPECT_FLAG);
   private WorkspaceDriver driver = new WorkspaceDriver();
 
   @BeforeClass
@@ -46,26 +62,36 @@ public class BazelInvokingIntegrationTest {
   }
 
   @Test
-  public void aspect_intelliJInfoGenericOutputGroup_generatesInfoTxt() throws Exception {
+  public void aspect_genericOutputGroup_generatesInfoTxt() throws Exception {
     driver.scratchFile("foo/BUILD", "sh_test(name = \"bar\",\n" + "srcs = [\"bar.sh\"])");
     driver.scratchExecutableFile("foo/bar.sh", "echo \"bar\"", "exit 0");
 
-    BazelCommand cmd = driver.bazel(
-        "build",
-        "//foo:bar",
-        "--repository_cache=\"\"",
-        "--override_repository=intellij_aspect="
-            + System.getenv("TEST_SRCDIR")
-            + "/intellij_with_bazel/aspect",
-        "--define=ij_product=intellij-latest",
-        "--aspects=@intellij_aspect//:intellij_info_bundled.bzl%intellij_info_aspect",
-        "--output_groups=intellij-info-generic"
-    ).runVerbose();
+    ImmutableList.Builder<String> args = ImmutableList.builder();
+    args.add("build");
+    args.add("//foo:bar");
+    args.add("--define=ij_product=intellij-latest");
+    args.addAll(ASPECT_FLAGS);
+    args.add(getOutputGroupsFlag(OutputGroup.INFO, ImmutableList.of(LanguageClass.GENERIC)));
+
+    BazelCommand cmd = driver.bazel(args.build()).runVerbose();
 
     assertEquals("return code is 0", 0, cmd.exitCode());
+    // Bazel's output goes into stderr by default, even on success.
     assertTrue(
         "stderr contains intellij-info.txt",
-        cmd.errorLines().stream().anyMatch(x -> x.contains("intellij-info.txt")));
+        cmd.errorLines().stream()
+            .anyMatch(line -> line.endsWith(getIntelliJInfoTxtFilename("bar"))));
   }
 
+  private String getIntelliJInfoTxtFilename(String targetName) {
+    return String.format("%s-%s.intellij-info.txt", targetName, targetName.hashCode());
+  }
+
+  private String getOutputGroupsFlag(
+      OutputGroup outputGroup, List<LanguageClass> languageClassList) {
+    String outputGroups =
+        Joiner.on(',')
+            .join(AspectStrategy.getOutputGroups(outputGroup, new HashSet<>(languageClassList)));
+    return "--output_groups=" + outputGroups;
+  }
 }

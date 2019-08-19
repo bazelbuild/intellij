@@ -2,7 +2,9 @@ load("@build_bazel_integration_testing//tools:bazel_java_integration_test.bzl", 
 
 bazel_java_integration_test(
     name = "BazelInvokingIntegrationTest",
-    srcs = ["BazelInvokingIntegrationTest.java"],
+    srcs = [
+        "BazelInvokingIntegrationTest.java",
+    ],
     data = [
         "//aspect:aspect_files",
     ],
@@ -13,5 +15,10 @@ bazel_java_integration_test(
     versions = [
         "0.28.1",
         "0.27.2",
+    ],
+    deps = [
+        "//aspect/testing:guava",
+        "//base",
+        "//base:integration_test_utils",
     ],
 )
