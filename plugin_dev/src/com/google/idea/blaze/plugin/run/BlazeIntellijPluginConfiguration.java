@@ -230,7 +230,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
       @Override
       protected GeneralCommandLine createCommandLine() throws ExecutionException {
         GeneralCommandLine commandLine = super.createCommandLine();
-        for (String jreName : new String[] {"jre64", "jre"}) {
+        for (String jreName : new String[] {"jbr", "jre64", "jre"}) {
           File bundledJre = new File(ideaJdk.getHomePath(), jreName);
           if (bundledJre.isDirectory()) {
             File bundledJava = new File(bundledJre, "bin/java");
