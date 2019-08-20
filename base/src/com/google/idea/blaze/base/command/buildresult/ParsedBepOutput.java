@@ -42,6 +42,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /** A data class representing blaze's build event protocol (BEP) output for a build. */
 public final class ParsedBepOutput {
@@ -61,13 +62,15 @@ public final class ParsedBepOutput {
               event.getId().getConfiguration().getId(), event.getConfiguration().getMnemonic());
           continue;
         case NAMED_SET:
-          fileSets.put(
-              event.getId().getNamedSet().getId(), FileSet.builder(event.getNamedSetOfFiles()));
+          NamedSetOfFiles namedSet = event.getNamedSetOfFiles();
+          fileSets.compute(
+              event.getId().getNamedSet().getId(),
+              (k, v) ->
+                  v != null ? v.setNamedSet(namedSet) : FileSet.builder().setNamedSet(namedSet));
           continue;
         case TARGET_COMPLETED:
           String label = event.getId().getTargetCompleted().getLabel();
-          String configMnemonic =
-              configIdToMnemonic.get(event.getId().getTargetCompleted().getConfiguration().getId());
+          String configId = event.getId().getTargetCompleted().getConfiguration().getId();
 
           event
               .getCompleted()
@@ -78,11 +81,15 @@ public final class ParsedBepOutput {
                     targetToFileSets.putAll(label, sets);
                     topLevelFileSets.addAll(sets);
                     for (String id : sets) {
-                      fileSets
-                          .get(id)
-                          .setConfiguration(configMnemonic)
-                          .addOutputGroups(ImmutableSet.of(o.getName()))
-                          .addTargets(ImmutableSet.of(label));
+                      fileSets.compute(
+                          id,
+                          (k, v) -> {
+                            FileSet.Builder builder = (v != null) ? v : FileSet.builder();
+                            return builder
+                                .setConfigId(configId)
+                                .addOutputGroups(ImmutableSet.of(o.getName()))
+                                .addTargets(ImmutableSet.of(label));
+                          });
                     }
                   });
           continue;
@@ -93,7 +100,8 @@ public final class ParsedBepOutput {
       }
     }
     ImmutableMap<String, FileSet> filesMap =
-        fillInTransitiveFileSetData(fileSets, topLevelFileSets, startTimeMillis);
+        fillInTransitiveFileSetData(
+            fileSets, topLevelFileSets, configIdToMnemonic, startTimeMillis);
     return new ParsedBepOutput(filesMap, targetToFileSets.build(), startTimeMillis);
   }
 
@@ -108,13 +116,19 @@ public final class ParsedBepOutput {
    * explicitly provided in BEP. This method fills in that data for the transitive closure.
    */
   private static ImmutableMap<String, FileSet> fillInTransitiveFileSetData(
-      Map<String, FileSet.Builder> fileSets, Set<String> topLevelFileSets, long startTimeMillis) {
+      Map<String, FileSet.Builder> fileSets,
+      Set<String> topLevelFileSets,
+      Map<String, String> configIdToMnemonic,
+      long startTimeMillis) {
     Queue<String> toVisit = Queues.newArrayDeque(topLevelFileSets);
     Set<String> visited = new HashSet<>(topLevelFileSets);
     while (!toVisit.isEmpty()) {
       String setId = toVisit.remove();
       FileSet.Builder fileSet = fileSets.get(setId);
-      fileSets.get(setId).namedSet.getFileSetsList().stream()
+      if (fileSet.namedSet == null) {
+        continue;
+      }
+      fileSet.namedSet.getFileSetsList().stream()
           .map(NamedSetOfFilesId::getId)
           .filter(s -> !visited.contains(s))
           .forEach(
@@ -125,7 +139,10 @@ public final class ParsedBepOutput {
               });
     }
     return fileSets.entrySet().stream()
-        .collect(toImmutableMap(Map.Entry::getKey, e -> e.getValue().build(startTimeMillis)));
+        .filter(e -> e.getValue().isValid(configIdToMnemonic))
+        .collect(
+            toImmutableMap(
+                Map.Entry::getKey, e -> e.getValue().build(configIdToMnemonic, startTimeMillis)));
   }
 
   /** A map from file set ID to file set, with the same ordering as the BEP stream. */
@@ -208,8 +225,8 @@ public final class ParsedBepOutput {
       this.targets = ImmutableSet.copyOf(targets);
     }
 
-    static Builder builder(NamedSetOfFiles namedSet) {
-      return new Builder(namedSet);
+    static Builder builder() {
+      return new Builder();
     }
 
     private Stream<BepArtifactData> toPerArtifactData() {
@@ -217,24 +234,25 @@ public final class ParsedBepOutput {
     }
 
     private static class Builder {
-      final NamedSetOfFiles namedSet;
-      String configuration;
+      @Nullable NamedSetOfFiles namedSet;
+      @Nullable String configId;
       final Set<String> outputGroups = new HashSet<>();
       final Set<String> targets = new HashSet<>();
 
-      Builder(NamedSetOfFiles namedSet) {
-        this.namedSet = namedSet;
-      }
-
       Builder updateFromParent(Builder parent) {
-        configuration = parent.configuration;
+        configId = parent.configId;
         outputGroups.addAll(parent.outputGroups);
         targets.addAll(parent.outputGroups);
         return this;
       }
 
-      Builder setConfiguration(String configuration) {
-        this.configuration = configuration;
+      Builder setNamedSet(NamedSetOfFiles namedSet) {
+        this.namedSet = namedSet;
+        return this;
+      }
+
+      Builder setConfigId(String configId) {
+        this.configId = configId;
         return this;
       }
 
@@ -248,8 +266,13 @@ public final class ParsedBepOutput {
         return this;
       }
 
-      FileSet build(long startTimeMillis) {
-        return new FileSet(namedSet, configuration, startTimeMillis, outputGroups, targets);
+      boolean isValid(Map<String, String> configIdToMnemonic) {
+        return namedSet != null && configId != null && configIdToMnemonic.get(configId) != null;
+      }
+
+      FileSet build(Map<String, String> configIdToMnemonic, long startTimeMillis) {
+        return new FileSet(
+            namedSet, configIdToMnemonic.get(configId), startTimeMillis, outputGroups, targets);
       }
     }
   }
