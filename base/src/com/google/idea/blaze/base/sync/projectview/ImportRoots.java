@@ -17,6 +17,8 @@ package com.google.idea.blaze.base.sync.projectview;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.intellij.openapi.diagnostic.Logger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
@@ -36,14 +38,21 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.util.WorkspacePathUtil;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
+import kotlin.text.Charsets;
+
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 /** The roots to import. Derived from project view. */
 public final class ImportRoots {
+  private static final Logger logger = Logger.getInstance(ImportRoots.class);
 
   private final BoolExperiment treatProjectTargetsAsSource =
       new BoolExperiment("blaze.treat.project.targets.as.source", true);
@@ -56,6 +65,7 @@ public final class ImportRoots {
     if (root == null || projectViewSet == null) {
       return null;
     }
+
     return ImportRoots.builder(root, Blaze.getBuildSystem(project)).add(projectViewSet).build();
   }
 
@@ -101,7 +111,9 @@ public final class ImportRoots {
       if (buildSystem == BuildSystem.Bazel && hasWorkspaceRoot(rootDirectories)) {
         excludeBuildSystemArtifacts();
         excludeProjectDataSubDirectory();
+        excludeIgnoredDirectories();
       }
+
       ImmutableSet<WorkspacePath> minimalExcludes =
           WorkspacePathUtil.calculateMinimalWorkspacePaths(excludeDirectoriesBuilder.build());
 
@@ -131,6 +143,34 @@ public final class ImportRoots {
 
     private void excludeProjectDataSubDirectory() {
       excludeDirectoriesBuilder.add(new WorkspacePath(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY));
+    }
+
+    private void excludeIgnoredDirectories() {
+      boolean isBazelIgnoreEnabled = BlazeUserSettings.getInstance().getEnableBazelIgnore();
+      if (!isBazelIgnoreEnabled) {
+        return;
+      }
+
+      File bazelIgnore = workspaceRoot.fileForPath(new WorkspacePath(".bazelignore"));
+      if (!bazelIgnore.exists()) {
+        return;
+      }
+
+      try {
+        List<String> excludes = Files.readAllLines(bazelIgnore.toPath(), Charsets.UTF_8);
+
+        excludes.stream()
+                .filter(this::isValidExclude)
+                .forEach(exclude -> excludeDirectoriesBuilder.add(new WorkspacePath(exclude)));
+
+      } catch (IOException e) {
+        logger.warn(e);
+      }
+
+    }
+
+    private boolean isValidExclude(String exclude) {
+      return exclude != null && !exclude.trim().isEmpty();
     }
 
     private static boolean hasWorkspaceRoot(ImmutableCollection<WorkspacePath> rootDirectories) {

@@ -74,6 +74,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean collapseProjectView = true;
   private boolean formatBuildFilesOnSave = true;
   private boolean showAddFileToProjectNotification = true;
+  private boolean enableBazelIgnore = true;
   private String blazeBinaryPath = DEFAULT_BLAZE_PATH;
   private String bazelBinaryPath = DEFAULT_BAZEL_PATH;
 
@@ -235,6 +236,16 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
     }
   }
 
+  public boolean getEnableBazelIgnore() {
+    return enableBazelIgnore;
+  }
+
+  public void setEnableBazelIgnore(boolean enableBazelIgnore) {
+    this.enableBazelIgnore = enableBazelIgnore;
+
+    // TODO trigger refresh
+  }
+
   static class SettingsLogger implements LoggedSettingsProvider {
 
     @Override
@@ -260,6 +271,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
           Boolean.toString(settings.showAddFileToProjectNotification));
       builder.put("blazeBinaryPath", settings.blazeBinaryPath);
       builder.put("bazelBinaryPath", settings.bazelBinaryPath);
+      builder.put("enableBazelIgnore", Boolean.toString(settings.enableBazelIgnore));
       return builder.build();
     }
   }
