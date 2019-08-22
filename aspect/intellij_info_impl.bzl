@@ -692,7 +692,15 @@ def divide_java_sources(ctx):
     return java_sources, gen_java_sources, srcjars
 
 def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
-    """Updates Android-specific output groups, returns false if not a Android target."""
+    """Updates Android-specific output groups, returns true if any android specific info was collected."""
+    handled = False
+    handled = collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups) or handled
+    return handled
+
+def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+    """Updates intellij-info-android with android_ide_info, and intellij_resolve_android with android resolve files. Returns false if target doesn't contain android attribute."""
     if not hasattr(target, "android"):
         return False
 
@@ -711,6 +719,10 @@ def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output
             # Generate unique ResFolderLocation for resource files.
             res_folders.append(struct_omit_none(root = root, resources = res_files.keys()))
 
+    instruments = None
+    if hasattr(ctx.rule.attr, "instruments") and ctx.rule.attr.instruments:
+        instruments = str(ctx.rule.attr.instruments.label)
+
     android_info = struct_omit_none(
         java_package = android.java_package,
         idl_import_root = android.idl.import_root if hasattr(android.idl, "import_root") else None,
@@ -724,6 +736,7 @@ def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output
         resources = resources,
         res_folders = res_folders,
         resource_jar = library_artifact(android.resource_jar),
+        instruments = instruments,
         **extra_ide_info
     )
     resolve_files = jars_from_output(android.idl.output)
@@ -734,6 +747,18 @@ def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output
     ide_info["android_ide_info"] = android_info
     update_set_in_dict(output_groups, "intellij-info-android", depset([ide_info_file]))
     update_set_in_dict(output_groups, "intellij-resolve-android", depset(resolve_files))
+    return True
+
+def collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+    """Updates intellij-info-android output group with android_instrumentation_info, returns false if not an android_instrumentation_test target."""
+    if not ctx.rule.kind == "android_instrumentation_test":
+        return False
+
+    android_instrumentation_info = struct_omit_none(
+        test_app = str(ctx.rule.attr.test_app.label),
+    )
+    ide_info["android_instrumentation_info"] = android_instrumentation_info
+    update_set_in_dict(output_groups, "intellij-info-android", depset([ide_info_file]))
     return True
 
 def collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
@@ -894,7 +919,6 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups) or handled
 
     # Any extra ide info
     if hasattr(semantics, "extra_ide_info"):

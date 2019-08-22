@@ -76,6 +76,8 @@ message AndroidIdeInfo {
   string idl_import_root = 11;
   map<string, string> manifest_values = 12;
   repeated ResFolderLocation res_folders = 13;
+  // Label for the target android_binary to instrument.
+  string instruments = 14;
 }
 
 // Details about an Android res folder
@@ -93,6 +95,12 @@ message AndroidSdkIdeInfo {
 
 message AndroidAarIdeInfo {
   ArtifactLocation aar = 1;
+}
+
+// Details about an android instrumentation test.
+message AndroidInstrumentationInfo {
+  // Label for the android_binary to use as instrumentor.
+  string test_app = 1;
 }
 
 message PyIdeInfo {
@@ -195,6 +203,7 @@ message TargetIdeInfo {
   AndroidIdeInfo android_ide_info = 110;
   AndroidAarIdeInfo android_aar_ide_info = 111;
   AndroidSdkIdeInfo android_sdk_ide_info = 112;
+  AndroidInstrumentationInfo android_instrumentation_info = 113;
 
   CIdeInfo c_ide_info = 120;
   CToolchainIdeInfo c_toolchain_ide_info = 121;
