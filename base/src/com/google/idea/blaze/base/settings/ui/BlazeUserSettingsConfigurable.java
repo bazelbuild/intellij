@@ -121,6 +121,12 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
                   .setter(BlazeUserSettings::setEnableBazelIgnore)
                   .componentFactory(SimpleComponent::createCheckBox);
 
+  public static final ConfigurableSetting<?, ?> SHOW_ROOT_FILES =
+          setting("With multiple entries . exludes workspace root directories")
+                  .getter(BlazeUserSettings::getShowRootFiles)
+                  .setter(BlazeUserSettings::setShowRootFiles)
+                  .componentFactory(SimpleComponent::createCheckBox);
+
   private static final String BLAZE_BINARY_PATH_KEY = "blaze.binary.path";
   private static final ConfigurableSetting<?, ?> BLAZE_BINARY_PATH =
       setting("Blaze binary location")
@@ -147,6 +153,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           FORMAT_BUILD_FILES_ON_SAVE,
           SHOW_ADD_FILE_TO_PROJECT,
           ENABLE_BAZEL_IGNORE,
+          SHOW_ROOT_FILES,
           BLAZE_BINARY_PATH,
           BAZEL_BINARY_PATH);
 
@@ -175,6 +182,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
             FORMAT_BUILD_FILES_ON_SAVE,
             SHOW_ADD_FILE_TO_PROJECT,
             ENABLE_BAZEL_IGNORE,
+            SHOW_ROOT_FILES,
             BLAZE_BINARY_PATH,
             BAZEL_BINARY_PATH));
   }

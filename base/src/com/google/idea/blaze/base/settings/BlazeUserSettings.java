@@ -74,6 +74,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean collapseProjectView = true;
   private boolean formatBuildFilesOnSave = true;
   private boolean showAddFileToProjectNotification = true;
+  private boolean showRootFiles = false;
   private boolean enableBazelIgnore = true;
   private String blazeBinaryPath = DEFAULT_BLAZE_PATH;
   private String bazelBinaryPath = DEFAULT_BAZEL_PATH;
@@ -242,6 +243,16 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setEnableBazelIgnore(boolean enableBazelIgnore) {
     this.enableBazelIgnore = enableBazelIgnore;
+
+    // TODO trigger refresh
+  }
+
+  public boolean getShowRootFiles() {
+    return showRootFiles;
+  }
+
+  public void setShowRootFiles(boolean showRootFiles) {
+    this.showRootFiles = showRootFiles;
 
     // TODO trigger refresh
   }
