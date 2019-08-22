@@ -81,7 +81,6 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
         };
     autoScrollToConsoleHandler.install(myTree);
     add(createToolbarPanel(), BorderLayout.WEST);
-
   }
 
   /** A custom toolbar panel, without most of the irrelevant built-in items. */
@@ -207,5 +206,25 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
         reload();
       }
     }
+  }
+
+  @Override
+  public boolean hasNextOccurence() {
+    // workaround for NPE on empty trees
+    // TODO: remove if/when https://youtrack.jetbrains.com/issue/IDEA-215994 is fixed
+    if (myTree.getModel().getRoot() == null) {
+      return false;
+    }
+    return super.hasNextOccurence();
+  }
+
+  @Override
+  public boolean hasPreviousOccurence() {
+    // workaround for NPE on empty trees
+    // TODO: remove if/when https://youtrack.jetbrains.com/issue/IDEA-215994 is fixed
+    if (myTree.getModel().getRoot() == null) {
+      return false;
+    }
+    return super.hasPreviousOccurence();
   }
 }
