@@ -107,7 +107,7 @@ public class ServiceHelper {
     Object old;
     try {
       old = container.getComponentInstance(key);
-    } catch (UnsatisfiableDependenciesException e) {
+    } catch (UnsatisfiableDependenciesException | IllegalArgumentException e) {
       old = null;
     }
     container.unregisterComponent(key.getName());
