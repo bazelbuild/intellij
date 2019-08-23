@@ -254,6 +254,40 @@ http_archive(
     url = "https://github.com/bazelbuild/bazel-skylib/releases/download/0.8.0/bazel-skylib.0.8.0.tar.gz",
 )
 
+http_archive(
+    name = "build_bazel_integration_testing",
+    sha256 = "490554b98da4ce6e3e1e074e01b81e8440b760d4f086fccf50085a25528bf5cd",
+    strip_prefix = "bazel-integration-testing-922d2b04bfb9721ab14ff6d26d4a8a6ab847aa07",
+    url = "https://github.com/bazelbuild/bazel-integration-testing/archive/922d2b04bfb9721ab14ff6d26d4a8a6ab847aa07.zip",
+)
+
+load("@build_bazel_integration_testing//tools:bazel_java_integration_test.bzl", "bazel_java_integration_test_deps")
+
+bazel_java_integration_test_deps(versions = [
+    "0.28.1",
+    "0.27.2",
+])
+
+load("@build_bazel_integration_testing//tools:import.bzl", "bazel_external_dependency_archive")
+
+bazel_external_dependency_archive(
+    name = "integration_test_deps",
+    srcs = {
+        # Bazel 0.28.1, 0.27.2
+        "cc470e529fafb6165b5be3929ff2d99b38429b386ac100878687416603a67889": [
+            "https://mirror.bazel.build/bazel_coverage_output_generator/releases/coverage_output_generator-v1.0.zip",
+        ],
+        # Bazel 0.28.1
+        "96e223094a12c842a66db0bb7bb6866e88e26e678f045842911f9bd6b47161f5": [
+            "https://mirror.bazel.build/bazel_java_tools/releases/javac11/v4.0/java_tools_javac11_linux-v4.0.zip",
+        ],
+        # Bazel 0.27.2
+        "074d624fb34441df369afdfd454e75dba821d5d54932fcfee5ba598d17dc1b99": [
+            "https://mirror.bazel.build/bazel_java_tools/releases/javac11/v2.0/java_tools_javac11_linux-v2.0.zip",
+        ],
+    },
+)
+
 # LICENSE: The Apache Software License, Version 2.0
 # proto_library rules implicitly depend on @com_google_protobuf//:protoc
 http_archive(

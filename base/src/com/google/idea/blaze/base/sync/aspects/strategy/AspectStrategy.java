@@ -97,7 +97,7 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
    * Get the names of the output groups created by the aspect for the given {@link OutputGroup} and
    * languages.
    */
-  private ImmutableList<String> getOutputGroups(
+  public static ImmutableList<String> getOutputGroups(
       OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
     TreeSet<String> outputGroups = new TreeSet<>();
     if (outputGroup.equals(OutputGroup.INFO)) {
