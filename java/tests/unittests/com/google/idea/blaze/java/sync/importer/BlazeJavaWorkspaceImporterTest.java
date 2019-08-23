@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.sync.importer;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.mock;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -58,10 +59,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TestSourceSection
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.*;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
@@ -153,6 +151,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
         });
     applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
+    applicationServices.register(BlazeUserSettings.class, mock(BlazeUserSettings.class));
 
     context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);

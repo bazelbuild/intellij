@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.common.experiments.ExperimentService;
@@ -78,6 +79,7 @@ public class BuildTargetFinderTest extends BlazeTestCase {
     ExtensionPoint<BuildSystemProvider> extensionPoint =
         registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
     extensionPoint.registerExtension(new BazelBuildSystemProvider());
+    applicationServices.register(BlazeUserSettings.class, mock(BlazeUserSettings.class));
   }
 
   private BuildTargetFinder buildTargetFinder(Collection<WorkspacePath> roots) {

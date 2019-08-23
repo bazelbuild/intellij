@@ -16,6 +16,7 @@
 package com.google.idea.blaze.scala.sync.importer;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.Mockito.mock;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -44,10 +45,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.*;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
@@ -111,6 +109,7 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
     applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    applicationServices.register(BlazeUserSettings.class, mock(BlazeUserSettings.class));
 
     // will silently fall back to FilePathJavaPackageReader
     applicationServices.register(

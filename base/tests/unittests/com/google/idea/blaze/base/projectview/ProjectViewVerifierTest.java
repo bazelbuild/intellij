@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -43,6 +44,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import static org.mockito.Mockito.mock;
 
 /** Tests for ProjectViewVerifier */
 @RunWith(JUnit4.class)
@@ -79,6 +82,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
 
     fileOperationProvider = new MockFileOperationProvider(workspaceRoot);
     applicationServices.register(FileOperationProvider.class, fileOperationProvider);
+    applicationServices.register(BlazeUserSettings.class, mock(BlazeUserSettings.class));
     context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
