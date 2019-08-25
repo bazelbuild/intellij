@@ -38,6 +38,7 @@ import com.jetbrains.cidr.cpp.toolchains.CPPToolchains.Toolchain;
 import com.jetbrains.cidr.execution.debugger.CidrDebuggerPathManager;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment.PrepareFor;
 import com.jetbrains.cidr.toolchains.OSType;
+import com.jetbrains.cidr.ToolVersion;
 import java.io.File;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -204,6 +205,11 @@ public class BlazeGDBServerProvider {
     @Override
     public String readVersion() {
       return "no version";
+    }
+
+    @Override
+    public ToolVersion readToolVersion() {
+      return new ToolVersion(0, 0, 0);
     }
 
     @Override
