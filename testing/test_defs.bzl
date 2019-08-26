@@ -94,6 +94,7 @@ def intellij_unit_test_suite(
         "-Didea.classpath.index.enabled=false",
         "-Djava.awt.headless=true",
         "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
+        "-Didea.register.ep.in.pico.container=true",  #api192: needed for constructor injection
     ])
 
     _generate_test_suite(
@@ -171,6 +172,7 @@ def intellij_integration_test_suite(
         "-Didea.classpath.index.enabled=false",
         "-Djava.awt.headless=true",
         "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
+        "-Didea.register.ep.in.pico.container=true",  #api192: needed for constructor injection
     ])
 
     if required_plugins:
