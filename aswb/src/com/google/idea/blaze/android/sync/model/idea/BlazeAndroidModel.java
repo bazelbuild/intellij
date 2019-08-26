@@ -140,7 +140,7 @@ public class BlazeAndroidModel implements AndroidModel {
     return null;
   }
 
-  @Override
+  // @Override #api 3.6
   public File getRootDirPath() {
     return rootDirPath;
   }
@@ -150,7 +150,7 @@ public class BlazeAndroidModel implements AndroidModel {
     return false;
   }
 
-  @Override
+  // @Override #api 3.6
   public VirtualFile getRootDir() {
     File rootDirPath = getRootDirPath();
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(rootDirPath);

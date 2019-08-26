@@ -177,7 +177,7 @@ public class DebuggerSettingsStateTest {
     }
 
     @NotNull
-    @Override
+    // @Override #api3.5
     public DebugConnectorTask getConnectDebuggerTask(
         @NotNull ExecutionEnvironment executionEnvironment,
         @Nullable AndroidVersion androidVersion,
@@ -186,6 +186,18 @@ public class DebuggerSettingsStateTest {
         @NotNull AndroidDebuggerState androidDebuggerState,
         @NotNull String s1,
         boolean b) {
+      throw new UnsupportedOperationException("not implemented");
+    }
+
+    @NotNull
+    // @Override #api3.5
+    public DebugConnectorTask getConnectDebuggerTask(
+        @NotNull ExecutionEnvironment executionEnvironment,
+        @Nullable AndroidVersion androidVersion,
+        @NotNull Set set,
+        @NotNull AndroidFacet androidFacet,
+        @NotNull AndroidDebuggerState androidDebuggerState,
+        @NotNull String s1) {
       throw new UnsupportedOperationException("not implemented");
     }
   }
