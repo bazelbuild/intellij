@@ -478,6 +478,9 @@ final class SyncPhaseCoordinator {
               updateInMemoryState(
                   project, context, projectViewSet, projectData, syncParams.syncMode));
         }
+        if (projectData != null) {
+          stats.setTargetMapSize(projectData.getTargetMap().targets().size());
+        }
         onSyncComplete(project, context, projectViewSet, projectData, syncParams, syncResult);
       }
       stats
@@ -486,6 +489,7 @@ final class SyncPhaseCoordinator {
           .setSyncBinaryType(Blaze.getBuildSystemProvider(project).getSyncBinaryType())
           .setSyncResult(syncResult)
           .setStartTime(startTime)
+          .setBlazeExecTime(totalBlazeTime(stats.getCurrentTimedEvents()))
           .setTotalClockTime(Duration.between(startTime, Instant.now()));
       EventLoggingService.getInstance().log(stats.build());
       context.output(new StatusOutput("Sync finished"));
@@ -639,6 +643,16 @@ final class SyncPhaseCoordinator {
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
       syncPlugin.validate(project, context, blazeProjectData);
     }
+  }
+
+  private static Duration totalBlazeTime(ImmutableList<TimedEvent> timedEvents) {
+    long totalMillis =
+        timedEvents.stream()
+            .filter(e -> e.isLeafEvent)
+            .filter(e -> e.type == EventType.BlazeInvocation)
+            .mapToLong(e -> e.duration.toMillis())
+            .sum();
+    return Duration.ofMillis(totalMillis);
   }
 
   private static void outputTimingSummary(

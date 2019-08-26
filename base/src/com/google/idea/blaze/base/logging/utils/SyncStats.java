@@ -52,10 +52,13 @@ public abstract class SyncStats {
 
   public abstract ImmutableList<BuildPhaseSyncStats> buildPhaseStats();
 
+  public abstract int targetMapSize();
+
   public static Builder builder() {
     return new AutoValue_SyncStats.Builder()
         .setBlazeExecTime(Duration.ZERO)
         .setWorkspaceType(WorkspaceType.JAVA)
+        .setTargetMapSize(0)
         .setLanguagesActive(ImmutableList.of());
   }
 
@@ -91,6 +94,8 @@ public abstract class SyncStats {
 
     public abstract Builder setLanguagesActive(Iterable<LanguageClass> languagesActive);
 
+    public abstract Builder setTargetMapSize(int targetMapSize);
+
     abstract ImmutableList.Builder<BuildPhaseSyncStats> buildPhaseStatsBuilder();
 
     public Builder addBuildPhaseStats(BuildPhaseSyncStats buildPhaseStats) {
@@ -102,6 +107,7 @@ public abstract class SyncStats {
       buildPhaseStatsBuilder().addAll(buildPhaseStats);
       return this;
     }
+
 
     public abstract SyncStats build();
   }
