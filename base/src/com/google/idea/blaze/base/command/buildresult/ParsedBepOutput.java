@@ -188,6 +188,7 @@ public final class ParsedBepOutput {
         .map(f -> f.parsedOutputs)
         .flatMap(List::stream)
         .filter(o -> pathFilter.test(o.getRelativePath()))
+        .distinct()
         .collect(toImmutableList());
   }
 

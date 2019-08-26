@@ -20,7 +20,9 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -51,13 +53,13 @@ public class FileAttributeScanner {
               }));
     }
 
-    ImmutableMap.Builder<F, T> result = ImmutableMap.builder();
+    Map<F, T> result = new HashMap<>();
     for (FilePair<F, T> filePair : Futures.allAsList(futures).get()) {
       if (filePair != null) {
         result.put(filePair.file, filePair.attribute);
       }
     }
-    return result.build();
+    return ImmutableMap.copyOf(result);
   }
 
   private static class FilePair<F, T> {
