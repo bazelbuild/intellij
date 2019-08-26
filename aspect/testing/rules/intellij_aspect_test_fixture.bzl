@@ -71,3 +71,12 @@ def intellij_aspect_test_fixture(name, deps):
         deps = deps,
         testonly = 1,
     )
+
+def test_sources(outs):
+    for out in outs:
+        native.genrule(
+            name = out + ".genrule",
+            srcs = [out + ".testdata"],
+            outs = [out],
+            cmd = "cp $< $@",
+        )
