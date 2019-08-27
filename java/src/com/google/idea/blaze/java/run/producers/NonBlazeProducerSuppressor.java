@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.run.producers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -111,7 +112,7 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
         return (Class<RunConfigurationProducer<?>>) clazz;
       }
       return null;
-    } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
+    } catch (PluginException | ClassNotFoundException | NoClassDefFoundError ignored) {
       return null;
     }
   }
