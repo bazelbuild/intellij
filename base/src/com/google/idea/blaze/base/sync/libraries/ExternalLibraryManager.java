@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.libraries;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.collect.ImmutableList;
@@ -28,6 +29,8 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.vcs.VcsSyncListener;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -35,10 +38,9 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import java.io.File;
 import java.util.Map;
 import java.util.Objects;
@@ -50,7 +52,7 @@ import javax.annotation.Nullable;
  */
 public class ExternalLibraryManager {
   private final Project project;
-  private volatile boolean duringSync;
+  private volatile boolean duringBlazeSync;
   private volatile ImmutableMap<
           Class<? extends BlazeExternalLibraryProvider>, BlazeExternalSyntheticLibrary>
       libraries;
@@ -61,30 +63,21 @@ public class ExternalLibraryManager {
 
   ExternalLibraryManager(Project project) {
     this.project = project;
-    this.duringSync = false;
+    this.duringBlazeSync = false;
     this.libraries = ImmutableMap.of();
-    VirtualFileManager.getInstance()
-        .addVirtualFileListener(
-            new VirtualFileListener() {
-              @Override
-              public void fileCreated(VirtualFileEvent event) {
-                libraries.values().forEach(library -> library.updateFile(event.getFile()));
+    AsyncVfsEventsPostProcessor.getInstance()
+        .addListener(
+            events -> {
+              if (duringBlazeSync || libraries.isEmpty()) {
+                return;
               }
-
-              @Override
-              public void fileDeleted(VirtualFileEvent event) {
-                libraries.values().forEach(library -> library.removeFile(event.getFile()));
-              }
-
-              @Override
-              public void fileMoved(VirtualFileMoveEvent event) {
-                libraries
-                    .values()
-                    .forEach(
-                        library -> {
-                          library.updateFile(event.getFile());
-                          library.removeFile(event.getOldParent(), event.getFileName());
-                        });
+              ImmutableList<VirtualFile> deletedFiles =
+                  events.stream()
+                      .filter(VFileDeleteEvent.class::isInstance)
+                      .map(VFileEvent::getFile)
+                      .collect(toImmutableList());
+              if (!deletedFiles.isEmpty()) {
+                libraries.values().forEach(library -> library.removeInvalidFiles(deletedFiles));
               }
             },
             project);
@@ -92,7 +85,7 @@ public class ExternalLibraryManager {
 
   @Nullable
   public SyntheticLibrary getLibrary(Class<? extends BlazeExternalLibraryProvider> providerClass) {
-    return duringSync ? null : libraries.get(providerClass);
+    return duringBlazeSync ? null : libraries.get(providerClass);
   }
 
   private void initialize(BlazeProjectData projectData) {
@@ -121,13 +114,21 @@ public class ExternalLibraryManager {
   static class StartSyncListener implements SyncListener {
     @Override
     public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {
-      ExternalLibraryManager.getInstance(project).duringSync = true;
+      ExternalLibraryManager.getInstance(project).duringBlazeSync = true;
     }
 
     @Override
     public void afterSync(
         Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
-      ExternalLibraryManager.getInstance(project).duringSync = false;
+      ExternalLibraryManager manager = ExternalLibraryManager.getInstance(project);
+      if (syncMode == SyncMode.STARTUP) {
+        BlazeProjectData blazeProjectData =
+            BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+        if (blazeProjectData != null) {
+          manager.initialize(blazeProjectData);
+        }
+      }
+      manager.duringBlazeSync = false;
     }
   }
 
@@ -149,7 +150,17 @@ public class ExternalLibraryManager {
         ModifiableRootModel workspaceModifiableModel) {
       ExternalLibraryManager manager = ExternalLibraryManager.getInstance(project);
       manager.initialize(blazeProjectData);
-      manager.duringSync = false;
+      manager.duringBlazeSync = false;
+    }
+  }
+
+  static class VcsListener implements VcsSyncListener {
+    @Override
+    public void onVcsSync(Project project) {
+      ExternalLibraryManager.getInstance(project)
+          .libraries
+          .values()
+          .forEach(BlazeExternalSyntheticLibrary::restoreMissingFiles);
     }
   }
 }

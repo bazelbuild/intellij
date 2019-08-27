@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.libraries;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.intellij.navigation.ItemPresentation;
@@ -26,10 +27,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import icons.BlazeIcons;
 import java.io.File;
 import java.util.Collection;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -40,7 +39,7 @@ import javax.swing.Icon;
 public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
     implements ItemPresentation {
   private final String presentableText;
-  private final ConcurrentMap<File, Optional<VirtualFile>> virtualFilesMap;
+  private final Collection<File> files;
   private final Set<VirtualFile> validFiles;
 
   /**
@@ -52,16 +51,12 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
    */
   BlazeExternalSyntheticLibrary(String presentableText, Collection<File> files) {
     this.presentableText = presentableText;
-    this.virtualFilesMap = new ConcurrentHashMap<>();
-    for (File file : files) {
-      this.virtualFilesMap.computeIfAbsent(
-          file, f -> Optional.of(f).map(VfsUtils::resolveVirtualFile).filter(VirtualFile::isValid));
-    }
+    this.files = files;
     this.validFiles =
         Sets.newConcurrentHashSet(
-            this.virtualFilesMap.values().stream()
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+            files.stream()
+                .map(VfsUtils::resolveVirtualFile)
+                .filter(Objects::nonNull)
                 .collect(toImmutableSet()));
   }
 
@@ -71,31 +66,27 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
     return presentableText;
   }
 
-  void updateFile(VirtualFile virtualFile) {
-    virtualFilesMap.computeIfPresent(
-        VfsUtil.virtualToIoFile(virtualFile),
-        (file, oldVirtualFile) -> {
-          validFiles.add(virtualFile);
-          return Optional.of(virtualFile);
-        });
+  void removeInvalidFiles(Collection<VirtualFile> deletedFiles) {
+    if (deletedFiles.stream().anyMatch(VirtualFile::isDirectory)) {
+      validFiles.removeIf(f -> !f.isValid());
+    } else {
+      validFiles.removeAll(deletedFiles);
+    }
   }
 
-  void removeFile(VirtualFile virtualFile) {
-    virtualFilesMap.computeIfPresent(
-        VfsUtil.virtualToIoFile(virtualFile),
-        (file, oldVirtualFile) -> {
-          oldVirtualFile.ifPresent(validFiles::remove);
-          return Optional.empty();
-        });
-  }
-
-  void removeFile(VirtualFile directory, String name) {
-    virtualFilesMap.computeIfPresent(
-        new File(VfsUtil.virtualToIoFile(directory), name),
-        (file, oldVirtualFile) -> {
-          oldVirtualFile.ifPresent(validFiles::remove);
-          return Optional.empty();
-        });
+  void restoreMissingFiles() {
+    if (validFiles.size() < files.size()) {
+      Sets.difference(
+              ImmutableSet.copyOf(files),
+              validFiles.stream()
+                  .filter(VirtualFile::isValid)
+                  .map(VfsUtil::virtualToIoFile)
+                  .collect(toImmutableSet()))
+          .stream()
+          .map(VfsUtils::resolveVirtualFile)
+          .filter(Objects::nonNull)
+          .forEach(validFiles::add);
+    }
   }
 
   @Override

@@ -31,18 +31,17 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager.SyncPlugin;
 import com.google.idea.sdkcompat.openapi.VFileCreateEventCompat;
-import com.google.idea.sdkcompat.openapi.VirtualFileManagerCompat;
 import com.intellij.mock.MockLocalFileSystem;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.vfs.AsyncVfsEventsListener;
+import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -60,6 +59,7 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
   private MockExternalLibraryProvider libraryProvider;
   private SyncListener syncListener;
   private SyncPlugin syncPlugin;
+  private List<AsyncVfsEventsListener> vfsListeners;
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -68,10 +68,9 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
     libraryProvider = new MockExternalLibraryProvider();
     syncListener = new ExternalLibraryManager.StartSyncListener();
     syncPlugin = new ExternalLibraryManager.SyncPlugin();
+    vfsListeners = new ArrayList<>();
     applicationServices.register(
-        VirtualFileManager.class,
-        new VirtualFileManagerCompat(
-            ImmutableList.of(fileSystem), ApplicationManager.getApplication().getMessageBus()));
+        AsyncVfsEventsPostProcessor.class, (listener, disposable) -> vfsListeners.add(listener));
     applicationServices.register(VirtualFileSystemProvider.class, () -> fileSystem);
     projectServices.register(ExternalLibraryManager.class, new ExternalLibraryManager(project));
     registerExtensionPoint(
@@ -90,22 +89,6 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
     mockSync(SyncResult.SUCCESS);
 
     Collection<VirtualFile> libraryRoots = getExternalLibrary().getSourceRoots();
-    assertThat(libraryRoots).containsExactly(fooFile, barFile);
-  }
-
-  @Test
-  public void testFileCreated() {
-    VirtualFile fooFile = fileSystem.createFile("/src/foo/Foo.java");
-    assertThat(fooFile).isNotNull();
-
-    libraryProvider.setFiles("/src/foo/Foo.java", "/src/bar/Bar.java");
-    mockSync(SyncResult.SUCCESS);
-
-    Collection<VirtualFile> libraryRoots = getExternalLibrary().getSourceRoots();
-    assertThat(libraryRoots).containsExactly(fooFile);
-
-    VirtualFile barFile = fileSystem.createFile("/src/bar/Bar.java");
-    assertThat(barFile).isNotNull();
     assertThat(libraryRoots).containsExactly(fooFile, barFile);
   }
 
@@ -236,36 +219,26 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
     return library;
   }
 
-  private static final class MockFileSystem extends MockLocalFileSystem {
+  private final class MockFileSystem extends MockLocalFileSystem {
     private final Set<String> paths = new HashSet<>();
 
     VirtualFile createFile(String path) {
       VirtualFile file = super.findFileByPath(path);
       assertThat(file).isNotNull();
-      BulkFileListener publisher =
-          ApplicationManager.getApplication()
-              .getMessageBus()
-              .syncPublisher(VirtualFileManager.VFS_CHANGES);
+      paths.add(path);
       List<VFileEvent> events =
           ImmutableList.of(
               new VFileCreateEventCompat(this, file.getParent(), file.getName(), false, false));
-      publisher.before(events);
-      paths.add(path);
-      publisher.after(events);
+      vfsListeners.forEach(listener -> listener.filesChanged(events));
       return file;
     }
 
     void removeFile(String path) {
       VirtualFile file = super.findFileByPath(path);
       assertThat(file).isNotNull();
-      BulkFileListener publisher =
-          ApplicationManager.getApplication()
-              .getMessageBus()
-              .syncPublisher(VirtualFileManager.VFS_CHANGES);
-      List<VFileEvent> events = ImmutableList.of(new VFileDeleteEvent(this, file, false));
-      publisher.before(events);
       paths.remove(path);
-      publisher.after(events);
+      List<VFileEvent> events = ImmutableList.of(new VFileDeleteEvent(this, file, false));
+      vfsListeners.forEach(listener -> listener.filesChanged(events));
     }
 
     @Nullable
