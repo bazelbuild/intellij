@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ui.problems;
 
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
@@ -62,7 +63,6 @@ public class BlazeProblemsView {
     return ServiceManager.getService(project, BlazeProblemsView.class);
   }
 
-  private static final String TOOL_WINDOW_ID = "Blaze Problems";
   private static final EnumSet<ErrorTreeElementKind> ALL_MESSAGE_KINDS =
       EnumSet.allOf(ErrorTreeElementKind.class);
   private static final int MAX_ISSUES = 2000;
@@ -73,6 +73,7 @@ public class BlazeProblemsView {
   private final Icon passiveIcon = IconLoader.getDisabledIcon(activeIcon);
 
   private final Project project;
+  private final String toolWindowId;
   private final BlazeProblemsViewPanel panel;
 
   private final Set<Integer> problemHashes = Collections.synchronizedSet(new HashSet<>());
@@ -83,6 +84,7 @@ public class BlazeProblemsView {
 
   public BlazeProblemsView(Project project, ToolWindowManager wm) {
     this.project = project;
+    this.toolWindowId = Blaze.getBuildSystem(project).getName() + " Problems";
     panel = new BlazeProblemsViewPanel(project);
     Disposer.register(project, () -> Disposer.dispose(panel));
     UIUtil.invokeLaterIfNeeded(() -> createToolWindow(project, wm));
@@ -93,7 +95,7 @@ public class BlazeProblemsView {
       return;
     }
     ToolWindow toolWindow =
-        wm.registerToolWindow(TOOL_WINDOW_ID, false, ToolWindowAnchor.BOTTOM, project, true);
+        wm.registerToolWindow(toolWindowId, false, ToolWindowAnchor.BOTTOM, project, true);
     Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     toolWindow.getContentManager().addContent(content);
     Disposer.register(project, () -> toolWindow.getContentManager().removeAllContents(true));
@@ -274,7 +276,7 @@ public class BlazeProblemsView {
           if (project.isDisposed()) {
             return;
           }
-          ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID);
+          ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
           if (tw == null) {
             return;
           }
@@ -286,10 +288,11 @@ public class BlazeProblemsView {
   private void focusProblemsView() {
     UIUtil.invokeLaterIfNeeded(
         () -> {
-          ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(TOOL_WINDOW_ID);
+          ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
           if (tw != null) {
             tw.activate(null, false, false);
           }
         });
   }
+
 }
