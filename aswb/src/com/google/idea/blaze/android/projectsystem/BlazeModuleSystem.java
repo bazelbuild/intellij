@@ -459,6 +459,12 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   }
 
   // #api3.5 @Override
+  @Nullable
+  public String getPackageName() {
+    return PackageNameCompat.getPackageName(module);
+  }
+
+  // #api3.5 @Override
   public GlobalSearchScope getResolveScope(ScopeType scopeType) {
     // Bazel projects have either a workspace module, or a resource module. In both cases, we just
     // want to ignore the currently specified module level dependencies and use the global set of

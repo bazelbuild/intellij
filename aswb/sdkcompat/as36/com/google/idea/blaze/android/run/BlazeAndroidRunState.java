@@ -133,11 +133,7 @@ public final class BlazeAndroidRunState implements RunProfileState {
         previousSessionProcessHandler.detachProcess();
       }
 
-      processHandler =
-          new AndroidProcessHandler.Builder(env.getProject())
-              .setApplicationId(applicationId)
-              .monitorRemoteProcesses(launchTasksProvider.monitorRemoteProcess())
-              .build();
+      processHandler = new AndroidProcessHandler(env.getProject(), applicationId);
       console =
           runContext
               .getConsoleProvider()

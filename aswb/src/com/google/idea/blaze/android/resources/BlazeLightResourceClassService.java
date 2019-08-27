@@ -17,7 +17,6 @@ package com.google.idea.blaze.android.resources;
 
 import com.android.tools.idea.projectsystem.LightResourceClassService;
 import com.android.tools.idea.res.AndroidLightPackage;
-import com.android.tools.idea.res.ResourceRepositoryRClass;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -101,7 +100,7 @@ public class BlazeLightResourceClassService implements LightResourceClassService
   @NotNull
   public List<PsiClass> getLightRClasses(
       @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    ResourceRepositoryRClass rClass = this.rClasses.get(qualifiedName);
+    BlazeRClass rClass = this.rClasses.get(qualifiedName);
     if (rClass != null) {
       if (scope.isSearchInModuleContent(rClass.getModule())) {
         return ImmutableList.of(rClass);

@@ -15,10 +15,8 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
-import com.android.tools.idea.flags.StudioFlags;
 import com.android.tools.idea.run.DeviceCount;
 import com.android.tools.idea.run.LaunchCompatibility;
-import com.android.tools.idea.run.TargetSelectionMode;
 import com.android.tools.idea.run.ValidationError;
 import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.editor.DeployTargetProvider;
@@ -39,12 +37,13 @@ import org.jdom.Element;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Manages deploy target state for run configurations. */
-public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExternalizable {
+public abstract class BlazeAndroidRunConfigurationDeployTargetManagerBase
+    implements JDOMExternalizable {
   private final boolean isAndroidTest;
   private final List<DeployTargetProvider> deployTargetProviders;
   private final Map<String, DeployTargetState> deployTargetStates;
 
-  public BlazeAndroidRunConfigurationDeployTargetManager(boolean isAndroidTest) {
+  public BlazeAndroidRunConfigurationDeployTargetManagerBase(boolean isAndroidTest) {
     this.isAndroidTest = isAndroidTest;
     this.deployTargetProviders = DeployTargetProvider.getProviders();
 
@@ -93,20 +92,11 @@ public class BlazeAndroidRunConfigurationDeployTargetManager implements JDOMExte
     return deployTargetStates.get(currentTarget.getId());
   }
 
-  private DeployTargetProvider getCurrentDeployTargetProvider() {
-    TargetSelectionMode targetSelectionMode;
-    if (StudioFlags.SELECT_DEVICE_SNAPSHOT_COMBO_BOX_VISIBLE.get()) {
-      targetSelectionMode = TargetSelectionMode.DEVICE_AND_SNAPSHOT_COMBO_BOX;
-    } else {
-      targetSelectionMode = TargetSelectionMode.SHOW_DIALOG;
-    }
-    DeployTargetProvider targetProvider = getDeployTargetProvider(targetSelectionMode.name());
-    assert targetProvider != null;
-    return targetProvider;
-  }
+  // #api3.5
+  protected abstract DeployTargetProvider getCurrentDeployTargetProvider();
 
   @Nullable
-  private DeployTargetProvider getDeployTargetProvider(String id) {
+  protected DeployTargetProvider getDeployTargetProvider(String id) {
     for (DeployTargetProvider target : deployTargetProviders) {
       if (target.getId().equals(id)) {
         return target;

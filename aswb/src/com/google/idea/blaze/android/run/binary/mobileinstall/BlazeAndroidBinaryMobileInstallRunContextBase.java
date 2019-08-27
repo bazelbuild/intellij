@@ -16,29 +16,17 @@
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
 import com.android.ddmlib.IDevice;
-import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
-import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
-import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
-import com.android.tools.idea.run.tasks.DebugConnectorTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.tasks.LaunchTasksProvider;
-import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationIdProvider;
-import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryConsoleProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
-import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -46,23 +34,22 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
-import java.util.Set;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Run context for android_binary. */
-public class BlazeAndroidBinaryMobileInstallRunContext implements BlazeAndroidRunContext {
+abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAndroidRunContext {
 
-  private final Project project;
-  private final AndroidFacet facet;
-  private final RunConfiguration runConfiguration;
-  private final ExecutionEnvironment env;
-  private final BlazeAndroidBinaryRunConfigurationState configState;
-  private final ConsoleProvider consoleProvider;
-  private final ApplicationIdProvider applicationIdProvider;
-  private final BlazeApkBuildStepMobileInstall buildStep;
+  protected final Project project;
+  protected final AndroidFacet facet;
+  protected final RunConfiguration runConfiguration;
+  protected final ExecutionEnvironment env;
+  protected final BlazeAndroidBinaryRunConfigurationState configState;
+  protected final ConsoleProvider consoleProvider;
+  protected final ApplicationIdProvider applicationIdProvider;
+  protected final BlazeApkBuildStepMobileInstall buildStep;
 
-  public BlazeAndroidBinaryMobileInstallRunContext(
+  public BlazeAndroidBinaryMobileInstallRunContextBase(
       Project project,
       AndroidFacet facet,
       RunConfiguration runConfiguration,
@@ -110,69 +97,9 @@ public class BlazeAndroidBinaryMobileInstallRunContext implements BlazeAndroidRu
   }
 
   @Override
-  public LaunchTasksProvider getLaunchTasksProvider(
-      LaunchOptions.Builder launchOptionsBuilder,
-      boolean isDebug,
-      BlazeAndroidRunConfigurationDebuggerManager debuggerManager)
-      throws ExecutionException {
-    return new BlazeAndroidLaunchTasksProvider(
-        project, this, applicationIdProvider, launchOptionsBuilder, isDebug, true, debuggerManager);
-  }
-
-  @Override
   public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
     return ImmutableList.of();
-  }
-
-  @Override
-  public LaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions,
-      @Nullable Integer userId,
-      AndroidDebugger androidDebugger,
-      AndroidDebuggerState androidDebuggerState,
-      ProcessHandlerLaunchStatus processHandlerLaunchStatus)
-      throws ExecutionException {
-    final StartActivityFlagsProvider startActivityFlagsProvider =
-        new DefaultStartActivityFlagsProvider(
-            androidDebugger,
-            androidDebuggerState,
-            project,
-            launchOptions.isDebug(),
-            UserIdHelper.getFlagsFromUserId(userId));
-    BlazeAndroidDeployInfo deployInfo;
-    try {
-      deployInfo = buildStep.getDeployInfo();
-    } catch (ApkProvisionException e) {
-      throw new ExecutionException(e);
-    }
-
-    return BlazeAndroidBinaryApplicationLaunchTaskProvider.getApplicationLaunchTask(
-        project,
-        applicationIdProvider,
-        deployInfo.getMergedManifest(),
-        configState,
-        startActivityFlagsProvider,
-        processHandlerLaunchStatus);
-  }
-
-  @Nullable
-  @Override
-  @SuppressWarnings("unchecked")
-  public DebugConnectorTask getDebuggerTask(
-      AndroidDebugger androidDebugger,
-      AndroidDebuggerState androidDebuggerState,
-      Set<String> packageIds,
-      boolean monitorRemoteProcess)
-      throws ExecutionException {
-    return androidDebugger.getConnectDebuggerTask(
-        env,
-        null,
-        packageIds,
-        facet,
-        androidDebuggerState,
-        runConfiguration.getType().getId(),
-        monitorRemoteProcess);
   }
 
   @Nullable

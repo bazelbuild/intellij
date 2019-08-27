@@ -22,7 +22,7 @@ java_library(
            ) + select_for_plugin_api({
         "android-studio-3.4": glob(["cidr/v183/**/*.java"]),
         "android-studio-3.5": glob(["cidr/v191/**/*.java"]),
-        "android-studio-3.6": glob(["cidr/v191/**/*.java"]),
+        "android-studio-3.6": glob(["cidr/v192/**/*.java"]),
         "default": [],
     }),
     deps = [
