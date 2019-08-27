@@ -61,8 +61,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import one.util.streamex.StreamEx;
 
 /**
  * {@link GoPackage} specialized for blaze, with a couple of differences:
@@ -81,25 +85,33 @@ public class BlazeGoPackage extends GoPackage {
   private static final Logger logger = Logger.getInstance(BlazeGoPackage.class);
   private static final String GO_TARGET_TO_FILE_MAP_KEY = "BlazeGoTargetToFileMap";
 
-  private final String importPath;
   private final Label label;
-  private final Collection<File> files;
-  @Nullable private transient PsiElement cachedNavigable;
-  @Nullable private transient PsiElement[] cachedImportReferences;
+  private final String importPath;
+  private final ConcurrentMap<File, Optional<PsiFile>> files;
+  private final ConcurrentMap<File, Optional<VirtualFile>> directories;
+  @Nullable private volatile PsiElement navigableElement;
+  @Nullable private volatile PsiElement[] importReferences;
 
-  public static BlazeGoPackage create(
+  BlazeGoPackage(
       Project project, BlazeProjectData projectData, String importPath, TargetIdeInfo target) {
-    return create(
+    this(
         project,
         importPath,
         replaceProtoLibrary(project, projectData, target.getKey()).getLabel(),
         getTargetToFileMap(project, projectData).get(target.getKey().getLabel()));
   }
 
-  static BlazeGoPackage create(
-      Project project, String importPath, Label label, Collection<File> files) {
-    return new BlazeGoPackage(
-        project, getPackageName(project, files, importPath), importPath, label, files);
+  BlazeGoPackage(Project project, String importPath, Label label, Collection<File> files) {
+    super(project, getPackageName(project, files, importPath));
+    this.importPath = importPath;
+    this.label = label;
+    this.files = new ConcurrentHashMap<>();
+    files.forEach(f -> this.files.put(f, Optional.empty()));
+    this.directories = new ConcurrentHashMap<>();
+    files.stream()
+        .map(File::getParentFile)
+        .filter(Objects::nonNull)
+        .forEach(f -> directories.put(f, Optional.empty()));
   }
 
   /**
@@ -209,14 +221,6 @@ public class BlazeGoPackage extends GoPackage {
     return ImmutableSet.of(new File(directory, filename));
   }
 
-  private BlazeGoPackage(
-      Project project, String packageName, String importPath, Label label, Collection<File> files) {
-    super(project, packageName, getDirectories(files));
-    this.importPath = importPath;
-    this.label = label;
-    this.files = files;
-  }
-
   /**
    * Package name is determined by package declaration in the source files (must all be the same).
    *
@@ -245,19 +249,44 @@ public class BlazeGoPackage extends GoPackage {
         .orElseGet(() -> importPath.substring(importPath.lastIndexOf('/') + 1));
   }
 
-  private static VirtualFile[] getDirectories(Collection<File> files) {
-    return files.stream()
-        .map(File::getParentFile)
+  @Override
+  public Set<VirtualFile> getDirectories() {
+    directories.replaceAll(
+        (file, oldVirtualFile) ->
+            oldVirtualFile.filter(VirtualFile::isValid).isPresent()
+                ? oldVirtualFile
+                : Optional.ofNullable(VfsUtils.resolveVirtualFile(file, false)));
+    return directories.values().stream()
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .filter(VirtualFile::isValid)
+        .collect(toImmutableSet());
+  }
+
+  @Override
+  public StreamEx<PsiDirectory> getPsiDirectories() {
+    PsiManager psiManager = PsiManager.getInstance(getProject());
+    return StreamEx.of(getDirectories())
+        .map(psiManager::findDirectory)
         .filter(Objects::nonNull)
-        .distinct()
-        .map(VfsUtils::resolveVirtualFile)
-        .filter(Objects::nonNull)
-        .toArray(VirtualFile[]::new);
+        .filter(PsiDirectory::isValid);
   }
 
   @Override
   public Collection<PsiFile> files() {
-    return GoFilesCache.getInstance(getProject()).getFiles(files);
+    PsiManager psiManager = PsiManager.getInstance(getProject());
+    files.replaceAll(
+        (file, oldGoFile) ->
+            oldGoFile.filter(PsiFile::isValid).isPresent()
+                ? oldGoFile
+                : Optional.ofNullable(VfsUtils.resolveVirtualFile(file, false))
+                    .map(psiManager::findFile)
+                    .filter(GoFile.class::isInstance));
+    return files.values().stream()
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .filter(PsiFile::isValid)
+        .collect(toImmutableSet());
   }
 
   /**
@@ -294,17 +323,18 @@ public class BlazeGoPackage extends GoPackage {
   @Nullable
   @Override
   public PsiElement getNavigableElement() {
-    if (cachedNavigable == null || !cachedNavigable.isValid()) {
-      Project project = getProject();
-      BuildReferenceManager buildReferenceManager = BuildReferenceManager.getInstance(project);
-      cachedNavigable = buildReferenceManager.resolveLabel(label);
-      if (cachedNavigable == null) {
-        cachedNavigable =
-            buildReferenceManager.findBuildFile(
-                WorkspaceHelper.resolveBlazePackage(project, label));
-      }
+    PsiElement navigable = navigableElement;
+    if (navigable != null && navigable.isValid()) {
+      return navigable;
     }
-    return cachedNavigable;
+    Project project = getProject();
+    BuildReferenceManager buildReferenceManager = BuildReferenceManager.getInstance(project);
+    PsiElement resolveLabel = buildReferenceManager.resolveLabel(label);
+    return navigableElement =
+        resolveLabel != null
+            ? resolveLabel
+            : buildReferenceManager.findBuildFile(
+                WorkspaceHelper.resolveBlazePackage(project, label));
   }
 
   @Override
@@ -358,16 +388,15 @@ public class BlazeGoPackage extends GoPackage {
    */
   @Nullable
   PsiElement[] getImportReferences() {
-    if (cachedImportReferences == null
-        || Arrays.stream(cachedImportReferences)
-            .filter(Objects::nonNull)
-            .anyMatch(e -> !e.isValid())) {
-      PsiElement navigable = getNavigableElement();
-      if (navigable != null) {
-        cachedImportReferences = getImportReferences(label, navigable, importPath);
-      }
+    PsiElement[] references = importReferences;
+    if (references != null && Arrays.stream(references).allMatch(e -> e == null || e.isValid())) {
+      return references;
     }
-    return cachedImportReferences;
+    PsiElement navigable = getNavigableElement();
+    if (navigable == null) {
+      return null;
+    }
+    return importReferences = getImportReferences(label, navigable, importPath);
   }
 
   @VisibleForTesting
@@ -422,5 +451,35 @@ public class BlazeGoPackage extends GoPackage {
       return buildElement;
     }
     return null;
+  }
+
+  // need to override these because GoPackage uses GoPackage#myDirectories directly in their
+  // implementations
+
+  @Override
+  public boolean isValid() {
+    return getDirectories().size() == directories.size();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof BlazeGoPackage)) {
+      return false;
+    }
+    BlazeGoPackage aPackage = (BlazeGoPackage) o;
+    return importPath.equals(aPackage.importPath) && directories.equals(aPackage.directories);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(importPath, directories);
+  }
+
+  @Override
+  public String toString() {
+    return "Package: " + this.importPath;
   }
 }

@@ -83,7 +83,7 @@ class BlazeGoImportResolver implements GoImportResolver {
     return goPackageMap
         .computeIfAbsent(
             importPath,
-            (path) -> Optional.of(BlazeGoPackage.create(project, projectData, path, target)))
+            (path) -> Optional.of(new BlazeGoPackage(project, projectData, path, target)))
         .orElse(null);
   }
 

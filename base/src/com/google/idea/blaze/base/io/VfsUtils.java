@@ -23,13 +23,23 @@ import javax.annotation.Nullable;
 
 /** A helper class */
 public final class VfsUtils {
-
   /**
    * Attempts to resolve the given file path to a {@link VirtualFile}. If called on the event
    * thread, will refresh if not already cached.
    */
   @Nullable
   public static VirtualFile resolveVirtualFile(File file) {
+    return resolveVirtualFile(file, true);
+  }
+
+  /**
+   * Attempts to resolve the given file path to a {@link VirtualFile}.
+   *
+   * @param refreshIfNeeded whether to refresh the file in the VFS first, if it is not already
+   *     cached. Will only refresh if called on the EDT.
+   */
+  @Nullable
+  public static VirtualFile resolveVirtualFile(File file, boolean refreshIfNeeded) {
     LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();
     VirtualFile vf = fileSystem.findFileByPathIfCached(file.getPath());
     if (vf != null) {
@@ -39,7 +49,8 @@ public final class VfsUtils {
     if (vf != null && vf.isValid()) {
       return vf;
     }
-    boolean shouldRefresh = ApplicationManager.getApplication().isDispatchThread();
+    boolean shouldRefresh =
+        refreshIfNeeded && ApplicationManager.getApplication().isDispatchThread();
     return shouldRefresh ? fileSystem.refreshAndFindFileByIoFile(file) : null;
   }
 }

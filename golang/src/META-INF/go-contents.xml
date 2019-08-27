@@ -36,14 +36,12 @@
     <BinaryContextProvider implementation="com.google.idea.blaze.golang.run.producers.GoBinaryContextProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider
         implementation="com.google.idea.blaze.golang.run.BlazeGoRunConfigurationHandlerProvider"/>
-    <SyncListener implementation="com.google.idea.blaze.golang.resolve.GoFilesCache$ClearCacheListener"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <programRunner implementation="com.google.idea.blaze.golang.run.BlazeGoDebugRunner"/>
     <documentationProvider implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver$GoPackageDocumentationProvider"/>
     <additionalLibraryRootsProvider implementation="com.google.idea.blaze.golang.sync.BlazeGoAdditionalLibraryRootsProvider"/>
-    <projectService serviceImplementation="com.google.idea.blaze.golang.resolve.GoFilesCache"/>
   </extensions>
 
   <project-components>
