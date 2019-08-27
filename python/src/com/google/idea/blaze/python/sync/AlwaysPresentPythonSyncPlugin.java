@@ -48,14 +48,19 @@ public class AlwaysPresentPythonSyncPlugin implements BlazeSyncPlugin {
 
   @Override
   public ImmutableList<String> getRequiredExternalPluginIds(Collection<LanguageClass> languages) {
-    return languages.contains(LanguageClass.PYTHON)
-        ? ImmutableList.of(PythonPluginUtils.getPythonPluginId())
+    String pluginId = PythonPluginUtils.getPythonPluginId();
+    return pluginId != null && languages.contains(LanguageClass.PYTHON)
+        ? ImmutableList.of(pluginId)
         : ImmutableList.of();
   }
 
   @Override
   public boolean validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
+    String pluginId = PythonPluginUtils.getPythonPluginId();
+    if (pluginId == null) {
+      return true;
+    }
     ImportRoots importRoots = ImportRoots.forProjectSafe(project);
     if (importRoots == null) {
       return true;
@@ -67,7 +72,6 @@ public class AlwaysPresentPythonSyncPlugin implements BlazeSyncPlugin {
     if (!hasPythonTarget) {
       return true;
     }
-    String pluginId = PythonPluginUtils.getPythonPluginId();
     if (!PluginUtils.isPluginEnabled(pluginId)) {
       IssueOutput.warn(
               "Your project appears to contain Python targets. To enable Python support, "

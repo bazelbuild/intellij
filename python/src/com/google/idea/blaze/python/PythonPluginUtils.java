@@ -17,6 +17,7 @@ package com.google.idea.blaze.python;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.util.PlatformUtils;
+import javax.annotation.Nullable;
 
 /** Utilities class related to the JetBrains python plugin. */
 public final class PythonPluginUtils {
@@ -24,22 +25,19 @@ public final class PythonPluginUtils {
   private PythonPluginUtils() {}
 
   private static final ImmutableMap<String, String> PRODUCT_TO_PLUGIN_ID =
-      ImmutableMap.of(
-          PlatformUtils.IDEA_PREFIX,
-          "Pythonid",
-          PlatformUtils.IDEA_CE_PREFIX,
-          "PythonCore",
-          "AndroidStudio",
-          "PythonCore",
-          PlatformUtils.CLION_PREFIX,
-          "com.intellij.clion-python");
+      ImmutableMap.<String, String>builder()
+          .put(PlatformUtils.CLION_PREFIX, "com.intellij.clion-python")
+          .put(PlatformUtils.IDEA_PREFIX, "Pythonid")
+          .put(PlatformUtils.IDEA_CE_PREFIX, "PythonCore")
+          .put(PlatformUtils.GOIDE_PREFIX, "PythonCore")
+          .put(PlatformUtils.RIDER_PREFIX, "PythonCore")
+          .put(PlatformUtils.DBE_PREFIX, "PythonCore")
+          .put("AndroidStudio", "PythonCore")
+          .build();
 
+  /** The python plugin ID for this IDE, or null if not available/relevant. */
+  @Nullable
   public static String getPythonPluginId() {
-    String pluginId = PRODUCT_TO_PLUGIN_ID.get(PlatformUtils.getPlatformPrefix());
-    if (pluginId == null) {
-      throw new RuntimeException(
-          "No python plugin ID for unhandled platform: " + PlatformUtils.getPlatformPrefix());
-    }
-    return pluginId;
+    return PRODUCT_TO_PLUGIN_ID.get(PlatformUtils.getPlatformPrefix());
   }
 }
