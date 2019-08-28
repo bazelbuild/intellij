@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSe
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.ui.OpenProjectViewAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -57,7 +58,8 @@ public class SuggestBuildShardingNotification {
     String message =
         String.format(
             "The %1$s server ran out of memory during sync. You can work around this by "
-                + "<a href='fix'>reducing the shard size</a> in the project view file, "
+                + "reducing the shard size in the project view file "
+                + "<a href='fix'>(click here)</a>, "
                 + "or alternatively allocate more memory to %1$s",
             buildSystem);
     IssueOutput.error(
@@ -79,7 +81,8 @@ public class SuggestBuildShardingNotification {
     String message =
         String.format(
             "The %1$s server ran out of memory during sync. This can occur for large projects. You "
-                + "can work around this by <a href='fix'>sharding the %1$s build during sync</a>, "
+                + "can work around this by sharding the %1$s build during sync"
+                + "<a href='fix'>(click here)</a>, "
                 + "or alternatively allocate more memory to %1$s",
             buildSystem);
     IssueOutput.error(StringUtil.stripHtml(message, true) + ". Click here to set up sync sharding.")
@@ -151,6 +154,7 @@ public class SuggestBuildShardingNotification {
       return;
     }
     edit.apply();
+    OpenProjectViewAction.openLocalProjectViewFile(project);
     BlazeSyncManager.getInstance(project).incrementalProjectSync();
   }
 }
