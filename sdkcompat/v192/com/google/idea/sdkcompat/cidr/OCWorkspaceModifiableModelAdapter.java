@@ -19,9 +19,11 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
@@ -30,19 +32,16 @@ import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace.ModifiableModel;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceImpl;
-import com.jetbrains.cidr.lang.workspace.OCWorkspaceImplUtilKt;
 import com.jetbrains.cidr.lang.workspace.compiler.CachedTempFilesPool;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Message;
+import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Session;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 /** Adapter to bridge different SDK versions. */
 public class OCWorkspaceModifiableModelAdapter {
@@ -134,30 +133,26 @@ public class OCWorkspaceModifiableModelAdapter {
   private static ImmutableList<String> collectCompilerSettingsInParallel(
       OCWorkspaceImpl.ModifiableModel model, CidrToolEnvironment toolEnvironment) {
     CompilerInfoCache compilerInfoCache = new CompilerInfoCache();
-    List<Future<List<Message>>> compilerSettingsTasks = new ArrayList<>();
-    ExecutorService compilerSettingExecutor =
-        AppExecutorUtil.createBoundedApplicationPoolExecutor(
-            "Compiler Settings Collector", Runtime.getRuntime().availableProcessors());
     TempFilesPool tempFilesPool = new CachedTempFilesPool();
-    for (OCResolveConfiguration.ModifiableModel config : model.getConfigurations()) {
-      compilerSettingsTasks.add(
-          OCWorkspaceImplUtilKt.collectCompilerSettingsAsync(
-              config, toolEnvironment, compilerInfoCache, compilerSettingExecutor, tempFilesPool));
-    }
+    Session<Integer> session = compilerInfoCache.createSession(new EmptyProgressIndicator());
     ImmutableList.Builder<String> issues = ImmutableList.builder();
-    for (Future<List<Message>> task : compilerSettingsTasks) {
-      try {
-        task.get().stream()
+    try {
+      int i = 0;
+      for (OCResolveConfiguration.ModifiableModel config : model.getConfigurations()) {
+        session.schedule(i++, config, toolEnvironment);
+      }
+      MultiMap<Integer, Message> messages = new MultiMap<>();
+      session.waitForAll(messages);
+      for (Map.Entry<Integer, Collection<Message>> entry :
+          ContainerUtil.sorted(messages.entrySet(), Comparator.comparingInt(Map.Entry::getKey))) {
+        entry.getValue().stream()
             .filter(m -> m.getType().equals(Message.Type.ERROR))
             .map(Message::getText)
             .forEachOrdered(issues::add);
-      } catch (InterruptedException e) {
-        task.cancel(true);
-        Thread.currentThread().interrupt();
-      } catch (ExecutionException e) {
-        task.cancel(true);
-        logger.error("Error getting compiler settings, cancelling", e);
       }
+    } catch (Error | RuntimeException e) {
+      session.dispose(); // This calls tempFilesPool.clean();
+      throw e;
     }
     tempFilesPool.clean();
     return issues.build();

@@ -15,8 +15,10 @@
  */
 package com.google.idea.sdkcompat.clion;
 
+import com.jetbrains.cidr.ToolVersion;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolSetWithHome;
 import java.io.File;
+import javax.annotation.Nullable;
 
 /**
  * Adapter to bridge different SDK versions.
@@ -33,5 +35,12 @@ public abstract class CPPToolSetWithHomeAndSeparators extends CPPToolSetWithHome
   @Override
   public String getSupportedFileSeparators() {
     return SUPPORTED_FILE_SEPARATORS;
+  }
+
+  // Introduced in #api192
+  @Nullable
+  @Override
+  public ToolVersion readToolVersion() {
+    return null;
   }
 }
