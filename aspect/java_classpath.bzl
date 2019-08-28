@@ -23,11 +23,8 @@ def _runtime_classpath_impl(target, ctx):
     })
 
 def _get_runtime_jars(target):
-    if hasattr(target, "java"):
-        return target.java.compilation_info.runtime_classpath
-    if java_common.provider in target:
-        java_provider = target[java_common.provider]
-        return java_provider.transitive_runtime_jars
+    if JavaInfo in target:
+        return target[JavaInfo].compilation_info.runtime_classpath
     return depset()
 
 def _aspect_def(impl):

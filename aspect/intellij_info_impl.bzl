@@ -213,7 +213,7 @@ def get_aspect_ids(ctx, target):
 def _is_language_specific_proto_library(ctx, target):
     """Returns True if the target is a proto library with attached language-specific aspect."""
     return (ctx.rule.kind == "proto_library" and
-            (hasattr(target, "java") or hasattr(target, "aspect_proto_go_api_info")))
+            (JavaInfo in target or hasattr(target, "aspect_proto_go_api_info")))
 
 def make_target_key(label, aspect_ids):
     """Returns a TargetKey proto struct from a target."""
@@ -498,16 +498,12 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
 
 def get_java_provider(target):
     """Find a provider exposing java compilation/outputs data."""
-    if hasattr(target, "java"):
-        return target.java
+    if JavaInfo in target:
+        return target[JavaInfo]
     if hasattr(target, "scala"):
         return target.scala
     if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
         return target.kt
-
-    # TODO(brendandouglas): use JavaInfo preferentially
-    if JavaInfo in target:
-        return target[JavaInfo]
     return None
 
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -982,5 +978,5 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         attr_aspects = attr_aspects,
         fragments = ["cpp"],
         implementation = aspect_impl,
-        required_aspect_providers = [["java"], ["aspect_proto_go_api_info"], ["dart"]],
+        required_aspect_providers = [[JavaInfo], ["aspect_proto_go_api_info"], ["dart"]],
     )
