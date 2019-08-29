@@ -59,6 +59,7 @@ import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
@@ -86,6 +87,7 @@ import org.jetbrains.annotations.TestOnly;
 /** Blaze implementation of {@link AndroidModuleSystem}. */
 @SuppressWarnings("NullableProblems")
 public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFinder {
+  private static final Logger logger = Logger.getInstance(BlazeModuleSystem.class);
   private Module module;
   private final Project project;
   private SampleDataDirectoryProvider sampleDataDirectoryProvider;
@@ -360,16 +362,19 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
           BlazeLibraryCollector.getLibraries(
               ProjectViewManager.getInstance(project).getProjectViewSet(), blazeProjectData)) {
         if (library instanceof AarLibrary) {
-          libraries.add(
-              externalLibraryInterner.intern(toExternalLibrary((AarLibrary) library, decoder)));
+          ExternalLibrary externalLibrary = toExternalLibrary((AarLibrary) library, decoder);
+          if (externalLibrary != null) {
+            libraries.add(externalLibraryInterner.intern(externalLibrary));
+          }
         } else if (library instanceof BlazeResourceLibrary) {
           libraries.add(
               externalLibraryInterner.intern(
                   toExternalLibrary((BlazeResourceLibrary) library, decoder)));
         } else if (library instanceof BlazeJarLibrary) {
-          libraries.add(
-              externalLibraryInterner.intern(
-                  toExternalLibrary((BlazeJarLibrary) library, decoder)));
+          ExternalLibrary externalLibrary = toExternalLibrary((BlazeJarLibrary) library, decoder);
+          if (externalLibrary != null) {
+            libraries.add(externalLibraryInterner.intern(externalLibrary));
+          }
         }
       }
       return libraries.build();
@@ -398,9 +403,10 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
       }
       ImmutableMap<String, AarLibrary> aarLibraries = androidSyncData.importResult.aarLibraries;
       if (aarLibraries != null && aarLibraries.containsKey(libraryKey)) {
-        libraries.add(
-            externalLibraryInterner.intern(
-                toExternalLibrary(aarLibraries.get(libraryKey), decoder)));
+        ExternalLibrary externalLibrary = toExternalLibrary(aarLibraries.get(libraryKey), decoder);
+        if (externalLibrary != null) {
+          libraries.add(externalLibraryInterner.intern(externalLibrary));
+        }
       }
     }
     return libraries.build();
@@ -432,24 +438,47 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
         .withResFolder(new SelectiveResourceFolder(resFolder, resources));
   }
 
+  @Nullable
   private ExternalLibrary toExternalLibrary(AarLibrary library, ArtifactLocationDecoder decoder) {
     UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
-    PathString aarFile = new PathString(unpackedAars.getAarDir(decoder, library));
-    PathString resFolder = new PathString(unpackedAars.getResourceDirectory(decoder, library));
+    File aarFile = unpackedAars.getAarDir(decoder, library);
+    if (aarFile == null) {
+      logger.warn(
+          String.format(
+              "Fail to locate AAR file %s. Re-sync the project may solve the problem",
+              library.aarArtifact));
+      return null;
+    }
+    File resFolder = unpackedAars.getResourceDirectory(decoder, library);
+    PathString resFolderPathString = resFolder == null ? null : new PathString(resFolder);
     return new ExternalLibrary(library.key.toString())
-        .withLocation(aarFile)
+        .withLocation(new PathString(aarFile))
         .withManifestFile(
-            resFolder == null ? null : resFolder.getParentOrRoot().resolve("AndroidManifest.xml"))
-        .withResFolder(resFolder == null ? null : new SelectiveResourceFolder(resFolder, null))
-        .withSymbolFile(resFolder == null ? null : resFolder.getParentOrRoot().resolve("R.txt"));
+            resFolderPathString == null
+                ? null
+                : resFolderPathString.getParentOrRoot().resolve("AndroidManifest.xml"))
+        .withResFolder(
+            resFolderPathString == null
+                ? null
+                : new SelectiveResourceFolder(resFolderPathString, null))
+        .withSymbolFile(
+            resFolderPathString == null
+                ? null
+                : resFolderPathString.getParentOrRoot().resolve("R.txt"));
   }
 
+  @Nullable
   private ExternalLibrary toExternalLibrary(
       BlazeJarLibrary library, ArtifactLocationDecoder decoder) {
-    return new ExternalLibrary(library.key.toString())
-        .withClassJars(
-            ImmutableList.of(
-                new PathString(JarCache.getInstance(project).getCachedJar(decoder, library))));
+    File cachedJar = JarCache.getInstance(project).getCachedJar(decoder, library);
+    if (cachedJar == null) {
+      logger.warn(
+          String.format(
+              "Failed to locate jar file %s. Re-sync project may solve the problem", library));
+      return null;
+    }
+    return new ExternalLibrary(library.toString())
+        .withClassJars(ImmutableList.of(new PathString(cachedJar)));
   }
 
   @Override
