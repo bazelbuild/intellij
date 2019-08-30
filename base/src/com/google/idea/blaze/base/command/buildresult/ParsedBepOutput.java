@@ -243,7 +243,7 @@ public final class ParsedBepOutput {
       Builder updateFromParent(Builder parent) {
         configId = parent.configId;
         outputGroups.addAll(parent.outputGroups);
-        targets.addAll(parent.outputGroups);
+        targets.addAll(parent.targets);
         return this;
       }
 
