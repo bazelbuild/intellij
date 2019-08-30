@@ -34,12 +34,14 @@ import java.io.File;
 import org.jetbrains.android.dom.wrappers.LazyValueResourceElementWrapper;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Tests that R class references are properly resolved by the android plugin. */
 @RunWith(JUnit4.class)
+@Ignore("b/140286021")
 public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
   @Before
   public void setup() {
