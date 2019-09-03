@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.actions;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -29,8 +28,8 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
@@ -41,12 +40,15 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper;
+import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedTargetsResult;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -62,14 +64,25 @@ public class BlazeBuildService {
     return ServiceManager.getService(BlazeBuildService.class);
   }
 
+  public static Long getLastBuildTimeStamp(Project project) {
+    return project.getUserData(PROJECT_LAST_BUILD_TIMESTAMP_KEY);
+  }
+
   public void buildFile(Project project, String fileName, ImmutableCollection<Label> targets) {
-    if (project == null || !Blaze.isBlazeProject(project) || fileName == null) {
+    if (!Blaze.isBlazeProject(project) || fileName == null) {
+      return;
+    }
+    ProjectViewSet projectView = ProjectViewManager.getInstance(project).getProjectViewSet();
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectView == null || projectData == null) {
       return;
     }
     buildTargetExpressions(
         project,
-        Lists.newArrayList(targets),
-        ProjectViewManager.getInstance(project).getProjectViewSet(),
+        projectView,
+        projectData,
+        context -> Lists.newArrayList(targets),
         new NotificationScope(
             project,
             "Make",
@@ -79,17 +92,35 @@ public class BlazeBuildService {
   }
 
   public void buildProject(Project project) {
-    if (project == null || !Blaze.isBlazeProject(project)) {
+    if (!Blaze.isBlazeProject(project)) {
       return;
     }
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    if (projectViewSet == null) {
+    ProjectViewSet projectView = ProjectViewManager.getInstance(project).getProjectViewSet();
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectView == null || projectData == null) {
       return;
     }
+    ScopedFunction<List<TargetExpression>> targets =
+        context -> {
+          try {
+            return SyncProjectTargetsHelper.deriveTargetsFromDirectories(
+                project,
+                context,
+                projectView,
+                projectData.getWorkspacePathResolver(),
+                projectData.getWorkspaceLanguageSettings());
+          } catch (SyncFailedException e) {
+            context.setHasError();
+            return null;
+          }
+        };
+
     buildTargetExpressions(
         project,
-        projectViewSet.listItems(TargetSection.KEY),
-        projectViewSet,
+        projectView,
+        projectData,
+        targets,
         new NotificationScope(
             project,
             "Make",
@@ -103,22 +134,15 @@ public class BlazeBuildService {
     project.putUserData(PROJECT_LAST_BUILD_TIMESTAMP_KEY, System.currentTimeMillis());
   }
 
-  public static Long getLastBuildTimeStamp(Project project) {
-    return project.getUserData(PROJECT_LAST_BUILD_TIMESTAMP_KEY);
-  }
-
-  @VisibleForTesting
-  void buildTargetExpressions(
+  private static void buildTargetExpressions(
       Project project,
-      List<TargetExpression> targets,
-      ProjectViewSet projectViewSet,
+      ProjectViewSet projectView,
+      BlazeProjectData projectData,
+      ScopedFunction<List<TargetExpression>> targetsFunction,
       NotificationScope notificationScope) {
-    if (targets.isEmpty() || projectViewSet == null) {
-      return;
-    }
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (blazeProjectData == null) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // a gross hack to avoid breaking change detector tests. We had a few tests which relied on
+      // this never being called *and* relied on PROJECT_LAST_BUILD_TIMESTAMP_KEY being set
       return;
     }
     FocusBehavior problemsViewFocus = BlazeUserSettings.getInstance().getShowProblemsViewOnRun();
@@ -145,6 +169,8 @@ public class BlazeBuildService {
                         .push(new TimingScope("Make", EventType.BlazeInvocation))
                         .push(notificationScope);
 
+                    List<TargetExpression> targets = targetsFunction.execute(context);
+
                     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
                     SaveUtil.saveAllFiles();
@@ -153,8 +179,8 @@ public class BlazeBuildService {
                             project,
                             context,
                             workspaceRoot,
-                            projectViewSet,
-                            blazeProjectData.getWorkspacePathResolver(),
+                            projectView,
+                            projectData.getWorkspacePathResolver(),
                             targets);
                     if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
                       return null;
@@ -165,9 +191,9 @@ public class BlazeBuildService {
                                 project,
                                 context,
                                 workspaceRoot,
-                                projectViewSet,
-                                blazeProjectData.getBlazeVersionData(),
-                                blazeProjectData.getWorkspaceLanguageSettings(),
+                                projectView,
+                                projectData.getBlazeVersionData(),
+                                projectData.getWorkspaceLanguageSettings(),
                                 shardedTargets.shardedTargets);
                     FileCaches.refresh(project, context);
 

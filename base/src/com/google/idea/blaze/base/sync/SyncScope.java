@@ -25,13 +25,17 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /** Helper methods to run scoped sync operations throwing checked exceptions. */
-final class SyncScope {
+public final class SyncScope {
 
   private static final Logger logger = Logger.getInstance(SyncScope.class);
 
-  static class SyncFailedException extends Exception {}
+  private SyncScope() {}
 
-  static class SyncCanceledException extends Exception {}
+  /** Checked exception representing a failed sync action. */
+  public static class SyncFailedException extends Exception {}
+
+  /** Checked exception representing a cancelled sync action. */
+  public static class SyncCanceledException extends Exception {}
 
   interface ScopedSyncOperation {
     void execute(BlazeContext context) throws SyncFailedException, SyncCanceledException;

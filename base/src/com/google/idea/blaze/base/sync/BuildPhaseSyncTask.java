@@ -15,16 +15,12 @@
  */
 package com.google.idea.blaze.base.sync;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.dependencies.DirectoryToTargetProvider;
-import com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy;
-import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -34,7 +30,6 @@ import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeri
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
@@ -42,7 +37,6 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
@@ -55,7 +49,6 @@ import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedT
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.sharding.SuggestBuildShardingNotification;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
@@ -126,7 +119,7 @@ final class BuildPhaseSyncTask {
       if (shouldDeriveSyncTargetsFromDirectories(viewSet)) {
         buildStats.setTargetsDerivedFromDirectories(true);
         List<TargetExpression> fromDirs =
-            getTargetsFromDirectories(
+            SyncProjectTargetsHelper.deriveTargetsFromDirectories(
                 project,
                 context,
                 viewSet,
@@ -201,61 +194,6 @@ final class BuildPhaseSyncTask {
       sb.append(String.format("\nPlus %d more targets", targets.size() - 50));
     }
     context.output(PrintOutput.log(sb.toString()));
-  }
-
-  private ImmutableList<TargetExpression> getTargetsFromDirectories(
-      Project project,
-      BlazeContext parentContext,
-      ProjectViewSet projectViewSet,
-      WorkspacePathResolver pathResolver,
-      WorkspaceLanguageSettings languageSettings)
-      throws SyncFailedException {
-    String fileBugSuggestion =
-        Blaze.getBuildSystem(project) == BuildSystem.Bazel ? "" : " Please run 'Help > File a Bug'";
-    if (!DirectoryToTargetProvider.hasProvider()) {
-      IssueOutput.error(
-              "Can't derive targets from project directories: no query provider available."
-                  + fileBugSuggestion)
-          .submit(parentContext);
-      throw new SyncFailedException();
-    }
-    ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
-            .add(projectViewSet)
-            .build();
-    if (importRoots.rootDirectories().isEmpty()) {
-      return ImmutableList.of();
-    }
-    List<TargetInfo> targets =
-        Scope.push(
-            parentContext,
-            context -> {
-              context.push(new TimingScope("QueryDirectoryTargets", EventType.BlazeInvocation));
-              context.output(new StatusOutput("Querying targets in project directories..."));
-              // We don't want blaze build errors to fail the whole sync
-              context.setPropagatesErrors(false);
-              return DirectoryToTargetProvider.expandDirectoryTargets(
-                  project, importRoots, pathResolver, context);
-            });
-    if (targets == null) {
-      IssueOutput.error("Deriving targets from project directories failed." + fileBugSuggestion)
-          .submit(parentContext);
-      throw new SyncFailedException();
-    }
-    ImmutableList<TargetExpression> retained =
-        SourceToTargetFilteringStrategy.filterTargets(targets).stream()
-            .filter(
-                t ->
-                    t.getKind() != null
-                        && languageSettings.isLanguageActive(t.getKind().getLanguageClass()))
-            .map(t -> t.label)
-            .collect(toImmutableList());
-    parentContext.output(
-        PrintOutput.log(
-            String.format(
-                "%d targets found under project directories; syncing %d of them.",
-                targets.size(), retained.size())));
-    return retained;
   }
 
   private Collection<? extends TargetExpression> getWorkingSetTargets(

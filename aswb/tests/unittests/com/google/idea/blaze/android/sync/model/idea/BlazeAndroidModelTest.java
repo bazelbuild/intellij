@@ -26,6 +26,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.actions.BlazeBuildService;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -33,7 +35,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.mock.MockFileDocumentManagerImpl;
 import com.intellij.mock.MockModule;
@@ -79,8 +80,10 @@ public class BlazeAndroidModelTest extends BlazeTestCase {
     applicationServices.register(BlazeBuildService.class, new BlazeBuildService());
     projectServices.register(ProjectScopeBuilder.class, new ProjectScopeBuilderImpl(project));
     projectServices.register(ProjectViewManager.class, new MockProjectViewManager());
-    projectServices.register(
-        BlazeProjectDataManager.class, new BlazeProjectDataManagerImpl(project));
+
+    BlazeProjectDataManager mockProjectDataManager =
+        new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder().build());
+    projectServices.register(BlazeProjectDataManager.class, mockProjectDataManager);
 
     BlazeImportSettingsManager manager = new BlazeImportSettingsManager(project);
     manager.setImportSettings(new BlazeImportSettings("", "", "", "", BuildSystem.Blaze));
