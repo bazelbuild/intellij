@@ -92,7 +92,6 @@ public class BlazeAndroidBinaryMobileInstallRunContext
     }
 
     return BlazeAndroidBinaryApplicationLaunchTaskProvider.getApplicationLaunchTask(
-        project,
         applicationIdProvider,
         deployInfo.getMergedManifest(),
         configState,

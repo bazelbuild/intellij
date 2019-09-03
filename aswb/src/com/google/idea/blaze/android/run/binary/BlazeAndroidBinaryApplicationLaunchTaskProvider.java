@@ -26,7 +26,6 @@ import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 
 /** Provides the launch task for android_binary */
 public class BlazeAndroidBinaryApplicationLaunchTaskProvider {
@@ -34,7 +33,6 @@ public class BlazeAndroidBinaryApplicationLaunchTaskProvider {
       Logger.getInstance(BlazeAndroidBinaryApplicationLaunchTaskProvider.class);
 
   public static LaunchTask getApplicationLaunchTask(
-      Project project,
       ApplicationIdProvider applicationIdProvider,
       ManifestParser.ParsedManifest mergedManifestParsedManifest,
       BlazeAndroidBinaryRunConfigurationState configState,
