@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.run.producers;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -48,6 +49,16 @@ public class BlazeBuildFileRunConfigurationProducer
       this.rule = rule;
       this.ruleType = ruleType;
       this.label = label;
+    }
+
+    @Nullable
+    TargetInfo guessTargetInfo() {
+      String ruleName = rule.getFunctionName();
+      if (ruleName == null) {
+        return null;
+      }
+      Kind kind = Kind.fromRuleName(ruleName);
+      return kind != null ? TargetInfo.builder(label, kind.getKindString()).build() : null;
     }
   }
 
@@ -158,14 +169,19 @@ public class BlazeBuildFileRunConfigurationProducer
   }
 
   private static void setupBuildFileConfiguration(
-      BlazeCommandRunConfiguration configuration, BuildTarget target) {
-    configuration.setTarget(target.label);
-    BlazeCommandRunConfigurationCommonState handlerState =
-        configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
-    if (handlerState != null) {
-      handlerState.getCommandState().setCommand(commandForRuleType(target.ruleType));
+      BlazeCommandRunConfiguration config, BuildTarget target) {
+    TargetInfo info = target.guessTargetInfo();
+    if (info != null) {
+      config.setTargetInfo(info);
+    } else {
+      config.setTarget(target.label);
     }
-    configuration.setGeneratedName();
+    BlazeCommandRunConfigurationCommonState state =
+        config.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    if (state != null) {
+      state.getCommandState().setCommand(commandForRuleType(target.ruleType));
+    }
+    config.setGeneratedName();
   }
 
   private static BlazeCommandName commandForRuleType(RuleType ruleType) {
