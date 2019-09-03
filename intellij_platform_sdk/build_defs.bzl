@@ -6,7 +6,7 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-beta": "intellij-2019.2",
     "intellij-ue-latest": "intellij-ue-2019.1",
     "intellij-ue-beta": "intellij-ue-2019.2",
-    "android-studio-latest": "android-studio-3.4",
+    "android-studio-latest": "android-studio-3.5",
     "android-studio-beta": "android-studio-3.5",
     "android-studio-beta-mac": "android-studio-3.5-mac",
     "android-studio-canary": "android-studio-3.6",
