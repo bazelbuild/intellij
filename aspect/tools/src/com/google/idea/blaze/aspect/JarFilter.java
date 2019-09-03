@@ -36,7 +36,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
@@ -246,6 +248,7 @@ public final class JarFilter {
       throws IOException {
     final int bufferSize = 8 * 1024;
     byte[] buffer = new byte[bufferSize];
+    Set<String> names = new HashSet<>();
 
     try (ZipOutputStream outputStream =
         new ZipOutputStream(new FileOutputStream(output.toFile()))) {
@@ -255,6 +258,10 @@ public final class JarFilter {
           while (entries.hasMoreElements()) {
             ZipEntry entry = entries.nextElement();
             if (!shouldKeep.test(entry.getName())) {
+              continue;
+            }
+            if (!names.add(entry.getName())) {
+              // ignore duplicate entries, on the assumption that their contents are identical
               continue;
             }
 
