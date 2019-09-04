@@ -77,9 +77,7 @@ java_library(
     resources = glob(["resources/**/*"]),
     deps = [
         "//base",
-        "//common/concurrency",
         "//common/experiments",
-        "//cpp",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//java",
