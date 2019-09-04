@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.aspects;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -56,7 +57,9 @@ public class BlazeBuildOutputs {
     this.perTargetArtifacts = perTarget.build();
   }
 
-  ImmutableList<OutputArtifact> getOutputGroupArtifacts(Predicate<String> outputGroupFilter) {
+  @VisibleForTesting
+  public ImmutableList<OutputArtifact> getOutputGroupArtifacts(
+      Predicate<String> outputGroupFilter) {
     return artifacts.values().stream()
         .filter(a -> a.outputGroups.stream().anyMatch(outputGroupFilter))
         .map(a -> a.artifact)
