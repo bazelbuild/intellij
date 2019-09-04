@@ -74,9 +74,6 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
   }
 
   @Override
-  public void augmentEnvironment(ExecutionEnvironment env) {}
-
-  @Override
   public void augmentLaunchOptions(LaunchOptions.Builder options) {
     options.setDeploy(false).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
   }

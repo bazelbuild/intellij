@@ -111,9 +111,6 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
   }
 
   @Override
-  public void augmentEnvironment(ExecutionEnvironment env) {}
-
-  @Override
   public BlazeAndroidDeviceSelector getDeviceSelector() {
     return new BlazeAndroidDeviceSelector.NormalDeviceSelector();
   }

@@ -98,8 +98,6 @@ public final class BlazeAndroidRunConfigurationRunner
     assert facet != null : "Enforced by fatal validation check in createRunner.";
     final Project project = env.getProject();
 
-    runContext.augmentEnvironment(env);
-
     boolean isDebug = executor instanceof DefaultDebugExecutor;
     AndroidSessionInfo info =
         AndroidSessionInfoCompat.findOldSession(project, null, runConfig, env.getExecutionTarget());

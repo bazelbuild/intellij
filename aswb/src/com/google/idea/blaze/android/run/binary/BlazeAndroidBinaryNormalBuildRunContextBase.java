@@ -84,9 +84,6 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   }
 
   @Override
-  public void augmentEnvironment(ExecutionEnvironment env) {}
-
-  @Override
   public BlazeAndroidDeviceSelector getDeviceSelector() {
     return new BlazeAndroidDeviceSelector.NormalDeviceSelector();
   }

@@ -28,7 +28,6 @@ import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
 public interface BlazeAndroidRunContext {
 
   BlazeAndroidDeviceSelector getDeviceSelector();
-
-  void augmentEnvironment(ExecutionEnvironment env);
 
   void augmentLaunchOptions(LaunchOptions.Builder options);
 
