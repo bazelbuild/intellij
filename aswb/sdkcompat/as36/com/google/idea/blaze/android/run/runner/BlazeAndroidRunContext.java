@@ -36,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
 /** Instantiated when the configuration wants to run. */
 public interface BlazeAndroidRunContext {
 
-  BlazeAndroidDeviceSelector getDeviceSelector();
-
   void augmentEnvironment(ExecutionEnvironment env);
 
   void augmentLaunchOptions(LaunchOptions.Builder options);

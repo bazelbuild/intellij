@@ -104,9 +104,8 @@ public final class BlazeAndroidRunConfigurationRunner
     AndroidSessionInfo info =
         AndroidSessionInfoCompat.findOldSession(project, null, runConfig, env.getExecutionTarget());
 
-    BlazeAndroidDeviceSelector deviceSelector = runContext.getDeviceSelector();
     BlazeAndroidDeviceSelector.DeviceSession deviceSession =
-        deviceSelector.getDevice(
+        BlazeAndroidDeviceSelector.getDevice(
             project,
             facet,
             deployTargetManager,

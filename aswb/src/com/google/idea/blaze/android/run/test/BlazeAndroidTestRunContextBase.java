@@ -29,7 +29,6 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.DeployTaskCompat;
 import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeApkBuildStepMobileInstall;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProvider;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStepNormalBuild;
@@ -112,11 +111,6 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
 
   @Override
   public void augmentEnvironment(ExecutionEnvironment env) {}
-
-  @Override
-  public BlazeAndroidDeviceSelector getDeviceSelector() {
-    return new BlazeAndroidDeviceSelector.NormalDeviceSelector();
-  }
 
   @Override
   public void augmentLaunchOptions(LaunchOptions.Builder options) {

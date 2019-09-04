@@ -26,7 +26,6 @@ import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationIdP
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryConsoleProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -66,11 +65,6 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
     this.consoleProvider = new BlazeAndroidBinaryConsoleProvider(project);
     this.buildStep = new BlazeApkBuildStepMobileInstall(project, label, blazeFlags, exeFlags);
     this.applicationIdProvider = new BlazeAndroidBinaryApplicationIdProvider(buildStep);
-  }
-
-  @Override
-  public BlazeAndroidDeviceSelector getDeviceSelector() {
-    return new BlazeAndroidDeviceSelector.NormalDeviceSelector();
   }
 
   @Override
