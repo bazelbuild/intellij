@@ -59,20 +59,6 @@ http_archive(
     url = "https://download.jetbrains.com/cpp/CLion-2019.2.1.tar.gz",
 )
 
-# Python plugin for Android Studio 3.4. Required at compile-time for python-specific features.
-http_archive(
-    name = "python_2018_3",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'python',",
-        "    jars = ['python-ce/lib/python-ce.jar'],",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
-    sha256 = "095a2258f1707a8a1cd3c77f7c249d30f06cca2ca2738edba6c8befd92c0f763",
-    url = "https://plugins.jetbrains.com/files/7322/58209/python-ce-2018.3.183.5912.2.zip",
-)
-
 # Python plugin for IntelliJ CE 2019.1. Required at compile-time for python-specific features.
 http_archive(
     name = "python_2019_1",
@@ -155,15 +141,6 @@ http_archive(
     ]),
     sha256 = "b895f9d46f4cc01bd040e6319574fad85bdc287366d4073e130ef7df49199aaa",
     url = "https://plugins.jetbrains.com/files/1347/66462/scala-intellij-bin-2019.2.15.zip",
-)
-
-# The plugin api for Android Studio 3.4. This is required to build ASwB,
-# and run integration tests.
-http_archive(
-    name = "android_studio_3_4",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio34",
-    sha256 = "35eb8c74837d1aab59229101fc91568a607ac04854a40209f7a0ba7ac0601924",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/3.4.2.0/android-studio-ide-183.5692245-linux.tar.gz",
 )
 
 # The plugin api for Android Studio 3.5. This is required to build ASwB,

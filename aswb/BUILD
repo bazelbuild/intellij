@@ -71,7 +71,6 @@ java_library(
 java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "android-studio-3.4": glob(["sdkcompat/as34/**/*.java"]),
         "android-studio-3.5": glob(["sdkcompat/as35/**/*.java"]),
         "android-studio-3.6": glob(["sdkcompat/as36/**/*.java"]),
     }),
@@ -124,19 +123,10 @@ intellij_integration_test_suite(
             "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",
             "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
             "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
-        ],
-    ) + select_for_plugin_api({
-        "default": [],
-        # These two tests are not compatible with 3.4. Remove this selection when latest point to 3.5
-        "android-studio-3.5": [
             "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
             "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
         ],
-        "android-studio-3.6": [
-            "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
-            "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
-        ],
-    }),
+    ),
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [
