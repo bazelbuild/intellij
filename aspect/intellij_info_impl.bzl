@@ -806,7 +806,7 @@ def divide_java_sources(ctx):
                         java_sources.append(f)
                     else:
                         gen_java_sources.append(f)
-                elif f.basename.endswith(".srcjar"):
+                elif f.basename.endswith(".srcjar") or f.basename.endswith("sources.jar"):
                     srcjars.append(f)
 
     return java_sources, gen_java_sources, srcjars
