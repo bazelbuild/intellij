@@ -15,14 +15,17 @@
  */
 package com.google.idea.blaze.python.sdk;
 
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonVersion;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.python.sync.PySdkSuggester;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.startup.StartupActivity;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
@@ -31,11 +34,41 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import java.io.File;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /** A PySdkSuggester that returns the most recent system interpreter for a given Python version. */
-public class FallbackPythonSdkSuggester implements PySdkSuggester {
-  private final ImmutableMap<PythonVersion, String> sdks;
+public final class FallbackPythonSdkSuggester implements PySdkSuggester {
+
+  /** Initializes SDK information on first blaze project open */
+  static class SdkInitializer implements StartupActivity, DumbAware {
+    @Override
+    public void runActivity(Project project) {
+      if (!Blaze.isBlazeProject(project)) {
+        return;
+      }
+      @SuppressWarnings("unused")
+      ImmutableMap<PythonVersion, String> ignored = sdks.get();
+    }
+  }
+
+  private static final Supplier<ImmutableMap<PythonVersion, String>> sdks =
+      Suppliers.memoize(FallbackPythonSdkSuggester::findSystemSdks);
+
+  /** Finds system interpreters, and parses version information. Must be run off the EDT. */
+  private static ImmutableMap<PythonVersion, String> findSystemSdks() {
+    ImmutableMap.Builder<PythonVersion, String> builder = ImmutableMap.builder();
+    List<PyDetectedSdk> detectedSdks = PySdkExtKt.detectSystemWideSdks(null, ImmutableList.of());
+    detectedSdks.stream()
+        .filter(sdk -> sdk.getHomePath() != null && getSdkLanguageLevel(sdk).isPython2())
+        .max(Comparator.comparingInt(sdk -> getSdkLanguageLevel(sdk).getVersion()))
+        .ifPresent((sdk) -> builder.put(PythonVersion.PY2, sdk.getHomePath()));
+    detectedSdks.stream()
+        .filter(sdk -> sdk.getHomePath() != null && getSdkLanguageLevel(sdk).isPy3K())
+        .max(Comparator.comparingInt(sdk -> getSdkLanguageLevel(sdk).getVersion()))
+        .ifPresent((sdk) -> builder.put(PythonVersion.PY3, sdk.getHomePath()));
+    return builder.build();
+  }
 
   // PyDetectedSdk does not have a proper version/language level, so go via PythonSdkFlavor
   private static LanguageLevel getSdkLanguageLevel(PyDetectedSdk sdk) {
@@ -47,20 +80,6 @@ public class FallbackPythonSdkSuggester implements PySdkSuggester {
     return flavor.getLanguageLevel(sdkHomepath);
   }
 
-  public FallbackPythonSdkSuggester() {
-    ImmutableMap.Builder<PythonVersion, String> builder = ImmutableMap.builder();
-    List<PyDetectedSdk> detectedSdks = PySdkExtKt.detectSystemWideSdks(null, ImmutableList.of());
-    detectedSdks.stream()
-        .filter(sdk -> sdk.getHomePath() != null && getSdkLanguageLevel(sdk).isPython2())
-        .max(Comparator.comparingInt(sdk -> getSdkLanguageLevel(sdk).getVersion()))
-        .ifPresent((sdk) -> builder.put(PythonVersion.PY2, sdk.getHomePath()));
-    detectedSdks.stream()
-        .filter(sdk -> sdk.getHomePath() != null && getSdkLanguageLevel(sdk).isPy3K())
-        .max(Comparator.comparingInt(sdk -> getSdkLanguageLevel(sdk).getVersion()))
-        .ifPresent((sdk) -> builder.put(PythonVersion.PY3, sdk.getHomePath()));
-    sdks = builder.build();
-  }
-
   @Nullable
   @Override
   public Sdk suggestSdk(Project project, PythonVersion version) {
@@ -68,16 +87,16 @@ public class FallbackPythonSdkSuggester implements PySdkSuggester {
       return null;
     }
 
-    if (!sdks.containsKey(version)) {
+    if (!sdks.get().containsKey(version)) {
       return null;
     }
 
-    String homePath = sdks.get(version);
+    String homePath = sdks.get().get(version);
     if (!new File(homePath).exists()) {
       return null;
     }
 
-    Sdk sdk = PySdkSuggester.findPythonSdk(sdks.get(version));
+    Sdk sdk = PySdkSuggester.findPythonSdk(sdks.get().get(version));
     if (sdk != null) {
       return sdk;
     }

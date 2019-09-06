@@ -38,6 +38,7 @@
     <useScopeEnlarger implementation="com.google.idea.blaze.python.search.BlazePyUseScopeEnlarger"/>
     <programRunner implementation="com.google.idea.blaze.python.run.BlazePyDebugRunner"/>
     <consoleFilterProvider implementation="com.google.idea.blaze.python.run.filter.BlazePyTracebackFilter$BlazePyTracebackFilterProvider"/>
+    <postStartupActivity implementation="com.google.idea.blaze.python.sdk.FallbackPythonSdkSuggester$SdkInitializer"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
