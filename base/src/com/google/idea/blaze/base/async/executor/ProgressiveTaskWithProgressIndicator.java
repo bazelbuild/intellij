@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.async.executor;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressManager;
@@ -134,6 +135,14 @@ public class ProgressiveTaskWithProgressIndicator {
             }
           });
     }
+    future.addListener(
+        () -> {
+          if (indicator.isRunning()) {
+            indicator.stop();
+            indicator.processFinish();
+          }
+        },
+        MoreExecutors.directExecutor());
     return future;
   }
 }
