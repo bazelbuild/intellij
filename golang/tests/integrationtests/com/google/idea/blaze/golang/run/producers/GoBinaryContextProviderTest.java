@@ -41,20 +41,58 @@ import org.junit.runners.JUnit4;
 public class GoBinaryContextProviderTest extends BlazeRunConfigurationProducerTestCase {
 
   @Test
-  public void testProducedFromGoFile() {
+  public void contextProducedFromBinaryGoFileIsBinaryTarget() {
     PsiFile goFile =
         createAndIndexFile(new WorkspacePath("foo/bar/main.go"), "package main", "func main() {}");
 
-    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
-    builder.setTargetMap(
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setKind("go_binary")
-                    .setLabel("//foo/bar:main")
-                    .addSource(sourceRoot("foo/bar/main.go"))
-                    .build())
-            .build());
+    MockBlazeProjectDataBuilder builder =
+        MockBlazeProjectDataBuilder.builder(workspaceRoot)
+            .setTargetMap(
+                TargetMapBuilder.builder()
+                    .addTarget(
+                        TargetIdeInfo.builder()
+                            .setKind("go_binary")
+                            .setLabel("//foo/bar:main")
+                            .addSource(sourceRoot("foo/bar/main.go")))
+                    .build());
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+
+    ConfigurationContext context = createContextFromPsi(goFile);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    assertThat(configurations).isNotNull();
+    assertThat(configurations).hasSize(1);
+
+    ConfigurationFromContext fromContext = configurations.get(0);
+    assertThat(fromContext.isProducedBy(BinaryContextRunConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config.getTarget()).isEqualTo(TargetExpression.fromStringSafe("//foo/bar:main"));
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.RUN);
+  }
+
+  @Test
+  public void contextProducedFromLibraryGoFileIsBinaryTarget() {
+    PsiFile goFile =
+        createAndIndexFile(new WorkspacePath("foo/bar/main.go"), "package main", "func main() {}");
+
+    MockBlazeProjectDataBuilder builder =
+        MockBlazeProjectDataBuilder.builder(workspaceRoot)
+            .setTargetMap(
+                TargetMapBuilder.builder()
+                    .addTarget(
+                        TargetIdeInfo.builder()
+                            .setKind("go_library")
+                            .setLabel("//foo/bar:library")
+                            .addSource(sourceRoot("foo/bar/main.go")))
+                    .addTarget(
+                        TargetIdeInfo.builder()
+                            .setKind("go_binary")
+                            .setLabel("//foo/bar:main")
+                            .addDependency("//foo/bar:library"))
+                    .build());
     registerProjectService(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
 

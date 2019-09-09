@@ -17,20 +17,29 @@ package com.google.idea.blaze.golang.run.producers;
 
 import com.goide.execution.GoRunUtil;
 import com.goide.psi.GoFile;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.producers.BinaryContextProvider;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.execution.actions.ConfigurationContext;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -66,21 +75,46 @@ class GoBinaryContextProvider implements BinaryContextProvider {
 
   @Nullable
   private static TargetInfo getTargetLabel(PsiFile psiFile) {
+    Project project = psiFile.getProject();
     BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(psiFile.getProject()).getBlazeProjectData();
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {
       return null;
     }
-    VirtualFile vf = psiFile.getVirtualFile();
-    if (vf == null) {
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) {
       return null;
     }
-    File file = new File(vf.getPath());
-    return SourceToTargetMap.getInstance(psiFile.getProject()).getRulesForSourceFile(file).stream()
-        .map(projectData.getTargetMap()::get)
+    File file = VfsUtil.virtualToIoFile(virtualFile);
+    Collection<TargetKey> rulesForFile =
+        SourceToTargetMap.getInstance(project).getRulesForSourceFile(file);
+
+    TargetMap targetMap = projectData.getTargetMap();
+    List<TargetKey> libraryKeys = new ArrayList<>();
+    for (TargetKey key : rulesForFile) {
+      TargetIdeInfo target = targetMap.get(key);
+      if (target == null || target.getKind().getLanguageClass() != LanguageClass.GO) {
+        continue;
+      }
+      switch (target.getKind().getRuleType()) {
+        case BINARY:
+          return target.toTargetInfo();
+        case LIBRARY:
+          libraryKeys.add(target.getKey());
+          break;
+        case TEST:
+        case UNKNOWN:
+          // ignore these
+      }
+    }
+    ImmutableMultimap<TargetKey, TargetKey> rdeps = ReverseDependencyMap.get(project);
+    return libraryKeys.stream()
+        .map(rdeps::get)
+        .flatMap(Collection::stream)
+        .map(targetMap::get)
         .filter(Objects::nonNull)
-        .filter(t -> t.getKind().getLanguageClass().equals(LanguageClass.GO))
-        .filter(t -> t.getKind().getRuleType().equals(RuleType.BINARY))
+        .filter(t -> t.getKind().getLanguageClass() == LanguageClass.GO)
+        .filter(t -> t.getKind().getRuleType() == RuleType.BINARY)
         .map(TargetIdeInfo::toTargetInfo)
         .findFirst()
         .orElse(null);
