@@ -115,7 +115,7 @@ def get_res_artifacts(resources, retain_res_fileset_info):
     """Returns a map from the res folder to the set of resources within that folder. Given a set of resources, this method constructs a map where the keys are all the unique res folders that contain the given resources. The values are empty sets most of the time, but if the given predicate retail_fileset returns True for a given folder, then it contains all the resources that are present within that folder. Note that sets are implemented as dicts with values set to True"""
     res_artifacts = dict()
     for resource in resources:
-        for file in resource.files:
+        for file in resource.files.to_list():
             res_folder = source_directory_tuple(file)
             res_files = res_artifacts.setdefault(res_folder, dict())
             if retain_res_fileset_info and retain_res_fileset_info(res_folder[0]):
