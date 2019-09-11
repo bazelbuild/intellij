@@ -106,15 +106,14 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
   @Override
   public ProcessHandler createProcess(CommandLineState state) throws ExecutionException {
-    return createProcess(state, ImmutableList.of(), false);
+    return createProcess(state, ImmutableList.of());
   }
 
-  private ProcessHandler createProcess(
-      CommandLineState state, List<String> extraBlazeFlags, boolean isInferiorProcess)
+  private ProcessHandler createProcess(CommandLineState state, List<String> extraBlazeFlags)
       throws ExecutionException {
     ImmutableList<String> testHandlerFlags = ImmutableList.of();
     BlazeTestUiSession testUiSession =
-        !isInferiorProcess && useTestUi()
+        useTestUi()
             ? TestUiSessionProvider.getInstance(project).getTestUiSession(configuration.getTarget())
             : null;
     if (testUiSession != null) {
@@ -251,7 +250,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     List<String> extraDebugFlags =
         BlazeGDBServerProvider.getFlagsForDebugging(toolchainForDebugger, handlerState);
 
-    ProcessHandler targetProcess = createProcess(state, extraDebugFlags, true);
+    ProcessHandler targetProcess = createProcess(state, extraDebugFlags);
 
     configProcessHandler(targetProcess, false, true, getProject());
 
