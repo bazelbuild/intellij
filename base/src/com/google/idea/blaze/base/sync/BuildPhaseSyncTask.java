@@ -26,8 +26,6 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
-import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
@@ -37,6 +35,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper.ProjectTargets;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
@@ -116,24 +115,21 @@ final class BuildPhaseSyncTask {
       }
     }
     if (syncParams.addProjectViewTargets) {
-      if (shouldDeriveSyncTargetsFromDirectories(viewSet)) {
+      ProjectTargets projectTargets =
+          SyncProjectTargetsHelper.getProjectTargets(
+              project,
+              context,
+              viewSet,
+              projectState.getWorkspacePathResolver(),
+              projectState.getLanguageSettings());
+      if (!projectTargets.derivedTargets.isEmpty()) {
         buildStats.setTargetsDerivedFromDirectories(true);
-        List<TargetExpression> fromDirs =
-            SyncProjectTargetsHelper.deriveTargetsFromDirectories(
-                project,
-                context,
-                viewSet,
-                projectState.getWorkspacePathResolver(),
-                projectState.getLanguageSettings());
-        targets.addAll(fromDirs);
-        printTargets(context, "project view directories", fromDirs);
+        printTargets(context, "project view directories", projectTargets.derivedTargets);
       }
-      // add explicit targets after derived targets so users can override automatic behavior
-      List<TargetExpression> projectViewTargets = viewSet.listItems(TargetSection.KEY);
-      if (!projectViewTargets.isEmpty()) {
-        targets.addAll(projectViewTargets);
-        printTargets(context, "project view targets", projectViewTargets);
+      if (!projectTargets.explicitTargets.isEmpty()) {
+        printTargets(context, "project view targets", projectTargets.explicitTargets);
       }
+      targets.addAll(projectTargets.getTargetsToSync());
     }
     if (!syncParams.targetExpressions.isEmpty()) {
       targets.addAll(syncParams.targetExpressions);
@@ -178,10 +174,6 @@ final class BuildPhaseSyncTask {
       }
       throw new SyncFailedException();
     }
-  }
-
-  private boolean shouldDeriveSyncTargetsFromDirectories(ProjectViewSet viewSet) {
-    return viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
   }
 
   private void printTargets(

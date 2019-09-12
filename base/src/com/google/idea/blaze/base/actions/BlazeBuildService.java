@@ -104,12 +104,13 @@ public class BlazeBuildService {
     ScopedFunction<List<TargetExpression>> targets =
         context -> {
           try {
-            return SyncProjectTargetsHelper.deriveTargetsFromDirectories(
-                project,
-                context,
-                projectView,
-                projectData.getWorkspacePathResolver(),
-                projectData.getWorkspaceLanguageSettings());
+            return SyncProjectTargetsHelper.getProjectTargets(
+                    project,
+                    context,
+                    projectView,
+                    projectData.getWorkspacePathResolver(),
+                    projectData.getWorkspaceLanguageSettings())
+                .getTargetsToSync();
           } catch (SyncFailedException e) {
             context.setHasError();
             return null;

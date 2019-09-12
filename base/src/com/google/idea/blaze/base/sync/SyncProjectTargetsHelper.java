@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
+import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -44,7 +46,48 @@ public final class SyncProjectTargetsHelper {
 
   private SyncProjectTargetsHelper() {}
 
-  public static ImmutableList<TargetExpression> deriveTargetsFromDirectories(
+  /** The full set of project targets which should be built during sync. */
+  public static class ProjectTargets {
+    final ImmutableList<TargetExpression> derivedTargets;
+    final ImmutableList<TargetExpression> explicitTargets;
+
+    private ProjectTargets(
+        ImmutableList<TargetExpression> derivedTargets,
+        ImmutableList<TargetExpression> explicitTargets) {
+      this.derivedTargets = derivedTargets;
+      this.explicitTargets = explicitTargets;
+    }
+
+    public ImmutableList<TargetExpression> getTargetsToSync() {
+      // add explicit targets after derived targets so users can override automatic behavior
+      return ImmutableList.<TargetExpression>builder()
+          .addAll(derivedTargets)
+          .addAll(explicitTargets)
+          .build();
+    }
+  }
+
+  public static ProjectTargets getProjectTargets(
+      Project project,
+      BlazeContext context,
+      ProjectViewSet viewSet,
+      WorkspacePathResolver pathResolver,
+      WorkspaceLanguageSettings languageSettings)
+      throws SyncFailedException {
+    ImmutableList<TargetExpression> derived =
+        shouldDeriveSyncTargetsFromDirectories(viewSet)
+            ? deriveTargetsFromDirectories(
+                project, context, viewSet, pathResolver, languageSettings)
+            : ImmutableList.of();
+    List<TargetExpression> projectViewTargets = viewSet.listItems(TargetSection.KEY);
+    return new ProjectTargets(derived, ImmutableList.copyOf(projectViewTargets));
+  }
+
+  private static boolean shouldDeriveSyncTargetsFromDirectories(ProjectViewSet viewSet) {
+    return viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
+  }
+
+  private static ImmutableList<TargetExpression> deriveTargetsFromDirectories(
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
