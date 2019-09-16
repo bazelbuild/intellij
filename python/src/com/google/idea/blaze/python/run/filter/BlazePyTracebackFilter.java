@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.python.run.filter;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.run.filter.FileResolver;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.filters.ConsoleFilterProvider;
@@ -39,8 +40,20 @@ public class BlazePyTracebackFilter implements Filter {
     }
   }
 
+  // format: File "/path/to/file", line 123, in function_name
   private static final Pattern TRACEBACK_FILE_LINE =
-      Pattern.compile("File \"(.*?)\", line ([0-9]+), in (.*?)");
+      Pattern.compile("File \"(?<filepath>.*?)\", (?<link>line (?<lineno>[0-9]+)), in (.*?)");
+
+  // format: /path/to/file:123: Arbitrary message here
+  private static final Pattern WARNING_LINE =
+      Pattern.compile("(?<link>(?<filepath>.+?):(?<lineno>[0-9]+):) .*");
+
+  // Each of these patterns has 3 named groups:
+  // - filepath: the path of the file to link to
+  // - lineno: the line number in that file to link to
+  // - link: the part of the pattern that should be the link
+  private static final ImmutableList<Pattern> patterns =
+      ImmutableList.of(TRACEBACK_FILE_LINE, WARNING_LINE);
 
   private final Project project;
 
@@ -51,11 +64,18 @@ public class BlazePyTracebackFilter implements Filter {
   @Nullable
   @Override
   public Result applyFilter(String line, int entireLength) {
-    Matcher matcher = TRACEBACK_FILE_LINE.matcher(line);
-    if (!matcher.find()) {
+    Matcher matcher = null;
+    for (Pattern p : patterns) {
+      matcher = p.matcher(line);
+      if (matcher.find()) {
+        break;
+      }
+      matcher = null;
+    }
+    if (matcher == null) {
       return null;
     }
-    String filePath = matcher.group(1);
+    String filePath = matcher.group("filepath");
     if (filePath == null) {
       return null;
     }
@@ -66,15 +86,12 @@ public class BlazePyTracebackFilter implements Filter {
     if (file == null) {
       return null;
     }
-    int lineNumber = parseLineNumber(matcher.group(2));
+
+    int lineNumber = parseLineNumber(matcher.group("lineno"));
     OpenFileHyperlinkInfo hyperlink = new OpenFileHyperlinkInfo(project, file, lineNumber - 1);
 
-    int startIx = matcher.start(2) - "line ".length();
-    int endIx = matcher.end(2);
-    if (startIx < 0) {
-      startIx = matcher.start(1);
-      endIx = matcher.end(1);
-    }
+    int startIx = matcher.start("link");
+    int endIx = matcher.end("link");
     int offset = entireLength - line.length();
     return new Result(startIx + offset, endIx + offset, hyperlink);
   }
