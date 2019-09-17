@@ -1,10 +1,5 @@
 """An aspect which extracts the runtime classpath from a java target."""
 
-load(
-    ":artifacts.bzl",
-    "artifact_location",
-)
-
 def _runtime_classpath_impl(target, ctx):
     """The top level aspect implementation function.
 
