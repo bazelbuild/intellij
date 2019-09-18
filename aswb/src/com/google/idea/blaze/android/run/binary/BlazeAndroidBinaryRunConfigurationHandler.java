@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
+import static com.android.tools.idea.run.deployment.DeviceAndSnapshotComboBoxAction.DEPLOYS_TO_LOCAL_DEVICE;
+
 import com.android.annotations.VisibleForTesting;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
@@ -81,6 +83,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
     configState =
         new BlazeAndroidBinaryRunConfigurationState(
             Blaze.buildSystemName(configuration.getProject()));
+    configuration.putUserData(DEPLOYS_TO_LOCAL_DEVICE, true);
   }
 
   @Override
