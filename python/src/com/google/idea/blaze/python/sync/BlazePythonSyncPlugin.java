@@ -23,6 +23,7 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonVers
 import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.io.VfsUtils;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -58,6 +59,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.util.PlatformUtils;
@@ -154,8 +156,13 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
     }
     // recursive refresh of the blaze execution root. This is required because our blaze aspect
     // can't yet tell us exactly which genfiles are required to resolve the project.
-    VirtualFile execRoot =
-        VfsUtils.resolveVirtualFile(blazeProjectData.getBlazeInfo().getExecutionRoot());
+    File file = blazeProjectData.getBlazeInfo().getExecutionRoot();
+    VirtualFile execRoot = VfsUtils.resolveVirtualFile(file);
+    if (execRoot == null) {
+      // force-refresh the exec root
+      LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();
+      execRoot = fileSystem.refreshAndFindFileByIoFile(file);
+    }
     if (execRoot == null) {
       return ImmutableSetMultimap.of();
     }
