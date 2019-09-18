@@ -53,10 +53,11 @@ import javax.annotation.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 /**
- * For situations where psi elements for the current file can't be efficiently resolved. Uses rough
- * heuristics to recognize test contexts, then does everything else asynchronously.
+ * For situations where psi elements for the current file can't be efficiently resolved (for
+ * example, files outside the current project). Uses rough heuristics to recognize test contexts,
+ * then does everything else asynchronously.
  */
-class OutsideProjectTestContextProvider implements TestContextProvider {
+class VirtualFileTestContextProvider implements TestContextProvider {
 
   private static final ListeningExecutorService EXECUTOR =
       MoreExecutors.listeningDecorator(PooledThreadExecutor.INSTANCE);
@@ -64,9 +65,6 @@ class OutsideProjectTestContextProvider implements TestContextProvider {
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {
-    if (context.getModule() != null) {
-      return null;
-    }
     PsiElement psi = context.getPsiLocation();
     if (!(psi instanceof PsiFileSystemItem) || !(psi instanceof FakePsiElement)) {
       return null;
@@ -111,7 +109,7 @@ class OutsideProjectTestContextProvider implements TestContextProvider {
   @Nullable
   private static RunConfigurationContext findContextAsync(ConfigurationContext context) {
     return Arrays.stream(TestContextProvider.EP_NAME.getExtensions())
-        .filter(p -> !(p instanceof OutsideProjectTestContextProvider))
+        .filter(p -> !(p instanceof VirtualFileTestContextProvider))
         .map(p -> ReadAction.compute(() -> p.getTestContext(context)))
         .filter(Objects::nonNull)
         .findFirst()
