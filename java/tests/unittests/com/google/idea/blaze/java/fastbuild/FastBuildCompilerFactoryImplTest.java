@@ -71,7 +71,11 @@ public final class FastBuildCompilerFactoryImplTest {
   }
 
   private static final JavaToolchainInfo JAVA_TOOLCHAIN =
-      JavaToolchainInfo.create(getJavacJars(), /* sourceVersion= */ "8", /* targetVersion= */ "8");
+      JavaToolchainInfo.create(
+          getJavacJars(),
+          /* bootJars= */ ImmutableList.of(),
+          /* sourceVersion= */ "8",
+          /* targetVersion= */ "8");
   private static final JavaInfo JAVA_LIBRARY_WITHOUT_SOURCES = JavaInfo.builder().build();
 
   private FastBuildCompilerFactory compilerFactory;
@@ -153,7 +157,10 @@ public final class FastBuildCompilerFactoryImplTest {
             .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
             .setJavaToolchainInfo(
                 JavaToolchainInfo.create(
-                    getJavacJars(), /* sourceVersion= */ "12345", /* targetVersion= */ "9876"))
+                    getJavacJars(),
+                    /* bootJars= */ ImmutableList.of(),
+                    /* sourceVersion= */ "12345",
+                    /* targetVersion= */ "9876"))
             .build();
     blazeData.put(targetLabel, targetData);
     blazeData.put(jdkOneLabel, jdkOneData);
@@ -284,7 +291,10 @@ public final class FastBuildCompilerFactoryImplTest {
     try {
       getCompiler(
               JavaToolchainInfo.create(
-                  getJavacJars(), /* sourceVersion= */ "7", /* targetVersion= */ "8"))
+                  getJavacJars(),
+                  /* bootJars= */ ImmutableList.of(),
+                  /* sourceVersion= */ "7",
+                  /* targetVersion= */ "8"))
           .compile(
               createBlazeContext(javacOutput),
               createCompileInstructions(java, javacOutput).build());

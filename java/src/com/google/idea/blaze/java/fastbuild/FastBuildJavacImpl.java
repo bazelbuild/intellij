@@ -26,6 +26,7 @@ import com.sun.tools.javac.util.JavacMessages;
 import com.sun.tools.javac.util.Log;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
@@ -48,42 +49,36 @@ import javax.tools.JavaFileObject;
 public final class FastBuildJavacImpl implements FastBuildJavac {
 
   @Override
-  public boolean compile(
-      List<String> args,
-      Collection<File> sources,
-      DiagnosticListener<? super JavaFileObject> listener) {
-
+  public Object[] compile(List<String> args, Collection<File> sources) {
     Context context = new Context();
-    FormattingListener formattingListener = new FormattingListener(context, listener);
+    DiagnosticsCollector collector = new DiagnosticsCollector(context);
     JavacTool javacTool = JavacTool.create();
     JavacFileManager fileManager =
-        javacTool.getStandardFileManager(
-            formattingListener, Locale.ENGLISH, StandardCharsets.UTF_8);
+        javacTool.getStandardFileManager(collector, Locale.ENGLISH, StandardCharsets.UTF_8);
     Iterable<? extends JavaFileObject> filesToCompile =
         fileManager.getJavaFileObjects(sources.toArray(new File[] {}));
     JavacTask task =
         javacTool.getTask(
             /* writer (ignored if a diagnosticListener is set) */ null,
             fileManager,
-            formattingListener,
+            collector,
             args,
             /* classes= */ null,
             filesToCompile,
             context);
-    return task.call();
+    boolean result = task.call();
+    CompilerOutput results = new CompilerOutput(result, collector.diagnostics);
+    return results.encode();
   }
 
   @Trusted
-  private static final class FormattingListener
-      implements javax.tools.DiagnosticListener<JavaFileObject> {
+  private static final class DiagnosticsCollector implements DiagnosticListener<JavaFileObject> {
 
     private final Context context;
-    private final DiagnosticListener<? super JavaFileObject> delegate;
+    private final List<DiagnosticLine> diagnostics = new ArrayList<>();
 
-    private FormattingListener(
-        Context context, DiagnosticListener<? super JavaFileObject> delegate) {
+    private DiagnosticsCollector(Context context) {
       this.context = context;
-      this.delegate = delegate;
     }
 
     @Override
@@ -91,7 +86,15 @@ public final class FastBuildJavacImpl implements FastBuildJavac {
       DiagnosticFormatter<JCDiagnostic> formatter = Log.instance(context).getDiagnosticFormatter();
       Locale locale = JavacMessages.instance(context).getCurrentLocale();
       String formatted = formatter.format((JCDiagnostic) diagnostic, locale);
-      delegate.report(new FormattedJavacDiagnostic(diagnostic, formatted));
+
+      diagnostics.add(
+          new DiagnosticLine(
+              diagnostic.getKind(),
+              diagnostic.getMessage(locale),
+              formatted,
+              diagnostic.getSource() != null ? diagnostic.getSource().toUri() : null,
+              diagnostic.getLineNumber(),
+              diagnostic.getColumnNumber()));
     }
   }
 }

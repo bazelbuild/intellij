@@ -33,14 +33,19 @@ def _fast_build_info_impl(target, ctx):
             )
             for datadep in ctx.rule.attr.data
         ]
+
     if hasattr(target, "java_toolchain"):
         write_output = True
         toolchain = target.java_toolchain
         javac_jars = []
         if hasattr(toolchain, "tools"):
             javac_jars = [artifact_location(f) for f in toolchain.tools.to_list()]
+        bootclasspath_jars = []
+        if hasattr(toolchain, "bootclasspath"):
+            bootclasspath_jars = [artifact_location(f) for f in toolchain.bootclasspath.to_list()]
         info["java_toolchain_info"] = struct_omit_none(
             javac_jars = javac_jars,
+            bootclasspath_jars = bootclasspath_jars,
             source_version = toolchain.source_version,
             target_version = toolchain.target_version,
         )

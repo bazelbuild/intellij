@@ -218,14 +218,19 @@ public abstract class FastBuildBlazeData {
   abstract static class JavaToolchainInfo {
     public abstract ImmutableList<ArtifactLocation> javacJars();
 
+    public abstract ImmutableList<ArtifactLocation> bootClasspathJars();
+
     public abstract String sourceVersion();
 
     public abstract String targetVersion();
 
     static JavaToolchainInfo create(
-        ImmutableList<ArtifactLocation> javacJars, String sourceVersion, String targetVersion) {
+        ImmutableList<ArtifactLocation> javacJars,
+        ImmutableList<ArtifactLocation> bootJars,
+        String sourceVersion,
+        String targetVersion) {
       return new AutoValue_FastBuildBlazeData_JavaToolchainInfo(
-          javacJars, sourceVersion, targetVersion);
+          javacJars, bootJars, sourceVersion, targetVersion);
     }
 
     static JavaToolchainInfo fromProto(FastBuildInfo.JavaToolchainInfo javaToolchainInfo) {
@@ -233,8 +238,15 @@ public abstract class FastBuildBlazeData {
           javaToolchainInfo.getJavacJarsList().stream()
               .map(ArtifactLocation::fromProto)
               .collect(toImmutableList());
+      ImmutableList<ArtifactLocation> bootJars =
+          javaToolchainInfo.getBootclasspathJarsList().stream()
+              .map(ArtifactLocation::fromProto)
+              .collect(toImmutableList());
       return create(
-          javacJars, javaToolchainInfo.getSourceVersion(), javaToolchainInfo.getTargetVersion());
+          javacJars,
+          bootJars,
+          javaToolchainInfo.getSourceVersion(),
+          javaToolchainInfo.getTargetVersion());
     }
   }
 }

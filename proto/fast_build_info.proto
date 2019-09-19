@@ -56,4 +56,5 @@ message JavaToolchainInfo {
   string source_version = 2;
   string target_version = 3;
   repeated ArtifactLocation javac_jars = 4;
+  repeated ArtifactLocation bootclasspath_jars = 5;
 }

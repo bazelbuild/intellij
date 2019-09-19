@@ -36,6 +36,8 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaToolchainInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildCompiler.CompileInstructions;
+import com.google.idea.blaze.java.fastbuild.FastBuildJavac.CompilerOutput;
+import com.google.idea.blaze.java.fastbuild.FastBuildJavac.DiagnosticLine;
 import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope.FastBuildLogOutput;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -59,8 +61,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
-import javax.tools.DiagnosticListener;
-import javax.tools.JavaFileObject;
 
 final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
 
@@ -106,8 +106,11 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
     checkState(projectData != null, "not a blaze project");
     List<File> javacJars =
         projectData.getArtifactLocationDecoder().decodeAll(javaToolchain.javacJars());
+    List<File> bootJars =
+        projectData.getArtifactLocationDecoder().decodeAll(javaToolchain.bootClasspathJars());
     Javac javac = createCompiler(javacJars);
-    return new JavacRunner(javac, javaToolchain.sourceVersion(), javaToolchain.targetVersion());
+    return new JavacRunner(
+        javac, bootJars, javaToolchain.sourceVersion(), javaToolchain.targetVersion());
   }
 
   private JavaToolchainInfo getJavaToolchain(Label label, Map<Label, FastBuildBlazeData> blazeData)
@@ -143,7 +146,6 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
 
   private Javac createCompiler(List<File> javacJars) throws FastBuildException {
     try {
-
       Class<?> javacClass =
           loadJavacClass(
               FAST_BUILD_JAVAC_CLASS,
@@ -160,8 +162,10 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
               FastBuildJavac.class, new MatchingMethodInvocationHandler(javacClass, javacInstance));
       return (context, javacArgs, files, writer) -> {
         Stopwatch timer = Stopwatch.createStarted();
-        boolean result =
-            javaCompiler.compile(javacArgs, files, new ProblemsViewDiagnosticListener(context));
+        Object[] rawOutput = javaCompiler.compile(javacArgs, files);
+        CompilerOutput output = CompilerOutput.decode(rawOutput);
+        processDiagnostics(context, output);
+        boolean result = output.result;
         Command command =
             Command.builder()
                 .setExecutable(javacJars.get(0).getPath())
@@ -200,11 +204,14 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
   private static class JavacRunner implements FastBuildCompiler {
 
     private final Javac javac;
+    private final List<File> bootClassPathJars;
     private final String sourceVersion;
     private final String targetVersion;
 
-    private JavacRunner(Javac javac, String sourceVersion, String targetVersion) {
+    private JavacRunner(
+        Javac javac, List<File> bootClassPathJars, String sourceVersion, String targetVersion) {
       this.javac = javac;
+      this.bootClassPathJars = bootClassPathJars;
       this.sourceVersion = sourceVersion;
       this.targetVersion = targetVersion;
     }
@@ -223,6 +230,11 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
               .add("-cp")
               .add(instructions.classpath().stream().map(File::getPath).collect(joining(":")))
               .add("-g");
+      if (!bootClassPathJars.isEmpty()) {
+        argsBuilder
+            .add("-bootclasspath")
+            .add(bootClassPathJars.stream().map(File::getPath).collect(joining(":")));
+      }
       if (instructions.annotationProcessorClassNames().isEmpty()) {
         // Without this, it will find all the annotation processors in the classpath and run them.
         // We only want to run them if the BUILD file asked for it.
@@ -340,45 +352,34 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
     }
   }
 
-  private static class ProblemsViewDiagnosticListener
-      implements DiagnosticListener<JavaFileObject> {
+  private static void processDiagnostics(BlazeContext context, CompilerOutput output) {
+    output.diagnostics.forEach(d -> processDiagostic(context, d));
+  }
 
-    private final BlazeContext context;
-
-    private ProblemsViewDiagnosticListener(BlazeContext context) {
-      this.context = context;
+  private static void processDiagostic(BlazeContext context, DiagnosticLine line) {
+    IssueOutput.Builder output = IssueOutput.issue(toCategory(line.kind), line.message);
+    if (line.uri != null) {
+      output.inFile(new File(line.uri));
     }
-
-    @Override
-    public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-
-      IssueOutput.Builder output =
-          IssueOutput.issue(toCategory(diagnostic.getKind()), diagnostic.getMessage(null));
-      if (diagnostic.getSource() != null) {
-        output.inFile(new File(diagnostic.getSource().toUri()));
-      }
-      if (diagnostic.getPosition() != Diagnostic.NOPOS) {
-        output
-            .onLine((int) diagnostic.getLineNumber())
-            .inColumn((int) diagnostic.getColumnNumber());
-      }
-      context.output(output.build());
-      context.output(new PrintOutput(diagnostic.toString()));
+    if (line.lineNumber != Diagnostic.NOPOS) {
+      output.onLine((int) line.lineNumber).inColumn((int) line.columnNumber);
     }
+    context.output(output.build());
+    context.output(new PrintOutput(line.formattedMessage));
+  }
 
-    private Category toCategory(Kind kind) {
-      switch (kind) {
-        case ERROR:
-          return Category.ERROR;
-        case MANDATORY_WARNING:
-        case WARNING:
-          return Category.WARNING;
-        case NOTE:
-          return Category.NOTE;
-        case OTHER:
-          return Category.INFORMATION;
-      }
-      throw new AssertionError("Unknown Kind " + kind);
+  private static Category toCategory(Kind kind) {
+    switch (kind) {
+      case ERROR:
+        return Category.ERROR;
+      case MANDATORY_WARNING:
+      case WARNING:
+        return Category.WARNING;
+      case NOTE:
+        return Category.NOTE;
+      case OTHER:
+        return Category.INFORMATION;
     }
+    throw new AssertionError("Unknown Kind " + kind);
   }
 }
