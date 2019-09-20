@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.dependencies;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
+import com.google.idea.common.futures.FuturesUtil;
 import com.intellij.openapi.project.Project;
 import java.util.Arrays;
 import java.util.List;

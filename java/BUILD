@@ -42,6 +42,7 @@ java_library(
         "//common/actions",
         "//common/concurrency",
         "//common/experiments",
+        "//common/futures",
         "//common/settings",
         "//common/transactions",
         "//intellij_platform_sdk:coverage",

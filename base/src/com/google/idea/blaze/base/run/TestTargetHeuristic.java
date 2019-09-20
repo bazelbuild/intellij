@@ -21,7 +21,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.model.primitives.RuleType;
-import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
+import com.google.idea.common.futures.FuturesUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
