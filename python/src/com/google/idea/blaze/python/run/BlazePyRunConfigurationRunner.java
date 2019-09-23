@@ -55,7 +55,6 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.UrlFilter;
-import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
@@ -173,13 +172,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
         @Override
         protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine)
             throws ExecutionException {
-          ProcessHandler handler =
-              super.doCreateProcess(ProcessGroupUtil.newProcessGroupFor(commandLine));
-          if (handler instanceof KillableProcessHandler) {
-            // SIGINT can cause the JVM to crash, when stopped at a breakpoint (IDEA-167432).
-            ((KillableProcessHandler) handler).setShouldKillProcessSoftly(false);
-          }
-          return handler;
+          return super.doCreateProcess(ProcessGroupUtil.newProcessGroupFor(commandLine));
         }
       };
     }
