@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.base.async.process;
 
-
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
@@ -193,10 +195,28 @@ public interface ExternalTask {
       }
     }
 
-    /** See GeneralCommandLine#ParentEnvironmentType for an explanation of why we do this. */
+    // See GeneralCommandLine#ParentEnvironmentType for an explanation of why we do this.
     private static void initializeEnvironment(Map<String, String> envMap) {
       envMap.clear();
       envMap.putAll(EnvironmentUtil.getEnvironmentMap());
+    }
+
+    // Allow prepending custom paths to $PATH
+    @VisibleForTesting
+    static final String CUSTOM_PATH_SYSTEM_PROPERTY = "blaze.external.task.env.path";
+
+    private static final String PATH_ENVIRONMENT_VARIABLE = "PATH";
+
+    @VisibleForTesting
+    static void customizeEnvironmentPath(Map<String, String> envMap) {
+      String customPath = System.getProperty(CUSTOM_PATH_SYSTEM_PROPERTY);
+      if (!Strings.isNullOrEmpty(customPath)) {
+        envMap.put(
+            PATH_ENVIRONMENT_VARIABLE,
+            Joiner.on(File.pathSeparator)
+                .skipNulls()
+                .join(customPath, Strings.emptyToNull(envMap.get(PATH_ENVIRONMENT_VARIABLE))));
+      }
     }
 
     private int invokeCommand(BlazeContext context) {
@@ -224,6 +244,7 @@ public interface ExternalTask {
           env.put(entry.getKey(), entry.getValue());
         }
         env.put("PWD", workingDirectory.getPath());
+        customizeEnvironmentPath(env);
 
         try {
           final Process process = builder.start();
