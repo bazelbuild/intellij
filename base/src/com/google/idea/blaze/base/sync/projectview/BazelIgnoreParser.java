@@ -3,12 +3,12 @@ package com.google.idea.blaze.base.sync.projectview;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import javax.annotation.Nullable;
 
@@ -21,10 +21,8 @@ public class BazelIgnoreParser {
 
   public BazelIgnoreParser(WorkspaceRoot workspaceRoot) {
     this.bazelIgnoreFile =
-        LocalFileSystem
-            .getInstance()
-            .findFileByIoFile(
-                workspaceRoot.fileForPath(new WorkspacePath(".bazelignore")));
+        VfsUtils.resolveVirtualFile(
+            workspaceRoot.fileForPath(new WorkspacePath(".bazelignore")));
   }
 
   public ImmutableList<WorkspacePath> getIgnoredPaths() {
