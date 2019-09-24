@@ -232,4 +232,20 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
 
     assertThat(importRoots.containsWorkspacePath(new WorkspacePath("root/a/b"))).isFalse();
   }
+
+  @Test
+  public void testBazelIgnoreParser_excludesIgnoredPaths() throws Exception {
+    workspace.createFile(new WorkspacePath(".bazelignore"),  "root0");
+
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystem.Bazel)
+            .add(DirectoryEntry.include(new WorkspacePath("")))
+            .add(DirectoryEntry.include(new WorkspacePath("root0/subdir0")))
+            .add(DirectoryEntry.include(new WorkspacePath("root0/subdir1")))
+            .add(DirectoryEntry.include(new WorkspacePath("root1")))
+            .build();
+
+    assertThat(importRoots.rootDirectories()).containsExactly(new WorkspacePath("root1"));
+    assertThat(importRoots.excludeDirectories()).containsExactly(new WorkspacePath("root0"));
+  }
 }
