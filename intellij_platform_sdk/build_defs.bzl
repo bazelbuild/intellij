@@ -15,6 +15,7 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-beta-mac": "android-studio-3.5-mac",
     "android-studio-canary": "android-studio-3.6",
     "clion-latest": "clion-2019.1",
+    "clion-latest-mac": "clion-2019.1-mac",
     "clion-beta": "clion-2019.2",
 }
 
@@ -56,6 +57,10 @@ DIRECT_IJ_PRODUCTS = {
         directory = "android_studio_3_6",
     ),
     "clion-2019.1": struct(
+        ide = "clion",
+        directory = "clion_2019_1",
+    ),
+    "clion-2019.1-mac": struct(
         ide = "clion",
         directory = "clion_2019_1",
     ),

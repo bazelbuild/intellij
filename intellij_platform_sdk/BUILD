@@ -170,6 +170,14 @@ config_setting(
 )
 
 config_setting(
+    name = "clion-latest-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=clion-latest",
+    },
+)
+
+config_setting(
     name = "clion-beta",
     values = {
         "define": "ij_product=clion-beta",
@@ -179,6 +187,14 @@ config_setting(
 config_setting(
     name = "clion-2019.1",
     values = {
+        "define": "ij_product=clion-2019.1",
+    },
+)
+
+config_setting(
+    name = "clion-2019.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
         "define": "ij_product=clion-2019.1",
     },
 )
