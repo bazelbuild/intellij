@@ -498,12 +498,16 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
 
 def get_java_provider(target):
     """Find a provider exposing java compilation/outputs data."""
-    if JavaInfo in target:
-        return target[JavaInfo]
+
+    # Check for scala and kt providers before JavaInfo. e.g. scala targets have
+    # JavaInfo, but their data lives in the "scala" provider and not JavaInfo.
+    # See https://github.com/bazelbuild/intellij/pull/1202
     if hasattr(target, "scala"):
         return target.scala
     if hasattr(target, "kt") and hasattr(target.kt, "outputs"):
         return target.kt
+    if JavaInfo in target:
+        return target[JavaInfo]
     return None
 
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
