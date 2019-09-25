@@ -73,9 +73,6 @@ def select_for_plugin_api(params):
         }),
       )
     """
-    if not params:
-        fail("Empty select_for_plugin_api")
-
     for indirect_ij_product in INDIRECT_IJ_PRODUCTS:
         if indirect_ij_product in params:
             error_message = "".join([
@@ -83,6 +80,12 @@ def select_for_plugin_api(params):
                 "Instead, select on an exact ij_product.",
             ])
             fail(error_message)
+    return _do_select_for_plugin_api(params)
+
+def _do_select_for_plugin_api(params):
+    """A version of select_for_plugin_api which accepts indirect products."""
+    if not params:
+        fail("Empty select_for_plugin_api")
 
     expanded_params = dict(**params)
 
@@ -97,6 +100,8 @@ def select_for_plugin_api(params):
             expanded_params[indirect_ij_product] = params[resolved_plugin_api]
             if not fallback_value:
                 fallback_value = params[resolved_plugin_api]
+        if indirect_ij_product in params:
+            expanded_params[resolved_plugin_api] = params[indirect_ij_product]
 
     # Map the shorthand ij_products to full config_setting targets.
     # This makes it more convenient so the user doesn't have to
