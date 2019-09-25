@@ -32,6 +32,14 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-ue-latest-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-latest",
+    },
+)
+
+config_setting(
     name = "intellij-beta",
     values = {
         "define": "ij_product=intellij-beta",
@@ -84,6 +92,14 @@ config_setting(
 config_setting(
     name = "intellij-ue-2019.1",
     values = {
+        "define": "ij_product=intellij-ue-2019.1",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2019.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-ue-2019.1",
     },
 )
