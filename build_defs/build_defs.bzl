@@ -194,12 +194,6 @@ def api_version_txt(name, **kwargs):
         **kwargs
     )
 
-def beta_gensignature(name, srcs, stable, stable_version, beta_version):
-    if stable_version == beta_version:
-        native.alias(name = name, actual = stable)
-    else:
-        native.gensignature(name = name, srcs = srcs)
-
 repackaged_files_data = provider()
 
 def _repackaged_files_impl(ctx):
