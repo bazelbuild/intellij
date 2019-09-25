@@ -38,6 +38,20 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-canary",
+    values = {
+        "define": "ij_product=intellij-canary",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-canary",
+    values = {
+        "define": "ij_product=intellij-ue-canary",
+    },
+)
+
+config_setting(
     name = "intellij-2019.1",
     values = {
         "define": "ij_product=intellij-2019.1",

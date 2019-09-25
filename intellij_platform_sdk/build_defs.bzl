@@ -4,8 +4,10 @@
 INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2019.1",
     "intellij-beta": "intellij-2019.2",
+    "intellij-canary": "intellij-2019.2",  # TODO(b/141539619): switch to 2019.3 after drop
     "intellij-ue-latest": "intellij-ue-2019.1",
     "intellij-ue-beta": "intellij-ue-2019.2",
+    "intellij-ue-canary": "intellij-2019.2",  # TODO(b/141539619): switch to 2019.3 after drop
     "android-studio-latest": "android-studio-3.5",
     "android-studio-beta": "android-studio-3.5",
     "android-studio-beta-mac": "android-studio-3.5-mac",
