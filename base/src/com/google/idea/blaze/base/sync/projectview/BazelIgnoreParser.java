@@ -40,8 +40,7 @@ public class BazelIgnoreParser {
    * @return a list of validated WorkspacePaths.
    */
   public ImmutableList<WorkspacePath> getIgnoredPaths() {
-    if (FileOperationProvider.getInstance() == null ||
-        !FileOperationProvider.getInstance().exists(bazelIgnoreFile)) {
+    if (!FileOperationProvider.getInstance().exists(bazelIgnoreFile)) {
       return ImmutableList.of();
     }
 
@@ -52,7 +51,9 @@ public class BazelIgnoreParser {
         if (path.endsWith("/")) {
           // .bazelignore allows the "/" path suffix, but WorkspacePath doesn't.
           path = path.substring(0, path.length() - 1);
-        } else if (!WorkspacePath.isValid(path)) {
+        }
+
+        if (!WorkspacePath.isValid(path)) {
           logger.warn(
               String.format(
                   "Found %s in .bazelignore, but unable to parse as relative workspace path.", path));

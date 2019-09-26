@@ -217,19 +217,13 @@ public class TestFileSystem {
     @Override
     public List<String> readAllLines(File file) throws IOException {
       VirtualFile vf = getVirtualFile(file);
-      // Assume UTF-8 here for test-only purposes.
       String text = new String(vf.contentsToByteArray(), UTF_8);
 
-      ImmutableList.Builder<String> lines = ImmutableList.builder();
       if (text.length() == 0) {
-        return lines.build();
+        return ImmutableList.of();
       }
 
-      for (CharSequence cs : Splitter.on("\n").split(text)) {
-        lines.add(cs.toString());
-      }
-
-      return lines.build();
+      return Splitter.on("\n").splitToList(text);
     }
   }
 
