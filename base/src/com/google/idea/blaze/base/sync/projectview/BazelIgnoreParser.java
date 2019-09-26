@@ -26,14 +26,12 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
-import javax.annotation.Nullable;
 
 /** A parser for .bazelgnore files, which tells Bazel a list of paths to ignore. */
 public class BazelIgnoreParser {
 
   Logger logger = Logger.getInstance(BazelIgnoreParser.class);
 
-  @Nullable
   private final File bazelIgnoreFile;
 
   public BazelIgnoreParser(WorkspaceRoot workspaceRoot) {
