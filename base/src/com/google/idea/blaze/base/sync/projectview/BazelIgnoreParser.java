@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import javax.annotation.Nullable;
 
+/** A parser for .bazelgnore files, which tells Bazel a list of paths to ignore. */
 public class BazelIgnoreParser {
 
   Logger logger = Logger.getInstance(BazelIgnoreParser.class);
@@ -24,6 +25,10 @@ public class BazelIgnoreParser {
     this.bazelIgnoreFile = workspaceRoot.fileForPath(new WorkspacePath(".bazelignore"));
   }
 
+  /**
+   * Parse a .bazelignore file (if it exists) for workspace relative paths.
+   * @return a list of validated WorkspacePaths.
+   */
   public ImmutableList<WorkspacePath> getIgnoredPaths() {
     VirtualFile vf = VfsUtils.resolveVirtualFile(bazelIgnoreFile);
     if (vf == null || !vf.exists()) {
@@ -33,7 +38,6 @@ public class BazelIgnoreParser {
     Document document = FileDocumentManager.getInstance().getDocument(vf);
     if (document == null || document.getImmutableCharSequence().length() == 0)  {
       return ImmutableList.of();
-
     }
 
     ImmutableList.Builder<WorkspacePath> ignoredPaths = ImmutableList.builder();
