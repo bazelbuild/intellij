@@ -58,6 +58,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
+import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
@@ -479,7 +480,11 @@ final class SyncPhaseCoordinator {
                   project, context, projectViewSet, projectData, syncParams.syncMode));
         }
         if (projectData != null) {
-          stats.setTargetMapSize(projectData.getTargetMap().targets().size());
+          int librariesCount =
+              BlazeLibraryCollector.getLibraries(projectViewSet, projectData).size();
+          stats
+              .setTargetMapSize(projectData.getTargetMap().targets().size())
+              .setLibraryCount(librariesCount);
         }
         onSyncComplete(project, context, projectViewSet, projectData, syncParams, syncResult);
       }
