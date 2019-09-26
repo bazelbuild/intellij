@@ -40,7 +40,8 @@ public class BazelIgnoreParser {
    * @return a list of validated WorkspacePaths.
    */
   public ImmutableList<WorkspacePath> getIgnoredPaths() {
-    if (!FileOperationProvider.getInstance().exists(bazelIgnoreFile)) {
+    if (FileOperationProvider.getInstance() != null &&
+        !FileOperationProvider.getInstance().exists(bazelIgnoreFile)) {
       return ImmutableList.of();
     }
 
