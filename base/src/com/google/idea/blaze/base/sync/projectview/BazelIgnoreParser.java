@@ -16,22 +16,18 @@
 package com.google.idea.blaze.base.sync.projectview;
 
 
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.io.VfsUtils;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
+import java.io.IOException;
 
 /** A parser for .bazelgnore files, which tells Bazel a list of paths to ignore. */
 public class BazelIgnoreParser {
 
-  Logger logger = Logger.getInstance(BazelIgnoreParser.class);
+  private static final Logger logger = Logger.getInstance(BazelIgnoreParser.class);
 
   private final File bazelIgnoreFile;
 
@@ -44,39 +40,30 @@ public class BazelIgnoreParser {
    * @return a list of validated WorkspacePaths.
    */
   public ImmutableList<WorkspacePath> getIgnoredPaths() {
-    if (VirtualFileSystemProvider.getInstance() == null) {
-      return ImmutableList.of();
-    }
-
-    VirtualFile vf = VfsUtils.resolveVirtualFile(bazelIgnoreFile);
-    if (vf == null || !vf.exists()) {
-      return ImmutableList.of();
-    }
-
-    Document document = FileDocumentManager.getInstance().getDocument(vf);
-    if (document == null || document.getImmutableCharSequence().length() == 0)  {
+    if (!FileOperationProvider.getInstance().exists(bazelIgnoreFile)) {
       return ImmutableList.of();
     }
 
     ImmutableList.Builder<WorkspacePath> ignoredPaths = ImmutableList.builder();
 
-    for (CharSequence cs : Splitter.on("\n").split(document.getImmutableCharSequence())) {
-      String path = cs.toString();
-      String validationOutcome = WorkspacePath.validate(path);
-      if (validationOutcome != null) {
-        if (validationOutcome.contains("may not end with '/'")) {
+    try {
+      for (String path : FileOperationProvider.getInstance().readAllLines(bazelIgnoreFile)) {
+        if (path.endsWith("/")) {
+          // .bazelignore allows the "/" path suffix, but WorkspacePath doesn't.
           path = path.substring(0, path.length() - 1);
-        } else {
+        } else if (!WorkspacePath.isValid(path)) {
           logger.warn(
-              "Found "
-                  + path
-                  + " in .bazelignore, but unable to parse as relative workspace path for reason: "
-                  + validationOutcome);
+              String.format(
+                  "Found %s in .bazelignore, but unable to parse as relative workspace path.", path));
           continue;
         }
-      }
 
-      ignoredPaths.add(new WorkspacePath(path));
+        ignoredPaths.add(new WorkspacePath(path));
+      }
+    } catch (IOException e) {
+      logger.warn(
+          String.format(
+              "Unable to read .bazelignore file even though it exists."));
     }
 
     return ignoredPaths.build();

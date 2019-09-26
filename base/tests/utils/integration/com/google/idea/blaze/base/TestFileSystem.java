@@ -19,6 +19,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.intellij.openapi.application.ReadAction;
@@ -35,7 +37,9 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /** Creates temp files for integration tests. */
@@ -204,6 +208,28 @@ public class TestFileSystem {
 
     private VirtualFile getVirtualFile(File file) {
       return fileSystem.findFileByPath(file.getPath());
+    }
+
+    /**
+     * Read lines from VirtualFile instances. The real File may not be created on disk (like on
+     * testFileSystems), so we cannot use Files#readAllLines here.
+     */
+    @Override
+    public List<String> readAllLines(File file) throws IOException {
+      VirtualFile vf = getVirtualFile(file);
+      // Assume UTF-8 here for test-only purposes.
+      String text = new String(vf.contentsToByteArray(), Charset.forName("UTF-8"));
+
+      ImmutableList.Builder<String> lines = ImmutableList.builder();
+      if (text.length() == 0) {
+        return lines.build();
+      }
+
+      for (CharSequence cs : Splitter.on("\n").split(text)) {
+        lines.add(cs.toString());
+      }
+
+      return lines.build();
     }
   }
 

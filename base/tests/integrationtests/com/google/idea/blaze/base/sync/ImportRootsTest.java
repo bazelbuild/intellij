@@ -237,14 +237,14 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testBazelIgnoreParser_worksWithoutBazelIgnore() throws Exception {
     BazelIgnoreParser parser = new BazelIgnoreParser(workspaceRoot);
-    assertThat(parser.getIgnoredPaths()).hasSize(0);
+    assertThat(parser.getIgnoredPaths()).isEmpty();
   }
 
   @Test
   public void testBazelIgnoreParser_worksWithEmptyBazelIgnore() throws Exception {
     workspace.createFile(new WorkspacePath(".bazelignore"),  "");
     BazelIgnoreParser parser = new BazelIgnoreParser(workspaceRoot);
-    assertThat(parser.getIgnoredPaths()).hasSize(0);
+    assertThat(parser.getIgnoredPaths()).isEmpty();
   }
 
   @Test
@@ -252,7 +252,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
     // directories cannot be absolute and cannot contain ":"
     workspace.createFile(new WorkspacePath(".bazelignore"),  "/mal:formed");
     BazelIgnoreParser parser = new BazelIgnoreParser(workspaceRoot);
-    assertThat(parser.getIgnoredPaths()).hasSize(0);
+    assertThat(parser.getIgnoredPaths()).isEmpty();
   }
 
   @Test
