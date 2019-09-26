@@ -19,6 +19,7 @@ package com.google.idea.blaze.base.sync.projectview;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.io.VfsUtils;
+import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,6 +44,10 @@ public class BazelIgnoreParser {
    * @return a list of validated WorkspacePaths.
    */
   public ImmutableList<WorkspacePath> getIgnoredPaths() {
+    if (VirtualFileSystemProvider.getInstance() == null) {
+      return ImmutableList.of();
+    }
+
     VirtualFile vf = VfsUtils.resolveVirtualFile(bazelIgnoreFile);
     if (vf == null || !vf.exists()) {
       return ImmutableList.of();
