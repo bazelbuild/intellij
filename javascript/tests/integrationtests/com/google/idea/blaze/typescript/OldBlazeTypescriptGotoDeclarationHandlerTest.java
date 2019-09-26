@@ -40,9 +40,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link BlazeTypescriptGotoDeclarationHandler}. */
+/**
+ * Integration tests for {@link BlazeTypescriptGotoDeclarationHandler}.
+ *
+ * <p>Handles .d.ts files generated from old CLs. Uses FILE_GENERATED_FROM_JS_COMMENT.
+ */
 @RunWith(JUnit4.class)
-public class BlazeTypescriptGotoDeclarationHandlerTest extends BlazeIntegrationTestCase {
+public class OldBlazeTypescriptGotoDeclarationHandlerTest extends BlazeIntegrationTestCase {
   @Before
   public void init() {
     registerProjectService(
@@ -110,59 +114,66 @@ public class BlazeTypescriptGotoDeclarationHandlerTest extends BlazeIntegrationT
     // )
     workspace.createPsiFile(
         new WorkspacePath("foo/bar/library.d.ts"),
-        "// Generated from foo/bar/module.js",
+        "//!! Processing provides [foo.bar.ESFiveClass, foo.bar.ESSixClass] from input "
+            + "foo/bar/provides.js",
+        "//!! Processing provides [foo.bar.ClosureClass] from input foo/bar/module.js",
         "declare namespace ಠ_ಠ.clutz {",
-        "  class module$exports$foo$bar$ClosureClass {",
-        "    private noStructuralTyping_module$exports$foo$bar$ClosureClass : any;",
-        "    bar ( ) : void ;",
-        "    foo ( ) : void ;",
+        "  class module$exports$foo$bar$ClosureClass extends "
+            + "module$exports$foo$bar$ClosureClass_Instance {",
         "    static bar ( ) : void ;",
         "    static foo ( ) : void ;",
+        "  }",
+        "  class module$exports$foo$bar$ClosureClass_Instance {",
+        "    private noStructuralTyping_: any;",
+        "    bar ( ) : void ;",
+        "    foo ( ) : void ;",
         "  }",
         "}",
         "declare module 'goog:foo.bar.ClosureClass' {",
-        "  import ClosureClass = ಠ_ಠ.clutz.module$exports$foo$bar$ClosureClass;",
-        "  export default ClosureClass;",
+        "  import alias = ಠ_ಠ.clutz.module$exports$foo$bar$ClosureClass;",
+        "  export default alias;",
         "}",
-        "// Generated from foo/bar/provides.js",
         "declare namespace ಠ_ಠ.clutz.foo.bar {",
-        "  class ESFiveClass {",
-        "    private noStructuralTyping_foo_bar_ESFiveClass : any;",
-        "    foo ( ) : void ;",
+        "  class ESFiveClass extends ESFiveClass_Instance {",
         "    static foo ( ) : void ;",
         "  }",
-        "}",
-        "// Generated from foo/bar/provides.js",
-        "declare namespace ಠ_ಠ.clutz.foo.bar.ESFiveClass {",
-        "  class NestedClass {",
-        "    private noStructuralTyping_foo_bar_ESFiveClass_NestedClass : any;",
+        "  class ESFiveClass_Instance {",
+        "    private noStructuralTyping_: any;",
         "    foo ( ) : void ;",
+        "  }",
+        "}",
+        "declare namespace ಠ_ಠ.clutz.foo.bar.ESFiveClass {",
+        "  class NestedClass extends NestedClass_Instance {",
         "    static foo ( ) : void ;",
+        "  }",
+        "  class NestedClass_Instance {",
+        "    private noStructuralTyping_: any;",
+        "    foo ( ) : void ;",
         "  }",
         "}",
         "declare module 'goog:foo.bar.ESFiveClass' {",
-        "  import ESFiveClass = ಠ_ಠ.clutz.foo.bar.ESFiveClass;",
-        "  export default ESFiveClass;",
+        "  import alias = ಠ_ಠ.clutz.foo.bar.ESFiveClass;",
+        "  export default alias;",
         "}",
-        "// Generated from foo/bar/provides.js",
         "declare namespace ಠ_ಠ.clutz.foo.bar {",
-        "  class ESSixClass {",
-        "    private noStructuralTyping_foo_bar_ESSixClass : any;",
-        "    bar ( ) : void ;",
-        "    foo ( ) : void ;",
+        "  class ESSixClass extends ESSixClass_Instance {",
         "    static bar ( ) : void ;",
         "    static foo ( ) : void ;",
         "  }",
+        "  class ESSixClass_Instance {",
+        "    private noStructuralTyping_: any;",
+        "    bar ( ) : void ;",
+        "    foo ( ) : void ;",
+        "  }",
         "}",
-        "// Generated from foo/bar/provides.js",
         "declare namespace ಠ_ಠ.clutz.foo.bar.ESSixClass {",
         "  enum Enum {",
         "    FOO = 0.0 ,",
         "  }",
         "}",
         "declare module 'goog:foo.bar.ESSixClass' {",
-        "  import ESSixClass = ಠ_ಠ.clutz.foo.bar.ESSixClass;",
-        "  export default ESSixClass;",
+        "  import alias = ಠ_ಠ.clutz.foo.bar.ESSixClass;",
+        "  export default alias;",
         "}");
   }
 
@@ -302,31 +313,29 @@ public class BlazeTypescriptGotoDeclarationHandlerTest extends BlazeIntegrationT
         "ClosureClass.f<caret>oo();",
         "ClosureClass.b<caret>ar();");
 
-    // Broken due to upstream bug: https://youtrack.jetbrains.com/issue/WEB-41611
-    //
-    // PsiElement esFiveClassFoo = getElementUnderCaret(0);
-    // assertThat(esFiveClassFoo).isInstanceOf(JSFunctionExpression.class);
-    // assertThat(esFiveClassFoo.getParent().getText())
-    //     .isEqualTo("foo.bar.ESFiveClass.foo = function() {}");
-    //
-    // PsiElement nestedClassFoo = getElementUnderCaret(1);
-    // assertThat(nestedClassFoo).isInstanceOf(JSFunction.class);
-    // assertThat(nestedClassFoo.getText())
-    //     .isEqualTo(
-    //         String.join(
-    //             "\n", //
-    //             "/** @public */",
-    //             "  static foo() {}"));
-    // assertThat(nestedClassFoo.getParent().getParent().getText())
-    //     .isEqualTo(
-    //         String.join(
-    //             "\n",
-    //             "foo.bar.ESFiveClass.NestedClass = class {",
-    //             "  /** @public */",
-    //             "  static foo() {}",
-    //             "  /** @public */",
-    //             "  foo() {}",
-    //             "}"));
+    PsiElement esFiveClassFoo = getElementUnderCaret(0);
+    assertThat(esFiveClassFoo).isInstanceOf(JSFunctionExpression.class);
+    assertThat(esFiveClassFoo.getParent().getText())
+        .isEqualTo("foo.bar.ESFiveClass.foo = function() {}");
+
+    PsiElement nestedClassFoo = getElementUnderCaret(1);
+    assertThat(nestedClassFoo).isInstanceOf(JSFunction.class);
+    assertThat(nestedClassFoo.getText())
+        .isEqualTo(
+            String.join(
+                "\n", //
+                "/** @public */",
+                "  static foo() {}"));
+    assertThat(nestedClassFoo.getParent().getParent().getText())
+        .isEqualTo(
+            String.join(
+                "\n",
+                "foo.bar.ESFiveClass.NestedClass = class {",
+                "  /** @public */",
+                "  static foo() {}",
+                "  /** @public */",
+                "  foo() {}",
+                "}"));
 
     PsiElement esSixClassFoo = getElementUnderCaret(2); // in class definition
     assertThat(esSixClassFoo).isInstanceOf(JSFunction.class);
@@ -376,31 +385,29 @@ public class BlazeTypescriptGotoDeclarationHandlerTest extends BlazeIntegrationT
         "new ClosureClass().f<caret>oo();",
         "new ClosureClass().b<caret>ar();");
 
-    // Broken due to upstream bug: https://youtrack.jetbrains.com/issue/WEB-41611
-    //
-    // PsiElement esFiveClassFoo = getElementUnderCaret(0);
-    // assertThat(esFiveClassFoo).isInstanceOf(JSFunctionExpression.class);
-    // assertThat(esFiveClassFoo.getParent().getText())
-    //     .isEqualTo("foo.bar.ESFiveClass.prototype.foo = function() {}");
-    //
-    // PsiElement nestedClassFoo = getElementUnderCaret(1);
-    // assertThat(nestedClassFoo).isInstanceOf(JSFunction.class);
-    // assertThat(nestedClassFoo.getText())
-    //     .isEqualTo(
-    //         String.join(
-    //             "\n", //
-    //             "/** @public */",
-    //             "  foo() {}"));
-    // assertThat(nestedClassFoo.getParent().getParent().getText())
-    //     .isEqualTo(
-    //         String.join(
-    //             "\n",
-    //             "foo.bar.ESFiveClass.NestedClass = class {",
-    //             "  /** @public */",
-    //             "  static foo() {}",
-    //             "  /** @public */",
-    //             "  foo() {}",
-    //             "}"));
+    PsiElement esFiveClassFoo = getElementUnderCaret(0);
+    assertThat(esFiveClassFoo).isInstanceOf(JSFunctionExpression.class);
+    assertThat(esFiveClassFoo.getParent().getText())
+        .isEqualTo("foo.bar.ESFiveClass.prototype.foo = function() {}");
+
+    PsiElement nestedClassFoo = getElementUnderCaret(1);
+    assertThat(nestedClassFoo).isInstanceOf(JSFunction.class);
+    assertThat(nestedClassFoo.getText())
+        .isEqualTo(
+            String.join(
+                "\n", //
+                "/** @public */",
+                "  foo() {}"));
+    assertThat(nestedClassFoo.getParent().getParent().getText())
+        .isEqualTo(
+            String.join(
+                "\n",
+                "foo.bar.ESFiveClass.NestedClass = class {",
+                "  /** @public */",
+                "  static foo() {}",
+                "  /** @public */",
+                "  foo() {}",
+                "}"));
 
     PsiElement esSixClassFoo = getElementUnderCaret(2); // in class definition
     assertThat(esSixClassFoo).isInstanceOf(JSFunction.class);

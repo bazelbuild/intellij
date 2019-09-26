@@ -118,8 +118,7 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
     if (pathResolver == null) {
       return null;
     }
-    return resolvedToDts
-        .stream()
+    return resolvedToDts.stream()
         .map(e -> resolveToJs(pathResolver, lfs, psiManager, isConstructor, e))
         .flatMap(Collection::stream)
         .toArray(PsiElement[]::new);
@@ -159,33 +158,28 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
     if (dtsElement == null) {
       return ImmutableList.of();
     }
-    PsiFile dtsFile = dtsElement.getContainingFile();
-    if (!TypeScriptUtil.isDefinitionFile(dtsFile)) {
+    if (!TypeScriptUtil.isDefinitionFile(dtsElement.getContainingFile())) {
       return ImmutableList.of();
     }
     String qualifiedName = getDtsQualifiedName((JSQualifiedNamedElement) dtsElement);
     if (qualifiedName == null) {
       return ImmutableList.of();
     }
-    Collection<JSFile> jsFiles =
-        jsFilesFromDtsFile(pathResolver, lfs, psiManager, (JSFile) dtsFile);
+    Collection<JSFile> jsFiles = jsFilesFromDtsSymbol(pathResolver, lfs, psiManager, dtsElement);
     if (jsFiles.isEmpty()) {
       return ImmutableList.of();
     }
     if (dtsElement instanceof TypeScriptModule) {
       String moduleName = getModuleName(qualifiedName);
       return isConstructor
-          ? findChildrenOfType(jsFiles, JSFunction.class)
-              .stream()
+          ? findChildrenOfType(jsFiles, JSFunction.class).stream()
               .filter(e -> isConstructorWithName(e, moduleName))
               .collect(Collectors.toList())
-          : getModuleDeclarations(jsFiles)
-              .stream()
+          : getModuleDeclarations(jsFiles).stream()
               .filter(a -> Objects.equals(a.getStringValue(), moduleName))
               .collect(Collectors.toList());
     }
-    return getResolveCandidates(dtsElement, jsFiles)
-        .stream()
+    return getResolveCandidates(dtsElement, jsFiles).stream()
         .filter(e -> Objects.equals(getJsQualifiedName(e), qualifiedName))
         .collect(Collectors.toList());
   }
@@ -201,13 +195,11 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
           .collect(Collectors.toList());
     } else if (dtsElement instanceof TypeScriptFunction) {
       TypeScriptFunction dtsFunction = (TypeScriptFunction) dtsElement;
-      return findChildrenOfType(jsFiles, JSFunction.class)
-          .stream()
+      return findChildrenOfType(jsFiles, JSFunction.class).stream()
           .filter(f -> staticModifierEquals(f, dtsFunction))
           .collect(Collectors.toList());
     } else if (dtsElement instanceof TypeScriptEnum) {
-      return findChildrenOfType(jsFiles, JSObjectLiteralExpression.class)
-          .stream()
+      return findChildrenOfType(jsFiles, JSObjectLiteralExpression.class).stream()
           .map(PsiElement::getParent)
           .filter(JSAssignmentExpression.class::isInstance)
           .map(PsiElement::getFirstChild)
@@ -220,14 +212,56 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
     return ImmutableList.of();
   }
 
-  private static final Pattern GENERATED_FROM_JS_COMMENT =
+  /**
+   * Comment above each symbol declaring their source .js file. E.g.,
+   *
+   * <pre>// Generated from foo.bar.js</pre>
+   *
+   * This is necessary after the change to split .jspb.js file into multiple separate files. Each
+   * symbol within the same .d.ts file could come from different .jspb.js files.
+   */
+  private static final Pattern SYMBOL_GENERATED_FROM_JS_COMMENT =
+      Pattern.compile("^// Generated from (.*\\.js)$");
+
+  /**
+   * Comment at the top of a .d.ts file listing exported symbols and the single .js file that
+   * generated the .d.ts file. E.g.,
+   *
+   * <pre>//!! Processing provides [Foo,Bar] from input foo.bar.js</pre>
+   *
+   * @deprecated no longer used on recent CLs.
+   */
+  @Deprecated
+  private static final Pattern FILE_GENERATED_FROM_JS_COMMENT =
       Pattern.compile("^//!! Processing provides \\[.*] from input (.*\\.js)$");
+
+  private static Collection<JSFile> jsFilesFromDtsSymbol(
+      ExecutionRootPathResolver pathResolver,
+      LocalFileSystem lfs,
+      PsiManager psiManager,
+      PsiElement dtsElement) {
+    while (dtsElement != null && !(dtsElement instanceof PsiFile)) {
+      PsiElement comment =
+          PsiTreeUtil.findSiblingBackward(dtsElement, JSTokenTypes.END_OF_LINE_COMMENT, null);
+      if (comment != null) {
+        Matcher matcher = SYMBOL_GENERATED_FROM_JS_COMMENT.matcher(comment.getText());
+        if (matcher.find()) {
+          JSFile file = pathToJsFile(pathResolver, lfs, psiManager, matcher.group(1));
+          return file != null ? ImmutableList.of(file) : ImmutableList.of();
+        }
+      }
+      dtsElement = dtsElement.getParent();
+    }
+    return dtsElement != null
+        ? jsFilesFromDtsFile(pathResolver, lfs, psiManager, dtsElement.getContainingFile())
+        : ImmutableList.of();
+  }
 
   private static Collection<JSFile> jsFilesFromDtsFile(
       ExecutionRootPathResolver pathResolver,
       LocalFileSystem lfs,
       PsiManager psiManager,
-      JSFile dtsFile) {
+      PsiFile dtsFile) {
     ImmutableList.Builder<JSFile> jsFiles = ImmutableList.builder();
     for (PsiElement child : dtsFile.getChildren()) {
       if (child instanceof PsiWhiteSpace) {
@@ -238,15 +272,10 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
               .filter(PsiComment.class::isInstance)
               .map(PsiComment.class::cast)
               .map(PsiComment::getText)
-              .map(GENERATED_FROM_JS_COMMENT::matcher)
+              .map(FILE_GENERATED_FROM_JS_COMMENT::matcher)
               .filter(Matcher::find)
               .map(m -> m.group(1))
-              .map(ExecutionRootPath::new)
-              .map(pathResolver::resolveExecutionRootPath)
-              .map(lfs::findFileByIoFile)
-              .map(psiManager::findFile)
-              .filter(JSFile.class::isInstance)
-              .map(JSFile.class::cast)
+              .map(path -> pathToJsFile(pathResolver, lfs, psiManager, path))
               .orElse(null);
       if (jsFile != null) {
         jsFiles.add(jsFile);
@@ -255,6 +284,22 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
       }
     }
     return jsFiles.build();
+  }
+
+  @Nullable
+  private static JSFile pathToJsFile(
+      ExecutionRootPathResolver pathResolver,
+      LocalFileSystem lfs,
+      PsiManager psiManager,
+      String path) {
+    return Optional.of(path)
+        .map(ExecutionRootPath::new)
+        .map(pathResolver::resolveExecutionRootPath)
+        .map(lfs::findFileByIoFile)
+        .map(psiManager::findFile)
+        .filter(JSFile.class::isInstance)
+        .map(JSFile.class::cast)
+        .orElse(null);
   }
 
   /**
@@ -317,8 +362,7 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
   }
 
   private static Collection<JSLiteralExpression> getModuleDeclarations(Collection<JSFile> jsFiles) {
-    return findChildrenOfType(jsFiles, JSCallExpression.class)
-        .stream()
+    return findChildrenOfType(jsFiles, JSCallExpression.class).stream()
         .filter(
             call -> {
               String method = call.getMethodExpression().getText();
@@ -336,8 +380,7 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
 
   private static <T extends PsiElement> Collection<T> findChildrenOfType(
       Collection<JSFile> jsFiles, Class<? extends T> aClass) {
-    return jsFiles
-        .stream()
+    return jsFiles.stream()
         .map(f -> PsiTreeUtil.findChildrenOfType(f, aClass))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
