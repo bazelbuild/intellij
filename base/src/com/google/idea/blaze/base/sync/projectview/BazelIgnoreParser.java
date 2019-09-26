@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
 import javax.annotation.Nullable;
 
 public class BazelIgnoreParser {
@@ -17,20 +18,24 @@ public class BazelIgnoreParser {
   Logger logger = Logger.getInstance(BazelIgnoreParser.class);
 
   @Nullable
-  private final VirtualFile bazelIgnoreFile;
+  private final File bazelIgnoreFile;
 
   public BazelIgnoreParser(WorkspaceRoot workspaceRoot) {
-    this.bazelIgnoreFile =
-        VfsUtils.resolveVirtualFile(
-            workspaceRoot.fileForPath(new WorkspacePath(".bazelignore")));
+    this.bazelIgnoreFile = workspaceRoot.fileForPath(new WorkspacePath(".bazelignore"));
   }
 
   public ImmutableList<WorkspacePath> getIgnoredPaths() {
-    if (bazelIgnoreFile == null || !bazelIgnoreFile.exists()) {
+    VirtualFile vf = VfsUtils.resolveVirtualFile(bazelIgnoreFile);
+    if (vf == null || !vf.exists()) {
       return ImmutableList.of();
     }
 
-    Document document = FileDocumentManager.getInstance().getDocument(bazelIgnoreFile);
+    Document document = FileDocumentManager.getInstance().getDocument(vf);
+    if (document == null || document.getImmutableCharSequence().length() == 0)  {
+      return ImmutableList.of();
+
+    }
+
     ImmutableList.Builder<WorkspacePath> ignoredPaths = ImmutableList.builder();
 
     for (CharSequence cs : Splitter.on("\n").split(document.getImmutableCharSequence())) {
