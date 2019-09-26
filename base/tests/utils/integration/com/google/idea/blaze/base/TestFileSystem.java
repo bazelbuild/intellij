@@ -17,6 +17,7 @@ package com.google.idea.blaze.base;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -37,7 +38,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -218,7 +218,7 @@ public class TestFileSystem {
     public List<String> readAllLines(File file) throws IOException {
       VirtualFile vf = getVirtualFile(file);
       // Assume UTF-8 here for test-only purposes.
-      String text = new String(vf.contentsToByteArray(), Charset.forName("UTF-8"));
+      String text = new String(vf.contentsToByteArray(), UTF_8);
 
       ImmutableList.Builder<String> lines = ImmutableList.builder();
       if (text.length() == 0) {
