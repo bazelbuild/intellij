@@ -28,8 +28,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2019_1",
     build_file = "@//intellij_platform_sdk:BUILD.ue",
-    sha256 = "df6a1e6fbf77578b47163b96c83bc90a05bf043847c6e7c0bf285fe2e77d71e4",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.1.2/ideaIU-2019.1.2.zip",
+    sha256 = "bf8a48166400830c1b5fa9c0967b27eb97d6eb04dd7463b48499589fc2c4ceed",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.1.4/ideaIU-2019.1.4.zip",
 )
 
 # The plugin api for IntelliJ UE 2019.2. This is required to run UE-specific
@@ -69,8 +69,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "378002fa79623341a31bd3ac003506f04ac950d43313c8d413c6f0763826eadd",
-    url = "https://plugins.jetbrains.com/files/7322/60398/python-ce-2019.1.191.6707.7.zip",
+    sha256 = "10ccbc5f9ca38f9f9516d48c976d7b1001ff58538865130bcb51ec925c8b22f5",
+    url = "https://plugins.jetbrains.com/files/7322/65660/python-ce-2019.1.191.8026.25.zip",
 )
 
 # Python plugin for IntelliJ CE 2019.2. Required at compile-time for python-specific features.
@@ -97,8 +97,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "815f59dcd5f7db019e224cdb85e67db99c8d5deb99721a73a36f710bda64be49",
-    url = "https://plugins.jetbrains.com/files/9568/62411/intellij-go-191.7141.44.205.zip",
+    sha256 = "bf545eed82e8bc586f4d5fa1eb2c8139a7fe973d5f7e88fff58496c58c422e41",
+    url = "https://plugins.jetbrains.com/files/9568/64332/intellij-go-191.7479.19.213.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
