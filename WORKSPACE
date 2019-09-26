@@ -11,7 +11,7 @@ http_archive(
     name = "intellij_ce_2019_1",
     build_file = "@//intellij_platform_sdk:BUILD.idea",
     sha256 = "a1dfecd42b23e0076b3f40c2e318dc189eff264eca2eaac4d0c1c8cde4e4a39d",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2019.1.4/ideaIC-2019.1.4.zip"
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2019.1.4/ideaIC-2019.1.4.zip",
 )
 
 # The plugin api for IntelliJ 2019.2. This is required to build IJwB,
@@ -19,8 +19,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2019_2",
     build_file = "@//intellij_platform_sdk:BUILD.idea192",
-    sha256 = "9567f2a88c9d4c4a0495208914f07bd2dace78dad0fee31fb9f8a4adab3cc437",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2019.2/ideaIC-2019.2.zip",
+    sha256 = "fe2fc87fb4db61bd6a3b1b5ce706783ca82adf14568035fc9785b0f336063df1",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2019.2.3/ideaIC-2019.2.3.zip",
 )
 
 # The plugin api for IntelliJ UE 2019.1. This is required to run UE-specific
