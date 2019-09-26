@@ -28,7 +28,6 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -182,14 +181,10 @@ class GenerateDeployableJarTaskProvider
         throw new ExecutionException(e);
       }
 
-      ImmutableList<OutputArtifact> deployJars =
-          buildResultHelper.getBuildArtifactsForTarget(
-              target.withTargetName(target.targetName() + "_deploy.jar"), file -> true);
-      ImmutableList<OutputArtifact> regularFiles =
-          buildResultHelper.getBuildArtifactsForTarget(target, file -> true);
       List<File> outputs =
           BlazeArtifact.getLocalFiles(
-              deployJars);
+              buildResultHelper.getBuildArtifactsForTarget(
+                  target.withTargetName(target.targetName() + "_deploy.jar"), file -> true));
       if (outputs.isEmpty()) {
         throw new ExecutionException(
             String.format("Failed to find deployable jar when building %s", target));
