@@ -36,7 +36,6 @@ import com.intellij.lang.javascript.psi.JSLiteralExpression;
 import com.intellij.lang.javascript.psi.JSProperty;
 import com.intellij.psi.PsiElement;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -47,7 +46,6 @@ import org.junit.runners.JUnit4;
  * <p>Handles .d.ts files generated from old CLs. Uses FILE_GENERATED_FROM_JS_COMMENT.
  */
 @RunWith(JUnit4.class)
-@Ignore("Temporarily disable: broken with latest 2019.2 update.")
 public class OldBlazeTypescriptGotoDeclarationHandlerTest extends BlazeIntegrationTestCase {
   @Before
   public void init() {

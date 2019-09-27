@@ -354,11 +354,18 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
   }
 
   private static String getModuleName(String qualifiedName) {
-    String moduleGoog = "module:goog:";
-    return qualifiedName.startsWith(moduleGoog)
-        ? qualifiedName.substring(moduleGoog.length())
-        // for nested namespaces
-        : qualifiedName;
+    if (qualifiedName.startsWith("module:")) {
+      qualifiedName = qualifiedName.substring("module:".length());
+    }
+    if (qualifiedName.startsWith("\"")
+        && qualifiedName.length() >= 2
+        && qualifiedName.endsWith("\"")) {
+      qualifiedName = qualifiedName.substring(1, qualifiedName.length() - 1);
+    }
+    if (qualifiedName.startsWith("goog:")) {
+      qualifiedName = qualifiedName.substring("goog:".length());
+    }
+    return qualifiedName;
   }
 
   private static Collection<JSLiteralExpression> getModuleDeclarations(Collection<JSFile> jsFiles) {
