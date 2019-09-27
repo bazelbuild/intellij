@@ -101,6 +101,7 @@ public final class ImportRoots {
       if (buildSystem == BuildSystem.Bazel && hasWorkspaceRoot(rootDirectories)) {
         excludeBuildSystemArtifacts();
         excludeProjectDataSubDirectory();
+        excludeBazelIgnoredPaths();
       }
       ImmutableSet<WorkspacePath> minimalExcludes =
           WorkspacePathUtil.calculateMinimalWorkspacePaths(excludeDirectoriesBuilder.build());
@@ -131,6 +132,10 @@ public final class ImportRoots {
 
     private void excludeProjectDataSubDirectory() {
       excludeDirectoriesBuilder.add(new WorkspacePath(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY));
+    }
+
+    private void excludeBazelIgnoredPaths() {
+      excludeDirectoriesBuilder.addAll(new BazelIgnoreParser(workspaceRoot).getIgnoredPaths());
     }
 
     private static boolean hasWorkspaceRoot(ImmutableCollection<WorkspacePath> rootDirectories) {

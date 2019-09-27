@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.base.sync.projectview.BazelIgnoreParser;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import java.util.stream.Collectors;
 import org.junit.Test;
@@ -231,5 +232,42 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
             .build();
 
     assertThat(importRoots.containsWorkspacePath(new WorkspacePath("root/a/b"))).isFalse();
+  }
+
+  @Test
+  public void testBazelIgnoreParser_worksWithoutBazelIgnore() throws Exception {
+    BazelIgnoreParser parser = new BazelIgnoreParser(workspaceRoot);
+    assertThat(parser.getIgnoredPaths()).isEmpty();
+  }
+
+  @Test
+  public void testBazelIgnoreParser_worksWithEmptyBazelIgnore() throws Exception {
+    workspace.createFile(new WorkspacePath(".bazelignore"), "");
+    BazelIgnoreParser parser = new BazelIgnoreParser(workspaceRoot);
+    assertThat(parser.getIgnoredPaths()).isEmpty();
+  }
+
+  @Test
+  public void testBazelIgnoreParser_doesNotCrashWithMalformedBazelIgnore() throws Exception {
+    // directories cannot be absolute and cannot contain ":"
+    workspace.createFile(new WorkspacePath(".bazelignore"), "/mal:formed");
+    BazelIgnoreParser parser = new BazelIgnoreParser(workspaceRoot);
+    assertThat(parser.getIgnoredPaths()).isEmpty();
+  }
+
+  @Test
+  public void testBazelIgnoreParser_excludesIgnoredPath() throws Exception {
+    workspace.createFile(new WorkspacePath(".bazelignore"), "root0");
+    BazelIgnoreParser parser = new BazelIgnoreParser(workspaceRoot);
+    assertThat(parser.getIgnoredPaths()).containsExactly(new WorkspacePath("root0"));
+  }
+
+  @Test
+  public void testBazelIgnoreParser_excludesMultipleIgnoredPaths() throws Exception {
+    workspace.createFile(new WorkspacePath(".bazelignore"), "root0\nroot1/dir/");
+    BazelIgnoreParser parser = new BazelIgnoreParser(workspaceRoot);
+    assertThat(parser.getIgnoredPaths())
+        .containsExactly(
+            new WorkspacePath("root0"), new WorkspacePath(new WorkspacePath("root1"), "dir"));
   }
 }

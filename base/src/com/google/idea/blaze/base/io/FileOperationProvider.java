@@ -20,6 +20,7 @@ import com.intellij.openapi.components.ServiceManager;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /** File system operations. Mocked out in tests involving file manipulations. */
@@ -76,5 +77,9 @@ public class FileOperationProvider {
 
   public void deleteRecursively(File file) throws IOException {
     MoreFiles.deleteRecursively(file.toPath());
+  }
+
+  public List<String> readAllLines(File file) throws IOException {
+    return Files.readAllLines(file.toPath());
   }
 }

@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -95,6 +96,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
+  private static class MockFileOperationProvider extends FileOperationProvider {}
+
   private static final String FAKE_WORKSPACE_ROOT = "/root";
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File(FAKE_WORKSPACE_ROOT));
 
@@ -123,6 +126,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   @Override
   @SuppressWarnings("FunctionalInterfaceClash") // False positive on getDeclaredPackageOfJavaFile.
   protected void initTest(Container applicationServices, Container projectServices) {
+    applicationServices.register(FileOperationProvider.class, new MockFileOperationProvider());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
 
     ExtensionPointImpl<Kind.Provider> ep =
