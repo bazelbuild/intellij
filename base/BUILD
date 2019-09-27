@@ -199,6 +199,8 @@ java_library(
 java_library(
     name = "dep_finder_api",
     srcs = [
+        "src/com/google/idea/blaze/base/dependencies/MissingDependencyData.java",
+        "src/com/google/idea/blaze/base/dependencies/MissingDependencyTargetProvider.java",
         "src/com/google/idea/blaze/base/dependencies/SourceToTargetProvider.java",
         "src/com/google/idea/blaze/base/dependencies/TargetInfo.java",
         "src/com/google/idea/blaze/base/dependencies/TestSize.java",
@@ -212,6 +214,7 @@ java_library(
         ":proto_wrapper",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//third_party/auto_value",
     ],
 )
 
