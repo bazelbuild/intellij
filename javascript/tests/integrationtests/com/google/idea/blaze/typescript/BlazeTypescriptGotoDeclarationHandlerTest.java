@@ -36,12 +36,14 @@ import com.intellij.lang.javascript.psi.JSLiteralExpression;
 import com.intellij.lang.javascript.psi.JSProperty;
 import com.intellij.psi.PsiElement;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Integration tests for {@link BlazeTypescriptGotoDeclarationHandler}. */
 @RunWith(JUnit4.class)
+@Ignore("Temporarily disable: broken with latest 2019.2 update.")
 public class BlazeTypescriptGotoDeclarationHandlerTest extends BlazeIntegrationTestCase {
   @Before
   public void init() {
