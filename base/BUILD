@@ -68,6 +68,7 @@ java_library(
     name = "label_api",
     srcs = [
         "src/com/google/idea/blaze/base/ideinfo/ArtifactLocation.java",
+        "src/com/google/idea/blaze/base/ideinfo/TargetKey.java",
         "src/com/google/idea/blaze/base/model/primitives/InvalidTargetException.java",
         "src/com/google/idea/blaze/base/model/primitives/Kind.java",
         "src/com/google/idea/blaze/base/model/primitives/Label.java",
@@ -199,6 +200,7 @@ java_library(
 java_library(
     name = "dep_finder_api",
     srcs = [
+        "src/com/google/idea/blaze/base/dependencies/DirectDependencyTargetProvider.java",
         "src/com/google/idea/blaze/base/dependencies/SourceToTargetProvider.java",
         "src/com/google/idea/blaze/base/dependencies/TargetInfo.java",
         "src/com/google/idea/blaze/base/dependencies/TestSize.java",
@@ -241,6 +243,22 @@ java_library(
     neverlink = 1,
     deps = [
         "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+# neverlink library exposed so other plugins can provide dependency information
+java_library(
+    name = "target_map_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/targetmaps/SourceToTargetMap.java",
+    ],
+    neverlink = 1,
+    exports = [
+        ":label_api",
+    ],
+    deps = [
+        ":label_api",
         "//intellij_platform_sdk:plugin_api",
     ],
 )
@@ -288,6 +306,7 @@ intellij_plugin(
     name = "base_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":base_plugin_xml",
+    visibility = ["//javatests/com/google/devtools/intellij/g3plugins:__subpackages__"],
     deps = [":plugin_library"],
 )
 
