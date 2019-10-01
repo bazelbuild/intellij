@@ -238,15 +238,17 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
               .map(DirectoryEntry::include)
               .collect(toCollection(LinkedHashSet::new));
 
+      boolean autoDeriveTargets = autoDeriveTargets();
+
       Set<TargetExpression> newTargets =
-          autoDeriveTargets()
+          autoDeriveTargets
               ? ImmutableSet.of()
               : pathsToAdd.stream()
                   .filter(path -> !existingRoots.containsWorkspacePath(path))
                   .map(TargetExpression::allFromPackageRecursive)
                   .collect(toCollection(LinkedHashSet::new));
 
-      boolean addTargets = addTargetsCheckBox.isSelected();
+      boolean addTargets = autoDeriveTargets || addTargetsCheckBox.isSelected();
 
       ProjectViewEdit edit =
           ProjectViewEdit.editLocalProjectView(
