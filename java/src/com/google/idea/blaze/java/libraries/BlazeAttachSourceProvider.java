@@ -95,13 +95,11 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
     // Hack: When sources are requested and we have them, we attach them automatically in the
     // background.
     if (attachAutomatically.getValue()) {
-      ActionCallback callback = new ActionCallback().doWhenDone(() -> navigateToSource(psiFile));
       TransactionGuard.getInstance()
           .submitTransactionLater(
               project,
               () -> {
                 attachSources(project, blazeProjectData, librariesToAttachSourceTo);
-                callback.setDone();
               });
       return ImmutableList.of();
     }
