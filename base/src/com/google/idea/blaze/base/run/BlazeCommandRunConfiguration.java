@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -274,7 +275,12 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
 
   @Nullable
   private static TargetExpression parseTarget(@Nullable String targetPattern) {
-    return targetPattern != null ? TargetExpression.fromStringSafe(targetPattern) : null;
+    if (targetPattern == null) {
+      return null;
+    }
+    // try to canonicalize labels with implicit target names
+    Label label = LabelUtils.createLabelFromString(/* blazePackage= */ null, targetPattern);
+    return label != null ? label : TargetExpression.fromStringSafe(targetPattern);
   }
 
   /**
