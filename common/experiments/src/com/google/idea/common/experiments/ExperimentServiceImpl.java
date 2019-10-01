@@ -128,10 +128,13 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
     }
   }
 
-  private void scheduleRefresh(Duration delay) {
+  private synchronized void scheduleRefresh(Duration delay) {
     if (alarm.isDisposed()) {
       return;
     }
+    // don't allow multiple pending requests
+    alarm.cancelAllRequests();
+
     alarm.addRequest(
         () -> {
           try {
@@ -143,6 +146,11 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
           }
         },
         delay.toMillis());
+  }
+
+  @Override
+  public void notifyExperimentsChanged() {
+    scheduleRefresh(Duration.ZERO);
   }
 
   private void refreshExperiments() {

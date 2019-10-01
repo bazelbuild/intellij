@@ -94,7 +94,12 @@ final class FileExperimentLoader extends HashingExperimentLoader {
     public void after(List<? extends VFileEvent> events) {
       if (events.stream().anyMatch(this::isExperimentsFile)) {
         logger.info("Scheduling experiments file refresh on " + file);
-        ApplicationManager.getApplication().executeOnPooledThread(() -> reloadExperiments());
+        ApplicationManager.getApplication()
+            .executeOnPooledThread(
+                () -> {
+                  reloadExperiments();
+                  ExperimentService.getInstance().notifyExperimentsChanged();
+                });
       }
     }
 

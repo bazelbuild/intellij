@@ -44,4 +44,7 @@ public interface ExperimentService {
 
   /** Returns all experiments queried through this service. */
   ImmutableMap<String, Experiment> getAllQueriedExperiments();
+
+  /** Triggers an asynchronous refresh of the cached experiments. */
+  void notifyExperimentsChanged();
 }

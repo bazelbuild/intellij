@@ -80,4 +80,7 @@ public class MockExperimentService implements ExperimentService {
   public ImmutableMap<String, Experiment> getAllQueriedExperiments() {
     throw new UnsupportedOperationException("MockExperimentService#getAllQueriedExperiments");
   }
+
+  @Override
+  public void notifyExperimentsChanged() {}
 }
