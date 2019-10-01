@@ -95,18 +95,6 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
         getJavaBinFromLauncher(
             target, getLauncher(fastBuildInfo).orElse(null), getSwigdeps(fastBuildInfo)));
 
-    if (debugPort > 0) {
-      commandBuilder.addJvmArgument(
-          "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
-    }
-
-    addJvmOptsFromBlazeFlags(config, commandBuilder);
-
-    for (String flag : targetJavaInfo.jvmFlags()) {
-      commandBuilder.addJvmArgument(
-          LocationSubstitution.replaceLocations(flag, target, targetData.data()));
-    }
-
     fastBuildInfo.classpath().forEach(commandBuilder::addClasspathElement);
 
     commandBuilder.addSystemProperty(
@@ -139,6 +127,19 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
         FastBuildTestEnvironmentModifier.getModifiers(Blaze.getBuildSystem(project))) {
       modifier.modify(
           commandBuilder, config.getTargetKind(), fastBuildInfo, fastBuildInfo.blazeInfo());
+    }
+
+    // add custom jvm flags last (blaze stomps all over custom environment variables)
+    if (debugPort > 0) {
+      commandBuilder.addJvmArgument(
+          "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + debugPort);
+    }
+
+    addJvmOptsFromBlazeFlags(config, commandBuilder);
+
+    for (String flag : targetJavaInfo.jvmFlags()) {
+      commandBuilder.addJvmArgument(
+          LocationSubstitution.replaceLocations(flag, target, targetData.data()));
     }
 
     return commandBuilder.build();
