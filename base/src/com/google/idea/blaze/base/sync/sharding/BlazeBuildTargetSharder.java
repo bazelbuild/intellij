@@ -102,12 +102,6 @@ public class BlazeBuildTargetSharder {
           BuildResult.SUCCESS);
     }
 
-    List<WildcardTargetPattern> wildcardIncludes = getWildcardPatterns(targets);
-    if (wildcardIncludes.isEmpty()) {
-      return new ShardedTargetsResult(
-          new ShardedTargetList(ImmutableList.of(ImmutableList.copyOf(targets))),
-          BuildResult.SUCCESS);
-    }
     ExpandedTargetsResult expandedTargets =
         expandWildcardTargets(
             project, context, workspaceRoot, projectViewSet, pathResolver, targets);
