@@ -104,6 +104,9 @@ public class BlazeAndroidTestRunConfigurationHandler
     }
     TargetMap targetMap = projectData.getTargetMap();
     TargetIdeInfo instrumentationTest = targetMap.get(TargetKey.forPlainTarget(label));
+    if (instrumentationTest == null) {
+      return null;
+    }
     for (Dependency dependency : instrumentationTest.getDependencies()) {
       TargetIdeInfo dependencyInfo = targetMap.get(dependency.getTargetKey());
       // Should exist via test_app attribute, and be unique.
