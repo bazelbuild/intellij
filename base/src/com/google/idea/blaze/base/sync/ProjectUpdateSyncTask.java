@@ -62,6 +62,7 @@ import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.transactions.Transactions;
 import com.google.idea.sdkcompat.openapi.SaveFromInsideWriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -311,6 +312,12 @@ final class ProjectUpdateSyncTask {
         });
   }
 
+  private void createSdks(BlazeProjectData blazeProjectData) {
+    for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
+      syncPlugin.createSdks(project, blazeProjectData);
+    }
+  }
+
   private boolean updateProject(
       BlazeContext parentContext,
       ProjectViewSet projectViewSet,
@@ -322,6 +329,8 @@ final class ProjectUpdateSyncTask {
         parentContext,
         context -> {
           context.push(new TimingScope("UpdateProjectStructure", EventType.Other));
+          context.output(new StatusOutput("Initializing project SDKs..."));
+          ApplicationManager.getApplication().invokeAndWait(() -> createSdks(newBlazeProjectData));
           context.output(new StatusOutput("Committing project structure..."));
 
           try {

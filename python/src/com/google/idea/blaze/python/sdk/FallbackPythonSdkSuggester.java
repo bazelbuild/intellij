@@ -24,21 +24,19 @@ import com.google.idea.blaze.python.sync.PySdkSuggester;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import java.io.File;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /** A PySdkSuggester that returns the most recent system interpreter for a given Python version. */
-public final class FallbackPythonSdkSuggester implements PySdkSuggester {
+public final class FallbackPythonSdkSuggester extends PySdkSuggester {
 
   /** Initializes SDK information on first blaze project open */
   static class SdkInitializer implements StartupActivity, DumbAware {
@@ -82,26 +80,19 @@ public final class FallbackPythonSdkSuggester implements PySdkSuggester {
 
   @Nullable
   @Override
-  public Sdk suggestSdk(Project project, PythonVersion version) {
+  protected String suggestPythonHomePath(Project project, PythonVersion version) {
     if (!Blaze.isBlazeProject(project)) {
       return null;
     }
 
-    if (!sdks.get().containsKey(version)) {
+    ImmutableMap<PythonVersion, String> sdkMap = sdks.get();
+
+    String homePath = sdkMap.get(version);
+    if (!FileUtil.exists(homePath)) {
       return null;
     }
 
-    String homePath = sdks.get().get(version);
-    if (!new File(homePath).exists()) {
-      return null;
-    }
-
-    Sdk sdk = PySdkSuggester.findPythonSdk(sdks.get().get(version));
-    if (sdk != null) {
-      return sdk;
-    }
-
-    return SdkConfigurationUtil.createAndAddSDK(homePath, PythonSdkType.getInstance());
+    return homePath;
   }
 
   @Override

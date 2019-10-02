@@ -223,7 +223,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       facetModel.removeFacet(facet);
     }
 
-    Sdk sdk = getOrCreatePythonSdk(project, blazeProjectData, context);
+    Sdk sdk = getPythonSdk(project, blazeProjectData, context);
     if (sdk == null) {
       String fixDirections =
           "Configure a suitable Python Interpreter for the module \""
@@ -305,6 +305,22 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
   }
 
   @Override
+  public void createSdks(Project project, BlazeProjectData blazeProjectData) {
+    List<PythonVersion> compatVersions = suggestPythonVersions(blazeProjectData);
+    if (compatVersions.isEmpty()) {
+      compatVersions = DEFAULT_PYTHON_VERSIONS;
+    }
+
+    for (PythonVersion version : compatVersions) {
+      for (PySdkSuggester suggester : PySdkSuggester.EP_NAME.getExtensions()) {
+        if (suggester.createSdkIfNeeded(project, version)) {
+          return;
+        }
+      }
+    }
+  }
+
+  @Override
   public void updateProjectSdk(
       Project project,
       BlazeContext context,
@@ -319,7 +335,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
     if (isValidPythonSdk(currentSdk)) {
       return;
     }
-    Sdk sdk = getOrCreatePythonSdk(project, blazeProjectData, context);
+    Sdk sdk = getPythonSdk(project, blazeProjectData, context);
     if (sdk != null) {
       setProjectSdk(project, sdk);
     }
@@ -412,7 +428,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
   }
 
   @Nullable
-  private static Sdk getOrCreatePythonSdk(
+  private static Sdk getPythonSdk(
       Project project, BlazeProjectData blazeProjectData, BlazeContext context) {
     List<PythonVersion> compatVersions = suggestPythonVersions(blazeProjectData);
 

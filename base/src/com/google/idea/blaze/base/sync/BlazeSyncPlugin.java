@@ -129,6 +129,13 @@ public interface BlazeSyncPlugin {
     return ImmutableSetMultimap.of();
   }
 
+  /**
+   * Initializes any structures the plugin may need to outside of a write action. The API for Python
+   * SDK creation needs to be invoked from EDT outside of a write action, and this method will be
+   * invoked in that context.
+   */
+  default void createSdks(Project project, BlazeProjectData blazeProjectData) {}
+
   /** Updates the sdk for the project. */
   default void updateProjectSdk(
       Project project,

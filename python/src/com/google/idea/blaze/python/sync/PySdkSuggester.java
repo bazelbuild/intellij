@@ -19,24 +19,61 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonVers
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import javax.annotation.Nullable;
 
 /** Extension to allow suggestion of Python SDK to use for a particular project */
-public interface PySdkSuggester {
-  ExtensionPointName<PySdkSuggester> EP_NAME =
+public abstract class PySdkSuggester {
+
+  public static final ExtensionPointName<PySdkSuggester> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.PySdkSuggester");
 
   /**
-   * Suggests an existing Python SDK to use for the given project, otherwise creates an appropriate
-   * one, adds it to the registered SDK list and returns it. If it doesn't know a specific SDK to
-   * use, return null.
+   * Suggests the home path of a python interpreter to use for the given project and python version.
+   *
+   * @param project the project to suggest for
+   * @param version the python version for
+   * @return the String path of a compatible python interpreter appropriate for the project, or null
+   */
+  @Nullable
+  protected abstract String suggestPythonHomePath(Project project, PythonVersion version);
+
+  /**
+   * Registered Python SDK to use for the given project and python version if this PySdkSuggester
+   * can provide one.
+   *
+   * @param project the project to register an SDK for
+   * @param version the python version to register an SDK for
+   */
+  boolean createSdkIfNeeded(Project project, PythonVersion version) {
+    String homePath = suggestPythonHomePath(project, version);
+    if (homePath == null) {
+      return false;
+    }
+    Sdk sdk = findPythonSdk(homePath);
+    if (sdk != null) {
+      return false;
+    }
+    return SdkConfigurationUtil.createAndAddSDK(homePath, PythonSdkType.getInstance()) != null;
+  }
+
+  /**
+   * Suggests a registered Python SDK to use for the given project. If the function cannot find a
+   * compatible registered SDK, it will return null.
    *
    * @param project the project to suggest the SDK for
    * @param version the python version to suggest an SDK for
    * @return an SDK appropriate for the project, or null
    */
-  Sdk suggestSdk(Project project, PythonVersion version);
+  @Nullable
+  Sdk suggestSdk(Project project, PythonVersion version) {
+    String homePath = suggestPythonHomePath(project, version);
+    if (homePath == null) {
+      return null;
+    }
+    return findPythonSdk(homePath);
+  }
 
   /**
    * This is a mechanism allowing the plugin to migrate the suggested SDK. If a project/facet's
@@ -45,11 +82,11 @@ public interface PySdkSuggester {
    * @param sdk an SDK to check for deprecatedness
    * @return a boolean indicated whether sdk is considered deprecated
    */
-  boolean isDeprecatedSdk(Sdk sdk);
+  public abstract boolean isDeprecatedSdk(Sdk sdk);
 
   /** Utility method for PySdkSuggester to resolve a homepath to a registered SDK. */
   @Nullable
-  static Sdk findPythonSdk(String homePath) {
+  private static Sdk findPythonSdk(String homePath) {
     return PythonSdkType.getAllSdks().stream()
         .filter(sdk -> homePath.equals(sdk.getHomePath()))
         .findAny()
