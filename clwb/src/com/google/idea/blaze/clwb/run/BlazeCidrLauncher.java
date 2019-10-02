@@ -297,13 +297,13 @@ public final class BlazeCidrLauncher extends CidrLauncher {
    */
   private Optional<String> convertBlazeTestFilterToExecutableFlag() {
     String testArgument = getTestFilterArgument();
-    String testFilter = handlerState.getTestFilter();
+    String testFilter = handlerState.getTestFilterFlag();
 
     if (testFilter == null) {
       return Optional.empty();
     }
 
-    return Optional.of(testArgument + "=" + testFilter);
+    return Optional.of(testFilter.replaceFirst(BlazeFlags.TEST_FILTER, testArgument));
   }
 
   @Override

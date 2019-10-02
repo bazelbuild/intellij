@@ -99,7 +99,7 @@ public interface RunConfigurationContext {
         }
         return Objects.equals(handlerState.getCommandState().getCommand(), command)
             && Objects.equals(config.getTarget(), target)
-            && handlerState.getTestFilter() == null;
+            && handlerState.getTestFilterFlag() == null;
       }
     };
   }

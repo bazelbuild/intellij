@@ -141,7 +141,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
 
     @Nullable
     private String getTestFilter() {
-      return state.getTestFilter();
+      return state.getTestFilterForExternalProcesses();
     }
 
     GoApplicationRunningState toNativeState(ExecutionEnvironment env) throws ExecutionException {

@@ -90,7 +90,7 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
             getConfiguration(),
             getFastBuildInfo(),
             outputFile,
-            handlerState.getTestFilter(),
+            handlerState.getTestFilterForExternalProcesses(),
             debugPort);
 
     Stopwatch timer = Stopwatch.createStarted();

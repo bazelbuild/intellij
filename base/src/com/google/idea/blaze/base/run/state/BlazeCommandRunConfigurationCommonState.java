@@ -82,9 +82,20 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
     return null;
   }
 
+  /**
+   * The actual test filter value intended to be passed directly to external processes or
+   * environment variables.
+   *
+   * <p>Unlike {@link #getTestFilterFlag()}, this is not a flag intended to be used on the command
+   * line, so the shell-escaping/quoting has been removed.
+   */
   @Nullable
-  public String getTestFilter() {
-    String testFilterFlag = getTestFilterFlag();
+  public String getTestFilterForExternalProcesses() {
+    String testFilterFlag =
+        getBlazeFlagsState().getFlagsForExternalProcesses().stream()
+            .filter(flag -> flag.startsWith(BlazeFlags.TEST_FILTER))
+            .findFirst()
+            .orElse(null);
     if (testFilterFlag == null) {
       return null;
     }
