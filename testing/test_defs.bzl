@@ -183,6 +183,7 @@ def intellij_integration_test_suite(
         size = size,
         srcs = srcs + [suite_class_name],
         data = data,
+        tags = ["notsan"],
         jvm_flags = jvm_flags,
         test_class = suite_class,
         runtime_deps = runtime_deps,
