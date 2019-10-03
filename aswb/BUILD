@@ -121,8 +121,6 @@ intellij_integration_test_suite(
             "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",
             "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
             "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
-            "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
-            "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
         ],
     ),
     required_plugins = "com.google.idea.bazel.aswb",
