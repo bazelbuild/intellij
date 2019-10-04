@@ -39,6 +39,7 @@ public class RunConfigurationSerializer {
 
   private static final Logger logger = Logger.getInstance(RunConfigurationSerializer.class);
 
+  @VisibleForTesting static final String TEMPLATE_RUN_CONFIG_NAME_PREFIX = "Imported Template for ";
   @VisibleForTesting static final String WORKSPACE_ROOT_VARIABLE_NAME = "WORKSPACE_ROOT";
 
   private static void setWorkspacePathVariable(Project project) {
@@ -81,9 +82,37 @@ public class RunConfigurationSerializer {
    */
   public static void loadFromXmlIgnoreExisting(Project project, File xmlFile) {
     try {
-      loadFromXmlElementIgnoreExisting(project, JDOMUtil.load(xmlFile));
+      Element runConfig = JDOMUtil.load(xmlFile);
+      // We don't support importing/exporting templates. Turn it into a normal run config.
+      normalizeTemplateRunConfig(runConfig);
+      loadFromXmlElementIgnoreExisting(project, runConfig);
     } catch (InvalidDataException | JDOMException | IOException e) {
       logger.warn("Error parsing run configuration from XML", e);
+    }
+  }
+
+  /**
+   * Turn a template run config into a normal run config by doing the following:
+   *
+   * <ul>
+   *   <li>Sets the "default" attribute to "false" on a configuration element if the "default"
+   *       attribute is present. This effectively turns a template configuration into a normal
+   *       configuration because "default=true" is what indicates a template configuration.
+   *   <li>Sets the "name" attribute to #TEMPLATE_RUN_CONFIG_NAME_PREFIX + factoryName attribute.
+   *       This makes it clear to the user what the run-config is, because or else it will just show
+   *       as "Untitled".
+   * </ul>
+   *
+   * @see com.intellij.execution.impl.RunnerAndConfigurationSettingsImplKt#TEMPLATE_FLAG_ATTRIBUTE
+   * @param element The element to be modified.
+   */
+  @VisibleForTesting
+  static void normalizeTemplateRunConfig(Element element) {
+    if (element.getAttribute("default") != null
+        && element.getAttributeValue("default").equals("true")) {
+      element.setAttribute("default", "false");
+      element.setAttribute(
+          "name", TEMPLATE_RUN_CONFIG_NAME_PREFIX + element.getAttributeValue("factoryName"));
     }
   }
 

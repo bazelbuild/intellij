@@ -31,10 +31,10 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMUtil;
 import javax.annotation.Nullable;
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -65,7 +65,7 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
 
     RunnerAndConfigurationSettings runnerAndConfigurationSettings =
         runManager.createConfiguration(
-            "Blaze Configuration", BlazeCommandRunConfigurationType.getInstance().getFactory());
+            "Bazel Configuration", BlazeCommandRunConfigurationType.getInstance().getFactory());
     runManager.addConfiguration(runnerAndConfigurationSettings, false);
     configuration =
         (BlazeCommandRunConfiguration) runnerAndConfigurationSettings.getConfiguration();
@@ -74,6 +74,53 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
   @After
   public final void doTeardown() {
     clearRunManager();
+  }
+
+  @Test
+  public void normalizeTemplateRunConfig() throws Exception {
+    Element element =
+        JDOMUtil.load(
+            "<configuration default=\"true\" type=\"BlazeCommandRunConfigurationType\"\n"
+                + "    factoryName=\"Bazel Command\">\n"
+                + "  <blaze-settings\n"
+                + "      handler-id=\"BlazeCommandGenericRunConfigurationHandlerProvider\">\n"
+                + "    <blaze-user-flag>--some_flag</blaze-user-flag>\n"
+                + "  </blaze-settings>\n"
+                + "</configuration>");
+
+    RunnerAndConfigurationSettingsImpl originalConfig =
+        new RunnerAndConfigurationSettingsImpl(runManager, null, true);
+    originalConfig.readExternal(element, false);
+    assertThat(originalConfig.isTemplate()).isTrue();
+
+    RunConfigurationSerializer.normalizeTemplateRunConfig(element);
+
+    RunnerAndConfigurationSettingsImpl normalizedConfig =
+        new RunnerAndConfigurationSettingsImpl(runManager, null, true);
+    normalizedConfig.readExternal(element, false);
+    assertThat(normalizedConfig.isTemplate()).isFalse();
+    assertThat(normalizedConfig.getName())
+        .isEqualTo(RunConfigurationSerializer.TEMPLATE_RUN_CONFIG_NAME_PREFIX + "Bazel Command");
+  }
+
+  @Test
+  public void normalizeNormalRunConfig_doNotReplaceName() throws Exception {
+    Element element =
+        JDOMUtil.load(
+            "<configuration\n"
+                + "    default=\"false\"\n"
+                + "    factoryName=\"Bazel Command\"\n"
+                + "    name=\"ExampleConfig\"\n"
+                + "    type=\"BlazeCommandRunConfigurationType\">\n"
+                + "</configuration>");
+
+    RunConfigurationSerializer.normalizeTemplateRunConfig(element);
+
+    RunnerAndConfigurationSettingsImpl normalizedConfig =
+        new RunnerAndConfigurationSettingsImpl(runManager, null, true);
+    normalizedConfig.readExternal(element, false);
+    assertThat(normalizedConfig.isTemplate()).isFalse();
+    assertThat(normalizedConfig.getName()).isEqualTo("ExampleConfig");
   }
 
   private void clearRunManager() {
