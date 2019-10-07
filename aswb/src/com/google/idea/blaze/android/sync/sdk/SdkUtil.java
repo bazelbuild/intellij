@@ -15,23 +15,37 @@
  */
 package com.google.idea.blaze.android.sync.sdk;
 
+import static com.android.SdkConstants.FN_FRAMEWORK_LIBRARY;
+import static com.android.SdkConstants.RES_FOLDER;
+
 import com.android.tools.idea.updater.configure.SdkUpdaterConfigurableProvider;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** SDK utilities. */
 public class SdkUtil {
+  private static final Logger logger = Logger.getInstance(SdkUtil.class);
+
   @Nullable
   public static AndroidSdkPlatform getAndroidSdkPlatform(BlazeProjectData blazeProjectData) {
     BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
@@ -62,5 +76,55 @@ public class SdkUtil {
         ConfigurableExtensionPointUtil.createApplicationConfigurableForProvider(
             SdkUpdaterConfigurableProvider.class);
     ShowSettingsUtil.getInstance().showSettingsDialog(null, configurable.getClass());
+  }
+
+  private static boolean containsJarAndRes(Sdk sdk) {
+    VirtualFile[] classes = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+    // A valid sdk must contains path to android.jar and res
+    if (classes.length < 2) {
+      return false;
+    }
+    boolean hasJar = false;
+    boolean hasRes = false;
+    for (VirtualFile file : classes) {
+      if (FN_FRAMEWORK_LIBRARY.equals(file.getName())) {
+        hasJar = true;
+      }
+      if (RES_FOLDER.equals(file.getName())) {
+        hasRes = true;
+      }
+    }
+    return hasJar && hasRes;
+  }
+
+  /**
+   * Check if sdk is not null and have path to expected files (android.jar and res/). If it does not
+   * have expected content, this sdk will be removed from jdktable.
+   *
+   * @param sdk sdk to check
+   * @return true if sdk is valid
+   */
+  public static boolean checkSdkAndRemoveIfInvalid(@Nullable Sdk sdk) {
+    if (sdk == null) {
+      return false;
+    } else if (containsJarAndRes(sdk)) {
+      return true;
+    } else {
+      ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+      logger.info(
+          String.format(
+              "Some classes of Sdk %s is missing. Trying to remove and reinstall it.",
+              sdk.getName()));
+      EventLoggingService.getInstance().logEvent(SdkUtil.class, "Invalid SDK");
+
+      Application application = ApplicationManager.getApplication();
+      if (application.isDispatchThread()) {
+        WriteAction.run(() -> jdkTable.removeJdk(sdk));
+      } else {
+        UIUtil.invokeAndWaitIfNeeded(
+            (Runnable) () -> WriteAction.run(() -> jdkTable.removeJdk(sdk)));
+      }
+      return false;
+    }
   }
 }

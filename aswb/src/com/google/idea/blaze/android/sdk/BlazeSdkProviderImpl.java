@@ -20,6 +20,7 @@ import com.android.tools.idea.gradle.project.sync.setup.module.android.SdkModule
 import com.android.tools.idea.sdk.AndroidSdks;
 import com.android.tools.idea.sdk.IdeSdks;
 import com.android.tools.idea.sdk.progress.StudioLoggerProgressIndicator;
+import com.google.idea.blaze.android.sync.sdk.SdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.ui.UIUtil;
 import java.util.List;
@@ -37,8 +38,8 @@ public class BlazeSdkProviderImpl implements BlazeSdkProvider {
   @Nullable
   public Sdk findSdk(String targetHash) {
     AndroidSdks androidSdks = AndroidSdks.getInstance();
-    Sdk sdk = androidSdks.findSuitableAndroidSdk(targetHash);
-    if (sdk != null) {
+    Sdk sdk = AndroidSdks.getInstance().findSuitableAndroidSdk(targetHash);
+    if (SdkUtil.checkSdkAndRemoveIfInvalid(sdk)) {
       return sdk;
     }
     // We may have an android platform downloaded, but not created an IntelliJ SDK out of it.
