@@ -2,8 +2,6 @@
 # Description: Builds ijwb
 #
 
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -23,6 +21,8 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 optional_plugin_xml(
     name = "optional_java",
