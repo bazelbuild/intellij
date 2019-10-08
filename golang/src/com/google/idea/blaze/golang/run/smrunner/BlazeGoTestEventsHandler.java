@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
+import com.google.idea.blaze.golang.run.producers.GoTestContextProvider;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
@@ -50,15 +51,12 @@ public class BlazeGoTestEventsHandler implements BlazeTestEventsHandler {
   @Override
   public String getTestFilter(Project project, List<Location<?>> testLocations) {
     String filter =
-        testLocations.stream()
-            .map(Location::getPsiElement)
-            .filter(GoFunctionOrMethodDeclaration.class::isInstance)
-            .map(GoFunctionOrMethodDeclaration.class::cast)
-            .map(GoFunctionOrMethodDeclaration::getName)
-            .distinct()
-            .map(name -> "^" + name + "$")
-            .reduce((a, b) -> a + "|" + b)
-            .orElse(null);
+        GoTestContextProvider.getTestFilter(
+            testLocations.stream()
+                .map(Location::getPsiElement)
+                .filter(GoFunctionOrMethodDeclaration.class::isInstance)
+                .map(GoFunctionOrMethodDeclaration.class::cast)
+                .map(GoFunctionOrMethodDeclaration::getName));
     return filter != null
         ? String.format(
             "%s=%s", BlazeFlags.TEST_FILTER, BlazeParametersListUtil.encodeParam(filter))

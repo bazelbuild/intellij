@@ -16,7 +16,9 @@
 package com.google.idea.blaze.golang.run.producers;
 
 import com.goide.execution.testing.GoTestFinder;
+import com.goide.execution.testing.GoTestFunctionType;
 import com.goide.psi.GoFile;
+import com.goide.psi.GoFunctionDeclaration;
 import com.goide.psi.GoFunctionOrMethodDeclaration;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -28,9 +30,11 @@ import com.google.idea.blaze.base.run.producers.TestContextProvider;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-class GoTestContextProvider implements TestContextProvider {
+/** Provides Go test context from {@link PsiElement}. */
+public class GoTestContextProvider implements TestContextProvider {
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {
@@ -48,16 +52,32 @@ class GoTestContextProvider implements TestContextProvider {
       return null;
     }
     GoFunctionOrMethodDeclaration function = GoTestFinder.findTestFunctionInContext(element);
-    if (function == null) {
-      return TestContext.builder(/* sourceElement= */ file, ExecutorType.DEBUG_SUPPORTED_TYPES)
+    if (function != null) {
+      return TestContext.builder(/* sourceElement= */ function, ExecutorType.DEBUG_SUPPORTED_TYPES)
           .setTarget(target)
-          .setDescription(file.getName())
+          .setTestFilter("^" + function.getName() + "$")
+          .setDescription(String.format("%s#%s", file.getName(), function.getName()))
           .build();
     }
-    return TestContext.builder(/* sourceElement= */ function, ExecutorType.DEBUG_SUPPORTED_TYPES)
+    String testFilter =
+        getTestFilter(
+            ((GoFile) file)
+                .getFunctions().stream()
+                    .map(GoFunctionDeclaration::getName)
+                    .filter(name -> GoTestFunctionType.fromName(name) == GoTestFunctionType.TEST));
+    return TestContext.builder(/* sourceElement= */ file, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
-        .setTestFilter("^" + function.getName() + "$")
-        .setDescription(String.format("%s#%s", file.getName(), function.getName()))
+        .setTestFilter(testFilter)
+        .setDescription(file.getName())
         .build();
+  }
+
+  @Nullable
+  public static String getTestFilter(Stream<String> functions) {
+    return functions
+        .distinct()
+        .map(name -> "^" + name + "$")
+        .reduce((a, b) -> a + "|" + b)
+        .orElse(null);
   }
 }
