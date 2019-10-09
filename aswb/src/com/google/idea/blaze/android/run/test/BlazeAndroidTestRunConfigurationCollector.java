@@ -40,12 +40,12 @@ public class BlazeAndroidTestRunConfigurationCollector implements ProjectCompone
     return project.getComponent(BlazeAndroidTestRunConfigurationCollector.class);
   }
 
-  public void logLaunchMethod(String launchMethod) {
+  public void logLaunchMethod(String launchMethod, String executorId) {
     EventLoggingService.getInstance()
         .logEvent(
             BlazeAndroidTestRunConfigurationCollector.class,
             "BlazeAndroidTestRun",
-            ImmutableMap.of("launchMethod", launchMethod));
+            ImmutableMap.of("launchMethod", launchMethod, "executorId", executorId));
   }
 
   @Override

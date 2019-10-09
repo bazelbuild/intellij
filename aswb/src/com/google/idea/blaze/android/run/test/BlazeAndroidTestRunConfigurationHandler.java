@@ -173,7 +173,7 @@ public class BlazeAndroidTestRunConfigurationHandler
     BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);
 
     BlazeAndroidTestRunConfigurationCollector.getInstance(project)
-        .logLaunchMethod(configState.getLaunchMethod().name());
+        .logLaunchMethod(configState.getLaunchMethod().name(), env.getExecutor().getId());
     return new BlazeAndroidRunConfigurationRunner(
         module,
         runContext,
