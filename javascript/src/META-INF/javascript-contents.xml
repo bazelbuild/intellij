@@ -26,12 +26,15 @@
         serviceInterface="com.intellij.lang.typescript.tsconfig.TypeScriptConfigLibraryUpdater"
         serviceImplementation="com.google.idea.blaze.typescript.BlazeTypeScriptConfigLibraryUpdater"
         overrides="true"/>
-    <projectService serviceInterface="com.intellij.lang.typescript.tsconfig.TypeScriptConfigService"
+    <projectService
+        serviceInterface="com.intellij.lang.typescript.tsconfig.TypeScriptConfigService"
         serviceImplementation="com.google.idea.blaze.typescript.DelegatingTypeScriptConfigService"
         overrides="true"/>
     <runLineMarkerContributor
         implementationClass="com.google.idea.blaze.javascript.run.producers.BlazeJavaScriptTestRunLineMarkerContributor"
         language="JavaScript"/>
+    <editorNotificationProvider
+        implementation="com.google.idea.blaze.typescript.AddTsConfigNotificationProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
