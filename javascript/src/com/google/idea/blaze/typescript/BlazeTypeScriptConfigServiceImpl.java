@@ -40,7 +40,9 @@ import com.intellij.lang.typescript.tsconfig.TypeScriptConfigsChangedListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,6 +51,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat {
@@ -59,7 +62,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
   private final List<TypeScriptConfigsChangedListener> listeners;
 
   private ImmutableMap<VirtualFile, TypeScriptConfig> configs;
-  private int configsHash;
+  private final AtomicInteger configsHash = new AtomicInteger(Objects.hash());
 
   BlazeTypeScriptConfigServiceImpl(Project project) {
     this.project = project;
@@ -69,10 +72,17 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
 
   void clear() {
     configs = ImmutableMap.of();
-    configsHash = Objects.hash();
+    configsHash.set(Objects.hash());
   }
 
-  /** @return whether there was a change to the typescript configs. */
+  /**
+   * Checks for modifications to the tsconfig files for the project.
+   *
+   * <p>This calls {@link File#lastModified()}, so should not be called on the EDT or with a read
+   * lock.
+   *
+   * @return whether there was a change to the typescript configs.
+   */
   boolean update() {
     configs =
         parseConfigs(project).stream()
@@ -86,15 +96,12 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
         configs.values().stream()
             .map(TypeScriptConfig::getDependencies)
             .flatMap(Collection::stream)
-            .map(VirtualFile::getModificationStamp)
+            .map(VfsUtil::virtualToIoFile)
+            .map(File::lastModified)
             .max(Comparator.naturalOrder())
             .orElse(0L);
     int newConfigsHash = Objects.hash(pathHash, contentTimestamp);
-    if (configsHash != newConfigsHash) {
-      configsHash = newConfigsHash;
-      return true;
-    }
-    return false;
+    return configsHash.getAndSet(newConfigsHash) != newConfigsHash;
   }
 
   private ImmutableList<TypeScriptConfig> parseConfigs(Project project) {
