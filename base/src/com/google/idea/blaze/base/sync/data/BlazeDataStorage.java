@@ -33,13 +33,19 @@ public class BlazeDataStorage {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return ".ijwb";
     }
-    switch (ApplicationInfo.getInstance().getBuild().getProductCode()) {
+    String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
+    // see org.jetbrains.idea.devkit.projectRoots.IntelliJPlatformProduct
+    switch (productCode) {
+      case "IU": // IntelliJ IDEA
+      case "IC": // IntelliJ IDEA Community Edition
+      case "IE": // IntelliJ IDEA Educational Edition
+        return ".ijwb";
       case "CL": // CLion
         return ".clwb";
       case "AI": // Android Studio
         return ".aswb";
       default:
-        return ".ijwb";
+        return '.' + productCode.toLowerCase() + "wb";
     }
   }
 
