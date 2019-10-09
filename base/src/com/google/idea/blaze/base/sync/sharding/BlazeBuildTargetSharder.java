@@ -39,9 +39,11 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.projectview.ProjectTargetsHelper;
 import com.google.idea.blaze.base.sync.sharding.WildcardTargetExpander.ExpandedTargetsResult;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -57,6 +59,10 @@ public class BlazeBuildTargetSharder {
   private static final IntExperiment targetShardSize =
       new IntExperiment("blaze.target.shard.size", 1000);
 
+  /** If enabled, we'll automatically shard when we think it's appropriate. */
+  private static final BoolExperiment shardAutomatically =
+      new BoolExperiment("blaze.shard.automatically", true);
+
   // number of packages per blaze query shard
   static final int PACKAGE_SHARD_SIZE = 500;
 
@@ -71,24 +77,25 @@ public class BlazeBuildTargetSharder {
     }
   }
 
-  /** Returns true if sharding is already enabled for this project. */
-  static boolean shardingEnabled(Project project) {
+  /** Returns true if sharding is requested via the project view file. */
+  static boolean shardingRequested(Project project) {
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    return projectViewSet != null && shardingEnabled(projectViewSet);
+    return projectViewSet != null && shardingRequested(projectViewSet);
   }
 
-  private static boolean shardingEnabled(ProjectViewSet projectViewSet) {
+  private static boolean shardingRequested(ProjectViewSet projectViewSet) {
     return projectViewSet.getScalarValue(ShardBlazeBuildsSection.KEY).orElse(false);
   }
 
-  /** Number of individual targets per blaze build shard */
-  static int getTargetShardSize(ProjectViewSet projectViewSet) {
+  /** Number of individual targets per blaze build shard. */
+  private static int getTargetShardSize(ProjectViewSet projectViewSet) {
     return projectViewSet
         .getScalarValue(TargetShardSizeSection.KEY)
         .orElse(targetShardSize.getValue());
   }
 
   /** Expand wildcard target patterns and partition the resulting target list. */
+  @SuppressWarnings("unchecked")
   public static ShardedTargetsResult expandAndShardTargets(
       Project project,
       BlazeContext context,
@@ -96,9 +103,17 @@ public class BlazeBuildTargetSharder {
       ProjectViewSet projectViewSet,
       WorkspacePathResolver pathResolver,
       List<TargetExpression> targets) {
-    if (!shardingEnabled(projectViewSet)) {
+    if (!shardingRequested(projectViewSet)) {
+      if (!shardAutomatically.getValue()) {
+        return new ShardedTargetsResult(
+            new ShardedTargetList(ImmutableList.of(ImmutableList.copyOf(targets))),
+            BuildResult.SUCCESS);
+      }
+      // for now, automatically shard only to keep the arg length below ARG_MAX
       return new ShardedTargetsResult(
-          new ShardedTargetList(ImmutableList.of(ImmutableList.copyOf(targets))),
+          new ShardedTargetList(
+              (ImmutableList)
+                  LexicographicTargetSharder.shardTargets(targets, targetShardSize.getValue())),
           BuildResult.SUCCESS);
     }
 
@@ -211,11 +226,17 @@ public class BlazeBuildTargetSharder {
    */
   static class LexicographicTargetSharder implements BuildBatchingService {
     @Override
+    @SuppressWarnings("unchecked")
     public ImmutableList<ImmutableList<Label>> calculateTargetBatches(
         Project project, Set<Label> targets, int suggestedShardSize) {
-      List<Label> sorted =
-          ImmutableList.sortedCopyOf(Comparator.comparing(Label::toString), targets);
-      return Lists.partition(sorted, suggestedShardSize).stream()
+      return (ImmutableList) shardTargets(targets, suggestedShardSize);
+    }
+
+    private static ImmutableList<ImmutableList<? extends TargetExpression>> shardTargets(
+        Collection<? extends TargetExpression> targets, int shardSize) {
+      List<? extends TargetExpression> sorted =
+          ImmutableList.sortedCopyOf(Comparator.comparing(TargetExpression::toString), targets);
+      return Lists.partition(sorted, shardSize).stream()
           .map(ImmutableList::copyOf)
           .collect(toImmutableList());
     }

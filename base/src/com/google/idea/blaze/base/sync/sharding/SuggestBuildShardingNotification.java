@@ -17,13 +17,12 @@ package com.google.idea.blaze.base.sync.sharding;
 
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit.ProjectViewEditor;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsSection;
-import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.settings.ui.OpenProjectViewAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.intellij.notification.Notification;
@@ -46,34 +45,27 @@ public class SuggestBuildShardingNotification {
 
   /** Displays any sharding-related notifications (with quick fixes) appropriate to the OOME. */
   public static void syncOutOfMemoryError(Project project, BlazeContext context) {
-    if (BlazeBuildTargetSharder.shardingEnabled(project)) {
-      suggestReducingShardSize(project, context);
+    if (BlazeBuildTargetSharder.shardingRequested(project)) {
+      suggestIncreasingServerMemory(project, context);
     } else {
       suggestSharding(project, context);
     }
   }
 
-  private static void suggestReducingShardSize(Project project, BlazeContext context) {
-    String buildSystem = Blaze.buildSystemName(project);
+  private static void suggestIncreasingServerMemory(Project project, BlazeContext context) {
+    BuildSystem buildSystem = Blaze.getBuildSystem(project);
     String message =
         String.format(
-            "The %1$s server ran out of memory during sync. You can work around this by "
-                + "reducing the shard size in the project view file "
-                + "<a href='fix'>(click here)</a>, "
-                + "or alternatively allocate more memory to %1$s",
-            buildSystem);
-    IssueOutput.error(
-            StringUtil.stripHtml(message, true) + ". Click here to reduce the shard " + "size.")
-        .navigatable(
-            new NavigatableAdapter() {
-              @Override
-              public void navigate(boolean requestFocus) {
-                reduceShardSizeAndResync(project);
-              }
-            })
-        .submit(context);
+            "The %s server ran out of memory during sync. You can work around this by "
+                + "allocating more memory to the %s server, for example by adding this line to "
+                + "your %s",
+            buildSystem.getName(),
+            buildSystem.getName(),
+            buildSystem == BuildSystem.Bazel ? ".bazelrc" : "~/.blazerc");
 
-    showNotification(project, message, SuggestBuildShardingNotification::reduceShardSizeAndResync);
+    IssueOutput.error(StringUtil.stripHtml(message, true)).submit(context);
+
+    showNotification(project, message, p -> {});
   }
 
   private static void suggestSharding(Project project, BlazeContext context) {
@@ -116,22 +108,6 @@ public class SuggestBuildShardingNotification {
             });
     notification.setImportant(true);
     ApplicationManager.getApplication().invokeLater(() -> notification.notify(project));
-  }
-
-  /** Halve the previous shard size and resync. */
-  private static void reduceShardSizeAndResync(Project project) {
-    int previousShardSize =
-        BlazeBuildTargetSharder.getTargetShardSize(
-            ProjectViewManager.getInstance(project).getProjectViewSet());
-    editProjectViewAndResync(
-        project,
-        builder -> {
-          ScalarSection<Integer> existingSection = builder.getLast(TargetShardSizeSection.KEY);
-          builder.replace(
-              existingSection,
-              ScalarSection.builder(TargetShardSizeSection.KEY).set(previousShardSize / 2));
-          return true;
-        });
   }
 
   private static void enableShardingAndResync(Project project) {
