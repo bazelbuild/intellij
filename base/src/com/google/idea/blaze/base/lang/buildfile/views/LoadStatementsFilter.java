@@ -25,6 +25,7 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/** Creates a Structure view filter for load statements in BUILD/WORKSPACE/bzl files. */
 public class LoadStatementsFilter implements Filter {
   @NonNls public static final String ID = "SHOW_LOAD_STATEMENTS";
 
