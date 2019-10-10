@@ -22,12 +22,10 @@ import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
 import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.util.PlatformIcons;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 /** Creates a Structure view filter for load statements in BUILD/WORKSPACE/bzl files. */
 public class LoadStatementsFilter implements Filter {
-  @NonNls public static final String ID = "SHOW_LOAD_STATEMENTS";
+  public static final String ID = "SHOW_LOAD_STATEMENTS";
 
   @Override
   public boolean isVisible(TreeElement treeNode) {
@@ -39,13 +37,14 @@ public class LoadStatementsFilter implements Filter {
   }
 
   @Override
-  @NotNull
   public ActionPresentation getPresentation() {
-    return new ActionPresentationData("Show Load Statements", null, PlatformIcons.IMPORT_ICON);
+    return new ActionPresentationData(
+            /*text=*/ "Show Load Statements",
+            /*description=*/ null,
+            /*icon=*/ PlatformIcons.IMPORT_ICON);
   }
 
   @Override
-  @NotNull
   public String getName() {
     return ID;
   }

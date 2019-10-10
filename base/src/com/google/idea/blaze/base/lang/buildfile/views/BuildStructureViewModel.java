@@ -27,7 +27,6 @@ import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
@@ -49,7 +48,6 @@ public class BuildStructureViewModel extends StructureViewModelBase
     super(file, editor, element);
   }
 
-  @NotNull
   @Override
   public Filter[] getFilters() {
     return new Filter[] { new LoadStatementsFilter() };
