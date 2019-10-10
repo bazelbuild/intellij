@@ -317,13 +317,18 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   activeLanguages,
                   targets,
                   aspectStrategy);
-          combinedResult.set(
-              combinedResult.isNull() ? result : combinedResult.get().updateOutputs(result));
+          if (!result.buildResult.outOfMemory()) {
+            combinedResult.set(
+                combinedResult.isNull() ? result : combinedResult.get().updateOutputs(result));
+          }
           return result.buildResult;
         };
     BuildResult result =
         shardedTargets.runShardedCommand(project, context, progressMessage, invocation);
-    return combinedResult.isNull() ? BlazeBuildOutputs.noOutputs(result) : combinedResult.get();
+    if (combinedResult.isNull() || result.status == Status.FATAL_ERROR) {
+      return BlazeBuildOutputs.noOutputs(result);
+    }
+    return combinedResult.get();
   }
 
   /**
