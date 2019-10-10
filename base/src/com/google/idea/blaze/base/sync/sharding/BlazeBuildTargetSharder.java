@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.projectview.ProjectTargetsHelper;
 import com.google.idea.blaze.base.sync.sharding.WildcardTargetExpander.ExpandedTargetsResult;
@@ -94,40 +95,61 @@ public class BlazeBuildTargetSharder {
         .orElse(targetShardSize.getValue());
   }
 
+  private enum ShardingApproach {
+    NONE,
+    EXPAND_AND_SHARD, // first expand wildcard targets, then split into batches
+    SHARD_WITHOUT_EXPANDING, // split unexpanded wildcard targets into batches
+  }
+
+  private static ShardingApproach getShardingApproach(Project project, ProjectViewSet viewSet) {
+    if (shardingRequested(viewSet)) {
+      return ShardingApproach.EXPAND_AND_SHARD;
+    }
+    if (!shardAutomatically.getValue()) {
+      return ShardingApproach.NONE;
+    }
+    // otherwise, only expand targets before sharding (a 'complete' batching of the build) if we're
+    // syncing remotely
+    return Blaze.getBuildSystemProvider(project).syncingRemotely()
+        ? ShardingApproach.EXPAND_AND_SHARD
+        : ShardingApproach.SHARD_WITHOUT_EXPANDING;
+  }
+
   /** Expand wildcard target patterns and partition the resulting target list. */
   @SuppressWarnings("unchecked")
   public static ShardedTargetsResult expandAndShardTargets(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
-      ProjectViewSet projectViewSet,
+      ProjectViewSet viewSet,
       WorkspacePathResolver pathResolver,
       List<TargetExpression> targets) {
-    if (!shardingRequested(projectViewSet)) {
-      if (!shardAutomatically.getValue()) {
+    ShardingApproach approach = getShardingApproach(project, viewSet);
+    switch (approach) {
+      case NONE:
         return new ShardedTargetsResult(
             new ShardedTargetList(ImmutableList.of(ImmutableList.copyOf(targets))),
             BuildResult.SUCCESS);
-      }
-      // for now, automatically shard only to keep the arg length below ARG_MAX
-      return new ShardedTargetsResult(
-          new ShardedTargetList(
-              (ImmutableList)
-                  LexicographicTargetSharder.shardTargets(targets, targetShardSize.getValue())),
-          BuildResult.SUCCESS);
-    }
+      case SHARD_WITHOUT_EXPANDING:
+        // shard only to keep the arg length below ARG_MAX
+        return new ShardedTargetsResult(
+            new ShardedTargetList(
+                (ImmutableList)
+                    LexicographicTargetSharder.shardTargets(targets, targetShardSize.getValue())),
+            BuildResult.SUCCESS);
+      case EXPAND_AND_SHARD:
+        ExpandedTargetsResult expandedTargets =
+            expandWildcardTargets(project, context, workspaceRoot, viewSet, pathResolver, targets);
+        if (expandedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
+          return new ShardedTargetsResult(
+              new ShardedTargetList(ImmutableList.of()), expandedTargets.buildResult);
+        }
 
-    ExpandedTargetsResult expandedTargets =
-        expandWildcardTargets(
-            project, context, workspaceRoot, projectViewSet, pathResolver, targets);
-    if (expandedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
-      return new ShardedTargetsResult(
-          new ShardedTargetList(ImmutableList.of()), expandedTargets.buildResult);
+        return new ShardedTargetsResult(
+            shardTargets(project, expandedTargets.singleTargets, getTargetShardSize(viewSet)),
+            expandedTargets.buildResult);
     }
-
-    return new ShardedTargetsResult(
-        shardTargets(project, expandedTargets.singleTargets, getTargetShardSize(projectViewSet)),
-        expandedTargets.buildResult);
+    throw new IllegalStateException("Unhandled sharding approach: " + approach);
   }
 
   /** Expand wildcard target patterns into individual blaze targets. */
