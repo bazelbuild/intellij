@@ -52,6 +52,8 @@ public final class BlazeFlags {
 
   public static final String DELETED_PACKAGES = "--deleted_packages";
 
+  public static final String DISABLE_REMOTE_UPLOAD_LOCAL_RESULTS = "--remote_upload_local_results=false";
+
   /**
    * Flags to add to blaze/bazel invocations of the given type.
    *
