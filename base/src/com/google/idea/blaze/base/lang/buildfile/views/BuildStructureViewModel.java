@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.TargetExpression;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewModelBase;
 import com.intellij.ide.structureView.StructureViewTreeElement;
+import com.intellij.ide.util.treeView.smartTree.Filter;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
@@ -44,6 +45,11 @@ public class BuildStructureViewModel extends StructureViewModelBase
   public BuildStructureViewModel(
       PsiFile file, @Nullable Editor editor, StructureViewTreeElement element) {
     super(file, editor, element);
+  }
+
+  @Override
+  public Filter[] getFilters() {
+    return new Filter[] {new LoadStatementsFilter()};
   }
 
   @Override
