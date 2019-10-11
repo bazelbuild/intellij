@@ -17,8 +17,15 @@ package com.google.idea.blaze.base.settings;
 
 /** The kind of the build system's binary */
 public enum BuildBinaryType {
-  BLAZE,
-  BAZEL,
-  RABBIT,
-  BLAZE_CUSTOM
+  BLAZE(false),
+  BAZEL(false),
+  RABBIT(true),
+  BLAZE_CUSTOM(false);
+
+  /** Whether the blaze invocations are run remotely. */
+  public final boolean isRemote;
+
+  BuildBinaryType(boolean isRemote) {
+    this.isRemote = isRemote;
+  }
 }

@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncListener;
@@ -101,6 +102,7 @@ public class AutoSyncHandler implements ProjectComponent {
         BlazeSyncParams.builder()
             .setTitle(AutoSyncProvider.AUTO_SYNC_TITLE)
             .setSyncMode(SyncMode.INCREMENTAL)
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddProjectViewTargets(true)
             .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .setBackgroundSync(true)
@@ -174,6 +176,7 @@ public class AutoSyncHandler implements ProjectComponent {
     return BlazeSyncParams.builder()
         .setTitle(AutoSyncProvider.AUTO_SYNC_TITLE)
         .setSyncMode(mode)
+        .setBlazeBuildParams(params2.blazeBuildParams())
         .setBackgroundSync(params1.backgroundSync() && params2.backgroundSync())
         .addTargetExpressions(params1.targetExpressions())
         .addTargetExpressions(params2.targetExpressions())

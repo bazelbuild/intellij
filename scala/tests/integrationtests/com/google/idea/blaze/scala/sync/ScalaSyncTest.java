@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -80,6 +81,7 @@ public class ScalaSyncTest extends BlazeSyncIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);
@@ -151,6 +153,7 @@ public class ScalaSyncTest extends BlazeSyncIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
 

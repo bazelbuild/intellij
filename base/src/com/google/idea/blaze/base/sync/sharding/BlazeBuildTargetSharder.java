@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.projectview.ProjectTargetsHelper;
 import com.google.idea.blaze.base.sync.sharding.WildcardTargetExpander.ExpandedTargetsResult;
@@ -121,6 +122,7 @@ public class BlazeBuildTargetSharder {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet viewSet,
       WorkspacePathResolver pathResolver,
       List<TargetExpression> targets) {
@@ -139,7 +141,8 @@ public class BlazeBuildTargetSharder {
             BuildResult.SUCCESS);
       case EXPAND_AND_SHARD:
         ExpandedTargetsResult expandedTargets =
-            expandWildcardTargets(project, context, workspaceRoot, viewSet, pathResolver, targets);
+            expandWildcardTargets(
+                project, context, workspaceRoot, buildParams, viewSet, pathResolver, targets);
         if (expandedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
           return new ShardedTargetsResult(
               new ShardedTargetList(ImmutableList.of()), expandedTargets.buildResult);
@@ -157,6 +160,7 @@ public class BlazeBuildTargetSharder {
       Project project,
       BlazeContext parentContext,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       WorkspacePathResolver pathResolver,
       List<TargetExpression> targets) {
@@ -167,7 +171,7 @@ public class BlazeBuildTargetSharder {
           context.output(new StatusOutput("Sharding: expanding wildcard target patterns..."));
           context.setPropagatesErrors(false);
           return doExpandWildcardTargets(
-              project, context, workspaceRoot, projectViewSet, pathResolver, targets);
+              project, context, workspaceRoot, buildParams, projectViewSet, pathResolver, targets);
         });
   }
 
@@ -175,6 +179,7 @@ public class BlazeBuildTargetSharder {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       WorkspacePathResolver pathResolver,
       List<TargetExpression> targets) {
@@ -201,7 +206,7 @@ public class BlazeBuildTargetSharder {
     }
     ExpandedTargetsResult result =
         WildcardTargetExpander.expandToSingleTargets(
-            project, context, workspaceRoot, projectViewSet, fullList);
+            project, context, workspaceRoot, buildParams, projectViewSet, fullList);
 
     // finally add back any explicitly-specified, unexcluded single targets which may have been
     // removed by the query (for example, because they have the 'manual' tag)

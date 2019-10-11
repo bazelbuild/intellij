@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -173,6 +174,7 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
             BlazeSyncParams.builder()
                 .setTitle("Adding Library")
                 .setSyncMode(SyncMode.INCREMENTAL)
+                .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
                 .setAddProjectViewTargets(true)
                 .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
                 .build());

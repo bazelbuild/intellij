@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
@@ -172,6 +173,7 @@ public class BlazeBuildService {
 
                     List<TargetExpression> targets = targetsFunction.execute(context);
 
+                    BlazeBuildParams buildParams = BlazeBuildParams.fromProject(project);
                     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
                     SaveUtil.saveAllFiles();
@@ -180,6 +182,7 @@ public class BlazeBuildService {
                             project,
                             context,
                             workspaceRoot,
+                            buildParams,
                             projectView,
                             projectData.getWorkspacePathResolver(),
                             targets);
@@ -192,6 +195,7 @@ public class BlazeBuildService {
                                 project,
                                 context,
                                 workspaceRoot,
+                                buildParams,
                                 projectView,
                                 projectData.getBlazeVersionData(),
                                 projectData.getWorkspaceLanguageSettings(),

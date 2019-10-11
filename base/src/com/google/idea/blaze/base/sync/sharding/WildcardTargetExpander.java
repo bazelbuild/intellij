@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -41,6 +40,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -132,6 +132,7 @@ public class WildcardTargetExpander {
       Project project,
       BlazeContext parentContext,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       List<TargetExpression> allTargets) {
     return Scope.push(
@@ -140,7 +141,7 @@ public class WildcardTargetExpander {
           context.push(new TimingScope("ExpandTargetsQuery", EventType.BlazeInvocation));
           context.setPropagatesErrors(false);
           return doExpandToSingleTargets(
-              project, context, workspaceRoot, projectViewSet, allTargets);
+              project, context, workspaceRoot, buildParams, projectViewSet, allTargets);
         });
   }
 
@@ -148,6 +149,7 @@ public class WildcardTargetExpander {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       List<TargetExpression> allTargets) {
     ImmutableList<ImmutableList<TargetExpression>> shards =
@@ -163,7 +165,12 @@ public class WildcardTargetExpander {
                   "Expanding wildcard target patterns, shard %s of %s", i + 1, shards.size())));
       ExpandedTargetsResult result =
           queryIndividualTargets(
-              project, context, workspaceRoot, handledRulesPredicate, shard, excludeManualTargets);
+              context,
+              workspaceRoot,
+              buildParams,
+              handledRulesPredicate,
+              shard,
+              excludeManualTargets);
       output = output == null ? result : ExpandedTargetsResult.merge(output, result);
       if (output.buildResult.status == Status.FATAL_ERROR) {
         return output;
@@ -217,9 +224,9 @@ public class WildcardTargetExpander {
 
   /** Runs a blaze query to expand the input target patterns to individual blaze targets. */
   private static ExpandedTargetsResult queryIndividualTargets(
-      Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       Predicate<String> handledRulesPredicate,
       List<TargetExpression> targetPatterns,
       boolean excludeManualTargets) {
@@ -229,7 +236,7 @@ public class WildcardTargetExpander {
       return new ExpandedTargetsResult(ImmutableList.of(), BuildResult.SUCCESS);
     }
     BlazeCommand.Builder builder =
-        BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.QUERY)
+        BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.QUERY)
             .addBlazeFlags(BlazeFlags.KEEP_GOING)
             .addBlazeFlags("--output=label_kind")
             .addBlazeFlags(query);
@@ -292,10 +299,5 @@ public class WildcardTargetExpander {
     return excludeManualTargets
         ? String.format("attr('tags', '^((?!manual).)*$', %s)", targetList)
         : targetList;
-  }
-
-  private static String getBinaryPath(Project project) {
-    BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(project);
-    return buildSystemProvider.getSyncBinaryPath(project);
   }
 }

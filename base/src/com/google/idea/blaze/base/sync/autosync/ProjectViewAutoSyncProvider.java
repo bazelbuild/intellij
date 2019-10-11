@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.intellij.openapi.project.Project;
@@ -59,6 +60,7 @@ class ProjectViewAutoSyncProvider implements AutoSyncProvider {
     return BlazeSyncParams.builder()
         .setTitle(AUTO_SYNC_TITLE)
         .setSyncMode(SyncMode.INCREMENTAL)
+        .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
         .setAddProjectViewTargets(true)
         .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
         .setBackgroundSync(true)

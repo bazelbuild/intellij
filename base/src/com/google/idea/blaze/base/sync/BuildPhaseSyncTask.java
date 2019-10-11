@@ -142,6 +142,7 @@ final class BuildPhaseSyncTask {
             project,
             context,
             workspaceRoot,
+            syncParams.blazeBuildParams(),
             viewSet,
             projectState.getWorkspacePathResolver(),
             targets);
@@ -156,6 +157,7 @@ final class BuildPhaseSyncTask {
         getBlazeBuildResult(
             project,
             context,
+            syncParams.blazeBuildParams(),
             viewSet,
             projectState.getBlazeInfo(),
             shardedTargets,
@@ -212,6 +214,7 @@ final class BuildPhaseSyncTask {
   private BlazeBuildOutputs getBlazeBuildResult(
       Project project,
       BlazeContext parentContext,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       BlazeInfo blazeInfo,
       ShardedTargetList shardedTargets,
@@ -232,6 +235,7 @@ final class BuildPhaseSyncTask {
               project,
               context,
               workspaceRoot,
+              buildParams,
               projectViewSet,
               blazeInfo,
               shardedTargets,

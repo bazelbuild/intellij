@@ -28,6 +28,8 @@ public abstract class BlazeSyncParams {
 
   public abstract SyncMode syncMode();
 
+  public abstract BlazeBuildParams blazeBuildParams();
+
   public abstract boolean backgroundSync();
 
   public abstract boolean addProjectViewTargets();
@@ -52,6 +54,8 @@ public abstract class BlazeSyncParams {
     public abstract Builder setTitle(String value);
 
     public abstract Builder setSyncMode(SyncMode value);
+
+    public abstract Builder setBlazeBuildParams(BlazeBuildParams value);
 
     public abstract Builder setBackgroundSync(boolean value);
 
@@ -81,6 +85,7 @@ public abstract class BlazeSyncParams {
     return builder()
         .setTitle(base.title())
         .setSyncMode(base.syncMode())
+        .setBlazeBuildParams(base.blazeBuildParams())
         .setBackgroundSync(first.backgroundSync() && second.backgroundSync())
         .addTargetExpressions(first.targetExpressions())
         .addTargetExpressions(second.targetExpressions())

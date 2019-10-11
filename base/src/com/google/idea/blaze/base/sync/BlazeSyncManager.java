@@ -60,6 +60,7 @@ public class BlazeSyncManager {
                     BlazeSyncParams.builder()
                         .setTitle("Initial directory update")
                         .setSyncMode(SyncMode.NO_BUILD)
+                        .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
                         .setBackgroundSync(true)
                         .build();
                 submitTask(project, params);
@@ -91,6 +92,7 @@ public class BlazeSyncManager {
         BlazeSyncParams.builder()
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddProjectViewTargets(true)
             .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .build();
@@ -102,6 +104,7 @@ public class BlazeSyncManager {
         BlazeSyncParams.builder()
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddProjectViewTargets(true)
             .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .build();
@@ -113,6 +116,7 @@ public class BlazeSyncManager {
         BlazeSyncParams.builder()
             .setTitle("Partial Sync")
             .setSyncMode(SyncMode.PARTIAL)
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .addTargetExpressions(targetExpressions)
             .build();
     requestProjectSync(syncParams);
@@ -135,6 +139,7 @@ public class BlazeSyncManager {
         BlazeSyncParams.builder()
             .setTitle("Update Directories")
             .setSyncMode(SyncMode.NO_BUILD)
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setBackgroundSync(inBackground)
             .build();
     requestProjectSync(syncParams);
@@ -145,6 +150,7 @@ public class BlazeSyncManager {
         BlazeSyncParams.builder()
             .setTitle("Sync Working Set")
             .setSyncMode(SyncMode.PARTIAL)
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddWorkingSet(true)
             .build();
     requestProjectSync(syncParams);

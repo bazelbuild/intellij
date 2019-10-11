@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectState;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
@@ -60,6 +61,7 @@ public interface BlazeIdeInterface {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       BlazeInfo blazeInfo,
       ShardedTargetList shardedTargets,
@@ -74,6 +76,7 @@ public interface BlazeIdeInterface {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
       WorkspaceLanguageSettings workspaceLanguageSettings,

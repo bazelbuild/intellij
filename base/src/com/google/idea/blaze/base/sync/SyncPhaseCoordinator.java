@@ -215,6 +215,7 @@ final class SyncPhaseCoordinator {
                               BlazeSyncParams.builder()
                                   .setTitle("Filtering targets")
                                   .setSyncMode(SyncMode.PARTIAL)
+                                  .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
                                   .setBackgroundSync(true)
                                   .build();
                           BlazeSyncParams params = finalizeSyncParams(syncParams, context);
@@ -269,7 +270,8 @@ final class SyncPhaseCoordinator {
               context,
               childContext -> {
                 SyncProjectState projectState =
-                    ProjectStateSyncTask.collectProjectState(project, context);
+                    ProjectStateSyncTask.collectProjectState(
+                        project, params.blazeBuildParams(), context);
                 if (projectState == null) {
                   return;
                 }
@@ -324,7 +326,8 @@ final class SyncPhaseCoordinator {
             SyncStats.builder());
         return;
       }
-      SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context);
+      SyncProjectState projectState =
+          ProjectStateSyncTask.collectProjectState(project, params.blazeBuildParams(), context);
       BlazeSyncBuildResult buildResult =
           projectState != null
               ? BuildPhaseSyncTask.runBuildPhase(project, params, projectState, context)
@@ -489,7 +492,7 @@ final class SyncPhaseCoordinator {
       stats
           .setSyncMode(syncParams.syncMode())
           .setSyncTitle(syncParams.title())
-          .setSyncBinaryType(Blaze.getBuildSystemProvider(project).getSyncBinaryType())
+          .setSyncBinaryType(syncParams.blazeBuildParams().blazeBinaryType())
           .setSyncResult(syncResult)
           .setStartTime(startTime)
           .setBlazeExecTime(totalBlazeTime(stats.getCurrentTimedEvents()))

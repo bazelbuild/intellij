@@ -34,7 +34,6 @@ import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -77,6 +76,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectState;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
@@ -85,7 +85,6 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -119,6 +118,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       BlazeInfo blazeInfo,
       ShardedTargetList shardedTargets,
@@ -128,6 +128,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         project,
         context,
         workspaceRoot,
+        buildParams,
         projectViewSet,
         blazeInfo,
         workspaceLanguageSettings.getActiveLanguages(),
@@ -290,13 +291,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     return state;
   }
 
-  private static final BoolExperiment parallelizeRemoteSyncs =
-      new BoolExperiment("parallelize.remote.syncs", false);
-
   private static BlazeBuildOutputs runBlazeBuild(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       BlazeInfo blazeInfo,
       ImmutableSet<LanguageClass> activeLanguages,
@@ -305,9 +304,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     final Ref<BlazeBuildOutputs> combinedResult = new Ref<>();
 
-    boolean parallelize =
-        parallelizeRemoteSyncs.getValue()
-            && Blaze.getBuildSystemProvider(project).syncingRemotely();
+    boolean parallelize = buildParams.parallelizeBuilds();
 
     Function<Integer, String> progressMessage =
         count ->
@@ -320,6 +317,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   project,
                   context,
                   workspaceRoot,
+                  buildParams,
                   projectViewSet,
                   blazeInfo,
                   activeLanguages,
@@ -348,6 +346,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       BlazeInfo blazeInfo,
       ImmutableSet<LanguageClass> activeLanguages,
@@ -357,7 +356,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         BuildResultHelperProvider.createForSync(project, blazeInfo)) {
 
       BlazeCommand.Builder builder =
-          BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.BUILD)
+          BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.BUILD)
               .addTargets(targets)
               .addBlazeFlags(BlazeFlags.KEEP_GOING)
               .addBlazeFlags(buildResultHelper.getBuildFlags())
@@ -645,6 +644,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
       WorkspaceLanguageSettings workspaceLanguageSettings,
@@ -659,6 +659,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 project,
                 context,
                 workspaceRoot,
+                buildParams,
                 projectViewSet,
                 blazeVersionData,
                 workspaceLanguageSettings,
@@ -672,12 +673,13 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       List<TargetExpression> targets) {
     BlazeCommand.Builder blazeCommandBuilder =
-        BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.BUILD)
+        BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.BUILD)
             .addTargets(targets)
             .addBlazeFlags()
             .addBlazeFlags(BlazeFlags.KEEP_GOING)
@@ -734,10 +736,5 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .timed("PrefetchGenfiles", EventType.Prefetching)
         .withProgressMessage("Prefetching genfiles...")
         .run();
-  }
-
-  private static String getBinaryPath(Project project) {
-    BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(project);
-    return buildSystemProvider.getSyncBinaryPath(project);
   }
 }

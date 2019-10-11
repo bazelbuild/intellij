@@ -61,8 +61,9 @@ import javax.annotation.Nullable;
 final class ProjectStateSyncTask {
 
   @Nullable
-  static SyncProjectState collectProjectState(Project project, BlazeContext context) {
-    ProjectStateSyncTask task = new ProjectStateSyncTask(project);
+  static SyncProjectState collectProjectState(
+      Project project, BlazeBuildParams buildParams, BlazeContext context) {
+    ProjectStateSyncTask task = new ProjectStateSyncTask(project, buildParams);
     // TODO(brendandouglas): capture timing information
     return SyncScope.push(context, task::getProjectState);
   }
@@ -70,11 +71,13 @@ final class ProjectStateSyncTask {
   private final Project project;
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
+  private final BlazeBuildParams buildParams;
 
-  private ProjectStateSyncTask(Project project) {
+  private ProjectStateSyncTask(Project project, BlazeBuildParams buildParams) {
     this.project = project;
     this.importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
+    this.buildParams = buildParams;
   }
 
   private SyncProjectState getProjectState(BlazeContext context)
@@ -107,7 +110,7 @@ final class ProjectStateSyncTask {
             .runBlazeInfo(
                 context,
                 importSettings.getBuildSystem(),
-                Blaze.getBuildSystemProvider(project).getSyncBinaryPath(project),
+                buildParams.blazeBinaryPath(),
                 workspaceRoot,
                 syncFlags);
 
