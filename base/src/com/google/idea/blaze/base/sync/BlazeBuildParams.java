@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project;
 public abstract class BlazeBuildParams {
 
   private static final BoolExperiment parallelizeRemoteSyncs =
-      new BoolExperiment("parallelize.remote.syncs", false);
+      new BoolExperiment("parallelize.remote.syncs", true);
 
   public static BlazeBuildParams fromProject(Project project) {
     BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
