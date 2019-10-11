@@ -85,6 +85,7 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -289,6 +290,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     return state;
   }
 
+  private static final BoolExperiment parallelizeRemoteSyncs =
+      new BoolExperiment("parallelize.remote.syncs", false);
+
   private static BlazeBuildOutputs runBlazeBuild(
       Project project,
       BlazeContext context,
@@ -300,6 +304,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       AspectStrategy aspectStrategy) {
 
     final Ref<BlazeBuildOutputs> combinedResult = new Ref<>();
+
+    boolean parallelize =
+        parallelizeRemoteSyncs.getValue()
+            && Blaze.getBuildSystemProvider(project).syncingRemotely();
 
     Function<Integer, String> progressMessage =
         count ->
@@ -324,7 +332,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           return result.buildResult;
         };
     BuildResult result =
-        shardedTargets.runShardedCommand(project, context, progressMessage, invocation);
+        shardedTargets.runShardedCommand(
+            project, context, progressMessage, invocation, parallelize);
     if (combinedResult.isNull() || result.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(result);
     }
@@ -643,8 +652,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     Function<Integer, String> progressMessage =
         count ->
             String.format(
-                "Building IDE resolve files for shard %s of %s...",
-                count, shardedTargets.shardCount());
+                "Compiling targets for shard %s of %s...", count, shardedTargets.shardCount());
     Function<List<TargetExpression>, BuildResult> invocation =
         targets ->
             doCompileIdeArtifacts(
@@ -655,7 +663,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 blazeVersionData,
                 workspaceLanguageSettings,
                 targets);
-    return shardedTargets.runShardedCommand(project, context, progressMessage, invocation);
+    return shardedTargets.runShardedCommand(
+        project, context, progressMessage, invocation, /* parallelize= */ false);
   }
 
   /** Blaze build invocation requesting the 'intellij-compile' aspect output group. */

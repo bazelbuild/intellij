@@ -24,12 +24,13 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Utilities operating on futures. */
 public class FutureUtil {
   /** The result of the future operation */
   public static class FutureResult<T> {
-    private final T result;
+    @Nullable private final T result;
     private final boolean success;
 
     FutureResult(T result) {
@@ -42,6 +43,7 @@ public class FutureUtil {
       this.success = false;
     }
 
+    @Nullable
     public T result() {
       return result;
     }
