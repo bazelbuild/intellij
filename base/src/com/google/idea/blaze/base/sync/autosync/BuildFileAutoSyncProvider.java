@@ -59,7 +59,9 @@ class BuildFileAutoSyncProvider implements AutoSyncProvider {
     if (path == null || path.getParent() == null) {
       return null;
     }
-    return new BlazeSyncParams.Builder(AUTO_SYNC_TITLE, SyncMode.PARTIAL)
+    return BlazeSyncParams.builder()
+        .setTitle(AUTO_SYNC_TITLE)
+        .setSyncMode(SyncMode.PARTIAL)
         .addTargetExpression(TargetExpression.allFromPackageNonRecursive(path.getParent()))
         .setBackgroundSync(true)
         .build();

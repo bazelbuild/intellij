@@ -76,7 +76,9 @@ class ProtoAutoSyncProvider implements AutoSyncProvider {
 
     return plainTargets.isEmpty()
         ? null
-        : new BlazeSyncParams.Builder(AUTO_SYNC_TITLE, SyncMode.PARTIAL)
+        : BlazeSyncParams.builder()
+            .setTitle(AUTO_SYNC_TITLE)
+            .setSyncMode(SyncMode.PARTIAL)
             .addTargetExpressions(plainTargets)
             .setBackgroundSync(true)
             .build();

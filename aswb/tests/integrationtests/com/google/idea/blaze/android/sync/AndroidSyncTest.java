@@ -112,8 +112,10 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
 
     setTargetMap(targetMap);
     runBlazeSync(
-        new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
-            .addProjectViewTargets(true)
+        BlazeSyncParams.builder()
+            .setTitle("Sync")
+            .setSyncMode(SyncMode.INCREMENTAL)
+            .setAddProjectViewTargets(true)
             .build());
 
     errorCollector.assertNoIssues();

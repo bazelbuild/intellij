@@ -15,119 +15,82 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import java.util.Collection;
-import javax.annotation.concurrent.Immutable;
 
 /** Parameters that control the sync. */
-@Immutable
-public final class BlazeSyncParams {
+@AutoValue
+public abstract class BlazeSyncParams {
 
-  /** Builder for sync params */
-  public static final class Builder {
-    private String title;
-    private SyncMode syncMode;
-    private boolean backgroundSync;
-    private boolean addProjectViewTargets;
-    private boolean addWorkingSet;
-    private final ImmutableSet.Builder<TargetExpression> targetExpressions = ImmutableSet.builder();
+  public abstract String title();
 
-    public static Builder copy(BlazeSyncParams params) {
-      return new Builder(params.title, params.syncMode)
-          .setBackgroundSync(params.backgroundSync)
-          .addProjectViewTargets(params.addProjectViewTargets)
-          .addTargetExpressions(params.targetExpressions)
-          .addWorkingSet(params.addWorkingSet);
-    }
+  public abstract SyncMode syncMode();
 
-    public Builder(String title, SyncMode syncMode) {
-      this.title = title;
-      this.syncMode = syncMode;
-    }
+  public abstract boolean backgroundSync();
 
-    public Builder setSyncMode(SyncMode syncMode) {
-      this.syncMode = syncMode;
-      return this;
-    }
+  public abstract boolean addProjectViewTargets();
 
-    public Builder setTitle(String title) {
-      this.title = title;
-      return this;
-    }
+  public abstract boolean addWorkingSet();
 
-    public Builder setBackgroundSync(boolean backgroundSync) {
-      this.backgroundSync = backgroundSync;
-      return this;
-    }
+  public abstract ImmutableSet<TargetExpression> targetExpressions();
 
-    public Builder addProjectViewTargets(boolean addProjectViewTargets) {
-      this.addProjectViewTargets = addProjectViewTargets;
-      return this;
-    }
+  public abstract Builder toBuilder();
+
+  public static Builder builder() {
+    return new AutoValue_BlazeSyncParams.Builder()
+        .setBackgroundSync(false)
+        .setAddProjectViewTargets(false)
+        .setAddWorkingSet(false);
+  }
+
+  /** Builder for {@link BlazeSyncParams}. */
+  @AutoValue.Builder
+  public abstract static class Builder {
+
+    public abstract Builder setTitle(String value);
+
+    public abstract Builder setSyncMode(SyncMode value);
+
+    public abstract Builder setBackgroundSync(boolean value);
+
+    public abstract Builder setAddProjectViewTargets(boolean value);
+
+    public abstract Builder setAddWorkingSet(boolean value);
+
+    abstract ImmutableSet.Builder<TargetExpression> targetExpressionsBuilder();
 
     public Builder addTargetExpression(TargetExpression targetExpression) {
-      this.targetExpressions.add(targetExpression);
+      targetExpressionsBuilder().add(targetExpression);
       return this;
     }
 
     public Builder addTargetExpressions(Collection<? extends TargetExpression> targets) {
-      this.targetExpressions.addAll(targets);
+      targetExpressionsBuilder().addAll(targets);
       return this;
     }
 
-    public Builder addWorkingSet(boolean addWorkingSet) {
-      this.addWorkingSet = addWorkingSet;
-      return this;
-    }
-
-    public BlazeSyncParams build() {
-      return new BlazeSyncParams(
-          title,
-          syncMode,
-          backgroundSync,
-          addProjectViewTargets,
-          addWorkingSet,
-          targetExpressions.build());
-    }
-  }
-
-  public final String title;
-  public final SyncMode syncMode;
-  public final boolean backgroundSync;
-  public final boolean addProjectViewTargets;
-  public final boolean addWorkingSet;
-  public final ImmutableSet<TargetExpression> targetExpressions;
-
-  private BlazeSyncParams(
-      String title,
-      SyncMode syncMode,
-      boolean backgroundSync,
-      boolean addProjectViewTargets,
-      boolean addWorkingSet,
-      ImmutableSet<TargetExpression> targetExpressions) {
-    this.title = title;
-    this.syncMode = syncMode;
-    this.backgroundSync = backgroundSync;
-    this.addProjectViewTargets = addProjectViewTargets;
-    this.addWorkingSet = addWorkingSet;
-    this.targetExpressions = targetExpressions;
+    public abstract BlazeSyncParams build();
   }
 
   /** Combine {@link BlazeSyncParams} from multiple build phases. */
   public static BlazeSyncParams combine(BlazeSyncParams first, BlazeSyncParams second) {
-    BlazeSyncParams base = first.syncMode.ordinal() > second.syncMode.ordinal() ? first : second;
-    return new Builder(base.title, base.syncMode)
-        .setBackgroundSync(first.backgroundSync && second.backgroundSync)
-        .addTargetExpressions(first.targetExpressions)
-        .addTargetExpressions(second.targetExpressions)
-        .addProjectViewTargets(first.addProjectViewTargets || second.addProjectViewTargets)
-        .addWorkingSet(first.addWorkingSet || second.addWorkingSet)
+    BlazeSyncParams base =
+        first.syncMode().ordinal() > second.syncMode().ordinal() ? first : second;
+    return builder()
+        .setTitle(base.title())
+        .setSyncMode(base.syncMode())
+        .setBackgroundSync(first.backgroundSync() && second.backgroundSync())
+        .addTargetExpressions(first.targetExpressions())
+        .addTargetExpressions(second.targetExpressions())
+        .setAddProjectViewTargets(first.addProjectViewTargets() || second.addProjectViewTargets())
+        .setAddWorkingSet(first.addWorkingSet() || second.addWorkingSet())
         .build();
   }
 
   @Override
-  public String toString() {
-    return String.format("%s (%s)", title, syncMode.name().toLowerCase());
+  public final String toString() {
+    return String.format("%s (%s)", title(), syncMode().name().toLowerCase());
   }
 }

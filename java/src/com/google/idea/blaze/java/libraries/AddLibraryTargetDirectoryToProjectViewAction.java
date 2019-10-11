@@ -170,9 +170,11 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
     edit.apply();
     BlazeSyncManager.getInstance(project)
         .requestProjectSync(
-            new BlazeSyncParams.Builder("Adding Library", SyncMode.INCREMENTAL)
-                .addProjectViewTargets(true)
-                .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+            BlazeSyncParams.builder()
+                .setTitle("Adding Library")
+                .setSyncMode(SyncMode.INCREMENTAL)
+                .setAddProjectViewTargets(true)
+                .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
                 .build());
   }
 }

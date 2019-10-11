@@ -66,8 +66,10 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
 
   protected void runFullBlazeSync() {
     runBlazeSync(
-        new BlazeSyncParams.Builder("full sync", SyncMode.FULL)
-            .addProjectViewTargets(true)
+        BlazeSyncParams.builder()
+            .setTitle("full sync")
+            .setSyncMode(SyncMode.FULL)
+            .setAddProjectViewTargets(true)
             .build());
     errorCollector.assertNoIssues();
   }

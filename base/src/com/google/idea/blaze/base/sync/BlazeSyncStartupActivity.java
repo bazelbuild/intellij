@@ -44,9 +44,11 @@ public class BlazeSyncStartupActivity implements StartupActivity {
   }
 
   private static BlazeSyncParams startupSyncParams() {
-    return new BlazeSyncParams.Builder("Sync Project", SyncMode.STARTUP)
-        .addProjectViewTargets(true)
-        .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+    return BlazeSyncParams.builder()
+        .setTitle("Sync Project")
+        .setSyncMode(SyncMode.STARTUP)
+        .setAddProjectViewTargets(true)
+        .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
         .build();
   }
 }

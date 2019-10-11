@@ -60,13 +60,13 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
     verify(manager).requestProjectSync(paramsCaptor.capture());
     BlazeSyncParams params = paramsCaptor.getValue();
     assertThat(params).isNotNull();
-    assertThat(params.title).isEqualTo("Full Sync");
-    assertThat(params.syncMode).isEqualTo(SyncMode.FULL);
-    assertThat(params.backgroundSync).isFalse();
-    assertThat(params.addProjectViewTargets).isTrue();
-    assertThat(params.addWorkingSet)
+    assertThat(params.title()).isEqualTo("Full Sync");
+    assertThat(params.syncMode()).isEqualTo(SyncMode.FULL);
+    assertThat(params.backgroundSync()).isFalse();
+    assertThat(params.addProjectViewTargets()).isTrue();
+    assertThat(params.addWorkingSet())
         .isEqualTo(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet());
-    assertThat(params.targetExpressions).isEmpty();
+    assertThat(params.targetExpressions()).isEmpty();
   }
 
   @Test
@@ -75,13 +75,13 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
     verify(manager).requestProjectSync(paramsCaptor.capture());
     BlazeSyncParams params = paramsCaptor.getValue();
     assertThat(params).isNotNull();
-    assertThat(params.title).isEqualTo("Sync");
-    assertThat(params.syncMode).isEqualTo(SyncMode.INCREMENTAL);
-    assertThat(params.backgroundSync).isFalse();
-    assertThat(params.addProjectViewTargets).isTrue();
-    assertThat(params.addWorkingSet)
+    assertThat(params.title()).isEqualTo("Sync");
+    assertThat(params.syncMode()).isEqualTo(SyncMode.INCREMENTAL);
+    assertThat(params.backgroundSync()).isFalse();
+    assertThat(params.addProjectViewTargets()).isTrue();
+    assertThat(params.addWorkingSet())
         .isEqualTo(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet());
-    assertThat(params.targetExpressions).isEmpty();
+    assertThat(params.targetExpressions()).isEmpty();
   }
 
   @Test
@@ -94,12 +94,12 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
     verify(manager).requestProjectSync(paramsCaptor.capture());
     BlazeSyncParams params = paramsCaptor.getValue();
     assertThat(params).isNotNull();
-    assertThat(params.title).isEqualTo("Partial Sync");
-    assertThat(params.syncMode).isEqualTo(SyncMode.PARTIAL);
-    assertThat(params.backgroundSync).isFalse();
-    assertThat(params.addProjectViewTargets).isFalse();
-    assertThat(params.addWorkingSet).isFalse();
-    assertThat(params.targetExpressions).containsExactlyElementsIn(targets);
+    assertThat(params.title()).isEqualTo("Partial Sync");
+    assertThat(params.syncMode()).isEqualTo(SyncMode.PARTIAL);
+    assertThat(params.backgroundSync()).isFalse();
+    assertThat(params.addProjectViewTargets()).isFalse();
+    assertThat(params.addWorkingSet()).isFalse();
+    assertThat(params.targetExpressions()).containsExactlyElementsIn(targets);
   }
 
   @Test
@@ -108,11 +108,11 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
     verify(manager).requestProjectSync(paramsCaptor.capture());
     BlazeSyncParams params = paramsCaptor.getValue();
     assertThat(params).isNotNull();
-    assertThat(params.title).isEqualTo("Sync Working Set");
-    assertThat(params.syncMode).isEqualTo(SyncMode.PARTIAL);
-    assertThat(params.backgroundSync).isFalse();
-    assertThat(params.addProjectViewTargets).isFalse();
-    assertThat(params.addWorkingSet).isTrue();
-    assertThat(params.targetExpressions).isEmpty();
+    assertThat(params.title()).isEqualTo("Sync Working Set");
+    assertThat(params.syncMode()).isEqualTo(SyncMode.PARTIAL);
+    assertThat(params.backgroundSync()).isFalse();
+    assertThat(params.addProjectViewTargets()).isFalse();
+    assertThat(params.addWorkingSet()).isTrue();
+    assertThat(params.targetExpressions()).isEmpty();
   }
 }

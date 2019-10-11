@@ -166,9 +166,11 @@ public class AdditionalLanguagesHelper
 
     BlazeSyncManager.getInstance(project)
         .requestProjectSync(
-            new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
-                .addProjectViewTargets(true)
-                .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+            BlazeSyncParams.builder()
+                .setTitle("Sync")
+                .setSyncMode(SyncMode.INCREMENTAL)
+                .setAddProjectViewTargets(true)
+                .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
                 .build());
   }
 }

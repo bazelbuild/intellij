@@ -171,7 +171,7 @@ final class SyncPhaseCoordinator {
   }
 
   private boolean useRemoteExecutor(BlazeSyncParams syncParams) {
-    if (syncParams.syncMode == SyncMode.NO_BUILD) {
+    if (syncParams.syncMode() == SyncMode.NO_BUILD) {
       return false;
     }
     boolean remoteSync = Blaze.getBuildSystemProvider(project).syncingRemotely();
@@ -212,7 +212,9 @@ final class SyncPhaseCoordinator {
                     Scope.root(
                         context -> {
                           BlazeSyncParams syncParams =
-                              new BlazeSyncParams.Builder("Filtering targets", SyncMode.PARTIAL)
+                              BlazeSyncParams.builder()
+                                  .setTitle("Filtering targets")
+                                  .setSyncMode(SyncMode.PARTIAL)
                                   .setBackgroundSync(true)
                                   .build();
                           BlazeSyncParams params = finalizeSyncParams(syncParams, context);
@@ -222,13 +224,9 @@ final class SyncPhaseCoordinator {
   }
 
   private BlazeSyncParams finalizeSyncParams(BlazeSyncParams params, BlazeContext context) {
-    BlazeProjectData oldProjectData = getOldProjectData(context, params.syncMode);
-    if (oldProjectData == null && params.syncMode != SyncMode.NO_BUILD) {
-      params =
-          BlazeSyncParams.Builder.copy(params)
-              .setSyncMode(SyncMode.FULL)
-              .addProjectViewTargets(true)
-              .build();
+    BlazeProjectData oldProjectData = getOldProjectData(context, params.syncMode());
+    if (oldProjectData == null && params.syncMode() != SyncMode.NO_BUILD) {
+      params = params.toBuilder().setSyncMode(SyncMode.FULL).setAddProjectViewTargets(true).build();
     }
     return params;
   }
@@ -257,8 +255,8 @@ final class SyncPhaseCoordinator {
     SyncStats.Builder stats = SyncStats.builder();
     try {
       SaveUtil.saveAllFiles();
-      onSyncStart(project, context, params.syncMode);
-      BlazeProjectData oldProjectData = getOldProjectData(context, params.syncMode);
+      onSyncStart(project, context, params.syncMode());
+      BlazeProjectData oldProjectData = getOldProjectData(context, params.syncMode());
       if (oldProjectData == null) {
         String message = "Can't filter project targets: project has never been synced.";
         context.output(PrintOutput.error(message));
@@ -282,7 +280,7 @@ final class SyncPhaseCoordinator {
 
                 fillInBuildStats(stats, projectState, /* buildResult= */ null);
                 ProjectUpdateSyncTask.runProjectUpdatePhase(
-                    project, params.syncMode, projectState, targetData, childContext);
+                    project, params.syncMode(), projectState, targetData, childContext);
               },
               new TimingScope("Filtering project targets", EventType.Other));
       stats.addTimedEvents(timedEvents);
@@ -315,8 +313,8 @@ final class SyncPhaseCoordinator {
     Instant startTime = Instant.now();
     try {
       SaveUtil.saveAllFiles();
-      onSyncStart(project, context, params.syncMode);
-      if (params.syncMode == SyncMode.STARTUP) {
+      onSyncStart(project, context, params.syncMode());
+      if (params.syncMode() == SyncMode.STARTUP) {
         finishSync(
             params,
             startTime,
@@ -426,7 +424,7 @@ final class SyncPhaseCoordinator {
                 }
                 ProjectUpdateSyncTask.runProjectUpdatePhase(
                     project,
-                    updateTask.syncParams.syncMode,
+                    updateTask.syncParams.syncMode(),
                     updateTask.projectState,
                     targetData,
                     childContext);
@@ -474,10 +472,10 @@ final class SyncPhaseCoordinator {
         Preconditions.checkNotNull(projectViewSet);
         BlazeProjectData projectData =
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-        if (syncParams.syncMode != SyncMode.NO_BUILD) {
+        if (syncParams.syncMode() != SyncMode.NO_BUILD) {
           stats.addTimedEvents(
               updateInMemoryState(
-                  project, context, projectViewSet, projectData, syncParams.syncMode));
+                  project, context, projectViewSet, projectData, syncParams.syncMode()));
         }
         if (projectData != null) {
           int librariesCount =
@@ -489,8 +487,8 @@ final class SyncPhaseCoordinator {
         onSyncComplete(project, context, projectViewSet, projectData, syncParams, syncResult);
       }
       stats
-          .setSyncMode(syncParams.syncMode)
-          .setSyncTitle(syncParams.title)
+          .setSyncMode(syncParams.syncMode())
+          .setSyncTitle(syncParams.title())
           .setSyncBinaryType(Blaze.getBuildSystemProvider(project).getSyncBinaryType())
           .setSyncResult(syncResult)
           .setStartTime(startTime)
@@ -527,7 +525,7 @@ final class SyncPhaseCoordinator {
         .push(
             new BlazeConsoleScope.Builder(project, indicator)
                 .setPopupBehavior(
-                    syncParams.backgroundSync
+                    syncParams.backgroundSync()
                         ? FocusBehavior.NEVER
                         : userSettings.getShowBlazeConsoleOnSync())
                 .addConsoleFilters(
@@ -538,12 +536,14 @@ final class SyncPhaseCoordinator {
         .push(
             new ProblemsViewScope(
                 project,
-                syncParams.backgroundSync
+                syncParams.backgroundSync()
                     ? FocusBehavior.NEVER
                     : userSettings.getShowProblemsViewOnSync(),
                 /* resetProblemsContext= */ clearProblems))
         .push(new IdeaLogScope());
-    if (notifyFinished && !syncParams.backgroundSync && syncParams.syncMode != SyncMode.NO_BUILD) {
+    if (notifyFinished
+        && !syncParams.backgroundSync()
+        && syncParams.syncMode() != SyncMode.NO_BUILD) {
       context.push(
           new NotificationScope(project, "Sync", "Sync project", "Sync successful", "Sync failed"));
     }
@@ -618,7 +618,7 @@ final class SyncPhaseCoordinator {
       Project project, BlazeSyncParams syncParams, BlazeContext context, SyncResult syncResult) {
     final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
     for (SyncListener syncListener : syncListeners) {
-      syncListener.afterSync(project, context, syncParams.syncMode, syncResult);
+      syncListener.afterSync(project, context, syncParams.syncMode(), syncResult);
     }
   }
 
@@ -638,7 +638,7 @@ final class SyncPhaseCoordinator {
           BlazeImportSettingsManager.getInstance(project).getImportSettings(),
           projectViewSet,
           blazeProjectData,
-          syncParams.syncMode,
+          syncParams.syncMode(),
           syncResult);
     }
   }

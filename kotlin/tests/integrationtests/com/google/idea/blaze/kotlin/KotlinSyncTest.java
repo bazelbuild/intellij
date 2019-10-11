@@ -87,7 +87,11 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
     setTargetMap(targetMap);
 
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Full Sync", SyncMode.FULL).addProjectViewTargets(true).build();
+        BlazeSyncParams.builder()
+            .setTitle("Full Sync")
+            .setSyncMode(SyncMode.FULL)
+            .setAddProjectViewTargets(true)
+            .build();
     runBlazeSync(syncParams);
 
     BlazeProjectData blazeProjectData =
@@ -158,8 +162,10 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
     setTargetMap(targetMap);
 
     runBlazeSync(
-        new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
-            .addProjectViewTargets(true)
+        BlazeSyncParams.builder()
+            .setTitle("Sync")
+            .setSyncMode(SyncMode.INCREMENTAL)
+            .setAddProjectViewTargets(true)
             .build());
 
     BlazeProjectData blazeProjectData =

@@ -100,7 +100,7 @@ final class ProjectUpdateSyncTask {
       SyncProjectState projectState,
       BlazeBuildOutputs buildResult,
       BlazeContext parentContext) {
-    boolean mergeWithOldState = !syncParams.addProjectViewTargets;
+    boolean mergeWithOldState = !syncParams.addProjectViewTargets();
     return Scope.push(
         parentContext,
         context -> {
@@ -114,7 +114,7 @@ final class ProjectUpdateSyncTask {
               projectState,
               buildResult,
               mergeWithOldState,
-              getOldProjectData(project, syncParams.syncMode));
+              getOldProjectData(project, syncParams.syncMode()));
         });
   }
 

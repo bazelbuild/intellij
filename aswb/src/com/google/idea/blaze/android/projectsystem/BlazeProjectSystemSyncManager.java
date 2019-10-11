@@ -75,9 +75,11 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
                   + " Use ProjectSystemSyncManager.isSyncInProgress to detect this scenario."));
     } else {
       BlazeSyncParams syncParams =
-          new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
-              .addProjectViewTargets(true)
-              .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+          BlazeSyncParams.builder()
+              .setTitle("Sync")
+              .setSyncMode(SyncMode.INCREMENTAL)
+              .setAddProjectViewTargets(true)
+              .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
               .setBackgroundSync(true)
               .build();
 

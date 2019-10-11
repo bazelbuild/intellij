@@ -42,8 +42,8 @@ public class BlazeSyncManager {
 
   /** Requests a project sync with Blaze. */
   public void requestProjectSync(BlazeSyncParams syncParams) {
-    if (syncParams.syncMode == SyncMode.NO_BUILD
-        && !syncParams.backgroundSync
+    if (syncParams.syncMode() == SyncMode.NO_BUILD
+        && !syncParams.backgroundSync()
         && !SyncDirectoriesWarning.warn(project)) {
       return;
     }
@@ -57,7 +57,9 @@ public class BlazeSyncManager {
               }
               if (runInitialDirectoryOnlySync(syncParams)) {
                 BlazeSyncParams params =
-                    new BlazeSyncParams.Builder("Initial directory update", SyncMode.NO_BUILD)
+                    BlazeSyncParams.builder()
+                        .setTitle("Initial directory update")
+                        .setSyncMode(SyncMode.NO_BUILD)
                         .setBackgroundSync(true)
                         .build();
                 submitTask(project, params);
@@ -71,7 +73,7 @@ public class BlazeSyncManager {
   }
 
   private static boolean runInitialDirectoryOnlySync(BlazeSyncParams syncParams) {
-    switch (syncParams.syncMode) {
+    switch (syncParams.syncMode()) {
       case NO_BUILD:
       case STARTUP:
         return false;
@@ -79,32 +81,38 @@ public class BlazeSyncManager {
         return true;
       case INCREMENTAL:
       case PARTIAL:
-        return !syncParams.backgroundSync;
+        return !syncParams.backgroundSync();
     }
-    throw new AssertionError("Unhandled syncMode: " + syncParams.syncMode);
+    throw new AssertionError("Unhandled syncMode: " + syncParams.syncMode());
   }
 
   public void fullProjectSync() {
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Full Sync", SyncMode.FULL)
-            .addProjectViewTargets(true)
-            .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+        BlazeSyncParams.builder()
+            .setTitle("Full Sync")
+            .setSyncMode(SyncMode.FULL)
+            .setAddProjectViewTargets(true)
+            .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .build();
     requestProjectSync(syncParams);
   }
 
   public void incrementalProjectSync() {
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Sync", SyncMode.INCREMENTAL)
-            .addProjectViewTargets(true)
-            .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+        BlazeSyncParams.builder()
+            .setTitle("Sync")
+            .setSyncMode(SyncMode.INCREMENTAL)
+            .setAddProjectViewTargets(true)
+            .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .build();
     requestProjectSync(syncParams);
   }
 
   public void partialSync(Collection<? extends TargetExpression> targetExpressions) {
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Partial Sync", SyncMode.PARTIAL)
+        BlazeSyncParams.builder()
+            .setTitle("Partial Sync")
+            .setSyncMode(SyncMode.PARTIAL)
             .addTargetExpressions(targetExpressions)
             .build();
     requestProjectSync(syncParams);
@@ -124,7 +132,9 @@ public class BlazeSyncManager {
    */
   public void directoryUpdate(boolean inBackground) {
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Update Directories", SyncMode.NO_BUILD)
+        BlazeSyncParams.builder()
+            .setTitle("Update Directories")
+            .setSyncMode(SyncMode.NO_BUILD)
             .setBackgroundSync(inBackground)
             .build();
     requestProjectSync(syncParams);
@@ -132,8 +142,10 @@ public class BlazeSyncManager {
 
   public void workingSetSync() {
     BlazeSyncParams syncParams =
-        new BlazeSyncParams.Builder("Sync Working Set", SyncMode.PARTIAL)
-            .addWorkingSet(true)
+        BlazeSyncParams.builder()
+            .setTitle("Sync Working Set")
+            .setSyncMode(SyncMode.PARTIAL)
+            .setAddWorkingSet(true)
             .build();
     requestProjectSync(syncParams);
   }

@@ -98,9 +98,11 @@ public class AutoSyncHandler implements ProjectComponent {
   public void queueIncrementalSync() {
     pendingChangesHandler.clearQueue();
     BlazeSyncParams params =
-        new BlazeSyncParams.Builder(AutoSyncProvider.AUTO_SYNC_TITLE, SyncMode.INCREMENTAL)
-            .addProjectViewTargets(true)
-            .addWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
+        BlazeSyncParams.builder()
+            .setTitle(AutoSyncProvider.AUTO_SYNC_TITLE)
+            .setSyncMode(SyncMode.INCREMENTAL)
+            .setAddProjectViewTargets(true)
+            .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .setBackgroundSync(true)
             .build();
     queueSync(params);
@@ -142,19 +144,19 @@ public class AutoSyncHandler implements ProjectComponent {
 
   private void queueSync(BlazeSyncParams syncParams) {
     // all auto-syncs must have the 'backgroundSync' flag
-    syncParams = BlazeSyncParams.Builder.copy(syncParams).setBackgroundSync(true).build();
+    syncParams = syncParams.toBuilder().setBackgroundSync(true).build();
     logSync(syncParams);
     BlazeSyncManager.getInstance(project).requestProjectSync(syncParams);
   }
 
   private void logSync(BlazeSyncParams syncParams) {
     Map<String, String> data = new HashMap<>();
-    data.put("syncMode", syncParams.syncMode.toString());
-    if (syncParams.syncMode == SyncMode.PARTIAL) {
-      data.put("targets", Joiner.on(',').join(syncParams.targetExpressions));
+    data.put("syncMode", syncParams.syncMode().toString());
+    if (syncParams.syncMode() == SyncMode.PARTIAL) {
+      data.put("targets", Joiner.on(',').join(syncParams.targetExpressions()));
     }
     EventLoggingService.getInstance().logEvent(getClass(), "auto-sync", data);
-    logger.info("Automatic sync queued: " + syncParams.syncMode);
+    logger.info("Automatic sync queued: " + syncParams.syncMode());
   }
 
   @Nullable
@@ -168,13 +170,16 @@ public class AutoSyncHandler implements ProjectComponent {
     if (params1 == null || params2 == null) {
       return params1 == null ? params2 : params1;
     }
-    SyncMode mode = combineModes(params1.syncMode, params2.syncMode);
-    return new BlazeSyncParams.Builder(AutoSyncProvider.AUTO_SYNC_TITLE, mode)
-        .setBackgroundSync(params1.backgroundSync && params2.backgroundSync)
-        .addTargetExpressions(params1.targetExpressions)
-        .addTargetExpressions(params2.targetExpressions)
-        .addWorkingSet(params1.addWorkingSet || params2.addWorkingSet)
-        .addProjectViewTargets(params1.addProjectViewTargets || params2.addProjectViewTargets)
+    SyncMode mode = combineModes(params1.syncMode(), params2.syncMode());
+    return BlazeSyncParams.builder()
+        .setTitle(AutoSyncProvider.AUTO_SYNC_TITLE)
+        .setSyncMode(mode)
+        .setBackgroundSync(params1.backgroundSync() && params2.backgroundSync())
+        .addTargetExpressions(params1.targetExpressions())
+        .addTargetExpressions(params2.targetExpressions())
+        .setAddWorkingSet(params1.addWorkingSet() || params2.addWorkingSet())
+        .setAddProjectViewTargets(
+            params1.addProjectViewTargets() || params2.addProjectViewTargets())
         .build();
   }
 

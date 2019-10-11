@@ -106,7 +106,7 @@ final class BuildPhaseSyncTask {
   private void doRun(BlazeContext context) throws SyncFailedException, SyncCanceledException {
     List<TargetExpression> targets = Lists.newArrayList();
     ProjectViewSet viewSet = projectState.getProjectViewSet();
-    if (syncParams.addWorkingSet && projectState.getWorkingSet() != null) {
+    if (syncParams.addWorkingSet() && projectState.getWorkingSet() != null) {
       Collection<? extends TargetExpression> workingSetTargets =
           getWorkingSetTargets(viewSet, projectState.getWorkingSet());
       if (!workingSetTargets.isEmpty()) {
@@ -114,7 +114,7 @@ final class BuildPhaseSyncTask {
         printTargets(context, "working set", workingSetTargets);
       }
     }
-    if (syncParams.addProjectViewTargets) {
+    if (syncParams.addProjectViewTargets()) {
       ProjectTargets projectTargets =
           SyncProjectTargetsHelper.getProjectTargets(
               project,
@@ -131,9 +131,9 @@ final class BuildPhaseSyncTask {
       }
       targets.addAll(projectTargets.getTargetsToSync());
     }
-    if (!syncParams.targetExpressions.isEmpty()) {
-      targets.addAll(syncParams.targetExpressions);
-      printTargets(context, syncParams.title, syncParams.targetExpressions);
+    if (!syncParams.targetExpressions().isEmpty()) {
+      targets.addAll(syncParams.targetExpressions());
+      printTargets(context, syncParams.title(), syncParams.targetExpressions());
     }
     buildStats.setTargets(targets);
 
