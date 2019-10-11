@@ -378,24 +378,19 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   LineProcessingOutputStream.of(
                       BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
               .build()
-              .run(new TimingScope("ExecuteBlazeCommand", EventType.BlazeInvocation));
+              .run();
 
       BuildResult buildResult = BuildResult.fromExitCode(retVal);
       if (buildResult.status == Status.FATAL_ERROR) {
         return BlazeBuildOutputs.noOutputs(buildResult);
       }
-      return Scope.push(
-          context,
-          childContext -> {
-            try {
-              childContext.push(new TimingScope("ReadingBuildOutputs", EventType.Other));
-              return BlazeBuildOutputs.fromParsedBepOutput(
-                  buildResult, buildResultHelper.getBuildOutput());
-            } catch (GetArtifactsException e) {
-              IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
-              return BlazeBuildOutputs.noOutputs(buildResult);
-            }
-          });
+      try {
+        return BlazeBuildOutputs.fromParsedBepOutput(
+            buildResult, buildResultHelper.getBuildOutput());
+      } catch (GetArtifactsException e) {
+        IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
+        return BlazeBuildOutputs.noOutputs(buildResult);
+      }
     }
   }
 
