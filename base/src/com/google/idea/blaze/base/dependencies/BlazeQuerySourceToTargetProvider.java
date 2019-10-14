@@ -21,11 +21,10 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
-import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
+import com.google.idea.blaze.base.query.BlazeQueryOutputBaseProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
@@ -78,22 +77,28 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
   private static ImmutableList<TargetInfo> runDirectRdepsQuery(
       Project project, Label label, BlazeContext context) {
     String query = String.format("'same_pkg_direct_rdeps(%s)'", label);
-    BlazeCommand command =
-        BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.QUERY)
-            .addBlazeFlags("--output=label_kind")
-            .addBlazeFlags(query)
-            .build();
+
+    ImmutableList.Builder<String> args = ImmutableList.builder();
+    args.add(getBinaryPath(project));
+
+    String outputBaseFlag = BlazeQueryOutputBaseProvider.getInstance(project).getOutputBaseFlag();
+    if (outputBaseFlag != null) {
+      // startup flag: must come before the 'query' arg
+      args.add(outputBaseFlag);
+    }
+    args.add("query", "--output=label_kind", query);
 
     BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(t -> true);
     int retVal =
         ExternalTask.builder(WorkspaceRoot.fromProject(project))
-            .addBlazeCommand(command)
+            .args(args.build())
             .context(context)
             .stdout(LineProcessingOutputStream.of(outputProcessor))
             .stderr(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))
             .build()
             .run();
-    if (retVal != 0) {
+    if (retVal != 0 && retVal != 3) {
+      // exit code of 3 represents a potentially expected, non-fatal error
       return null;
     }
     return outputProcessor.getTargets();
