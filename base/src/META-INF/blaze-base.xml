@@ -495,6 +495,7 @@
     <VcsSyncListener implementation="com.google.idea.blaze.base.sync.autosync.VcsAutoSyncProvider"/>
     <VcsSyncListener implementation="com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager$VcsListener"/>
     <SettingsUiContributor implementation="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable$UiContributor" order="first" id="base"/>
+    <MacroTargetProvider implementation="com.google.idea.blaze.base.query.BlazeQueryMacroTargetProvider" order="last"/>
   </extensions>
 
 </idea-plugin>
