@@ -1,3 +1,7 @@
+v2019.10.14
+===========
+* Bug fixes and internal cleanup.
+
 v2019.09.30
 ===========
 * CLion: fix unresolved genfiles after the first sync.
