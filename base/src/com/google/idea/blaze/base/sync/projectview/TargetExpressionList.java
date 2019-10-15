@@ -26,39 +26,43 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots.ProjectDirectorie
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** Identifies targets covered by the .blazeproject 'targets' section, as it's seen by blaze. */
-public final class ProjectTargetsHelper {
+/**
+ * Identifies targets/sources covered by an ordered list of {@link TargetExpression}.
+ *
+ * <p>Handles a mixture of included and excluded target expressions.
+ */
+public final class TargetExpressionList {
 
-  public static ProjectTargetsHelper create(List<TargetExpression> projectTargets) {
-    return new ProjectTargetsHelper(
-        projectTargets.stream().map(ProjectTarget::new).collect(toImmutableList()), null);
+  public static TargetExpressionList create(List<TargetExpression> targets) {
+    return new TargetExpressionList(
+        targets.stream().map(TargetData::new).collect(toImmutableList()), null);
   }
 
-  static ProjectTargetsHelper createWithTargetsDerivedFromDirectories(
-      List<TargetExpression> projectTargets, ProjectDirectoriesHelper directories) {
-    return new ProjectTargetsHelper(
-        projectTargets.stream().map(ProjectTarget::new).collect(toImmutableList()), directories);
+  static TargetExpressionList createWithTargetsDerivedFromDirectories(
+      List<TargetExpression> targets, ProjectDirectoriesHelper directories) {
+    return new TargetExpressionList(
+        targets.stream().map(TargetData::new).collect(toImmutableList()), directories);
   }
 
   /**
    * The list of the project targets, in the reverse order to which they're passed to blaze, since
    * later target expressions override earlier ones.
    */
-  private final ImmutableList<ProjectTarget> reversedTargets;
+  private final ImmutableList<TargetData> reversedTargets;
 
   /** Non-null if we're auto-including targets derived from the project directories. */
   @Nullable private final ProjectDirectoriesHelper directories;
 
-  private ProjectTargetsHelper(
-      List<ProjectTarget> projectTargets, @Nullable ProjectDirectoriesHelper directories) {
+  private TargetExpressionList(
+      List<TargetData> projectTargets, @Nullable ProjectDirectoriesHelper directories) {
     this.reversedTargets = ImmutableList.copyOf(projectTargets).reverse();
     this.directories = directories;
   }
 
-  /** Returns true if the entire package is covered by the project targets. */
-  boolean packageInProject(WorkspacePath packagePath) {
+  /** Returns true if the entire package is covered by the target expressions. */
+  boolean includesPackage(WorkspacePath packagePath) {
     // the last target expression to cover this label overrides all previous expressions
-    for (ProjectTarget target : reversedTargets) {
+    for (TargetData target : reversedTargets) {
       if (target.coversPackage(packagePath)) {
         return !target.isExcluded();
       }
@@ -66,9 +70,10 @@ public final class ProjectTargetsHelper {
     return directories != null && directories.containsWorkspacePath(packagePath);
   }
 
-  public boolean targetInProject(Label label) {
+  /** Returns true if the individual target is covered by this list. */
+  public boolean includesTarget(Label label) {
     // the last target expression to cover this label overrides all previous expressions
-    for (ProjectTarget target : reversedTargets) {
+    for (TargetData target : reversedTargets) {
       if (target.coversTarget(label)) {
         return !target.isExcluded();
       }
@@ -76,12 +81,13 @@ public final class ProjectTargetsHelper {
     return directories != null && directories.containsWorkspacePath(label.blazePackage());
   }
 
-  private static class ProjectTarget {
+  /** A single {@link TargetExpression} and associated information. */
+  private static class TargetData {
     private final TargetExpression originalExpression;
     private final TargetExpression unexcludedExpression;
     @Nullable private final WildcardTargetPattern wildcardPattern;
 
-    ProjectTarget(TargetExpression expression) {
+    TargetData(TargetExpression expression) {
       this.originalExpression = expression;
       this.unexcludedExpression =
           expression.isExcluded()

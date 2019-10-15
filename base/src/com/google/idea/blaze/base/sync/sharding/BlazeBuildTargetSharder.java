@@ -38,7 +38,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
-import com.google.idea.blaze.base.sync.projectview.ProjectTargetsHelper;
+import com.google.idea.blaze.base.sync.projectview.TargetExpressionList;
 import com.google.idea.blaze.base.sync.sharding.WildcardTargetExpander.ExpandedTargetsResult;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -210,13 +210,13 @@ public class BlazeBuildTargetSharder {
 
     // finally add back any explicitly-specified, unexcluded single targets which may have been
     // removed by the query (for example, because they have the 'manual' tag)
-    ProjectTargetsHelper helper = ProjectTargetsHelper.create(targets);
+    TargetExpressionList helper = TargetExpressionList.create(targets);
     List<TargetExpression> singleTargets =
         targets.stream()
             .filter(t -> !t.isExcluded())
             .filter(t -> !isWildcardPattern(t))
             .filter(t -> t instanceof Label)
-            .filter(t -> helper.targetInProject((Label) t))
+            .filter(t -> helper.includesTarget((Label) t))
             .collect(toImmutableList());
     return ExpandedTargetsResult.merge(
         result, new ExpandedTargetsResult(singleTargets, result.buildResult));

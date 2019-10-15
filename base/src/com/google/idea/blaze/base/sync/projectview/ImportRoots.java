@@ -113,11 +113,11 @@ public final class ImportRoots {
       ProjectDirectoriesHelper directories =
           new ProjectDirectoriesHelper(minimalRootDirectories, minimalExcludes);
 
-      ProjectTargetsHelper targets =
+      TargetExpressionList targets =
           deriveTargetsFromDirectories
-              ? ProjectTargetsHelper.createWithTargetsDerivedFromDirectories(
+              ? TargetExpressionList.createWithTargetsDerivedFromDirectories(
                   projectTargets.build(), directories)
-              : ProjectTargetsHelper.create(projectTargets.build());
+              : TargetExpressionList.create(projectTargets.build());
 
       return new ImportRoots(directories, targets);
     }
@@ -144,7 +144,7 @@ public final class ImportRoots {
   }
 
   private final ProjectDirectoriesHelper projectDirectories;
-  private final ProjectTargetsHelper projectTargets;
+  private final TargetExpressionList projectTargets;
 
   public static Builder builder(Project project) {
     return new Builder(WorkspaceRoot.fromProject(project), Blaze.getBuildSystem(project));
@@ -155,7 +155,7 @@ public final class ImportRoots {
   }
 
   private ImportRoots(
-      ProjectDirectoriesHelper projectDirectories, ProjectTargetsHelper projectTargets) {
+      ProjectDirectoriesHelper projectDirectories, TargetExpressionList projectTargets) {
     this.projectDirectories = projectDirectories;
     this.projectTargets = projectTargets;
   }
@@ -182,11 +182,11 @@ public final class ImportRoots {
    * (explicit or derived from directories) cover all targets in the relevant packages.
    */
   public boolean targetInProject(Label label) {
-    return projectTargets.targetInProject(label);
+    return projectTargets.includesTarget(label);
   }
 
   public boolean packageInProjectTargets(WorkspacePath packagePath) {
-    return projectTargets.packageInProject(packagePath);
+    return projectTargets.includesPackage(packagePath);
   }
 
   public boolean containsWorkspacePath(WorkspacePath workspacePath) {
