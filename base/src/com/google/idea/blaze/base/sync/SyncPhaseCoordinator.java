@@ -17,9 +17,11 @@ package com.google.idea.blaze.base.sync;
 
 import static java.util.stream.Collectors.joining;
 
+import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -79,6 +81,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
@@ -98,48 +101,67 @@ final class SyncPhaseCoordinator {
     ALL_PHASES, // running all sync phases synchronously
   }
 
-  private static class UpdatePhaseTask {
-    final Instant startTime;
-    final BlazeSyncParams syncParams;
-    @Nullable final SyncProjectState projectState;
-    final BlazeSyncBuildResult buildResult;
-    final SyncResult syncResult;
+  @AutoValue
+  abstract static class UpdatePhaseTask {
+    abstract Instant startTime();
 
-    UpdatePhaseTask(
-        Instant startTime,
-        BlazeSyncParams syncParams,
-        @Nullable SyncProjectState projectState,
-        BlazeSyncBuildResult buildResult,
-        SyncResult syncResult) {
-      this.startTime = startTime;
-      this.syncParams = syncParams;
-      this.projectState = projectState;
-      this.buildResult = buildResult;
-      this.syncResult = syncResult;
+    abstract BlazeSyncParams syncParams();
+
+    @Nullable
+    abstract SyncProjectState projectState();
+
+    abstract ImmutableSet<Integer> buildIds();
+
+    abstract BlazeSyncBuildResult buildResult();
+
+    abstract SyncResult syncResult();
+
+    abstract Builder toBuilder();
+
+    static Builder builder() {
+      return new AutoValue_SyncPhaseCoordinator_UpdatePhaseTask.Builder();
     }
 
-    UpdatePhaseTask newTaskWithStartTime(Instant startTime) {
-      return new UpdatePhaseTask(startTime, syncParams, projectState, buildResult, syncResult);
+    @AutoValue.Builder
+    abstract static class Builder {
+
+      abstract Builder setStartTime(Instant value);
+
+      abstract Builder setSyncParams(BlazeSyncParams value);
+
+      abstract Builder setProjectState(SyncProjectState value);
+
+      abstract Builder setBuildIds(ImmutableSet<Integer> value);
+
+      abstract Builder setBuildResult(BlazeSyncBuildResult value);
+
+      abstract Builder setSyncResult(SyncResult value);
+
+      abstract UpdatePhaseTask build();
     }
 
     /** Combines this task with another task (relative input ordering is unimportant). */
     static UpdatePhaseTask combineTasks(UpdatePhaseTask a, UpdatePhaseTask b) {
-      UpdatePhaseTask first = a.startTime.isBefore(b.startTime) ? a : b;
-      UpdatePhaseTask second = a.startTime.isBefore(b.startTime) ? b : a;
-      // if one of the builds failed entirely, ignore it
-      if (!first.syncResult.successful()) {
-        return second.newTaskWithStartTime(first.startTime);
+      ImmutableSet<Integer> buildIds =
+          ImmutableSet.<Integer>builder().addAll(a.buildIds()).addAll(b.buildIds()).build();
+      UpdatePhaseTask first = a.startTime().isBefore(b.startTime()) ? a : b;
+      UpdatePhaseTask second = a.startTime().isBefore(b.startTime()) ? b : a;
+      // if one of the builds failed entirely, ignore the build result
+      if (!first.syncResult().successful()) {
+        return second.toBuilder().setStartTime(first.startTime()).setBuildIds(buildIds).build();
       }
-      if (!second.syncResult.successful()) {
-        return first;
+      if (!second.syncResult().successful()) {
+        return first.toBuilder().setBuildIds(buildIds).build();
       }
       // take the most recent version of the project data, and combine the blaze build outputs
-      return new UpdatePhaseTask(
-          first.startTime,
-          BlazeSyncParams.combine(first.syncParams, second.syncParams),
-          second.projectState,
-          first.buildResult.updateResult(second.buildResult),
-          SyncResult.combine(first.syncResult, second.syncResult));
+      return builder()
+          .setStartTime(first.startTime())
+          .setSyncParams(BlazeSyncParams.combine(first.syncParams(), second.syncParams()))
+          .setProjectState(second.projectState())
+          .setBuildIds(buildIds)
+          .setBuildResult(first.buildResult().updateResult(second.buildResult()))
+          .setSyncResult(SyncResult.combine(first.syncResult(), second.syncResult()))
+          .build();
     }
   }
 
@@ -157,6 +179,12 @@ final class SyncPhaseCoordinator {
   // a per-project executor to run single-threaded sync phases
   private final ListeningExecutorService singleThreadedExecutor;
   private final Project project;
+
+  /**
+   * An integer uniquely identifying each build task. Used to track in-progress syncs on a
+   * per-target basis.
+   */
+  private static final AtomicInteger nextBuildId = new AtomicInteger();
 
   @Nullable
   @GuardedBy("this")
@@ -299,6 +327,7 @@ final class SyncPhaseCoordinator {
           startTime,
           context,
           ProjectViewManager.getInstance(project).getProjectViewSet(),
+          ImmutableSet.of(),
           syncResult,
           stats);
     }
@@ -313,6 +342,7 @@ final class SyncPhaseCoordinator {
   @VisibleForTesting
   void runSync(BlazeSyncParams params, boolean singleThreaded, BlazeContext context) {
     Instant startTime = Instant.now();
+    int buildId = nextBuildId.getAndIncrement();
     try {
       SaveUtil.saveAllFiles();
       onSyncStart(project, context, params.syncMode());
@@ -322,6 +352,7 @@ final class SyncPhaseCoordinator {
             startTime,
             context,
             ProjectViewManager.getInstance(project).getProjectViewSet(),
+            ImmutableSet.of(buildId),
             SyncResult.SUCCESS,
             SyncStats.builder());
         return;
@@ -330,15 +361,17 @@ final class SyncPhaseCoordinator {
           ProjectStateSyncTask.collectProjectState(project, params.blazeBuildParams(), context);
       BlazeSyncBuildResult buildResult =
           projectState != null
-              ? BuildPhaseSyncTask.runBuildPhase(project, params, projectState, context)
+              ? BuildPhaseSyncTask.runBuildPhase(project, params, projectState, buildId, context)
               : BlazeSyncBuildResult.builder().build();
       UpdatePhaseTask task =
-          new UpdatePhaseTask(
-              startTime,
-              params,
-              projectState,
-              buildResult,
-              syncResultFromBuildPhase(buildResult, context));
+          UpdatePhaseTask.builder()
+              .setStartTime(startTime)
+              .setSyncParams(params)
+              .setProjectState(projectState)
+              .setBuildIds(ImmutableSet.of(buildId))
+              .setBuildResult(buildResult)
+              .setSyncResult(syncResultFromBuildPhase(buildResult, context))
+              .build();
       if (singleThreaded) {
         updateProjectAndFinishSync(task, context);
       } else {
@@ -351,6 +384,7 @@ final class SyncPhaseCoordinator {
           startTime,
           context,
           ProjectViewManager.getInstance(project).getProjectViewSet(),
+          ImmutableSet.of(buildId),
           SyncResult.FAILURE,
           SyncStats.builder());
     }
@@ -373,7 +407,7 @@ final class SyncPhaseCoordinator {
                     context -> {
                       UpdatePhaseTask updateTask = getAndClearPendingTask();
                       setupScopes(
-                          updateTask.syncParams, context, indicator, SyncPhase.PROJECT_UPDATE);
+                          updateTask.syncParams(), context, indicator, SyncPhase.PROJECT_UPDATE);
                       updateProjectAndFinishSync(updateTask, context);
                     }));
   }
@@ -410,10 +444,10 @@ final class SyncPhaseCoordinator {
 
   private void updateProjectAndFinishSync(UpdatePhaseTask updateTask, BlazeContext context) {
     SyncStats.Builder stats = SyncStats.builder();
-    SyncResult syncResult = updateTask.syncResult;
+    SyncResult syncResult = updateTask.syncResult();
     try {
-      fillInBuildStats(stats, updateTask.projectState, updateTask.buildResult);
-      if (!syncResult.successful() || !updateTask.buildResult.isValid()) {
+      fillInBuildStats(stats, updateTask.projectState(), updateTask.buildResult());
+      if (!syncResult.successful() || !updateTask.buildResult().isValid()) {
         return;
       }
       List<TimedEvent> timedEvents =
@@ -427,8 +461,8 @@ final class SyncPhaseCoordinator {
                 }
                 ProjectUpdateSyncTask.runProjectUpdatePhase(
                     project,
-                    updateTask.syncParams.syncMode(),
-                    updateTask.projectState,
+                    updateTask.syncParams().syncMode(),
+                    updateTask.projectState(),
                     targetData,
                     childContext);
               },
@@ -440,12 +474,13 @@ final class SyncPhaseCoordinator {
     } catch (Throwable e) {
       logSyncError(context, e);
     } finally {
-      SyncProjectState projectState = updateTask.projectState;
+      SyncProjectState projectState = updateTask.projectState();
       finishSync(
-          updateTask.syncParams,
-          updateTask.startTime,
+          updateTask.syncParams(),
+          updateTask.startTime(),
           context,
           projectState != null ? projectState.getProjectViewSet() : null,
+          updateTask.buildIds(),
           syncResult,
           stats);
     }
@@ -454,7 +489,11 @@ final class SyncPhaseCoordinator {
   @Nullable
   private ProjectTargetData updateTargetData(UpdatePhaseTask task, BlazeContext context) {
     return ProjectUpdateSyncTask.updateTargetData(
-        project, task.syncParams, task.projectState, task.buildResult.getBuildResult(), context);
+        project,
+        task.syncParams(),
+        task.projectState(),
+        task.buildResult().getBuildResult(),
+        context);
   }
 
   /**
@@ -468,6 +507,7 @@ final class SyncPhaseCoordinator {
       Instant startTime,
       BlazeContext context,
       @Nullable ProjectViewSet projectViewSet,
+      ImmutableSet<Integer> buildIds,
       SyncResult syncResult,
       SyncStats.Builder stats) {
     try {
@@ -487,7 +527,8 @@ final class SyncPhaseCoordinator {
               .setTargetMapSize(projectData.getTargetMap().targets().size())
               .setLibraryCount(librariesCount);
         }
-        onSyncComplete(project, context, projectViewSet, projectData, syncParams, syncResult);
+        onSyncComplete(
+            project, context, projectViewSet, buildIds, projectData, syncParams, syncResult);
       }
       stats
           .setSyncMode(syncParams.syncMode())
@@ -504,7 +545,7 @@ final class SyncPhaseCoordinator {
     } catch (Throwable e) {
       logSyncError(context, e);
     } finally {
-      afterSync(project, syncParams, context, syncResult);
+      afterSync(project, syncParams, context, syncResult, buildIds);
     }
   }
 
@@ -618,10 +659,14 @@ final class SyncPhaseCoordinator {
   }
 
   private static void afterSync(
-      Project project, BlazeSyncParams syncParams, BlazeContext context, SyncResult syncResult) {
+      Project project,
+      BlazeSyncParams syncParams,
+      BlazeContext context,
+      SyncResult syncResult,
+      ImmutableSet<Integer> buildIds) {
     final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
     for (SyncListener syncListener : syncListeners) {
-      syncListener.afterSync(project, context, syncParams.syncMode(), syncResult);
+      syncListener.afterSync(project, context, syncParams.syncMode(), syncResult, buildIds);
     }
   }
 
@@ -629,6 +674,7 @@ final class SyncPhaseCoordinator {
       Project project,
       BlazeContext context,
       ProjectViewSet projectViewSet,
+      ImmutableSet<Integer> buildIds,
       BlazeProjectData blazeProjectData,
       BlazeSyncParams syncParams,
       SyncResult syncResult) {
@@ -640,6 +686,7 @@ final class SyncPhaseCoordinator {
           context,
           BlazeImportSettingsManager.getInstance(project).getImportSettings(),
           projectViewSet,
+          buildIds,
           blazeProjectData,
           syncParams.syncMode(),
           syncResult);

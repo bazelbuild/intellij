@@ -65,8 +65,9 @@ final class BuildPhaseSyncTask {
       Project project,
       BlazeSyncParams syncParams,
       SyncProjectState projectState,
+      int buildId,
       BlazeContext context) {
-    BuildPhaseSyncTask task = new BuildPhaseSyncTask(project, syncParams, projectState);
+    BuildPhaseSyncTask task = new BuildPhaseSyncTask(project, syncParams, projectState, buildId);
     return task.run(context);
   }
 
@@ -75,16 +76,18 @@ final class BuildPhaseSyncTask {
   private final WorkspaceRoot workspaceRoot;
   private final BlazeSyncParams syncParams;
   private final SyncProjectState projectState;
+  private final int buildId;
   private final BlazeSyncBuildResult.Builder resultBuilder;
   private final BuildPhaseSyncStats.Builder buildStats;
 
   private BuildPhaseSyncTask(
-      Project project, BlazeSyncParams syncParams, SyncProjectState projectState) {
+      Project project, BlazeSyncParams syncParams, SyncProjectState projectState, int buildId) {
     this.project = project;
     this.importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     this.syncParams = syncParams;
     this.projectState = projectState;
+    this.buildId = buildId;
     this.resultBuilder = BlazeSyncBuildResult.builder();
     this.buildStats = BuildPhaseSyncStats.builder();
   }
@@ -101,6 +104,12 @@ final class BuildPhaseSyncTask {
           doRun(context);
         });
     return resultBuilder.setBuildPhaseStats(ImmutableList.of(buildStats.build())).build();
+  }
+
+  private void notifyBuildStarted(BlazeContext context, ImmutableList<TargetExpression> targets) {
+    SyncListener.EP_NAME
+        .extensions()
+        .forEach(l -> l.buildStarted(project, context, buildId, targets));
   }
 
   private void doRun(BlazeContext context) throws SyncFailedException, SyncCanceledException {
@@ -136,6 +145,7 @@ final class BuildPhaseSyncTask {
       printTargets(context, syncParams.title(), syncParams.targetExpressions());
     }
     buildStats.setTargets(targets);
+    notifyBuildStarted(context, ImmutableList.copyOf(targets));
 
     ShardedTargetsResult shardedTargetsResult =
         BlazeBuildTargetSharder.expandAndShardTargets(

@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
@@ -172,7 +173,8 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
         null);
     assertThat(libraryProvider.getAdditionalProjectLibraries(project)).isNotEmpty();
 
-    syncListener.afterSync(project, context, SyncMode.INCREMENTAL, SyncResult.SUCCESS);
+    syncListener.afterSync(
+        project, context, SyncMode.INCREMENTAL, SyncResult.SUCCESS, ImmutableSet.of());
     assertThat(libraryProvider.getAdditionalProjectLibraries(project)).isNotEmpty();
   }
 
@@ -189,7 +191,8 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
     syncListener.onSyncStart(project, context, SyncMode.INCREMENTAL);
     assertThat(libraryProvider.getAdditionalProjectLibraries(project)).isEmpty();
 
-    syncListener.afterSync(project, context, SyncMode.INCREMENTAL, SyncResult.FAILURE);
+    syncListener.afterSync(
+        project, context, SyncMode.INCREMENTAL, SyncResult.FAILURE, ImmutableSet.of());
     assertThat(libraryProvider.getAdditionalProjectLibraries(project)).isNotEmpty();
   }
 
@@ -208,7 +211,7 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
           null,
           null);
     }
-    syncListener.afterSync(project, context, SyncMode.INCREMENTAL, syncResult);
+    syncListener.afterSync(project, context, SyncMode.INCREMENTAL, syncResult, ImmutableSet.of());
   }
 
   private SyntheticLibrary getExternalLibrary() {

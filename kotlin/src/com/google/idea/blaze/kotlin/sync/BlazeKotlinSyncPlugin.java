@@ -301,7 +301,11 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
   static class Listener implements SyncListener {
     @Override
     public void afterSync(
-        Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
+        Project project,
+        BlazeContext context,
+        SyncMode syncMode,
+        SyncResult syncResult,
+        ImmutableSet<Integer> buildIds) {
       BlazeProjectData blazeProjectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       if (blazeProjectData == null

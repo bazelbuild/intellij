@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -203,6 +204,7 @@ public class BulkSymbolTableBuildingChangeListener implements BulkFileListener {
         BlazeContext context,
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
+        ImmutableSet<Integer> buildIds,
         BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {

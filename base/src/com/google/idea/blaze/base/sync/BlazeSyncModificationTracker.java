@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,11 @@ public final class BlazeSyncModificationTracker {
   static class Updater implements SyncListener {
     @Override
     public void afterSync(
-        Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
+        Project project,
+        BlazeContext context,
+        SyncMode syncMode,
+        SyncResult syncResult,
+        ImmutableSet<Integer> buildIds) {
       ((SimpleModificationTracker) getInstance(project)).incModificationCount();
     }
   }

@@ -19,6 +19,7 @@ import com.goide.project.GoModuleSettings;
 import com.goide.sdk.GoSdk;
 import com.goide.sdk.GoSdkService;
 import com.goide.sdk.GoSdkUtil;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -49,6 +50,7 @@ public class BlazeGoSdkUpdater implements SyncListener {
       BlazeContext context,
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
+      ImmutableSet<Integer> buildIds,
       BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {

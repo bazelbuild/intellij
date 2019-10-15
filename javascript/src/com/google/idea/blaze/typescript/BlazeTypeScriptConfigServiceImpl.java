@@ -196,6 +196,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
         BlazeContext context,
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
+        ImmutableSet<Integer> buildIds,
         BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {

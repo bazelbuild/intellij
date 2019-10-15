@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -57,6 +58,7 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
       BlazeContext context,
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
+      ImmutableSet<Integer> buildIds,
       BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {

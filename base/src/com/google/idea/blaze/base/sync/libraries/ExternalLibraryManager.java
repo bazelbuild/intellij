@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -119,7 +120,11 @@ public class ExternalLibraryManager {
 
     @Override
     public void afterSync(
-        Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
+        Project project,
+        BlazeContext context,
+        SyncMode syncMode,
+        SyncResult syncResult,
+        ImmutableSet<Integer> buildIds) {
       ExternalLibraryManager manager = ExternalLibraryManager.getInstance(project);
       if (syncMode == SyncMode.STARTUP) {
         BlazeProjectData blazeProjectData =

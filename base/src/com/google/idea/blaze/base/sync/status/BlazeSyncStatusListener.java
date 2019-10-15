@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.status;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -34,7 +35,11 @@ public class BlazeSyncStatusListener implements SyncListener {
 
   @Override
   public void afterSync(
-      Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
+      Project project,
+      BlazeContext context,
+      SyncMode syncMode,
+      SyncResult syncResult,
+      ImmutableSet<Integer> buildIds) {
     BlazeSyncStatusImpl.getImpl(project).syncEnded(syncMode, syncResult);
   }
 }

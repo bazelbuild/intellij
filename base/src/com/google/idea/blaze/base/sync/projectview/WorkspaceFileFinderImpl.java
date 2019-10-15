@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.projectview;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -45,6 +46,7 @@ class WorkspaceFileFinderImpl implements SyncListener, WorkspaceFileFinder {
       BlazeContext context,
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
+      ImmutableSet<Integer> buildIds,
       BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {

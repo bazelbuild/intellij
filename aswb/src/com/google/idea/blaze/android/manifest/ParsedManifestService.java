@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.manifest;
 
 import static com.google.idea.blaze.android.manifest.ManifestParser.parseManifestFromInputStream;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -79,6 +80,7 @@ public class ParsedManifestService {
         BlazeContext context,
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
+        ImmutableSet<Integer> buildIds,
         BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {

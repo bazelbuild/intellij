@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -97,6 +98,7 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
         BlazeContext context,
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
+        ImmutableSet<Integer> buildIds,
         BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {

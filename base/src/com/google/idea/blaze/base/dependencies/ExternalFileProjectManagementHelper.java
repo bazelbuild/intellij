@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.dependencies;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -189,6 +190,7 @@ public class ExternalFileProjectManagementHelper
         BlazeContext context,
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
+        ImmutableSet<Integer> buildIds,
         BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {

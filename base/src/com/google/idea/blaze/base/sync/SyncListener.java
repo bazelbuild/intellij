@@ -15,7 +15,10 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -30,17 +33,34 @@ public interface SyncListener {
   /** Called after open documents have been saved, prior to starting the blaze sync. */
   default void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {}
 
+  /**
+   * Called just prior to starting a blaze build during sync.
+   *
+   * @param buildId a unique ID associated with each sync build. {@link #afterSync} is guaranteed to
+   *     be called with this build ID at some point.
+   */
+  default void buildStarted(
+      Project project,
+      BlazeContext context,
+      int buildId,
+      ImmutableList<TargetExpression> targets) {}
+
   /** Called on successful (or partially successful) completion of a sync */
   default void onSyncComplete(
       Project project,
       BlazeContext context,
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
+      ImmutableSet<Integer> buildIds,
       BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {}
 
   /** Guaranteed to be called once per sync, regardless of whether it successfully completed */
   default void afterSync(
-      Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {}
+      Project project,
+      BlazeContext context,
+      SyncMode syncMode,
+      SyncResult syncResult,
+      ImmutableSet<Integer> buildIds) {}
 }

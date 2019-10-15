@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.project.Project;
 
@@ -22,7 +23,11 @@ import com.intellij.openapi.project.Project;
 public class SimpleSyncListenerService implements SyncListener {
   @Override
   public void afterSync(
-      Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
+      Project project,
+      BlazeContext context,
+      SyncMode syncMode,
+      SyncResult syncResult,
+      ImmutableSet<Integer> buildIds) {
     for (SimpleSyncListener listener : SimpleSyncListener.EP_NAME.getExtensions()) {
       listener.syncFinished(project, syncMode, syncResult);
     }

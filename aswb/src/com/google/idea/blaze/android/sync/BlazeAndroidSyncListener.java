@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.sync;
 
 import com.android.tools.idea.res.ResourceFolderRegistry;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -27,7 +28,11 @@ import com.intellij.openapi.project.Project;
 public class BlazeAndroidSyncListener implements SyncListener {
   @Override
   public void afterSync(
-      Project project, BlazeContext context, SyncMode syncMode, SyncResult syncResult) {
+      Project project,
+      BlazeContext context,
+      SyncMode syncMode,
+      SyncResult syncResult,
+      ImmutableSet<Integer> buildIds) {
     if (syncResult.successful()) {
       DumbService dumbService = DumbService.getInstance(project);
       dumbService.queueTask(new ResourceFolderRegistry.PopulateCachesTask(project));

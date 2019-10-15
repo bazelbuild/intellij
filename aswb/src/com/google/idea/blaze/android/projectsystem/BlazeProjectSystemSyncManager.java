@@ -19,6 +19,7 @@ import static com.android.tools.idea.projectsystem.ProjectSystemSyncUtil.PROJECT
 
 import com.android.annotations.VisibleForTesting;
 import com.android.tools.idea.projectsystem.ProjectSystemSyncManager;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -138,7 +139,8 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
         Project project,
         BlazeContext context,
         SyncMode syncMode,
-        com.google.idea.blaze.base.sync.SyncResult syncResult) {
+        com.google.idea.blaze.base.sync.SyncResult syncResult,
+        ImmutableSet<Integer> buildIds) {
 
       LastSyncResultCache lastSyncResultCache = LastSyncResultCache.getInstance(project);
 
