@@ -79,6 +79,8 @@ public class FileOperationProvider {
     MoreFiles.deleteRecursively(file.toPath());
   }
 
+  // If the file is too big, this method can blow up RAM as it reads the file contents
+  // entirely into memory. Only use this for small files.
   public List<String> readAllLines(File file) throws IOException {
     return Files.readAllLines(file.toPath());
   }

@@ -177,11 +177,11 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
 
     TargetMap targetMap = targetMapBuilder.build();
-    JavaSourceFilter sourceFilter =
-        new JavaSourceFilter(
+    com.google.idea.blaze.java.sync.importer.JavaSourceFilter sourceFilter =
+        new com.google.idea.blaze.java.sync.importer.JavaSourceFilter(
             Blaze.getBuildSystem(project), workspaceRoot, projectViewSet, targetMap);
-    BlazeJavaWorkspaceImporter blazeWorkspaceImporter =
-        new BlazeJavaWorkspaceImporter(
+    com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter blazeWorkspaceImporter =
+        new com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter(
             project,
             workspaceRoot,
             projectViewSet,
