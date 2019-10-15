@@ -17,6 +17,7 @@ package com.google.idea.blaze.golang.run;
 
 import com.goide.dlv.location.DlvPositionConverter;
 import com.goide.dlv.location.DlvPositionConverterFactory;
+import com.goide.sdk.GoSdkService;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
@@ -35,13 +36,18 @@ class BlazeDlvPositionConverter implements DlvPositionConverter {
   private static final Logger logger = Logger.getInstance(BlazeDlvPositionConverter.class);
 
   private final WorkspaceRoot root;
+  private final String goRoot;
   private final ExecutionRootPathResolver resolver;
   private final BiMap<String, VirtualFile> remoteToLocal;
 
   private BlazeDlvPositionConverter(
-      WorkspaceRoot root, ExecutionRootPathResolver resolver, Set<String> remotePaths) {
+      WorkspaceRoot workspaceRoot,
+      String goRoot,
+      ExecutionRootPathResolver resolver,
+      Set<String> remotePaths) {
+    this.root = workspaceRoot;
+    this.goRoot = goRoot;
     this.resolver = resolver;
-    this.root = root;
     this.remoteToLocal = Maps.synchronizedBiMap(HashBiMap.create(remotePaths.size()));
     for (String path : remotePaths) {
       String normalizedPath = normalizePath(path);
@@ -50,9 +56,9 @@ class BlazeDlvPositionConverter implements DlvPositionConverter {
       }
       VirtualFile localFile = resolve(normalizedPath);
       if (localFile != null) {
-        remoteToLocal.put(normalizedPath, localFile);
+        remoteToLocal.put(path, localFile);
       } else {
-        logger.warn("Unable to find local file for debug path: " + normalizedPath);
+        logger.warn("Unable to find local file for debug path: " + path);
       }
     }
   }
@@ -74,9 +80,9 @@ class BlazeDlvPositionConverter implements DlvPositionConverter {
   @Nullable
   @Override
   public VirtualFile toLocalFile(String remotePath) {
-    String normalizedPath = normalizePath(remotePath);
-    VirtualFile localFile = remoteToLocal.get(normalizedPath);
-    if (localFile == null) {
+    VirtualFile localFile = remoteToLocal.get(remotePath);
+    if (localFile == null || !localFile.isValid()) {
+      String normalizedPath = normalizePath(remotePath);
       localFile = resolve(normalizedPath);
       if (localFile != null) {
         remoteToLocal.put(normalizedPath, localFile);
@@ -91,12 +97,14 @@ class BlazeDlvPositionConverter implements DlvPositionConverter {
         resolver.resolveExecutionRootPath(new ExecutionRootPath(normalizedPath)));
   }
 
-  private static String normalizePath(String path) {
+  private String normalizePath(String path) {
     if (path.startsWith("/build/work/")) {
       // /build/work/<hash>/<project>/actual/path
       return afterNthSlash(path, 5);
     } else if (path.startsWith("/tmp/go-build-release/buildroot/")) {
       return afterNthSlash(path, 4);
+    } else if (path.startsWith("GOROOT/")) {
+      return goRoot + '/' + afterNthSlash(path, 1);
     }
     return path;
   }
@@ -121,10 +129,11 @@ class BlazeDlvPositionConverter implements DlvPositionConverter {
     @Override
     public DlvPositionConverter createPositionConverter(
         Project project, @Nullable Module module, Set<String> remotePaths) {
-      WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);
+      WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProjectSafe(project);
+      String goRoot = GoSdkService.getInstance(project).getSdk(module).getHomePath();
       ExecutionRootPathResolver resolver = ExecutionRootPathResolver.fromProject(project);
-      return (root != null && resolver != null)
-          ? new BlazeDlvPositionConverter(root, resolver, remotePaths)
+      return (workspaceRoot != null && resolver != null)
+          ? new BlazeDlvPositionConverter(workspaceRoot, goRoot, resolver, remotePaths)
           : null;
     }
   }

@@ -21,7 +21,8 @@
         order="before default"/>
     <packageFactory implementation="com.google.idea.blaze.golang.resolve.BlazeGoPackageFactory"/>
     <dlv.positionConverterFactory
-        implementation="com.google.idea.blaze.golang.run.BlazeDlvPositionConverter$Factory"/>
+        implementation="com.google.idea.blaze.golang.run.BlazeDlvPositionConverter$Factory"
+        order="first"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">

@@ -19,6 +19,9 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.goide.dlv.location.DlvPositionConverter;
 import com.goide.dlv.location.DlvPositionConverterFactory;
+import com.goide.sdk.GoSdk;
+import com.goide.sdk.GoSdkImpl;
+import com.goide.sdk.GoSdkService;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
@@ -34,8 +37,10 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.mock.MockLocalFileSystem;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ultimate.UltimateVerifier;
 import java.io.File;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -67,6 +72,14 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
             MockBlazeProjectDataBuilder.builder()
                 .setWorkspacePathResolver(new WorkspacePathResolverImpl(workspaceRoot))
                 .build()));
+    GoSdkService goSdkService =
+        new GoSdkService(project, new UltimateVerifier()) {
+          @Override
+          public GoSdk getSdk(@Nullable Module module) {
+            return new GoSdkImpl("/usr/lib/golang", null, null);
+          }
+        };
+    projectServices.register(GoSdkService.class, goSdkService);
     registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
         .registerExtension(new BazelBuildSystemProvider());
     registerExtensionPoint(DlvPositionConverterFactory.EP_NAME, DlvPositionConverterFactory.class)
@@ -223,6 +236,29 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
         .hasPath("/build/work/one/two.go");
     assertThatFile(converter.toLocalFile("/tmp/go-build-release/bar.go"))
         .hasPath("/tmp/go-build-release/bar.go");
+  }
+
+  @Test
+  public void testConvertGoRootPaths() {
+    fileSystem.setResolvablePaths(
+        workspacePath("foo/bar.go"),
+        "/usr/lib/golang/src/fmt/format.go",
+        "/usr/lib/golang/src/time/time.go");
+    DlvPositionConverter converter =
+        DlvPositionConverterFactory.create(
+            getProject(),
+            null,
+            ImmutableSet.of("foo/bar.go", "GOROOT/src/fmt/format.go", "GOROOT/src/time/time.go"));
+    assertThatFile(converter.toLocalFile("foo/bar.go")).hasWorkspacePath("foo/bar.go");
+    assertThatFile(converter.toLocalFile("GOROOT/src/fmt/format.go"))
+        .hasPath("/usr/lib/golang/src/fmt/format.go");
+    assertThatFile(converter.toLocalFile("GOROOT/src/time/time.go"))
+        .hasPath("/usr/lib/golang/src/time/time.go");
+    assertThat(converter.toRemotePath(workspaceFile("foo/bar.go"))).isEqualTo("foo/bar.go");
+    assertThat(converter.toRemotePath(fileForPath("/usr/lib/golang/src/fmt/format.go")))
+        .isEqualTo("GOROOT/src/fmt/format.go");
+    assertThat(converter.toRemotePath(fileForPath("/usr/lib/golang/src/time/time.go")))
+        .isEqualTo("GOROOT/src/time/time.go");
   }
 
   private VirtualFile fileForPath(String path) {
