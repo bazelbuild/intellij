@@ -18,12 +18,10 @@ test_suite(
         "//base:integration_tests",
         "//base:unit_tests",
         "//dart:unit_tests",
-        "//golang:unit_tests",
         "//ijwb:integration_tests",
         "//ijwb:unit_tests",
         "//java:integration_tests",
         "//java:unit_tests",
-        "//javascript:unit_tests",
         "//kotlin:integration_tests",
         "//kotlin:unit_tests",
         "//plugin_dev:integration_tests",
@@ -39,7 +37,9 @@ test_suite(
     name = "ijwb_ue_tests",
     tests = [
         "//golang:integration_tests",
+        "//golang:unit_tests",
         "//javascript:integration_tests",
+        "//javascript:unit_tests",
     ],
 )
 

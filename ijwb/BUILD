@@ -21,6 +21,7 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -68,16 +69,20 @@ intellij_plugin(
         ":plugin_library",
         "//base:plugin_library",
         "//dart:plugin_library",
-        "//golang:plugin_library",
         "//java:plugin_library",
-        "//javascript:plugin_library",
         "//kotlin:plugin_library",
         "//plugin_dev:plugin_library",
         "//python:plugin_library",
         "//scala:plugin_library",
         "//skylark:plugin_library",
         "//terminal:plugin_library",
-    ],
+    ] + select_for_ide(
+        intellij = [],
+        intellij_ue = [
+            "//golang:plugin_library",
+            "//javascript:plugin_library",
+        ],
+    ),
 )
 
 repackaged_files(

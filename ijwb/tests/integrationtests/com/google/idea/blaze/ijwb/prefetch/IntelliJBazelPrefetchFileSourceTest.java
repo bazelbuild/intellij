@@ -30,6 +30,6 @@ public class IntelliJBazelPrefetchFileSourceTest extends BlazeIntegrationTestCas
   @Test
   public void testPrefetchedExtensions() {
     assertThat(PrefetchFileSource.getAllPrefetchFileExtensions())
-        .containsExactly("java", "proto", "js", "html", "css", "gss", "ts", "tsx", "dart");
+        .containsExactly("java", "proto", "dart");
   }
 }

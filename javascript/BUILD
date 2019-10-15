@@ -12,7 +12,6 @@ load(
     "intellij_unit_test_suite",
     "intellij_integration_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 
 java_library(
     name = "javascript",
@@ -22,21 +21,11 @@ java_library(
         "//base",
         "//common/experiments",
         "//common/transactions",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
         "//third_party/javascript",
-        "//intellij_platform_sdk:plugin_api",
-        "//intellij_platform_sdk:jsr305",
-    ] + select_for_ide(
-        intellij = [":webcore"],
-        intellij_ue = [],
-    ),
-)
-
-java_library(
-    name = "webcore",
-    srcs = glob(["webcore/src/**/*.java"]),
-    neverlink = 1,
-    deps = ["//intellij_platform_sdk:plugin_api"],
+    ],
 )
 
 optional_plugin_xml(
