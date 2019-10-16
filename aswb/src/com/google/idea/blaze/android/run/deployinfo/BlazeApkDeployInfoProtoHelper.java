@@ -19,6 +19,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
+import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.Artifact;
+import com.google.idea.blaze.android.manifest.ManifestParser.ParsedManifest;
 import com.google.idea.blaze.android.manifest.ParsedManifestService;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -37,6 +39,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Reads the deploy info from a build step. */
@@ -74,13 +77,44 @@ public class BlazeApkDeployInfoProtoHelper {
     if (executionRoot == null) {
       return null;
     }
-    BlazeAndroidDeployInfo androidDeployInfo =
-        new BlazeAndroidDeployInfo(project, new File(executionRoot), deployInfo);
 
-    List<File> manifestFiles = androidDeployInfo.getManifestFiles();
-    ParsedManifestService.getInstance(project).invalidateCachedManifests(manifestFiles);
+    File mergedManifestFile =
+        new File(executionRoot, deployInfo.getMergedManifest().getExecRootPath());
+    ParsedManifest mergedManifest = getParsedManifestSafe(mergedManifestFile);
+    ParsedManifestService.getInstance(project)
+        .invalidateCachedManifests(ImmutableList.of(mergedManifestFile));
 
-    return androidDeployInfo;
+    // android_test targets uses additional merged manifests field of the deploy info proto to hold
+    // the manifest of the test target APK.
+    ParsedManifest testTargetMergedManifest = null;
+    List<Artifact> additionalManifests = deployInfo.getAdditionalMergedManifestsList();
+    if (additionalManifests.size() == 1) {
+      File testTargetMergedManifestFile =
+          new File(executionRoot, additionalManifests.get(0).getExecRootPath());
+      testTargetMergedManifest = getParsedManifestSafe(testTargetMergedManifestFile);
+      ParsedManifestService.getInstance(project)
+          .invalidateCachedManifests(ImmutableList.of(testTargetMergedManifestFile));
+    }
+
+    List<File> apksToDeploy =
+        deployInfo.getApksToDeployList().stream()
+            .map(artifact -> new File(executionRoot, artifact.getExecRootPath()))
+            .collect(Collectors.toList());
+
+    return new BlazeAndroidDeployInfo(mergedManifest, testTargetMergedManifest, apksToDeploy);
+  }
+
+  /** Transforms thrown {@link IOException} to {@link GetArtifactsException} */
+  private ParsedManifest getParsedManifestSafe(File manifestFile) throws GetArtifactsException {
+    try {
+      return ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
+    } catch (IOException e) {
+      throw new GetArtifactsException(
+          "Could not read merged manifest file "
+              + manifestFile
+              + " due to error: "
+              + e.getMessage());
+    }
   }
 
   @Nullable
