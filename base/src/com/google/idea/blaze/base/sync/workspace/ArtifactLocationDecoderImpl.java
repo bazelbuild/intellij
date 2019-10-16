@@ -102,8 +102,8 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
   private BlazeArtifact outputArtifactFromExecRoot(ArtifactLocation location) {
     // exec-root-relative path of the form 'blaze-out/mnemonic/genfiles/path'
     String execRootPath = location.getExecutionRootRelativePath();
-    int ix1 = execRootPath.indexOf(File.pathSeparatorChar);
-    int ix2 = execRootPath.indexOf(File.pathSeparatorChar, ix1 + 1);
+    int ix1 = execRootPath.indexOf(File.separatorChar);
+    int ix2 = execRootPath.indexOf(File.separatorChar, ix1 + 1);
     if (ix2 == -1) {
       return new SourceArtifact(decode(location));
     }
