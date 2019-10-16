@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.syncstatus;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor.PsiFileAndName;
 import com.intellij.ide.projectView.PresentationData;
@@ -44,17 +45,24 @@ public class SyncStatusNodeDecorator implements ProjectViewNodeDecorator {
     if (projectData == null) {
       return;
     }
-    PsiFileAndName psiFileAndName = toPsiFile(projectData, node);
-    if (psiFileAndName == null) {
+    PsiFileAndName fileAndName = toPsiFile(projectData, node);
+    if (fileAndName == null) {
       return;
     }
-    VirtualFile vf = psiFileAndName.psiFile.getVirtualFile();
-    if (vf == null || !SyncStatusContributor.isUnsynced(project, projectData, vf)) {
+    VirtualFile vf = fileAndName.psiFile.getVirtualFile();
+    SyncStatus status =
+        vf == null ? null : SyncStatusContributor.getSyncStatus(project, projectData, vf);
+    if (status == SyncStatus.UNSYNCED) {
+      data.clearText();
+      data.addText(fileAndName.name, SimpleTextAttributes.GRAY_ATTRIBUTES);
+      data.addText(" (unsynced)", SimpleTextAttributes.GRAY_ATTRIBUTES);
       return;
     }
-    data.clearText();
-    data.addText(psiFileAndName.name, SimpleTextAttributes.GRAY_ATTRIBUTES);
-    data.addText(" (unsynced)", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    if (status == SyncStatus.IN_PROGRESS) {
+      data.clearText();
+      data.addText(fileAndName.name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      data.addText(" (syncing...)", SimpleTextAttributes.GRAY_ATTRIBUTES);
+    }
   }
 
   @Nullable

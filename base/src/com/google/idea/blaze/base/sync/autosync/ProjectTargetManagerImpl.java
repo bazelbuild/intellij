@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.TargetExpressionList;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -39,11 +40,7 @@ import javax.annotation.Nullable;
 /** Tracks and manages project targets for the purposes of automatic syncing. */
 class ProjectTargetManagerImpl implements ProjectTargetManager {
 
-  public static ProjectTargetManager getInstance(Project project) {
-    return getImpl(project);
-  }
-
-  private static ProjectTargetManagerImpl getImpl(Project project) {
+  static ProjectTargetManagerImpl getImpl(Project project) {
     return ServiceManager.getService(project, ProjectTargetManagerImpl.class);
   }
 
@@ -57,17 +54,12 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
 
   @Override
   public SyncStatus getSyncStatus(Label target) {
-    if (inProgress(target)) {
-      return SyncStatus.IN_PROGRESS;
-    }
     // TODO(brendandouglas): implement logic to determine if a synced target is 'stale'
     // (time since last sync, any events affecting sync results, etc.)
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    return projectData != null
-            && projectData.getTargetMap().contains(TargetKey.forPlainTarget(target))
-        ? SyncStatus.SYNCED
-        : SyncStatus.UNSYNCED;
+    if (inProgress(target)) {
+      return inTargetMap(target) ? SyncStatus.RESYNCING : SyncStatus.IN_PROGRESS;
+    }
+    return inTargetMap(target) ? SyncStatus.SYNCED : SyncStatus.UNSYNCED;
   }
 
   @Override
@@ -78,7 +70,7 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
         SourceToTargetMap.getInstance(project).getRulesForSourceFile(source);
     if (!syncedTargets.isEmpty()) {
       return syncedTargets.stream().anyMatch(t -> inProgress(t.getLabel()))
-          ? SyncStatus.IN_PROGRESS
+          ? SyncStatus.RESYNCING
           : SyncStatus.SYNCED;
     }
     Label label = WorkspaceHelper.getBuildLabel(project, source);
@@ -96,6 +88,13 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
     return SyncStatus.UNSYNCED;
   }
 
+  private boolean inTargetMap(Label target) {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    return projectData != null
+        && projectData.getTargetMap().contains(TargetKey.forPlainTarget(target));
+  }
+
   /** Returns true if the target is currently being synced. */
   private boolean inProgress(Label target) {
     return inProgressBuilds.values().stream().anyMatch(list -> list.includesTarget(target));
@@ -109,6 +108,8 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
         int buildId,
         ImmutableList<TargetExpression> targets) {
       getImpl(project).inProgressBuilds.put(buildId, TargetExpressionList.create(targets));
+      // refresh the sync status indicators
+      ProjectView.getInstance(project).refresh();
     }
 
     @Override

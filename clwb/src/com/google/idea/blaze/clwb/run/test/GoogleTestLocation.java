@@ -15,13 +15,13 @@
  */
 package com.google.idea.blaze.clwb.run.test;
 
+import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
 import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
 import com.google.idea.sdkcompat.cidr.OCSymbolAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -180,14 +180,13 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
     if (virtualFile == null) {
       return false;
     }
-    if (ProjectFileIndex.getInstance(file.getProject()).isInSource(virtualFile)) {
-      if (!SyncStatusContributor.isUnsynced(file.getProject(), virtualFile)) {
-        return false;
-      }
+    SyncStatus status = SyncStatusContributor.getSyncStatus(file.getProject(), virtualFile);
+    if (status != null && (status == SyncStatus.UNSYNCED || status == SyncStatus.IN_PROGRESS)) {
+      MacroCallLocator locator = new MacroCallLocator();
+      file.accept(locator);
+      return locator.foundGtestMacroCall;
     }
-    MacroCallLocator locator = new MacroCallLocator();
-    file.accept(locator);
-    return locator.foundGtestMacroCall;
+    return false;
   }
 
   @Nullable

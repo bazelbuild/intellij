@@ -16,15 +16,16 @@
 package com.google.idea.blaze.base.syncstatus;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager;
+import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import java.io.File;
 import java.util.Arrays;
 import javax.annotation.Nullable;
 
@@ -38,36 +39,37 @@ public interface SyncStatusContributor {
       ExtensionPointName.create("com.google.idea.blaze.SyncStatusContributor");
 
   /**
-   * Returns true if the given {@link VirtualFile} is indexed in the project, and of a type handled
-   * by a {@link SyncStatusContributor}, but not built in the most recent sync.
+   * Returns a {@link SyncStatus} for the given file, or null if it's not relevant (not in the
+   * project or otherwise can't be synced).
    */
-  static boolean isUnsynced(Project project, VirtualFile vf) {
+  @Nullable
+  static SyncStatus getSyncStatus(Project project, VirtualFile vf) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {
-      return false;
+      return null;
     }
-    return isUnsynced(project, projectData, vf);
+    return getSyncStatus(project, projectData, vf);
   }
 
   /**
-   * Returns true if the given {@link PsiFile} is indexed in the project, and of a type handled by a
-   * {@link SyncStatusContributor}, but not built in the most recent sync.
+   * Returns a {@link SyncStatus} for the given file, or null if it's not relevant (not in the
+   * project or otherwise can't be synced).
    */
-  static boolean isUnsynced(Project project, BlazeProjectData projectData, VirtualFile vf) {
+  @Nullable
+  static SyncStatus getSyncStatus(Project project, BlazeProjectData projectData, VirtualFile vf) {
     if (!vf.isValid() || !vf.isInLocalFileSystem()) {
-      return false;
+      return null;
     }
     boolean handledType =
         Arrays.stream(EP_NAME.getExtensions()).anyMatch(c -> c.handlesFile(projectData, vf));
     if (!handledType) {
-      return false;
+      return null;
     }
     if (ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(vf) == null) {
-      return false;
+      return null;
     }
-    SourceToTargetMap sourceToTargetMap = SourceToTargetMap.getInstance(project);
-    return sourceToTargetMap.getRulesForSourceFile(VfsUtilCore.virtualToIoFile(vf)).isEmpty();
+    return ProjectTargetManager.getInstance(project).getSyncStatus(new File(vf.getPath()));
   }
 
   /**

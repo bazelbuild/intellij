@@ -16,17 +16,23 @@
 package com.google.idea.blaze.base.sync.autosync;
 
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
 
 /** Tracks and manages project targets for the purposes of automatic syncing. */
 public interface ProjectTargetManager {
 
+  static ProjectTargetManager getInstance(Project project) {
+    return ProjectTargetManagerImpl.getImpl(project);
+  }
+
   /** A per-target / per-source sync status. */
   enum SyncStatus {
     UNSYNCED,
-    IN_PROGRESS,
-    STALE,
+    RESYNCING, // previously synced; is currently being resynced
+    IN_PROGRESS, // never previously synced; is currently being synced
+    STALE, // previously synced, but stale
     SYNCED,
   }
 

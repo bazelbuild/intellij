@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.settings.ui.AddDirectoryToProjectAction;
+import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -166,7 +167,7 @@ class AddSourceToProjectAction extends BlazeProjectAction {
 
     if (!addDirectories
         && (AddSourceToProjectHelper.sourceCoveredByProjectViewTargets(context)
-            || !SyncStatusContributor.isUnsynced(project, context.file))) {
+            || SyncStatusContributor.getSyncStatus(project, context.file) != SyncStatus.UNSYNCED)) {
       return null;
     }
     return "Add source file to project";
