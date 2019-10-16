@@ -80,7 +80,7 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
       @NotNull ProcessHandlerLaunchStatus state,
       @NotNull ProcessHandlerConsolePrinter printer) {
     try {
-      String packageName = applicationIdProvider.getTestPackageName();
+      String packageName = applicationIdProvider.getPackageName();
       setUpForReattachingDebugger(packageName, launchInfo, state, printer);
     } catch (ApkProvisionException e) {
       LOG.error(e);
