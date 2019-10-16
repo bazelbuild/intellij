@@ -91,6 +91,90 @@ public class TargetExpressionListTest extends BlazeTestCase {
   }
 
   @Test
+  public void includesAnyTargetInPackage_acceptsIndividualPackageTarget() throws Exception {
+    TargetExpressionList helper =
+        TargetExpressionList.create(ImmutableList.of(TargetExpression.fromString("//foo/bar:baz")));
+
+    assertThat(helper.includesAnyTargetInPackage(new WorkspacePath("foo/bar"))).isTrue();
+  }
+
+  @Test
+  public void includesAnyTargetInPackage_acceptsPackageWildcard() throws Exception {
+    TargetExpressionList helper =
+        TargetExpressionList.create(ImmutableList.of(TargetExpression.fromString("//foo/bar:all")));
+
+    assertThat(helper.includesAnyTargetInPackage(new WorkspacePath("foo/bar"))).isTrue();
+  }
+
+  @Test
+  public void includesAnyTargetInPackage_acceptsParentPackageRecursiveWildcard() throws Exception {
+    TargetExpressionList helper =
+        TargetExpressionList.create(ImmutableList.of(TargetExpression.fromString("//foo/...")));
+
+    assertThat(helper.includesAnyTargetInPackage(new WorkspacePath("foo/bar"))).isTrue();
+  }
+
+  @Test
+  public void includesAnyTargetInPackage_ignoresParentPackageNonRecursiveWildcard()
+      throws Exception {
+    TargetExpressionList helper =
+        TargetExpressionList.create(ImmutableList.of(TargetExpression.fromString("//foo:all")));
+
+    assertThat(helper.includesAnyTargetInPackage(new WorkspacePath("foo/bar"))).isFalse();
+  }
+
+  @Test
+  public void includesAnyTargetInPackage_ignoresTargetInOtherPackage() throws Exception {
+    TargetExpressionList helper =
+        TargetExpressionList.create(ImmutableList.of(TargetExpression.fromString("//foo:target")));
+
+    assertThat(helper.includesAnyTargetInPackage(new WorkspacePath("bar"))).isFalse();
+  }
+
+  @Test
+  public void includesAnyTargetInPackage_ignoresTargetInParentPackage() throws Exception {
+    TargetExpressionList helper =
+        TargetExpressionList.create(ImmutableList.of(TargetExpression.fromString("//foo:target")));
+
+    assertThat(helper.includesAnyTargetInPackage(new WorkspacePath("foo/bar"))).isFalse();
+  }
+
+  @Test
+  public void includesAnyTargetInPackage_ignoresExcludedPackage() throws Exception {
+    TargetExpressionList helper =
+        TargetExpressionList.create(
+            ImmutableList.of(TargetExpression.fromString("-//foo/bar:all")));
+
+    assertThat(helper.includesAnyTargetInPackage(new WorkspacePath("foo/bar"))).isFalse();
+  }
+
+  @Test
+  public void includesAnyTargetInPackage_parentPackageRecursivelyExcluded() throws Exception {
+    TargetExpressionList helper =
+        TargetExpressionList.create(
+            ImmutableList.of(
+                TargetExpression.fromString("//foo/bar:all"),
+                TargetExpression.fromString("//foo/bar:target"),
+                TargetExpression.fromString("-//foo/...")));
+
+    assertThat(helper.includesAnyTargetInPackage(new WorkspacePath("foo/bar"))).isFalse();
+  }
+
+  @Test
+  public void includesAnyTargetInPackage_ignoresExcludedTargets() throws Exception {
+    TargetExpressionList helper =
+        TargetExpressionList.create(
+            ImmutableList.of(
+                TargetExpression.fromString("//foo:target"),
+                TargetExpression.fromString("-//foo:target"),
+                TargetExpression.fromString("//bar:other"),
+                TargetExpression.fromString("-//bar:target")));
+
+    assertThat(helper.includesAnyTargetInPackage(new WorkspacePath("foo"))).isFalse();
+    assertThat(helper.includesAnyTargetInPackage(new WorkspacePath("bar"))).isTrue();
+  }
+
+  @Test
   public void testInferringTargetsFromDirectoriesSimple() throws Exception {
     TargetExpressionList helper =
         TargetExpressionList.createWithTargetsDerivedFromDirectories(

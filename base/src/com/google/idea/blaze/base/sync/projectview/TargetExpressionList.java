@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots.ProjectDirectoriesHelper;
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -54,8 +55,22 @@ public final class TargetExpressionList {
   @Nullable private final ProjectDirectoriesHelper directories;
 
   private TargetExpressionList(
-      List<TargetData> projectTargets, @Nullable ProjectDirectoriesHelper directories) {
-    this.reversedTargets = ImmutableList.copyOf(projectTargets).reverse();
+      ImmutableList<TargetData> projectTargets, @Nullable ProjectDirectoriesHelper directories) {
+    // reverse list, removing trivially-excluded targets
+    List<TargetData> excluded = new ArrayList<>();
+    ImmutableList.Builder<TargetData> builder = ImmutableList.builder();
+    for (TargetData target : projectTargets.reverse()) {
+      if (target.isExcluded()) {
+        excluded.add(target);
+        builder.add(target);
+        continue;
+      }
+      boolean drop = excluded.stream().anyMatch(excl -> excl.coversTargetData(target));
+      if (!drop) {
+        builder.add(target);
+      }
+    }
+    this.reversedTargets = builder.build();
     this.directories = directories;
   }
 
@@ -68,6 +83,26 @@ public final class TargetExpressionList {
       }
     }
     return directories != null && directories.containsWorkspacePath(packagePath);
+  }
+
+  /** Returns true if any target in the package is covered by these target expressions. */
+  public boolean includesAnyTargetInPackage(WorkspacePath packagePath) {
+    // first check if the entire package is included/excluded
+    for (TargetData target : reversedTargets) {
+      if (target.coversPackage(packagePath)) {
+        return !target.isExcluded();
+      }
+    }
+    if (directories != null && directories.containsWorkspacePath(packagePath)) {
+      return true;
+    }
+    // fall back to looking for any unexcluded expression including a target in this package
+    for (TargetData target : reversedTargets) {
+      if (!target.isExcluded() && target.inPackage(packagePath)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** Returns true if the individual target is covered by this list. */
@@ -104,8 +139,31 @@ public final class TargetExpressionList {
       return label.equals(unexcludedExpression) || coversPackage(label.blazePackage());
     }
 
+    /** Returns true if the entire package is covered by this expression. */
     boolean coversPackage(WorkspacePath path) {
       return wildcardPattern != null && wildcardPattern.coversPackage(path);
+    }
+
+    boolean coversTargetData(TargetData data) {
+      if (data.wildcardPattern == null) {
+        return data.unexcludedExpression instanceof Label
+            && coversTarget(((Label) data.unexcludedExpression));
+      }
+      if (wildcardPattern == null) {
+        return false;
+      }
+      return data.wildcardPattern.isRecursive()
+          ? wildcardPattern.isRecursive()
+              && wildcardPattern.coversPackage(data.wildcardPattern.getBasePackage())
+          : wildcardPattern.coversPackage(data.wildcardPattern.getBasePackage());
+    }
+
+    boolean inPackage(WorkspacePath path) {
+      if (coversPackage(path)) {
+        return true;
+      }
+      return unexcludedExpression instanceof Label
+          && ((Label) unexcludedExpression).blazePackage().equals(path);
     }
   }
 }
