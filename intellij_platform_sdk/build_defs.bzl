@@ -9,7 +9,7 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-ue-latest": "intellij-ue-2019.1",
     "intellij-ue-latest-mac": "intellij-ue-2019.1-mac",
     "intellij-ue-beta": "intellij-ue-2019.2",
-    "intellij-ue-canary": "intellij-2019.2",  # TODO(b/141539619): switch to 2019.3 after drop
+    "intellij-ue-canary": "intellij-ue-2019.3",
     "android-studio-latest": "android-studio-3.5",
     "android-studio-beta": "android-studio-3.5",
     "android-studio-beta-mac": "android-studio-3.5-mac",
@@ -51,6 +51,14 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-2019.3-mac": struct(
         ide = "intellij",
         directory = "intellij_ce_2019_3",
+    ),
+    "intellij-ue-2019.3": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2019_3",
+    ),
+    "intellij-ue-2019.3-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2019_3",
     ),
     "android-studio-3.5": struct(
         ide = "android-studio",

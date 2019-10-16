@@ -127,6 +127,21 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-ue-2019.3",
+    values = {
+        "define": "ij_product=intellij-ue-2019.3",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2019.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-2019.3",
+    },
+)
+
+config_setting(
     name = "android-studio-latest",
     values = {
         "define": "ij_product=android-studio-latest",
@@ -328,6 +343,7 @@ java_library(
         "clion-2019.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2019.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2019.2": ["@jsr305_annotations//jar"],
+        "intellij-ue-2019.3": ["@jsr305_annotations//jar"],
         "default": [":plugin_api"],
     }),
 )

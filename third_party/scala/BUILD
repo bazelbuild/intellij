@@ -13,6 +13,7 @@ java_library(
         "intellij-2019.2": ["@scala_2019_2//:scala"],
         "intellij-ue-2019.2": ["@scala_2019_2//:scala"],
         "intellij-2019.3": ["@scala_2019_3//:scala"],
+        "intellij-ue-2019.3": ["@scala_2019_3//:scala"],
         "default": [],
     }),
 )

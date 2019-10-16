@@ -13,8 +13,8 @@ java_library(
         "intellij-ue-2019.1": ["@intellij_ue_2019_1//:javascript"],
         "intellij-2019.2": ["@intellij_ue_2019_2//:javascript"],
         "intellij-ue-2019.2": ["@intellij_ue_2019_2//:javascript"],
-        # TODO(b/141539619): update to ue_2019_3 when available
-        "intellij-2019.3": ["@intellij_ue_2019_2//:javascript"],
+        "intellij-2019.3": ["@intellij_ue_2019_3//:javascript"],
+        "intellij-ue-2019.3": ["@intellij_ue_2019_3//:javascript"],
         "clion-2019.1": ["@clion_2019_1//:javascript"],
         "clion-2019.2": ["@clion_2019_2//:javascript"],
         "default": [],
@@ -30,8 +30,8 @@ java_library(
         "intellij-ue-2019.1": ["@intellij_ue_2019_1//:css"],
         "intellij-2019.2": ["@intellij_ue_2019_2//:css"],
         "intellij-ue-2019.2": ["@intellij_ue_2019_2//:css"],
-        # TODO(b/141539619): update to ue_2019_3 when available
-        "intellij-2019.3": ["@intellij_ue_2019_2//:css"],
+        "intellij-2019.3": ["@intellij_ue_2019_3//:css"],
+        "intellij-ue-2019.3": ["@intellij_ue_2019_3//:css"],
         "clion-2019.1": ["@clion_2019_1//:css"],
         "clion-2019.2": ["@clion_2019_2//:css"],
         "default": [],
@@ -47,8 +47,8 @@ java_library(
         "intellij-ue-2019.1": ["@intellij_ue_2019_1//:angular"],
         "intellij-2019.2": ["@intellij_ue_2019_2//:angular"],
         "intellij-ue-2019.2": ["@intellij_ue_2019_2//:angular"],
-        # TODO(b/141539619): update to ue_2019_3 when available
-        "intellij-2019.3": ["@intellij_ue_2019_2//:angular"],
+        "intellij-2019.3": ["@intellij_ue_2019_3//:angular"],
+        "intellij-ue-2019.3": ["@intellij_ue_2019_3//:angular"],
         "clion-2019.1": ["@intellij_ue_2019_1//:angular"],
         "clion-2019.2": ["@intellij_ue_2019_2//:angular"],
         "default": [],
