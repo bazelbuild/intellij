@@ -27,6 +27,8 @@ java_library(
         "intellij-ue-2019.1": ["//sdkcompat/v191"],
         "intellij-2019.2": ["//sdkcompat/v192"],
         "intellij-ue-2019.2": ["//sdkcompat/v192"],
+        # TODO(b/141539619): create sdkcompat for v193
+        "intellij-2019.3": ["//sdkcompat/v192"],
         "clion-2019.1": ["//sdkcompat/v191"],
         "clion-2019.2": ["//sdkcompat/v192"],
     }),

@@ -90,6 +90,21 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2019.3",
+    values = {
+        "define": "ij_product=intellij-2019.3",
+    },
+)
+
+config_setting(
+    name = "intellij-2019.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-2019.3",
+    },
+)
+
+config_setting(
     name = "intellij-ue-2019.1",
     values = {
         "define": "ij_product=intellij-ue-2019.1",

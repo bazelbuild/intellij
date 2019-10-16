@@ -12,6 +12,7 @@ java_library(
         "intellij-ue-2019.1": ["@go_2019_1//:go"],
         "intellij-2019.2": ["@go_2019_2//:go"],
         "intellij-ue-2019.2": ["@go_2019_2//:go"],
+        "intellij-2019.3": ["@go_2019_2//:go"],
         "default": [],
     }),
 )
