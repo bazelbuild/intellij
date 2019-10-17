@@ -17,12 +17,11 @@ package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
-import com.google.common.collect.Iterables;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 
-/** Application id provider for android_binary. */
+/** Application id provider for android_test and android_instrumentation_test. */
 public class BlazeAndroidTestApplicationIdProvider implements ApplicationIdProvider {
   private final BlazeApkBuildStep buildStep;
 
@@ -33,15 +32,12 @@ public class BlazeAndroidTestApplicationIdProvider implements ApplicationIdProvi
   @Override
   public String getPackageName() throws ApkProvisionException {
     BlazeAndroidDeployInfo deployInfo = buildStep.getDeployInfo();
-    ManifestParser.ParsedManifest parsedManifest =
-        Iterables.getFirst(deployInfo.getAdditionalMergedManifest(), null);
+    ManifestParser.ParsedManifest parsedManifest = deployInfo.getTestTargetMergedManifest();
     if (parsedManifest == null) {
-      // The application may not have a separate package,
-      // and can instead be in the same package as the tests.
-      return getTestPackageName();
+      throw new ApkProvisionException("Could not find merged manifest.");
     }
     if (parsedManifest.packageName == null) {
-      throw new ApkProvisionException("No application id in manifest under test");
+      throw new ApkProvisionException("No application id in test target manifest.");
     }
     return parsedManifest.packageName;
   }
@@ -51,12 +47,12 @@ public class BlazeAndroidTestApplicationIdProvider implements ApplicationIdProvi
     BlazeAndroidDeployInfo deployInfo = buildStep.getDeployInfo();
     ManifestParser.ParsedManifest parsedManifest = deployInfo.getMergedManifest();
     if (parsedManifest == null) {
-      throw new ApkProvisionException(
-          "Could not find merged manifest: " + deployInfo.getMergedManifestFile());
+      // The test instrumentor may not have a separate package,
+      // and can instead be in the same package as the test target package.
+      return getPackageName();
     }
     if (parsedManifest.packageName == null) {
-      throw new ApkProvisionException(
-          "No application id in merged manifest: " + deployInfo.getMergedManifestFile());
+      throw new ApkProvisionException("No application id in test instrumentor manifest");
     }
     return parsedManifest.packageName;
   }
