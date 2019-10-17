@@ -98,11 +98,14 @@ public final class ImportRoots {
 
     public ImportRoots build() {
       ImmutableCollection<WorkspacePath> rootDirectories = rootDirectoriesBuilder.build();
-      if (buildSystem == BuildSystem.Bazel && hasWorkspaceRoot(rootDirectories)) {
-        excludeBuildSystemArtifacts();
-        excludeProjectDataSubDirectory();
+      if (buildSystem == BuildSystem.Bazel) {
+        if (hasWorkspaceRoot(rootDirectories)) {
+          excludeBuildSystemArtifacts();
+          excludeProjectDataSubDirectory();
+        }
         excludeBazelIgnoredPaths();
       }
+
       ImmutableSet<WorkspacePath> minimalExcludes =
           WorkspacePathUtil.calculateMinimalWorkspacePaths(excludeDirectoriesBuilder.build());
 

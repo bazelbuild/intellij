@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.MockInputStreamProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -73,8 +74,7 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
     applicationServices.register(JavaSourcePackageReader.class, new JavaSourcePackageReader());
     applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
-
-
+    applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
 
     ExtensionPoint<JavaLikeLanguage> javaLikeLanguages =
         registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class);

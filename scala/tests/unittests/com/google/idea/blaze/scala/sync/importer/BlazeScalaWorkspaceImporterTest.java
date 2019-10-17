@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -111,6 +112,7 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
     applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
+    applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
 
     // will silently fall back to FilePathJavaPackageReader
     applicationServices.register(

@@ -270,4 +270,39 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
         .containsExactly(
             new WorkspacePath("root0"), new WorkspacePath(new WorkspacePath("root1"), "dir"));
   }
+
+  @Test
+  public void testBazelIgnoreParser_skipsEmptyLines() throws Exception {
+    workspace.createFile(new WorkspacePath(".bazelignore"), "root0\n     \n\nroot1/dir/\n\n");
+    BazelIgnoreParser parser = new BazelIgnoreParser(workspaceRoot);
+    assertThat(parser.getIgnoredPaths())
+        .containsExactly(
+            new WorkspacePath("root0"), new WorkspacePath(new WorkspacePath("root1"), "dir"));
+  }
+
+  @Test
+  public void testBlazeBuildsDoNotUseBazelIgnore() throws Exception {
+    workspace.createFile(new WorkspacePath(".bazelignore"), "root1/a/b");
+
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
+            .add(DirectoryEntry.include(new WorkspacePath("root0")))
+            .add(DirectoryEntry.include(new WorkspacePath("root1/a/b/c")))
+            .build();
+
+    assertThat(importRoots.containsWorkspacePath(new WorkspacePath("root1/a/b/c"))).isTrue();
+  }
+
+  @Test
+  public void testIgnoresPathsFromBazelIgnore() throws Exception {
+    workspace.createFile(new WorkspacePath(".bazelignore"), "root1/a/b");
+
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, BuildSystem.Bazel)
+            .add(DirectoryEntry.include(new WorkspacePath("root0")))
+            .add(DirectoryEntry.include(new WorkspacePath("root1/a/b/c")))
+            .build();
+
+    assertThat(importRoots.containsWorkspacePath(new WorkspacePath("root1/a/b/c"))).isFalse();
+  }
 }
