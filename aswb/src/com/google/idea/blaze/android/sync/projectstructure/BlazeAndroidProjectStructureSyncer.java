@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toSet;
 import com.android.annotations.VisibleForTesting;
 import com.android.builder.model.SourceProvider;
 import com.android.ide.common.gradle.model.SourceProviderUtil;
+import com.android.ide.common.util.PathString;
 import com.android.ide.common.util.PathStringUtil;
 import com.android.projectmodel.AndroidPathType;
 import com.android.projectmodel.SourceSet;
@@ -476,7 +477,6 @@ public class BlazeAndroidProjectStructureSyncer {
       AndroidSdkPlatform androidSdkPlatform,
       boolean configAndroidJava8Libs) {
     File moduleDirectory = workspaceRoot.directory();
-    File manifest = new File(workspaceRoot.directory(), "AndroidManifest.xml");
     String resourceJavaPackage = ":workspace";
     updateModuleFacetInMemoryState(
         project,
@@ -484,7 +484,7 @@ public class BlazeAndroidProjectStructureSyncer {
         androidSdkPlatform,
         workspaceModule,
         moduleDirectory,
-        manifest,
+        null,
         resourceJavaPackage,
         ImmutableList.of(),
         configAndroidJava8Libs);
@@ -496,32 +496,30 @@ public class BlazeAndroidProjectStructureSyncer {
       AndroidSdkPlatform androidSdkPlatform,
       Module module,
       File moduleDirectory,
-      File manifestFile,
+      @Nullable File manifestFile,
       String resourceJavaPackage,
       Collection<File> resources,
       boolean configAndroidJava8Libs) {
+    List<PathString> manifests =
+        manifestFile == null
+            ? Collections.emptyList()
+            : Collections.singletonList(PathStringUtil.toPathString(manifestFile));
     SourceSet sourceSet =
         new SourceSet(
             ImmutableMap.of(
                 AndroidPathType.RES,
                 PathStringUtil.toPathStrings(resources),
                 AndroidPathType.MANIFEST,
-                Collections.singletonList(PathStringUtil.toPathString(manifestFile))));
+                manifests));
     SourceProvider sourceProvider =
         SourceProviderUtil.toSourceProvider(sourceSet, module.getName());
 
-    String applicationId = resourceJavaPackage;
-    try {
-      ManifestParser.ParsedManifest parsedManifest =
-          ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
-      if (parsedManifest != null && parsedManifest.packageName != null) {
-        applicationId = parsedManifest.packageName;
-      }
-    } catch (IOException e) {
-      log.warn("Could not read from manifest file: " + manifestFile);
-      if (context != null) {
-        context.output(PrintOutput.log("Could not read from manifest file: " + manifestFile));
-      }
+    String applicationId = null;
+    if (manifestFile != null) {
+      applicationId = getPackageNameFromManifest(context, project, manifestFile);
+    }
+    if (applicationId == null) {
+      applicationId = resourceJavaPackage;
     }
 
     BlazeAndroidModel androidModel =
@@ -536,5 +534,23 @@ public class BlazeAndroidProjectStructureSyncer {
     if (facet != null) {
       facet.getConfiguration().setModel(androidModel);
     }
+  }
+
+  @Nullable
+  private static String getPackageNameFromManifest(
+      @Nullable BlazeContext context, Project project, File manifest) {
+    try {
+      ManifestParser.ParsedManifest parsedManifest =
+          ParsedManifestService.getInstance(project).getParsedManifest(manifest);
+      if (parsedManifest != null && parsedManifest.packageName != null) {
+        return parsedManifest.packageName;
+      }
+    } catch (IOException e) {
+      log.error("Could not read from manifest file: " + manifest);
+      if (context != null) {
+        context.output(PrintOutput.log("Could not read from manifest file: " + manifest));
+      }
+    }
+    return null;
   }
 }
