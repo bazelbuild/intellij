@@ -52,7 +52,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable private final TestIdeInfo testIdeInfo;
   @Nullable private final JavaToolchainIdeInfo javaToolchainIdeInfo;
   @Nullable private final KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
-  @Nullable private final Instant syncTime;
+  @Nullable private final Long syncTimeMillis;
 
   private TargetIdeInfo(
       TargetKey key,
@@ -75,7 +75,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       @Nullable TestIdeInfo testIdeInfo,
       @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo,
       @Nullable KotlinToolchainIdeInfo kotlinToolchainIdeInfo,
-      @Nullable Instant syncTime) {
+      @Nullable Long syncTimeMillis) {
     this.key = key;
     this.kind = kind;
     this.buildFile = buildFile;
@@ -96,7 +96,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     this.testIdeInfo = testIdeInfo;
     this.javaToolchainIdeInfo = javaToolchainIdeInfo;
     this.kotlinToolchainIdeInfo = kotlinToolchainIdeInfo;
-    this.syncTime = syncTime;
+    this.syncTimeMillis = syncTimeMillis;
   }
 
   @Nullable
@@ -151,12 +151,10 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       dartIdeInfo = DartIdeInfo.fromProto(proto.getDartIdeInfo());
       sourcesBuilder.addAll(dartIdeInfo.getSources());
     }
-    Instant syncTime =
+    Long syncTime =
         syncTimeOverride != null
-            ? syncTimeOverride
-            : proto.getSyncTimeMillis() == 0
-                ? null
-                : Instant.ofEpochMilli(proto.getSyncTimeMillis());
+            ? Long.valueOf(syncTimeOverride.toEpochMilli())
+            : proto.getSyncTimeMillis() == 0 ? null : proto.getSyncTimeMillis();
     return new TargetIdeInfo(
         key,
         kind,
@@ -216,16 +214,17 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setTestInfo, testIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavaToolchainIdeInfo, javaToolchainIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setKtToolchainIdeInfo, kotlinToolchainIdeInfo);
-    ProtoWrapper.setIfNotNull(i -> builder.setSyncTimeMillis(i.toEpochMilli()), syncTime);
+    ProtoWrapper.setIfNotNull(builder::setSyncTimeMillis, syncTimeMillis);
     return builder.build();
   }
 
   /**
-   * Updates this target's {@link #syncTime}. Returns this same {@link TargetIdeInfo} instance if
-   * the sync time is unchanged.
+   * Updates this target's {@link #syncTimeMillis}. Returns this same {@link TargetIdeInfo} instance
+   * if the sync time is unchanged.
    */
   public TargetIdeInfo updateSyncTime(Instant syncTime) {
-    if (syncTime.equals(this.syncTime)) {
+    long syncTimeMillis = syncTime.toEpochMilli();
+    if (Objects.equals(syncTimeMillis, this.syncTimeMillis)) {
       return this;
     }
     return new TargetIdeInfo(
@@ -249,7 +248,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         testIdeInfo,
         javaToolchainIdeInfo,
         kotlinToolchainIdeInfo,
-        syncTime);
+        syncTimeMillis);
   }
 
   public TargetKey getKey() {
@@ -349,14 +348,14 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
 
   @Nullable
   public Instant getSyncTime() {
-    return syncTime;
+    return syncTimeMillis != null ? Instant.ofEpochMilli(syncTimeMillis) : null;
   }
 
   public TargetInfo toTargetInfo() {
     return TargetInfo.builder(getKey().getLabel(), getKind().getKindString())
         .setTestSize(getTestIdeInfo() != null ? getTestIdeInfo().getTestSize() : null)
         .setTestClass(getJavaIdeInfo() != null ? getJavaIdeInfo().getTestClass() : null)
-        .setSyncTime(syncTime)
+        .setSyncTime(getSyncTime())
         .setSources(ImmutableList.copyOf(getSources()))
         .build();
   }
@@ -404,7 +403,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     private TestIdeInfo testIdeInfo;
     private JavaToolchainIdeInfo javaToolchainIdeInfo;
     private KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
-    private Instant syncTime;
+    private Long syncTime;
 
     public Builder setLabel(String label) {
       return setLabel(Label.create(label));
@@ -533,8 +532,8 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       return this;
     }
 
-    public Builder setSyncTime(Instant syncTime) {
-      this.syncTime = syncTime;
+    public Builder setSyncTime(@Nullable Instant syncTime) {
+      this.syncTime = syncTime != null ? syncTime.toEpochMilli() : null;
       return this;
     }
 
@@ -593,7 +592,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         && Objects.equals(testIdeInfo, that.testIdeInfo)
         && Objects.equals(javaToolchainIdeInfo, that.javaToolchainIdeInfo)
         && Objects.equals(kotlinToolchainIdeInfo, that.kotlinToolchainIdeInfo)
-        && Objects.equals(syncTime, that.syncTime);
+        && Objects.equals(syncTimeMillis, that.syncTimeMillis);
   }
 
   @Override
@@ -619,6 +618,6 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         testIdeInfo,
         javaToolchainIdeInfo,
         kotlinToolchainIdeInfo,
-        syncTime);
+        syncTimeMillis);
   }
 }
