@@ -29,7 +29,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Utility class to find the dependencies of Blaze targets. */
-class DependencyFinder {
+public class DependencyFinder {
 
   /**
    * Returns the list of compile-time dependencies for the given target. Returns {@code null} if the
