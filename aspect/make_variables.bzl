@@ -87,6 +87,13 @@ def expand_make_variables(attr_name, expression, ctx, additional_subs = {}):
         # odd number of '$', but integer division will provide correct count
         rv = rv + "$" * ((end_dollars - begin_dollars) // 2)
         varname = expression[end_dollars + 1:end_parens]
+
+        # Handle $(location) expansion
+        if varname.startswith("location"):
+            varname = varname[len("location"):].strip()
+            rv = rv + ctx.expand_location(varname)
+            continue
+
         if not _is_valid_make_var(varname):
             # invalid make variable name
             fail("expand_make_variables: $(%s) invalid name" % varname, attr_name)
