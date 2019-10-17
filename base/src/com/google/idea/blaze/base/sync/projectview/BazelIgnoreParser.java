@@ -48,6 +48,10 @@ public class BazelIgnoreParser {
 
     try {
       for (String path : FileOperationProvider.getInstance().readAllLines(bazelIgnoreFile)) {
+        if (!isEmptyLine(path)) {
+          continue;
+        }
+
         if (path.endsWith("/")) {
           // .bazelignore allows the "/" path suffix, but WorkspacePath doesn't.
           path = path.substring(0, path.length() - 1);
@@ -68,5 +72,9 @@ public class BazelIgnoreParser {
     }
 
     return ignoredPaths.build();
+  }
+
+  private boolean isEmptyLine(String ignore) {
+    return !ignore.trim().isEmpty();
   }
 }
