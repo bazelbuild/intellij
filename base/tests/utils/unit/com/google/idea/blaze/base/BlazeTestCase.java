@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base;
 
+import com.google.idea.sdkcompat.openapi.ExtensionsCompat;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -91,7 +92,7 @@ public class BlazeTestCase {
         (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer();
     MockProject mockProject = TestUtils.mockProject(applicationContainer, testDisposable);
 
-    Extensions.cleanRootArea(testDisposable);
+    ExtensionsCompat.cleanRootArea(testDisposable);
     extensionsArea = (ExtensionsAreaImpl) Extensions.getRootArea();
 
     this.project = mockProject;

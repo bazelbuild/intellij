@@ -25,13 +25,10 @@ java_library(
         "default": [],
     }),
     deps = [
+        "//sdkcompat",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//intellij_platform_sdk:jsr305",
         "@junit//jar",
-    ] + select_for_ide(
-        android_studio = ["//sdkcompat"],
-        clion = ["//sdkcompat"],
-        default = [],
-    ),
+    ],
 )
