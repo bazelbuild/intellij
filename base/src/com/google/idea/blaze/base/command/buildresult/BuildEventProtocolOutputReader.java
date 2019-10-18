@@ -42,11 +42,6 @@ public final class BuildEventProtocolOutputReader {
 
   private BuildEventProtocolOutputReader() {}
 
-  /** Parses a BEP input stream, returning a {@link ParsedBepOutput}. */
-  public static ParsedBepOutput parseBepOutput(InputStream inputStream) throws IOException {
-    return ParsedBepOutput.parseBepArtifacts(inputStream);
-  }
-
   /**
    * Returns all test results from a BEP-formatted {@link InputStream}.
    *

@@ -28,8 +28,8 @@ import com.google.common.collect.SetMultimap;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.NamedSetOfFilesId;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.NamedSetOfFiles;
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Label;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,7 +47,12 @@ import javax.annotation.Nullable;
 /** A data class representing blaze's build event protocol (BEP) output for a build. */
 public final class ParsedBepOutput {
 
-  static ParsedBepOutput parseBepArtifacts(InputStream bepStream) throws IOException {
+  static ParsedBepOutput parseBepArtifacts(InputStream bepStream) throws BuildEventStreamException {
+    return parseBepArtifacts(BuildEventStreamProvider.fromInputStream(bepStream));
+  }
+
+  public static ParsedBepOutput parseBepArtifacts(BuildEventStreamProvider stream)
+      throws BuildEventStreamException {
     BuildEventStreamProtos.BuildEvent event;
     Map<String, String> configIdToMnemonic = new HashMap<>();
     Set<String> topLevelFileSets = new HashSet<>();
@@ -55,7 +60,7 @@ public final class ParsedBepOutput {
     ImmutableSetMultimap.Builder<String, String> targetToFileSets = ImmutableSetMultimap.builder();
     long startTimeMillis = 0L;
 
-    while ((event = BuildEventStreamProtos.BuildEvent.parseDelimitedFrom(bepStream)) != null) {
+    while ((event = stream.getNext()) != null) {
       switch (event.getId().getIdCase()) {
         case CONFIGURATION:
           configIdToMnemonic.put(
