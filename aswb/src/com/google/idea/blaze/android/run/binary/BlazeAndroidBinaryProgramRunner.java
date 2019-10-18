@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
+import com.android.tools.idea.profilers.ProfileRunExecutor;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.google.idea.blaze.android.run.AndroidSessionInfoCompat;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
@@ -44,7 +45,9 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
     }
     // In practice, the stock runner will probably handle all non-incremental-install configs.
     if (DefaultDebugExecutor.EXECUTOR_ID.equals(executorId)
-        || DefaultRunExecutor.EXECUTOR_ID.equals(executorId)) {
+        || DefaultRunExecutor.EXECUTOR_ID.equals(executorId)
+        || (StartupProfilerSupport.SUPPORTS_STARTUP_PROFILING
+            && ProfileRunExecutor.EXECUTOR_ID.equals(executorId))) {
       return true;
     }
     // Otherwise, the configuration must be a Blaze incremental install configuration running with
