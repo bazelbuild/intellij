@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.sync.sharding;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
@@ -153,7 +152,8 @@ public class WildcardTargetExpander {
       ProjectViewSet projectViewSet,
       List<TargetExpression> allTargets) {
     ImmutableList<ImmutableList<TargetExpression>> shards =
-        shardTargets(allTargets, BlazeBuildTargetSharder.PACKAGE_SHARD_SIZE);
+        BlazeBuildTargetSharder.shardTargetsRetainingOrdering(
+            allTargets, BlazeBuildTargetSharder.PACKAGE_SHARD_SIZE);
     Predicate<String> handledRulesPredicate = handledRuleTypes(projectViewSet);
     boolean excludeManualTargets = excludeManualTargets(project, projectViewSet);
     ExpandedTargetsResult output = null;
@@ -177,33 +177,6 @@ public class WildcardTargetExpander {
       }
     }
     return output;
-  }
-
-  /**
-   * Partition targets list. Because order is important with respect to excluded targets, each shard
-   * has all subsequent excluded targets appended to it.
-   */
-  @VisibleForTesting
-  static ImmutableList<ImmutableList<TargetExpression>> shardTargets(
-      List<TargetExpression> targets, int shardSize) {
-    if (targets.size() <= shardSize) {
-      return ImmutableList.of(ImmutableList.copyOf(targets));
-    }
-    List<ImmutableList<TargetExpression>> output = new ArrayList<>();
-    for (int index = 0; index < targets.size(); index += shardSize) {
-      int endIndex = Math.min(targets.size(), index + shardSize);
-      List<TargetExpression> shard = new ArrayList<>(targets.subList(index, endIndex));
-      if (shard.stream().filter(TargetExpression::isExcluded).count() == shard.size()) {
-        continue;
-      }
-      List<TargetExpression> remainingExcludes =
-          targets.subList(endIndex, targets.size()).stream()
-              .filter(TargetExpression::isExcluded)
-              .collect(Collectors.toList());
-      shard.addAll(remainingExcludes);
-      output.add(ImmutableList.copyOf(shard));
-    }
-    return ImmutableList.copyOf(output);
   }
 
   /**

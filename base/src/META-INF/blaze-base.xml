@@ -495,7 +495,7 @@
     <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.VirtualFileTestContextProvider"/>
     <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.AllInPackageTestContextProvider"/>
     <OutputArtifactParser implementation="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser$LocalFileParser"/>
-    <BuildBatchingService implementation="com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder$LexicographicTargetSharder" order="last"/>
+    <BuildBatchingService implementation="com.google.idea.blaze.base.sync.sharding.LexicographicTargetSharder" order="last"/>
     <VcsSyncListener implementation="com.google.idea.blaze.base.prefetch.PrefetchVcsSyncListener"/>
     <VcsSyncListener implementation="com.google.idea.blaze.base.sync.autosync.VcsAutoSyncProvider"/>
     <VcsSyncListener implementation="com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager$VcsListener"/>

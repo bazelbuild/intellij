@@ -21,7 +21,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.LexicographicTargetSharder;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import java.util.List;
@@ -29,7 +28,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Test that targets are correctly partitioned in {@link BlazeBuildTargetSharder#shardTargets}. */
+/** Unit tests for {@link BlazeBuildTargetSharder}. */
 @RunWith(JUnit4.class)
 public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
@@ -45,7 +44,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   }
 
   @Test
-  public void testShardSizeRespected() {
+  public void shardTargets_testShardSizeRespected() {
     List<TargetExpression> targets =
         ImmutableList.of(
             target("//java/com/google:one"),
@@ -70,7 +69,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   }
 
   @Test
-  public void testTargetsAreSorted() {
+  public void shardTargets_testTargetsAreSorted() {
     List<TargetExpression> targets =
         ImmutableList.of(
             target("//java/com/d:target"),
@@ -90,7 +89,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   }
 
   @Test
-  public void testExcludedTargetsAreRemoved() {
+  public void shardTargets_testExcludedTargetsAreRemoved() {
     List<TargetExpression> targets =
         ImmutableList.of(
             target("//java/com/google:one"),
@@ -106,7 +105,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   }
 
   @Test
-  public void testExcludedThenIncludedTargetsAreRetained() {
+  public void shardTargets_testExcludedThenIncludedTargetsAreRetained() {
     List<TargetExpression> targets =
         ImmutableList.of(
             target("//java/com/google:one"),
@@ -118,5 +117,90 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     assertThat(shards.shardedTargets).hasSize(1);
     assertThat(shards.shardedTargets.get(0))
         .containsExactly(target("//java/com/google:one"), target("//java/com/google:two"));
+  }
+
+  @Test
+  public void shardTargetsRetainingOrdering_testShardSizeRespected() {
+    List<TargetExpression> targets =
+        ImmutableList.of(
+            target("//java/com/google:one"),
+            target("//java/com/google:two"),
+            target("//java/com/google:three"),
+            target("//java/com/google:four"),
+            target("//java/com/google:five"));
+    List<ImmutableList<TargetExpression>> shards =
+        BlazeBuildTargetSharder.shardTargetsRetainingOrdering(targets, 2);
+    assertThat(shards).hasSize(3);
+    assertThat(shards.get(0)).hasSize(2);
+    assertThat(shards.get(1)).hasSize(2);
+    assertThat(shards.get(2)).hasSize(1);
+
+    shards = BlazeBuildTargetSharder.shardTargetsRetainingOrdering(targets, 4);
+    assertThat(shards).hasSize(2);
+    assertThat(shards.get(0)).hasSize(4);
+    assertThat(shards.get(1)).hasSize(1);
+
+    shards = BlazeBuildTargetSharder.shardTargetsRetainingOrdering(targets, 100);
+    assertThat(shards).hasSize(1);
+    assertThat(shards.get(0)).hasSize(5);
+  }
+
+  @Test
+  public void shardTargetsRetainingOrdering_testAllSubsequentExcludedTargetsAppendedToShards() {
+    List<TargetExpression> targets =
+        ImmutableList.of(
+            target("//java/com/google:one"),
+            target("-//java/com/google:two"),
+            target("//java/com/google:three"),
+            target("-//java/com/google:four"),
+            target("//java/com/google:five"),
+            target("-//java/com/google:six"));
+    List<ImmutableList<TargetExpression>> shards =
+        BlazeBuildTargetSharder.shardTargetsRetainingOrdering(targets, 3);
+    assertThat(shards).hasSize(2);
+    assertThat(shards.get(0)).hasSize(5);
+    assertThat(shards.get(0))
+        .isEqualTo(
+            ImmutableList.of(
+                target("//java/com/google:one"),
+                target("-//java/com/google:two"),
+                target("//java/com/google:three"),
+                target("-//java/com/google:four"),
+                target("-//java/com/google:six")));
+    assertThat(shards.get(1)).hasSize(3);
+    assertThat(shards.get(1))
+        .containsExactly(
+            target("-//java/com/google:four"),
+            target("//java/com/google:five"),
+            target("-//java/com/google:six"))
+        .inOrder();
+
+    shards = BlazeBuildTargetSharder.shardTargetsRetainingOrdering(targets, 1);
+    assertThat(shards).hasSize(3);
+    assertThat(shards.get(0))
+        .containsExactly(
+            target("//java/com/google:one"),
+            target("-//java/com/google:two"),
+            target("-//java/com/google:four"),
+            target("-//java/com/google:six"))
+        .inOrder();
+  }
+
+  @Test
+  public void shardTargetsRetainingOrdering_testShardWithOnlyExcludedTargetsIsDropped() {
+    List<TargetExpression> targets =
+        ImmutableList.of(
+            target("//java/com/google:one"),
+            target("//java/com/google:two"),
+            target("//java/com/google:three"),
+            target("-//java/com/google:four"),
+            target("-//java/com/google:five"),
+            target("-//java/com/google:six"));
+
+    List<ImmutableList<TargetExpression>> shards =
+        BlazeBuildTargetSharder.shardTargetsRetainingOrdering(targets, 3);
+
+    assertThat(shards).hasSize(1);
+    assertThat(shards.get(0)).hasSize(6);
   }
 }

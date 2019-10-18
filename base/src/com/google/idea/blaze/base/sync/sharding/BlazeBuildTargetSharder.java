@@ -21,7 +21,6 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
@@ -45,8 +44,6 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -63,7 +60,7 @@ public class BlazeBuildTargetSharder {
 
   /** If enabled, we'll automatically shard when we think it's appropriate. */
   private static final BoolExperiment shardAutomatically =
-      new BoolExperiment("blaze.shard.automatically", true);
+      new BoolExperiment("blaze.shard.automatically.2", true);
 
   // number of packages per blaze query shard
   static final int PACKAGE_SHARD_SIZE = 500;
@@ -117,7 +114,6 @@ public class BlazeBuildTargetSharder {
   }
 
   /** Expand wildcard target patterns and partition the resulting target list. */
-  @SuppressWarnings("unchecked")
   public static ShardedTargetsResult expandAndShardTargets(
       Project project,
       BlazeContext context,
@@ -136,8 +132,7 @@ public class BlazeBuildTargetSharder {
         // shard only to keep the arg length below ARG_MAX
         return new ShardedTargetsResult(
             new ShardedTargetList(
-                (ImmutableList)
-                    LexicographicTargetSharder.shardTargets(targets, targetShardSize.getValue())),
+                shardTargetsRetainingOrdering(targets, targetShardSize.getValue())),
             BuildResult.SUCCESS);
       case EXPAND_AND_SHARD:
         ExpandedTargetsResult expandedTargets =
@@ -248,25 +243,30 @@ public class BlazeBuildTargetSharder {
   }
 
   /**
-   * A simple target batcher splitting based on the target strings. This will tend to split by
-   * package, so is better than random batching.
+   * Partition targets list. Because order is important with respect to excluded targets, original
+   * relative ordering is retained, and each shard has all subsequent excluded targets appended to
+   * it.
    */
-  static class LexicographicTargetSharder implements BuildBatchingService {
-    @Override
-    @SuppressWarnings("unchecked")
-    public ImmutableList<ImmutableList<Label>> calculateTargetBatches(
-        Project project, Set<Label> targets, int suggestedShardSize) {
-      return (ImmutableList) shardTargets(targets, suggestedShardSize);
+  static ImmutableList<ImmutableList<TargetExpression>> shardTargetsRetainingOrdering(
+      List<TargetExpression> targets, int shardSize) {
+    if (targets.size() <= shardSize) {
+      return ImmutableList.of(ImmutableList.copyOf(targets));
     }
-
-    private static ImmutableList<ImmutableList<? extends TargetExpression>> shardTargets(
-        Collection<? extends TargetExpression> targets, int shardSize) {
-      List<? extends TargetExpression> sorted =
-          ImmutableList.sortedCopyOf(Comparator.comparing(TargetExpression::toString), targets);
-      return Lists.partition(sorted, shardSize).stream()
-          .map(ImmutableList::copyOf)
-          .collect(toImmutableList());
+    List<ImmutableList<TargetExpression>> output = new ArrayList<>();
+    for (int index = 0; index < targets.size(); index += shardSize) {
+      int endIndex = Math.min(targets.size(), index + shardSize);
+      List<TargetExpression> shard = new ArrayList<>(targets.subList(index, endIndex));
+      if (shard.stream().filter(TargetExpression::isExcluded).count() == shard.size()) {
+        continue;
+      }
+      List<TargetExpression> remainingExcludes =
+          targets.subList(endIndex, targets.size()).stream()
+              .filter(TargetExpression::isExcluded)
+              .collect(Collectors.toList());
+      shard.addAll(remainingExcludes);
+      output.add(ImmutableList.copyOf(shard));
     }
+    return ImmutableList.copyOf(output);
   }
 
   /** Returns the wildcard target patterns, ignoring exclude patterns (those starting with '-') */
