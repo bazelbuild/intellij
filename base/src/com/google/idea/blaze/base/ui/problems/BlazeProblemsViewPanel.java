@@ -48,6 +48,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
+import javax.swing.tree.DefaultMutableTreeNode;
 
 /** A custom error tree view panel for Blaze invocation errors. */
 class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
@@ -212,7 +213,10 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
   public boolean hasNextOccurence() {
     // workaround for NPE on empty trees
     // TODO: remove if/when https://youtrack.jetbrains.com/issue/IDEA-215994 is fixed
-    if (myTree.getModel().getRoot() == null) {
+    Object root = myTree.getModel().getRoot();
+    if (root == null
+        || (root instanceof DefaultMutableTreeNode
+            && ((DefaultMutableTreeNode) root).getChildCount() == 0)) {
       return false;
     }
     return super.hasNextOccurence();
@@ -222,7 +226,10 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
   public boolean hasPreviousOccurence() {
     // workaround for NPE on empty trees
     // TODO: remove if/when https://youtrack.jetbrains.com/issue/IDEA-215994 is fixed
-    if (myTree.getModel().getRoot() == null) {
+    Object root = myTree.getModel().getRoot();
+    if (root == null
+        || (root instanceof DefaultMutableTreeNode
+            && ((DefaultMutableTreeNode) root).getChildCount() == 0)) {
       return false;
     }
     return super.hasPreviousOccurence();
