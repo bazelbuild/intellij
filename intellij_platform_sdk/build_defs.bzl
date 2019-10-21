@@ -2,45 +2,36 @@
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "intellij-latest": "intellij-2019.1",
-    "intellij-latest-mac": "intellij-2019.1-mac",
+    "intellij-latest": "intellij-2019.2",
+    "intellij-latest-mac": "intellij-2019.2-mac",
     "intellij-beta": "intellij-2019.2",
     "intellij-canary": "intellij-2019.3",
-    "intellij-ue-latest": "intellij-ue-2019.1",
-    "intellij-ue-latest-mac": "intellij-ue-2019.1-mac",
+    "intellij-ue-latest": "intellij-ue-2019.2",
+    "intellij-ue-latest-mac": "intellij-ue-2019.2-mac",
     "intellij-ue-beta": "intellij-ue-2019.2",
     "intellij-ue-canary": "intellij-ue-2019.3",
     "android-studio-latest": "android-studio-3.5",
     "android-studio-beta": "android-studio-3.5",
     "android-studio-beta-mac": "android-studio-3.5-mac",
     "android-studio-canary": "android-studio-3.6",
-    "clion-latest": "clion-2019.1",
-    "clion-latest-mac": "clion-2019.1-mac",
+    "clion-latest": "clion-2019.2",
     "clion-beta": "clion-2019.2",
 }
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2019.1": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2019_1",
-    ),
-    "intellij-2019.1-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2019_1",
-    ),
-    "intellij-ue-2019.1": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2019_1",
-    ),
-    "intellij-ue-2019.1-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2019_1",
-    ),
     "intellij-2019.2": struct(
         ide = "intellij",
         directory = "intellij_ce_2019_2",
     ),
+    "intellij-2019.2-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2019_2",
+    ),
     "intellij-ue-2019.2": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2019_2",
+    ),
+    "intellij-ue-2019.2-mac": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2019_2",
     ),
@@ -71,14 +62,6 @@ DIRECT_IJ_PRODUCTS = {
     "android-studio-3.6": struct(
         ide = "android-studio",
         directory = "android_studio_3_6",
-    ),
-    "clion-2019.1": struct(
-        ide = "clion",
-        directory = "clion_2019_1",
-    ),
-    "clion-2019.1-mac": struct(
-        ide = "clion",
-        directory = "clion_2019_1",
     ),
     "clion-2019.2": struct(
         ide = "clion",
