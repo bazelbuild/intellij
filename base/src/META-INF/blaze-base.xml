@@ -272,9 +272,6 @@
     <codeInsight.lineMarkerProvider
         language="BUILD"
       implementationClass="com.google.idea.blaze.base.query.MacroLineMarkerProvider"/>
-
-    <projectService serviceInterface="com.google.idea.blaze.base.dependencies.MissingDependencyTargetProvider"
-        serviceImplementation="com.google.idea.blaze.base.dependencies.MissingDependencyTargetProviderImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
