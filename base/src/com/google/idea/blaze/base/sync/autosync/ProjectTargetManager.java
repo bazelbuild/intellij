@@ -34,7 +34,11 @@ public interface ProjectTargetManager {
     IN_PROGRESS, // never previously synced; is currently being synced
     STALE, // previously synced, but stale
     SYNCED,
+    FAILED, // last sync failed
   }
+
+  /** The {@link SyncStatus} for the project as a whole. Unaffected by partial syncs. */
+  SyncStatus getProjectSyncStatus();
 
   /** Returns the {@link SyncStatus} of the given target. */
   SyncStatus getSyncStatus(Label target);

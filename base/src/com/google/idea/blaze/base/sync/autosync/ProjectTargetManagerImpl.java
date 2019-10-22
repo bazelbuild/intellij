@@ -45,11 +45,18 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
   }
 
   private final Project project;
-  private final ConcurrentHashMap<Integer, TargetExpressionList> inProgressBuilds =
+  private final ConcurrentHashMap<Integer, InProgressSync> inProgressBuilds =
       new ConcurrentHashMap<>();
+
+  private volatile SyncStatus projectSyncStatus = SyncStatus.UNSYNCED;
 
   private ProjectTargetManagerImpl(Project project) {
     this.project = project;
+  }
+
+  @Override
+  public SyncStatus getProjectSyncStatus() {
+    return projectSyncStatus;
   }
 
   @Override
@@ -82,6 +89,7 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
     // we don't know which target covers this source without a blaze query. Instead, just check if
     // any target in the parent package is currently being synced
     if (inProgressBuilds.values().stream()
+        .map(s -> s.targets)
         .anyMatch(list -> list.includesAnyTargetInPackage(label.blazePackage()))) {
       return SyncStatus.IN_PROGRESS;
     }
@@ -97,7 +105,9 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
 
   /** Returns true if the target is currently being synced. */
   private boolean inProgress(Label target) {
-    return inProgressBuilds.values().stream().anyMatch(list -> list.includesTarget(target));
+    return inProgressBuilds.values().stream()
+        .map(s -> s.targets)
+        .anyMatch(list -> list.includesTarget(target));
   }
 
   static class TargetSyncListener implements SyncListener {
@@ -105,9 +115,15 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
     public void buildStarted(
         Project project,
         BlazeContext context,
+        boolean fullProjectSync,
         int buildId,
         ImmutableList<TargetExpression> targets) {
-      getImpl(project).inProgressBuilds.put(buildId, TargetExpressionList.create(targets));
+      ProjectTargetManagerImpl manager = getImpl(project);
+      manager.inProgressBuilds.put(
+          buildId, new InProgressSync(fullProjectSync, TargetExpressionList.create(targets)));
+      if (fullProjectSync) {
+        manager.projectSyncStatus = SyncStatus.RESYNCING;
+      }
       // refresh the sync status indicators
       ProjectView.getInstance(project).refresh();
     }
@@ -120,7 +136,24 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
         SyncResult syncResult,
         ImmutableSet<Integer> buildIds) {
       ProjectTargetManagerImpl manager = getImpl(project);
-      buildIds.forEach(manager.inProgressBuilds::remove);
+      buildIds.forEach(
+          id -> {
+            InProgressSync s = manager.inProgressBuilds.remove(id);
+            if (s.fullProjectSync) {
+              manager.projectSyncStatus =
+                  syncResult.successful() ? SyncStatus.SYNCED : SyncStatus.FAILED;
+            }
+          });
+    }
+  }
+
+  private static class InProgressSync {
+    final boolean fullProjectSync;
+    final TargetExpressionList targets;
+
+    InProgressSync(boolean fullProjectSync, TargetExpressionList targets) {
+      this.fullProjectSync = fullProjectSync;
+      this.targets = targets;
     }
   }
 }
