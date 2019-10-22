@@ -44,12 +44,8 @@ public final class InternalDevFlag {
   /**
    * Returns whether the internal plugin dev marker is supported, <strong>regardless of whether the
    * current user is marked as a dev</strong>.
-   *
-   * @deprecated You probably want {@link #isInternalDev()} instead.
    */
-  // # TODO(grl): make this private once FileWatcherSwitch is gone.
-  @Deprecated
-  public static boolean isInternalDevMarkerSupported() {
+  private static boolean isInternalDevMarkerSupported() {
     return !disableInternalDevMarker.getValue()
         && !ExperimentUsernameProvider.isUsernameOverridden();
   }
