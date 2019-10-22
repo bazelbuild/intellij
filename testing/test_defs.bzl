@@ -178,12 +178,15 @@ def intellij_integration_test_suite(
     if required_plugins:
         jvm_flags.append("-Didea.required.plugins.id=" + required_plugins)
 
+    tags = kwargs.pop("tags", [])
+    tags.append("notsan")
+
     native.java_test(
         name = name,
         size = size,
         srcs = srcs + [suite_class_name],
         data = data,
-        tags = ["notsan"],
+        tags = tags,
         jvm_flags = jvm_flags,
         test_class = suite_class,
         runtime_deps = runtime_deps,
