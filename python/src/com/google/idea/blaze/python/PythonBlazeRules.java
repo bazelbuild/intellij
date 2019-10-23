@@ -30,6 +30,7 @@ public final class PythonBlazeRules implements Kind.Provider {
         Kind.Provider.create("py_binary", LanguageClass.PYTHON, RuleType.BINARY),
         Kind.Provider.create("py_test", LanguageClass.PYTHON, RuleType.TEST),
         Kind.Provider.create("py_appengine_binary", LanguageClass.PYTHON, RuleType.BINARY),
-        Kind.Provider.create("py_wrap_cc", LanguageClass.PYTHON, RuleType.UNKNOWN));
+        Kind.Provider.create("py_wrap_cc", LanguageClass.PYTHON, RuleType.UNKNOWN),
+        Kind.Provider.create("py_web_test", LanguageClass.PYTHON, RuleType.TEST));
   }
 }

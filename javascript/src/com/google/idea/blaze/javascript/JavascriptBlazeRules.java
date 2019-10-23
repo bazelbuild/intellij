@@ -38,7 +38,8 @@ class JavascriptBlazeRules implements Kind.Provider {
         Kind.Provider.create("_nodejs_module", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
         Kind.Provider.create("_nodejs_test", LanguageClass.JAVASCRIPT, RuleType.TEST),
         // not executable, despite the name
-        Kind.Provider.create(
-            "checkable_js_lib_binary", LanguageClass.JAVASCRIPT, RuleType.LIBRARY));
+        Kind.Provider.create("checkable_js_lib_binary", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
+        Kind.Provider.create("js_web_test", LanguageClass.JAVASCRIPT, RuleType.TEST),
+        Kind.Provider.create("jsunit_web_test", LanguageClass.JAVASCRIPT, RuleType.TEST));
   }
 }

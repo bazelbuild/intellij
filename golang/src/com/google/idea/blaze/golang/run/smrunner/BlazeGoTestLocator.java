@@ -89,7 +89,7 @@ public final class BlazeGoTestLocator implements SMTestLocator {
     }
     // More than one source file or we failed to get one source file, we'll point to the rule.
     PsiElement rule = getTargetRule(project, target.getKey().getLabel());
-    return rule != null ? ImmutableList.of(new PsiLocation<>(rule)) : null;
+    return rule != null ? ImmutableList.of(new PsiLocation<>(rule)) : ImmutableList.of();
   }
 
   @Nullable

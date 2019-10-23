@@ -159,6 +159,10 @@ public abstract class Kind {
     return Arrays.asList(kinds).contains(this);
   }
 
+  public boolean isWebTest() {
+    return getRuleType() == RuleType.TEST && getKindString().endsWith("web_test");
+  }
+
   @Override
   public final String toString() {
     return getKindString();

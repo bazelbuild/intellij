@@ -27,6 +27,7 @@ class DartBlazeRules implements Kind.Provider {
     return ImmutableSet.of(
         Kind.Provider.create("dart_proto_library", LanguageClass.DART, RuleType.LIBRARY),
         Kind.Provider.create("_dart_library", LanguageClass.DART, RuleType.LIBRARY),
-        Kind.Provider.create("dart_vm_test", LanguageClass.DART, RuleType.TEST));
+        Kind.Provider.create("dart_vm_test", LanguageClass.DART, RuleType.TEST),
+        Kind.Provider.create("dart_web_test", LanguageClass.DART, RuleType.TEST));
   }
 }

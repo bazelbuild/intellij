@@ -44,7 +44,8 @@ public final class JavaBlazeRules implements Kind.Provider {
     GWT_APPLICATION("gwt_application", LanguageClass.JAVA, RuleType.UNKNOWN),
     GWT_HOST("gwt_host", LanguageClass.JAVA, RuleType.UNKNOWN),
     GWT_MODULE("gwt_module", LanguageClass.JAVA, RuleType.UNKNOWN),
-    GWT_TEST("gwt_test", LanguageClass.JAVA, RuleType.TEST);
+    GWT_TEST("gwt_test", LanguageClass.JAVA, RuleType.TEST),
+    JAVA_WEB_TEST("java_web_test", LanguageClass.JAVA, RuleType.TEST);
 
     private final String name;
     private final LanguageClass languageClass;

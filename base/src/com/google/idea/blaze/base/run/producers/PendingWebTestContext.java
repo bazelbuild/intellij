@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.PendingRunConfigurationContext;
@@ -110,7 +109,7 @@ public class PendingWebTestContext extends TestContext implements PendingRunConf
         .stream()
         .map(targetMap::get)
         .filter(Objects::nonNull)
-        .filter(t -> t.getKind() == RuleTypes.WEB_TEST.getKind())
+        .filter(t -> t.getKind().isWebTest())
         .map(TargetIdeInfo::toTargetInfo)
         .sorted(Comparator.comparing(t -> t.label))
         .collect(ImmutableList.toImmutableList());
@@ -147,7 +146,7 @@ public class PendingWebTestContext extends TestContext implements PendingRunConf
     JBPopup popup =
         JBPopupFactory.getInstance()
             .createPopupChooserBuilder(wrapperTests)
-            .setTitle("Choose web test to run")
+            .setTitle("Choose Web Test to Run")
             .setMovable(false)
             .setResizable(false)
             .setRequestFocus(true)
