@@ -36,12 +36,14 @@ public interface SyncListener {
   /**
    * Called just prior to starting a blaze build during sync.
    *
+   * @param fullProjectSync true if all project targets are being synced.
    * @param buildId a unique ID associated with each sync build. {@link #afterSync} is guaranteed to
    *     be called with this build ID at some point.
    */
   default void buildStarted(
       Project project,
       BlazeContext context,
+      boolean fullProjectSync,
       int buildId,
       ImmutableList<TargetExpression> targets) {}
 

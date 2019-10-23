@@ -36,6 +36,9 @@ public interface ProjectTargetManager {
     SYNCED,
   }
 
+  /** The {@link SyncStatus} for the project as a whole. Unaffected by partial syncs. */
+  SyncStatus getProjectSyncStatus();
+
   /** Returns the {@link SyncStatus} of the given target. */
   SyncStatus getSyncStatus(Label target);
 
