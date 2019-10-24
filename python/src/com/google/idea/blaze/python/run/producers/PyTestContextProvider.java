@@ -86,7 +86,7 @@ class PyTestContextProvider implements TestContextProvider {
       this.testFunction = testFunction;
     }
 
-    private String getTestFilterForParameters(String testBase, PyDecorator decorator) {
+    private static String getTestFilterForParameters(String testBase, PyDecorator decorator) {
       PyArgumentList parameterizedArgumentList = decorator.getArgumentList();
       if (parameterizedArgumentList == null) {
         return testBase;
@@ -109,7 +109,8 @@ class PyTestContextProvider implements TestContextProvider {
       return Joiner.on(" ").join(parameterizedFilters);
     }
 
-    private String getTestFilterForNamedParameters(String testBase, PyDecorator decorator) {
+    private static String getTestFilterForNamedParameters(
+        String testBase, PyDecorator decorator, boolean useUnderscores) {
       PyArgumentList parameterizedArgumentList = decorator.getArgumentList();
       if (parameterizedArgumentList == null) {
         return testBase;
@@ -132,7 +133,9 @@ class PyTestContextProvider implements TestContextProvider {
               PyStringLiteralExpression keyString = (PyStringLiteralExpression) key;
               PyStringLiteralExpression valueString = (PyStringLiteralExpression) value;
               if (keyString.getStringValue().equals("testcase_name")) {
-                parameterizedFilters.add(testBase + valueString.getStringValue());
+                String testCaseName = valueString.getStringValue();
+                String separator = useUnderscores && !testCaseName.startsWith("_") ? "_" : "";
+                parameterizedFilters.add(testBase + separator + testCaseName);
               }
             }
           }
@@ -143,8 +146,11 @@ class PyTestContextProvider implements TestContextProvider {
             PyTupleExpression tupleArgument = (PyTupleExpression) contained;
             PyExpression[] tupleElements = tupleArgument.getElements();
             if (tupleElements.length > 0 && tupleElements[0] instanceof PyStringLiteralExpression) {
-              PyStringLiteralExpression testcaseName = (PyStringLiteralExpression) tupleElements[0];
-              parameterizedFilters.add(testBase + testcaseName.getStringValue());
+              PyStringLiteralExpression testCaseLiteral =
+                  (PyStringLiteralExpression) tupleElements[0];
+              String testCaseName = testCaseLiteral.getStringValue();
+              String separator = useUnderscores && !testCaseName.startsWith("_") ? "_" : "";
+              parameterizedFilters.add(testBase + separator + testCaseName);
             }
           }
         }
@@ -189,7 +195,10 @@ class PyTestContextProvider implements TestContextProvider {
           decoratorList.findDecorator("parameterized.named_parameters");
       if (namedParameterizedDecorator != null) {
         return new PythonTestFilterInfo(
-            getTestFilterForNamedParameters(nonParameterizedTest, namedParameterizedDecorator),
+            getTestFilterForNamedParameters(
+                nonParameterizedTest,
+                namedParameterizedDecorator,
+                testFunction.getName().startsWith("test_")),
             filterDescription);
       }
       return new PythonTestFilterInfo(nonParameterizedTest, filterDescription);
