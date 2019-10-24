@@ -51,20 +51,12 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
 
   @Test
   public void testProducedFromGoFile() {
-    PsiFile fooGoFile =
+    PsiFile goFile =
         createAndIndexFile(
             new WorkspacePath("foo/bar/foo_test.go"),
             "package foo",
             "import \"testing\"",
-            "func TestFoo(t *testing.T) {}",
-            "func TestBar(t *testing.T) {}",
-            "func TestBaz(t *testing.T) {}");
-    PsiFile otherGoFile =
-        createAndIndexFile(
-            new WorkspacePath("foo/bar/other_test.go"),
-            "package foo",
-            "import \"testing\"",
-            "func TestOther(t *testing.T) {}");
+            "func TestFoo(t *testing.T) {}");
 
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
@@ -74,46 +66,25 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
                     .setKind("go_test")
                     .setLabel("//foo/bar:foo_test")
                     .addSource(sourceRoot("foo/bar/foo_test.go"))
-                    .addSource(sourceRoot("foo/bar/other_test.go"))
                     .build())
             .build());
     registerProjectService(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
-    { // foo_test.go
-      ConfigurationContext context = createContextFromPsi(fooGoFile);
-      List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
-      assertThat(configurations).isNotNull();
-      assertThat(configurations).hasSize(1);
 
-      ConfigurationFromContext fromContext = configurations.get(0);
-      assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
-      assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+    ConfigurationContext context = createContextFromPsi(goFile);
+    List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
+    assertThat(configurations).isNotNull();
+    assertThat(configurations).hasSize(1);
 
-      BlazeCommandRunConfiguration config =
-          (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-      assertThat(config.getTarget())
-          .isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test"));
-      assertThat(getTestFilterContents(config))
-          .isEqualTo("--test_filter=\"^TestFoo$|^TestBar$|^TestBaz$\"");
-      assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
-    }
-    { // other_test.go
-      ConfigurationContext context = createContextFromPsi(otherGoFile);
-      List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
-      assertThat(configurations).isNotNull();
-      assertThat(configurations).hasSize(1);
+    ConfigurationFromContext fromContext = configurations.get(0);
+    assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
 
-      ConfigurationFromContext fromContext = configurations.get(0);
-      assertThat(fromContext.isProducedBy(TestContextRunConfigurationProducer.class)).isTrue();
-      assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
-
-      BlazeCommandRunConfiguration config =
-          (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-      assertThat(config.getTarget())
-          .isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test"));
-      assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=^TestOther$");
-      assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
-    }
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config.getTarget()).isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test"));
+    assertThat(getTestFilterContents(config)).isNull();
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 
   @Test
