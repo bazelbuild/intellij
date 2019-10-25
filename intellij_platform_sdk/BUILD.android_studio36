@@ -6,7 +6,15 @@ package(default_visibility = ["//visibility:public"])
 
 java_import(
     name = "sdk",
-    jars = glob(["android-studio/lib/*.jar"]),
+    jars = glob(
+        # temporarily include the newly extracted java plugin in the core SDK
+        # see https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin/
+        # api#191: expose the java plugin as a separate target
+        [
+            "android-studio/lib/*.jar",
+            "android-studio/plugins/java/lib/*.jar",
+        ],
+    ),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
 )
@@ -15,7 +23,11 @@ java_import(
     name = "android_plugin",
     jars = glob([
         "android-studio/plugins/android/lib/*.jar",
+        "android-studio/plugins/android-layoutlib/lib/*.jar",
+        "android-studio/plugins/android-wizardTemplate-plugin/lib/*.jar",
+        "android-studio/plugins/android-wizardTemplate-impl/lib/*.jar",
         "android-studio/plugins/android-ndk/lib/*.jar",
+        "android-studio/plugins/sdk-updates/lib/*.jar",
     ]),
 )
 
@@ -24,6 +36,9 @@ java_import(
     jars = glob([
         "android-studio/plugins/test-recorder/lib/*.jar",
     ]),
+    runtime_deps = [
+        ":kotlin",
+    ],
 )
 
 java_import(

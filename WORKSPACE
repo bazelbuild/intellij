@@ -147,7 +147,7 @@ http_archive(
         ")",
     ]),
     sha256 = "b945bcb8bf4a029c42230893b41587d408101370a663e050302275919cf015f3",
-    url = "https://plugins.jetbrains.com/files/1347/70287/scala-intellij-bin-2019.3.7.zip"
+    url = "https://plugins.jetbrains.com/files/1347/70287/scala-intellij-bin-2019.3.7.zip",
 )
 
 # The plugin api for Android Studio 3.5. This is required to build ASwB,
@@ -157,6 +157,13 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.android_studio",
     sha256 = "94fc392a148480a67299d83c1faaabc56db27188194748433534cf8b5ca4dd29",
     url = "https://dl.google.com/dl/android/studio/ide-zips/3.5.1.0/android-studio-ide-191.5900203-linux.tar.gz",
+)
+
+http_archive(
+    name = "android_studio_3_6",
+    build_file = "@//intellij_platform_sdk:BUILD.android_studio36",
+    sha256 = "decdfac53c227033dfa7d1923534fd946baf4b3b04257e43c67c2c775f1d7f4f",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/3.6.0.13/android-studio-ide-192.5916306-linux.tar.gz",
 )
 
 # LICENSE: Common Public License 1.0

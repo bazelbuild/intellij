@@ -18,9 +18,11 @@ package com.google.idea.blaze.android.run.runner;
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.profilers.AndroidProfilerProgramRunner;
 import com.android.tools.idea.run.ConsolePrinter;
+import com.android.tools.idea.run.tasks.LaunchResult;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTaskDurations;
 import com.android.tools.idea.run.util.LaunchStatus;
+import com.intellij.execution.Executor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
@@ -44,10 +46,11 @@ public class BlazeAndroidOpenProfilerWindowTask implements LaunchTask {
   }
 
   @Override
-  public boolean perform(IDevice device, LaunchStatus launchStatus, ConsolePrinter printer) {
+  public LaunchResult run(
+      Executor executor, IDevice device, LaunchStatus launchStatus, ConsolePrinter printer) {
     ApplicationManager.getApplication()
         .invokeLater(() -> AndroidProfilerProgramRunner.createProfilerToolWindow(project, null));
-    return true;
+    return LaunchResult.success();
   }
 
   @Override

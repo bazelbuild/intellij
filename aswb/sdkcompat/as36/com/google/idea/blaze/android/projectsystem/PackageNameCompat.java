@@ -28,6 +28,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.android.dom.manifest.AndroidManifestUtils;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.SourceProviderManager;
 import org.jetbrains.annotations.Nullable;
 
 /** Utilities to obtain the package name for a given module. #api3.5 */
@@ -72,7 +73,7 @@ public class PackageNameCompat {
 
   @Nullable
   private static String getPackageNameFromPrimaryManifest(AndroidFacet facet) {
-    VirtualFile manifest = facet.getManifestFile();
+    VirtualFile manifest = SourceProviderManager.getInstance(facet).getMainManifestFile();
     if (manifest == null) {
       return null;
     }
