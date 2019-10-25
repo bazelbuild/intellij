@@ -39,6 +39,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKeyValueExpression;
+import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
@@ -86,14 +87,29 @@ class PyTestContextProvider implements TestContextProvider {
       this.testFunction = testFunction;
     }
 
-    private static String getTestFilterForParameters(String testBase, PyDecorator decorator) {
+    private static PyExpression[] getParameterizedDecoratorArgumentList(PyDecorator decorator) {
       PyArgumentList parameterizedArgumentList = decorator.getArgumentList();
       if (parameterizedArgumentList == null) {
-        return testBase;
+        return null;
       }
+
       PyExpression[] arguments = parameterizedArgumentList.getArguments();
+      if (arguments.length == 1 && arguments[0] instanceof PyListLiteralExpression) {
+        PyListLiteralExpression literalList = (PyListLiteralExpression) arguments[0];
+        arguments = literalList.getElements();
+      }
+
       if (arguments.length == 0) {
-        return testBase;
+        return null;
+      }
+      return arguments;
+    }
+
+    @Nullable
+    private static String getTestFilterForParameters(String testBase, PyDecorator decorator) {
+      PyExpression[] arguments = getParameterizedDecoratorArgumentList(decorator);
+      if (arguments == null) {
+        return null;
       }
 
       ArrayList<String> parameterizedFilters = new ArrayList<>();
@@ -102,22 +118,15 @@ class PyTestContextProvider implements TestContextProvider {
         parameterizedFilters.add(testBase + i);
       }
 
-      if (parameterizedFilters.isEmpty()) {
-        return testBase;
-      }
-
       return Joiner.on(" ").join(parameterizedFilters);
     }
 
+    @Nullable
     private static String getTestFilterForNamedParameters(
         String testBase, PyDecorator decorator, boolean useUnderscores) {
-      PyArgumentList parameterizedArgumentList = decorator.getArgumentList();
-      if (parameterizedArgumentList == null) {
-        return testBase;
-      }
-      PyExpression[] arguments = parameterizedArgumentList.getArguments();
-      if (arguments.length == 0) {
-        return testBase;
+      PyExpression[] arguments = getParameterizedDecoratorArgumentList(decorator);
+      if (arguments == null) {
+        return null;
       }
 
       ArrayList<String> parameterizedFilters = new ArrayList<>();
