@@ -17,14 +17,34 @@ package com.google.idea.blaze.terminal;
 
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.project.Project;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer;
 
-/** Set the default terminal path to the workspace root. */
-public class DefaultTerminalLocationCustomizer extends LocalTerminalCustomizer {
+/** Set the default terminal path to the workspace root, and fixes $PATH tweaks by other plugins. */
+public class TerminalCustomizer extends LocalTerminalCustomizer {
 
-  // added in 2017.1, so foregoing the override annotation for backwards compatibility.
-  @SuppressWarnings("Overrides")
+  private static final String FORCED_PATH = "_INTELLIJ_FORCE_SET_PATH";
+
+  @Override
+  public String[] customizeCommandAndEnvironment(
+      Project project, String[] command, Map<String, String> envs) {
+
+    // Some plugins forcibly override the $PATH variable after the user's rc files have run,
+    // preventing customization. That's needlessly heavy-handed, since most users just append
+    // or prepend to it. Respect the user's choice, and only set $PATH *before* the rc files.
+    if (envs.containsKey(FORCED_PATH)) {
+      String path = envs.get(FORCED_PATH);
+      if (!path.isEmpty()) {
+        envs.put("PATH", path);
+      }
+      envs.remove(FORCED_PATH);
+    }
+
+    return super.customizeCommandAndEnvironment(project, command, envs);
+  }
+
+  @Override
   @Nullable
   protected String getDefaultFolder(Project project) {
     WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);
