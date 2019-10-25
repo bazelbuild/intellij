@@ -147,13 +147,28 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
       return this;
     }
 
+    public Builder addJar(LibraryArtifact jar) {
+      jars.add(jar);
+      return this;
+    }
+
     public Builder addGeneratedJar(LibraryArtifact.Builder jar) {
       generatedJars.add(jar.build());
       return this;
     }
 
+    public Builder addGeneratedJar(LibraryArtifact jar) {
+      generatedJars.add(jar);
+      return this;
+    }
+
     public Builder setFilteredGenJar(LibraryArtifact.Builder jar) {
       this.filteredGenJar = jar.build();
+      return this;
+    }
+
+    public Builder setFilteredGenJar(LibraryArtifact jar) {
+      this.filteredGenJar = jar;
       return this;
     }
 
