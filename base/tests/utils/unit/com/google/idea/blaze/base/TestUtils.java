@@ -138,4 +138,22 @@ public class TestUtils {
           }
         });
   }
+
+  /**
+   * Sets a system property, reverting to the previous value when the supplied parent disposable is
+   * disposed.
+   */
+  public static void setSystemProperties(Disposable parentDisposable, String key, String value) {
+    String prevValue = System.getProperty(key);
+    System.setProperty(key, value);
+    Disposer.register(
+        parentDisposable,
+        () -> {
+          if (prevValue != null) {
+            System.setProperty(key, value);
+          } else {
+            System.clearProperty(key);
+          }
+        });
+  }
 }

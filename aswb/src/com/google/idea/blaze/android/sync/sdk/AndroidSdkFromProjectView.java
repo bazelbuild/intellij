@@ -37,6 +37,13 @@ import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 
 /** Calculates AndroidSdkPlatform. */
 public class AndroidSdkFromProjectView {
+  private static final Joiner COMMA_JOINER = Joiner.on(", ");
+  public static final String NO_SDK_ERROR_TEMPLATE =
+      "No such android_sdk_platform: '%s'. "
+          + "Available android_sdk_platforms are: %s. "
+          + "Please change android_sdk_platform or run SDK manager "
+          + "to download missing SDK platforms.";
+
   @Nullable
   public static AndroidSdkPlatform getAndroidSdkPlatform(
       BlazeContext context, ProjectViewSet projectViewSet) {
@@ -85,14 +92,7 @@ public class AndroidSdkFromProjectView {
     if (sdk == null) {
       ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
       IssueOutput.error(
-              ("No such android_sdk_platform: '"
-                  + androidSdk
-                  + "'. "
-                  + "Available android_sdk_platforms are: "
-                  + getAvailableTargetHashesAsList(sdks)
-                  + ". "
-                  + "Please change android_sdk_platform or run SDK manager "
-                  + "to download missing SDK platforms."))
+              String.format(NO_SDK_ERROR_TEMPLATE, androidSdk, getAllAvailableTargetHashes()))
           .inFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
           .submit(context);
       return null;
@@ -118,7 +118,12 @@ public class AndroidSdkFromProjectView {
   }
 
   private static String getAvailableTargetHashesAsList(Collection<Sdk> sdks) {
-    return Joiner.on(", ").join(getAvailableSdkTargetHashes(sdks));
+    return COMMA_JOINER.join(getAvailableSdkTargetHashes(sdks));
+  }
+
+  private static String getAllAvailableTargetHashes() {
+    return COMMA_JOINER.join(
+        getAvailableSdkTargetHashes(BlazeSdkProvider.getInstance().getAllAndroidSdks()));
   }
 
   private static int getAndroidSdkApiLevel(Sdk sdk) {

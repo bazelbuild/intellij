@@ -22,6 +22,7 @@ import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.and
 import com.android.tools.idea.model.MergedManifestManager;
 import com.android.tools.lint.checks.PermissionHolder;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -44,7 +45,7 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
         "targets:",
         "  //java/com/example/...:all",
         "android_sdk_platform: android-27");
-    mockSdk("android-27", "Android 27 SDK");
+    MockSdkUtil.registerSdk(workspace, "27");
   }
 
   @Test

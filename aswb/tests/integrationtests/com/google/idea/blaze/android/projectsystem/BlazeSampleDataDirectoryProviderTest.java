@@ -23,6 +23,7 @@ import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.and
 
 import com.android.ide.common.util.PathString;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -50,7 +51,7 @@ public class BlazeSampleDataDirectoryProviderTest extends BlazeAndroidIntegratio
         "targets:",
         "  //com/google/example:main",
         "android_sdk_platform: android-25");
-    mockSdk("android-25", "Android 25 SDK");
+    MockSdkUtil.registerSdk(workspace, "25");
 
     workspaceDir = workspace.createDirectory(new WorkspacePath("com/google/example"));
     resDir = workspace.createFile(new WorkspacePath("com/google/example/res"));

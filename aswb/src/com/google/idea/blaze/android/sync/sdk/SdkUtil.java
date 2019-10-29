@@ -78,7 +78,7 @@ public class SdkUtil {
     ShowSettingsUtil.getInstance().showSettingsDialog(null, configurable.getClass());
   }
 
-  private static boolean containsJarAndRes(Sdk sdk) {
+  public static boolean containsJarAndRes(Sdk sdk) {
     VirtualFile[] classes = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
     // A valid sdk must contains path to android.jar and res
     if (classes.length < 2) {

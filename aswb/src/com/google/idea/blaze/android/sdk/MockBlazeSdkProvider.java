@@ -24,7 +24,7 @@ import java.util.Map.Entry;
 import javax.annotation.Nullable;
 
 /** Indirection to Sdks for testing purposes. */
-public class MockBlazeSdkProvider extends BlazeSdkProviderImpl {
+public class MockBlazeSdkProvider implements BlazeSdkProvider {
   Map<String, Sdk> sdks = Maps.newHashMap();
 
   public void addSdk(String targetHash, Sdk sdk) {

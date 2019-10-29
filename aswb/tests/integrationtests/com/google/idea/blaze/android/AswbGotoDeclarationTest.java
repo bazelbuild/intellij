@@ -49,7 +49,7 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
         "targets:",
         "  //java/com/foo/gallery/activities:activities",
         "android_sdk_platform: android-27");
-    mockSdk("android-27", "Android 27 SDK");
+    MockSdkUtil.registerSdk(workspace, "27");
   }
 
   @After

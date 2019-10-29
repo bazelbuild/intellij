@@ -15,22 +15,24 @@
  */
 package com.google.idea.blaze.android.sync;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_library;
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder.targetMap;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
+import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
-import com.google.idea.blaze.android.sdk.MockBlazeSdkProvider;
+import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
+import com.google.idea.blaze.android.sync.sdk.SdkUtil;
+import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.sync.BlazeBuildParams;
-import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
@@ -39,40 +41,57 @@ import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.containers.MultiMap;
+import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Android-specific sync integration tests. */
 @RunWith(JUnit4.class)
-public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
+public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
 
-  @Rule
-  public final AndroidIntegrationTestSetupRule androidSetupRule =
-      new AndroidIntegrationTestSetupRule();
+  private static final String ANDROID_28 = "android-28";
 
-  @Before
-  public void setup() {
-    mockSdk("android-25", "Android 25 SDK");
+  private static final class TestProjectArguments {
+    Sdk sdk;
+    TargetMap targetMap;
+    VirtualFile javaRoot;
+
+    TestProjectArguments(Sdk sdk, TargetMap targetMap, VirtualFile javaRoot) {
+      this.sdk = checkNotNull(sdk);
+      this.targetMap = checkNotNull(targetMap);
+      this.javaRoot = checkNotNull(javaRoot);
+    }
   }
 
-  private void mockSdk(String targetHash, String sdkName) {
-    SdkTypeId sdkType = mock(SdkTypeId.class);
-    when(sdkType.getName()).thenReturn("Android SDK");
-    Sdk sdk = mock(Sdk.class);
-    when(sdk.getName()).thenReturn(sdkName);
-    when(sdk.getSdkType()).thenReturn(sdkType);
-    MockBlazeSdkProvider sdkProvider = (MockBlazeSdkProvider) BlazeSdkProvider.getInstance();
-    sdkProvider.addSdk(targetHash, sdk);
+  public TestProjectArguments createTestProjectArguments() {
+    Sdk android25 = MockSdkUtil.registerSdk(workspace, "25");
+
+    workspace.createFile(
+        new WorkspacePath("java/com/google/Source.java"),
+        "package com.google;",
+        "public class Source {}");
+    workspace.createFile(
+        new WorkspacePath("java/com/google/Other.java"),
+        "package com.google;",
+        "public class Other {}");
+    VirtualFile javaRoot = workspace.createDirectory(new WorkspacePath("java/com/google"));
+    TargetMap targetMap =
+        targetMap(
+            android_library("//java/com/google:lib")
+                .java_toolchain_version("8")
+                .res("res/values/strings.xml")
+                .src("Source.java", "Other.java"));
+    return new TestProjectArguments(android25, targetMap, javaRoot);
   }
 
   @Test
@@ -84,34 +103,16 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
   }
 
   @Test
-  public void testSimpleSync() {
+  public void testSimpleSync_invalidSdkAndFailToReInstall() {
+    TestProjectArguments testEnvArgument = createTestProjectArguments();
+    MockSdkUtil.registerSdk(workspace, "28", "5", MultiMap.create(), false);
     setProjectView(
         "directories:",
         "  java/com/google",
         "targets:",
         "  //java/com/google:lib",
-        "android_sdk_platform: android-25");
-
-    workspace.createFile(
-        new WorkspacePath("java/com/google/Source.java"),
-        "package com.google;",
-        "public class Source {}");
-
-    workspace.createFile(
-        new WorkspacePath("java/com/google/Other.java"),
-        "package com.google;",
-        "public class Other {}");
-
-    VirtualFile javaRoot = workspace.createDirectory(new WorkspacePath("java/com/google"));
-
-    TargetMap targetMap =
-        targetMap(
-            android_library("//java/com/google:lib")
-                .java_toolchain_version("8")
-                .res("res/values/strings.xml")
-                .src("Source.java", "Other.java"));
-
-    setTargetMap(targetMap);
+        "android_sdk_platform: android-28");
+    setTargetMap(testEnvArgument.targetMap);
     runBlazeSync(
         BlazeSyncParams.builder()
             .setTitle("Sync")
@@ -119,9 +120,71 @@ public class AndroidSyncTest extends BlazeSyncIntegrationTestCase {
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
+    List<Sdk> allSdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
+    assertThat(allSdks).containsExactly(testEnvArgument.sdk);
+    errorCollector.assertIssues(
+        String.format(
+            AndroidSdkFromProjectView.NO_SDK_ERROR_TEMPLATE,
+            ANDROID_28,
+            Joiner.on(", ").join(AndroidSdkFromProjectView.getAvailableSdkTargetHashes(allSdks))));
+  }
 
+  @Test
+  public void testSimpleSync_invalidSdkAndSReInstall() {
+    TestProjectArguments testEnvArgument = createTestProjectArguments();
+    MockSdkUtil.registerSdk(workspace, "28", "5", MultiMap.create(), true);
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "targets:",
+        "  //java/com/google:lib",
+        "android_sdk_platform: android-28");
+    setTargetMap(testEnvArgument.targetMap);
+    // When IDE re-add local SDK into {link @ProjectJdkTable}, it need access to embedded jdk. Set
+    // path to mock jdk as embedded jdk path to avoid NPE.
+    Sdk jdk = IdeaTestUtil.getMockJdk18();
+    File jdkFile = new File(jdk.getHomePath());
+    if (!jdkFile.exists()) {
+      jdkFile.mkdirs();
+      jdkFile.deleteOnExit();
+      TestUtils.setSystemProperties(
+          getTestRootDisposable(), "android.test.embedded.jdk", jdkFile.getPath());
+    }
+    runBlazeSync(
+        BlazeSyncParams.builder()
+            .setTitle("Sync")
+            .setSyncMode(SyncMode.INCREMENTAL)
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setAddProjectViewTargets(true)
+            .build());
+    assertSyncSuccess(testEnvArgument.targetMap, testEnvArgument.javaRoot);
+    assertThat(SdkUtil.containsJarAndRes(BlazeSdkProvider.getInstance().findSdk(ANDROID_28)))
+        .isTrue();
+  }
+
+  @Test
+  public void testSimpleSync() {
+    TestProjectArguments testEnvArgument = createTestProjectArguments();
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "targets:",
+        "  //java/com/google:lib",
+        "android_sdk_platform: android-25");
+
+    setTargetMap(testEnvArgument.targetMap);
+    runBlazeSync(
+        BlazeSyncParams.builder()
+            .setTitle("Sync")
+            .setSyncMode(SyncMode.INCREMENTAL)
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setAddProjectViewTargets(true)
+            .build());
+    assertSyncSuccess(testEnvArgument.targetMap, testEnvArgument.javaRoot);
+  }
+
+  private void assertSyncSuccess(TargetMap targetMap, VirtualFile javaRoot) {
     errorCollector.assertNoIssues();
-
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
     assertThat(blazeProjectData).isNotNull();

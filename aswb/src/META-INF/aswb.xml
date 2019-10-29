@@ -35,8 +35,7 @@
     <projectService serviceImplementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemSyncManager$LastSyncResultCache"/>
     <applicationService serviceImplementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettings"/>
     <applicationService serviceInterface="com.google.idea.blaze.android.sdk.BlazeSdkProvider"
-      serviceImplementation="com.google.idea.blaze.android.sdk.BlazeSdkProviderImpl"
-      testServiceImplementation="com.google.idea.blaze.android.sdk.MockBlazeSdkProvider"/>
+      serviceImplementation="com.google.idea.blaze.android.sdk.BlazeSdkProviderImpl"/>
     <dom.fileDescription implementation="com.google.idea.blaze.android.resources.BlazeResourcesDomFileDescription"/>
     <moduleService serviceImplementation="com.google.idea.blaze.android.projectsystem.BlazeModuleSystem"/>
     <runConfigurationProducer

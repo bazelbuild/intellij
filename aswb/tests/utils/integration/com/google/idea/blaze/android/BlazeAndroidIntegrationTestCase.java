@@ -16,11 +16,7 @@
 package com.google.idea.blaze.android;
 
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder.targetMap;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
-import com.google.idea.blaze.android.sdk.MockBlazeSdkProvider;
 import com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.settings.BuildSystem;
@@ -29,8 +25,6 @@ import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.JdepsFileWriter;
 import com.google.idea.blaze.base.sync.SyncMode;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import org.junit.Rule;
 
 /** Base class for integration tests that require an ASwB project setup. */
@@ -53,16 +47,6 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
     TargetMap targetMap = targetMap(builders);
     setTargetMap(targetMap);
     JdepsFileWriter.writeDefaultJdepsFiles(getExecRoot(), fileSystem, targetMap);
-  }
-
-  public static void mockSdk(String targetHash, String sdkName) {
-    SdkTypeId sdkType = mock(SdkTypeId.class);
-    when(sdkType.getName()).thenReturn("Android SDK");
-    Sdk sdk = mock(Sdk.class);
-    when(sdk.getName()).thenReturn(sdkName);
-    when(sdk.getSdkType()).thenReturn(sdkType);
-    MockBlazeSdkProvider sdkProvider = (MockBlazeSdkProvider) BlazeSdkProvider.getInstance();
-    sdkProvider.addSdk(targetHash, sdk);
   }
 
   protected void runFullBlazeSync() {

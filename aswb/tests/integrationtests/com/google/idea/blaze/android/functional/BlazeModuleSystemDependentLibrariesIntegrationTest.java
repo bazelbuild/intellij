@@ -29,6 +29,7 @@ import com.android.projectmodel.SelectiveResourceFolder;
 import com.android.tools.idea.projectsystem.GoogleMavenArtifactId;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
@@ -117,8 +118,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
         "targets:",
         "  //java/com/google:app",
         "android_sdk_platform: android-27");
-
-    mockSdk("android-27", "Android 27 SDK");
+    MockSdkUtil.registerSdk(workspace, "27");
 
     NbAarTarget aarTarget =
         aar_import(aarFile)

@@ -22,6 +22,7 @@ import com.android.ide.common.repository.GradleCoordinate;
 import com.android.tools.idea.projectsystem.GoogleMavenArtifactId;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
 import com.google.idea.blaze.android.projectsystem.MavenArtifactLocator;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -74,7 +75,7 @@ public class BlazeModuleSystemExternalDependencyIntegrationTest
         "targets:",
         "  //java/com/foo/gallery/activities:activities",
         "android_sdk_platform: android-27");
-    mockSdk("android-27", "Android 27 SDK");
+    MockSdkUtil.registerSdk(workspace, "27");
 
     workspace.createFile(
         new WorkspacePath("java/com/foo/gallery/activities/MainActivity.java"),

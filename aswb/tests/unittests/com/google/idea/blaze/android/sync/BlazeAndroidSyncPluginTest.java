@@ -17,12 +17,11 @@
 package com.google.idea.blaze.android.sync;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.android.LightWeightMockSdkUtil;
 import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sdk.MockBlazeSdkProvider;
@@ -46,7 +45,6 @@ import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -68,8 +66,8 @@ import org.junit.runners.JUnit4;
 /** Unit tests for {@link com.google.idea.blaze.android.sync.BlazeAndroidSyncPlugin} */
 @RunWith(JUnit4.class)
 public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
-  private static final Sdk MOCK_ANDROID_SDK_26 = mockSdk("android-sdk-26");
-  private static final Sdk MOCK_ANDROID_SDK_28 = mockSdk("android-sdk-28");
+  private static final String MOCK_ANDROID_SDK_TARGET_HASH_26 = "android-26";
+  private static final String MOCK_ANDROID_SDK_TARGET_HASH_28 = "android-28";
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/"));
   private final BlazeAndroidSyncPlugin syncPlugin = new BlazeAndroidSyncPlugin();
   private BlazeContext context;
@@ -93,10 +91,12 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     super.initTest(applicationServices, projectServices);
-    MockBlazeSdkProvider mockSdkProvider = new MockBlazeSdkProvider();
-    mockSdkProvider.addSdk("android-26", MOCK_ANDROID_SDK_26);
-    mockSdkProvider.addSdk("android-28", MOCK_ANDROID_SDK_28);
-    applicationServices.register(BlazeSdkProvider.class, mockSdkProvider);
+    MockBlazeSdkProvider mockBlazeSdkProvider = new MockBlazeSdkProvider();
+    applicationServices.register(BlazeSdkProvider.class, mockBlazeSdkProvider);
+    LightWeightMockSdkUtil.registerSdk(
+        MOCK_ANDROID_SDK_TARGET_HASH_26, "android-sdk-26", mockBlazeSdkProvider);
+    LightWeightMockSdkUtil.registerSdk(
+        MOCK_ANDROID_SDK_TARGET_HASH_28, "android-sdk-28", mockBlazeSdkProvider);
 
     projectServices.register(ProjectRootManager.class, new MockProjectRootManagerEx());
 
@@ -184,7 +184,8 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
             .setWorkspaceLanguageSettings(
                 new WorkspaceLanguageSettings(WorkspaceType.ANDROID, ImmutableSet.of()))
             .build();
-    ProjectRootManagerEx.getInstanceEx(project).setProjectSdk(MOCK_ANDROID_SDK_26);
+    ProjectRootManagerEx.getInstanceEx(project)
+        .setProjectSdk(BlazeSdkProvider.getInstance().findSdk(MOCK_ANDROID_SDK_TARGET_HASH_26));
 
     // Perform.
     syncPlugin.updateProjectSdk(project, context, projectViewSet, null, blazeProjectData);
@@ -198,15 +199,6 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
     // an sdk is already available, so it's not reset from project view.
     assertThat(rootManager.getProjectSdk().getName()).isEqualTo("android-sdk-26");
     assertThat(languageLevel).isNull();
-  }
-
-  private static Sdk mockSdk(String sdkName) {
-    SdkTypeId sdkType = mock(SdkTypeId.class);
-    when(sdkType.getName()).thenReturn("Android SDK");
-    Sdk sdk = mock(Sdk.class);
-    when(sdk.getName()).thenReturn(sdkName);
-    when(sdk.getSdkType()).thenReturn(sdkType);
-    return sdk;
   }
 
   /** Stores language level so that it can be obtained later for verification */

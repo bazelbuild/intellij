@@ -50,6 +50,17 @@ stamped_plugin_xml(
 )
 
 java_library(
+    name = "unit_test_utils",
+    testonly = 1,
+    srcs = glob(["tests/utils/unit/**/*.java"]),
+    deps = [
+        ":aswb_lib",
+        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:test_libs",
+    ],
+)
+
+java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]),
@@ -92,6 +103,7 @@ intellij_unit_test_suite(
     test_package_root = "com.google.idea.blaze.android",
     deps = [
         ":aswb_lib",
+        ":unit_test_utils",
         "//base",
         "//base:unit_test_utils",
         "//common/experiments",
@@ -133,6 +145,7 @@ intellij_integration_test_suite(
     deps = [
         ":aswb_lib",
         ":integration_test_utils",
+        ":unit_test_utils",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
