@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -206,24 +207,22 @@ final class SyncPhaseCoordinator {
     return remoteSync && allowConcurrentRemoteSyncs.getValue();
   }
 
-  void syncProject(BlazeSyncParams syncParams) {
+  ListenableFuture<Void> syncProject(BlazeSyncParams syncParams) {
     boolean singleThreaded = !useRemoteExecutor(syncParams);
-    @SuppressWarnings("unused") // go/futurereturn-lsc
-    Future<?> possiblyIgnoredError =
-        ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
-            .setExecutor(singleThreaded ? singleThreadedExecutor : remoteBuildExecutor)
-            .submitTask(
-                indicator ->
-                    Scope.root(
-                        context -> {
-                          BlazeSyncParams params = finalizeSyncParams(syncParams, context);
-                          setupScopes(
-                              params,
-                              context,
-                              indicator,
-                              singleThreaded ? SyncPhase.ALL_PHASES : SyncPhase.BUILD);
-                          runSync(params, singleThreaded, context);
-                        }));
+    return ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
+        .setExecutor(singleThreaded ? singleThreadedExecutor : remoteBuildExecutor)
+        .submitTask(
+            indicator ->
+                Scope.root(
+                    context -> {
+                      BlazeSyncParams params = finalizeSyncParams(syncParams, context);
+                      setupScopes(
+                          params,
+                          context,
+                          indicator,
+                          singleThreaded ? SyncPhase.ALL_PHASES : SyncPhase.BUILD);
+                      runSync(params, singleThreaded, context);
+                    }));
   }
 
   /**
@@ -539,7 +538,9 @@ final class SyncPhaseCoordinator {
           .setBlazeExecTime(totalBlazeTime(stats.getCurrentTimedEvents()))
           .setTotalClockTime(Duration.between(startTime, Instant.now()));
       EventLoggingService.getInstance().log(stats.build());
-      context.output(new StatusOutput("Sync finished"));
+
+      String msg = syncResult == SyncResult.CANCELLED ? "Sync cancelled" : "Sync finished";
+      context.output(new StatusOutput(msg));
       outputTimingSummary(context, stats.getCurrentTimedEvents());
 
     } catch (Throwable e) {

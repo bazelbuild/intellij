@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -25,7 +28,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import java.util.Collection;
+import java.util.concurrent.Future;
 import java.util.function.Predicate;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 /** Manages syncing and its listeners. */
 public class BlazeSyncManager {
@@ -55,22 +60,45 @@ public class BlazeSyncManager {
                     String.format(
                         "Attempt to sync non-%s project.", Blaze.buildSystemName(project)));
               }
-              if (runInitialDirectoryOnlySync(syncParams)) {
-                BlazeSyncParams params =
-                    BlazeSyncParams.builder()
-                        .setTitle("Initial directory update")
-                        .setSyncMode(SyncMode.NO_BUILD)
-                        .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
-                        .setBackgroundSync(true)
-                        .build();
-                submitTask(project, params);
+              if (!runInitialDirectoryOnlySync(syncParams)) {
+                @SuppressWarnings("FutureReturnValueIgnored")
+                Future<Void> future = submitTask(project, syncParams);
+                return;
               }
-              submitTask(project, syncParams);
+              BlazeSyncParams params =
+                  BlazeSyncParams.builder()
+                      .setTitle("Initial directory update")
+                      .setSyncMode(SyncMode.NO_BUILD)
+                      .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
+                      .setBackgroundSync(true)
+                      .build();
+              ListenableFuture<Void> initialSync = submitTask(project, params);
+              Futures.addCallback(
+                  initialSync,
+                  runOnSuccess(
+                      () -> {
+                        @SuppressWarnings("FutureReturnValueIgnored")
+                        Future<Void> future = submitTask(project, syncParams);
+                      }),
+                  PooledThreadExecutor.INSTANCE);
             });
   }
 
-  private void submitTask(Project project, BlazeSyncParams params) {
-    SyncPhaseCoordinator.getInstance(project).syncProject(params);
+  @SuppressWarnings("FutureReturnValueIgnored")
+  private static ListenableFuture<Void> submitTask(Project project, BlazeSyncParams params) {
+    return SyncPhaseCoordinator.getInstance(project).syncProject(params);
+  }
+
+  private static FutureCallback<Void> runOnSuccess(Runnable runnable) {
+    return new FutureCallback<Void>() {
+      @Override
+      public void onSuccess(Void aVoid) {
+        runnable.run();
+      }
+
+      @Override
+      public void onFailure(Throwable throwable) {}
+    };
   }
 
   private static boolean runInitialDirectoryOnlySync(BlazeSyncParams syncParams) {

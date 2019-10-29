@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -73,7 +74,7 @@ public final class SyncProjectTargetsHelper {
       ProjectViewSet viewSet,
       WorkspacePathResolver pathResolver,
       WorkspaceLanguageSettings languageSettings)
-      throws SyncFailedException {
+      throws SyncFailedException, SyncCanceledException {
     ImmutableList<TargetExpression> derived =
         shouldDeriveSyncTargetsFromDirectories(viewSet)
             ? deriveTargetsFromDirectories(
@@ -93,7 +94,7 @@ public final class SyncProjectTargetsHelper {
       ProjectViewSet projectViewSet,
       WorkspacePathResolver pathResolver,
       WorkspaceLanguageSettings languageSettings)
-      throws SyncFailedException {
+      throws SyncFailedException, SyncCanceledException {
     String fileBugSuggestion =
         Blaze.getBuildSystem(project) == BuildSystem.Bazel ? "" : " Please run 'Help > File a Bug'";
     if (!DirectoryToTargetProvider.hasProvider()) {
@@ -119,6 +120,9 @@ public final class SyncProjectTargetsHelper {
               return DirectoryToTargetProvider.expandDirectoryTargets(
                   project, importRoots, pathResolver, childContext);
             });
+    if (context.isCancelled()) {
+      throw new SyncCanceledException();
+    }
     if (targets == null) {
       IssueOutput.error("Deriving targets from project directories failed." + fileBugSuggestion)
           .submit(context);

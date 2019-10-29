@@ -42,6 +42,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper;
+import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -112,6 +113,9 @@ public class BlazeBuildService {
                     projectData.getWorkspacePathResolver(),
                     projectData.getWorkspaceLanguageSettings())
                 .getTargetsToSync();
+          } catch (SyncCanceledException e) {
+            context.setCancelled();
+            return null;
           } catch (SyncFailedException e) {
             context.setHasError();
             return null;

@@ -37,7 +37,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -234,11 +233,7 @@ public class BlazeConsoleView implements Disposable {
 
     @Override
     public void update(AnActionEvent event) {
-      Presentation presentation = event.getPresentation();
-      boolean isNowVisible = stopHandler != null;
-      if (presentation.isEnabled() != isNowVisible) {
-        presentation.setEnabled(isNowVisible);
-      }
+      event.getPresentation().setEnabled(stopHandler != null);
     }
   }
 
