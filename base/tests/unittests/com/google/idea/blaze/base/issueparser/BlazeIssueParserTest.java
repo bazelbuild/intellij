@@ -451,6 +451,36 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue).isNull();
   }
 
+  @Test
+  public void testIgnoreRedundantBuildError() {
+    String[] lines =
+        new String[] {
+          "ERROR: /foo/bar/BUILD:1:1: Couldn't build file foo/bar/Foo-class.jar: Building"
+              + " foo/bar/Foo-class.jar (1 source file) failed (Exit 1) java failed: error"
+              + " executing command third_party/java/jdk/jdk11-k8/bin/java -Xms3072m -Xmx3072m"
+              + " '-XX:MaxGCPauseMillis=20000' -XX:+IgnoreUnrecognizedVMOptions"
+              + " -XX:-DeallocateHeapPages -XX:-GoogleAdjustGCThreads -XX:-GoogleG1ConcGCThreads"
+              + " ... (remaining 24 argument(s) skipped).  [forge_remote_host=ikkl10]",
+          "foo/bar/Foo.java:13: error: <identifier> expected", // 1
+          "  asdf",
+          "      ^",
+          "foo/bar/Foo.java:13: error: cannot find symbol", // 4
+          "  asdf",
+          "  ^",
+          "  symbol:   class asdf",
+          "  location: class Foo",
+        };
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    for (int i = 0; i < lines.length; ++i) {
+      if (i == 1 || i == 4) {
+        continue;
+      }
+      assertThat(blazeIssueParser.parseIssue(lines[i])).isNull();
+    }
+    assertThat(blazeIssueParser.parseIssue(lines[1])).isNotNull();
+    assertThat(blazeIssueParser.parseIssue(lines[4])).isNotNull();
+  }
+
   /** Simple Parser for testing */
   private static class TestParser extends BlazeIssueParser.SingleLineParser {
 

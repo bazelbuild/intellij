@@ -261,8 +261,13 @@ public class BlazeIssueParser {
       super("^ERROR: (/.*?BUILD):([0-9]+):([0-9]+): (.*)$");
     }
 
+    @Nullable
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
+      if (matcher.group(4).startsWith("Couldn't build file ")) {
+        // This is usually accompanied by a more useful error from the compiler.
+        return null;
+      }
       File file = fileFromAbsolutePath(matcher.group(1));
       return IssueOutput.error(matcher.group(4))
           .inFile(file)
@@ -385,7 +390,7 @@ public class BlazeIssueParser {
 
   /**
    * Fallback parser, intended to be run last to catch any errors not specifically handled by other
-   * parsers. Avoids parsing test failure notifications.
+   * parsers. Avoids parsing build/test failure notifications.
    */
   static class GenericErrorParser extends SingleLineParser {
     static final GenericErrorParser INSTANCE = new GenericErrorParser();
@@ -398,21 +403,23 @@ public class BlazeIssueParser {
             + "(.*: Process exited with status [0-9]+\\.)|"
             + "(build interrupted\\.)|"
             + "(Couldn't start the build. Unable to run tests.)|"
+            + "(/.*?BUILD:[0-9]+:[0-9]+: Couldn't build file .*)|"
             + "(.*))$";
 
     private GenericErrorParser() {
       super(PATTERN);
     }
 
+    @Nullable
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
-      if (matcher.group(1) != null
-          || matcher.group(2) != null
-          || matcher.group(3) != null
-          || matcher.group(4) != null) {
-        return null;
+      int lastGroup = matcher.groupCount();
+      for (int i = 1; i < lastGroup; ++i) {
+        if (matcher.group(i) != null) {
+          return null;
+        }
       }
-      return IssueOutput.error(matcher.group(5)).build();
+      return IssueOutput.error(matcher.group(lastGroup)).build();
     }
   }
 
