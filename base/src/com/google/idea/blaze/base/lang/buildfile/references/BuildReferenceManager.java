@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.lang.buildfile.references;
 
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.completion.BuildLookupElement;
@@ -40,6 +41,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PathUtil;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -128,8 +130,9 @@ public class BuildReferenceManager {
 
   /**
    * Finds all child directories. If exactly one is found, continue traversing (and appending to
-   * LookupElement string) until there are multiple options.<br>
-   * Used for package path completion suggestions.
+   * LookupElement string) until there are multiple options. Stops traversing at BUILD packages.
+   *
+   * <p>Used for package path completion suggestions.
    */
   public BuildLookupElement[] resolvePackageLookupElements(FileLookupData lookupData) {
     String relativePath = lookupData.filePathFragment;
@@ -175,11 +178,20 @@ public class BuildReferenceManager {
       if (validChildren.size() > 1) {
         return uniqueLookup[0] != null ? uniqueLookup : lookupsForFiles(validChildren, lookupData);
       }
-      // continue traversing while there's only one option
+      // if we've already traversed a directory and this is a BUILD package, stop here
+      if (uniqueLookup[0] != null && hasBuildFile(children)) {
+        return uniqueLookup;
+      }
+      // otherwise continue traversing while there's only one option
       uniqueLookup[0] = lookupForFile(validChildren.get(0), lookupData);
       pathFragment = "";
       vf = validChildren.get(0);
     }
+  }
+
+  private boolean hasBuildFile(VirtualFile[] children) {
+    BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
+    return Arrays.stream(children).anyMatch(f -> provider.isBuildFile(f.getName()));
   }
 
   private BuildLookupElement[] lookupsForFiles(List<VirtualFile> files, FileLookupData lookupData) {

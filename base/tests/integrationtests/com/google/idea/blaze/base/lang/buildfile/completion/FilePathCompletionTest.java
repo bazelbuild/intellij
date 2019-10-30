@@ -79,6 +79,19 @@ public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
     assertFileContents(file, "'//java/com/google'");
   }
 
+  @Test
+  public void testStopDirectoryTraversalAtBuildPackage() {
+    workspace.createFile(new WorkspacePath("foo/bar/BUILD"));
+    workspace.createFile(new WorkspacePath("foo/bar/baz/BUILD"));
+
+    BuildFile file = createBuildFile(new WorkspacePath("other/BUILD"), "'//f'");
+    Editor editor = editorTest.openFileInEditor(file);
+    editorTest.setCaretPosition(editor, 0, "'//f".length());
+
+    assertThat(editorTest.completeIfUnique()).isTrue();
+    assertFileContents(file, "'//foo/bar'");
+  }
+
   // expected to be a typical workflow -- complete a segment,
   // get the possibilities, then start typing
   // next segment and complete again
