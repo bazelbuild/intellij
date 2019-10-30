@@ -146,7 +146,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.DefaultJdkProvider"
-        interface="com.google.idea.blaze.java.sync.sdk.DefaultJdkProvider"/>
+        interface="com.google.idea.blaze.java.sync.sdk.BlazeJdkProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.JavaSyncAugmenter"
                     interface="com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.JavaLikeLanguage"

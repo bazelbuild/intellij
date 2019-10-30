@@ -20,9 +20,9 @@ import com.intellij.pom.java.LanguageLevel;
 import java.io.File;
 import javax.annotation.Nullable;
 
-/** May download or otherwise provide default sdk locations for languages. */
-public interface DefaultJdkProvider {
-  ExtensionPointName<DefaultJdkProvider> EP_NAME =
+/** May download or otherwise provide jdk locations. */
+public interface BlazeJdkProvider {
+  ExtensionPointName<BlazeJdkProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.DefaultJdkProvider");
 
   @Nullable

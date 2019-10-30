@@ -20,7 +20,8 @@ import static com.intellij.openapi.util.io.FileUtil.notNullize;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.java.sync.sdk.DefaultJdkProvider;
+import com.google.idea.blaze.java.sync.sdk.BlazeJdkProvider;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -33,11 +34,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.SystemProperties;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Utility methods related to IDEA JDKs. */
@@ -45,25 +48,56 @@ public class Jdks {
 
   private static final Logger logger = Logger.getInstance(Jdks.class);
 
+  private static final BoolExperiment useExistingJdkPreferentially =
+      new BoolExperiment("blaze.use.existing.jdk", false);
+
   @Nullable
   public static Sdk chooseOrCreateJavaSdk(LanguageLevel langLevel) {
-    Sdk existing = findClosestMatch(langLevel);
-    if (existing != null) {
-      return existing;
+    if (useExistingJdkPreferentially.getValue()) {
+      Sdk existing = findClosestMatch(langLevel);
+      if (existing != null) {
+        return existing;
+      }
     }
     String jdkHomePath = null;
-    for (DefaultJdkProvider defaultSdkProvider : DefaultJdkProvider.EP_NAME.getExtensions()) {
-      File sdkRoot = defaultSdkProvider.provideJdkForLanguageLevel(langLevel);
-      if (sdkRoot != null) {
-        jdkHomePath = sdkRoot.getPath();
+    for (BlazeJdkProvider jdkProvider : BlazeJdkProvider.EP_NAME.getExtensions()) {
+      File jdkRoot = jdkProvider.provideJdkForLanguageLevel(langLevel);
+      if (jdkRoot != null) {
+        jdkHomePath = jdkRoot.getPath();
         break;
       }
     }
 
     if (jdkHomePath == null) {
+      // fall back to looking for closest match before using suggesters
+      Sdk existing = findClosestMatch(langLevel);
+      if (existing != null) {
+        return existing;
+      }
       jdkHomePath = getJdkHomePath(langLevel);
     }
-    return jdkHomePath != null ? createJdk(jdkHomePath) : null;
+    return jdkHomePath != null ? getOrCreateSdk(jdkHomePath) : null;
+  }
+
+  private static Sdk getOrCreateSdk(String homePath) {
+    return ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()).stream()
+        .filter(jdk -> jdkPathMatches(jdk, homePath))
+        .findFirst()
+        .orElseGet(() -> createJdk(homePath));
+  }
+
+  private static boolean jdkPathMatches(Sdk jdk, String homePath) {
+    String jdkPath = jdk.getHomePath();
+    if (jdkPath == null) {
+      return false;
+    }
+    try {
+      return Objects.equals(
+          new File(homePath).getCanonicalPath(), new File(jdkPath).getCanonicalPath());
+    } catch (IOException e) {
+      // ignore these exceptions
+      return false;
+    }
   }
 
   @Nullable
