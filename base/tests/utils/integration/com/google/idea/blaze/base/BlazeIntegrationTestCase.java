@@ -44,10 +44,12 @@ import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.ModuleFixture;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import java.io.BufferedInputStream;
@@ -198,7 +200,13 @@ public abstract class BlazeIntegrationTestCase {
 
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
         factory.createFixtureBuilder("test-project");
-    return factory.createCodeInsightFixture(fixtureBuilder.getFixture());
+    CodeInsightTestFixture testFixture =
+        factory.createCodeInsightFixture(fixtureBuilder.getFixture());
+    @SuppressWarnings("unchecked") // ModuleFixtureBuilder#getModule() is never used
+    EmptyModuleFixtureBuilder<ModuleFixture> moduleFixtureBuilder =
+        fixtureBuilder.addModule(EmptyModuleFixtureBuilder.class);
+    moduleFixtureBuilder.addSourceContentRoot(testFixture.getTempDirPath());
+    return testFixture;
   }
 
   /**
