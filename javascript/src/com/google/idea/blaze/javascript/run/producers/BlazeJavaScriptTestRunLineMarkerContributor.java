@@ -24,14 +24,12 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.SourceToTargetFinder;
-import com.google.idea.blaze.base.run.smrunner.BlazeWebTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -149,7 +147,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributor extends RunLineMarkerCo
                   .filter(
                       key -> {
                         TargetIdeInfo target = targetMap.get(key);
-                        return target != null && target.getKind() == RuleTypes.WEB_TEST.getKind();
+                        return target != null && target.getKind().isWebTest();
                       })
                   .map(TargetKey::getLabel)
                   .collect(ImmutableList.toImmutableList()),
@@ -183,7 +181,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributor extends RunLineMarkerCo
     return labels.stream()
         .map(
             label ->
-                BlazeWebTestEventsHandler.WEB_TEST_PROTOCOL
+                SmRunnerUtils.GENERIC_TEST_PROTOCOL
                     + URLUtil.SCHEME_SEPARATOR
                     + label
                     + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER
@@ -210,7 +208,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributor extends RunLineMarkerCo
     return labels.stream()
         .map(
             label ->
-                BlazeWebTestEventsHandler.WEB_TEST_PROTOCOL
+                SmRunnerUtils.GENERIC_TEST_PROTOCOL
                     + URLUtil.SCHEME_SEPARATOR
                     + label
                     + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER

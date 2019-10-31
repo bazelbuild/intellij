@@ -72,7 +72,9 @@ public class BlazeGoTestEventsHandler implements BlazeTestEventsHandler {
 
   @Override
   public String suiteLocationUrl(Label label, @Nullable Kind kind, String name) {
-    return SmRunnerUtils.GENERIC_SUITE_PROTOCOL + URLUtil.SCHEME_SEPARATOR + label.toString();
+    return SmRunnerUtils.GENERIC_SUITE_PROTOCOL
+        + URLUtil.SCHEME_SEPARATOR
+        + label.withTargetName(name);
   }
 
   @Override
@@ -84,7 +86,7 @@ public class BlazeGoTestEventsHandler implements BlazeTestEventsHandler {
       @Nullable String className) {
     return SmRunnerUtils.GENERIC_TEST_PROTOCOL
         + URLUtil.SCHEME_SEPARATOR
-        + label.toString()
+        + label.withTargetName(parentSuite) // target and suite name won't match with web_tests
         + SmRunnerUtils.TEST_NAME_PARTS_SPLITTER
         + name;
   }

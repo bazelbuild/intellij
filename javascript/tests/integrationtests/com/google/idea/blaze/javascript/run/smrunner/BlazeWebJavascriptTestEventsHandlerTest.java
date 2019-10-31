@@ -26,11 +26,13 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.run.smrunner.BlazeWebTestEventsHandler;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.execution.Location;
@@ -49,11 +51,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link BlazeJavascriptTestEventsHandler} with js_web_test. */
+/** Integration tests for {@link BlazeWebTestEventsHandler} with JavaScript. */
 @RunWith(JUnit4.class)
-public class BlazeJavascriptWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
+public class BlazeWebJavascriptTestEventsHandlerTest extends BlazeIntegrationTestCase {
 
-  private final BlazeJavascriptTestEventsHandler handler = new BlazeJavascriptTestEventsHandler();
+  private final BlazeWebTestEventsHandler handler = new BlazeWebTestEventsHandler();
 
   @Test
   public void testClosureTestResolves() {
@@ -62,7 +64,7 @@ public class BlazeJavascriptWebTestEventsHandlerTest extends BlazeIntegrationTes
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//foo/bar:foo_test_chrome-linux")
-                    .setKind("js_web_test")
+                    .setKind("web_test")
                     .setBuildFile(src("foo/bar/BUILD"))
                     .addDependency("//foo/bar:foo_test_debug"))
             .addTarget(
@@ -116,7 +118,7 @@ public class BlazeJavascriptWebTestEventsHandlerTest extends BlazeIntegrationTes
         ")");
 
     Label label = Label.create("//foo/bar:foo_test_chrome-linux");
-    Kind kind = Kind.fromRuleName("js_web_test");
+    Kind kind = RuleTypes.WEB_TEST.getKind();
 
     {
       String url = handler.suiteLocationUrl(label, kind, "workspace/foo/bar/foo_test");
@@ -157,7 +159,7 @@ public class BlazeJavascriptWebTestEventsHandlerTest extends BlazeIntegrationTes
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//foo/bar:foo_test_chrome-linux")
-                    .setKind("js_web_test")
+                    .setKind("web_test")
                     .setBuildFile(src("foo/bar/BUILD"))
                     .addDependency("//foo/bar:foo_test_wrapped_test"))
             .addTarget(
@@ -227,7 +229,7 @@ public class BlazeJavascriptWebTestEventsHandlerTest extends BlazeIntegrationTes
         ")");
 
     Label label = Label.create("//foo/bar:foo_test_chrome-linux");
-    Kind kind = Kind.fromRuleName("js_web_test");
+    Kind kind = RuleTypes.WEB_TEST.getKind();
 
     {
       String url = handler.suiteLocationUrl(label, kind, "foo");

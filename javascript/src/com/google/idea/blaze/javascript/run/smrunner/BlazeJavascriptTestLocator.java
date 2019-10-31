@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
@@ -83,11 +84,11 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
     if (file != null) {
       return findClosureTestCase(project, file, testName);
     } else {
-      Label label = Label.createIfValid(components.get(0));
-      if (label == null) {
+      TargetIdeInfo target = getWrappedTest(project, components.get(0));
+      if (target == null) {
         return ImmutableList.of();
       }
-      return findJasmineTestCase(project, label, suiteName, testName);
+      return findJasmineTestCase(project, target, suiteName, testName);
     }
   }
 
@@ -122,9 +123,43 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
     return ImmutableList.of(new PsiLocation<>(psiFile));
   }
 
+  @Nullable
+  private static TargetIdeInfo getWrappedTest(Project project, String labelString) {
+    Label label = Label.createIfValid(labelString);
+    if (label == null) {
+      return null;
+    }
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData == null) {
+      return null;
+    }
+    TargetMap targetMap = projectData.getTargetMap();
+    TargetIdeInfo target = targetMap.get(TargetKey.forPlainTarget(label));
+    if (target == null
+        || target.getKind().getRuleType() != RuleType.TEST
+        || target.getKind().getLanguageClass() != LanguageClass.JAVASCRIPT) {
+      return null;
+    }
+    if (target.getKind().getKindString().endsWith("web_test")) {
+      target =
+          target.getDependencies().stream()
+              .map(Dependency::getTargetKey)
+              .map(targetMap::get)
+              .filter(Objects::nonNull)
+              .filter(
+                  t ->
+                      t.getKind().getRuleType() == RuleType.TEST
+                          && t.getKind().getLanguageClass() == LanguageClass.JAVASCRIPT)
+              .findFirst()
+              .orElse(null);
+    }
+    return target;
+  }
+
   @SuppressWarnings("rawtypes")
   private static List<Location> findJasmineTestCase(
-      Project project, Label label, String suiteName, @Nullable String testName) {
+      Project project, TargetIdeInfo target, String suiteName, @Nullable String testName) {
     if (!searchForJasmineSources.getValue()) {
       return ImmutableList.of();
     }
@@ -137,7 +172,7 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
     return OutputArtifactResolver.resolveAll(
             project,
             projectData.getArtifactLocationDecoder(),
-            getJasmineSources(projectData, label))
+            getJasmineSources(projectData, target))
         .stream()
         .map(VfsUtils::resolveVirtualFile)
         .filter(Objects::nonNull)
@@ -188,12 +223,8 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
   }
 
   private static ImmutableSet<ArtifactLocation> getJasmineSources(
-      BlazeProjectData projectData, Label label) {
+      BlazeProjectData projectData, TargetIdeInfo target) {
     TargetMap targetMap = projectData.getTargetMap();
-    TargetIdeInfo target = targetMap.get(TargetKey.forPlainTarget(label));
-    if (target == null || target.getKind().getLanguageClass() != LanguageClass.JAVASCRIPT) {
-      return ImmutableSet.of();
-    }
     if (!target.getSources().isEmpty()) {
       return target.getSources();
     }
@@ -205,7 +236,7 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
     // want to follow.
     return target.getDependencies().stream()
         .map(Dependency::getTargetKey)
-        .map(projectData.getTargetMap()::get)
+        .map(targetMap::get)
         .filter(Objects::nonNull)
         .filter(t -> t.getKind().getLanguageClass() == LanguageClass.JAVASCRIPT)
         .map(TargetIdeInfo::getSources)

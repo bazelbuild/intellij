@@ -23,7 +23,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
-import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -40,9 +40,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link JavascriptTestContextProvider}. */
+/**
+ * Integration tests for {@link JavascriptTestContextProvider}.
+ *
+ * @deprecated jsunit_test_suites now produce jsunit_web_tests.
+ */
+@Deprecated
 @RunWith(JUnit4.class)
-public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProducerTestCase {
+public class OldJavascriptTestContextProviderTest extends BlazeRunConfigurationProducerTestCase {
   @Test
   public void testClosureTestSuite() {
     PsiFile jsTestFile =
@@ -59,7 +64,7 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
     ConfigurationFromContext configurationFromContext = getConfigurationFromContext(context);
 
     BlazeCommandRunConfiguration configuration = getBlazeRunConfiguration(configurationFromContext);
-    assertThat(configuration.getTargetKind()).isEqualTo(Kind.fromRuleName("js_web_test"));
+    assertThat(configuration.getTargetKind()).isEqualTo(RuleTypes.WEB_TEST.getKind());
     assertThat(configuration.getTarget())
         .isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test_chrome-linux"));
   }
@@ -84,7 +89,7 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
     ConfigurationFromContext configurationFromContext = getConfigurationFromContext(context);
 
     BlazeCommandRunConfiguration configuration = getBlazeRunConfiguration(configurationFromContext);
-    assertThat(configuration.getTargetKind()).isEqualTo(Kind.fromRuleName("js_web_test"));
+    assertThat(configuration.getTargetKind()).isEqualTo(RuleTypes.WEB_TEST.getKind());
     assertThat(configuration.getTarget())
         .isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test_chrome-linux"));
   }
@@ -97,7 +102,7 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
     ConfigurationFromContext configurationFromContext = getConfigurationFromContext(context);
 
     BlazeCommandRunConfiguration configuration = getBlazeRunConfiguration(configurationFromContext);
-    assertThat(configuration.getTargetKind()).isEqualTo(Kind.fromRuleName("js_web_test"));
+    assertThat(configuration.getTargetKind()).isEqualTo(RuleTypes.WEB_TEST.getKind());
     assertThat(configuration.getTarget())
         .isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test_chrome-linux"));
   }
@@ -117,10 +122,10 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
     PendingWebTestContext testContext = (PendingWebTestContext) configuration.getPendingContext();
     testContext.updateContextAndRerun(
         configuration,
-        TargetInfo.builder(Label.create("//foo/bar:foo_test_firefox-linux"), "js_web_test").build(),
+        TargetInfo.builder(Label.create("//foo/bar:foo_test_firefox-linux"), "web_test").build(),
         () -> {});
 
-    assertThat(configuration.getTargetKind()).isEqualTo(Kind.fromRuleName("js_web_test"));
+    assertThat(configuration.getTargetKind()).isEqualTo(RuleTypes.WEB_TEST.getKind());
     assertThat(configuration.getTarget())
         .isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test_firefox-linux"));
   }
@@ -174,7 +179,7 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
     for (String browser : browsers) {
       targetMapBuilder.addTarget(
           TargetIdeInfo.builder()
-              .setKind("js_web_test")
+              .setKind("web_test")
               .setLabel("//foo/bar:foo_test_" + browser)
               .setBuildFile(sourceRoot("foo/bar/BUILD"))
               .addDependency("//foo/bar:foo_test" + "_debug"));

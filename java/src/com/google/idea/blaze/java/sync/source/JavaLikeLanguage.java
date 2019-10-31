@@ -104,7 +104,8 @@ public interface JavaLikeLanguage {
     public ImmutableSet<Kind> getHandledTestKinds() {
       return ImmutableSet.of(
           JavaBlazeRules.RuleTypes.JAVA_TEST.getKind(),
-          JavaBlazeRules.RuleTypes.GWT_TEST.getKind());
+          JavaBlazeRules.RuleTypes.GWT_TEST.getKind(),
+          JavaBlazeRules.RuleTypes.JAVA_WEB_TEST.getKind());
     }
 
     @Override

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.base.Strings;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -37,11 +38,11 @@ import javax.annotation.Nullable;
  * underlying {@link BlazeTestEventsHandler}.
  */
 public class BlazeWebTestEventsHandler implements BlazeTestEventsHandler {
-  public static final String WEB_TEST_PROTOCOL = "blaze:web:test";
+  static final String WEB_TEST_PROTOCOL = "blaze:web:test";
 
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
-    return kind != null && kind.isWebTest();
+    return kind == RuleTypes.WEB_TEST.getKind();
   }
 
   @Override

@@ -25,10 +25,11 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.run.smrunner.BlazeWebTestEventsHandler;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.java.JavaBlazeRules.RuleTypes;
 import com.intellij.execution.Location;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -42,11 +43,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link BlazeJavaTestEventsHandler} with java_web_test. */
+/** Integration tests for {@link BlazeWebTestEventsHandler} with Java. */
 @RunWith(JUnit4.class)
-public class BlazeJavaWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
+public class BlazeWebJavaTestEventsHandlerTest extends BlazeIntegrationTestCase {
 
-  private final BlazeJavaTestEventsHandler handler = new BlazeJavaTestEventsHandler();
+  private final BlazeWebTestEventsHandler handler = new BlazeWebTestEventsHandler();
 
   @Test
   public void testSuiteLocationResolves() {
@@ -55,7 +56,7 @@ public class BlazeJavaWebTestEventsHandlerTest extends BlazeIntegrationTestCase 
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//java/com/google/lib:JavaClass_chrome-linux")
-                    .setKind("java_web_test")
+                    .setKind("web_test")
                     .setBuildFile(src("java/com/google/lib/BUILD"))
                     .addDependency("//java/com/google/lib:JavaClass_wrapped_test"))
             .addTarget(
@@ -82,7 +83,7 @@ public class BlazeJavaWebTestEventsHandlerTest extends BlazeIntegrationTestCase 
     String url =
         handler.suiteLocationUrl(
             Label.create("//java/com/google/lib:JavaClass_chrome-linux"),
-            RuleTypes.JAVA_WEB_TEST.getKind(),
+            RuleTypes.WEB_TEST.getKind(),
             "com.google.lib.JavaClass");
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
@@ -96,7 +97,7 @@ public class BlazeJavaWebTestEventsHandlerTest extends BlazeIntegrationTestCase 
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//java/com/google/lib:JavaClass_chrome-linux")
-                    .setKind("java_web_test")
+                    .setKind("web_test")
                     .setBuildFile(src("java/com/google/lib/BUILD"))
                     .addDependency("//java/com/google/lib:JavaClass_wrapped_test"))
             .addTarget(
@@ -126,7 +127,7 @@ public class BlazeJavaWebTestEventsHandlerTest extends BlazeIntegrationTestCase 
     String url =
         handler.testLocationUrl(
             Label.create("//java/com/google/lib:JavaClass_chrome-linux"),
-            RuleTypes.JAVA_WEB_TEST.getKind(),
+            RuleTypes.WEB_TEST.getKind(),
             null,
             "testMethod",
             "com.google.lib.JavaClass");
@@ -142,7 +143,7 @@ public class BlazeJavaWebTestEventsHandlerTest extends BlazeIntegrationTestCase 
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//java/com/google/lib:JavaClass_chrome-linux")
-                    .setKind("java_web_test")
+                    .setKind("web_test")
                     .setBuildFile(src("java/com/google/lib/BUILD"))
                     .addDependency("//java/com/google/lib:JavaClass_wrapped_test"))
             .addTarget(
@@ -172,7 +173,7 @@ public class BlazeJavaWebTestEventsHandlerTest extends BlazeIntegrationTestCase 
     String url =
         handler.testLocationUrl(
             Label.create("//java/com/google/lib:JavaClass_chrome-linux"),
-            RuleTypes.JAVA_WEB_TEST.getKind(),
+            null,
             "testMethod",
             "[0] true (testMethod)",
             "com.google.lib.JavaClass");

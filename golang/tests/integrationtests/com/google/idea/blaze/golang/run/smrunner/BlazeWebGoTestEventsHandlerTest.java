@@ -32,13 +32,14 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
+import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.run.smrunner.BlazeWebTestEventsHandler;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.google.idea.blaze.golang.GoBlazeRules.RuleTypes;
 import com.intellij.execution.Location;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -48,11 +49,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link BlazeGoTestEventsHandler} with go_web_test. */
+/** Integration tests for {@link BlazeWebTestEventsHandler} with Go. */
 @RunWith(JUnit4.class)
-public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
+public class BlazeWebGoTestEventsHandlerTest extends BlazeIntegrationTestCase {
 
-  private final BlazeGoTestEventsHandler handler = new BlazeGoTestEventsHandler();
+  private final BlazeWebTestEventsHandler handler = new BlazeWebTestEventsHandler();
 
   @Test
   public void testSuiteLocationResolvesToBuildRule() {
@@ -61,7 +62,7 @@ public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//foo/bar:foo_test_chrome-linux")
-                    .setKind("go_web_test")
+                    .setKind("web_test")
                     .setBuildFile(src("foo/bar/BUILD"))
                     .addDependency("//foo/bar:foo_test_wrapped_test"))
             .addTarget(
@@ -120,7 +121,7 @@ public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
     String url =
         handler.suiteLocationUrl(
             Label.create("//foo/bar:foo_test_chrome-linux"),
-            RuleTypes.GO_WEB_TEST.getKind(),
+            RuleTypes.WEB_TEST.getKind(),
             "foo_test_wrapped_test");
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
@@ -134,7 +135,7 @@ public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//foo/bar:foo_test_chrome-linux")
-                    .setKind("go_web_test")
+                    .setKind("web_test")
                     .setBuildFile(src("foo/bar/BUILD"))
                     .addDependency("//foo/bar:foo_test_wrapped_test"))
             .addTarget(
@@ -178,7 +179,7 @@ public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
     String url =
         handler.suiteLocationUrl(
             Label.create("//foo/bar:foo_test_chrome-linux"),
-            RuleTypes.GO_WEB_TEST.getKind(),
+            RuleTypes.WEB_TEST.getKind(),
             "foo_test_wrapped_test");
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
@@ -192,7 +193,7 @@ public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//:foo_test_chrome-linux")
-                    .setKind("go_web_test")
+                    .setKind("web_test")
                     .setBuildFile(src("BUILD"))
                     .addDependency("//:foo_test_wrapped_test"))
             .addTarget(
@@ -234,7 +235,7 @@ public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
     String url =
         handler.suiteLocationUrl(
             Label.create("//:foo_test_chrome-linux"),
-            RuleTypes.GO_WEB_TEST.getKind(),
+            RuleTypes.WEB_TEST.getKind(),
             "foo_test_wrapped_test");
     Location<?> location = getLocation(url);
     assertThat(location).isNotNull();
@@ -248,7 +249,7 @@ public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//foo/bar:foo_test_chrome-linux")
-                    .setKind("go_web_test")
+                    .setKind("web_test")
                     .setBuildFile(src("foo/bar/BUILD"))
                     .addDependency("//foo/bar:foo_test_wrapped_test"))
             .addTarget(
@@ -295,7 +296,7 @@ public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
     String url =
         handler.testLocationUrl(
             Label.create("//foo/bar:foo_test_chrome-linux"),
-            RuleTypes.GO_WEB_TEST.getKind(),
+            RuleTypes.WEB_TEST.getKind(),
             "foo_test_wrapped_test",
             "TestFoo",
             null);
@@ -311,13 +312,13 @@ public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//foo/bar:foo_test_chrome-linux")
-                    .setKind("go_web_test")
+                    .setKind("web_test")
                     .setBuildFile(src("foo/bar/BUILD"))
                     .addDependency("//foo/bar:foo_test_wrapped_test"))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//foo/bar:foo_test_firefox-linux")
-                    .setKind("go_web_test")
+                    .setKind("web_test")
                     .setBuildFile(src("foo/bar/BUILD"))
                     .addDependency("//foo/bar:foo_test_wrapped_test"))
             .addTarget(
@@ -365,7 +366,7 @@ public class BlazeGoWebTestEventsHandlerTest extends BlazeIntegrationTestCase {
       String url =
           handler.suiteLocationUrl(
               Label.create("//foo/bar:foo_test_" + browser + "-linux"),
-              RuleTypes.GO_WEB_TEST.getKind(),
+              RuleTypes.WEB_TEST.getKind(),
               "foo_test_wrapped_test");
       Location<?> location = getLocation(url);
       assertThat(location).isNotNull();
