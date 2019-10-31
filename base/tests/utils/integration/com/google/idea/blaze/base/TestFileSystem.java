@@ -206,6 +206,15 @@ public class TestFileSystem {
       return Arrays.stream(vf.getChildren()).map((f) -> new File(f.getPath())).toArray(File[]::new);
     }
 
+    @Override
+    public long getFileModifiedTime(File file) {
+      VirtualFile vf = getVirtualFile(file);
+      if (vf == null) {
+        return super.getFileModifiedTime(file);
+      }
+      return vf.getTimeStamp();
+    }
+
     private VirtualFile getVirtualFile(File file) {
       return fileSystem.findFileByPath(file.getPath());
     }
