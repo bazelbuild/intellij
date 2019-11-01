@@ -46,9 +46,9 @@ import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.OpenSourceUtil;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.util.NoSuchElementException;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
-import javax.swing.tree.DefaultMutableTreeNode;
 
 /** A custom error tree view panel for Blaze invocation errors. */
 class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
@@ -214,9 +214,7 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
     // workaround for NPE on empty trees
     // TODO: remove if/when https://youtrack.jetbrains.com/issue/IDEA-215994 is fixed
     Object root = myTree.getModel().getRoot();
-    if (root == null
-        || (root instanceof DefaultMutableTreeNode
-            && ((DefaultMutableTreeNode) root).getChildCount() == 0)) {
+    if (root == null) {
       return false;
     }
     return super.hasNextOccurence();
@@ -227,11 +225,13 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
     // workaround for NPE on empty trees
     // TODO: remove if/when https://youtrack.jetbrains.com/issue/IDEA-215994 is fixed
     Object root = myTree.getModel().getRoot();
-    if (root == null
-        || (root instanceof DefaultMutableTreeNode
-            && ((DefaultMutableTreeNode) root).getChildCount() == 0)) {
+    if (root == null) {
       return false;
     }
-    return super.hasPreviousOccurence();
+    try {
+      return super.hasPreviousOccurence();
+    } catch (NoSuchElementException e) {
+      return false;
+    }
   }
 }
