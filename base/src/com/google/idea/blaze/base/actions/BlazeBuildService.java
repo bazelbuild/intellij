@@ -176,6 +176,9 @@ public class BlazeBuildService {
                         .push(notificationScope);
 
                     List<TargetExpression> targets = targetsFunction.execute(context);
+                    if (targets == null) {
+                      return null;
+                    }
 
                     BlazeBuildParams buildParams = BlazeBuildParams.fromProject(project);
                     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
