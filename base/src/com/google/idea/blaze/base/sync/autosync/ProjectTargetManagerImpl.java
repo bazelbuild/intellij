@@ -148,6 +148,10 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
       ProjectTargetManagerImpl manager = getImpl(project);
       buildIds.forEach(manager.inProgressBuilds::remove);
       manager.updateProjectSyncStatus();
+      if (!syncResult.successful()) {
+        // project view won't otherwise update for failed/cancelled syncs
+        ProjectView.getInstance(project).refresh();
+      }
     }
   }
 
