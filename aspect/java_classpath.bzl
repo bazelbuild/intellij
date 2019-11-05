@@ -19,7 +19,10 @@ def _runtime_classpath_impl(target, ctx):
 
 def _get_runtime_jars(target):
     if JavaInfo in target:
-        return target[JavaInfo].compilation_info.runtime_classpath
+        if (target[JavaInfo].compilation_info == None):
+            return target[JavaInfo].transitive_runtime_jars
+        else :
+            return target[JavaInfo].compilation_info.runtime_classpath
     return depset()
 
 def _aspect_def(impl):
