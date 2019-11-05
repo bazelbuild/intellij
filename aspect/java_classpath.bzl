@@ -18,7 +18,9 @@ def _runtime_classpath_impl(target, ctx):
     })
 
 def _get_runtime_jars(target):
-    if JavaInfo in target:
+    # JavaInfo constructor doesn't fill in compilation info
+    # https://github.com/bazelbuild/bazel/issues/10170
+    if JavaInfo in target and target[JavaInfo].compilation_info:
         return target[JavaInfo].compilation_info.runtime_classpath
     return depset()
 
