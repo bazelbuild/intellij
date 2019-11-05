@@ -47,19 +47,44 @@ public class JavaTestTest extends BazelIntellijAspectTest {
         .containsExactly(
             jarString(testRelative("FooTest.jar"), null, testRelative("FooTest-src.jar")));
 
+    // intellij-info groups
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
         .containsAllOf(
             testRelative("FooTest.java-manifest"), testRelative(intellijInfoFileName("FooTest")));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
+        .containsAllOf(
+            testRelative("FooTest.java-manifest"), testRelative(intellijInfoFileName("FooTest")));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-outputs"))
+        .containsExactly(
+            testRelative("FooTest.java-manifest"), testRelative(intellijInfoFileName("FooTest")));
+
+    // intellij-resolve groups
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .containsAllOf(testRelative("FooTest.jar"), testRelative("FooTest-src.jar"));
+        .containsAllOf(
+            testRelative("FooTest.jar"),
+            testRelative("FooTest-src.jar"),
+            testRelative("FooTest.jdeps"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java-direct-deps"))
+        .containsAllOf(
+            testRelative("FooTest.jar"),
+            testRelative("FooTest-src.jar"),
+            testRelative("FooTest.jdeps"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java-outputs"))
+        .containsExactly(
+            testRelative("FooTest.jar"),
+            testRelative("FooTest-src.jar"),
+            testRelative("FooTest.jdeps"));
+
+    // intellij-compile groups
     assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
         .contains(testRelative("FooTest.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java-direct-deps"))
+        .contains(testRelative("FooTest.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java-outputs"))
+        .containsExactly(testRelative("FooTest.jar"));
 
-    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
-            testRelative("FooTest.java-manifest"), testRelative(intellijInfoFileName("FooTest")));
-    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
-
+    // TargetIdeInfo contents
     assertThat(testInfo.getJavaIdeInfo().getJdeps().getRelativePath())
         .isEqualTo(testRelative("FooTest.jdeps"));
     assertThat(testInfo.getTestInfo().getSize()).isEqualTo("large");

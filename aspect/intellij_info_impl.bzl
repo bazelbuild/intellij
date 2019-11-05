@@ -240,6 +240,21 @@ def make_dep_from_label(label, dependency_type):
         dependency_type = dependency_type,
     )
 
+def update_sync_output_groups(groups_dict, key, new_set):
+    """Updates all sync-relevant output groups associated with 'key'.
+
+    This is currently the [key] output group itself, together with [key]-outputs
+    and [key]-direct-deps.
+
+    Args:
+      groups_dict: the output groups dict, from group name to artifact depset.
+      key: the base output group name.
+      new_set: a depset of artifacts to add to the output groups.
+    """
+    update_set_in_dict(groups_dict, key, new_set)
+    update_set_in_dict(groups_dict, key + "-outputs", new_set)
+    update_set_in_dict(groups_dict, key + "-direct-deps", new_set)
+
 def update_set_in_dict(input_dict, key, other_set):
     """Updates depset in dict, merging it with another depset."""
     input_dict[key] = depset(transitive = [input_dict.get(key, depset()), other_set])
@@ -298,9 +313,9 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         srcs_version = _get_python_srcs_version(ctx),
     )
 
-    update_set_in_dict(output_groups, "intellij-info-py", depset([ide_info_file]))
-    update_set_in_dict(output_groups, "intellij-compile-py", to_build)
-    update_set_in_dict(output_groups, "intellij-resolve-py", to_build)
+    update_sync_output_groups(output_groups, "intellij-info-py", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-compile-py", to_build)
+    update_sync_output_groups(output_groups, "intellij-resolve-py", to_build)
     return True
 
 def _collect_generated_proto_go_sources(target):
@@ -369,9 +384,9 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])
     compile_files = depset(generated, transitive = [compile_files])
 
-    update_set_in_dict(output_groups, "intellij-info-go", depset([ide_info_file]))
-    update_set_in_dict(output_groups, "intellij-compile-go", compile_files)
-    update_set_in_dict(output_groups, "intellij-resolve-go", depset(generated))
+    update_sync_output_groups(output_groups, "intellij-info-go", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-compile-go", compile_files)
+    update_sync_output_groups(output_groups, "intellij-resolve-go", depset(generated))
     return True
 
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -414,9 +429,9 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     # TODO(brendandouglas): target to cpp files only
     compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])
 
-    update_set_in_dict(output_groups, "intellij-info-cpp", depset([ide_info_file]))
-    update_set_in_dict(output_groups, "intellij-compile-cpp", compile_files)
-    update_set_in_dict(output_groups, "intellij-resolve-cpp", resolve_files)
+    update_sync_output_groups(output_groups, "intellij-info-cpp", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-compile-cpp", compile_files)
+    update_sync_output_groups(output_groups, "intellij-resolve-cpp", resolve_files)
     return True
 
 def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -493,7 +508,7 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
         built_in_include_directory = [str(d) for d in cpp_toolchain.built_in_include_directories],
     )
     ide_info["c_toolchain_ide_info"] = c_toolchain_info
-    update_set_in_dict(output_groups, "intellij-info-cpp", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-info-cpp", depset([ide_info_file]))
     return True
 
 def get_java_provider(target):
@@ -591,9 +606,14 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 
     ide_info["java_ide_info"] = java_info
     ide_info_files += [ide_info_file]
-    update_set_in_dict(output_groups, "intellij-info-java", depset(ide_info_files))
-    update_set_in_dict(output_groups, "intellij-compile-java", depset(compile_files))
-    update_set_in_dict(output_groups, "intellij-resolve-java", depset(resolve_files))
+    update_sync_output_groups(output_groups, "intellij-info-java", depset(ide_info_files))
+    update_sync_output_groups(output_groups, "intellij-compile-java", depset(compile_files))
+    update_sync_output_groups(output_groups, "intellij-resolve-java", depset(resolve_files))
+
+    # also add transitive hjars + src jars, to catch implicit deps
+    if hasattr(java, "transitive_compile_time_jars"):
+        update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_compile_time_jars)
+        update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_source_jars)
     return True
 
 def _package_manifest_file_argument(f):
@@ -745,8 +765,8 @@ def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, ou
         resolve_files += [android.manifest]
 
     ide_info["android_ide_info"] = android_info
-    update_set_in_dict(output_groups, "intellij-info-android", depset([ide_info_file]))
-    update_set_in_dict(output_groups, "intellij-resolve-android", depset(resolve_files))
+    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-resolve-android", depset(resolve_files))
     return True
 
 def collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -758,7 +778,7 @@ def collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_i
         test_app = str(ctx.rule.attr.test_app.label),
     )
     ide_info["android_instrumentation_info"] = android_instrumentation_info
-    update_set_in_dict(output_groups, "intellij-info-android", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return True
 
 def collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
@@ -769,7 +789,7 @@ def collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
     ide_info["android_sdk_ide_info"] = struct(
         android_jar = artifact_location(android_jar_file),
     )
-    update_set_in_dict(output_groups, "intellij-info-android", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return True
 
 def collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
@@ -782,7 +802,7 @@ def collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
     ide_info["android_aar_ide_info"] = struct(
         aar = artifact_location(aar_file),
     )
-    update_set_in_dict(output_groups, "intellij-info-android", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return True
 
 def build_test_info(ctx):
@@ -810,7 +830,7 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
         target_version = toolchain.target_version,
         javac_jars = javac_jars,
     )
-    update_set_in_dict(output_groups, "intellij-info-java", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-info-java", depset([ide_info_file]))
     return True
 
 ##### Main aspect function
@@ -865,7 +885,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # runtime_deps
     runtime_dep_targets = collect_targets_from_attrs(
         rule_attrs,
-        semantics_extra_deps(RUNTIME_DEPS, semantics, "extra_runtime_deps"),
+        RUNTIME_DEPS,
     )
     runtime_deps = make_deps(runtime_dep_targets, RUNTIME)
     all_deps = depset(compiletime_deps + runtime_deps).to_list()
@@ -881,6 +901,15 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     output_groups = dict()
     for dep in prerequisites:
         for k, v in dep.intellij_info.output_groups.items():
+            # roll up outputs of direct deps into '-direct-deps' output group
+            if k.endswith("-direct-deps"):
+                continue
+            if k.endswith("-outputs"):
+                directs = k[:-(len("outputs"))] + "direct-deps"
+                update_set_in_dict(output_groups, directs, v)
+                continue
+
+            # everything else gets rolled up transitively
             update_set_in_dict(output_groups, k, v)
 
     # Initialize the ide info dict, and corresponding output file
@@ -926,7 +955,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
     # Add to generic output group if it's not handled by a language-specific handler
     if not handled:
-        update_set_in_dict(output_groups, "intellij-info-generic", depset([ide_info_file]))
+        update_sync_output_groups(output_groups, "intellij-info-generic", depset([ide_info_file]))
 
     # Output the ide information file.
     info = struct_omit_none(**ide_info)
@@ -954,7 +983,7 @@ def make_intellij_info_aspect(aspect_impl, semantics):
     tool_label = semantics.tool_label
     flag_hack_label = semantics.flag_hack_label
     deps = semantics_extra_deps(DEPS, semantics, "extra_deps")
-    runtime_deps = semantics_extra_deps(RUNTIME_DEPS, semantics, "extra_runtime_deps")
+    runtime_deps = RUNTIME_DEPS
     prerequisite_deps = semantics_extra_deps(PREREQUISITE_DEPS, semantics, "extra_prerequisites")
 
     attr_aspects = deps + runtime_deps + prerequisite_deps
