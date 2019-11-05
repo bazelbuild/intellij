@@ -18,11 +18,15 @@ def _runtime_classpath_impl(target, ctx):
     })
 
 def _get_runtime_jars(target):
-    # JavaInfo constructor doesn't fill in compilation info
-    # https://github.com/bazelbuild/bazel/issues/10170
-    if JavaInfo in target and target[JavaInfo].compilation_info:
+    if JavaInfo not in target:
+        return depset()
+    if target[JavaInfo].compilation_info:
         return target[JavaInfo].compilation_info.runtime_classpath
-    return depset()
+
+    # JavaInfo constructor doesn't fill in compilation info, so just return the
+    # full transitive set of runtime jars
+    # https://github.com/bazelbuild/bazel/issues/10170
+    return target[JavaInfo].transitive_runtime_jars
 
 def _aspect_def(impl):
     return aspect(implementation = impl)
