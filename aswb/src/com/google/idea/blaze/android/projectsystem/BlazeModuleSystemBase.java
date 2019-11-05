@@ -58,13 +58,11 @@ import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -82,39 +80,28 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import kotlin.Triple;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
 @SuppressWarnings("NullableProblems")
-public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFinder {
-  private static final Logger logger = Logger.getInstance(BlazeModuleSystem.class);
-  private Module module;
-  private final Project project;
-  private SampleDataDirectoryProvider sampleDataDirectoryProvider;
-  private BlazeClassFileFinder classFileFinder;
-  private final boolean isWorkspaceModule;
+public abstract class BlazeModuleSystemBase implements AndroidModuleSystem, BlazeClassFileFinder {
+  private static final Logger logger = Logger.getInstance(BlazeModuleSystemBase.class);
+  protected Module module;
+  protected final Project project;
+  SampleDataDirectoryProvider sampleDataDirectoryProvider;
+  BlazeClassFileFinder classFileFinder;
+  final boolean isWorkspaceModule;
 
-  // @Override #api 3.6
-  public Module getModule() {
-    return module;
-  }
-
-  @TestOnly
-  public static BlazeModuleSystem create(Module module) {
-    assert (ApplicationManager.getApplication().isUnitTestMode());
-    return new BlazeModuleSystem(module);
-  }
-
-  public static BlazeModuleSystem getInstance(Module module) {
-    return ModuleServiceManager.getService(module, BlazeModuleSystem.class);
-  }
-
-  private BlazeModuleSystem(Module module) {
+  BlazeModuleSystemBase(Module module) {
     this.module = module;
     this.project = module.getProject();
     classFileFinder = BlazeClassFileFinderFactory.createBlazeClassFileFinder(module);
     sampleDataDirectoryProvider = new BlazeSampleDataDirectoryProvider(module);
     isWorkspaceModule = BlazeDataStorage.WORKSPACE_MODULE_NAME.equals(module.getName());
+  }
+
+  // @Override #api 3.6
+  public Module getModule() {
+    return module;
   }
 
   @Override

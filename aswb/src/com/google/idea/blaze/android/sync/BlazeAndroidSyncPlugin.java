@@ -253,9 +253,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
     boolean valid = true;
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       AndroidFacet facet = AndroidFacet.getInstance(module);
-      if (facet != null
-          && facet.requiresAndroidModel()
-          && facet.getConfiguration().getModel() == null) {
+      if (BlazeAndroidSyncPluginCompat.facetHasAndroidModel(facet)) {
         IssueOutput.error("Android model missing for module: " + module.getName()).submit(context);
         valid = false;
       }

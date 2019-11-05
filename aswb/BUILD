@@ -84,6 +84,7 @@ java_library(
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-3.5": glob(["sdkcompat/as35/**/*.java"]),
         "android-studio-3.6": glob(["sdkcompat/as36/**/*.java"]),
+        "android-studio-4.0": glob(["sdkcompat/as40/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     deps = [

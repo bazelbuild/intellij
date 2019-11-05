@@ -534,7 +534,8 @@ public class BlazeAndroidProjectStructureSyncer {
             configAndroidJava8Libs);
     AndroidFacet facet = AndroidFacet.getInstance(module);
     if (facet != null) {
-      facet.getConfiguration().setModel(androidModel);
+      BlazeAndroidProjectStructureSyncerCompat.updateAndroidFacetWithSourceAndModel(
+          facet, sourceProvider, androidModel);
     }
   }
 }

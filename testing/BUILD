@@ -22,12 +22,12 @@ java_library(
            ) + select_for_plugin_api({
         "android-studio-3.5": glob(["cidr/v191/**/*.java"]),
         "android-studio-3.6": glob(["cidr/v192/**/*.java"]),
+        "android-studio-4.0": glob(["cidr/v192/**/*.java"]),
         "default": [],
     }),
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
         "//sdkcompat",
         "@junit//jar",
     ],
