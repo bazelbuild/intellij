@@ -201,12 +201,6 @@ public class JarCache {
       if (!removed.isEmpty()) {
         context.output(PrintOutput.log(String.format("Removed %d jars", removed.size())));
       }
-      ImmutableMap<File, Long> cacheFileSizes = FileSizeScanner.readFilesizes(cachedFiles.values());
-      long total = cacheFileSizes.values().stream().mapToLong(x -> x).sum();
-      String msg =
-          String.format("Total Jar Cache size: %d kB (%d files)", total / 1024, cachedFiles.size());
-      context.output(PrintOutput.log(msg));
-
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       context.setCancelled();
@@ -215,7 +209,23 @@ public class JarCache {
       IssueOutput.warn("Jar Cache synchronization didn't complete").submit(context);
     } finally {
       // update the in-memory record of which files are cached
-      readFileState();
+      ImmutableMap<String, File> state = readFileState();
+      logCacheSize(context, state);
+    }
+  }
+
+  private static void logCacheSize(BlazeContext context, ImmutableMap<String, File> cachedFiles) {
+    try {
+      ImmutableMap<File, Long> cacheFileSizes = FileSizeScanner.readFilesizes(cachedFiles.values());
+      long total = cacheFileSizes.values().stream().mapToLong(x -> x).sum();
+      String msg =
+          String.format("Total Jar Cache size: %d kB (%d files)", total / 1024, cachedFiles.size());
+      context.output(PrintOutput.log(msg));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      context.setCancelled();
+    } catch (ExecutionException e) {
+      // ignore any errors reading file sizes for logging purposes
     }
   }
 
