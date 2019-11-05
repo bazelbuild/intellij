@@ -58,6 +58,10 @@ public class BlazeBuildTargetSharder {
   private static final IntExperiment targetShardSize =
       new IntExperiment("blaze.target.shard.size", 1000);
 
+  /** Default # targets to keep the arg length below ARG_MAX. */
+  private static final IntExperiment argLengthShardSize =
+      new IntExperiment("arg.length.shard.size", 1000);
+
   /** If enabled, we'll automatically shard when we think it's appropriate. */
   private static final BoolExperiment shardAutomatically =
       new BoolExperiment("blaze.shard.automatically.2", true);
@@ -132,7 +136,7 @@ public class BlazeBuildTargetSharder {
         // shard only to keep the arg length below ARG_MAX
         return new ShardedTargetsResult(
             new ShardedTargetList(
-                shardTargetsRetainingOrdering(targets, targetShardSize.getValue())),
+                shardTargetsRetainingOrdering(targets, argLengthShardSize.getValue())),
             BuildResult.SUCCESS);
       case EXPAND_AND_SHARD:
         ExpandedTargetsResult expandedTargets =
