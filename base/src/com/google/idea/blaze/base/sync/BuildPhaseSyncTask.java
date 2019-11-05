@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -42,7 +41,6 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedTargetsResult;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
@@ -167,15 +165,7 @@ final class BuildPhaseSyncTask {
         .setShardCount(shardedTargets.shardCount())
         .setParallelBuilds(syncParams.blazeBuildParams().parallelizeBuilds());
 
-    BlazeBuildOutputs blazeBuildResult =
-        getBlazeBuildResult(
-            project,
-            context,
-            syncParams.blazeBuildParams(),
-            viewSet,
-            projectState.getBlazeInfo(),
-            shardedTargets,
-            projectState.getLanguageSettings());
+    BlazeBuildOutputs blazeBuildResult = getBlazeBuildResult(context, viewSet, shardedTargets);
     resultBuilder.setBuildResult(blazeBuildResult);
     buildStats.setBuildResult(blazeBuildResult.buildResult);
     if (context.isCancelled()) {
@@ -226,13 +216,7 @@ final class BuildPhaseSyncTask {
   }
 
   private BlazeBuildOutputs getBlazeBuildResult(
-      Project project,
-      BlazeContext parentContext,
-      BlazeBuildParams buildParams,
-      ProjectViewSet projectViewSet,
-      BlazeInfo blazeInfo,
-      ShardedTargetList shardedTargets,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
+      BlazeContext parentContext, ProjectViewSet projectViewSet, ShardedTargetList shardedTargets) {
 
     return Scope.push(
         parentContext,
@@ -249,11 +233,11 @@ final class BuildPhaseSyncTask {
               project,
               context,
               workspaceRoot,
-              buildParams,
+              syncParams.blazeBuildParams(),
               projectViewSet,
-              blazeInfo,
+              projectState.getBlazeInfo(),
               shardedTargets,
-              workspaceLanguageSettings);
+              projectState.getLanguageSettings());
         });
   }
 }

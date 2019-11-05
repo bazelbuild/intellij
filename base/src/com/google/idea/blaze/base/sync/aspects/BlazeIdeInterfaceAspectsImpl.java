@@ -66,6 +66,7 @@ import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Result;
 import com.google.idea.blaze.base.scope.Scope;
@@ -347,11 +348,14 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       BlazeBuildParams buildParams,
-      ProjectViewSet projectViewSet,
+      ProjectViewSet viewSet,
       BlazeInfo blazeInfo,
       ImmutableSet<LanguageClass> activeLanguages,
       List<TargetExpression> targets,
       AspectStrategy aspectStrategy) {
+    boolean onlyDirectDeps =
+        viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
+
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.createForSync(project, blazeInfo)) {
 
@@ -363,12 +367,15 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
               .addBlazeFlags(
                   BlazeFlags.blazeFlags(
                       project,
-                      projectViewSet,
+                      viewSet,
                       BlazeCommandName.BUILD,
                       BlazeInvocationContext.SYNC_CONTEXT));
 
       aspectStrategy.addAspectAndOutputGroups(
-          builder, ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE), activeLanguages);
+          builder,
+          ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
+          activeLanguages,
+          onlyDirectDeps);
 
       int retVal =
           ExternalTask.builder(workspaceRoot)
@@ -689,7 +696,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         .addAspectAndOutputGroups(
             blazeCommandBuilder,
             ImmutableList.of(OutputGroup.COMPILE),
-            workspaceLanguageSettings.getActiveLanguages());
+            workspaceLanguageSettings.getActiveLanguages(),
+            /* directDepsOnly= */ false);
 
     // Run the blaze build command.
     int retVal =

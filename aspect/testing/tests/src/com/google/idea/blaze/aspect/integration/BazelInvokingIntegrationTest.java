@@ -104,7 +104,7 @@ public class BazelInvokingIntegrationTest {
     Set<LanguageClass> languageClasses = new HashSet<>(languageClassList);
     String outputGroupNames =
         outputGroups.stream()
-            .flatMap(g -> getOutputGroups(g, languageClasses).stream())
+            .flatMap(g -> getOutputGroups(g, languageClasses, /* directDepsOnly= */ false).stream())
             .collect(Collectors.joining(","));
     return "--output_groups=" + outputGroupNames;
   }

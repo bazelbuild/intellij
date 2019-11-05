@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.repackaged.TextFormat;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.io.IOException;
@@ -33,9 +34,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
 /** Aspect strategy for Skylark. */
 public abstract class AspectStrategy implements BuildSystemExtensionPoint {
@@ -63,6 +66,14 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
     return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystem);
   }
 
+  /**
+   * Whether output groups containing a trimmed build graph can be requested, when relevant.
+   *
+   * <p>Per-language switching is hard-coded for now.
+   */
+  private static final BoolExperiment directDepsTrimmingEnabled =
+      new BoolExperiment("sync.allow.requesting.direct.deps", true);
+
   public abstract String getName();
 
   protected abstract List<String> getAspectFlags();
@@ -70,27 +81,22 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
   /**
    * Add the aspect to the build and request the given {@code OutputGroup}s. This method should only
    * be called once.
+   *
+   * @param directDepsOnly when supported for a language, the build outputs will be trimmed to
+   *     direct deps of the top-level targets.
    */
   public final void addAspectAndOutputGroups(
-      BlazeCommand.Builder blazeCommandBuilder,
+      BlazeCommand.Builder builder,
       Collection<OutputGroup> outputGroups,
-      Set<LanguageClass> activeLanguages) {
+      Set<LanguageClass> activeLanguages,
+      boolean directDepsOnly) {
     List<String> groups =
         outputGroups.stream()
-            .flatMap(g -> getOutputGroups(g, activeLanguages).stream())
+            .flatMap(g -> getOutputGroups(g, activeLanguages, directDepsOnly).stream())
             .collect(toImmutableList());
-    addAspectAndOutputGroups(blazeCommandBuilder, groups);
-  }
-
-  /**
-   * Add the aspect to the build and request the given {@code outputGroups}. This method should only
-   * be called once.
-   */
-  private void addAspectAndOutputGroups(
-      BlazeCommand.Builder blazeCommandBuilder, Collection<String> outputGroups) {
-    blazeCommandBuilder
+    builder
         .addBlazeFlags(getAspectFlags())
-        .addBlazeFlags("--output_groups=" + Joiner.on(',').join(outputGroups));
+        .addBlazeFlags("--output_groups=" + Joiner.on(',').join(groups));
   }
 
   /**
@@ -98,17 +104,15 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
    * languages.
    */
   public static ImmutableList<String> getOutputGroups(
-      OutputGroup outputGroup, Set<LanguageClass> activeLanguages) {
+      OutputGroup outputGroup, Set<LanguageClass> activeLanguages, boolean directDepsOnly) {
     TreeSet<String> outputGroups = new TreeSet<>();
     if (outputGroup.equals(OutputGroup.INFO)) {
       outputGroups.add(outputGroup.prefix + "generic");
     }
-    for (LanguageClass langClass : activeLanguages) {
-      LanguageOutputGroup currentGroup = LanguageOutputGroup.forLanguage(langClass);
-      if (currentGroup != null) {
-        outputGroups.add(outputGroup.prefix + currentGroup.suffix);
-      }
-    }
+    activeLanguages.stream()
+        .map(l -> getOutputGroupForLanguage(outputGroup, l, directDepsOnly))
+        .filter(Objects::nonNull)
+        .forEach(outputGroups::add);
     return ImmutableList.copyOf(outputGroups);
   }
 
@@ -119,5 +123,29 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
       parser.merge(new InputStreamReader(inputStream, UTF_8), builder);
       return builder.build();
     }
+  }
+
+  @Nullable
+  private static String getOutputGroupForLanguage(
+      OutputGroup group, LanguageClass language, boolean directDepsOnly) {
+    String langSuffix = getLanguageSuffix(language);
+    if (langSuffix == null) {
+      return null;
+    }
+    directDepsOnly = directDepsOnly && allowDirectDepsTrimming(language);
+    if (!directDepsOnly) {
+      return group.prefix + langSuffix;
+    }
+    return group.prefix + langSuffix + "-direct-deps";
+  }
+
+  @Nullable
+  private static String getLanguageSuffix(LanguageClass language) {
+    LanguageOutputGroup group = LanguageOutputGroup.forLanguage(language);
+    return group != null ? group.suffix : null;
+  }
+
+  private static boolean allowDirectDepsTrimming(LanguageClass language) {
+    return directDepsTrimmingEnabled.getValue() && language != LanguageClass.C;
   }
 }

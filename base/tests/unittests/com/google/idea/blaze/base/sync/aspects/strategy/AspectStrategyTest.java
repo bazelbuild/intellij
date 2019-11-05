@@ -40,10 +40,12 @@ import org.junit.runners.JUnit4;
 public class AspectStrategyTest extends BlazeTestCase {
 
   private static final MockAspectStrategy strategy = new MockAspectStrategy();
+  private MockExperimentService experiments;
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
-    applicationServices.register(ExperimentService.class, new MockExperimentService());
+    experiments = new MockExperimentService();
+    applicationServices.register(ExperimentService.class, experiments);
   }
 
   @Test
@@ -51,7 +53,8 @@ public class AspectStrategyTest extends BlazeTestCase {
     Set<LanguageClass> activeLanguages = ImmutableSet.of();
 
     BlazeCommand.Builder builder = emptyBuilder();
-    strategy.addAspectAndOutputGroups(builder, ImmutableList.of(OutputGroup.INFO), activeLanguages);
+    strategy.addAspectAndOutputGroups(
+        builder, ImmutableList.of(OutputGroup.INFO), activeLanguages, /* directDepsOnly= */ false);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-info-generic");
   }
 
@@ -61,12 +64,18 @@ public class AspectStrategyTest extends BlazeTestCase {
 
     BlazeCommand.Builder builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
-        builder, ImmutableList.of(OutputGroup.RESOLVE), activeLanguages);
+        builder,
+        ImmutableList.of(OutputGroup.RESOLVE),
+        activeLanguages,
+        /* directDepsOnly= */ false);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-resolve-java");
 
     builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
-        builder, ImmutableList.of(OutputGroup.COMPILE), activeLanguages);
+        builder,
+        ImmutableList.of(OutputGroup.COMPILE),
+        activeLanguages,
+        /* directDepsOnly= */ false);
     assertThat(getOutputGroups(builder)).containsExactly("intellij-compile-java");
   }
 
@@ -78,7 +87,8 @@ public class AspectStrategyTest extends BlazeTestCase {
             .collect(Collectors.toSet());
 
     BlazeCommand.Builder builder = emptyBuilder();
-    strategy.addAspectAndOutputGroups(builder, ImmutableList.of(OutputGroup.INFO), activeLanguages);
+    strategy.addAspectAndOutputGroups(
+        builder, ImmutableList.of(OutputGroup.INFO), activeLanguages, /* directDepsOnly= */ false);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-info-generic",
@@ -94,7 +104,10 @@ public class AspectStrategyTest extends BlazeTestCase {
 
     builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
-        builder, ImmutableList.of(OutputGroup.RESOLVE), activeLanguages);
+        builder,
+        ImmutableList.of(OutputGroup.RESOLVE),
+        activeLanguages,
+        /* directDepsOnly= */ false);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-resolve-java",
@@ -109,7 +122,10 @@ public class AspectStrategyTest extends BlazeTestCase {
 
     builder = emptyBuilder();
     strategy.addAspectAndOutputGroups(
-        builder, ImmutableList.of(OutputGroup.COMPILE), activeLanguages);
+        builder,
+        ImmutableList.of(OutputGroup.COMPILE),
+        activeLanguages,
+        /* directDepsOnly= */ false);
     assertThat(getOutputGroups(builder))
         .containsExactly(
             "intellij-compile-java",
@@ -121,6 +137,52 @@ public class AspectStrategyTest extends BlazeTestCase {
             "intellij-compile-js",
             "intellij-compile-ts",
             "intellij-compile-dart");
+  }
+
+  @Test
+  public void testDirectDepsOutputGroupsEnabledForJava() {
+    BlazeCommand.Builder builder = emptyBuilder();
+
+    strategy.addAspectAndOutputGroups(
+        builder,
+        ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
+        ImmutableSet.of(LanguageClass.JAVA),
+        /* directDepsOnly= */ true);
+
+    assertThat(getOutputGroups(builder))
+        .containsExactly(
+            "intellij-info-generic",
+            "intellij-info-java-direct-deps",
+            "intellij-resolve-java-direct-deps");
+  }
+
+  @Test
+  public void testDirectDepsOutputGroupsDisabledForCpp() {
+    BlazeCommand.Builder builder = emptyBuilder();
+
+    strategy.addAspectAndOutputGroups(
+        builder,
+        ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
+        ImmutableSet.of(LanguageClass.C),
+        /* directDepsOnly= */ true);
+
+    assertThat(getOutputGroups(builder))
+        .containsExactly("intellij-info-generic", "intellij-info-cpp", "intellij-resolve-cpp");
+  }
+
+  @Test
+  public void testDirectDepsExperimentRespected() {
+    experiments.setExperimentRaw("sync.allow.requesting.direct.deps", false);
+    BlazeCommand.Builder builder = emptyBuilder();
+
+    strategy.addAspectAndOutputGroups(
+        builder,
+        ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
+        ImmutableSet.of(LanguageClass.JAVA),
+        /* directDepsOnly= */ true);
+
+    assertThat(getOutputGroups(builder))
+        .containsExactly("intellij-info-generic", "intellij-info-java", "intellij-resolve-java");
   }
 
   private static BlazeCommand.Builder emptyBuilder() {
