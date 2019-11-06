@@ -59,6 +59,7 @@ public class AndroidIdeInfoTest {
   public void resourceFolderAndResourcesTest() {
     Common.ArtifactLocation myLibRoot = sourceProto("com/google/mylib/res");
     Common.ArtifactLocation anotherLibRoot = sourceProto("com/google/anotherlib/res");
+    Common.ArtifactLocation resourceAAR = sourceProto("com/google/mylib/resources.aar");
 
     IntellijIdeInfo.AndroidIdeInfo input =
         IntellijIdeInfo.AndroidIdeInfo.newBuilder()
@@ -67,8 +68,7 @@ public class AndroidIdeInfoTest {
             .addResFolders(
                 IntellijIdeInfo.ResFolderLocation.newBuilder()
                     .setRoot(myLibRoot)
-                    .addResources("values/values.xml")
-                    .addResources("layouts/layout.xml")
+                    .setAar(resourceAAR)
                     .build())
             .addResFolders(
                 IntellijIdeInfo.ResFolderLocation.newBuilder().setRoot(anotherLibRoot).build())
@@ -88,8 +88,7 @@ public class AndroidIdeInfoTest {
     assertThat(folder0.getRoot()).isEqualTo(ArtifactLocation.fromProto(myLibRoot));
     assertThat(folder1.getRoot()).isEqualTo(ArtifactLocation.fromProto(anotherLibRoot));
 
-    assertThat(folder0.getResources()).containsExactly("values/values.xml", "layouts/layout.xml");
-    assertThat(folder1.getResources()).isEmpty();
+    assertThat(folder0.getAar()).isEqualTo(ArtifactLocation.fromProto(resourceAAR));
   }
 
   /**
@@ -102,14 +101,14 @@ public class AndroidIdeInfoTest {
   public void resourceFolderWithoutResourcesTest() {
     Common.ArtifactLocation myLibRoot = sourceProto("com/google/mylib/res");
     Common.ArtifactLocation anotherLibRoot = sourceProto("com/google/anotherlib/res");
+    Common.ArtifactLocation resourceAAR = sourceProto("com/google/mylib/resources.aar");
 
     IntellijIdeInfo.AndroidIdeInfo input =
         IntellijIdeInfo.AndroidIdeInfo.newBuilder()
             .addResFolders(
                 IntellijIdeInfo.ResFolderLocation.newBuilder()
                     .setRoot(myLibRoot)
-                    .addResources("values/values.xml")
-                    .addResources("layouts/layout.xml")
+                    .setAar(resourceAAR)
                     .build())
             .addResFolders(
                 IntellijIdeInfo.ResFolderLocation.newBuilder().setRoot(anotherLibRoot).build())
@@ -129,8 +128,7 @@ public class AndroidIdeInfoTest {
     assertThat(folder0.getRoot()).isEqualTo(ArtifactLocation.fromProto(myLibRoot));
     assertThat(folder1.getRoot()).isEqualTo(ArtifactLocation.fromProto(anotherLibRoot));
 
-    assertThat(folder0.getResources()).containsExactly("values/values.xml", "layouts/layout.xml");
-    assertThat(folder1.getResources()).isEmpty();
+    assertThat(folder0.getAar()).isEqualTo(ArtifactLocation.fromProto(resourceAAR));
   }
 
   private static Common.ArtifactLocation sourceProto(String location) {

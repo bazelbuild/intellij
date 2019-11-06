@@ -17,7 +17,6 @@ package com.google.idea.blaze.android.sync;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.AndroidIdeInfo;
@@ -37,7 +36,6 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.util.Collection;
-import java.util.Set;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -60,11 +58,10 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
   @Test
   public void testTargetIdeInfoMultipleResourceFiles() {
     Common.ArtifactLocation localResFolder = artifactLocation("res");
-    Set<String> localResourceRelativePath = ImmutableSet.of();
     Common.ArtifactLocation quantumResFolder =
         artifactLocation("java/com/google/android/assets/quantum/res");
-    Set<String> quantumResRelativePath =
-        ImmutableSet.of("values/colors.xml", "drawable/quantum_ic_1k_plus_vd_theme_24.xml");
+    Common.ArtifactLocation quantumAAR =
+        artifactLocation("java/com/google/android/assets/quantum/resources.aar");
     IntellijIdeInfo.TargetIdeInfo ideProto =
         IntellijIdeInfo.TargetIdeInfo.newBuilder()
             .setKey(TargetKey.newBuilder().setLabel("//test:test").build())
@@ -82,8 +79,8 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
                     .addSources(artifactLocation("source.java")))
             .setAndroidIdeInfo(
                 AndroidIdeInfo.newBuilder()
-                    .addResFolders(resFolderLocation(localResFolder, localResourceRelativePath))
-                    .addResFolders(resFolderLocation(quantumResFolder, quantumResRelativePath))
+                    .addResFolders(resFolderLocation(localResFolder))
+                    .addResFolders(resFolderLocation(quantumResFolder, quantumAAR))
                     .setApk(artifactLocation("apk"))
                     .addDependencyApk(artifactLocation("apk"))
                     .setJavaPackage("package"))
@@ -93,8 +90,8 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
     Collection<AndroidResFolder> resources = target.getAndroidIdeInfo().getResFolders();
     assertThat(resources)
         .containsExactly(
-            resFolderLocation(artifactLocation(localResFolder), localResourceRelativePath),
-            resFolderLocation(artifactLocation(quantumResFolder), quantumResRelativePath));
+            resFolderLocation(artifactLocation(localResFolder)),
+            resFolderLocation(artifactLocation(quantumResFolder), artifactLocation(quantumAAR)));
   }
 
   private static ArtifactLocation artifactLocation(Common.ArtifactLocation artifactLocation) {
@@ -105,15 +102,26 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
     return Common.ArtifactLocation.newBuilder().setRelativePath(relativePath).build();
   }
 
-  private static AndroidResFolder resFolderLocation(ArtifactLocation root, Set<String> resources) {
-    return AndroidResFolder.builder().setRoot(root).addResources(resources).build();
+  private static AndroidResFolder resFolderLocation(ArtifactLocation root) {
+    return AndroidResFolder.builder()
+        .setRoot(root)
+        .setAar(artifactLocation(Common.ArtifactLocation.getDefaultInstance()))
+        .build();
+  }
+
+  private static IntellijIdeInfo.ResFolderLocation resFolderLocation(Common.ArtifactLocation root) {
+    return IntellijIdeInfo.ResFolderLocation.newBuilder()
+        .setAar(Common.ArtifactLocation.getDefaultInstance())
+        .setRoot(root)
+        .build();
+  }
+
+  private static AndroidResFolder resFolderLocation(ArtifactLocation root, ArtifactLocation aar) {
+    return AndroidResFolder.builder().setRoot(root).setAar(aar).build();
   }
 
   private static IntellijIdeInfo.ResFolderLocation resFolderLocation(
-      Common.ArtifactLocation root, Set<String> resources) {
-    return IntellijIdeInfo.ResFolderLocation.newBuilder()
-        .setRoot(root)
-        .addAllResources(resources)
-        .build();
+      Common.ArtifactLocation root, Common.ArtifactLocation aar) {
+    return IntellijIdeInfo.ResFolderLocation.newBuilder().setRoot(root).setAar(aar).build();
   }
 }

@@ -735,14 +735,27 @@ def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, ou
     android = target.android
     resources = []
     res_folders = []
+    resolve_files = jars_from_output(android.idl.output)
     if (hasattr(ctx.rule.attr, "resource_files")):
         for artifact_path_fragments, res_files in get_res_artifacts(ctx.rule.attr.resource_files).items():
             # Generate unique ArtifactLocation for resource directories.
             root = to_artifact_location(*artifact_path_fragments)
             resources.append(root)
+            aar_file_name = target.label.name.replace("/", "-")
+            aar_file_name = aar_file_name + "-" + str(hash(root.root_execution_path_fragment + root.relative_path + aar_file_name))
+
+            aar = ctx.actions.declare_file(aar_file_name + ".aar")
+
+            ctx.actions.run(
+                outputs = [aar],
+                inputs = [android.manifest] + res_files,
+                arguments = [aar.path, android.manifest.path, " ".join([tmp.path for tmp in res_files]), root.relative_path],
+                executable = ctx.executable._create_aar,
+            )
+            resolve_files += [aar]
 
             # Generate unique ResFolderLocation for resource files.
-            res_folders.append(struct_omit_none(root = root))
+            res_folders.append(struct_omit_none(root = root, aar = artifact_location(aar)))
 
     instruments = None
     if hasattr(ctx.rule.attr, "instruments") and ctx.rule.attr.instruments:
@@ -764,7 +777,6 @@ def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, ou
         instruments = instruments,
         **extra_ide_info
     )
-    resolve_files = jars_from_output(android.idl.output)
 
     if android.manifest and not android.manifest.is_source:
         resolve_files += [android.manifest]
@@ -1008,6 +1020,12 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         ),
         "_flag_hack": attr.label(
             default = flag_hack_label,
+        ),
+        "_create_aar": attr.label(
+            default = tool_label("create_aar"),
+            cfg = "host",
+            executable = True,
+            allow_files = True,
         ),
     }
 

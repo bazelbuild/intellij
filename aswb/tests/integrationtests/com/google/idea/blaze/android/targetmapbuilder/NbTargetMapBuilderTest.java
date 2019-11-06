@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.targetmapbuilder;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAarTarget.aar_import;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_binary;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_library;
@@ -24,7 +25,6 @@ import static com.google.idea.blaze.android.targetmapbuilder.NbJavaTarget.java_l
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder.targetMap;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.truth.Truth;
 import com.google.gson.GsonBuilder;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
@@ -326,11 +326,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                             .addResource(
                                 AndroidResFolder.builder()
                                     .setRoot(source("third_party/quantum/res"))
-                                    .addResources(
-                                        ImmutableList.of(
-                                            "values/strings.xml",
-                                            "values/attrs.xml",
-                                            "layout/menu.xml"))
+                                    .setAar(source("third_party/quantum/resources.aar"))
                                     .build())
                             .setGenerateResourceClass(true)
                             .setResourceJavaPackage("third_party.quantum")))
@@ -416,9 +412,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
             android_library(individualLibrary).res("res"),
             android_library(quantum)
                 .manifest("manifest/AndroidManifest.xml")
-                .res_folder(
-                    "//third_party/quantum/res",
-                    ImmutableList.of("values/strings.xml", "values/attrs.xml", "layout/menu.xml")),
+                .res_folder("//third_party/quantum/res", "resources.aar"),
             java_library(guava).source_jar("//third_party/guava-21.jar"),
             aar_import(aarFile)
                 .aar("lib_aar.aar")
@@ -453,7 +447,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
 
   private static void assertTargetMapEquivalence(TargetMap actual, TargetMap expected)
       throws IOException {
-    Truth.assertThat(serializeTargetMap(actual)).isEqualTo(serializeTargetMap(expected));
+    assertThat(serializeTargetMap(actual)).isEqualTo(serializeTargetMap(expected));
   }
 
   private static String serializeTargetMap(TargetMap map) throws IOException {

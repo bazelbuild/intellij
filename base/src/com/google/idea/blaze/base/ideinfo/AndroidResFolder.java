@@ -15,12 +15,13 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
+import static com.google.common.base.StandardSystemProperty.LINE_SEPARATOR;
+
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.ResFolderLocation;
-import java.util.Collection;
+import javax.annotation.Nullable;
 
 /**
  * Information about Android res folders. Contains the root res folder and optionally the specific
@@ -28,39 +29,41 @@ import java.util.Collection;
  */
 public final class AndroidResFolder implements ProtoWrapper<IntellijIdeInfo.ResFolderLocation> {
   private final ArtifactLocation root;
-  private final ImmutableSet<String> resources;
+  @Nullable private final ArtifactLocation aar;
 
-  private AndroidResFolder(ArtifactLocation root, ImmutableSet<String> resources) {
+  private AndroidResFolder(ArtifactLocation root, @Nullable ArtifactLocation aar) {
     this.root = root;
-    this.resources = resources;
+    this.aar = aar;
   }
 
   static AndroidResFolder fromProto(IntellijIdeInfo.ResFolderLocation proto) {
     return ProjectDataInterner.intern(
         new AndroidResFolder(
             ArtifactLocation.fromProto(proto.getRoot()),
-            ImmutableSet.copyOf(proto.getResourcesList())));
+            proto.hasAar() ? ArtifactLocation.fromProto(proto.getAar()) : null));
   }
 
   static AndroidResFolder fromProto(Common.ArtifactLocation root) {
-    return ProjectDataInterner.intern(
-        new AndroidResFolder(ArtifactLocation.fromProto(root), ImmutableSet.of()));
+    return ProjectDataInterner.intern(new AndroidResFolder(ArtifactLocation.fromProto(root), null));
   }
 
   @Override
   public ResFolderLocation toProto() {
-    return IntellijIdeInfo.ResFolderLocation.newBuilder()
-        .setRoot(root.toProto())
-        .addAllResources(resources)
-        .build();
+    IntellijIdeInfo.ResFolderLocation.Builder resFolderLocationBuilder =
+        IntellijIdeInfo.ResFolderLocation.newBuilder().setRoot(root.toProto());
+    if (aar != null) {
+      resFolderLocationBuilder.setAar(aar.toProto());
+    }
+    return resFolderLocationBuilder.build();
   }
 
   public ArtifactLocation getRoot() {
     return root;
   }
 
-  public ImmutableSet<String> getResources() {
-    return resources;
+  @Nullable
+  public ArtifactLocation getAar() {
+    return aar;
   }
 
   public static Builder builder() {
@@ -70,25 +73,20 @@ public final class AndroidResFolder implements ProtoWrapper<IntellijIdeInfo.ResF
   /** Builder for an resource artifact location */
   public static class Builder {
     ArtifactLocation root;
-    ImmutableSet.Builder<String> resources = ImmutableSet.builder();
+    ArtifactLocation aar;
 
     public AndroidResFolder.Builder setRoot(ArtifactLocation root) {
       this.root = root;
       return this;
     }
 
-    public AndroidResFolder.Builder addResource(String resource) {
-      resources.add(resource);
-      return this;
-    }
-
-    public AndroidResFolder.Builder addResources(Collection<String> resources) {
-      this.resources.addAll(resources);
+    public AndroidResFolder.Builder setAar(ArtifactLocation aar) {
+      this.aar = aar;
       return this;
     }
 
     public AndroidResFolder build() {
-      return new AndroidResFolder(root, resources.build());
+      return new AndroidResFolder(root, aar);
     }
   }
 
@@ -101,22 +99,19 @@ public final class AndroidResFolder implements ProtoWrapper<IntellijIdeInfo.ResF
       return false;
     }
     AndroidResFolder that = (AndroidResFolder) o;
-    return Objects.equal(getRoot(), that.getRoot())
-        && Objects.equal(getResources(), that.getResources());
+    return Objects.equal(getRoot(), that.getRoot()) && Objects.equal(getAar(), that.getAar());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(getRoot(), getResources());
+    return Objects.hashCode(getRoot(), getAar());
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("AndroidResFolder {");
-    sb.append("\n  root = ").append(getRoot());
-    if (!resources.isEmpty()) {
-      sb.append("\n  resources = ").append(String.join(",", resources));
-    }
+    sb.append(LINE_SEPARATOR.value()).append(" root = ").append(getRoot());
+    sb.append(LINE_SEPARATOR.value()).append(" aar = ").append(getAar());
     sb.append("}");
     return sb.toString();
   }
