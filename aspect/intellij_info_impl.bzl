@@ -111,15 +111,20 @@ def source_directory_tuple(resource_file):
         is_external_artifact(resource_file.owner),
     )
 
-def get_res_artifacts(resources, retain_res_fileset_info):
-    """Returns a map from the res folder to the set of resources within that folder. Given a set of resources, this method constructs a map where the keys are all the unique res folders that contain the given resources. The values are empty sets most of the time, but if the given predicate retail_fileset returns True for a given folder, then it contains all the resources that are present within that folder. Note that sets are implemented as dicts with values set to True"""
+def get_res_artifacts(resources):
+    """Get a map from the res folder to the set of resource files within that folder.
+
+    Args:
+      resources: all resources of a target
+
+    Returns:
+       a map from the res folder to the set of resource files within that folder
+    """
     res_artifacts = dict()
     for resource in resources:
         for file in resource.files.to_list():
             res_folder = source_directory_tuple(file)
-            res_files = res_artifacts.setdefault(res_folder, dict())
-            if retain_res_fileset_info and retain_res_fileset_info(res_folder[0]):
-                res_files.update({file.path[len(res_folder[0]) + 1:]: True})
+            res_artifacts.setdefault(res_folder, []).append(file)
     return res_artifacts
 
 def build_file_artifact_location(ctx):
@@ -731,13 +736,13 @@ def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, ou
     resources = []
     res_folders = []
     if (hasattr(ctx.rule.attr, "resource_files")):
-        for artifact_path_fragments, res_files in get_res_artifacts(ctx.rule.attr.resource_files, android_semantics.retain_res_fileset_info if android_semantics else None).items():
+        for artifact_path_fragments, res_files in get_res_artifacts(ctx.rule.attr.resource_files).items():
             # Generate unique ArtifactLocation for resource directories.
             root = to_artifact_location(*artifact_path_fragments)
             resources.append(root)
 
             # Generate unique ResFolderLocation for resource files.
-            res_folders.append(struct_omit_none(root = root, resources = res_files.keys()))
+            res_folders.append(struct_omit_none(root = root))
 
     instruments = None
     if hasattr(ctx.rule.attr, "instruments") and ctx.rule.attr.instruments:
