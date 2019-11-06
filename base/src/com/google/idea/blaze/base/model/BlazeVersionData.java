@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
  */
 public final class BlazeVersionData implements ProtoWrapper<ProjectData.BlazeVersionData> {
   @Nullable private final Long blazeCl;
-  @Nullable private final Long clientCl;
+  @Nullable public final Long clientCl;
   @Nullable private final BazelVersion bazelVersion;
 
   private BlazeVersionData(

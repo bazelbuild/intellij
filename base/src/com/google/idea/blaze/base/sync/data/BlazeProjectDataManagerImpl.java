@@ -15,9 +15,12 @@
  */
 package com.google.idea.blaze.base.sync.data;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
@@ -42,7 +45,7 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
   // a per-project single-threaded executor to write project data to disk
   private final ListeningExecutorService writeDataExecutor;
 
-  @Nullable private volatile BlazeProjectData blazeProjectData;
+  @Nullable private volatile BlazeProjectData projectData;
 
   public static BlazeProjectDataManagerImpl getImpl(Project project) {
     return (BlazeProjectDataManagerImpl) BlazeProjectDataManager.getInstance(project);
@@ -59,12 +62,12 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
 
   @Nullable
   public BlazeProjectData loadProjectRoot(BlazeImportSettings importSettings) {
-    BlazeProjectData projectData = blazeProjectData;
+    BlazeProjectData projectData = this.projectData;
     if (projectData != null) {
       return projectData;
     }
     synchronized (this) {
-      projectData = blazeProjectData;
+      projectData = this.projectData;
       return projectData != null ? projectData : loadProject(importSettings);
     }
   }
@@ -72,15 +75,15 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
   @Override
   @Nullable
   public BlazeProjectData getBlazeProjectData() {
-    return blazeProjectData;
+    return projectData;
   }
 
   @Nullable
   private synchronized BlazeProjectData loadProject(BlazeImportSettings importSettings) {
     try {
       File file = getCacheFile(project, importSettings);
-      blazeProjectData = BlazeProjectData.loadFromDisk(importSettings.getBuildSystem(), file);
-      return blazeProjectData;
+      projectData = BlazeProjectData.loadFromDisk(importSettings.getBuildSystem(), file);
+      return projectData;
     } catch (Throwable e) {
       if (!(e instanceof FileNotFoundException)) {
         logger.warn(e);
@@ -90,8 +93,8 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
   }
 
   public void saveProject(
-      final BlazeImportSettings importSettings, final BlazeProjectData blazeProjectData) {
-    this.blazeProjectData = blazeProjectData;
+      final BlazeImportSettings importSettings, final BlazeProjectData projectData) {
+    this.projectData = projectData;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -102,12 +105,25 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
               try {
                 File file = getCacheFile(project, importSettings);
                 synchronized (this) {
-                  blazeProjectData.saveToDisk(file);
+                  projectData.saveToDisk(file);
                 }
+                logFileSize(projectData, file);
+
               } catch (Throwable e) {
                 logger.error(serializationErrorMessage(e), e);
               }
             });
+  }
+
+  private static void logFileSize(BlazeProjectData projectData, File cacheFile) {
+    ImmutableMap.Builder<String, String> data = ImmutableMap.builder();
+    data.put("size", Long.toString(FileOperationProvider.getInstance().getFileSize(cacheFile)));
+    Long clientCl = projectData.getBlazeVersionData().clientCl;
+    if (clientCl != null) {
+      data.put("cl", Long.toString(clientCl));
+    }
+    EventLoggingService.getInstance()
+        .logEvent(BlazeProjectDataManagerImpl.class, "ProjectDataSerialized", data.build());
   }
 
   private static String serializationErrorMessage(Throwable e) {
