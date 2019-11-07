@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
+import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -35,7 +36,6 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
@@ -123,7 +123,8 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
                     : "_mi.deployinfo.pb";
 
             BlazeApkDeployInfoProtoHelper deployInfoHelper =
-                new BlazeApkDeployInfoProtoHelper(project, blazeFlags);
+                new BlazeApkDeployInfoProtoHelper(
+                    project, blazeFlags, fileName -> fileName.endsWith(deployInfoSuffix));
             try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
 
               command
@@ -153,17 +154,11 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
               try {
                 context.output(new StatusOutput("Reading deployment information..."));
                 deployInfo =
-                    deployInfoHelper.readDeployInfo(
-                        context,
-                        buildResultHelper,
-                        fileName -> fileName.endsWith(deployInfoSuffix));
-              } catch (GetArtifactsException e) {
+                    deployInfoHelper.readDeployInfoForNormalBuild(
+                        context, buildResultHelper, label);
+              } catch (GetDeployInfoException e) {
                 IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
                     .submit(context);
-                return null;
-              }
-              if (deployInfo == null) {
-                IssueOutput.error("Could not read apk deploy info from build").submit(context);
               }
               return null;
             }

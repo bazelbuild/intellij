@@ -15,10 +15,10 @@
  */
 package com.google.idea.blaze.android.run.deployinfo;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
+import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.Artifact;
 import com.google.idea.blaze.android.manifest.ManifestParser.ParsedManifest;
 import com.google.idea.blaze.android.manifest.ParsedManifestService;
@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** Reads the deploy info from a build step. */
@@ -49,40 +51,84 @@ public class BlazeApkDeployInfoProtoHelper {
   private final Project project;
   private final WorkspaceRoot workspaceRoot;
   private final ImmutableList<String> buildFlags;
+  private final AndroidDeployInfoReader androidDeployInfoReader;
 
-  public BlazeApkDeployInfoProtoHelper(Project project, ImmutableList<String> buildFlags) {
+  /** Indicates a failure when extracting deploy info. */
+  public static class GetDeployInfoException extends Exception {
+    GetDeployInfoException(String message) {
+      super(message);
+    }
+  }
+
+  /** Gets deploy info file from the local file system. This class is exposed for easier testing. */
+  @VisibleForTesting
+  static class AndroidDeployInfoReader {
+    private final Predicate<String> pathFilter;
+
+    AndroidDeployInfoReader(Predicate<String> pathFilter) {
+      this.pathFilter = pathFilter;
+    }
+
+    AndroidDeployInfo getDeployInfo(BuildResultHelper buildResultHelper, Label filterTarget)
+        throws GetDeployInfoException {
+      ImmutableList<File> deployInfoFiles;
+      try {
+        deployInfoFiles =
+            BlazeArtifact.getLocalFiles(
+                buildResultHelper.getBuildArtifactsForTarget(filterTarget, pathFilter));
+      } catch (GetArtifactsException e) {
+        throw new GetDeployInfoException(e.getMessage());
+      }
+
+      if (deployInfoFiles.isEmpty()) {
+        throw new GetDeployInfoException(
+            "No deploy info files found. Were build flags for BuildResultHelper set up correctly?");
+      }
+
+      if (deployInfoFiles.size() > 1) {
+        throw new GetDeployInfoException(
+            "More than one deploy info file found for target "
+                + filterTarget
+                + ". This may be due to a stale project state. Please sync the project and try"
+                + " again.");
+      }
+
+      try (InputStream inputStream = new FileInputStream(deployInfoFiles.get(0))) {
+        return AndroidDeployInfo.parseFrom(inputStream);
+      } catch (IOException e) {
+        throw new GetDeployInfoException(e.getMessage());
+      }
+    }
+  }
+
+  public BlazeApkDeployInfoProtoHelper(
+      Project project, ImmutableList<String> buildFlags, Predicate<String> pathFilter) {
+    this(project, buildFlags, new AndroidDeployInfoReader(pathFilter));
+  }
+
+  @VisibleForTesting
+  BlazeApkDeployInfoProtoHelper(
+      Project project,
+      ImmutableList<String> buildFlags,
+      AndroidDeployInfoReader androidDeployInfoReader) {
     this.project = project;
     this.buildFlags = buildFlags;
     this.workspaceRoot = WorkspaceRoot.fromProject(project);
+    this.androidDeployInfoReader = androidDeployInfoReader;
   }
 
-  @Nullable
-  public BlazeAndroidDeployInfo readDeployInfo(
-      BlazeContext context, BuildResultHelper buildResultHelper, Predicate<String> pathFilter)
-      throws GetArtifactsException {
-    File deployInfoFile =
-        Iterables.getOnlyElement(
-            BlazeArtifact.getLocalFiles(buildResultHelper.getAllOutputArtifacts(pathFilter)), null);
-    if (deployInfoFile == null) {
-      return null;
-    }
-    AndroidDeployInfoOuterClass.AndroidDeployInfo deployInfo;
-    try (InputStream inputStream = new FileInputStream(deployInfoFile)) {
-      deployInfo = AndroidDeployInfoOuterClass.AndroidDeployInfo.parseFrom(inputStream);
-    } catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
+  public BlazeAndroidDeployInfo readDeployInfoForNormalBuild(
+      BlazeContext context, BuildResultHelper buildResultHelper, Label target)
+      throws GetDeployInfoException {
     String executionRoot = getExecutionRoot(context);
-    if (executionRoot == null) {
-      return null;
-    }
+
+    // Assume there's only one deploy info file during normal build.
+    AndroidDeployInfo deployInfo = androidDeployInfoReader.getDeployInfo(buildResultHelper, target);
 
     File mergedManifestFile =
         new File(executionRoot, deployInfo.getMergedManifest().getExecRootPath());
-    ParsedManifest mergedManifest = getParsedManifestSafe(mergedManifestFile);
-    ParsedManifestService.getInstance(project)
-        .invalidateCachedManifests(ImmutableList.of(mergedManifestFile));
+    ParsedManifest mergedManifest = getParsedManifest(mergedManifestFile);
+    ParsedManifestService.getInstance(project).invalidateCachedManifest(mergedManifestFile);
 
     // android_test targets uses additional merged manifests field of the deploy info proto to hold
     // the manifest of the test target APK.
@@ -91,9 +137,9 @@ public class BlazeApkDeployInfoProtoHelper {
     if (additionalManifests.size() == 1) {
       File testTargetMergedManifestFile =
           new File(executionRoot, additionalManifests.get(0).getExecRootPath());
-      testTargetMergedManifest = getParsedManifestSafe(testTargetMergedManifestFile);
+      testTargetMergedManifest = getParsedManifest(testTargetMergedManifestFile);
       ParsedManifestService.getInstance(project)
-          .invalidateCachedManifests(ImmutableList.of(testTargetMergedManifestFile));
+          .invalidateCachedManifest(testTargetMergedManifestFile);
     }
 
     List<File> apksToDeploy =
@@ -104,21 +150,38 @@ public class BlazeApkDeployInfoProtoHelper {
     return new BlazeAndroidDeployInfo(mergedManifest, testTargetMergedManifest, apksToDeploy);
   }
 
-  /** Transforms thrown {@link IOException} to {@link GetArtifactsException} */
-  private ParsedManifest getParsedManifestSafe(File manifestFile) throws GetArtifactsException {
-    try {
-      return ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
-    } catch (IOException e) {
-      throw new GetArtifactsException(
-          "Could not read merged manifest file "
-              + manifestFile
-              + " due to error: "
-              + e.getMessage());
-    }
+  @Nullable
+  public BlazeAndroidDeployInfo readDeployInfoForInstrumentationTest(
+      BlazeContext context, BuildResultHelper buildResultHelper, Label testLabel, Label targetLabel)
+      throws GetDeployInfoException {
+    String executionRoot = getExecutionRoot(context);
+    AndroidDeployInfo testDeployInfo =
+        androidDeployInfoReader.getDeployInfo(buildResultHelper, testLabel);
+    AndroidDeployInfo targetDeployInfo =
+        androidDeployInfoReader.getDeployInfo(buildResultHelper, targetLabel);
+
+    File testMergedManifestFile =
+        new File(executionRoot, testDeployInfo.getMergedManifest().getExecRootPath());
+    ParsedManifest testMergedManifest = getParsedManifest(testMergedManifestFile);
+    ParsedManifestService.getInstance(project).invalidateCachedManifest(testMergedManifestFile);
+
+    File testTargetMergedManifestFile =
+        new File(executionRoot, targetDeployInfo.getMergedManifest().getExecRootPath());
+    ParsedManifest testTargetMergedManifest = getParsedManifest(testTargetMergedManifestFile);
+    ParsedManifestService.getInstance(project)
+        .invalidateCachedManifest(testTargetMergedManifestFile);
+
+    List<File> apksToDeploy =
+        Stream.concat(
+                testDeployInfo.getApksToDeployList().stream(),
+                targetDeployInfo.getApksToDeployList().stream())
+            .map(artifact -> new File(executionRoot, artifact.getExecRootPath()))
+            .collect(Collectors.toList());
+
+    return new BlazeAndroidDeployInfo(testMergedManifest, testTargetMergedManifest, apksToDeploy);
   }
 
-  @Nullable
-  private String getExecutionRoot(BlazeContext context) {
+  private String getExecutionRoot(BlazeContext context) throws GetDeployInfoException {
     ListenableFuture<String> execRootFuture =
         BlazeInfoRunner.getInstance()
             .runBlazeInfo(
@@ -135,6 +198,19 @@ public class BlazeApkDeployInfoProtoHelper {
       LOG.error(e);
       context.setHasError();
     }
-    return null;
+    throw new GetDeployInfoException("Could not determine project execution root.");
+  }
+
+  /** Transforms thrown {@link IOException} to {@link GetArtifactsException} */
+  private ParsedManifest getParsedManifest(File manifestFile) throws GetDeployInfoException {
+    try {
+      return ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
+    } catch (IOException e) {
+      throw new GetDeployInfoException(
+          "Could not read merged manifest file "
+              + manifestFile
+              + " due to error: "
+              + e.getMessage());
+    }
   }
 }

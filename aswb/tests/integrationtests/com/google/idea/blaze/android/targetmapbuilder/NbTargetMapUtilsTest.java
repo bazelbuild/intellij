@@ -15,10 +15,12 @@
  */
 package com.google.idea.blaze.android.targetmapbuilder;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetMapUtils.blazePackageForLabel;
+import static com.google.idea.blaze.android.targetmapbuilder.NbTargetMapUtils.makeLabelFromTargetExpression;
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetMapUtils.workspacePathForLabel;
 
-import com.google.common.truth.Truth;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +32,7 @@ public class NbTargetMapUtilsTest {
   @Test
   public void testWorkspacePathForLabel() {
     WorkspacePath blazePackage = WorkspacePath.createIfValid("com/google/foo");
-    Truth.assertThat(workspacePathForLabel(blazePackage, "Foo.java"))
+    assertThat(workspacePathForLabel(blazePackage, "Foo.java"))
         .isEqualTo(workspacePathForLabel(blazePackage, "//com/google/foo/Foo.java"));
   }
 
@@ -39,6 +41,22 @@ public class NbTargetMapUtilsTest {
     String label = "//com/google/foo:foobar";
     WorkspacePath blazePackageForLabel = WorkspacePath.createIfValid("com/google/foo");
 
-    Truth.assertThat(blazePackageForLabel(label)).isEqualTo(blazePackageForLabel);
+    assertThat(blazePackageForLabel(label)).isEqualTo(blazePackageForLabel);
+  }
+
+  @Test
+  public void testMakeLabelFromTargetExpression_absolutePath() {
+    String labelStr = "//com/google/foo:foobar";
+    WorkspacePath blazePackageForLabel = WorkspacePath.createIfValid("com/google/foo");
+    assertThat(makeLabelFromTargetExpression(blazePackageForLabel, labelStr))
+        .isEqualTo(Label.create("//com/google/foo:foobar"));
+  }
+
+  @Test
+  public void testMakeLabelFromTargetExpression_relativePath() {
+    String labelStr = ":foobar";
+    WorkspacePath blazePackageForLabel = WorkspacePath.createIfValid("com/google/foo");
+    assertThat(makeLabelFromTargetExpression(blazePackageForLabel, labelStr))
+        .isEqualTo(Label.create("//com/google/foo:foobar"));
   }
 }

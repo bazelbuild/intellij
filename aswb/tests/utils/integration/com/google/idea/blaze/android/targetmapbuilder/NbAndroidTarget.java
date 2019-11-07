@@ -68,6 +68,7 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
     if (kind.equals(AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind())) {
       // The android_binary rule requires a manifest.
       setDefaultManifest();
+      setGenerateResourceClass();
     }
 
     // blaze java packages all take the form "java/<actual_package_here>".
@@ -173,6 +174,12 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
 
   public NbAndroidTarget java_toolchain_version(String version) {
     javaTarget.java_toolchain_version(version);
+    return this;
+  }
+
+  public NbAndroidTarget instruments(String targetLabel) {
+    androidIdeInfoBuilder.setInstruments(
+        NbTargetMapUtils.makeLabelFromTargetExpression(blazePackage, targetLabel));
     return this;
   }
 }
