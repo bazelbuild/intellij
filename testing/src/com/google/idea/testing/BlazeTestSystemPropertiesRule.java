@@ -90,11 +90,12 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
     setIfEmpty("idea.plugins.path", Joiner.on(File.pathSeparator).join(pluginJars));
   }
 
+  @Nullable
   private static String determinePlatformPrefix(String buildNumber) {
     if (buildNumber.startsWith("AI")) { // Android Studio
       return "AndroidStudio";
     } else if (buildNumber.startsWith("IU")) { // IntelliJ Ultimate
-      return "";
+      return null;
     } else if (buildNumber.startsWith("IC")) { // IntelliJ Community
       return "Idea";
     } else if (buildNumber.startsWith("CL")) { // CLion
@@ -175,7 +176,10 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
     setIfEmpty(property, path.getPath());
   }
 
-  private static void setIfEmpty(String property, String value) {
+  private static void setIfEmpty(String property, @Nullable String value) {
+    if (value == null) {
+      return;
+    }
     if (System.getProperty(property) == null) {
       System.setProperty(property, value);
     }

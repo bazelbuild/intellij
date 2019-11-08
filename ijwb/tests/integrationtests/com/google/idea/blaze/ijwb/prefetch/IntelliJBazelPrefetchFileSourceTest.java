@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
+import com.intellij.util.PlatformUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -29,7 +30,12 @@ public class IntelliJBazelPrefetchFileSourceTest extends BlazeIntegrationTestCas
 
   @Test
   public void testPrefetchedExtensions() {
-    assertThat(PrefetchFileSource.getAllPrefetchFileExtensions())
-        .containsExactly("java", "proto", "dart");
+    if (PlatformUtils.isIdeaUltimate()) {
+      assertThat(PrefetchFileSource.getAllPrefetchFileExtensions())
+          .containsExactly("java", "proto", "dart", "js", "html", "css", "gss", "ts", "tsx");
+    } else {
+      assertThat(PrefetchFileSource.getAllPrefetchFileExtensions())
+          .containsExactly("java", "proto", "dart");
+    }
   }
 }
