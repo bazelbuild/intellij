@@ -19,16 +19,15 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.settings.BuildSystem;
-import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.protobuf.repackaged.TextFormat;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,10 +40,7 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /** Aspect strategy for Skylark. */
-public abstract class AspectStrategy implements BuildSystemExtensionPoint {
-
-  private static final ExtensionPointName<AspectStrategy> EP_NAME =
-      ExtensionPointName.create("com.google.idea.blaze.AspectStrategy");
+public abstract class AspectStrategy {
 
   public static final Predicate<String> ASPECT_OUTPUT_FILE_PREDICATE =
       str -> str.endsWith(".intellij-info.txt");
@@ -62,8 +58,15 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
     }
   }
 
-  public static AspectStrategy getInstance(BuildSystem buildSystem) {
-    return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystem);
+  public static AspectStrategy getInstance(BlazeVersionData versionData) {
+    AspectStrategy strategy =
+        AspectStrategyProvider.EP_NAME
+            .extensions()
+            .map(p -> p.getStrategy(versionData))
+            .filter(Objects::nonNull)
+            .findFirst()
+            .orElse(null);
+    return Preconditions.checkNotNull(strategy);
   }
 
   /**
@@ -73,6 +76,13 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
    */
   private static final BoolExperiment directDepsTrimmingEnabled =
       new BoolExperiment("sync.allow.requesting.direct.deps", true);
+
+  /** True if the aspect available to the plugin supports direct deps trimming. */
+  private final boolean aspectSupportsDirectDepsTrimming;
+
+  protected AspectStrategy(boolean aspectSupportsDirectDepsTrimming) {
+    this.aspectSupportsDirectDepsTrimming = aspectSupportsDirectDepsTrimming;
+  }
 
   public abstract String getName();
 
@@ -103,7 +113,7 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
    * Get the names of the output groups created by the aspect for the given {@link OutputGroup} and
    * languages.
    */
-  public static ImmutableList<String> getOutputGroups(
+  public final ImmutableList<String> getOutputGroups(
       OutputGroup outputGroup, Set<LanguageClass> activeLanguages, boolean directDepsOnly) {
     TreeSet<String> outputGroups = new TreeSet<>();
     if (outputGroup.equals(OutputGroup.INFO)) {
@@ -126,7 +136,7 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
   }
 
   @Nullable
-  private static String getOutputGroupForLanguage(
+  private String getOutputGroupForLanguage(
       OutputGroup group, LanguageClass language, boolean directDepsOnly) {
     String langSuffix = getLanguageSuffix(language);
     if (langSuffix == null) {
@@ -145,7 +155,9 @@ public abstract class AspectStrategy implements BuildSystemExtensionPoint {
     return group != null ? group.suffix : null;
   }
 
-  private static boolean allowDirectDepsTrimming(LanguageClass language) {
-    return directDepsTrimmingEnabled.getValue() && language != LanguageClass.C;
+  private boolean allowDirectDepsTrimming(LanguageClass language) {
+    return aspectSupportsDirectDepsTrimming
+        && directDepsTrimmingEnabled.getValue()
+        && language != LanguageClass.C;
   }
 }

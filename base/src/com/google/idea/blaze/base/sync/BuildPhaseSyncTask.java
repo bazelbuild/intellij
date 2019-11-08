@@ -233,6 +233,7 @@ final class BuildPhaseSyncTask {
               project,
               context,
               workspaceRoot,
+              projectState.getBlazeVersionData(),
               syncParams.blazeBuildParams(),
               projectViewSet,
               projectState.getBlazeInfo(),

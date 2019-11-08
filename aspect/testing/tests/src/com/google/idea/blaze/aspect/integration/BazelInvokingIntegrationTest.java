@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.aspect.integration;
 
-import static com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.getOutputGroups;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -23,6 +22,7 @@ import build.bazel.tests.integration.BazelCommand;
 import build.bazel.tests.integration.WorkspaceDriver;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyBazel;
 import java.io.IOException;
@@ -102,9 +102,14 @@ public class BazelInvokingIntegrationTest {
       Collection<OutputGroup> outputGroups, Collection<LanguageClass> languageClassList) {
     // e.g. --output_groups=intellij-info-generic,intellij-resolve-java,intellij-compile-java
     Set<LanguageClass> languageClasses = new HashSet<>(languageClassList);
+    AspectStrategy strategy = new AspectStrategyBazel();
     String outputGroupNames =
         outputGroups.stream()
-            .flatMap(g -> getOutputGroups(g, languageClasses, /* directDepsOnly= */ false).stream())
+            .flatMap(
+                g ->
+                    strategy
+                        .getOutputGroups(g, languageClasses, /* directDepsOnly= */ false)
+                        .stream())
             .collect(Collectors.joining(","));
     return "--output_groups=" + outputGroupNames;
   }

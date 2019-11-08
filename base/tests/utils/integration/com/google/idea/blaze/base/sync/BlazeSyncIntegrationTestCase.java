@@ -260,6 +260,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         Project project,
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
+        BlazeVersionData blazeVersion,
         BlazeBuildParams buildParams,
         ProjectViewSet projectViewSet,
         BlazeInfo blazeInfo,

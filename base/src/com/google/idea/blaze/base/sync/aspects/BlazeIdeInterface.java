@@ -61,6 +61,7 @@ public interface BlazeIdeInterface {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeVersionData blazeVersion,
       BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       BlazeInfo blazeInfo,

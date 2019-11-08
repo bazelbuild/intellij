@@ -119,12 +119,13 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeVersionData blazeVersion,
       BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
       BlazeInfo blazeInfo,
       ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
-    AspectStrategy aspectStrategy = AspectStrategy.getInstance(Blaze.getBuildSystem(project));
+    AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersion);
     return runBlazeBuild(
         project,
         context,
@@ -271,6 +272,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             prevState,
             diff,
             configHandler,
+            projectState.getBlazeVersionData(),
             projectState.getLanguageSettings(),
             importRoots,
             mergeWithOldState,
@@ -428,11 +430,12 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       @Nullable BlazeIdeInterfaceState prevState,
       ArtifactsDiff fileState,
       BlazeConfigurationHandler configHandler,
+      BlazeVersionData versionData,
       WorkspaceLanguageSettings languageSettings,
       ImportRoots importRoots,
       boolean mergeWithOldState,
       @Nullable TargetMap oldTargetMap) {
-    AspectStrategy aspectStrategy = AspectStrategy.getInstance(Blaze.getBuildSystem(project));
+    AspectStrategy aspectStrategy = AspectStrategy.getInstance(versionData);
     Result<TargetMapAndInterfaceState> result =
         Scope.push(
             parentContext,
@@ -692,7 +695,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                     BlazeCommandName.BUILD,
                     BlazeInvocationContext.SYNC_CONTEXT));
 
-    AspectStrategy.getInstance(blazeVersionData.buildSystem())
+    AspectStrategy.getInstance(blazeVersionData)
         .addAspectAndOutputGroups(
             blazeCommandBuilder,
             ImmutableList.of(OutputGroup.COMPILE),

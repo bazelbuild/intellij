@@ -24,6 +24,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.io.File;
 import java.util.Arrays;
+import javax.annotation.Nullable;
 
 /** A strategy for attaching the java_classpath aspect during a build invocation. */
 public interface JavaClasspathAspectStrategy {
@@ -33,6 +34,7 @@ public interface JavaClasspathAspectStrategy {
   ExtensionPointName<JavaClasspathAspectStrategy> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.JavaClasspathAspectStrategy");
 
+  @Nullable
   static JavaClasspathAspectStrategy findStrategy(BlazeVersionData versionData) {
     return Arrays.stream(EP_NAME.getExtensions())
         .filter(s -> s.isApplicable(versionData))

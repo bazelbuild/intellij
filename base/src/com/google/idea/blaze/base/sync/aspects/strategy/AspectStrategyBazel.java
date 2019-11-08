@@ -15,18 +15,31 @@
  */
 package com.google.idea.blaze.base.sync.aspects.strategy;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import java.io.File;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Aspect strategy for Bazel, where the aspect is situated in an external repository. */
 public class AspectStrategyBazel extends AspectStrategy {
 
-  private AspectStrategyBazel() {}
+  static final class Provider implements AspectStrategyProvider {
+    @Override
+    @Nullable
+    public AspectStrategy getStrategy(BlazeVersionData versionData) {
+      return versionData.buildSystem() == BuildSystem.Bazel ? new AspectStrategyBazel() : null;
+    }
+  }
+
+  @VisibleForTesting
+  public AspectStrategyBazel() {
+    super(/* aspectSupportsDirectDepsTrimming= */ true);
+  }
 
   // These flags are static constants for sharing between the implementation and tests.
   public static final String ASPECT_FLAG =
@@ -53,10 +66,5 @@ public class AspectStrategyBazel extends AspectStrategy {
 
   private static String getAspectRepositoryOverrideFlag() {
     return OVERRIDE_REPOSITORY_FLAG + "=" + findAspectDirectory().getPath();
-  }
-
-  @Override
-  public ImmutableSet<BuildSystem> getSupportedBuildSystems() {
-    return ImmutableSet.of(BuildSystem.Bazel);
   }
 }
