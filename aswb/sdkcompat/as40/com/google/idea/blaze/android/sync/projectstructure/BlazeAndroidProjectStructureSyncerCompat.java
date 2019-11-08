@@ -22,7 +22,7 @@ import com.android.tools.idea.model.AndroidModel;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
 import java.util.stream.Collectors;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.jps.android.model.impl.JpsAndroidModuleProperties;
+import org.jetbrains.android.facet.AndroidFacetProperties;
 
 class BlazeAndroidProjectStructureSyncerCompat {
 
@@ -35,7 +35,7 @@ class BlazeAndroidProjectStructureSyncerCompat {
             .map(it -> pathToUrl(it.getAbsolutePath()))
             .collect(
                 Collectors.joining(
-                    JpsAndroidModuleProperties.PATH_LIST_SEPARATOR_IN_FACET_CONFIGURATION));
+                    AndroidFacetProperties.PATH_LIST_SEPARATOR_IN_FACET_CONFIGURATION));
     facet.getProperties().TEST_RES_FOLDERS_RELATIVE_PATH = "";
     AndroidModel.set(facet, androidModel);
   }

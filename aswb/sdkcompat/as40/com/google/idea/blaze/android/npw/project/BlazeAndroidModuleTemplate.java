@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.npw.project;
 
 import com.android.tools.idea.projectsystem.AndroidModulePaths;
+import com.android.tools.idea.projectsystem.IdeaSourceProvider;
 import com.android.tools.idea.projectsystem.NamedModuleTemplate;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -32,7 +33,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.IdeaSourceProvider;
 import org.jetbrains.android.facet.SourceProviderManager;
 
 /**
@@ -164,7 +164,8 @@ public class BlazeAndroidModuleTemplate implements AndroidModulePaths {
       paths.srcDirectory = VfsUtilCore.virtualToIoFile(targetDirectory);
     } else {
       // People usually put the manifest file with their sources.
-      paths.srcDirectory = new File(VfsUtilCore.urlToPath(sourceProvider.getManifestFileUrl()));
+      paths.srcDirectory =
+          new File(VfsUtilCore.urlToPath(sourceProvider.getManifestDirectoryUrl()));
     }
     // We have a res dir if this happens to be a resource module.
     paths.resDirectories =

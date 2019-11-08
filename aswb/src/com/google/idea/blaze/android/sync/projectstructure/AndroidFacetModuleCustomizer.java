@@ -20,7 +20,6 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.jps.android.model.impl.JpsAndroidModuleProperties;
 
 /** Adds the Android facet to modules imported from {@link AndroidProject}s. */
 public class AndroidFacetModuleCustomizer {
@@ -53,13 +52,6 @@ public class AndroidFacetModuleCustomizer {
   }
 
   private static void configureFacet(AndroidFacet facet, boolean isApp) {
-    JpsAndroidModuleProperties facetState = facet.getProperties();
-    facetState.ALLOW_USER_CONFIGURATION = false;
-    facetState.PROJECT_TYPE =
-        isApp ? AndroidProject.PROJECT_TYPE_APP : AndroidProject.PROJECT_TYPE_LIBRARY;
-    facetState.MANIFEST_FILE_RELATIVE_PATH = "";
-    facetState.RES_FOLDER_RELATIVE_PATH = "";
-    facetState.ASSETS_FOLDER_RELATIVE_PATH = "";
-    facetState.ENABLE_SOURCES_AUTOGENERATION = false;
+    AndroidFacetModuleCustomizerCompat.configureFacet(facet, isApp);
   }
 }

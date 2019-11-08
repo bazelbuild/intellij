@@ -198,7 +198,7 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
         .executeOnPooledThread(
             () -> {
               try {
-                runner.run(new AndroidTestListener(launchStatus, printer));
+                runner.run(new AndroidTestListener(printer));
               } catch (Exception e) {
                 LOG.info(e);
                 printer.stderr("Error: Unexpected exception while running tests: " + e);
