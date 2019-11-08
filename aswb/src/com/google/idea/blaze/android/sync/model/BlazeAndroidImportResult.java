@@ -15,15 +15,16 @@
  */
 package com.google.idea.blaze.android.sync.model;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.LibraryKey;
+import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import javax.annotation.concurrent.Immutable;
 
 /** The result of a blaze import operation. */
@@ -37,30 +38,33 @@ public final class BlazeAndroidImportResult
   // map from library key to AarLibrary.
   // Key is generated according to ArtifactLocation of aar file location
   public final ImmutableMap<String, AarLibrary> aarLibraries;
-  public final ImmutableList<ArtifactLocation> javacJars;
+  public final ImmutableList<BlazeJarLibrary> javacJarLibraries;
 
   public BlazeAndroidImportResult(
       ImmutableList<AndroidResourceModule> androidResourceModules,
       ImmutableMap<String, BlazeResourceLibrary> resourceLibraries,
       ImmutableMap<String, AarLibrary> aarLibraries,
-      ImmutableList<ArtifactLocation> javacJars) {
+      ImmutableList<BlazeJarLibrary> javacJarLibraries) {
     this.androidResourceModules = androidResourceModules;
     this.resourceLibraries = resourceLibraries;
     this.aarLibraries = aarLibraries;
-    this.javacJars = javacJars;
+    this.javacJarLibraries = javacJarLibraries;
   }
 
   static BlazeAndroidImportResult fromProto(ProjectData.BlazeAndroidImportResult proto) {
-    ImmutableList<ArtifactLocation> javacJars;
-    if (proto.getJavacJarsCount() > 0) {
-      javacJars =
-          proto.getJavacJarsList().stream()
-              .map(ArtifactLocation::fromProto)
-              .collect(toImmutableList());
+    ImmutableList<BlazeJarLibrary> javacJarLibraries;
+    if (proto.getJavacJarLibrariesCount() > 0) {
+      javacJarLibraries =
+          ProtoWrapper.map(proto.getJavacJarLibrariesList(), BlazeJarLibrary::fromProto);
+    } else if (proto.getJavacJarsCount() > 0) {
+      javacJarLibraries =
+          ProtoWrapper.map(
+              proto.getJavacJarsList(),
+              javacJar -> toBlazeJarLibrary(ArtifactLocation.fromProto(javacJar)));
     } else {
-      javacJars =
+      javacJarLibraries =
           proto.hasJavacJar()
-              ? ImmutableList.of(ArtifactLocation.fromProto(proto.getJavacJar()))
+              ? ImmutableList.of(toBlazeJarLibrary(ArtifactLocation.fromProto(proto.getJavacJar())))
               : ImmutableList.of();
     }
     return new BlazeAndroidImportResult(
@@ -77,7 +81,12 @@ public final class BlazeAndroidImportResult
                 ImmutableMap.toImmutableMap(
                     library -> LibraryKey.libraryNameFromArtifactLocation(library.aarArtifact),
                     Functions.identity())),
-        javacJars);
+        javacJarLibraries);
+  }
+
+  private static BlazeJarLibrary toBlazeJarLibrary(ArtifactLocation classJar) {
+    return new BlazeJarLibrary(
+        new LibraryArtifact(null, classJar, ImmutableList.of()), /* targetKey= */ null);
   }
 
   @Override
@@ -86,7 +95,7 @@ public final class BlazeAndroidImportResult
         .addAllAndroidResourceModules(ProtoWrapper.mapToProtos(androidResourceModules))
         .addAllResourceLibraries(ProtoWrapper.mapToProtos(resourceLibraries.values()))
         .addAllAarLibraries(ProtoWrapper.mapToProtos(aarLibraries.values()))
-        .addAllJavacJars(ProtoWrapper.mapToProtos(javacJars))
+        .addAllJavacJarLibraries(ProtoWrapper.mapToProtos(javacJarLibraries))
         .build();
   }
 }

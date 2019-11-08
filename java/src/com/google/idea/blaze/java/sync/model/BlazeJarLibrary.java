@@ -19,6 +19,8 @@ import com.google.common.base.Objects;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -29,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import java.io.File;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
 /** An immutable reference to a .jar required by a rule. */
@@ -38,26 +41,28 @@ public final class BlazeJarLibrary extends BlazeLibrary {
   private static final Logger logger = Logger.getInstance(BlazeJarLibrary.class);
 
   public final LibraryArtifact libraryArtifact;
+  @Nullable public final TargetKey targetKey;
 
-  public BlazeJarLibrary(LibraryArtifact libraryArtifact) {
+  public BlazeJarLibrary(LibraryArtifact libraryArtifact, @Nullable TargetKey targetKey) {
     super(LibraryKey.fromArtifactLocation(libraryArtifact.jarForIntellijLibrary()));
     this.libraryArtifact = libraryArtifact;
+    this.targetKey = targetKey;
   }
 
   public static BlazeJarLibrary fromProto(ProjectData.BlazeLibrary proto) {
     return new BlazeJarLibrary(
-        LibraryArtifact.fromProto(proto.getBlazeJarLibrary().getLibraryArtifact()));
+        LibraryArtifact.fromProto(proto.getBlazeJarLibrary().getLibraryArtifact()),
+        proto.getBlazeJarLibrary().hasTargetKey()
+            ? TargetKey.fromProto(proto.getBlazeJarLibrary().getTargetKey())
+            : null);
   }
 
   @Override
   public ProjectData.BlazeLibrary toProto() {
-    return super.toProto()
-        .toBuilder()
-        .setBlazeJarLibrary(
-            ProjectData.BlazeJarLibrary.newBuilder()
-                .setLibraryArtifact(libraryArtifact.toProto())
-                .build())
-        .build();
+    ProjectData.BlazeJarLibrary.Builder builder =
+        ProjectData.BlazeJarLibrary.newBuilder().setLibraryArtifact(libraryArtifact.toProto());
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setTargetKey, targetKey);
+    return super.toProto().toBuilder().setBlazeJarLibrary(builder).build();
   }
 
   @Override

@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
@@ -50,8 +49,8 @@ public class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
     if (syncData.importResult.resourceLibraries != null) {
       libraries.addAll(syncData.importResult.resourceLibraries.values());
     }
-    for (ArtifactLocation javacJar : syncData.importResult.javacJars) {
-      libraries.add(new BlazeJarLibrary(new LibraryArtifact(null, javacJar, ImmutableList.of())));
+    for (BlazeJarLibrary javacJarLibrary : syncData.importResult.javacJarLibraries) {
+      libraries.add(javacJarLibrary);
     }
     libraries.addAll(syncData.importResult.aarLibraries.values());
     return libraries.build();

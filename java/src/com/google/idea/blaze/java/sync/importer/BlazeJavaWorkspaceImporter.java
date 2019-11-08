@@ -165,7 +165,9 @@ public final class BlazeJavaWorkspaceImporter {
       List<LibraryArtifact> allJars = Lists.newArrayList();
       allJars.addAll(javaIdeInfo.getJars());
       Collection<BlazeJarLibrary> libraries =
-          allJars.stream().map(BlazeJarLibrary::new).collect(Collectors.toList());
+          allJars.stream()
+              .map(jar -> new BlazeJarLibrary(jar, target.getKey()))
+              .collect(Collectors.toList());
 
       targetKeyToLibrary.putAll(target.getKey(), libraries);
       for (BlazeJarLibrary library : libraries) {
@@ -189,7 +191,9 @@ public final class BlazeJavaWorkspaceImporter {
         ArtifactLocation srcJar = guessSrcJarLocation(artifact);
         ImmutableList<ArtifactLocation> srcJars =
             srcJar != null ? ImmutableList.of(srcJar) : ImmutableList.of();
-        library = new BlazeJarLibrary(new LibraryArtifact(artifact, null, srcJars));
+        library =
+            new BlazeJarLibrary(
+                new LibraryArtifact(artifact, null, srcJars), /* targetKey= */ null);
       }
       result.put(library.key, library);
     }
@@ -279,16 +283,16 @@ public final class BlazeJavaWorkspaceImporter {
     }
     workspaceBuilder.generatedJarsFromSourceTargets.addAll(
         javaIdeInfo.getGeneratedJars().stream()
-            .map(BlazeJarLibrary::new)
+            .map(jar -> new BlazeJarLibrary(jar, targetKey))
             .collect(Collectors.toList()));
     if (javaIdeInfo.getFilteredGenJar() != null) {
       workspaceBuilder.generatedJarsFromSourceTargets.add(
-          new BlazeJarLibrary(javaIdeInfo.getFilteredGenJar()));
+          new BlazeJarLibrary(javaIdeInfo.getFilteredGenJar(), targetKey));
     }
     if (JavaSourceFilter.isJavaProtoTarget(target)) {
       // add generated jars from all proto library targets in the project
       javaIdeInfo.getJars().stream()
-          .map(BlazeJarLibrary::new)
+          .map(jar -> new BlazeJarLibrary(jar, targetKey))
           .forEach(workspaceBuilder.generatedJarsFromSourceTargets::add);
     }
 

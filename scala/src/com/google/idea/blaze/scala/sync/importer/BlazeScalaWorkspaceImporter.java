@@ -83,7 +83,7 @@ public final class BlazeScalaWorkspaceImporter {
       }
       if (target.getJavaIdeInfo() != null) {
         target.getJavaIdeInfo().getJars().stream()
-            .map(BlazeJarLibrary::new)
+            .map(jar -> new BlazeJarLibrary(jar, target.getKey()))
             .forEach(library -> libraries.putIfAbsent(library.key, library));
       }
     }

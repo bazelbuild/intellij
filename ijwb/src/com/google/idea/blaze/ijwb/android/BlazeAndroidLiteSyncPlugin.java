@@ -31,9 +31,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Rudimentary support for android in IntelliJ. */
@@ -70,27 +68,30 @@ public class BlazeAndroidLiteSyncPlugin implements BlazeSyncPlugin {
 
   @Nullable
   private static BlazeLibrary getSdkLibrary(BlazeProjectData blazeProjectData) {
-    List<AndroidSdkIdeInfo> sdkTargets = androidSdkTargets(blazeProjectData.getTargetMap());
-    if (sdkTargets.isEmpty()) {
+    TargetIdeInfo sdkTarget = getAndroidSdkTarget(blazeProjectData.getTargetMap());
+    if (sdkTarget == null) {
       return null;
     }
-    // for now, just add the first one found
-    // TODO: warn if there's more than one
-    ArtifactLocation sdk =
-        sdkTargets.stream()
-            .map(AndroidSdkIdeInfo::getAndroidJar)
-            .filter(Objects::nonNull)
-            .findFirst()
-            .orElse(null);
-    return sdk != null
-        ? new BlazeJarLibrary(new LibraryArtifact(null, sdk, ImmutableList.of()))
+    return sdkTarget != null
+        ? new BlazeJarLibrary(
+            new LibraryArtifact(null, getAndroidSdkJar(sdkTarget), ImmutableList.of()),
+            sdkTarget.getKey())
         : null;
   }
 
-  private static List<AndroidSdkIdeInfo> androidSdkTargets(TargetMap targetMap) {
+  @Nullable
+  private static TargetIdeInfo getAndroidSdkTarget(TargetMap targetMap) {
+    // for now, just add the first one found
+    // TODO: warn if there's more than one
     return targetMap.targets().stream()
-        .map(TargetIdeInfo::getAndroidSdkIdeInfo)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+        .filter(target -> getAndroidSdkJar(target) != null)
+        .findFirst()
+        .orElse(null);
+  }
+
+  @Nullable
+  private static ArtifactLocation getAndroidSdkJar(TargetIdeInfo target) {
+    AndroidSdkIdeInfo sdkIdeInfo = target.getAndroidSdkIdeInfo();
+    return sdkIdeInfo != null ? sdkIdeInfo.getAndroidJar() : null;
   }
 }

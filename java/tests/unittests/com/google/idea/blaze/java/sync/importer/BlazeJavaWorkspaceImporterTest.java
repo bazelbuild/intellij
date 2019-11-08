@@ -1358,7 +1358,8 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
           if (target.getKey().getLabel().equals(Label.create("//java/example:source"))) {
             jars.add(
                 new BlazeJarLibrary(
-                    LibraryArtifact.builder().setInterfaceJar(gen("source.jar")).build()));
+                    LibraryArtifact.builder().setInterfaceJar(gen("source.jar")).build(),
+                    target.getKey()));
           }
         });
 

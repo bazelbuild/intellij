@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -34,6 +35,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
+import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -105,12 +107,18 @@ public class BlazeImportUtil {
   }
 
   /** Returns the javac jars if they can be found in the given list of targets. */
-  static ImmutableList<ArtifactLocation> getJavacJars(Collection<TargetIdeInfo> targets) {
-    return targets.stream()
-        .filter(target -> target.getJavaToolchainIdeInfo() != null)
-        .findFirst()
-        .map(t -> t.getJavaToolchainIdeInfo().getJavacJars())
-        .orElse(ImmutableList.of());
+  static ImmutableList<BlazeJarLibrary> getJavacJars(Collection<TargetIdeInfo> targets) {
+    TargetIdeInfo target =
+        targets.stream().filter(t -> t.getJavaToolchainIdeInfo() != null).findFirst().orElse(null);
+    if (target == null) {
+      return ImmutableList.of();
+    }
+    return target.getJavaToolchainIdeInfo().getJavacJars().stream()
+        .map(
+            javacJar ->
+                new BlazeJarLibrary(
+                    new LibraryArtifact(null, javacJar, ImmutableList.of()), target.getKey()))
+        .collect(ImmutableList.toImmutableList());
   }
 
   /** Returns the set of relative generated resource paths for the given {@link ProjectViewSet}. */

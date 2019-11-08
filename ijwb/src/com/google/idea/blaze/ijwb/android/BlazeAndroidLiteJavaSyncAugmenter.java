@@ -47,12 +47,12 @@ public class BlazeAndroidLiteJavaSyncAugmenter implements BlazeJavaSyncAugmenter
     // Add R.java jars
     LibraryArtifact resourceJar = androidIdeInfo.getResourceJar();
     if (resourceJar != null) {
-      jars.add(new BlazeJarLibrary(resourceJar));
+      jars.add(new BlazeJarLibrary(resourceJar, target.getKey()));
     }
 
     LibraryArtifact idlJar = androidIdeInfo.getIdlJar();
     if (idlJar != null) {
-      genJars.add(new BlazeJarLibrary(idlJar));
+      genJars.add(new BlazeJarLibrary(idlJar, target.getKey()));
     }
   }
 }

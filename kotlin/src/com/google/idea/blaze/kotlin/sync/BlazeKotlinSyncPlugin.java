@@ -175,7 +175,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
       }
       libraries.addAll(
           target.getJavaIdeInfo().getJars().stream()
-              .map(BlazeJarLibrary::new)
+              .map(jar -> new BlazeJarLibrary(jar, target.getKey()))
               .collect(Collectors.toList()));
     }
     return libraries.build();
