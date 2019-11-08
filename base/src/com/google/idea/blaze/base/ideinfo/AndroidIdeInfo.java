@@ -45,7 +45,6 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
   @Nullable private final String resourceJavaPackage;
   private final boolean generateResourceClass;
   @Nullable private final Label legacyResources;
-  @Nullable private final Label instruments;
 
   private AndroidIdeInfo(
       List<AndroidResFolder> resources,
@@ -56,8 +55,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
       @Nullable LibraryArtifact idlJar,
       @Nullable LibraryArtifact resourceJar,
       boolean hasIdlSources,
-      @Nullable Label legacyResources,
-      @Nullable Label instruments) {
+      @Nullable Label legacyResources) {
     this.resources = ImmutableList.copyOf(resources);
     this.resourceJavaPackage = resourceJavaPackage;
     this.generateResourceClass = generateResourceClass;
@@ -67,7 +65,6 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     this.resourceJar = resourceJar;
     this.hasIdlSources = hasIdlSources;
     this.legacyResources = legacyResources;
-    this.instruments = instruments;
   }
 
   static AndroidIdeInfo fromProto(IntellijIdeInfo.AndroidIdeInfo proto) {
@@ -84,9 +81,6 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
         proto.getHasIdlSources(),
         !Strings.isNullOrEmpty(proto.getLegacyResources())
             ? Label.create(proto.getLegacyResources())
-            : null,
-        !Strings.isNullOrEmpty(proto.getInstruments())
-            ? Label.create(proto.getInstruments())
             : null);
   }
 
@@ -103,7 +97,6 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setIdlJar, idlJar);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setResourceJar, resourceJar);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setLegacyResources, legacyResources);
-    ProtoWrapper.unwrapAndSetIfNotNull(builder::setInstruments, instruments);
     return builder.build();
   }
 
@@ -153,11 +146,6 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     return legacyResources;
   }
 
-  @Nullable
-  public Label getInstruments() {
-    return instruments;
-  }
-
   public static Builder builder() {
     return new Builder();
   }
@@ -173,7 +161,6 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     private String resourceJavaPackage;
     private boolean generateResourceClass;
     private Label legacyResources;
-    private Label instruments;
 
     public Builder setManifestFile(ArtifactLocation artifactLocation) {
       this.manifest = artifactLocation;
@@ -224,11 +211,6 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
       return this;
     }
 
-    public Builder setInstruments(@Nullable Label instruments) {
-      this.instruments = instruments;
-      return this;
-    }
-
     public AndroidIdeInfo build() {
       if (!resources.isEmpty() || manifest != null) {
         if (!generateResourceClass) {
@@ -246,8 +228,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
           idlJar,
           resourceJar,
           hasIdlSources,
-          legacyResources,
-          instruments);
+          legacyResources);
     }
   }
 
@@ -268,8 +249,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
         && Objects.equals(idlJar, that.idlJar)
         && Objects.equals(resourceJar, that.resourceJar)
         && Objects.equals(resourceJavaPackage, that.resourceJavaPackage)
-        && Objects.equals(legacyResources, that.legacyResources)
-        && Objects.equals(instruments, that.instruments);
+        && Objects.equals(legacyResources, that.legacyResources);
   }
 
   @Override
@@ -283,7 +263,6 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
         hasIdlSources,
         resourceJavaPackage,
         generateResourceClass,
-        legacyResources,
-        instruments);
+        legacyResources);
   }
 }
