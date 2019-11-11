@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileMoveEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -62,7 +63,7 @@ public class AutoSyncHandler implements ProjectComponent {
   }
 
   private final PendingChangesHandler<VirtualFile> pendingChangesHandler =
-      new PendingChangesHandler<VirtualFile>(/* delayMillis= */ 2000) {
+      new PendingChangesHandler<VirtualFile>(/* delayMillis= */ 5000) {
         @Override
         boolean runTask(ImmutableSet<VirtualFile> changes) {
           if (!Blaze.getBuildSystemProvider(project).syncingRemotely()
@@ -97,7 +98,8 @@ public class AutoSyncHandler implements ProjectComponent {
    * <p>TODO(brendandouglas): move to a Topic-based push model.
    */
   public void queueIncrementalSync(String reason) {
-    pendingChangesHandler.clearQueue();
+    pendingChangesHandler.clearQueueAndIgnoreChangesForDuration(Duration.ofSeconds(5));
+
     BlazeSyncParams params =
         BlazeSyncParams.builder()
             .setTitle(AutoSyncProvider.AUTO_SYNC_TITLE)

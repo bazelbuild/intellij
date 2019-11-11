@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.autosync;
 
 import com.google.common.collect.ImmutableSet;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -41,6 +42,7 @@ abstract class PendingChangesHandler<V> {
   private final AtomicBoolean isTaskPending = new AtomicBoolean(false);
 
   private volatile long lastChangeTimeMillis;
+  private volatile boolean ignoreChanges;
 
   /**
    * @param delayMillis when no new changes have arrived for approximately this period of time the
@@ -57,6 +59,9 @@ abstract class PendingChangesHandler<V> {
   abstract boolean runTask(ImmutableSet<V> changes);
 
   void queueChange(V item) {
+    if (ignoreChanges) {
+      return;
+    }
     pendingItems.add(item);
     lastChangeTimeMillis = System.currentTimeMillis();
     // to minimize synchronization overhead, we don't explicitly cancel any existing task on each
@@ -69,6 +74,19 @@ abstract class PendingChangesHandler<V> {
   /** Clears the list of pending changes. Any task */
   void clearQueue() {
     pendingItems.clear();
+  }
+
+  void clearQueueAndIgnoreChangesForDuration(Duration time) {
+    ignoreChanges = true;
+    clearQueue();
+    timer.schedule(
+        new TimerTask() {
+          @Override
+          public void run() {
+            ignoreChanges = false;
+          }
+        },
+        /* delay= */ time.toMillis());
   }
 
   private void queueTask(long delayMillis) {
