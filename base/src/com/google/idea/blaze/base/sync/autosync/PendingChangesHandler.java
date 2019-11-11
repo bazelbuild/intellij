@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.autosync;
 
 import com.google.common.collect.ImmutableSet;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -33,23 +34,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 abstract class PendingChangesHandler<V> {
 
-  private static final int RETRY_DELAY_MILLIS = 10000;
+  private static final Duration RETRY_DELAY = Duration.ofSeconds(10);
 
   private final Set<V> pendingItems = Collections.synchronizedSet(new HashSet<>());
 
   private final Timer timer = new Timer("pendingChangesTimer", /* isDaemon= */ true);
-  private final int delayMillis;
+  private final Duration delayDuration;
   private final AtomicBoolean isTaskPending = new AtomicBoolean(false);
 
-  private volatile long lastChangeTimeMillis;
+  private volatile Instant lastChangeTime;
   private volatile boolean ignoreChanges;
 
   /**
-   * @param delayMillis when no new changes have arrived for approximately this period of time the
+   * @param delayDuration when no new changes have arrived for approximately this period of time the
    *     batched task is executed
    */
-  PendingChangesHandler(int delayMillis) {
-    this.delayMillis = delayMillis;
+  PendingChangesHandler(Duration delayDuration) {
+    this.delayDuration = delayDuration;
   }
 
   /**
@@ -63,11 +64,11 @@ abstract class PendingChangesHandler<V> {
       return;
     }
     pendingItems.add(item);
-    lastChangeTimeMillis = System.currentTimeMillis();
+    lastChangeTime = Instant.now();
     // to minimize synchronization overhead, we don't explicitly cancel any existing task on each
     // change, but delay this until the pending task would otherwise run.
     if (isTaskPending.compareAndSet(false, true)) {
-      queueTask(delayMillis);
+      queueTask(delayDuration);
     }
   }
 
@@ -89,8 +90,8 @@ abstract class PendingChangesHandler<V> {
         /* delay= */ time.toMillis());
   }
 
-  private void queueTask(long delayMillis) {
-    timer.schedule(newTask(), delayMillis);
+  private void queueTask(Duration delay) {
+    timer.schedule(newTask(), delay.toMillis());
   }
 
   private TimerTask newTask() {
@@ -107,10 +108,11 @@ abstract class PendingChangesHandler<V> {
    * another task.
    */
   private void timerComplete() {
-    long timeSinceLastEvent = System.currentTimeMillis() - lastChangeTimeMillis;
-    if (timeSinceLastEvent < delayMillis) {
+    Duration timeSinceLastEvent = Duration.between(lastChangeTime, Instant.now());
+    Duration timeToWait = delayDuration.minus(timeSinceLastEvent);
+    if (!timeToWait.isNegative()) {
       // kick off another task and abort this one
-      queueTask(delayMillis - timeSinceLastEvent);
+      queueTask(timeToWait);
       return;
     }
     ImmutableSet<V> items = retrieveAndClearPendingItems();
@@ -121,7 +123,7 @@ abstract class PendingChangesHandler<V> {
       isTaskPending.set(false);
     } else {
       pendingItems.addAll(items);
-      queueTask(RETRY_DELAY_MILLIS);
+      queueTask(RETRY_DELAY);
     }
   }
 

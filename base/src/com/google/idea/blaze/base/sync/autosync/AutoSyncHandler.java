@@ -61,12 +61,18 @@ public class AutoSyncHandler implements ProjectComponent {
 
   private static Logger logger = Logger.getInstance(AutoSyncHandler.class);
 
+  /** Auto-syncs will only be run when there are no relevant file events for this length of time. */
+  private static final Duration AUTO_SYNC_DELAY = Duration.ofSeconds(5);
+
+  /** We ignore all events for this duration after starting a project-wide sync. */
+  private static final Duration THROTTLE_AFTER_FULL_SYNC = Duration.ofSeconds(5);
+
   public static AutoSyncHandler getInstance(Project project) {
     return project.getComponent(AutoSyncHandler.class);
   }
 
   private final PendingChangesHandler<VirtualFile> pendingChangesHandler =
-      new PendingChangesHandler<VirtualFile>(/* delayMillis= */ 5000) {
+      new PendingChangesHandler<VirtualFile>(AUTO_SYNC_DELAY) {
         @Override
         boolean runTask(ImmutableSet<VirtualFile> changes) {
           if (!Blaze.getBuildSystemProvider(project).syncingRemotely()
@@ -101,7 +107,7 @@ public class AutoSyncHandler implements ProjectComponent {
    * <p>TODO(brendandouglas): move to a Topic-based push model.
    */
   public void queueIncrementalSync(String reason) {
-    pendingChangesHandler.clearQueueAndIgnoreChangesForDuration(Duration.ofSeconds(5));
+    pendingChangesHandler.clearQueue();
 
     BlazeSyncParams params =
         BlazeSyncParams.builder()
@@ -243,9 +249,10 @@ public class AutoSyncHandler implements ProjectComponent {
     @Override
     public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {
       // cancel any pending auto-syncs if we're doing a project-wide sync
-      if (!Blaze.getBuildSystemProvider(project).syncingRemotely()
-          && (syncMode == SyncMode.INCREMENTAL || syncMode == SyncMode.FULL)) {
-        AutoSyncHandler.getInstance(project).pendingChangesHandler.clearQueue();
+      if (syncMode == SyncMode.INCREMENTAL || syncMode == SyncMode.FULL) {
+        AutoSyncHandler.getInstance(project)
+            .pendingChangesHandler
+            .clearQueueAndIgnoreChangesForDuration(THROTTLE_AFTER_FULL_SYNC);
       }
     }
   }
