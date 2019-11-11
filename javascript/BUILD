@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -9,9 +7,11 @@ load(
 )
 load(
     "//testing:test_defs.bzl",
-    "intellij_unit_test_suite",
     "intellij_integration_test_suite",
+    "intellij_unit_test_suite",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "javascript",
