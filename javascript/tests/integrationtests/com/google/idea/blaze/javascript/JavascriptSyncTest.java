@@ -59,6 +59,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
+            .setSyncOrigin("test")
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
@@ -99,6 +100,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
+            .setSyncOrigin("test")
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
@@ -139,6 +141,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
+            .setSyncOrigin("test")
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
@@ -176,6 +179,7 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
+            .setSyncOrigin("test")
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();

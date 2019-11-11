@@ -28,7 +28,8 @@ class VcsAutoSyncProvider implements VcsSyncListener {
   @Override
   public void onVcsSync(Project project) {
     if (Blaze.isBlazeProject(project) && AutoSyncSettings.getInstance().autoSyncOnVcsSync) {
-      AutoSyncHandler.getInstance(project).queueIncrementalSync();
+      AutoSyncHandler.getInstance(project)
+          .queueIncrementalSync(/* reason= */ "VcsAutoSyncProvider");
     }
   }
 }

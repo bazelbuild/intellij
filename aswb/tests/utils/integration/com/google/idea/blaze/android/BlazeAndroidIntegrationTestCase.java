@@ -54,6 +54,7 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
         BlazeSyncParams.builder()
             .setTitle("full sync")
             .setSyncMode(SyncMode.FULL)
+            .setSyncOrigin("test")
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());

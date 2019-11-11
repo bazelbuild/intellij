@@ -34,6 +34,9 @@ public abstract class SyncStats {
 
   public abstract String syncTitle();
 
+  /** A string describing what triggered the sync (e.g. on startup, auto-sync, etc.). */
+  public abstract String syncOrigin();
+
   public abstract BuildBinaryType syncBinaryType();
 
   public abstract SyncResult syncResult();
@@ -71,6 +74,8 @@ public abstract class SyncStats {
     public abstract Builder setSyncMode(SyncMode syncMode);
 
     public abstract Builder setSyncTitle(String syncTitle);
+
+    public abstract Builder setSyncOrigin(String syncOrigin);
 
     public abstract Builder setSyncBinaryType(BuildBinaryType binaryType);
 

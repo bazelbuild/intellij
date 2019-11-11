@@ -234,7 +234,9 @@ public final class BlazeConfigurationToolchainResolver {
                   new NavigatableAdapter() {
                     @Override
                     public void navigate(boolean requestFocus) {
-                      BlazeSyncManager.getInstance(project).incrementalProjectSync();
+                      BlazeSyncManager.getInstance(project)
+                          .incrementalProjectSync(
+                              /* reason= */ "BlazeConfigurationToolchainResolver");
                     }
                   })
               .submit(context);

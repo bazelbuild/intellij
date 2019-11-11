@@ -61,8 +61,9 @@ class BuildFileAutoSyncProvider implements AutoSyncProvider {
       return null;
     }
     return BlazeSyncParams.builder()
-        .setTitle(AUTO_SYNC_TITLE)
+        .setTitle(AUTO_SYNC_TITLE + ".BuildFileAutoSyncProvider")
         .setSyncMode(SyncMode.PARTIAL)
+        .setSyncOrigin(AUTO_SYNC_REASON)
         .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
         .addTargetExpression(TargetExpression.allFromPackageNonRecursive(path.getParent()))
         .setBackgroundSync(true)

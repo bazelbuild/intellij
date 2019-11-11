@@ -80,6 +80,7 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
           BlazeSyncParams.builder()
               .setTitle("Sync")
               .setSyncMode(SyncMode.INCREMENTAL)
+              .setSyncOrigin("ProjectSystemSyncManager")
               .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
               .setAddProjectViewTargets(true)
               .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())

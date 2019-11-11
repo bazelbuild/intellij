@@ -228,8 +228,10 @@ final class SyncPhaseCoordinator {
   /**
    * Filters the project targets as part of a coherent sync process, updating derived project data
    * and sending notifications accordingly.
+   *
+   * @param reason a description of what triggered this action
    */
-  void filterProjectTargets(Predicate<TargetKey> filter) {
+  void filterProjectTargets(Predicate<TargetKey> filter, String reason) {
     @SuppressWarnings("unused") // go/futurereturn-lsc
     Future<?> possiblyIgnoredError =
         ProgressiveTaskWithProgressIndicator.builder(project, "Filtering Project Targets")
@@ -242,6 +244,7 @@ final class SyncPhaseCoordinator {
                               BlazeSyncParams.builder()
                                   .setTitle("Filtering targets")
                                   .setSyncMode(SyncMode.PARTIAL)
+                                  .setSyncOrigin(reason)
                                   .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
                                   .setBackgroundSync(true)
                                   .build();
@@ -532,6 +535,7 @@ final class SyncPhaseCoordinator {
       stats
           .setSyncMode(syncParams.syncMode())
           .setSyncTitle(syncParams.title())
+          .setSyncOrigin(syncParams.syncOrigin())
           .setSyncBinaryType(syncParams.blazeBuildParams().blazeBinaryType())
           .setSyncResult(syncResult)
           .setStartTime(startTime)

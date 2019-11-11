@@ -32,7 +32,7 @@ public class FullSyncProjectAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    BlazeSyncManager.getInstance(project).fullProjectSync();
+    BlazeSyncManager.getInstance(project).fullProjectSync(/* reason= */ "FullSyncProjectAction");
     updateStatus(project, e);
   }
 

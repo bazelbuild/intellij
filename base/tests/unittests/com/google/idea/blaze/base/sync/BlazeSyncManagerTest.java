@@ -72,7 +72,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
 
   @Test
   public void testFullProjectSync() {
-    manager.fullProjectSync();
+    manager.fullProjectSync(/* reason= */ "test");
     verify(manager).requestProjectSync(paramsCaptor.capture());
     BlazeSyncParams params = paramsCaptor.getValue();
     assertThat(params).isNotNull();
@@ -87,7 +87,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
 
   @Test
   public void testIncrementalProjectSync() {
-    manager.incrementalProjectSync();
+    manager.incrementalProjectSync(/* reason= */ "test");
     verify(manager).requestProjectSync(paramsCaptor.capture());
     BlazeSyncParams params = paramsCaptor.getValue();
     assertThat(params).isNotNull();
@@ -106,7 +106,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
         ImmutableList.of(
             TargetExpression.fromStringSafe("//foo:bar"),
             TargetExpression.fromStringSafe("//foo:baz"));
-    manager.partialSync(targets);
+    manager.partialSync(targets, /* reason= */ "test");
     verify(manager).requestProjectSync(paramsCaptor.capture());
     BlazeSyncParams params = paramsCaptor.getValue();
     assertThat(params).isNotNull();
@@ -120,7 +120,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
 
   @Test
   public void testWorkingSetSync() {
-    manager.workingSetSync();
+    manager.workingSetSync(/* reason= */ "test");
     verify(manager).requestProjectSync(paramsCaptor.capture());
     BlazeSyncParams params = paramsCaptor.getValue();
     assertThat(params).isNotNull();

@@ -165,7 +165,8 @@ public class AlwaysPresentGoSyncPlugin implements BlazeSyncPlugin {
     }
     edit.apply();
 
-    BlazeSyncManager.getInstance(project).incrementalProjectSync();
+    BlazeSyncManager.getInstance(project)
+        .incrementalProjectSync(/* reason= */ "enabled-go-support");
   }
 
   private static boolean goWorkspaceTypeSupported() {

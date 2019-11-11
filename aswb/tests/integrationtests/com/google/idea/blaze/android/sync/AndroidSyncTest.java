@@ -117,6 +117,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
+            .setSyncOrigin("test")
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
@@ -154,6 +155,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
+            .setSyncOrigin("test")
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
@@ -177,6 +179,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
+            .setSyncOrigin("test")
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());

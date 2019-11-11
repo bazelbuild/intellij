@@ -170,6 +170,7 @@ public class AdditionalLanguagesHelper
             BlazeSyncParams.builder()
                 .setTitle("Sync")
                 .setSyncMode(SyncMode.INCREMENTAL)
+                .setSyncOrigin("added_language_support")
                 .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
                 .setAddProjectViewTargets(true)
                 .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())

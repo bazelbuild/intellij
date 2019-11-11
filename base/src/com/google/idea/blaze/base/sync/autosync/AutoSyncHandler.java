@@ -96,12 +96,13 @@ public class AutoSyncHandler implements ProjectComponent {
    *
    * <p>TODO(brendandouglas): move to a Topic-based push model.
    */
-  public void queueIncrementalSync() {
+  public void queueIncrementalSync(String reason) {
     pendingChangesHandler.clearQueue();
     BlazeSyncParams params =
         BlazeSyncParams.builder()
             .setTitle(AutoSyncProvider.AUTO_SYNC_TITLE)
             .setSyncMode(SyncMode.INCREMENTAL)
+            .setSyncOrigin(AutoSyncProvider.AUTO_SYNC_REASON + "." + reason)
             .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddProjectViewTargets(true)
             .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
@@ -173,9 +174,14 @@ public class AutoSyncHandler implements ProjectComponent {
       return params1 == null ? params2 : params1;
     }
     SyncMode mode = combineModes(params1.syncMode(), params2.syncMode());
+    String origin =
+        params1.syncOrigin().equals(params2.syncOrigin())
+            ? params1.syncOrigin()
+            : AutoSyncProvider.AUTO_SYNC_REASON + ".Combined";
     return BlazeSyncParams.builder()
         .setTitle(AutoSyncProvider.AUTO_SYNC_TITLE)
         .setSyncMode(mode)
+        .setSyncOrigin(origin)
         .setBlazeBuildParams(params2.blazeBuildParams())
         .setBackgroundSync(params1.backgroundSync() && params2.backgroundSync())
         .addTargetExpressions(params1.targetExpressions())

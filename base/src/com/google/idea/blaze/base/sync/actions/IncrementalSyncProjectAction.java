@@ -37,7 +37,8 @@ public class IncrementalSyncProjectAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    BlazeSyncManager.getInstance(project).incrementalProjectSync();
+    BlazeSyncManager.getInstance(project)
+        .incrementalProjectSync(/* reason= */ "IncrementalSyncProjectAction");
     updateIcon(e);
   }
 

@@ -69,6 +69,7 @@ public class BlazeSyncManager {
                   BlazeSyncParams.builder()
                       .setTitle("Initial directory update")
                       .setSyncMode(SyncMode.NO_BUILD)
+                      .setSyncOrigin(syncParams.syncOrigin())
                       .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
                       .setBackgroundSync(true)
                       .build();
@@ -115,11 +116,17 @@ public class BlazeSyncManager {
     throw new AssertionError("Unhandled syncMode: " + syncParams.syncMode());
   }
 
-  public void fullProjectSync() {
+  /**
+   * Runs a non-incremental full project sync, clearing the previous project data.
+   *
+   * @param reason a description of what triggered this sync
+   */
+  public void fullProjectSync(String reason) {
     BlazeSyncParams syncParams =
         BlazeSyncParams.builder()
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
+            .setSyncOrigin(reason)
             .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddProjectViewTargets(true)
             .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
@@ -127,11 +134,17 @@ public class BlazeSyncManager {
     requestProjectSync(syncParams);
   }
 
-  public void incrementalProjectSync() {
+  /**
+   * Syncs the entire project.
+   *
+   * @param reason a description of what triggered this sync
+   */
+  public void incrementalProjectSync(String reason) {
     BlazeSyncParams syncParams =
         BlazeSyncParams.builder()
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
+            .setSyncOrigin(reason)
             .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddProjectViewTargets(true)
             .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
@@ -139,21 +152,33 @@ public class BlazeSyncManager {
     requestProjectSync(syncParams);
   }
 
-  public void partialSync(Collection<? extends TargetExpression> targetExpressions) {
+  /**
+   * Runs a partial sync of the given targets.
+   *
+   * @param reason a description of what triggered this sync
+   */
+  public void partialSync(Collection<? extends TargetExpression> targetExpressions, String reason) {
     BlazeSyncParams syncParams =
         BlazeSyncParams.builder()
             .setTitle("Partial Sync")
             .setSyncMode(SyncMode.PARTIAL)
+            .setSyncOrigin(reason)
             .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .addTargetExpressions(targetExpressions)
             .build();
     requestProjectSync(syncParams);
   }
 
-  public void filterProjectTargets(Predicate<TargetKey> filter) {
+  /**
+   * Filters the project targets as part of a coherent sync process, updating derived project data
+   * and sending notifications accordingly.
+   *
+   * @param reason a description of what triggered this action
+   */
+  public void filterProjectTargets(Predicate<TargetKey> filter, String reason) {
     StartupManager.getInstance(project)
         .runWhenProjectIsInitialized(
-            () -> SyncPhaseCoordinator.getInstance(project).filterProjectTargets(filter));
+            () -> SyncPhaseCoordinator.getInstance(project).filterProjectTargets(filter, reason));
   }
 
   /**
@@ -161,23 +186,31 @@ public class BlazeSyncManager {
    *
    * @param inBackground run in the background, suppressing the normal 'no targets will be build'
    *     warning.
+   * @param reason a description of what triggered this sync
    */
-  public void directoryUpdate(boolean inBackground) {
+  public void directoryUpdate(boolean inBackground, String reason) {
     BlazeSyncParams syncParams =
         BlazeSyncParams.builder()
             .setTitle("Update Directories")
             .setSyncMode(SyncMode.NO_BUILD)
+            .setSyncOrigin(reason)
             .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setBackgroundSync(inBackground)
             .build();
     requestProjectSync(syncParams);
   }
 
-  public void workingSetSync() {
+  /**
+   * Runs a sync of the 'working set' (the locally modified files).
+   *
+   * @param reason a description of what triggered this sync
+   */
+  public void workingSetSync(String reason) {
     BlazeSyncParams syncParams =
         BlazeSyncParams.builder()
             .setTitle("Sync Working Set")
             .setSyncMode(SyncMode.PARTIAL)
+            .setSyncOrigin(reason)
             .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddWorkingSet(true)
             .build();

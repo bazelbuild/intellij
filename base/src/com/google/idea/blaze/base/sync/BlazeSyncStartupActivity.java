@@ -35,7 +35,8 @@ public class BlazeSyncStartupActivity implements StartupActivity {
     if (hasProjectData(project, importSettings)) {
       BlazeSyncManager.getInstance(project).requestProjectSync(startupSyncParams(project));
     } else {
-      BlazeSyncManager.getInstance(project).incrementalProjectSync();
+      BlazeSyncManager.getInstance(project)
+          .incrementalProjectSync(/* reason= */ "BlazeSyncStartupActivity");
     }
   }
 
@@ -47,6 +48,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
     return BlazeSyncParams.builder()
         .setTitle("Sync Project")
         .setSyncMode(SyncMode.STARTUP)
+        .setSyncOrigin("BlazeSyncStartupActivity")
         .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
         .setAddProjectViewTargets(true)
         .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())

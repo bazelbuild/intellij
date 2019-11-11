@@ -281,9 +281,11 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
       edit.apply();
 
       if (addTargets) {
-        BlazeSyncManager.getInstance(project).partialSync(newTargets);
+        BlazeSyncManager.getInstance(project)
+            .partialSync(newTargets, /* reason= */ "AddDirectoryToProjectAction");
       } else {
-        BlazeSyncManager.getInstance(project).directoryUpdate(/* inBackground= */ true);
+        BlazeSyncManager.getInstance(project)
+            .directoryUpdate(/* inBackground= */ true, /* reason= */ "AddDirectoryToProjectAction");
       }
       super.doOKAction();
     }

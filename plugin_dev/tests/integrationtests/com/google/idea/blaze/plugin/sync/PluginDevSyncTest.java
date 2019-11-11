@@ -82,6 +82,7 @@ public class PluginDevSyncTest extends BlazeSyncIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
+            .setSyncOrigin("test")
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());

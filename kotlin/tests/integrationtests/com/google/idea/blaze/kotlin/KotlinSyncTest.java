@@ -91,6 +91,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
+            .setSyncOrigin("test")
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
@@ -167,6 +168,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
         BlazeSyncParams.builder()
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
+            .setSyncOrigin("test")
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());

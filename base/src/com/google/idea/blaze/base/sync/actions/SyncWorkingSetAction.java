@@ -27,7 +27,7 @@ public class SyncWorkingSetAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    BlazeSyncManager.getInstance(project).workingSetSync();
+    BlazeSyncManager.getInstance(project).workingSetSync(/* reason= */ "SyncWorkingSetAction");
     updateStatus(project, e);
   }
 

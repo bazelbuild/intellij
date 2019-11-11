@@ -69,7 +69,8 @@ public class PartialSyncAction extends BlazeProjectAction {
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
     PartialSyncData data = fromContext(project, e);
     if (data != null) {
-      BlazeSyncManager.getInstance(project).partialSync(data.targets);
+      BlazeSyncManager.getInstance(project)
+          .partialSync(data.targets, /* reason= */ "PartialSyncAction");
     }
   }
 

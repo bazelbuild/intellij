@@ -131,6 +131,7 @@ public class SuggestBuildShardingNotification {
     }
     edit.apply();
     OpenProjectViewAction.openLocalProjectViewFile(project);
-    BlazeSyncManager.getInstance(project).incrementalProjectSync();
+    BlazeSyncManager.getInstance(project)
+        .incrementalProjectSync(/* reason= */ "SuggestBuildShardingNotification");
   }
 }

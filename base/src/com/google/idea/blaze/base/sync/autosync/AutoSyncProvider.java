@@ -32,6 +32,8 @@ public interface AutoSyncProvider {
 
   String AUTO_SYNC_TITLE = "Automatic Sync";
 
+  String AUTO_SYNC_REASON = "AutoSync";
+
   /**
    * Returns true if changes to this file are expected to impact the results of a project sync.
    *

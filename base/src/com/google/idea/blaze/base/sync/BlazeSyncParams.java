@@ -28,6 +28,9 @@ public abstract class BlazeSyncParams {
 
   public abstract SyncMode syncMode();
 
+  /** A string describing what triggered the sync (e.g. on startup, auto-sync, etc.). */
+  public abstract String syncOrigin();
+
   public abstract BlazeBuildParams blazeBuildParams();
 
   public abstract boolean backgroundSync();
@@ -54,6 +57,8 @@ public abstract class BlazeSyncParams {
     public abstract Builder setTitle(String value);
 
     public abstract Builder setSyncMode(SyncMode value);
+
+    public abstract Builder setSyncOrigin(String syncOrigin);
 
     public abstract Builder setBlazeBuildParams(BlazeBuildParams value);
 
@@ -85,6 +90,7 @@ public abstract class BlazeSyncParams {
     return builder()
         .setTitle(base.title())
         .setSyncMode(base.syncMode())
+        .setSyncOrigin(base.syncOrigin())
         .setBlazeBuildParams(base.blazeBuildParams())
         .setBackgroundSync(first.backgroundSync() && second.backgroundSync())
         .addTargetExpressions(first.targetExpressions())

@@ -514,7 +514,8 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       return;
     }
     edit.apply();
-    BlazeSyncManager.getInstance(project).incrementalProjectSync();
+    BlazeSyncManager.getInstance(project)
+        .incrementalProjectSync(/* reason= */ "enabled-python-support");
   }
 
   private static void removePythonWorkspaceType(ProjectView.Builder builder) {

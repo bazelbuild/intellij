@@ -75,7 +75,8 @@ class ExcludeLibraryAction extends BlazeProjectAction {
     }
     edit.apply();
 
-    BlazeSyncManager.getInstance(project).incrementalProjectSync();
+    BlazeSyncManager.getInstance(project)
+        .incrementalProjectSync(/* reason= */ "ExcludeLibraryAction");
   }
 
   @Override
