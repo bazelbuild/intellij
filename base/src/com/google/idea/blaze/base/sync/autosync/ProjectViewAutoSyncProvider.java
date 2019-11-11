@@ -58,9 +58,9 @@ class ProjectViewAutoSyncProvider implements AutoSyncProvider {
     }
     // run a full incremental sync in response to .bazelproject changes
     return BlazeSyncParams.builder()
-        .setTitle(AUTO_SYNC_TITLE + ".ProjectViewAutoSyncProvider")
+        .setTitle(AUTO_SYNC_TITLE)
         .setSyncMode(SyncMode.INCREMENTAL)
-        .setSyncOrigin(AUTO_SYNC_REASON)
+        .setSyncOrigin(AUTO_SYNC_REASON + ".ProjectViewAutoSyncProvider")
         .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
         .setAddProjectViewTargets(true)
         .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
