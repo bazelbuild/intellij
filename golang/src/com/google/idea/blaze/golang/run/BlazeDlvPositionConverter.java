@@ -18,8 +18,6 @@ package com.google.idea.blaze.golang.run;
 import com.goide.dlv.location.DlvPositionConverter;
 import com.goide.dlv.location.DlvPositionConverterFactory;
 import com.goide.sdk.GoSdkService;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
@@ -29,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -38,7 +37,8 @@ class BlazeDlvPositionConverter implements DlvPositionConverter {
   private final WorkspaceRoot root;
   private final String goRoot;
   private final ExecutionRootPathResolver resolver;
-  private final BiMap<String, VirtualFile> remoteToLocal;
+  private final Map<VirtualFile, String> localToRemote;
+  private final Map<String, VirtualFile> normalizedToLocal;
 
   private BlazeDlvPositionConverter(
       WorkspaceRoot workspaceRoot,
@@ -48,15 +48,21 @@ class BlazeDlvPositionConverter implements DlvPositionConverter {
     this.root = workspaceRoot;
     this.goRoot = goRoot;
     this.resolver = resolver;
-    this.remoteToLocal = Maps.synchronizedBiMap(HashBiMap.create(remotePaths.size()));
+    this.localToRemote = Maps.newHashMapWithExpectedSize(remotePaths.size());
+    this.normalizedToLocal = Maps.newHashMapWithExpectedSize(remotePaths.size());
     for (String path : remotePaths) {
-      String normalizedPath = normalizePath(path);
-      if (remoteToLocal.containsKey(normalizedPath)) {
+      String normalized = normalizePath(path);
+      if (normalizedToLocal.containsKey(normalized)) {
         continue;
       }
-      VirtualFile localFile = resolve(normalizedPath);
+      VirtualFile localFile = resolve(normalized);
       if (localFile != null) {
-        remoteToLocal.put(path, localFile);
+        if (remotePaths.contains(normalized)) {
+          localToRemote.put(localFile, normalized);
+        } else {
+          localToRemote.put(localFile, path);
+        }
+        normalizedToLocal.put(normalized, localFile);
       } else {
         logger.warn("Unable to find local file for debug path: " + path);
       }
@@ -66,26 +72,27 @@ class BlazeDlvPositionConverter implements DlvPositionConverter {
   @Nullable
   @Override
   public String toRemotePath(VirtualFile localFile) {
-    String remotePath = remoteToLocal.inverse().get(localFile);
+    String remotePath = localToRemote.get(localFile);
     if (remotePath != null) {
       return remotePath;
-    } else if (root.isInWorkspace(localFile)) {
-      remotePath = root.workspacePathFor(localFile).relativePath();
-      remoteToLocal.put(remotePath, localFile);
-      return remotePath;
     }
-    return localFile.getPath();
+    remotePath =
+        root.isInWorkspace(localFile)
+            ? root.workspacePathFor(localFile).relativePath()
+            : localFile.getPath();
+    localToRemote.put(localFile, remotePath);
+    return remotePath;
   }
 
   @Nullable
   @Override
   public VirtualFile toLocalFile(String remotePath) {
-    VirtualFile localFile = remoteToLocal.get(remotePath);
+    String normalized = normalizePath(remotePath);
+    VirtualFile localFile = normalizedToLocal.get(normalized);
     if (localFile == null || !localFile.isValid()) {
-      String normalizedPath = normalizePath(remotePath);
-      localFile = resolve(normalizedPath);
+      localFile = resolve(normalized);
       if (localFile != null) {
-        remoteToLocal.put(normalizedPath, localFile);
+        normalizedToLocal.put(normalized, localFile);
       }
     }
     return localFile;
