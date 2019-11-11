@@ -68,6 +68,8 @@ public abstract class BlazeSyncParams {
 
     public abstract Builder setAddWorkingSet(boolean value);
 
+    public abstract Builder setTargetExpressions(Collection<? extends TargetExpression> targets);
+
     abstract ImmutableSet.Builder<TargetExpression> targetExpressionsBuilder();
 
     public Builder addTargetExpression(TargetExpression targetExpression) {

@@ -75,7 +75,7 @@ public final class TargetExpressionList {
   }
 
   /** Returns true if the entire package is covered by the target expressions. */
-  boolean includesPackage(WorkspacePath packagePath) {
+  public boolean includesPackage(WorkspacePath packagePath) {
     // the last target expression to cover this label overrides all previous expressions
     for (TargetData target : reversedTargets) {
       if (target.coversPackage(packagePath)) {

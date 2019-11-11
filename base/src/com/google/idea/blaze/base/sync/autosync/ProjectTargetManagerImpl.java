@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -63,7 +64,7 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
   public SyncStatus getSyncStatus(Label target) {
     // TODO(brendandouglas): implement logic to determine if a synced target is 'stale'
     // (time since last sync, any events affecting sync results, etc.)
-    if (inProgress(target)) {
+    if (syncInProgress(target)) {
       return inTargetMap(target) ? SyncStatus.RESYNCING : SyncStatus.IN_PROGRESS;
     }
     return inTargetMap(target) ? SyncStatus.SYNCED : SyncStatus.UNSYNCED;
@@ -76,7 +77,7 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
     ImmutableCollection<TargetKey> syncedTargets =
         SourceToTargetMap.getInstance(project).getRulesForSourceFile(source);
     if (!syncedTargets.isEmpty()) {
-      return syncedTargets.stream().anyMatch(t -> inProgress(t.getLabel()))
+      return syncedTargets.stream().anyMatch(t -> syncInProgress(t.getLabel()))
           ? SyncStatus.RESYNCING
           : SyncStatus.SYNCED;
     }
@@ -103,11 +104,23 @@ class ProjectTargetManagerImpl implements ProjectTargetManager {
         && projectData.getTargetMap().contains(TargetKey.forPlainTarget(target));
   }
 
-  /** Returns true if the target is currently being synced. */
-  private boolean inProgress(Label target) {
+  @Override
+  public boolean syncInProgress(TargetExpression expr) {
     return inProgressBuilds.values().stream()
         .map(s -> s.targets)
-        .anyMatch(list -> list.includesTarget(target));
+        .anyMatch(list -> includesTarget(list, expr));
+  }
+
+  private static boolean includesTarget(TargetExpressionList list, TargetExpression expr) {
+    if (expr instanceof Label) {
+      return list.includesTarget((Label) expr);
+    }
+    WildcardTargetPattern pattern = WildcardTargetPattern.fromExpression(expr);
+    if (pattern == null || pattern.isRecursive()) {
+      // TODO(brendandouglas): support recursive target patterns
+      return false;
+    }
+    return list.includesPackage(pattern.getBasePackage());
   }
 
   private void updateProjectSyncStatus() {

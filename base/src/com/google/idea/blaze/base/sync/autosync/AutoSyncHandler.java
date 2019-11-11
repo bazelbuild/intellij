@@ -15,9 +15,12 @@
  */
 package com.google.idea.blaze.base.sync.autosync;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
@@ -142,9 +145,31 @@ public class AutoSyncHandler implements ProjectComponent {
         autoSyncParams = combineSyncParams(autoSyncParams, getSyncParams(provider, file));
       }
     }
+    autoSyncParams = filterTargets(autoSyncParams);
     if (autoSyncParams != null) {
       queueSync(autoSyncParams);
     }
+  }
+
+  /** Filters a list of targets to be synced, for example removing currently-syncing targets. */
+  @Nullable
+  private BlazeSyncParams filterTargets(@Nullable BlazeSyncParams params) {
+    if (params == null || params.syncMode() != SyncMode.PARTIAL) {
+      return params;
+    }
+    ImmutableSet<TargetExpression> targets =
+        params.targetExpressions().stream()
+            .filter(t -> !ignoreTarget(project, t))
+            .collect(toImmutableSet());
+    if (targets.isEmpty()) {
+      // skip the sync entirely
+      return null;
+    }
+    return params.toBuilder().setTargetExpressions(targets).build();
+  }
+
+  private static boolean ignoreTarget(Project project, TargetExpression target) {
+    return ProjectTargetManager.getInstance(project).syncInProgress(target);
   }
 
   private void queueSync(BlazeSyncParams syncParams) {
