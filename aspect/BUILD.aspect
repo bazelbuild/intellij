@@ -32,4 +32,10 @@ java_import(
     jars = ["tools/PackageParser_deploy.jar"],
 )
 
+sh_binary(
+  name = "create_aar_bin",
+  srcs = ["tools/create_aar.sh"],
+  visibility = ["//visibility:public"],
+)
+
 define_flag_hack()

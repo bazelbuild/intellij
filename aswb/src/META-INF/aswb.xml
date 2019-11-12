@@ -60,7 +60,6 @@
     <SyncListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemSyncManager$SyncStatusPublisher"/>
     <JavaSyncAugmenter implementation="com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter"/>
     <FileCache implementation="com.google.idea.blaze.android.libraries.UnpackedAars$FileCacheAdapter"/>
-    <PrefetchFileSource implementation="com.google.idea.blaze.android.sync.AndroidPrefetchFileSource"/>
     <OutputsProvider implementation="com.google.idea.blaze.android.sync.AndroidPrefetchFileSource"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationHandlerProvider"/>
