@@ -43,6 +43,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serviceContainer.NonInjectable;
 import java.io.File;
 import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
@@ -74,6 +75,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
   private final Supplier<EventLoggingService> eventLoggerSupplier;
   private final Supplier<File> fastBuildJavacJarSupplier;
 
+  @NonInjectable
   private FastBuildCompilerFactoryImpl(
       BlazeProjectDataManager projectDataManager,
       Supplier<EventLoggingService> eventLoggerSupplier,

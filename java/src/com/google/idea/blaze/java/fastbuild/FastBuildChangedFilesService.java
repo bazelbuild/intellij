@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import java.io.File;
@@ -89,6 +90,7 @@ final class FastBuildChangedFilesService implements Disposable {
                 FastBuildChangedFilesService.class.getSimpleName() + "-" + project.getName())));
   }
 
+  @NonInjectable
   private FastBuildChangedFilesService(
       Project project,
       BlazeProjectDataManager projectDataManager,
