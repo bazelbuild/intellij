@@ -53,7 +53,15 @@ java_import(
 
 java_import(
     name = "python",
-    jars = glob(["clion-*/plugins/python/lib/python.jar"]),
+    jars = glob(["clion-*/plugins/python-ce/lib/python-ce.jar"]),
+)
+
+java_import(
+    name = "test-google",
+    jars = glob([
+        "clion-*/plugins/clion-test-google/lib/*.jar",
+        "clion-*/plugins/clion-test-catch/lib/*.jar"
+    ]),
 )
 
 java_import(
