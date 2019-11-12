@@ -221,7 +221,7 @@ public interface ExternalTask {
 
     private int invokeCommand(BlazeContext context) {
       String logMessage =
-          "Command: " + ParametersListUtil.join(command) + SystemProperties.getLineSeparator();
+          "Command: " + String.join(" ", command) + SystemProperties.getLineSeparator();
 
       context.output(
           PrintOutput.log(
