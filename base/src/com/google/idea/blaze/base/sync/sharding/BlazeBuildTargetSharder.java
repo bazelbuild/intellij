@@ -34,7 +34,6 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.projectview.TargetExpressionList;
@@ -103,7 +102,8 @@ public class BlazeBuildTargetSharder {
     SHARD_WITHOUT_EXPANDING, // split unexpanded wildcard targets into batches
   }
 
-  private static ShardingApproach getShardingApproach(Project project, ProjectViewSet viewSet) {
+  private static ShardingApproach getShardingApproach(
+      BlazeBuildParams buildParams, ProjectViewSet viewSet) {
     if (shardingRequested(viewSet)) {
       return ShardingApproach.EXPAND_AND_SHARD;
     }
@@ -112,7 +112,7 @@ public class BlazeBuildTargetSharder {
     }
     // otherwise, only expand targets before sharding (a 'complete' batching of the build) if we're
     // syncing remotely
-    return Blaze.getBuildSystemProvider(project).syncingRemotely()
+    return buildParams.blazeBinaryType().isRemote
         ? ShardingApproach.EXPAND_AND_SHARD
         : ShardingApproach.SHARD_WITHOUT_EXPANDING;
   }
@@ -126,7 +126,7 @@ public class BlazeBuildTargetSharder {
       ProjectViewSet viewSet,
       WorkspacePathResolver pathResolver,
       List<TargetExpression> targets) {
-    ShardingApproach approach = getShardingApproach(project, viewSet);
+    ShardingApproach approach = getShardingApproach(buildParams, viewSet);
     switch (approach) {
       case NONE:
         return new ShardedTargetsResult(

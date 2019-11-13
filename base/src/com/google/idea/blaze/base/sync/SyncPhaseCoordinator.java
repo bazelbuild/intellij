@@ -203,7 +203,7 @@ final class SyncPhaseCoordinator {
     if (syncParams.syncMode() == SyncMode.NO_BUILD) {
       return false;
     }
-    boolean remoteSync = Blaze.getBuildSystemProvider(project).syncingRemotely();
+    boolean remoteSync = syncParams.blazeBuildParams().blazeBinaryType().isRemote;
     return remoteSync && allowConcurrentRemoteSyncs.getValue();
   }
 
