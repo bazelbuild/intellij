@@ -15,6 +15,7 @@
  */
 package com.google.idea.testing;
 
+import com.google.idea.sdkcompat.testframework.ServiceHelperCompat;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -74,7 +75,7 @@ public class ServiceHelper {
       Class<T> key, T implementation, Disposable parentDisposable) {
     Application application = ApplicationManager.getApplication();
     if (application instanceof ComponentManagerImpl) {
-      replaceComponentInstance(
+      ServiceHelperCompat.replaceComponentInstance(
           (ComponentManagerImpl) application, key, implementation, parentDisposable);
     } else {
       registerComponentInstance(
@@ -94,7 +95,7 @@ public class ServiceHelper {
   public static <T> void registerProjectComponent(
       Project project, Class<T> key, T implementation, Disposable parentDisposable) {
     if (project instanceof ComponentManagerImpl) {
-      replaceComponentInstance(
+      ServiceHelperCompat.replaceComponentInstance(
           (ComponentManagerImpl) project, key, implementation, parentDisposable);
     } else {
       registerComponentInstance(
@@ -121,14 +122,5 @@ public class ServiceHelper {
             container.registerComponentInstance(key.getName(), finalOld);
           }
         });
-  }
-
-  private static <T> void replaceComponentInstance(
-      ComponentManagerImpl componentManager,
-      Class<T> key,
-      T implementation,
-      Disposable parentDisposable) {
-    T old = componentManager.registerComponentInstance(key, implementation);
-    Disposer.register(parentDisposable, () -> componentManager.registerComponentInstance(key, old));
   }
 }
