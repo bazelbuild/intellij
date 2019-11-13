@@ -60,7 +60,7 @@ public class LoadStatementAnnotator extends BuildAnnotator {
     if (targetString.startsWith("/")) {
       Annotation annotation =
           markWarning(
-              target, "Deprecated load syntax; loaded Skylark module should by in label format.");
+              target, "Deprecated load syntax; loaded Starlark module should by in label format.");
       InspectionManager inspectionManager = InspectionManager.getInstance(target.getProject());
       ProblemDescriptor descriptor =
           inspectionManager.createProblemDescriptor(
@@ -72,6 +72,6 @@ public class LoadStatementAnnotator extends BuildAnnotator {
       annotation.registerFix(DeprecatedLoadQuickFix.INSTANCE, null, null, descriptor);
       return;
     }
-    markError(target, "Invalid load syntax: missing Skylark module.");
+    markError(target, "Invalid load syntax: missing Starlark module.");
   }
 }

@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 class SkylarkLineBreakpointType extends XLineBreakpointTypeBase {
 
   protected SkylarkLineBreakpointType() {
-    super("Skylark", "Skylark Line Breakpoints", new SkylarkDebuggerEditorsProvider());
+    super("Starlark", "Starlark Line Breakpoints", new SkylarkDebuggerEditorsProvider());
   }
 
   @Override

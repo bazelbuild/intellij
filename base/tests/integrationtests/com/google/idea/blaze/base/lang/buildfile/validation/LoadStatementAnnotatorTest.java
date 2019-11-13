@@ -71,7 +71,7 @@ public class LoadStatementAnnotatorTest extends BuildFileIntegrationTestCase {
             "load('/tools/ide/build_test.bzl', 'build_test')");
     assertHasAnnotation(
         file,
-        "Deprecated load syntax; loaded Skylark module should by in label format.",
+        "Deprecated load syntax; loaded Starlark module should by in label format.",
         HighlightSeverity.WARNING);
   }
 
@@ -81,7 +81,7 @@ public class LoadStatementAnnotatorTest extends BuildFileIntegrationTestCase {
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"), "load('not a skylark label', 'symbol')");
     assertHasAnnotation(
-        file, "Invalid load syntax: missing Skylark module.", HighlightSeverity.ERROR);
+        file, "Invalid load syntax: missing Starlark module.", HighlightSeverity.ERROR);
   }
 
   @Test
