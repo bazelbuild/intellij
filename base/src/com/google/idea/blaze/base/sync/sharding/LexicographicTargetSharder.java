@@ -20,7 +20,6 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.intellij.openapi.project.Project;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -32,7 +31,7 @@ import java.util.Set;
 class LexicographicTargetSharder implements BuildBatchingService {
   @Override
   public ImmutableList<ImmutableList<Label>> calculateTargetBatches(
-      Project project, Set<Label> targets, int suggestedShardSize) {
+      Set<Label> targets, boolean remoteBuild, int suggestedShardSize) {
     List<Label> sorted = ImmutableList.sortedCopyOf(Comparator.comparing(Label::toString), targets);
     return Lists.partition(sorted, suggestedShardSize).stream()
         .map(ImmutableList::copyOf)

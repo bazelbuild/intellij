@@ -148,7 +148,10 @@ public class BlazeBuildTargetSharder {
         }
 
         return new ShardedTargetsResult(
-            shardTargets(project, expandedTargets.singleTargets, getTargetShardSize(viewSet)),
+            shardTargets(
+                expandedTargets.singleTargets,
+                buildParams.blazeBinaryType().isRemote,
+                getTargetShardSize(viewSet)),
             expandedTargets.buildResult);
     }
     throw new IllegalStateException("Unhandled sharding approach: " + approach);
@@ -224,9 +227,9 @@ public class BlazeBuildTargetSharder {
   @SuppressWarnings("unchecked")
   @VisibleForTesting
   static ShardedTargetList shardTargets(
-      Project project, List<TargetExpression> targets, int shardSize) {
+      List<TargetExpression> targets, boolean isRemote, int shardSize) {
     ImmutableList<ImmutableList<Label>> batches =
-        BuildBatchingService.batchTargets(project, canonicalizeTargets(targets), shardSize);
+        BuildBatchingService.batchTargets(canonicalizeTargets(targets), isRemote, shardSize);
     return new ShardedTargetList((ImmutableList) batches);
   }
 
