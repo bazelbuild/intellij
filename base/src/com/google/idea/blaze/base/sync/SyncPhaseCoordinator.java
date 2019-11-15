@@ -381,6 +381,10 @@ final class SyncPhaseCoordinator {
           projectState != null
               ? BuildPhaseSyncTask.runBuildPhase(project, params, projectState, buildId, context)
               : BlazeSyncBuildResult.builder().build();
+      //If we have partial success we'll run the build again this time only with intellij-info-java
+      if (projectState != null && syncResultFromBuildPhase(buildResult, context) == SyncResult.PARTIAL_SUCCESS) {
+        buildResult = syncInfoOnly(params, context, buildId, projectState, buildResult);
+      }
       UpdatePhaseTask task =
           UpdatePhaseTask.builder()
               .setStartTime(startTime)
@@ -406,6 +410,25 @@ final class SyncPhaseCoordinator {
           SyncResult.FAILURE,
           SyncStats.builder());
     }
+  }
+
+  private BlazeSyncBuildResult syncInfoOnly(BlazeSyncParams params, BlazeContext context,
+      int buildId, SyncProjectState projectState, BlazeSyncBuildResult buildResult) {
+    final BlazeSyncParams infoOnlySyncParams = params.toBuilder().setBlazeBuildParams(
+        params.blazeBuildParams().toBuilder().setInfoOnly(true).build()
+    ).build();
+    final BlazeSyncBuildResult infoOnlySyncResult = BuildPhaseSyncTask
+        .runBuildPhase(project, infoOnlySyncParams, projectState, buildId, context);
+    /*
+     * updateResult should be used the other way around [ olderRun.updateResult(newerRun) ]
+     * since that is used to remove stale/old artifacts from targets which boths runs "saw"
+     * In our case both runs are sequential without artifacts changing.
+     * The second run only has IDE-INFO files
+     * For every target the first run was able to process it has all the data (first run does IDE-INFO and Resolve)
+     * What happens when we updateResult as below is that we basically just add the IDE-INFO files
+     * of the broken targets from the second run into the first run
+     */
+    return infoOnlySyncResult.updateResult(buildResult);
   }
 
   private void queueUpdateTask(UpdatePhaseTask task) {

@@ -385,7 +385,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
       aspectStrategy.addAspectAndOutputGroups(
           builder,
-          ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
+          buildParams.infoOnly() ?
+            ImmutableList.of(OutputGroup.INFO):
+            ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
           activeLanguages,
           onlyDirectDeps);
 
