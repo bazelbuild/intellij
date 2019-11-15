@@ -80,7 +80,7 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
       errors.add(ValidationError.fatal(AndroidBundle.message("no.facet.error", module.getName())));
       return errors;
     }
-    if (facet.getConfiguration().getAndroidPlatform() == null) {
+    if (AndroidPlatformCompat.getAndroidPlatform(facet) == null) {
       errors.add(ValidationError.fatal(AndroidBundle.message("select.platform.error")));
     }
     return errors;
