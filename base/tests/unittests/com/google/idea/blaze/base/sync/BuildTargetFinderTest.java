@@ -73,7 +73,7 @@ public class BuildTargetFinderTest extends BlazeTestCase {
 
     applicationServices.register(FileOperationProvider.class, fileOperationProvider);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
-    applicationServices.register(
+    projectServices.register(
         BlazeImportSettingsManager.class, mock(BlazeImportSettingsManager.class));
     ExtensionPoint<BuildSystemProvider> extensionPoint =
         registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
