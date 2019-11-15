@@ -29,7 +29,7 @@ def _fast_build_info_impl(target, ctx):
         info["data"] = [
             struct(
                 label = str(datadep.label),
-                artifacts = [artifact_location(file) for file in datadep.files],
+                artifacts = [artifact_location(file) for file in datadep.files.to_list()],
             )
             for datadep in ctx.rule.attr.data
         ]
