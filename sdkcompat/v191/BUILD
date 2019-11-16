@@ -1,8 +1,8 @@
 # Description: Indirections for SDK changes to the underlying platform library.
 
-licenses(["notice"])  # Apache 2.0
-
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
+
+licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "v191",
@@ -10,6 +10,7 @@ java_library(
         "com/google/idea/sdkcompat/configuration/**",
         "com/google/idea/sdkcompat/openapi/**",
         "com/google/idea/sdkcompat/platform/**",
+        "com/google/idea/sdkcompat/python/*.java",
         "com/google/idea/sdkcompat/run/**",
         "com/google/idea/sdkcompat/testframework/*.java",
         "com/google/idea/sdkcompat/vcs/**",
