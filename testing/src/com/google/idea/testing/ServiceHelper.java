@@ -64,11 +64,8 @@ public class ServiceHelper {
 
   public static <T> void registerApplicationService(
       Class<T> key, T implementation, Disposable parentDisposable) {
-    registerComponentInstance(
-        (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer(),
-        key,
-        implementation,
-        parentDisposable);
+    ServiceHelperCompat.registerService(
+        ApplicationManager.getApplication(), key, implementation, parentDisposable);
   }
 
   public static <T> void registerApplicationComponent(
@@ -88,8 +85,7 @@ public class ServiceHelper {
 
   public static <T> void registerProjectService(
       Project project, Class<T> key, T implementation, Disposable parentDisposable) {
-    registerComponentInstance(
-        (MutablePicoContainer) project.getPicoContainer(), key, implementation, parentDisposable);
+    ServiceHelperCompat.registerService(project, key, implementation, parentDisposable);
   }
 
   public static <T> void registerProjectComponent(

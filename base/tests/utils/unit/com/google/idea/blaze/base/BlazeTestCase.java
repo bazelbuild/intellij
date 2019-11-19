@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base;
 
 import com.google.idea.sdkcompat.openapi.ExtensionsCompat;
+import com.google.idea.sdkcompat.testframework.MockComponentManagerCompat;
+import com.intellij.mock.MockComponentManager;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,15 +74,16 @@ public class BlazeTestCase {
 
   /** A wrapper around the pico container used by IntelliJ's DI system */
   public static class Container {
-    private final MutablePicoContainer container;
+    private final MockComponentManager componentManager;
+    private final Disposable testDisposable;
 
-    Container(MutablePicoContainer container) {
-      this.container = container;
+    Container(MockComponentManager componentManager, Disposable testDisposable) {
+      this.componentManager = componentManager;
+      this.testDisposable = testDisposable;
     }
 
-    public <T> Container register(Class<T> klass, T instance) {
-      this.container.registerComponentInstance(klass.getName(), instance);
-      return this;
+    public <T> void register(Class<T> klass, T instance) {
+      MockComponentManagerCompat.registerService(componentManager, klass, instance, testDisposable);
     }
   }
 
@@ -97,7 +100,9 @@ public class BlazeTestCase {
 
     this.project = mockProject;
 
-    initTest(new Container(applicationContainer), new Container(mockProject.getPicoContainer()));
+    initTest(
+        new Container((MockComponentManager) ApplicationManager.getApplication(), testDisposable),
+        new Container(mockProject, testDisposable));
   }
 
   @After

@@ -16,8 +16,11 @@
 package com.google.idea.sdkcompat.testframework;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.util.Disposer;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.defaults.UnsatisfiableDependenciesException;
 
 /** Compat APIs used to replace components and services in tests. */
 public class ServiceHelperCompat {
@@ -29,6 +32,39 @@ public class ServiceHelperCompat {
       Disposable parentDisposable) {
     T old = componentManager.registerComponentInstance(key, implementation);
     Disposer.register(parentDisposable, () -> componentManager.registerComponentInstance(key, old));
+  }
+
+  public static <T> void registerService(
+      ComponentManager componentManager,
+      Class<T> key,
+      T implementation,
+      Disposable parentDisposable) {
+    registerComponentInstance(
+        (MutablePicoContainer) componentManager.getPicoContainer(),
+        key,
+        implementation,
+        parentDisposable);
+  }
+
+  private static <T> void registerComponentInstance(
+      MutablePicoContainer container, Class<T> key, T implementation, Disposable parentDisposable) {
+    Object old;
+    try {
+      old = container.getComponentInstance(key);
+    } catch (UnsatisfiableDependenciesException e) {
+      old = null;
+    }
+    container.unregisterComponent(key.getName());
+    container.registerComponentInstance(key.getName(), implementation);
+    Object finalOld = old;
+    Disposer.register(
+        parentDisposable,
+        () -> {
+          container.unregisterComponent(key.getName());
+          if (finalOld != null) {
+            container.registerComponentInstance(key.getName(), finalOld);
+          }
+        });
   }
 
   private ServiceHelperCompat() {}

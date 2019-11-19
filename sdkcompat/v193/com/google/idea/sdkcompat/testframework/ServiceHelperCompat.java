@@ -16,6 +16,7 @@
 package com.google.idea.sdkcompat.testframework;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.testFramework.ServiceContainerUtil;
 
@@ -32,4 +33,12 @@ public class ServiceHelperCompat {
   }
 
   private ServiceHelperCompat() {}
+
+  public static <T> void registerService(
+      ComponentManager componentManager,
+      Class<T> key,
+      T implementation,
+      Disposable parentDisposable) {
+    ServiceContainerUtil.registerServiceInstance(componentManager, key, implementation);
+  }
 }
