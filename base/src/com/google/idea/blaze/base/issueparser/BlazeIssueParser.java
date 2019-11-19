@@ -59,7 +59,8 @@ public class BlazeIssueParser {
     ImmutableList.Builder<BlazeIssueParser.Parser> parsers =
         ImmutableList.<BlazeIssueParser.Parser>builder()
             .add(
-                new BlazeIssueParser.CompileParser(project),
+                new BlazeIssueParser.PythonCompileParser(project),
+                new BlazeIssueParser.DefaultCompileParser(project),
                 new BlazeIssueParser.TracebackParser(),
                 new BlazeIssueParser.BuildParser(),
                 new BlazeIssueParser.SkylarkErrorParser(),
@@ -177,17 +178,43 @@ public class BlazeIssueParser {
     }
   }
 
-  static class CompileParser extends SingleLineParser {
+  static class PythonCompileParser extends SingleLineParser {
     private final Project project;
 
-    CompileParser(Project project) {
+    PythonCompileParser(Project project) {
       super(
-          "^([^:]*)" // file path
+          "^File \"([^:]*\\.py)\", " // file path
+              + "line ([0-9]+), " // line number
+              + "(.*)$"); // message
+      this.project = project;
+    }
+
+    @Override
+    protected IssueOutput createIssue(Matcher matcher) {
+      final File file = FileResolver.resolveToFile(project, matcher.group(1));
+      return IssueOutput.issue(IssueOutput.Category.ERROR, matcher.group(3))
+          .inFile(file)
+          .onLine(Integer.parseInt(matcher.group(2)))
+          .consoleHyperlinkRange(
+              union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 0, 2)))
+          .build();
+    }
+  }
+
+  static class DefaultCompileParser extends SingleLineParser {
+    private final Project project;
+
+    DefaultCompileParser(Project project) {
+      super(
+          "^" // start
+              + "([^:]+)" // file path
               + ":([0-9]+)" // line number
               + "(?::([0-9]+))?" // optional column number
-              + "(?::| -)? " // colon or hyphen separator
-              + "(?i:(fatal error|error|warning|note))" // message type (case insensitive)
-              + "(?:[^:-]+)?[:-] " // optional error code with colon or hyphen separator
+              + "(?::| -) " // colon or hyphen separator
+              + "(?i:" // optional case insensitive message type
+              + "(fatal error|error|warning|note|internal problem|context)"
+              + "(?::| -)? " // optional colon or hyphen separator
+              + ")?"
               + "(.*)$"); // message
       this.project = project;
     }
@@ -205,14 +232,20 @@ public class BlazeIssueParser {
           .build();
     }
 
-    private static IssueOutput.Category messageCategory(String messageType) {
+    private static IssueOutput.Category messageCategory(@Nullable String messageType) {
+      if (messageType == null) {
+        return IssueOutput.Category.ERROR;
+      }
       switch (Ascii.toLowerCase(messageType)) {
         case "warning":
           return IssueOutput.Category.WARNING;
         case "note":
+        case "message":
+        case "context":
           return IssueOutput.Category.NOTE;
         case "error":
         case "fatal error":
+        case "internal problem":
           return IssueOutput.Category.ERROR;
         default: // fall out
       }

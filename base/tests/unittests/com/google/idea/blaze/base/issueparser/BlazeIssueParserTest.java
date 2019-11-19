@@ -82,7 +82,8 @@ public class BlazeIssueParserTest extends BlazeTestCase {
 
     parsers =
         ImmutableList.of(
-            new BlazeIssueParser.CompileParser(project),
+            new BlazeIssueParser.PythonCompileParser(project),
+            new BlazeIssueParser.DefaultCompileParser(project),
             new BlazeIssueParser.TracebackParser(),
             new BlazeIssueParser.BuildParser(),
             new BlazeIssueParser.SkylarkErrorParser(),
@@ -206,21 +207,6 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.NOTE);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(TextRange.create(0, "net/something/foo_bar.cc:30:11".length()));
-  }
-
-  @Test
-  public void testParseCompileErrorWithHyphenAndErrorCode() {
-    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
-    IssueOutput issue =
-        blazeIssueParser.parseIssue(
-            "java/com/google/foo/bar/baz.ts:123:45 - error TS2304: Cannot find name 'asdf'.");
-    assertThat(issue).isNotNull();
-    assertThat(issue.getLine()).isEqualTo(123);
-    assertThat(issue.getColumn()).isEqualTo(45);
-    assertThat(issue.getMessage()).isEqualTo("Cannot find name 'asdf'.");
-    assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
-    assertThat(issue.getConsoleHyperlinkRange())
-        .isEqualTo(TextRange.create(0, "java/com/google/foo/bar/baz.ts:123:45".length()));
   }
 
   @Test
@@ -479,6 +465,71 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     }
     assertThat(blazeIssueParser.parseIssue(lines[1])).isNotNull();
     assertThat(blazeIssueParser.parseIssue(lines[4])).isNotNull();
+  }
+
+  @Test
+  public void testParseTypeScriptCompileError() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "foo/bar/baz.ts:123:45 - error TS2304: Cannot find name 'asdf'.");
+    assertThat(issue).isNotNull();
+    assertThat(issue.getFile()).isNotNull();
+    assertThat(issue.getFile().getPath()).isEqualTo("/root/foo/bar/baz.ts");
+    assertThat(issue.getLine()).isEqualTo(123);
+    assertThat(issue.getColumn()).isEqualTo(45);
+    assertThat(issue.getMessage()).isEqualTo("TS2304: Cannot find name 'asdf'.");
+    assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(TextRange.create(0, "foo/bar/baz.ts:123:45".length()));
+  }
+
+  @Test
+  public void testParseJavaScriptCompileError() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "foo/bar.js:10: ERROR - [JSC_UNDEFINED_VARIABLE] variable foo is undeclared");
+    assertThat(issue).isNotNull();
+    assertThat(issue.getFile()).isNotNull();
+    assertThat(issue.getFile().getPath()).isEqualTo("/root/foo/bar.js");
+    assertThat(issue.getLine()).isEqualTo(10);
+    assertThat(issue.getColumn()).isEqualTo(-1);
+    assertThat(issue.getMessage()).isEqualTo("[JSC_UNDEFINED_VARIABLE] variable foo is undeclared");
+    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(TextRange.create(0, "foo/bar.js:10".length()));
+  }
+
+  @Test
+  public void testParseGoCompileError() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue = blazeIssueParser.parseIssue("foo/bar.go:123:45: undefined: asdf");
+    assertThat(issue).isNotNull();
+    assertThat(issue.getFile()).isNotNull();
+    assertThat(issue.getFile().getPath()).isEqualTo("/root/foo/bar.go");
+    assertThat(issue.getLine()).isEqualTo(123);
+    assertThat(issue.getColumn()).isEqualTo(45);
+    assertThat(issue.getMessage()).isEqualTo("undefined: asdf");
+    assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(TextRange.create(0, "foo/bar.go:123:45".length()));
+  }
+
+  @Test
+  public void testParsePythonCompileError() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "File \"foo/bar.py\", line 123, in foo: bad option in return type [bad-return-type]");
+    assertThat(issue).isNotNull();
+    assertThat(issue.getFile()).isNotNull();
+    assertThat(issue.getFile().getPath()).isEqualTo("/root/foo/bar.py");
+    assertThat(issue.getLine()).isEqualTo(123);
+    assertThat(issue.getMessage()).isEqualTo("in foo: bad option in return type [bad-return-type]");
+    assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(TextRange.create(0, "File \"foo/bar.py\", line 123".length()));
   }
 
   /** Simple Parser for testing */
