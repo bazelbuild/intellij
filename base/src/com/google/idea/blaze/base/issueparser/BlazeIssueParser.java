@@ -59,7 +59,8 @@ public class BlazeIssueParser {
     ImmutableList<BlazeIssueParser.SingleLineParser> compileParsers =
         ImmutableList.of(
             new BlazeIssueParser.PythonCompileParser(project),
-            new BlazeIssueParser.DefaultCompileParser(project));
+            new BlazeIssueParser.DefaultCompileParser(project),
+            new BlazeIssueParser.ZincParser(project));
     ImmutableList.Builder<BlazeIssueParser.Parser> parsers =
         ImmutableList.<BlazeIssueParser.Parser>builder()
             .addAll(compileParsers)
@@ -258,6 +259,45 @@ public class BlazeIssueParser {
       return IssueOutput.Category.ERROR;
     }
   }
+
+    static class ZincParser extends SingleLineParser {
+        private final Project project;
+
+        ZincParser(Project project) {
+            super("^\\[(?i)(fatal error|error|warning|note)\\] (.*?scala)"
+                    + ":([0-9]+)" // line number
+                    + "(?::([0-9]+))?" // optional column number
+                    + "(.*)$"); // message
+            this.project = project;
+        }
+
+        @Override
+        protected IssueOutput createIssue(Matcher matcher) {
+            final File file = FileResolver.resolveToFile(project, matcher.group(2));
+            IssueOutput.Category category = messageCategory(matcher.group(1));
+            return IssueOutput.issue(category, matcher.group(5))
+                    .inFile(file)
+                    .onLine(Integer.parseInt(matcher.group(3)))
+                    .inColumn(parseOptionalInt(matcher.group(4)))
+                    .consoleHyperlinkRange(
+                            union(fileHighlightRange(matcher, 2), matchedTextRange(matcher, 3, 4)))
+                    .build();
+        }
+
+        private static IssueOutput.Category messageCategory(String messageType) {
+            switch (Ascii.toLowerCase(messageType)) {
+                case "warning":
+                    return IssueOutput.Category.WARNING;
+                case "note":
+                    return IssueOutput.Category.NOTE;
+                case "error":
+                case "fatal error":
+                    return IssueOutput.Category.ERROR;
+                default: // fall out
+            }
+            return IssueOutput.Category.ERROR;
+        }
+    }
 
   static class TracebackParser implements Parser {
     private static final Pattern PATTERN =

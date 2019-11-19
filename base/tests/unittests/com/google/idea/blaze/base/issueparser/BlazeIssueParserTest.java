@@ -83,7 +83,8 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     ImmutableList<BlazeIssueParser.SingleLineParser> compilerParsers =
         ImmutableList.of(
             new BlazeIssueParser.PythonCompileParser(project),
-            new BlazeIssueParser.DefaultCompileParser(project));
+            new BlazeIssueParser.DefaultCompileParser(project),
+            new BlazeIssueParser.ZincParser(project));
     parsers =
         ImmutableList.<BlazeIssueParser.Parser>builder()
             .addAll(compilerParsers)
@@ -535,6 +536,23 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(TextRange.create(0, "File \"foo/bar.py\", line 123".length()));
+  }
+
+  @Test
+  public void testParseZincCompileError() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    String issueTest = "[Error] src/foo/Bar.scala:9 type mismatch;";
+    IssueOutput issue = blazeIssueParser.parseIssue(issueTest);
+    assertThat(issue).isNotNull();
+    assertThat(issue.getFile()).isNotNull();
+    assertThat(issue.getFile().getPath()).isEqualTo("/root/src/foo/Bar.scala");
+    assertThat(issue.getLine()).isEqualTo(9);
+    assertThat(issue.getMessage()).isEqualTo(" type mismatch;");
+    assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
+    String fileSubstring = "src/foo/Bar.scala:9";
+    int indexOfFileSubstring = issueTest.indexOf(fileSubstring);
+    assertThat(issue.getConsoleHyperlinkRange())
+            .isEqualTo(TextRange.create(indexOfFileSubstring, indexOfFileSubstring + fileSubstring.length()));
   }
 
   /** Simple Parser for testing */
