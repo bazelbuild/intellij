@@ -73,7 +73,7 @@ public class SuggestBuildShardingNotification {
     String message =
         String.format(
             "The %1$s server ran out of memory during sync. This can occur for large projects. You "
-                + "can work around this by sharding the %1$s build during sync"
+                + "can work around this by sharding the %1$s build during sync "
                 + "<a href='fix'>(click here)</a>, "
                 + "or alternatively allocate more memory to %1$s",
             buildSystem);
