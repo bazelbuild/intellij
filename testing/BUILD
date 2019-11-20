@@ -24,6 +24,14 @@ java_library(
         "android-studio-3.6": glob(["cidr/v192/**/*.java"]),
         "android-studio-4.0": glob(["cidr/v192/**/*.java"]),
         "default": [],
+    }) + select_for_plugin_api({
+        "android-studio-3.5": glob(["testcompat/v192/**/*.java"]),
+        "android-studio-3.6": glob(["testcompat/v192/**/*.java"]),
+        "android-studio-4.0": glob(["testcompat/v192/**/*.java"]),
+        "clion-2019.2": glob(["testcompat/v192/**/*.java"]),
+        "intellij-2019.2": glob(["testcompat/v192/**/*.java"]),
+        "intellij-ue-2019.2": glob(["testcompat/v192/**/*.java"]),
+        "default": glob(["testcompat/v193/**/*.java"]),
     }),
     deps = [
         "//intellij_platform_sdk:jsr305",

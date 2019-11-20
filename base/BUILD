@@ -259,6 +259,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//sdkcompat",
+        "//testing:lib",
         "@junit//jar",
     ],
 )
