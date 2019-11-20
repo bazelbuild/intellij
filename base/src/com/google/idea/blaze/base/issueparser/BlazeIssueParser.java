@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -487,23 +486,27 @@ public class BlazeIssueParser {
 
   @Nullable
   public IssueOutput parseIssue(String line) {
-
-    List<Parser> parsers = this.parsers;
     if (multilineMatchingParser != null) {
-      parsers = Lists.newArrayList(multilineMatchingParser);
+      ParseResult issue = multilineMatchingParser.parse(line, multilineMatchResult);
+      if (issue.needsMoreInput) {
+        multilineMatchResult.add(line);
+        return null;
+      }
+      multilineMatchingParser = null;
+      multilineMatchResult = new ArrayList<>();
+      if (issue.output != null) {
+        return issue.output;
+      }
+      // multi line match failed, continue with other parsers
     }
 
     for (Parser parser : parsers) {
-      ParseResult issue = parser.parse(line, multilineMatchResult);
+      ParseResult issue = parser.parse(line, ImmutableList.of());
       if (issue.needsMoreInput) {
         multilineMatchingParser = parser;
         multilineMatchResult.add(line);
         return null;
-      } else {
-        multilineMatchingParser = null;
-        multilineMatchResult = new ArrayList<>();
       }
-
       if (issue.output != null) {
         return issue.output;
       }
