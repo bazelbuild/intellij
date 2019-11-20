@@ -15,9 +15,8 @@
  */
 package com.google.idea.blaze.base.issueparser;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.common.base.Ascii;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -31,6 +30,7 @@ import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.run.filter.FileResolver;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import java.io.File;
@@ -43,6 +43,7 @@ import javax.annotation.Nullable;
 
 /** Parses blaze output for compile errors. */
 public class BlazeIssueParser {
+  private static final Logger logger = Logger.getInstance(BlazeIssueParser.class);
 
   public static ImmutableList<BlazeIssueParser.Parser> defaultIssueParsers(
       Project project,
@@ -55,13 +56,16 @@ public class BlazeIssueParser {
       return ImmutableList.of();
     }
 
+    ImmutableList<BlazeIssueParser.SingleLineParser> compileParsers =
+        ImmutableList.of(
+            new BlazeIssueParser.PythonCompileParser(project),
+            new BlazeIssueParser.DefaultCompileParser(project));
     ImmutableList.Builder<BlazeIssueParser.Parser> parsers =
         ImmutableList.<BlazeIssueParser.Parser>builder()
+            .addAll(compileParsers)
             .add(
-                new BlazeIssueParser.PythonCompileParser(project),
-                new BlazeIssueParser.DefaultCompileParser(project),
                 new BlazeIssueParser.TracebackParser(),
-                new BlazeIssueParser.BuildParser(),
+                new BlazeIssueParser.BuildParser(compileParsers),
                 new BlazeIssueParser.SkylarkErrorParser(),
                 new BlazeIssueParser.LinelessBuildParser(),
                 new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
@@ -116,8 +120,11 @@ public class BlazeIssueParser {
 
     @Override
     public final ParseResult parse(String currentLine, List<String> multilineMatchResult) {
-      checkState(
-          multilineMatchResult.isEmpty(), "SingleLineParser recieved multiple lines of input");
+      if (!multilineMatchResult.isEmpty()) {
+        logger.error(
+            "SingleLineParser recieved multiple lines of input:\n\t"
+                + Joiner.on("\n\t").join(multilineMatchResult));
+      }
       return parse(currentLine);
     }
 
@@ -271,8 +278,12 @@ public class BlazeIssueParser {
         return ParseResult.NEEDS_MORE_INPUT;
       } else {
         Matcher matcher = PATTERN.matcher(previousLines.get(0));
-        checkState(
-            matcher.find(), "Found a match in the first line previously, but now it isn't there.");
+        if (!matcher.find()) {
+          logger.error(
+              "Found traceback in the first line previously, but now it isn't there: "
+                  + previousLines.get(0));
+          return ParseResult.NO_RESULT;
+        }
         StringBuilder message = new StringBuilder(matcher.group(5));
         for (int i = 1; i < previousLines.size(); ++i) {
           message.append(System.lineSeparator()).append(previousLines.get(i));
@@ -288,26 +299,52 @@ public class BlazeIssueParser {
     }
   }
 
-  static class BuildParser extends SingleLineParser {
-    BuildParser() {
-      super("^ERROR: (/.*?BUILD):([0-9]+):([0-9]+): (.*)$");
+  static class BuildParser implements Parser {
+    private static final Pattern PATTERN =
+        Pattern.compile("^ERROR: (/.*?BUILD):([0-9]+):([0-9]+): (.*)$");
+    private final List<BlazeIssueParser.SingleLineParser> compileParsers;
+
+    BuildParser(ImmutableList<BlazeIssueParser.SingleLineParser> compileParsers) {
+      this.compileParsers = compileParsers;
     }
 
-    @Nullable
     @Override
-    protected IssueOutput createIssue(Matcher matcher) {
-      if (matcher.group(4).startsWith("Couldn't build file ")) {
-        // This is usually accompanied by a more useful error from the compiler.
-        return null;
+    public ParseResult parse(String currentLine, List<String> previousLines) {
+      if (previousLines.isEmpty()) {
+        Matcher matcher = PATTERN.matcher(currentLine);
+        if (matcher.find()) {
+          return matcher.group(4).startsWith("Couldn't build file ")
+              ? ParseResult.NEEDS_MORE_INPUT
+              : createIssue(matcher);
+        }
+        return ParseResult.NO_RESULT;
       }
+      if (compileParsers.stream()
+          .anyMatch(parser -> parser.parse(currentLine) != ParseResult.NO_RESULT)) {
+        // Found compile error, this will be handled by one of the compile error parsers.
+        // Ignore the redundant BUILD error.
+        return ParseResult.NO_RESULT;
+      }
+      Matcher matcher = PATTERN.matcher(previousLines.get(0));
+      if (!matcher.find()) {
+        logger.error(
+            "Found BUILD error in the first line previously, but now it isn't there: "
+                + previousLines.get(0));
+        return ParseResult.NO_RESULT;
+      }
+      return createIssue(matcher);
+    }
+
+    private static ParseResult createIssue(Matcher matcher) {
       File file = fileFromAbsolutePath(matcher.group(1));
-      return IssueOutput.error(matcher.group(4))
-          .inFile(file)
-          .onLine(Integer.parseInt(matcher.group(2)))
-          .inColumn(parseOptionalInt(matcher.group(3)))
-          .consoleHyperlinkRange(
-              union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 2, 3)))
-          .build();
+      return ParseResult.output(
+          IssueOutput.error(matcher.group(4))
+              .inFile(file)
+              .onLine(Integer.parseInt(matcher.group(2)))
+              .inColumn(parseOptionalInt(matcher.group(3)))
+              .consoleHyperlinkRange(
+                  union(fileHighlightRange(matcher, 1), matchedTextRange(matcher, 2, 3)))
+              .build());
     }
   }
 
@@ -435,7 +472,6 @@ public class BlazeIssueParser {
             + "(.*: Process exited with status [0-9]+\\.)|"
             + "(build interrupted\\.)|"
             + "(Couldn't start the build. Unable to run tests.)|"
-            + "(/.*?BUILD:[0-9]+:[0-9]+: Couldn't build file .*)|"
             + "(.*))$";
 
     private GenericErrorParser() {

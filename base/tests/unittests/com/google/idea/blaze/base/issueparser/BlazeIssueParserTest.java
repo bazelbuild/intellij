@@ -80,23 +80,28 @@ public class BlazeIssueParserTest extends BlazeTestCase {
             .build();
     when(projectViewManager.getProjectViewSet()).thenReturn(projectViewSet);
 
-    parsers =
+    ImmutableList<BlazeIssueParser.SingleLineParser> compilerParsers =
         ImmutableList.of(
             new BlazeIssueParser.PythonCompileParser(project),
-            new BlazeIssueParser.DefaultCompileParser(project),
-            new BlazeIssueParser.TracebackParser(),
-            new BlazeIssueParser.BuildParser(),
-            new BlazeIssueParser.SkylarkErrorParser(),
-            new BlazeIssueParser.LinelessBuildParser(),
-            new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
-            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
-            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                projectViewSet, "no targets found beneath '(.*)'"),
-            new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
-                projectViewSet, "ERROR: invalid target format '(.*)'"),
-            new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot),
-            BlazeIssueParser.GenericErrorParser.INSTANCE);
+            new BlazeIssueParser.DefaultCompileParser(project));
+    parsers =
+        ImmutableList.<BlazeIssueParser.Parser>builder()
+            .addAll(compilerParsers)
+            .add(
+                new BlazeIssueParser.TracebackParser(),
+                new BlazeIssueParser.BuildParser(compilerParsers),
+                new BlazeIssueParser.SkylarkErrorParser(),
+                new BlazeIssueParser.LinelessBuildParser(),
+                new BlazeIssueParser.ProjectViewLabelParser(projectViewSet),
+                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                    projectViewSet, "no such package '(.*)': BUILD file not found on package path"),
+                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                    projectViewSet, "no targets found beneath '(.*)'"),
+                new BlazeIssueParser.InvalidTargetProjectViewPackageParser(
+                    projectViewSet, "ERROR: invalid target format '(.*)'"),
+                new BlazeIssueParser.FileNotFoundBuildParser(workspaceRoot),
+                BlazeIssueParser.GenericErrorParser.INSTANCE)
+            .build();
   }
 
   @Test
@@ -458,13 +463,13 @@ public class BlazeIssueParserTest extends BlazeTestCase {
         };
     BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
     for (int i = 0; i < lines.length; ++i) {
+      IssueOutput issue = blazeIssueParser.parseIssue(lines[i]);
       if (i == 1 || i == 4) {
-        continue;
+        assertThat(issue).isNotNull();
+      } else {
+        assertThat(issue).isNull();
       }
-      assertThat(blazeIssueParser.parseIssue(lines[i])).isNull();
     }
-    assertThat(blazeIssueParser.parseIssue(lines[1])).isNotNull();
-    assertThat(blazeIssueParser.parseIssue(lines[4])).isNotNull();
   }
 
   @Test
