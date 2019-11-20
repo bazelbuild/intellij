@@ -49,7 +49,7 @@ class KotlinSyncAugmenter implements BlazeJavaSyncAugmenter {
     }
     // this is a temporary hack to include annotation processing genjars, by including *all* jars
     // produced by source targets
-    // TODO(brendandouglas): remove when kotlin rules expose JavaGenJarsProvider
+    // TODO(b/79993254): remove when kotlin rules expose JavaGenJarsProvider
     javaInfo.getJars().forEach(jar -> genJars.add(new BlazeJarLibrary(jar, target.getKey())));
   }
 }
