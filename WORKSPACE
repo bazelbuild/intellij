@@ -201,6 +201,14 @@ jvm_maven_import_external(
 )
 
 jvm_maven_import_external(
+    name = "truth8",
+    artifact = "com.google.truth.extensions:truth-java8-extension:0.42",
+    artifact_sha256 = "cf9e095a6763bc33633b8844c3ebadffe3b082c81dd97a4d79b64ad88d305bc1",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["http://central.maven.org/maven2"],
+)
+
+jvm_maven_import_external(
     name = "mockito",
     artifact = "org.mockito:mockito-core:1.10.19",
     artifact_sha256 = "d5831ee4f71055800821a34a3051cf1ed5b3702f295ffebd50f65fb5d81a71b8",
