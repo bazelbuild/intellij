@@ -15,9 +15,9 @@
  */
 package com.google.idea.common.formatter;
 
+import com.google.idea.sdkcompat.platform.ServiceHelperCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import org.picocontainer.MutablePicoContainer;
 
 /** A utility class to replace the default IntelliJ {@link CodeStyleManager}. */
 public final class FormatterInstaller {
@@ -27,16 +27,12 @@ public final class FormatterInstaller {
     CodeStyleManager createFormatter(CodeStyleManager delegate);
   }
 
-  private static final String CODE_STYLE_MANAGER_KEY = CodeStyleManager.class.getName();
-
   /**
    * Replace the existing formatter with one produced from the given {@link CodeStyleManagerFactory}
    */
   public static void replaceFormatter(Project project, CodeStyleManagerFactory newFormatter) {
     CodeStyleManager currentManager = CodeStyleManager.getInstance(project);
-    MutablePicoContainer container = (MutablePicoContainer) project.getPicoContainer();
-    container.unregisterComponent(CODE_STYLE_MANAGER_KEY);
-    container.registerComponentInstance(
-        CODE_STYLE_MANAGER_KEY, newFormatter.createFormatter(currentManager));
+    ServiceHelperCompat.registerService(
+        project, CodeStyleManager.class, newFormatter.createFormatter(currentManager), project);
   }
 }
