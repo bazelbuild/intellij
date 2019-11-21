@@ -15,12 +15,15 @@
  */
 package com.google.idea.blaze.base.async.process;
 
+import static com.google.common.base.StandardSystemProperty.JAVA_IO_TMPDIR;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.ExternalTask.ExternalTaskImpl;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -29,83 +32,76 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public final class ExternalTaskImplTest {
 
+  private static File newTempFile() throws IOException {
+    File temp = File.createTempFile("sadjfhjk-", "-sodiuflk");
+    temp.deleteOnExit();
+    temp.setExecutable(true);
+    return temp;
+  }
+
   @Test
-  public void customizeEnvironmentPath_withoutCustomPath_shouldNotModifyMap() throws Exception {
+  public void getCustomBinary_withoutCustomPath() throws Exception {
     System.clearProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY);
-
-    Map<String, String> envMap = new HashMap<>();
-    ExternalTaskImpl.customizeEnvironmentPath(envMap);
-    assertThat(envMap).isEmpty();
-
-    Map<String, String> expected = ImmutableMap.of("USER", "grl");
-    envMap = new HashMap<>(expected);
-    ExternalTaskImpl.customizeEnvironmentPath(envMap);
-    assertThat(envMap).isEqualTo(expected);
-
-    expected = ImmutableMap.of("PATH", "/usr/local/bin:/usr/bin:/bin");
-    envMap = new HashMap<>(expected);
-    ExternalTaskImpl.customizeEnvironmentPath(envMap);
-    assertThat(envMap).isEqualTo(expected);
-
-    expected = ImmutableMap.of("PATH", "/usr/local/bin:/usr/bin:/bin", "LANG", "en_US.UTF-8");
-    envMap = new HashMap<>(expected);
-    ExternalTaskImpl.customizeEnvironmentPath(envMap);
-    assertThat(envMap).isEqualTo(expected);
+    assertThat(ExternalTaskImpl.getCustomBinary("sh")).isEmpty();
   }
 
   @Test
-  public void customizeEnvironmentPath_withEmptyCustomPath_shouldNotSetPath() throws Exception {
-    System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, "");
-    Map<String, String> envMap = new HashMap<>();
-    envMap.put("USER", "grl");
-
-    ExternalTaskImpl.customizeEnvironmentPath(envMap);
-
-    assertThat(envMap).hasSize(1);
-    assertThat(envMap).containsEntry("USER", "grl");
-    assertThat(envMap).doesNotContainKey("PATH");
+  public void getCustomBinary_multiArgCommand() throws Exception {
+    System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, JAVA_IO_TMPDIR.value());
+    File temp = newTempFile();
+    assertThat(ExternalTaskImpl.getCustomBinary(temp.getName() + " --withlog")).isEmpty();
   }
 
   @Test
-  public void customizeEnvironmentPath_withEmptyCustomPath_shouldNotModifyPath() throws Exception {
-    System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, "");
-    Map<String, String> envMap = new HashMap<>();
-    envMap.put("PATH", "/bin");
-
-    ExternalTaskImpl.customizeEnvironmentPath(envMap);
-
-    assertThat(envMap).containsEntry("PATH", "/bin");
+  public void getCustomBinary_fullPathCommand() throws Exception {
+    System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, JAVA_IO_TMPDIR.value());
+    File temp = newTempFile();
+    assertThat(ExternalTaskImpl.getCustomBinary(temp.getAbsolutePath())).isEmpty();
   }
 
   @Test
-  public void customizeEnvironmentPath_withCustomPath_shouldPrependPath() throws Exception {
-    System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, "/custom/bin");
-    Map<String, String> envMap = new HashMap<>();
-    envMap.put("PATH", "/bin");
-
-    ExternalTaskImpl.customizeEnvironmentPath(envMap);
-
-    assertThat(envMap).containsEntry("PATH", "/custom/bin:/bin");
+  public void getCustomBinary_nonExistent() throws Exception {
+    System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, JAVA_IO_TMPDIR.value());
+    assertThat(ExternalTaskImpl.getCustomBinary("this_is_almost_certainly_not_an_existing_file"))
+        .isEmpty();
   }
 
   @Test
-  public void customizeEnvironmentPath_withoutEnvPath_shouldSetPath() throws Exception {
-    System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, "/custom/bin");
-    Map<String, String> envMap = new HashMap<>();
-
-    ExternalTaskImpl.customizeEnvironmentPath(envMap);
-
-    assertThat(envMap).containsEntry("PATH", "/custom/bin");
+  public void getCustomBinary_directory() throws Exception {
+    File tmpDir = new File(JAVA_IO_TMPDIR.value());
+    assertThat(tmpDir.exists()).isTrue();
+    assertThat(tmpDir.isFile()).isFalse();
+    System.setProperty(
+        ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, tmpDir.getParentFile().getAbsolutePath());
+    assertThat(ExternalTaskImpl.getCustomBinary(tmpDir.getName())).isEmpty();
   }
 
   @Test
-  public void customizeEnvironmentPath_withEmptyEnvPath_shouldSetPath() throws Exception {
-    System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, "/custom/bin");
-    Map<String, String> envMap = new HashMap<>();
-    envMap.put("PATH", "");
+  public void getCustomBinary_success() throws Exception {
+    System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, JAVA_IO_TMPDIR.value());
+    File temp = newTempFile();
+    Optional<File> fileOr = ExternalTaskImpl.getCustomBinary(temp.getName());
+    assertThat(fileOr).isPresent();
+    assertThat(fileOr.get().getAbsolutePath()).isEqualTo(temp.getAbsolutePath());
+  }
 
-    ExternalTaskImpl.customizeEnvironmentPath(envMap);
+  @Test
+  public void resolveCustomBinary_success() throws Exception {
+    System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, JAVA_IO_TMPDIR.value());
+    File temp = newTempFile();
+    assertThat(
+            ExternalTaskImpl.resolveCustomBinary(ImmutableList.of(temp.getName(), "--some_flag")))
+        .containsExactly(temp.getAbsolutePath(), "--some_flag")
+        .inOrder();
+  }
 
-    assertThat(envMap).containsEntry("PATH", "/custom/bin");
+  @Test
+  public void resolveCustomBinary_unmodified() throws Exception {
+    System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, JAVA_IO_TMPDIR.value());
+    String notFoundBinName = "probably_not_a_binary_that_exists_in_the_temp_directory";
+    assertThat(
+            ExternalTaskImpl.resolveCustomBinary(ImmutableList.of(notFoundBinName, "--some_flag")))
+        .containsExactly(notFoundBinName, "--some_flag")
+        .inOrder();
   }
 }

@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.async.process;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -28,6 +27,7 @@ import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,9 +37,11 @@ import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -201,22 +203,32 @@ public interface ExternalTask {
       envMap.putAll(EnvironmentUtil.getEnvironmentMap());
     }
 
-    // Allow prepending custom paths to $PATH
+    // Allow adding a custom system path to lookup executables in.
     @VisibleForTesting
     static final String CUSTOM_PATH_SYSTEM_PROPERTY = "blaze.external.task.env.path";
 
-    private static final String PATH_ENVIRONMENT_VARIABLE = "PATH";
+    @VisibleForTesting
+    static Optional<File> getCustomBinary(String potentialCommandName) {
+      String customPath = System.getProperty(CUSTOM_PATH_SYSTEM_PROPERTY);
+      if (Strings.isNullOrEmpty(customPath)) {
+        return Optional.empty();
+      }
+      return Optional.ofNullable(
+          PathEnvironmentVariableUtil.findInPath(
+              potentialCommandName, customPath, /*filter=*/ null));
+    }
 
     @VisibleForTesting
-    static void customizeEnvironmentPath(Map<String, String> envMap) {
-      String customPath = System.getProperty(CUSTOM_PATH_SYSTEM_PROPERTY);
-      if (!Strings.isNullOrEmpty(customPath)) {
-        envMap.put(
-            PATH_ENVIRONMENT_VARIABLE,
-            Joiner.on(File.pathSeparator)
-                .skipNulls()
-                .join(customPath, Strings.emptyToNull(envMap.get(PATH_ENVIRONMENT_VARIABLE))));
+    static List<String> resolveCustomBinary(List<String> command) {
+      if (command.isEmpty()) {
+        return command;
       }
+      List<String> actualCommand = new ArrayList<>(command);
+      Optional<File> customBinaryOverride = getCustomBinary(actualCommand.get(0));
+      if (customBinaryOverride.isPresent()) {
+        actualCommand.set(0, customBinaryOverride.get().getAbsolutePath());
+      }
+      return actualCommand;
     }
 
     private int invokeCommand(BlazeContext context) {
@@ -232,9 +244,10 @@ public interface ExternalTask {
         if (context.isEnding()) {
           return -1;
         }
+
         ProcessBuilder builder =
             new ProcessBuilder()
-                .command(command)
+                .command(resolveCustomBinary(command))
                 .redirectErrorStream(redirectErrorStream)
                 .directory(workingDirectory);
 
@@ -244,7 +257,6 @@ public interface ExternalTask {
           env.put(entry.getKey(), entry.getValue());
         }
         env.put("PWD", workingDirectory.getPath());
-        customizeEnvironmentPath(env);
 
         try {
           final Process process = builder.start();
