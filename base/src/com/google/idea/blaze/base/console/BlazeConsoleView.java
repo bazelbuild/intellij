@@ -153,6 +153,7 @@ public class BlazeConsoleView implements Disposable {
     // Create runner UI layout
     RunnerLayoutUi.Factory factory = RunnerLayoutUi.Factory.getInstance(project);
     RunnerLayoutUi layoutUi = factory.create("", "", "session", project);
+    layoutUi.getOptions().setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
 
     Content console =
         layoutUi.createContent(
