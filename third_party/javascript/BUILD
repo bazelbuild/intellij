@@ -14,6 +14,7 @@ java_library(
         "intellij-2019.3": ["@intellij_ue_2019_3//:javascript"],
         "intellij-ue-2019.3": ["@intellij_ue_2019_3//:javascript"],
         "clion-2019.2": ["@clion_2019_2//:javascript"],
+        "clion-2019.3": ["@clion_2019_3//:javascript"],
         "default": [],
     }),
 )

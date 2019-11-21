@@ -52,6 +52,15 @@ http_archive(
     url = "https://download.jetbrains.com/cpp/CLion-2019.2.5.tar.gz",
 )
 
+# The prerelease plugin api for CLion 2019.3. This is required to build CLwB,
+# and run integration tests.
+http_archive(
+    name = "clion_2019_3",
+    build_file = "@//intellij_platform_sdk:BUILD.clion193",
+    sha256 = "ddfa2bc7ab0d316463f66146e56394de9258260f82123d74b825e6e56e556c35",
+    url = "https://download.jetbrains.com/cpp/CLion-193.5233.10.tar.gz",
+)
+
 # Python plugin for Android Studio 3.5. Required at compile-time for python-specific features.
 http_archive(
     name = "python_2019_1",

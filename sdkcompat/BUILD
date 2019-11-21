@@ -29,5 +29,6 @@ java_library(
         "intellij-2019.3": ["//sdkcompat/v193"],
         "intellij-ue-2019.3": ["//sdkcompat/v193"],
         "clion-2019.2": ["//sdkcompat/v192"],
+        "clion-2019.3": ["//sdkcompat/v193"],
     }),
 )

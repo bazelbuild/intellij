@@ -222,6 +222,13 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "clion-2019.3",
+    values = {
+        "define": "ij_product=clion-2019.3",
+    },
+)
+
 load(
     ":build_defs.bzl",
     "select_for_ide",
@@ -326,6 +333,7 @@ java_library(
     name = "jsr305",
     exports = select_for_plugin_api({
         "clion-2019.2": ["@jsr305_annotations//jar"],
+        "clion-2019.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2019.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2019.3": ["@jsr305_annotations//jar"],
         "default": [":plugin_api"],
