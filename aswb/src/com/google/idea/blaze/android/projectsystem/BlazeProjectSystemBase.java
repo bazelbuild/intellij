@@ -19,14 +19,12 @@ import com.android.tools.apk.analyzer.AaptInvoker;
 import com.android.tools.idea.log.LogWrapper;
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.AndroidProjectSystem;
-import com.android.tools.idea.projectsystem.LightResourceClassService;
 import com.android.tools.idea.projectsystem.ProjectSystemSyncManager;
 import com.android.tools.idea.res.AndroidInnerClassFinder;
 import com.android.tools.idea.res.AndroidResourceClassPsiElementFinder;
 import com.android.tools.idea.sdk.AndroidSdks;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.base.actions.BlazeBuildService;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,21 +36,16 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-/** Blaze Implementation of {@link AndroidProjectSystem}. */
-public class BlazeProjectSystem implements AndroidProjectSystem {
-  /**
-   * R classes are generated on the fly by {@link LightResourceClassService}. So there is no need to
-   * then augment those R classes. We keep this as an experiment in case something untoward happens,
-   * but it can be deleted (b/78110212)
-   */
-  private static final BoolExperiment ENABLE_PSI_AUGMENT =
-      new BoolExperiment("blaze.psi.augment", false);
+/**
+ * Base class to implement common methods in {@link AndroidProjectSystem} for blaze with different
+ * sdk
+ */
+public abstract class BlazeProjectSystemBase implements AndroidProjectSystem {
+  protected final Project project;
+  protected final ProjectSystemSyncManager syncManager;
+  protected final List<PsiElementFinder> myFinders;
 
-  private final Project project;
-  private final ProjectSystemSyncManager syncManager;
-  private final List<PsiElementFinder> myFinders;
-
-  public BlazeProjectSystem(Project project) {
+  public BlazeProjectSystemBase(Project project) {
     this.project = project;
     syncManager = new BlazeProjectSystemSyncManager(project);
 
@@ -77,7 +70,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
   public Path getPathToAapt() {
     return AaptInvoker.getPathToAapt(
         AndroidSdks.getInstance().tryToChooseSdkHandler(),
-        new LogWrapper(BlazeProjectSystem.class));
+        new LogWrapper(BlazeProjectSystemBase.class));
   }
 
   @Override
@@ -111,11 +104,6 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
   @Override
   public Collection<PsiElementFinder> getPsiElementFinders() {
     return myFinders;
-  }
-
-  // #api AS3.4
-  public boolean getAugmentRClasses() {
-    return ENABLE_PSI_AUGMENT.getValue();
   }
 
   @Nonnull

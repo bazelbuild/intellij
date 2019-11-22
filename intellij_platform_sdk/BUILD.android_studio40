@@ -1,0 +1,127 @@
+# Description:
+#
+# Plugin source jars for Android Studio (version encoded in directory name)
+package(
+    default_visibility = [
+        "//third_party/java/jetbrains/plugin_api:__pkg__",
+    ],
+)
+
+licenses(["restricted"])
+
+exports_files(["LICENSE"])
+
+java_import(
+    name = "sdk",
+    jars = glob(
+        # temporarily include the newly extracted java plugin in the core SDK
+        # see https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin/
+        # api#191: expose the java plugin as a separate target
+        [
+            "lib/*.jar",
+            "plugins/java/lib/*.jar",
+        ],
+        # Plugin code shouldn't need junit, and plugin tests may be driven by a different version.
+        # Exclude to avoid warnings: "Multiple versions of JUnit detected on classpath".
+        exclude = glob(["lib/junit*.jar"]),
+    ),
+    tags = ["intellij-provided-by-sdk"],
+    deps = [
+        # guava v20+ requires this at compile-time when using annotation processors.
+        "//third_party/java/error_prone:annotations",
+        "//third_party/java/junit:not-testonly",
+    ],
+)
+
+java_import(
+    name = "guava",
+    jars = glob(["lib/guava-*.jar"]),
+)
+
+java_import(
+    name = "coverage",
+    jars = glob(["plugins/coverage/lib/*.jar"]),
+)
+
+java_import(
+    name = "hg4idea",
+    jars = ["plugins/hg4idea/lib/hg4idea.jar"],
+)
+
+java_import(
+    name = "android_plugin",
+    jars = glob([
+        "plugins/android/lib/*.jar",
+        "plugins/android-layoutlib/lib/*.jar",
+        "plugins/android-wizardTemplate-plugin/lib/*.jar",
+        "plugins/android-wizardTemplate-impl/lib/*.jar",
+        "plugins/android-ndk/lib/*.jar",
+        "plugins/sdk-updates/lib/*.jar",
+    ]),
+    runtime_deps = [
+        ":kotlin",
+    ],
+)
+
+java_import(
+    name = "test_recorder",
+    jars = glob([
+        "plugins/test-recorder/lib/*.jar",
+    ]),
+)
+
+java_import(
+    name = "kotlin",
+    jars = glob(["plugins/Kotlin/lib/*.jar"]),
+)
+
+java_import(
+    name = "junit",
+    jars = glob(["plugins/junit/lib/*.jar"]),
+)
+
+java_import(
+    name = "tasks",
+    jars = [
+        "plugins/tasks/lib/tasks-api.jar",
+        "plugins/tasks/lib/tasks-core.jar",
+    ],
+)
+
+java_import(
+    name = "terminal",
+    jars = ["plugins/terminal/lib/terminal.jar"],
+)
+
+java_import(
+    name = "forms_rt",
+    jars = ["lib/forms_rt.jar"],
+)
+
+# The plugins required by ASwB. We need to include them
+# when running integration tests.
+java_import(
+    name = "bundled_plugins",
+    jars = glob(
+        [
+            "plugins/gradle/lib/*.jar",
+            "plugins/Groovy/lib/*.jar",
+            "plugins/java-i18n/lib/*.jar",
+            "plugins/junit/lib/*.jar",
+            "plugins/ndk-workspace/lib/*.jar",
+            "plugins/properties/lib/*.jar",
+            "plugins/smali/lib/*.jar",
+            "plugins/IntelliLang/lib/*.jar",
+        ],
+        exclude = [
+            # Conflict with lib/guava-*.jar
+            "plugins/gradle/lib/guava-*.jar",
+        ],
+    ),
+    tags = ["intellij-provided-by-sdk"],
+)
+
+filegroup(
+    name = "application_info_jar",
+    srcs = ["lib/resources.jar"],
+)

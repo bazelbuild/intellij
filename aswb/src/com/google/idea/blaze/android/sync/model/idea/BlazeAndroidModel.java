@@ -74,22 +74,22 @@ public class BlazeAndroidModel implements AndroidModel {
     this.desugarJava8Libs = desugarJava8Libs;
   }
 
-  @Override
+  // @Override #api3.6
   public SourceProvider getDefaultSourceProvider() {
     return sourceProvider;
   }
 
-  @Override
+  // @Override #api3.6
   public List<SourceProvider> getActiveSourceProviders() {
     return sourceProviders;
   }
 
-  @Override
+  // @Override #api3.6
   public List<SourceProvider> getTestSourceProviders() {
     return sourceProviders;
   }
 
-  @Override
+  // @Override #api3.6
   public List<SourceProvider> getAllSourceProviders() {
     return sourceProviders;
   }

@@ -96,6 +96,12 @@ public class BlazeAndroidModuleTemplate implements AndroidModulePaths {
     return srcDirectory;
   }
 
+  @Nullable
+  @Override
+  public File getUnitTestDirectory(@Nullable String packageName) {
+    return srcDirectory;
+  }
+
   @Override
   public List<File> getResDirectories() {
     return resDirectories;
