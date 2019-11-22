@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Streams;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.GoIdeInfo;
@@ -48,6 +49,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
@@ -64,6 +66,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import one.util.streamex.StreamEx;
@@ -257,8 +260,7 @@ public class BlazeGoPackage extends GoPackage {
                 ? oldVirtualFile
                 : Optional.ofNullable(VfsUtils.resolveVirtualFile(file, false)));
     return directories.values().stream()
-        .filter(Optional::isPresent)
-        .map(Optional::get)
+        .flatMap(Streams::stream)
         .filter(VirtualFile::isValid)
         .collect(toImmutableSet());
   }
@@ -283,24 +285,29 @@ public class BlazeGoPackage extends GoPackage {
                     .map(psiManager::findFile)
                     .filter(GoFile.class::isInstance));
     return files.values().stream()
-        .filter(Optional::isPresent)
-        .map(Optional::get)
+        .flatMap(Streams::stream)
         .filter(PsiFile::isValid)
         .collect(toImmutableSet());
   }
 
   /**
-   * Override {@link GoPackage#processFiles(Processor)} to work on specific files instead of by
-   * directory.
+   * Override {@link GoPackage#processFiles(Processor, Predicate)} to work on specific files instead
+   * of by directory.
    */
   @Override
-  public boolean processFiles(Processor<? super PsiFile> processor) {
+  public boolean processFiles(
+      Processor<? super PsiFile> processor, Predicate<VirtualFile> virtualFileFilter) {
     if (!isValid()) {
       return true;
     }
+    FileIndexFacade fileIndexFacade = FileIndexFacade.getInstance(getProject());
     for (PsiFile file : files()) {
       ProgressIndicatorProvider.checkCanceled();
-      if (!processor.process(file)) {
+      VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile.isValid()
+          && virtualFileFilter.test(virtualFile)
+          && !fileIndexFacade.isExcludedFile(virtualFile)
+          && !processor.process(file)) {
         return false;
       }
     }
