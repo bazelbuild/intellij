@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.SyncCache;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
@@ -145,6 +146,7 @@ public class WorkspaceHelper {
       BuildSystemProvider provider, WorkspaceRoot root, WorkspacePath workspacePath) {
     File file = root.fileForPath(workspacePath).getParentFile();
     while (file != null && FileUtil.isAncestor(root.directory(), file, false)) {
+      ProgressManager.checkCanceled();
       if (provider.findBuildFileInDirectory(file) != null) {
         return root.workspacePathFor(file);
       }

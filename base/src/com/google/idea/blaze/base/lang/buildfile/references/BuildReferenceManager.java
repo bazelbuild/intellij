@@ -221,8 +221,7 @@ public class BuildReferenceManager {
 
   @Nullable
   public BuildFile findBuildFile(@Nullable File packageDirectory) {
-    FileOperationProvider provider = FileOperationProvider.getInstance();
-    if (packageDirectory == null || !provider.isDirectory(packageDirectory)) {
+    if (packageDirectory == null) {
       return null;
     }
     VirtualFile vf =
