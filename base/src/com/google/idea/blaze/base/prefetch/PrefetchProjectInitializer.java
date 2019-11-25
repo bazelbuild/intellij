@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.prefetch;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -64,25 +65,28 @@ public class PrefetchProjectInitializer implements ApplicationComponent {
     if (!Blaze.isBlazeProject(project)) {
       return;
     }
-    BlazeProjectData projectData = getBlazeProjectData(project);
-    ProjectViewSet projectViewSet = getProjectViewSet(project);
     PrefetchIndexingTask.submitPrefetchingTask(
         project,
         PooledThreadExecutor.INSTANCE.submit(
             () -> {
               RemoteOutputsCache.getInstance(project).initialize();
-              if (projectViewSet != null) {
-                FileCaches.initialize(project);
-              }
+              FileCaches.initialize(project);
             }),
         "Reading local caches");
 
-    if (projectViewSet == null) {
-      return;
-    }
     PrefetchIndexingTask.submitPrefetchingTask(
         project,
-        PrefetchService.getInstance().prefetchProjectFiles(project, projectViewSet, projectData),
+        Futures.submitAsync(
+            () -> {
+              BlazeProjectData projectData = getBlazeProjectData(project);
+              ProjectViewSet viewSet = getProjectViewSet(project);
+              if (projectData == null || viewSet == null) {
+                return Futures.immediateFuture(null);
+              }
+              return PrefetchService.getInstance()
+                  .prefetchProjectFiles(project, viewSet, projectData);
+            },
+            PooledThreadExecutor.INSTANCE),
         "Initial Prefetching");
   }
 
