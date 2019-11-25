@@ -27,6 +27,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.history.core.Paths;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import java.io.File;
@@ -94,6 +95,7 @@ public class DeprecatedLoadQuickFix implements LocalQuickFix, HighPriorityAction
     BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
     file = file.getParentFile();
     while (file != null) {
+      ProgressManager.checkCanceled();
       File buildFile = provider.findBuildFileInDirectory(file);
       if (buildFile != null) {
         return file;

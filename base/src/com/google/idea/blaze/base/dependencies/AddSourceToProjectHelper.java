@@ -53,6 +53,7 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -321,6 +322,7 @@ class AddSourceToProjectHelper {
     }
     BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
     while (source != null) {
+      ProgressManager.checkCanceled();
       if (provider.findBuildFileInDirectory(pathResolver.resolveToFile(source)) != null) {
         return source;
       }
