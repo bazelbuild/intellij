@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.typescript;
 
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.sdkcompat.typescript.TypeScriptConfigServiceCompat;
@@ -61,15 +62,10 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigServiceCompat
     }
   }
 
-  void clear() {
+  void update(BlazeProjectData projectData) {
     if (impl instanceof BlazeTypeScriptConfigServiceImpl) {
-      ((BlazeTypeScriptConfigServiceImpl) impl).clear();
+      ((BlazeTypeScriptConfigServiceImpl) impl).update(projectData);
     }
-  }
-
-  boolean update() {
-    return impl instanceof BlazeTypeScriptConfigServiceImpl
-        && ((BlazeTypeScriptConfigServiceImpl) impl).update();
   }
 
   @Override

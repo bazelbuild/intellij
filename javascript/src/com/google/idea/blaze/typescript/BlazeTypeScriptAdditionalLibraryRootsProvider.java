@@ -72,29 +72,42 @@ public final class BlazeTypeScriptAdditionalLibraryRootsProvider
     if (!projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.TYPESCRIPT)) {
       return ImmutableList.of();
     }
-    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
-    Stream<File> filesFromTargetMap =
-        projectData.getTargetMap().targets().stream()
-            .filter(t -> t.getTsIdeInfo() != null)
-            .map(TargetIdeInfo::getTsIdeInfo)
-            .map(TsIdeInfo::getSources)
-            .flatMap(Collection::stream)
-            .filter(BlazeTypeScriptAdditionalLibraryRootsProvider::isTypeScriptArtifact)
-            .filter(location -> isExternalArtifact(importRoots, location))
-            .distinct()
-            .map(a -> OutputArtifactResolver.resolve(project, decoder, a))
-            .filter(Objects::nonNull);
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    Stream<File> filesFromTsConfig =
-        moveTsconfigFilesToAdditionalLibrary.getValue()
-            ? TypeScriptConfigService.Provider.getConfigFiles(project).stream()
-                .map(TypeScriptConfig::getFileList)
-                .flatMap(Collection::stream)
-                .map(VfsUtil::virtualToIoFile)
-                .filter(file -> isExternalFile(workspaceRoot, importRoots, file))
-            : Stream.of();
+    return Stream.concat(
+            filesFromTargetMap(project, projectData, importRoots),
+            filesFromTsConfig(project, projectData, importRoots))
+        .collect(toImmutableList());
+  }
 
-    return Stream.concat(filesFromTargetMap, filesFromTsConfig).collect(toImmutableList());
+  private static Stream<File> filesFromTargetMap(
+      Project project, BlazeProjectData projectData, ImportRoots importRoots) {
+    ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
+    return projectData.getTargetMap().targets().stream()
+        .filter(t -> t.getTsIdeInfo() != null)
+        .map(TargetIdeInfo::getTsIdeInfo)
+        .map(TsIdeInfo::getSources)
+        .flatMap(Collection::stream)
+        .filter(BlazeTypeScriptAdditionalLibraryRootsProvider::isTypeScriptArtifact)
+        .filter(location -> isExternalArtifact(importRoots, location))
+        .distinct()
+        .map(a -> OutputArtifactResolver.resolve(project, decoder, a))
+        .filter(Objects::nonNull);
+  }
+
+  private static Stream<File> filesFromTsConfig(
+      Project project, BlazeProjectData projectData, ImportRoots importRoots) {
+    if (!moveTsconfigFilesToAdditionalLibrary.getValue()) {
+      return Stream.of();
+    }
+    TypeScriptConfigService typeScriptConfigService = TypeScriptConfigService.Provider.get(project);
+    if (typeScriptConfigService instanceof DelegatingTypeScriptConfigService) {
+      ((DelegatingTypeScriptConfigService) typeScriptConfigService).update(projectData);
+    }
+    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+    return typeScriptConfigService.getConfigs().stream()
+        .map(TypeScriptConfig::getFileList)
+        .flatMap(Collection::stream)
+        .map(VfsUtil::virtualToIoFile)
+        .filter(file -> isExternalFile(workspaceRoot, importRoots, file));
   }
 
   private static boolean isTypeScriptArtifact(ArtifactLocation location) {

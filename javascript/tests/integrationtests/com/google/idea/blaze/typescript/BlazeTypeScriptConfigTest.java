@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.TestFileSystem.MockFileOperationProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VfsUtils;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -165,14 +166,15 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
                             .add(Label.create("//project/foo:tsconfig")))
                     .build())
             .build());
+    BlazeProjectData projectData =
+        MockBlazeProjectDataBuilder.builder()
+            .setOutputBase(fileSystem.getRootDir() + "/out")
+            .build();
     registerProjectService(
-        BlazeProjectDataManager.class,
-        new MockBlazeProjectDataManager(
-            MockBlazeProjectDataBuilder.builder()
-                .setOutputBase(fileSystem.getRootDir() + "/out")
-                .build()));
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(projectData));
 
     this.blazeConfigService = new BlazeTypeScriptConfigServiceImpl(getProject());
+    blazeConfigService.update(projectData);
     this.regularConfigService =
         TypeScriptConfigServiceCompat.newImpl(
             getProject(),

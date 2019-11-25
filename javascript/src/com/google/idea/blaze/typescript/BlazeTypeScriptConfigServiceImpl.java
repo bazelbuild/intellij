@@ -21,22 +21,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
-import com.google.idea.blaze.base.sync.SyncListener;
-import com.google.idea.blaze.base.sync.SyncMode;
-import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.common.transactions.Transactions;
 import com.google.idea.sdkcompat.typescript.TypeScriptConfigServiceCompat;
 import com.intellij.lang.typescript.compiler.TypeScriptCompilerService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
-import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigsChangedListener;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
@@ -61,18 +54,13 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
   private final Project project;
   private final List<TypeScriptConfigsChangedListener> listeners;
 
-  private ImmutableMap<VirtualFile, TypeScriptConfig> configs;
+  private volatile ImmutableMap<VirtualFile, TypeScriptConfig> configs;
   private final AtomicInteger configsHash = new AtomicInteger(Objects.hash());
 
   BlazeTypeScriptConfigServiceImpl(Project project) {
     this.project = project;
     this.listeners = new ArrayList<>();
-    update();
-  }
-
-  void clear() {
-    configs = ImmutableMap.of();
-    configsHash.set(Objects.hash());
+    this.configs = ImmutableMap.of();
   }
 
   /**
@@ -80,16 +68,21 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
    *
    * <p>This calls {@link File#lastModified()}, so should not be called on the EDT or with a read
    * lock.
-   *
-   * @return whether there was a change to the typescript configs.
    */
-  boolean update() {
+  void update(BlazeProjectData projectData) {
     configs =
-        parseConfigs(project).stream()
+        parseConfigs(project, projectData).stream()
             .collect(
                 ImmutableMap.toImmutableMap(TypeScriptConfig::getConfigFile, Functions.identity()));
     for (TypeScriptConfigsChangedListener listener : listeners) {
       TypeScriptConfigServiceCompat.fireListener(listener, configs);
+    }
+    restartServiceIfConfigsChanged();
+  }
+
+  private void restartServiceIfConfigsChanged() {
+    if (!restartTypeScriptService.getValue()) {
+      return;
     }
     int pathHash = Arrays.hashCode(configs.keySet().stream().map(VirtualFile::getPath).toArray());
     long contentTimestamp =
@@ -101,16 +94,21 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
             .max(Comparator.naturalOrder())
             .orElse(0L);
     int newConfigsHash = Objects.hash(pathHash, contentTimestamp);
-    return configsHash.getAndSet(newConfigsHash) != newConfigsHash;
+    if (configsHash.getAndSet(newConfigsHash) != newConfigsHash) {
+      TransactionGuard.getInstance()
+          .submitTransactionLater(
+              project, () -> TypeScriptCompilerService.restartServices(project, false));
+    }
   }
 
-  private ImmutableList<TypeScriptConfig> parseConfigs(Project project) {
+  private static ImmutableList<TypeScriptConfig> parseConfigs(
+      Project project, BlazeProjectData projectData) {
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     if (projectViewSet == null) {
       return ImmutableList.of();
     }
     return getTsConfigTargets(projectViewSet).stream()
-        .map(label -> BlazeTypeScriptConfig.getInstance(project, label))
+        .map(label -> BlazeTypeScriptConfig.getInstance(project, projectData, label))
         .filter(Objects::nonNull)
         .collect(ImmutableList.toImmutableList());
   }
@@ -187,34 +185,5 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
   @Override
   public Set<VirtualFile> getIncludedFiles(VirtualFile file) {
     return ImmutableSet.of();
-  }
-
-  static class Updater implements SyncListener {
-    @Override
-    public void onSyncComplete(
-        Project project,
-        BlazeContext context,
-        BlazeImportSettings importSettings,
-        ProjectViewSet projectViewSet,
-        ImmutableSet<Integer> buildIds,
-        BlazeProjectData blazeProjectData,
-        SyncMode syncMode,
-        SyncResult syncResult) {
-      TypeScriptConfigService service = TypeScriptConfigService.Provider.get(project);
-      if (!(service instanceof DelegatingTypeScriptConfigService)) {
-        return;
-      }
-      if (!blazeProjectData
-          .getWorkspaceLanguageSettings()
-          .isLanguageActive(LanguageClass.TYPESCRIPT)) {
-        ((DelegatingTypeScriptConfigService) service).clear();
-      } else if (syncMode != SyncMode.NO_BUILD) {
-        if (((DelegatingTypeScriptConfigService) service).update()
-            && restartTypeScriptService.getValue()) {
-          Transactions.submitTransactionAndWait(
-              () -> TypeScriptCompilerService.restartServices(project, false));
-        }
-      }
-    }
   }
 }

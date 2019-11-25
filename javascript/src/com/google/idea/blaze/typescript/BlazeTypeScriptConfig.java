@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.sdkcompat.typescript.TypeScriptConfigCompat;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.javascript.library.JSLibraryUtil;
@@ -114,7 +113,7 @@ class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
   private final NotNullLazyValue<List<VirtualFile>> files;
 
   @Nullable
-  static TypeScriptConfig getInstance(Project project, Label label) {
+  static TypeScriptConfig getInstance(Project project, BlazeProjectData projectData, Label label) {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
     // as seen by the project
@@ -122,12 +121,6 @@ class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
         VfsUtils.resolveVirtualFile(
             new File(workspaceRoot.fileForPath(label.blazePackage()), "tsconfig.json"));
     if (configFile == null) {
-      return null;
-    }
-
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (projectData == null) {
       return null;
     }
 
