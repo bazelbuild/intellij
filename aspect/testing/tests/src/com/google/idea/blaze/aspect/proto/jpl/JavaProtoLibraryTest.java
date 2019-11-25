@@ -79,5 +79,74 @@ public class JavaProtoLibraryTest extends BazelIntellijAspectTest {
                 testRelative("libbar_proto-speed.jar"),
                 testRelative("libbar_proto-speed-hjar.jar"),
                 testRelative("bar_proto-speed-src.jar")));
+
+    // intellij-info groups
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
+        .containsAllOf(
+            testRelative("lib.java-manifest"),
+            testRelative(intellijInfoFileName("lib")),
+            testRelative(intellijInfoFileName("bar_java_proto")),
+            testRelative(intellijInfoFileName(barProto.getKey())),
+            testRelative(intellijInfoFileName(fooProto.getKey())));
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-outputs"))
+        .containsExactly(
+            testRelative("lib.java-manifest"), testRelative(intellijInfoFileName("lib")));
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
+        .containsAllOf(
+            testRelative("lib.java-manifest"),
+            testRelative(intellijInfoFileName("lib")),
+            testRelative(intellijInfoFileName("bar_java_proto")),
+            testRelative(intellijInfoFileName(barProto.getKey())));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
+        .doesNotContain(testRelative(intellijInfoFileName(fooProto.getKey())));
+
+    // intellij-resolve groups
+    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
+        .containsExactly(
+            // lib
+            testRelative("liblib.jar"),
+            testRelative("liblib-hjar.jar"),
+            testRelative("liblib-src.jar"),
+            testRelative("liblib.jdeps"),
+            // bar_proto
+            testRelative("libbar_proto-speed.jar"),
+            testRelative("libbar_proto-speed-hjar.jar"),
+            testRelative("bar_proto-speed-src.jar"),
+            // foo_proto
+            testRelative("libfoo_proto-speed.jar"),
+            testRelative("libfoo_proto-speed-hjar.jar"),
+            testRelative("foo_proto-speed-src.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java-outputs"))
+        .containsExactly(
+            testRelative("liblib.jar"),
+            testRelative("liblib-hjar.jar"),
+            testRelative("liblib-src.jar"),
+            testRelative("liblib.jdeps"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java-direct-deps"))
+        .containsAllOf(
+            // lib
+            testRelative("liblib.jar"),
+            testRelative("liblib-hjar.jar"),
+            testRelative("liblib-src.jar"),
+            testRelative("liblib.jdeps"),
+            // bar_proto
+            testRelative("libbar_proto-speed.jar"),
+            testRelative("libbar_proto-speed-hjar.jar"),
+            testRelative("bar_proto-speed-src.jar"),
+            // foo_proto (only hjar)
+            testRelative("libfoo_proto-speed-hjar.jar"));
+
+    // intellij-compile groups
+    assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java"))
+        .containsExactly(
+            testRelative("liblib.jar"),
+            testRelative("libbar_proto-speed.jar"),
+            testRelative("libfoo_proto-speed.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java-outputs"))
+        .containsExactly(testRelative("liblib.jar"));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-compile-java-direct-deps"))
+        .containsExactly(testRelative("liblib.jar"), testRelative("libbar_proto-speed.jar"));
   }
 }

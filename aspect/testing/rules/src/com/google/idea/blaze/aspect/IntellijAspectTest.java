@@ -18,6 +18,7 @@ package com.google.idea.blaze.aspect;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.toList;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.IntellijAspectTestFixture;
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.OutputGroup;
@@ -243,6 +244,21 @@ public abstract class IntellijAspectTest {
 
   protected static String intellijInfoFileName(String targetName) {
     return String.format("%s-%s.intellij-info.txt", targetName, targetName.hashCode());
+  }
+
+  protected static String intellijInfoFileName(TargetKey key) {
+    String targetName = getTargetName(key.getLabel());
+    if (key.getAspectIdsList().isEmpty()) {
+      return intellijInfoFileName(targetName);
+    }
+    String aspects = Joiner.on(".").join(key.getAspectIdsList());
+    return String.format(
+        "%s-%s-%s.intellij-info.txt", targetName, targetName.hashCode(), aspects.hashCode());
+  }
+
+  private static String getTargetName(String label) {
+    int colonIx = label.indexOf(':');
+    return label.substring(colonIx + 1);
   }
 
   /** Returns the runtime location of a data dependency. */

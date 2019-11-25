@@ -838,6 +838,25 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
     update_sync_output_groups(output_groups, "intellij-info-java", depset([ide_info_file]))
     return True
 
+def _is_proto_library_wrapper(target, ctx):
+    """Returns True if the target is an empty shim around a proto library."""
+    if not ctx.rule.kind.endswith("proto_library") or ctx.rule.kind == "proto_library":
+        return False
+
+    # treat any *proto_library rule with a single proto_library dep as a shim
+    deps = collect_targets_from_attrs(ctx.rule.attr, ["deps"])
+    return len(deps) == 1 and deps[0].intellij_info and deps[0].intellij_info.kind == "proto_library"
+
+def _get_forwarded_deps(target, ctx):
+    """Returns the list of deps of this target to forward.
+
+    Used to handle wrapper/shim targets which are really just pointers to a
+    different target (for example, java_proto_library)
+    """
+    if _is_proto_library_wrapper(target, ctx):
+        return collect_targets_from_attrs(ctx.rule.attr, ["deps"])
+    return []
+
 ##### Main aspect function
 
 def intellij_info_aspect_impl(target, ctx, semantics):
@@ -901,11 +920,18 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         semantics_extra_deps(PREREQUISITE_DEPS, semantics, "extra_prerequisites"),
     )
 
+    forwarded_deps = _get_forwarded_deps(target, ctx)
+
     # Roll up output files from my prerequisites
     prerequisites = direct_dep_targets + runtime_dep_targets + extra_prerequisite_targets
     output_groups = dict()
     for dep in prerequisites:
         for k, v in dep.intellij_info.output_groups.items():
+            if dep in forwarded_deps:
+                # unconditionally roll up deps for these targets
+                output_groups[k] = output_groups[k] + [v] if k in output_groups else [v]
+                continue
+
             # roll up outputs of direct deps into '-direct-deps' output group
             if k.endswith("-direct-deps"):
                 continue
