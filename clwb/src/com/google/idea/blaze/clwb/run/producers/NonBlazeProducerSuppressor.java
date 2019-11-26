@@ -21,6 +21,7 @@ import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.cidr.cpp.execution.testing.boost.CMakeBoostTestRunConfigurationProducer;
 import com.jetbrains.cidr.cpp.execution.testing.google.CMakeGoogleTestRunConfigurationProducer;
 import com.jetbrains.cidr.cpp.execution.testing.tcatch.CMakeCatchTestRunConfigurationProducer;
 
@@ -31,7 +32,8 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
       PRODUCERS_TO_SUPPRESS =
           ImmutableList.of(
               CMakeGoogleTestRunConfigurationProducer.class,
-              CMakeCatchTestRunConfigurationProducer.class);
+              CMakeCatchTestRunConfigurationProducer.class,
+              CMakeBoostTestRunConfigurationProducer.class);
 
   private final Project project;
 

@@ -10,6 +10,8 @@ java_import(
         [
             "clion-*/lib/*.jar",
             "clion-*/plugins/clion-test-google/lib/*.jar",
+            "clion-*/plugins/clion-test-catch/lib/*.jar",
+            "clion-*/plugins/clion-test-boost/lib/*.jar",
         ]),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
