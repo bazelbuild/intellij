@@ -30,7 +30,7 @@ public class ServiceHelperCompat {
       Class<T> key,
       T implementation,
       Disposable parentDisposable) {
-    // TODO(b/144912851): replace "IDEA CORE" reference with PluginManagerCore.CORE_ID
+    // #api192: replace "IDEA CORE" reference with PluginManagerCore.CORE_ID
     // once it is available in the plugin API.
     Optional<IdeaPluginDescriptor> platformPlugin =
         PluginManager.getLoadedPlugins().stream()
