@@ -21,72 +21,64 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager.SyncPlugin;
-import com.google.idea.sdkcompat.openapi.VFileCreateEventCompat;
-import com.intellij.mock.MockLocalFileSystem;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.vfs.AsyncVfsEventsListener;
 import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import java.io.File;
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import javax.annotation.Nullable;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Test cases for {@link ExternalLibraryManager}. */
 @RunWith(JUnit4.class)
-public final class ExternalLibraryManagerTest extends BlazeTestCase {
-  private MockFileSystem fileSystem;
-  private MockExternalLibraryProvider libraryProvider;
+public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
+  private final MockExternalLibraryProvider libraryProvider = new MockExternalLibraryProvider();
   private SyncListener syncListener;
   private SyncPlugin syncPlugin;
-  private List<AsyncVfsEventsListener> vfsListeners;
 
-  @Override
-  protected void initTest(Container applicationServices, Container projectServices) {
-    super.initTest(applicationServices, projectServices);
-    fileSystem = new MockFileSystem();
-    libraryProvider = new MockExternalLibraryProvider();
-    syncListener = new ExternalLibraryManager.StartSyncListener();
-    syncPlugin = new ExternalLibraryManager.SyncPlugin();
-    vfsListeners = new ArrayList<>();
-    applicationServices.register(
-        AsyncVfsEventsPostProcessor.class, (listener, disposable) -> vfsListeners.add(listener));
-    applicationServices.register(VirtualFileSystemProvider.class, () -> fileSystem);
-    projectServices.register(ExternalLibraryManager.class, new ExternalLibraryManager(project));
-    registerExtensionPoint(
-            AdditionalLibraryRootsProvider.EP_NAME, AdditionalLibraryRootsProvider.class)
-        .registerExtension(libraryProvider);
+  @Before
+  public final void before() {
+    syncPlugin = SyncPlugin.EP_NAME.findExtension(ExternalLibraryManager.SyncPlugin.class);
+    syncListener =
+        SyncListener.EP_NAME.findExtension(ExternalLibraryManager.StartSyncListener.class);
+    registerExtension(AdditionalLibraryRootsProvider.EP_NAME, libraryProvider);
+  }
+
+  @After
+  public final void after() {
+    getExternalLibrary().getSourceRoots().forEach(this::delete);
   }
 
   @Test
   public void testFilesFound() {
-    VirtualFile fooFile = fileSystem.createFile("/src/foo/Foo.java");
+    VirtualFile fooFile = workspace.createFile(new WorkspacePath("foo/Foo.java"));
     assertThat(fooFile).isNotNull();
-    VirtualFile barFile = fileSystem.createFile("/src/bar/Bar.java");
+    VirtualFile barFile = workspace.createFile(new WorkspacePath("bar/Bar.java"));
     assertThat(barFile).isNotNull();
 
-    libraryProvider.setFiles("/src/foo/Foo.java", "/src/bar/Bar.java");
+    libraryProvider.setFiles(fooFile.getPath(), barFile.getPath());
     mockSync(SyncResult.SUCCESS);
 
     Collection<VirtualFile> libraryRoots = getExternalLibrary().getSourceRoots();
@@ -94,38 +86,37 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
   }
 
   @Test
-  public void testFileRemoved() {
-    VirtualFile fooFile = fileSystem.createFile("/src/foo/Foo.java");
+  public void testFileRemoved() throws InterruptedException {
+    VirtualFile fooFile = workspace.createFile(new WorkspacePath("foo/Foo.java"));
     assertThat(fooFile).isNotNull();
-    VirtualFile barFile = fileSystem.createFile("/src/bar/Bar.java");
+    VirtualFile barFile = workspace.createFile(new WorkspacePath("bar/Bar.java"));
     assertThat(barFile).isNotNull();
 
-    libraryProvider.setFiles("/src/foo/Foo.java", "/src/bar/Bar.java");
+    libraryProvider.setFiles(fooFile.getPath(), barFile.getPath());
     mockSync(SyncResult.SUCCESS);
 
     Collection<VirtualFile> libraryRoots = getExternalLibrary().getSourceRoots();
     assertThat(libraryRoots).containsExactly(fooFile, barFile);
 
-    fileSystem.removeFile("/src/bar/Bar.java");
+    deleteAndWaitForVfsEvents(barFile);
     assertThat(libraryRoots).containsExactly(fooFile);
-
-    fileSystem.removeFile("/src/foo/Foo.java");
+    deleteAndWaitForVfsEvents(fooFile);
     assertThat(libraryRoots).isEmpty();
   }
 
   @Test
   public void testSuccessfulSync() {
     // both old and new files exist, project data is changed
-    VirtualFile oldFile = fileSystem.createFile("/src/old/Old.java");
+    VirtualFile oldFile = workspace.createFile(new WorkspacePath("old/Old.java"));
     assertThat(oldFile).isNotNull();
-    VirtualFile newFile = fileSystem.createFile("/src/new/New.java");
+    VirtualFile newFile = workspace.createFile(new WorkspacePath("new/New.java"));
     assertThat(newFile).isNotNull();
 
-    libraryProvider.setFiles("/src/old/Old.java");
+    libraryProvider.setFiles(oldFile.getPath());
     mockSync(SyncResult.SUCCESS);
     assertThat(getExternalLibrary().getSourceRoots()).containsExactly(oldFile);
 
-    libraryProvider.setFiles("/src/new/New.java");
+    libraryProvider.setFiles(newFile.getPath());
     mockSync(SyncResult.SUCCESS);
     assertThat(getExternalLibrary().getSourceRoots()).containsExactly(newFile);
   }
@@ -133,16 +124,16 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
   @Test
   public void testFailedSync() {
     // both old and new files exist, project data is changed
-    VirtualFile oldFile = fileSystem.createFile("/src/old/Old.java");
+    VirtualFile oldFile = workspace.createFile(new WorkspacePath("old/Old.java"));
     assertThat(oldFile).isNotNull();
-    VirtualFile newFile = fileSystem.createFile("/src/new/New.java");
+    VirtualFile newFile = workspace.createFile(new WorkspacePath("new/New.java"));
     assertThat(newFile).isNotNull();
 
-    libraryProvider.setFiles("/src/old/Old.java");
+    libraryProvider.setFiles(oldFile.getPath());
     mockSync(SyncResult.SUCCESS);
     assertThat(getExternalLibrary().getSourceRoots()).containsExactly(oldFile);
 
-    libraryProvider.setFiles("/src/new/New.java");
+    libraryProvider.setFiles(newFile.getPath());
     mockSync(SyncResult.FAILURE);
     // files list should remain the same if sync failed
     assertThat(getExternalLibrary().getSourceRoots()).containsExactly(oldFile);
@@ -150,19 +141,19 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
 
   @Test
   public void testDuringSuccessfulSync() {
-    VirtualFile oldFile = fileSystem.createFile("/src/foo/Foo.java");
+    VirtualFile oldFile = workspace.createFile(new WorkspacePath("foo/Foo.java"));
     assertThat(oldFile).isNotNull();
 
-    libraryProvider.setFiles("/src/foo/Foo.java");
+    libraryProvider.setFiles(oldFile.getPath());
     mockSync(SyncResult.SUCCESS);
-    assertThat(libraryProvider.getAdditionalProjectLibraries(project)).isNotEmpty();
+    assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isNotEmpty();
 
     BlazeContext context = new BlazeContext();
-    syncListener.onSyncStart(project, context, SyncMode.INCREMENTAL);
-    assertThat(libraryProvider.getAdditionalProjectLibraries(project)).isEmpty();
+    syncListener.onSyncStart(getProject(), context, SyncMode.INCREMENTAL);
+    assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isEmpty();
 
     syncPlugin.updateProjectStructure(
-        project,
+        getProject(),
         context,
         null,
         new ProjectViewSet(ImmutableList.of()),
@@ -171,37 +162,37 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
         null,
         null,
         null);
-    assertThat(libraryProvider.getAdditionalProjectLibraries(project)).isNotEmpty();
+    assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isNotEmpty();
 
     syncListener.afterSync(
-        project, context, SyncMode.INCREMENTAL, SyncResult.SUCCESS, ImmutableSet.of());
-    assertThat(libraryProvider.getAdditionalProjectLibraries(project)).isNotEmpty();
+        getProject(), context, SyncMode.INCREMENTAL, SyncResult.SUCCESS, ImmutableSet.of());
+    assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isNotEmpty();
   }
 
   @Test
   public void testDuringFailedSync() {
-    VirtualFile oldFile = fileSystem.createFile("/src/foo/Foo.java");
+    VirtualFile oldFile = workspace.createFile(new WorkspacePath("foo/Foo.java"));
     assertThat(oldFile).isNotNull();
 
-    libraryProvider.setFiles("/src/foo/Foo.java");
+    libraryProvider.setFiles(oldFile.getPath());
     mockSync(SyncResult.SUCCESS);
-    assertThat(libraryProvider.getAdditionalProjectLibraries(project)).isNotEmpty();
+    assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isNotEmpty();
 
     BlazeContext context = new BlazeContext();
-    syncListener.onSyncStart(project, context, SyncMode.INCREMENTAL);
-    assertThat(libraryProvider.getAdditionalProjectLibraries(project)).isEmpty();
+    syncListener.onSyncStart(getProject(), context, SyncMode.INCREMENTAL);
+    assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isEmpty();
 
     syncListener.afterSync(
-        project, context, SyncMode.INCREMENTAL, SyncResult.FAILURE, ImmutableSet.of());
-    assertThat(libraryProvider.getAdditionalProjectLibraries(project)).isNotEmpty();
+        getProject(), context, SyncMode.INCREMENTAL, SyncResult.FAILURE, ImmutableSet.of());
+    assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isNotEmpty();
   }
 
   private void mockSync(SyncResult syncResult) {
     BlazeContext context = new BlazeContext();
-    syncListener.onSyncStart(project, context, SyncMode.INCREMENTAL);
+    syncListener.onSyncStart(getProject(), context, SyncMode.INCREMENTAL);
     if (syncResult.successful()) {
       syncPlugin.updateProjectStructure(
-          project,
+          getProject(),
           context,
           null,
           new ProjectViewSet(ImmutableList.of()),
@@ -211,50 +202,48 @@ public final class ExternalLibraryManagerTest extends BlazeTestCase {
           null,
           null);
     }
-    syncListener.afterSync(project, context, SyncMode.INCREMENTAL, syncResult, ImmutableSet.of());
+    syncListener.afterSync(
+        getProject(), context, SyncMode.INCREMENTAL, syncResult, ImmutableSet.of());
   }
 
   private SyntheticLibrary getExternalLibrary() {
-    Collection<SyntheticLibrary> libraries = libraryProvider.getAdditionalProjectLibraries(project);
+    Collection<SyntheticLibrary> libraries =
+        libraryProvider.getAdditionalProjectLibraries(getProject());
     assertThat(libraries).hasSize(1);
     SyntheticLibrary library = Iterables.getFirst(libraries, null);
     assertThat(library).isNotNull();
     return library;
   }
 
-  private final class MockFileSystem extends MockLocalFileSystem {
-    private final Set<String> paths = new HashSet<>();
-
-    VirtualFile createFile(String path) {
-      VirtualFile file = super.findFileByPath(path);
-      assertThat(file).isNotNull();
-      paths.add(path);
-      List<VFileEvent> events =
-          ImmutableList.of(
-              new VFileCreateEventCompat(this, file.getParent(), file.getName(), false, false));
-      vfsListeners.forEach(listener -> listener.filesChanged(events));
-      return file;
+  private void deleteAndWaitForVfsEvents(VirtualFile file) throws InterruptedException {
+    Disposable disposable = Disposer.newDisposable();
+    AsyncVfsEventsPostProcessor.getInstance()
+        .addListener(
+            events -> {
+              Disposer.dispose(disposable);
+              synchronized (this) {
+                notify();
+              }
+            },
+            disposable);
+    delete(file);
+    synchronized (this) {
+      while (!Disposer.isDisposed(disposable)) {
+        wait();
+      }
     }
+  }
 
-    void removeFile(String path) {
-      VirtualFile file = super.findFileByPath(path);
-      assertThat(file).isNotNull();
-      paths.remove(path);
-      List<VFileEvent> events = ImmutableList.of(new VFileDeleteEvent(this, file, false));
-      vfsListeners.forEach(listener -> listener.filesChanged(events));
-    }
-
-    @Nullable
-    @Override
-    public VirtualFile findFileByIoFile(File file) {
-      return findFileByPath(file.getPath());
-    }
-
-    @Nullable
-    @Override
-    public VirtualFile findFileByPath(String path) {
-      return paths.contains(path) ? super.findFileByPath(path) : null;
-    }
+  private void delete(VirtualFile file) {
+    TransactionGuard.getInstance()
+        .submitTransactionAndWait(
+            () -> {
+              try {
+                WriteAction.run(() -> file.delete(this));
+              } catch (IOException e) {
+                throw new UncheckedIOException(e);
+              }
+            });
   }
 
   private static final class MockExternalLibraryProvider extends BlazeExternalLibraryProvider {
