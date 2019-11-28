@@ -37,7 +37,7 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
   }
 
   private static boolean getDefaultJarCacheValue() {
-    return BuildSystemProvider.defaultBuildSystem().buildSystem() == BuildSystem.Blaze;
+    return true;
   }
 
   @Override
