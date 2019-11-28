@@ -83,7 +83,7 @@ public class AutomaticallyDeriveTargetsSection {
                   TextBlock.of(
                       "# Automatically includes all relevant targets under the 'directories'"
                           + " above")))
-          .add(ScalarSection.builder(KEY).set(true))
+          .add(ScalarSection.builder(KEY).set(false))
           .add(TextBlockSection.of(TextBlock.newLine()))
           .build();
     }
