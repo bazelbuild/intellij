@@ -324,6 +324,19 @@ java_library(
         android_studio = [":guava"],
         clion = [":guava"],
         intellij = [":guava"],
+    ) + select_for_plugin_api({
+        "intellij-ue-2019.3": [":failureaccess_for_external_binaries"],
+        "default": [],
+    }),
+)
+
+java_library(
+    name = "failureaccess_for_external_binaries",
+    visibility = ["//aspect/tools:__pkg__"],
+    exports = select_from_plugin_api_directory(
+        android_studio = [":failureaccess"],
+        clion = [":failureaccess"],
+        intellij = [":failureaccess"],
     ),
 )
 

@@ -37,7 +37,7 @@ http_archive(
 # integration tests.
 http_archive(
     name = "intellij_ue_2019_3",
-    build_file = "@//intellij_platform_sdk:BUILD.ue192",
+    build_file = "@//intellij_platform_sdk:BUILD.ue193",
     sha256 = "5bbaeaa580ae38622b8c6e9188551726f7d82fccde8ef1743cb141d902235e66",
     strip_prefix = "idea-IU-193.4386.10",
     url = "https://download.jetbrains.com/idea/ideaIU-193.4386.10.tar.gz",

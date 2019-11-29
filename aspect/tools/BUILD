@@ -12,7 +12,9 @@ licenses(["notice"])  # Apache 2.0
 java_library(
     name = "guava",
     visibility = ["//visibility:private"],
-    exports = ["//intellij_platform_sdk:guava_for_external_binaries"],
+    exports = [
+        "//intellij_platform_sdk:guava_for_external_binaries",
+    ],
 )
 
 java_library(
