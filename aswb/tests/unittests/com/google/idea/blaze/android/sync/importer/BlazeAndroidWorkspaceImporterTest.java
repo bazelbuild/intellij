@@ -1254,7 +1254,6 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     errorCollector.assertNoIssues();
 
     // The java importer performs jdeps optimization, but the android one does not.
-    assertThat(javaResult.libraries).isEmpty();
     assertThat(
             androidResult.aarLibraries.values().stream()
                 .map(BlazeAndroidWorkspaceImporterTest::aarName)
@@ -1397,7 +1396,6 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     errorCollector.assertNoIssues();
 
-    assertThat(javaResult.libraries).isEmpty();
     assertThat(
             androidResult.aarLibraries.values().stream()
                 .map(BlazeAndroidWorkspaceImporterTest::aarName)
