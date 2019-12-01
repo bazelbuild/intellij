@@ -1188,33 +1188,6 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
         .containsExactly("a.jar");
   }
 
-  @Test
-  public void testLibraryDepsWithJdepsReportingZeroShouldNotIncludeDirectDepsIfNotInWorkingSet() {
-    ProjectView projectView =
-        ProjectView.builder()
-            .add(
-                ListSection.builder(DirectorySection.KEY)
-                    .add(DirectoryEntry.include(new WorkspacePath("java/apps/example")))
-                    .add(DirectoryEntry.include(new WorkspacePath("javatests/apps/example"))))
-            .build();
-    TargetMapBuilder targetMapBuilder = targetMapForJdepsSuite();
-    workingSet =
-        new JavaWorkingSet(
-            workspaceRoot,
-            new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of()),
-            Predicate.isEqual("BUILD"));
-
-    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
-    assertThat(
-            result
-                .libraries
-                .values()
-                .stream()
-                .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
-                .collect(Collectors.toList()))
-        .isEmpty();
-  }
-
   /*
    * Test the exclude_target section
    */
