@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
-import com.google.idea.blaze.android.manifest.ParsedManifestService;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -143,9 +142,9 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
               AndroidDeployInfo deployInfoProto =
                   BlazeApkDeployInfoProtoHelper.readDeployInfoProtoForTarget(
                       label, buildResultHelper, fileName -> fileName.endsWith(DEPLOY_INFO_SUFFIX));
-              deployInfo = new BlazeAndroidDeployInfo(project, executionRoot, deployInfoProto);
-              ParsedManifestService.getInstance(project)
-                  .invalidateCachedManifests(deployInfo.getManifestFiles());
+              deployInfo =
+                  BlazeApkDeployInfoProtoHelper.extractDeployInfoAndInvalidateManifests(
+                      project, executionRoot, deployInfoProto);
             } catch (GetArtifactsException e) {
               IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
                   .submit(context);
