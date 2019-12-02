@@ -19,7 +19,10 @@ java_import(
 
 java_import(
     name = "guava",
-    jars = glob(["clion-*/lib/guava-*.jar"]),
+    jars = glob([
+        "clion-*/lib/failureaccess-*.jar",
+        "clion-*/lib/guava-*.jar",
+    ]),
 )
 
 java_import(
