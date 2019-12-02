@@ -247,6 +247,9 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.BinaryContextRunConfigurationProducer"
         order="first"/>
+    <runLineMarkerContributor
+        language="BUILD"
+        implementationClass="com.google.idea.blaze.base.run.producers.BlazeBuildFileRunLineMarkerProvider"/>
     <projectService serviceInterface="com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider"
                     serviceImplementation="com.google.idea.blaze.base.run.smrunner.TestUiSessionProviderImpl"/>
     <stepsBeforeRunProvider implementation="com.google.idea.blaze.base.run.BlazeBeforeRunTaskProvider"/>
