@@ -72,8 +72,7 @@ public class BlazeApkDeployInfoProtoHelper {
     File mergedManifestFile =
         new File(executionRoot, deployInfoProto.getMergedManifest().getExecRootPath());
     ParsedManifest mergedManifest = getParsedManifestSafe(project, mergedManifestFile);
-    ParsedManifestService.getInstance(project)
-        .invalidateCachedManifests(ImmutableList.of(mergedManifestFile));
+    ParsedManifestService.getInstance(project).invalidateCachedManifest(mergedManifestFile);
 
     // android_test targets uses additional merged manifests field of the deploy info proto to hold
     // the manifest of the test target APK.
@@ -84,7 +83,7 @@ public class BlazeApkDeployInfoProtoHelper {
           new File(executionRoot, additionalManifests.get(0).getExecRootPath());
       testTargetMergedManifest = getParsedManifestSafe(project, testTargetMergedManifestFile);
       ParsedManifestService.getInstance(project)
-          .invalidateCachedManifests(ImmutableList.of(testTargetMergedManifestFile));
+          .invalidateCachedManifest(testTargetMergedManifestFile);
     }
 
     ImmutableList<File> apksToDeploy =

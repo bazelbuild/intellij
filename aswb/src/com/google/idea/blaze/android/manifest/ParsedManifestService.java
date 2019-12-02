@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -69,8 +68,8 @@ public class ParsedManifestService {
     return manifestFileToParsedManifests.get(file);
   }
 
-  public void invalidateCachedManifests(Collection<File> manifestFiles) {
-    manifestFileToParsedManifests.keySet().removeAll(manifestFiles);
+  public void invalidateCachedManifest(File manifestFile) {
+    manifestFileToParsedManifests.keySet().remove(manifestFile);
   }
 
   static class ClearManifestParser implements SyncListener {
