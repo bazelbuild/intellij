@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import java.util.Collection;
@@ -68,6 +69,7 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
     if (kind.equals(AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind())) {
       // The android_binary rule requires a manifest.
       setDefaultManifest();
+      setGenerateResourceClass();
     }
 
     // blaze java packages all take the form "java/<actual_package_here>".
@@ -173,6 +175,15 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
 
   public NbAndroidTarget java_toolchain_version(String version) {
     javaTarget.java_toolchain_version(version);
+    return this;
+  }
+
+  public NbAndroidTarget instruments(String relativeLabel) {
+    if (relativeLabel.startsWith("//")) {
+      androidIdeInfoBuilder.setInstruments(Label.create(relativeLabel));
+    } else {
+      androidIdeInfoBuilder.setInstruments(Label.create("//" + blazePackage + relativeLabel));
+    }
     return this;
   }
 }
