@@ -19,14 +19,13 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 
-/** Builds the APK. */
+/** Builds the APK and optionally installs the APK. */
 public interface BlazeApkBuildStep {
   /**
-   * Builds and optionally installs the APK.
-   *
-   * @return True to continue the launch.
+   * Builds and optionally installs the APK. Errors and messages are bubbled up to the caller via
+   * the given {@link BlazeContext}.
    */
-  boolean build(BlazeContext context, BlazeAndroidDeviceSelector.DeviceSession deviceSession);
+  void build(BlazeContext context, BlazeAndroidDeviceSelector.DeviceSession deviceSession);
 
   BlazeAndroidDeployInfo getDeployInfo() throws ApkProvisionException;
 }

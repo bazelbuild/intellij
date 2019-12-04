@@ -27,16 +27,20 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.run.AndroidSessionInfoCompat;
 import com.google.idea.blaze.android.run.BlazeAndroidRunState;
+import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
+import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -48,6 +52,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
@@ -206,12 +211,31 @@ public final class BlazeAndroidRunConfigurationRunner
               env.getCopyableUserData(DEVICE_SESSION_KEY);
 
           BlazeApkBuildStep buildStep = runContext.getBuildStep();
+          ScopedTask<Void> buildTask =
+              new ScopedTask<Void>(context) {
+                @Override
+                protected Void execute(BlazeContext context) {
+                  buildStep.build(context, deviceSession);
+                  return null;
+                }
+              };
+
           try {
-            return buildStep.build(context, deviceSession);
+            ListenableFuture<Void> buildFuture =
+                ProgressiveTaskWithProgressIndicator.builder(
+                        project,
+                        String.format("Executing %s apk build", Blaze.buildSystemName(project)))
+                    .submitTaskWithResult(buildTask);
+            Futures.getChecked(buildFuture, ExecutionException.class);
+          } catch (ExecutionException e) {
+            context.setHasError();
+          } catch (CancellationException e) {
+            context.setCancelled();
           } catch (Exception e) {
             LOG.error(e);
             return false;
           }
+          return context.shouldContinue();
         });
   }
 }
