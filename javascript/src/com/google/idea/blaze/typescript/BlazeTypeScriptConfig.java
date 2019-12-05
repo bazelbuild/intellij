@@ -43,6 +43,7 @@ import com.intellij.lang.typescript.tsconfig.TypeScriptImportResolveContext;
 import com.intellij.lang.typescript.tsconfig.TypeScriptImportsResolverProvider;
 import com.intellij.lang.typescript.tsconfig.checkers.TypeScriptConfigFilesInclude;
 import com.intellij.lang.typescript.tsconfig.checkers.TypeScriptConfigIncludeBase;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -386,10 +387,13 @@ class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
       runfilesPrefix = "./" + label.targetName() + ".runfiles/" + workspaceRoot.getName();
     }
 
+    boolean suppressWildcards =
+        typesScriptSuppressWildcardImports.getValue()
+            && ApplicationInfo.getInstance().getBuild().getBaselineVersion() >= 193;
     Set<String> keys = json.keySet();
     for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
       String name = entry.getKey();
-      if (typesScriptSuppressWildcardImports.getValue()
+      if (suppressWildcards
           && name.endsWith("/*")
           && keys.contains(name.substring(0, name.length() - 2))) {
         // If we include both the exact match (e.g., @foo/bar) and the wildcard match (@foo/bar/*)
@@ -398,8 +402,8 @@ class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
         // users are more likely to want the exact match as opposed to the wildcard match.
         // The [TS] import suggestions provided by the typescript service should still provides
         // options from the wildcard matches if the user still needs them.
-        // TODO: remove this when the upstream bug has been fixed:
-        // https://youtrack.jetbrains.com/issue/WEB-42689
+        // Fixed in 2019.3.2: https://youtrack.jetbrains.com/issue/WEB-42689
+        // TODO: remove after 2019.2 is obsolete #api192
         continue;
       }
       List<String> mappings = new ArrayList<>();
