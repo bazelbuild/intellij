@@ -15,15 +15,23 @@
  */
 package com.google.idea.sdkcompat.vcs;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vfs.VirtualFile;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
-/** Compat for {@link ChangesListView}. Remove when #api182 is no longer supported. */
+/** Compat for {@link ChangesListView}. Remove when #api192 is no longer supported. */
 public final class ChangesListViewCompat {
   private ChangesListViewCompat() {}
 
-  // #api182
-  public static ChangesListView create(Project project) {
-    return new ChangesListView(project, /* showCheckboxes */ false);
+  /**
+   * #api192: The DataKey was changed from UNVERSIONED_FILES_DATA_KEY to
+   * UNVERSIONED_FILE_PATHS_DATA_KEY but the type also changed from Stream&lt;VirtualFile> to
+   * Stream&lt;FilePath>
+   */
+  @Nullable
+  public static Stream<VirtualFile> getUnversionedFileStreamFromEvent(AnActionEvent e) {
+    return e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
   }
 }
