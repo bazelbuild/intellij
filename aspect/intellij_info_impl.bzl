@@ -726,13 +726,13 @@ def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output
 
 def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates intellij-info-android with android_ide_info, and intellij_resolve_android with android resolve files. Returns false if target doesn't contain android attribute."""
-    if not hasattr(target, "android"):
+    if AndroidIdeInfo not in target:
         return False
 
     android_semantics = semantics.android if hasattr(semantics, "android") else None
     extra_ide_info = android_semantics.extra_ide_info(target, ctx) if android_semantics else {}
 
-    android = target.android
+    android_ide_info = target[AndroidIdeInfo]
     resources = []
     res_folders = []
     if (hasattr(ctx.rule.attr, "resource_files")):
@@ -749,25 +749,32 @@ def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, ou
         instruments = str(ctx.rule.attr.instruments.label)
 
     android_info = struct_omit_none(
-        java_package = android.java_package,
-        idl_import_root = android.idl.import_root if hasattr(android.idl, "import_root") else None,
-        manifest = artifact_location(android.manifest),
+        java_package = android_ide_info.java_package,
+        idl_import_root = getattr(android_ide_info, "idl_import_root", None),
+        manifest = artifact_location(android_ide_info.manifest),
         manifest_values = [struct_omit_none(key = key, value = value) for key, value in ctx.rule.attr.manifest_values.items()] if hasattr(ctx.rule.attr, "manifest_values") else None,
-        apk = artifact_location(android.apk),
-        dependency_apk = [artifact_location(apk) for apk in android.apks_under_test],
-        has_idl_sources = android.idl.output != None,
-        idl_jar = library_artifact(android.idl.output),
-        generate_resource_class = android.defines_resources,
+        apk = artifact_location(android_ide_info.signed_apk),
+        dependency_apk = [artifact_location(apk) for apk in android_ide_info.apks_under_test],
+        has_idl_sources = android_ide_info.idl_class_jar != None,
+        idl_jar = struct_omit_none(
+            jar = artifact_location(android_ide_info.idl_class_jar),
+            source_jar = artifact_location(android_ide_info.idl_source_jar),
+            source_jars = [artifact_location(android_ide_info.idl_source_jar)],
+        ) if android_ide_info.idl_class_jar else None,
+        generate_resource_class = android_ide_info.defines_android_resources,
         resources = resources,
         res_folders = res_folders,
-        resource_jar = library_artifact(android.resource_jar),
+        resource_jar = library_artifact(android_ide_info.resource_jar),
         instruments = instruments,
         **extra_ide_info
     )
-    resolve_files = jars_from_output(android.idl.output)
+    resolve_files = [
+        android_ide_info.idl_class_jar,
+        android_ide_info.idl_source_jar,
+    ] if android_ide_info.idl_class_jar else []
 
-    if android.manifest and not android.manifest.is_source:
-        resolve_files += [android.manifest]
+    if android_ide_info.manifest and not android_ide_info.manifest.is_source:
+        resolve_files.append(android_ide_info.manifest)
 
     ide_info["android_ide_info"] = android_info
     update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
