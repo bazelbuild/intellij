@@ -37,7 +37,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -85,7 +84,8 @@ public class ExternalLibraryManager {
   }
 
   @Nullable
-  public SyntheticLibrary getLibrary(Class<? extends BlazeExternalLibraryProvider> providerClass) {
+  public BlazeExternalSyntheticLibrary getLibrary(
+      Class<? extends BlazeExternalLibraryProvider> providerClass) {
     return duringBlazeSync ? null : libraries.get(providerClass);
   }
 

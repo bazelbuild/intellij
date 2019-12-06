@@ -30,7 +30,8 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.function.Predicate;
 
-final class BlazeGoAdditionalLibraryRootsProvider extends BlazeExternalLibraryProvider {
+/** Provides out-of-project go sources for indexing. */
+public final class BlazeGoAdditionalLibraryRootsProvider extends BlazeExternalLibraryProvider {
   private static final BoolExperiment useGoAdditionalLibraryRootsProvider =
       new BoolExperiment("use.go.additional.library.roots.provider4", true);
 
