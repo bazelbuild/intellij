@@ -75,7 +75,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
   // requires some integration testing setup (e.g. will throw an exception if idea.home.path isn't
   // set).
   private static final String KOTLIN_PLUGIN_ID = "org.jetbrains.kotlin";
-  private static final LanguageVersion DEFAULT_VERSION = LanguageVersion.KOTLIN_1_2;
+  private static final LanguageVersion DEFAULT_VERSION = LanguageVersion.KOTLIN_1_3;
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
