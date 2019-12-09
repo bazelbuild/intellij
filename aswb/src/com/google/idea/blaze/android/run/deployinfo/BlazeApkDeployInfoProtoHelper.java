@@ -15,9 +15,8 @@
  */
 package com.google.idea.blaze.android.run.deployinfo;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.Artifact;
 import com.google.idea.blaze.android.manifest.ManifestParser.ParsedManifest;
@@ -35,40 +34,46 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-/** Reads the deploy info from a build step. */
+/**
+ * Utilities for reading and constructing {@link AndroidDeployInfo} and {@link
+ * BlazeAndroidDeployInfo}.
+ */
 public class BlazeApkDeployInfoProtoHelper {
-  public static AndroidDeployInfo readDeployInfoProtoForTarget(
+  public AndroidDeployInfo readDeployInfoProtoForTarget(
       Label target, BuildResultHelper buildResultHelper, Predicate<String> pathFilter)
-      throws GetArtifactsException {
-    ImmutableList<File> artifacts =
-        BlazeArtifact.getLocalFiles(
-            buildResultHelper.getBuildArtifactsForTarget(target, pathFilter));
-    if (artifacts.isEmpty()) {
-      throw new GetArtifactsException(
+      throws GetDeployInfoException {
+    ImmutableList<File> deployInfoFiles;
+    try {
+      deployInfoFiles =
+          BlazeArtifact.getLocalFiles(
+              buildResultHelper.getBuildArtifactsForTarget(target, pathFilter));
+    } catch (GetArtifactsException e) {
+      throw new GetDeployInfoException(e.getMessage());
+    }
+
+    if (deployInfoFiles.isEmpty()) {
+      throw new GetDeployInfoException(
           "No deploy info proto artifact found.  Was android_deploy_info in the output groups?");
     }
-    if (artifacts.size() != 1) {
-      String errMsg =
+
+    if (deployInfoFiles.size() > 1) {
+      throw new GetDeployInfoException(
           "More than one deploy info proto artifact found: "
-              + artifacts.stream().map(File::getPath).collect(Collectors.joining(", ", "[", "]"));
-      throw new GetArtifactsException(errMsg);
+              + deployInfoFiles.stream()
+                  .map(File::getPath)
+                  .collect(Collectors.joining(", ", "[", "]")));
     }
-    File deployInfoFile = Iterables.getOnlyElement(artifacts, null);
-    if (deployInfoFile == null) {
-      throw new GetArtifactsException("Deploy info file doesn't exist.");
-    }
-    AndroidDeployInfo deployInfo;
-    try (InputStream inputStream = new FileInputStream(deployInfoFile)) {
-      deployInfo = AndroidDeployInfoOuterClass.AndroidDeployInfo.parseFrom(inputStream);
+
+    try (InputStream inputStream = new FileInputStream(deployInfoFiles.get(0))) {
+      return AndroidDeployInfo.parseFrom(inputStream);
     } catch (IOException e) {
-      throw new GetArtifactsException(e.getMessage());
+      throw new GetDeployInfoException(e.getMessage());
     }
-    return deployInfo;
   }
 
-  public static BlazeAndroidDeployInfo extractDeployInfoAndInvalidateManifests(
+  public BlazeAndroidDeployInfo extractDeployInfoAndInvalidateManifests(
       Project project, File executionRoot, AndroidDeployInfo deployInfoProto)
-      throws GetArtifactsException {
+      throws GetDeployInfoException {
     File mergedManifestFile =
         new File(executionRoot, deployInfoProto.getMergedManifest().getExecRootPath());
     ParsedManifest mergedManifest = getParsedManifestSafe(project, mergedManifestFile);
@@ -94,17 +99,25 @@ public class BlazeApkDeployInfoProtoHelper {
     return new BlazeAndroidDeployInfo(mergedManifest, testTargetMergedManifest, apksToDeploy);
   }
 
-  /** Transforms thrown {@link IOException} to {@link GetArtifactsException} */
+  /** Transforms thrown {@link IOException} to {@link GetDeployInfoException} */
   private static ParsedManifest getParsedManifestSafe(Project project, File manifestFile)
-      throws GetArtifactsException {
+      throws GetDeployInfoException {
     try {
       return ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
     } catch (IOException e) {
-      throw new GetArtifactsException(
+      throw new GetDeployInfoException(
           "Could not read merged manifest file "
               + manifestFile
               + " due to error: "
               + e.getMessage());
+    }
+  }
+
+  /** Indicates a failure when extracting deploy info. */
+  public static class GetDeployInfoException extends Exception {
+    @VisibleForTesting
+    public GetDeployInfoException(String message) {
+      super(message);
     }
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.async.process;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.async.process.ExternalTask.Builder;
 import com.google.idea.blaze.base.async.process.ExternalTask.ExternalTaskImpl;
 import com.intellij.openapi.components.ServiceManager;
@@ -23,7 +24,8 @@ import com.intellij.openapi.components.ServiceManager;
  * Constructs an {@link ExternalTask} from a builder instance. This indirection exists to allow easy
  * redirection in blaze-invoking integration tests.
  */
-interface ExternalTaskProvider {
+@VisibleForTesting
+public interface ExternalTaskProvider {
 
   static ExternalTaskProvider getInstance() {
     return ServiceManager.getService(ExternalTaskProvider.class);
@@ -31,8 +33,8 @@ interface ExternalTaskProvider {
 
   ExternalTask build(ExternalTask.Builder builder);
 
+  /** Default implementation returning an {@link ExternalTaskImpl}. */
   class Impl implements ExternalTaskProvider {
-
     @Override
     public ExternalTask build(Builder builder) {
       return new ExternalTaskImpl(

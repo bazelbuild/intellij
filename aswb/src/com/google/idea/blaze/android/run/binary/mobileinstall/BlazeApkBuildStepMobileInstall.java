@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.run.binary.mobileinstall;
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.DeviceFutures;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
@@ -25,6 +26,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
+import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -34,7 +36,6 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
@@ -64,6 +65,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
   private final Label label;
   private final ImmutableList<String> blazeFlags;
   private final ImmutableList<String> exeFlags;
+  private final BlazeApkDeployInfoProtoHelper deployInfoHelper;
   private BlazeAndroidDeployInfo deployInfo = null;
 
   /**
@@ -75,15 +77,26 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
     return buildSystem == BuildSystem.Bazel ? "_incremental.deployinfo.pb" : "_mi.deployinfo.pb";
   }
 
+  @VisibleForTesting
+  public BlazeApkBuildStepMobileInstall(
+      Project project,
+      Label label,
+      ImmutableList<String> blazeFlags,
+      ImmutableList<String> exeFlags,
+      BlazeApkDeployInfoProtoHelper deployInfoHelper) {
+    this.project = project;
+    this.label = label;
+    this.blazeFlags = blazeFlags;
+    this.exeFlags = exeFlags;
+    this.deployInfoHelper = deployInfoHelper;
+  }
+
   public BlazeApkBuildStepMobileInstall(
       Project project,
       Label label,
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags) {
-    this.project = project;
-    this.label = label;
-    this.blazeFlags = blazeFlags;
-    this.exeFlags = exeFlags;
+    this(project, label, blazeFlags, exeFlags, new BlazeApkDeployInfoProtoHelper());
   }
 
   @Override
@@ -158,12 +171,12 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
 
       context.output(new StatusOutput("Reading deployment information..."));
       AndroidDeployInfo deployInfoProto =
-          BlazeApkDeployInfoProtoHelper.readDeployInfoProtoForTarget(
+          deployInfoHelper.readDeployInfoProtoForTarget(
               label, buildResultHelper, fileName -> fileName.endsWith(deployInfoSuffix));
       deployInfo =
-          BlazeApkDeployInfoProtoHelper.extractDeployInfoAndInvalidateManifests(
+          deployInfoHelper.extractDeployInfoAndInvalidateManifests(
               project, executionRoot, deployInfoProto);
-    } catch (GetArtifactsException e) {
+    } catch (GetDeployInfoException e) {
       IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
           .submit(context);
     }

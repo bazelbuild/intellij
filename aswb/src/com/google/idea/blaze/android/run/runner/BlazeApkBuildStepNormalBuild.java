@@ -21,12 +21,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
+import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
@@ -54,13 +54,24 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
   private final Project project;
   private final Label label;
   private final ImmutableList<String> buildFlags;
+  private final BlazeApkDeployInfoProtoHelper deployInfoHelper;
   private BlazeAndroidDeployInfo deployInfo = null;
 
+  @VisibleForTesting
   public BlazeApkBuildStepNormalBuild(
-      Project project, Label label, ImmutableList<String> buildFlags) {
+      Project project,
+      Label label,
+      ImmutableList<String> buildFlags,
+      BlazeApkDeployInfoProtoHelper deployInfoHelper) {
     this.project = project;
     this.label = label;
     this.buildFlags = buildFlags;
+    this.deployInfoHelper = deployInfoHelper;
+  }
+
+  public BlazeApkBuildStepNormalBuild(
+      Project project, Label label, ImmutableList<String> buildFlags) {
+    this(project, label, buildFlags, new BlazeApkDeployInfoProtoHelper());
   }
 
   /**
@@ -127,12 +138,12 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
 
       context.output(new StatusOutput("Reading deployment information..."));
       AndroidDeployInfo deployInfoProto =
-          BlazeApkDeployInfoProtoHelper.readDeployInfoProtoForTarget(
+          deployInfoHelper.readDeployInfoProtoForTarget(
               label, buildResultHelper, fileName -> fileName.endsWith(DEPLOY_INFO_SUFFIX));
       deployInfo =
-          BlazeApkDeployInfoProtoHelper.extractDeployInfoAndInvalidateManifests(
+          deployInfoHelper.extractDeployInfoAndInvalidateManifests(
               project, executionRoot, deployInfoProto);
-    } catch (GetArtifactsException e) {
+    } catch (GetDeployInfoException e) {
       IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
           .submit(context);
     }
