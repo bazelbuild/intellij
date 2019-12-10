@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.io;
 
 import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 import com.intellij.openapi.components.ServiceManager;
 import java.io.File;
 import java.io.IOException;
@@ -76,7 +77,21 @@ public class FileOperationProvider {
   }
 
   public void deleteRecursively(File file) throws IOException {
-    MoreFiles.deleteRecursively(file.toPath());
+    deleteRecursively(file, false);
+  }
+
+  /**
+   * Deletes the file or directory at the given path recursively, allowing insecure delete according
+   * to {@code allowInsecureDelete}.
+   *
+   * @see RecursiveDeleteOption#ALLOW_INSECURE
+   */
+  public void deleteRecursively(File file, boolean allowInsecureDelete) throws IOException {
+    if (allowInsecureDelete) {
+      MoreFiles.deleteRecursively(file.toPath(), RecursiveDeleteOption.ALLOW_INSECURE);
+    } else {
+      MoreFiles.deleteRecursively(file.toPath());
+    }
   }
 
   // If the file is too big, this method can blow up RAM as it reads the file contents

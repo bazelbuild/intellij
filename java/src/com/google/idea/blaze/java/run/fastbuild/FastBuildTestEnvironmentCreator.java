@@ -52,6 +52,8 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
   private static final String TEMP_DIRECTORY_VARIABLE = "TEST_TMPDIR";
   private static final String TEST_FILTER_VARIABLE = "TESTBRIDGE_TEST_ONLY";
   private static final String WORKSPACE_VARIABLE = "TEST_WORKSPACE";
+  private static final String ALLOW_INSECURE_TEST_DIAGNOSTICS_DELETION_KEY =
+      "blaze.fastBuild.allowInsecureTestDiagnosticsDeletion";
 
   private static final ExtensionPointName<FastBuildTestEnvironmentCreator> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.FastBuildTestEnvironmentCreator");
@@ -242,7 +244,7 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
 
       try {
         if (testDiagnosticsDir.exists()) {
-          files.deleteRecursively(testDiagnosticsDir);
+          files.deleteRecursively(testDiagnosticsDir, shouldAllowInsecureTestDiagnosticsDeletion());
         }
       } catch (IOException e) {
         throw new ExecutionException(e);
@@ -251,6 +253,11 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
       commandBuilder.addEnvironmentVariable(
           "TEST_DIAGNOSTICS_OUTPUT_DIR", testDiagnosticsDir.toString());
     }
+  }
+
+  /** Should we allow insecure deletion of test resources? */
+  private static boolean shouldAllowInsecureTestDiagnosticsDeletion() {
+    return Boolean.getBoolean(ALLOW_INSECURE_TEST_DIAGNOSTICS_DELETION_KEY);
   }
 
   private static void addJvmOptsFromBlazeFlags(
