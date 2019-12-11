@@ -56,6 +56,7 @@ import com.intellij.openapi.project.Project;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -175,7 +176,14 @@ public final class BlazeJavaWorkspaceImporter {
       }
     }
 
-    Map<LibraryKey, BlazeJarLibrary> result = Maps.newHashMap();
+    // Preserve classpath order. Add leaf level dependencies first and work the way up. This
+    // prevents conflicts when a JAR repackages it's dependencies. In such a case we prefer to
+    // resolve symbols from the original JAR rather than the repackaged version.
+    // Using accessOrdered LinkedHashMap because jars that are present in `workspaceBuilder.jdeps`
+    // and in `workspaceBuilder.directDeps`, we want to treat it as a directDep
+    Map<LibraryKey, BlazeJarLibrary> result =
+        new LinkedHashMap<>(
+            /* initialCapacity= */ 32, /* loadFactor= */ 0.75f, /* accessOrder= */ true);
 
     // Collect jars from jdep references
     for (String jdepsPath : workspaceBuilder.jdeps) {

@@ -84,6 +84,7 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -1213,6 +1214,88 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                 .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
                 .collect(Collectors.toList()))
         .isEmpty();
+  }
+
+  @Test
+  public void testLibrariesAreOrderedCorrectly() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/apps/example")))
+                    .add(DirectoryEntry.include(new WorkspacePath("javatests/apps/example"))))
+            .build();
+    TargetMapBuilder targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/apps/example:example_debug")
+                    .setBuildFile(source("java/apps/example/BUILD"))
+                    .setKind("java_library")
+                    .addSource(source("java/apps/example/Test.java"))
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .addDependency("//thirdparty/a:a")
+                    .addDependency("//thirdparty/b:b")
+                    .addDependency("//thirdparty/c:c")
+                    .addDependency("//thirdparty/d:d"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//thirdparty/d:d")
+                    .setKind("java_library")
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder().setClassJar(gen("thirdparty/d.jar")))))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//javatests/apps/example:example_debug_test")
+                    .setBuildFile(source("javatests/apps/example/BUILD"))
+                    .setKind("java_library")
+                    .addSource(source("javatests/apps/example/Test.java"))
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .addDependency("//thirdparty/f:f")
+                    .addDependency("//thirdparty/g:g")
+                    .addDependency("//thirdparty/h:h")
+                    .addDependency("//thirdparty/i:i"))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//thirdparty/i:i")
+                    .setKind("java_library")
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder().setClassJar(gen("thirdparty/i.jar")))));
+
+    jdepsMap.put(
+        TargetKey.forPlainTarget(Label.create("//java/apps/example:example_debug")),
+        Lists.newArrayList(
+            jdepsPath("thirdparty/a.jar"),
+            jdepsPath("thirdparty/b.jar"),
+            jdepsPath("thirdparty/c.jar"),
+            jdepsPath("thirdparty/d.jar")));
+
+    jdepsMap.put(
+        TargetKey.forPlainTarget(Label.create("//javatests/apps/example:example_debug_test")),
+        Lists.newArrayList(
+            jdepsPath("thirdparty/f.jar"),
+            jdepsPath("thirdparty/g.jar"),
+            jdepsPath("thirdparty/h.jar"),
+            jdepsPath("thirdparty/i.jar")));
+
+    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
+    errorCollector.assertNoIssues();
+    assertThat(result.libraries).hasSize(8);
+
+    List<String> importedLibs =
+        result.libraries.values().stream()
+            .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
+            .collect(Collectors.toList());
+    List<String> jdepLibs = importedLibs.subList(0, 6);
+    List<String> directDepsLibs = importedLibs.subList(6, importedLibs.size());
+
+    // Need not be ordered within sublist.
+    assertThat(jdepLibs).containsExactly("a.jar", "b.jar", "c.jar", "f.jar", "g.jar", "h.jar");
+    assertThat(directDepsLibs).containsExactly("d.jar", "i.jar");
   }
 
   /*
