@@ -971,6 +971,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         build_file_artifact_location = build_file_artifact_location(ctx),
         tags = tags,
         features = ctx.features,
+        testonly = ctx.rule.attr.testonly,
     )
 
     # Collect test info
