@@ -829,7 +829,11 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
     toolchain = target.java_toolchain
     javac_jars = []
     if hasattr(toolchain, "tools"):
-        javac_jars = [artifact_location(f) for f in toolchain.tools.to_list()]
+        javac_jars = [
+            artifact_location(f)
+            for f in toolchain.tools.to_list()
+            if f.basename.endswith(".jar")
+        ]
     ide_info["java_toolchain_ide_info"] = struct_omit_none(
         source_version = toolchain.source_version,
         target_version = toolchain.target_version,
