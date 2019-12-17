@@ -847,13 +847,13 @@ def artifact_to_path(artifact):
 
 def collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups):
     """Updates kotlin_toolchain-relevant output groups, returns false if not a kotlin_toolchain target."""
-    if not hasattr(target, "kotlin_toolchain"):
+    if not hasattr(target, "kt"):
         return False
-    toolchain = target.kotlin_toolchain
-    sdk_library_targets = [artifact_to_path(artifact_location(f)) for f in toolchain.sdk_library_targets.to_list()]
+    kt = target.kt
+    if not hasattr(target, "language_version"):
+        return False
     ide_info["kt_toolchain_ide_info"] = struct_omit_none(
-        language_version = toolchain.language_version,
-        sdk_library_targets = sdk_library_targets,
+        language_version = kt.language_version,
     )
     update_sync_output_groups(output_groups, "intellij-info-kotlin", depset([ide_info_file]))
     return True
