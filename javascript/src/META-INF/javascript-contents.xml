@@ -35,6 +35,10 @@
         language="JavaScript"/>
     <editorNotificationProvider
         implementation="com.google.idea.blaze.typescript.AddTsConfigNotificationProvider"/>
+    <projectService
+        serviceInterface="com.intellij.lang.javascript.completion.JSCompletionService"
+        serviceImplementation="com.google.idea.blaze.javascript.BlazeJsCompletionService"
+        overrides="true"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
