@@ -21,19 +21,15 @@ import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.cidr.cpp.execution.testing.boost.CMakeBoostTestRunConfigurationProducer;
-import com.jetbrains.cidr.cpp.execution.testing.google.CMakeGoogleTestRunConfigurationProducer;
-import com.jetbrains.cidr.cpp.execution.testing.tcatch.CMakeCatchTestRunConfigurationProducer;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
 public class NonBlazeProducerSuppressor implements ProjectComponent {
 
-  private static final ImmutableList<Class<? extends RunConfigurationProducer<?>>>
-      PRODUCERS_TO_SUPPRESS =
-          ImmutableList.of(
-              CMakeGoogleTestRunConfigurationProducer.class,
-              CMakeCatchTestRunConfigurationProducer.class,
-              CMakeBoostTestRunConfigurationProducer.class);
+  private static final ImmutableList<String> PRODUCERS_TO_SUPPRESS =
+      ImmutableList.of(
+          "com.jetbrains.cidr.cpp.execution.testing.boost.CMakeBoostTestRunConfigurationProducer",
+          "com.jetbrains.cidr.cpp.execution.testing.google.CMakeGoogleTestRunConfigurationProducer",
+          "com.jetbrains.cidr.cpp.execution.testing.tcatch.CMakeCatchTestRunConfigurationProducer");
 
   private final Project project;
 
@@ -51,6 +47,14 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
   private static void suppressProducers(Project project) {
     RunConfigurationProducerService producerService =
         RunConfigurationProducerService.getInstance(project);
-    PRODUCERS_TO_SUPPRESS.forEach(producerService::addIgnoredProducer);
+    for (String producer : PRODUCERS_TO_SUPPRESS) {
+      try {
+        Class<? extends RunConfigurationProducer<?>> producerClass =
+            (Class<? extends RunConfigurationProducer<?>>) Class.forName(producer);
+        producerService.addIgnoredProducer(producerClass);
+      } catch (ClassCastException | ClassNotFoundException e) {
+        // Ignore nonexistent producers.
+      }
+    }
   }
 }
