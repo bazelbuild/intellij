@@ -30,10 +30,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
-import com.google.idea.blaze.base.ideinfo.Dependency;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -43,7 +39,6 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 
@@ -74,28 +69,6 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
     this(project, label, buildFlags, new BlazeApkDeployInfoProtoHelper());
   }
 
-  /**
-   * In case we're dealing with an {@link AndroidBlazeRules.RuleTypes#ANDROID_INSTRUMENTATION_TEST},
-   * build the underlying {@link AndroidBlazeRules.RuleTypes#ANDROID_BINARY} instead.
-   */
-  private static Label getTargetToBuild(BlazeProjectData projectData, Label label) {
-    TargetMap targetMap = projectData.getTargetMap();
-    TargetIdeInfo target = targetMap.get(TargetKey.forPlainTarget(label));
-    if (target == null
-        || target.getKind() != AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
-      return label;
-    }
-    for (Dependency dependency : target.getDependencies()) {
-      TargetIdeInfo dependencyInfo = targetMap.get(dependency.getTargetKey());
-      // Should exist via test_app attribute, and be unique.
-      if (dependencyInfo != null
-          && dependencyInfo.getKind() == AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind()) {
-        return dependency.getTargetKey().getLabel();
-      }
-    }
-    return label;
-  }
-
   @Override
   public void build(BlazeContext context, BlazeAndroidDeviceSelector.DeviceSession deviceSession) {
     BlazeProjectData projectData =
@@ -114,7 +87,7 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
 
     try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
       command
-          .addTargets(getTargetToBuild(projectData, label))
+          .addTargets(label)
           .addBlazeFlags("--output_groups=+android_deploy_info")
           .addBlazeFlags(buildFlags)
           .addBlazeFlags(buildResultHelper.getBuildFlags());

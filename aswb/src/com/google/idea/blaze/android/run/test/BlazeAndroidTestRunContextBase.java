@@ -33,11 +33,13 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStepNormalBuild;
+import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -78,10 +80,17 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
     this.env = env;
     this.label = label;
     this.configState = configState;
-    this.buildStep =
-        configState.getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)
-            ? new BlazeApkBuildStepMobileInstall(project, label, blazeFlags, exeFlags)
-            : new BlazeApkBuildStepNormalBuild(project, label, blazeFlags);
+
+    if (configState.getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)) {
+      this.buildStep = new BlazeApkBuildStepMobileInstall(project, label, blazeFlags, exeFlags);
+    } else if (runConfiguration.getTargetKind()
+        == AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
+      // android_instrumentation_test builds both test and app target APKs.
+      this.buildStep = new BlazeInstrumentationTestApkBuildStep(project, label, blazeFlags);
+    } else {
+      this.buildStep = new BlazeApkBuildStepNormalBuild(project, label, blazeFlags);
+    }
+
     this.applicationIdProvider = new BlazeAndroidTestApplicationIdProvider(buildStep);
     this.apkProvider = new BlazeApkProvider(project, buildStep);
 
