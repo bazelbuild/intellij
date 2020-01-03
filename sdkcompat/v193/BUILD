@@ -14,6 +14,7 @@ java_library(
         "com/google/idea/sdkcompat/run/**",
         "com/google/idea/sdkcompat/testframework/*.java",
         "com/google/idea/sdkcompat/vcs/**",
+        "com/intellij/openapi/roots/impl/**",
     ]) + select_for_ide(
         android_studio = glob([
             "com/google/idea/sdkcompat/cidr/**",
