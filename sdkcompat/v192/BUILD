@@ -11,11 +11,11 @@ java_library(
         "com/google/idea/sdkcompat/openapi/**",
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/python/*.java",
-        "com/google/idea/sdkcompat/run/**",
         "com/google/idea/sdkcompat/util/**",
-        "com/google/idea/sdkcompat/testframework/*.java",
+        "com/google/idea/sdkcompat/run/**",
         "com/google/idea/sdkcompat/vcs/**",
         "com/intellij/serviceContainer/*.java",
+        "com/google/idea/sdkcompat/psi/**",
     ]) + select_for_ide(
         android_studio = glob([
             "com/google/idea/sdkcompat/cidr/**",
