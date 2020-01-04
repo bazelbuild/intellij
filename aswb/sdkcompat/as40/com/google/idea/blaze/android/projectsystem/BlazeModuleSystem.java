@@ -15,21 +15,14 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
-import com.android.manifmerger.ManifestSystemProperty;
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.ManifestOverrides;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.android.manifest.BlazeMergedManifestUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
-import java.util.Map;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.TestOnly;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
@@ -52,67 +45,8 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
 
   @Override
   public ManifestOverrides getManifestOverrides() {
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (projectData == null) {
-      return new ManifestOverrides();
-    }
-    TargetKey targetKey = AndroidResourceModuleRegistry.getInstance(project).getTargetKey(module);
-    if (targetKey == null) {
-      return new ManifestOverrides();
-    }
-    TargetIdeInfo target = projectData.getTargetMap().get(targetKey);
-
-    if (target == null || target.getAndroidIdeInfo() == null) {
-      return new ManifestOverrides();
-    }
-    Map<String, String> manifestValues = target.getAndroidIdeInfo().getManifestValues();
-    ImmutableMap.Builder<ManifestSystemProperty, String> directOverrides = ImmutableMap.builder();
-    ImmutableMap.Builder<String, String> placeholders = ImmutableMap.builder();
-    manifestValues.forEach(
-        (key, value) -> processManifestValue(key, value, directOverrides, placeholders));
-    return new ManifestOverrides(directOverrides.build(), placeholders.build());
-  }
-
-  /**
-   * Puts the key-value pair from a target's manifest_values map into either {@code directOverrides}
-   * if the key corresponds to a manifest attribute that Blaze allows you to override directly, or
-   * {@code placeholders} otherwise.
-   *
-   * @see <a
-   *     href="https://docs.bazel.build/versions/master/be/android.html#android_binary.manifest_values">manifest_values</a>
-   */
-  @Nullable
-  private static void processManifestValue(
-      String key,
-      String value,
-      ImmutableMap.Builder<ManifestSystemProperty, String> directOverrides,
-      ImmutableMap.Builder<String, String> placeholders) {
-    switch (key) {
-      case "applicationId":
-        directOverrides.put(ManifestSystemProperty.PACKAGE, value);
-        break;
-      case "versionCode":
-        directOverrides.put(ManifestSystemProperty.VERSION_CODE, value);
-        break;
-      case "versionName":
-        directOverrides.put(ManifestSystemProperty.VERSION_NAME, value);
-        break;
-      case "minSdkVersion":
-        directOverrides.put(ManifestSystemProperty.MIN_SDK_VERSION, value);
-        break;
-      case "targetSdkVersion":
-        directOverrides.put(ManifestSystemProperty.TARGET_SDK_VERSION, value);
-        break;
-      case "maxSdkVersion":
-        directOverrides.put(ManifestSystemProperty.MAX_SDK_VERSION, value);
-        break;
-      case "packageName":
-        // From the doc: "packageName will be ignored and will be set from either applicationId if
-        // specified or the package in manifest"
-        break;
-      default:
-        placeholders.put(key, value);
-    }
+    AndroidFacet facet = AndroidFacet.getInstance(module);
+    assert facet != null;
+    return BlazeMergedManifestUtils.getManifestOverrides(facet);
   }
 }

@@ -19,6 +19,7 @@ import static com.google.idea.blaze.android.manifest.ManifestParser.parseManifes
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -37,11 +38,41 @@ import javax.annotation.Nullable;
 
 /** Obtains and caches {@link ManifestParser.ParsedManifest}. */
 public class ParsedManifestService {
+  private final Map<BlazeArtifact, ManifestParser.ParsedManifest>
+      manifestArtifactToParsedManifests = Maps.newHashMap();
   private final Map<File, ManifestParser.ParsedManifest> manifestFileToParsedManifests =
       Maps.newHashMap();
 
   public static ParsedManifestService getInstance(Project project) {
     return ServiceManager.getService(project, ParsedManifestService.class);
+  }
+
+  /**
+   * Returns parsed manifest from the given Blaze artifact corresponding to a manifest file. Returns
+   * null if the manifest is invalid.
+   *
+   * <p>An invalid manifest is anything that could not be parsed by the parser, such as a malformed
+   * manifest file.
+   *
+   * @throws IOException only when an IO error occurs. Errors related to malformed manifests are
+   *     indicated by returning null.
+   */
+  @Nullable
+  public ManifestParser.ParsedManifest getParsedManifest(BlazeArtifact blazeArtifact)
+      throws IOException {
+    if (blazeArtifact instanceof BlazeArtifact.LocalFileArtifact) {
+      return getParsedManifest(((BlazeArtifact.LocalFileArtifact) blazeArtifact).getFile());
+    }
+    if (!manifestArtifactToParsedManifests.containsKey(blazeArtifact)) {
+      try (InputStream inputStream = blazeArtifact.getInputStream()) {
+        ManifestParser.ParsedManifest parsedManifest = parseManifestFromInputStream(inputStream);
+        if (parsedManifest == null) {
+          return null;
+        }
+        manifestArtifactToParsedManifests.put(blazeArtifact, parsedManifest);
+      }
+    }
+    return manifestArtifactToParsedManifests.get(blazeArtifact);
   }
 
   /**
@@ -83,7 +114,9 @@ public class ParsedManifestService {
         BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {
-      getInstance(project).manifestFileToParsedManifests.clear();
+      ParsedManifestService parsedManifestService = getInstance(project);
+      parsedManifestService.manifestFileToParsedManifests.clear();
+      parsedManifestService.manifestArtifactToParsedManifests.clear();
     }
   }
 
