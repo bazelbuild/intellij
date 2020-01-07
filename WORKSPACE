@@ -38,9 +38,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2019_3",
     build_file = "@//intellij_platform_sdk:BUILD.ue193",
-    sha256 = "5bbaeaa580ae38622b8c6e9188551726f7d82fccde8ef1743cb141d902235e66",
-    strip_prefix = "idea-IU-193.4386.10",
-    url = "https://download.jetbrains.com/idea/ideaIU-193.4386.10.tar.gz",
+    sha256 = "0cd0771630385eadf308c8e29e9979acc4f92f2010eda27041cfa04c2f51214f",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.3.1/ideaIU-2019.3.1.zip",
 )
 
 # The plugin api for CLion 2019.2. This is required to build CLwB,
@@ -127,8 +126,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "b80126de5f2011e506943cbc1959f2af14d206a000812ee67ffef3c2d59380ef",
-    url = "https://plugins.jetbrains.com/files/9568/70301/intellij-go-193.4386.1.538.zip",
+    sha256 = "9474152d52147dce02bb3b79d76d600afa03373458d6df525d820930a849fc1c",
+    url = "https://plugins.jetbrains.com/files/9568/75063/intellij-go-193.5662.53.103.zip",
 )
 
 # Scala plugin for IntelliJ CE 2019.2. Required at compile-time for scala-specific features.
