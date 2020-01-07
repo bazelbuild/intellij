@@ -44,7 +44,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   }
 
   @Test
-  public void shardTargets_testShardSizeRespected() {
+  public void shardSingleTargets_testShardSizeRespected() {
     List<TargetExpression> targets =
         ImmutableList.of(
             target("//java/com/google:one"),
@@ -53,24 +53,24 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
             target("//java/com/google:four"),
             target("//java/com/google:five"));
     ShardedTargetList shards =
-        BlazeBuildTargetSharder.shardTargets(targets, /* isRemote= */ false, 2);
+        BlazeBuildTargetSharder.shardSingleTargets(targets, /* isRemote= */ false, 2);
     assertThat(shards.shardedTargets).hasSize(3);
     assertThat(shards.shardedTargets.get(0)).hasSize(2);
     assertThat(shards.shardedTargets.get(1)).hasSize(2);
     assertThat(shards.shardedTargets.get(2)).hasSize(1);
 
-    shards = BlazeBuildTargetSharder.shardTargets(targets, /* isRemote= */ false, 4);
+    shards = BlazeBuildTargetSharder.shardSingleTargets(targets, /* isRemote= */ false, 4);
     assertThat(shards.shardedTargets).hasSize(2);
     assertThat(shards.shardedTargets.get(0)).hasSize(4);
     assertThat(shards.shardedTargets.get(1)).hasSize(1);
 
-    shards = BlazeBuildTargetSharder.shardTargets(targets, /* isRemote= */ false, 100);
+    shards = BlazeBuildTargetSharder.shardSingleTargets(targets, /* isRemote= */ false, 100);
     assertThat(shards.shardedTargets).hasSize(1);
     assertThat(shards.shardedTargets.get(0)).hasSize(5);
   }
 
   @Test
-  public void shardTargets_testTargetsAreSorted() {
+  public void shardSingleTargets_testTargetsAreSorted() {
     List<TargetExpression> targets =
         ImmutableList.of(
             target("//java/com/d:target"),
@@ -80,7 +80,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
             target("//java/com/c:target"),
             target("-//java/com/e:target"));
     ShardedTargetList shards =
-        BlazeBuildTargetSharder.shardTargets(targets, /* isRemote= */ false, 2);
+        BlazeBuildTargetSharder.shardSingleTargets(targets, /* isRemote= */ false, 2);
     assertThat(shards.shardedTargets).hasSize(2);
     assertThat(shards.shardedTargets.get(0))
         .containsExactly(target("//java/com/a:target"), target("//java/com/b:target"))
@@ -91,7 +91,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   }
 
   @Test
-  public void shardTargets_testExcludedTargetsAreRemoved() {
+  public void shardSingleTargets_testExcludedTargetsAreRemoved() {
     List<TargetExpression> targets =
         ImmutableList.of(
             target("//java/com/google:one"),
@@ -101,14 +101,31 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
             target("-//java/com/google:three"),
             target("-//java/com/google:six"));
     ShardedTargetList shards =
-        BlazeBuildTargetSharder.shardTargets(targets, /* isRemote= */ false, 3);
+        BlazeBuildTargetSharder.shardSingleTargets(targets, /* isRemote= */ false, 3);
 
     assertThat(shards.shardedTargets).hasSize(1);
     assertThat(shards.shardedTargets.get(0)).containsExactly(target("//java/com/google:two"));
   }
 
   @Test
-  public void shardTargets_testExcludedThenIncludedTargetsAreRetained() {
+  public void shardSingleTargets_testWildcardExcludesHandled() {
+    List<TargetExpression> targets =
+        ImmutableList.of(
+            target("//java/com/foo:target"),
+            target("//java/com/bar:target"),
+            target("//java/com/baz:target"),
+            target("//java/com/foo:other"),
+            target("-//java/com/foo/..."));
+    ShardedTargetList shards =
+        BlazeBuildTargetSharder.shardSingleTargets(targets, /* isRemote= */ false, 2);
+    assertThat(shards.shardedTargets).hasSize(1);
+    assertThat(shards.shardedTargets.get(0))
+        .containsExactly(target("//java/com/bar:target"), target("//java/com/baz:target"))
+        .inOrder();
+  }
+
+  @Test
+  public void shardSingleTargets_testExcludedThenIncludedTargetsAreRetained() {
     List<TargetExpression> targets =
         ImmutableList.of(
             target("//java/com/google:one"),
@@ -117,7 +134,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
             target("-//java/com/google:two"),
             target("//java/com/google:two"));
     ShardedTargetList shards =
-        BlazeBuildTargetSharder.shardTargets(targets, /* isRemote= */ false, 3);
+        BlazeBuildTargetSharder.shardSingleTargets(targets, /* isRemote= */ false, 3);
     assertThat(shards.shardedTargets).hasSize(1);
     assertThat(shards.shardedTargets.get(0))
         .containsExactly(target("//java/com/google:one"), target("//java/com/google:two"));
