@@ -11,11 +11,13 @@ public abstract class VcsVFSListenerAdapter extends VcsVFSListener {
 
   protected VcsVFSListenerAdapter(AbstractVcs<?> vcs) {
     super(vcs);
+    installListeners();
   }
 
   /** #api192: remove */
   protected VcsVFSListenerAdapter(Project project, AbstractVcs<?> vcs) {
     super(vcs);
+    installListeners();
   }
 
   /** #api192: move to caller */
