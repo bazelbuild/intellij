@@ -50,6 +50,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDirectory;
@@ -276,18 +277,34 @@ public class BlazeGoPackage extends GoPackage {
 
   @Override
   public Collection<PsiFile> files() {
-    PsiManager psiManager = PsiManager.getInstance(getProject());
-    files.replaceAll(
-        (file, oldGoFile) ->
-            oldGoFile.filter(PsiFile::isValid).isPresent()
-                ? oldGoFile
-                : Optional.ofNullable(VfsUtils.resolveVirtualFile(file, false))
-                    .map(psiManager::findFile)
-                    .filter(GoFile.class::isInstance));
+    files.replaceAll(this::updateGoFile);
     return files.values().stream()
         .flatMap(Streams::stream)
         .filter(PsiFile::isValid)
         .collect(toImmutableSet());
+  }
+
+  private Optional<PsiFile> updateGoFile(File file, Optional<PsiFile> oldGoFile) {
+    if (oldGoFile.filter(PsiFile::isValid).isPresent()) {
+      return oldGoFile;
+    }
+    VirtualFile virtualFile = VfsUtils.resolveVirtualFile(file, false);
+    if (virtualFile == null) {
+      return Optional.empty();
+    }
+    PsiFile newGoFile = PsiManager.getInstance(getProject()).findFile(virtualFile);
+    if (newGoFile instanceof GoFile) {
+      return Optional.of(newGoFile);
+    }
+    if (virtualFile.getName().endsWith(".go")
+        && virtualFile.getLength() > FileUtilRt.getUserFileSizeLimit()) {
+      logger.error(
+          String.format(
+              "%s is too large (%dkb), please either reduce the file size or increase the value of"
+                  + " idea.max.intellisense.filesize in Help -> Edit Custom Properties...",
+              virtualFile.getPath(), virtualFile.getLength() / 1024));
+    }
+    return Optional.empty();
   }
 
   /**
