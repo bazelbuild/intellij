@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
@@ -83,7 +84,6 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
         BlazeCommand.builder(
             Blaze.getBuildSystemProvider(project).getBinaryPath(project), BlazeCommandName.BUILD);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    File executionRoot = projectData.getBlazeInfo().getExecutionRoot();
 
     try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
       command
@@ -105,17 +105,26 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
       FileCaches.refresh(project, context);
 
       if (retVal != 0) {
-        context.setHasError();
+        IssueOutput.error("Blaze build failed. See Blaze Console for details.").submit(context);
         return;
       }
 
       context.output(new StatusOutput("Reading deployment information..."));
+      String executionRoot =
+          ExecRootUtil.getExecutionRoot(buildResultHelper, project, buildFlags, context);
+      if (executionRoot == null) {
+        IssueOutput.error("Could not locate execroot!").submit(context);
+        return;
+      }
+
       AndroidDeployInfo deployInfoProto =
           deployInfoHelper.readDeployInfoProtoForTarget(
               label, buildResultHelper, fileName -> fileName.endsWith(DEPLOY_INFO_SUFFIX));
       deployInfo =
           deployInfoHelper.extractDeployInfoAndInvalidateManifests(
-              project, executionRoot, deployInfoProto);
+              project, new File(executionRoot), deployInfoProto);
+    } catch (GetArtifactsException e) {
+      IssueOutput.error("Could not read BEP output: " + e.getMessage()).submit(context);
     } catch (GetDeployInfoException e) {
       IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
           .submit(context);
