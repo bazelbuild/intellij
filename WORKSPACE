@@ -19,9 +19,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2019_3",
     build_file = "@//intellij_platform_sdk:BUILD.idea193",
-    sha256 = "5bd69fc7588f0845facc7a0cf6c6b55d63217b19d8687e3cc6d7405e24a0db79",
-    strip_prefix = "idea-IC-193.4386.10",
-    url = "https://download.jetbrains.com/idea/ideaIC-193.4386.10.tar.gz",
+    sha256 = "6074bfa917f65fa157a14a9798fecd6ef3a1dfb2889fbe2f338538d89e175c94",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2019.3.1/ideaIC-2019.3.1.zip",
 )
 
 # The plugin api for IntelliJ UE 2019.2. This is required to run UE-specific
@@ -98,8 +97,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "21b2bd88c594bc58d8e8062c845be3bee965fc4dff2da9521158a6da3ab5b825",
-    url = "https://plugins.jetbrains.com/files/7322/70397/python-ce.zip",
+    sha256 = "19c077be8e3cef7ae97c6910f1aa753f87dfae825de96b2d7c810b5f9b9df34e",
+    url = "https://plugins.jetbrains.com/files/7322/74951/python-ce-193.5662.65.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
