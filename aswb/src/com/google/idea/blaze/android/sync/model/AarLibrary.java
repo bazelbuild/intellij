@@ -46,8 +46,14 @@ import org.jetbrains.annotations.Nullable;
 public final class AarLibrary extends BlazeLibrary {
   private static final Logger logger = Logger.getInstance(AarLibrary.class);
 
-  public final LibraryArtifact libraryArtifact;
+  // libraryArtifact would be null if this aar is created by aspect file. Such aar is generated for
+  // generated resources which should not have any bundled jar file.
+  @Nullable public final LibraryArtifact libraryArtifact;
   public final ArtifactLocation aarArtifact;
+
+  public AarLibrary(ArtifactLocation aarArtifact) {
+    this(null, aarArtifact);
+  }
 
   public AarLibrary(LibraryArtifact libraryArtifact, ArtifactLocation aarArtifact) {
     // Use the aar's name for the library key. The jar name is the same for all AARs, so could more
@@ -58,21 +64,22 @@ public final class AarLibrary extends BlazeLibrary {
   }
 
   static AarLibrary fromProto(ProjectData.BlazeLibrary proto) {
+    ProjectData.AarLibrary aarLibrary = proto.getAarLibrary();
     return new AarLibrary(
-        LibraryArtifact.fromProto(proto.getAarLibrary().getLibraryArtifact()),
-        ArtifactLocation.fromProto(proto.getAarLibrary().getAarArtifact()));
+        aarLibrary.hasLibraryArtifact()
+            ? LibraryArtifact.fromProto(aarLibrary.getLibraryArtifact())
+            : null,
+        ArtifactLocation.fromProto(aarLibrary.getAarArtifact()));
   }
 
   @Override
   public ProjectData.BlazeLibrary toProto() {
-    return super.toProto()
-        .toBuilder()
-        .setAarLibrary(
-            ProjectData.AarLibrary.newBuilder()
-                .setLibraryArtifact(libraryArtifact.toProto())
-                .setAarArtifact(aarArtifact.toProto())
-                .build())
-        .build();
+    ProjectData.AarLibrary.Builder aarLibraryBuilder =
+        ProjectData.AarLibrary.newBuilder().setAarArtifact(aarArtifact.toProto());
+    if (libraryArtifact != null) {
+      aarLibraryBuilder.setLibraryArtifact(libraryArtifact.toProto());
+    }
+    return super.toProto().toBuilder().setAarLibrary(aarLibraryBuilder.build()).build();
   }
 
   /**
@@ -86,12 +93,14 @@ public final class AarLibrary extends BlazeLibrary {
       ModifiableModel libraryModel) {
     UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
     File resourceDirectory = unpackedAars.getResourceDirectory(artifactLocationDecoder, this);
-    File jar = unpackedAars.getClassJar(artifactLocationDecoder, this);
     if (resourceDirectory == null) {
       logger.warn("Failed to update AAR library model for: " + aarArtifact);
       return;
     }
-    libraryModel.addRoot(pathToUrl(jar), OrderRootType.CLASSES);
+    if (libraryArtifact != null) {
+      File jar = unpackedAars.getClassJar(artifactLocationDecoder, this);
+      libraryModel.addRoot(pathToUrl(jar), OrderRootType.CLASSES);
+    }
     libraryModel.addRoot(pathToUrl(resourceDirectory), OrderRootType.CLASSES);
   }
 

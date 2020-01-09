@@ -86,8 +86,10 @@ message ResFolderLocation {
   ArtifactLocation root = 1;
   // Relative paths to the specific res files underneath the root. If empty, all
   // res files
-  // Deprecated: we no longer return path to resources.
+  // Deprecated: we no longer return path to resources. Instead, resource files
+  // will be packed as an aar and stored in aar field
   repeated string resources = 2 [deprecated = true];
+  ArtifactLocation aar = 3;
 }
 
 message AndroidSdkIdeInfo {

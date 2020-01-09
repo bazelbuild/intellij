@@ -38,6 +38,6 @@ public class AswbPrefetchFileSourceTest extends BlazeIntegrationTestCase {
     assertThat(PrefetchFileSource.getAllPrefetchFileExtensions())
         .containsExactly(
             "java", "proto", "c", "cc", "cpp", "cxx", "c++", "C", "h", "hh", "hpp", "hxx", "inc",
-            "xml", "dart");
+            "dart");
   }
 }
