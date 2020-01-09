@@ -34,6 +34,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.util.SystemProperties;
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +55,7 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
   private static final String WORKSPACE_VARIABLE = "TEST_WORKSPACE";
   private static final String ALLOW_INSECURE_TEST_DIAGNOSTICS_DELETION_KEY =
       "blaze.fastBuild.allowInsecureTestDiagnosticsDeletion";
+  private static final String ALWAYS_USE_PROJECT_JDK_KEY = "blaze.fastBuild.alwaysUseProjectJdk";
 
   private static final ExtensionPointName<FastBuildTestEnvironmentCreator> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.FastBuildTestEnvironmentCreator");
@@ -93,9 +95,13 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
     JavaCommandBuilder commandBuilder = new JavaCommandBuilder();
     commandBuilder.setWorkingDirectory(workingDir.toFile());
 
-    commandBuilder.setJavaBinary(
-        getJavaBinFromLauncher(
-            target, getLauncher(fastBuildInfo).orElse(null), getSwigdeps(fastBuildInfo)));
+    if (Boolean.getBoolean(ALWAYS_USE_PROJECT_JDK_KEY)) {
+      commandBuilder.setJavaBinary(getProjectJdkBinary(project));
+    } else {
+      commandBuilder.setJavaBinary(
+          getJavaBinFromLauncher(
+              target, getLauncher(fastBuildInfo).orElse(null), getSwigdeps(fastBuildInfo)));
+    }
 
     fastBuildInfo.classpath().forEach(commandBuilder::addClasspathElement);
 
@@ -145,6 +151,11 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
     }
 
     return commandBuilder.build();
+  }
+
+  static File getProjectJdkBinary(Project project) {
+    String jdkHome = ProjectRootManager.getInstance(project).getProjectSdk().getHomePath();
+    return Paths.get(jdkHome, "bin", "java").toFile();
   }
 
   private Optional<Label> getLauncher(FastBuildInfo fastBuildInfo) {
