@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPoint {
+public abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPoint {
 
   private static final String OUTPUT_FILE_VARIABLE = "XML_OUTPUT_FILE";
   private static final String RUNFILES_DIR_VARIABLE = "TEST_SRCDIR";
