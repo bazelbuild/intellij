@@ -163,5 +163,7 @@
                     interface="com.google.idea.blaze.java.run.fastbuild.FastBuildTestEnvironmentModifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildCompilationModification"
                     interface="com.google.idea.blaze.java.fastbuild.FastBuildCompilationModification"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.AttachSourcesFilter"
+                    interface="com.google.idea.blaze.java.sync.model.AttachSourcesFilter"/>
   </extensionPoints>
 </idea-plugin>
