@@ -28,7 +28,10 @@ java_library(
         "android-studio-3.5": glob(["testcompat/v192/**/*.java"]),
         "android-studio-3.6": glob(["testcompat/v192/**/*.java"]),
         "android-studio-4.0": glob(["testcompat/v192/**/*.java"]),
-        "clion-2019.2": glob(["testcompat/v192/**/*.java"]),
+        "clion-2019.2": glob(
+            ["testcompat/v192/**/*.java"],
+            exclude = ["testcompat/v192/com/google/idea/sdkcompat/testframework/JavaResolveTestCase.java"],
+        ),
         "intellij-2019.2": glob(["testcompat/v192/**/*.java"]),
         "intellij-ue-2019.2": glob(["testcompat/v192/**/*.java"]),
         "default": glob(["testcompat/v193/**/*.java"]),

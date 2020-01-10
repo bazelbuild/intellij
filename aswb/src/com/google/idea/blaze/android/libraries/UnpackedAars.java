@@ -112,9 +112,9 @@ public class UnpackedAars {
 
   private static class AarAndJar {
     private final BlazeArtifact aar;
-    private final BlazeArtifact jar;
+    @Nullable private final BlazeArtifact jar;
 
-    AarAndJar(BlazeArtifact aar, BlazeArtifact jar) {
+    AarAndJar(BlazeArtifact aar, @Nullable BlazeArtifact jar) {
       this.aar = aar;
       this.jar = jar;
     }
@@ -201,7 +201,11 @@ public class UnpackedAars {
   }
 
   /** Returns the merged jar derived from an AAR, in the unpacked AAR directory. */
+  @Nullable
   public File getClassJar(ArtifactLocationDecoder decoder, AarLibrary library) {
+    if (library.libraryArtifact == null) {
+      return null;
+    }
     ImmutableMap<String, File> cacheState = this.cacheState;
     BlazeArtifact artifact = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
     if (cacheState.isEmpty()) {
@@ -370,7 +374,10 @@ public class UnpackedAars {
     Map<String, AarAndJar> outputs = new HashMap<>();
     for (AarLibrary library : aarLibraries) {
       BlazeArtifact aar = decoder.resolveOutput(library.aarArtifact);
-      BlazeArtifact jar = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
+      BlazeArtifact jar =
+          library.libraryArtifact != null
+              ? decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary())
+              : null;
       outputs.put(cacheKeyForAar(aar), new AarAndJar(aar, jar));
     }
     return ImmutableMap.copyOf(outputs);
@@ -431,10 +438,12 @@ public class UnpackedAars {
       createStampFile(ops, aarDir, aarAndJar.aar);
 
       // copy merged jar
-      try (InputStream stream = aarAndJar.jar.getInputStream()) {
-        Path destination = Paths.get(jarFileForKey(cacheKey).getPath());
-        ops.mkdirs(destination.getParent().toFile());
-        Files.copy(stream, destination, StandardCopyOption.REPLACE_EXISTING);
+      if (aarAndJar.jar != null) {
+        try (InputStream stream = aarAndJar.jar.getInputStream()) {
+          Path destination = Paths.get(jarFileForKey(cacheKey).getPath());
+          ops.mkdirs(destination.getParent().toFile());
+          Files.copy(stream, destination, StandardCopyOption.REPLACE_EXISTING);
+        }
       }
 
     } catch (IOException e) {

@@ -27,13 +27,10 @@ import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
-import com.google.idea.blaze.base.ideinfo.Dependency;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -43,7 +40,6 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 
@@ -74,28 +70,6 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
     this(project, label, buildFlags, new BlazeApkDeployInfoProtoHelper());
   }
 
-  /**
-   * In case we're dealing with an {@link AndroidBlazeRules.RuleTypes#ANDROID_INSTRUMENTATION_TEST},
-   * build the underlying {@link AndroidBlazeRules.RuleTypes#ANDROID_BINARY} instead.
-   */
-  private static Label getTargetToBuild(BlazeProjectData projectData, Label label) {
-    TargetMap targetMap = projectData.getTargetMap();
-    TargetIdeInfo target = targetMap.get(TargetKey.forPlainTarget(label));
-    if (target == null
-        || target.getKind() != AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
-      return label;
-    }
-    for (Dependency dependency : target.getDependencies()) {
-      TargetIdeInfo dependencyInfo = targetMap.get(dependency.getTargetKey());
-      // Should exist via test_app attribute, and be unique.
-      if (dependencyInfo != null
-          && dependencyInfo.getKind() == AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind()) {
-        return dependency.getTargetKey().getLabel();
-      }
-    }
-    return label;
-  }
-
   @Override
   public void build(BlazeContext context, BlazeAndroidDeviceSelector.DeviceSession deviceSession) {
     BlazeProjectData projectData =
@@ -110,11 +84,10 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
         BlazeCommand.builder(
             Blaze.getBuildSystemProvider(project).getBinaryPath(project), BlazeCommandName.BUILD);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    File executionRoot = projectData.getBlazeInfo().getExecutionRoot();
 
     try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
       command
-          .addTargets(getTargetToBuild(projectData, label))
+          .addTargets(label)
           .addBlazeFlags("--output_groups=+android_deploy_info")
           .addBlazeFlags(buildFlags)
           .addBlazeFlags(buildResultHelper.getBuildFlags());
@@ -132,17 +105,26 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
       FileCaches.refresh(project, context);
 
       if (retVal != 0) {
-        context.setHasError();
+        IssueOutput.error("Blaze build failed. See Blaze Console for details.").submit(context);
         return;
       }
 
       context.output(new StatusOutput("Reading deployment information..."));
+      String executionRoot =
+          ExecRootUtil.getExecutionRoot(buildResultHelper, project, buildFlags, context);
+      if (executionRoot == null) {
+        IssueOutput.error("Could not locate execroot!").submit(context);
+        return;
+      }
+
       AndroidDeployInfo deployInfoProto =
           deployInfoHelper.readDeployInfoProtoForTarget(
               label, buildResultHelper, fileName -> fileName.endsWith(DEPLOY_INFO_SUFFIX));
       deployInfo =
           deployInfoHelper.extractDeployInfoAndInvalidateManifests(
-              project, executionRoot, deployInfoProto);
+              project, new File(executionRoot), deployInfoProto);
+    } catch (GetArtifactsException e) {
+      IssueOutput.error("Could not read BEP output: " + e.getMessage()).submit(context);
     } catch (GetDeployInfoException e) {
       IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
           .submit(context);

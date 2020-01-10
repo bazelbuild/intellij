@@ -38,7 +38,6 @@ import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
-import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.Dependency;
@@ -353,10 +352,6 @@ public abstract class BlazeModuleSystemBase implements AndroidModuleSystem, Blaz
           if (externalLibrary != null) {
             libraries.add(externalLibraryInterner.intern(externalLibrary));
           }
-        } else if (library instanceof BlazeResourceLibrary) {
-          libraries.add(
-              externalLibraryInterner.intern(
-                  toExternalLibrary((BlazeResourceLibrary) library, decoder)));
         } else if (library instanceof BlazeJarLibrary) {
           ExternalLibrary externalLibrary = toExternalLibrary((BlazeJarLibrary) library, decoder);
           if (externalLibrary != null) {
@@ -381,13 +376,6 @@ public abstract class BlazeModuleSystemBase implements AndroidModuleSystem, Blaz
     }
 
     for (String libraryKey : registry.get(module).resourceLibraryKeys) {
-      ImmutableMap<String, BlazeResourceLibrary> resourceLibraries =
-          androidSyncData.importResult.resourceLibraries;
-      if (resourceLibraries != null && resourceLibraries.containsKey(libraryKey)) {
-        libraries.add(
-            externalLibraryInterner.intern(
-                toExternalLibrary(resourceLibraries.get(libraryKey), decoder)));
-      }
       ImmutableMap<String, AarLibrary> aarLibraries = androidSyncData.importResult.aarLibraries;
       if (aarLibraries != null && aarLibraries.containsKey(libraryKey)) {
         ExternalLibrary externalLibrary = toExternalLibrary(aarLibraries.get(libraryKey), decoder);
@@ -397,32 +385,6 @@ public abstract class BlazeModuleSystemBase implements AndroidModuleSystem, Blaz
       }
     }
     return libraries.build();
-  }
-
-  private ExternalLibrary toExternalLibrary(
-      BlazeResourceLibrary library, ArtifactLocationDecoder decoder) {
-    PathString resFolder =
-        new PathString(
-            Preconditions.checkNotNull(
-                OutputArtifactResolver.resolve(project, decoder, library.root),
-                "Fail to find file %s",
-                library.root));
-    List<PathString> resources =
-        library.resources.isEmpty()
-            ? null
-            : library.resources.stream()
-                .map(relativePath -> resFolder.resolve(relativePath))
-                .collect(Collectors.toList());
-    return new ExternalLibrary(library.key.toString())
-        .withManifestFile(
-            library.manifest == null
-                ? null
-                : new PathString(
-                    Preconditions.checkNotNull(
-                        OutputArtifactResolver.resolve(project, decoder, library.manifest),
-                        "Fail to find file %s",
-                        library.manifest.getRelativePath())))
-        .withResFolder(new SelectiveResourceFolder(resFolder, resources));
   }
 
   @Nullable

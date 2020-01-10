@@ -89,6 +89,9 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
         continue;
       }
       VirtualFile rootBase = root.getVirtualFile();
+      if (rootBase == null) {
+        continue;
+      }
       String relativePath = VfsUtilCore.getRelativePath(fileToImport, rootBase);
       if (relativePath == null) {
         continue;

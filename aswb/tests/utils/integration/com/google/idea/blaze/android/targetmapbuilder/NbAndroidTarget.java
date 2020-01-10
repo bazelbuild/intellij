@@ -17,15 +17,16 @@ package com.google.idea.blaze.android.targetmapbuilder;
 
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetMapUtils.makeSourceArtifact;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.java.AndroidBlazeRules;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Builder for a blaze android target's IDE info. Defines common attributes across all android
@@ -40,6 +41,7 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
   private final NbJavaTarget javaTarget;
   private final AndroidIdeInfo.Builder androidIdeInfoBuilder;
   private final WorkspacePath blazePackage;
+  private final List<ArtifactLocation> aarList;
   private boolean hasCustomManifest;
 
   public static NbAndroidTarget android_library(String label) {
@@ -65,6 +67,7 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
     javaTarget = new NbJavaTarget(blazeInfoData, label, kind);
     this.blazePackage = NbTargetMapUtils.blazePackageForLabel(label);
     this.androidIdeInfoBuilder = AndroidIdeInfo.builder();
+    aarList = new ArrayList<>();
 
     if (kind.equals(AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind())) {
       // The android_binary rule requires a manifest.
@@ -108,22 +111,31 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
     return this;
   }
 
+  public List<ArtifactLocation> getAarList() {
+    return aarList;
+  }
+
   /**
    * Adds a folder and child files to this target's list of android resources. The folder string is
    * a label where following strings are relative resource files in that folder. Note: Also toggles
    * generate resource class to true.
    */
-  public NbAndroidTarget res_folder(String folderLabel, Collection<String> pathToResourceFiles) {
+  public NbAndroidTarget res_folder(String folderLabel, String pathToAar) {
     // An android target that directly declares resources should also generate resource classes.
     setGenerateResourceClass();
+    ArtifactLocation aar =
+        ArtifactLocation.builder()
+            .setRelativePath(NbTargetMapUtils.workspacePathForLabel(blazePackage, pathToAar))
+            .setIsSource(true)
+            .build();
+    aarList.add(aar);
     androidIdeInfoBuilder.addResource(
         AndroidResFolder.builder()
             .setRoot(
                 makeSourceArtifact(
                     NbTargetMapUtils.workspacePathForLabel(blazePackage, folderLabel)))
-            .addResources(ImmutableList.copyOf(pathToResourceFiles))
+            .setAar(aar)
             .build());
-
     return this;
   }
 
