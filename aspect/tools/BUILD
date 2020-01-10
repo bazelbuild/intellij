@@ -26,6 +26,13 @@ java_library(
 )
 
 java_binary(
+    name = "CreateAar",
+    main_class = "com.google.idea.blaze.aspect.CreateAar",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":lib"],
+)
+
+java_binary(
     name = "JarFilter",
     main_class = "com.google.idea.blaze.aspect.JarFilter",
     visibility = ["//visibility:public"],
@@ -88,5 +95,13 @@ java_test(
     size = "small",
     srcs = ["tests/unittests/com/google/idea/blaze/aspect/ArtifactLocationParserTest.java"],
     test_class = "com.google.idea.blaze.aspect.ArtifactLocationParserTest",
+    deps = [":test_lib"],
+)
+
+java_test(
+    name = "CreateAarTestTest",
+    size = "small",
+    srcs = ["tests/unittests/com/google/idea/blaze/aspect/CreateAarTest.java"],
+    test_class = "com.google.idea.blaze.aspect.CreateAarTest",
     deps = [":test_lib"],
 )

@@ -2,12 +2,12 @@
 # Description: Bazel aspect bundled with the Bazel IntelliJ plugin.
 #
 
-licenses(["notice"])  # Apache 2.0
-
 load(
     ":intellij_info_impl.bzl",
     "define_flag_hack",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 # Files needed at runtime for blaze-invoking integration tests
 filegroup(
@@ -18,6 +18,7 @@ filegroup(
         "java_classpath.bzl",
         "make_variables.bzl",
         ":BUILD.bazel",
+        "//aspect/tools:CreateAar",
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",
     ],
@@ -36,6 +37,7 @@ filegroup(
         "java_classpath.bzl",
         "make_variables.bzl",
         ":BUILD.bazel",
+        "//aspect/tools:CreateAar",
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",
     ],
