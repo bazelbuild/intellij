@@ -49,7 +49,6 @@ public class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
     for (BlazeJarLibrary javacJarLibrary : syncData.importResult.javacJarLibraries) {
       libraries.add(javacJarLibrary);
     }
-    libraries.addAll(syncData.importResult.aarLibraries.values());
     return libraries.build();
   }
 
