@@ -43,11 +43,9 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /** Utility methods for sharding blaze build invocations. */
@@ -148,7 +146,7 @@ public class BlazeBuildTargetSharder {
         }
 
         return new ShardedTargetsResult(
-            shardTargets(
+            shardSingleTargets(
                 expandedTargets.singleTargets,
                 buildParams.blazeBinaryType().isRemote,
                 getTargetShardSize(viewSet)),
@@ -224,29 +222,29 @@ public class BlazeBuildTargetSharder {
         result, new ExpandedTargetsResult(singleTargets, result.buildResult));
   }
 
+  /**
+   * Shards a list of individual blaze targets (with no wildcard expressions other than for excluded
+   * target patterns).
+   */
   @SuppressWarnings("unchecked")
   @VisibleForTesting
-  static ShardedTargetList shardTargets(
+  static ShardedTargetList shardSingleTargets(
       List<TargetExpression> targets, boolean isRemote, int shardSize) {
     ImmutableList<ImmutableList<Label>> batches =
-        BuildBatchingService.batchTargets(canonicalizeTargets(targets), isRemote, shardSize);
+        BuildBatchingService.batchTargets(canonicalizeSingleTargets(targets), isRemote, shardSize);
     return new ShardedTargetList((ImmutableList) batches);
   }
 
   /**
-   * Given an ordered list of individual blaze targets (with no wildcard expressions), removes
-   * duplicates and excluded targets, returning an unordered set.
+   * Given an ordered list of individual blaze targets (with no wildcard expressions other than for
+   * excluded target patterns), removes duplicates and excluded targets, returning an unordered set.
    */
-  private static ImmutableSet<Label> canonicalizeTargets(List<TargetExpression> targets) {
-    Set<String> set = new HashSet<>();
-    for (TargetExpression target : targets) {
-      if (target.isExcluded()) {
-        set.remove(target.toString().substring(1));
-      } else {
-        set.add(target.toString());
-      }
-    }
-    return set.stream().map(Label::create).collect(toImmutableSet());
+  private static ImmutableSet<Label> canonicalizeSingleTargets(List<TargetExpression> targets) {
+    return filterExcludedTargets(targets).stream()
+        .filter(t -> !t.isExcluded())
+        .filter(t -> t instanceof Label)
+        .map(t -> (Label) t)
+        .collect(toImmutableSet());
   }
 
   /**
@@ -256,6 +254,7 @@ public class BlazeBuildTargetSharder {
    */
   static ImmutableList<ImmutableList<TargetExpression>> shardTargetsRetainingOrdering(
       List<TargetExpression> targets, int shardSize) {
+    targets = filterExcludedTargets(targets);
     if (targets.size() <= shardSize) {
       return ImmutableList.of(ImmutableList.copyOf(targets));
     }
@@ -274,6 +273,15 @@ public class BlazeBuildTargetSharder {
       output.add(ImmutableList.copyOf(shard));
     }
     return ImmutableList.copyOf(output);
+  }
+
+  /**
+   * Removes any trivially-excluded targets from an ordered list of target expressions. Handles
+   * included and excluded wildcard target patterns.
+   */
+  private static ImmutableList<TargetExpression> filterExcludedTargets(
+      List<TargetExpression> targets) {
+    return TargetExpressionList.create(targets).getTargets();
   }
 
   /** Returns the wildcard target patterns, ignoring exclude patterns (those starting with '-') */

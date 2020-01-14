@@ -27,7 +27,6 @@ import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceWar
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
-import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -45,8 +44,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -111,7 +108,6 @@ public class BlazeAndroidWorkspaceImporter {
         buildAndroidResourceModules(resourceModules.build());
     return new BlazeAndroidImportResult(
         androidResourceModules,
-        libraries.getBlazeResourceLibs(),
         libraries.getAarLibs(),
         BlazeImportUtil.getJavacJars(input.targetMap.targets()));
   }
@@ -178,7 +174,7 @@ public class BlazeAndroidWorkspaceImporter {
   /**
    * Helper function to create an AndroidResourceModule.Builder with initial resource information.
    * The builder is incomplete since it doesn't contain information about dependencies. {@link
-   * getOrCreateResourceModuleBuilder} will aggregate AndroidResourceModule.Builder over its
+   * #getOrCreateResourceModuleBuilder} will aggregate AndroidResourceModule.Builder over its
    * transitive dependencies.
    */
   protected AndroidResourceModule.Builder createResourceModuleBuilder(
@@ -204,12 +200,10 @@ public class BlazeAndroidWorkspaceImporter {
         if (shouldCreateFakeAar.test(artifactLocation)) {
           // we are creating aar libraries, and this resource isn't inside the project view
           // so we can skip adding it to the module
-          String libraryKey =
-              libraryFactory.createBlazeResourceLibrary(
-                  androidResFolder,
-                  androidIdeInfo.getManifest(),
-                  target.getBuildFile().getRelativePath());
-          androidResourceModule.addResourceLibraryKey(libraryKey);
+          String libraryKey = libraryFactory.createAarLibrary(androidResFolder.getAar());
+          if (libraryKey != null) {
+            androidResourceModule.addResourceLibraryKey(libraryKey);
+          }
         } else {
           if (shouldCreateModule(androidIdeInfo)) {
             androidResourceModule.addResource(artifactLocation);
@@ -317,78 +311,9 @@ public class BlazeAndroidWorkspaceImporter {
 
   static class LibraryFactory {
     private Map<String, AarLibrary> aarLibraries = new HashMap<>();
-    private Map<String, BlazeResourceLibrary.Builder> resourceLibraries = new HashMap<>();
-    private final Map<ArtifactLocation, String> resFolderToBuildFile = new HashMap<>();
 
     public ImmutableMap<String, AarLibrary> getAarLibs() {
       return ImmutableMap.copyOf(aarLibraries);
-    }
-
-    public ImmutableMap<String, BlazeResourceLibrary> getBlazeResourceLibs() {
-      ImmutableMap.Builder<String, BlazeResourceLibrary> builder = ImmutableMap.builder();
-      for (Map.Entry<String, BlazeResourceLibrary.Builder> entry : resourceLibraries.entrySet()) {
-        builder.put(entry.getKey(), entry.getValue().build());
-      }
-      return builder.build();
-    }
-
-    /**
-     * Creates a new BlazeResourceLibrary, or locates an existing one if one already existed for
-     * this location. Returns the library key for the library.
-     */
-    @NotNull
-    private String createBlazeResourceLibrary(
-        @NotNull ArtifactLocation root,
-        @NotNull Set<String> resources,
-        @Nullable ArtifactLocation manifestLocation,
-        @Nullable String buildFile) {
-      String libraryKey = BlazeResourceLibrary.libraryNameFromArtifactLocation(root);
-      BlazeResourceLibrary.Builder library = resourceLibraries.get(libraryKey);
-      ArtifactLocation existedManifestLocation = library == null ? null : library.getManifest();
-      if (!Objects.equals(existedManifestLocation, manifestLocation)) {
-        // For each target, it's hard to tell whether a manifest file is specific for a resource
-        // since targets are allowed have same resource directory but different manifest files.
-        // So for a target, we have the following assumption
-        // 1. A target's manifest file may be specific for its resource when its resource folder and
-        // its BUILD file are under same directory
-        // 2. If multiple targets meet requirement 1, the closest to resource folder wins
-        if (buildFile == null || manifestLocation == null) {
-          manifestLocation = existedManifestLocation;
-        } else {
-          String buildFileParent = buildFile.split("/BUILD", -1)[0];
-          if (root.getRelativePath().startsWith(buildFileParent)
-              && buildFileParent.startsWith(
-                  resFolderToBuildFile.getOrDefault(root, buildFileParent))) {
-            resFolderToBuildFile.put(root, buildFileParent);
-          } else if (existedManifestLocation != null) {
-            manifestLocation = existedManifestLocation;
-          }
-        }
-      }
-      if (library == null) {
-        library = new BlazeResourceLibrary.Builder().setRoot(root).setManifest(manifestLocation);
-        resourceLibraries.put(libraryKey, library);
-      }
-      library.addResources(resources);
-      library.setManifest(manifestLocation);
-      return libraryKey;
-    }
-
-    @NotNull
-    public String createBlazeResourceLibrary(
-        @NotNull ArtifactLocation root,
-        @Nullable ArtifactLocation manifestLocation,
-        @Nullable String buildFile) {
-      return createBlazeResourceLibrary(root, ImmutableSet.of(), manifestLocation, buildFile);
-    }
-
-    @NotNull
-    public String createBlazeResourceLibrary(
-        @NotNull AndroidResFolder androidResFolder,
-        @Nullable ArtifactLocation manifestLocation,
-        @Nullable String buildFile) {
-      return createBlazeResourceLibrary(
-          androidResFolder.getRoot(), androidResFolder.getResources(), manifestLocation, buildFile);
     }
 
     /**
@@ -397,7 +322,7 @@ public class BlazeAndroidWorkspaceImporter {
      * for this target.
      */
     @Nullable
-    public String createAarLibrary(@NotNull TargetIdeInfo target) {
+    private String createAarLibrary(@NotNull TargetIdeInfo target) {
       // NOTE: we are not doing jdeps optimization, even though we have the jdeps data for the AAR's
       // jar. The aar might still have resources that are used (e.g., @string/foo in .xml), and we
       // don't have the equivalent of jdeps data.
@@ -414,6 +339,25 @@ public class BlazeAndroidWorkspaceImporter {
         LibraryArtifact firstJar = target.getJavaIdeInfo().getJars().iterator().next();
         aarLibraries.put(
             libraryKey, new AarLibrary(firstJar, target.getAndroidAarIdeInfo().getAar()));
+      }
+      return libraryKey;
+    }
+
+    /**
+     * Creates a new Aar library for this ArtifactLocation. Returns the key for the library or null
+     * if no aar exists for this target. Note that this function is designed for aar created by
+     * aspect which does not contains class jar. Mistakenly using this function for normal aar
+     * imported by user will fail to cache jar file in this Aar.
+     */
+    @Nullable
+    private String createAarLibrary(@Nullable ArtifactLocation aar) {
+      if (aar == null) {
+        return null;
+      }
+      String libraryKey = LibraryKey.libraryNameFromArtifactLocation(aar);
+      if (!aarLibraries.containsKey(libraryKey)) {
+        // aar_import should only have one jar (a merged jar from the AAR's jars).
+        aarLibraries.put(libraryKey, new AarLibrary(aar));
       }
       return libraryKey;
     }

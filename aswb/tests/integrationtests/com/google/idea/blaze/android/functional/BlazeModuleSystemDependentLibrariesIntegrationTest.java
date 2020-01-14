@@ -34,8 +34,8 @@ import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
 import com.google.idea.blaze.android.projectsystem.MavenArtifactLocator;
-import com.google.idea.blaze.android.sync.model.BlazeResourceLibrary;
 import com.google.idea.blaze.android.targetmapbuilder.NbAarTarget;
+import com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -133,23 +133,41 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
                 "    <color name=\"aarColor\">#ffffff</color>",
                 "</resources>"))
         .build();
-    setTargetMap(
+
+    NbAndroidTarget binaryTarget =
         android_binary(main)
             .source_jar("app.jar")
-            .res("res", "//third_party/shared/res")
+            .res("res")
+            .res_folder("//third_party/shared/res", "app-third_party-shared-res.aar")
             .src("app/MainActivity.java")
-            .dep(guava, quantum, aarFile, intermediateDependency),
-        android_library(individualLibrary).res("res"),
+            .dep(guava, quantum, aarFile, intermediateDependency);
+    AarLibraryFileBuilder.aar(workspaceRoot, binaryTarget.getAarList().get(0).getRelativePath())
+        .build();
+
+    NbAndroidTarget quantumTarget =
         android_library(quantum)
+            .res_folder("//third_party/quantum/res", "values-third_party-quantum-res.aar");
+    AarLibraryFileBuilder.aar(workspaceRoot, quantumTarget.getAarList().get(0).getRelativePath())
+        .build();
+
+    NbAndroidTarget constraintLayoutTarget =
+        android_library(constraintLayout)
             .res_folder(
-                "//third_party/quantum/res",
-                ImmutableList.of("values/strings.xml", "values/attrs.xml", "layout/menu.xml")),
+                "//third_party/constraint_layout/res",
+                "constraint_layout-third_party-constraint_layout-res.aar");
+    AarLibraryFileBuilder.aar(
+            workspaceRoot, constraintLayoutTarget.getAarList().get(0).getRelativePath())
+        .build();
+
+    setTargetMap(
+        binaryTarget,
+        android_library(individualLibrary).res("res"),
         java_library(guava).source_jar("//third_party/guava-21.jar"),
+        quantumTarget,
         aarTarget,
         android_library(recyclerView).res("res"),
         android_library(intermediateDependency).res("res").dep(constraintLayout),
-        android_library(constraintLayout).res("res"));
-
+        constraintLayoutTarget);
     runFullBlazeSync();
 
     Module appModule =
@@ -166,53 +184,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
     return ArtifactLocation.builder().setRelativePath(relativePath).setIsSource(true).build();
   }
 
-  private static ExternalLibrary getQuantumResourceLibrary(PathString rootPath) {
-    return new ExternalLibrary(
-        BlazeResourceLibrary.libraryNameFromArtifactLocation(source("third_party/quantum/res")),
-        null,
-        rootPath.resolve("third_party/quantum/AndroidManifest.xml"),
-        null,
-        ImmutableList.of(),
-        ImmutableList.of(),
-        new SelectiveResourceFolder(
-            rootPath.resolve("third_party/quantum/res"),
-            ImmutableList.of(
-                rootPath.resolve("third_party/quantum/res/values/strings.xml"),
-                rootPath.resolve("third_party/quantum/res/values/attrs.xml"),
-                rootPath.resolve("third_party/quantum/res/layout/menu.xml"))),
-        null,
-        null);
-  }
-
-  private static ExternalLibrary getSharedResourceLibrary(PathString rootPath) {
-    return new ExternalLibrary(
-        BlazeResourceLibrary.libraryNameFromArtifactLocation(source("third_party/shared/res")),
-        null,
-        rootPath.resolve("java/com/google/AndroidManifest.xml"),
-        null,
-        ImmutableList.of(),
-        ImmutableList.of(),
-        new SelectiveResourceFolder(rootPath.resolve("third_party/shared/res"), null),
-        null,
-        null);
-  }
-
-  private static ExternalLibrary getLayoutResourceLibrary(PathString rootPath) {
-    return new ExternalLibrary(
-        BlazeResourceLibrary.libraryNameFromArtifactLocation(
-            source("third_party/constraint_layout/res")),
-        null,
-        rootPath.resolve("third_party/constraint_layout/AndroidManifest.xml"),
-        null,
-        ImmutableList.of(),
-        ImmutableList.of(),
-        new SelectiveResourceFolder(rootPath.resolve("third_party/constraint_layout/res"), null),
-        null,
-        null);
-  }
-
-  private ExternalLibrary getAarLibrary(PathString rootPath) {
-    String aarPath = "third_party/aar/lib_aar.aar";
+  private ExternalLibrary getAarLibrary(PathString rootPath, String aarPath) {
     String cacheKey = UnpackedAars.cacheKeyForAar(rootPath.resolve(aarPath).getNativePath());
     UnpackedAars unpackedAars = UnpackedAars.getInstance(getProject());
     PathString aarFile = new PathString(unpackedAars.getAarDir(cacheKey));
@@ -261,10 +233,12 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
                 .filter(library -> library instanceof ExternalLibrary)
                 .collect(Collectors.toList()))
         .containsExactly(
-            getQuantumResourceLibrary(rootPath),
-            getSharedResourceLibrary(rootPath),
-            getLayoutResourceLibrary(rootPath),
-            getAarLibrary(rootPath));
+            getAarLibrary(rootPath, "third_party/aar/lib_aar.aar"),
+            getAarLibrary(rootPath, "java/com/google/app-third_party-shared-res.aar"),
+            getAarLibrary(
+                rootPath,
+                "third_party/constraint_layout/constraint_layout-third_party-constraint_layout-res.aar"),
+            getAarLibrary(rootPath, "third_party/quantum/values-third_party-quantum-res.aar"));
 
     assertThat(
             libraries.stream()
@@ -285,10 +259,12 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
                 .filter(library -> library instanceof ExternalLibrary)
                 .collect(Collectors.toList()))
         .containsExactly(
-            getQuantumResourceLibrary(rootPath),
-            getSharedResourceLibrary(rootPath),
-            getLayoutResourceLibrary(rootPath),
-            getAarLibrary(rootPath),
+            getAarLibrary(rootPath, "third_party/quantum/values-third_party-quantum-res.aar"),
+            getAarLibrary(rootPath, "java/com/google/app-third_party-shared-res.aar"),
+            getAarLibrary(
+                rootPath,
+                "third_party/constraint_layout/constraint_layout-third_party-constraint_layout-res.aar"),
+            getAarLibrary(rootPath, "third_party/aar/lib_aar.aar"),
             new ExternalLibrary(
                 LibraryKey.libraryNameFromArtifactLocation(source("third_party/guava-21.jar")),
                 null,

@@ -20,9 +20,16 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Files;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.shade.DefaultShader;
 import org.apache.maven.plugins.shade.ShadeRequest;
@@ -58,14 +65,19 @@ final class Repackager {
       System.exit(1);
     }
 
+    File tempOutput = File.createTempFile("repackaged_output_jar", ".jar");
+
     ShadeRequest shadeRequest = new ShadeRequest();
     shadeRequest.setJars(ImmutableSet.of(input));
-    shadeRequest.setUberJar(output);
+    shadeRequest.setUberJar(tempOutput);
     shadeRequest.setRelocators(loadRelocators());
     shadeRequest.setFilters(ImmutableList.of());
     shadeRequest.setResourceTransformers(ImmutableList.of(new ServicesResourceTransformer()));
 
     getShader().shade(shadeRequest);
+
+    copyJarWhileSettingtConstTimestamps(tempOutput, output);
+    tempOutput.delete();
   }
 
   private Shader getShader() throws PlexusContainerException, ComponentLookupException {
@@ -130,6 +142,54 @@ final class Repackager {
     }
 
     return relocators.build();
+  }
+
+  /**
+   * The the last modification time -- {@link ZipEntry#getTime}) that simulates the time used by
+   * Blaze.
+   *
+   * <p>The use of the {@link ZoneOffset#systemDefault()} is on purpose (even if it might look
+   * strange). This is because ZIP seem to use MS-DOS/FAT last-modified-time format
+   * (https://en.wikipedia.org/wiki/Zip_(file_format)), which leads to timestamps being
+   * time-zoneless, and resolution being 2 seconds (the rounding of seconds seem to vary between
+   * tools). Since the {@link java.util.TimeZone#getDefault() default TimeZone} will be used to
+   * convert the {@code ALL_ENTRIES_MODIFIED_TIME} to the MS-DOS date and time, according to {@link
+   * ZipEntry#setTime}, the resulting datetime of the entries/files in the ZIP/jar file will be
+   * time-zoneless `2010-01-01 00:00:00` (+/- 2 seconds potentially as viewed by some tools).
+   *
+   * <p>There are extra fields in ZIP format that allow to set date-times that accurately define
+   * "time instances" -- {@link ZipEntry#setCreationTime}, {@link ZipEntry#setLastAccessTime},
+   * {@link ZipEntry#setLastModifiedTime} (this one sets both extra and DOS timestamp fields), but
+   * blaze seem to not set those.
+   */
+  private static final long ALL_ENTRIES_MODIFIED_TIME =
+      ZonedDateTime.of(2010, 1, 1, 0, 0, 0, 0, ZoneOffset.systemDefault())
+          .toInstant()
+          .toEpochMilli();
+
+  /**
+   * Copies input jar to output jar with setting the last modification time ({@link
+   * ZipEntry#setTime}) of the all entries/files to the constant {@link #ALL_ENTRIES_MODIFIED_TIME}
+   * in the output jar.
+   *
+   * @param inputFile input jar file
+   * @param outputFile output jar file
+   */
+  private static void copyJarWhileSettingtConstTimestamps(File inputFile, File outputFile)
+      throws IOException {
+    try (ZipOutputStream output = new ZipOutputStream(new FileOutputStream(outputFile));
+        ZipInputStream input = new ZipInputStream(new FileInputStream(inputFile))) {
+      byte[] buffer = new byte[8 * 1024];
+      for (ZipEntry e = input.getNextEntry(); e != null; e = input.getNextEntry()) {
+        e.setTime(ALL_ENTRIES_MODIFIED_TIME);
+        output.putNextEntry(e);
+
+        int n;
+        while ((n = input.read(buffer, 0, buffer.length)) > 0) {
+          output.write(buffer, 0, n);
+        }
+      }
+    }
   }
 
   public static void main(String[] args) throws Exception {

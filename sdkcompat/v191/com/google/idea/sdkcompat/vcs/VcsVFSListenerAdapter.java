@@ -4,6 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsVFSListener;
+import java.util.ArrayList;
 import java.util.List;
 
 /** #api192: VcsVFSListener compatibility bridge */
@@ -29,8 +30,8 @@ public abstract class VcsVFSListenerAdapter extends VcsVFSListener {
     public final List<FilePath> deletedWithoutConfirmFiles;
 
     AllDeletedFiles(List<FilePath> deletedFiles, List<FilePath> deletedWithoutConfirmFiles) {
-      this.deletedFiles = deletedFiles;
-      this.deletedWithoutConfirmFiles = deletedWithoutConfirmFiles;
+      this.deletedFiles = new ArrayList<>(deletedFiles);
+      this.deletedWithoutConfirmFiles = new ArrayList<>(deletedWithoutConfirmFiles);
     }
   }
 }

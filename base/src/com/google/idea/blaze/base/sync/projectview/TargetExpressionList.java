@@ -74,6 +74,13 @@ public final class TargetExpressionList {
     this.directories = directories;
   }
 
+  /** Returns the original list of targets with trivially-excluded targets removed. */
+  public ImmutableList<TargetExpression> getTargets() {
+    return reversedTargets.reverse().stream()
+        .map(t -> t.originalExpression)
+        .collect(toImmutableList());
+  }
+
   /** Returns true if the entire package is covered by the target expressions. */
   public boolean includesPackage(WorkspacePath packagePath) {
     // the last target expression to cover this label overrides all previous expressions
