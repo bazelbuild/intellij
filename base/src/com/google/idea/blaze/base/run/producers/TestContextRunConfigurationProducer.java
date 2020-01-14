@@ -45,12 +45,34 @@ public class TestContextRunConfigurationProducer
     super(BlazeCommandRunConfigurationType.getInstance());
   }
 
+  /** Implements {@link #equals} so that cached value stability checker passes. */
+  private static final class ContextWrapper {
+    final ConfigurationContext context;
+
+    ContextWrapper(ConfigurationContext context) {
+      this.context = context;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof ContextWrapper
+          && Objects.equals(
+              context.getPsiLocation(), ((ContextWrapper) obj).context.getPsiLocation());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(this.getClass(), context.getPsiLocation());
+    }
+  }
+
   @Nullable
   private RunConfigurationContext findTestContext(ConfigurationContext context) {
     if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
       // handled by a different producer
       return null;
     }
+    ContextWrapper wrapper = new ContextWrapper(context);
     PsiElement psi = context.getPsiLocation();
     return psi == null
         ? null
@@ -59,9 +81,9 @@ public class TestContextRunConfigurationProducer
             cacheKey,
             () ->
                 CachedValueProvider.Result.create(
-                    doFindTestContext(context),
+                    doFindTestContext(wrapper.context),
                     PsiModificationTracker.MODIFICATION_COUNT,
-                    BlazeSyncModificationTracker.getInstance(context.getProject())));
+                    BlazeSyncModificationTracker.getInstance(wrapper.context.getProject())));
   }
 
   @Nullable
