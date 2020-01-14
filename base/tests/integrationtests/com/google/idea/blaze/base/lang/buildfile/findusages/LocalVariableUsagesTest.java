@@ -30,6 +30,9 @@ import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -86,7 +89,9 @@ public class LocalVariableUsagesTest extends BuildFileIntegrationTestCase {
     PsiReference[] references = FindUsages.findAllReferences(target);
     assertThat(references).hasLength(2);
 
-    assertThat(references[0]).isInstanceOf(LocalReference.class);
-    assertThat(references[1]).isInstanceOf(TargetReference.class);
+    // We cannot guarantee order of references.
+    List<Class<?>> referenceClasses =
+        Arrays.stream(references).map(Object::getClass).collect(Collectors.toList());
+    assertThat(referenceClasses).containsExactly(TargetReference.class, LocalReference.class);
   }
 }

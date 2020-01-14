@@ -74,6 +74,22 @@ public class MultipleJavaClassesTestContextProviderTest
     registerProjectService(BlazeProjectDataManager.class, mockProjectDataManager);
     registerProjectService(
         WorkspaceFileFinder.Provider.class, () -> file -> file.getPath().contains("test"));
+
+    // required for IntelliJ to recognize annotations, JUnit version, etc.
+    workspace.createPsiFile(
+        new WorkspacePath("org/junit/runner/RunWith.java"),
+        "package org.junit.runner;"
+            + "public @interface RunWith {"
+            + "    Class<? extends Runner> value();"
+            + "}");
+    workspace.createPsiFile(
+        new WorkspacePath("org/junit/Test.java"),
+        "package org.junit;",
+        "public @interface Test {}");
+    workspace.createPsiFile(
+        new WorkspacePath("org/junit/runners/JUnit4.java"),
+        "package org.junit.runners;",
+        "public class JUnit4 {}");
   }
 
   @After
