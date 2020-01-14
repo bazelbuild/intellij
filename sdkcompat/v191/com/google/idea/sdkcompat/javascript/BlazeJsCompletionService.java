@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.javascript;
+package com.google.idea.sdkcompat.javascript;
 
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.javascript.completion.JSCompletionService;
@@ -22,7 +22,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/** Replacement {@link JSCompletionService} that fixes a buggy timeout implementation. */
+/**
+ * Replacement {@link JSCompletionService} that fixes a buggy timeout implementation.
+ *
+ * #api192 : JSCompletionService is final in 193.
+ */
 public class BlazeJsCompletionService extends JSCompletionService {
   public BlazeJsCompletionService(LookupManager lookupManager) {
     super(lookupManager);
