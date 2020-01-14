@@ -93,11 +93,16 @@
                         serviceImplementation="com.google.idea.blaze.java.sync.source.PackageManifestReader"/>
     <programRunner implementation="com.google.idea.blaze.java.run.BlazeJavaDebuggerRunner"/>
     <projectService serviceImplementation="com.google.idea.blaze.java.libraries.AttachedSourceJarManager"/>
-    <refactoring.safeDeleteProcessor id="build_file_safe_delete" order="before javaProcessor"
-                                     implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
-    <!--duplicated here in case the Kotlin plugin is present, as it also tries to replace javaProcessor-->
-    <refactoring.safeDeleteProcessor id="build_file_safe_delete_copy" order="before kotlinProcessor"
-                                     implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
+
+    <!--
+      Load `BuildFileSafeDeleteProcessor` before `OCSafeDeleteProcessorDelegate` (Android NDK Pugin).
+      `OCSafeDeleteProcessorDelegate` does not provide an ID, so we load `BuildFileSafeDeleteProcessor`
+      first. This might break some upstream implementations that rely on being the first
+      JavaSafeDeleteProcessor to load.
+    -->
+    <refactoring.safeDeleteProcessor id="build_file_safe_delete" order="first"
+            implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
+
     <projectService serviceImplementation="com.google.idea.blaze.java.libraries.JarCache"/>
 
     <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider"/>
