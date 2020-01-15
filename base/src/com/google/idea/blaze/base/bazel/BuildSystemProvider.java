@@ -166,7 +166,7 @@ public interface BuildSystemProvider {
     ImmutableList.Builder<FileNameMatcher> list = ImmutableList.builder();
     possibleBuildFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
     possibleWorkspaceFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
-    list.add(new ExtensionFileNameMatcher("bzl"));
+    list.add(new ExtensionFileNameMatcher("bzl"), new ExactFileNameMatcher("prelude_bazel"));
     return list.build();
   }
 
