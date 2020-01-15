@@ -31,15 +31,13 @@ import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager.SyncPlugin;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vfs.AsyncVfsEventsPostProcessor;
+import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -215,23 +213,9 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
     return library;
   }
 
-  private void deleteAndWaitForVfsEvents(VirtualFile file) throws InterruptedException {
-    Disposable disposable = Disposer.newDisposable();
-    AsyncVfsEventsPostProcessor.getInstance()
-        .addListener(
-            events -> {
-              Disposer.dispose(disposable);
-              synchronized (this) {
-                notify();
-              }
-            },
-            disposable);
+  private void deleteAndWaitForVfsEvents(VirtualFile file) {
     delete(file);
-    synchronized (this) {
-      while (!Disposer.isDisposed(disposable)) {
-        wait();
-      }
-    }
+    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed();
   }
 
   private void delete(VirtualFile file) {
