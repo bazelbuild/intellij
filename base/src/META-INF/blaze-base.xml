@@ -215,6 +215,8 @@
                         serviceImplementation="com.google.idea.blaze.base.projectview.ProjectViewStorageManagerImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.projectview.ProjectViewManager"
                     serviceImplementation="com.google.idea.blaze.base.projectview.ProjectViewManagerImpl"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.prelude.PreludeManager"
+                    serviceImplementation="com.google.idea.blaze.base.prelude.PreludeManagerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface"
                         serviceImplementation="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceAspectsImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.console.BlazeConsoleService"
