@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.LoadedSymbol;
 import com.google.idea.blaze.base.lang.buildfile.psi.Parameter;
 import com.google.idea.blaze.base.lang.buildfile.psi.StatementList;
 import com.google.idea.blaze.base.lang.buildfile.psi.TargetExpression;
+import com.google.idea.blaze.base.prelude.PreludeManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -43,7 +44,15 @@ public class ResolveUtil {
     while (!(element instanceof PsiFileSystemItem)) {
       PsiElement parent = element.getParent();
       if (parent instanceof BuildFile) {
-        if (!((BuildFile) parent).searchSymbolsInScope(processor, topLevelScope ? element : null)) {
+        BuildFile parentBuildFile = (BuildFile) parent;
+        PsiElement stopAtElement = topLevelScope ? element : null;
+        PreludeManager preludeManager = PreludeManager.getInstance(originalElement.getProject());
+        // if it is build file we should start looking from topmost level
+        if (parentBuildFile.getBlazeFileType() == BuildFile.BlazeFileType.BuildPackage
+            && !preludeManager.searchSymbolsInScope(processor, stopAtElement)) {
+          return;
+        }
+        if (!parentBuildFile.searchSymbolsInScope(processor, stopAtElement)) {
           return;
         }
       } else if (parent instanceof FunctionStatement) {
