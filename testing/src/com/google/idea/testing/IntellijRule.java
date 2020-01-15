@@ -23,6 +23,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.junit.rules.ExternalResource;
+import org.picocontainer.MutablePicoContainer;
+import org.picocontainer.defaults.UnsatisfiableDependenciesException;
 
 /**
  * A lightweight IntelliJ test rule.
@@ -55,19 +57,29 @@ public final class IntellijRule extends ExternalResource {
   }
 
   public <T> void registerApplicationService(Class<T> klass, T instance) {
-    ServiceHelper.registerApplicationService(klass, instance, testDisposable);
+    registerComponentInstance(
+        (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer(),
+        klass,
+        instance,
+        testDisposable);
   }
 
   public <T> void registerApplicationComponent(Class<T> klass, T instance) {
-    ServiceHelper.registerApplicationComponent(klass, instance, testDisposable);
+    registerComponentInstance(
+        (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer(),
+        klass,
+        instance,
+        testDisposable);
   }
 
   public <T> void registerProjectService(Class<T> klass, T instance) {
-    ServiceHelper.registerProjectService(getProject(), klass, instance, testDisposable);
+    registerComponentInstance(
+        (MutablePicoContainer) getProject().getPicoContainer(), klass, instance, testDisposable);
   }
 
   public <T> void registerProjectComponent(Class<T> klass, T instance) {
-    ServiceHelper.registerProjectComponent(getProject(), klass, instance, testDisposable);
+    registerComponentInstance(
+        (MutablePicoContainer) getProject().getPicoContainer(), klass, instance, testDisposable);
   }
 
   public <T> void registerExtensionPoint(ExtensionPointName<T> name, Class<T> type) {
@@ -76,5 +88,26 @@ public final class IntellijRule extends ExternalResource {
 
   public <T> void registerExtension(ExtensionPointName<T> name, T instance) {
     ServiceHelper.registerExtension(name, instance, testDisposable);
+  }
+
+  private static <T> void registerComponentInstance(
+      MutablePicoContainer container, Class<T> key, T implementation, Disposable parentDisposable) {
+    Object old;
+    try {
+      old = container.getComponentInstance(key);
+    } catch (UnsatisfiableDependenciesException e) {
+      old = null;
+    }
+    container.unregisterComponent(key.getName());
+    container.registerComponentInstance(key.getName(), implementation);
+    Object finalOld = old;
+    Disposer.register(
+        parentDisposable,
+        () -> {
+          container.unregisterComponent(key.getName());
+          if (finalOld != null) {
+            container.registerComponentInstance(key.getName(), finalOld);
+          }
+        });
   }
 }
