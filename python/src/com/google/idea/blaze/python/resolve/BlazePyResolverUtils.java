@@ -67,6 +67,34 @@ public class BlazePyResolverUtils {
     return Optional.of(new File(projectData.getBlazeInfo().getGenfilesDirectory(), relativePath));
   }
 
+  @Nullable
+  public static PsiElement resolvePy3GenfilesPath(
+      PyQualifiedNameResolveContext context, String relativePath) {
+    return resolvePy3GenfilesPath(context.getProject(), relativePath)
+        .map(f -> resolveFile(context.getPsiManager(), f))
+        .orElse(null);
+  }
+
+  private static Optional<File> resolvePy3GenfilesPath(Project project, String relativePath) {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData == null) {
+      return Optional.empty();
+    }
+    File genfiles = projectData.getBlazeInfo().getGenfilesDirectory();
+    String mnemonic = genfiles.getParentFile().getName();
+    if (mnemonic.contains("-py3-") || !mnemonic.contains("-")) {
+      return Optional.empty();
+    }
+    mnemonic =
+        mnemonic.substring(0, mnemonic.indexOf('-'))
+            + "-py3"
+            + mnemonic.substring(mnemonic.indexOf('-'));
+    File outputBase = genfiles.getParentFile().getParentFile();
+    File py3Genfiles = new File(new File(outputBase, mnemonic), genfiles.getName());
+    return Optional.of(new File(py3Genfiles, relativePath));
+  }
+
   /**
    * Looks for a PsiDirectory or PyFile at the given workspace-relative path (appending '.py' to the
    * path when looking for py files).
