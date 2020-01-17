@@ -38,7 +38,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -440,11 +440,10 @@ public final class SourceDirectoryCalculator {
       }
     }
     if (declaredPackage == null) {
-      IssueOutput.warn(
+      context.output(
+          PrintOutput.log(
               "Failed to inspect the package name of java source file: "
-                  + sourceArtifact.artifactLocation)
-          .inFile(decoder.resolveSource(sourceArtifact.artifactLocation))
-          .submit(context);
+                  + sourceArtifact.artifactLocation));
       return null;
     }
     String parentPath = new File(sourceArtifact.artifactLocation.getRelativePath()).getParent();
