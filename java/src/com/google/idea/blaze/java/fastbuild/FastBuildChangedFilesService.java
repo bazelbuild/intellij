@@ -163,11 +163,15 @@ final class FastBuildChangedFilesService implements Disposable {
     throw new AssertionError("Unknown state " + data.state);
   }
 
+  @SuppressWarnings("GuardedBy")
   synchronized void addFilesFromFailedCompilation(Label label, Set<File> files) {
 
     Data data = labelData.get(label);
     checkState(data != null, "No build information about %s", label);
 
+    // TODO(b/145386688): Access should be guarded by enclosing instance
+    // 'com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService' of 'data', which is not
+    // accessible in this scope; instead found: 'this'
     data.updateChangedSources(files);
   }
 
@@ -186,6 +190,7 @@ final class FastBuildChangedFilesService implements Disposable {
     }
 
     @Override
+    @SuppressWarnings("GuardedBy")
     public void onSuccess(BuildOutput result) {
 
       ImmutableSet<File> targetSources = getSourceFiles(label, result.blazeData());
@@ -193,6 +198,9 @@ final class FastBuildChangedFilesService implements Disposable {
       synchronized (FastBuildChangedFilesService.this) {
         Data data = labelData.get(label);
         if (data != null) {
+          // TODO(b/145386688): Access should be guarded by enclosing instance
+          // 'com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService' of 'data', which is
+          // not accessible in this scope; instead found: 'FastBuildChangedFilesService.this'
           data.setSources(targetSources);
         }
       }
@@ -206,6 +214,7 @@ final class FastBuildChangedFilesService implements Disposable {
     }
   }
 
+  @SuppressWarnings("GuardedBy")
   private class ChangeSourceListener implements BulkFileListener {
     @Override
     public void after(List<? extends VFileEvent> events) {
@@ -229,7 +238,9 @@ final class FastBuildChangedFilesService implements Disposable {
                   if (changedFiles.isEmpty()) {
                     return null;
                   }
-
+                  // TODO(b/145386688): Access should be guarded by enclosing instance
+                  // 'com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService' of 'data',
+                  // which is not accessible in this scope
                   labelData.values().forEach(data -> data.updateChangedSources(changedFiles));
                   return null;
                 }
