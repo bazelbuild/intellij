@@ -33,6 +33,7 @@ import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import javax.annotation.Nullable;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -64,11 +65,6 @@ public class BlazeGoAnnotatorTest extends BlazeIntegrationTestCase {
                                         .setImportPath("foo/foo")))
                         .build())
                 .build()));
-  }
-
-  @Ignore("until https://youtrack.jetbrains.com/issue/GO-8698 is fixed")
-  @Test
-  public void testSamePackageDifferentDirectoryUnexportedSymbols() {
     psi(
         "foo/BUILD", //
         "go_library(",
@@ -76,6 +72,11 @@ public class BlazeGoAnnotatorTest extends BlazeIntegrationTestCase {
         "    srcs = [\"foo.go\"],",
         "    srcs = [\"foo/bar/foo.go\"],",
         ")");
+  }
+
+  @Ignore("until https://youtrack.jetbrains.com/issue/GO-8698 is fixed")
+  @Test
+  public void testSamePackageDifferentDirectoryUnexportedFunction() {
     psi(
         "foo/bar/foo.go", //
         "package foo",
@@ -89,10 +90,54 @@ public class BlazeGoAnnotatorTest extends BlazeIntegrationTestCase {
                 "  b<caret>ar()",
                 "}");
     testFixture.configureFromExistingVirtualFile(foo.getVirtualFile());
-    PsiReference reference = foo.findReferenceAt(testFixture.getCaretOffset());
+    assertNoAnnotations(foo.findReferenceAt(testFixture.getCaretOffset()));
+  }
+
+  @Ignore("until https://youtrack.jetbrains.com/issue/GO-8698 is fixed")
+  @Test
+  public void testSamePackageDifferentDirectoryUnexportedType() {
+    psi(
+        "foo/bar/foo.go", //
+        "package foo",
+        "type bar struct {}");
+    GoFile foo =
+        (GoFile)
+            psi(
+                "foo/foo.go", //
+                "package foo",
+                "func foo() bar {",
+                "  return b<caret>ar{}",
+                "}");
+    testFixture.configureFromExistingVirtualFile(foo.getVirtualFile());
+    assertNoAnnotations(foo.findReferenceAt(testFixture.getCaretOffset()));
+  }
+
+  @Ignore("until https://youtrack.jetbrains.com/issue/GO-8698 is fixed")
+  @Test
+  public void testSamePackageDifferentDirectoryUnexportedField() {
+    psi(
+        "foo/bar/foo.go", //
+        "package foo",
+        "type Bar struct {",
+        "  field int",
+        "}");
+    GoFile foo =
+        (GoFile)
+            psi(
+                "foo/foo.go", //
+                "package foo",
+                "func foo(b Bar) int {",
+                "  return b.f<caret>ield",
+                "}");
+    testFixture.configureFromExistingVirtualFile(foo.getVirtualFile());
+    assertNoAnnotations(foo.findReferenceAt(testFixture.getCaretOffset()));
+  }
+
+  private static void assertNoAnnotations(@Nullable PsiReference reference) {
     assertThat(reference).isNotNull();
     PsiElement element = reference.getElement();
-    AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(foo));
+    AnnotationHolderImpl holder =
+        new AnnotationHolderImpl(new AnnotationSession(element.getContainingFile()));
     new GoAnnotator().annotate(element, holder);
     assertThat(holder).isEmpty();
   }
