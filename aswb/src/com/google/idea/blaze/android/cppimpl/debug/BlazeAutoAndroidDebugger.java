@@ -60,7 +60,12 @@ class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
 
   @Override
   public String getDisplayName() {
-    return ID;
+    return "Detect Automatically";
+  }
+
+  @Override
+  public boolean supportsProject(Project project) {
+    return Blaze.isBlazeProject(project);
   }
 
   @Override

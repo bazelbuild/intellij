@@ -33,6 +33,7 @@ import com.intellij.psi.PsiReference;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -45,6 +46,7 @@ import org.junit.runners.JUnit4;
 public class LocalVariableUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
+  @Ignore("148246421")
   public void testLocalReferences() {
     BuildFile buildFile =
         createBuildFile(

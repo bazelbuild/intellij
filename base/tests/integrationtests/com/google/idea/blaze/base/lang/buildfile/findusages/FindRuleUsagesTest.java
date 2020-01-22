@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -37,6 +38,7 @@ import org.junit.runners.JUnit4;
 public class FindRuleUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
+  @Ignore("b/148287130")
   public void testLocalReferences() {
     BuildFile buildFile =
         createBuildFile(

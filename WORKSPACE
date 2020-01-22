@@ -176,8 +176,8 @@ http_archive(
 http_archive(
     name = "android_studio_4_0",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio40",
-    sha256 = "5f70261eca51776a70129642fe6cbdab96501ca491da10d2b53d3c6ae3cb3afc",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/4.0.0.4/android-studio-ide-192.6008643-linux.tar.gz",
+    sha256 = "1827a9ee3beb724fb4365b1811f7f9e1d7de4f31e91a9300f4544a51ae5cb12d",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/4.0.0.8/android-studio-ide-193.6107147-linux.tar.gz",
 )
 
 # LICENSE: Common Public License 1.0

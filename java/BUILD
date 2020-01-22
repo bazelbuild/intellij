@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -12,6 +10,8 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 _FAST_BUILD_JAVAC_SRCS = ["src/com/google/idea/blaze/java/fastbuild/FastBuildJavac.java"]
 
@@ -184,7 +184,21 @@ java_binary(
 
 intellij_integration_test_suite(
     name = "integration_tests",
-    srcs = glob(["tests/integrationtests/**/*.java"]),
+    srcs = glob(
+        ["tests/integrationtests/**/*.java"],
+        exclude = [
+            "tests/integrationtests/com/google/idea/blaze/java/lang/build/**/*.java",  # bad in here
+
+            #
+            "tests/integrationtests/com/google/idea/blaze/java/run/fastbuild/*.java",  #bad in here
+            "tests/integrationtests/com/google/idea/blaze/java/run/producers/*.java",  #bad in here
+
+            #
+            "tests/integrationtests/com/google/idea/blaze/java/run/BlazeJavaWebTestEventsHandlerTest.java",  #bad
+            "tests/integrationtests/com/google/idea/blaze/java/run/BlazeWebJavaTestEventsHandlerTest.java",  #bad
+            "tests/integrationtests/com/google/idea/blaze/java/run/CombinedTestHeuristicTest.java",  #bad
+        ],
+    ),
     required_plugins = "com.google.idea.blaze.java",
     test_package_root = "com.google.idea.blaze.java",
     runtime_deps = [

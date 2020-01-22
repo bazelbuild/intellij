@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -79,6 +80,7 @@ public class FunctionStatementUsagesTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
+  @Ignore("b/148246421")
   public void testFuncallReference() {
     BuildFile extFile =
         createBuildFile(

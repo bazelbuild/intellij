@@ -25,7 +25,9 @@ import com.android.tools.idea.projectsystem.SourceProviders;
 import com.android.tools.idea.projectsystem.SourceProvidersFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import java.util.Collection;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.SourceProvidersImpl;
@@ -60,5 +62,11 @@ public class BlazeProjectSystem extends BlazeProjectSystemBase {
         }
       }
     };
+  }
+
+  @NotNull
+  @Override
+  public Collection<Module> getSubmodules() {
+    return ImmutableList.of();
   }
 }

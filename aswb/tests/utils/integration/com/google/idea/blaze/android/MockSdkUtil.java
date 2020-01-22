@@ -25,7 +25,9 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.containers.MultiMap;
+import java.io.File;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkType;
 
 /**
@@ -38,7 +40,7 @@ import org.jetbrains.android.sdk.AndroidSdkType;
  */
 public class MockSdkUtil {
 
-  private static final WorkspacePath SDK_DIR = new WorkspacePath("sdk");
+  public static final WorkspacePath SDK_DIR = new WorkspacePath("sdk");
   private static final WorkspacePath PLATFORM_DIR = new WorkspacePath(SDK_DIR, "platforms");
   private static final String TARGET_HASH = "android-%s";
   private static final String SDK_NAME = "Android %s SDK";
@@ -136,10 +138,12 @@ public class MockSdkUtil {
       workspace.createDirectory(new WorkspacePath(workspacePathToAndroid, "data/res"));
       workspace.createFile(new WorkspacePath(workspacePathToAndroid, "data/annotations.zip"));
     }
+    String sdkHomeDir = workspace.createDirectory(SDK_DIR).getPath();
+    AndroidSdkData.getSdkData(new File(sdkHomeDir), true);
     MockSdk sdk =
         new MockSdk(
             sdkName,
-            workspace.createDirectory(SDK_DIR).getPath(),
+            sdkHomeDir,
             String.format("%s.%s.0", major, minor),
             roots,
             AndroidSdkType.getInstance());
