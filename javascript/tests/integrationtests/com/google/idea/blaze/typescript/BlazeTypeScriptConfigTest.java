@@ -93,7 +93,6 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
           "        \"noImplicitThis\": true,",
           "        \"noLib\": true,",
           "        \"noResolve\": false,",
-          "        \"noStrictGenericChecks\": true,",
           "        \"paths\": {",
           "            \"workspace/*\": [",
           "                \"./tsconfig.runfiles/workspace/*\"",
