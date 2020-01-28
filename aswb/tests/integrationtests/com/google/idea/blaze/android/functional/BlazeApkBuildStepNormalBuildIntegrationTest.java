@@ -83,7 +83,7 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
   public void setupBuildResultHelperProvider() throws GetArtifactsException {
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(getExecRoot(), null, null, 0));
+        .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0));
     registerExtension(
         BuildResultHelperProvider.EP_NAME,
         new BuildResultHelperProvider() {
@@ -206,7 +206,7 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
 
     // Return null execroot
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, 0));
+        .thenReturn(new ParsedBepOutput(null, null, null, null, 0));
 
     // Setup interceptor for fake running of blaze commands and capture details.
     ExternalTaskInterceptor externalTaskInterceptor = new ExternalTaskInterceptor();

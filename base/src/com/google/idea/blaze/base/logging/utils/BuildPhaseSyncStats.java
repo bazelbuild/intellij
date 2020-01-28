@@ -44,6 +44,8 @@ public abstract class BuildPhaseSyncStats {
 
   public abstract ImmutableList<TimedEvent> timedEvents();
 
+  public abstract ImmutableList<String> buildIds();
+
   public abstract Duration totalTime();
 
   public static Builder builder() {
@@ -56,6 +58,7 @@ public abstract class BuildPhaseSyncStats {
         .setTargetsDerivedFromDirectories(false)
         .setBuildResult(BuildResult.FATAL_ERROR)
         .setTimedEvents(ImmutableList.of())
+        .setBuildIds(ImmutableList.of())
         .setTotalTime(Duration.ZERO);
   }
   /** Auto value builder for SyncStats. */
@@ -76,6 +79,8 @@ public abstract class BuildPhaseSyncStats {
     public abstract Builder setBuildResult(BuildResult buildResult);
 
     public abstract Builder setTimedEvents(ImmutableList<TimedEvent> timedEvents);
+
+    public abstract Builder setBuildIds(ImmutableList<String> buildIds);
 
     public abstract Builder setTotalTime(Duration totalTime);
 
