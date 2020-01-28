@@ -24,14 +24,10 @@ import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.TestFileSystem.MockFileOperationProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VfsUtils;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
-import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.sdkcompat.typescript.TypeScriptConfigCompat;
 import com.google.idea.sdkcompat.typescript.TypeScriptConfigServiceCompat;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
@@ -40,7 +36,9 @@ import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
 import com.intellij.lang.typescript.tsconfig.graph.TypeScriptConfigGraphCache;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -165,15 +163,12 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
                             .add(Label.create("//project/foo:tsconfig")))
                     .build())
             .build());
-    BlazeProjectData projectData =
-        MockBlazeProjectDataBuilder.builder()
-            .setOutputBase(fileSystem.getRootDir() + "/out")
-            .build();
-    registerProjectService(
-        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(projectData));
 
     this.blazeConfigService = new BlazeTypeScriptConfigServiceImpl(getProject());
-    blazeConfigService.update(projectData);
+    this.blazeConfigService.update(
+        ImmutableMap.of(
+            Label.create("//project/foo:tsconfig"),
+            new File("/src/workspace/project/foo/tsconfig.json")));
     this.regularConfigService =
         TypeScriptConfigServiceCompat.newImpl(
             getProject(),
@@ -181,6 +176,11 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
             PsiManager.getInstance(getProject()),
             TypeScriptLibraryProvider.getService(getProject()),
             new TypeScriptConfigGraphCache(getProject()));
+  }
+
+  @Override
+  protected boolean runTestsOnEdt() {
+    return false;
   }
 
   @Test
@@ -199,7 +199,8 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     TypeScriptConfigCompat blazeConfig =
         (TypeScriptConfigCompat) blazeConfigService.getConfigs().get(0);
     TypeScriptConfig regularConfig =
-        TypeScriptConfigServiceCompat.getConfigs(regularConfigService).get(0);
+        ReadAction.compute(
+            () -> TypeScriptConfigServiceCompat.getConfigs(regularConfigService).get(0));
 
     assertThat(blazeConfig.isDirectoryBased()).isEqualTo(regularConfig.isDirectoryBased());
     assertThat(blazeConfig.getConfigFile()).isEqualTo(regularConfig.getConfigFile());
@@ -308,12 +309,12 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
             "./tsconfig.runfiles/workspace/project/foo/*")
         .inOrder();
 
-    assertThat(blazeConfig.getRootDirsFiles())
+    assertThat(ReadAction.compute(blazeConfig::getRootDirsFiles))
         .containsExactly(
             vf("/src/workspace/project/foo"),
             vf("/src/out/execroot/bin/project/foo/tsconfig.runfiles/workspace"),
             vf("/src/out/execroot/bin/project/foo/tsconfig.runfiles/workspace/project/foo"));
-    assertThat(blazeConfig.getRootDirs())
+    assertThat(ReadAction.compute(blazeConfig::getRootDirs))
         .containsExactly(
             psi("/src/workspace/project/foo"),
             psi("/src/out/execroot/bin/project/foo/tsconfig.runfiles/workspace"),
@@ -328,7 +329,8 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
 
   private PsiDirectory psi(String path) {
     PsiManager psiManager = PsiManager.getInstance(getProject());
-    PsiDirectory psiDirectory = psiManager.findDirectory(vf(path));
+    VirtualFile virtualFile = vf(path);
+    PsiDirectory psiDirectory = ReadAction.compute(() -> psiManager.findDirectory(virtualFile));
     assertThat(psiDirectory).isNotNull();
     return psiDirectory;
   }
@@ -342,6 +344,17 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
               .collect(
                   ImmutableMap.toImmutableMap(
                       e -> new File(e.getKey()), e -> new File(e.getValue())));
+    }
+
+    @Override
+    public File getCanonicalFile(File file) throws IOException {
+      file = file.getCanonicalFile();
+      for (File link : symlinks.keySet()) {
+        if (FileUtil.isAncestor(link, file, /* strict= */ false)) {
+          return new File(symlinks.get(link), link.toPath().relativize(file.toPath()).toString());
+        }
+      }
+      return file;
     }
 
     @Override

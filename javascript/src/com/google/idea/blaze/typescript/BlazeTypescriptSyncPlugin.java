@@ -15,7 +15,10 @@
  */
 package com.google.idea.blaze.typescript;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
@@ -35,6 +38,7 @@ import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.plugin.PluginUtils;
+import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -51,7 +55,10 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.intellij.ide.browsers.BrowserLauncher;
+import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
+import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.util.PlatformUtils;
@@ -125,16 +132,38 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
           childContext.push(new TimingScope("TsConfig", EventType.BlazeInvocation));
           childContext.output(new StatusOutput("Updating tsconfig..."));
 
+          DelegatingTypeScriptConfigService service =
+              Optional.of(TypeScriptConfigService.Provider.get(project))
+                  .filter(DelegatingTypeScriptConfigService.class::isInstance)
+                  .map(DelegatingTypeScriptConfigService.class::cast)
+                  .orElse(null);
+
+          ImmutableMap.Builder<Label, File> updatedTsconfigs = ImmutableMap.builder();
           for (Label target : tsConfigTargets) {
             File tsconfig =
                 new File(workspaceRoot.fileForPath(target.blazePackage()), "tsconfig.json");
             if (syncTsConfigTarget(
                     project, childContext, workspaceRoot, projectViewSet, target, tsconfig)
-                != 0) {
+                == 0) {
+              updatedTsconfigs.put(target, tsconfig);
+            } else {
               childContext.setHasError();
-              // continue running any remaining targets
             }
           }
+          if (service == null) {
+            return;
+          }
+          service.update(updatedTsconfigs.build());
+          PrefetchService.getInstance()
+              .prefetchFiles(
+                  service.getConfigs().parallelStream()
+                      .map(TypeScriptConfig::getFileList)
+                      .flatMap(Collection::stream)
+                      .distinct()
+                      .map(VfsUtil::virtualToIoFile)
+                      .collect(toImmutableList()),
+                  /* refetchCachedFiles= */ false,
+                  /* fetchFileTypes= */ false);
         });
   }
 
