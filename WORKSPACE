@@ -37,8 +37,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2019_3",
     build_file = "@//intellij_platform_sdk:BUILD.ue193",
-    sha256 = "0cd0771630385eadf308c8e29e9979acc4f92f2010eda27041cfa04c2f51214f",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.3.1/ideaIU-2019.3.1.zip",
+    sha256 = "d399ecc9357dd3b3ad3bcc1ed046f74b8e535bb862f68fd019b23fdc8ee2ca56",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.3.2/ideaIU-2019.3.2.zip",
 )
 
 # The plugin api for CLion 2019.2. This is required to build CLwB,
