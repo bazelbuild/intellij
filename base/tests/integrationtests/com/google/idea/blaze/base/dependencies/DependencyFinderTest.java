@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.testing.ServiceHelper;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,11 +44,8 @@ public final class DependencyFinderTest extends BlazeIntegrationTestCase {
   @Before
   public void initTest() {
     MockitoAnnotations.initMocks(this);
-    ServiceHelper.registerProjectService(
-        testFixture.getProject(),
-        BlazeProjectDataManager.class,
-        mockProjectDataManager,
-        getTestRootDisposable());
+    registerProjectService(
+        BlazeProjectDataManager.class, mockProjectDataManager, getTestRootDisposable());
   }
 
   @Test

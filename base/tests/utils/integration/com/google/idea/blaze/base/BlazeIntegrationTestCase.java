@@ -33,6 +33,7 @@ import com.google.idea.testing.VerifyRequiredPluginsEnabled;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -55,6 +56,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -93,6 +97,15 @@ public abstract class BlazeIntegrationTestCase {
   protected VirtualFile projectDataDirectory;
   protected TestFileSystem fileSystem;
   protected WorkspaceFileSystem workspace;
+
+  // api193: It is no longer possible to register project/application services with arbitrary
+  // disposables. They are attached to either project or application. Projects are reused in light
+  // test cases, and Application is reused whenever possible.
+  // This means application or project services can persist between tests.
+  // These fields are used to store consumers that will reset services to their original values
+  // during teardown.
+  private final Map<Class<?>, Consumer<Void>> resetProjectServicesMethods = new HashMap<>();
+  private final Map<Class<?>, Consumer<Void>> resetApplicationServicesMethods = new HashMap<>();
 
   @Before
   public final void setUp() throws Exception {
@@ -177,6 +190,13 @@ public abstract class BlazeIntegrationTestCase {
             table.removeJdk(sdk);
           }
         });
+
+    resetProjectServicesMethods.values().forEach(c -> c.accept(null));
+    resetProjectServicesMethods.clear();
+
+    resetApplicationServicesMethods.values().forEach(c -> c.accept(null));
+    resetApplicationServicesMethods.clear();
+
     testFixture.tearDown();
     testFixture = null;
   }
@@ -229,6 +249,15 @@ public abstract class BlazeIntegrationTestCase {
   }
 
   protected <T> void registerApplicationService(Class<T> key, T implementation) {
+    // If overwriting an existing service, register a method to undo the overwrite.
+    T currImpl = ServiceManager.getService(key);
+    if (currImpl != null) {
+      resetApplicationServicesMethods.putIfAbsent(
+          key,
+          unused ->
+              ServiceHelper.registerApplicationService(key, currImpl, getTestRootDisposable()));
+    }
+
     ServiceHelper.registerApplicationService(key, implementation, getTestRootDisposable());
   }
 
@@ -237,8 +266,21 @@ public abstract class BlazeIntegrationTestCase {
   }
 
   protected <T> void registerProjectService(Class<T> key, T implementation) {
-    ServiceHelper.registerProjectService(
-        getProject(), key, implementation, getTestRootDisposable());
+    registerProjectService(key, implementation, getTestRootDisposable());
+  }
+
+  protected <T> void registerProjectService(
+      Class<T> key, T implementation, Disposable parentDisposable) {
+    // If overwriting an existing service, register a method to undo the overwrite.
+    T currImpl = ServiceManager.getService(getProject(), key);
+    if (currImpl != null) {
+      resetProjectServicesMethods.putIfAbsent(
+          key,
+          unused ->
+              ServiceHelper.registerProjectService(getProject(), key, currImpl, parentDisposable));
+    }
+
+    ServiceHelper.registerProjectService(getProject(), key, implementation, parentDisposable);
   }
 
   public <T> void registerProjectComponent(Class<T> key, T implementation) {
