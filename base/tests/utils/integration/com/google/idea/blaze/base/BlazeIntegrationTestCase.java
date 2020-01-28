@@ -94,12 +94,19 @@ public abstract class BlazeIntegrationTestCase {
   protected TestFileSystem fileSystem;
   protected WorkspaceFileSystem workspace;
 
+  // Use a service handler to register services. This handler will ensure that all overwritten
+  // services are reverted during teardown.
+  private BlazeIntegrationTestCaseServiceHandler serviceHandler;
+
   @Before
   public final void setUp() throws Exception {
     testFixture = createTestFixture();
     testFixture.setUp();
     fileSystem =
         new TestFileSystem(getProject(), testFixture.getTempDirFixture(), isLightTestCase());
+
+    serviceHandler = new BlazeIntegrationTestCaseServiceHandler();
+    serviceHandler.setUp();
 
     runWriteAction(
         () -> {
@@ -177,6 +184,9 @@ public abstract class BlazeIntegrationTestCase {
             table.removeJdk(sdk);
           }
         });
+    serviceHandler.tearDown();
+    serviceHandler = null;
+
     testFixture.tearDown();
     testFixture = null;
   }
@@ -229,7 +239,7 @@ public abstract class BlazeIntegrationTestCase {
   }
 
   protected <T> void registerApplicationService(Class<T> key, T implementation) {
-    ServiceHelper.registerApplicationService(key, implementation, getTestRootDisposable());
+    serviceHandler.registerApplicationService(key, implementation, getTestRootDisposable());
   }
 
   protected <T> void registerApplicationComponent(Class<T> key, T implementation) {
@@ -237,8 +247,12 @@ public abstract class BlazeIntegrationTestCase {
   }
 
   protected <T> void registerProjectService(Class<T> key, T implementation) {
-    ServiceHelper.registerProjectService(
-        getProject(), key, implementation, getTestRootDisposable());
+    registerProjectService(key, implementation, getTestRootDisposable());
+  }
+
+  protected <T> void registerProjectService(
+      Class<T> key, T implementation, Disposable parentDisposable) {
+    serviceHandler.registerProjectService(getProject(), key, implementation, parentDisposable);
   }
 
   public <T> void registerProjectComponent(Class<T> key, T implementation) {
