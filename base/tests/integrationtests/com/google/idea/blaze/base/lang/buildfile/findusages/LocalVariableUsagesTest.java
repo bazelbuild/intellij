@@ -45,12 +45,30 @@ import org.junit.runners.JUnit4;
 public class LocalVariableUsagesTest extends BuildFileIntegrationTestCase {
 
   @Test
-  public void testLocalReferences() {
+  public void testLocalFuncallReference() {
+    BuildFile buildFile =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"), "localVar = 5", "funcall(localVar)");
+
+    TargetExpression target =
+        buildFile.findChildByClass(AssignmentStatement.class).getLeftHandSideExpression();
+
+    PsiReference[] references = FindUsages.findAllReferences(target);
+    assertThat(references).hasLength(1);
+
+    FuncallExpression funcall = buildFile.findChildByClass(FuncallExpression.class);
+    assertThat(funcall).isNotNull();
+
+    PsiElement ref = references[0].getElement();
+    assertThat(PsiUtils.getParentOfType(ref, FuncallExpression.class, true)).isEqualTo(funcall);
+  }
+
+  @Test
+  public void testLocalNestedReference() {
     BuildFile buildFile =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
             "localVar = 5",
-            "funcall(localVar)",
             "def function(name):",
             "    tempVar = localVar");
 
@@ -58,22 +76,14 @@ public class LocalVariableUsagesTest extends BuildFileIntegrationTestCase {
         buildFile.findChildByClass(AssignmentStatement.class).getLeftHandSideExpression();
 
     PsiReference[] references = FindUsages.findAllReferences(target);
-    assertThat(references).hasLength(2);
-
-    FuncallExpression funcall = buildFile.findChildByClass(FuncallExpression.class);
-    assertThat(funcall).isNotNull();
-
-    PsiElement firstRef = references[0].getElement();
-    assertThat(PsiUtils.getParentOfType(firstRef, FuncallExpression.class, true))
-        .isEqualTo(funcall);
+    assertThat(references).hasLength(1);
 
     FunctionStatement function = buildFile.findChildByClass(FunctionStatement.class);
     assertThat(function).isNotNull();
 
-    PsiElement secondRef = references[1].getElement();
-    assertThat(secondRef.getParent()).isInstanceOf(AssignmentStatement.class);
-    assertThat(PsiUtils.getParentOfType(secondRef, FunctionStatement.class, true))
-        .isEqualTo(function);
+    PsiElement ref = references[0].getElement();
+    assertThat(ref.getParent()).isInstanceOf(AssignmentStatement.class);
+    assertThat(PsiUtils.getParentOfType(ref, FunctionStatement.class, true)).isEqualTo(function);
   }
 
   // the case where a symbol is the target of multiple assignment statements
