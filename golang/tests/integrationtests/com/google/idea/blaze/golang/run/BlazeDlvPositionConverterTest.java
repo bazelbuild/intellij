@@ -19,67 +19,45 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.goide.dlv.location.DlvPositionConverter;
 import com.goide.dlv.location.DlvPositionConverterFactory;
+import com.goide.sdk.GoSdkImpl;
 import com.goide.sdk.GoSdkService;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import com.google.idea.sdkcompat.golang.GoSdkServiceProvider;
 import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.junit.Ignore;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Unit tests for {@link BlazeDlvPositionConverter} */
 @RunWith(JUnit4.class)
-@Ignore("Failing in 2019.3")
-public class BlazeDlvPositionConverterTest extends BlazeTestCase {
-  private PartialMockLocalFileSystem fileSystem;
+public class BlazeDlvPositionConverterTest extends BlazeIntegrationTestCase {
   private File executionRoot;
-  private WorkspaceRoot workspaceRoot;
+  private PartialMockLocalFileSystem mockFileSystem;
 
-  @Override
-  protected void initTest(Container applicationServices, Container projectServices) {
-    super.initTest(applicationServices, projectServices);
-    fileSystem = new PartialMockLocalFileSystem();
-    applicationServices.register(VirtualFileSystemProvider.class, () -> fileSystem);
-    BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
-    BlazeImportSettings importSettings =
-        new BlazeImportSettings("/root", "", "", "", BuildSystem.Bazel);
-    workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
-    importSettingsManager.setImportSettings(importSettings);
-    projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
-    projectServices.register(
-        BlazeProjectDataManager.class,
-        new MockBlazeProjectDataManager(
-            MockBlazeProjectDataBuilder.builder()
-                .setWorkspacePathResolver(new WorkspacePathResolverImpl(workspaceRoot))
-                .build()));
-    GoSdkService goSdkService = GoSdkServiceProvider.newInstance(project);
-    projectServices.register(GoSdkService.class, goSdkService);
-    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(new BazelBuildSystemProvider());
-    registerExtensionPoint(DlvPositionConverterFactory.EP_NAME, DlvPositionConverterFactory.class)
-        .registerExtension(new BlazeDlvPositionConverter.Factory());
-    ExecutionRootPathResolver resolver = ExecutionRootPathResolver.fromProject(getProject());
-    assertThat(resolver).isNotNull();
-    executionRoot = resolver.getExecutionRoot();
+  @Before
+  public void init() {
+    GoSdkService.getInstance(getProject()).setSdk(new GoSdkImpl("/usr/lib/golang", null, null));
+    registerApplicationService(VirtualFileSystemProvider.class, () -> mockFileSystem);
+    BlazeProjectData projectData =
+        MockBlazeProjectDataBuilder.builder()
+            .setWorkspacePathResolver(new WorkspacePathResolverImpl(workspaceRoot))
+            .build();
+    registerProjectService(
+        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(projectData));
+    executionRoot = projectData.getBlazeInfo().getExecutionRoot();
+    mockFileSystem = new PartialMockLocalFileSystem();
   }
 
   @Test
@@ -91,7 +69,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
 
   @Test
   public void testConvertWorkspacePaths() {
-    fileSystem.setResolvablePaths(workspacePath("foo/bar.go"), workspacePath("one/two.go"));
+    mockFileSystem.setResolvablePaths(workspacePath("foo/bar.go"), workspacePath("one/two.go"));
     DlvPositionConverter converter =
         DlvPositionConverterFactory.create(
             getProject(), null, ImmutableSet.of("foo/bar.go", "one/two.go"));
@@ -103,7 +81,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
 
   @Test
   public void testConvertAbsolutePaths() {
-    fileSystem.setResolvablePaths("/absolute/path.go");
+    mockFileSystem.setResolvablePaths("/absolute/path.go");
     DlvPositionConverter converter =
         DlvPositionConverterFactory.create(
             getProject(), null, ImmutableSet.of("/absolute/path.go"));
@@ -114,7 +92,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
 
   @Test
   public void testConvertGenfilePaths() {
-    fileSystem.setResolvablePaths(
+    mockFileSystem.setResolvablePaths(
         executionRootPath("bazel-genfiles/foo/bar.go"),
         executionRootPath("bazel-genfiles/one/two.go"));
     DlvPositionConverter converter =
@@ -134,7 +112,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
 
   @Test
   public void testConvertNewFileToRemote() {
-    fileSystem.setResolvablePaths(
+    mockFileSystem.setResolvablePaths(
         workspacePath("foo/bar.go"), workspacePath("one/two.go"), workspacePath("three/four.go"));
     DlvPositionConverter converter =
         DlvPositionConverterFactory.create(
@@ -144,7 +122,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
 
   @Test
   public void testConvertNewPathToLocal() {
-    fileSystem.setResolvablePaths(
+    mockFileSystem.setResolvablePaths(
         workspacePath("foo/bar.go"), workspacePath("one/two.go"), workspacePath("three/four.go"));
     DlvPositionConverter converter =
         DlvPositionConverterFactory.create(
@@ -154,7 +132,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
 
   @Test
   public void testConvertNoneExistentPathToLocal() {
-    fileSystem.setResolvablePaths(workspacePath("foo/bar.go"), workspacePath("one/two.go"));
+    mockFileSystem.setResolvablePaths(workspacePath("foo/bar.go"), workspacePath("one/two.go"));
     DlvPositionConverter converter =
         DlvPositionConverterFactory.create(
             getProject(), null, ImmutableSet.of("foo/bar.go", "one/two.go"));
@@ -163,7 +141,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
 
   @Test
   public void testConvertNoneWorkspaceFileToRemote() {
-    fileSystem.setResolvablePaths(
+    mockFileSystem.setResolvablePaths(
         workspacePath("foo/bar.go"), workspacePath("one/two.go"), "/outside/root.go");
     DlvPositionConverter converter =
         DlvPositionConverterFactory.create(
@@ -174,7 +152,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
 
   @Test
   public void testConvertNormalizedPaths() {
-    fileSystem.setResolvablePaths(workspacePath("foo/bar.go"), workspacePath("one/two.go"));
+    mockFileSystem.setResolvablePaths(workspacePath("foo/bar.go"), workspacePath("one/two.go"));
     DlvPositionConverter converter =
         DlvPositionConverterFactory.create(
             getProject(),
@@ -196,7 +174,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
 
   @Test
   public void testConvertNormalizedNewPaths() {
-    fileSystem.setResolvablePaths(workspacePath("foo/bar.go"), workspacePath("one/two.go"));
+    mockFileSystem.setResolvablePaths(workspacePath("foo/bar.go"), workspacePath("one/two.go"));
     DlvPositionConverter converter =
         DlvPositionConverterFactory.create(getProject(), null, ImmutableSet.of());
     assertThatFile(converter.toLocalFile("/build/work/1234/project/foo/bar.go"))
@@ -207,7 +185,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
 
   @Test
   public void testFailedToNormalize() {
-    fileSystem.setResolvablePaths(
+    mockFileSystem.setResolvablePaths(
         workspacePath("foo.go"),
         workspacePath("one/two.go"),
         workspacePath("bar.go"),
@@ -233,7 +211,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
 
   @Test
   public void testConvertGoRootPaths() {
-    fileSystem.setResolvablePaths(
+    mockFileSystem.setResolvablePaths(
         workspacePath("foo/bar.go"),
         "/usr/lib/golang/src/fmt/format.go",
         "/usr/lib/golang/src/time/time.go");
@@ -255,7 +233,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
   }
 
   private VirtualFile fileForPath(String path) {
-    VirtualFile file = fileSystem.findFileByPath(path);
+    VirtualFile file = mockFileSystem.findFileByPath(path);
     assertThat(file).isNotNull();
     return file;
   }
@@ -289,7 +267,7 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
       @Override
       public void hasPath(String path) {
         assertThat(localFile).isNotNull();
-        assertThat(localFile).isEqualTo(fileSystem.findFileByPath(path));
+        assertThat(localFile).isEqualTo(mockFileSystem.findFileByPath(path));
       }
 
       @Override
@@ -304,7 +282,12 @@ public class BlazeDlvPositionConverterTest extends BlazeTestCase {
     };
   }
 
-  /** {@link MockLocalFileSystem} that can resolve a predetermined list of paths, but not others. */
+  /**
+   * {@link MockLocalFileSystem} that can resolve a predetermined list of paths, but not others.
+   *
+   * <p>We can't use {@link BlazeIntegrationTestCase#fileSystem} because it doesn't allow absolute
+   * paths, and we need to test how the converter handles certain absolute paths.
+   */
   private static class PartialMockLocalFileSystem extends MockLocalFileSystem {
     private Set<String> resolvablePaths;
 

@@ -28,8 +28,6 @@ java_library(
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/java/**",
-            "com/google/idea/sdkcompat/javascript/**",
-            "com/google/idea/sdkcompat/typescript/**",
             "com/google/idea/sdkcompat/scala/**",
         ]),
         intellij_ue = glob([
