@@ -97,8 +97,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "19c077be8e3cef7ae97c6910f1aa753f87dfae825de96b2d7c810b5f9b9df34e",
-    url = "https://plugins.jetbrains.com/files/7322/74951/python-ce-193.5662.65.zip",
+    sha256 = "82d72e875ce5f127f75af50f14db922a8228c1fcc38ab3dcf2d0011a72e1bf10",
+    url = "https://plugins.jetbrains.com/files/7322/76344/python-ce.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
@@ -153,8 +153,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "b945bcb8bf4a029c42230893b41587d408101370a663e050302275919cf015f3",
-    url = "https://plugins.jetbrains.com/files/1347/70287/scala-intellij-bin-2019.3.7.zip",
+    sha256 = "94779905396c2d3a2d5693aece5f4845e5675e7a6e0102313e88d1afd5b16ffb",
+    url = "https://plugins.jetbrains.com/files/1347/75234/scala-intellij-bin-2019.3.23.zip",
 )
 
 # The plugin api for Android Studio 3.5. This is required to build ASwB,
