@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
@@ -12,6 +10,8 @@ load(
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "golang",
@@ -72,6 +72,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//sdkcompat",
         "//third_party/go:go_for_tests",
         "@junit//jar",
     ],
