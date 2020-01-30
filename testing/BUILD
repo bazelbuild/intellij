@@ -2,15 +2,15 @@
 #
 # Common test utilities for IntelliJ plugins.
 
-package(default_visibility = ["//visibility:public"])
-
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//intellij_platform_sdk:build_defs.bzl",
     "select_for_ide",
     "select_for_plugin_api",
 )
+
+package(default_visibility = ["//visibility:public"])
+
+licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "lib",
@@ -31,6 +31,10 @@ java_library(
         "clion-2019.2": glob(
             ["testcompat/v192/**/*.java"],
             exclude = ["testcompat/v192/com/google/idea/sdkcompat/testframework/JavaResolveTestCase.java"],
+        ),
+        "clion-2019.3": glob(
+            ["testcompat/v193/**/*.java"],
+            exclude = ["testcompat/v193/com/google/idea/sdkcompat/testframework/JavaResolveTestCase.java"],
         ),
         "intellij-2019.2": glob(["testcompat/v192/**/*.java"]),
         "intellij-ue-2019.2": glob(["testcompat/v192/**/*.java"]),
