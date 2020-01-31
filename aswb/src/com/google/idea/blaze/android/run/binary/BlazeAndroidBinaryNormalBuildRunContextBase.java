@@ -90,7 +90,10 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
 
   @Override
   public void augmentLaunchOptions(LaunchOptions.Builder options) {
-    options.setDeploy(true).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
+    options
+        .setDeploy(true)
+        .setOpenLogcatAutomatically(
+            configState.getAndroidBinaryConfigState().showLogcatAutomatically());
   }
 
   @Override

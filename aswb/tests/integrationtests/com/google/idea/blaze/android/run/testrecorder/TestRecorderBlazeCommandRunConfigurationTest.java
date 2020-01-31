@@ -22,7 +22,8 @@ import com.google.gct.testrecorder.ui.TestRecorderAction;
 import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandler;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandlerProvider;
-import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
+import com.google.idea.blaze.android.run.state.AndroidBinaryConfigState;
+import com.google.idea.blaze.android.run.state.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
@@ -34,7 +35,6 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
-import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider.TargetState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.sdkcompat.run.RunManagerCompat;
@@ -119,8 +119,10 @@ public class TestRecorderBlazeCommandRunConfigurationTest extends BlazeIntegrati
     blazeConfiguration.setTarget(Label.create("//label:android_binary_rule"));
     BlazeAndroidBinaryRunConfigurationState configurationState =
         ((BlazeAndroidBinaryRunConfigurationHandler) blazeConfiguration.getHandler()).getState();
-    configurationState.setMode(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
-    configurationState.setActivityClass("MyAppMainActivity");
+    configurationState
+        .getAndroidBinaryConfigState()
+        .setMode(AndroidBinaryConfigState.LAUNCH_SPECIFIC_ACTIVITY);
+    configurationState.getAndroidBinaryConfigState().setActivityClass("MyAppMainActivity");
 
     TestRecorderRunConfigurationProxy proxy =
         TestRecorderRunConfigurationProxy.getInstance(blazeConfiguration);

@@ -36,7 +36,7 @@ public final class UserIdHelper {
   public static Integer getUserIdFromConfigurationState(
       IDevice device, ConsolePrinter consolePrinter, BlazeAndroidBinaryRunConfigurationState state)
       throws ExecutionException {
-    if (state.useWorkProfileIfPresent()) {
+    if (state.getAndroidBinaryConfigState().useWorkProfileIfPresent()) {
       try {
         Integer userId = getWorkProfileId(device);
         if (userId == null) {
@@ -51,7 +51,7 @@ public final class UserIdHelper {
         throw new ExecutionException(e);
       }
     }
-    return state.getUserId();
+    return state.getAndroidBinaryConfigState().getUserId();
   }
 
   @Nullable

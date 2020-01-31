@@ -67,7 +67,8 @@ public abstract class RunConfigurationCompositeState implements RunConfiguration
     return new RunConfigurationCompositeStateEditor(project, getStates());
   }
 
-  static class RunConfigurationCompositeStateEditor implements RunConfigurationStateEditor {
+  /** An editor composed of sub-editors from states. */
+  public static class RunConfigurationCompositeStateEditor implements RunConfigurationStateEditor {
     List<RunConfigurationStateEditor> editors;
 
     public RunConfigurationCompositeStateEditor(

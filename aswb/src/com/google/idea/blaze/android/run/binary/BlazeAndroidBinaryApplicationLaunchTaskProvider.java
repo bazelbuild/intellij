@@ -43,24 +43,28 @@ public class BlazeAndroidBinaryApplicationLaunchTaskProvider {
 
       final LaunchTask launchTask;
 
-      switch (configState.getMode()) {
-        case BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEFAULT_ACTIVITY:
+      switch (configState.getAndroidBinaryConfigState().getMode()) {
+        case AndroidBinaryConfigState.LAUNCH_DEFAULT_ACTIVITY:
           BlazeDefaultActivityLocator activityLocator =
               new BlazeDefaultActivityLocator(mergedManifestParsedManifest);
           launchTask =
               new DefaultActivityLaunchTask(
                   applicationId, activityLocator, startActivityFlagsProvider);
           break;
-        case BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY:
+        case AndroidBinaryConfigState.LAUNCH_SPECIFIC_ACTIVITY:
           launchTask =
               new SpecificActivityLaunchTask(
-                  applicationId, configState.getActivityClass(), startActivityFlagsProvider);
+                  applicationId,
+                  configState.getAndroidBinaryConfigState().getActivityClass(),
+                  startActivityFlagsProvider);
           break;
-        case BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEEP_LINK:
+        case AndroidBinaryConfigState.LAUNCH_DEEP_LINK:
           launchTask =
-              new AndroidDeepLinkLaunchTask(configState.getDeepLink(), startActivityFlagsProvider);
+              new AndroidDeepLinkLaunchTask(
+                  configState.getAndroidBinaryConfigState().getDeepLink(),
+                  startActivityFlagsProvider);
           break;
-        case BlazeAndroidBinaryRunConfigurationState.DO_NOTHING:
+        case AndroidBinaryConfigState.DO_NOTHING:
         default:
           launchTask = null;
           break;

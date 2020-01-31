@@ -74,7 +74,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
 
   // Keys to store state for the MI migration prompt
   private static final String MI_LAST_PROMPT = "MI_MIGRATE_LAST_PROMPT";
-  static final String MI_NEVER_ASK_AGAIN = "MI_MIGRATE_NEVER_AGAIN";
+  public static final String MI_NEVER_ASK_AGAIN = "MI_MIGRATE_NEVER_AGAIN";
   private static final Long MI_TIMEOUT_MS = TimeUnit.HOURS.toMillis(20); // 20 hours
 
   @VisibleForTesting
@@ -82,7 +82,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
     this.configuration = configuration;
     configState =
         new BlazeAndroidBinaryRunConfigurationState(
-            Blaze.buildSystemName(configuration.getProject()));
+            Blaze.getBuildSystem(configuration.getProject()));
     configuration.putUserData(DEPLOYS_TO_LOCAL_DEVICE, true);
   }
 
@@ -142,17 +142,14 @@ public class BlazeAndroidBinaryRunConfigurationHandler
     BlazeAndroidRunConfigurationValidationUtil.validateExecution(module, facet, projectViewSet);
 
     ImmutableList<String> blazeFlags =
-        configState
-            .getCommonState()
-            .getExpandedBuildFlags(
-                project,
-                projectViewSet,
-                BlazeCommandName.RUN,
-                BlazeInvocationContext.runConfigContext(
-                    ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), false));
+        configState.getExpandedBuildFlags(
+            project,
+            projectViewSet,
+            BlazeCommandName.RUN,
+            BlazeInvocationContext.runConfigContext(
+                ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), false));
     ImmutableList<String> exeFlags =
-        ImmutableList.copyOf(
-            configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
+        ImmutableList.copyOf(configState.getExeFlagsState().getFlagsForExternalProcesses());
     BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);
 
     return new BlazeAndroidRunConfigurationRunner(
@@ -169,7 +166,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
       ExecutionEnvironment env,
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags) {
-    switch (configState.getLaunchMethod()) {
+    switch (configState.getAndroidBinaryConfigState().getLaunchMethod()) {
       case NON_BLAZE:
         if (!maybeShowMobileInstallOptIn(project, configuration)) {
           return new BlazeAndroidBinaryNormalBuildRunContext(
@@ -178,7 +175,9 @@ public class BlazeAndroidBinaryRunConfigurationHandler
         // fall through
       case MOBILE_INSTALL_V2:
         // Standardize on a single mobile-install launch method
-        configState.setLaunchMethod(AndroidBinaryLaunchMethod.MOBILE_INSTALL);
+        configState
+            .getAndroidBinaryConfigState()
+            .setLaunchMethod(AndroidBinaryLaunchMethod.MOBILE_INSTALL);
         // fall through
       case MOBILE_INSTALL:
         return new BlazeAndroidBinaryMobileInstallRunContext(
@@ -303,6 +302,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
             ((BlazeCommandRunConfiguration) runConfig).getHandler().getState();
         if (state instanceof BlazeAndroidBinaryRunConfigurationState) {
           ((BlazeAndroidBinaryRunConfigurationState) state)
+              .getAndroidBinaryConfigState()
               .setLaunchMethod(AndroidBinaryLaunchMethod.MOBILE_INSTALL);
           count++;
         }

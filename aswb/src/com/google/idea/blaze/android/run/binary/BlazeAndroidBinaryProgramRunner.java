@@ -53,7 +53,10 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
     // Otherwise, the configuration must be a Blaze incremental install configuration running with
     // an incremental install executor.
     AndroidBinaryLaunchMethod launchMethod =
-        ((BlazeAndroidBinaryRunConfigurationHandler) handler).getState().getLaunchMethod();
+        ((BlazeAndroidBinaryRunConfigurationHandler) handler)
+            .getState()
+            .getAndroidBinaryConfigState()
+            .getLaunchMethod();
     return (AndroidBinaryLaunchMethod.MOBILE_INSTALL.equals(launchMethod)
             || AndroidBinaryLaunchMethod.MOBILE_INSTALL_V2.equals(launchMethod))
         && (IncrementalInstallDebugExecutor.EXECUTOR_ID.equals(executorId)

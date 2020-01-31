@@ -19,6 +19,7 @@ import com.android.annotations.Nullable;
 import com.android.ddmlib.IDevice;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gct.testrecorder.run.TestRecorderRunConfigurationProxy;
+import com.google.idea.blaze.android.run.binary.AndroidBinaryConfigState;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandler;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
@@ -54,19 +55,20 @@ public class TestRecorderBlazeCommandRunConfigurationProxy
 
   @Override
   public boolean isLaunchActivitySupported() {
-    String mode = myBaseConfigurationHandler.getState().getMode();
+    String mode = myBaseConfigurationHandler.getState().getAndroidBinaryConfigState().getMode();
 
     // Supported launch activities are Default and Specified.
-    return BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEFAULT_ACTIVITY.equals(mode)
-        || BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY.equals(mode);
+    return AndroidBinaryConfigState.LAUNCH_DEFAULT_ACTIVITY.equals(mode)
+        || AndroidBinaryConfigState.LAUNCH_SPECIFIC_ACTIVITY.equals(mode);
   }
 
   @Override
   public String getLaunchActivityClass() {
     BlazeAndroidBinaryRunConfigurationState state = myBaseConfigurationHandler.getState();
 
-    if (BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY.equals(state.getMode())) {
-      return state.getActivityClass();
+    if (AndroidBinaryConfigState.LAUNCH_SPECIFIC_ACTIVITY.equals(
+        state.getAndroidBinaryConfigState().getMode())) {
+      return state.getAndroidBinaryConfigState().getActivityClass();
     }
 
     return "";

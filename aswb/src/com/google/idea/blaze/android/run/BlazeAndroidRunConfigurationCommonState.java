@@ -111,7 +111,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
         .build();
   }
 
-  private ImmutableList<String> getNativeDebuggerFlags() {
+  public ImmutableList<String> getNativeDebuggerFlags() {
     return isNativeDebuggingEnabled() ? NATIVE_DEBUG_FLAGS : ImmutableList.of();
   }
 
