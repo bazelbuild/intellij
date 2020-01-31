@@ -751,7 +751,7 @@ def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, ou
             args.add("--aar", aar)
             args.add("--manifest_file", android.manifest)
             args.add_joined("--resources", res_files, join_with = ",")
-            args.add("--resource_root", root.relative_path)
+            args.add("--resource_root", root.relative_path if root.is_source else root.root_execution_path_fragment + "/" + root.relative_path)
 
             ctx.actions.run(
                 outputs = [aar],
