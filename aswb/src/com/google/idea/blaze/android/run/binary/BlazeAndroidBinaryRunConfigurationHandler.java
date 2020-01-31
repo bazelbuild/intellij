@@ -155,6 +155,19 @@ public class BlazeAndroidBinaryRunConfigurationHandler
             configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
     BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);
 
+    EventLoggingService.getInstance()
+        .logEvent(
+            BlazeAndroidBinaryRunConfigurationHandler.class,
+            "BlazeAndroidBinaryRun",
+            ImmutableMap.of(
+                "launchMethod",
+                configState.getLaunchMethod().name(),
+                "executorId",
+                env.getExecutor().getId(),
+                "targetLabel",
+                configuration.getTarget().toString(),
+                "nativeDebuggingEnabled",
+                Boolean.toString(configState.getCommonState().isNativeDebuggingEnabled())));
     return new BlazeAndroidRunConfigurationRunner(
         module,
         runContext,
