@@ -5,6 +5,13 @@
 #   plugin apis to known packages that build plugins. Only packages
 #   listed here may depend on these libraries.
 
+load(
+    ":build_defs.bzl",
+    "select_for_ide",
+    "select_for_plugin_api",
+    "select_from_plugin_api_directory",
+)
+
 licenses(["notice"])  # Apache2
 
 package(default_visibility = ["//visibility:public"])
@@ -128,6 +135,21 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-ue-2020.1",
+    values = {
+        "define": "ij_product=intellij-ue-2020.1",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2020.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-2020.1",
+    },
+)
+
+config_setting(
     name = "android-studio-latest",
     values = {
         "define": "ij_product=android-studio-latest",
@@ -227,13 +249,6 @@ config_setting(
     values = {
         "define": "ij_product=clion-2019.3",
     },
-)
-
-load(
-    ":build_defs.bzl",
-    "select_for_ide",
-    "select_for_plugin_api",
-    "select_from_plugin_api_directory",
 )
 
 # The purpose of this rule is to hide the versioning
