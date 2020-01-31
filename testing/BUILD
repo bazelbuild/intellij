@@ -27,7 +27,6 @@ java_library(
     }) + select_for_plugin_api({
         "android-studio-3.5": glob(["testcompat/v192/**/*.java"]),
         "android-studio-3.6": glob(["testcompat/v192/**/*.java"]),
-        "android-studio-4.0": glob(["testcompat/v192/**/*.java"]),
         "clion-2019.2": glob(
             ["testcompat/v192/**/*.java"],
             exclude = ["testcompat/v192/com/google/idea/sdkcompat/testframework/JavaResolveTestCase.java"],

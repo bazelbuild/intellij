@@ -31,6 +31,7 @@ public class LaunchTaskRunnerCompat {
   public static LaunchTaskRunner create(
       Project project,
       String launchConfigName,
+      String applicationId,
       LaunchInfo launchInfo,
       ProcessHandler processHandler,
       DeviceFutures deviceFutures,

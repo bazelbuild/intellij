@@ -40,7 +40,8 @@ public class NdkDependenciesTest extends BlazeIntegrationTestCase {
 
   @ClassRule
   public static TestRule setDisabledPlugins =
-      new DisablePluginsTestRule(BlazeNdkDependencySyncPlugin.getPluginsRequiredForNdkSupport());
+      new DisablePluginsTestRule(
+          BlazeNdkDependencySyncPlugin.getPluginsRequiredForNdkSupport().asList());
 
   @Rule
   public final AndroidIntegrationTestSetupRule androidSetupRule =

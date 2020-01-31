@@ -21,11 +21,13 @@ import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
+import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.DebugConnectorTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
@@ -54,6 +56,13 @@ public class BlazeAndroidBinaryMobileInstallRunContext
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags) {
     super(project, facet, runConfiguration, env, configState, label, blazeFlags, exeFlags);
+  }
+
+  @Override
+  public void augmentLaunchOptions(LaunchOptions.Builder options) {
+    super.augmentLaunchOptions(options);
+    options.addExtraOptions(
+        ImmutableMap.of(ProfilerState.ANDROID_PROFILER_STATE_ID, configState.getProfilerState()));
   }
 
   @Override

@@ -156,7 +156,7 @@ public class DebuggerSettingsStateTest {
     }
 
     @NotNull
-    @Override
+    // @Override #api3.6 Method override removed in api4.0
     public Set<XBreakpointType<?, ?>> getSupportedBreakpointTypes(
         @NotNull Project project, @NotNull AndroidVersion androidVersion) {
       throw new UnsupportedOperationException("not implemented");

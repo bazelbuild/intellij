@@ -16,7 +16,7 @@
 package com.google.idea.blaze.android.sync;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.plugin.PluginUtils;
@@ -47,14 +47,14 @@ public final class BlazeNdkDependencySyncPlugin implements BlazeSyncPlugin {
     }
   }
 
-  private static final ImmutableList<PluginNameAndId> REQUIRED_PLUGINS =
-      ImmutableList.of(new PluginNameAndId("Android NDK Support", "com.android.tools.ndk"));
+  private static final ImmutableSet<PluginNameAndId> REQUIRED_PLUGINS =
+      ImmutableSet.of(new PluginNameAndId("Android NDK Support", "com.android.tools.ndk"));
 
   /** Returns the IDs of the plugins required for NDK support. */
   @VisibleForTesting
-  public static ImmutableList<String> getPluginsRequiredForNdkSupport() {
-    return ImmutableList.copyOf(
-        REQUIRED_PLUGINS.stream().map(plugin -> plugin.id).collect(Collectors.toList()));
+  public static ImmutableSet<String> getPluginsRequiredForNdkSupport() {
+    return ImmutableSet.copyOf(
+        REQUIRED_PLUGINS.stream().map(plugin -> plugin.id).collect(Collectors.toSet()));
   }
 
   @Override

@@ -23,7 +23,7 @@ java_library(
     exports = select_for_plugin_api({
         "android-studio-3.5": ["//sdkcompat/v191"],
         "android-studio-3.6": ["//sdkcompat/v192"],
-        "android-studio-4.0": ["//sdkcompat/v192"],
+        "android-studio-4.0": ["//sdkcompat/v193"],
         "intellij-2019.2": ["//sdkcompat/v192"],
         "intellij-ue-2019.2": ["//sdkcompat/v192"],
         "intellij-2019.3": ["//sdkcompat/v193"],

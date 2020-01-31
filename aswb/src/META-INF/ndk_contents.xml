@@ -31,6 +31,7 @@
 
   <extensions defaultExtensionNs="com.android.run">
     <androidDebugger implementation="com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger"/>
+    <androidDebugger implementation="com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebugger"/>
   </extensions>
 
 </idea-plugin>

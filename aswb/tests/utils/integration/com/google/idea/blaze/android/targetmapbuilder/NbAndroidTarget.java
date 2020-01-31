@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.targetmapbuilder;
 
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetMapUtils.makeSourceArtifact;
 
+import com.google.idea.blaze.android.fixtures.ManifestFixture;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -153,6 +154,15 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
     setManifest(manifestLabel);
     // An android target that declares its own manifest should also generate resource classes.
     setGenerateResourceClass();
+    return this;
+  }
+
+  public NbAndroidTarget manifest(ManifestFixture manifestFixture) {
+    return manifest(manifestFixture.label);
+  }
+
+  public NbAndroidTarget manifest_value(String attributeOrPlaceholder, String value) {
+    androidIdeInfoBuilder.putManifestValue(attributeOrPlaceholder, value);
     return this;
   }
 

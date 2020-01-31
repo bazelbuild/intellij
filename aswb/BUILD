@@ -2,8 +2,6 @@
 # Description: Builds ASwB for blaze and bazel
 #
 
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -24,6 +22,8 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 optional_plugin_xml(
     name = "optional_ndk_xml",
@@ -52,7 +52,11 @@ stamped_plugin_xml(
 java_library(
     name = "unit_test_utils",
     testonly = 1,
-    srcs = glob(["tests/utils/unit/**/*.java"]),
+    srcs = glob(["tests/utils/unit/**/*.java"]) + select_for_plugin_api({
+        "android-studio-3.5": glob(["testcompat/as35/utils/unit/**/*.java"]),
+        "android-studio-3.6": glob(["testcompat/as36/utils/unit/**/*.java"]),
+        "android-studio-4.0": glob(["testcompat/as40/utils/unit/**/*.java"]),
+    }),
     deps = [
         ":aswb_lib",
         "//intellij_platform_sdk:plugin_api_for_tests",
@@ -63,7 +67,11 @@ java_library(
 java_library(
     name = "integration_test_utils",
     testonly = 1,
-    srcs = glob(["tests/utils/integration/**/*.java"]),
+    srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
+        "android-studio-3.5": glob(["testcompat/as35/utils/integration/**/*.java"]),
+        "android-studio-3.6": glob(["testcompat/as36/utils/integration/**/*.java"]),
+        "android-studio-4.0": glob(["testcompat/as40/utils/integration/**/*.java"]),
+    }),
     deps = [
         ":aswb_lib",
         "//base",
@@ -95,12 +103,17 @@ java_library(
         "//java",
         "//proto:proto_deps",
         "//sdkcompat",
+        "@error_prone_annotations//jar",
     ],
 )
 
 intellij_unit_test_suite(
     name = "unit_tests",
-    srcs = glob(["tests/unittests/**/*.java"]),
+    srcs = glob(["tests/unittests/**/*.java"]) + select_for_plugin_api({
+        "android-studio-3.5": glob(["testcompat/as35/unittests/**/*.java"]),
+        "android-studio-3.6": glob(["testcompat/as36/unittests/**/*.java"]),
+        "android-studio-4.0": glob(["testcompat/as40/unittests/**/*.java"]),
+    }),
     test_package_root = "com.google.idea.blaze.android",
     deps = [
         ":aswb_lib",
@@ -121,7 +134,7 @@ intellij_unit_test_suite(
 test_suite(
     name = "integration_tests",
     tests = [
-        ":NdkDependenciesTest",
+        #b/139825934 ":NdkDependenciesTest",
         ":normal_integration_tests",
     ],
 )
@@ -132,10 +145,14 @@ intellij_integration_test_suite(
         ["tests/integrationtests/**/*.java"],
         exclude = [
             "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",
-            "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
+            "tests/integrationtests/com/google/idea/blaze/android/functional/*.java",
             "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
         ],
-    ),
+    ) + select_for_plugin_api({
+        "android-studio-3.5": glob(["testcompat/as35/integration/**/*.java"]),
+        "android-studio-3.6": glob(["testcompat/as36/integration/**/*.java"]),
+        "android-studio-4.0": glob(["testcompat/as40/integration/**/*.java"]),
+    }),
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [

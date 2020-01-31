@@ -21,6 +21,7 @@ import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchInfo;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.LaunchOptionsProvider;
 import com.android.tools.idea.run.LaunchTaskRunner;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.ui.ApplyChangesAction;
@@ -106,6 +107,10 @@ public final class BlazeAndroidRunState implements RunProfileState {
       throw new ExecutionException("Unable to obtain application id", e);
     }
 
+    if (executor instanceof LaunchOptionsProvider) {
+      launchOptionsBuilder.addExtraOptions(((LaunchOptionsProvider) executor).getLaunchOptions());
+    }
+
     LaunchTasksProvider launchTasksProvider =
         runContext.getLaunchTasksProvider(launchOptionsBuilder, isDebug, debuggerManager);
 
@@ -161,6 +166,7 @@ public final class BlazeAndroidRunState implements RunProfileState {
         LaunchTaskRunnerCompat.create(
             module.getProject(),
             launchConfigName,
+            applicationId,
             launchInfo,
             processHandler,
             deviceSession.deviceFutures,
