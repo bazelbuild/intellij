@@ -46,6 +46,8 @@ intellij_plugin_library(
     optional_plugin_xmls = [":optional_xml"] + select_for_plugin_api({
         "intellij-2019.3": [],
         "intellij-ue-2019.3": [],
+        "intellij-2020.1": [],
+        "intellij-ue-2020.1": [],
         "clion-2019.3": [],
         "default": [":pre-v193_xml"],
     }),
