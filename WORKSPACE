@@ -275,16 +275,16 @@ jvm_maven_import_external(
 
 jvm_maven_import_external(
     name = "mockito",
-    artifact = "org.mockito:mockito-core:1.10.19",
-    artifact_sha256 = "d5831ee4f71055800821a34a3051cf1ed5b3702f295ffebd50f65fb5d81a71b8",
-    licenses = ["notice"],  # Apache 2.0
+    artifact = "org.mockito:mockito-core:3.2.4",
+    artifact_sha256 = "587dcc78914585a7ba7933417237dfcf4d4a1a295d1aa8091d732a76a1d8fe92",
+    licenses = ["notice"],  # MIT
     server_urls = ["https://repo1.maven.org/maven2"],
 )
 
 jvm_maven_import_external(
     name = "objenesis",
-    artifact = "org.objenesis:objenesis:1.3",
-    artifact_sha256 = "dd4ef3d3091063a4fec578cbb2bbe6c1f921c00091ba2993dcd9afd25ff9444a",
+    artifact = "org.objenesis:objenesis:3.1",
+    artifact_sha256 = "cdb3d038c188de6f46ffd5cd930be2d5e5dba59c53b26437995d534e3db2fb80",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
