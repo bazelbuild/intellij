@@ -20,7 +20,7 @@ import static org.jetbrains.android.facet.SourceProviderUtil.createSourceProvide
 
 import com.android.tools.idea.model.AndroidModel;
 import com.android.tools.idea.projectsystem.AndroidProjectSystem;
-import com.android.tools.idea.projectsystem.IdeaSourceProvider;
+import com.android.tools.idea.projectsystem.NamedIdeaSourceProvider;
 import com.android.tools.idea.projectsystem.SourceProviders;
 import com.android.tools.idea.projectsystem.SourceProvidersFactory;
 import com.google.common.collect.ImmutableList;
@@ -49,10 +49,11 @@ public class BlazeProjectSystem extends BlazeProjectSystemBase {
       public SourceProviders createSourceProvidersFor(@NotNull AndroidFacet facet) {
         BlazeAndroidModel model = ((BlazeAndroidModel) AndroidModel.get(facet));
         if (model != null) {
-          IdeaSourceProvider mainSourceProvider =
+          NamedIdeaSourceProvider mainSourceProvider =
               createIdeaSourceProviderFromModelSourceProvider(model.getDefaultSourceProvider());
           return new SourceProvidersImpl(
               mainSourceProvider,
+              ImmutableList.of(mainSourceProvider),
               ImmutableList.of(mainSourceProvider),
               ImmutableList.of(mainSourceProvider),
               ImmutableList.of(mainSourceProvider),

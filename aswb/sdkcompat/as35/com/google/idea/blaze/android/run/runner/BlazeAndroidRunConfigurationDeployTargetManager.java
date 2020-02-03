@@ -16,8 +16,16 @@
 package com.google.idea.blaze.android.run.runner;
 
 import com.android.tools.idea.flags.StudioFlags;
+import com.android.tools.idea.run.LaunchCompatibility;
 import com.android.tools.idea.run.TargetSelectionMode;
+import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.editor.DeployTargetProvider;
+import com.google.idea.blaze.android.run.DeployTargetProviderCompat;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import javax.annotation.Nullable;
+import org.jetbrains.android.facet.AndroidFacet;
 
 /** An indirection to provide a class compatible with #api3.5 and prior. */
 public class BlazeAndroidRunConfigurationDeployTargetManager
@@ -37,5 +45,35 @@ public class BlazeAndroidRunConfigurationDeployTargetManager
     DeployTargetProvider targetProvider = getDeployTargetProvider(targetSelectionMode.name());
     assert targetProvider != null;
     return targetProvider;
+  }
+
+  @Nullable
+  @Override
+  DeployTarget getDeployTarget(
+      Executor executor, ExecutionEnvironment env, AndroidFacet facet, int runConfigId)
+      throws ExecutionException {
+    DeployTargetProvider currentTargetProvider = getCurrentDeployTargetProvider();
+
+    DeployTarget deployTarget;
+    if (currentTargetProvider.requiresRuntimePrompt()) {
+      deployTarget =
+          currentTargetProvider.showPrompt(
+              executor,
+              env,
+              facet,
+              getDeviceCount(),
+              isAndroidTest,
+              deployTargetStates,
+              runConfigId,
+              (device) -> LaunchCompatibility.YES);
+      if (deployTarget == null) {
+        return null;
+      }
+    } else {
+      deployTarget =
+          DeployTargetProviderCompat.getDeployTarget(currentTargetProvider, env.getProject());
+    }
+
+    return deployTarget;
   }
 }

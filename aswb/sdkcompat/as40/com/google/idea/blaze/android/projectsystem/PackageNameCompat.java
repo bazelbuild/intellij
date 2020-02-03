@@ -15,20 +15,40 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
-import com.android.tools.idea.model.MergedManifestManager;
-import com.android.tools.idea.model.MergedManifestSnapshot;
-import com.android.utils.concurrency.AsyncSupplier;
+import com.android.manifmerger.ManifestSystemProperty;
+import com.android.tools.idea.model.AndroidManifestIndex;
+import com.android.tools.idea.model.AndroidManifestRawText;
+import com.android.tools.idea.model.MergedManifestModificationTracker;
+import com.android.tools.idea.projectsystem.ManifestOverrides;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.android.dom.manifest.AndroidManifestUtils;
 import org.jetbrains.android.dom.manifest.AndroidManifestXmlFile;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.SourceProviderManager;
 import org.jetbrains.annotations.Nullable;
 
 /** Utilities to obtain the package name for a given module. #api3.5 */
 public class PackageNameCompat {
+  /**
+   * Determines whether we use the {@link AndroidManifestIndex} to obtain the raw text package name
+   * from a module's primary manifest. Note that we still won't use the index if {@link
+   * AndroidManifestIndex#indexEnabled()} returns false.
+   *
+   * @see PackageNameCompat#getPackageName(Module)
+   * @see PackageNameCompat#doGetPackageName(AndroidFacet, boolean)
+   */
+  private static final BoolExperiment USE_ANDROID_MANIFEST_INDEX =
+      new BoolExperiment("use.android.manifest.index", true);
+
   @Nullable
   public static String getPackageName(Module module) {
     AndroidFacet facet = AndroidFacet.getInstance(module);
@@ -37,33 +57,78 @@ public class PackageNameCompat {
         .getCachedValue(
             facet,
             () -> {
-              String packageName = StringUtil.nullize(doGetPackageName(facet), true);
+              boolean useIndex =
+                  AndroidManifestIndex.indexEnabled() && USE_ANDROID_MANIFEST_INDEX.getValue();
+              String packageName = doGetPackageName(facet, useIndex);
               return CachedValueProvider.Result.create(
-                  packageName, MergedManifestManager.getModificationTracker(module));
+                  StringUtil.nullize(packageName, true),
+                  MergedManifestModificationTracker.getInstance(module));
             });
   }
 
+  /**
+   * Returns the package name from an Android module's merged manifest without actually computing
+   * the whole merged manifest. This is either
+   *
+   * <ol>
+   *   <li>The {@link ManifestSystemProperty#PACKAGE} manifest override if one is specified by the
+   *       corresponding BUILD target, or
+   *   <li>The result of applying placeholder substitution to the raw package name from the module's
+   *       primary manifest
+   * </ol>
+   *
+   * In the second case, we try to obtain the raw package name using the {@link
+   * AndroidManifestIndex} if {@code useIndex} is true. If {@code useIndex} is false or querying the
+   * index fails for some reason (e.g. this method is called in a read action but not a *smart* read
+   * action), then we resort to parsing the PSI of the module's primary manifest to get the raw
+   * package name.
+   *
+   * @see AndroidModuleSystem#getManifestOverrides()
+   * @see AndroidModuleSystem#getPackageName()
+   */
   @Nullable
-  @SuppressWarnings("FutureReturnValueIgnored") // for the supplier.get() which is simply a trigger
-  private static String doGetPackageName(AndroidFacet facet) {
-    // It's possible for Blaze to override the module's package name, so we have to check the merged
-    // manifest.
-    AsyncSupplier<MergedManifestSnapshot> supplier =
-        MergedManifestManager.getMergedManifestSupplier(facet.getModule());
-    MergedManifestSnapshot mergedManifest = supplier.getNow();
-    if (mergedManifest != null) {
-      if (mergedManifest.isValid()) {
-        return mergedManifest.getPackage();
-      }
-    } else {
-      // We might be on the EDT, so we can't block on computing the merged manifest. But we *can*
-      // ensure that the computation
-      // is running in the background so that this module's merged manifest will be available to
-      // some future caller.
-      supplier.get();
+  @VisibleForTesting
+  static String doGetPackageName(AndroidFacet facet, boolean useIndex) {
+    ManifestOverrides manifestOverrides =
+        BlazeModuleSystem.getInstance(facet.getModule()).getManifestOverrides();
+    String packageOverride =
+        manifestOverrides.getDirectOverrides().get(ManifestSystemProperty.PACKAGE);
+    if (packageOverride != null) {
+      return packageOverride;
     }
-    // Since we can't use the merged manifest yet, we'll resort to manually parsing the PSI of the
-    // primary manifest for now.
+    String rawPackageName = null;
+    if (useIndex) {
+      rawPackageName = getRawPackageNameFromIndex(facet);
+    }
+    if (rawPackageName == null) {
+      rawPackageName = getRawPackageNameFromPsi(facet);
+    }
+    return rawPackageName == null ? null : manifestOverrides.resolvePlaceholders(rawPackageName);
+  }
+
+  @Nullable
+  private static String getRawPackageNameFromIndex(AndroidFacet facet) {
+    VirtualFile primaryManifest = SourceProviderManager.getInstance(facet).getMainManifestFile();
+    if (primaryManifest == null) {
+      return null;
+    }
+    Project project = facet.getModule().getProject();
+    try {
+      AndroidManifestRawText manifestRawText =
+          DumbService.getInstance(project)
+              .runReadActionInSmartMode(
+                  () -> AndroidManifestIndex.getDataForManifestFile(project, primaryManifest));
+      return manifestRawText == null ? null : manifestRawText.getPackageName();
+    } catch (IndexNotReadyException e) {
+      // TODO(142681129): runReadActionInSmartMode doesn't work if we already have read access.
+      //  We need to refactor the callers of AndroidManifestUtils#getPackage to require a *smart*
+      //  read action, at which point we can remove this try-catch.
+      return null;
+    }
+  }
+
+  @Nullable
+  private static String getRawPackageNameFromPsi(AndroidFacet facet) {
     AndroidManifestXmlFile primaryManifest = AndroidManifestUtils.getPrimaryManifestXml(facet);
     return primaryManifest == null ? null : primaryManifest.getPackageName();
   }

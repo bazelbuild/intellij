@@ -16,13 +16,11 @@
 package com.google.idea.blaze.android.run.runner;
 
 import com.android.tools.idea.run.DeviceCount;
-import com.android.tools.idea.run.LaunchCompatibility;
 import com.android.tools.idea.run.ValidationError;
 import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.editor.DeployTargetProvider;
 import com.android.tools.idea.run.editor.DeployTargetState;
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.android.run.DeployTargetProviderCompat;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -39,9 +37,9 @@ import org.jetbrains.android.facet.AndroidFacet;
 /** Manages deploy target state for run configurations. */
 public abstract class BlazeAndroidRunConfigurationDeployTargetManagerBase
     implements JDOMExternalizable {
-  private final boolean isAndroidTest;
+  protected final boolean isAndroidTest;
   private final List<DeployTargetProvider> deployTargetProviders;
-  private final Map<String, DeployTargetState> deployTargetStates;
+  protected final Map<String, DeployTargetState> deployTargetStates;
 
   public BlazeAndroidRunConfigurationDeployTargetManagerBase(boolean isAndroidTest) {
     this.isAndroidTest = isAndroidTest;
@@ -59,33 +57,9 @@ public abstract class BlazeAndroidRunConfigurationDeployTargetManagerBase
   }
 
   @Nullable
-  DeployTarget getDeployTarget(
+  abstract DeployTarget getDeployTarget(
       Executor executor, ExecutionEnvironment env, AndroidFacet facet, int runConfigId)
-      throws ExecutionException {
-    DeployTargetProvider currentTargetProvider = getCurrentDeployTargetProvider();
-
-    DeployTarget deployTarget;
-    if (currentTargetProvider.requiresRuntimePrompt()) {
-      deployTarget =
-          currentTargetProvider.showPrompt(
-              executor,
-              env,
-              facet,
-              getDeviceCount(),
-              isAndroidTest,
-              deployTargetStates,
-              runConfigId,
-              (device) -> LaunchCompatibility.YES);
-      if (deployTarget == null) {
-        return null;
-      }
-    } else {
-      deployTarget =
-          DeployTargetProviderCompat.getDeployTarget(currentTargetProvider, env.getProject());
-    }
-
-    return deployTarget;
-  }
+      throws ExecutionException;
 
   DeployTargetState getCurrentDeployTargetState() {
     DeployTargetProvider currentTarget = getCurrentDeployTargetProvider();

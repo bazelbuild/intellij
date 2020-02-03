@@ -156,7 +156,7 @@ public class BlazeAndroidModuleTemplate implements AndroidModulePaths {
     }
 
     IdeaSourceProvider sourceProvider =
-        SourceProviderManager.getInstance(androidFacet).getMainIdeaSourceProvider();
+        SourceProviderManager.getInstance(androidFacet).getSources();
 
     // If this happens to be a resource package,
     // the module name (resource package) would be more descriptive than the facet name (Android).
@@ -170,8 +170,12 @@ public class BlazeAndroidModuleTemplate implements AndroidModulePaths {
       paths.srcDirectory = VfsUtilCore.virtualToIoFile(targetDirectory);
     } else {
       // People usually put the manifest file with their sources.
+      //noinspection OptionalGetWithoutIsPresent
       paths.srcDirectory =
-          new File(VfsUtilCore.urlToPath(sourceProvider.getManifestDirectoryUrl()));
+          sourceProvider.getManifestDirectoryUrls().stream()
+              .map(it -> new File(VfsUtilCore.urlToPath(it)))
+              .findFirst()
+              .get();
     }
     // We have a res dir if this happens to be a resource module.
     paths.resDirectories =
