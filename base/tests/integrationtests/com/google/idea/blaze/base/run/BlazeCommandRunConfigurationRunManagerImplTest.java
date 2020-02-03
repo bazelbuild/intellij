@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration.BlazeCommandRunConfigurationSettingsEditor;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.sdkcompat.run.RunManagerCompat;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -79,8 +78,8 @@ public class BlazeCommandRunConfigurationRunManagerImplTest extends BlazeIntegra
 
     // We don't need to do this at setup, because it is handled by RunManagerImpl's constructor.
     // However, clearAll() clears the configuration types, so we need to reinitialize them.
-    RunManagerCompat.initializeConfigurationTypes(
-        runManager, ConfigurationType.CONFIGURATION_TYPE_EP);
+    runManager.initializeConfigurationTypes(
+        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList());
   }
 
   @Test

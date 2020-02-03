@@ -26,9 +26,9 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.sdkcompat.cidr.CLanguageKindCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCFileTypeHelpers;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.preprocessor.OCImportGraph;
@@ -134,7 +134,7 @@ final class BlazeResolveConfiguration {
   }
 
   private static OCLanguageKind getMaximumLanguageKind() {
-    return CLanguageKindCompat.cpp();
+    return CLanguageKind.CPP;
   }
 
   @VisibleForTesting

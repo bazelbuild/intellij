@@ -15,7 +15,6 @@
  */
 package com.google.idea.common.actions;
 
-import com.google.idea.sdkcompat.openapi.ActionManagerCompat;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -58,7 +57,7 @@ public class ReplaceActionHelper {
     AnAction oldAction = actionManager.getAction(actionId);
     if (oldAction != null) {
       newAction.getTemplatePresentation().setIcon(oldAction.getTemplatePresentation().getIcon());
-      ActionManagerCompat.replaceAction(actionId, newAction);
+      ActionManager.getInstance().replaceAction(actionId, newAction);
     } else {
       actionManager.registerAction(actionId, newAction);
     }

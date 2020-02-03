@@ -21,9 +21,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.typescript.TypeScriptConfigServiceCompat;
 import com.intellij.lang.typescript.compiler.TypeScriptCompilerService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
+import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
+import com.intellij.lang.typescript.tsconfig.TypeScriptConfigUtil;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigsChangedListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,7 +46,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
-class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat {
+class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   private static final Logger logger = Logger.getInstance(BlazeTypeScriptConfigServiceImpl.class);
   private static final BoolExperiment restartTypeScriptService =
       new BoolExperiment("restart.typescript.service", true);
@@ -83,7 +84,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
             .collect(
                 ImmutableMap.toImmutableMap(TypeScriptConfig::getConfigFile, Functions.identity()));
     for (TypeScriptConfigsChangedListener listener : listeners) {
-      TypeScriptConfigServiceCompat.fireListener(listener, configs);
+      listener.afterUpdate(configs.keySet());
     }
     restartServiceIfConfigsChanged();
   }
@@ -127,7 +128,8 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
   @Nullable
   @Override
   public TypeScriptConfig getPreferableConfig(VirtualFile scopeFile) {
-    return TypeScriptConfigServiceCompat.getPreferableConfig(scopeFile, configs);
+    return configs.get(
+        TypeScriptConfigUtil.getNearestParentConfigFile(scopeFile, configs.keySet()));
   }
 
   @Nullable
@@ -142,7 +144,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigServiceCompat 
   }
 
   @Override
-  public List<VirtualFile> doGetConfigFiles() {
+  public List<VirtualFile> getConfigFiles() {
     return configs.keySet().asList();
   }
 

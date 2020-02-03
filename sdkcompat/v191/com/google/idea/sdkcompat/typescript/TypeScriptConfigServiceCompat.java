@@ -31,7 +31,7 @@ import com.intellij.psi.PsiManager;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** Compatibility layer for {@link TypeScriptConfigService}. #api183 */
+/** Compatibility layer for {@link TypeScriptConfigService}. #api192 */
 public interface TypeScriptConfigServiceCompat extends TypeScriptConfigService {
   static List<VirtualFile> getConfigFiles(TypeScriptConfigService service) {
     return service.getConfigFiles();

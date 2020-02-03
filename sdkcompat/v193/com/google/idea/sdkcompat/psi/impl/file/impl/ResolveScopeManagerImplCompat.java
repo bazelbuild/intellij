@@ -21,7 +21,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.file.impl.ResolveScopeManagerImpl;
 
-/** Compat class for {@link ResolveScopeManagerImpl} */
+/** Compat class for {@link ResolveScopeManagerImpl}. #api192: constructor changed in 2019.3 */
 public class ResolveScopeManagerImplCompat {
   private ResolveScopeManagerImplCompat() {}
 

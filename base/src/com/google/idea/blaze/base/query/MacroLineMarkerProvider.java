@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.icons.AllIcons;
@@ -103,7 +102,6 @@ public class MacroLineMarkerProvider implements LineMarkerProvider {
               element,
               element.getTextRange(),
               AllIcons.Hierarchy.MethodDefined,
-              Pass.LINE_MARKERS, // #api183: remove this old, unused parameter
               psi -> tooltip,
               null,
               GutterIconRenderer.Alignment.RIGHT);

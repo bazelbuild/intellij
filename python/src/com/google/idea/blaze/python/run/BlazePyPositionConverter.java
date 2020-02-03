@@ -42,17 +42,17 @@ public class BlazePyPositionConverter implements PyPositionConverter {
 
   private static final Logger logger = Logger.getInstance(BlazePyPositionConverter.class);
 
-  @SuppressWarnings("MissingOverride") // (briefly) removed in 2019.1
+  @SuppressWarnings("MissingOverride") // #api191 (briefly) removed in 2019.1
   public PySourcePosition create(String filePath, int line) {
     return new PySourcePosition(convertFilePath(filePath), line) {};
   }
 
-  @SuppressWarnings("MissingOverride") // added in 2019.1 #api183
+  @SuppressWarnings("MissingOverride") // #api191: changed in 2019.1
   public PySourcePosition convertPythonToFrame(String filePath, int line) {
     return new PySourcePosition(filePath, line) {};
   }
 
-  @SuppressWarnings("MissingOverride") // added in 2019.1 #api183
+  @SuppressWarnings("MissingOverride") // #api191: changed in 2019.1
   public PySourcePosition convertFrameToPython(PySourcePosition position) {
     return position;
   }
@@ -64,13 +64,13 @@ public class BlazePyPositionConverter implements PyPositionConverter {
         convertLocalLineToRemote(position.getFile(), position.getLine())) {};
   }
 
-  @SuppressWarnings("MissingOverride") // (briefly) removed in 2017.3
+  @Override
   @Nullable
   public XSourcePosition convertFromPython(PySourcePosition position) {
     return createXSourcePosition(getVirtualFile(position.getFile()), position.getLine());
   }
 
-  @SuppressWarnings("MissingOverride") // added in 2017.3
+  @Override
   @Nullable
   public XSourcePosition convertFromPython(PySourcePosition position, String frameName) {
     return createXSourcePosition(getVirtualFile(position.getFile()), position.getLine());

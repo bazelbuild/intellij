@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.typescript.TypeScriptConfigCompat;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.javascript.library.JSLibraryUtil;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
@@ -76,7 +75,7 @@ import javax.annotation.Nullable;
  * <p>Resolves all the symlinks under tsconfig.runfiles, and adds all of their roots to the paths
  * substitutions.
  */
-class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
+class BlazeTypeScriptConfig implements TypeScriptConfig {
   private static final Logger logger = Logger.getInstance(BlazeTypeScriptConfig.class);
   private static final BoolExperiment typesScriptSuppressWildcardImports =
       new BoolExperiment("typescript.suppress.wildcard.imports", true);
@@ -485,11 +484,6 @@ class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
   }
 
   @Override
-  public boolean accept(VirtualFile file) {
-    return getInclude().accept(file);
-  }
-
-  @Override
   public boolean isDirectoryBased() {
     return false;
   }
@@ -537,11 +531,6 @@ class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
   }
 
   @Override
-  public boolean isCompileOnSave() {
-    return compileOnSave;
-  }
-
-  @Override
   public boolean isInlineSourceMap() {
     return inlineSourceMap;
   }
@@ -579,11 +568,6 @@ class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
   @Override
   public ModuleTarget getModule() {
     return module;
-  }
-
-  @Override
-  public boolean isIncludedFile(VirtualFile file) {
-    return false;
   }
 
   @Override
@@ -710,11 +694,6 @@ class BlazeTypeScriptConfig implements TypeScriptConfigCompat {
   @Override
   public VirtualFile getRootDirFile() {
     return null;
-  }
-
-  @Override
-  public Collection<VirtualFile> getProjectReferences() {
-    return ImmutableList.of();
   }
 
   @Override

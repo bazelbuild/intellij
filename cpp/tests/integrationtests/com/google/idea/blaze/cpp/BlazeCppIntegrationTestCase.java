@@ -19,13 +19,17 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.android.tools.ndk.NdkHelper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.sdkcompat.cidr.FileSymbolTablesCacheAdapter;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.cidr.lang.psi.OCFile;
+import com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache;
+import com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache.SymbolsProperties.SymbolsKind;
+import com.jetbrains.cidr.lang.symbols.symtable.OCSymbolTablesBuildingActivity;
 import java.util.List;
 import org.junit.After;
 import org.junit.Before;
@@ -37,12 +41,31 @@ public class BlazeCppIntegrationTestCase extends BlazeIntegrationTestCase {
   public void enableCppLanguageSupport() {
     NdkHelper.disableCppLanguageSupport(getProject(), false);
 
-    FileSymbolTablesCacheAdapter.enableSymbolTableBuildingInTests(getProject(), true, true);
+    enableSymbolTableBuildingInTests(getProject(), true, true);
+  }
+
+  @VisibleForTesting
+  private static void enableSymbolTableBuildingInTests(
+      Project project, boolean loadPrevSymbols, boolean saveSymbols) {
+    FileSymbolTablesCache.setShouldBuildTablesInTests(
+        new FileSymbolTablesCache.SymbolsProperties(
+            // We may want to allow ALL_INCLUDING_UNUSED_SYSTEM_HEADERS as well, but for now
+            // ONLY_USED is enough
+            SymbolsKind.ONLY_USED, loadPrevSymbols, saveSymbols));
+
+    // Normally, CidrProjectFixture will setShouldBuildTablesInTests before a project is created
+    // and thus before FileSymbolTablesCache is instantiated for a project.
+    //
+    // When FileSymbolTablesCache is created, it should queue OCSymbolTablesBuildingActivity.
+    //
+    // However, because we run well after a project is created, we need to manually queue
+    // OCSymbolTablesBuildingActivity after toggling on setShouldBuildTablesInTests.
+    OCSymbolTablesBuildingActivity.getInstance(project).rebuildSymbols();
   }
 
   @After
   public void disableCppLanguageSupport() {
-    FileSymbolTablesCacheAdapter.disableSymbolTableBuildingInTests();
+    FileSymbolTablesCache.setShouldBuildTablesInTests(null);
     NdkHelper.disableCppLanguageSupport(getProject(), true);
   }
 

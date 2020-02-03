@@ -48,9 +48,9 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.ui.UiUtil;
-import com.google.idea.sdkcompat.run.RunConfigurationBaseCompat;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.ModuleRunProfile;
@@ -356,7 +356,7 @@ public class BlazeCommandRunConfiguration extends LocatableConfigurationBase
           "Configuration cannot be run until project has been synced.");
     }
     boolean hasBlazeBeforeRunTask =
-        RunConfigurationBaseCompat.getAllBeforeRunTasks(this).stream()
+        RunManagerEx.getInstanceEx(getProject()).getBeforeRunTasks(this).stream()
             .anyMatch(
                 task ->
                     task.getProviderId().equals(BlazeBeforeRunTaskProvider.ID) && task.isEnabled());

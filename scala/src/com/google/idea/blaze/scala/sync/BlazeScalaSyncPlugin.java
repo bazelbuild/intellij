@@ -37,7 +37,6 @@ import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.scala.sync.importer.BlazeScalaWorkspaceImporter;
 import com.google.idea.blaze.scala.sync.model.BlazeScalaImportResult;
 import com.google.idea.blaze.scala.sync.model.BlazeScalaSyncData;
-import com.google.idea.sdkcompat.scala.ScalaLibraryTypeCompat;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -46,6 +45,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.jetbrains.plugins.scala.project.ScalaLibraryType;
 
 /** Supports scala. */
 public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
@@ -77,7 +77,7 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
       // TODO: use a canonical class in the SDK (e.g., scala.App) instead of the name?
       if (library.getName() != null && library.getName().startsWith("scala-library")) {
         ExistingLibraryEditor editor = new ExistingLibraryEditor(library, null);
-        editor.setType(ScalaLibraryTypeCompat.getScalaLibraryType());
+        editor.setType(ScalaLibraryType.apply());
         editor.commit();
         return;
       }

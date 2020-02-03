@@ -29,9 +29,9 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.sdkcompat.cidr.CLanguageKindCompat;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.jetbrains.cidr.lang.CLanguageKind;
 import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -80,7 +80,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             cFlags,
             "cc version (trunk r123456)");
 
-    assertThat(settings.getCompilerSwitches(CLanguageKindCompat.c(), null))
+    assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("-fast", "-slow")
         .inOrder();
   }
@@ -97,7 +97,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             cFlags,
             "cc version (trunk r123456)");
 
-    assertThat(settings.getCompilerSwitches(CLanguageKindCompat.c(), null))
+    assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("--sysroot=" + workspaceRoot + "/third_party/toolchain");
   }
 
@@ -113,7 +113,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             cFlags,
             "cc version (trunk r123456)");
 
-    assertThat(settings.getCompilerSwitches(CLanguageKindCompat.c(), null))
+    assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("--sysroot=/usr");
   }
 
@@ -131,7 +131,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             "cc version (trunk r123456)");
 
     String execRoot = blazeProjectData.getBlazeInfo().getExecutionRoot().toString();
-    assertThat(settings.getCompilerSwitches(CLanguageKindCompat.c(), null))
+    assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly(
             "-isystem",
             execRoot + "/external/arm_gcc/include",
@@ -152,7 +152,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
             cFlags,
             "cc version (trunk r123456)");
 
-    assertThat(settings.getCompilerSwitches(CLanguageKindCompat.c(), null))
+    assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly("-isystem", "/usr/include");
   }
 }

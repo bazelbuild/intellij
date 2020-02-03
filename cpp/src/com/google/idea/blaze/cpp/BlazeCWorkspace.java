@@ -32,7 +32,6 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
-import com.google.idea.sdkcompat.cidr.CLanguageKindCompat;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceFileMapperCompat;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter.PerFileCompilerOpts;
@@ -50,6 +49,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
@@ -74,7 +74,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
   private final BlazeConfigurationResolver configurationResolver;
   private BlazeConfigurationResolverResult resolverResult;
   private final ImmutableList<OCLanguageKind> supportedLanguages =
-      ImmutableList.of(CLanguageKindCompat.c(), CLanguageKindCompat.cpp());
+      ImmutableList.of(CLanguageKind.C, CLanguageKind.CPP);
 
   private final Project project;
   private final CidrToolEnvironment toolEnvironment = new CidrToolEnvironment();
@@ -236,7 +236,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         for (VirtualFile vf : resolveConfiguration.getSources(targetKey)) {
           OCLanguageKind kind = resolveConfiguration.getDeclaredLanguageKind(vf);
           if (kind == null) {
-            kind = CLanguageKindCompat.cpp();
+            kind = CLanguageKind.CPP;
           }
 
           CidrSwitchBuilder fileSpecificSwitchBuilder = new CidrSwitchBuilder();

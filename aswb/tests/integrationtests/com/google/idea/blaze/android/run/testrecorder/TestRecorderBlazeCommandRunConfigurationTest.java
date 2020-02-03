@@ -37,7 +37,6 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider.TargetState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.AndroidBlazeRules;
-import com.google.idea.sdkcompat.run.RunManagerCompat;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -106,8 +105,8 @@ public class TestRecorderBlazeCommandRunConfigurationTest extends BlazeIntegrati
     runManager.clearAll();
     // We don't need to do this at setup, because it is handled by RunManagerImpl's constructor.
     // However, clearAll() clears the configuration types, so we need to reinitialize them.
-    RunManagerCompat.initializeConfigurationTypes(
-        runManager, ConfigurationType.CONFIGURATION_TYPE_EP);
+    runManager.initializeConfigurationTypes(
+        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList());
   }
 
   @Test

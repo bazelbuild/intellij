@@ -28,7 +28,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
-import com.google.idea.sdkcompat.typescript.TypeScriptConfigCompat;
 import com.google.idea.sdkcompat.typescript.TypeScriptConfigServiceCompat;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.typescript.library.TypeScriptLibraryProvider;
@@ -184,20 +183,10 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
   }
 
   @Test
-  public void testCompileOnsave() {
-    TypeScriptConfigCompat blazeConfig =
-        (TypeScriptConfigCompat) blazeConfigService.getConfigs().get(0);
-    // regularConfig incorrectly parses this as true, since it uses the value from the empty
-    // extender config instead of the extendee, and the default value is true
-    assertThat(blazeConfig.isCompileOnSave()).isFalse();
-  }
-
-  @Test
   public void testSameOptions() {
     assertThat(blazeConfigService.getConfigs()).hasSize(1);
     assertThat(regularConfigService.getConfigFiles()).hasSize(1);
-    TypeScriptConfigCompat blazeConfig =
-        (TypeScriptConfigCompat) blazeConfigService.getConfigs().get(0);
+    TypeScriptConfig blazeConfig = blazeConfigService.getConfigs().get(0);
     TypeScriptConfig regularConfig =
         ReadAction.compute(
             () -> TypeScriptConfigServiceCompat.getConfigs(regularConfigService).get(0));
@@ -240,7 +229,6 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     assertThat(blazeConfig.noLib()).isEqualTo(regularConfig.noLib());
     assertThat(blazeConfig.getRootDirFile()).isNull();
     assertThat(blazeConfig.getRootDirFile()).isEqualTo(regularConfig.getRootDirFile());
-    assertThat(blazeConfig.getProjectReferences()).isEmpty();
     assertThat(blazeConfig.preserveSymlinks()).isEqualTo(regularConfig.preserveSymlinks());
     assertThat(blazeConfig.jsxFactory()).isEqualTo(regularConfig.jsxFactory());
     assertThat(blazeConfig.getPlugins()).containsExactly("@bazel/tsetse", "ide_performance");
@@ -252,16 +240,13 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     // regularConfig can't correctly parse the file list in test mode,
     // so these values are manually checked
 
-    TypeScriptConfigCompat blazeConfig =
-        (TypeScriptConfigCompat) blazeConfigService.getConfigs().get(0);
+    TypeScriptConfig blazeConfig = blazeConfigService.getConfigs().get(0);
     VirtualFile includedSource = vf("/src/workspace/project/foo/included.ts");
     VirtualFile excludedSource = vf("/src/workspace/project/foo/excluded.ts");
-    assertThat(blazeConfig.accept(includedSource)).isTrue();
-    assertThat(blazeConfig.accept(excludedSource)).isFalse();
 
     // we don't use TypeScriptConfigPatternInclude so this is always false
-    assertThat(blazeConfig.isIncludedFile(includedSource)).isFalse();
-    assertThat(blazeConfig.isIncludedFile(excludedSource)).isFalse();
+    assertThat(blazeConfig.isIncludedFile(includedSource, true)).isFalse();
+    assertThat(blazeConfig.isIncludedFile(excludedSource, true)).isFalse();
 
     assertThat(blazeConfig.isFromFileList(includedSource)).isTrue();
     assertThat(blazeConfig.isFromFileList(excludedSource)).isFalse();
