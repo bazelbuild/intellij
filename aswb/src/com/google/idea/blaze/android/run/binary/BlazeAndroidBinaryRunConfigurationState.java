@@ -256,7 +256,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
   public RunConfigurationStateEditor getEditor(Project project) {
     return new BlazeAndroidBinaryRunConfigurationStateEditor(
         commonState.getEditor(project),
-        AndroidProfilersPanelCompat.getNewAndroidProfilersPanel(project, profilerState),
+        new AndroidProfilersPanelCompat(project, profilerState),
         project);
   }
 }

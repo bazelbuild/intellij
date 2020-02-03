@@ -16,21 +16,26 @@
 package com.android.tools.idea.run.editor;
 
 import com.intellij.openapi.project.Project;
+import javax.annotation.Nullable;
 
 /** Compat class for {@link com.android.tools.idea.run.editor.AndroidProfilersPanel} */
 public class AndroidProfilersPanelCompat {
-  private AndroidProfilersPanelCompat() {}
+  private final AndroidProfilersPanel panel;
 
-  public static AndroidProfilersPanel getNewAndroidProfilersPanel(
-      Project project, ProfilerState state) {
-    return new AndroidProfilersPanel(project, state);
+  public AndroidProfilersPanelCompat(Project project, ProfilerState state) {
+    this.panel = new AndroidProfilersPanel(project, state);
   }
 
-  public static void resetFrom(AndroidProfilersPanel profilersPanel, ProfilerState state) {
-    profilersPanel.resetFrom(state);
+  @Nullable
+  public AndroidProfilersPanel getPanel() {
+    return panel;
   }
 
-  public static void applyTo(AndroidProfilersPanel profilersPanel, ProfilerState state) {
-    profilersPanel.applyTo(state);
+  public void resetFrom(ProfilerState state) {
+    panel.resetFrom(state);
+  }
+
+  public void applyTo(ProfilerState state) {
+    panel.applyTo(state);
   }
 }

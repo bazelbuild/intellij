@@ -19,18 +19,13 @@ import com.intellij.openapi.project.Project;
 
 /** Compat class for {@link com.android.tools.idea.run.editor.AndroidProfilersPanel} */
 public class AndroidProfilersPanelCompat {
-  private AndroidProfilersPanelCompat() {}
+  public AndroidProfilersPanelCompat(Project project, ProfilerState state) {}
 
-  public static AndroidProfilersPanel getNewAndroidProfilersPanel(
-      Project project, ProfilerState state) {
-    return new AndroidProfilersPanel(project, state);
+  public AndroidProfilersPanel getPanel() {
+    return null; // No profiler options support in 3.5
   }
 
-  public static void resetFrom(AndroidProfilersPanel profilersPanel, ProfilerState state) {
-    profilersPanel.resetFrom(state);
-  }
+  public void resetFrom(ProfilerState state) {}
 
-  public static void applyTo(AndroidProfilersPanel profilersPanel, ProfilerState state) {
-    profilersPanel.applyTo(state);
-  }
+  public void applyTo(ProfilerState state) {}
 }
