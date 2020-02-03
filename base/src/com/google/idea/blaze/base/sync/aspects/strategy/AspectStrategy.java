@@ -158,6 +158,7 @@ public abstract class AspectStrategy {
   private boolean allowDirectDepsTrimming(LanguageClass language) {
     return aspectSupportsDirectDepsTrimming
         && directDepsTrimmingEnabled.getValue()
-        && language != LanguageClass.C;
+        && language != LanguageClass.C
+        && language != LanguageClass.GO;
   }
 }

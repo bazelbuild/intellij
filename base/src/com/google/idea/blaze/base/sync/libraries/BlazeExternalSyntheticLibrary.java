@@ -17,26 +17,18 @@ package com.google.idea.blaze.base.sync.libraries;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.io.VfsUtils;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.stubs.StubUpdatingIndex;
-import com.intellij.util.indexing.FileBasedIndex;
 import icons.BlazeIcons;
 import java.io.File;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -47,14 +39,8 @@ import javax.swing.Icon;
 public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
     implements ItemPresentation {
   private final String presentableText;
-  private final Set<File> files;
+  private final ImmutableSet<File> files;
   private final Set<VirtualFile> validFiles;
-
-  private static final BoolExperiment reindexAfterAddingExternalLibraryFiles =
-      new BoolExperiment("reindex.after.adding.external.library.files", true);
-  private static final ScheduledExecutorService indexingScheduler =
-      Executors.newSingleThreadScheduledExecutor();
-  private static final AtomicReference<ScheduledFuture<?>> indexingFuture = new AtomicReference<>();
 
   /**
    * Constructs library with an initial set of valid {@link VirtualFile}s.
@@ -65,9 +51,13 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
    */
   BlazeExternalSyntheticLibrary(String presentableText, Collection<File> files) {
     this.presentableText = presentableText;
-    this.files = new HashSet<>();
-    this.validFiles = Sets.newConcurrentHashSet();
-    addFiles(files, false);
+    this.files = ImmutableSet.copyOf(files);
+    this.validFiles =
+        Sets.newConcurrentHashSet(
+            files.stream()
+                .map(VfsUtils::resolveVirtualFile)
+                .filter(Objects::nonNull)
+                .collect(toImmutableSet()));
   }
 
   @Nullable
@@ -96,30 +86,6 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
           .map(VfsUtils::resolveVirtualFile)
           .filter(Objects::nonNull)
           .forEach(validFiles::add);
-    }
-  }
-
-  public void addFiles(Collection<File> files, boolean reindex) {
-    if (this.files.addAll(files)) {
-      files.stream()
-          .map(VfsUtils::resolveVirtualFile)
-          .filter(Objects::nonNull)
-          .forEach(this.validFiles::add);
-      if (reindex && reindexAfterAddingExternalLibraryFiles.getValue()) {
-        requestReindex();
-      }
-    }
-  }
-
-  private static void requestReindex() {
-    ScheduledFuture<?> previous =
-        indexingFuture.getAndSet(
-            indexingScheduler.schedule(
-                () -> FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID),
-                5,
-                TimeUnit.SECONDS));
-    if (previous != null && !previous.isDone() && !previous.isCancelled()) {
-      previous.cancel(false);
     }
   }
 
