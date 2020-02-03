@@ -38,8 +38,7 @@ test_suite(
     tests = [
         "//golang:integration_tests",
         "//golang:unit_tests",
-        # temporarily disabled: failing in 2019.3
-        # "//javascript:integration_tests",
+        "//javascript:integration_tests",
         "//javascript:unit_tests",
     ],
 )

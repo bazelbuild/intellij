@@ -12,7 +12,8 @@ java_import(
             "clion-*/plugins/clion-test-google/lib/*.jar",
             "clion-*/plugins/clion-test-catch/lib/*.jar",
             "clion-*/plugins/clion-test-boost/lib/*.jar",
-        ]),
+        ],
+    ),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
 )
@@ -32,14 +33,7 @@ java_import(
 
 java_import(
     name = "javascript",
-    data = [":javascript_data"],
     jars = glob(["clion-*/plugins/JavaScriptLanguage/lib/*.jar"]),
-)
-
-filegroup(
-    name = "javascript_data",
-    srcs = glob(["clion-*/plugins/JavaScriptLanguage/jsLanguageServicesImpl/external/*"]),
-    visibility = ["//visibility:private"],
 )
 
 java_import(

@@ -29,14 +29,12 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformUtils;
 import javax.annotation.Nullable;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Sync integration tests for projects containing javascript. */
 @RunWith(JUnit4.class)
-@Ignore("Failing in 2019.3")
 public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
 
   @Test
