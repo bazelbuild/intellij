@@ -25,7 +25,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 
-class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
+/** Attached either java or native debugger depending on if native debugging is enabled. */
+public class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
   public static final String ID = Blaze.defaultBuildSystemName();
   private static final Logger log = Logger.getInstance(BlazeAutoAndroidDebugger.class);
   private final BlazeNativeAndroidDebugger nativeDebugger = new BlazeNativeAndroidDebugger();

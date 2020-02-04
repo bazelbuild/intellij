@@ -18,7 +18,6 @@ package com.google.idea.blaze.android.run;
 import static com.google.idea.blaze.android.cppapi.NdkSupport.NDK_SUPPORT;
 
 import com.android.tools.idea.run.ValidationError;
-import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
@@ -36,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import java.awt.Component;
-import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
@@ -69,9 +67,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     this.exeFlags =
         new RunConfigurationFlagsState(
             USER_EXE_FLAG_TAG, "Executable flags (mobile-install only):");
-    // Note: AndroidDebugger.EP_NAME includes native debugger(s).
-    this.debuggerSettings =
-        new DebuggerSettingsState(false, Arrays.asList(AndroidDebugger.EP_NAME.getExtensions()));
+    this.debuggerSettings = new DebuggerSettingsState(false);
     this.debuggerManager = new BlazeAndroidRunConfigurationDebuggerManager(debuggerSettings);
   }
 

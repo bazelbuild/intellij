@@ -20,11 +20,6 @@
     <SyncListener implementation="com.google.idea.blaze.android.cppimpl.BlazeNdkSupportEnabler"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.google.idea.blaze.android.cppapi.BlazeNativeDebuggerIdProvider"
-                        serviceImplementation="com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebuggerIdProviderImpl"/>
-  </extensions>
-
   <extensions defaultExtensionNs="cidr.debugger">
     <languageSupport language="" implementationClass="com.google.idea.blaze.android.cppimpl.debug.BlazeAndroidNativeDebuggerLanguageSupport"/>
   </extensions>
