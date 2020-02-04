@@ -16,7 +16,6 @@
 package com.google.idea.testing.cidr;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.sdkcompat.cidr.OCResolveConfigurationCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +26,7 @@ import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCLanguageKindCalculator;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
+import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationImpl;
 import com.jetbrains.cidr.lang.workspace.OCVariant;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import java.util.Collection;
@@ -136,6 +136,6 @@ public class StubOCResolveConfiguration extends UserDataHolderBase
 
   @Override
   public int compareTo(OCResolveConfiguration o) {
-    return OCResolveConfigurationCompat.compareConfigurations(this, o);
+    return OCResolveConfigurationImpl.compareConfigurations(this, o);
   }
 }

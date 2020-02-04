@@ -20,25 +20,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.cidr.lang.OCLanguageKind;
-import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
-import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
-import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationImpl;
-import com.jetbrains.cidr.lang.workspace.OCWorkspace.ModifiableModel;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceImpl;
 import com.jetbrains.cidr.lang.workspace.compiler.CachedTempFilesPool;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Message;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Session;
-import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
-import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
@@ -51,7 +42,7 @@ public class OCWorkspaceModifiableModelAdapter {
    * Commits the modifiable model and returns any error messages encountered setting up the model
    * (e.g., while running a compiler for feature detection).
    *
-   * <p>#api182: model API changed in 2018.3.
+   * <p>#api191: fileMapper unused in 2019.2.
    */
   public static ImmutableList<String> commit(
       OCWorkspaceImpl.ModifiableModel model,
@@ -67,67 +58,6 @@ public class OCWorkspaceModifiableModelAdapter {
               ApplicationManager.getApplication().runWriteAction(model::commit);
             });
     return issues;
-  }
-
-  // #api182: In 2018.3, addConfiguration only takes 2 or 4 parameters
-  public static void addConfiguration(
-      ModifiableModel workspaceModifiable,
-      String id,
-      String displayName,
-      String shortDisplayName,
-      File directory,
-      Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages,
-      Map<VirtualFile, PerFileCompilerOpts> configSourceFiles,
-      CidrToolEnvironment toolEnvironment, // #api182
-      WorkspaceFileMapper fileMapper // #api182
-      ) {
-    OCResolveConfigurationImpl.ModifiableModel config =
-        workspaceModifiable.addConfiguration(
-            id, displayName, null, OCResolveConfiguration.DEFAULT_FILE_SEPARATORS);
-    for (Map.Entry<OCLanguageKind, PerLanguageCompilerOpts> languageEntry :
-        configLanguages.entrySet()) {
-      OCCompilerSettings.ModifiableModel langSettings =
-          config.getLanguageCompilerSettings(languageEntry.getKey());
-      PerLanguageCompilerOpts configForLanguage = languageEntry.getValue();
-      langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
-      langSettings.setCompilerSwitches(configForLanguage.switches);
-    }
-
-    for (Map.Entry<VirtualFile, PerFileCompilerOpts> fileEntry : configSourceFiles.entrySet()) {
-      PerFileCompilerOpts compilerOpts = fileEntry.getValue();
-      OCCompilerSettings.ModifiableModel fileCompilerSettings =
-          config.addSource(fileEntry.getKey(), compilerOpts.kind);
-      fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
-    }
-  }
-
-  public static ModifiableModel getClearedModifiableModel(Project project) {
-    return OCWorkspaceImpl.getInstanceImpl(project).getModifiableModel(true);
-  }
-
-  /** Group compiler options for a specific file. #api182 */
-  public static class PerFileCompilerOpts {
-    final OCLanguageKind kind;
-    final CidrCompilerSwitches switches;
-
-    public PerFileCompilerOpts(OCLanguageKind kind, CidrCompilerSwitches switches) {
-      this.kind = kind;
-      this.switches = switches;
-    }
-  }
-
-  /** Group compiler options for a specific language. #api182 */
-  public static class PerLanguageCompilerOpts {
-    final OCCompilerKind kind;
-    final File compiler;
-    final CidrCompilerSwitches switches;
-
-    public PerLanguageCompilerOpts(
-        OCCompilerKind kind, File compiler, CidrCompilerSwitches switches) {
-      this.kind = kind;
-      this.compiler = compiler;
-      this.switches = switches;
-    }
   }
 
   private static ImmutableList<String> collectCompilerSettingsInParallel(

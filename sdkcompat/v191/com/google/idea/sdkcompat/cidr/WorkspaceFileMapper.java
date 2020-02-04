@@ -17,5 +17,7 @@ package com.google.idea.sdkcompat.cidr;
 
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceFileMapper;
 
-/** A marker interface present for making {@link OCWorkspaceFileMapper} available to #api183 */
+/**
+ * A marker interface present for making {@link OCWorkspaceFileMapper}, removed in 2019.2 (#api191).
+ */
 public interface WorkspaceFileMapper extends OCWorkspaceFileMapper {}

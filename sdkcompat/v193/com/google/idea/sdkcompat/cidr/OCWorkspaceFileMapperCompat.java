@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 
 /** Compat interface for {@link WorkspaceFileMapper}. */
 public class OCWorkspaceFileMapperCompat {
-  /** Present only for compatibility with v191, unused in v192. */
+  /** Returns a new {@link WorkspaceFileMapper}. #api191: not needed in 2019.2. */
   public static WorkspaceFileMapper create() {
     return new WorkspaceFileMapper() {
       @Nullable

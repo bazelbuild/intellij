@@ -34,9 +34,6 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceFileMapperCompat;
 import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter;
-import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter.PerFileCompilerOpts;
-import com.google.idea.sdkcompat.cidr.OCWorkspaceModifiableModelAdapter.PerLanguageCompilerOpts;
-import com.google.idea.sdkcompat.cidr.OCWorkspaceModificationTrackersCompat;
 import com.google.idea.sdkcompat.cidr.WorkspaceFileMapper;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.application.PathManager;
@@ -51,10 +48,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
+import com.jetbrains.cidr.lang.toolchains.CidrCompilerSwitches;
 import com.jetbrains.cidr.lang.toolchains.CidrSwitchBuilder;
 import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
+import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
+import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
+import com.jetbrains.cidr.lang.workspace.OCResolveConfigurationImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
+import com.jetbrains.cidr.lang.workspace.OCWorkspaceEventImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceImpl;
+import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackersImpl;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import java.io.File;
 import java.util.HashMap;
@@ -129,7 +132,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
                   WorkspaceFileMapper fileMapper = OCWorkspaceFileMapperCompat.create();
                   OCWorkspaceImpl.ModifiableModel model =
                       calculateConfigurations(
-                          blazeProjectData, workspaceRoot, newResult, indicator, fileMapper);
+                          blazeProjectData, workspaceRoot, newResult, indicator);
                   ImmutableList<String> issues =
                       OCWorkspaceModifiableModelAdapter.commit(
                           model, SERIALIZATION_VERSION, toolEnvironment, fileMapper);
@@ -150,11 +153,10 @@ public final class BlazeCWorkspace implements ProjectComponent {
       BlazeProjectData blazeProjectData,
       WorkspaceRoot workspaceRoot,
       BlazeConfigurationResolverResult configResolveData,
-      ProgressIndicator indicator,
-      WorkspaceFileMapper fileMapper) {
+      ProgressIndicator indicator) {
 
     OCWorkspaceImpl.ModifiableModel workspaceModifiable =
-        OCWorkspaceModifiableModelAdapter.getClearedModifiableModel(project);
+        OCWorkspaceImpl.getInstanceImpl(project).getModifiableModel(/* clear= */ true);
     ImmutableList<BlazeResolveConfiguration> configurations =
         configResolveData.getAllConfigurations();
     ExecutionRootPathResolver executionRootPathResolver =
@@ -272,21 +274,69 @@ public final class BlazeCWorkspace implements ProjectComponent {
       }
 
       String id = resolveConfiguration.getDisplayName();
-      String shortDisplayName = resolveConfiguration.getDisplayName();
 
-      OCWorkspaceModifiableModelAdapter.addConfiguration(
+      addConfiguration(
           workspaceModifiable,
           id,
           id,
-          shortDisplayName,
           workspaceRoot.directory(),
           configLanguages,
-          configSourceFiles,
-          toolEnvironment,
-          fileMapper);
+          configSourceFiles);
       progress++;
     }
     return workspaceModifiable;
+  }
+
+  private static void addConfiguration(
+      OCWorkspaceImpl.ModifiableModel workspaceModifiable,
+      String id,
+      String displayName,
+      File directory,
+      Map<OCLanguageKind, PerLanguageCompilerOpts> configLanguages,
+      Map<VirtualFile, PerFileCompilerOpts> configSourceFiles) {
+    OCResolveConfigurationImpl.ModifiableModel config =
+        workspaceModifiable.addConfiguration(
+            id, displayName, null, OCResolveConfiguration.DEFAULT_FILE_SEPARATORS);
+    for (Map.Entry<OCLanguageKind, PerLanguageCompilerOpts> languageEntry :
+        configLanguages.entrySet()) {
+      OCCompilerSettings.ModifiableModel langSettings =
+          config.getLanguageCompilerSettings(languageEntry.getKey());
+      PerLanguageCompilerOpts configForLanguage = languageEntry.getValue();
+      langSettings.setCompiler(configForLanguage.kind, configForLanguage.compiler, directory);
+      langSettings.setCompilerSwitches(configForLanguage.switches);
+    }
+
+    for (Map.Entry<VirtualFile, PerFileCompilerOpts> fileEntry : configSourceFiles.entrySet()) {
+      PerFileCompilerOpts compilerOpts = fileEntry.getValue();
+      OCCompilerSettings.ModifiableModel fileCompilerSettings =
+          config.addSource(fileEntry.getKey(), compilerOpts.kind);
+      fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
+    }
+  }
+
+  /** Group compiler options for a specific file. */
+  private static class PerFileCompilerOpts {
+    final OCLanguageKind kind;
+    final CidrCompilerSwitches switches;
+
+    private PerFileCompilerOpts(OCLanguageKind kind, CidrCompilerSwitches switches) {
+      this.kind = kind;
+      this.switches = switches;
+    }
+  }
+
+  /** Group compiler options for a specific language. */
+  private static class PerLanguageCompilerOpts {
+    final OCCompilerKind kind;
+    final File compiler;
+    final CidrCompilerSwitches switches;
+
+    private PerLanguageCompilerOpts(
+        OCCompilerKind kind, File compiler, CidrCompilerSwitches switches) {
+      this.kind = kind;
+      this.compiler = compiler;
+      this.switches = switches;
+    }
   }
 
   private void addConfigLanguageSwitches(
@@ -305,6 +355,10 @@ public final class BlazeCWorkspace implements ProjectComponent {
     configLanguages.put(language, perLanguageCompilerOpts);
   }
 
+  /**
+   * Notifies the workspace of changes in inputs to the resolve configuration. See {@link
+   * com.jetbrains.cidr.lang.workspace.OCWorkspaceListener.OCWorkspaceEvent}.
+   */
   private void incModificationTrackers() {
     TransactionGuard.submitTransaction(
         project,
@@ -312,8 +366,14 @@ public final class BlazeCWorkspace implements ProjectComponent {
           if (project.isDisposed()) {
             return;
           }
-          OCWorkspaceModificationTrackersCompat.incrementModificationTrackers(
-              project, true, true, true);
+          OCWorkspaceEventImpl event =
+              new OCWorkspaceEventImpl(
+                  /* resolveConfigurationsChanged= */ true,
+                  /* sourceFilesChanged= */ true,
+                  /* compilerSettingsChanged= */ true);
+          ((OCWorkspaceModificationTrackersImpl)
+                  OCWorkspace.getInstance(project).getModificationTrackers())
+              .fireWorkspaceChanged(event);
         });
   }
 

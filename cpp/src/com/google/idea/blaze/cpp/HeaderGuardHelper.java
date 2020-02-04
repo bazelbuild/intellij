@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Bazel Authors. All rights reserved.
+ * Copyright 2020 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.sdkcompat.cidr;
+package com.google.idea.blaze.cpp;
 
 import com.intellij.psi.PsiFile;
 import com.jetbrains.cidr.lang.preprocessor.OCHeaderGuardDetector;
 import com.jetbrains.cidr.lang.preprocessor.OCHeaderGuardInfo;
-import com.jetbrains.cidr.lang.preprocessor.OCHeaderGuardUtil;
 import com.jetbrains.cidr.lang.psi.OCDirective;
 import org.jetbrains.annotations.Nullable;
 
-/** Compat utils for {@link OCHeaderGuardUtil}. #api183 */
-public class OCHeaderGuardUtilCompat {
-  /** Wraps the method of the same name that is available only in #api191. */
+/** Helper methods for header guard. */
+public final class HeaderGuardHelper {
+  private HeaderGuardHelper() {}
+
   @Nullable
   public static OCDirective findBeginIfndefHeaderGuardDirective(
       PsiFile file, boolean maybeWithoutLastEndif) {

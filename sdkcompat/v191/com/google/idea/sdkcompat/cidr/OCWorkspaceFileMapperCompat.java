@@ -20,7 +20,7 @@ import com.jetbrains.cidr.lang.workspace.OCWorkspaceImplUtilKt;
 
 /** Compat interface for {@link WorkspaceFileMapper}. */
 public class OCWorkspaceFileMapperCompat {
-  /** Returns a new {@link WorkspaceFileMapper}. */
+  /** Returns a new {@link WorkspaceFileMapper}. #api191: not needed in 2019.2. */
   public static WorkspaceFileMapper create() {
     OCWorkspaceFileMapper mapper = OCWorkspaceImplUtilKt.createFileMapper();
     return mapper::map;

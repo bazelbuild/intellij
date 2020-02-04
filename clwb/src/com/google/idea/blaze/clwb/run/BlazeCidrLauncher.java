@@ -45,7 +45,6 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
-import com.google.idea.sdkcompat.clion.GDBDriverConfigurationAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
@@ -62,6 +61,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.cidr.cpp.execution.CLionRunParameters;
+import com.jetbrains.cidr.cpp.execution.debugger.backend.CLionGDBDriverConfiguration;
 import com.jetbrains.cidr.cpp.toolchains.CPPDebugger.Kind;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
@@ -267,7 +267,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
                 new CidrRemotePathMapping("/proc/self/cwd", workspaceRootDirectory.getParent())));
 
     DebuggerDriverConfiguration debuggerDriverConfiguration =
-        new GDBDriverConfigurationAdapter(project, toolchainForDebugger);
+        new CLionGDBDriverConfiguration(project, toolchainForDebugger);
 
     return new BlazeCidrRemoteDebugProcess(
         targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder());
