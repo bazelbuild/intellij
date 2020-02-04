@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.sdkcompat.scala;
+package com.google.idea.sdkcompat.vcs;
 
-import com.intellij.psi.PsiElement;
-import javax.annotation.Nullable;
-import org.jetbrains.plugins.scala.testingSupport.test.TestConfigurationUtil;
-import scala.Option;
+import com.intellij.dvcs.ignore.VcsRepositoryIgnoredFilesHolder;
+import com.intellij.openapi.vcs.FilePath;
+import java.util.Collection;
 
-/** #api191: TestConfigurationUtil changed in 2019.2 */
-public class TestConfigurationUtilCompat {
+/** #api192: addFiles takes {@link FilePath} objects in 2019.3 */
+public class VcsRepositoryIgnoredFilesHolderCompat {
+  private VcsRepositoryIgnoredFilesHolderCompat() {}
 
-  @Nullable
-  public static String getStaticTestName(PsiElement element, boolean allowSymbolLiterals) {
-    Option<String> option = TestConfigurationUtil.getStaticTestName(element, allowSymbolLiterals);
-    return option.isEmpty() ? null : option.get();
+  public static void addFiles(
+      VcsRepositoryIgnoredFilesHolder holder, Collection<? extends FilePath> paths) {
+    holder.addFiles(paths);
   }
 }

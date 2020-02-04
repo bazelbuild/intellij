@@ -16,16 +16,31 @@
 package com.google.idea.sdkcompat.scala;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import javax.annotation.Nullable;
+import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject;
+import org.jetbrains.plugins.scala.runner.ScalaMainMethodUtil;
 import org.jetbrains.plugins.scala.testingSupport.test.TestConfigurationUtil;
 import scala.Option;
 
-/** #api191: TestConfigurationUtil changed in 2019.2 */
-public class TestConfigurationUtilCompat {
+/** Provides SDK compatibility shims for java plugin API classes. */
+public final class ScalaSdkCompat {
+  private ScalaSdkCompat() {}
 
+  /** #api191: TestConfigurationUtil changed in 2019.2 */
   @Nullable
   public static String getStaticTestName(PsiElement element, boolean allowSymbolLiterals) {
     Option<String> option = TestConfigurationUtil.getStaticTestName(element, allowSymbolLiterals);
     return option.isEmpty() ? null : option.get();
+  }
+
+  /** #api193: ScalaMainMethodUtil moved in 2020.1. */
+  public static Option<PsiMethod> findMainMethod(ScObject obj) {
+    return ScalaMainMethodUtil.findMainMethod(obj);
+  }
+
+  /** #api193: ScalaMainMethodUtil moved in 2020.1. */
+  public static boolean hasMainMethod(ScObject obj) {
+    return ScalaMainMethodUtil.hasMainMethod(obj);
   }
 }

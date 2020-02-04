@@ -16,7 +16,7 @@
 package com.google.idea.blaze.scala.run;
 
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.google.idea.sdkcompat.scala.TestConfigurationUtilCompat;
+import com.google.idea.sdkcompat.scala.ScalaSdkCompat;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import java.util.function.Predicate;
@@ -65,7 +65,7 @@ public final class Specs2Utils {
 
   @Nullable
   private static String getSpecs2TestName(ScInfixExpr testCase) {
-    return TestConfigurationUtilCompat.getStaticTestName(
+    return ScalaSdkCompat.getStaticTestName(
         testCase.getFirstChild(), /* allowSymbolLiterals= */ false);
   }
 

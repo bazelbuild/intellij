@@ -5,7 +5,7 @@ load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 licenses(["notice"])  # Apache 2.0
 
 java_library(
-    name = "v192",
+    name = "v201",
     srcs = glob([
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/openapi/**",
@@ -13,7 +13,6 @@ java_library(
         "com/google/idea/sdkcompat/python/*.java",
         "com/google/idea/sdkcompat/util/**",
         "com/google/idea/sdkcompat/vcs/**",
-        "com/intellij/serviceContainer/*.java",
         "com/google/idea/sdkcompat/psi/**",
     ]) + select_for_ide(
         android_studio = glob([
@@ -23,7 +22,6 @@ java_library(
         clion = glob([
             "com/google/idea/sdkcompat/cidr/**",
             "com/google/idea/sdkcompat/clion/**",
-            "com/google/idea/sdkcompat/javascript/**",
             "com/google/idea/sdkcompat/typescript/**",
         ]),
         intellij = glob([
@@ -32,7 +30,6 @@ java_library(
         ]),
         intellij_ue = glob([
             "com/google/idea/sdkcompat/java/**",
-            "com/google/idea/sdkcompat/javascript/**",
             "com/google/idea/sdkcompat/typescript/**",
             "com/google/idea/sdkcompat/scala/**",
         ]),

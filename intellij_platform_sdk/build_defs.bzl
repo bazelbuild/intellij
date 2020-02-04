@@ -53,11 +53,11 @@ DIRECT_IJ_PRODUCTS = {
     ),
     "intellij-2020.1": struct(
         ide = "intellij",
-        directory = "intellij_2020_1",
+        directory = "intellij_ce_2020_1",
     ),
     "intellij-2020.1-mac": struct(
         ide = "intellij",
-        directory = "intellij_2020_1",
+        directory = "intellij_ce_2020_1",
     ),
     "intellij-ue-2020.1": struct(
         ide = "intellij-ue",

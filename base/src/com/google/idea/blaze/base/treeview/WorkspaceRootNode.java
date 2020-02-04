@@ -53,8 +53,9 @@ public class WorkspaceRootNode extends PsiDirectoryNode {
     this.workspaceRoot = workspaceRoot;
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes"}) // #api193: wildcard generics added in 2020.1
   @Override
-  public Collection<AbstractTreeNode> getChildrenImpl() {
+  public Collection getChildrenImpl() {
     if (!BlazeUserSettings.getInstance().getCollapseProjectView()) {
       return getWrappedChildren();
     }
@@ -62,7 +63,7 @@ public class WorkspaceRootNode extends PsiDirectoryNode {
     if (project == null) {
       return getWrappedChildren();
     }
-    List<AbstractTreeNode> children = Lists.newArrayList();
+    List<AbstractTreeNode<?>> children = Lists.newArrayList();
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     if (projectViewSet == null) {
       return getWrappedChildren();
@@ -93,8 +94,9 @@ public class WorkspaceRootNode extends PsiDirectoryNode {
     return children;
   }
 
-  private Collection<AbstractTreeNode> getWrappedChildren() {
-    return BlazePsiDirectoryNode.wrapChildren(super.getChildrenImpl());
+  @SuppressWarnings({"rawtypes", "unchecked"}) // #api193: wildcard generics added in 2020.1
+  private Collection<AbstractTreeNode<?>> getWrappedChildren() {
+    return BlazePsiDirectoryNode.wrapChildren((Collection) super.getChildrenImpl());
   }
 
   @Override

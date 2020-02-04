@@ -7,6 +7,7 @@ licenses(["notice"])  # Apache 2.0
 java_library(
     name = "v193",
     srcs = glob([
+        "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/openapi/**",
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/python/*.java",
@@ -21,7 +22,6 @@ java_library(
         clion = glob([
             "com/google/idea/sdkcompat/cidr/**",
             "com/google/idea/sdkcompat/clion/**",
-            "com/google/idea/sdkcompat/javascript/**",
             "com/google/idea/sdkcompat/typescript/**",
         ]),
         intellij = glob([

@@ -7,6 +7,7 @@ licenses(["notice"])  # Apache 2.0
 java_library(
     name = "v191",
     srcs = glob([
+        "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/openapi/**",
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/python/*.java",
