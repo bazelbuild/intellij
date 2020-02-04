@@ -42,38 +42,24 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.components.JBTabbedPane;
-import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.uiDesigner.core.GridLayoutManager;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ResourceBundle;
-import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.border.TitledBorder;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 
-/**
- * The part of the Blaze Android Binary handler editor that allows the user to pick an activity to
- * launch. Patterned after {@link org.jetbrains.android.run.ApplicationRunParameters}.
- */
+/** An editor for android binary run configs. */
 class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationStateEditor {
-  public static final Key<BlazeAndroidBinaryRunConfigurationStateEditor>
-      ACTIVITY_CLASS_TEXT_FIELD_KEY = Key.create("BlazeActivityClassTextField");
-
   private final RunConfigurationStateEditor commonStateEditor;
   private final AndroidProfilersPanelCompat profilersPanelCompat;
 
-  private JPanel panel;
+  private Box mainContainer;
   private ComponentWithBrowseButton<EditorTextField> activityField;
   private JRadioButton launchNothingButton;
   private JRadioButton launchDefaultButton;
@@ -110,7 +96,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
                     AndroidUtils.ACTIVITY_BASE_CLASS_NAME, ProjectScope.getAllScope(project));
             if (activityBaseClass == null) {
               Messages.showErrorDialog(
-                  panel, AndroidBundle.message("cant.find.activity.class.error"));
+                  mainContainer, AndroidBundle.message("cant.find.activity.class.error"));
               return;
             }
             GlobalSearchScope searchScope = GlobalSearchScope.projectScope(project);
@@ -144,7 +130,6 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
         e -> PropertiesComponent.getInstance(project).setValue(MI_NEVER_ASK_AGAIN, true));
 
     useWorkProfileIfPresentCheckBox.addActionListener(listener);
-    showLogcatAutomaticallyCheckBox.addActionListener(listener);
   }
 
   @Override
@@ -167,8 +152,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     }
 
     useMobileInstallCheckBox.setSelected(
-        AndroidBinaryLaunchMethodsUtils.useMobileInstall(
-            ((BlazeAndroidBinaryRunConfigurationState) genericState).getLaunchMethod()));
+        AndroidBinaryLaunchMethodsUtils.useMobileInstall(state.getLaunchMethod()));
     useWorkProfileIfPresentCheckBox.setSelected(state.useWorkProfileIfPresent());
     userIdField.setValue(state.getUserId());
 
@@ -201,10 +185,12 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
 
   @Override
   public JComponent createComponent() {
+    // old
+    // return UiUtil.createBox(commonStateEditor.createComponent(), mainContainer);
     JBTabbedPane tabbedPane = new JBTabbedPane();
-    JComponent commonStatePane = UiUtil.createBox(commonStateEditor.createComponent(), panel);
-    commonStatePane.setOpaque(true);
-    tabbedPane.addTab("General", commonStatePane);
+    JComponent generalPanel = UiUtil.createBox(commonStateEditor.createComponent(), mainContainer);
+    generalPanel.setOpaque(true);
+    tabbedPane.addTab("General", generalPanel);
     if (profilersPanelCompat.getPanel() != null) {
       tabbedPane.addTab("Profiler", profilersPanelCompat.getPanel().getComponent());
     }
@@ -231,7 +217,46 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     updateEnabledState();
   }
 
-  private void createUIComponents(Project project) {
+  /** Create UI components. */
+  private void setupUI(Project project) {
+    // Mobile install settings
+    useMobileInstallCheckBox = new JCheckBox();
+    useMobileInstallCheckBox.setText("Use mobile-install");
+    useMobileInstallCheckBox.setSelected(true);
+
+    // User settings
+    useWorkProfileIfPresentCheckBox = new JCheckBox();
+    useWorkProfileIfPresentCheckBox.setText(" Use work profile if present");
+    userIdLabel = new JLabel();
+    userIdLabel.setText("User ID:");
+    userIdField = new IntegerTextField();
+    Box userBox =
+        UiUtil.createBox(
+            useWorkProfileIfPresentCheckBox,
+            UiUtil.createHorizontalBox(1, userIdLabel, userIdField));
+    userBox.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "User"));
+
+    // Log cat
+    showLogcatAutomaticallyCheckBox = new JCheckBox(" Show logcat automatically");
+    Box logcatBox =
+        UiUtil.createHorizontalBox(0, showLogcatAutomaticallyCheckBox, Box.createHorizontalGlue());
+    logcatBox.setBorder(
+        BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Logcat"));
+
+    // Activity launch options
+    launchNothingButton = new JRadioButton();
+    launchNothingButton.setText("Do not launch Activity");
+
+    launchDefaultButton = new JRadioButton();
+    launchDefaultButton.setText("Launch default Activity");
+    launchDefaultButton.setMnemonic('L');
+    launchDefaultButton.setDisplayedMnemonicIndex(0);
+
+    launchCustomButton = new JRadioButton();
+    launchCustomButton.setText("Launch:");
+    launchCustomButton.setMnemonic('A');
+    launchCustomButton.setDisplayedMnemonicIndex(1);
+
     final EditorTextField editorTextField =
         new LanguageTextField(PlainTextLanguage.INSTANCE, project, "") {
           @Override
@@ -244,302 +269,28 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
               DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
             }
             editor.putUserData(
-                ACTIVITY_CLASS_TEXT_FIELD_KEY, BlazeAndroidBinaryRunConfigurationStateEditor.this);
+                Key.create("BlazeActivityClassTextField"),
+                BlazeAndroidBinaryRunConfigurationStateEditor.this);
             return editor;
           }
         };
-    activityField = new ComponentWithBrowseButton<EditorTextField>(editorTextField, null);
-  }
+    activityField = new ComponentWithBrowseButton<>(editorTextField, null);
 
-  /** Initially generated by IntelliJ from a .form file, then checked in as source. */
-  private void setupUI(Project project) {
-    createUIComponents(project);
-    panel = new JPanel();
-    panel.setLayout(new GridLayoutManager(6, 2, new Insets(0, 0, 0, 0), -1, -1));
-    final JPanel activityPanel = new JPanel();
-    activityPanel.setLayout(new GridLayoutManager(4, 2, new Insets(0, 0, 0, 0), -1, -1));
-    panel.add(
-        activityPanel,
-        new GridConstraints(
-            3,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_CENTER,
-            GridConstraints.FILL_BOTH,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            null,
-            null,
-            null,
-            0,
-            false));
-    activityPanel.setBorder(
-        BorderFactory.createTitledBorder(
-            BorderFactory.createEtchedBorder(),
-            "Activity",
-            TitledBorder.DEFAULT_JUSTIFICATION,
-            TitledBorder.DEFAULT_POSITION,
-            new Font(
-                activityPanel.getFont().getName(),
-                activityPanel.getFont().getStyle(),
-                activityPanel.getFont().getSize()),
-            new Color(-16777216)));
-    final JPanel userPanel = new JPanel();
-    userPanel.setLayout(new GridLayoutManager(2, 2, new Insets(0, 0, 0, 0), -1, -1));
-    panel.add(
-        userPanel,
-        new GridConstraints(
-            4,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_CENTER,
-            GridConstraints.FILL_BOTH,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            null,
-            null,
-            null,
-            0,
-            false));
-    userPanel.setBorder(
-        BorderFactory.createTitledBorder(
-            BorderFactory.createEtchedBorder(),
-            "User",
-            TitledBorder.DEFAULT_JUSTIFICATION,
-            TitledBorder.DEFAULT_POSITION,
-            new Font(
-                userPanel.getFont().getName(),
-                userPanel.getFont().getStyle(),
-                userPanel.getFont().getSize()),
-            new Color(-16777216)));
-    final JPanel logcatPanel = new JPanel();
-    logcatPanel.setLayout(new GridLayoutManager(1, 1, new Insets(0, 0, 0, 0), -1, -1));
-    panel.add(
-        logcatPanel,
-        new GridConstraints(
-            5,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_CENTER,
-            GridConstraints.FILL_BOTH,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            null,
-            null,
-            null,
-            0,
-            false));
-    logcatPanel.setBorder(
-        BorderFactory.createTitledBorder(
-            BorderFactory.createEtchedBorder(),
-            "Logcat",
-            TitledBorder.DEFAULT_JUSTIFICATION,
-            TitledBorder.DEFAULT_POSITION,
-            new Font(
-                logcatPanel.getFont().getName(),
-                logcatPanel.getFont().getStyle(),
-                logcatPanel.getFont().getSize()),
-            Color.BLACK));
-    launchNothingButton = new JRadioButton();
-    this.loadButtonText(
-        launchNothingButton,
-        ResourceBundle.getBundle("messages/AndroidBundle")
-            .getString("android.run.configuration.do.nothing.label"));
-    activityPanel.add(
-        launchNothingButton,
-        new GridConstraints(
-            0,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_CENTER,
-            GridConstraints.FILL_HORIZONTAL,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    launchDefaultButton = new JRadioButton();
-    launchDefaultButton.setText("Launch default Activity");
-    launchDefaultButton.setMnemonic('L');
-    launchDefaultButton.setDisplayedMnemonicIndex(0);
-    activityPanel.add(
-        launchDefaultButton,
-        new GridConstraints(
-            1,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_CENTER,
-            GridConstraints.FILL_HORIZONTAL,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    launchCustomButton = new JRadioButton();
-    launchCustomButton.setText("Launch:");
-    launchCustomButton.setMnemonic('A');
-    launchCustomButton.setDisplayedMnemonicIndex(1);
-    activityPanel.add(
-        launchCustomButton,
-        new GridConstraints(
-            2,
-            0,
-            1,
-            1,
-            GridConstraints.ANCHOR_WEST,
-            GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_FIXED,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    activityPanel.add(
-        activityField,
-        new GridConstraints(
-            2,
-            1,
-            1,
-            1,
-            GridConstraints.ANCHOR_CENTER,
-            GridConstraints.FILL_BOTH,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    useWorkProfileIfPresentCheckBox = new JCheckBox();
-    useWorkProfileIfPresentCheckBox.setText(" Use work profile if present");
-    userPanel.add(
-        useWorkProfileIfPresentCheckBox,
-        new GridConstraints(
-            0,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_WEST,
-            GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    userIdLabel = new JLabel();
-    userIdLabel.setText("User ID");
-    userPanel.add(
-        userIdLabel,
-        new GridConstraints(
-            1,
-            0,
-            1,
-            1,
-            GridConstraints.ANCHOR_WEST,
-            GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_FIXED,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            1,
-            false));
-    userIdField = new IntegerTextField();
-    userPanel.add(
-        userIdField,
-        new GridConstraints(
-            1,
-            1,
-            1,
-            1,
-            GridConstraints.ANCHOR_WEST,
-            GridConstraints.FILL_HORIZONTAL,
-            GridConstraints.SIZEPOLICY_WANT_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    showLogcatAutomaticallyCheckBox = new JCheckBox(" Show logcat automatically");
-    logcatPanel.add(
-        showLogcatAutomaticallyCheckBox,
-        new GridConstraints(
-            0,
-            0,
-            1,
-            1,
-            GridConstraints.ANCHOR_WEST,
-            GridConstraints.FILL_HORIZONTAL,
-            GridConstraints.SIZEPOLICY_WANT_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
-    useMobileInstallCheckBox = new JCheckBox();
-    useMobileInstallCheckBox.setText("Use mobile-install");
-    useMobileInstallCheckBox.setSelected(true);
-    panel.add(
-        useMobileInstallCheckBox,
-        new GridConstraints(
-            0,
-            0,
-            1,
-            2,
-            GridConstraints.ANCHOR_WEST,
-            GridConstraints.FILL_NONE,
-            GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
-            GridConstraints.SIZEPOLICY_FIXED,
-            null,
-            null,
-            null,
-            0,
-            false));
     ButtonGroup buttonGroup;
     buttonGroup = new ButtonGroup();
     buttonGroup.add(launchDefaultButton);
     buttonGroup.add(launchCustomButton);
     buttonGroup.add(launchNothingButton);
-  }
 
-  /** Initially generated by IntelliJ from a .form file. */
-  private void loadButtonText(AbstractButton component, String text) {
-    StringBuffer result = new StringBuffer();
-    boolean haveMnemonic = false;
-    char mnemonic = '\0';
-    int mnemonicIndex = -1;
-    for (int i = 0; i < text.length(); i++) {
-      if (text.charAt(i) == '&') {
-        i++;
-        if (i == text.length()) {
-          break;
-        }
-        if (!haveMnemonic && text.charAt(i) != '&') {
-          haveMnemonic = true;
-          mnemonic = text.charAt(i);
-          mnemonicIndex = result.length();
-        }
-      }
-      result.append(text.charAt(i));
-    }
-    component.setText(result.toString());
-    if (haveMnemonic) {
-      component.setMnemonic(mnemonic);
-      component.setDisplayedMnemonicIndex(mnemonicIndex);
-    }
+    Box activityBox =
+        UiUtil.createBox(
+            launchNothingButton,
+            launchDefaultButton,
+            UiUtil.createHorizontalBox(0, launchCustomButton, activityField));
+    activityBox.setBorder(
+        BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Activity"));
+
+    // Panel to hold all the above editable components.
+    mainContainer = UiUtil.createBox(useMobileInstallCheckBox, activityBox, userBox, logcatBox);
   }
 }
