@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.plugin;
 import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.transactions.Transactions;
+import com.intellij.application.Topics;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
@@ -56,9 +57,17 @@ public class JUnitPluginDependencyWarning implements ApplicationComponent {
 
   @Override
   public void initComponent() {
-    if (PlatformUtils.isIntelliJ() && !PluginUtils.isPluginEnabled(JUNIT_PLUGIN_ID)) {
-      notifyJUnitNotEnabled();
-    }
+    Topics.subscribe(
+        AppLifecycleListener.TOPIC,
+        /* disposable= */ null,
+        new AppLifecycleListener() {
+          @Override
+          public void appStarting(@Nullable Project projectFromCommandLine) {
+            if (PlatformUtils.isIntelliJ() && !PluginUtils.isPluginEnabled(JUNIT_PLUGIN_ID)) {
+              notifyJUnitNotEnabled();
+            }
+          }
+        });
   }
 
   /**

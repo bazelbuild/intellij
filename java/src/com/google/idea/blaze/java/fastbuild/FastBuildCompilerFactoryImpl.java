@@ -42,6 +42,7 @@ import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope.FastBuildLogOu
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import java.io.File;
@@ -85,9 +86,9 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
     this.fastBuildJavacJarSupplier = fastBuildJavacJarSupplier;
   }
 
-  FastBuildCompilerFactoryImpl(BlazeProjectDataManager projectDataManager) {
+  FastBuildCompilerFactoryImpl(Project project) {
     this(
-        projectDataManager,
+        BlazeProjectDataManager.getInstance(project),
         EventLoggingService::getInstance,
         FastBuildCompilerFactoryImpl::findFastBuildJavacJar);
   }

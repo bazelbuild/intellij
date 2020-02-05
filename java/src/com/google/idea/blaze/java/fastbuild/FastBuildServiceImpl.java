@@ -97,15 +97,11 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
   private final ConcurrentHashMap<Label, FastBuildState> builds;
 
-  FastBuildServiceImpl(
-      Project project,
-      ProjectViewManager projectViewManager,
-      FastBuildIncrementalCompiler incrementalCompiler,
-      FastBuildChangedFilesService changedFilesManager) {
+  FastBuildServiceImpl(Project project) {
     this.project = project;
-    this.projectViewManager = projectViewManager;
-    this.incrementalCompiler = incrementalCompiler;
-    this.changedFilesManager = changedFilesManager;
+    this.projectViewManager = ProjectViewManager.getInstance(project);
+    this.incrementalCompiler = FastBuildIncrementalCompiler.getInstance(project);
+    this.changedFilesManager = FastBuildChangedFilesService.getInstance(project);
     this.builds = new ConcurrentHashMap<>();
     this.shutdownHook = new Thread(this::resetBuilds);
   }

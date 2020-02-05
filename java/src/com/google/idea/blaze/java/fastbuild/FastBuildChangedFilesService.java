@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -67,6 +68,10 @@ import javax.annotation.concurrent.GuardedBy;
  */
 final class FastBuildChangedFilesService implements Disposable {
 
+  static FastBuildChangedFilesService getInstance(Project project) {
+    return ServiceManager.getService(project, FastBuildChangedFilesService.class);
+  }
+
   private static final Logger logger = Logger.getInstance(FastBuildChangedFilesService.class);
 
   @VisibleForTesting static final int MAX_FILES_TO_COLLECT = 30;
@@ -81,10 +86,10 @@ final class FastBuildChangedFilesService implements Disposable {
   @GuardedBy("this")
   private boolean subscribed;
 
-  FastBuildChangedFilesService(Project project, BlazeProjectDataManager projectDataManager) {
+  FastBuildChangedFilesService(Project project) {
     this(
         project,
-        projectDataManager,
+        BlazeProjectDataManager.getInstance(project),
         listeningDecorator(
             ConcurrencyUtil.newSingleThreadExecutor(
                 FastBuildChangedFilesService.class.getSimpleName() + "-" + project.getName())));

@@ -38,9 +38,8 @@ import javax.annotation.Nullable;
 public class BlazeCoverageProjectViewClassDecorator
     extends AbstractCoverageProjectViewNodeDecoratorCompat {
 
-  public BlazeCoverageProjectViewClassDecorator(
-      Project project, CoverageDataManager coverageDataManager) {
-    super(project, coverageDataManager);
+  BlazeCoverageProjectViewClassDecorator(Project project) {
+    super(project, CoverageDataManager.getInstance(project));
   }
 
   @Override
