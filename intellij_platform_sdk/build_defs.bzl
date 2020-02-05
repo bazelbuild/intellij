@@ -15,7 +15,7 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-beta-mac": "android-studio-3.6-mac",
     "android-studio-canary": "android-studio-4.0",
     "clion-latest": "clion-2019.2",
-    "clion-beta": "clion-2019.2",
+    "clion-beta": "clion-2019.3",
 }
 
 DIRECT_IJ_PRODUCTS = {
