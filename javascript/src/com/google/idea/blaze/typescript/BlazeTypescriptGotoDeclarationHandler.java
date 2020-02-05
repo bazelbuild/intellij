@@ -53,11 +53,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -223,18 +221,6 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
   private static final Pattern SYMBOL_GENERATED_FROM_JS_COMMENT =
       Pattern.compile("^// Generated from (.*\\.js)$");
 
-  /**
-   * Comment at the top of a .d.ts file listing exported symbols and the single .js file that
-   * generated the .d.ts file. E.g.,
-   *
-   * <pre>//!! Processing provides [Foo,Bar] from input foo.bar.js</pre>
-   *
-   * @deprecated no longer used on recent CLs.
-   */
-  @Deprecated
-  private static final Pattern FILE_GENERATED_FROM_JS_COMMENT =
-      Pattern.compile("^//!! Processing provides \\[.*] from input (.*\\.js)$");
-
   private static Collection<JSFile> jsFilesFromDtsSymbol(
       ExecutionRootPathResolver pathResolver,
       LocalFileSystem lfs,
@@ -252,38 +238,7 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
       }
       dtsElement = dtsElement.getParent();
     }
-    return dtsElement != null
-        ? jsFilesFromDtsFile(pathResolver, lfs, psiManager, dtsElement.getContainingFile())
-        : ImmutableList.of();
-  }
-
-  private static Collection<JSFile> jsFilesFromDtsFile(
-      ExecutionRootPathResolver pathResolver,
-      LocalFileSystem lfs,
-      PsiManager psiManager,
-      PsiFile dtsFile) {
-    ImmutableList.Builder<JSFile> jsFiles = ImmutableList.builder();
-    for (PsiElement child : dtsFile.getChildren()) {
-      if (child instanceof PsiWhiteSpace) {
-        continue;
-      }
-      JSFile jsFile =
-          Optional.of(child)
-              .filter(PsiComment.class::isInstance)
-              .map(PsiComment.class::cast)
-              .map(PsiComment::getText)
-              .map(FILE_GENERATED_FROM_JS_COMMENT::matcher)
-              .filter(Matcher::find)
-              .map(m -> m.group(1))
-              .map(path -> pathToJsFile(pathResolver, lfs, psiManager, path))
-              .orElse(null);
-      if (jsFile != null) {
-        jsFiles.add(jsFile);
-      } else {
-        break;
-      }
-    }
-    return jsFiles.build();
+    return ImmutableList.of();
   }
 
   @Nullable
