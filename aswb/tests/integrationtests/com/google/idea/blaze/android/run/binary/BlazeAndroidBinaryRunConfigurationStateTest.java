@@ -20,13 +20,10 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
-import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
-import com.google.idea.common.experiments.ExperimentService;
-import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -51,12 +48,6 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
 
   @Before
   public final void doSetup() {
-    MockExperimentService experimentService = new MockExperimentService();
-    registerApplicationComponent(ExperimentService.class, experimentService);
-    // BlazeAndroidRunConfigurationCommonState.isNativeDebuggingEnabled() always
-    // returns false if this experiment is false.
-    experimentService.setExperiment(NdkSupport.NDK_SUPPORT, true);
-
     state = new BlazeAndroidBinaryRunConfigurationState(buildSystem().getName());
   }
 

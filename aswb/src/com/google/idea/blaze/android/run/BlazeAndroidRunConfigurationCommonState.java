@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.android.run;
 
-import static com.google.idea.blaze.android.cppapi.NdkSupport.NDK_SUPPORT;
-
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -88,7 +86,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   }
 
   public boolean isNativeDebuggingEnabled() {
-    return debuggerSettings.isNativeDebuggingEnabled() && NDK_SUPPORT.getValue();
+    return debuggerSettings.isNativeDebuggingEnabled();
   }
 
   public void setNativeDebuggingEnabled(boolean nativeDebuggingEnabled) {

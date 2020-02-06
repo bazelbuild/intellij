@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.run.state;
 
-import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.ui.UiUtil;
@@ -79,10 +78,7 @@ public class DebuggerSettingsState implements RunConfigurationState {
 
     @Override
     public JComponent createComponent() {
-      if (NdkSupport.NDK_SUPPORT.getValue()) {
-        return UiUtil.createBox(enableNativeDebuggingCheckBox);
-      }
-      return UiUtil.createBox();
+      return UiUtil.createBox(enableNativeDebuggingCheckBox);
     }
 
     @Override

@@ -20,10 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.AndroidIntegrationTestSetupRule;
-import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
-import com.google.idea.common.experiments.ExperimentService;
-import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
@@ -47,12 +44,6 @@ public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeIntegratio
 
   @Before
   public final void doSetup() {
-    MockExperimentService experimentService = new MockExperimentService();
-    registerApplicationComponent(ExperimentService.class, experimentService);
-    // BlazeAndroidRunConfigurationCommonState.isNativeDebuggingEnabled() always
-    // returns false if this experiment is false.
-    experimentService.setExperiment(NdkSupport.NDK_SUPPORT, true);
-
     state = new BlazeAndroidRunConfigurationCommonState(buildSystem().getName(), false);
   }
 
