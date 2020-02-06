@@ -2,6 +2,8 @@
 
 licenses(["notice"])  # Apache 2.0
 
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
 proto_library(
     name = "intellij_aspect_test_fixture_proto",
     srcs = ["intellij_aspect_test_fixture.proto"],
@@ -27,7 +29,7 @@ java_binary(
         ":intellij_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
         "//proto:intellij_ide_info_java_proto",
-        "@com_google_protobuf_java//:protobuf_java",
+        "@com_google_protobuf//:protobuf_java",
     ],
 )
 
@@ -75,7 +77,7 @@ java_binary(
         ":fast_build_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
         "//proto:fast_build_info_java_proto",
-        "@com_google_protobuf_java//:protobuf_java",
+        "@com_google_protobuf//:protobuf_java",
     ],
 )
 

@@ -5,6 +5,8 @@
 
 licenses(["notice"])  # Apache 2.0
 
+load("@rules_proto//proto:defs.bzl", "proto_library")
+
 java_import(
     name = "proto_deps",
     jars = ["proto_deps.jar"],

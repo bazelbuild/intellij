@@ -1,5 +1,6 @@
 licenses(["notice"])  # Apache 2.0
 
+load("@rules_proto//proto:defs.bzl", "proto_library")
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
