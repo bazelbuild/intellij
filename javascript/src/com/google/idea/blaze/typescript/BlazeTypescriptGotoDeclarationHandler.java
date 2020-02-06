@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.typescript;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -33,6 +35,7 @@ import com.intellij.lang.javascript.ecmascript6.TypeScriptUtil;
 import com.intellij.lang.javascript.psi.JSAssignmentExpression;
 import com.intellij.lang.javascript.psi.JSCallExpression;
 import com.intellij.lang.javascript.psi.JSDefinitionExpression;
+import com.intellij.lang.javascript.psi.JSExpression;
 import com.intellij.lang.javascript.psi.JSFile;
 import com.intellij.lang.javascript.psi.JSFunction;
 import com.intellij.lang.javascript.psi.JSLiteralExpression;
@@ -65,7 +68,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -131,7 +133,7 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
         .isPresent();
   }
 
-  private static Collection<PsiElement> resolveToDts(JSReferenceExpression referenceExpression) {
+  private static ImmutableList<PsiElement> resolveToDts(JSReferenceExpression referenceExpression) {
     return Stream.of(referenceExpression)
         .map(e -> e.multiResolve(false))
         .flatMap(Arrays::stream)
@@ -143,10 +145,10 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
                 e instanceof ES6ImportedBinding
                     ? ((ES6ImportedBinding) e).findReferencedElements().stream()
                     : Stream.of(e))
-        .collect(Collectors.toList());
+        .collect(toImmutableList());
   }
 
-  private static Collection<PsiElement> resolveToJs(
+  private static ImmutableList<PsiElement> resolveToJs(
       ExecutionRootPathResolver pathResolver,
       LocalFileSystem lfs,
       PsiManager psiManager,
@@ -163,7 +165,7 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
     if (qualifiedName == null) {
       return ImmutableList.of();
     }
-    Collection<JSFile> jsFiles = jsFilesFromDtsSymbol(pathResolver, lfs, psiManager, dtsElement);
+    ImmutableList<JSFile> jsFiles = jsFilesFromDtsSymbol(pathResolver, lfs, psiManager, dtsElement);
     if (jsFiles.isEmpty()) {
       return ImmutableList.of();
     }
@@ -172,30 +174,30 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
       return isConstructor
           ? findChildrenOfType(jsFiles, JSFunction.class).stream()
               .filter(e -> isConstructorWithName(e, moduleName))
-              .collect(Collectors.toList())
+              .collect(toImmutableList())
           : getModuleDeclarations(jsFiles).stream()
               .filter(a -> Objects.equals(a.getStringValue(), moduleName))
-              .collect(Collectors.toList());
+              .collect(toImmutableList());
     }
     return getResolveCandidates(dtsElement, jsFiles).stream()
         .filter(e -> Objects.equals(getJsQualifiedName(e), qualifiedName))
-        .collect(Collectors.toList());
+        .collect(toImmutableList());
   }
 
-  private static Collection<? extends JSQualifiedNamedElement> getResolveCandidates(
-      PsiElement dtsElement, Collection<JSFile> jsFiles) {
+  private static ImmutableList<? extends JSQualifiedNamedElement> getResolveCandidates(
+      PsiElement dtsElement, ImmutableList<JSFile> jsFiles) {
     if (dtsElement instanceof TypeScriptClass) {
       return Stream.concat(
               findChildrenOfType(jsFiles, JSClass.class).stream(),
               // Apparently you can declare a JS class with just a constructor function and
               // attach some properties to it.
               findChildrenOfType(jsFiles, JSFunction.class).stream())
-          .collect(Collectors.toList());
+          .collect(toImmutableList());
     } else if (dtsElement instanceof TypeScriptFunction) {
       TypeScriptFunction dtsFunction = (TypeScriptFunction) dtsElement;
       return findChildrenOfType(jsFiles, JSFunction.class).stream()
           .filter(f -> staticModifierEquals(f, dtsFunction))
-          .collect(Collectors.toList());
+          .collect(toImmutableList());
     } else if (dtsElement instanceof TypeScriptEnum) {
       return findChildrenOfType(jsFiles, JSObjectLiteralExpression.class).stream()
           .map(PsiElement::getParent)
@@ -203,7 +205,7 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
           .map(PsiElement::getFirstChild)
           .filter(JSDefinitionExpression.class::isInstance)
           .map(JSDefinitionExpression.class::cast)
-          .collect(Collectors.toList());
+          .collect(toImmutableList());
     } else if (dtsElement instanceof TypeScriptEnumField) {
       return findChildrenOfType(jsFiles, JSProperty.class);
     }
@@ -221,7 +223,7 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
   private static final Pattern SYMBOL_GENERATED_FROM_JS_COMMENT =
       Pattern.compile("^// Generated from (.*\\.js)$");
 
-  private static Collection<JSFile> jsFilesFromDtsSymbol(
+  private static ImmutableList<JSFile> jsFilesFromDtsSymbol(
       ExecutionRootPathResolver pathResolver,
       LocalFileSystem lfs,
       PsiManager psiManager,
@@ -258,31 +260,45 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
   }
 
   /**
-   * In goog.module()s, the name "exports" replaces the actual exported symbol. E.g.,
+   * Usually, we can just compare {@link JSQualifiedNamedElement#getQualifiedName()}, but in
+   * goog.module()s, the name "exports" replaces the actual exported symbol. E.g.,
    *
    * <pre>
    * goog.module('Foo');
-   * exports.bar = null; // assigns to Foo.bar
+   * exports.bar = goog.defineClass(null, { foo: function() {}});
    * </pre>
+   *
+   * creates a function with the qualified name of Foo.bar.foo.
    */
   @Nullable
   private static String getJsQualifiedName(JSQualifiedNamedElement jsElement) {
-    String exports = "exports.";
+    String exportedName =
+        Optional.ofNullable(
+                PsiTreeUtil.getTopmostParentOfType(jsElement, JSAssignmentExpression.class))
+            .map(JSAssignmentExpression::getDefinitionExpression)
+            .map(JSQualifiedNamedElement::getQualifiedName)
+            .filter(name -> name.equals("exports") || name.startsWith("exports."))
+            .orElse(null);
     String qualifiedName = jsElement.getQualifiedName();
-    if (qualifiedName == null || !qualifiedName.startsWith(exports)) {
+    if (qualifiedName == null || exportedName == null) {
       return qualifiedName;
     }
-    String exportedName = qualifiedName.substring(exports.length());
-    return Stream.of(jsElement)
-        .map(PsiElement::getContainingFile)
-        .map(JSFile.class::cast)
-        .map(ImmutableList::of)
-        // should be only one goog.module()
-        .map(BlazeTypescriptGotoDeclarationHandler::getModuleDeclarations)
-        .flatMap(Collection::stream)
-        .findFirst()
-        .map(m -> m.getStringValue() + "." + exportedName)
-        .orElse(qualifiedName);
+    String moduleName =
+        Stream.of(jsElement)
+            .map(PsiElement::getContainingFile)
+            .map(JSFile.class::cast)
+            .map(ImmutableList::of)
+            // should be only one goog.module()
+            .map(BlazeTypescriptGotoDeclarationHandler::getModuleDeclarations)
+            .flatMap(Collection::stream)
+            .findFirst()
+            .map(JSLiteralExpression::getStringValue)
+            .orElse(null);
+    // if exports is already part of the element's qualified name, then the exported name is already
+    // included, otherwise we have to include the exported name
+    return qualifiedName.startsWith("exports")
+        ? moduleName + qualifiedName.substring("exports".length())
+        : moduleName + exportedName.substring("exports".length()) + '.' + qualifiedName;
   }
 
   /** Undo a bunch of clutz transformations. https://github.com/angular/clutz */
@@ -323,13 +339,15 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
     return qualifiedName;
   }
 
-  private static Collection<JSLiteralExpression> getModuleDeclarations(Collection<JSFile> jsFiles) {
+  private static ImmutableList<JSLiteralExpression> getModuleDeclarations(
+      ImmutableList<JSFile> jsFiles) {
     return findChildrenOfType(jsFiles, JSCallExpression.class).stream()
         .filter(
             call -> {
-              String method = call.getMethodExpression().getText();
-              return Objects.equals(method, "goog.provide")
-                  || Objects.equals(method, "goog.module");
+              JSExpression method = call.getMethodExpression();
+              return method != null
+                  && (Objects.equals(method.getText(), "goog.provide")
+                      || Objects.equals(method.getText(), "goog.module"));
             })
         .map(JSCallExpression::getArguments)
         .filter(a -> a.length == 1)
@@ -337,15 +355,15 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
         .filter(JSLiteralExpression.class::isInstance)
         .map(JSLiteralExpression.class::cast)
         .filter(JSLiteralExpression::isQuotedLiteral)
-        .collect(Collectors.toList());
+        .collect(toImmutableList());
   }
 
-  private static <T extends PsiElement> Collection<T> findChildrenOfType(
-      Collection<JSFile> jsFiles, Class<? extends T> aClass) {
+  private static <T extends PsiElement> ImmutableList<T> findChildrenOfType(
+      ImmutableList<JSFile> jsFiles, Class<? extends T> aClass) {
     return jsFiles.stream()
         .map(f -> PsiTreeUtil.findChildrenOfType(f, aClass))
         .flatMap(Collection::stream)
-        .collect(Collectors.toList());
+        .collect(toImmutableList());
   }
 
   private static boolean isConstructorWithName(JSFunction jsFunction, String moduleName) {
