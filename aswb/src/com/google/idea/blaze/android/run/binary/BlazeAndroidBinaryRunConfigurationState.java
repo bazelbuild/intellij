@@ -20,6 +20,7 @@ import com.android.tools.idea.run.editor.AndroidProfilersPanelCompat;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod;
@@ -156,7 +157,15 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
    * warning.
    */
   public List<ValidationError> validate(@Nullable AndroidFacet facet) {
-    return commonState.validate(facet);
+    ImmutableList.Builder<ValidationError> errors = ImmutableList.builder();
+    errors.addAll(commonState.validate(facet));
+    if (commonState.isNativeDebuggingEnabled()
+        && AndroidBinaryLaunchMethodsUtils.useMobileInstall(launchMethod)) {
+      errors.add(
+          ValidationError.fatal("Native debugging is not supported when using mobile-install."));
+    }
+
+    return errors.build();
   }
 
   @Override
