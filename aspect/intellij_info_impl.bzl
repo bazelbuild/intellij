@@ -792,6 +792,7 @@ def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, ou
 
     ide_info["android_ide_info"] = android_info
     update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-compile-android", depset([android.apk]) if android.apk else depset())
     update_sync_output_groups(output_groups, "intellij-resolve-android", depset(resolve_files))
     return True
 
