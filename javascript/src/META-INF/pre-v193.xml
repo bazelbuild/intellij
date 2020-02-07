@@ -14,7 +14,7 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <extensions>
+  <extensions defaultExtensionNs="com.intellij">
     <projectService
           serviceInterface="com.intellij.lang.javascript.completion.JSCompletionService"
           serviceImplementation="com.google.idea.sdkcompat.javascript.BlazeJsCompletionService"

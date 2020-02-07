@@ -44,12 +44,10 @@ optional_plugin_xml(
 intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_xml"] + select_for_plugin_api({
-        "intellij-2019.3": [],
-        "intellij-ue-2019.3": [],
-        "intellij-2020.1": [],
-        "intellij-ue-2020.1": [],
-        "clion-2019.3": [],
-        "default": [":pre-v193_xml"],
+        "intellij-2019.2": [":pre-v193_xml"],
+        "intellij-ue-2019.2": [":pre-v193_xml"],
+        "clion-2019.2": [":pre-v193_xml"],
+        "default": [],
     }),
     plugin_xmls = ["src/META-INF/blaze-javascript.xml"],
     visibility = ["//visibility:public"],
@@ -93,7 +91,12 @@ intellij_unit_test_suite(
 
 intellij_integration_test_suite(
     name = "integration_tests",
-    srcs = glob(["tests/integrationtests/**/*.java"]),
+    srcs = glob(["tests/integrationtests/**/*.java"]) + select_for_plugin_api({
+        "intellij-2019.2": glob(["tests/integrationtests.192/**/*.java"]),
+        "intellij-ue-2019.2": glob(["tests/integrationtests.192/**/*.java"]),
+        "clion-2019.2": glob(["tests/integrationtests.192/**/*.java"]),
+        "default": [],
+    }),
     required_plugins = "com.google.idea.blaze.javascript,JavaScript",
     test_package_root = "com.google.idea.blaze",
     runtime_deps = [":javascript_integration_test_plugin"],
