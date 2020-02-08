@@ -24,10 +24,14 @@ import com.google.idea.blaze.android.run.state.DebuggerSettingsState;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.lang.AdditionalLanguagesHelper;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -117,10 +121,30 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     List<ValidationError> errors = Lists.newArrayList();
     // If facet is null, we can't validate the managers, but that's fine because
     // BlazeAndroidRunConfigurationValidationUtil.validateFacet will give a fatal error.
-    if (facet != null) {
-      errors.addAll(deployTargetManager.validate(facet));
-      errors.addAll(debuggerManager.validate(facet));
+    if (facet == null) {
+      return errors;
     }
+
+    errors.addAll(deployTargetManager.validate(facet));
+    errors.addAll(debuggerManager.validate(facet));
+    Project project = facet.getModule().getProject();
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      errors.add(ValidationError.fatal("Project data missing. Please sync your project."));
+      return errors;
+    }
+
+    if (isNativeDebuggingEnabled()
+        && !blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
+      errors.add(
+          ValidationError.fatal(
+              "Native debugging requires C language support.",
+              () ->
+                  AdditionalLanguagesHelper.enableLanguageSupport(
+                      project, ImmutableList.of(LanguageClass.C))));
+    }
+
     return errors;
   }
 
