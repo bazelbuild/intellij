@@ -145,7 +145,7 @@ intellij_integration_test_suite(
         ["tests/integrationtests/**/*.java"],
         exclude = [
             "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",
-            "tests/integrationtests/com/google/idea/blaze/android/functional/*.java",
+            "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
             "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
         ],
     ) + select_for_plugin_api({
