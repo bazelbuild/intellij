@@ -362,31 +362,22 @@ bazel_external_dependency_archive(
 )
 
 # LICENSE: The Apache Software License, Version 2.0
-# proto_library rules implicitly depend on @com_google_protobuf//:protoc
 http_archive(
-    name = "com_google_protobuf",
-    sha256 = "d82eb0141ad18e98de47ed7ed415daabead6d5d1bef1b8cccb6aa4d108a9008f",
-    strip_prefix = "protobuf-b4f193788c9f0f05d7e0879ea96cd738630e5d51",
-    # Commit from 2019-05-15, update to protobuf 3.8 when available.
-    url = "https://github.com/protocolbuffers/protobuf/archive/b4f193788c9f0f05d7e0879ea96cd738630e5d51.tar.gz",
+    name = "rules_proto",
+    sha256 = "4d421d51f9ecfe9bf96ab23b55c6f2b809cbaf0eea24952683e397decfbd0dd0",
+    strip_prefix = "rules_proto-f6b8d89b90a7956f6782a4a3609b2f0eee3ce965",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/f6b8d89b90a7956f6782a4a3609b2f0eee3ce965.tar.gz",
+        "https://github.com/bazelbuild/rules_proto/archive/f6b8d89b90a7956f6782a4a3609b2f0eee3ce965.tar.gz",
+    ],
 )
 
-load("@com_google_protobuf//:protobuf_deps.bzl", "protobuf_deps")
+load("@rules_proto//proto:repositories.bzl", "rules_proto_dependencies", "rules_proto_toolchains")
 
-protobuf_deps()
+rules_proto_dependencies()
 
-# LICENSE: The Apache Software License, Version 2.0
-# java_proto_library rules implicitly depend on @com_google_protobuf_java//:java_toolchain
-# It's the same repository as above, but there's no way to alias them at the moment (and both are
-# required).
-http_archive(
-    name = "com_google_protobuf_java",
-    sha256 = "d82eb0141ad18e98de47ed7ed415daabead6d5d1bef1b8cccb6aa4d108a9008f",
-    strip_prefix = "protobuf-b4f193788c9f0f05d7e0879ea96cd738630e5d51",
-    url = "https://github.com/protocolbuffers/protobuf/archive/b4f193788c9f0f05d7e0879ea96cd738630e5d51.tar.gz",
-)
+rules_proto_toolchains()
 
-# BEGIN-EXTERNAL-SCALA
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(
     name = "io_bazel_rules_scala",
@@ -403,9 +394,7 @@ scala_repositories()
 load("@io_bazel_rules_scala//scala:toolchains.bzl", "scala_register_toolchains")
 
 scala_register_toolchains()
-# END-EXTERNAL-SCALA
 
-# BEGIN-EXTERNAL-KOTLIN
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(
     name = "io_bazel_rules_kotlin",
@@ -418,4 +407,3 @@ http_archive(
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
 kotlin_repositories()
-# END-EXTERNAL-KOTLIN
