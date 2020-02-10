@@ -33,8 +33,8 @@ import com.android.tools.idea.run.tasks.ShowLogcatTask;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.android.run.CheckApkDebuggableTaskCompat;
 import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.intellij.execution.ExecutionException;
@@ -81,7 +81,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       @NotNull LaunchStatus launchStatus,
       @NotNull ConsolePrinter consolePrinter)
       throws ExecutionException {
-    final List<LaunchTask> launchTasks = Lists.newArrayList();
+    final ImmutableList.Builder<LaunchTask> launchTasks = ImmutableList.builder();
 
     Integer userId = runContext.getUserId(device, consolePrinter);
     launchOptionsBuilder.setPmInstallOptions(UserIdHelper.getFlagsFromUserId(userId));
@@ -99,11 +99,16 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       launchTasks.addAll(deployTasks);
     }
     if (launchStatus.isLaunchTerminated()) {
-      return launchTasks;
+      return launchTasks.build();
     }
 
     String packageName;
     try {
+      if (launchOptions.isDebug()) {
+        launchTasks.add(
+            new CheckApkDebuggableTaskCompat(runContext.getBuildStep().getDeployInfo()));
+      }
+
       packageName = applicationIdProvider.getPackageName();
 
       ProcessHandlerLaunchStatus processHandlerLaunchStatus =
@@ -132,7 +137,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       launchTasks.add(new ShowLogcatTask(project, packageName));
     }
 
-    return launchTasks;
+    return launchTasks.build();
   }
 
   @Nullable
