@@ -102,8 +102,12 @@ public class BlazeInstrumentationTestApkBuildStep implements BlazeApkBuildStep {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
     try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
+      if (testComponents.isSelfInstrumentingTest()) {
+        command.addTargets(testComponents.instrumentor);
+      } else {
+        command.addTargets(testComponents.target, testComponents.instrumentor);
+      }
       command
-          .addTargets(testComponents.instrumentor, testComponents.target)
           .addBlazeFlags("--output_groups=+android_deploy_info")
           .addBlazeFlags(buildFlags)
           .addBlazeFlags(buildResultHelper.getBuildFlags());
@@ -138,17 +142,23 @@ public class BlazeInstrumentationTestApkBuildStep implements BlazeApkBuildStep {
                 testComponents.instrumentor,
                 buildResultHelper,
                 fileName -> fileName.endsWith(DEPLOY_INFO_FILE_SUFFIX));
-        AndroidDeployInfo targetDeployInfoProto =
-            deployInfoHelper.readDeployInfoProtoForTarget(
-                testComponents.target,
-                buildResultHelper,
-                fileName -> fileName.endsWith(DEPLOY_INFO_FILE_SUFFIX));
-        deployInfo =
-            deployInfoHelper.extractInstrumentationTestDeployInfoAndInvalidateManifests(
-                project,
-                new File(executionRoot),
-                instrumentorDeployInfoProto,
-                targetDeployInfoProto);
+        if (testComponents.isSelfInstrumentingTest()) {
+          deployInfo =
+              deployInfoHelper.extractDeployInfoAndInvalidateManifests(
+                  project, new File(executionRoot), instrumentorDeployInfoProto);
+        } else {
+          AndroidDeployInfo targetDeployInfoProto =
+              deployInfoHelper.readDeployInfoProtoForTarget(
+                  testComponents.target,
+                  buildResultHelper,
+                  fileName -> fileName.endsWith(DEPLOY_INFO_FILE_SUFFIX));
+          deployInfo =
+              deployInfoHelper.extractInstrumentationTestDeployInfoAndInvalidateManifests(
+                  project,
+                  new File(executionRoot),
+                  instrumentorDeployInfoProto,
+                  targetDeployInfoProto);
+        }
       } catch (GetArtifactsException e) {
         IssueOutput.error("Could not read BEP output: " + e.getMessage()).submit(context);
       } catch (GetDeployInfoException e) {
@@ -238,30 +248,26 @@ public class BlazeInstrumentationTestApkBuildStep implements BlazeApkBuildStep {
       return null;
     }
     Label appLabel = instrumentorAndroidInfo.getInstruments();
-    if (appLabel == null) {
-      IssueOutput.error(
-              "No \"instruments\" in target definition for "
-                  + instrumentorLabel
-                  + ". Please ensure a instrumentation target is defined via the \"instruments\""
-                  + " attribute.  See"
-                  + " https://docs.bazel.build/versions/master/be/android.html#android_binary.instruments"
-                  + " for more information.")
-          .submit(context);
-      return null;
-    }
-
     return new InstrumentorToTarget(appLabel, instrumentorLabel);
   }
 
-  /** A container for a instrumentation test instrumentor and the target app it instruments. */
+  /**
+   * A container for a instrumentation test instrumentor and the target app it instruments. If the
+   * target label is null, the test is considered to be self-instrumenting.
+   */
   @VisibleForTesting
   public static class InstrumentorToTarget {
-    public final Label target;
+    @Nullable public final Label target;
     public final Label instrumentor;
 
-    InstrumentorToTarget(Label target, Label instrumentor) {
+    InstrumentorToTarget(@Nullable Label target, Label instrumentor) {
       this.target = target;
       this.instrumentor = instrumentor;
+    }
+
+    /** Returns whether the instrumentor contains the target itself (self-instrumenting). */
+    public boolean isSelfInstrumentingTest() {
+      return target == null;
     }
   }
 }

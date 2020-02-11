@@ -62,7 +62,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   /** Exposed to test methods to toggle presence of execroot */
   private BuildResultHelper mockBuildResultHelper;
 
-  void setupProject() {
+  private void setupProject() {
     setProjectView(
         "directories:",
         "  java/com/foo/app",
@@ -87,8 +87,11 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
         android_binary("//java/com/foo/app:test_app")
             .src("Test.java")
             .instruments("//java/com/foo/app:app"),
+        android_binary("//java/com/foo/app:test_app_self_instrumenting").src("Test.java"),
         android_instrumentation_test("//java/com/foo/app:instrumentation_test")
-            .test_app("//java/com/foo/app:test_app"));
+            .test_app("//java/com/foo/app:test_app"),
+        android_instrumentation_test("//java/com/foo/app:self_instrumenting_test")
+            .test_app("//java/com/foo/app:test_app_self_instrumenting"));
     runFullBlazeSync();
   }
 
@@ -111,6 +114,51 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
             return Optional.empty();
           }
         });
+  }
+
+  @Test
+  public void getInstrumentorToTargetPair_separateInstrumentorAndTestTargets() {
+    setupProject();
+    MessageCollector messageCollector = new MessageCollector();
+    BlazeContext context = new BlazeContext();
+    context.addOutputSink(IssueOutput.class, messageCollector);
+
+    BlazeInstrumentationTestApkBuildStep buildStep =
+        new BlazeInstrumentationTestApkBuildStep(
+            getProject(),
+            Label.create("//java/com/foo/app:instrumentation_test"),
+            ImmutableList.of());
+    InstrumentorToTarget pair =
+        buildStep.getInstrumentorToTargetPair(
+            context, BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData());
+
+    assertThat(pair.instrumentor).isEqualTo(Label.create("//java/com/foo/app:test_app"));
+    assertThat(pair.target).isEqualTo(Label.create("//java/com/foo/app:app"));
+    assertThat(pair.isSelfInstrumentingTest()).isFalse();
+    assertThat(messageCollector.getMessages()).isEmpty();
+  }
+
+  @Test
+  public void getInstrumentorToTargetPair_selfInstrumentingTest() {
+    setupProject();
+    MessageCollector messageCollector = new MessageCollector();
+    BlazeContext context = new BlazeContext();
+    context.addOutputSink(IssueOutput.class, messageCollector);
+
+    BlazeInstrumentationTestApkBuildStep buildStep =
+        new BlazeInstrumentationTestApkBuildStep(
+            getProject(),
+            Label.create("//java/com/foo/app:self_instrumenting_test"),
+            ImmutableList.of());
+    InstrumentorToTarget pair =
+        buildStep.getInstrumentorToTargetPair(
+            context, BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData());
+
+    assertThat(pair.instrumentor)
+        .isEqualTo(Label.create("//java/com/foo/app:test_app_self_instrumenting"));
+    assertThat(pair.target).isNull();
+    assertThat(pair.isSelfInstrumentingTest()).isTrue();
+    assertThat(messageCollector.getMessages()).isEmpty();
   }
 
   @Test
@@ -155,6 +203,45 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     assertThat(externalTaskInterceptor.context).isEqualTo(context);
     assertThat(externalTaskInterceptor.command).contains(instrumentorTarget.toString());
     assertThat(externalTaskInterceptor.command).contains(appTarget.toString());
+    assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
+    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
+  }
+
+  @Test
+  public void deployInfoBuiltCorrectly_selfInstrumentingTest()
+      throws GetDeployInfoException, ApkProvisionException {
+    setupProject();
+    Label testTarget = Label.create("//java/com/foo/app:self_instrumenting_test");
+    Label instrumentorTarget = Label.create("//java/com/foo/app:test_app_self_instrumenting");
+    BlazeContext context = new BlazeContext();
+    ImmutableList<String> blazeFlags = ImmutableList.of("some_blaze_flag", "some_other_flag");
+
+    // Setup interceptor for fake running of blaze commands and capture details.
+    ExternalTaskInterceptor externalTaskInterceptor = new ExternalTaskInterceptor();
+    registerApplicationService(ExternalTaskProvider.class, externalTaskInterceptor);
+
+    // Return fake deploy info proto and mocked deploy info data object.
+    BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
+
+    AndroidDeployInfo fakeInstrumentorProto = AndroidDeployInfo.newBuilder().build();
+    BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
+    when(helper.readDeployInfoProtoForTarget(
+            eq(instrumentorTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(fakeInstrumentorProto);
+    when(helper.extractDeployInfoAndInvalidateManifests(
+            eq(getProject()), eq(new File(getExecRoot())), eq(fakeInstrumentorProto)))
+        .thenReturn(mockDeployInfo);
+
+    // Perform
+    BlazeInstrumentationTestApkBuildStep buildStep =
+        new BlazeInstrumentationTestApkBuildStep(getProject(), testTarget, blazeFlags, helper);
+    buildStep.build(context, new DeviceSession(null, null, null));
+
+    // Verify
+    assertThat(buildStep.getDeployInfo()).isNotNull();
+    assertThat(buildStep.getDeployInfo()).isEqualTo(mockDeployInfo);
+    assertThat(externalTaskInterceptor.context).isEqualTo(context);
+    assertThat(externalTaskInterceptor.command).contains(instrumentorTarget.toString());
     assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
     assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
   }
@@ -290,53 +377,6 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     // Verify
     assertThat(context.hasErrors()).isTrue();
     assertThat(messageCollector.getMessages()).contains("Could not locate execroot!");
-  }
-
-  @Test
-  public void noInstrumentsSpecified() {
-    setProjectView(
-        "directories:",
-        "  java/com/foo/app",
-        "targets:",
-        "  //java/com/foo/app:instrumentation_test",
-        "android_sdk_platform: android-27");
-    MockSdkUtil.registerSdk(workspace, "27");
-
-    workspace.createFile(
-        new WorkspacePath("java/com/foo/app/MainActivity.java"),
-        "package com.foo.app",
-        "import android.app.Activity;",
-        "public class MainActivity extends Activity {}");
-
-    workspace.createFile(
-        new WorkspacePath("java/com/foo/app/Test.java"),
-        "package com.foo.app",
-        "public class Test {}");
-
-    setTargetMap(
-        android_binary("//java/com/foo/app:app").src("MainActivity.java"),
-        android_binary("//java/com/foo/app:test_app").src("Test.java"),
-        android_instrumentation_test("//java/com/foo/app:instrumentation_test")
-            .test_app("//java/com/foo/app:test_app"));
-    runFullBlazeSync();
-
-    MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
-    context.addOutputSink(IssueOutput.class, messageCollector);
-
-    BlazeInstrumentationTestApkBuildStep buildStep =
-        new BlazeInstrumentationTestApkBuildStep(
-            getProject(),
-            Label.create("//java/com/foo/app:instrumentation_test"),
-            ImmutableList.of());
-    InstrumentorToTarget pair =
-        buildStep.getInstrumentorToTargetPair(
-            context, BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData());
-
-    assertThat(pair).isNull();
-    assertThat(messageCollector.getMessages()).hasSize(1);
-    assertThat(messageCollector.getMessages().get(0))
-        .contains("No \"instruments\" in target definition for //java/com/foo/app:test_app.");
   }
 
   @Test
