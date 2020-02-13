@@ -196,13 +196,29 @@ message BlazeAndroidSyncData {
 }
 
 message RemoteOutputArtifacts {
+  option deprecated = true;
+
   repeated OutputArtifact artifacts = 1;
+}
+
+message TrackedOutputArtifacts {
+  repeated string top_level_targets = 1;
+  repeated LocalFileOrOutputArtifact output_artifacts = 2;
+  message TargetSetsToArtifactSets {
+    message Entry {
+      repeated int32 target_indices = 1;
+      repeated int32 artifact_indices = 2;
+    }
+    repeated Entry entries = 1;
+  }
+  TargetSetsToArtifactSets target_sets_to_artifact_sets = 3;
 }
 
 message TargetData {
   TargetMap target_map = 1;
   BlazeIdeInterfaceState ide_interface_state = 2;
-  RemoteOutputArtifacts remote_outputs = 3;
+  RemoteOutputArtifacts remote_outputs = 3 [deprecated = true];
+  TrackedOutputArtifacts tracked_output_artifacts = 4;
 }
 
 message SyncState {

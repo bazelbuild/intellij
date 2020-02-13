@@ -20,7 +20,7 @@ import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.OutputArtifacts;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.nio.file.Paths;
@@ -30,15 +30,13 @@ import java.util.Objects;
 public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecoder {
   private final BlazeInfo blazeInfo;
   private final WorkspacePathResolver pathResolver;
-  private final RemoteOutputArtifacts remoteOutputs;
+  private final OutputArtifacts trackedOutputs;
 
   public ArtifactLocationDecoderImpl(
-      BlazeInfo blazeInfo,
-      WorkspacePathResolver pathResolver,
-      RemoteOutputArtifacts remoteOutputs) {
+      BlazeInfo blazeInfo, WorkspacePathResolver pathResolver, OutputArtifacts trackedOutputs) {
     this.blazeInfo = blazeInfo;
     this.pathResolver = pathResolver;
-    this.remoteOutputs = remoteOutputs;
+    this.trackedOutputs = trackedOutputs;
   }
 
   @Override
@@ -46,11 +44,8 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
     if (artifact.isMainWorkspaceSourceArtifact()) {
       return new SourceArtifact(decode(artifact));
     }
-    BlazeArtifact remoteOutput = remoteOutputs.findRemoteOutput(artifact);
-    if (remoteOutput != null) {
-      return remoteOutput;
-    }
-    return outputArtifactFromExecRoot(artifact);
+    BlazeArtifact output = trackedOutputs.findOutputArtifact(artifact.getRelativePath());
+    return output != null ? output : outputArtifactFromExecRoot(artifact);
   }
 
   @Override

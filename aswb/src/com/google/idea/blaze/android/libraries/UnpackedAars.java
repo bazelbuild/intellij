@@ -35,7 +35,7 @@ import com.google.idea.blaze.base.filecache.FileCacheDiffer;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.OutputArtifacts;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -137,7 +137,7 @@ public class UnpackedAars {
         context,
         projectViewSet,
         projectData,
-        RemoteOutputArtifacts.fromProjectData(oldProjectData),
+        OutputArtifacts.fromProjectData(oldProjectData),
         removeMissingFiles);
   }
 
@@ -145,7 +145,7 @@ public class UnpackedAars {
       BlazeContext context,
       ProjectViewSet viewSet,
       BlazeProjectData projectData,
-      RemoteOutputArtifacts previousOutputs,
+      OutputArtifacts previousOutputs,
       boolean removeMissingFiles) {
     FileOperationProvider fileOpProvider = FileOperationProvider.getInstance();
 
@@ -337,7 +337,9 @@ public class UnpackedAars {
       ProjectViewSet viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-      if (viewSet == null || projectData == null || !projectData.getRemoteOutputs().isEmpty()) {
+      if (viewSet == null
+          || projectData == null
+          || projectData.getOutputArtifacts().hasRemoteOutputs()) {
         // if we have remote artifacts, only refresh during sync
         return;
       }
@@ -346,7 +348,7 @@ public class UnpackedAars {
               context,
               viewSet,
               projectData,
-              projectData.getRemoteOutputs(),
+              projectData.getOutputArtifacts(),
               /* removeMissingFiles= */ false);
     }
 

@@ -47,7 +47,7 @@ public final class ProjectDataInterner {
     return state.doIntern(label);
   }
 
-  static String intern(String string) {
+  public static String intern(String string) {
     return state.doIntern(string);
   }
 

@@ -22,6 +22,7 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
@@ -40,12 +41,16 @@ import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-/** A set of {@link RemoteOutputArtifact}s we want to retain a reference to between syncs. */
+/**
+ * A set of {@link RemoteOutputArtifact}s we want to retain a reference to between syncs.
+ *
+ * <p>TODO: to be replaced by {@link TrackedOutputArtifacts}.
+ */
 public final class RemoteOutputArtifacts
-    implements ProtoWrapper<ProjectData.RemoteOutputArtifacts> {
+    implements OutputArtifacts, ProtoWrapper<ProjectData.RemoteOutputArtifacts> {
 
   public static RemoteOutputArtifacts fromProjectData(@Nullable BlazeProjectData projectData) {
-    return projectData == null ? EMPTY : projectData.getRemoteOutputs();
+    return projectData == null ? EMPTY : projectData.getTargetData().remoteOutputs;
   }
 
   public static RemoteOutputArtifacts EMPTY = new RemoteOutputArtifacts(ImmutableMap.of());
@@ -65,16 +70,19 @@ public final class RemoteOutputArtifacts
   public ProjectData.RemoteOutputArtifacts toProto() {
     ProjectData.RemoteOutputArtifacts.Builder proto =
         ProjectData.RemoteOutputArtifacts.newBuilder();
-    remoteOutputArtifacts.values().forEach(a -> proto.addArtifacts(a.toProto()));
+    remoteOutputArtifacts.values().forEach(a -> proto.addArtifacts(a.toProto().getArtifact()));
     return proto.build();
   }
 
   public static RemoteOutputArtifacts fromProto(ProjectData.RemoteOutputArtifacts proto) {
     ImmutableMap.Builder<String, RemoteOutputArtifact> map = ImmutableMap.builder();
     proto.getArtifactsList().stream()
-        .map(RemoteOutputArtifact::fromProto)
+        .map(
+            a ->
+                OutputArtifact.fromProto(
+                    LocalFileOrOutputArtifact.newBuilder().setArtifact(a).build(), null))
         .filter(Objects::nonNull)
-        .forEach(a -> map.put(a.getRelativePath(), a));
+        .forEach(a -> map.put(a.getRelativePath(), (RemoteOutputArtifact) a));
     return new RemoteOutputArtifacts(map.build());
   }
 
@@ -115,9 +123,10 @@ public final class RemoteOutputArtifacts
         targets.targets().stream()
             .flatMap(t -> artifactsToTrack(providers, t))
             .distinct()
-            .map(this::findRemoteOutput)
+            .map(this::findOutputArtifact)
             .filter(Objects::nonNull)
             .distinct()
+            .map(RemoteOutputArtifact.class::cast)
             .collect(toImmutableMap(RemoteOutputArtifact::getRelativePath, o -> o));
     return new RemoteOutputArtifacts(tracked);
   }
@@ -132,8 +141,9 @@ public final class RemoteOutputArtifacts
     return list.stream().filter(ArtifactLocation::isGenerated);
   }
 
-  public boolean isEmpty() {
-    return remoteOutputArtifacts.isEmpty();
+  @Override
+  public boolean hasRemoteOutputs() {
+    return !remoteOutputArtifacts.isEmpty();
   }
 
   /**
@@ -141,16 +151,18 @@ public final class RemoteOutputArtifacts
    * first such match, or null if none can be found.
    */
   @Nullable
+  @Override
   public RemoteOutputArtifact resolveGenfilesPath(String genfilesRelativePath) {
     return configurationMnemonics.stream()
-        .map(m -> findRemoteOutput(String.format("%s/genfiles/%s", m, genfilesRelativePath)))
+        .map(m -> findOutputArtifact(String.format("%s/genfiles/%s", m, genfilesRelativePath)))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
   }
 
   @Nullable
-  public RemoteOutputArtifact findRemoteOutput(ArtifactLocation location) {
+  @Override
+  public RemoteOutputArtifact findOutputArtifact(ArtifactLocation location) {
     if (location.isSource()) {
       return null;
     }
@@ -158,11 +170,12 @@ public final class RemoteOutputArtifacts
     if (!execRootPath.startsWith("blaze-out/")) {
       return null;
     }
-    return findRemoteOutput(execRootPath.substring("blaze-out/".length()));
+    return findOutputArtifact(execRootPath.substring("blaze-out/".length()));
   }
 
   @Nullable
-  public RemoteOutputArtifact findRemoteOutput(String blazeOutRelativePath) {
+  @Override
+  public RemoteOutputArtifact findOutputArtifact(String blazeOutRelativePath) {
     // first try the exact path (forwards compatibility with a future BEP format)
     RemoteOutputArtifact file = remoteOutputArtifacts.get(blazeOutRelativePath);
     if (file != null) {

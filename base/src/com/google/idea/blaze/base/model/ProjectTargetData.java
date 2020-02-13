@@ -33,25 +33,32 @@ public final class ProjectTargetData implements ProtoWrapper<ProjectData.TargetD
 
   public final TargetMap targetMap;
   @Nullable public final BlazeIdeInterfaceState ideInterfaceState;
+  // DO NOT SUBMIT
   public final RemoteOutputArtifacts remoteOutputs;
+  public final TrackedOutputArtifacts trackedOutputs;
 
   public ProjectTargetData(
       TargetMap targetMap,
       @Nullable BlazeIdeInterfaceState ideInterfaceState,
-      RemoteOutputArtifacts remoteOutputs) {
+      RemoteOutputArtifacts remoteOutputs,
+      TrackedOutputArtifacts trackedOutputs) {
     this.targetMap = targetMap;
     this.ideInterfaceState = ideInterfaceState;
     this.remoteOutputs = remoteOutputs;
+    this.trackedOutputs = trackedOutputs;
   }
 
-  public static ProjectTargetData fromProto(ProjectData.TargetData proto) {
+  public static ProjectTargetData fromProto(ProjectData.TargetData proto, String outputPath) {
     TargetMap targetMap = TargetMap.fromProto(proto.getTargetMap());
     BlazeIdeInterfaceState ideInterfaceState =
         proto.hasIdeInterfaceState()
             ? BlazeIdeInterfaceState.fromProto(proto.getIdeInterfaceState())
             : null;
-    RemoteOutputArtifacts remoteOutputs = RemoteOutputArtifacts.fromProto(proto.getRemoteOutputs());
-    return new ProjectTargetData(targetMap, ideInterfaceState, remoteOutputs);
+    return new ProjectTargetData(
+        targetMap,
+        ideInterfaceState,
+        RemoteOutputArtifacts.fromProto(proto.getRemoteOutputs()),
+        TrackedOutputArtifacts.fromProto(proto.getTrackedOutputArtifacts(), outputPath));
   }
 
   @Override
@@ -59,7 +66,8 @@ public final class ProjectTargetData implements ProtoWrapper<ProjectData.TargetD
     ProjectData.TargetData.Builder builder =
         ProjectData.TargetData.newBuilder()
             .setTargetMap(targetMap.toProto())
-            .setRemoteOutputs(remoteOutputs.toProto());
+            .setRemoteOutputs(remoteOutputs.toProto())
+            .setTrackedOutputArtifacts(trackedOutputs.toProto());
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setIdeInterfaceState, ideInterfaceState);
     return builder.build();
   }
@@ -74,7 +82,8 @@ public final class ProjectTargetData implements ProtoWrapper<ProjectData.TargetD
     BlazeIdeInterfaceState newState =
         ideInterfaceState != null ? ideInterfaceState.filter(targetsToKeep) : null;
     RemoteOutputArtifacts newOutputs = remoteOutputs.removeUntrackedOutputs(newTargets, settings);
-    return new ProjectTargetData(newTargets, newState, newOutputs);
+    TrackedOutputArtifacts newTrackedOutputs = trackedOutputs.removeUntrackedOutputs(newTargets);
+    return new ProjectTargetData(newTargets, newState, newOutputs, newTrackedOutputs);
   }
 
   @Override
@@ -88,11 +97,16 @@ public final class ProjectTargetData implements ProtoWrapper<ProjectData.TargetD
     ProjectTargetData that = (ProjectTargetData) o;
     return targetMap.equals(that.targetMap)
         && Objects.equals(ideInterfaceState, that.ideInterfaceState)
-        && remoteOutputs.equals(that.remoteOutputs);
+        && (TrackedOutputArtifacts.enable.getValue()
+            ? trackedOutputs.equals(that.trackedOutputs)
+            : remoteOutputs.equals(that.remoteOutputs));
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(targetMap, ideInterfaceState, remoteOutputs);
+    return Objects.hash(
+        targetMap,
+        ideInterfaceState,
+        TrackedOutputArtifacts.enable.getValue() ? trackedOutputs : remoteOutputs);
   }
 }

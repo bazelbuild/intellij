@@ -358,8 +358,8 @@
                     interface="com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputArtifactParser"
                     interface="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.RemoteOutputArtifactParser"
-                    interface="com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact$Parser"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.OutputArtifactProtoParser"
+                    interface="com.google.idea.blaze.base.command.buildresult.OutputArtifact$Parser"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildBatchingService"
                     interface="com.google.idea.blaze.base.sync.sharding.BuildBatchingService"/>
   </extensionPoints>
@@ -499,6 +499,7 @@
     <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.VirtualFileTestContextProvider"/>
     <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.AllInPackageTestContextProvider"/>
     <OutputArtifactParser implementation="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser$LocalFileParser"/>
+    <OutputArtifactProtoParser implementation="com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact$Parser"/>
     <BuildBatchingService implementation="com.google.idea.blaze.base.sync.sharding.LexicographicTargetSharder" order="last"/>
     <VcsSyncListener implementation="com.google.idea.blaze.base.prefetch.PrefetchVcsSyncListener"/>
     <VcsSyncListener implementation="com.google.idea.blaze.base.sync.autosync.VcsAutoSyncProvider"/>

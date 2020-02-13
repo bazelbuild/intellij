@@ -15,11 +15,16 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
+import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import java.util.Arrays;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** A blaze output artifact, generated during some build action. */
-public interface OutputArtifact extends BlazeArtifact {
+public interface OutputArtifact extends BlazeArtifact, ProtoWrapper<LocalFileOrOutputArtifact> {
 
   /** Returns the length of the underlying file in bytes, or 0 if this can't be determined. */
   long getLength();
@@ -46,4 +51,22 @@ public interface OutputArtifact extends BlazeArtifact {
    */
   @Nullable
   ArtifactState toArtifactState();
+
+  @Nullable
+  static OutputArtifact fromProto(LocalFileOrOutputArtifact proto, @Nullable String outputPath) {
+    return Arrays.stream(OutputArtifact.Parser.EP_NAME.getExtensions())
+        .map(p -> p.parseProto(proto, outputPath))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
+  /** Converts {@link LocalFileOrOutputArtifact} to {@link OutputArtifact}. */
+  interface Parser {
+    ExtensionPointName<OutputArtifact.Parser> EP_NAME =
+        ExtensionPointName.create("com.google.idea.blaze.OutputArtifactProtoParser");
+
+    @Nullable
+    OutputArtifact parseProto(LocalFileOrOutputArtifact proto, @Nullable String outputPath);
+  }
 }

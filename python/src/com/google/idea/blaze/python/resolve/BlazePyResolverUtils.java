@@ -15,11 +15,11 @@
  */
 package com.google.idea.blaze.python.resolve;
 
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
-import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.OutputArtifacts;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.project.Project;
@@ -54,12 +54,10 @@ public class BlazePyResolverUtils {
     if (projectData == null) {
       return Optional.empty();
     }
-    // first look for remote output artifacts
-    // TODO(brendandouglas): add a common solution handling both remote and local outputs
-    RemoteOutputArtifacts remotes = RemoteOutputArtifacts.fromProjectData(projectData);
-    RemoteOutputArtifact artifact = remotes.resolveGenfilesPath(relativePath);
+    OutputArtifacts artifacts = OutputArtifacts.fromProjectData(projectData);
+    OutputArtifact artifact = artifacts.resolveGenfilesPath(relativePath);
     if (artifact == null) {
-      artifact = remotes.resolveGenfilesPath(relativePath + ".py");
+      artifact = artifacts.resolveGenfilesPath(relativePath + ".py");
     }
     if (artifact != null) {
       return Optional.ofNullable(OutputArtifactResolver.resolve(project, artifact));
