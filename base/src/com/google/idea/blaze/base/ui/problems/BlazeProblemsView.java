@@ -49,7 +49,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
@@ -74,7 +77,7 @@ public class BlazeProblemsView {
 
   private final Project project;
   private final String toolWindowId;
-  private final BlazeProblemsViewPanel panel;
+  private final RunnableFuture<BlazeProblemsViewPanel> uiFuture;
 
   private final Set<Integer> problemHashes = Collections.synchronizedSet(new HashSet<>());
   private final AtomicInteger problemCount = new AtomicInteger(0);
@@ -82,15 +85,32 @@ public class BlazeProblemsView {
   private volatile FocusBehavior focusBehavior;
   private volatile UUID currentSessionId = UUID.randomUUID();
 
-  public BlazeProblemsView(Project project, ToolWindowManager wm) {
+  public BlazeProblemsView(Project project) {
     this.project = project;
     this.toolWindowId = Blaze.getBuildSystem(project).getName() + " Problems";
-    panel = new BlazeProblemsViewPanel(project);
-    Disposer.register(project, () -> Disposer.dispose(panel));
-    UIUtil.invokeLaterIfNeeded(() -> createToolWindow(project, wm));
+    uiFuture =
+        new FutureTask<>(
+            () -> {
+              BlazeProblemsViewPanel panel = new BlazeProblemsViewPanel(project);
+              Disposer.register(project, () -> Disposer.dispose(panel));
+              createToolWindow(project, ToolWindowManager.getInstance(project), panel);
+              return panel;
+            });
+    UIUtil.invokeLaterIfNeeded(uiFuture);
   }
 
-  private void createToolWindow(Project project, ToolWindowManager wm) {
+  @Nullable
+  private BlazeProblemsViewPanel getPanel() {
+    try {
+      return uiFuture.get();
+    } catch (InterruptedException | ExecutionException e) {
+      logger.error("Couldn't create Problems View Panel", e);
+      return null;
+    }
+  }
+
+  private void createToolWindow(
+      Project project, ToolWindowManager wm, BlazeProblemsViewPanel panel) {
     if (project.isDisposed()) {
       return;
     }
@@ -99,10 +119,14 @@ public class BlazeProblemsView {
     Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     toolWindow.getContentManager().addContent(content);
     Disposer.register(project, () -> toolWindow.getContentManager().removeAllContents(true));
-    updateIcon();
+    updateIcon(panel);
   }
 
   public void newProblemsContext(FocusBehavior focusBehavior) {
+    BlazeProblemsViewPanel panel = getPanel();
+    if (panel == null) {
+      return;
+    }
     viewUpdater.execute(
         () -> {
           currentSessionId = UUID.randomUUID();
@@ -111,12 +135,16 @@ public class BlazeProblemsView {
           didFocusProblemsView = false;
           this.focusBehavior = focusBehavior;
           problemHashes.clear();
-          updateIcon();
+          updateIcon(panel);
           panel.reload();
         });
   }
 
   public void addMessage(IssueOutput issue, @Nullable Navigatable openInConsole) {
+    BlazeProblemsViewPanel panel = getPanel();
+    if (panel == null) {
+      return;
+    }
     if (!problemHashes.add(issue.hashCode())) {
       return;
     }
@@ -146,7 +174,8 @@ public class BlazeProblemsView {
         navigatable,
         openInConsole,
         getExportTextPrefix(issue),
-        getRenderTextPrefix(issue));
+        getRenderTextPrefix(issue),
+        panel);
 
     if (didFocusProblemsView) {
       return;
@@ -233,7 +262,8 @@ public class BlazeProblemsView {
       @Nullable Navigatable navigatable,
       @Nullable Navigatable openInConsole,
       String exportTextPrefix,
-      String rendererTextPrefix) {
+      String rendererTextPrefix,
+      BlazeProblemsViewPanel panel) {
     UUID sessionId = currentSessionId;
     viewUpdater.execute(
         () -> {
@@ -266,11 +296,11 @@ public class BlazeProblemsView {
           } else {
             panel.addMessage(type, text, null, -1, -1, sessionId);
           }
-          updateIcon();
+          updateIcon(panel);
         });
   }
 
-  private void updateIcon() {
+  private void updateIcon(BlazeProblemsViewPanel panel) {
     UIUtil.invokeLaterIfNeeded(
         () -> {
           if (project.isDisposed()) {
@@ -294,5 +324,4 @@ public class BlazeProblemsView {
           }
         });
   }
-
 }
