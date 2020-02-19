@@ -18,9 +18,11 @@ package com.google.idea.blaze.base.sync.actions;
 import com.google.idea.blaze.base.actions.BlazeProjectToggleAction;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAware;
 
 /** Manages a tick box of whether to show performance warnings. */
-public class ShowPerformanceWarningsToggleAction extends BlazeProjectToggleAction {
+public class ShowPerformanceWarningsToggleAction extends BlazeProjectToggleAction
+    implements DumbAware {
   @Override
   public boolean isSelected(AnActionEvent e) {
     return BlazeUserSettings.getInstance().getShowPerformanceWarnings();

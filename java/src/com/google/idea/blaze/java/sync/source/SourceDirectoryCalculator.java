@@ -239,7 +239,10 @@ public final class SourceDirectoryCalculator {
           sourceRootsPerFile.add(sourceRoot);
         }
       }
-    } catch (ExecutionException | InterruptedException e) {
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      context.setCancelled();
+    } catch (ExecutionException e) {
       throw new IllegalStateException("Could not read sources", e);
     }
 

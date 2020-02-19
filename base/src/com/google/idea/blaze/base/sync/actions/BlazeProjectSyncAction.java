@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The Bazel Authors. All rights reserved.
+ * Copyright 2016 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,33 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.BlazeSyncManager;
+import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
-import com.google.idea.common.actions.ActionPresentationHelper;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
-/** A partial (additive) sync which runs no blaze build actions, only updating directories */
-public class UpdateDirectoriesSyncAction extends BlazeProjectSyncAction {
+/** Base class for sync actions. */
+public abstract class BlazeProjectSyncAction extends BlazeProjectAction implements DumbAware {
+
+  protected abstract void runSync(Project project, AnActionEvent e);
 
   @Override
-  protected void runSync(Project project, AnActionEvent e) {
-    BlazeSyncManager.getInstance(project)
-        .directoryUpdate(/* inBackground= */ false, /* reason= */ "UpdateDirectoriesSyncAction");
+  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
+    if (!BlazeSyncStatus.getInstance(project).syncInProgress()) {
+      runSync(project, e);
+    }
+    updateStatus(project, e);
   }
 
   @Override
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
-    String text = String.format("Sync Directories (no %s build)", Blaze.buildSystemName(project));
-    ActionPresentationHelper.of(e)
-        .disableIf(BlazeSyncStatus.getInstance(project).syncInProgress())
-        .setText(text)
-        .commit();
+    updateStatus(project, e);
+  }
+
+  private static void updateStatus(Project project, AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(!BlazeSyncStatus.getInstance(project).syncInProgress());
   }
 }
