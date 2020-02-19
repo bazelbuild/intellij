@@ -137,7 +137,7 @@ public class IssueOutputFilter implements Filter {
     if (file == null) {
       return null;
     }
-    VirtualFile vf = VfsUtils.resolveVirtualFile(file);
+    VirtualFile vf = VfsUtils.resolveVirtualFile(file, /* refreshIfNeeded= */ true);
     return vf != null ? resolveSymlinks(vf) : null;
   }
 

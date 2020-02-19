@@ -123,7 +123,7 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
     // as seen by the project
-    VirtualFile configFile = VfsUtils.resolveVirtualFile(tsconfig);
+    VirtualFile configFile = VfsUtils.resolveVirtualFile(tsconfig, /* refreshIfNeeded= */ false);
     if (configFile == null) {
       return null;
     }
@@ -208,7 +208,10 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
 
     this.baseUrlFile =
         NullableLazyValue.createValue(
-            () -> VfsUtils.resolveVirtualFile(new File(tsconfigEditor.getParentFile(), baseUrl)));
+            () ->
+                VfsUtils.resolveVirtualFile(
+                    new File(tsconfigEditor.getParentFile(), baseUrl),
+                    /* refreshIfNeeded= */ false));
     this.rootDirsFiles =
         NotNullLazyValue.createValue(
             () ->
@@ -231,7 +234,8 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
     this.dependencies =
         NotNullLazyValue.createValue(
             () -> {
-              VirtualFile file = VfsUtils.resolveVirtualFile(tsconfigEditor);
+              VirtualFile file =
+                  VfsUtils.resolveVirtualFile(tsconfigEditor, /* refreshIfNeeded= */ false);
               return file != null ? ImmutableList.of(file) : ImmutableList.of();
             });
     this.includeChecker =
@@ -478,7 +482,7 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
                 return f;
               }
             })
-        .map(VfsUtils::resolveVirtualFile)
+        .map(f -> VfsUtils.resolveVirtualFile(f, /* refreshIfNeeded= */ false))
         .filter(Objects::nonNull)
         .collect(ImmutableList.toImmutableList());
   }

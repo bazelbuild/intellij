@@ -84,7 +84,7 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
                   .map(VfsUtil::virtualToIoFile)
                   .collect(toImmutableSet()))
           .stream()
-          .map(VfsUtils::resolveVirtualFile)
+          .map(file -> VfsUtils.resolveVirtualFile(file, /* refreshIfNeeded= */ false))
           .filter(Objects::nonNull)
           .forEach(validFiles::add);
     }

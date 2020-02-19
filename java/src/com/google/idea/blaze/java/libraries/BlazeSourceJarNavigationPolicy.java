@@ -128,7 +128,7 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
     if (sourceJar == null) {
       return null;
     }
-    VirtualFile vfsFile = VfsUtils.resolveVirtualFile(sourceJarFile);
+    VirtualFile vfsFile = VfsUtils.resolveVirtualFile(sourceJarFile, /* refreshIfNeeded= */ true);
     if (vfsFile == null) {
       return null;
     }

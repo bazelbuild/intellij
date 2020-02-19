@@ -152,7 +152,8 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
     // recursive refresh of the blaze execution root. This is required because our blaze aspect
     // can't yet tell us exactly which genfiles are required to resolve the project.
     VirtualFile execRoot =
-        VfsUtils.resolveVirtualFile(blazeProjectData.getBlazeInfo().getExecutionRoot());
+        VfsUtils.resolveVirtualFile(
+            blazeProjectData.getBlazeInfo().getExecutionRoot(), /* refreshIfNeeded= */ false);
     if (execRoot == null) {
       return ImmutableSetMultimap.of();
     }

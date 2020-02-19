@@ -307,7 +307,7 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
   }
 
   private static VirtualFile vf(String path) {
-    VirtualFile resolved = VfsUtils.resolveVirtualFile(new File(path));
+    VirtualFile resolved = VfsUtils.resolveVirtualFile(new File(path), false);
     assertThat(resolved).isNotNull();
     return resolved;
   }

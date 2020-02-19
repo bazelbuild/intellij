@@ -107,7 +107,7 @@ final class HeaderRootTrimmer {
                   logger.info(String.format("Couldn't resolve include root: %s", path));
                 }
                 for (File file : possibleDirectories) {
-                  VirtualFile vf = VfsUtils.resolveVirtualFile(file);
+                  VirtualFile vf = VfsUtils.resolveVirtualFile(file, /* refreshIfNeeded= */ true);
                   if (vf != null) {
                     // Check gen directories to see if they actually contain headers and not just
                     // other random generated files (like .s, .cc, or module maps).

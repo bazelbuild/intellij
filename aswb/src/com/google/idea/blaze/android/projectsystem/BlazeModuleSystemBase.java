@@ -193,7 +193,8 @@ public abstract class BlazeModuleSystemBase implements AndroidModuleSystem, Blaz
                   project, blazeProjectData.getArtifactLocationDecoder(), buildFile),
               "Fail to find file %s",
               buildFile.getRelativePath());
-      VirtualFile buildVirtualFile = VfsUtils.resolveVirtualFile(buildIoFile);
+      VirtualFile buildVirtualFile =
+          VfsUtils.resolveVirtualFile(buildIoFile, /* refreshIfNeeded= */ true);
       if (buildVirtualFile != null) {
         fileEditorManager.openFile(buildVirtualFile, true);
       }

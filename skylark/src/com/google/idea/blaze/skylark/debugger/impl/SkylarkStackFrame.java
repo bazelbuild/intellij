@@ -76,7 +76,8 @@ class SkylarkStackFrame extends XStackFrame {
   /** Converts between source location formats used by the IDE and the Skylark debug server. */
   @Nullable
   static XSourcePosition fromLocationProto(Location location) {
-    VirtualFile vf = VfsUtils.resolveVirtualFile(new File(location.getPath()));
+    VirtualFile vf =
+        VfsUtils.resolveVirtualFile(new File(location.getPath()), /* refreshIfNeeded= */ true);
     if (vf == null) {
       return null;
     }

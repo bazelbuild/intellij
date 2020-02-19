@@ -140,7 +140,8 @@ class AddTsConfigNotificationProvider
     if (directoryPath == null) {
       return null;
     }
-    VirtualFile directoryVirtualFile = VfsUtils.resolveVirtualFile(root.fileForPath(directoryPath));
+    VirtualFile directoryVirtualFile =
+        VfsUtils.resolveVirtualFile(root.fileForPath(directoryPath), /* refreshIfNeeded= */ false);
     if (directoryVirtualFile == null) {
       return null;
     }

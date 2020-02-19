@@ -194,7 +194,7 @@ public class BlazeProblemsView {
    */
   @Nullable
   private static VirtualFile resolveVirtualFile(File file) {
-    VirtualFile vf = VfsUtils.resolveVirtualFile(file);
+    VirtualFile vf = VfsUtils.resolveVirtualFile(file, /* refreshIfNeeded= */ true);
     return vf != null ? resolveSymlinks(vf) : null;
   }
 

@@ -101,7 +101,8 @@ class BlazeDlvPositionConverter implements DlvPositionConverter {
   @Nullable
   private VirtualFile resolve(String normalizedPath) {
     return VfsUtils.resolveVirtualFile(
-        resolver.resolveExecutionRootPath(new ExecutionRootPath(normalizedPath)));
+        resolver.resolveExecutionRootPath(new ExecutionRootPath(normalizedPath)),
+        /* refreshIfNeeded= */ false);
   }
 
   private String normalizePath(String path) {
