@@ -12,6 +12,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -21,6 +22,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.usages.Usage;
 import com.intellij.util.Processor;
 import java.util.Collection;
@@ -30,6 +32,13 @@ import javax.swing.Icon;
 /** Provides SDK compatibility shims for base plugin API classes, available to all IDEs. */
 public final class BaseSdkCompat {
   private BaseSdkCompat() {}
+
+  /** #api193: made public in 2020.1. */
+  @Nullable
+  @SuppressWarnings("rawtypes")
+  public static ProjectExtensionPointName<EditorNotifications.Provider> getEditorNotificationsEp() {
+    return null;
+  }
 
   /** #api193: constructor changed in 2020.1. */
   public static class DvcsBranchManagerAdapter extends DvcsBranchManager {

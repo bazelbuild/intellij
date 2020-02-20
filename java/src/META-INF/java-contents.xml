@@ -87,12 +87,11 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.BlazeJavaAbstractTestCaseConfigurationProducer"
         order="first, before testContextProducer"/>
-    <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"
-                        serviceImplementation="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"/>
-    <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.PackageManifestReader"
-                        serviceImplementation="com.google.idea.blaze.java.sync.source.PackageManifestReader"/>
+    <applicationService serviceImplementation="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"/>
+    <applicationService serviceImplementation="com.google.idea.blaze.java.sync.source.PackageManifestReader"/>
     <programRunner implementation="com.google.idea.blaze.java.run.BlazeJavaDebuggerRunner"/>
     <projectService serviceImplementation="com.google.idea.blaze.java.libraries.AttachedSourceJarManager"/>
+    <postStartupActivity implementation="com.google.idea.blaze.java.libraries.DisableLibraryBytecodeNotification"/>
 
     <!--
       Load `BuildFileSafeDeleteProcessor` before `OCSafeDeleteProcessorDelegate` (Android NDK Pugin).
