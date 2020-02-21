@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
-/** #api191: VcsRepositoryIgnoredFilesHolderBase compat for 2019.1 */
+/** VcsRepositoryIgnoredFilesHolderBase compat (#api192: last changed in 2019.3) */
 public abstract class VcsRepositoryIgnoredFilesHolderBaseAdapter<RepositoryT extends Repository>
     extends VcsRepositoryIgnoredFilesHolderBase<RepositoryT> {
   public VcsRepositoryIgnoredFilesHolderBaseAdapter(

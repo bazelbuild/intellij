@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The Bazel Authors. All rights reserved.
+ * Copyright 2020 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.sdkcompat.openapi;
+package com.google.idea.testing;
 
 import com.intellij.ide.impl.HeadlessDataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.Key;
 import javax.annotation.Nullable;
 
-/** #api191: 'headless' DataManager for test environments changed in 2019.2. */
-public class HeadlessDataManagerAdapter extends HeadlessDataManager {
+/**
+ * IntelliJ replaces the normal DataManager with a mock version in headless environments. We rely on
+ * a functional DataManager in run configuration tests to recognize when multiple psi elements are
+ * selected.
+ */
+public class FunctionalHeadlessDataManager extends HeadlessDataManager {
   private volatile DataContext dataContext;
 
   @Override

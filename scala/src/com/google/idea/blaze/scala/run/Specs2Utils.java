@@ -16,7 +16,6 @@
 package com.google.idea.blaze.scala.run;
 
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.google.idea.sdkcompat.scala.ScalaSdkCompat;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import java.util.function.Predicate;
@@ -24,7 +23,9 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
+import org.jetbrains.plugins.scala.testingSupport.test.TestConfigurationUtil;
 import org.jetbrains.plugins.scala.testingSupport.test.structureView.TestNodeProvider;
+import scala.Option;
 
 /** Common functions for handling specs2 test scopes/cases. */
 public final class Specs2Utils {
@@ -65,8 +66,10 @@ public final class Specs2Utils {
 
   @Nullable
   private static String getSpecs2TestName(ScInfixExpr testCase) {
-    return ScalaSdkCompat.getStaticTestName(
-        testCase.getFirstChild(), /* allowSymbolLiterals= */ false);
+    Option<String> option =
+        TestConfigurationUtil.getStaticTestName(
+            testCase.getFirstChild(), /* allowSymbolLiterals= */ false);
+    return option.isEmpty() ? null : option.get();
   }
 
   @Nullable
