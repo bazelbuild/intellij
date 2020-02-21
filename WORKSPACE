@@ -46,8 +46,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2019_3",
     build_file = "@//intellij_platform_sdk:BUILD.ue193",
-    sha256 = "d399ecc9357dd3b3ad3bcc1ed046f74b8e535bb862f68fd019b23fdc8ee2ca56",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.3.2/ideaIU-2019.3.2.zip",
+    sha256 = "d0787fb1f1297cd4123e51dd71325ebb0ef4f33a7eb4a8e1863a9235de5bfae4",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2019.3.3/ideaIU-2019.3.3.zip",
 )
 
 # The plugin api for IntelliJ UE 2020.1. This is required to run UE-specific
