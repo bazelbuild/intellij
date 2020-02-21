@@ -19,8 +19,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2019_3",
     build_file = "@//intellij_platform_sdk:BUILD.idea193",
-    sha256 = "fb347c3c681328d11e87846950e8c5af6ac2c8d6a7e56946d3a10e6121d322f9",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2019.3.2/ideaIC-2019.3.2.zip",
+    sha256 = "4a7b945a5355c3629bf063b89aefab107f06d94368df90a8d5f55cecc46be697",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2019.3.3/ideaIC-2019.3.3.zip",
 )
 
 # The plugin api for IntelliJ 2020.1. This is required to build IJwB,
