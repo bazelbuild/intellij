@@ -73,8 +73,8 @@ http_archive(
 http_archive(
     name = "clion_2019_3",
     build_file = "@//intellij_platform_sdk:BUILD.clion193",
-    sha256 = "3c12a827bedf5ecc0d6c9aaf6822bb849f53798e5fd48e3f7ef975b4aa5976b7",
-    url = "https://download.jetbrains.com/cpp/CLion-2019.3.3.tar.gz",
+    sha256 = "adb76d1d5b13b5fae3e3953c953ee16f3342ef36af404fc2873b9dc9d2190d72",
+    url = "https://download.jetbrains.com/cpp/CLion-2019.3.4.tar.gz",
 )
 
 # Python plugin for Android Studio 3.5. Required at compile-time for python-specific features.
