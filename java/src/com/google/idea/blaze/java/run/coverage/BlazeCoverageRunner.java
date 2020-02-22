@@ -17,6 +17,8 @@ package com.google.idea.blaze.java.run.coverage;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.primitives.Ints;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -29,10 +31,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.HashSet;
 import javax.annotation.Nullable;
 
 /** Loads coverage data when blaze invocation is complete. */
@@ -51,8 +50,17 @@ public class BlazeCoverageRunner extends CoverageRunner {
     if (blazeProjectData == null) {
       return null;
     }
+    HashSet<String> sourceFiles = new HashSet<>();
+    for (TargetIdeInfo targetIdeInfo : blazeProjectData.getTargetData().targetMap.targets()) {
+      for (ArtifactLocation artifactLocation : targetIdeInfo.getSources()) {
+        if (artifactLocation != null) {
+          sourceFiles.add(artifactLocation.getRelativePath());
+        }
+      }
+    }
+
     try (FileInputStream stream = new FileInputStream(sessionDataFile)) {
-      return parseCoverage(blazeProjectData.getWorkspacePathResolver(), stream);
+      return parseCoverage(blazeProjectData.getWorkspacePathResolver(), stream, sourceFiles);
     } catch (IOException e) {
       logger.warn(e);
     }
@@ -60,12 +68,23 @@ public class BlazeCoverageRunner extends CoverageRunner {
   }
 
   @VisibleForTesting
-  static ProjectData parseCoverage(WorkspacePathResolver pathResolver, InputStream stream)
+  static ProjectData parseCoverage(WorkspacePathResolver pathResolver, InputStream stream, HashSet<String> sourceFiles)
       throws IOException {
     ProjectData data = new ProjectData();
     BlazeCoverageData blazeData = BlazeCoverageData.parse(stream);
     for (String filePath : blazeData.perFileData.keySet()) {
       File file = pathResolver.resolveToFile(filePath);
+      if (!file.exists()) {
+        for (String sourceFile : sourceFiles) {
+          if (sourceFile.endsWith(filePath)) {
+            File testFile = pathResolver.resolveToFile(sourceFile);
+            if (testFile.exists()) {
+              file = testFile;
+            }
+          }
+        }
+      }
+
       ClassData classData = data.getOrCreateClassData(file.getPath());
       classData.setLines(fromFileData(blazeData.perFileData.get(filePath)));
     }
