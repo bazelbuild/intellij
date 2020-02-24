@@ -30,7 +30,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-/** #api182: A stub {@link OCWorkspace} to use for testing. */
+/** A stub {@link OCWorkspace} to use for testing. */
 public class StubOCWorkspace implements OCWorkspace {
   private final ImmutableList<OCResolveConfiguration> resolveConfigurations;
   private final OCWorkspaceModificationTrackersImpl modificationTrackers;
@@ -56,19 +56,20 @@ public class StubOCWorkspace implements OCWorkspace {
   }
 
   @Override
-  public List<OCResolveConfiguration> getConfigurationsForFile(@Nullable VirtualFile sourceFile) {
-    if (sourceFile == null) {
-      return Collections.emptyList();
-    }
+  public List<OCResolveConfiguration> getConfigurationsForFile(VirtualFile sourceFile) {
     return OCFileType.INSTANCE.equals(sourceFile.getFileType())
         ? resolveConfigurations
         : Collections.emptyList();
   }
 
   @Override
+  public List<OCResolveConfiguration> getConfigurationsForFile(@NotNull String sourceFileUrl) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   @Nullable
-  public OCResolveConfiguration getConfigurationById(
-      @NotNull String id) {
+  public OCResolveConfiguration getConfigurationById(@NotNull String id) {
     return ContainerUtil.find(resolveConfigurations, it -> Objects.equals(id, it.getUniqueId()));
   }
 

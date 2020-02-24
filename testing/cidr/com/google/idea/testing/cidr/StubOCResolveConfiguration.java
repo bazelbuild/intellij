@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-/** #api182: Stub {@link OCResolveConfiguration} for testing. */
+/** Stub {@link OCResolveConfiguration} for testing. */
 public class StubOCResolveConfiguration extends UserDataHolderBase
     implements OCResolveConfiguration {
 

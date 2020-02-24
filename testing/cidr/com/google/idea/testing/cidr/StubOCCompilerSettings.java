@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-/** #api182: Stub {@link OCCompilerSettings} for testing. */
+/** Stub {@link OCCompilerSettings} for testing. */
 class StubOCCompilerSettings implements OCCompilerSettings {
   private final Project project;
   private HeadersSearchRoots roots;
