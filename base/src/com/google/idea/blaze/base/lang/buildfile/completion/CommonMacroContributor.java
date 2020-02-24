@@ -53,9 +53,21 @@ public interface CommonMacroContributor {
     @AutoValue.Builder
     public abstract static class Builder {
 
-      public abstract CommonMacros.Builder setLocation(String value);
+      public abstract CommonMacros.Builder setLocation(String location);
 
-      public abstract Builder setFunctionNames(ImmutableList<String> value);
+      protected abstract ImmutableList.Builder<String> functionNamesBuilder();
+
+      public Builder addFunctionName(String fn) {
+        functionNamesBuilder().add(fn);
+        return this;
+      }
+
+      public Builder addFunctionNames(String... functions) {
+        functionNamesBuilder().add(functions);
+        return this;
+      }
+
+      public abstract Builder setFunctionNames(ImmutableList<String> list);
 
       public abstract CommonMacros build();
     }
