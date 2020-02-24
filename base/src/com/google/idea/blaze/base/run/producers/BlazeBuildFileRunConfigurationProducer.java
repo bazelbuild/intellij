@@ -39,11 +39,11 @@ import javax.annotation.Nullable;
 public class BlazeBuildFileRunConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
 
-  private static class BuildTarget {
+  static class BuildTarget {
 
-    private final FuncallExpression rule;
-    private final RuleType ruleType;
-    private final Label label;
+    final FuncallExpression rule;
+    final RuleType ruleType;
+    final Label label;
 
     BuildTarget(FuncallExpression rule, RuleType ruleType, Label label) {
       this.rule = rule;
@@ -132,12 +132,12 @@ public class BlazeBuildFileRunConfigurationProducer
 
   @Nullable
   private static BuildTarget getBuildTarget(ConfigurationContext context) {
-    return targetFromFuncall(
+    return getBuildTarget(
         PsiTreeUtil.getNonStrictParentOfType(context.getPsiLocation(), FuncallExpression.class));
   }
 
   @Nullable
-  private static BuildTarget targetFromFuncall(@Nullable FuncallExpression rule) {
+  static BuildTarget getBuildTarget(@Nullable FuncallExpression rule) {
     if (rule == null) {
       return null;
     }
@@ -184,7 +184,7 @@ public class BlazeBuildFileRunConfigurationProducer
     config.setGeneratedName();
   }
 
-  private static BlazeCommandName commandForRuleType(RuleType ruleType) {
+  static BlazeCommandName commandForRuleType(RuleType ruleType) {
     switch (ruleType) {
       case BINARY:
         return BlazeCommandName.RUN;
