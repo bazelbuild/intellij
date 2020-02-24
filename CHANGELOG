@@ -1,3 +1,9 @@
+v2020.02.24
+===========
+* Allow queuing sync actions while building indices.
+* Show gutter run markers next to BUILD targets.
+* BUILD files auto-complete updates.
+
 v2020.02.10
 ===========
 * Bug fixes and internal cleanup.
