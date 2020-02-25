@@ -17,13 +17,17 @@ package com.google.idea.blaze.android.sync.projectstructure;
 
 import com.android.builder.model.SourceProvider;
 import com.android.tools.idea.model.AndroidModel;
+import com.google.common.annotations.VisibleForTesting;
 import org.jetbrains.android.facet.AndroidFacet;
 
-class BlazeAndroidProjectStructureSyncerCompat {
+/** Compat class for {@link BlazeAndroidProjectStructureSyncer} */
+@VisibleForTesting
+public class BlazeAndroidProjectStructureSyncerCompat {
 
   private BlazeAndroidProjectStructureSyncerCompat() {}
 
-  static void updateAndroidFacetWithSourceAndModel(
+  @VisibleForTesting
+  public static void updateAndroidFacetWithSourceAndModel(
       AndroidFacet facet, SourceProvider sourceProvider, AndroidModel androidModel) {
     facet.getConfiguration().setModel(androidModel);
   }

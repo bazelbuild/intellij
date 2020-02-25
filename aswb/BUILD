@@ -145,8 +145,8 @@ intellij_integration_test_suite(
             "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
         ],
     ) + select_for_plugin_api({
-        "android-studio-3.6": glob(["testcompat/as36/integration/**/*.java"]),
-        "android-studio-4.0": glob(["testcompat/as40/integration/**/*.java"]),
+        "android-studio-3.6": glob(["testcompat/as36/integrationtests/**/*.java"]),
+        "android-studio-4.0": glob(["testcompat/as40/integrationtests/**/*.java"]),
     }),
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",

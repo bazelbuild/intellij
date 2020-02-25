@@ -19,16 +19,20 @@ import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
 
 import com.android.builder.model.SourceProvider;
 import com.android.tools.idea.model.AndroidModel;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
 import java.util.stream.Collectors;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetProperties;
 
-class BlazeAndroidProjectStructureSyncerCompat {
+/** Compat class for {@link BlazeAndroidProjectStructureSyncer} */
+@VisibleForTesting
+public class BlazeAndroidProjectStructureSyncerCompat {
 
   private BlazeAndroidProjectStructureSyncerCompat() {}
 
-  static void updateAndroidFacetWithSourceAndModel(
+  @VisibleForTesting
+  public static void updateAndroidFacetWithSourceAndModel(
       AndroidFacet facet, SourceProvider sourceProvider, BlazeAndroidModel androidModel) {
     facet.getProperties().RES_FOLDERS_RELATIVE_PATH =
         sourceProvider.getResDirectories().stream()
