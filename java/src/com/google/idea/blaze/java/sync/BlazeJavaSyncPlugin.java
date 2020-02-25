@@ -32,7 +32,6 @@ import com.google.idea.blaze.base.projectview.section.Glob;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
@@ -199,13 +198,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
 
     final Sdk sdk = Jdks.chooseOrCreateJavaSdk(javaLanguageLevel);
     if (sdk == null) {
-      String msg =
-          String.format(
-              "Unable to find a JDK %1$s installed.\n", javaLanguageLevel.getPresentableText());
-      msg +=
-          "After configuring a suitable JDK in the \"Project Structure\" dialog, "
-              + "sync the project again.";
-      IssueOutput.error(msg).submit(context);
+      JdkDetectionNotification.show(project, context, javaLanguageLevel);
       return;
     }
     setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
