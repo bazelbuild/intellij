@@ -52,7 +52,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
 import org.jetbrains.annotations.NotNull;
-import org.picocontainer.MutablePicoContainer;
 
 /** UI for changing the ProjectView. */
 public class ProjectViewUi {
@@ -67,7 +66,6 @@ public class ProjectViewUi {
   private boolean useSharedProjectView;
   private boolean allowEditShared;
   private String sharedProjectViewText;
-  private boolean settingsInitialized;
 
   public ProjectViewUi(Disposable parentDisposable) {
     this.parentDisposable = parentDisposable;
@@ -176,26 +174,11 @@ public class ProjectViewUi {
 
     setDummyWorkspacePathResolverProvider(this.workspacePathResolver);
     setProjectViewText(projectViewText);
-    settingsInitialized = true;
   }
 
   private void setDummyWorkspacePathResolverProvider(WorkspacePathResolver workspacePathResolver) {
-    MutablePicoContainer container = (MutablePicoContainer) getProject().getPicoContainer();
-    Class<WorkspacePathResolverProvider> key = WorkspacePathResolverProvider.class;
-    Object oldProvider = container.getComponentInstance(key);
-    container.unregisterComponent(key.getName());
-    container.registerComponentInstance(
-        key.getName(), (WorkspacePathResolverProvider) () -> workspacePathResolver);
-    if (!settingsInitialized) {
-      Disposer.register(
-          parentDisposable,
-          () -> {
-            container.unregisterComponent(key.getName());
-            if (oldProvider != null) {
-              container.registerComponentInstance(key.getName(), oldProvider);
-            }
-          });
-    }
+    WorkspacePathResolverProvider.getInstance(getProject())
+        .setTemporaryOverride(workspacePathResolver, parentDisposable);
   }
 
   private void setProjectViewText(String projectViewText) {
