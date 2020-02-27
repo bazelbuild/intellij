@@ -84,6 +84,13 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
       List<String> blazeFlags,
       BlazeContext context)
       throws BlazeInfoException {
+
+    boolean isExecutable = ExternalTask.builder().args("which", binaryPath).build().run() == 0;
+    if (!isExecutable) {
+      BazelBinaryNotFoundNotification.show(binaryPath);
+      throw new BlazeInfoException(-1, binaryPath + " cannot be executed");
+    }
+
     BlazeCommand.Builder builder = BlazeCommand.builder(binaryPath, BlazeCommandName.INFO);
     if (key != null) {
       builder.addBlazeFlags(key);
