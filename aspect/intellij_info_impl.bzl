@@ -719,13 +719,19 @@ def divide_java_sources(ctx):
 def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Android-specific output groups, returns true if any android specific info was collected."""
     handled = False
-    handled = collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups) or handled
+    handled = _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+    handled = _collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+    handled = _collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups) or handled
+    handled = _collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups) or handled
+
+    if handled:
+        # do this once do avoid adding unnecessary nesting to the depset
+        # (https://docs.bazel.build/versions/master/skylark/performance.html#reduce-the-number-of-calls-to-depset)
+        update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return handled
 
-def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
-    """Updates intellij-info-android with android_ide_info, and intellij_resolve_android with android resolve files. Returns false if target doesn't contain android attribute."""
+def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+    """Updates ide_info proto with android_ide_info, and intellij_resolve_android with android resolve files. Returns false if target doesn't contain android attribute."""
     if not hasattr(target, "android"):
         return False
 
@@ -791,12 +797,11 @@ def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, ou
         resolve_files += [android.manifest]
 
     ide_info["android_ide_info"] = android_info
-    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     update_sync_output_groups(output_groups, "intellij-resolve-android", depset(resolve_files))
     return True
 
-def collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
-    """Updates intellij-info-android output group with android_instrumentation_info, returns false if not an android_instrumentation_test target."""
+def _collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+    """Updates ide_info proto with android_instrumentation_info, returns false if not an android_instrumentation_test target."""
     if not ctx.rule.kind == "android_instrumentation_test":
         return False
 
@@ -804,10 +809,9 @@ def collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_i
         test_app = str(ctx.rule.attr.test_app.label),
     )
     ide_info["android_instrumentation_info"] = android_instrumentation_info
-    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return True
 
-def collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
+def _collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
     """Updates android_sdk-relevant groups, returns false if not an android_sdk target."""
     if ctx.rule.kind != "android_sdk":
         return False
@@ -815,11 +819,10 @@ def collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
     ide_info["android_sdk_ide_info"] = struct(
         android_jar = artifact_location(android_jar_file),
     )
-    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return True
 
-def collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
-    """Updates android aar_import-relevant groups, returns false if not an aar_import target."""
+def _collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
+    """Updates ide_info proto with aar_import-relevant groups, returns false if not an aar_import target."""
     if ctx.rule.kind != "aar_import":
         return False
     if not hasattr(ctx.rule.attr, "aar"):
@@ -828,7 +831,6 @@ def collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
     ide_info["android_aar_ide_info"] = struct(
         aar = artifact_location(aar_file),
     )
-    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return True
 
 def build_test_info(ctx):
@@ -1009,7 +1011,6 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups) or handled
 
     # Any extra ide info
     if hasattr(semantics, "extra_ide_info"):
