@@ -111,7 +111,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     ImmutableList<String> testHandlerFlags = ImmutableList.of();
     BlazeTestUiSession testUiSession =
         useTestUi()
-            ? TestUiSessionProvider.getInstance(project).getTestUiSession(configuration.getTarget())
+            ? TestUiSessionProvider.getInstance(project)
+                .getTestUiSession(configuration.getTargets())
             : null;
     if (testUiSession != null) {
       testHandlerFlags = testUiSession.getBlazeFlags();
@@ -147,7 +148,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         BlazeCommand.builder(
                 Blaze.getBuildSystemProvider(project).getBinaryPath(project),
                 handlerState.getCommandState().getCommand())
-            .addTargets(configuration.getTarget())
+            .addTargets(configuration.getTargets())
             .addBlazeFlags(extraBlazeFlags)
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
@@ -193,7 +194,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   @Override
   public CidrDebugProcess createDebugProcess(CommandLineState state, XDebugSession session)
       throws ExecutionException {
-    TargetExpression target = configuration.getTarget();
+    TargetExpression target = configuration.getSingleTarget();
     if (target == null) {
       throw new ExecutionException("Cannot parse run configuration target.");
     }

@@ -146,7 +146,6 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
     return changed;
   }
 
-  @SuppressWarnings("unchecked") // BlazeCommandRunConfiguration needs to be generified
   private static boolean addBlazeBeforeRunTask(BlazeCommandRunConfiguration config) {
     BeforeRunTaskProvider<?> provider =
         BlazeBeforeRunTaskProvider.getProvider(config.getProject(), BlazeBeforeRunTaskProvider.ID);
@@ -180,11 +179,11 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
     Set<Label> labelsWithConfigs = Sets.newHashSet();
     for (RunConfiguration configuration : configurations) {
       if (configuration instanceof BlazeRunConfiguration) {
-        BlazeRunConfiguration blazeRunConfiguration = (BlazeRunConfiguration) configuration;
-        TargetExpression target = blazeRunConfiguration.getTarget();
-        if (target instanceof Label) {
-          labelsWithConfigs.add((Label) target);
-        }
+        BlazeRunConfiguration config = (BlazeRunConfiguration) configuration;
+        config.getTargets().stream()
+            .filter(t -> t instanceof Label)
+            .map(t -> (Label) t)
+            .forEach(labelsWithConfigs::add);
       }
     }
     return labelsWithConfigs;

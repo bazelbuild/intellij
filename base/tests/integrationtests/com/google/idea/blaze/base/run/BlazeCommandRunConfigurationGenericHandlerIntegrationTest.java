@@ -95,7 +95,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
         type.getFactory().createTemplateConfiguration(getProject());
     readConfiguration.readExternal(element);
 
-    assertThat(readConfiguration.getTarget()).isEqualTo(targetExpression);
+    assertThat(readConfiguration.getTargets()).containsExactly(targetExpression);
     assertThat(readConfiguration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
 
@@ -117,7 +117,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
         type.getFactory().createTemplateConfiguration(getProject());
     readConfiguration.readExternal(element);
 
-    assertThat(readConfiguration.getTarget()).isEqualTo(configuration.getTarget());
+    assertThat(readConfiguration.getTargets()).isEqualTo(configuration.getTargets());
     assertThat(readConfiguration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
   }
@@ -141,7 +141,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
         type.getFactory().createTemplateConfiguration(getProject());
     editor.applyEditorTo(readConfiguration);
 
-    assertThat(readConfiguration.getTarget()).isEqualTo(targetExpression);
+    assertThat(readConfiguration.getTargets()).containsExactly(targetExpression);
     assertThat(readConfiguration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
 
@@ -166,7 +166,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
 
     // Call setTarget to initialize a generic handler, or this won't apply anything.
     configuration.setTarget(null);
-    assertThat(configuration.getTarget()).isNull();
+    assertThat(configuration.getTargets()).isEmpty();
     assertThat(configuration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
     BlazeCommandRunConfigurationCommonState state =
@@ -188,7 +188,7 @@ public class BlazeCommandRunConfigurationGenericHandlerIntegrationTest
 
     editor.applyEditorTo(readConfiguration);
 
-    assertThat(readConfiguration.getTarget()).isNull();
+    assertThat(readConfiguration.getTargets()).isEmpty();
     assertThat(configuration.getHandler())
         .isInstanceOf(BlazeCommandGenericRunConfigurationHandler.class);
 

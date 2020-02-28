@@ -129,7 +129,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
       BlazeTestUiSession testUiSession =
           canUseTestUi()
               ? TestUiSessionProvider.getInstance(project)
-                  .getTestUiSession(configuration.getTarget())
+                  .getTestUiSession(configuration.getTargets())
               : null;
       if (testUiSession != null) {
         testHandlerFlags = testUiSession.getBlazeFlags();
@@ -190,7 +190,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
               : Blaze.getBuildSystemProvider(project).getBinaryPath(project);
 
       return BlazeCommand.builder(binaryPath, command)
-          .addTargets(configuration.getTarget())
+          .addTargets(configuration.getTargets())
           .addBlazeFlags(
               BlazeFlags.blazeFlags(
                   project,

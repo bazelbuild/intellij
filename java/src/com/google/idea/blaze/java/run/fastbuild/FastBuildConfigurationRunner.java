@@ -103,8 +103,8 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
 
-    checkState(configuration.getTarget() != null);
-    Label label = (Label) configuration.getTarget();
+    checkState(configuration.getSingleTarget() != null);
+    Label label = (Label) configuration.getSingleTarget();
 
     String binaryPath =
         handlerState.getBlazeBinaryState().getBlazeBinary() != null

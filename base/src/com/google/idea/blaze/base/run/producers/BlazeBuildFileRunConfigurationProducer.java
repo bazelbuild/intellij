@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.producers;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
@@ -92,7 +93,7 @@ public class BlazeBuildFileRunConfigurationProducer
     if (target == null) {
       return false;
     }
-    if (!Objects.equals(configuration.getTarget(), target.label)) {
+    if (!Objects.equals(configuration.getTargets(), ImmutableList.of(target.label))) {
       return false;
     }
     // We don't know any details about how the various factories set up configurations from here.

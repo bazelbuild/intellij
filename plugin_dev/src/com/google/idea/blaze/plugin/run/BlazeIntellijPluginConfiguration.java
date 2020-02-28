@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -104,7 +105,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
 
   private final String buildSystem;
 
-  @Nullable private Label target;
+  @Nullable private volatile Label target;
   private RunConfigurationFlagsState blazeFlags;
   private RunConfigurationFlagsState exeFlags;
   @Nullable private Sdk pluginSdk;
@@ -139,9 +140,9 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
   }
 
   @Override
-  @Nullable
-  public Label getTarget() {
-    return target;
+  public ImmutableList<Label> getTargets() {
+    Label target = this.target;
+    return target == null ? ImmutableList.of() : ImmutableList.of(target);
   }
 
   public void setTarget(Label target) {
@@ -192,7 +193,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     }
     String buildNumber = IdeaJdkHelper.getBuildNumber(ideaJdk);
     final BlazeIntellijPluginDeployer deployer =
-        new BlazeIntellijPluginDeployer(sandboxHome, buildNumber, getTarget());
+        new BlazeIntellijPluginDeployer(sandboxHome, buildNumber, target);
     env.putUserData(BlazeIntellijPluginDeployer.USER_DATA_KEY, deployer);
 
     // copy license from running instance of idea
@@ -275,7 +276,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
   public void checkConfiguration() throws RuntimeConfigurationException {
     super.checkConfiguration();
 
-    Label label = getTarget();
+    Label label = target;
     if (label == null) {
       throw new RuntimeConfigurationError("Select a target to run");
     }
@@ -385,7 +386,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
   @Override
   @Nullable
   public String suggestedName() {
-    Label target = getTarget();
+    Label target = this.target;
     if (target == null) {
       return null;
     }
@@ -450,7 +451,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     @VisibleForTesting
     @Override
     public void resetEditorFrom(BlazeIntellijPluginConfiguration s) {
-      targetCombo.setSelectedItem(s.getTarget());
+      targetCombo.setSelectedItem(s.target);
       blazeFlagsEditor.resetEditorFrom(s.blazeFlags);
       exeFlagsEditor.resetEditorFrom(s.exeFlags);
       if (s.pluginSdk != null) {

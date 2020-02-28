@@ -225,7 +225,7 @@ public final class BuildPluginBeforeRunTaskProvider
                       BuildResultHelperProvider.create(project)) {
                     BlazeCommand command =
                         BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
-                            .addTargets(config.getTarget())
+                            .addTargets(config.getTargets())
                             .addBlazeFlags(
                                 BlazeFlags.blazeFlags(
                                     project,

@@ -16,7 +16,9 @@
 package com.google.idea.blaze.base.run.producers;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.producers.BinaryContextProvider.BinaryRunContext;
@@ -127,6 +129,7 @@ public class BinaryContextRunConfigurationProducer
     if (runContext == null) {
       return false;
     }
-    return runContext.getTarget().label.equals(configuration.getTarget());
+    ImmutableList<? extends TargetExpression> targets = configuration.getTargets();
+    return targets.size() == 1 && runContext.getTarget().label.equals(targets.get(0));
   }
 }

@@ -34,8 +34,8 @@ public class TestUiSessionProviderImpl implements TestUiSessionProvider {
 
   @Nullable
   @Override
-  public BlazeTestUiSession getTestUiSession(TargetExpression target) {
-    if (!BlazeTestEventsHandler.targetSupported(project, target)) {
+  public BlazeTestUiSession getTestUiSession(ImmutableList<? extends TargetExpression> targets) {
+    if (!BlazeTestEventsHandler.targetsSupported(project, targets)) {
       return null;
     }
     File bepOutputFile = BuildEventProtocolUtils.createTempOutputFile();

@@ -141,8 +141,8 @@ public class MultipleJavaClassesTestContextProviderTest
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=com.google.test");
     assertThat(config.getName()).isEqualTo("Blaze test all in directory 'test'");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
@@ -184,8 +184,8 @@ public class MultipleJavaClassesTestContextProviderTest
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test/sub:TestClass"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test/sub:TestClass"));
     assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=com.google.test");
     assertThat(config.getName()).isEqualTo("Blaze test all in directory 'test'");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
@@ -288,8 +288,8 @@ public class MultipleJavaClassesTestContextProviderTest
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:allTests"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:allTests"));
     assertThat(getTestFilterContents(config))
         .isEqualTo("--test_filter=\"com.google.test.TestClass1#|com.google.test.TestClass2#\"");
     assertThat(config.getName()).isEqualTo("Blaze test TestClass1 and 1 others");

@@ -168,7 +168,7 @@ public class BlazeCommandRunConfiguration
   }
 
   @Nullable private volatile String targetPattern;
-  // null if the target is null or not a Label
+  // null if the target is null or not a single Label
   @Nullable private volatile String targetKindString;
   // used to recognize previously created pending targets by their corresponding source element
   @Nullable private volatile String contextElementString;
@@ -228,9 +228,19 @@ public class BlazeCommandRunConfiguration
   }
 
   @Override
+  public ImmutableList<TargetExpression> getTargets() {
+    TargetExpression expr = parseTarget(targetPattern);
+    return expr == null ? ImmutableList.of() : ImmutableList.of(expr);
+  }
+
+  /**
+   * Returns the single target expression represented by this configuration, or null if there isn't
+   * exactly one.
+   */
   @Nullable
-  public TargetExpression getTarget() {
-    return parseTarget(targetPattern);
+  public TargetExpression getSingleTarget() {
+    ImmutableList<TargetExpression> targets = getTargets();
+    return targets.size() == 1 ? targets.get(0) : null;
   }
 
   public void setTargetInfo(TargetInfo target) {

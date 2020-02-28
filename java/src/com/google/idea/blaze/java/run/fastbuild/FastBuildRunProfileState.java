@@ -110,12 +110,12 @@ final class FastBuildRunProfileState extends BlazeJavaDebuggableRunProfileState 
   }
 
   private Label getLabel() throws ExecutionException {
-    if (!(getConfiguration().getTarget() instanceof Label)) {
+    if (!(getConfiguration().getSingleTarget() instanceof Label)) {
       // We shouldn't ever have this problem since we checked FastBuildService#supportsFastBuild
       // and that will return false for wildcard targets.
       throw new ExecutionException("Fast builds only operate on single targets, not wildcards.");
     }
-    return (Label) getConfiguration().getTarget();
+    return (Label) getConfiguration().getSingleTarget();
   }
 
   @Override

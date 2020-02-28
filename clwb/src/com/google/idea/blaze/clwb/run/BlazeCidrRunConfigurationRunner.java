@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
@@ -87,6 +88,15 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     return executor instanceof DefaultDebugExecutor;
   }
 
+  private static Label getSingleTarget(BlazeCommandRunConfiguration config)
+      throws ExecutionException {
+    ImmutableList<? extends TargetExpression> targets = config.getTargets();
+    if (targets.size() != 1 || !(targets.get(0) instanceof Label)) {
+      throw new ExecutionException("Invalid configuration: doesn't have a single target label");
+    }
+    return (Label) targets.get(0);
+  }
+
   /**
    * Builds blaze C/C++ target in debug mode, and returns the output build artifact.
    *
@@ -122,6 +132,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
                   ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
               "Building debug binary");
 
+      Label target = getSingleTarget(configuration);
       try {
         BuildResult result = buildOperation.get();
         if (result.status != BuildResult.Status.SUCCESS) {
@@ -137,27 +148,25 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       try {
         candidateFiles =
             BlazeArtifact.getLocalFiles(
-                    buildResultHelper.getBuildArtifactsForTarget(
-                        (Label) configuration.getTarget(), file -> true))
+                    buildResultHelper.getBuildArtifactsForTarget(target, file -> true))
                 .stream()
                 .filter(File::canExecute)
                 .collect(Collectors.toList());
       } catch (GetArtifactsException e) {
         throw new ExecutionException(
             String.format(
-                "Failed to get output artifacts when building %s: %s",
-                configuration.getTarget(), e.getMessage()));
+                "Failed to get output artifacts when building %s: %s", target, e.getMessage()));
       }
       if (candidateFiles.isEmpty()) {
         throw new ExecutionException(
-            String.format("No output artifacts found when building %s", configuration.getTarget()));
+            String.format("No output artifacts found when building %s", target));
       }
-      File file = findExecutable((Label) configuration.getTarget(), candidateFiles);
+      File file = findExecutable(target, candidateFiles);
       if (file == null) {
         throw new ExecutionException(
             String.format(
                 "More than 1 executable was produced when building %s; don't know which to debug",
-                configuration.getTarget()));
+                target));
       }
       LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
       return file;

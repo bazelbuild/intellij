@@ -152,7 +152,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     RunConfiguration config = fromContext.getConfiguration();
     assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) config;
-    assertThat(blazeConfig.getTarget()).isNull();
+    assertThat(blazeConfig.getTargets()).isEmpty();
     assertThat(blazeConfig.getName())
         .isEqualTo("Choose subclass for NonAbstractSuperClassTestCase");
   }
@@ -193,7 +193,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     RunConfiguration config = fromContext.getConfiguration();
     assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) config;
-    assertThat(blazeConfig.getTarget()).isNull();
+    assertThat(blazeConfig.getTargets()).isEmpty();
     assertThat(blazeConfig.getName()).isEqualTo("Choose subclass for AbstractTestCase");
 
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
@@ -212,8 +212,8 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     BlazeJavaAbstractTestCaseConfigurationProducer.chooseSubclass(
         fromContext, context, EmptyRunnable.INSTANCE);
 
-    assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
+    assertThat(blazeConfig.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(blazeConfig))
         .isEqualTo(BlazeFlags.TEST_FILTER + "=com.google.test.TestClass#");
   }
@@ -254,7 +254,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     RunConfiguration config = fromContext.getConfiguration();
     assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) config;
-    assertThat(blazeConfig.getTarget()).isNull();
+    assertThat(blazeConfig.getTargets()).isEmpty();
     assertThat(blazeConfig.getName()).isEqualTo("Choose subclass for AbstractTestCase.testMethod");
 
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
@@ -273,8 +273,8 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     BlazeJavaAbstractTestCaseConfigurationProducer.chooseSubclass(
         fromContext, context, EmptyRunnable.INSTANCE);
 
-    assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
+    assertThat(blazeConfig.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(blazeConfig))
         .isEqualTo(BlazeFlags.TEST_FILTER + "=com.google.test.TestClass#testMethod$");
   }

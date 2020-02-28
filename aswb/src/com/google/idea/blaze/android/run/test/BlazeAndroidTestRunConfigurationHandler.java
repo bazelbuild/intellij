@@ -88,7 +88,7 @@ public class BlazeAndroidTestRunConfigurationHandler
   @Override
   @Nullable
   public Label getLabel() {
-    TargetExpression target = configuration.getTarget();
+    TargetExpression target = configuration.getSingleTarget();
     if (target instanceof Label) {
       return (Label) target;
     }
@@ -151,7 +151,7 @@ public class BlazeAndroidTestRunConfigurationHandler
     // 2. Any other validation is done during edit-time of the run configuration before saving.
     BlazeCommandRunConfiguration configFromEnv =
         BlazeAndroidRunConfigurationHandler.getCommandConfig(env);
-    configuration.setTarget(configFromEnv.getTarget());
+    configuration.setTarget(configFromEnv.getSingleTarget());
 
     Module module = getModule();
     AndroidFacet facet = module != null ? AndroidFacet.getInstance(module) : null;

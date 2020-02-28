@@ -95,7 +95,7 @@ public class BlazeCommandRunConfigurationRunManagerImplTest extends BlazeIntegra
     final BlazeCommandRunConfiguration readConfiguration =
         (BlazeCommandRunConfiguration) configurations[0];
 
-    assertThat(readConfiguration.getTarget()).isEqualTo(label);
+    assertThat(readConfiguration.getTargets()).containsExactly(label);
   }
 
   @Test

@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.base.run.smrunner;
 
+
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -46,8 +48,9 @@ public interface BlazeTestEventsHandler {
    * <p>Test results will still be displayed for unhandled kinds if they're included in a test_suite
    * or multi-target Blaze invocation, where we don't know up front the languages involved.
    */
-  static boolean targetSupported(Project project, TargetExpression target) {
-    Kind kind = getKindForTarget(project, target);
+  static boolean targetsSupported(
+      Project project, ImmutableList<? extends TargetExpression> targets) {
+    Kind kind = getKindForTargets(project, targets);
     return Arrays.stream(EP_NAME.getExtensions()).anyMatch(handler -> handler.handlesKind(kind));
   }
 
@@ -72,6 +75,15 @@ public interface BlazeTestEventsHandler {
   }
 
   /**
+   * Returns a {@link BlazeTestEventsHandler} applicable to the given targets or {@link
+   * Optional#empty()} if no such handler can be found.
+   */
+  static Optional<BlazeTestEventsHandler> getHandlerForTargets(
+      Project project, ImmutableList<? extends TargetExpression> targets) {
+    return getHandlerForTargetKind(getKindForTargets(project, targets));
+  }
+
+  /**
    * Returns a {@link BlazeTestEventsHandler} applicable to the given target kind, or {@link
    * Optional#empty()} if no such handler can be found.
    */
@@ -79,6 +91,22 @@ public interface BlazeTestEventsHandler {
     return Arrays.stream(EP_NAME.getExtensions())
         .filter(handler -> handler.handlesKind(kind))
         .findFirst();
+  }
+
+  /** Returns the single Kind shared by all targets or null if they have different kinds. */
+  @Nullable
+  static Kind getKindForTargets(Project project, List<? extends TargetExpression> targets) {
+    // TODO(brendandouglas): extend BlazeTestEventsHandler API to handle multiple targets with
+    // *known* kinds
+    Kind singleKind = null;
+    for (TargetExpression target : targets) {
+      Kind kind = getKindForTarget(project, target);
+      if (kind == null || (singleKind != null && !kind.equals(singleKind))) {
+        return null;
+      }
+      singleKind = kind;
+    }
+    return singleKind;
   }
 
   @Nullable

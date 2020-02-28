@@ -36,6 +36,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -248,6 +249,15 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     return false;
   }
 
+  private static Label getSingleTarget(BlazeCommandRunConfiguration config)
+      throws ExecutionException {
+    ImmutableList<? extends TargetExpression> targets = config.getTargets();
+    if (targets.size() != 1 || !(targets.get(0) instanceof Label)) {
+      throw new ExecutionException("Invalid configuration: doesn't have a single target label");
+    }
+    return (Label) targets.get(0);
+  }
+
   /**
    * Builds blaze go target and returns the output build artifact.
    *
@@ -263,6 +273,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     if (blazeProjectData == null) {
       throw new ExecutionException("Not synced yet, please sync project");
     }
+    Label label = getSingleTarget(configuration);
 
     SaveUtil.saveAllFiles();
     try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
@@ -328,29 +339,26 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         try {
           candidateFiles =
               BlazeArtifact.getLocalFiles(
-                      buildResultHelper.getBuildArtifactsForTarget(
-                          (Label) configuration.getTarget(), file -> true))
+                      buildResultHelper.getBuildArtifactsForTarget(label, file -> true))
                   .stream()
                   .filter(File::canExecute)
                   .collect(Collectors.toList());
         } catch (GetArtifactsException e) {
           throw new ExecutionException(
               String.format(
-                  "Failed to get output artifacts when building %s: %s",
-                  configuration.getTarget(), e.getMessage()));
+                  "Failed to get output artifacts when building %s: %s", label, e.getMessage()));
         }
         if (candidateFiles.isEmpty()) {
           throw new ExecutionException(
-              String.format(
-                  "No output artifacts found when building %s", configuration.getTarget()));
+              String.format("No output artifacts found when building %s", label));
         }
-        File binary = findExecutable((Label) configuration.getTarget(), candidateFiles);
+        File binary = findExecutable(label, candidateFiles);
         if (binary == null) {
           throw new ExecutionException(
               String.format(
                   "More than 1 executable was produced when building %s; "
                       + "don't know which one to debug",
-                  configuration.getTarget()));
+                  label));
         }
         LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(binary));
         File workingDir = getWorkingDirectory(WorkspaceRoot.fromProject(project), binary);

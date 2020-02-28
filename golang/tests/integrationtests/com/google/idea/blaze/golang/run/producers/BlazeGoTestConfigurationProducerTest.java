@@ -82,7 +82,8 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget()).isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//foo/bar:foo_test"));
     assertThat(getTestFilterContents(config)).isNull();
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
@@ -125,7 +126,8 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget()).isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//foo/bar:foo_test"));
     assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=^TestFoo$");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
