@@ -44,6 +44,11 @@
       text="Sync Working Set"
       icon="BlazeIcons.Logo">
     </action>
+    <action id="Blaze.CleanProjectTargets"
+        class="com.google.idea.blaze.base.sync.actions.CleanProjectTargetsSyncAction"
+        text="Clean Project Targets"
+        icon="AllIcons.Actions.Refresh">
+    </action>
     <action id="Blaze.ExpandSyncToWorkingSet"
       class="com.google.idea.blaze.base.sync.actions.ExpandSyncToWorkingSetAction"
       text="Expand Sync to Working Set">
