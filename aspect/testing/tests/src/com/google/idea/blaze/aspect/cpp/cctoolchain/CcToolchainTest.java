@@ -49,7 +49,7 @@ public class CcToolchainTest extends BazelIntellijAspectTest {
     // This is *usually* deliberately chosen, though nowadays it may be fine to omit -std.
     // Compilers like Clang now default to a modern language level:
     // https://github.com/llvm-mirror/clang/commit/466d8da5f89b1a780f735c86f414fa69ce63221b
-    // The -std= flag could also be in the form -Xgcc-only=-std=<> or -Xclang-only=-std=<s>
+    // The -std= flag could also be in the form -Xclang-only=-std=<s>
     Pattern stdRegex = Pattern.compile("^(-std=.*|-X[a-zA-Z]+-only=-std=.*)");
     assertThat(
             toolchainInfo.getCppOptionList().stream()
