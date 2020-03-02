@@ -614,14 +614,24 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
     return ImmutableList.of();
   }
 
+  /**
+   * This is still useful for prefetching and adding symlink-resolved library files to the project.
+   */
   @Override
   public Collection<VirtualFile> getFileList() {
     return files.getValue();
   }
 
+  /**
+   * https://www.typescriptlang.org/docs/handbook/tsconfig-json.html
+   *
+   * <p>If the "files" and "include" are both left unspecified, the compiler defaults to including
+   * all TypeScript (.ts, .d.ts and .tsx) files in the containing directory and subdirectories
+   * except those excluded using the "exclude" property.
+   */
   @Override
   public boolean hasFilesList() {
-    return true;
+    return false;
   }
 
   @Override

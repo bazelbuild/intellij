@@ -256,7 +256,7 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
             vf("/src/workspace/project/foo/included.ts"),
             vf(
                 "/src/out/execroot/bin/project/foo/tsconfig.runfiles/workspace/javascript/closure/base.d.ts"));
-    assertThat(blazeConfig.hasFilesList()).isTrue();
+    assertThat(blazeConfig.hasFilesList()).isFalse();
   }
 
   @Test
