@@ -25,6 +25,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.jetbrains.cidr.ArchitectureType;
 import com.jetbrains.cidr.cpp.execution.debugger.backend.CLionGDBDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import java.io.File;
@@ -47,9 +48,9 @@ final class BlazeGDBDriverConfiguration extends CLionGDBDriverConfiguration {
   }
 
   @Override
-  public GeneralCommandLine createDriverCommandLine(DebuggerDriver driver)
-      throws ExecutionException {
-    GeneralCommandLine commandLine = super.createDriverCommandLine(driver);
+  public GeneralCommandLine createDriverCommandLine(
+      DebuggerDriver driver, ArchitectureType architectureType) throws ExecutionException {
+    GeneralCommandLine commandLine = super.createDriverCommandLine(driver, architectureType);
     modifyCommandLine(commandLine);
     return commandLine;
   }
