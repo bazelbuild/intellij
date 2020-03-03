@@ -42,6 +42,11 @@ java_import(
 )
 
 java_import(
+    name = "tslint",
+    jars = glob(["plugins/tslint/lib/*.jar"]),
+)
+
+java_import(
     name = "angular",
     jars = glob(["plugins/AngularJS/lib/*.jar"]),
 )
