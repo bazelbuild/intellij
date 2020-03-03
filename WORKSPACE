@@ -240,6 +240,13 @@ http_archive(
     url = "https://dl.google.com/dl/android/studio/ide-zips/4.0.0.10/android-studio-ide-193.6220182-linux.tar.gz",
 )
 
+http_archive(
+    name = "android_studio_4_1",
+    build_file = "@//intellij_platform_sdk:BUILD.android_studio41",
+    sha256 = "1deb9157d8a9b21053fb50031a0b307dd2cd1b460caa923f794ca2de8f733a56",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/4.1.0.1/android-studio-ide-193.6224510-linux.tar.gz",
+)
+
 # LICENSE: Common Public License 1.0
 jvm_maven_import_external(
     name = "junit",
