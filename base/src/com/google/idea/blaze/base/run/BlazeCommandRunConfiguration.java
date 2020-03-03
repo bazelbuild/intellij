@@ -15,25 +15,19 @@
  */
 package com.google.idea.blaze.base.run;
 
-import static java.util.stream.Collectors.toList;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.logging.EventLoggingService;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandlerProvider.TargetState;
@@ -43,11 +37,9 @@ import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.run.targetfinder.FuturesUtil;
 import com.google.idea.blaze.base.run.targetfinder.TargetFinder;
+import com.google.idea.blaze.base.run.ui.TargetExpressionListUi;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -67,12 +59,10 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.ui.TextFieldWithAutoCompletion;
-import com.intellij.ui.TextFieldWithAutoCompletion.StringsCompletionProvider;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
-import java.util.Collection;
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.Box;
 import javax.swing.JComponent;
@@ -134,7 +124,7 @@ public class BlazeCommandRunConfiguration
   /** Set up a run configuration with a not-yet-known target pattern. */
   public void setPendingContext(PendingRunConfigurationContext pendingContext) {
     this.pendingContext = pendingContext;
-    this.targetPattern = null;
+    this.targetPatterns = ImmutableList.of();
     this.targetKindString = null;
     this.contextElementString = pendingContext.getSourceElementString();
     updateHandler();
@@ -154,7 +144,7 @@ public class BlazeCommandRunConfiguration
     if (pendingContext == null || !pendingContext.isDone()) {
       return false;
     }
-    if (targetPattern == null) {
+    if (targetPatterns.isEmpty()) {
       return true;
     }
     // setup failed, but it still has useful information (perhaps the user modified it?)
@@ -167,7 +157,7 @@ public class BlazeCommandRunConfiguration
     return pendingContext;
   }
 
-  @Nullable private volatile String targetPattern;
+  private volatile ImmutableList<String> targetPatterns = ImmutableList.of();
   // null if the target is null or not a single Label
   @Nullable private volatile String targetKindString;
   // used to recognize previously created pending targets by their corresponding source element
@@ -229,8 +219,7 @@ public class BlazeCommandRunConfiguration
 
   @Override
   public ImmutableList<TargetExpression> getTargets() {
-    TargetExpression expr = parseTarget(targetPattern);
-    return expr == null ? ImmutableList.of() : ImmutableList.of(expr);
+    return parseTargets(targetPatterns);
   }
 
   /**
@@ -244,13 +233,15 @@ public class BlazeCommandRunConfiguration
   }
 
   public void setTargetInfo(TargetInfo target) {
-    targetPattern = target.label.toString().trim();
-    updateTargetKind(target);
+    String pattern = target.label.toString().trim();
+    targetPatterns = pattern.isEmpty() ? ImmutableList.of() : ImmutableList.of(pattern);
+    updateTargetKind(target.kindString);
   }
 
   /** Sets the target expression and asynchronously kicks off a target kind update. */
   public void setTarget(@Nullable TargetExpression target) {
-    targetPattern = target != null ? target.toString().trim() : null;
+    targetPatterns =
+        target != null ? ImmutableList.of(target.toString().trim()) : ImmutableList.of();
     updateTargetKindAsync(null);
   }
 
@@ -262,7 +253,7 @@ public class BlazeCommandRunConfiguration
   }
 
   private TargetState getTargetState() {
-    return targetPattern == null && pendingContext != null
+    return targetPatterns.isEmpty() && pendingContext != null
         ? TargetState.PENDING
         : TargetState.KNOWN;
   }
@@ -286,9 +277,22 @@ public class BlazeCommandRunConfiguration
     }
   }
 
+  /** Returns an empty list if *any* of the patterns aren't valid target expressions. */
+  private static ImmutableList<TargetExpression> parseTargets(List<String> strings) {
+    ImmutableList.Builder<TargetExpression> list = ImmutableList.builder();
+    for (String s : strings) {
+      TargetExpression expr = parseTarget(s);
+      if (expr == null) {
+        return ImmutableList.of();
+      }
+      list.add(expr);
+    }
+    return list.build();
+  }
+
   @Nullable
   private static TargetExpression parseTarget(@Nullable String targetPattern) {
-    if (targetPattern == null) {
+    if (Strings.isNullOrEmpty(targetPattern)) {
       return null;
     }
     // try to canonicalize labels with implicit target names
@@ -307,26 +311,28 @@ public class BlazeCommandRunConfiguration
   }
 
   /**
-   * Queries the kind of the current target pattern, possibly asynchronously.
+   * Queries the kind of the current target pattern, possibly asynchronously, in the case where
+   * there's only a single target.
    *
    * @param asyncCallback if the kind is updated asynchronously, this will be run after the kind is
    *     updated. If it's updated synchronously, this will not be run.
    */
   void updateTargetKindAsync(@Nullable Runnable asyncCallback) {
-    TargetExpression expr = parseTarget(targetPattern);
-    if (!(expr instanceof Label)) {
+    ImmutableList<TargetExpression> targets = parseTargets(targetPatterns);
+    if (targets.size() != 1 || !(targets.get(0) instanceof Label)) {
+      // TODO(brendandouglas): any reason to support multiple targets here?
       updateTargetKind(null);
       return;
     }
-    Label label = (Label) expr;
+    Label label = (Label) targets.get(0);
     ListenableFuture<TargetInfo> future = TargetFinder.findTargetInfoFuture(getProject(), label);
     if (future.isDone()) {
-      updateTargetKind(FuturesUtil.getIgnoringErrors(future));
+      updateTargetKindFromSingleTarget(FuturesUtil.getIgnoringErrors(future));
     } else {
-      updateTargetKind(null);
+      updateTargetKindFromSingleTarget(null);
       future.addListener(
           () -> {
-            updateTargetKind(FuturesUtil.getIgnoringErrors(future));
+            updateTargetKindFromSingleTarget(FuturesUtil.getIgnoringErrors(future));
             if (asyncCallback != null) {
               asyncCallback.run();
             }
@@ -335,8 +341,12 @@ public class BlazeCommandRunConfiguration
     }
   }
 
-  private void updateTargetKind(@Nullable TargetInfo targetInfo) {
-    targetKindString = targetInfo != null ? targetInfo.kindString : null;
+  private void updateTargetKindFromSingleTarget(@Nullable TargetInfo target) {
+    updateTargetKind(target == null ? null : target.kindString);
+  }
+
+  private void updateTargetKind(@Nullable String kind) {
+    targetKindString = kind;
     updateHandler();
   }
 
@@ -351,10 +361,14 @@ public class BlazeCommandRunConfiguration
       return kind.toString();
     }
 
-    TargetExpression target = parseTarget(targetPattern);
-    if (target instanceof Label) {
+    ImmutableList<TargetExpression> targets = parseTargets(targetPatterns);
+    if (targets.size() > 1) {
+      return "target patterns";
+    }
+    TargetExpression singleTarget = Iterables.getFirst(targets, null);
+    if (singleTarget instanceof Label) {
       return "unknown rule";
-    } else if (target != null) {
+    } else if (singleTarget != null) {
       return "target pattern";
     } else {
       return "unknown target";
@@ -385,20 +399,27 @@ public class BlazeCommandRunConfiguration
     if (pendingContext != null && !pendingContext.isDone()) {
       return;
     }
-    if (Strings.isNullOrEmpty(targetPattern)) {
+    ImmutableList<String> targetPatterns = this.targetPatterns;
+    if (targetPatterns.isEmpty()) {
       throw new RuntimeConfigurationError(
           String.format(
               "You must specify a %s target expression.", Blaze.buildSystemName(getProject())));
     }
+    for (String pattern : targetPatterns) {
+      if (Strings.isNullOrEmpty(pattern)) {
+        throw new RuntimeConfigurationError(
+            String.format(
+                "You must specify a %s target expression.", Blaze.buildSystemName(getProject())));
+      }
+      if (!pattern.startsWith("//") && !pattern.startsWith("@")) {
+        throw new RuntimeConfigurationError(
+            "You must specify the full target expression, starting with // or @");
+      }
 
-    if (!targetPattern.startsWith("//") && !targetPattern.startsWith("@")) {
-      throw new RuntimeConfigurationError(
-          "You must specify the full target expression, starting with // or @");
-    }
-
-    String error = TargetExpression.validate(targetPattern);
-    if (error != null) {
-      throw new RuntimeConfigurationError(error);
+      String error = TargetExpression.validate(pattern);
+      if (error != null) {
+        throw new RuntimeConfigurationError(error);
+      }
     }
   }
 
@@ -427,12 +448,24 @@ public class BlazeCommandRunConfiguration
     keepInSync = keepInSyncString != null ? Boolean.parseBoolean(keepInSyncString) : null;
     contextElementString = element.getAttributeValue(CONTEXT_ELEMENT_ATTR);
 
-    // Target is persisted as a tag to permit multiple targets in the future.
-    Element targetElement = element.getChild(TARGET_TAG);
-    if (targetElement != null && !Strings.isNullOrEmpty(targetElement.getTextTrim())) {
-      targetPattern = targetElement.getTextTrim();
-      targetKindString = targetElement.getAttributeValue(KIND_ATTR);
+    ImmutableList.Builder<String> targets = ImmutableList.builder();
+    List<Element> targetElements = element.getChildren(TARGET_TAG);
+    for (Element targetElement : targetElements) {
+      if (targetElement != null && !Strings.isNullOrEmpty(targetElement.getTextTrim())) {
+        targets.add(targetElement.getTextTrim());
+        // backwards-compatibility with prior per-target kind serialization
+        String kind = targetElement.getAttributeValue(KIND_ATTR);
+        if (kind != null) {
+          targetKindString = kind;
+        }
+      }
     }
+    targetPatterns = targets.build();
+    String singleKind = element.getAttributeValue(KIND_ATTR);
+    if (singleKind != null) {
+      targetKindString = element.getAttributeValue(KIND_ATTR);
+    }
+
     // Because BlazeProjectData is not available when configurations are loading,
     // we can't call setTarget and have it find the appropriate handler provider.
     // So instead, we use the stored provider ID.
@@ -453,13 +486,16 @@ public class BlazeCommandRunConfiguration
     super.writeExternal(element);
 
     blazeElementState.removeChildren(TARGET_TAG);
-    if (targetPattern != null) {
-      Element targetElement = new Element(TARGET_TAG);
-      targetElement.setText(targetPattern);
-      if (targetKindString != null) {
-        targetElement.setAttribute(KIND_ATTR, targetKindString);
+    for (String target : targetPatterns) {
+      if (target.isEmpty()) {
+        continue;
       }
+      Element targetElement = new Element(TARGET_TAG);
+      targetElement.setText(target);
       blazeElementState.addContent(targetElement);
+    }
+    if (targetKindString != null) {
+      blazeElementState.setAttribute(KIND_ATTR, targetKindString);
     }
     if (keepInSync != null) {
       blazeElementState.setAttribute(KEEP_IN_SYNC_TAG, Boolean.toString(keepInSync));
@@ -480,7 +516,7 @@ public class BlazeCommandRunConfiguration
   public BlazeCommandRunConfiguration clone() {
     final BlazeCommandRunConfiguration configuration = (BlazeCommandRunConfiguration) super.clone();
     configuration.blazeElementState = blazeElementState.clone();
-    configuration.targetPattern = targetPattern;
+    configuration.targetPatterns = targetPatterns;
     configuration.targetKindString = targetKindString;
     configuration.contextElementString = contextElementString;
     configuration.pendingContext = pendingContext;
@@ -538,18 +574,16 @@ public class BlazeCommandRunConfiguration
     private final JBCheckBox keepInSyncCheckBox;
     private final JBLabel targetExpressionLabel;
     private final ConsoleOutputFileSettingsUi<BlazeCommandRunConfiguration> outputFileUi;
-    private final TextFieldWithAutoCompletion<String> targetField;
+    private final TargetExpressionListUi targetsUi;
 
     BlazeCommandRunConfigurationSettingsEditor(BlazeCommandRunConfiguration config) {
       Project project = config.getProject();
-      targetField =
-          new TextFieldWithAutoCompletion<>(
-              project, new TargetCompletionProvider(project), true, null);
       elementState = config.blazeElementState.clone();
+      targetsUi = new TargetExpressionListUi(project);
       targetExpressionLabel = new JBLabel(UIUtil.ComponentStyle.LARGE);
       keepInSyncCheckBox = new JBCheckBox("Keep in sync with source XML");
       outputFileUi = new ConsoleOutputFileSettingsUi<>();
-      editorWithoutSyncCheckBox = UiUtil.createBox(targetExpressionLabel, targetField);
+      editorWithoutSyncCheckBox = UiUtil.createBox(targetExpressionLabel, targetsUi);
       editor =
           UiUtil.createBox(
               editorWithoutSyncCheckBox, outputFileUi.getComponent(), keepInSyncCheckBox);
@@ -578,7 +612,7 @@ public class BlazeCommandRunConfiguration
       if (handlerStateEditor != null) {
         handlerStateEditor.setComponentEnabled(enabled);
       }
-      targetField.setEnabled(enabled);
+      targetsUi.setEnabled(enabled);
       outputFileUi.setComponentEnabled(enabled);
     }
 
@@ -611,7 +645,7 @@ public class BlazeCommandRunConfiguration
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);
       }
-      targetField.setText(config.targetPattern);
+      targetsUi.setTargetExpressions(config.targetPatterns);
       outputFileUi.resetEditorFrom(config);
       handlerStateEditor.resetEditorFrom(config.handler.getState());
     }
@@ -637,7 +671,7 @@ public class BlazeCommandRunConfiguration
       }
 
       // finally, update the handler
-      config.targetPattern = Strings.emptyToNull(targetField.getText().trim());
+      config.targetPatterns = targetsUi.getTargetExpressions();
       config.updateTargetKindAsync(() -> UIUtil.invokeLaterIfNeeded(this::fireEditorStateChanged));
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
@@ -646,35 +680,6 @@ public class BlazeCommandRunConfiguration
       } else {
         handlerStateEditor.applyEditorTo(config.handler.getState());
       }
-    }
-  }
-
-  private static class TargetCompletionProvider extends StringsCompletionProvider {
-    TargetCompletionProvider(Project project) {
-      super(getTargets(project), null);
-    }
-
-    private static Collection<String> getTargets(Project project) {
-      BlazeProjectData projectData =
-          BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-      BlazeImportSettings importSettings =
-          BlazeImportSettingsManager.getInstance(project).getImportSettings();
-      ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-      if (projectData == null || importSettings == null || projectViewSet == null) {
-        return ImmutableList.of();
-      }
-      ImportRoots importRoots =
-          ImportRoots.builder(
-                  WorkspaceRoot.fromImportSettings(importSettings), importSettings.getBuildSystem())
-              .add(projectViewSet)
-              .build();
-      return projectData.getTargetMap().targets().stream()
-          .filter(TargetIdeInfo::isPlainTarget)
-          .map(TargetIdeInfo::getKey)
-          .map(TargetKey::getLabel)
-          .filter(importRoots::importAsSource)
-          .map(TargetExpression::toString)
-          .collect(toList());
     }
   }
 }
