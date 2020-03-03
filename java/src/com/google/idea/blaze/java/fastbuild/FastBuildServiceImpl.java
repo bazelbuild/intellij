@@ -59,6 +59,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService.ChangedSources;
+import com.google.idea.blaze.java.fastbuild.FastBuildException.BlazeBuildError;
 import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope.FastBuildLogOutput;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.google.idea.common.concurrency.ConcurrencyUtil;
@@ -297,7 +298,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
         FastBuildLogOutput.keyValue("deploy_jar_build_result", result.status.toString()));
     context.output(FastBuildLogOutput.milliseconds("deploy_jar_build_time_ms", timer));
     if (result.status != Status.SUCCESS) {
-      throw new RuntimeException("Blaze failure building deploy jar");
+      throw new FastBuildTunnelException(new BlazeBuildError("Blaze failure building deploy jar"));
     }
     Predicate<String> filePredicate =
         file ->
