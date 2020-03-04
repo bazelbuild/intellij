@@ -15,13 +15,21 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import javax.annotation.Nullable;
 
 /** Marker interface for all run configurations */
 public interface BlazeRunConfiguration {
-  @Nullable
-  TargetExpression getTarget();
+
+  /**
+   * Returns a list of target expressions this configuration should run, empty if its targets aren't
+   * known or valid.
+   *
+   * <p>Will be calculated synchronously, and in edge cases may involve significant work, so
+   * shouldn't be called on the EDT.
+   */
+  ImmutableList<? extends TargetExpression> getTargets();
 
   /** Keep in sync with source XML */
   void setKeepInSync(@Nullable Boolean keepInSync);

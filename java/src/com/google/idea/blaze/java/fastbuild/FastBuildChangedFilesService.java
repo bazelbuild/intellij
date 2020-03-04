@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -67,6 +68,10 @@ import javax.annotation.concurrent.GuardedBy;
  */
 final class FastBuildChangedFilesService implements Disposable {
 
+  static FastBuildChangedFilesService getInstance(Project project) {
+    return ServiceManager.getService(project, FastBuildChangedFilesService.class);
+  }
+
   private static final Logger logger = Logger.getInstance(FastBuildChangedFilesService.class);
 
   @VisibleForTesting static final int MAX_FILES_TO_COLLECT = 30;
@@ -81,10 +86,10 @@ final class FastBuildChangedFilesService implements Disposable {
   @GuardedBy("this")
   private boolean subscribed;
 
-  FastBuildChangedFilesService(Project project, BlazeProjectDataManager projectDataManager) {
+  FastBuildChangedFilesService(Project project) {
     this(
         project,
-        projectDataManager,
+        BlazeProjectDataManager.getInstance(project),
         listeningDecorator(
             ConcurrencyUtil.newSingleThreadExecutor(
                 FastBuildChangedFilesService.class.getSimpleName() + "-" + project.getName())));
@@ -163,11 +168,15 @@ final class FastBuildChangedFilesService implements Disposable {
     throw new AssertionError("Unknown state " + data.state);
   }
 
+  @SuppressWarnings("GuardedBy")
   synchronized void addFilesFromFailedCompilation(Label label, Set<File> files) {
 
     Data data = labelData.get(label);
     checkState(data != null, "No build information about %s", label);
 
+    // TODO(b/145386688): Access should be guarded by enclosing instance
+    // 'com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService' of 'data', which is not
+    // accessible in this scope; instead found: 'this'
     data.updateChangedSources(files);
   }
 
@@ -186,6 +195,7 @@ final class FastBuildChangedFilesService implements Disposable {
     }
 
     @Override
+    @SuppressWarnings("GuardedBy")
     public void onSuccess(BuildOutput result) {
 
       ImmutableSet<File> targetSources = getSourceFiles(label, result.blazeData());
@@ -193,6 +203,9 @@ final class FastBuildChangedFilesService implements Disposable {
       synchronized (FastBuildChangedFilesService.this) {
         Data data = labelData.get(label);
         if (data != null) {
+          // TODO(b/145386688): Access should be guarded by enclosing instance
+          // 'com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService' of 'data', which is
+          // not accessible in this scope; instead found: 'FastBuildChangedFilesService.this'
           data.setSources(targetSources);
         }
       }
@@ -206,6 +219,7 @@ final class FastBuildChangedFilesService implements Disposable {
     }
   }
 
+  @SuppressWarnings("GuardedBy")
   private class ChangeSourceListener implements BulkFileListener {
     @Override
     public void after(List<? extends VFileEvent> events) {
@@ -229,7 +243,9 @@ final class FastBuildChangedFilesService implements Disposable {
                   if (changedFiles.isEmpty()) {
                     return null;
                   }
-
+                  // TODO(b/145386688): Access should be guarded by enclosing instance
+                  // 'com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService' of 'data',
+                  // which is not accessible in this scope
                   labelData.values().forEach(data -> data.updateChangedSources(changedFiles));
                   return null;
                 }

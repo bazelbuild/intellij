@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
-import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
@@ -33,13 +32,12 @@ import icons.BlazeIcons;
 import javax.swing.Icon;
 
 /** Syncs the project with BUILD files. */
-public class IncrementalSyncProjectAction extends BlazeProjectAction {
+public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
 
   @Override
-  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
+  protected void runSync(Project project, AnActionEvent e) {
     BlazeSyncManager.getInstance(project)
         .incrementalProjectSync(/* reason= */ "IncrementalSyncProjectAction");
-    updateIcon(e);
   }
 
   @Override

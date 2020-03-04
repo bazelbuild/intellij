@@ -105,7 +105,7 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
   @SuppressWarnings("rawtypes")
   private static List<Location> findClosureTestCase(
       Project project, File file, @Nullable String testName) {
-    VirtualFile virtualFile = VfsUtils.resolveVirtualFile(file);
+    VirtualFile virtualFile = VfsUtils.resolveVirtualFile(file, /* refreshIfNeeded= */ false);
     if (virtualFile == null) {
       return ImmutableList.of();
     }
@@ -174,7 +174,7 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
             projectData.getArtifactLocationDecoder(),
             getJasmineSources(projectData, target))
         .stream()
-        .map(VfsUtils::resolveVirtualFile)
+        .map(f -> VfsUtils.resolveVirtualFile(f, /* refreshIfNeeded= */ false))
         .filter(Objects::nonNull)
         .map(psiManager::findFile)
         .filter(JSFile.class::isInstance)

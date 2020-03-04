@@ -69,7 +69,8 @@ public class GoBinaryContextProviderTest extends BlazeRunConfigurationProducerTe
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget()).isEqualTo(TargetExpression.fromStringSafe("//foo/bar:main"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//foo/bar:main"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.RUN);
   }
 
@@ -107,7 +108,8 @@ public class GoBinaryContextProviderTest extends BlazeRunConfigurationProducerTe
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget()).isEqualTo(TargetExpression.fromStringSafe("//foo/bar:main"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//foo/bar:main"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.RUN);
   }
 }

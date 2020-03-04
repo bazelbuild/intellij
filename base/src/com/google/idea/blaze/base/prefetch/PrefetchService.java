@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.prefetch;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.intellij.openapi.components.ServiceManager;
@@ -38,6 +39,7 @@ public interface PrefetchService {
    * @param refetchCachedFiles True if all files should be fetched, regardless of whether they were
    *     recently fetched.
    */
+  @CanIgnoreReturnValue
   ListenableFuture<?> prefetchFiles(
       Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes);
 

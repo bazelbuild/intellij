@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.java.run.coverage;
 
-import com.google.idea.sdkcompat.openapi.AbstractCoverageProjectViewNodeDecoratorCompat;
+import com.intellij.coverage.AbstractCoverageProjectViewNodeDecorator;
 import com.intellij.coverage.CoverageAnnotator;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuitesBundle;
@@ -36,11 +36,10 @@ import javax.annotation.Nullable;
  * here because the default decorator only handles PsiFile elements.
  */
 public class BlazeCoverageProjectViewClassDecorator
-    extends AbstractCoverageProjectViewNodeDecoratorCompat {
+    extends AbstractCoverageProjectViewNodeDecorator {
 
-  public BlazeCoverageProjectViewClassDecorator(
-      Project project, CoverageDataManager coverageDataManager) {
-    super(project, coverageDataManager);
+  BlazeCoverageProjectViewClassDecorator(Project project) {
+    super(project);
   }
 
   @Override

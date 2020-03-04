@@ -271,7 +271,10 @@
     <consoleFilterProvider implementation="com.google.idea.blaze.base.run.filter.TestLogFilter$Provider"/>
     <codeInsight.lineMarkerProvider
         language="BUILD"
-      implementationClass="com.google.idea.blaze.base.query.MacroLineMarkerProvider"/>
+        implementationClass="com.google.idea.blaze.base.query.MacroLineMarkerProvider"/>
+    <runLineMarkerContributor
+        language="BUILD"
+        implementationClass="com.google.idea.blaze.base.run.producers.BuildFileRunLineMarkerContributor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -311,6 +314,7 @@
     <enterHandlerDelegate implementation="com.google.idea.blaze.base.lang.buildfile.editor.BuildEnterHandler" order="after EnterBetweenBracesHandler"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.ParameterCompletionContributor"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuiltInFunctionCompletionContributor"/>
+    <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.CommonMacroCompletionContributor"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuiltInSymbolCompletionContributor"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuiltInFunctionAttributeCompletionContributor"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.ArgumentCompletionContributor"/>
@@ -358,9 +362,6 @@
   <application-components>
     <component>
       <implementation-class>com.google.idea.blaze.base.plugin.BlazeSpecificInitializer</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.google.idea.blaze.base.plugin.dependency.ProjectDependencyMigration</implementation-class>
     </component>
     <component>
       <interface-class>com.google.idea.common.experiments.ExperimentService</interface-class>
@@ -433,6 +434,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.HeuristicTestIdentifier" interface="com.google.idea.blaze.base.run.producers.HeuristicTestIdentifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputsProvider" interface="com.google.idea.blaze.base.model.OutputsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.VcsSyncListener" interface="com.google.idea.blaze.base.vcs.VcsSyncListener"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.CommonMacroContributor" interface="com.google.idea.blaze.base.lang.buildfile.completion.CommonMacroContributor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">

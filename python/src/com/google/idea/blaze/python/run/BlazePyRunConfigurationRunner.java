@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -132,13 +133,13 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
         nativeConfig.setPassParentEnvs(envState.isPassParentEnvs());
         nativeConfig.setEnvs(envState.getEnvs());
       }
+      Label target = getSingleTarget(configuration);
       return new PythonScriptCommandLineState(nativeConfig, env) {
 
         private final CommandLinePatcher applyHelperPydevFlags =
-            (commandLine) -> {
-              BlazePyDebugHelper.doBlazeDebugCommandlinePatching(
-                  nativeConfig.getProject(), configuration.getTarget(), commandLine);
-            };
+            (commandLine) ->
+                BlazePyDebugHelper.doBlazeDebugCommandlinePatching(
+                    nativeConfig.getProject(), target, commandLine);
 
         @Override
         protected ProcessHandler startProcess(
@@ -265,6 +266,15 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     return null;
   }
 
+  private static Label getSingleTarget(BlazeCommandRunConfiguration config)
+      throws ExecutionException {
+    ImmutableList<? extends TargetExpression> targets = config.getTargets();
+    if (targets.size() != 1 || !(targets.get(0) instanceof Label)) {
+      throw new ExecutionException("Invalid configuration: doesn't have a single target label");
+    }
+    return (Label) targets.get(0);
+  }
+
   /**
    * Builds blaze python target and returns the output build artifact.
    *
@@ -280,8 +290,8 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       throw new ExecutionException("Not synced yet, please sync project");
     }
 
-    String validationError =
-        BlazePyDebugHelper.validateDebugTarget(env.getProject(), configuration.getTarget());
+    Label target = getSingleTarget(configuration);
+    String validationError = BlazePyDebugHelper.validateDebugTarget(env.getProject(), target);
     if (validationError != null) {
       throw new WithBrowserHyperlinkExecutionException(validationError);
     }
@@ -294,8 +304,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
               BlazeCommandName.BUILD,
               configuration,
               buildResultHelper,
-              BlazePyDebugHelper.getAllBlazeDebugFlags(
-                  configuration.getProject(), configuration.getTarget()),
+              BlazePyDebugHelper.getAllBlazeDebugFlags(configuration.getProject(), target),
               ImmutableList.of(),
               BlazeInvocationContext.runConfigContext(
                   ExecutorType.fromExecutor(env.getExecutor()), configuration.getType(), true),
@@ -316,28 +325,26 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       try {
         candidateFiles =
             BlazeArtifact.getLocalFiles(
-                    buildResultHelper.getBuildArtifactsForTarget(
-                        (Label) configuration.getTarget(), file -> true))
+                    buildResultHelper.getBuildArtifactsForTarget(target, file -> true))
                 .stream()
                 .filter(File::canExecute)
                 .collect(Collectors.toList());
       } catch (GetArtifactsException e) {
         throw new ExecutionException(
             String.format(
-                "Failed to get output artifacts when building %s: %s",
-                configuration.getTarget(), e.getMessage()));
+                "Failed to get output artifacts when building %s: %s", target, e.getMessage()));
       }
       if (candidateFiles.isEmpty()) {
         throw new ExecutionException(
-            String.format("No output artifacts found when building %s", configuration.getTarget()));
+            String.format("No output artifacts found when building %s", target));
       }
-      File file = findExecutable((Label) configuration.getTarget(), candidateFiles);
+      File file = findExecutable(target, candidateFiles);
       if (file == null) {
         throw new ExecutionException(
             String.format(
                 "More than 1 executable was produced when building %s; "
                     + "don't know which one to debug",
-                configuration.getTarget()));
+                target));
       }
       LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
       return file;

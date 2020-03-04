@@ -49,11 +49,13 @@ public class BlazeSyncStatusImpl implements BlazeSyncStatus {
     return syncInProgress.get();
   }
 
-  void syncStarted() {
+  @Override
+  public void syncStarted() {
     syncInProgress.set(true);
   }
 
-  void syncEnded(SyncMode syncMode, SyncResult syncResult) {
+  @Override
+  public void syncEnded(SyncMode syncMode, SyncResult syncResult) {
     syncInProgress.set(false);
     stateManager.setLastSyncFailed(syncResult == SyncResult.FAILURE);
     if (allTargetsBuild(syncMode) && syncResult == SyncResult.SUCCESS) {

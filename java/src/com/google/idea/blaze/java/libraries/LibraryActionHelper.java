@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -25,18 +26,46 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-class LibraryActionHelper {
+/** Helper methods for converting between IntelliJ and Blaze libraries. */
+public final class LibraryActionHelper {
+  private LibraryActionHelper() {}
+
+  /**
+   * Returns the first {@link LibraryOrderEntry} containing this file, or null if none are found.
+   */
+  @Nullable
+  public static LibraryOrderEntry findLibraryForFile(VirtualFile vf, @NotNull Project project) {
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    return index.getOrderEntriesForFile(vf).stream()
+        .filter(e -> e instanceof LibraryOrderEntry)
+        .map(e -> (LibraryOrderEntry) e)
+        .findFirst()
+        .orElse(null);
+  }
 
   @Nullable
-  static BlazeJarLibrary findLibraryFromIntellijLibrary(
+  public static BlazeJarLibrary findLibraryFromIntellijLibrary(Project project, Library library) {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    return projectData != null
+        ? findLibraryFromIntellijLibrary(project, projectData, library)
+        : null;
+  }
+
+  @Nullable
+  public static BlazeJarLibrary findLibraryFromIntellijLibrary(
       Project project, BlazeProjectData blazeProjectData, Library library) {
     String libName = library.getName();
     if (libName == null) {

@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync.actions;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -44,7 +43,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Allows a partial sync of the project depending on what's been selected. */
-public class PartialSyncAction extends BlazeProjectAction {
+public class PartialSyncAction extends BlazeProjectSyncAction {
 
   private static class PartialSyncData {
     final String description;
@@ -66,7 +65,7 @@ public class PartialSyncAction extends BlazeProjectAction {
   }
 
   @Override
-  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
+  protected void runSync(Project project, AnActionEvent e) {
     PartialSyncData data = fromContext(project, e);
     if (data != null) {
       BlazeSyncManager.getInstance(project)

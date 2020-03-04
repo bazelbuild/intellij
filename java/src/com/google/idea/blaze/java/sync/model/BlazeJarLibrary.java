@@ -37,7 +37,6 @@ import javax.annotation.concurrent.Immutable;
 /** An immutable reference to a .jar required by a rule. */
 @Immutable
 public final class BlazeJarLibrary extends BlazeLibrary {
-
   private static final Logger logger = Logger.getInstance(BlazeJarLibrary.class);
 
   public final LibraryArtifact libraryArtifact;
@@ -79,6 +78,12 @@ public final class BlazeJarLibrary extends BlazeLibrary {
     }
 
     AttachedSourceJarManager sourceJarManager = AttachedSourceJarManager.getInstance(project);
+    for (AttachSourcesFilter decider : AttachSourcesFilter.EP_NAME.getExtensions()) {
+      if (decider.shouldAlwaysAttachSourceJar(this)) {
+        sourceJarManager.setHasSourceJarAttached(key, true);
+      }
+    }
+
     if (!sourceJarManager.hasSourceJarAttached(key)) {
       return;
     }

@@ -33,24 +33,30 @@ import java.util.function.Predicate;
 public class BlazeBuildOutputs {
 
   public static BlazeBuildOutputs noOutputs(BuildResult buildResult) {
-    return new BlazeBuildOutputs(buildResult, ImmutableMap.of());
+    return new BlazeBuildOutputs(buildResult, ImmutableMap.of(), ImmutableList.of());
   }
 
   public static BlazeBuildOutputs fromParsedBepOutput(
       BuildResult result, ParsedBepOutput parsedOutput) {
-    return new BlazeBuildOutputs(result, parsedOutput.getFullArtifactData());
+    ImmutableList<String> id =
+        parsedOutput.buildId != null ? ImmutableList.of(parsedOutput.buildId) : ImmutableList.of();
+    return new BlazeBuildOutputs(result, parsedOutput.getFullArtifactData(), id);
   }
 
   public final BuildResult buildResult;
-
+  public final ImmutableList<String> buildIds;
   private final ImmutableMap<String, BepArtifactData> artifacts;
 
   /** The artifacts transitively associated with each top-level target. */
   private final ImmutableSetMultimap<String, OutputArtifact> perTargetArtifacts;
 
-  private BlazeBuildOutputs(BuildResult buildResult, Map<String, BepArtifactData> artifacts) {
+  private BlazeBuildOutputs(
+      BuildResult buildResult,
+      Map<String, BepArtifactData> artifacts,
+      ImmutableList<String> buildIds) {
     this.buildResult = buildResult;
     this.artifacts = ImmutableMap.copyOf(artifacts);
+    this.buildIds = buildIds;
 
     ImmutableSetMultimap.Builder<String, OutputArtifact> perTarget = ImmutableSetMultimap.builder();
     artifacts.values().forEach(a -> a.topLevelTargets.forEach(t -> perTarget.put(t, a.artifact)));
@@ -103,6 +109,8 @@ public class BlazeBuildOutputs {
       }
     }
     return new BlazeBuildOutputs(
-        BuildResult.combine(buildResult, nextOutputs.buildResult), combined);
+        BuildResult.combine(buildResult, nextOutputs.buildResult),
+        combined,
+        ImmutableList.<String>builder().addAll(buildIds).addAll(nextOutputs.buildIds).build());
   }
 }

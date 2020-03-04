@@ -18,7 +18,9 @@ package com.google.idea.blaze.base.sync.workspace;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import javax.annotation.Nullable;
 
 /** Provides a WorkspacePathResolver. */
@@ -26,13 +28,25 @@ public class WorkspacePathResolverProviderImpl implements WorkspacePathResolverP
 
   private final Project project;
 
+  private volatile WorkspacePathResolver tempOverride = null;
+
   public WorkspacePathResolverProviderImpl(Project project) {
     this.project = project;
+  }
+
+  @Override
+  public void setTemporaryOverride(WorkspacePathResolver resolver, Disposable parentDisposable) {
+    tempOverride = resolver;
+    Disposer.register(parentDisposable, () -> tempOverride = null);
   }
 
   @Nullable
   @Override
   public WorkspacePathResolver getPathResolver() {
+    WorkspacePathResolver tempOverride = this.tempOverride;
+    if (tempOverride != null) {
+      return tempOverride;
+    }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData != null) {

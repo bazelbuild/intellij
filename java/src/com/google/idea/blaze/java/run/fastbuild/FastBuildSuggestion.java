@@ -115,10 +115,10 @@ public final class FastBuildSuggestion
     }
     BlazeCommandRunConfiguration blazeCfg = (BlazeCommandRunConfiguration) runProfile;
 
-    if (!(blazeCfg.getTarget() instanceof Label)) {
+    if (!(blazeCfg.getSingleTarget() instanceof Label)) {
       return false;
     }
-    Label label = (Label) blazeCfg.getTarget();
+    Label label = (Label) blazeCfg.getSingleTarget();
 
     return countJavaDeps(label, blazeCfg.getProject()) > MIN_JARS_TO_NOTIFY;
   }

@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import java.util.List;
 import org.junit.Before;
 
 /** BUILD file specific integration test base */
@@ -59,7 +60,12 @@ public abstract class BuildFileIntegrationTestCase extends BlazeIntegrationTestC
   }
 
   protected void assertFileContents(PsiFile file, String... contentLines) {
-    String contents = Joiner.on("\n").join(contentLines);
+    String contents = Joiner.on('\n').join(contentLines);
+    assertThat(file.getText()).isEqualTo(contents);
+  }
+
+  protected void assertFileContents(PsiFile file, List<String> contentLines) {
+    String contents = Joiner.on('\n').join(contentLines);
     assertThat(file.getText()).isEqualTo(contents);
   }
 }

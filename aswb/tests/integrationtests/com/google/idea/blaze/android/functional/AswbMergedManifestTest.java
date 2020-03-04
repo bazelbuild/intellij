@@ -16,20 +16,34 @@
 package com.google.idea.blaze.android.functional;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_binary;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_library;
+import static junit.framework.Assert.fail;
 
 import com.android.tools.idea.model.MergedManifestManager;
+import com.android.tools.idea.model.MergedManifestSnapshot;
+import com.android.tools.idea.projectsystem.AndroidModuleSystem;
+import com.android.tools.idea.projectsystem.ProjectSystemUtil;
 import com.android.tools.lint.checks.PermissionHolder;
+import com.android.utils.concurrency.AsyncSupplier;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
+import com.google.idea.blaze.android.fixtures.ManifestFixture;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.vfs.VirtualFile;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.IdeaSourceProvider;
+import org.jetbrains.android.facet.IdeaSourceProviderUtil;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -37,6 +51,8 @@ import org.junit.runners.JUnit4;
 /** Tests that merged manifest calculations are accurate for Blaze Android projects. */
 @RunWith(JUnit4.class)
 public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
+  private ManifestFixture.Factory manifestFactory;
+
   @Before
   public void setup() {
     setProjectView(
@@ -46,45 +62,66 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
         "  //java/com/example/...:all",
         "android_sdk_platform: android-27");
     MockSdkUtil.registerSdk(workspace, "27");
+    manifestFactory = new ManifestFixture.Factory(getProject(), workspace);
+  }
+
+  private Module getModule(String moduleName) {
+    Module module = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
+    assertThat(module).isNotNull();
+    return module;
+  }
+
+  private Set<Module> getModules(String... moduleNames) {
+    return Stream.of(moduleNames).map(this::getModule).collect(Collectors.toSet());
+  }
+
+  private AndroidFacet getFacet(String moduleName) {
+    AndroidFacet facet = AndroidFacet.getInstance(getModule(moduleName));
+    assertThat(facet).isNotNull();
+    return facet;
+  }
+
+  private static void runAndWaitForMergedManifestUpdate(Module module, Runnable toRun)
+      throws Exception {
+    runAndWaitForMergedManifestUpdates(ImmutableSet.of(module), toRun);
+  }
+
+  private static void runAndWaitForMergedManifestUpdates(Set<Module> modules, Runnable toRun)
+      throws Exception {
+    HashSet<Module> notUpdated = new HashSet<>(modules);
+    CountDownLatch manifestsUpdated = new CountDownLatch(modules.size());
+    modules.forEach(
+        module ->
+            MergedManifestManager.setUpdateCallback(
+                module,
+                () -> {
+                  MergedManifestManager.setUpdateCallback(module, null);
+                  notUpdated.remove(module);
+                  manifestsUpdated.countDown();
+                }));
+    toRun.run();
+    if (manifestsUpdated.await(5, TimeUnit.SECONDS)) {
+      return;
+    }
+    String notUpdatedText =
+        notUpdated.stream().map(Module::getName).collect(Collectors.joining(", "));
+    fail(
+        "Merged manifests for the following modules were not updated as expected: "
+            + notUpdatedText);
   }
 
   @Test
   public void manifestBelongsToResourceModule() {
-    VirtualFile manifest =
-        workspace.createFile(new WorkspacePath("java/com/example/target/AndroidManifest.xml"));
-    setTargetMap(
-        android_binary("//java/com/example/target:target")
-            .manifest("//java/com/example/target/AndroidManifest.xml")
-            .res("res"));
+    ManifestFixture manifest = manifestFactory.fromPackage("com.example.target");
+    setTargetMap(android_binary("//java/com/example/target:target").manifest(manifest).res("res"));
     runFullBlazeSync();
-
-    Module targetResourceModule =
-        ModuleManager.getInstance(getProject()).findModuleByName("java.com.example.target.target");
-    assertThat(targetResourceModule).isNotNull();
-    AndroidFacet targetFacet = AndroidFacet.getInstance(targetResourceModule);
-    assertThat(targetFacet).isNotNull();
+    AndroidFacet targetFacet = getFacet("java.com.example.target.target");
 
     // Verify the mapping from resource module to manifest.
-    assertThat(IdeaSourceProvider.getManifestFiles(targetFacet)).containsExactly(manifest);
+    assertThat(IdeaSourceProviderUtil.getManifestFiles(targetFacet))
+        .containsExactly(manifest.file.getVirtualFile());
     // Verify the mapping from manifest back to resource module.
-    assertThat(AndroidFacet.getInstance(manifest, getProject())).isEqualTo(targetFacet);
-  }
-
-  /**
-   * Creates an Android manifest file for the given package that uses the given permission.
-   *
-   * @return the label of the newly-created manifest
-   */
-  private String createManifestWithPermission(String packageName, String permissionName) {
-    String relativePath = "java/" + packageName.replace(".", "/") + "/AndroidManifest.xml";
-    workspace.createFile(
-        new WorkspacePath(relativePath),
-        "<manifest xmlns:android='http://schemas.android.com/apk/res/android'",
-        "    package='" + packageName + "'>",
-        "    <uses-permission",
-        "        android:name=\"" + permissionName + "\" />",
-        "</manifest>");
-    return "//" + relativePath;
+    assertThat(AndroidFacet.getInstance(manifest.file)).isEqualTo(targetFacet);
   }
 
   @Test
@@ -92,31 +129,35 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
     setTargetMap(
         android_binary("//java/com/example/target:target")
             .manifest(
-                createManifestWithPermission("com.example.target", "android.permission.BLUETOOTH"))
+                manifestFactory
+                    .fromPackage("com.example.target")
+                    .addUsesPermission("android.permission.BLUETOOTH"))
             .res("res")
             .dep("//java/com/example/direct:direct"),
         android_library("//java/com/example/direct:direct")
             .manifest(
-                createManifestWithPermission("com.example.direct", "android.permission.SEND_SMS"))
+                manifestFactory
+                    .fromPackage("com.example.direct")
+                    .addUsesPermission("android.permission.SEND_SMS"))
             .res("res")
             .dep("//java/com/example/transitive:transitive"),
         android_library("//java/com/example/transitive:transitive")
             .manifest(
-                createManifestWithPermission(
-                    "com.example.transitive", "android.permission.INTERNET"))
+                manifestFactory
+                    .fromPackage("com.example.transitive")
+                    .addUsesPermission("android.permission.INTERNET"))
             .res("res"),
         android_library("//java/com/example/irrelevant:irrelevant")
             .manifest(
-                createManifestWithPermission(
-                    "com.example.irrelevant", "android.permission.WRITE_EXTERNAL_STORAGE"))
+                manifestFactory
+                    .fromPackage("com.example.irrelevant")
+                    .addUsesPermission("android.permission.WRITE_EXTERNAL_STORAGE"))
             .res("res"));
     runFullBlazeSync();
 
-    Module targetResourceModule =
-        ModuleManager.getInstance(getProject()).findModuleByName("java.com.example.target.target");
-    assertThat(targetResourceModule).isNotNull();
+    Module targetModule = getModule("java.com.example.target.target");
     PermissionHolder permissions =
-        MergedManifestManager.getSnapshot(targetResourceModule).getPermissionHolder();
+        MergedManifestManager.getSnapshot(targetModule).getPermissionHolder();
 
     // We should have all the permissions used by the binary and its transitive dependencies...
     assertThat(permissions.hasPermission("android.permission.BLUETOOTH")).isTrue();
@@ -124,5 +165,175 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
     assertThat(permissions.hasPermission("android.permission.INTERNET")).isTrue();
     // ... but nothing from libraries that the binary doesn't depend on
     assertThat(permissions.hasPermission("android.permission.WRITE_EXTERNAL_STORAGE")).isFalse();
+  }
+
+  @Ignore("b/135927686")
+  @Test
+  public void updatesWhenManifestChanges() throws Exception {
+    ManifestFixture manifest =
+        manifestFactory
+            .fromPackage("com.example.target")
+            .addUsesPermission("android.permission.SEND_SMS");
+    setTargetMap(android_binary("//java/com/example/target:target").manifest(manifest).res("res"));
+    runFullBlazeSync();
+
+    Module targetModule = getModule("java.com.example.target.target");
+    AsyncSupplier<MergedManifestSnapshot> mergedManifest =
+        MergedManifestManager.getMergedManifestSupplier(targetModule);
+    PermissionHolder permissions = mergedManifest.get().get().getPermissionHolder();
+    assertThat(permissions.hasPermission("android.permission.SEND_SMS")).isTrue();
+
+    runAndWaitForMergedManifestUpdate(
+        targetModule, () -> manifest.removeUsesPermission("android.permission.SEND_SMS"));
+
+    permissions = mergedManifest.getNow().getPermissionHolder();
+    assertThat(permissions.hasPermission("android.permission.SEND_SMS")).isFalse();
+  }
+
+  @Test
+  public void updatesWhenDependencyManifestChanges() throws Exception {
+    ManifestFixture transitiveDependencyManifest =
+        manifestFactory.fromPackage("com.example.transitive");
+    setTargetMap(
+        android_binary("//java/com/example/topLevelOne:topLevelOne")
+            .manifest(manifestFactory.fromPackage("com.example.topLevelOne"))
+            .res("res")
+            .dep("//java/com/example/transitive:transitive"),
+        android_binary("//java/com/example/topLevelTwo:topLevelTwo")
+            .manifest(manifestFactory.fromPackage("com.example.topLevelTwo"))
+            .res("res")
+            .dep("//java/com/example/direct:direct"),
+        android_binary("//java/com/example/direct:direct")
+            .manifest(manifestFactory.fromPackage("com.example.direct"))
+            .res("res")
+            .dep("//java/com/example/transitive:transitive"),
+        android_library("//java/com/example/transitive:transitive")
+            .manifest(transitiveDependencyManifest)
+            .res("res"));
+    runFullBlazeSync();
+
+    Set<Module> modules =
+        getModules(
+            "java.com.example.topLevelOne.topLevelOne",
+            "java.com.example.topLevelTwo.topLevelTwo",
+            "java.com.example.direct.direct",
+            "java.com.example.transitive.transitive");
+
+    runAndWaitForMergedManifestUpdates(
+        modules,
+        () -> transitiveDependencyManifest.addUsesPermission("android.permission.SEND_SMS"));
+
+    // The merged manifest of //java/com/example/transitive:transitive and everything that depends
+    // on it
+    // should have been automatically updated to include the newly-added permission.
+    Set<Module> modulesMissingPermission =
+        modules.stream()
+            .filter(
+                module -> {
+                  PermissionHolder permissions =
+                      MergedManifestManager.getMergedManifestSupplier(module)
+                          .getNow()
+                          .getPermissionHolder();
+                  return !permissions.hasPermission("android.permission.SEND_SMS");
+                })
+            .collect(Collectors.toSet());
+    String missingPermissionsText =
+        "Merged manifests for the following modules are missing the added permission: "
+            + modulesMissingPermission.stream()
+                .map(Module::getName)
+                .collect(Collectors.joining(", "));
+    assertWithMessage(missingPermissionsText).that(modulesMissingPermission).isEmpty();
+  }
+
+  @Test
+  public void updatesWithNavigationChanges() throws Exception {
+    setTargetMap(
+        android_binary("//java/com/example/target:target")
+            .manifest(manifestFactory.fromPackage("com.example.target"))
+            .res("res"));
+    runFullBlazeSync();
+
+    Module module = getModule("java.com.example.target.target");
+    workspace.createDirectory(new WorkspacePath("java/com/example/target/res/navigation"));
+
+    // This will fail if the merged manifest wasn't updated.
+    runAndWaitForMergedManifestUpdate(
+        module,
+        () ->
+            workspace.createFile(
+                new WorkspacePath("java/com/example/target/res/navigation/nav_graph.xml"),
+                "<navigation></navigation>"));
+  }
+
+  @Test
+  public void getPackageName() throws Exception {
+    setTargetMap(
+        android_binary("//java/com/example/target:target")
+            .manifest(manifestFactory.fromPackage("com.example.target"))
+            .res("res"));
+    runFullBlazeSync();
+    Module module = getModule("java.com.example.target.target");
+    AndroidModuleSystem moduleSystem = ProjectSystemUtil.getModuleSystem(module);
+
+    runAndWaitForMergedManifestUpdate(
+        module,
+        () ->
+            // The merged manifest hasn't been calculated yet, so this should parse the primary
+            // manifest and kick off the initial merged manifest computation.
+            assertThat(moduleSystem.getPackageName()).isEqualTo("com.example.target"));
+
+    // Now that the merged manifest is available, we should use that instead of the primary
+    // manifest.
+    // TODO(b/128928135): Once manifest overrides are supported for Blaze projects, we should verify
+    // that we're
+    //  picking up the effective package name from the merged manifest here.
+    assertThat(moduleSystem.getPackageName()).isEqualTo("com.example.target");
+  }
+
+  @Test
+  public void directOverrides() throws Exception {
+    setTargetMap(
+        android_binary("//java/com/example/target:target")
+            .manifest(
+                manifestFactory
+                    .fromPackage("com.example.target")
+                    .setVersionCode(0)
+                    .setMinSdkVersion(27)
+                    .setTargetSdkVersion(28))
+            .manifest_value("applicationId", "com.example.merged")
+            .manifest_value("versionCode", "1")
+            .manifest_value("minSdkVersion", "28")
+            .manifest_value("targetSdkVersion", "29")
+            .manifest_value("packageName", "com.example.ignored")
+            .res("res"));
+    runFullBlazeSync();
+    Module module = getModule("java.com.example.target.target");
+
+    MergedManifestSnapshot manifest =
+        MergedManifestManager.getMergedManifest(module).get(5, TimeUnit.SECONDS);
+    assertThat(manifest.getApplicationId()).isEqualTo("com.example.merged");
+    assertThat(manifest.getVersionCode()).isEqualTo(1);
+    assertThat(manifest.getMinSdkVersion().getApiLevel()).isEqualTo(28);
+    assertThat(manifest.getTargetSdkVersion().getApiLevel()).isEqualTo(29);
+    assertThat(manifest.getPackage()).isEqualTo("com.example.target");
+  }
+
+  @Test
+  public void placeholderSubstitution() throws Exception {
+    setTargetMap(
+        android_binary("//java/com/example/target:target")
+            .manifest(
+                manifestFactory
+                    .fromPackage("com.example.target")
+                    .addUsesPermission("${permissionPlaceholder}"))
+            .manifest_value("permissionPlaceholder", "android.permission.SEND_SMS")
+            .res("res"));
+    runFullBlazeSync();
+    Module module = getModule("java.com.example.target.target");
+
+    MergedManifestSnapshot manifest =
+        MergedManifestManager.getMergedManifest(module).get(5, TimeUnit.SECONDS);
+    assertThat(manifest.getPermissionHolder().hasPermission("android.permission.SEND_SMS"))
+        .isTrue();
   }
 }

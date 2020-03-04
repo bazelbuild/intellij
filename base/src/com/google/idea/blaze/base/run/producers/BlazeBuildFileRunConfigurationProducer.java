@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.producers;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
@@ -39,11 +40,11 @@ import javax.annotation.Nullable;
 public class BlazeBuildFileRunConfigurationProducer
     extends BlazeRunConfigurationProducer<BlazeCommandRunConfiguration> {
 
-  private static class BuildTarget {
+  static class BuildTarget {
 
-    private final FuncallExpression rule;
-    private final RuleType ruleType;
-    private final Label label;
+    final FuncallExpression rule;
+    final RuleType ruleType;
+    final Label label;
 
     BuildTarget(FuncallExpression rule, RuleType ruleType, Label label) {
       this.rule = rule;
@@ -92,7 +93,7 @@ public class BlazeBuildFileRunConfigurationProducer
     if (target == null) {
       return false;
     }
-    if (!Objects.equals(configuration.getTarget(), target.label)) {
+    if (!Objects.equals(configuration.getTargets(), ImmutableList.of(target.label))) {
       return false;
     }
     // We don't know any details about how the various factories set up configurations from here.
@@ -132,12 +133,12 @@ public class BlazeBuildFileRunConfigurationProducer
 
   @Nullable
   private static BuildTarget getBuildTarget(ConfigurationContext context) {
-    return targetFromFuncall(
+    return getBuildTarget(
         PsiTreeUtil.getNonStrictParentOfType(context.getPsiLocation(), FuncallExpression.class));
   }
 
   @Nullable
-  private static BuildTarget targetFromFuncall(@Nullable FuncallExpression rule) {
+  static BuildTarget getBuildTarget(@Nullable FuncallExpression rule) {
     if (rule == null) {
       return null;
     }
@@ -184,7 +185,7 @@ public class BlazeBuildFileRunConfigurationProducer
     config.setGeneratedName();
   }
 
-  private static BlazeCommandName commandForRuleType(RuleType ruleType) {
+  static BlazeCommandName commandForRuleType(RuleType ruleType) {
     switch (ruleType) {
       case BINARY:
         return BlazeCommandName.RUN;

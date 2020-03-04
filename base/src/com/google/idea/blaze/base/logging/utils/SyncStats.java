@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.logging.utils;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
@@ -53,6 +54,8 @@ public abstract class SyncStats {
 
   public abstract ImmutableList<LanguageClass> languagesActive();
 
+  public abstract ImmutableList<WorkspacePath> blazeProjectFiles();
+
   public abstract ImmutableList<BuildPhaseSyncStats> buildPhaseStats();
 
   public abstract int targetMapSize();
@@ -65,6 +68,7 @@ public abstract class SyncStats {
         .setWorkspaceType(WorkspaceType.JAVA)
         .setTargetMapSize(0)
         .setLanguagesActive(ImmutableList.of())
+        .setBlazeProjectFiles(ImmutableList.of())
         .setLibraryCount(0);
   }
 
@@ -101,6 +105,8 @@ public abstract class SyncStats {
     public abstract Builder setWorkspaceType(WorkspaceType workspaceType);
 
     public abstract Builder setLanguagesActive(Iterable<LanguageClass> languagesActive);
+
+    public abstract Builder setBlazeProjectFiles(List<WorkspacePath> blazeProjectFiles);
 
     public abstract Builder setTargetMapSize(int targetMapSize);
 

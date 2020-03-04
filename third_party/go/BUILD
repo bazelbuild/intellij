@@ -1,8 +1,8 @@
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
+
 package(default_visibility = ["//visibility:public"])
 
 licenses(["notice"])
-
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 
 java_library(
     name = "go_internal",
@@ -12,6 +12,8 @@ java_library(
         "intellij-ue-2019.2": ["@go_2019_2//:go"],
         "intellij-2019.3": ["@go_2019_3//:go"],
         "intellij-ue-2019.3": ["@go_2019_3//:go"],
+        "intellij-2020.1": ["@go_2020_1//:go"],
+        "intellij-ue-2020.1": ["@go_2020_1//:go"],
         "default": [],
     }),
 )

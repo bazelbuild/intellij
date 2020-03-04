@@ -58,7 +58,8 @@ public class SuggestBuildShardingNotification {
         String.format(
             "The %s server ran out of memory during sync. You can work around this by "
                 + "allocating more memory to the %s server, for example by adding this line to "
-                + "your %s",
+                + "your %s:<br>"
+                + "startup --host_jvm_args=-Xmx15g --host_jvm_args=-Xms15g",
             buildSystem.getName(),
             buildSystem.getName(),
             buildSystem == BuildSystem.Bazel ? ".bazelrc" : "~/.blazerc");

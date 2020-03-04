@@ -98,7 +98,7 @@ final class FastBuildTestClassFinder {
   }
 
   private Optional<String> getMatchingClassName(String className, File file) {
-    VirtualFile virtualFile = VfsUtils.resolveVirtualFile(file);
+    VirtualFile virtualFile = VfsUtils.resolveVirtualFile(file, /* refreshIfNeeded= */ true);
     if (virtualFile == null) {
       return Optional.empty();
     }

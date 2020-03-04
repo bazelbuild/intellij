@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run.producers;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -98,7 +99,7 @@ public interface RunConfigurationContext {
           return false;
         }
         return Objects.equals(handlerState.getCommandState().getCommand(), command)
-            && Objects.equals(config.getTarget(), target)
+            && Objects.equals(config.getTargets(), ImmutableList.of(target))
             && handlerState.getTestFilterFlag() == null;
       }
     };

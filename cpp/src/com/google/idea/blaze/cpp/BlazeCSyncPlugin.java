@@ -90,7 +90,7 @@ final class BlazeCSyncPlugin implements BlazeSyncPlugin {
     // <li>Cidr caches the directory contents as part of symbol building, so we need to do this work
     // up front before incrementally rebuilding symbols.
     File file = blazeProjectData.getBlazeInfo().getExecutionRoot();
-    VirtualFile execRoot = VfsUtils.resolveVirtualFile(file);
+    VirtualFile execRoot = VfsUtils.resolveVirtualFile(file, /* refreshIfNeeded= */ true);
     if (execRoot == null) {
       // force-refresh the exec root
       LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();

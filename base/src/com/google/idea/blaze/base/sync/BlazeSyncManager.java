@@ -24,7 +24,9 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
+import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import java.util.Collection;
@@ -52,8 +54,11 @@ public class BlazeSyncManager {
         && !SyncDirectoriesWarning.warn(project)) {
       return;
     }
-    StartupManager.getInstance(project)
-        .runWhenProjectIsInitialized(
+    // an additional call to 'sync started'. This disables the sync actions while we wait for
+    // 'runWhenSmart'
+    BlazeSyncStatus.getInstance(project).syncStarted();
+    DumbService.getInstance(project)
+        .runWhenSmart(
             () -> {
               if (BlazeImportSettingsManager.getInstance(project).getImportSettings() == null) {
                 throw new IllegalStateException(

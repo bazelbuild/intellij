@@ -17,7 +17,6 @@ package com.google.idea.blaze.android.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.android.cppapi.NdkSupport;
 import com.google.idea.blaze.android.projectview.AndroidMinSdkSection;
 import com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
@@ -98,11 +97,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
     if (workspaceType != WorkspaceType.ANDROID) {
       return ImmutableSet.of();
     }
-    if (NdkSupport.NDK_SUPPORT.getValue()) {
-      return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA, LanguageClass.C);
-    } else {
-      return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA);
-    }
+    return ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA, LanguageClass.C);
   }
 
   @Override
@@ -269,12 +264,6 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
       WorkspaceLanguageSettings workspaceLanguageSettings) {
     if (!isAndroidWorkspace(workspaceLanguageSettings)) {
       return true;
-    }
-
-    if (workspaceLanguageSettings.isLanguageActive(LanguageClass.C)
-        && !NdkSupport.NDK_SUPPORT.getValue()) {
-      IssueOutput.error("Android NDK is not supported yet.").submit(context);
-      return false;
     }
 
     if (AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet) == null) {

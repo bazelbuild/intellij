@@ -19,6 +19,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Set;
 
@@ -27,6 +29,10 @@ import java.util.Set;
  * updated version of the target to be run without using Blaze.
  */
 interface FastBuildIncrementalCompiler {
+
+  static FastBuildIncrementalCompiler getInstance(Project project) {
+    return ServiceManager.getService(project, FastBuildIncrementalCompiler.class);
+  }
 
   /**
    * Compile the label using the previous FastBuildState. The {@code completedBuildOutput} field of

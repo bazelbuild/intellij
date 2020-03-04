@@ -68,8 +68,8 @@ public class ScalaBinaryContextProviderTest extends BlazeRunConfigurationProduce
     assertThat(config).isInstanceOf(BlazeRunConfiguration.class);
     BlazeRunConfiguration blazeConfig = (BlazeRunConfiguration) config;
     assertThat(blazeConfig).isNotNull();
-    assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//com/google/binary:UnrelatedName"));
+    assertThat(blazeConfig.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//com/google/binary:UnrelatedName"));
   }
 
   @Test
@@ -164,8 +164,8 @@ public class ScalaBinaryContextProviderTest extends BlazeRunConfigurationProduce
     assertThat(config).isInstanceOf(BlazeRunConfiguration.class);
     BlazeRunConfiguration blazeConfig = (BlazeRunConfiguration) config;
     assertThat(blazeConfig).isNotNull();
-    assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//com/google/binary:MainClass"));
+    assertThat(blazeConfig.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//com/google/binary:MainClass"));
   }
 
   @Test
@@ -206,7 +206,7 @@ public class ScalaBinaryContextProviderTest extends BlazeRunConfigurationProduce
     assertThat(config).isInstanceOf(BlazeRunConfiguration.class);
     BlazeRunConfiguration blazeConfig = (BlazeRunConfiguration) config;
     assertThat(blazeConfig).isNotNull();
-    assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//com/google/binary:OtherName"));
+    assertThat(blazeConfig.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//com/google/binary:OtherName"));
   }
 }

@@ -17,13 +17,13 @@ package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.sdkcompat.cidr.OCResolveConfigurationCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.jetbrains.cidr.lang.autoImport.OCDefaultAutoImportHelper;
 import com.jetbrains.cidr.lang.preprocessor.OCResolveRootAndConfiguration;
+import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import com.jetbrains.cidr.lang.workspace.headerRoots.IncludedHeadersRoot;
@@ -110,7 +110,10 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
     if (rootAndConfig.getConfiguration() == null) {
       return ImmutableList.of();
     }
-    return OCResolveConfigurationCompat.getAllHeaderRoots(
-        rootAndConfig.getConfiguration(), rootAndConfig.getKind(), rootAndConfig.getRootFile());
+    OCCompilerSettings settings =
+        rootAndConfig
+            .getConfiguration()
+            .getCompilerSettings(rootAndConfig.getKind(), rootAndConfig.getRootFile());
+    return settings.getHeadersSearchRoots().getAllRoots();
   }
 }

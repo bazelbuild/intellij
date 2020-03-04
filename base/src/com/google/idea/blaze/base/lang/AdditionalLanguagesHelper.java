@@ -64,9 +64,9 @@ public class AdditionalLanguagesHelper
   private final Project project;
   private final EditorNotifications notifications;
 
-  public AdditionalLanguagesHelper(Project project, final EditorNotifications notifications) {
+  AdditionalLanguagesHelper(Project project) {
     this.project = project;
-    this.notifications = notifications;
+    this.notifications = EditorNotifications.getInstance(project);
 
     for (LanguageClass langauge : LanguageClass.values()) {
       if (PropertiesComponent.getInstance(project).getBoolean(propertyKey(langauge))) {

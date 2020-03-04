@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.lang.buildfile.search.FindUsages;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import java.util.Arrays;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -99,6 +100,6 @@ public class FunctionStatementUsagesTest extends BuildFileIntegrationTestCase {
     PsiReference[] references = FindUsages.findAllReferences(function);
     assertThat(references).hasLength(2);
 
-    assertThat(references[1].getElement()).isEqualTo(funcall);
+    assertThat(Arrays.stream(references).anyMatch(r -> r.getElement().equals(funcall))).isTrue();
   }
 }

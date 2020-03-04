@@ -157,7 +157,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
     // recursive refresh of the blaze execution root. This is required because our blaze aspect
     // can't yet tell us exactly which genfiles are required to resolve the project.
     File file = blazeProjectData.getBlazeInfo().getExecutionRoot();
-    VirtualFile execRoot = VfsUtils.resolveVirtualFile(file);
+    VirtualFile execRoot = VfsUtils.resolveVirtualFile(file, /* refreshIfNeeded= */ true);
     if (execRoot == null) {
       // force-refresh the exec root
       LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();

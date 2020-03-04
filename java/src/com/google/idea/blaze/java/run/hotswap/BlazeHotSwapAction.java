@@ -17,11 +17,15 @@ package com.google.idea.blaze.java.run.hotswap;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.actions.ReplaceActionHelper;
+import com.intellij.application.Topics;
 import com.intellij.debugger.actions.HotSwapAction;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.project.Project;
+import javax.annotation.Nullable;
 
 /** Overrides the built-in hotswap action for Blaze projects */
 public class BlazeHotSwapAction extends AnAction {
@@ -31,6 +35,18 @@ public class BlazeHotSwapAction extends AnAction {
   static class Initializer implements ApplicationComponent {
     @Override
     public void initComponent() {
+      Topics.subscribe(
+          AppLifecycleListener.TOPIC,
+          /* disposable= */ null,
+          new AppLifecycleListener() {
+            @Override
+            public void appStarting(@Nullable Project projectFromCommandLine) {
+              replaceAction();
+            }
+          });
+    }
+
+    private static void replaceAction() {
       AnAction delegate = ActionManager.getInstance().getAction(ACTION_ID);
       if (delegate == null) {
         // HotSwapAction not registered by default for Android Studio, though still in the classpath

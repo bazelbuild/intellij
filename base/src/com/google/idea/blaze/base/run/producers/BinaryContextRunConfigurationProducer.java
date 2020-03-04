@@ -16,7 +16,9 @@
 package com.google.idea.blaze.base.run.producers;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.producers.BinaryContextProvider.BinaryRunContext;
@@ -41,12 +43,34 @@ public class BinaryContextRunConfigurationProducer
     super(BlazeCommandRunConfigurationType.getInstance());
   }
 
+  /** Implements {@link #equals} so that cached value stability checker passes. */
+  private static final class ContextWrapper {
+    final ConfigurationContext context;
+
+    ContextWrapper(ConfigurationContext context) {
+      this.context = context;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof ContextWrapper
+          && Objects.equals(
+              context.getPsiLocation(), ((ContextWrapper) obj).context.getPsiLocation());
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(this.getClass(), context.getPsiLocation());
+    }
+  }
+
   @Nullable
   private BinaryRunContext findRunContext(ConfigurationContext context) {
     if (!SmRunnerUtils.getSelectedSmRunnerTreeElements(context).isEmpty()) {
       // not a binary run context
       return null;
     }
+    ContextWrapper wrapper = new ContextWrapper(context);
     PsiElement psi = context.getPsiLocation();
     return psi == null
         ? null
@@ -54,9 +78,9 @@ public class BinaryContextRunConfigurationProducer
             psi,
             () ->
                 CachedValueProvider.Result.create(
-                    doFindRunContext(context),
+                    doFindRunContext(wrapper.context),
                     PsiModificationTracker.MODIFICATION_COUNT,
-                    BlazeSyncModificationTracker.getInstance(context.getProject())));
+                    BlazeSyncModificationTracker.getInstance(wrapper.context.getProject())));
   }
 
   @Nullable
@@ -105,6 +129,7 @@ public class BinaryContextRunConfigurationProducer
     if (runContext == null) {
       return false;
     }
-    return runContext.getTarget().label.equals(configuration.getTarget());
+    ImmutableList<? extends TargetExpression> targets = configuration.getTargets();
+    return targets.size() == 1 && runContext.getTarget().label.equals(targets.get(0));
   }
 }

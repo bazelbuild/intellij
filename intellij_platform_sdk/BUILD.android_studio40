@@ -35,7 +35,10 @@ java_import(
 
 java_import(
     name = "guava",
-    jars = glob(["lib/guava-*.jar"]),
+    jars = glob([
+        "lib/failureaccess-*.jar",
+        "lib/guava-*.jar",
+    ]),
 )
 
 java_import(

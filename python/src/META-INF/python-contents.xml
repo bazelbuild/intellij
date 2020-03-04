@@ -62,6 +62,9 @@
     <component>
       <implementation-class>com.google.idea.blaze.python.resolve.PyDynamicImportResolverInitializer</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.google.idea.blaze.python.run.BlazePyTracebackParser$OverrideUpstreamParser</implementation-class>
+    </component>
   </application-components>
 
   <project-components>

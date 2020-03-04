@@ -59,9 +59,7 @@ import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.transactions.Transactions;
-import com.google.idea.sdkcompat.openapi.SaveFromInsideWriteAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -88,9 +86,6 @@ import javax.annotation.Nullable;
 final class ProjectUpdateSyncTask {
 
   private static final Logger logger = Logger.getInstance(ProjectUpdateSyncTask.class);
-
-  private static final BoolExperiment saveStateDuringRootsChange =
-      new BoolExperiment("blaze.save.state.during.roots.change", true);
 
   /** Updates the project target map and related data, given the blaze build output. */
   @Nullable
@@ -347,11 +342,6 @@ final class ProjectUpdateSyncTask {
                                   directoryStructure,
                                   newBlazeProjectData,
                                   oldBlazeProjectData);
-                              if (saveStateDuringRootsChange.getValue()) {
-                                // a temporary workaround for IDEA-205934
-                                // #api183: remove when the upstream bug is fixed
-                                SaveFromInsideWriteAction.saveAll();
-                              }
                             }));
           } catch (ProcessCanceledException e) {
             context.setCancelled();

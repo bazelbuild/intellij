@@ -59,7 +59,7 @@ public class BlazeCommandRunConfigurationSettingsEditorTest extends BlazeIntegra
         type.getFactory().createTemplateConfiguration(getProject());
     editor.applyEditorTo(readConfiguration);
 
-    assertThat(readConfiguration.getTarget()).isEqualTo(label);
+    assertThat(readConfiguration.getTargets()).containsExactly(label);
 
     Disposer.dispose(editor);
   }
@@ -74,7 +74,7 @@ public class BlazeCommandRunConfigurationSettingsEditorTest extends BlazeIntegra
         type.getFactory().createTemplateConfiguration(getProject());
     editor.applyEditorTo(readConfiguration);
 
-    assertThat(readConfiguration.getTarget()).isEqualTo(configuration.getTarget());
+    assertThat(readConfiguration.getTargets()).isEqualTo(configuration.getTargets());
 
     Disposer.dispose(editor);
   }

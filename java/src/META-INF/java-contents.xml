@@ -87,17 +87,21 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.java.run.producers.BlazeJavaAbstractTestCaseConfigurationProducer"
         order="first, before testContextProducer"/>
-    <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"
-                        serviceImplementation="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"/>
-    <applicationService serviceInterface="com.google.idea.blaze.java.sync.source.PackageManifestReader"
-                        serviceImplementation="com.google.idea.blaze.java.sync.source.PackageManifestReader"/>
+    <applicationService serviceImplementation="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"/>
+    <applicationService serviceImplementation="com.google.idea.blaze.java.sync.source.PackageManifestReader"/>
     <programRunner implementation="com.google.idea.blaze.java.run.BlazeJavaDebuggerRunner"/>
     <projectService serviceImplementation="com.google.idea.blaze.java.libraries.AttachedSourceJarManager"/>
-    <refactoring.safeDeleteProcessor id="build_file_safe_delete" order="before javaProcessor"
-                                     implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
-    <!--duplicated here in case the Kotlin plugin is present, as it also tries to replace javaProcessor-->
-    <refactoring.safeDeleteProcessor id="build_file_safe_delete_copy" order="before kotlinProcessor"
-                                     implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
+    <postStartupActivity implementation="com.google.idea.blaze.java.libraries.DisableLibraryBytecodeNotification"/>
+
+    <!--
+      Load `BuildFileSafeDeleteProcessor` before `OCSafeDeleteProcessorDelegate` (Android NDK Pugin).
+      `OCSafeDeleteProcessorDelegate` does not provide an ID, so we load `BuildFileSafeDeleteProcessor`
+      first. This might break some upstream implementations that rely on being the first
+      JavaSafeDeleteProcessor to load.
+    -->
+    <refactoring.safeDeleteProcessor id="build_file_safe_delete" order="first"
+            implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
+
     <projectService serviceImplementation="com.google.idea.blaze.java.libraries.JarCache"/>
 
     <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider"/>
@@ -163,5 +167,7 @@
                     interface="com.google.idea.blaze.java.run.fastbuild.FastBuildTestEnvironmentModifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FastBuildCompilationModification"
                     interface="com.google.idea.blaze.java.fastbuild.FastBuildCompilationModification"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.AttachSourcesFilter"
+                    interface="com.google.idea.blaze.java.sync.model.AttachSourcesFilter"/>
   </extensionPoints>
 </idea-plugin>

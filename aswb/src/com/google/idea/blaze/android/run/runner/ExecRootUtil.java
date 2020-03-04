@@ -55,7 +55,9 @@ public final class ExecRootUtil {
       BlazeContext context)
       throws GetArtifactsException {
     String executionRoot = buildResultHelper.getBuildOutput().getLocalExecRoot();
-    if (executionRoot == null && !useBlazeInfoAsExecrootFallback.getValue()) {
+    if (executionRoot != null) {
+      return executionRoot;
+    } else if (!useBlazeInfoAsExecrootFallback.getValue()) {
       return null;
     }
 

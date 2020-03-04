@@ -74,7 +74,7 @@ public final class BlazeTypeScriptAdditionalLibraryRootsProvider
     }
     return Stream.concat(
             filesFromTargetMap(project, projectData, importRoots),
-            filesFromTsConfig(project, projectData, importRoots))
+            filesFromTsConfig(project, importRoots))
         .collect(toImmutableList());
   }
 
@@ -93,17 +93,12 @@ public final class BlazeTypeScriptAdditionalLibraryRootsProvider
         .filter(Objects::nonNull);
   }
 
-  private static Stream<File> filesFromTsConfig(
-      Project project, BlazeProjectData projectData, ImportRoots importRoots) {
+  private static Stream<File> filesFromTsConfig(Project project, ImportRoots importRoots) {
     if (!moveTsconfigFilesToAdditionalLibrary.getValue()) {
       return Stream.of();
     }
-    TypeScriptConfigService typeScriptConfigService = TypeScriptConfigService.Provider.get(project);
-    if (typeScriptConfigService instanceof DelegatingTypeScriptConfigService) {
-      ((DelegatingTypeScriptConfigService) typeScriptConfigService).update(projectData);
-    }
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    return typeScriptConfigService.getConfigs().stream()
+    return TypeScriptConfigService.Provider.get(project).getConfigs().stream()
         .map(TypeScriptConfig::getFileList)
         .flatMap(Collection::stream)
         .map(VfsUtil::virtualToIoFile)

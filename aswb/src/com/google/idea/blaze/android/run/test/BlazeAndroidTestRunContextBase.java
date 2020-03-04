@@ -96,7 +96,8 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
 
     BlazeTestUiSession testUiSession =
         canUseTestUi(env.getExecutor())
-            ? TestUiSessionProvider.getInstance(env.getProject()).getTestUiSession(label)
+            ? TestUiSessionProvider.getInstance(env.getProject())
+                .getTestUiSession(ImmutableList.of(label))
             : null;
     if (testUiSession != null) {
       this.blazeFlags =

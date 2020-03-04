@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.java.fastbuild.FastBuildException;
+import com.google.idea.blaze.java.fastbuild.FastBuildException.BlazeBuildError;
 import com.google.idea.blaze.java.fastbuild.FastBuildIncrementalCompileException;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope;
@@ -103,8 +104,8 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
 
-    checkState(configuration.getTarget() != null);
-    Label label = (Label) configuration.getTarget();
+    checkState(configuration.getSingleTarget() != null);
+    Label label = (Label) configuration.getSingleTarget();
 
     String binaryPath =
         handlerState.getBlazeBinaryState().getBlazeBinary() != null
@@ -154,7 +155,10 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
           env.getRunProfile(),
           new RunCanceledByUserException());
     } catch (FastBuildException e) {
-      logger.warn(e);
+      if (!(e instanceof BlazeBuildError)) {
+        // no need to log blaze build errors; they're expected
+        logger.warn(e);
+      }
       ExecutionUtil.handleExecutionError(env, new ExecutionException(e));
     } catch (java.util.concurrent.ExecutionException e) {
       logger.warn(e);

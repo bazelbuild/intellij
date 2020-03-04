@@ -24,7 +24,10 @@ import com.google.idea.blaze.android.manifest.ParsedManifestService;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.FileInputStream;
@@ -53,6 +56,28 @@ public class BlazeApkDeployInfoProtoHelper {
     }
 
     if (deployInfoFiles.isEmpty()) {
+      Logger log = Logger.getInstance(BlazeApkDeployInfoProtoHelper.class.getName());
+      try {
+        ParsedBepOutput bepOutput = buildResultHelper.getBuildOutput();
+        log.warn("Local execroot: " + bepOutput.getLocalExecRoot());
+        log.warn("All output artifacts:");
+        for (OutputArtifact outputArtifact : bepOutput.getAllOutputArtifacts(path -> true)) {
+          log.warn(outputArtifact.getKey() + " -> " + outputArtifact.getRelativePath());
+        }
+        log.warn("All local artifacts for " + target + ":");
+        List<OutputArtifact> allBuildArtifacts =
+            buildResultHelper.getBuildArtifactsForTarget(target, path -> true);
+        List<File> allLocalFiles = BlazeArtifact.getLocalFiles(allBuildArtifacts);
+        for (File file : allLocalFiles) {
+          String path = file.getPath();
+          log.warn(path);
+          if (pathFilter.test(path)) {
+            log.warn("Note: " + path + " passes pathFilter but was not recognized!");
+          }
+        }
+      } catch (GetArtifactsException e) {
+        log.warn("Error occured when gathering logs:", e);
+      }
       throw new GetDeployInfoException(
           "No deploy info proto artifact found.  Was android_deploy_info in the output groups?");
     }

@@ -68,20 +68,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JvmPsiConversionHelper;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.JvmPsiConversionHelperImpl;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.search.ProjectScopeBuilderImpl;
 import java.io.File;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -246,6 +244,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
             issue -> assertThat(issue.getSummary()).isNotEqualTo(NON_STANDARD_MANIFEST_NAME_ERROR));
   }
 
+  @Ignore("b/145809318")
   @Test
   public void testReportMissingClassDependencies() {
     createTargetMapWithMissingClassDependency();
@@ -298,6 +297,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
                 + "but the layout editor needs them to be correct.</B>");
   }
 
+  @Ignore("b/145809318")
   @Test
   public void testNoReportMissingClassDependenciesIfClassInSameTarget() {
     createTargetMapWithMissingClassDependency();
@@ -310,6 +310,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
             issue -> assertThat(issue.getSummary()).isNotEqualTo(MISSING_CLASS_DEPENDENCIES_ERROR));
   }
 
+  @Ignore("b/145809318")
   @Test
   public void testNoReportMissingClassDependenciesIfClassInDependency() {
     createTargetMapWithMissingClassDependency();
@@ -683,8 +684,10 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
             VfsUtilCore.virtualToIoFile(resourceView),
             TargetKey.forPlainTarget(Label.create("//com/google/example:resources")));
 
-    projectServices.register(
-        JavaPsiFacade.class, new MockJavaPsiFacade(project, psiManager, classes));
+    /* b/145809318
+        projectServices.register(
+            JavaPsiFacade.class, new MockJavaPsiFacade(project, classes));
+    b/145809318 */
     projectServices.register(SourceToTargetMap.class, new MockSourceToTargetMap(sourceToTarget));
   }
 
@@ -734,21 +737,6 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     @Override
     public PsiElement resolveLabel(Label label) {
       return null;
-    }
-  }
-
-  private static class MockJavaPsiFacade extends JavaPsiFacadeImpl {
-    private ImmutableMap<String, PsiClass> classes;
-
-    public MockJavaPsiFacade(
-        Project project, PsiManager psiManager, ImmutableMap<String, PsiClass> classes) {
-      super(project, psiManager, null, null);
-      this.classes = classes;
-    }
-
-    @Override
-    public PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
-      return classes.get(qualifiedName);
     }
   }
 

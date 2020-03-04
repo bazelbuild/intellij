@@ -25,8 +25,8 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.java.AndroidBlazeRules;
-import com.google.idea.sdkcompat.cidr.CidrDebuggerLanguageSupportManagerCompat;
 import com.intellij.execution.ExecutionException;
+import com.jetbrains.cidr.execution.debugger.CidrDebuggerLanguageSupportManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -58,7 +58,7 @@ public class BlazeAndroidNativeDebuggingTest extends BlazeIntegrationTestCase {
     state.getCommonState().setNativeDebuggingEnabled(true);
 
     try {
-      CidrDebuggerLanguageSupportManagerCompat.createEditor(getProject(), runProfile);
+      CidrDebuggerLanguageSupportManager.createEditor(getProject(), runProfile);
     } catch (ExecutionException e) {
       fail("BlazeNativeDebuggerLanguageSupport extension not registered correctly.");
     }

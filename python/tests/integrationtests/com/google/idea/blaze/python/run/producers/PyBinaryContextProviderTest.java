@@ -75,7 +75,8 @@ public class PyBinaryContextProviderTest extends BlazeRunConfigurationProducerTe
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget()).isEqualTo(TargetExpression.fromStringSafe("//py/bin:main"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//py/bin:main"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.RUN);
   }
 }

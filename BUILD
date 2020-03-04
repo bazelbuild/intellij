@@ -13,7 +13,7 @@ filegroup(
 
 # IJwB tests, run with an IntelliJ plugin SDK
 test_suite(
-    name = "ijwb_tests",
+    name = "ijwb_common_tests",
     tests = [
         "//base:integration_tests",
         "//base:unit_tests",
@@ -25,17 +25,37 @@ test_suite(
         "//kotlin:integration_tests",
         "//kotlin:unit_tests",
         "//plugin_dev:integration_tests",
-        "//python:integration_tests",
-        "//python:unit_tests",
         "//scala:integration_tests",
         "//scala:unit_tests",
     ],
 )
 
-# UE-specific IJwB tests
+# CE-compatible IJwB tests
+# UE supports python as well, but we use python-ce.jar for integration tests.
+# Since 2019.3, python-ce.jar needs 'com.intellij.modules.python-core-capable',
+# but UE only has 'com.intellij.modules.python-pro-capable' instead.
+test_suite(
+    name = "ijwb_ce_tests",
+    tests = [
+        ":ijwb_common_tests",
+        "//python:integration_tests",
+        "//python:unit_tests",
+    ],
+)
+
+# Preserve previous behavior on buildkite TODO: remove this
+test_suite(
+    name = "ijwb_tests",
+    tests = [
+        ":ijwb_ce_tests",
+    ],
+)
+
+# UE-compatible IJwB tests
 test_suite(
     name = "ijwb_ue_tests",
     tests = [
+        ":ijwb_common_tests",
         "//golang:integration_tests",
         "//golang:unit_tests",
         "//javascript:integration_tests",

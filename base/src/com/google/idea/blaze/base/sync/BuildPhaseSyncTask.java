@@ -167,7 +167,7 @@ final class BuildPhaseSyncTask {
 
     BlazeBuildOutputs blazeBuildResult = getBlazeBuildResult(context, viewSet, shardedTargets);
     resultBuilder.setBuildResult(blazeBuildResult);
-    buildStats.setBuildResult(blazeBuildResult.buildResult);
+    buildStats.setBuildResult(blazeBuildResult.buildResult).setBuildIds(blazeBuildResult.buildIds);
     if (context.isCancelled()) {
       throw new SyncCanceledException();
     }

@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
 import com.google.idea.blaze.base.lang.buildfile.psi.Argument;
 import com.google.idea.blaze.base.lang.buildfile.psi.Expression;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
+import com.google.idea.blaze.base.lang.buildfile.psi.Statement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -30,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.testFramework.LightVirtualFile;
+import javax.annotation.Nullable;
 
 /** Creates dummy BuildElements, e.g. for renaming purposes. */
 public class BuildElementGenerator {
@@ -89,5 +91,16 @@ public class BuildElementGenerator {
       return (Expression) element;
     }
     throw new RuntimeException("Could not parse text as expression: '" + text + "'");
+  }
+
+  /** Returns null if the text can't be parsed as a statement. */
+  @Nullable
+  public Statement createStatementFromText(String text) {
+    PsiFile dummyFile = createDummyFile(text);
+    PsiElement element = dummyFile.getFirstChild();
+    if (element instanceof Statement) {
+      return (Statement) element;
+    }
+    return null;
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.ui.problems;
 
-import com.google.idea.sdkcompat.openapi.IconsCompat;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -43,6 +42,8 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
+import com.intellij.ui.treeStructure.actions.CollapseAllAction;
+import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.OpenSourceUtil;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -101,6 +102,8 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
     super.fillRightToolbarGroup(group);
     group.add(new AutoscrollToConsoleAction());
     group.add(new ShowWarningsAction());
+    group.add(new ExpandAllAction(myTree));
+    group.add(new CollapseAllAction(myTree));
   }
 
   @Override
@@ -191,7 +194,7 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
     private final ErrorTreeViewConfiguration configuration;
 
     ShowWarningsAction() {
-      super(IdeBundle.message("action.show.warnings"), null, IconsCompat.SHOW_WARNINGS);
+      super(IdeBundle.message("action.show.warnings"), null, AllIcons.General.ShowWarning);
       configuration = ErrorTreeViewConfiguration.getInstance(myProject);
     }
 

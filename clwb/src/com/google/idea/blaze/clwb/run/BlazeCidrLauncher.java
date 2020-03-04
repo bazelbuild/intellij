@@ -45,7 +45,6 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
-import com.google.idea.sdkcompat.clion.GDBDriverConfigurationAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
@@ -63,12 +62,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.cidr.cpp.execution.CLionRunParameters;
 import com.jetbrains.cidr.cpp.toolchains.CPPDebugger.Kind;
-import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
 import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
-import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.backend.LLDBDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
@@ -114,7 +111,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     ImmutableList<String> testHandlerFlags = ImmutableList.of();
     BlazeTestUiSession testUiSession =
         useTestUi()
-            ? TestUiSessionProvider.getInstance(project).getTestUiSession(configuration.getTarget())
+            ? TestUiSessionProvider.getInstance(project)
+                .getTestUiSession(configuration.getTargets())
             : null;
     if (testUiSession != null) {
       testHandlerFlags = testUiSession.getBlazeFlags();
@@ -150,7 +148,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         BlazeCommand.builder(
                 Blaze.getBuildSystemProvider(project).getBinaryPath(project),
                 handlerState.getCommandState().getCommand())
-            .addTargets(configuration.getTarget())
+            .addTargets(configuration.getTargets())
             .addBlazeFlags(extraBlazeFlags)
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
@@ -196,7 +194,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   @Override
   public CidrDebugProcess createDebugProcess(CommandLineState state, XDebugSession session)
       throws ExecutionException {
-    TargetExpression target = configuration.getTarget();
+    TargetExpression target = configuration.getSingleTarget();
     if (target == null) {
       throw new ExecutionException("Cannot parse run configuration target.");
     }
@@ -219,7 +217,6 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
       GeneralCommandLine commandLine = new GeneralCommandLine(runner.executableToDebug.getPath());
 
-      commandLine.setWorkDirectory(workingDir);
       commandLine.addParameters(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
       commandLine.addParameters(handlerState.getTestArgs());
 
@@ -245,10 +242,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       state.addConsoleFilters(getConsoleFilters().toArray(new Filter[0]));
       return new CidrLocalDebugProcess(parameters, session, state.getConsoleBuilder());
     }
-
-    CPPToolchains.Toolchain toolchainForDebugger = BlazeGDBServerProvider.getToolchain(project);
-    List<String> extraDebugFlags =
-        BlazeGDBServerProvider.getFlagsForDebugging(toolchainForDebugger, handlerState);
+    List<String> extraDebugFlags = BlazeGDBServerProvider.getFlagsForDebugging(handlerState);
 
     ProcessHandler targetProcess = createProcess(state, extraDebugFlags);
 
@@ -266,8 +260,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
             ImmutableList.of(
                 new CidrRemotePathMapping("/proc/self/cwd", workspaceRootDirectory.getParent())));
 
-    DebuggerDriverConfiguration debuggerDriverConfiguration =
-        new GDBDriverConfigurationAdapter(project, toolchainForDebugger);
+    BlazeCLionGDBDriverConfiguration debuggerDriverConfiguration =
+        new BlazeCLionGDBDriverConfiguration(project);
 
     return new BlazeCidrRemoteDebugProcess(
         targetProcess, debuggerDriverConfiguration, parameters, session, state.getConsoleBuilder());

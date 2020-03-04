@@ -33,19 +33,17 @@ java_import(
 
 java_import(
     name = "javascript",
-    data = [":javascript_data"],
     jars = glob(["plugins/JavaScriptLanguage/lib/*.jar"]),
-)
-
-filegroup(
-    name = "javascript_data",
-    srcs = glob(["plugins/JavaScriptLanguage/jsLanguageServicesImpl/external/*"]),
-    visibility = ["//visibility:private"],
 )
 
 java_import(
     name = "css",
     jars = glob(["plugins/CSS/lib/*.jar"]),
+)
+
+java_import(
+    name = "tslint",
+    jars = glob(["plugins/tslint/lib/*.jar"]),
 )
 
 java_import(
