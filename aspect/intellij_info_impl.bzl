@@ -873,10 +873,10 @@ def collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups
     if not hasattr(target, "kt"):
         return False
     kt = target.kt
-    if not hasattr(target, "language_version"):
+    if not hasattr(kt, "language_version"):
         return False
-    ide_info["kt_toolchain_ide_info"] = struct_omit_none(
-        language_version = kt.language_version,
+    ide_info["kt_toolchain_ide_info"] = struct(
+        language_version = kt.language_version
     )
     update_sync_output_groups(output_groups, "intellij-info-kotlin", depset([ide_info_file]))
     return True
