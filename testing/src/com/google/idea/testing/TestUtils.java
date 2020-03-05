@@ -17,7 +17,7 @@ package com.google.idea.testing;
 
 import com.google.common.base.StandardSystemProperty;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.intellij.mock.MockApplicationEx;
+import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -110,10 +110,10 @@ public final class TestUtils {
     return propValue;
   }
 
-  private static class MockApplication extends MockApplicationEx {
+  private static class MyMockApplication extends MockApplication {
     private final ExecutorService executor = MoreExecutors.newDirectExecutorService();
 
-    MockApplication(Disposable parentDisposable) {
+    MyMockApplication(Disposable parentDisposable) {
       super(parentDisposable);
     }
 
@@ -129,7 +129,7 @@ public final class TestUtils {
   }
 
   static void createMockApplication(Disposable parentDisposable) {
-    final MockApplication instance = new MockApplication(parentDisposable);
+    final MyMockApplication instance = new MyMockApplication(parentDisposable);
 
     // If there was no previous application, ApplicationManager leaves the MockApplication in place,
     // which can break future tests.
