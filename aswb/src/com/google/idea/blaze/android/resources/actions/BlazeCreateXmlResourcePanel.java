@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.resources.actions;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.tools.idea.res.IdeResourceNameValidator;
+import com.google.idea.blaze.android.resources.AndroidResourceUtilCompat;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -50,7 +51,6 @@ import org.jetbrains.android.actions.CreateXmlResourceDialog;
 import org.jetbrains.android.actions.CreateXmlResourcePanel;
 import org.jetbrains.android.actions.CreateXmlResourceSubdirPanel;
 import org.jetbrains.android.actions.CreateXmlResourceSubdirPanel.Parent;
-import org.jetbrains.android.util.AndroidResourceUtil;
 
 /**
  * Embeddable UI for selecting how to create a new resource value (which XML file and directories to
@@ -122,7 +122,8 @@ public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Pare
     setupResourceDirectoryCombo();
 
     if (defaultFile == null) {
-      final String defaultFileName = AndroidResourceUtil.getDefaultResourceFileName(myResourceType);
+      final String defaultFileName =
+          AndroidResourceUtilCompat.getDefaultResourceFileName(myResourceType);
 
       if (defaultFileName != null) {
         myFileNameCombo.getEditor().setItem(defaultFileName);
@@ -168,7 +169,7 @@ public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Pare
 
   @Override
   public void resetToDefault() {
-    String defaultFileName = AndroidResourceUtil.getDefaultResourceFileName(myResourceType);
+    String defaultFileName = AndroidResourceUtilCompat.getDefaultResourceFileName(myResourceType);
     if (defaultFileName != null) {
       myFileNameCombo.getEditor().setItem(defaultFileName);
     }
@@ -236,7 +237,7 @@ public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Pare
     if (myNameField.isVisible() && resourceName.isEmpty()) {
       return new ValidationInfo("specify resource name", myNameField);
     } else if (myNameField.isVisible()
-        && !AndroidResourceUtil.isCorrectAndroidResourceName(resourceName)) {
+        && !AndroidResourceUtilCompat.isCorrectAndroidResourceName(resourceName)) {
       return new ValidationInfo(resourceName + " is not correct resource name", myNameField);
     } else if (fileName.isEmpty()) {
       return new ValidationInfo("specify file name", myFileNameCombo);

@@ -55,6 +55,7 @@ java_library(
     srcs = glob(["tests/utils/unit/**/*.java"]) + select_for_plugin_api({
         "android-studio-3.6": glob(["testcompat/as36/utils/unit/**/*.java"]),
         "android-studio-4.0": glob(["testcompat/as40/utils/unit/**/*.java"]),
+        "android-studio-4.1": glob(["testcompat/as41/utils/unit/**/*.java"]),
     }),
     deps = [
         ":aswb_lib",
@@ -69,16 +70,15 @@ java_library(
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
         "android-studio-3.6": glob(["testcompat/as36/utils/integration/**/*.java"]),
         "android-studio-4.0": glob(["testcompat/as40/utils/integration/**/*.java"]),
+        "android-studio-4.1": glob(["testcompat/as41/utils/integration/**/*.java"]),
     }),
     deps = [
-        ":aswb_lib",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
         "//cpp",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
-        "//intellij_platform_sdk:test_libs",
         "//java",
         "//testing:lib",
         "@junit//jar",
@@ -90,6 +90,7 @@ java_library(
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-3.6": glob(["sdkcompat/as36/**/*.java"]),
         "android-studio-4.0": glob(["sdkcompat/as40/**/*.java"]),
+        "android-studio-4.1": glob(["sdkcompat/as41/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     deps = [
@@ -99,8 +100,6 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
-        "//sdkcompat",
-        "@error_prone_annotations//jar",
     ],
 )
 
@@ -109,6 +108,7 @@ intellij_unit_test_suite(
     srcs = glob(["tests/unittests/**/*.java"]) + select_for_plugin_api({
         "android-studio-3.6": glob(["testcompat/as36/unittests/**/*.java"]),
         "android-studio-4.0": glob(["testcompat/as40/unittests/**/*.java"]),
+        "android-studio-4.1": glob(["testcompat/as41/unittests/**/*.java"]),
     }),
     test_package_root = "com.google.idea.blaze.android",
     deps = [
@@ -147,6 +147,7 @@ intellij_integration_test_suite(
     ) + select_for_plugin_api({
         "android-studio-3.6": glob(["testcompat/as36/integration/**/*.java"]),
         "android-studio-4.0": glob(["testcompat/as40/integration/**/*.java"]),
+        "android-studio-4.1": glob(["testcompat/as41/integration/**/*.java"]),
     }),
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",
@@ -158,7 +159,6 @@ intellij_integration_test_suite(
     deps = [
         ":aswb_lib",
         ":integration_test_utils",
-        ":unit_test_utils",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
@@ -170,7 +170,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
-        "//sdkcompat",
         "@junit//jar",
     ],
 )

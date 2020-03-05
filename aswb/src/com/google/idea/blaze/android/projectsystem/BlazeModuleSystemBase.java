@@ -332,7 +332,12 @@ public abstract class BlazeModuleSystemBase implements AndroidModuleSystem, Blaz
         .collect(Collectors.toList());
   }
 
-  @Override
+  // @Override #api4.1
+  public Collection<Library> getResolvedLibraryDependencies() {
+    return getResolvedDependentLibraries();
+  }
+
+  // @Override #api4.0
   public Collection<Library> getResolvedDependentLibraries() {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();

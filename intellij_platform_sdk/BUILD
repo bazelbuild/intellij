@@ -216,6 +216,13 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-4.1",
+    values = {
+        "define": "ij_product=android-studio-4.1",
+    },
+)
+
+config_setting(
     name = "clion-latest",
     values = {
         "define": "ij_product=clion-latest",

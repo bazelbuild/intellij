@@ -22,6 +22,7 @@ java_library(
            ) + select_for_plugin_api({
         "android-studio-3.6": glob(["cidr/**/*.java"]),
         "android-studio-4.0": glob(["cidr/**/*.java"]),
+        "android-studio-4.1": glob(["cidr/**/*.java"]),
         "default": [],
     }) + select_for_plugin_api({
         "android-studio-3.6": glob(["testcompat/v192/**/*.java"]),

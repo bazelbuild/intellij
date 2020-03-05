@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
+import static org.jetbrains.android.dom.manifest.AndroidManifestUtils.getPackageName;
 import static org.jetbrains.android.facet.SourceProviderUtil.createIdeaSourceProviderFromModelSourceProvider;
 import static org.jetbrains.android.facet.SourceProviderUtil.createSourceProvidersForLegacyModule;
 
@@ -25,11 +26,17 @@ import com.android.tools.idea.projectsystem.SourceProviders;
 import com.android.tools.idea.projectsystem.SourceProvidersFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
+import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.SourceProviderManager;
 import org.jetbrains.android.facet.SourceProvidersImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -63,6 +70,25 @@ public class BlazeProjectSystem extends BlazeProjectSystemBase {
         }
       }
     };
+  }
+
+  @NotNull
+  @Override
+  public Collection<AndroidFacet> getAndroidFacetsWithPackageName(
+      @NotNull Project project, @NotNull String packageName, @NotNull GlobalSearchScope scope) {
+    List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
+    return facets.stream()
+        .filter(facet -> getPackageName(facet) == packageName)
+        .filter(
+            facet -> {
+              VirtualFile file = SourceProviderManager.getInstance(facet).getMainManifestFile();
+              if (file == null) {
+                return false;
+              } else {
+                return scope.contains(file);
+              }
+            })
+        .collect(Collectors.toList());
   }
 
   @NotNull
