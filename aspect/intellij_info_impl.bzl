@@ -912,7 +912,9 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
     # Propagate my own exports
     export_deps = []
+    direct_exports = []
     if JavaInfo in target:
+        direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
         transitive_exports = target[JavaInfo].transitive_exports
         export_deps = [
             make_dep_from_label(label, COMPILE_TIME)
@@ -926,10 +928,8 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
             # Starlark android libraries do not produce transitive_exports.
             if not transitive_exports:
-                direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
                 export_deps = export_deps + make_deps(direct_exports, COMPILE_TIME)
         elif ctx.rule.kind == "aar_import":
-            direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
             export_deps = export_deps + make_deps(direct_exports, COMPILE_TIME)
     export_deps = depset(export_deps).to_list()
 
@@ -947,10 +947,10 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         semantics_extra_deps(PREREQUISITE_DEPS, semantics, "extra_prerequisites"),
     )
 
-    forwarded_deps = _get_forwarded_deps(target, ctx)
+    forwarded_deps = _get_forwarded_deps(target, ctx) + direct_exports
 
     # Roll up output files from my prerequisites
-    prerequisites = direct_dep_targets + runtime_dep_targets + extra_prerequisite_targets
+    prerequisites = direct_dep_targets + runtime_dep_targets + extra_prerequisite_targets + direct_exports
     output_groups = dict()
     for dep in prerequisites:
         for k, v in dep.intellij_info.output_groups.items():

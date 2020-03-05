@@ -33,10 +33,39 @@ intellij_aspect_test_fixture(
     deps = [":foo"],
 )
 
+java_library(
+    name = "foo_exports",
+    srcs = ["Foo.java"],
+    deps = [":exports_direct"],
+)
+
+java_library(
+    name = "exports_direct",
+    srcs = [],
+    exports = [
+        ":direct",
+        ":exports_indirect",
+    ],
+)
+
+java_library(
+    name = "exports_indirect",
+    srcs = [],
+    exports = [":indirect"],
+)
+
+intellij_aspect_test_fixture(
+    name = "foo_exports_fixture",
+    deps = [":foo_exports"],
+)
+
 java_test(
     name = "JavaLibraryTest",
     srcs = ["JavaLibraryTest.java"],
-    data = [":foo_fixture"],
+    data = [
+        "foo_exports_fixture",
+        ":foo_fixture",
+    ],
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing/rules:IntellijAspectTest",
