@@ -30,7 +30,8 @@ public class BazelWorkspaceRootProvider implements WorkspaceRootProvider {
   /** Checks for the existence of a WORKSPACE file in the given directory. */
   @Override
   public boolean isWorkspaceRoot(File file) {
-    return FileOperationProvider.getInstance().isFile(new File(file, "WORKSPACE"));
+    return FileOperationProvider.getInstance().isFile(new File(file, "WORKSPACE"))
+        || FileOperationProvider.getInstance().isFile(new File(file, "WORKSPACE.bazel"));
   }
 
   @Nullable

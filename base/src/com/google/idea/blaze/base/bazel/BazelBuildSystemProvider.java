@@ -101,6 +101,11 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   }
 
   @Override
+  public ImmutableList<String> possibleWorkspaceFileNames() {
+    return ImmutableList.of("WORKSPACE", "WORKSPACE.bazel");
+  }
+
+  @Override
   public void populateBlazeVersionData(
       BuildSystem buildSystem,
       WorkspaceRoot workspaceRoot,

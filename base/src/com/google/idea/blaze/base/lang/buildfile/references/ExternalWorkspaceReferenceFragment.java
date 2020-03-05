@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -69,10 +70,16 @@ public class ExternalWorkspaceReferenceFragment extends PsiReferenceBase<StringL
     if (projectRoot == null) {
       return null;
     }
-    PsiFileSystemItem workspaceFile =
-        BuildReferenceManager.getInstance(project)
-            .resolveFile(projectRoot.fileForPath(new WorkspacePath("WORKSPACE")));
-    return ObjectUtils.tryCast(workspaceFile, BuildFile.class);
+    for (String workspaceFileName :
+        Blaze.getBuildSystemProvider(project).possibleWorkspaceFileNames()) {
+      PsiFileSystemItem workspaceFile =
+          BuildReferenceManager.getInstance(project)
+              .resolveFile(projectRoot.fileForPath(new WorkspacePath(workspaceFileName)));
+      if (workspaceFile != null) {
+        return ObjectUtils.tryCast(workspaceFile, BuildFile.class);
+      }
+    }
+    return null;
   }
 
   @Override

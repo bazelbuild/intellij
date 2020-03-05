@@ -122,6 +122,9 @@ public interface BuildSystemProvider {
    */
   ImmutableList<String> possibleBuildFileNames();
 
+  /** The WORKSPACE file in the repository root. */
+  ImmutableList<String> possibleWorkspaceFileNames();
+
   /** Check if the given filename is a valid BUILD file name. */
   default boolean isBuildFile(String fileName) {
     return possibleBuildFileNames().contains(fileName);
@@ -162,7 +165,8 @@ public interface BuildSystemProvider {
   default ImmutableList<FileNameMatcher> buildLanguageFileTypeMatchers() {
     ImmutableList.Builder<FileNameMatcher> list = ImmutableList.builder();
     possibleBuildFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
-    list.add(new ExtensionFileNameMatcher("bzl"), new ExactFileNameMatcher("WORKSPACE"));
+    possibleWorkspaceFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
+    list.add(new ExtensionFileNameMatcher("bzl"));
     return list.build();
   }
 
