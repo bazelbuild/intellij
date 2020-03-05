@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -236,6 +237,11 @@ public class BlazeCommandRunConfiguration
     String pattern = target.label.toString().trim();
     targetPatterns = pattern.isEmpty() ? ImmutableList.of() : ImmutableList.of(pattern);
     updateTargetKind(target.kindString);
+  }
+
+  public void setTargets(ImmutableList<TargetExpression> targets) {
+    targetPatterns = targets.stream().map(TargetExpression::toString).collect(toImmutableList());
+    updateTargetKindAsync(null);
   }
 
   /** Sets the target expression and asynchronously kicks off a target kind update. */
