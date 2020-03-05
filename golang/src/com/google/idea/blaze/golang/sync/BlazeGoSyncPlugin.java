@@ -17,9 +17,7 @@ package com.google.idea.blaze.golang.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -28,10 +26,8 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
-import com.google.idea.blaze.base.sync.RefreshRequestType;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -40,7 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformUtils;
 import java.util.List;
 import java.util.Set;
@@ -52,9 +47,6 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
   /** From {@link com.goide.inspections.WrongSdkConfigurationNotificationProvider}. */
   private static final String DO_NOT_SHOW_NOTIFICATION_ABOUT_EMPTY_GOPATH =
       "DO_NOT_SHOW_NOTIFICATION_ABOUT_EMPTY_GOPATH";
-
-  private static final BoolExperiment refreshExecRoot =
-      new BoolExperiment("refresh.exec.root.golang", true);
 
   static final ImmutableSet<String> GO_LIBRARY_PREFIXES = ImmutableSet.of("GOPATH", "Go SDK");
 
@@ -141,23 +133,7 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
   }
 
   @Override
-  public ImmutableSetMultimap<RefreshRequestType, VirtualFile> filesToRefresh(
-      BlazeProjectData blazeProjectData) {
-    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO)) {
-      return ImmutableSetMultimap.of();
-    }
-    if (!refreshExecRoot.getValue()) {
-      return ImmutableSetMultimap.of();
-    }
-    // recursive refresh of the blaze execution root. This is required because our blaze aspect
-    // can't yet tell us exactly which genfiles are required to resolve the project.
-    VirtualFile execRoot =
-        VfsUtils.resolveVirtualFile(
-            blazeProjectData.getBlazeInfo().getExecutionRoot(), /* refreshIfNeeded= */ false);
-    if (execRoot == null) {
-      return ImmutableSetMultimap.of();
-    }
-    return ImmutableSetMultimap.of(
-        RefreshRequestType.create(/* recursive= */ true, /* reloadChildren= */ true), execRoot);
+  public boolean refreshExecutionRoot(BlazeProjectData blazeProjectData) {
+    return blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO);
   }
 }

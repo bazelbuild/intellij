@@ -15,11 +15,7 @@
  */
 package com.google.idea.blaze.base.sync;
 
-
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
@@ -70,16 +66,12 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Runs the 'project update' phase of sync, after the blaze build phase has completed. */
@@ -269,40 +261,17 @@ final class ProjectUpdateSyncTask {
         (childContext) -> {
           childContext.push(new TimingScope("RefreshVirtualFileSystem", EventType.Other));
           childContext.output(new StatusOutput("Refreshing files"));
-          ImmutableSetMultimap.Builder<RefreshRequestType, VirtualFile> requests =
-              ImmutableSetMultimap.builder();
-          for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-            requests.putAll(syncPlugin.filesToRefresh(blazeProjectData));
-          }
-          // Like VfsUtil.markDirtyAndRefresh, but with callback for when async refreshes finish.
-          List<ListenableFuture<?>> futures = new ArrayList<>();
-          for (Map.Entry<RefreshRequestType, Collection<VirtualFile>> entry :
-              requests.build().asMap().entrySet()) {
-            RefreshRequestType refreshRequestType = entry.getKey();
-            List<VirtualFile> list =
-                VfsUtil.markDirty(
-                    refreshRequestType.recursive(),
-                    refreshRequestType.reloadChildren(),
-                    entry.getValue().toArray(new VirtualFile[0]));
-            if (list.isEmpty()) {
-              continue;
-            }
-            SettableFuture<Boolean> completion = SettableFuture.create();
-            futures.add(completion);
-            LocalFileSystem.getInstance()
-                .refreshFiles(
-                    list,
-                    /* async= */ true,
-                    refreshRequestType.recursive(),
-                    () -> completion.set(true));
-          }
-          try {
-            Futures.allAsList(futures).get();
-          } catch (InterruptedException e) {
-            throw new ProcessCanceledException(e);
-          } catch (ExecutionException e) {
-            IssueOutput.warn("Failed to refresh file system").submit(childContext);
-            logger.warn("Failed to refresh file system", e);
+          if (ApplicationManager.getApplication().isReadAccessAllowed()) {
+            IssueOutput.warn("Attempted to refresh file system while holding read lock")
+                .submit(childContext);
+            logger.warn("Attempted to refresh file system while holding read lock");
+          } else if (Arrays.stream(BlazeSyncPlugin.EP_NAME.getExtensions())
+              .anyMatch(p -> p.refreshExecutionRoot(blazeProjectData))) {
+            // this refresh should happen off EDT and without read lock.
+            VirtualFile root =
+                VfsUtil.findFileByIoFile(blazeProjectData.getBlazeInfo().getExecutionRoot(), true);
+            VfsUtil.markDirtyAndRefresh(
+                /* async= */ false, /* recursive= */ true, /* reloadChildren= */ true, root);
           }
         });
   }
