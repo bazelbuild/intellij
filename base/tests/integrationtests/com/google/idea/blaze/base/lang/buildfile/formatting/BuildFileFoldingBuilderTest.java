@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiComment;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -41,11 +42,11 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testFuncDefStatementsFolded() {
+  public void testMultilineCommentFolded() {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
-            "# multi-line comment, not folded",
+            "# multi-line comment, folded",
             "# second line of comment",
             "def function(arg1, arg2):",
             "    stmt1",
@@ -54,8 +55,55 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
             "variable = 1");
 
     FoldingDescriptor[] foldingRegions = getFoldingRegions(file);
-    assertThat(foldingRegions).hasLength(1);
+    assertThat(foldingRegions).hasLength(2);
     assertThat(foldingRegions[0].getElement().getPsi())
+        .isEqualTo(file.firstChildOfClass(PsiComment.class));
+  }
+
+  @Test
+  public void testMultilineCommentIncludingBlankLinesIsFolded() {
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "# multi-line comment, folded",
+            "# second line of comment",
+            "",
+            "# another comment after a blank line");
+
+    FoldingDescriptor[] foldingRegions = getFoldingRegions(file);
+    assertThat(foldingRegions).hasLength(1);
+  }
+
+  @Test
+  public void testMultilineStringFoldedToFirstLine() {
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "\"\"\"First line of string",
+            "Second line of string\"\"\"");
+
+    FoldingDescriptor[] foldingRegions = getFoldingRegions(file);
+    assertThat(foldingRegions).hasLength(1);
+    assertThat(foldingRegions[0].getPlaceholderText())
+        .isEqualTo("\"\"\"First line of string...\"\"\"");
+  }
+
+  @Test
+  public void testFuncDefStatementsFolded() {
+    BuildFile file =
+        createBuildFile(
+            new WorkspacePath("java/com/google/BUILD"),
+            "# multi-line comment, folded",
+            "# second line of comment",
+            "def function(arg1, arg2):",
+            "    stmt1",
+            "    stmt2",
+            "",
+            "variable = 1");
+
+    FoldingDescriptor[] foldingRegions = getFoldingRegions(file);
+    assertThat(foldingRegions).hasLength(2);
+    assertThat(foldingRegions[1].getElement().getPsi())
         .isEqualTo(file.findFunctionInScope("function"));
   }
 

@@ -42,6 +42,8 @@ public class BuildToken extends IElementType {
   public static final TokenSet WHITESPACE_AND_NEWLINE =
       TokenSet.create(fromKind(TokenKind.WHITESPACE), fromKind(TokenKind.NEWLINE));
 
+  public static final BuildToken COMMENT = fromKind(TokenKind.COMMENT);
+
   public final TokenKind kind;
 
   private BuildToken(TokenKind kind) {

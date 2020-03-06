@@ -21,14 +21,17 @@ import com.google.idea.blaze.base.lang.buildfile.lexer.TokenKind;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElementTypes;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.LoadStatement;
+import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
+import com.google.idea.blaze.base.lang.buildfile.references.QuoteType;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.FileASTNode;
 import com.intellij.lang.folding.FoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.TokenType;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -36,54 +39,114 @@ import javax.annotation.Nullable;
 /** Simple code block folding for BUILD files. */
 public class BuildFileFoldingBuilder implements FoldingBuilder {
 
-  /** Currently only folding top-level nodes. */
+  private final BoolExperiment enabled =
+      new BoolExperiment("build.files.code.folding.enabled", true);
+
   @Override
   public FoldingDescriptor[] buildFoldRegions(ASTNode node, Document document) {
-    List<FoldingDescriptor> descriptors = Lists.newArrayList();
-    if (node instanceof FileASTNode) {
-      for (ASTNode child : node.getChildren(null)) {
-        addDescriptors(descriptors, child);
-      }
-    } else if (isTopLevel(node)) {
-      addDescriptors(descriptors, node);
+    if (!enabled.getValue()) {
+      return FoldingDescriptor.EMPTY;
     }
-    return descriptors.toArray(new FoldingDescriptor[0]);
+    List<FoldingDescriptor> descriptors = Lists.newArrayList();
+    addDescriptors(descriptors, node);
+    return descriptors.toArray(FoldingDescriptor.EMPTY);
   }
 
-  /** Only folding top-level statements */
   private void addDescriptors(List<FoldingDescriptor> descriptors, ASTNode node) {
     IElementType type = node.getElementType();
     if (type == BuildElementTypes.FUNCTION_STATEMENT) {
-      ASTNode colon = node.findChildByType(BuildToken.fromKind(TokenKind.COLON));
-      if (colon == null) {
-        return;
-      }
-      ASTNode stmtList = node.findChildByType(BuildElementTypes.STATEMENT_LIST);
-      if (stmtList == null) {
-        return;
-      }
-      int start = colon.getStartOffset() + 1;
-      int end = endOfList(stmtList);
-      descriptors.add(new FoldingDescriptor(node, range(start, end)));
-
+      foldFunctionDefinition(descriptors, node);
     } else if (type == BuildElementTypes.FUNCALL_EXPRESSION
         || type == BuildElementTypes.LOAD_STATEMENT) {
-      ASTNode listNode =
-          type == BuildElementTypes.FUNCALL_EXPRESSION
-              ? node.findChildByType(BuildElementTypes.ARGUMENT_LIST)
-              : node;
-      if (listNode == null) {
-        return;
-      }
-      ASTNode lParen = listNode.findChildByType(BuildToken.fromKind(TokenKind.LPAREN));
-      ASTNode rParen = listNode.findChildByType(BuildToken.fromKind(TokenKind.RPAREN));
-      if (lParen == null || rParen == null) {
-        return;
-      }
-      int start = lParen.getStartOffset() + 1;
-      int end = rParen.getTextRange().getEndOffset() - 1;
-      descriptors.add(new FoldingDescriptor(node, range(start, end)));
+      foldFunctionCall(descriptors, node);
+    } else if (type == BuildElementTypes.STRING_LITERAL) {
+      foldLongStrings(descriptors, node);
+    } else if (type == BuildToken.COMMENT) {
+      foldSequentialComments(descriptors, node);
     }
+    ASTNode child = node.getFirstChildNode();
+    while (child != null) {
+      addDescriptors(descriptors, child);
+      child = child.getTreeNext();
+    }
+  }
+
+  private static void foldFunctionDefinition(List<FoldingDescriptor> descriptors, ASTNode node) {
+    ASTNode colon = node.findChildByType(BuildToken.fromKind(TokenKind.COLON));
+    if (colon == null) {
+      return;
+    }
+    ASTNode stmtList = node.findChildByType(BuildElementTypes.STATEMENT_LIST);
+    if (stmtList == null) {
+      return;
+    }
+    int start = colon.getStartOffset() + 1;
+    int end = endOfList(stmtList);
+    descriptors.add(new FoldingDescriptor(node, range(start, end)));
+  }
+
+  private static void foldFunctionCall(List<FoldingDescriptor> descriptors, ASTNode node) {
+    IElementType type = node.getElementType();
+    ASTNode listNode =
+        type == BuildElementTypes.FUNCALL_EXPRESSION
+            ? node.findChildByType(BuildElementTypes.ARGUMENT_LIST)
+            : node;
+    if (listNode == null) {
+      return;
+    }
+    ASTNode lParen = listNode.findChildByType(BuildToken.fromKind(TokenKind.LPAREN));
+    ASTNode rParen = listNode.findChildByType(BuildToken.fromKind(TokenKind.RPAREN));
+    if (lParen == null || rParen == null) {
+      return;
+    }
+    int start = lParen.getStartOffset() + 1;
+    int end = rParen.getTextRange().getEndOffset() - 1;
+    descriptors.add(new FoldingDescriptor(node, range(start, end)));
+  }
+
+  private static void foldLongStrings(List<FoldingDescriptor> descriptors, ASTNode node) {
+    boolean isMultiLine = node.textContains('\n');
+    if (isMultiLine) {
+      descriptors.add(new FoldingDescriptor(node, node.getTextRange()));
+    }
+  }
+
+  private static void foldSequentialComments(List<FoldingDescriptor> descriptors, ASTNode node) {
+    // need to skip previous comments in sequence
+    ASTNode curNode = node.getTreePrev();
+    while (curNode != null) {
+      if (curNode.getElementType() == BuildToken.COMMENT) {
+        return;
+      }
+      curNode = isWhitespaceOrNewline(curNode) ? curNode.getTreePrev() : null;
+    }
+
+    // fold sequence comments in one block
+    curNode = node.getTreeNext();
+    ASTNode lastCommentNode = node;
+    while (curNode != null) {
+      if (curNode.getElementType() == BuildToken.COMMENT) {
+        lastCommentNode = curNode;
+        curNode = curNode.getTreeNext();
+        continue;
+      }
+      curNode = isWhitespaceOrNewline(curNode) ? curNode.getTreeNext() : null;
+    }
+
+    if (lastCommentNode != node) {
+      descriptors.add(
+          new FoldingDescriptor(
+              node,
+              TextRange.create(
+                  node.getStartOffset(), lastCommentNode.getTextRange().getEndOffset())));
+    }
+  }
+
+  private static boolean isWhitespaceOrNewline(ASTNode node) {
+    if (node.getPsi() instanceof PsiWhiteSpace) {
+      return true;
+    }
+    return BuildToken.WHITESPACE_AND_NEWLINE.contains(node.getElementType());
   }
 
   private static TextRange range(int start, int end) {
@@ -97,11 +160,10 @@ public class BuildFileFoldingBuilder implements FoldingBuilder {
    * Don't include whitespace and newlines at the end of the function.<br>
    * Could do this in the lexer instead, with additional look-ahead checks.
    */
-  private int endOfList(ASTNode stmtList) {
-    ASTNode child = stmtList.getLastChildNode();
+  private static int endOfList(ASTNode stmtList) {
+    ASTNode child = getLastChildRecursively(stmtList);
     while (child != null) {
-      IElementType type = child.getElementType();
-      if (type != TokenType.WHITE_SPACE && type != BuildToken.fromKind(TokenKind.NEWLINE)) {
+      if (!isWhitespaceOrNewline(child)) {
         return child.getTextRange().getEndOffset();
       }
       child = child.getTreePrev();
@@ -109,8 +171,15 @@ public class BuildFileFoldingBuilder implements FoldingBuilder {
     return stmtList.getTextRange().getEndOffset();
   }
 
-  private boolean isTopLevel(ASTNode node) {
-    return node.getTreeParent() instanceof FileASTNode;
+  private static ASTNode getLastChildRecursively(ASTNode node) {
+    ASTNode child = node;
+    while (true) {
+      ASTNode newChild = child.getLastChildNode();
+      if (newChild == null) {
+        return child;
+      }
+      child = newChild;
+    }
   }
 
   @Override
@@ -130,7 +199,24 @@ public class BuildFileFoldingBuilder implements FoldingBuilder {
         return "\"" + fileName + "\"...";
       }
     }
+    if (psi instanceof PsiComment) {
+      return "#...";
+    }
+    if (psi instanceof StringLiteral) {
+      StringLiteral str = ((StringLiteral) psi);
+      QuoteType type = str.getQuoteType();
+      String contents = str.getStringContents();
+      if (contents.contains("\n")) {
+        return type.wrap(getFirstLine(contents) + "...");
+      }
+      return type.wrap("...");
+    }
     return "...";
+  }
+
+  private static String getFirstLine(String string) {
+    int newlineIx = string.indexOf('\n');
+    return newlineIx == -1 ? string : string.substring(0, newlineIx);
   }
 
   @Override
