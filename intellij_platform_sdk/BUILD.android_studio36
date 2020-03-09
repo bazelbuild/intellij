@@ -84,6 +84,11 @@ java_import(
     jars = ["android-studio/lib/forms_rt.jar"],
 )
 
+java_import(
+    name = "objenesis",
+    jars = glob(["android-studio/lib/objenesis-*.jar"]),
+)
+
 # The plugins required by ASwB. We need to include them
 # when running integration tests.
 java_import(

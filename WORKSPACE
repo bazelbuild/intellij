@@ -282,16 +282,24 @@ jvm_maven_import_external(
 
 jvm_maven_import_external(
     name = "mockito",
-    artifact = "org.mockito:mockito-core:1.10.19",
-    artifact_sha256 = "d5831ee4f71055800821a34a3051cf1ed5b3702f295ffebd50f65fb5d81a71b8",
+    artifact = "org.mockito:mockito-core:3.3.0",
+    artifact_sha256 = "fc1a1f2d1d64566bc31ee36d8214059f2adbe303d9109e5cc0e99685741c57c2",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
 
 jvm_maven_import_external(
-    name = "objenesis",
-    artifact = "org.objenesis:objenesis:1.3",
-    artifact_sha256 = "dd4ef3d3091063a4fec578cbb2bbe6c1f921c00091ba2993dcd9afd25ff9444a",
+    name = "bytebuddy",
+    artifact = "net.bytebuddy:byte-buddy:1.10.5",
+    artifact_sha256 = "3c9c603970bb9d68572c1aa29e9ae6b477d602922977a04bfa5f3b5465d7d1f4",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+jvm_maven_import_external(
+    name = "bytebuddy-agent",
+    artifact = "net.bytebuddy:byte-buddy-agent:1.10.5",
+    artifact_sha256 = "290c9930965ef5810ddb15baf3b3647ce952f40fa2f0af82d5f669e04ba87e5b",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )

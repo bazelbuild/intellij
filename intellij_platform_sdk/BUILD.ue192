@@ -87,6 +87,11 @@ java_import(
     jars = ["lib/forms_rt.jar"],
 )
 
+java_import(
+    name = "objenesis",
+    jars = glob(["lib/objenesis-*.jar"]),
+)
+
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
 java_import(

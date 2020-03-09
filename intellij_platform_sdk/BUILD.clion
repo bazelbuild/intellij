@@ -56,7 +56,12 @@ java_import(
 
 java_import(
     name = "forms_rt",
-    jars = ["clion-*/lib/forms_rt.jar"],
+    jars = glob(["clion-*/lib/forms_rt.jar"]),
+)
+
+java_import(
+    name = "objenesis",
+    jars = glob(["clion-*/lib/objenesis-*.jar"]),
 )
 
 # The plugins required by CLwB. Presumably there will be some, when we write
