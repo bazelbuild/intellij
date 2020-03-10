@@ -17,7 +17,7 @@ docker_builder:
   bazel_repository_cache:
     folder: /.repo_cache
     fingerprint_script: cat */**.bzl && cat WORKSPACE
-    populate_script: mkdir -p /.repo_cache && bazel fetch --repository_cache=/.repo_cache //...
+    populate_script: mkdir -p /.repo_cache && bazel fetch --define=ij_product=intellij-2019.3 --repository_cache=/.repo_cache //...
 
   test_script:
   - bazel test --jobs=4 --repository_cache=/.repo_cache -k --remote_http_cache=http://$CIRRUS_HTTP_CACHE_HOST --define=ij_product=intellij-2019.3 //:ijwb_tests
