@@ -20,19 +20,21 @@ import com.android.resources.ResourceType;
 import com.android.tools.idea.res.LocalResourceRepository;
 import com.android.tools.idea.res.ResourceRepositoryManager;
 import com.android.tools.idea.res.ResourceRepositoryRClass;
-import com.google.common.base.Verify;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.android.augment.AndroidLightField;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
 
 /** Blaze implementation of an R class based on resource repositories. */
 public class BlazeRClass extends ResourceRepositoryRClass {
 
-  @NotNull private final Module myModule;
+  @NotNull private final AndroidFacet androidFacet;
 
   public BlazeRClass(
-      @NotNull PsiManager psiManager, @NotNull Module module, @NotNull String packageName) {
+      @NotNull PsiManager psiManager,
+      @NotNull AndroidFacet androidFacet,
+      @NotNull String packageName) {
     super(
         psiManager,
         new ResourcesSource() {
@@ -45,11 +47,7 @@ public class BlazeRClass extends ResourceRepositoryRClass {
           @NotNull
           @Override
           public LocalResourceRepository getResourceRepository() {
-            //noinspection ConstantConditions: verifyNotNull will not return null.
-            return Verify.verifyNotNull(
-                ResourceRepositoryManager.getAppResources(module),
-                "Failed to get Android resources for module %s",
-                module);
+            return ResourceRepositoryManager.getAppResources(androidFacet);
           }
 
           @NotNull
@@ -70,12 +68,12 @@ public class BlazeRClass extends ResourceRepositoryRClass {
             return true;
           }
         });
-    myModule = module;
-    setModuleInfo(module, false);
+    this.androidFacet = androidFacet;
+    setModuleInfo(getModule(), false);
   }
 
   @NotNull
   public Module getModule() {
-    return myModule;
+    return androidFacet.getModule();
   }
 }

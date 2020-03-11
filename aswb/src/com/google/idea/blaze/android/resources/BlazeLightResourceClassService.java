@@ -30,6 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,11 @@ public class BlazeLightResourceClassService implements LightResourceClassService
     }
 
     public void addRClass(String resourceJavaPackage, Module module) {
-      BlazeRClass rClass = new BlazeRClass(psiManager, module, resourceJavaPackage);
+      AndroidFacet androidFacet = AndroidFacet.getInstance(module);
+      if (androidFacet == null) {
+        return; // Do not register R class if android facet is not present.
+      }
+      BlazeRClass rClass = new BlazeRClass(psiManager, androidFacet, resourceJavaPackage);
       rClassMap.put(getQualifiedRClassName(resourceJavaPackage), rClass);
       if (CREATE_STUB_RESOURCE_PACKAGES.getValue()) {
         addStubPackages(resourceJavaPackage);
