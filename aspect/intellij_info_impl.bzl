@@ -308,7 +308,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         # track the generated .py output
         py_genfiles = [f for f in target.files.to_list() if f.basename.endswith(".py")]
         sources = [artifact_location(f) for f in py_genfiles]
-        to_build += py_genfiles
+        to_build = depset(py_genfiles, transitive = [to_build])
 
     ide_info["py_ide_info"] = struct_omit_none(
         sources = sources,
