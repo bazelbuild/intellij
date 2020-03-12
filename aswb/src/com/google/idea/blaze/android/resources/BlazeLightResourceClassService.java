@@ -31,14 +31,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** Implementation of {@link LightResourceClassService} set up at Blaze sync time. */
 public class BlazeLightResourceClassService implements LightResourceClassService {
 
-  @NotNull private Map<String, BlazeRClass> rClasses = Maps.newHashMap();
-  @NotNull private Map<String, PsiPackage> rClassPackages = Maps.newHashMap();
+  private Map<String, BlazeRClass> rClasses = Maps.newHashMap();
+  private Map<String, PsiPackage> rClassPackages = Maps.newHashMap();
 
   // It should be harmless to create stub resource PsiPackages which shadow any "real" PsiPackages.
   // Based on the ordering of PsiElementFinder it would prefer the real package
@@ -47,7 +46,7 @@ public class BlazeLightResourceClassService implements LightResourceClassService
   private static final BoolExperiment CREATE_STUB_RESOURCE_PACKAGES =
       new BoolExperiment("create.stub.resource.packages", true);
 
-  public static BlazeLightResourceClassService getInstance(@NotNull Project project) {
+  public static BlazeLightResourceClassService getInstance(Project project) {
     return ServiceManager.getService(project, BlazeLightResourceClassService.class);
   }
 
@@ -74,8 +73,7 @@ public class BlazeLightResourceClassService implements LightResourceClassService
       }
     }
 
-    @NotNull
-    private static String getQualifiedRClassName(@NotNull String packageName) {
+    private static String getQualifiedRClassName(String packageName) {
       return packageName + ".R";
     }
 
@@ -102,9 +100,7 @@ public class BlazeLightResourceClassService implements LightResourceClassService
   }
 
   @Override
-  @NotNull
-  public List<PsiClass> getLightRClasses(
-      @NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
+  public List<PsiClass> getLightRClasses(String qualifiedName, GlobalSearchScope scope) {
     BlazeRClass rClass = this.rClasses.get(qualifiedName);
     if (rClass != null) {
       if (scope.isSearchInModuleContent(rClass.getModule())) {
@@ -114,28 +110,24 @@ public class BlazeLightResourceClassService implements LightResourceClassService
     return ImmutableList.of();
   }
 
-  @NotNull
   @Override
   public Collection<? extends PsiClass> getLightRClassesAccessibleFromModule(
-      @NotNull Module module, boolean includeTest) {
+      Module module, boolean includeTest) {
     return rClasses.values();
   }
 
-  @NotNull
   @Override
-  public Collection<? extends PsiClass> getLightRClassesContainingModuleResources(
-      @NotNull Module module) {
+  public Collection<? extends PsiClass> getLightRClassesContainingModuleResources(Module module) {
     return rClasses.values();
   }
 
   @Override
   @Nullable
-  public PsiPackage findRClassPackage(@NotNull String qualifiedName) {
+  public PsiPackage findRClassPackage(String qualifiedName) {
     return rClassPackages.get(qualifiedName);
   }
 
   @Override
-  @NotNull
   public Collection<? extends PsiClass> getAllLightRClasses() {
     return rClasses.values();
   }
