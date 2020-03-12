@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -46,12 +45,12 @@ public class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
   }
 
   @Override
-  public void attachToClient(Project project, Client client, RunConfiguration config) {
+  public void attachToClient(Project project, Client client) {
     if (isNativeProject(project)) {
       log.info("Project has native development enabled. Attaching native debugger.");
-      nativeDebugger.attachToClient(project, client, config);
+      nativeDebugger.attachToClient(project, client);
     } else {
-      super.attachToClient(project, client, config);
+      super.attachToClient(project, client);
     }
   }
 
