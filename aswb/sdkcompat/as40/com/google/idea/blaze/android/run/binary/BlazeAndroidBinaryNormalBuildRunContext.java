@@ -29,7 +29,6 @@ import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.execution.ExecutionException;

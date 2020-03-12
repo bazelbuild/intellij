@@ -32,7 +32,6 @@ import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLau
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.execution.ExecutionException;

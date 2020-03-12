@@ -19,7 +19,9 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.ConsolePrinter;
+import com.android.tools.idea.run.tasks.LaunchResult;
 import com.android.tools.idea.run.tasks.LaunchTask;
+import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.devrel.gmscore.tools.apk.arsc.BinaryResourceFile;
@@ -28,6 +30,7 @@ import com.google.devrel.gmscore.tools.apk.arsc.XmlAttribute;
 import com.google.devrel.gmscore.tools.apk.arsc.XmlChunk;
 import com.google.devrel.gmscore.tools.apk.arsc.XmlStartElementChunk;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
+import com.intellij.execution.Executor;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,8 +38,20 @@ import java.util.List;
 import java.util.zip.ZipFile;
 
 /** Checks APKs to see if they are debuggable and warn the user if they aren't. */
-public abstract class CheckApkDebuggableTask implements LaunchTask {
+public class CheckApkDebuggableTask implements LaunchTask {
   private static final String ID = "APK_DEBUGGABILITY_CHECKER";
+  private final BlazeAndroidDeployInfo deployInfo;
+
+  CheckApkDebuggableTask(BlazeAndroidDeployInfo deployInfo) {
+    this.deployInfo = deployInfo;
+  }
+
+  @Override
+  public LaunchResult run(
+      Executor executor, IDevice device, LaunchStatus launchStatus, ConsolePrinter consolePrinter) {
+    CheckApkDebuggableTask.checkApkDebuggableTaskDelegate(deployInfo, device, consolePrinter);
+    return LaunchResult.success(); // Don't block deployment.
+  }
 
   @Override
   public String getDescription() {

@@ -36,7 +36,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.SourceProviderManager;
 import org.jetbrains.annotations.Nullable;
 
-/** Utilities to obtain the package name for a given module. #api3.5 */
+/** Utilities to obtain the package name for a given module. #api3.6 */
 public class PackageNameCompat {
   /**
    * Determines whether we use the {@link AndroidManifestIndex} to obtain the raw text package name

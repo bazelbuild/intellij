@@ -19,14 +19,13 @@ import com.android.tools.idea.run.LaunchCompatibility;
 import com.android.tools.idea.run.TargetSelectionMode;
 import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.editor.DeployTargetProvider;
-import com.google.idea.blaze.android.run.DeployTargetProviderCompat;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
-/** An indirection to provide a class compatible with #api3.5 and prior. */
+/** An indirection to provide a class compatible with #api3.6 and prior. */
 public class BlazeAndroidRunConfigurationDeployTargetManager
     extends BlazeAndroidRunConfigurationDeployTargetManagerBase {
   public BlazeAndroidRunConfigurationDeployTargetManager(boolean isAndroidTest) {
@@ -64,8 +63,7 @@ public class BlazeAndroidRunConfigurationDeployTargetManager
         return null;
       }
     } else {
-      deployTarget =
-          DeployTargetProviderCompat.getDeployTarget(currentTargetProvider, env.getProject());
+      deployTarget = currentTargetProvider.getDeployTarget(env.getProject());
     }
 
     return deployTarget;
