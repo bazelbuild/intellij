@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -12,6 +10,8 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 _FAST_BUILD_JAVAC_SRCS = ["src/com/google/idea/blaze/java/fastbuild/FastBuildJavac.java"]
 
@@ -27,11 +27,24 @@ _FAST_BUILD_JAVAC_IMPL_SRCS = [
     "src/com/google/idea/blaze/java/fastbuild/FormattedJavacDiagnostic.java",
 ]
 
+_JUNIT_SOURCES = [
+    "src/com/google/idea/blaze/java/run/producers/BlazeJavaAbstractTestCaseConfigurationProducer.java",
+    "src/com/google/idea/blaze/java/run/producers/JavaTestContextProvider.java",
+    "src/com/google/idea/blaze/java/run/producers/JUnitConfigurationUtil.java",
+    "src/com/google/idea/blaze/java/run/producers/NonBlazeProducerSuppressor.java",
+    "src/com/google/idea/blaze/java/run/producers/TestMethodSelectionUtil.java",
+    "src/com/google/idea/blaze/java/run/smrunner/JunitTestComparisonFailureParser.java",
+]
+
+_COVERAGE_SOURCES = [
+    "src/com/google/idea/blaze/java/run/coverage/*.java",
+]
+
 java_library(
     name = "java",
     srcs = glob(
         ["src/**/*.java"],
-        exclude = _FAST_BUILD_JAVAC_SRCS + _FAST_BUILD_JAVAC_IMPL_SRCS,
+        exclude = _FAST_BUILD_JAVAC_SRCS + _FAST_BUILD_JAVAC_IMPL_SRCS + _JUNIT_SOURCES + _COVERAGE_SOURCES,
     ),
     javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
     visibility = ["//visibility:public"],
@@ -44,13 +57,35 @@ java_library(
         "//common/experiments",
         "//common/settings",
         "//common/transactions",
-        "//intellij_platform_sdk:coverage",
         "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:junit",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
         "//third_party/auto_value",
+    ],
+)
+
+java_library(
+    name = "junit",
+    srcs = _JUNIT_SOURCES,
+    visibility = ["//visibility:public"],
+    deps = [
+        ":java",
+        "//base",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:junit",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
+    name = "coverage",
+    srcs = glob(_COVERAGE_SOURCES),
+    deps = [
+        "//base",
+        "//intellij_platform_sdk:coverage",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
     ],
 )
 
@@ -82,8 +117,14 @@ stamped_plugin_xml(
 
 optional_plugin_xml(
     name = "optional_java",
-    module = "JUnit",
+    module = "com.intellij.modules.java",
     plugin_xml = "src/META-INF/java-contents.xml",
+)
+
+optional_plugin_xml(
+    name = "optional_junit",
+    module = "JUnit",
+    plugin_xml = "src/META-INF/junit-contents.xml",
 )
 
 optional_plugin_xml(
@@ -96,11 +137,16 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [
         ":optional_java",
+        ":optional_junit",
         ":optional_coverage",
     ],
     plugin_xmls = ["src/META-INF/blaze-java.xml"],
     visibility = ["//visibility:public"],
-    deps = [":java"],
+    deps = [
+        ":coverage",
+        ":java",
+        ":junit",
+    ],
 )
 
 intellij_plugin(
@@ -135,6 +181,7 @@ intellij_unit_test_suite(
     ],
     test_package_root = "com.google.idea.blaze.java",
     deps = [
+        ":coverage",
         ":java",
         "//base",
         "//base:unit_test_utils",
@@ -192,6 +239,7 @@ intellij_integration_test_suite(
     ],
     deps = [
         ":java",
+        ":junit",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",

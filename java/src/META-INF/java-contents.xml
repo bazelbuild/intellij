@@ -14,7 +14,6 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-  <depends>JUnit</depends>
   <depends>com.intellij.modules.java</depends>
 
   <actions>
@@ -63,7 +62,6 @@
     <TestTargetHeuristic implementation="com.google.idea.blaze.java.run.TestClassHeuristic" order="before QualifiedClassNameHeuristic"/>
     <SyncListener implementation="com.google.idea.blaze.java.libraries.DetachAllSourceJarsAction$DetachAllOnSync"/>
     <JavaClasspathAspectStrategy implementation="com.google.idea.blaze.java.run.hotswap.JavaClasspathAspectStrategy$BazelStrategy"/>
-    <TestComparisonFailureParser implementation="com.google.idea.blaze.java.run.smrunner.JunitTestComparisonFailureParser"/>
     <FastBuildAspectStrategy implementation="com.google.idea.blaze.java.fastbuild.BazelFastBuildAspectStrategy"/>
     <FastBuildTestEnvironmentCreator implementation="com.google.idea.blaze.java.run.fastbuild.BazelFastBuildTestEnvironmentCreator"/>
     <FastBuildTestEnvironmentModifier implementation="com.google.idea.blaze.java.run.fastbuild.BazelTestEnvironmentVariables"/>
@@ -74,9 +72,6 @@
     <JavaLikeLanguage implementation="com.google.idea.blaze.java.sync.source.JavaLikeLanguage$Java"/>
     <JavaLikeLanguage implementation="com.google.idea.blaze.java.sync.source.AndroidJavaLikeLanguage"/>
     <TestContextProvider
-        implementation="com.google.idea.blaze.java.run.producers.JavaTestContextProvider"
-        id="JavaTestContextProvider"/>
-    <TestContextProvider
         implementation="com.google.idea.blaze.java.run.producers.MultipleJavaClassesTestContextProvider"
         order="after JavaTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.java.run.producers.JavaBinaryContextProvider"/>
@@ -84,9 +79,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <runConfigurationProducer
-        implementation="com.google.idea.blaze.java.run.producers.BlazeJavaAbstractTestCaseConfigurationProducer"
-        order="first, before testContextProducer"/>
     <applicationService serviceImplementation="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"/>
     <applicationService serviceImplementation="com.google.idea.blaze.java.sync.source.PackageManifestReader"/>
     <programRunner implementation="com.google.idea.blaze.java.run.BlazeJavaDebuggerRunner"/>
@@ -139,9 +131,6 @@
   </application-components>
 
   <project-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.java.run.producers.NonBlazeProducerSuppressor</implementation-class>
-    </component>
     <component>
       <interface-class>com.google.idea.blaze.java.fastbuild.FastBuildService</interface-class>
       <implementation-class>com.google.idea.blaze.java.fastbuild.FastBuildServiceImpl</implementation-class>
