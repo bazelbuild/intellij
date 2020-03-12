@@ -108,6 +108,7 @@ java_import(
     jars = glob(
         [
             "android-studio/plugins/gradle/lib/*.jar",
+            "android-studio/plugins/gradle-java/lib/*.jar",
             "android-studio/plugins/Groovy/lib/*.jar",
             "android-studio/plugins/java-i18n/lib/*.jar",
             "android-studio/plugins/junit/lib/*.jar",
