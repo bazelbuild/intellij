@@ -16,19 +16,24 @@
 package com.google.idea.blaze.android.run.binary;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.deploy.DeploymentConfiguration;
 import com.android.tools.idea.gradle.util.DynamicAppUtils;
 import com.android.tools.idea.run.ApkFileUnit;
 import com.android.tools.idea.run.ApkInfo;
+import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.tasks.ApplyChangesTask;
+import com.android.tools.idea.run.tasks.ApplyCodeChangesTask;
+import com.android.tools.idea.run.tasks.DeployTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
+import com.android.tools.idea.run.util.SwapInfo;
+import com.android.tools.idea.run.util.SwapInfo.SwapType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.android.run.ApplyChangesCompat;
-import com.google.idea.blaze.android.run.DeployTaskCompat;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
@@ -112,31 +117,30 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   @Override
   public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
-    Collection<ApkInfo> apks;
-    try {
-      apks = apkProvider.getApks(device);
-    } catch (ApkProvisionException e) {
-      throw new ExecutionException(e);
-    }
+    ImmutableMap<String, List<File>> filesToInstall =
+        getFilesToInstall(device, launchOptions, apkProvider);
+    return ImmutableList.of(getDeployTask(launchOptions, filesToInstall));
+  }
 
+  private LaunchTask getDeployTask(
+      LaunchOptions launchOptions, ImmutableMap<String, List<File>> filesToInstall) {
     if (updateCodeViaJvmti.getValue()) {
-      // Add packages to the deployment, filtering out any dynamic features that are disabled.
-      ImmutableMap.Builder<String, List<File>> packages = ImmutableMap.builder();
-      for (ApkInfo apkInfo : apks) {
-        packages.put(
-            apkInfo.getApplicationId(),
-            getFilteredFeatures(apkInfo, launchOptions.getDisabledDynamicFeatures()));
-      }
-
       // Set the appropriate action based on which deployment we're doing.
-      if (ApplyChangesCompat.isApplyChanges(env)) {
-        return ImmutableList.of(ApplyChangesCompat.newApplyChangesTask(project, packages.build()));
-      } else if (ApplyChangesCompat.isApplyCodeChanges(env)) {
-        return ImmutableList.of(
-            ApplyChangesCompat.newApplyCodeChangesTask(project, packages.build()));
+      SwapInfo swapInfo = env.getUserData(SwapInfo.SWAP_INFO_KEY);
+      SwapInfo.SwapType swapType = swapInfo == null ? null : swapInfo.getType();
+      if (swapType == SwapType.APPLY_CHANGES) {
+        return new ApplyChangesTask(
+            project,
+            filesToInstall,
+            DeploymentConfiguration.getInstance().APPLY_CODE_CHANGES_FALLBACK_TO_RUN);
+      } else if (swapType == SwapType.APPLY_CODE_CHANGES) {
+        return new ApplyCodeChangesTask(
+            project,
+            filesToInstall,
+            DeploymentConfiguration.getInstance().APPLY_CODE_CHANGES_FALLBACK_TO_RUN);
       }
     }
-    return ImmutableList.of(DeployTaskCompat.createDeployTask(project, launchOptions, apks));
+    return new DeployTask(project, filesToInstall, launchOptions.getPmInstallOptions());
   }
 
   @Nullable
@@ -146,8 +150,29 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
     return UserIdHelper.getUserIdFromConfigurationState(device, consolePrinter, configState);
   }
 
+  /**
+   * Returns a map from applicationId to the list of files to install for that applicationId,
+   * excluding any files for features that are disabled.
+   */
+  public static ImmutableMap<String, List<File>> getFilesToInstall(
+      IDevice device, LaunchOptions launchOptions, ApkProvider apkProvider)
+      throws ExecutionException {
+    Collection<ApkInfo> apks;
+    try {
+      apks = apkProvider.getApks(device);
+    } catch (ApkProvisionException e) {
+      throw new ExecutionException(e);
+    }
+    ImmutableMap.Builder<String, List<File>> filesToInstall = ImmutableMap.builder();
+    List<String> disabledFeatures = launchOptions.getDisabledDynamicFeatures();
+    for (ApkInfo apkInfo : apks) {
+      filesToInstall.put(apkInfo.getApplicationId(), getFilesToInstall(apkInfo, disabledFeatures));
+    }
+    return filesToInstall.build();
+  }
+
   @NotNull
-  public static List<File> getFilteredFeatures(ApkInfo apkInfo, List<String> disabledFeatures) {
+  private static List<File> getFilesToInstall(ApkInfo apkInfo, List<String> disabledFeatures) {
     if (apkInfo.getFiles().size() > 1) {
       return apkInfo.getFiles().stream()
           .filter(feature -> DynamicAppUtils.isFeatureEnabled(disabledFeatures, feature))
