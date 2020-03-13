@@ -19,6 +19,7 @@ import static com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContribu
 
 import com.android.ddmlib.IDevice;
 import com.android.sdklib.AndroidVersion;
+import com.android.tools.deployer.ApkVerifierTracker;
 import com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContributor;
 import com.android.tools.idea.run.AndroidLaunchTasksProvider;
 import com.android.tools.idea.run.ApkProvisionException;
@@ -84,8 +85,24 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       throws ExecutionException {
     final List<LaunchTask> launchTasks = Lists.newArrayList();
 
+    String packageName;
+    try {
+      packageName = applicationIdProvider.getPackageName();
+    } catch (ApkProvisionException e) {
+      LOG.error(e);
+      LaunchStatusCompat.terminateLaunch(
+          launchStatus, "Unable to determine application id: " + e, true);
+      return ImmutableList.of();
+    }
+
     Integer userId = runContext.getUserId(device, consolePrinter);
-    launchOptionsBuilder.setPmInstallOptions(UserIdHelper.getFlagsFromUserId(userId));
+    String pmInstallOption = UserIdHelper.getFlagsFromUserId(userId);
+    String skipVerification =
+        ApkVerifierTracker.getSkipVerificationInstallationFlag(device, packageName);
+    if (skipVerification != null) {
+      pmInstallOption = String.format("%s %s", pmInstallOption, skipVerification);
+    }
+    launchOptionsBuilder.setPmInstallOptions(pmInstallOption);
 
     LaunchOptions launchOptions = launchOptionsBuilder.build();
 
@@ -110,14 +127,12 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       return launchTasks;
     }
 
-    String packageName;
     try {
       if (launchOptions.isDebug()) {
         launchTasks.add(
             new CheckApkDebuggableTaskCompat(runContext.getBuildStep().getDeployInfo()));
       }
 
-      packageName = applicationIdProvider.getPackageName();
       StringBuilder amStartOptions = new StringBuilder();
 
       if (isProfilerLaunch(launchOptions)) {
