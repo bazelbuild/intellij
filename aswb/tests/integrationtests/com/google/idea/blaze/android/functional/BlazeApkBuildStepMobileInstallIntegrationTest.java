@@ -55,11 +55,13 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.Function;
 import java.io.File;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
@@ -387,11 +389,21 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     @Override
     public void prepareToRenderLabel() {}
 
-    @Override
+    // api40: see new API for canRun below
     public LaunchCompatibility canRun(
         com.android.sdklib.AndroidVersion androidVersion,
         IAndroidTarget iAndroidTarget,
         EnumSet<HardwareFeature> enumSet,
+        @Nullable Set<String> set) {
+      return null;
+    }
+
+    // @Override #api40
+    public LaunchCompatibility canRun(
+        com.android.sdklib.AndroidVersion androidVersion,
+        IAndroidTarget iAndroidTarget,
+        AndroidFacet facet,
+        Function<AndroidFacet, EnumSet<HardwareFeature>> getRequiredHardwareFeatures,
         @Nullable Set<String> set) {
       return null;
     }
