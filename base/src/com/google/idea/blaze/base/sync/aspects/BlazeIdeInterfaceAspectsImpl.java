@@ -315,6 +315,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 "Building targets for shard %s of %s...", count, shardedTargets.shardCount());
     Function<List<TargetExpression>, BuildResult> invocation =
         targets -> {
+
           BlazeBuildOutputs result =
               runBuildForTargets(
                   project,
@@ -362,16 +363,14 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         BuildResultHelperProvider.createForSync(project, blazeInfo)) {
 
       BlazeCommand.Builder builder =
-          BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.BUILD)
-              .addTargets(targets)
-              .addBlazeFlags(BlazeFlags.KEEP_GOING)
-              .addBlazeFlags(buildResultHelper.getBuildFlags())
-              .addBlazeFlags(
-                  BlazeFlags.blazeFlags(
-                      project,
-                      viewSet,
-                      BlazeCommandName.BUILD,
-                      BlazeInvocationContext.SYNC_CONTEXT));
+          BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.BUILD);
+      builder
+          .addTargets(targets)
+          .addBlazeFlags(BlazeFlags.KEEP_GOING)
+          .addBlazeFlags(buildResultHelper.getBuildFlags())
+          .addBlazeFlags(
+              BlazeFlags.blazeFlags(
+                  project, viewSet, BlazeCommandName.BUILD, BlazeInvocationContext.SYNC_CONTEXT));
 
       aspectStrategy.addAspectAndOutputGroups(
           builder,
@@ -381,7 +380,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
       for (BlazeCommandRunner runner : BlazeCommandRunner.EP_NAME.getExtensions()) {
         if (runner.isAvailable(project)) {
-          return runner.run(builder.build(), buildResultHelper, workspaceRoot, context);
+          return runner.run(
+              project, builder, buildParams, buildResultHelper, workspaceRoot, context);
         }
       }
       IssueOutput.error("Failed to create build: no blaze command runner found");
