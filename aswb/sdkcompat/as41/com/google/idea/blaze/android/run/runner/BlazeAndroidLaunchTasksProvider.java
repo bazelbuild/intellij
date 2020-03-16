@@ -39,7 +39,6 @@ import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.android.run.CheckApkDebuggableTaskCompat;
 import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.intellij.execution.ExecutionException;
@@ -50,7 +49,7 @@ import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/** Normal launch tasks provider. */
+/** Normal launch tasks provider. #api4.1 */
 public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
   private static final Logger LOG = Logger.getInstance(BlazeAndroidLaunchTasksProvider.class);
 
@@ -129,17 +128,15 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
 
     try {
       if (launchOptions.isDebug()) {
-        launchTasks.add(
-            new CheckApkDebuggableTaskCompat(runContext.getBuildStep().getDeployInfo()));
+        launchTasks.add(new CheckApkDebuggableTask(runContext.getBuildStep().getDeployInfo()));
       }
 
       StringBuilder amStartOptions = new StringBuilder();
 
       if (isProfilerLaunch(launchOptions)) {
-        AndroidProfilerLaunchTaskContributor contributor =
-            new AndroidProfilerLaunchTaskContributor();
         String amOptions =
-            contributor.getAmStartOptions(project, packageName, launchOptions, device);
+            AndroidProfilerLaunchTaskContributor.getAmStartOptions(
+                project, packageName, launchOptions, device);
         amStartOptions.append(amStartOptions.length() == 0 ? "" : " ").append(amOptions);
 
         launchTasks.add(
