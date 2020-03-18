@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync.aspects;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -58,6 +57,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.TrackedOutputArtifacts;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -162,24 +162,85 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     }
     context.output(PrintOutput.log("Target map size: " + state.targetMap.targets().size()));
 
-    RemoteOutputArtifacts oldRemoteOutputs = RemoteOutputArtifacts.fromProjectData(oldProjectData);
+    RemoteOutputArtifacts oldRemoteArtifacts =
+        RemoteOutputArtifacts.fromProjectData(oldProjectData);
     // combine outputs map, then filter to remove out-of-date / unnecessary items
-    RemoteOutputArtifacts newRemoteOutputs =
-        oldRemoteOutputs
-            .appendNewOutputs(getTrackedOutputs(buildResult))
+    RemoteOutputArtifacts newRemoteArtifacts =
+        oldRemoteArtifacts
+            .appendNewOutputs(buildResult.getTrackedRemoteOutputs())
             .removeUntrackedOutputs(state.targetMap, projectState.getLanguageSettings());
 
-    return new ProjectTargetData(state.targetMap, state.state, newRemoteOutputs);
-  }
+    TrackedOutputArtifacts oldTrackedArtifacts =
+        TrackedOutputArtifacts.fromProjectData(oldProjectData);
+    TrackedOutputArtifacts newTrackeArtifacts =
+        oldTrackedArtifacts
+            .appendNewOutputs(buildResult.getAllTrackedOutputs())
+            .removeUntrackedOutputs(state.targetMap);
 
-  /** Returns the {@link OutputArtifact}s we want to track between syncs. */
-  private static ImmutableSet<OutputArtifact> getTrackedOutputs(BlazeBuildOutputs buildOutput) {
-    // don't track intellij-info.txt outputs -- they're already tracked in
-    // BlazeIdeInterfaceState
-    Predicate<String> pathFilter = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE.negate();
-    return buildOutput.getOutputGroupArtifacts(group -> true).stream()
-        .filter(a -> pathFilter.test(a.getRelativePath()))
-        .collect(toImmutableSet());
+    // DO NOT SUBMIT
+    // DO NOT SUBMIT
+    // DO NOT SUBMIT
+    context.output(
+        PrintOutput.log(
+            "Remote output artifacts size: " + newRemoteArtifacts.remoteOutputArtifacts.size()));
+    context.output(
+        PrintOutput.log(
+            "Tracked # of artifacts: " + newTrackeArtifacts.targetSetsToArtifacts.values().size()));
+    context.output(
+        PrintOutput.log(
+            // should be the same
+            "Tracked # of unique artifacts: "
+                + ImmutableSet.copyOf(newTrackeArtifacts.targetSetsToArtifacts.values()).size()));
+    context.output(
+        PrintOutput.log(
+            "Tracked # of unique targets: "
+                + newTrackeArtifacts.targetSetsToArtifacts.keySet().stream()
+                    .flatMap(Collection::stream)
+                    .distinct()
+                    .count()));
+    context.output(
+        PrintOutput.log(
+            "Tracked # of targets sets: "
+                + newTrackeArtifacts.targetSetsToArtifacts.keySet().size()));
+    context.output(
+        PrintOutput.log(
+            "Tracked average # of targets per target set: "
+                + newTrackeArtifacts.targetSetsToArtifacts.keySet().stream()
+                    .mapToInt(Collection::size)
+                    .average()
+                    .orElse(-1)));
+    context.output(
+        PrintOutput.log(
+            "Tracked average # of artifacts per target set: "
+                + newTrackeArtifacts.targetSetsToArtifacts.keySet().stream()
+                    .map(newTrackeArtifacts.targetSetsToArtifacts::get)
+                    .mapToInt(Collection::size)
+                    .average()
+                    .orElse(-1)));
+    context.output(
+        PrintOutput.log(
+            "Tracked average # of targets per artifact: "
+                + newTrackeArtifacts.targetSetsToArtifacts.entries().stream()
+                    .map(Map.Entry::getKey)
+                    .mapToInt(Collection::size)
+                    .average()
+                    .orElse(-1)));
+    context.output(
+        PrintOutput.log(
+            "Tracked # of target sets with 1 artifact: "
+                + newTrackeArtifacts.targetSetsToArtifacts.keySet().stream()
+                    .map(newTrackeArtifacts.targetSetsToArtifacts::get)
+                    .filter(a -> a.size() == 1)
+                    .count()));
+    context.output(
+        PrintOutput.log(
+            "Tracked # of artifacts with 1 target: "
+                + newTrackeArtifacts.targetSetsToArtifacts.entries().stream()
+                    .filter(e -> e.getKey().size() == 1)
+                    .count()));
+
+    return new ProjectTargetData(
+        state.targetMap, state.state, newRemoteArtifacts, newTrackeArtifacts);
   }
 
   @Nullable

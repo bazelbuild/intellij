@@ -24,8 +24,8 @@ import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.OutputArtifacts;
 import com.google.idea.blaze.base.model.ProjectTargetData;
-import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
@@ -149,12 +149,12 @@ final class ProjectUpdateSyncTask {
 
   private void run(BlazeContext context) throws SyncCanceledException, SyncFailedException {
     TargetMap targetMap = targetData.targetMap;
-    RemoteOutputArtifacts oldRemoteState = RemoteOutputArtifacts.fromProjectData(oldProjectData);
-    RemoteOutputArtifacts newRemoteState = targetData.remoteOutputs;
+    OutputArtifacts oldState = OutputArtifacts.fromProjectData(oldProjectData);
+    OutputArtifacts newState = OutputArtifacts.fromTargetData(targetData);
 
     ArtifactLocationDecoder artifactLocationDecoder =
         new ArtifactLocationDecoderImpl(
-            projectState.getBlazeInfo(), projectState.getWorkspacePathResolver(), newRemoteState);
+            projectState.getBlazeInfo(), projectState.getWorkspacePathResolver(), newState);
 
     Scope.push(
         context,
@@ -165,8 +165,8 @@ final class ProjectUpdateSyncTask {
                   context,
                   targetMap,
                   projectState.getLanguageSettings(),
-                  newRemoteState,
-                  oldRemoteState,
+                  newState,
+                  oldState,
                   /* clearCache= */ syncMode == SyncMode.FULL);
         });
 

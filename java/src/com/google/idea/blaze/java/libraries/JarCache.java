@@ -34,7 +34,7 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.FileSizeScanner;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.OutputArtifacts;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -151,7 +151,7 @@ public class JarCache {
         context,
         projectViewSet,
         projectData,
-        RemoteOutputArtifacts.fromProjectData(oldProjectData),
+        OutputArtifacts.fromProjectData(oldProjectData),
         removeMissingFiles);
   }
 
@@ -159,7 +159,7 @@ public class JarCache {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeProjectData projectData,
-      RemoteOutputArtifacts previousOutputs,
+      OutputArtifacts previousOutputs,
       boolean removeMissingFiles) {
     if (!enabled) {
       return;
@@ -415,7 +415,9 @@ public class JarCache {
       ProjectViewSet viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-      if (viewSet == null || projectData == null || !projectData.getRemoteOutputs().isEmpty()) {
+      if (viewSet == null
+          || projectData == null
+          || projectData.getOutputArtifacts().hasRemoteOutputs()) {
         // if we have remote artifacts, only refresh during sync
         return;
       }
@@ -424,7 +426,7 @@ public class JarCache {
               context,
               viewSet,
               projectData,
-              projectData.getRemoteOutputs(),
+              projectData.getOutputArtifacts(),
               /* removeMissingFiles= */ false);
     }
 

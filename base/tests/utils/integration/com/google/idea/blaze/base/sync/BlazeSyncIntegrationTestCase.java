@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
+import com.google.idea.blaze.base.model.TrackedOutputArtifacts;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
@@ -278,7 +279,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeBuildOutputs buildResult,
         boolean mergeWithOldState,
         @Nullable BlazeProjectData oldProjectData) {
-      return new ProjectTargetData(targetMap, null, RemoteOutputArtifacts.fromProjectData(null));
+      return new ProjectTargetData(
+          targetMap, null, RemoteOutputArtifacts.EMPTY, TrackedOutputArtifacts.EMPTY);
     }
 
     @Override

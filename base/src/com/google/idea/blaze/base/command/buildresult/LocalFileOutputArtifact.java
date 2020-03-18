@@ -15,11 +15,14 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
-
+import com.google.devtools.intellij.model.ProjectData.LocalFile;
+import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
+import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactState.LocalFileState;
+import com.google.idea.blaze.base.ideinfo.ProjectDataInterner;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -28,7 +31,7 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 /** A blaze output artifact which exists on the local file system. */
-public class LocalFileOutputArtifact implements OutputArtifact, LocalFileArtifact {
+public class LocalFileOutputArtifact implements LocalFileArtifact, OutputArtifact {
 
   private final File file;
   private final String blazeOutRelativePath;
@@ -38,7 +41,17 @@ public class LocalFileOutputArtifact implements OutputArtifact, LocalFileArtifac
       File file, String blazeOutRelativePath, String configurationMnemonic) {
     this.file = file;
     this.blazeOutRelativePath = blazeOutRelativePath;
-    this.configurationMnemonic = configurationMnemonic;
+    this.configurationMnemonic = ProjectDataInterner.intern(configurationMnemonic);
+  }
+
+  @Override
+  public LocalFileOrOutputArtifact toProto() {
+    return LocalFileOrOutputArtifact.newBuilder()
+        .setLocalFile(
+            LocalFile.newBuilder()
+                .setTimestamp(getLastModifiedTime())
+                .setRelativePath(blazeOutRelativePath))
+        .build();
   }
 
   private long getLastModifiedTime() {
@@ -97,5 +110,21 @@ public class LocalFileOutputArtifact implements OutputArtifact, LocalFileArtifac
   @Override
   public String toString() {
     return blazeOutRelativePath;
+  }
+
+  static class Parser implements OutputArtifact.Parser {
+    @Nullable
+    @Override
+    public LocalFileOutputArtifact parseProto(
+        LocalFileOrOutputArtifact proto, @Nullable String outputPath) {
+      if (!proto.hasLocalFile() || outputPath == null) {
+        return null;
+      }
+      LocalFile file = proto.getLocalFile();
+      String relativePath = file.getRelativePath();
+      String mnemonic = BlazeConfigurationHandler.getConfigurationMnemonic(relativePath);
+      return new LocalFileOutputArtifact(
+          new File(outputPath, relativePath), relativePath, mnemonic);
+    }
   }
 }

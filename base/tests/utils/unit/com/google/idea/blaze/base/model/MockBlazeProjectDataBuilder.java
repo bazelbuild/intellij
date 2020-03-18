@@ -135,7 +135,10 @@ public class MockBlazeProjectDataBuilder {
 
     return new BlazeProjectData(
         new ProjectTargetData(
-            targetMap, /* ideInterfaceState= */ null, RemoteOutputArtifacts.EMPTY),
+            targetMap,
+            /* ideInterfaceState= */ null,
+            RemoteOutputArtifacts.EMPTY,
+            TrackedOutputArtifacts.EMPTY),
         blazeInfo,
         blazeVersionData,
         workspacePathResolver,

@@ -71,20 +71,22 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
     BlazeInfo blazeInfo = BlazeInfo.fromProto(buildSystem, proto.getBlazeInfo());
     WorkspacePathResolver workspacePathResolver =
         WorkspacePathResolver.fromProto(proto.getWorkspacePathResolver());
-    ProjectTargetData targetData = parseTargetData(proto);
+    ProjectTargetData targetData = parseTargetData(proto, blazeInfo.get(BlazeInfo.OUTPUT_PATH_KEY));
     return new BlazeProjectData(
         targetData,
         blazeInfo,
         BlazeVersionData.fromProto(proto.getBlazeVersionData()),
         workspacePathResolver,
-        new ArtifactLocationDecoderImpl(blazeInfo, workspacePathResolver, targetData.remoteOutputs),
+        new ArtifactLocationDecoderImpl(
+            blazeInfo, workspacePathResolver, OutputArtifacts.fromTargetData(targetData)),
         WorkspaceLanguageSettings.fromProto(proto.getWorkspaceLanguageSettings()),
         SyncState.fromProto(proto.getSyncState()));
   }
 
-  private static ProjectTargetData parseTargetData(ProjectData.BlazeProjectData proto) {
+  private static ProjectTargetData parseTargetData(
+      ProjectData.BlazeProjectData proto, String outputPath) {
     if (proto.hasTargetData()) {
-      return ProjectTargetData.fromProto(proto.getTargetData());
+      return ProjectTargetData.fromProto(proto.getTargetData(), outputPath);
     }
     // handle older version of project data
     TargetMap map = TargetMap.fromProto(proto.getTargetMap());
@@ -94,7 +96,8 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
         proto.getSyncState().hasRemoteOutputArtifacts()
             ? RemoteOutputArtifacts.fromProto(proto.getSyncState().getRemoteOutputArtifacts())
             : RemoteOutputArtifacts.EMPTY;
-    return new ProjectTargetData(map, ideInterfaceState, remoteOutputs);
+    return new ProjectTargetData(
+        map, ideInterfaceState, remoteOutputs, TrackedOutputArtifacts.EMPTY);
   }
 
   @Override
@@ -137,8 +140,8 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
     return workspaceLanguageSettings;
   }
 
-  public RemoteOutputArtifacts getRemoteOutputs() {
-    return targetData.remoteOutputs;
+  public OutputArtifacts getOutputArtifacts() {
+    return OutputArtifacts.fromProjectData(this);
   }
 
   public SyncState getSyncState() {
@@ -156,6 +159,25 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
     ProjectData.BlazeProjectData proto = toProto();
     try (OutputStream stream = new GZIPOutputStream(new FileOutputStream(file))) {
       proto.writeTo(stream);
+    }
+    // DO NOT SUBMIT
+    // DO NOT SUBMIT
+    // DO NOT SUBMIT
+    ProjectData.RemoteOutputArtifacts remotes = proto.getTargetData().getRemoteOutputs();
+    try (OutputStream stream =
+        new GZIPOutputStream(
+            new FileOutputStream(new File(file.getParentFile(), "remotes.dat.gz")))) {
+      remotes.writeTo(stream);
+    }
+    ProjectData.TrackedOutputArtifacts tracked = proto.getTargetData().getTrackedOutputArtifacts();
+    try (OutputStream stream =
+        new GZIPOutputStream(
+            new FileOutputStream(new File(file.getParentFile(), "tracked.dat.gz")))) {
+      tracked.writeTo(stream);
+    }
+    try (OutputStream stream =
+        new GZIPOutputStream(new FileOutputStream(new File(file.getParentFile(), "list.dat.gz")))) {
+      tracked.toBuilder().clearTargetSetsToArtifactSets().build().writeTo(stream);
     }
   }
 

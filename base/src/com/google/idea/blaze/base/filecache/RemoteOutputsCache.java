@@ -30,8 +30,8 @@ import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.OutputArtifacts;
 import com.google.idea.blaze.base.model.OutputsProvider;
-import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -57,7 +57,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -104,8 +103,8 @@ public final class RemoteOutputsCache {
       BlazeContext context,
       TargetMap targetMap,
       WorkspaceLanguageSettings languageSettings,
-      RemoteOutputArtifacts outputs,
-      RemoteOutputArtifacts previousOutputs,
+      OutputArtifacts outputs,
+      OutputArtifacts previousOutputs,
       boolean clearCache) {
     if (clearCache) {
       clearCache();
@@ -122,8 +121,9 @@ public final class RemoteOutputsCache {
         targetMap.targets().stream()
             .flatMap(t -> artifactsToCache(providers, t))
             .distinct()
-            .map(outputs::findRemoteOutput)
-            .filter(Objects::nonNull)
+            .map(outputs::findOutputArtifact)
+            .filter(RemoteOutputArtifact.class::isInstance)
+            .map(RemoteOutputArtifact.class::cast)
             .collect(toImmutableSet());
     updateCache(context, toCache, previousOutputs);
   }
@@ -136,9 +136,7 @@ public final class RemoteOutputsCache {
   }
 
   private void updateCache(
-      BlazeContext context,
-      Set<RemoteOutputArtifact> toCache,
-      RemoteOutputArtifacts previousOutputs) {
+      BlazeContext context, Set<RemoteOutputArtifact> toCache, OutputArtifacts previousOutputs) {
     Map<String, RemoteOutputArtifact> newState =
         toCache.stream()
             .collect(toImmutableMap(RemoteOutputsCache::getCacheKey, Functions.identity()));
