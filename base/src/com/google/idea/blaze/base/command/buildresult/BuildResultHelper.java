@@ -16,8 +16,11 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Label;
+import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /** Assists in getting build artifacts from a build operation. */
@@ -34,7 +37,20 @@ public interface BuildResultHelper extends AutoCloseable {
    * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
    * called once, after the build is complete.
    */
-  ParsedBepOutput getBuildOutput() throws GetArtifactsException;
+  default ParsedBepOutput getBuildOutput() throws GetArtifactsException {
+    return getBuildOutput(Optional.empty());
+  }
+
+  /**
+   * Retrieves BEP build events according to given id, parses them and returns the corresponding
+   * {@link ParsedBepOutput}. May only be called once, after the build is complete.
+   */
+  ParsedBepOutput getBuildOutput(Optional<String> completedBuildId) throws GetArtifactsException;
+
+  /** Parses the BEP output data and returns all build flags list in blazerc */
+  BuildFlags getBlazercFlags(
+      ImmutableList<String> startupBlacklist, ImmutableList<String> cmdlineBlacklist)
+      throws IOException, BuildEventStreamException;
 
   /**
    * Returns the build result. May only be called once, after the build is complete, or no artifacts

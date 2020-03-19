@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,12 +49,22 @@ class BuildResultHelperBep implements BuildResultHelper {
   }
 
   @Override
-  public ParsedBepOutput getBuildOutput() throws GetArtifactsException {
+  public ParsedBepOutput getBuildOutput(Optional<String> completedBuildId)
+      throws GetArtifactsException {
     try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
       return ParsedBepOutput.parseBepArtifacts(inputStream);
     } catch (IOException | BuildEventStreamException e) {
       logger.error(e);
       throw new GetArtifactsException(e.getMessage());
+    }
+  }
+
+  @Override
+  public BuildFlags getBlazercFlags(
+      ImmutableList<String> startupBlacklist, ImmutableList<String> cmdlineBlacklist)
+      throws IOException, BuildEventStreamException {
+    try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
+      return BuildFlags.parseBep(inputStream, startupBlacklist, cmdlineBlacklist);
     }
   }
 
