@@ -143,7 +143,7 @@ public class ExternalWorkspaceReferenceTest extends BuildFileIntegrationTestCase
   public void testReferenceToWorkspaceFileContents() {
     BuildFile workspaceFile =
         createBuildFile(
-            new WorkspacePath("WORKSPACE"),
+            new WorkspacePath("WORKSPACE.bazel"),
             "maven_jar(",
             "    name = 'w3c_css_sac',",
             "    artifact = 'org.w3c.css:sac:1.3',",

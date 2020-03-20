@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.ui.problems;
 
-import com.google.idea.sdkcompat.openapi.IconsCompat;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -195,7 +194,7 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
     private final ErrorTreeViewConfiguration configuration;
 
     ShowWarningsAction() {
-      super(IdeBundle.message("action.show.warnings"), null, IconsCompat.SHOW_WARNINGS);
+      super(IdeBundle.message("action.show.warnings"), null, AllIcons.General.ShowWarning);
       configuration = ErrorTreeViewConfiguration.getInstance(myProject);
     }
 

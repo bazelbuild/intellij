@@ -20,18 +20,19 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.clwb.ToolchainUtils;
-import com.google.idea.sdkcompat.clion.GDBDriverConfigurationAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.jetbrains.cidr.ArchitectureType;
+import com.jetbrains.cidr.cpp.execution.debugger.backend.CLionGDBDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import java.io.File;
 import java.io.IOException;
 import javax.annotation.Nullable;
 
-final class BlazeGDBDriverConfiguration extends GDBDriverConfigurationAdapter {
+final class BlazeGDBDriverConfiguration extends CLionGDBDriverConfiguration {
   private static final Logger LOG = Logger.getInstance(BlazeGDBDriverConfiguration.class);
 
   private final ImmutableList<String> startupCommands;
@@ -47,9 +48,9 @@ final class BlazeGDBDriverConfiguration extends GDBDriverConfigurationAdapter {
   }
 
   @Override
-  public GeneralCommandLine createDriverCommandLine(DebuggerDriver driver)
-      throws ExecutionException {
-    GeneralCommandLine commandLine = super.createDriverCommandLine(driver);
+  public GeneralCommandLine createDriverCommandLine(
+      DebuggerDriver driver, ArchitectureType architectureType) throws ExecutionException {
+    GeneralCommandLine commandLine = super.createDriverCommandLine(driver, architectureType);
     modifyCommandLine(commandLine);
     return commandLine;
   }

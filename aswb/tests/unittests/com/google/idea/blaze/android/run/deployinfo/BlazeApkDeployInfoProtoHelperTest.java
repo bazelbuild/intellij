@@ -20,7 +20,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.common.collect.ImmutableList;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.Artifact;
@@ -120,7 +119,9 @@ public class BlazeApkDeployInfoProtoHelperTest extends BlazeTestCase {
 
     ArgumentCaptor<File> expectedArgs = ArgumentCaptor.forClass(File.class);
     verify(mockParsedManifestService, times(2)).invalidateCachedManifest(expectedArgs.capture());
-    expectedArgs.getAllValues().containsAll(ImmutableList.of(mainManifest, testTargetManifest));
+    assertThat(expectedArgs.getAllValues())
+        .containsExactly(mainManifest, testTargetManifest)
+        .inOrder();
   }
 
   private static Artifact makeArtifact(String execRootPath) {

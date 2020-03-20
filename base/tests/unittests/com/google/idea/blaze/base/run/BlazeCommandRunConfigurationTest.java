@@ -82,7 +82,7 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
         type.getFactory().createTemplateConfiguration(project);
     readConfiguration.readExternal(element);
 
-    assertThat(readConfiguration.getTarget()).isEqualTo(label);
+    assertThat(readConfiguration.getTargets()).containsExactly(label);
   }
 
   @Test
@@ -93,7 +93,7 @@ public class BlazeCommandRunConfigurationTest extends BlazeTestCase {
         type.getFactory().createTemplateConfiguration(project);
     readConfiguration.readExternal(element);
 
-    assertThat(readConfiguration.getTarget()).isEqualTo(configuration.getTarget());
+    assertThat(readConfiguration.getTargets()).isEqualTo(configuration.getTargets());
   }
 
   private static class MockTargetFinder implements TargetFinder {

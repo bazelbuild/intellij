@@ -93,7 +93,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
     assertThat(blazeProjectData).isNotNull();
-    assertThat(blazeProjectData.getTargetMap()).isEqualTo(targetMap);
+    assertThat(blazeProjectData.getTargetMap().map()).isEqualTo(targetMap.map());
     assertThat(blazeProjectData.getWorkspaceLanguageSettings().getWorkspaceType())
         .isEqualTo(WorkspaceType.JAVA);
 
@@ -153,7 +153,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
     assertThat(blazeProjectData).isNotNull();
-    assertThat(blazeProjectData.getTargetMap()).isEqualTo(targetMap);
+    assertThat(blazeProjectData.getTargetMap().map()).isEqualTo(targetMap.map());
     assertThat(blazeProjectData.getWorkspaceLanguageSettings().getWorkspaceType())
         .isEqualTo(WorkspaceType.JAVA);
   }
@@ -215,7 +215,7 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
     assertThat(syncStats.workspaceType()).isEqualTo(WorkspaceType.JAVA);
     assertThat(syncStats.syncMode()).isEqualTo(SyncMode.FULL);
     assertThat(syncStats.syncResult()).isEqualTo(SyncResult.SUCCESS);
-    assertThat(syncStats.syncBinaryType()).isSameAs(BuildBinaryType.BAZEL);
+    assertThat(syncStats.syncBinaryType()).isEqualTo(BuildBinaryType.BAZEL);
     assertThat(syncStats.timedEvents()).isNotEmpty();
     assertThat(syncStats.buildPhaseStats()).hasSize(1);
     assertThat(syncStats.buildPhaseStats().get(0).targets())

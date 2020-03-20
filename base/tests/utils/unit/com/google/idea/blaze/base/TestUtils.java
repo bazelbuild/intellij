@@ -18,7 +18,7 @@ package com.google.idea.blaze.base;
 import static org.junit.Assert.fail;
 
 import com.google.common.util.concurrent.MoreExecutors;
-import com.intellij.mock.MockApplicationEx;
+import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -45,7 +45,7 @@ import org.picocontainer.PicoContainer;
 /** Test utilities. */
 public class TestUtils {
 
-  static class BlazeMockApplication extends MockApplicationEx {
+  static class BlazeMockApplication extends MockApplication {
     private final ExecutorService executor = MoreExecutors.newDirectExecutorService();
 
     public BlazeMockApplication(@NotNull Disposable parentDisposable) {

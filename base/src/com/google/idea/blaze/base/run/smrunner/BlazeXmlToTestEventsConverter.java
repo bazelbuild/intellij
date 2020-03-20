@@ -217,7 +217,8 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
     processor.onTestFailure(
         getTestFailedEvent(
             targetName,
-            STATUS_EXPLANATIONS.get(status) + " See console output for details",
+            STATUS_EXPLANATIONS.getOrDefault(status, "No output found for test target.")
+                + " See console output for details",
             /* content= */ null,
             BlazeComparisonFailureData.NONE,
             /* duration= */ 0));

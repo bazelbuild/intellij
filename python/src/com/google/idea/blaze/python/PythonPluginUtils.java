@@ -16,7 +16,9 @@
 package com.google.idea.blaze.python;
 
 import com.google.common.collect.ImmutableMap;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.util.PlatformUtils;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Utilities class related to the JetBrains python plugin. */
@@ -24,20 +26,57 @@ public final class PythonPluginUtils {
 
   private PythonPluginUtils() {}
 
-  private static final ImmutableMap<String, String> PRODUCT_TO_PLUGIN_ID =
-      ImmutableMap.<String, String>builder()
-          .put(PlatformUtils.CLION_PREFIX, "com.intellij.clion-python")
-          .put(PlatformUtils.IDEA_PREFIX, "Pythonid")
-          .put(PlatformUtils.IDEA_CE_PREFIX, "PythonCore")
-          .put(PlatformUtils.GOIDE_PREFIX, "PythonCore")
-          .put(PlatformUtils.RIDER_PREFIX, "PythonCore")
-          .put(PlatformUtils.DBE_PREFIX, "PythonCore")
-          .put("AndroidStudio", "PythonCore")
+  // Order is important, the first matching one will be used.
+  private static final ImmutableMap<IDEVersion, String> PRODUCT_TO_PLUGIN_ID =
+      ImmutableMap.<IDEVersion, String>builder()
+          .put(
+              new IDEVersion(PlatformUtils.CLION_PREFIX, "2019", "2.5"),
+              "com.intellij.clion-python")
+          .put(new IDEVersion(PlatformUtils.CLION_PREFIX), "PythonCore")
+          .put(new IDEVersion(PlatformUtils.IDEA_PREFIX), "Pythonid")
+          .put(new IDEVersion(PlatformUtils.IDEA_CE_PREFIX), "PythonCore")
+          .put(new IDEVersion(PlatformUtils.GOIDE_PREFIX), "PythonCore")
+          .put(new IDEVersion(PlatformUtils.RIDER_PREFIX), "PythonCore")
+          .put(new IDEVersion(PlatformUtils.DBE_PREFIX), "PythonCore")
+          .put(new IDEVersion("AndroidStudio"), "PythonCore")
           .build();
 
   /** The python plugin ID for this IDE, or null if not available/relevant. */
   @Nullable
   public static String getPythonPluginId() {
-    return PRODUCT_TO_PLUGIN_ID.get(PlatformUtils.getPlatformPrefix());
+    for (Map.Entry<IDEVersion, String> pythonPluginId : PRODUCT_TO_PLUGIN_ID.entrySet()) {
+      if (pythonPluginId.getKey().matchesCurrent()) {
+        return pythonPluginId.getValue();
+      }
+    }
+    return null;
+  }
+
+  private static class IDEVersion {
+    private final String prefix;
+
+    @Nullable private final String majorVersion;
+    @Nullable private final String minorVersion;
+
+    public IDEVersion(String prefix) {
+      this(prefix, null, null);
+    }
+
+    public IDEVersion(String prefix, @Nullable String majorVersion, @Nullable String minorVersion) {
+      this.prefix = prefix;
+      this.majorVersion = majorVersion;
+      this.minorVersion = minorVersion;
+    }
+
+    public boolean matchesCurrent() {
+      ApplicationInfo appInfo = ApplicationInfo.getInstance();
+      return PlatformUtils.getPlatformPrefix().equals(prefix)
+          && matchesVersion(majorVersion, appInfo.getMajorVersion())
+          && matchesVersion(minorVersion, appInfo.getMinorVersion());
+    }
+
+    private static boolean matchesVersion(@Nullable String v1, @Nullable String v2) {
+      return v1 == null || v2 == null || v1.equals(v2);
+    }
   }
 }

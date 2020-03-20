@@ -49,7 +49,7 @@ public class UsageGroupingRuleProviderOverride extends UsageGroupingRuleProvider
     UsageGroupingRule[] base = super.getActiveRules(project, usageViewSettings);
     for (int i = 0; i < base.length; i++) {
       if (base[i] instanceof FileGroupingRule) {
-        base[i] = BuildFileGroupingRuleProvider.getGroupingRule(project);
+        base[i] = BuildFileGroupingRule.getGroupingRule(project, (FileGroupingRule) base[i]);
       }
     }
     return base;

@@ -78,7 +78,7 @@ public abstract class BlazeProjectSystemBase implements AndroidProjectSystem {
     BlazeBuildService.getInstance().buildProject(project);
   }
 
-  @Override
+  // @Override #api3.6
   public String mergeBuildFiles(
       String dependencies, String destinationContents, @Nullable String supportLibVersionFilter) {
     // TODO: check if necessary to implement.

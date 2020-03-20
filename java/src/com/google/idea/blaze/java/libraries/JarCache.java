@@ -18,8 +18,8 @@ package com.google.idea.blaze.java.libraries;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
@@ -71,7 +71,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -135,13 +134,14 @@ public class JarCache {
       BlazeProjectData projectData,
       @Nullable BlazeProjectData oldProjectData,
       SyncMode syncMode) {
-    boolean fullRefresh = syncMode == SyncMode.FULL;
     boolean enabled = updateEnabled();
-    if (!enabled || fullRefresh) {
-      clearCache();
-    }
     if (!enabled) {
+      clearCache(context, /* blockOnCompletion= */ false);
       return;
+    }
+    boolean fullRefresh = syncMode == SyncMode.FULL;
+    if (fullRefresh) {
+      clearCache(context, /* blockOnCompletion= */ true);
     }
 
     // TODO(brendandouglas): add a mechanism for removing missing files for partial syncs
@@ -304,15 +304,25 @@ public class JarCache {
     return new File(cacheDir, key);
   }
 
-  private void clearCache() {
-    if (cacheDir.exists()) {
-      File[] cacheFiles = cacheDir.listFiles();
-      if (cacheFiles != null) {
-        @SuppressWarnings("unused") // go/futurereturn-lsc
-        Future<?> possiblyIgnoredError = FileUtil.asyncDelete(Lists.newArrayList(cacheFiles));
-      }
-    }
+  private void clearCache(BlazeContext context, boolean blockOnCompletion) {
     cacheState = ImmutableMap.of();
+    File[] cacheFiles = cacheDir.listFiles();
+    if (cacheFiles == null) {
+      return;
+    }
+    Collection<ListenableFuture<?>> futures = deleteCacheFiles(ImmutableList.copyOf(cacheFiles));
+    if (!blockOnCompletion) {
+      return;
+    }
+    try {
+      Futures.allAsList(futures).get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      context.setCancelled();
+    } catch (ExecutionException e) {
+      logger.warn("Jar Cache synchronization didn't complete", e);
+      IssueOutput.warn("Jar Cache synchronization didn't complete").submit(context);
+    }
   }
 
   /**

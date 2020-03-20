@@ -15,10 +15,7 @@
  */
 package com.google.idea.blaze.android.run;
 
-import static com.google.idea.blaze.android.cppapi.NdkSupport.NDK_SUPPORT;
-
 import com.android.tools.idea.run.ValidationError;
-import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
@@ -27,16 +24,19 @@ import com.google.idea.blaze.android.run.state.DebuggerSettingsState;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.lang.AdditionalLanguagesHelper;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import java.awt.Component;
-import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
@@ -69,9 +69,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     this.exeFlags =
         new RunConfigurationFlagsState(
             USER_EXE_FLAG_TAG, "Executable flags (mobile-install only):");
-    // Note: AndroidDebugger.EP_NAME includes native debugger(s).
-    this.debuggerSettings =
-        new DebuggerSettingsState(false, Arrays.asList(AndroidDebugger.EP_NAME.getExtensions()));
+    this.debuggerSettings = new DebuggerSettingsState(false);
     this.debuggerManager = new BlazeAndroidRunConfigurationDebuggerManager(debuggerSettings);
   }
 
@@ -92,7 +90,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   }
 
   public boolean isNativeDebuggingEnabled() {
-    return debuggerSettings.isNativeDebuggingEnabled() && NDK_SUPPORT.getValue();
+    return debuggerSettings.isNativeDebuggingEnabled();
   }
 
   public void setNativeDebuggingEnabled(boolean nativeDebuggingEnabled) {
@@ -123,10 +121,30 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     List<ValidationError> errors = Lists.newArrayList();
     // If facet is null, we can't validate the managers, but that's fine because
     // BlazeAndroidRunConfigurationValidationUtil.validateFacet will give a fatal error.
-    if (facet != null) {
-      errors.addAll(deployTargetManager.validate(facet));
-      errors.addAll(debuggerManager.validate(facet));
+    if (facet == null) {
+      return errors;
     }
+
+    errors.addAll(deployTargetManager.validate(facet));
+    errors.addAll(debuggerManager.validate(facet));
+    Project project = facet.getModule().getProject();
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      errors.add(ValidationError.fatal("Project data missing. Please sync your project."));
+      return errors;
+    }
+
+    if (isNativeDebuggingEnabled()
+        && !blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
+      errors.add(
+          ValidationError.fatal(
+              "Native debugging requires C language support.",
+              () ->
+                  AdditionalLanguagesHelper.enableLanguageSupport(
+                      project, ImmutableList.of(LanguageClass.C))));
+    }
+
     return errors;
   }
 

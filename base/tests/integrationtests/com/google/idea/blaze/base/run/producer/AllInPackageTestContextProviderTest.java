@@ -90,8 +90,8 @@ public class AllInPackageTestContextProviderTest extends BlazeRunConfigurationPr
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:all"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:all"));
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 

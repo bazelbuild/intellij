@@ -15,7 +15,8 @@
  */
 package com.google.idea.blaze.typescript;
 
-import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.sdkcompat.typescript.TypeScriptConfigServiceCompat;
@@ -31,6 +32,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
+import java.io.File;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -62,9 +64,9 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigServiceCompat
     }
   }
 
-  void update(BlazeProjectData projectData) {
+  void update(ImmutableMap<Label, File> tsconfigs) {
     if (impl instanceof BlazeTypeScriptConfigServiceImpl) {
-      ((BlazeTypeScriptConfigServiceImpl) impl).update(projectData);
+      ((BlazeTypeScriptConfigServiceImpl) impl).update(tsconfigs);
     }
   }
 

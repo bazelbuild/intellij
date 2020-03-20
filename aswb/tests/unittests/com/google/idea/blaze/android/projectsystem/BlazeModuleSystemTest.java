@@ -16,7 +16,7 @@
 package com.google.idea.blaze.android.projectsystem;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -42,16 +42,12 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Kind.Provider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -70,7 +66,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import java.io.File;
 import java.util.Map;
-import javax.annotation.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -205,33 +200,6 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
         .setTargetMap(targetMap)
         .setArtifactLocationDecoder(decoder)
         .build();
-  }
-
-  private static class MockProjectViewManager extends ProjectViewManager {
-    private ProjectViewSet viewSet;
-
-    public MockProjectViewManager() {
-      this.viewSet = ProjectViewSet.builder().build();
-    }
-
-    @Nullable
-    @Override
-    public ProjectViewSet getProjectViewSet() {
-      return viewSet;
-    }
-
-    @Nullable
-    @Override
-    public ProjectViewSet reloadProjectView(BlazeContext context) {
-      return viewSet;
-    }
-
-    @Nullable
-    @Override
-    public ProjectViewSet reloadProjectView(
-        BlazeContext context, WorkspacePathResolver workspacePathResolver) {
-      return viewSet;
-    }
   }
 
   private static class MockFileSystem extends TempFileSystem {

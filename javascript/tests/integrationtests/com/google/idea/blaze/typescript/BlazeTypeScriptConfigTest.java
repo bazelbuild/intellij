@@ -24,15 +24,10 @@ import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.TestFileSystem.MockFileOperationProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.VfsUtils;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
-import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.sdkcompat.typescript.TypeScriptConfigCompat;
 import com.google.idea.sdkcompat.typescript.TypeScriptConfigServiceCompat;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.typescript.library.TypeScriptLibraryProvider;
@@ -40,7 +35,9 @@ import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
 import com.intellij.lang.typescript.tsconfig.graph.TypeScriptConfigGraphCache;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -93,7 +90,6 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
           "        \"noImplicitThis\": true,",
           "        \"noLib\": true,",
           "        \"noResolve\": false,",
-          "        \"noStrictGenericChecks\": true,",
           "        \"paths\": {",
           "            \"workspace/*\": [",
           "                \"./tsconfig.runfiles/workspace/*\"",
@@ -166,15 +162,12 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
                             .add(Label.create("//project/foo:tsconfig")))
                     .build())
             .build());
-    BlazeProjectData projectData =
-        MockBlazeProjectDataBuilder.builder()
-            .setOutputBase(fileSystem.getRootDir() + "/out")
-            .build();
-    registerProjectService(
-        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(projectData));
 
     this.blazeConfigService = new BlazeTypeScriptConfigServiceImpl(getProject());
-    blazeConfigService.update(projectData);
+    this.blazeConfigService.update(
+        ImmutableMap.of(
+            Label.create("//project/foo:tsconfig"),
+            new File("/src/workspace/project/foo/tsconfig.json")));
     this.regularConfigService =
         TypeScriptConfigServiceCompat.newImpl(
             getProject(),
@@ -184,23 +177,19 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
             new TypeScriptConfigGraphCache(getProject()));
   }
 
-  @Test
-  public void testCompileOnsave() {
-    TypeScriptConfigCompat blazeConfig =
-        (TypeScriptConfigCompat) blazeConfigService.getConfigs().get(0);
-    // regularConfig incorrectly parses this as true, since it uses the value from the empty
-    // extender config instead of the extendee, and the default value is true
-    assertThat(blazeConfig.isCompileOnSave()).isFalse();
+  @Override
+  protected boolean runTestsOnEdt() {
+    return false;
   }
 
   @Test
   public void testSameOptions() {
     assertThat(blazeConfigService.getConfigs()).hasSize(1);
     assertThat(regularConfigService.getConfigFiles()).hasSize(1);
-    TypeScriptConfigCompat blazeConfig =
-        (TypeScriptConfigCompat) blazeConfigService.getConfigs().get(0);
+    TypeScriptConfig blazeConfig = blazeConfigService.getConfigs().get(0);
     TypeScriptConfig regularConfig =
-        TypeScriptConfigServiceCompat.getConfigs(regularConfigService).get(0);
+        ReadAction.compute(
+            () -> TypeScriptConfigServiceCompat.getConfigs(regularConfigService).get(0));
 
     assertThat(blazeConfig.isDirectoryBased()).isEqualTo(regularConfig.isDirectoryBased());
     assertThat(blazeConfig.getConfigFile()).isEqualTo(regularConfig.getConfigFile());
@@ -240,7 +229,6 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     assertThat(blazeConfig.noLib()).isEqualTo(regularConfig.noLib());
     assertThat(blazeConfig.getRootDirFile()).isNull();
     assertThat(blazeConfig.getRootDirFile()).isEqualTo(regularConfig.getRootDirFile());
-    assertThat(blazeConfig.getProjectReferences()).isEmpty();
     assertThat(blazeConfig.preserveSymlinks()).isEqualTo(regularConfig.preserveSymlinks());
     assertThat(blazeConfig.jsxFactory()).isEqualTo(regularConfig.jsxFactory());
     assertThat(blazeConfig.getPlugins()).containsExactly("@bazel/tsetse", "ide_performance");
@@ -252,16 +240,13 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     // regularConfig can't correctly parse the file list in test mode,
     // so these values are manually checked
 
-    TypeScriptConfigCompat blazeConfig =
-        (TypeScriptConfigCompat) blazeConfigService.getConfigs().get(0);
+    TypeScriptConfig blazeConfig = blazeConfigService.getConfigs().get(0);
     VirtualFile includedSource = vf("/src/workspace/project/foo/included.ts");
     VirtualFile excludedSource = vf("/src/workspace/project/foo/excluded.ts");
-    assertThat(blazeConfig.accept(includedSource)).isTrue();
-    assertThat(blazeConfig.accept(excludedSource)).isFalse();
 
     // we don't use TypeScriptConfigPatternInclude so this is always false
-    assertThat(blazeConfig.isIncludedFile(includedSource)).isFalse();
-    assertThat(blazeConfig.isIncludedFile(excludedSource)).isFalse();
+    assertThat(blazeConfig.isIncludedFile(includedSource, true)).isFalse();
+    assertThat(blazeConfig.isIncludedFile(excludedSource, true)).isFalse();
 
     assertThat(blazeConfig.isFromFileList(includedSource)).isTrue();
     assertThat(blazeConfig.isFromFileList(excludedSource)).isFalse();
@@ -271,7 +256,7 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
             vf("/src/workspace/project/foo/included.ts"),
             vf(
                 "/src/out/execroot/bin/project/foo/tsconfig.runfiles/workspace/javascript/closure/base.d.ts"));
-    assertThat(blazeConfig.hasFilesList()).isTrue();
+    assertThat(blazeConfig.hasFilesList()).isFalse();
   }
 
   @Test
@@ -309,12 +294,12 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
             "./tsconfig.runfiles/workspace/project/foo/*")
         .inOrder();
 
-    assertThat(blazeConfig.getRootDirsFiles())
+    assertThat(ReadAction.compute(blazeConfig::getRootDirsFiles))
         .containsExactly(
             vf("/src/workspace/project/foo"),
             vf("/src/out/execroot/bin/project/foo/tsconfig.runfiles/workspace"),
             vf("/src/out/execroot/bin/project/foo/tsconfig.runfiles/workspace/project/foo"));
-    assertThat(blazeConfig.getRootDirs())
+    assertThat(ReadAction.compute(blazeConfig::getRootDirs))
         .containsExactly(
             psi("/src/workspace/project/foo"),
             psi("/src/out/execroot/bin/project/foo/tsconfig.runfiles/workspace"),
@@ -322,14 +307,15 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
   }
 
   private static VirtualFile vf(String path) {
-    VirtualFile resolved = VfsUtils.resolveVirtualFile(new File(path));
+    VirtualFile resolved = VfsUtils.resolveVirtualFile(new File(path), false);
     assertThat(resolved).isNotNull();
     return resolved;
   }
 
   private PsiDirectory psi(String path) {
     PsiManager psiManager = PsiManager.getInstance(getProject());
-    PsiDirectory psiDirectory = psiManager.findDirectory(vf(path));
+    VirtualFile virtualFile = vf(path);
+    PsiDirectory psiDirectory = ReadAction.compute(() -> psiManager.findDirectory(virtualFile));
     assertThat(psiDirectory).isNotNull();
     return psiDirectory;
   }
@@ -343,6 +329,17 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
               .collect(
                   ImmutableMap.toImmutableMap(
                       e -> new File(e.getKey()), e -> new File(e.getValue())));
+    }
+
+    @Override
+    public File getCanonicalFile(File file) throws IOException {
+      file = file.getCanonicalFile();
+      for (File link : symlinks.keySet()) {
+        if (FileUtil.isAncestor(link, file, /* strict= */ false)) {
+          return new File(symlinks.get(link), link.toPath().relativize(file.toPath()).toString());
+        }
+      }
+      return file;
     }
 
     @Override

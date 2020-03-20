@@ -28,6 +28,9 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -49,14 +52,19 @@ public class FindRuleUsagesTest extends BuildFileIntegrationTestCase {
 
     PsiReference[] references = FindUsages.findAllReferences(target);
     assertThat(references).hasLength(2);
+    List<PsiElement> elements =
+        Arrays.stream(references).map(PsiReference::getElement).collect(Collectors.toList());
 
-    PsiElement firstRef = references[0].getElement();
-    assertThat(firstRef).isInstanceOf(StringLiteral.class);
-    assertThat(firstRef.getParent()).isInstanceOf(AssignmentStatement.class);
+    List<Class<?>> elementTypes =
+        elements.stream().map(PsiElement::getClass).collect(Collectors.toList());
+    assertThat(elementTypes).containsExactly(StringLiteral.class, StringLiteral.class);
 
-    PsiElement secondRef = references[1].getElement();
-    assertThat(secondRef).isInstanceOf(StringLiteral.class);
-    assertThat(secondRef.getParent()).isInstanceOf(ListLiteral.class);
+    List<Class<?>> parentTypes =
+        elements.stream()
+            .map(PsiElement::getParent)
+            .map(PsiElement::getClass)
+            .collect(Collectors.toList());
+    assertThat(parentTypes).containsExactly(AssignmentStatement.class, ListLiteral.class);
   }
 
   // test full package references, made locally

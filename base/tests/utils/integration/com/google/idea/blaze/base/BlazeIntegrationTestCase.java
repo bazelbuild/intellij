@@ -32,7 +32,6 @@ import com.google.idea.testing.ServiceHelper;
 import com.google.idea.testing.VerifyRequiredPluginsEnabled;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -151,10 +150,6 @@ public abstract class BlazeIntegrationTestCase {
     if (requiredPlugins != null) {
       VerifyRequiredPluginsEnabled.runCheck(requiredPlugins.split(","));
     }
-
-    // a temporary hack to prevent the scala plugin trying to download another plugin at test
-    // runtime. Remove after #api182.
-    new File(PathManager.getSystemPath(), "scala-dep.install").createNewFile();
   }
 
   @After

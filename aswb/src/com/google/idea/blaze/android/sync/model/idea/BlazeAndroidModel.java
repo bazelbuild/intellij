@@ -158,7 +158,7 @@ public class BlazeAndroidModel implements AndroidModel {
     return virtualFile;
   }
 
-  @Override
+  // @Override #api3.6
   public DataBindingMode getDataBindingMode() {
     return DataBindingMode.NONE;
   }

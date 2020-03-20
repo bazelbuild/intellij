@@ -108,7 +108,7 @@ public class PyIssueParserProvider implements BlazeIssueParserProvider {
         }
       }
       File file = BlazeIssueParser.fileFromRelativePath(workspaceRoot, fileName);
-      return file == null ? null : VfsUtils.resolveVirtualFile(file);
+      return file == null ? null : VfsUtils.resolveVirtualFile(file, /* refreshIfNeeded= */ true);
     }
 
     @Nullable

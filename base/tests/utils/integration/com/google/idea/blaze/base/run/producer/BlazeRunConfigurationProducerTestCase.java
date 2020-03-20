@@ -25,8 +25,8 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.sdkcompat.openapi.HeadlessDataManagerAdapter;
 import com.google.idea.sdkcompat.testframework.DataManagerCompat;
+import com.google.idea.testing.FunctionalHeadlessDataManager;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -57,7 +57,7 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
     // IntelliJ replaces the normal DataManager with a mock version in headless environments.
     // We rely on a functional DataManager in run configuration tests to recognize when multiple
     // psi elements are selected.
-    DataManagerCompat.replaceDataManager(new HeadlessDataManagerAdapter());
+    DataManagerCompat.replaceDataManager(new FunctionalHeadlessDataManager());
   }
 
   protected PsiFile createAndIndexFile(WorkspacePath path, String... contents) {

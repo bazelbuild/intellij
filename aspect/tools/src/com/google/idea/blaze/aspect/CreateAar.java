@@ -26,7 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -41,17 +41,17 @@ public class CreateAar {
     return new File(string);
   }
 
-  private static List<File> filelistParser(String string) {
+  private static Set<File> filelistParser(String string) {
     return Arrays.stream(string.split(","))
         .map(filename -> new File(filename))
-        .collect(Collectors.toList());
+        .collect(Collectors.toSet());
   }
 
   @VisibleForTesting
   static final class AarOptions {
     File outputAar;
     File manifestFile;
-    List<File> resourceFiles;
+    Set<File> resourceFiles;
     String resourceRoot;
   }
 

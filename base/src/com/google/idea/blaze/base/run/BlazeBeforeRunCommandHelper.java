@@ -97,7 +97,7 @@ public final class BlazeBeforeRunCommandHelper {
 
                 BlazeCommand.Builder command =
                     BlazeCommand.builder(binaryPath, commandName)
-                        .addTargets(configuration.getTarget())
+                        .addTargets(configuration.getTargets())
                         .addBlazeFlags(overridableExtraBlazeFlags)
                         .addBlazeFlags(
                             BlazeFlags.blazeFlags(

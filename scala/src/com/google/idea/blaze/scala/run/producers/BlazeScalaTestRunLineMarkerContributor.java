@@ -23,6 +23,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.io.URLUtil;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
+import org.jetbrains.plugins.scala.lang.lexer.ScalaTokenTypes;
 import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass;
@@ -68,6 +70,12 @@ public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMark
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean isIdentifier(PsiElement element) {
+    return element instanceof LeafPsiElement
+        && ((LeafPsiElement) element).getElementType().equals(ScalaTokenTypes.tIDENTIFIER);
   }
 
   @Nullable

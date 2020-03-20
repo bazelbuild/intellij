@@ -42,9 +42,11 @@ public class JUnitTestHeuristicTest extends BlazeIntegrationTestCase {
             + "    Class<? extends Runner> value();"
             + "}");
     workspace.createPsiFile(
-        new WorkspacePath("org/junit/Test"), "package org.junit;", "public @interface Test {}");
+        new WorkspacePath("org/junit/Test.java"),
+        "package org.junit;",
+        "public @interface Test {}");
     workspace.createPsiFile(
-        new WorkspacePath("org/junit/runners/JUnit4"),
+        new WorkspacePath("org/junit/runners/JUnit4.java"),
         "package org.junit.runners;",
         "public class JUnit4 {}");
   }

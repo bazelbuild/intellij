@@ -21,7 +21,7 @@ import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;
 import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.cppapi.BlazeNativeDebuggerIdProvider;
+import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
 import com.google.idea.blaze.android.run.state.DebuggerSettingsState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.project.Project;
@@ -57,14 +57,14 @@ public final class BlazeAndroidRunConfigurationDebuggerManager {
     return null;
   }
 
-  /**
-   * @return A persisted debugger state for the given project. Note that modifications to the
-   *     returned state will be saved between IDE restarts.
-   */
   @Nullable
   AndroidDebuggerState getAndroidDebuggerState(Project project) {
-    AndroidDebuggerState androidDebuggerState =
-        debuggerSettings.getDebuggerStateById(getDebuggerID());
+    AndroidDebugger debuggerToUse = getAndroidDebugger();
+    if (debuggerToUse == null) {
+      return null;
+    }
+
+    AndroidDebuggerState androidDebuggerState = debuggerToUse.createState();
     // Set our working directory to our workspace root for native debugging.
     if (androidDebuggerState instanceof NativeAndroidDebuggerState) {
       NativeAndroidDebuggerState nativeState = (NativeAndroidDebuggerState) androidDebuggerState;
@@ -75,10 +75,8 @@ public final class BlazeAndroidRunConfigurationDebuggerManager {
   }
 
   private String getDebuggerID() {
-    BlazeNativeDebuggerIdProvider blazeNativeDebuggerIdProvider =
-        BlazeNativeDebuggerIdProvider.getInstance();
-    return (blazeNativeDebuggerIdProvider != null && debuggerSettings.isNativeDebuggingEnabled())
-        ? blazeNativeDebuggerIdProvider.getDebuggerId()
+    return debuggerSettings.isNativeDebuggingEnabled()
+        ? BlazeAutoAndroidDebugger.ID
         : AndroidJavaDebugger.ID;
   }
 }

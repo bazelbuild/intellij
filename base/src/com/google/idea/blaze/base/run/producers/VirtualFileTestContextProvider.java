@@ -29,9 +29,6 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,8 +43,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -119,18 +114,10 @@ class VirtualFileTestContextProvider implements TestContextProvider {
   private static ConfigurationContext resolveContext(ConfigurationContext context, VirtualFile vf) {
     PsiFile psi =
         ReadAction.compute(() -> PsiManager.getInstance(context.getProject()).findFile(vf));
-    return psi == null ? context : createContextForNewPsi(context, psi);
-  }
-
-  private static ConfigurationContext createContextForNewPsi(
-      ConfigurationContext context, PsiElement psi) {
-    // #api182 use ConfigurationContext#createEmptyContextForLocation
-    Map<String, Object> map = new HashMap<>();
-    map.put(CommonDataKeys.PROJECT.getName(), context.getProject());
-    map.put(LangDataKeys.MODULE.getName(), context.getModule());
-    map.put(Location.DATA_KEY.getName(), PsiLocation.fromPsiElement(psi));
-    DataContext dataContext = new SimpleDataContext(map, context.getDataContext());
-    return ConfigurationContext.getFromContext(dataContext);
+    Location<PsiFile> location = PsiLocation.fromPsiElement(psi, context.getModule());
+    return location == null
+        ? context
+        : ConfigurationContext.createEmptyContextForLocation(location);
   }
 
   @Nullable
@@ -141,24 +128,5 @@ class VirtualFileTestContextProvider implements TestContextProvider {
       return null;
     }
     return resolver.getWorkspacePath(new File(vf.getPath()));
-  }
-
-  private static class SimpleDataContext implements DataContext {
-    private final Map<String, Object> map;
-    private final DataContext parent;
-
-    SimpleDataContext(Map<String, Object> map, DataContext parent) {
-      this.map = map;
-      this.parent = parent;
-    }
-
-    @Nullable
-    @Override
-    public Object getData(String id) {
-      if (map.containsKey(id)) {
-        return map.get(id);
-      }
-      return parent != null ? parent.getData(id) : null;
-    }
   }
 }

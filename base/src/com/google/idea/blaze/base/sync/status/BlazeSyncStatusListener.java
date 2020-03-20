@@ -30,7 +30,7 @@ public class BlazeSyncStatusListener implements SyncListener {
 
   @Override
   public void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {
-    BlazeSyncStatusImpl.getImpl(project).syncStarted();
+    BlazeSyncStatus.getInstance(project).syncStarted();
   }
 
   @Override
@@ -40,6 +40,6 @@ public class BlazeSyncStatusListener implements SyncListener {
       SyncMode syncMode,
       SyncResult syncResult,
       ImmutableSet<Integer> buildIds) {
-    BlazeSyncStatusImpl.getImpl(project).syncEnded(syncMode, syncResult);
+    BlazeSyncStatus.getInstance(project).syncEnded(syncMode, syncResult);
   }
 }

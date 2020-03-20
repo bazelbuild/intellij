@@ -29,4 +29,14 @@ public class FastBuildException extends Exception {
   public FastBuildException(String s, Throwable throwable) {
     super(s, throwable);
   }
+
+  /**
+   * Blaze build errors are expected (e.g. running fast build when targets don't compile), and
+   * should not be logged.
+   */
+  public static class BlazeBuildError extends FastBuildException {
+    BlazeBuildError(String message) {
+      super(message);
+    }
+  }
 }

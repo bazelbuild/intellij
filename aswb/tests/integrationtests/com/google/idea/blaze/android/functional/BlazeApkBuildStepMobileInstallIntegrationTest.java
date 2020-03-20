@@ -17,8 +17,8 @@ package com.google.idea.blaze.android.functional;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_binary;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -55,11 +55,13 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.util.Function;
 import java.io.File;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
@@ -97,7 +99,7 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
   public void setupBuildResultHelperProvider() throws GetArtifactsException {
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(getExecRoot(), null, null, 0));
+        .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0));
     registerExtension(
         BuildResultHelperProvider.EP_NAME,
         new BuildResultHelperProvider() {
@@ -278,7 +280,7 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
 
     // Return null execroot
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, 0));
+        .thenReturn(new ParsedBepOutput(null, null, null, null, 0));
 
     // Setup interceptor for fake running of blaze commands and capture details.
     ExternalTaskInterceptor externalTaskInterceptor = new ExternalTaskInterceptor();
@@ -387,11 +389,21 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     @Override
     public void prepareToRenderLabel() {}
 
-    @Override
+    // api40: see new API for canRun below
     public LaunchCompatibility canRun(
         com.android.sdklib.AndroidVersion androidVersion,
         IAndroidTarget iAndroidTarget,
         EnumSet<HardwareFeature> enumSet,
+        @Nullable Set<String> set) {
+      return null;
+    }
+
+    // @Override #api40
+    public LaunchCompatibility canRun(
+        com.android.sdklib.AndroidVersion androidVersion,
+        IAndroidTarget iAndroidTarget,
+        AndroidFacet facet,
+        Function<AndroidFacet, EnumSet<HardwareFeature>> getRequiredHardwareFeatures,
         @Nullable Set<String> set) {
       return null;
     }

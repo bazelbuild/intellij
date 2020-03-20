@@ -193,7 +193,7 @@ public class BlazeCoverageEngine extends CoverageEngine {
     }
     CoverageAnnotator annotator = getCoverageAnnotator(project);
     return new DirectoryCoverageViewExtension(project, annotator, suites, stateBean) {
-      private List<AbstractTreeNode> topLevelNodes;
+      private List<CoverageListNode> topLevelNodes;
 
       @Override
       public AbstractTreeNode createRootNode() {
@@ -203,28 +203,29 @@ public class BlazeCoverageEngine extends CoverageEngine {
         }
         return new CoverageListRootNode(
             project, resolveFile(project, root.directory()), suites, stateBean) {
+          @SuppressWarnings({"rawtypes", "unchecked"}) // #api193: wildcard generics added in 2020.1
           @Override
-          public Collection<? extends AbstractTreeNode> getChildren() {
+          public Collection getChildren() {
             return getRootChildren(this);
           }
         };
       }
 
+      @SuppressWarnings({"unchecked", "rawtypes"}) // #api193: wildcard generics added in 2020.1
       @Override
-      public List<AbstractTreeNode> getChildrenNodes(AbstractTreeNode node) {
+      public List getChildrenNodes(AbstractTreeNode node) {
         if (node instanceof CoverageListRootNode && topLevelDirectories.size() != 1) {
           return getRootChildren((CoverageListRootNode) node);
         }
-        return super.getChildrenNodes(node)
-            .stream()
+        return super.getChildrenNodes(node).stream()
             .filter(treeNode -> !isLeaf(treeNode) || getPercentage(0, treeNode) != null)
             .collect(Collectors.toList());
       }
 
-      private List<AbstractTreeNode> getRootChildren(CoverageListRootNode root) {
+      private List<CoverageListNode> getRootChildren(CoverageListRootNode root) {
         if (topLevelNodes == null) {
           topLevelNodes = ReadAction.compute(() -> getTopLevelNodes(project, suites, stateBean));
-          for (AbstractTreeNode node : topLevelNodes) {
+          for (AbstractTreeNode<?> node : topLevelNodes) {
             node.setParent(root);
           }
         }
@@ -240,7 +241,7 @@ public class BlazeCoverageEngine extends CoverageEngine {
         .collect(Collectors.toSet());
   }
 
-  private static List<AbstractTreeNode> getTopLevelNodes(
+  private static List<CoverageListNode> getTopLevelNodes(
       Project project, CoverageSuitesBundle suites, StateBean stateBean) {
     return getTopLevelDirectories(suites)
         .stream()

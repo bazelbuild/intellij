@@ -82,8 +82,8 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//py/test:unittests"));
     assertThat(getTestFilterContents(config)).isNull();
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
     assertThat(config.getName()).isEqualTo("Blaze test unittest.py");
@@ -124,8 +124,8 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//py/test:unittests"));
     assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=UnitTest");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
     assertThat(config.getName()).isEqualTo("Blaze test UnitTest (unittest.py)");
@@ -166,8 +166,8 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//py/test:unittests"));
     assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=UnitTest.testSomething");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
     assertThat(config.getName()).isEqualTo("Blaze test UnitTest.testSomething (unittest.py)");
@@ -209,8 +209,8 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//py/test:unittests"));
     assertThat(getTestFilterContents(config))
         .isEqualTo("--test_filter=\"UnitTest.testSomething0 UnitTest.testSomething1\"");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
@@ -256,8 +256,8 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//py/test:unittests"));
     assertThat(getTestFilterContents(config))
         .isEqualTo("--test_filter=\"UnitTest.testSomething_First UnitTest.testSomething_Second\"");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
@@ -303,8 +303,8 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//py/test:unittests"));
     assertThat(getTestFilterContents(config))
         .isEqualTo("--test_filter=\"UnitTest.testSomething_First UnitTest.testSomething_Second\"");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
@@ -350,8 +350,8 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//py/test:unittests"));
     assertThat(getTestFilterContents(config))
         .isEqualTo(
             "--test_filter=\"UnitTest.test_something_First UnitTest.test_something_Second\"");
@@ -395,8 +395,8 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//py/test:unittests"));
     assertThat(getTestFilterContents(config))
         .isEqualTo("--test_filter=\"UnitTest.testSomething0 UnitTest.testSomething1\"");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
@@ -442,8 +442,8 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//py/test:unittests"));
     assertThat(getTestFilterContents(config))
         .isEqualTo("--test_filter=\"UnitTest.testSomething_First UnitTest.testSomething_Second\"");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
@@ -486,8 +486,8 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//py/test:unittests"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//py/test:unittests"));
     assertThat(getTestFilterContents(config)).isNull();
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
     assertThat(config.getName()).isEqualTo("Blaze test UnitTest.testSomething (unittest.py)");

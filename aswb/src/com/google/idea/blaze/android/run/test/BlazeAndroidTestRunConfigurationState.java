@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
@@ -136,7 +137,15 @@ public final class BlazeAndroidTestRunConfigurationState implements RunConfigura
    * warning.
    */
   public List<ValidationError> validate(@Nullable AndroidFacet facet) {
-    return commonState.validate(facet);
+    ImmutableList.Builder<ValidationError> errors = ImmutableList.builder();
+    errors.addAll(commonState.validate(facet));
+    if (commonState.isNativeDebuggingEnabled()
+        && !launchMethod.equals(AndroidTestLaunchMethod.NON_BLAZE)) {
+      errors.add(
+          ValidationError.fatal(
+              "Native debugging is not support when running with blaze test or mobile-install."));
+    }
+    return errors.build();
   }
 
   @Override

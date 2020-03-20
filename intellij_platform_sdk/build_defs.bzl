@@ -4,18 +4,18 @@
 INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2019.2",
     "intellij-latest-mac": "intellij-2019.2-mac",
-    "intellij-beta": "intellij-2019.2",
-    "intellij-canary": "intellij-2019.3",
+    "intellij-beta": "intellij-2019.3",
+    "intellij-canary": "intellij-2020.1",
     "intellij-ue-latest": "intellij-ue-2019.2",
     "intellij-ue-latest-mac": "intellij-ue-2019.2-mac",
-    "intellij-ue-beta": "intellij-ue-2019.2",
-    "intellij-ue-canary": "intellij-ue-2019.3",
-    "android-studio-latest": "android-studio-3.5",
-    "android-studio-beta": "android-studio-3.6",
-    "android-studio-beta-mac": "android-studio-3.6-mac",
-    "android-studio-canary": "android-studio-4.0",
+    "intellij-ue-beta": "intellij-ue-2019.3",
+    "intellij-ue-canary": "intellij-ue-2020.1",
+    "android-studio-latest": "android-studio-3.6",
+    "android-studio-beta": "android-studio-4.0",
+    "android-studio-beta-mac": "android-studio-4.0-mac",
+    "android-studio-canary": "android-studio-4.1",
     "clion-latest": "clion-2019.2",
-    "clion-beta": "clion-2019.2",
+    "clion-beta": "clion-2019.3",
 }
 
 DIRECT_IJ_PRODUCTS = {
@@ -51,13 +51,21 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij-ue",
         directory = "intellij_ue_2019_3",
     ),
-    "android-studio-3.5": struct(
-        ide = "android-studio",
-        directory = "android_studio_3_5",
+    "intellij-2020.1": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2020_1",
     ),
-    "android-studio-3.5-mac": struct(
-        ide = "android-studio",
-        directory = "android_studio_3_5",
+    "intellij-2020.1-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2020_1",
+    ),
+    "intellij-ue-2020.1": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2020_1",
+    ),
+    "intellij-ue-2020.1-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2020_1",
     ),
     "android-studio-3.6": struct(
         ide = "android-studio",
@@ -70,6 +78,14 @@ DIRECT_IJ_PRODUCTS = {
     "android-studio-4.0": struct(
         ide = "android-studio",
         directory = "android_studio_4_0",
+    ),
+    "android-studio-4.0-mac": struct(
+        ide = "android-studio",
+        directory = "android_studio_4_0",
+    ),
+    "android-studio-4.1": struct(
+        ide = "android-studio",
+        directory = "android_studio_4_1",
     ),
     "clion-2019.2": struct(
         ide = "clion",

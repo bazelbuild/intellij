@@ -28,15 +28,18 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.configurations.ConfigurationInfoProvider;
+import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
-import com.intellij.execution.runners.BaseProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.options.SettingsEditor;
 import javax.annotation.Nullable;
 
 class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
@@ -83,7 +86,7 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
     return "Pending target handler";
   }
 
-  static class PendingTargetProgramRunner extends BaseProgramRunner<RunnerSettings> {
+  static class PendingTargetProgramRunner implements ProgramRunner<RunnerSettings> {
     @Override
     public String getRunnerId() {
       return "PendingTargetProgramRunner";
@@ -104,10 +107,8 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
     }
 
     @Override
-    protected void execute(
-        ExecutionEnvironment env, @Nullable Callback callback, RunProfileState state)
-        throws ExecutionException {
-      if (!(state instanceof DummyRunProfileState)) {
+    public void execute(ExecutionEnvironment env) throws ExecutionException {
+      if (!(env.getState() instanceof DummyRunProfileState)) {
         reRunConfiguration(env);
         return;
       }
@@ -120,6 +121,39 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
                   ExecutionUtil.handleExecutionError(env, e);
                 }
               });
+    }
+
+    /** #api193: remove when 2019.3 no longer supported; default implementation added in 2020.1 */
+    @Override
+    public void execute(ExecutionEnvironment env, @Nullable Callback callback)
+        throws ExecutionException {
+      execute(env);
+    }
+
+    /** #api193: remove when 2019.3 no longer supported; default implementation added in 2020.1. */
+    @Nullable
+    @Override
+    public RunnerSettings createConfigurationData(
+        ConfigurationInfoProvider configurationInfoProvider) {
+      return null;
+    }
+
+    /** #api193: remove when 2019.3 no longer supported; default implementation added in 2020.1. */
+    @Override
+    public void checkConfiguration(
+        RunnerSettings runnerSettings,
+        @Nullable ConfigurationPerRunnerSettings configurationPerRunnerSettings) {}
+
+    /** #api193: remove when 2019.3 no longer supported; default implementation added in 2020.1. */
+    @Override
+    public void onProcessStarted(RunnerSettings runnerSettings, ExecutionResult executionResult) {}
+
+    /** #api193: remove when 2019.3 no longer supported; default implementation added in 2020.1. */
+    @Nullable
+    @Override
+    public SettingsEditor<RunnerSettings> getSettingsEditor(
+        Executor executor, RunConfiguration runConfiguration) {
+      return null;
     }
   }
 

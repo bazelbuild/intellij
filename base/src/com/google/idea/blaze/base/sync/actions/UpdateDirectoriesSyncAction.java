@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
-import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
@@ -24,10 +23,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 
 /** A partial (additive) sync which runs no blaze build actions, only updating directories */
-public class UpdateDirectoriesSyncAction extends BlazeProjectAction {
+public class UpdateDirectoriesSyncAction extends BlazeProjectSyncAction {
 
   @Override
-  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
+  protected void runSync(Project project, AnActionEvent e) {
     BlazeSyncManager.getInstance(project)
         .directoryUpdate(/* inBackground= */ false, /* reason= */ "UpdateDirectoriesSyncAction");
   }

@@ -23,8 +23,8 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.util.SystemProperties;
 import com.intellij.xdebugger.XDebugSession;
-import com.jetbrains.cidr.cpp.execution.CLionRunParameters;
 import com.jetbrains.cidr.execution.TrivialInstaller;
+import com.jetbrains.cidr.execution.TrivialRunParameters;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver;
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver.Inferior;
@@ -50,7 +50,7 @@ public class BlazeCidrRemoteDebugProcess extends CidrDebugProcess {
       TextConsoleBuilder textConsoleBuilder)
       throws ExecutionException {
     super(
-        new CLionRunParameters(
+        new TrivialRunParameters(
             debuggerDriverConfiguration, new TrivialInstaller(new GeneralCommandLine())),
         xDebugSession,
         textConsoleBuilder);

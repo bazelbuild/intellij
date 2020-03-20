@@ -75,8 +75,8 @@ public class ScalaSpecs2TestContextProviderTest extends BlazeRunConfigurationPro
 
     BlazeCommandRunConfiguration config =
         (BlazeCommandRunConfiguration) fromContext.getConfiguration();
-    assertThat(config.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//scala/com/google/test:TestClass"));
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//scala/com/google/test:TestClass"));
     assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=com.google.test.TestClass#");
     assertThat(config.getName()).isEqualTo("Blaze test TestClass");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
@@ -85,6 +85,10 @@ public class ScalaSpecs2TestContextProviderTest extends BlazeRunConfigurationPro
   }
 
   private PsiFile createTestPsiFile() {
+    createAndIndexFile(
+        WorkspacePath.createIfValid("scala/org/junit/Test.scala"),
+        "package org.junit",
+        "class Test");
     createAndIndexFile(
         WorkspacePath.createIfValid("scala/org/junit/runner/RunWith.scala"),
         "package org.junit.runner",

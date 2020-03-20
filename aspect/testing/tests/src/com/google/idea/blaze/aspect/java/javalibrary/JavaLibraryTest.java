@@ -31,6 +31,51 @@ import org.junit.runners.JUnit4;
 public class JavaLibraryTest extends BazelIntellijAspectTest {
 
   @Test
+  public void testExports() throws Exception {
+    IntellijAspectTestFixture testFixture = loadTestFixture(":foo_exports_fixture");
+    TargetIdeInfo target = findTarget(testFixture, ":foo_exports");
+
+    // transitive exports should be rolled up into direct deps
+    assertThat(target.getDepsList())
+        .containsAllOf(
+            dep(":exports_direct"), dep(":direct"), dep(":exports_indirect"), dep(":indirect"));
+    assertThat(target.getDepsList()).doesNotContain(dep(":distant"));
+
+    // intellij-info groups
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
+        .containsAllOf(
+            testRelative("foo_exports.java-manifest"),
+            testRelative(intellijInfoFileName("foo_exports")),
+            testRelative(intellijInfoFileName("exports_direct")),
+            testRelative("direct.java-manifest"),
+            testRelative(intellijInfoFileName("direct")),
+            testRelative(intellijInfoFileName("exports_indirect")),
+            testRelative("indirect.java-manifest"),
+            testRelative(intellijInfoFileName("indirect")),
+            testRelative("distant.java-manifest"),
+            testRelative(intellijInfoFileName("distant")));
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-outputs"))
+        .containsExactly(
+            testRelative("foo_exports.java-manifest"),
+            testRelative(intellijInfoFileName("foo_exports")));
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
+        .containsAllOf(
+            testRelative("foo_exports.java-manifest"),
+            testRelative(intellijInfoFileName("foo_exports")),
+            testRelative(intellijInfoFileName("exports_direct")),
+            testRelative("direct.java-manifest"),
+            testRelative(intellijInfoFileName("direct")),
+            testRelative(intellijInfoFileName("exports_indirect")),
+            testRelative("indirect.java-manifest"),
+            testRelative(intellijInfoFileName("indirect")));
+    assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
+        .containsNoneOf(
+            testRelative("distant.java-manifest"), testRelative(intellijInfoFileName("distant")));
+  }
+
+  @Test
   public void testJavaLibrary() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":foo_fixture");
     TargetIdeInfo target = findTarget(testFixture, ":foo");

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -45,13 +46,10 @@ public class BlazeConfigurationNameBuilder {
     BlazeCommandName commandName = configuration.getHandler().getCommandName();
     setCommandName(commandName == null ? "command" : commandName.toString());
 
-    TargetExpression targetExpression = configuration.getTarget();
-
-    if (targetExpression != null) {
-      String text =
-          targetExpression instanceof Label
-              ? getTextForLabel((Label) targetExpression)
-              : targetExpression.toString();
+    ImmutableList<? extends TargetExpression> targets = configuration.getTargets();
+    if (!targets.isEmpty()) {
+      TargetExpression first = targets.get(0);
+      String text = first instanceof Label ? getTextForLabel((Label) first) : first.toString();
       setTargetString(text);
     }
   }

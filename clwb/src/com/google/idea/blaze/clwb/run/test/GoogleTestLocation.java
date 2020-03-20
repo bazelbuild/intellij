@@ -18,7 +18,6 @@ package com.google.idea.blaze.clwb.run.test;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
 import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
-import com.google.idea.sdkcompat.cidr.OCSymbolAdapter;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.openapi.project.Project;
@@ -38,6 +37,7 @@ import com.jetbrains.cidr.lang.psi.OCMacroCall;
 import com.jetbrains.cidr.lang.psi.OCMacroCallArgument;
 import com.jetbrains.cidr.lang.psi.OCStruct;
 import com.jetbrains.cidr.lang.psi.visitors.OCVisitor;
+import com.jetbrains.cidr.lang.symbols.OCResolveContext;
 import com.jetbrains.cidr.lang.symbols.OCSymbol;
 import com.jetbrains.cidr.lang.symbols.cpp.OCFunctionSymbol;
 import com.jetbrains.cidr.lang.symbols.cpp.OCStructSymbol;
@@ -85,15 +85,17 @@ public class GoogleTestLocation extends PsiLocation<PsiElement> {
       }
       String className = parentSymbol.getQualifiedName().getName();
       return createFromClass(parent, className);
-    } else if (parent instanceof OCFunctionDefinition) {
+    }
+    if (parent instanceof OCFunctionDefinition) {
       OCFunctionSymbol symbol = ((OCFunctionDefinition) parent).getSymbol();
       if (symbol != null) {
-        OCSymbolWithQualifiedName resolvedOwner = OCSymbolAdapter.getResolvedOwner(symbol, project);
+        OCSymbolWithQualifiedName resolvedOwner =
+            symbol.getResolvedOwner(OCResolveContext.forSymbol(symbol, project));
         if (resolvedOwner != null) {
-          OCSymbol owner = OCSymbolAdapter.getDefinitionSymbol(resolvedOwner, project);
+          OCSymbol owner = resolvedOwner.getDefinitionSymbol(project);
           if (owner instanceof OCStructSymbol
               && CidrGoogleTestUtilAdapter.isGoogleTestClass((OCStructSymbol) owner, project)) {
-            OCStruct struct = (OCStruct) OCSymbolAdapter.locateDefinition(owner, project);
+            OCStruct struct = (OCStruct) owner.locateDefinition(project);
             Couple<String> name =
                 CidrGoogleTestUtil.extractGoogleTestName((OCStructSymbol) owner, project);
             if (name != null) {

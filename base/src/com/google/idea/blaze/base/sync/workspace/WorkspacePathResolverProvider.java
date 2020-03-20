@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.workspace;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
@@ -25,6 +26,8 @@ public interface WorkspacePathResolverProvider {
   static WorkspacePathResolverProvider getInstance(Project project) {
     return ServiceManager.getService(project, WorkspacePathResolverProvider.class);
   }
+
+  void setTemporaryOverride(WorkspacePathResolver resolver, Disposable parentDisposable);
 
   /**
    * Returns a WorkspacePathResolver for this project, or null if it's not a blaze/bazel project.

@@ -99,11 +99,8 @@ public class BlazeAndroidBinaryRunConfigurationHandler
   @Override
   @Nullable
   public Label getLabel() {
-    TargetExpression target = configuration.getTarget();
-    if (target instanceof Label) {
-      return (Label) target;
-    }
-    return null;
+    TargetExpression target = configuration.getSingleTarget();
+    return target instanceof Label ? (Label) target : null;
   }
 
   @Nullable
@@ -134,7 +131,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
     // 2. Any other validation is done during edit-time of the run configuration before saving.
     BlazeCommandRunConfiguration configFromEnv =
         BlazeAndroidRunConfigurationHandler.getCommandConfig(env);
-    configuration.setTarget(configFromEnv.getTarget());
+    configuration.setTarget(configFromEnv.getSingleTarget());
 
     Module module = getModule();
     AndroidFacet facet = module != null ? AndroidFacet.getInstance(module) : null;
@@ -155,6 +152,19 @@ public class BlazeAndroidBinaryRunConfigurationHandler
             configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
     BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);
 
+    EventLoggingService.getInstance()
+        .logEvent(
+            BlazeAndroidBinaryRunConfigurationHandler.class,
+            "BlazeAndroidBinaryRun",
+            ImmutableMap.of(
+                "launchMethod",
+                configState.getLaunchMethod().name(),
+                "executorId",
+                env.getExecutor().getId(),
+                "targetLabel",
+                configuration.getSingleTarget().toString(),
+                "nativeDebuggingEnabled",
+                Boolean.toString(configState.getCommonState().isNativeDebuggingEnabled())));
     return new BlazeAndroidRunConfigurationRunner(
         module,
         runContext,
@@ -258,7 +268,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
     LOG.info(
         "Showing mobile install opt-in dialog.\n"
             + "Run target: "
-            + configuration.getTarget()
+            + configuration.getSingleTarget()
             + "\n"
             + "Time since last prompt: "
             + (System.currentTimeMillis() - lastPrompt));

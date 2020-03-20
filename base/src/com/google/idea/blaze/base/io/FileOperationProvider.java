@@ -72,6 +72,10 @@ public class FileOperationProvider {
     return Files.isSymbolicLink(file.toPath());
   }
 
+  public File getCanonicalFile(File file) throws IOException {
+    return file.getCanonicalFile();
+  }
+
   public boolean mkdirs(File file) {
     return file.mkdirs();
   }

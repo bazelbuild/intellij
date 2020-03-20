@@ -37,6 +37,7 @@ import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import java.util.List;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -45,6 +46,25 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     extends BlazeRunConfigurationProducerTestCase {
+
+  @Before
+  public final void setup() {
+    // required for IntelliJ to recognize annotations, JUnit version, etc.
+    workspace.createPsiFile(
+        new WorkspacePath("org/junit/runner/RunWith.java"),
+        "package org.junit.runner;"
+            + "public @interface RunWith {"
+            + "    Class<? extends Runner> value();"
+            + "}");
+    workspace.createPsiFile(
+        new WorkspacePath("org/junit/Test.java"),
+        "package org.junit;",
+        "public @interface Test {}");
+    workspace.createPsiFile(
+        new WorkspacePath("org/junit/runners/JUnit4.java"),
+        "package org.junit.runners;",
+        "public class JUnit4 {}");
+  }
 
   @Test
   public void testIgnoreTestClassWithNoTestSubclasses() {
@@ -132,7 +152,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     RunConfiguration config = fromContext.getConfiguration();
     assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) config;
-    assertThat(blazeConfig.getTarget()).isNull();
+    assertThat(blazeConfig.getTargets()).isEmpty();
     assertThat(blazeConfig.getName())
         .isEqualTo("Choose subclass for NonAbstractSuperClassTestCase");
   }
@@ -173,7 +193,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     RunConfiguration config = fromContext.getConfiguration();
     assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) config;
-    assertThat(blazeConfig.getTarget()).isNull();
+    assertThat(blazeConfig.getTargets()).isEmpty();
     assertThat(blazeConfig.getName()).isEqualTo("Choose subclass for AbstractTestCase");
 
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
@@ -192,8 +212,8 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     BlazeJavaAbstractTestCaseConfigurationProducer.chooseSubclass(
         fromContext, context, EmptyRunnable.INSTANCE);
 
-    assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
+    assertThat(blazeConfig.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(blazeConfig))
         .isEqualTo(BlazeFlags.TEST_FILTER + "=com.google.test.TestClass#");
   }
@@ -234,7 +254,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     RunConfiguration config = fromContext.getConfiguration();
     assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) config;
-    assertThat(blazeConfig.getTarget()).isNull();
+    assertThat(blazeConfig.getTargets()).isEmpty();
     assertThat(blazeConfig.getName()).isEqualTo("Choose subclass for AbstractTestCase.testMethod");
 
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
@@ -253,8 +273,8 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     BlazeJavaAbstractTestCaseConfigurationProducer.chooseSubclass(
         fromContext, context, EmptyRunnable.INSTANCE);
 
-    assertThat(blazeConfig.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
+    assertThat(blazeConfig.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(blazeConfig))
         .isEqualTo(BlazeFlags.TEST_FILTER + "=com.google.test.TestClass#testMethod$");
   }

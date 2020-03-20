@@ -82,7 +82,7 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
     BlazeTestUiSession testUiSession =
         useTestUi()
             ? TestUiSessionProvider.getInstance(project)
-                .getTestUiSession(getConfiguration().getTarget())
+                .getTestUiSession(getConfiguration().getTargets())
             : null;
     if (testUiSession != null) {
       blazeCommand =
@@ -192,7 +192,7 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
     }
     BlazeCommand.Builder command =
         BlazeCommand.builder(binaryPath, blazeCommand)
-            .addTargets(configuration.getTarget())
+            .addTargets(configuration.getTargets())
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
                     project,

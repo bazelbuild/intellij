@@ -31,10 +31,10 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.common.transactions.Transactions;
-import com.google.idea.sdkcompat.run.RunConfigurationBaseCompat;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -130,12 +130,14 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
   }
 
   private static boolean enableBlazeBeforeRunTask(BlazeCommandRunConfiguration config) {
-    if (RunConfigurationBaseCompat.getAllBeforeRunTasks(config).stream()
-        .noneMatch(t -> t.getProviderId().equals(BlazeBeforeRunTaskProvider.ID))) {
+    @SuppressWarnings("rawtypes")
+    List<BeforeRunTask> tasks =
+        RunManagerEx.getInstanceEx(config.getProject()).getBeforeRunTasks(config);
+    if (tasks.stream().noneMatch(t -> t.getProviderId().equals(BlazeBeforeRunTaskProvider.ID))) {
       return addBlazeBeforeRunTask(config);
     }
     boolean changed = false;
-    for (BeforeRunTask<?> task : RunConfigurationBaseCompat.getAllBeforeRunTasks(config)) {
+    for (BeforeRunTask<?> task : tasks) {
       if (task.getProviderId().equals(BlazeBeforeRunTaskProvider.ID) && !task.isEnabled()) {
         changed = true;
         task.setEnabled(true);
@@ -144,7 +146,6 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
     return changed;
   }
 
-  @SuppressWarnings("unchecked") // BlazeCommandRunConfiguration needs to be generified
   private static boolean addBlazeBeforeRunTask(BlazeCommandRunConfiguration config) {
     BeforeRunTaskProvider<?> provider =
         BlazeBeforeRunTaskProvider.getProvider(config.getProject(), BlazeBeforeRunTaskProvider.ID);
@@ -178,11 +179,11 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
     Set<Label> labelsWithConfigs = Sets.newHashSet();
     for (RunConfiguration configuration : configurations) {
       if (configuration instanceof BlazeRunConfiguration) {
-        BlazeRunConfiguration blazeRunConfiguration = (BlazeRunConfiguration) configuration;
-        TargetExpression target = blazeRunConfiguration.getTarget();
-        if (target instanceof Label) {
-          labelsWithConfigs.add((Label) target);
-        }
+        BlazeRunConfiguration config = (BlazeRunConfiguration) configuration;
+        config.getTargets().stream()
+            .filter(t -> t instanceof Label)
+            .map(t -> (Label) t)
+            .forEach(labelsWithConfigs::add);
       }
     }
     return labelsWithConfigs;

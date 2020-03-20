@@ -57,7 +57,7 @@ public final class BlazePyRunConfigurationHandler implements BlazeCommandRunConf
   @Override
   @Nullable
   public String suggestedName(BlazeCommandRunConfiguration configuration) {
-    if (configuration.getTarget() == null) {
+    if (configuration.getTargets().isEmpty()) {
       return null;
     }
     return new BlazeConfigurationNameBuilder(configuration).build();

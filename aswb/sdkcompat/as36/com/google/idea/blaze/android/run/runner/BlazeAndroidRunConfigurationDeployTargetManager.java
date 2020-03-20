@@ -15,10 +15,17 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
+import com.android.tools.idea.run.LaunchCompatibility;
 import com.android.tools.idea.run.TargetSelectionMode;
+import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.editor.DeployTargetProvider;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import javax.annotation.Nullable;
+import org.jetbrains.android.facet.AndroidFacet;
 
-/** An indirection to provide a class compatible with #api3.5 and prior. */
+/** An indirection to provide a class compatible with #api3.6 and prior. */
 public class BlazeAndroidRunConfigurationDeployTargetManager
     extends BlazeAndroidRunConfigurationDeployTargetManagerBase {
   public BlazeAndroidRunConfigurationDeployTargetManager(boolean isAndroidTest) {
@@ -31,5 +38,34 @@ public class BlazeAndroidRunConfigurationDeployTargetManager
         getDeployTargetProvider(TargetSelectionMode.DEVICE_AND_SNAPSHOT_COMBO_BOX.name());
     assert targetProvider != null;
     return targetProvider;
+  }
+
+  @Override
+  @Nullable
+  DeployTarget getDeployTarget(
+      Executor executor, ExecutionEnvironment env, AndroidFacet facet, int runConfigId)
+      throws ExecutionException {
+    DeployTargetProvider currentTargetProvider = getCurrentDeployTargetProvider();
+
+    DeployTarget deployTarget;
+    if (currentTargetProvider.requiresRuntimePrompt()) {
+      deployTarget =
+          currentTargetProvider.showPrompt(
+              executor,
+              env,
+              facet,
+              getDeviceCount(),
+              isAndroidTest,
+              deployTargetStates,
+              runConfigId,
+              (device) -> LaunchCompatibility.YES);
+      if (deployTarget == null) {
+        return null;
+      }
+    } else {
+      deployTarget = currentTargetProvider.getDeployTarget(env.getProject());
+    }
+
+    return deployTarget;
   }
 }

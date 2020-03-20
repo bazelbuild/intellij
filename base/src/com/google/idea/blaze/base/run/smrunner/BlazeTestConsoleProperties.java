@@ -66,8 +66,8 @@ public class BlazeTestConsoleProperties extends SMTRunnerConsoleProperties
   @Nullable
   @Override
   public AbstractRerunFailedTestsAction createRerunFailedTestsAction(ConsoleView consoleView) {
-    return BlazeTestEventsHandler.getHandlerForTarget(
-            runConfiguration.getProject(), runConfiguration.getTarget())
+    return BlazeTestEventsHandler.getHandlerForTargets(
+            runConfiguration.getProject(), runConfiguration.getTargets())
         .map(handler -> handler.createRerunFailedTestsAction(consoleView))
         .orElse(null);
   }

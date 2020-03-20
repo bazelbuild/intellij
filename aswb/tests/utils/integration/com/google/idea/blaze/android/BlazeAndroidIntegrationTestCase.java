@@ -17,6 +17,7 @@ package com.google.idea.blaze.android;
 
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder.targetMap;
 
+import com.android.sdklib.repository.AndroidSdkHandler;
 import com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.settings.BuildSystem;
@@ -25,6 +26,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.JdepsFileWriter;
 import com.google.idea.blaze.base.sync.SyncMode;
+import org.junit.After;
 import org.junit.Rule;
 
 /** Base class for integration tests that require an ASwB project setup. */
@@ -41,6 +43,11 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
   @Override
   protected final BuildSystem buildSystem() {
     return BuildSystem.Bazel;
+  }
+
+  @After
+  public void cleanUpAndroidSdkHandler() {
+    AndroidSdkHandler.resetInstance(workspaceRoot.fileForPath(MockSdkUtil.SDK_DIR));
   }
 
   public void setTargetMap(NbTargetBuilder... builders) {

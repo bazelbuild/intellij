@@ -16,9 +16,9 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.sdkcompat.cidr.CLanguageKindCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import java.io.File;
@@ -48,16 +48,16 @@ final class BlazeCompilerSettings {
   }
 
   OCCompilerKind getCompiler(OCLanguageKind languageKind) {
-    if (languageKind == CLanguageKindCompat.c() || languageKind == CLanguageKindCompat.cpp()) {
+    if (languageKind == CLanguageKind.C || languageKind == CLanguageKind.CPP) {
       return OCCompilerKind.CLANG;
     }
     return OCCompilerKind.UNKNOWN;
   }
 
   File getCompilerExecutable(OCLanguageKind lang) {
-    if (lang == CLanguageKindCompat.c()) {
+    if (lang == CLanguageKind.C) {
       return cCompiler;
-    } else if (lang == CLanguageKindCompat.cpp()) {
+    } else if (lang == CLanguageKind.CPP) {
       return cppCompiler;
     }
     // We don't support objective c/c++.
@@ -65,10 +65,10 @@ final class BlazeCompilerSettings {
   }
 
   ImmutableList<String> getCompilerSwitches(OCLanguageKind lang, @Nullable VirtualFile sourceFile) {
-    if (lang == CLanguageKindCompat.c()) {
+    if (lang == CLanguageKind.C) {
       return cCompilerSwitches;
     }
-    if (lang == CLanguageKindCompat.cpp()) {
+    if (lang == CLanguageKind.CPP) {
       return cppCompilerSwitches;
     }
     return ImmutableList.of();

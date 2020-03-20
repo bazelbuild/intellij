@@ -60,8 +60,8 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
 
     BlazeCommandRunConfiguration configuration = getBlazeRunConfiguration(configurationFromContext);
     assertThat(configuration.getTargetKind()).isEqualTo(Kind.fromRuleName("js_web_test"));
-    assertThat(configuration.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test_chrome-linux"));
+    assertThat(configuration.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//foo/bar:foo_test_chrome-linux"));
   }
 
   @Test
@@ -85,8 +85,8 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
 
     BlazeCommandRunConfiguration configuration = getBlazeRunConfiguration(configurationFromContext);
     assertThat(configuration.getTargetKind()).isEqualTo(Kind.fromRuleName("js_web_test"));
-    assertThat(configuration.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test_chrome-linux"));
+    assertThat(configuration.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//foo/bar:foo_test_chrome-linux"));
   }
 
   @Test
@@ -98,8 +98,8 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
 
     BlazeCommandRunConfiguration configuration = getBlazeRunConfiguration(configurationFromContext);
     assertThat(configuration.getTargetKind()).isEqualTo(Kind.fromRuleName("js_web_test"));
-    assertThat(configuration.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test_chrome-linux"));
+    assertThat(configuration.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//foo/bar:foo_test_chrome-linux"));
   }
 
   @Test
@@ -121,8 +121,8 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
         () -> {});
 
     assertThat(configuration.getTargetKind()).isEqualTo(Kind.fromRuleName("js_web_test"));
-    assertThat(configuration.getTarget())
-        .isEqualTo(TargetExpression.fromStringSafe("//foo/bar:foo_test_firefox-linux"));
+    assertThat(configuration.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//foo/bar:foo_test_firefox-linux"));
   }
 
   @Test

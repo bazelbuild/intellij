@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,9 +75,7 @@ public class JavaSourcePackageReader extends JavaPackageReader {
           .submit(context);
       return null;
     } catch (FileNotFoundException e) {
-      IssueOutput.warn("No source file found for: " + sourceFile)
-          .inFile(sourceFile)
-          .submit(context);
+      context.output(PrintOutput.log("No source file found for: " + sourceFile));
       return null;
     } catch (IOException e) {
       logger.error(e);

@@ -304,11 +304,6 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
 
     sources = sources_from_target(ctx)
     to_build = target[PyInfo].transitive_sources
-    if ctx.rule.kind == "py_wrap_cc":
-        # track the generated .py output
-        py_genfiles = [f for f in target.files.to_list() if f.basename.endswith(".py")]
-        sources = [artifact_location(f) for f in py_genfiles]
-        to_build += py_genfiles
 
     ide_info["py_ide_info"] = struct_omit_none(
         sources = sources,
@@ -719,13 +714,19 @@ def divide_java_sources(ctx):
 def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Android-specific output groups, returns true if any android specific info was collected."""
     handled = False
-    handled = collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups) or handled
+    handled = _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+    handled = _collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+    handled = _collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups) or handled
+    handled = _collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups) or handled
+
+    if handled:
+        # do this once do avoid adding unnecessary nesting to the depset
+        # (https://docs.bazel.build/versions/master/skylark/performance.html#reduce-the-number-of-calls-to-depset)
+        update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return handled
 
-def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
-    """Updates intellij-info-android with android_ide_info, and intellij_resolve_android with android resolve files. Returns false if target doesn't contain android attribute."""
+def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+    """Updates ide_info proto with android_ide_info, and intellij_resolve_android with android resolve files. Returns false if target doesn't contain android attribute."""
     if not hasattr(target, "android"):
         return False
 
@@ -751,7 +752,7 @@ def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, ou
             args.add("--aar", aar)
             args.add("--manifest_file", android.manifest)
             args.add_joined("--resources", res_files, join_with = ",")
-            args.add("--resource_root", root.relative_path)
+            args.add("--resource_root", root.relative_path if root.is_source else root.root_execution_path_fragment + "/" + root.relative_path)
 
             ctx.actions.run(
                 outputs = [aar],
@@ -791,12 +792,11 @@ def collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, ou
         resolve_files += [android.manifest]
 
     ide_info["android_ide_info"] = android_info
-    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     update_sync_output_groups(output_groups, "intellij-resolve-android", depset(resolve_files))
     return True
 
-def collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
-    """Updates intellij-info-android output group with android_instrumentation_info, returns false if not an android_instrumentation_test target."""
+def _collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+    """Updates ide_info proto with android_instrumentation_info, returns false if not an android_instrumentation_test target."""
     if not ctx.rule.kind == "android_instrumentation_test":
         return False
 
@@ -804,10 +804,9 @@ def collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_i
         test_app = str(ctx.rule.attr.test_app.label),
     )
     ide_info["android_instrumentation_info"] = android_instrumentation_info
-    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return True
 
-def collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
+def _collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
     """Updates android_sdk-relevant groups, returns false if not an android_sdk target."""
     if ctx.rule.kind != "android_sdk":
         return False
@@ -815,11 +814,10 @@ def collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups):
     ide_info["android_sdk_ide_info"] = struct(
         android_jar = artifact_location(android_jar_file),
     )
-    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return True
 
-def collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
-    """Updates android aar_import-relevant groups, returns false if not an aar_import target."""
+def _collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
+    """Updates ide_info proto with aar_import-relevant groups, returns false if not an aar_import target."""
     if ctx.rule.kind != "aar_import":
         return False
     if not hasattr(ctx.rule.attr, "aar"):
@@ -828,7 +826,6 @@ def collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
     ide_info["android_aar_ide_info"] = struct(
         aar = artifact_location(aar_file),
     )
-    update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return True
 
 def build_test_info(ctx):
@@ -926,7 +923,9 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
     # Propagate my own exports
     export_deps = []
+    direct_exports = []
     if JavaInfo in target:
+        direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
         transitive_exports = target[JavaInfo].transitive_exports
         export_deps = [
             make_dep_from_label(label, COMPILE_TIME)
@@ -940,10 +939,8 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
             # Starlark android libraries do not produce transitive_exports.
             if not transitive_exports:
-                direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
                 export_deps = export_deps + make_deps(direct_exports, COMPILE_TIME)
         elif ctx.rule.kind == "aar_import":
-            direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
             export_deps = export_deps + make_deps(direct_exports, COMPILE_TIME)
     export_deps = depset(export_deps).to_list()
 
@@ -961,10 +958,10 @@ def intellij_info_aspect_impl(target, ctx, semantics):
         semantics_extra_deps(PREREQUISITE_DEPS, semantics, "extra_prerequisites"),
     )
 
-    forwarded_deps = _get_forwarded_deps(target, ctx)
+    forwarded_deps = _get_forwarded_deps(target, ctx) + direct_exports
 
     # Roll up output files from my prerequisites
-    prerequisites = direct_dep_targets + runtime_dep_targets + extra_prerequisite_targets
+    prerequisites = direct_dep_targets + runtime_dep_targets + extra_prerequisite_targets + direct_exports
     output_groups = dict()
     for dep in prerequisites:
         for k, v in dep.intellij_info.output_groups.items():

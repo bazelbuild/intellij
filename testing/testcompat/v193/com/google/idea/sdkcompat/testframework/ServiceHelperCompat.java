@@ -18,7 +18,9 @@ package com.google.idea.sdkcompat.testframework;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ServiceContainerUtil;
+import org.picocontainer.MutablePicoContainer;
 
 /** Compat APIs used to replace components and services in tests. */
 public class ServiceHelperCompat {
@@ -39,6 +41,19 @@ public class ServiceHelperCompat {
       Class<T> key,
       T implementation,
       Disposable parentDisposable) {
+    boolean exists = componentManager.getService(key) != null;
+    if (exists) {
+      // upstream code can do it all for us
+      ServiceContainerUtil.replaceService(componentManager, key, implementation, parentDisposable);
+      return;
+    }
+
+    // otherwise we should manually unregister on disposal
     ServiceContainerUtil.registerServiceInstance(componentManager, key, implementation);
+    Disposer.register(
+        parentDisposable,
+        () ->
+            ((MutablePicoContainer) componentManager.getPicoContainer())
+                .unregisterComponent(key.getName()));
   }
 }

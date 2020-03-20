@@ -27,10 +27,12 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
-import com.google.idea.sdkcompat.cidr.OCWorkspaceModificationTrackersCompat;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.cidr.lang.workspace.OCWorkspace;
+import com.jetbrains.cidr.lang.workspace.OCWorkspaceEventImpl;
+import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackersImpl;
 
 final class BlazeNdkSupportEnabler implements SyncListener {
 
@@ -82,8 +84,14 @@ final class BlazeNdkSupportEnabler implements SyncListener {
     // Notifying BuildSettingsChangeTracker in unitTestMode will leads to a dead lock.
     // See b/23087433 for more information.
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      OCWorkspaceModificationTrackersCompat.incrementModificationTrackers(
-          project, false, false, true);
+      OCWorkspaceEventImpl event =
+          new OCWorkspaceEventImpl(
+              /* resolveConfigurationsChanged= */ false,
+              /* sourceFilesChanged= */ false,
+              /* compilerSettingsChanged= */ true);
+      ((OCWorkspaceModificationTrackersImpl)
+              OCWorkspace.getInstance(project).getModificationTrackers())
+          .fireWorkspaceChanged(event);
     }
   }
 }

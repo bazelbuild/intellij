@@ -41,7 +41,7 @@ class BlazePackageHeuristic implements TestTargetHeuristic {
     VirtualFile vf =
         sourcePsiFile != null
             ? sourcePsiFile.getVirtualFile()
-            : VfsUtils.resolveVirtualFile(sourceFile);
+            : VfsUtils.resolveVirtualFile(sourceFile, /* refreshIfNeeded= */ true);
     WorkspacePath sourcePackage = findBlazePackage(project, vf);
     if (sourcePackage == null) {
       return false;
