@@ -1022,7 +1022,6 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_android_sdk_info(ctx, ide_info, ide_info_file, output_groups) or handled
     handled = collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
 
     # Any extra ide info
