@@ -21,9 +21,6 @@ import javax.annotation.Nullable;
 /** A blaze output artifact, generated during some build action. */
 public interface OutputArtifact extends BlazeArtifact {
 
-  /** Returns the length of the underlying file in bytes, or 0 if this can't be determined. */
-  long getLength();
-
   /** The path component related to the build configuration. */
   String getConfigurationMnemonic();
 

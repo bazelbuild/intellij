@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.java.sync.importer;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
@@ -24,6 +27,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency.DependencyType;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.Dependency;
@@ -34,9 +39,15 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.Scope;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.base.scope.scopes.TimingScope;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -52,6 +63,7 @@ import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.source.SourceArtifact;
 import com.google.idea.blaze.java.sync.source.SourceDirectoryCalculator;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,8 +71,10 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /** Builds a BlazeWorkspace. */
@@ -78,6 +92,8 @@ public final class BlazeJavaWorkspaceImporter {
   private final WorkspaceLanguageSettings workspaceLanguageSettings;
   private final List<BlazeJavaSyncAugmenter> augmenters;
   private final ProjectViewSet projectViewSet;
+
+  private static final Logger logger = Logger.getInstance(BlazeJavaWorkspaceImporter.class);
 
   public BlazeJavaWorkspaceImporter(
       Project project,
@@ -128,7 +144,7 @@ public final class BlazeJavaWorkspaceImporter {
     context.output(PrintOutput.log("Java content entry count: " + totalContentEntryCount));
 
     ImmutableMap<LibraryKey, BlazeJarLibrary> libraries =
-        buildLibraries(workspaceBuilder, sourceFilter.libraryTargets);
+        buildLibraries(context, workspaceBuilder, sourceFilter.libraryTargets);
 
     duplicateSourceDetector.reportDuplicates(context);
 
@@ -137,14 +153,13 @@ public final class BlazeJavaWorkspaceImporter {
     return new BlazeJavaImportResult(
         contentEntries,
         libraries,
-        ImmutableList.copyOf(
-            workspaceBuilder.buildOutputJars.stream().sorted().collect(Collectors.toList())),
+        workspaceBuilder.buildOutputJars.stream().sorted().collect(toImmutableList()),
         ImmutableSet.copyOf(workspaceBuilder.addedSourceFiles),
         sourceVersion);
   }
 
   private ImmutableMap<LibraryKey, BlazeJarLibrary> buildLibraries(
-      WorkspaceBuilder workspaceBuilder, List<TargetIdeInfo> libraryTargets) {
+      BlazeContext context, WorkspaceBuilder workspaceBuilder, List<TargetIdeInfo> libraryTargets) {
     // Build library maps
     Multimap<TargetKey, BlazeJarLibrary> targetKeyToLibrary = ArrayListMultimap.create();
     Map<String, BlazeJarLibrary> jdepsPathToLibrary = Maps.newHashMap();
@@ -166,9 +181,7 @@ public final class BlazeJavaWorkspaceImporter {
       List<LibraryArtifact> allJars = Lists.newArrayList();
       allJars.addAll(javaIdeInfo.getJars());
       Collection<BlazeJarLibrary> libraries =
-          allJars.stream()
-              .map(jar -> new BlazeJarLibrary(jar, target.getKey()))
-              .collect(Collectors.toList());
+          allJars.stream().map(jar -> new BlazeJarLibrary(jar, target.getKey())).collect(toList());
 
       targetKeyToLibrary.putAll(target.getKey(), libraries);
       for (BlazeJarLibrary library : libraries) {
@@ -218,7 +231,68 @@ public final class BlazeJavaWorkspaceImporter {
       result.put(library.key, library);
     }
 
-    return ImmutableMap.copyOf(result);
+    // Filter out any libraries corresponding to empty jars
+    return removeEmptyLibraries(context, artifactLocationDecoder, result);
+  }
+
+  /**
+   * Attempts to filter out any libraries from the given map that correspond to effectively empty
+   * JARs.
+   *
+   * <p>If something goes horribly wrong or this feature is disabled, this method just returns a
+   * copy of the given map.
+   *
+   * @see EmptyLibraryFilter
+   */
+  private static ImmutableMap<LibraryKey, BlazeJarLibrary> removeEmptyLibraries(
+      BlazeContext parentContext,
+      ArtifactLocationDecoder locationDecoder,
+      Map<LibraryKey, BlazeJarLibrary> allLibraries) {
+    if (!EmptyLibraryFilter.isEnabled()) {
+      return ImmutableMap.copyOf(allLibraries);
+    }
+    return Scope.push(
+        parentContext,
+        context -> {
+          context.push(new TimingScope("FilterEmptyJars", EventType.Other));
+          context.output(new StatusOutput("Filtering empty jars..."));
+          ImmutableMap<LibraryKey, BlazeJarLibrary> result;
+          try {
+            result =
+                filterByValueInParallel(
+                    allLibraries, new EmptyLibraryFilter(locationDecoder), FetchExecutor.EXECUTOR);
+          } catch (ExecutionException e) {
+            String warning = "Failed to filter out empty jars";
+            if (e.getCause() != null) {
+              warning += ": " + e.getCause().getMessage();
+            }
+            logger.warn(warning, e);
+            IssueOutput.warn(warning).submit(context);
+            return ImmutableMap.copyOf(allLibraries);
+          } catch (InterruptedException e) {
+            context.setCancelled();
+            return ImmutableMap.copyOf(allLibraries);
+          }
+          context.output(
+              PrintOutput.log(
+                  String.format(
+                      "Filtered out %d empty jars", allLibraries.size() - result.size())));
+          return result;
+        });
+  }
+
+  private static <K, V> ImmutableMap<K, V> filterByValueInParallel(
+      Map<K, V> map, Predicate<? super V> predicate, ListeningExecutorService executor)
+      throws ExecutionException, InterruptedException {
+    return Futures.allAsList(
+            map.entrySet().stream()
+                .map(
+                    entry -> executor.submit(() -> predicate.test(entry.getValue()) ? entry : null))
+                .collect(toImmutableList()))
+        .get()
+        .stream()
+        .filter(Objects::nonNull)
+        .collect(toImmutableMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
   private void addLibraryToJdeps(
@@ -262,9 +336,7 @@ public final class BlazeJavaWorkspaceImporter {
         if (depTarget != null
             && JavaBlazeRules.getJavaProtoLibraryKinds().contains(depTarget.getKind())) {
           workspaceBuilder.directDeps.addAll(
-              depTarget.getDependencies().stream()
-                  .map(Dependency::getTargetKey)
-                  .collect(Collectors.toList()));
+              depTarget.getDependencies().stream().map(Dependency::getTargetKey).collect(toList()));
         } else {
           workspaceBuilder.directDeps.add(dep.getTargetKey());
         }
@@ -292,7 +364,7 @@ public final class BlazeJavaWorkspaceImporter {
     workspaceBuilder.generatedJarsFromSourceTargets.addAll(
         javaIdeInfo.getGeneratedJars().stream()
             .map(jar -> new BlazeJarLibrary(jar, targetKey))
-            .collect(Collectors.toList()));
+            .collect(toList()));
     if (javaIdeInfo.getFilteredGenJar() != null) {
       workspaceBuilder.generatedJarsFromSourceTargets.add(
           new BlazeJarLibrary(javaIdeInfo.getFilteredGenJar(), targetKey));

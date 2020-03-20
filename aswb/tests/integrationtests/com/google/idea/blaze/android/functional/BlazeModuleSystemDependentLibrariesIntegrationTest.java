@@ -37,6 +37,7 @@ import com.google.idea.blaze.android.projectsystem.MavenArtifactLocator;
 import com.google.idea.blaze.android.targetmapbuilder.NbAarTarget;
 import com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -46,6 +47,7 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -111,6 +113,16 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
         "import android.app.Activity;",
         "public class MainActivity extends Activity {",
         "}");
+
+    // Make JARs appear nonempty so that they aren't filtered out
+    registerApplicationService(
+        FileOperationProvider.class,
+        new FileOperationProvider() {
+          @Override
+          public long getFileSize(File file) {
+            return file.getName().endsWith("jar") ? 500L : super.getFileSize(file);
+          }
+        });
 
     setProjectView(
         "directories:",

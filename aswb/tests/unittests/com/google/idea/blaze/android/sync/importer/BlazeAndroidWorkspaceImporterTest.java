@@ -1670,6 +1670,11 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
    * com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceClassifier}.
    */
   private static class MockFileOperationProvider extends FileOperationProvider {
+    @Override
+    public long getFileSize(File file) {
+      // Make JARs appear nonempty so that they aren't filtered out
+      return file.getName().endsWith("jar") ? 500L : super.getFileSize(file);
+    }
 
     // Return a few non-translation directories so that directories are considered interesting,
     // or return only-translation directories so that it's considered uninteresting.

@@ -46,11 +46,6 @@ public class LocalFileOutputArtifact implements OutputArtifact, LocalFileArtifac
   }
 
   @Override
-  public long getLength() {
-    return FileOperationProvider.getInstance().getFileSize(file);
-  }
-
-  @Override
   @Nullable
   public ArtifactState toArtifactState() {
     long lastModifiedTime = getLastModifiedTime();
