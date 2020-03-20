@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.resources;
 import com.android.tools.idea.projectsystem.LightResourceClassService;
 import com.android.tools.idea.res.AndroidLightPackage;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.components.ServiceManager;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 public class BlazeLightResourceClassService implements LightResourceClassService {
 
   private Map<String, BlazeRClass> rClasses = Maps.newHashMap();
+  private Map<Module, BlazeRClass> rClassesByModule = Maps.newHashMap();
   private Map<String, PsiPackage> rClassPackages = Maps.newHashMap();
 
   // It should be harmless to create stub resource PsiPackages which shadow any "real" PsiPackages.
@@ -53,6 +55,7 @@ public class BlazeLightResourceClassService implements LightResourceClassService
   /** Builds light R classes */
   public static class Builder {
     Map<String, BlazeRClass> rClassMap = Maps.newHashMap();
+    Map<Module, BlazeRClass> rClassByModuleMap = Maps.newHashMap();
     Map<String, PsiPackage> rClassPackages = Maps.newHashMap();
 
     private final PsiManager psiManager;
@@ -68,6 +71,7 @@ public class BlazeLightResourceClassService implements LightResourceClassService
       }
       BlazeRClass rClass = new BlazeRClass(psiManager, androidFacet, resourceJavaPackage);
       rClassMap.put(getQualifiedRClassName(resourceJavaPackage), rClass);
+      rClassByModuleMap.put(module, rClass);
       if (CREATE_STUB_RESOURCE_PACKAGES.getValue()) {
         addStubPackages(resourceJavaPackage);
       }
@@ -96,6 +100,7 @@ public class BlazeLightResourceClassService implements LightResourceClassService
 
   public void installRClasses(Builder builder) {
     this.rClasses = builder.rClassMap;
+    this.rClassesByModule = builder.rClassByModuleMap;
     this.rClassPackages = builder.rClassPackages;
   }
 
@@ -116,7 +121,13 @@ public class BlazeLightResourceClassService implements LightResourceClassService
     return rClasses.values();
   }
 
-  @Override
+  // @Override #api4.0: override added in as4.1
+  public Collection<? extends PsiClass> getLightRClassesDefinedByModule(
+      Module module, boolean includeTestClasses) {
+    BlazeRClass rClass = rClassesByModule.get(module);
+    return rClass == null ? ImmutableSet.of() : ImmutableSet.of(rClass);
+  }
+
   public Collection<? extends PsiClass> getLightRClassesContainingModuleResources(Module module) {
     return rClasses.values();
   }

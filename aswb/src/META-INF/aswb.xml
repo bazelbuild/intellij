@@ -89,6 +89,10 @@
     <testRecorderRunConfigurationProxyProvider implementation="com.google.idea.blaze.android.run.testrecorder.TestRecorderBlazeCommandRunConfigurationProxyProvider" />
   </extensions>
 
+  <extensions defaultExtensionNs="com.android.tools.idea.run.editor">
+    <androidDebuggerInfoProvider implementation="com.google.idea.blaze.android.run.BlazeCommandAndroidDebuggerInfoProvider" />
+  </extensions>
+
   <application-components>
     <component>
       <implementation-class>com.google.idea.blaze.android.plugin.PluginCompatibilityEnforcer</implementation-class>

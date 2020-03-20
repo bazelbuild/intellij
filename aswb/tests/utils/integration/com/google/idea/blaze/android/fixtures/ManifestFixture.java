@@ -90,13 +90,15 @@ public class ManifestFixture {
       return this;
     }
 
-    AndroidAttributeValue<String> name =
-        ManifestFixtureCompat.addUsesPermission(manifest).getName();
-    if (name == null) {
-      return this;
-    }
-
-    return updateManifest(manifest -> name.setValue(permissionName));
+    return updateManifest(
+        manifest -> {
+          AndroidAttributeValue<String> name =
+              ManifestFixtureCompat.addUsesPermission(manifest).getName();
+          if (name == null) {
+            return;
+          }
+          name.setValue(permissionName);
+        });
   }
 
   public ManifestFixture removeUsesPermission(String permissionName) {
