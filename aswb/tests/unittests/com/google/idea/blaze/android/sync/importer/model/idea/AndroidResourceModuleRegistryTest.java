@@ -50,15 +50,13 @@ public class AndroidResourceModuleRegistryTest extends BlazeTestCase {
     Module moduleOne = mock(Module.class);
     Module moduleTwo = mock(Module.class);
     Module moduleThree = mock(Module.class);
-    AndroidResourceModule resourceModuleOne =
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo/bar:one")))
-            .build();
-    AndroidResourceModule resourceModuleTwo =
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo/bar:two")))
-            .build();
-    AndroidResourceModule resourceModuleThree =
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//foo/bar:three")))
-            .build();
+    TargetKey keyOne = TargetKey.forPlainTarget(Label.create("//foo/bar:one"));
+    TargetKey keyTwo = TargetKey.forPlainTarget(Label.create("//foo/bar:two"));
+    TargetKey keyThree = TargetKey.forPlainTarget(Label.create("//foo/bar:three"));
+    AndroidResourceModule resourceModuleOne = AndroidResourceModule.builder(keyOne).build();
+    AndroidResourceModule resourceModuleTwo = AndroidResourceModule.builder(keyTwo).build();
+    AndroidResourceModule resourceModuleThree = AndroidResourceModule.builder(keyThree).build();
+
     registry.put(moduleOne, resourceModuleOne);
     registry.put(moduleTwo, resourceModuleTwo);
     registry.put(moduleThree, resourceModuleThree);
@@ -72,6 +70,9 @@ public class AndroidResourceModuleRegistryTest extends BlazeTestCase {
     assertThat(registry.getLabel(moduleOne)).isEqualTo(resourceModuleOne.targetKey.getLabel());
     assertThat(registry.getLabel(moduleTwo)).isEqualTo(resourceModuleTwo.targetKey.getLabel());
     assertThat(registry.getLabel(moduleThree)).isEqualTo(resourceModuleThree.targetKey.getLabel());
+    assertThat(registry.getModule(keyOne)).isEqualTo(moduleOne);
+    assertThat(registry.getModule(keyTwo)).isEqualTo(moduleTwo);
+    assertThat(registry.getModule(keyThree)).isEqualTo(moduleThree);
   }
 
   @Test
@@ -111,6 +112,7 @@ public class AndroidResourceModuleRegistryTest extends BlazeTestCase {
     assertThat(registry.get(null)).isNull();
     assertThat(registry.getTargetKey(null)).isNull();
     assertThat(registry.getLabel(null)).isNull();
+    assertThat(registry.getModule(null)).isNull();
   }
 
   @Test
@@ -118,5 +120,6 @@ public class AndroidResourceModuleRegistryTest extends BlazeTestCase {
     assertThat(registry.get(mock(Module.class))).isNull();
     assertThat(registry.getTargetKey(mock(Module.class))).isNull();
     assertThat(registry.getLabel(mock(Module.class))).isNull();
+    assertThat(registry.getModule(TargetKey.forPlainTarget(Label.create("//a/b:c")))).isNull();
   }
 }

@@ -112,7 +112,15 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
     applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
-    applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
+    applicationServices.register(
+        FileOperationProvider.class,
+        new FileOperationProvider() {
+          @Override
+          public long getFileSize(File file) {
+            // Make JARs appear nonempty so that they aren't filtered out
+            return file.getName().endsWith("jar") ? 500L : super.getFileSize(file);
+          }
+        });
 
     // will silently fall back to FilePathJavaPackageReader
     applicationServices.register(

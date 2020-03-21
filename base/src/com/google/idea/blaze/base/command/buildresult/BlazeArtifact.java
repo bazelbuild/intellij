@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.MustBeClosed;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +27,9 @@ import java.util.Collection;
 
 /** A blaze build artifact, either a source or output (generated) artifact. */
 public interface BlazeArtifact {
+
+  /** Returns the length of the underlying file in bytes, or 0 if this can't be determined. */
+  long getLength();
 
   /**
    * Filters out non-local artifacts.
@@ -45,7 +49,12 @@ public interface BlazeArtifact {
   BufferedInputStream getInputStream() throws IOException;
 
   /** A file artifact available on the local file system. */
-  interface LocalFileArtifact {
+  interface LocalFileArtifact extends BlazeArtifact {
     File getFile();
+
+    @Override
+    default long getLength() {
+      return FileOperationProvider.getInstance().getFileSize(getFile());
+    }
   }
 }

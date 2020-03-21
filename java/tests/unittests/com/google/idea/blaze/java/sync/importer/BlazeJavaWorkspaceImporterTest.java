@@ -84,6 +84,7 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -97,7 +98,26 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
-  private static class MockFileOperationProvider extends FileOperationProvider {}
+  private static class MockFileOperationProvider extends FileOperationProvider {
+    private final HashMap<File, Long> fileSizes = new HashMap<>();
+
+    void setFileSize(String relativePath, long size) {
+      fileSizes.put(new File("/", relativePath), size);
+    }
+
+    @Override
+    public long getFileSize(File file) {
+      if (fileSizes.containsKey(file)) {
+        return fileSizes.get(file);
+      }
+      if (!file.exists()) {
+        // this stops use from filtering out library jars
+        // because the test setup didn't create them.
+        return 500L;
+      }
+      return super.getFileSize(file);
+    }
+  }
 
   private static final String FAKE_WORKSPACE_ROOT = "/root";
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File(FAKE_WORKSPACE_ROOT));
@@ -123,11 +143,13 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   private JavaWorkingSet workingSet = null;
   private final WorkspaceLanguageSettings workspaceLanguageSettings =
       new WorkspaceLanguageSettings(WorkspaceType.JAVA, ImmutableSet.of(LanguageClass.JAVA));
+  private MockFileOperationProvider fileOperationProvider;
 
   @Override
   @SuppressWarnings("FunctionalInterfaceClash") // False positive on getDeclaredPackageOfJavaFile.
   protected void initTest(Container applicationServices, Container projectServices) {
-    applicationServices.register(FileOperationProvider.class, new MockFileOperationProvider());
+    fileOperationProvider = new MockFileOperationProvider();
+    applicationServices.register(FileOperationProvider.class, fileOperationProvider);
     applicationServices.register(ExperimentService.class, new MockExperimentService());
 
     ExtensionPointImpl<Kind.Provider> ep =
@@ -1041,6 +1063,37 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                 .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
                 .collect(Collectors.toList()))
         .containsExactly("a.jar", "c.jar");
+  }
+
+  @Test
+  public void testEmptyLibraryExcluded() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/apps/example"))))
+            .build();
+    TargetMapBuilder targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/apps/example:example_debug")
+                    .setBuildFile(source("java/apps/example/BUILD"))
+                    .setKind("java_library")
+                    .addSource(source("java/apps/example/Test.java"))
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .addDependency("//thirdparty/a:a"));
+    jdepsMap.put(
+        TargetKey.forPlainTarget(Label.create("//java/apps/example:example_debug")),
+        Lists.newArrayList(jdepsPath("thirdparty/a.jar"), jdepsPath("thirdparty/c.jar")));
+    fileOperationProvider.setFileSize("thirdparty/c.jar", 22L);
+
+    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
+    assertThat(
+            result.libraries.values().stream()
+                .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
+                .collect(Collectors.toList()))
+        .containsExactly("a.jar");
   }
 
   @Test

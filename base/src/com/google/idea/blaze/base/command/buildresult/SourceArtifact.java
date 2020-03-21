@@ -24,7 +24,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 /** A source file in the blaze workspace, accessible on the local file system. */
-public class SourceArtifact implements BlazeArtifact, LocalFileArtifact {
+public class SourceArtifact implements LocalFileArtifact {
 
   private final File file;
 

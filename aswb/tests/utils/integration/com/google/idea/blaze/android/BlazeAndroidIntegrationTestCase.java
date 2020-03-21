@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder.targetMap;
 
 import com.android.sdklib.repository.AndroidSdkHandler;
@@ -26,6 +27,12 @@ import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.JdepsFileWriter;
 import com.google.idea.blaze.base.sync.SyncMode;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.junit.After;
 import org.junit.Rule;
 
@@ -66,5 +73,21 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
             .setAddProjectViewTargets(true)
             .build());
     errorCollector.assertNoIssues();
+  }
+
+  protected Module getModule(String moduleName) {
+    Module module = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
+    assertThat(module).isNotNull();
+    return module;
+  }
+
+  protected Set<Module> getModules(String... moduleNames) {
+    return Stream.of(moduleNames).map(this::getModule).collect(Collectors.toSet());
+  }
+
+  protected AndroidFacet getFacet(String moduleName) {
+    AndroidFacet facet = AndroidFacet.getInstance(getModule(moduleName));
+    assertThat(facet).isNotNull();
+    return facet;
   }
 }
