@@ -28,23 +28,38 @@ public final class BlazeCommand {
 
   private final String binaryPath;
   private final BlazeCommandName name;
-  private final ImmutableList<String> arguments;
+  private final ImmutableList<String> blazeCmdlineFlags;
+  private final ImmutableList<String> blazeStartupFlags;
 
-  private BlazeCommand(String binaryPath, BlazeCommandName name, ImmutableList<String> arguments) {
+  private BlazeCommand(
+      String binaryPath,
+      BlazeCommandName name,
+      ImmutableList<String> blazeStartupFlags,
+      ImmutableList<String> blazeCmdlineFlags) {
     this.binaryPath = binaryPath;
     this.name = name;
-    this.arguments = arguments;
+    this.blazeCmdlineFlags = blazeCmdlineFlags;
+    this.blazeStartupFlags = blazeStartupFlags;
   }
 
   public BlazeCommandName getName() {
     return name;
   }
 
+  public ImmutableList<String> toArgumentList() {
+    return ImmutableList.<String>builder()
+        .addAll(blazeStartupFlags)
+        .add(name.toString())
+        .addAll(blazeCmdlineFlags)
+        .build();
+  }
+
   public ImmutableList<String> toList() {
     return ImmutableList.<String>builder()
         .add(binaryPath)
+        .addAll(blazeStartupFlags)
         .add(name.toString())
-        .addAll(arguments)
+        .addAll(blazeCmdlineFlags)
         .build();
   }
 
@@ -59,10 +74,10 @@ public final class BlazeCommand {
 
   /** Builder for a blaze command */
   public static class Builder {
-    private final String binaryPath;
-    private final BlazeCommandName name;
+    protected final String binaryPath;
+    protected final BlazeCommandName name;
     private final ImmutableList.Builder<TargetExpression> targets = ImmutableList.builder();
-    private final ImmutableList.Builder<String> blazeFlags = ImmutableList.builder();
+    private final ImmutableList.Builder<String> blazeCmdlineFlags = ImmutableList.builder();
     private final ImmutableList.Builder<String> exeFlags = ImmutableList.builder();
 
     public Builder(String binaryPath, BlazeCommandName name) {
@@ -72,9 +87,9 @@ public final class BlazeCommand {
       addBlazeFlags(BlazeFlags.getToolTagFlag());
     }
 
-    public BlazeCommand build() {
+    private ImmutableList<String> getArguments() {
       ImmutableList.Builder<String> arguments = ImmutableList.builder();
-      arguments.addAll(blazeFlags.build());
+      arguments.addAll(blazeCmdlineFlags.build());
 
       // Need to add '--' before targets, to support subtracted/excluded targets.
       arguments.add("--");
@@ -85,7 +100,15 @@ public final class BlazeCommand {
       }
 
       arguments.addAll(exeFlags.build());
-      return new BlazeCommand(binaryPath, name, arguments.build());
+      return arguments.build();
+    }
+
+    public BlazeCommand build() {
+      return new BlazeCommand(binaryPath, name, ImmutableList.of(), getArguments());
+    }
+
+    protected BlazeCommand build(ImmutableList<String> blazeStartupFlags) {
+      return new BlazeCommand(binaryPath, name, blazeStartupFlags, getArguments());
     }
 
     public Builder addTargets(TargetExpression... targets) {
@@ -111,7 +134,7 @@ public final class BlazeCommand {
     }
 
     public Builder addBlazeFlags(List<String> flags) {
-      this.blazeFlags.addAll(flags);
+      this.blazeCmdlineFlags.addAll(flags);
       return this;
     }
   }

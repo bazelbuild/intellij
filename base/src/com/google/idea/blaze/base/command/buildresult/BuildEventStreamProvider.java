@@ -28,6 +28,10 @@ public interface BuildEventStreamProvider {
     public BuildEventStreamException(String message, Exception e) {
       super(message, e);
     }
+
+    public BuildEventStreamException(String message) {
+      super(message);
+    }
   }
 
   @Nullable
