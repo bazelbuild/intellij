@@ -26,6 +26,7 @@ import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSectio
 import com.google.idea.blaze.android.projectview.GenfilesPath;
 import com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter;
 import com.google.idea.blaze.android.sync.BlazeAndroidLibrarySource;
+import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceRetentionFilter;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
@@ -131,6 +132,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   private final WorkspaceLanguageSettings workspaceLanguageSettings =
       new WorkspaceLanguageSettings(
           WorkspaceType.ANDROID, ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.JAVA));
+  private ExtensionPointImpl<GeneratedResourceRetentionFilter> retentionFilterEp;
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -153,6 +155,10 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     targetKindEp.registerExtension(new JavaBlazeRules());
     targetKindEp.registerExtension(new GenericBlazeRules());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+
+    retentionFilterEp =
+        registerExtensionPoint(
+            GeneratedResourceRetentionFilter.EP_NAME, GeneratedResourceRetentionFilter.class);
 
     context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);
@@ -844,6 +850,54 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     errorCollector.assertIssueContaining("Multiple R classes generated");
 
     assertThat(result.androidResourceModules).containsExactly(expectedAndroidResourceModule);
+  }
+
+  @Test
+  public void testGeneratedResourceRetentionFilter_retainsPassingResourceDependency() {
+    retentionFilterEp.registerExtension(
+        artifactLocation -> artifactLocation.getRelativePath().startsWith("common_deps"));
+
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:lib")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("java/example/AndroidManifest.xml"))
+                            .addResource(source("java/example/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("com.google.android.example"))
+                    .addDependency("//common_deps:lib")
+                    .build())
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//common_deps:lib")
+                    .setBuildFile(source("common_deps/BUILD"))
+                    .setKind("android_library")
+                    .setAndroidInfo(
+                        AndroidIdeInfo.builder()
+                            .setManifestFile(source("common_deps/AndroidManifest.xml"))
+                            .addResource(gen("common_deps/res"))
+                            .setGenerateResourceClass(true)
+                            .setResourceJavaPackage("commondeps"))
+                    .build());
+
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    errorCollector.assertNoIssues();
+    assertThat(result.androidResourceModules).hasSize(1);
+    AndroidResourceModule androidResourceModule = result.androidResourceModules.get(0);
+    assertThat(androidResourceModule.transitiveResourceDependencies)
+        .containsExactly(TargetKey.forPlainTarget(Label.create("//common_deps:lib")));
   }
 
   @Test

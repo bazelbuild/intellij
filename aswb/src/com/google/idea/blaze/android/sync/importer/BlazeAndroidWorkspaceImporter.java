@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.idea.blaze.android.sync.importer.aggregators.DependencyUtil;
+import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceRetentionFilter;
 import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceWarnings;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -75,7 +76,9 @@ public class BlazeAndroidWorkspaceImporter {
     this.shouldCreateFakeAar = BlazeImportUtil.getShouldCreateFakeAarFilter(input);
     whitelistedGenResourcePaths =
         BlazeImportUtil.getWhitelistedGenResourcePaths(input.projectViewSet);
-    whitelistFilter = new WhitelistFilter(whitelistedGenResourcePaths);
+    whitelistFilter =
+        new WhitelistFilter(
+            whitelistedGenResourcePaths, GeneratedResourceRetentionFilter.getFilter());
   }
 
   public BlazeAndroidImportResult importWorkspace() {
