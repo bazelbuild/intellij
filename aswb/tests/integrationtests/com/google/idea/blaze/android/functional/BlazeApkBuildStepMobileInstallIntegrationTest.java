@@ -53,6 +53,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.Function;
@@ -99,7 +100,7 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
   public void setupBuildResultHelperProvider() throws GetArtifactsException {
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0));
+        .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS));
     registerExtension(
         BuildResultHelperProvider.EP_NAME,
         new BuildResultHelperProvider() {
@@ -280,7 +281,7 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
 
     // Return null execroot
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, null, 0));
+        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS));
 
     // Setup interceptor for fake running of blaze commands and capture details.
     ExternalTaskInterceptor externalTaskInterceptor = new ExternalTaskInterceptor();

@@ -48,6 +48,10 @@ public final class BlazeCommand {
         .build();
   }
 
+  public ImmutableList<String> toArgumentList() {
+    return ImmutableList.<String>builder().add(name.toString()).addAll(arguments).build();
+  }
+
   @Override
   public String toString() {
     return Joiner.on(' ').join(toList());
