@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
@@ -33,13 +34,15 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
 
   @Override
   public BlazeBuildOutputs run(
-      BlazeCommand blazeCommand,
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BlazeBuildParams buildParams,
       BuildResultHelper buildResultHelper,
       WorkspaceRoot workspaceRoot,
       BlazeContext context) {
     int retVal =
         ExternalTask.builder(workspaceRoot)
-            .addBlazeCommand(blazeCommand)
+            .addBlazeCommand(blazeCommandBuilder.build())
             .context(context)
             .stderr(
                 LineProcessingOutputStream.of(
