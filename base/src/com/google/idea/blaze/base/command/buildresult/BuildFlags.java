@@ -31,8 +31,8 @@ public final class BuildFlags {
 
   static BuildFlags parseBep(
       InputStream bepStream,
-      Predicate<String> startupFlagsFilter,
-      Predicate<String> cmdlineFlagsFilter)
+      Predicate<CommandLineOuterClass.Option> startupFlagsFilter,
+      Predicate<CommandLineOuterClass.Option> cmdlineFlagsFilter)
       throws BuildEventStreamException {
     return parseBep(
         BuildEventStreamProvider.fromInputStream(bepStream),
@@ -42,8 +42,8 @@ public final class BuildFlags {
 
   public static BuildFlags parseBep(
       BuildEventStreamProvider stream,
-      Predicate<String> startupFlagsFilter,
-      Predicate<String> cmdlineFlagsFilter)
+      Predicate<CommandLineOuterClass.Option> startupFlagsFilter,
+      Predicate<CommandLineOuterClass.Option> cmdlineFlagsFilter)
       throws BuildEventStreamException {
     BuildEventStreamProtos.BuildEvent event;
     ImmutableList.Builder<String> startupOptionsBuilder = ImmutableList.builder();
@@ -80,11 +80,13 @@ public final class BuildFlags {
   private static void addOptionsToBuilder(
       ImmutableList.Builder<String> builder,
       List<CommandLineOuterClass.Option> options,
-      Predicate<String> flagsFilter) {
+      Predicate<CommandLineOuterClass.Option> flagsFilter) {
     for (CommandLineOuterClass.Option option : options) {
-      String cmdlineOption = option.getCombinedForm().replace("'", "");
-      if (!cmdlineOption.isEmpty() && flagsFilter.test(option.getOptionName())) {
-        builder.add(cmdlineOption);
+      if (flagsFilter.test(option)) {
+        String combinedOption =
+            String.format("--%s=%s", option.getOptionName(), option.getOptionValue())
+                .replace("'", "");
+        builder.add(combinedOption);
       }
     }
   }

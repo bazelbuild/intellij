@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
+import com.google.devtools.build.lib.runtime.proto.CommandLineOuterClass;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,13 +63,13 @@ class BuildResultHelperBep implements BuildResultHelper {
   @Override
   public BuildFlags getBlazeFlags(
       Optional<String> completedBuildId,
-      Predicate<String> startupFlagsFilter,
-      Predicate<String> cmdlineFlagsFilter)
-      throws GetFlagssException {
+      Predicate<CommandLineOuterClass.Option> startupFlagsFilter,
+      Predicate<CommandLineOuterClass.Option> cmdlineFlagsFilter)
+      throws GetFlagsException {
     try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
       return BuildFlags.parseBep(inputStream, startupFlagsFilter, cmdlineFlagsFilter);
     } catch (IOException | BuildEventStreamException e) {
-      throw new GetFlagssException(e.getMessage());
+      throw new GetFlagsException(e.getMessage());
     }
   }
 

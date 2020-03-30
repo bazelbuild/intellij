@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
+import com.google.devtools.build.lib.runtime.proto.CommandLineOuterClass;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.List;
 import java.util.Optional;
@@ -50,16 +51,17 @@ public interface BuildResultHelper extends AutoCloseable {
    */
   BuildFlags getBlazeFlags(
       Optional<String> completedBuildId,
-      Predicate<String> startupFlagsFilter,
-      Predicate<String> cmdlineFlagsFilter)
-      throws GetFlagssException;
+      Predicate<CommandLineOuterClass.Option> startupFlagsFilter,
+      Predicate<CommandLineOuterClass.Option> cmdlineFlagsFilter)
+      throws GetFlagsException;
 
   /**
    * Parses the BEP output data to collect all build flags used. Return all flags that pass filters
    */
   default BuildFlags getBlazeFlags(
-      Predicate<String> startupFlagsFilter, Predicate<String> cmdlineFlagsFilter)
-      throws GetFlagssException {
+      Predicate<CommandLineOuterClass.Option> startupFlagsFilter,
+      Predicate<CommandLineOuterClass.Option> cmdlineFlagsFilter)
+      throws GetFlagsException {
     return getBlazeFlags(Optional.empty(), startupFlagsFilter, cmdlineFlagsFilter);
   }
 
@@ -105,8 +107,8 @@ public interface BuildResultHelper extends AutoCloseable {
   }
 
   /** Indicates a failure to get artifact information */
-  class GetFlagssException extends Exception {
-    public GetFlagssException(String message) {
+  class GetFlagsException extends Exception {
+    public GetFlagsException(String message) {
       super(message);
     }
   }
