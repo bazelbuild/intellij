@@ -217,7 +217,15 @@ def get_aspect_ids(ctx, target):
 
 def _is_language_specific_proto_library(ctx, target):
     """Returns True if the target is a proto library with attached language-specific aspect."""
-    return (ctx.rule.kind == "proto_library" and JavaInfo in target)
+    if ctx.rule.kind != "proto_library":
+        return False
+    if JavaInfo in target:
+        return True
+
+    # TODO(b/125934428): uncomment when proto_library doesn't expose CcInfo
+    #    if CcInfo in target:
+    #        return True
+    return False
 
 def make_target_key(label, aspect_ids):
     """Returns a TargetKey proto struct from a target."""
@@ -393,6 +401,10 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     """Updates C++-specific output groups, returns false if not a C++ target."""
 
     if CcInfo not in target or _is_language_specific_proto_library(ctx, target):
+        return False
+
+    # ignore cc_proto_library, attach to proto_library with aspect attached instead
+    if ctx.rule.kind == "cc_proto_library":
         return False
 
     # Go targets always provide CcInfo. Usually it's empty, but even if it isn't we don't handle it
@@ -1075,5 +1087,5 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         attr_aspects = attr_aspects,
         fragments = ["cpp"],
         implementation = aspect_impl,
-        required_aspect_providers = [[JavaInfo], ["dart"]],
+        required_aspect_providers = [[JavaInfo], [CcInfo], ["dart"]],
     )
