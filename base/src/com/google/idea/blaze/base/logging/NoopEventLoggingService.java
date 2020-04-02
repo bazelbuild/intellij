@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.logging;
 
+import com.google.idea.blaze.base.logging.utils.HighlightStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -34,4 +35,7 @@ public final class NoopEventLoggingService implements EventLoggingService {
       String eventType,
       Map<String, String> keyValues,
       @Nullable Long durationInNanos) {}
+
+  @Override
+  public void logHighlightStats(HighlightStats highlightStats) {}
 }

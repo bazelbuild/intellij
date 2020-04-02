@@ -333,6 +333,7 @@
     <renameInputValidator implementation="com.google.idea.blaze.base.lang.buildfile.refactor.TargetRenameValidator"/>
     <completion.confidence language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuildFileCompletionConfidence"/>
     <spellchecker.support language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.BuildSpellcheckingStrategy"/>
+    <highlightVisitor implementation="com.google.idea.blaze.base.editor.HighlightingStatsCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.lang">
@@ -364,6 +365,8 @@
                     interface="com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact$Parser"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildBatchingService"
                     interface="com.google.idea.blaze.base.sync.sharding.BuildBatchingService"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.BlazeHighlightStatsCollector"
+                    interface="com.google.idea.blaze.base.editor.BlazeHighlightStatsCollector"/>
   </extensionPoints>
 
   <application-components>
