@@ -121,6 +121,14 @@ public class BlazeImportUtil {
         .collect(ImmutableList.toImmutableList());
   }
 
+  static ImmutableList<BlazeJarLibrary> getResourceJars(Collection<TargetIdeInfo> targets) {
+    return targets.stream()
+        .filter(
+            e -> e.getAndroidIdeInfo() != null && e.getAndroidIdeInfo().getResourceJar() != null)
+        .map(e -> new BlazeJarLibrary(e.getAndroidIdeInfo().getResourceJar(), e.getKey()))
+        .collect(ImmutableList.toImmutableList());
+  }
+
   /** Returns the set of relative generated resource paths for the given {@link ProjectViewSet}. */
   public static ImmutableSet<String> getWhitelistedGenResourcePaths(ProjectViewSet projectViewSet) {
     return ImmutableSet.copyOf(

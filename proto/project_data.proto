@@ -183,6 +183,7 @@ message BlazeAndroidImportResult {
   repeated BlazeLibrary aar_libraries = 4;
   repeated ArtifactLocation javac_jars = 5 [deprecated = true];
   repeated BlazeLibrary javac_jar_libraries = 6;
+  repeated BlazeLibrary resource_jars = 7;
 }
 
 message AndroidSdkPlatform {

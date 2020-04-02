@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android.sync;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
@@ -24,6 +26,7 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.google.idea.common.experiments.BoolExperiment;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +36,10 @@ import javax.annotation.Nullable;
 
 /** {@link LibrarySource} for android. */
 public class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
+
+  private static final BoolExperiment filterResourceJarsEnabled =
+      new BoolExperiment("aswb.filter.resource.jars", true);
+
   private final BlazeProjectData blazeProjectData;
 
   BlazeAndroidLibrarySource(BlazeProjectData blazeProjectData) {
@@ -57,10 +64,22 @@ public class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
   @Override
   public Predicate<BlazeLibrary> getLibraryFilter() {
     BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
-    if (syncData == null || syncData.importResult.aarLibraries.isEmpty()) {
+    if (syncData == null) {
       return null;
     }
-    return new AarJarFilter(syncData.importResult.aarLibraries.values());
+
+    Predicate<BlazeLibrary> finalPredicate = null;
+
+    if (!syncData.importResult.aarLibraries.isEmpty()) {
+      finalPredicate = new AarJarFilter(syncData.importResult.aarLibraries.values());
+    }
+    if (filterResourceJarsEnabled.getValue() && !syncData.importResult.resourceJars.isEmpty()) {
+      Predicate<BlazeLibrary> resJarFilter =
+          new ResourceJarFilter(syncData.importResult.resourceJars);
+      finalPredicate = finalPredicate == null ? resJarFilter : finalPredicate.and(resJarFilter);
+    }
+
+    return finalPredicate;
   }
 
   /**
@@ -102,6 +121,31 @@ public class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
       ArtifactLocation location = jarLibrary.libraryArtifact.jarForIntellijLibrary();
       String configurationLessPath = location.getRelativePath();
       return !aarJarsPaths.contains(configurationLessPath);
+    }
+  }
+
+  /** Filters out any resource JARs exported by android targets. */
+  @VisibleForTesting
+  public static class ResourceJarFilter implements Predicate<BlazeLibrary> {
+    private final Set<String> resourceJarPaths;
+
+    public ResourceJarFilter(Collection<BlazeJarLibrary> resourceJars) {
+      this.resourceJarPaths =
+          resourceJars.stream()
+              .map(e -> e.libraryArtifact.jarForIntellijLibrary().getRelativePath())
+              .collect(toImmutableSet());
+    }
+
+    @Override
+    public boolean test(BlazeLibrary blazeLibrary) {
+      if (!(blazeLibrary instanceof BlazeJarLibrary)) {
+        return true;
+      }
+      return !resourceJarPaths.contains(
+          ((BlazeJarLibrary) blazeLibrary)
+              .libraryArtifact
+              .jarForIntellijLibrary()
+              .getRelativePath());
     }
   }
 }

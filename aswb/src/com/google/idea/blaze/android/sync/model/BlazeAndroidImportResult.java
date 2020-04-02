@@ -36,14 +36,17 @@ public final class BlazeAndroidImportResult
   // Key is generated according to ArtifactLocation of aar file location
   public final ImmutableMap<String, AarLibrary> aarLibraries;
   public final ImmutableList<BlazeJarLibrary> javacJarLibraries;
+  public final ImmutableList<BlazeJarLibrary> resourceJars;
 
   public BlazeAndroidImportResult(
       ImmutableList<AndroidResourceModule> androidResourceModules,
       ImmutableMap<String, AarLibrary> aarLibraries,
-      ImmutableList<BlazeJarLibrary> javacJarLibraries) {
+      ImmutableList<BlazeJarLibrary> javacJarLibraries,
+      ImmutableList<BlazeJarLibrary> resourcesJars) {
     this.androidResourceModules = androidResourceModules;
     this.aarLibraries = aarLibraries;
     this.javacJarLibraries = javacJarLibraries;
+    this.resourceJars = resourcesJars;
   }
 
   static BlazeAndroidImportResult fromProto(ProjectData.BlazeAndroidImportResult proto) {
@@ -70,7 +73,8 @@ public final class BlazeAndroidImportResult
                 ImmutableMap.toImmutableMap(
                     library -> LibraryKey.libraryNameFromArtifactLocation(library.aarArtifact),
                     Functions.identity())),
-        javacJarLibraries);
+        javacJarLibraries,
+        ProtoWrapper.map(proto.getResourceJarsList(), BlazeJarLibrary::fromProto));
   }
 
   private static BlazeJarLibrary toBlazeJarLibrary(ArtifactLocation classJar) {
@@ -84,6 +88,7 @@ public final class BlazeAndroidImportResult
         .addAllAndroidResourceModules(ProtoWrapper.mapToProtos(androidResourceModules))
         .addAllAarLibraries(ProtoWrapper.mapToProtos(aarLibraries.values()))
         .addAllJavacJarLibraries(ProtoWrapper.mapToProtos(javacJarLibraries))
+        .addAllResourceLibraries(ProtoWrapper.mapToProtos(resourceJars))
         .build();
   }
 }

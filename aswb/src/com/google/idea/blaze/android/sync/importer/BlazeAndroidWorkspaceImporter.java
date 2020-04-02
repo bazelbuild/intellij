@@ -109,10 +109,12 @@ public class BlazeAndroidWorkspaceImporter {
 
     ImmutableList<AndroidResourceModule> androidResourceModules =
         buildAndroidResourceModules(resourceModules.build());
+
     return new BlazeAndroidImportResult(
         androidResourceModules,
         libraries.getAarLibs(),
-        BlazeImportUtil.getJavacJars(input.targetMap.targets()));
+        BlazeImportUtil.getJavacJars(input.targetMap.targets()),
+        BlazeImportUtil.getResourceJars(input.targetMap.targets()));
   }
 
   /**
