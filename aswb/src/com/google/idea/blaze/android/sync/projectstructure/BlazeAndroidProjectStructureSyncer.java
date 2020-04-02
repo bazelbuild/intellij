@@ -33,6 +33,8 @@ import com.google.idea.blaze.android.manifest.ParsedManifestService;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
+import com.google.idea.blaze.android.sync.importer.BlazeImportInput;
+import com.google.idea.blaze.android.sync.importer.BlazeImportUtil;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
@@ -377,6 +379,16 @@ public class BlazeAndroidProjectStructureSyncer {
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
     ModuleFinder moduleFinder = ModuleFinder.getInstance(project);
 
+    BlazeImportInput input =
+        BlazeImportInput.forProject(project, workspaceRoot, projectViewSet, blazeProjectData);
+
+    // Get package names from all visible targets.
+    Set<String> sourcePackages =
+        BlazeImportUtil.getSourceTargetsStream(input)
+            .filter(targetIdeInfo -> targetIdeInfo.getAndroidIdeInfo() != null)
+            .map(targetIdeInfo -> BlazeImportUtil.javaResourcePackageFor(targetIdeInfo, true))
+            .collect(toSet());
+
     for (AndroidResourceModule androidResourceModule :
         syncData.importResult.androidResourceModules) {
       TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
@@ -408,8 +420,12 @@ public class BlazeAndroidProjectStructureSyncer {
           androidIdeInfo.getResourceJavaPackage(),
           resources,
           configAndroidJava8Libs);
-      rClassBuilder.addRClass(androidIdeInfo.getResourceJavaPackage(), module);
+      String modulePackage = androidIdeInfo.getResourceJavaPackage();
+      rClassBuilder.addRClass(modulePackage, module);
+      sourcePackages.remove(modulePackage);
     }
+
+    rClassBuilder.addWorkspacePackages(sourcePackages);
 
     Set<TargetKey> androidResourceModules =
         syncData.importResult.androidResourceModules.stream()

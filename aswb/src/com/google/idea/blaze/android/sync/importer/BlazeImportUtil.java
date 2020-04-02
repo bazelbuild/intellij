@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.sync.importer;
 import com.android.ide.common.util.PathHashMapKt;
 import com.android.ide.common.util.PathMap;
 import com.android.ide.common.util.PathString;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
@@ -36,6 +37,7 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -65,6 +67,44 @@ public class BlazeImportUtil {
       return ideInfo.getResourceJavaPackage();
     }
     return null;
+  }
+
+  @Nullable
+  public static String javaResourcePackageFor(TargetIdeInfo target, boolean inferPackage) {
+    String definedJavaPackage = javaResourcePackageFor(target);
+    if (!inferPackage || definedJavaPackage != null) {
+      return definedJavaPackage;
+    }
+
+    return inferJavaResourcePackage(target.getKey().getLabel().blazePackage().relativePath());
+  }
+
+  @VisibleForTesting
+  static String inferJavaResourcePackage(String blazeRelativePath) {
+    // Blaze ensures that all android targets either provide a custom package override, or have
+    // blaze package of the form:
+    //        //any/path/java/package/name/with/slashes, or
+    //        //any/path/javatests/package/name/with/slashes
+    // We use this fact to infer package name.
+
+    // Using the separator `/` to ensure we do not accidentally catch things like "/java_src/"
+    // or "/somenamejava/"
+    String javaPackage = "/" + blazeRelativePath;
+    String workingPackage;
+
+    // get everything after `/java/` , or no-op if `/java/` is not present
+    workingPackage = StringUtil.substringAfterLast(javaPackage, "/java/");
+    javaPackage = workingPackage == null ? javaPackage : "/" + workingPackage;
+
+    // get everything after `/javatests/` , or no-op if `/javatests/` is not present
+    workingPackage = StringUtil.substringAfterLast(javaPackage, "/javatests/");
+    javaPackage = workingPackage == null ? javaPackage : "/" + workingPackage;
+
+    if (javaPackage.startsWith("/")) {
+      javaPackage = javaPackage.substring(1);
+    }
+
+    return javaPackage.replace('/', '.');
   }
 
   static Consumer<Output> asConsumer(BlazeContext context) {
