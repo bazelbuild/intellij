@@ -15,6 +15,7 @@
  */
 package com.google.idea.common.settings;
 
+import com.intellij.openapi.options.ConfigurationException;
 import java.util.function.Supplier;
 
 /** A mutable property. */
@@ -23,8 +24,12 @@ public interface Property<T> {
   /** Returns the value of the property. */
   T getValue();
 
-  /** Assigns a value to the property. */
-  void setValue(T value);
+  /**
+   * Assigns a value to the property.
+   *
+   * @throws ConfigurationException if the value can't be applied (e.g. it's invalid)
+   */
+  void setValue(T value) throws ConfigurationException;
 
   /** A function which accesses the value of a property on the given object. */
   @FunctionalInterface
@@ -35,7 +40,7 @@ public interface Property<T> {
   /** A function which assigns a value to a property on the given object. */
   @FunctionalInterface
   interface Setter<ObjectT, ValueT> {
-    void setValue(ObjectT object, ValueT value);
+    void setValue(ObjectT object, ValueT value) throws ConfigurationException;
   }
 
   /**
@@ -54,7 +59,7 @@ public interface Property<T> {
       }
 
       @Override
-      public void setValue(ValueT value) {
+      public void setValue(ValueT value) throws ConfigurationException {
         setter.setValue(objectSupplier.get(), value);
       }
     };

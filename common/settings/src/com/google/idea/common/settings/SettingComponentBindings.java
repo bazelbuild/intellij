@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
+import com.intellij.openapi.options.ConfigurationException;
 import java.util.List;
 import java.util.Objects;
 
@@ -43,8 +44,10 @@ final class SettingComponentBindings {
     return settingToBinding.values().stream().anyMatch(Binding::isModified);
   }
 
-  void applySettings() {
-    settingToBinding.values().forEach(Binding::applySetting);
+  void applySettings() throws ConfigurationException {
+    for (Binding<?, ?> binding : settingToBinding.values()) {
+      binding.applySetting();
+    }
   }
 
   void resetComponents() {
@@ -71,7 +74,7 @@ final class SettingComponentBindings {
       return !Objects.equals(component.getProperty().getValue(), setting.getValue());
     }
 
-    void applySetting() {
+    void applySetting() throws ConfigurationException {
       setting.setValue(component.getProperty().getValue());
     }
 
