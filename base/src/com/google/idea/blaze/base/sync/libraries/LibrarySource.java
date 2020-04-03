@@ -46,6 +46,13 @@ public interface LibrarySource {
   @Nullable
   Predicate<Library> getGcRetentionFilter();
 
+  /**
+   * Called for stats collection.
+   *
+   * @return a list of BlazeLibrary known to be empty
+   */
+  List<? extends BlazeLibrary> getEmptyLibraries();
+
   /** Adapter class */
   abstract class Adapter implements LibrarySource {
     @Override
@@ -63,6 +70,11 @@ public interface LibrarySource {
     @Override
     public Predicate<Library> getGcRetentionFilter() {
       return null;
+    }
+
+    @Override
+    public List<? extends BlazeLibrary> getEmptyLibraries() {
+      return ImmutableList.of();
     }
   }
 }

@@ -62,6 +62,8 @@ public abstract class SyncStats {
 
   public abstract int libraryCount();
 
+  public abstract int emptyLibraryCount();
+
   public static Builder builder() {
     return new AutoValue_SyncStats.Builder()
         .setBlazeExecTime(Duration.ZERO)
@@ -69,7 +71,8 @@ public abstract class SyncStats {
         .setTargetMapSize(0)
         .setLanguagesActive(ImmutableList.of())
         .setBlazeProjectFiles(ImmutableList.of())
-        .setLibraryCount(0);
+        .setLibraryCount(0)
+        .setEmptyLibraryCount(0);
   }
 
   /** Auto value builder for SyncStats. */
@@ -123,6 +126,8 @@ public abstract class SyncStats {
     }
 
     public abstract Builder setLibraryCount(int librariesCount);
+
+    public abstract Builder setEmptyLibraryCount(int emptyLibraryCount);
 
     public abstract SyncStats build();
   }

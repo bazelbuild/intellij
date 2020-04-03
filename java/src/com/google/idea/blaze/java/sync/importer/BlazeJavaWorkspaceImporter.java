@@ -16,8 +16,8 @@
 package com.google.idea.blaze.java.sync.importer;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
@@ -56,6 +56,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.DuplicateSourceDetector;
+import com.google.idea.blaze.java.sync.importer.util.Pair;
 import com.google.idea.blaze.java.sync.jdeps.JdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -65,16 +66,18 @@ import com.google.idea.blaze.java.sync.source.SourceDirectoryCalculator;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Builds a BlazeWorkspace. */
@@ -143,7 +146,9 @@ public final class BlazeJavaWorkspaceImporter {
     }
     context.output(PrintOutput.log("Java content entry count: " + totalContentEntryCount));
 
-    ImmutableMap<LibraryKey, BlazeJarLibrary> libraries =
+    // Pair#first is the map of full libraries, and
+    // Pair#second is the map of empty libraries
+    Pair<ImmutableMap<LibraryKey, BlazeJarLibrary>> allLibraries =
         buildLibraries(context, workspaceBuilder, sourceFilter.libraryTargets);
 
     duplicateSourceDetector.reportDuplicates(context);
@@ -152,13 +157,14 @@ public final class BlazeJavaWorkspaceImporter {
 
     return new BlazeJavaImportResult(
         contentEntries,
-        libraries,
+        allLibraries.first,
+        allLibraries.second,
         workspaceBuilder.buildOutputJars.stream().sorted().collect(toImmutableList()),
         ImmutableSet.copyOf(workspaceBuilder.addedSourceFiles),
         sourceVersion);
   }
 
-  private ImmutableMap<LibraryKey, BlazeJarLibrary> buildLibraries(
+  private Pair<ImmutableMap<LibraryKey, BlazeJarLibrary>> buildLibraries(
       BlazeContext context, WorkspaceBuilder workspaceBuilder, List<TargetIdeInfo> libraryTargets) {
     // Build library maps
     Multimap<TargetKey, BlazeJarLibrary> targetKeyToLibrary = ArrayListMultimap.create();
@@ -231,35 +237,37 @@ public final class BlazeJavaWorkspaceImporter {
       result.put(library.key, library);
     }
 
-    // Filter out any libraries corresponding to empty jars
-    return removeEmptyLibraries(context, artifactLocationDecoder, result);
+    // Segregate out any libraries corresponding to empty jars
+    return segregateEmptyLibraries(context, artifactLocationDecoder, result);
   }
 
   /**
-   * Attempts to filter out any libraries from the given map that correspond to effectively empty
+   * Attempts to segregate any libraries from the given map that correspond to effectively empty
    * JARs.
    *
    * <p>If something goes horribly wrong or this feature is disabled, this method just returns a
    * copy of the given map.
    *
+   * @return a pair of maps, where first element is the map of full libraries and second element is
+   *     the map of empty libraries
    * @see EmptyLibraryFilter
    */
-  private static ImmutableMap<LibraryKey, BlazeJarLibrary> removeEmptyLibraries(
+  private static Pair<ImmutableMap<LibraryKey, BlazeJarLibrary>> segregateEmptyLibraries(
       BlazeContext parentContext,
       ArtifactLocationDecoder locationDecoder,
       Map<LibraryKey, BlazeJarLibrary> allLibraries) {
     if (!EmptyLibraryFilter.isEnabled()) {
-      return ImmutableMap.copyOf(allLibraries);
+      return Pair.of(ImmutableMap.copyOf(allLibraries), ImmutableMap.of());
     }
     return Scope.push(
         parentContext,
         context -> {
           context.push(new TimingScope("FilterEmptyJars", EventType.Other));
           context.output(new StatusOutput("Filtering empty jars..."));
-          ImmutableMap<LibraryKey, BlazeJarLibrary> result;
+          Pair<ImmutableMap<LibraryKey, BlazeJarLibrary>> result;
           try {
             result =
-                filterByValueInParallel(
+                segregateByValueInParallel(
                     allLibraries, new EmptyLibraryFilter(locationDecoder), FetchExecutor.EXECUTOR);
           } catch (ExecutionException e) {
             String warning = "Failed to filter out empty jars";
@@ -268,31 +276,53 @@ public final class BlazeJavaWorkspaceImporter {
             }
             logger.warn(warning, e);
             IssueOutput.warn(warning).submit(context);
-            return ImmutableMap.copyOf(allLibraries);
+            return Pair.of(ImmutableMap.copyOf(allLibraries), ImmutableMap.of());
           } catch (InterruptedException e) {
             context.setCancelled();
-            return ImmutableMap.copyOf(allLibraries);
+            return Pair.of(ImmutableMap.copyOf(allLibraries), ImmutableMap.of());
           }
           context.output(
-              PrintOutput.log(
-                  String.format(
-                      "Filtered out %d empty jars", allLibraries.size() - result.size())));
+              PrintOutput.log(String.format("Filtered out %d empty jars", result.second.size())));
           return result;
         });
   }
 
-  private static <K, V> ImmutableMap<K, V> filterByValueInParallel(
+  private static <K, V> Pair<ImmutableMap<K, V>> segregateByValueInParallel(
       Map<K, V> map, Predicate<? super V> predicate, ListeningExecutorService executor)
       throws ExecutionException, InterruptedException {
-    return Futures.allAsList(
-            map.entrySet().stream()
-                .map(
-                    entry -> executor.submit(() -> predicate.test(entry.getValue()) ? entry : null))
-                .collect(toImmutableList()))
-        .get()
-        .stream()
-        .filter(Objects::nonNull)
-        .collect(toImmutableMap(Map.Entry::getKey, Map.Entry::getValue));
+    Map<Boolean, List<Map.Entry<K, V>>> partitionedMap =
+        Futures.allAsList(
+                map.entrySet().stream()
+                    .map(
+                        entry ->
+                            executor.submit(
+                                () -> Pair.create(predicate.test(entry.getValue()), entry)))
+                    .collect(toImmutableList()))
+            .get()
+            .stream()
+            .collect(
+                Collectors.partitioningBy(
+                    pair -> pair.first,
+                    Collector.of(
+                        ArrayList::new,
+                        (list, innerPair) -> list.add(innerPair.second),
+                        (list1, list2) -> {
+                          list1.addAll(list2);
+                          return list1;
+                        })));
+
+    // Using LinkedHashMaps to preserve order from list
+    Map<K, V> trueMap =
+        partitionedMap.get(true).stream()
+            .collect(
+                toMap(Map.Entry::getKey, Map.Entry::getValue, (i1, i2) -> i2, LinkedHashMap::new));
+
+    Map<K, V> falseMap =
+        partitionedMap.get(false).stream()
+            .collect(
+                toMap(Map.Entry::getKey, Map.Entry::getValue, (i1, i2) -> i2, LinkedHashMap::new));
+
+    return Pair.of(ImmutableMap.copyOf(trueMap), ImmutableMap.copyOf(falseMap));
   }
 
   private void addLibraryToJdeps(

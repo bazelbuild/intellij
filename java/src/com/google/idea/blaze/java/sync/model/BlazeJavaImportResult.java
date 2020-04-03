@@ -35,14 +35,34 @@ public final class BlazeJavaImportResult
   public final ImmutableSet<ArtifactLocation> javaSourceFiles;
   @Nullable public final String sourceVersion;
 
+  // `emptyLibraries` is not serialized, used in assessing equality, or considered in hashCodes.
+  public final ImmutableMap<LibraryKey, BlazeJarLibrary> emptyLibraries;
+
   public BlazeJavaImportResult(
       ImmutableList<BlazeContentEntry> contentEntries,
       ImmutableMap<LibraryKey, BlazeJarLibrary> libraries,
       ImmutableList<ArtifactLocation> buildOutputJars,
       ImmutableSet<ArtifactLocation> javaSourceFiles,
       @Nullable String sourceVersion) {
+    this(
+        contentEntries,
+        libraries,
+        ImmutableMap.of(),
+        buildOutputJars,
+        javaSourceFiles,
+        sourceVersion);
+  }
+
+  public BlazeJavaImportResult(
+      ImmutableList<BlazeContentEntry> contentEntries,
+      ImmutableMap<LibraryKey, BlazeJarLibrary> libraries,
+      ImmutableMap<LibraryKey, BlazeJarLibrary> emptyLibraries,
+      ImmutableList<ArtifactLocation> buildOutputJars,
+      ImmutableSet<ArtifactLocation> javaSourceFiles,
+      @Nullable String sourceVersion) {
     this.contentEntries = contentEntries;
     this.libraries = libraries;
+    this.emptyLibraries = emptyLibraries;
     this.buildOutputJars = buildOutputJars;
     this.javaSourceFiles = javaSourceFiles;
     this.sourceVersion = sourceVersion;

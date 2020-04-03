@@ -50,4 +50,13 @@ class BlazeJavaLibrarySource extends LibrarySource.Adapter {
     }
     return new LibraryGlobFilter(syncData.getExcludedLibraries());
   }
+
+  @Override
+  public List<? extends BlazeLibrary> getEmptyLibraries() {
+    BlazeJavaSyncData syncData = blazeProjectData.getSyncState().get(BlazeJavaSyncData.class);
+    if (syncData == null) {
+      return ImmutableList.of();
+    }
+    return syncData.getImportResult().emptyLibraries.values().asList();
+  }
 }

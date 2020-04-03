@@ -15,12 +15,12 @@
  */
 package com.google.idea.blaze.base.sync.libraries;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -33,13 +33,7 @@ public class BlazeLibraryCollector {
       ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
     // Use set to filter out duplicates.
     Set<BlazeLibrary> result = Sets.newLinkedHashSet();
-    List<LibrarySource> librarySources = Lists.newArrayList();
-    for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-      LibrarySource librarySource = syncPlugin.getLibrarySource(projectViewSet, blazeProjectData);
-      if (librarySource != null) {
-        librarySources.add(librarySource);
-      }
-    }
+    List<LibrarySource> librarySources = getLibrarySources(projectViewSet, blazeProjectData);
     for (LibrarySource librarySource : librarySources) {
       result.addAll(librarySource.getLibraries());
     }
@@ -53,5 +47,22 @@ public class BlazeLibraryCollector {
 
     return BlazeLibrarySorter.sortLibraries(
         result.stream().filter(libraryFilter).collect(Collectors.toList()));
+  }
+
+  public static List<BlazeLibrary> getEmptyLibraries(
+      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+    List<LibrarySource> librarySources = getLibrarySources(projectViewSet, blazeProjectData);
+    return librarySources.stream()
+        .map(LibrarySource::getEmptyLibraries)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+  }
+
+  private static List<LibrarySource> getLibrarySources(
+      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+    return BlazeSyncPlugin.EP_NAME.getExtensionList().stream()
+        .map(plugin -> plugin.getLibrarySource(projectViewSet, blazeProjectData))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
   }
 }
