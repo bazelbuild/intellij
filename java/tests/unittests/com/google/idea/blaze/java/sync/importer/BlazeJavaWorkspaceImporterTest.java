@@ -144,13 +144,16 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   private final WorkspaceLanguageSettings workspaceLanguageSettings =
       new WorkspaceLanguageSettings(WorkspaceType.JAVA, ImmutableSet.of(LanguageClass.JAVA));
   private MockFileOperationProvider fileOperationProvider;
+  private MockExperimentService experimentService;
 
   @Override
   @SuppressWarnings("FunctionalInterfaceClash") // False positive on getDeclaredPackageOfJavaFile.
   protected void initTest(Container applicationServices, Container projectServices) {
     fileOperationProvider = new MockFileOperationProvider();
     applicationServices.register(FileOperationProvider.class, fileOperationProvider);
-    applicationServices.register(ExperimentService.class, new MockExperimentService());
+
+    experimentService = new MockExperimentService();
+    applicationServices.register(ExperimentService.class, experimentService);
 
     ExtensionPointImpl<Kind.Provider> ep =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
@@ -1067,6 +1070,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
   @Test
   public void testEmptyLibraryExcluded() {
+    experimentService.setFeatureRolloutExperiment(EmptyLibraryFilter.filterExperiment, 100);
     ProjectView projectView =
         ProjectView.builder()
             .add(
