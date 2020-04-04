@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -204,18 +203,18 @@ public interface ExternalTask {
     }
 
     // Allow adding a custom system path to lookup executables in.
-    @VisibleForTesting
+    @Deprecated @VisibleForTesting
     static final String CUSTOM_PATH_SYSTEM_PROPERTY = "blaze.external.task.env.path";
 
     @VisibleForTesting
-    static Optional<File> getCustomBinary(String potentialCommandName) {
+    @Nullable
+    static File getCustomBinary(String potentialCommandName) {
       String customPath = System.getProperty(CUSTOM_PATH_SYSTEM_PROPERTY);
       if (Strings.isNullOrEmpty(customPath)) {
-        return Optional.empty();
+        return null;
       }
-      return Optional.ofNullable(
-          PathEnvironmentVariableUtil.findInPath(
-              potentialCommandName, customPath, /*filter=*/ null));
+      return PathEnvironmentVariableUtil.findInPath(
+          potentialCommandName, customPath, /*filter=*/ null);
     }
 
     @VisibleForTesting
@@ -224,9 +223,11 @@ public interface ExternalTask {
         return command;
       }
       List<String> actualCommand = new ArrayList<>(command);
-      Optional<File> customBinaryOverride = getCustomBinary(actualCommand.get(0));
-      if (customBinaryOverride.isPresent()) {
-        actualCommand.set(0, customBinaryOverride.get().getAbsolutePath());
+      String binary = actualCommand.get(0);
+      File binaryOverride =
+          BinaryPathRemapper.remapBinary(binary).orElseGet(() -> getCustomBinary(binary));
+      if (binaryOverride != null) {
+        actualCommand.set(0, binaryOverride.getAbsolutePath());
       }
       return actualCommand;
     }
