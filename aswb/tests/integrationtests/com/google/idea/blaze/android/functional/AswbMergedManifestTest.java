@@ -33,13 +33,11 @@ import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.fixtures.ManifestFixture;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.IdeaSourceProviderUtil;
 import org.junit.Before;
@@ -63,22 +61,6 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
         "android_sdk_platform: android-27");
     MockSdkUtil.registerSdk(workspace, "27");
     manifestFactory = new ManifestFixture.Factory(getProject(), workspace);
-  }
-
-  private Module getModule(String moduleName) {
-    Module module = ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
-    assertThat(module).isNotNull();
-    return module;
-  }
-
-  private Set<Module> getModules(String... moduleNames) {
-    return Stream.of(moduleNames).map(this::getModule).collect(Collectors.toSet());
-  }
-
-  private AndroidFacet getFacet(String moduleName) {
-    AndroidFacet facet = AndroidFacet.getInstance(getModule(moduleName));
-    assertThat(facet).isNotNull();
-    return facet;
   }
 
   private static void runAndWaitForMergedManifestUpdate(Module module, Runnable toRun)
