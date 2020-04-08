@@ -221,10 +221,8 @@ def _is_language_specific_proto_library(ctx, target):
         return False
     if JavaInfo in target:
         return True
-
-    # TODO(b/125934428): uncomment when proto_library doesn't expose CcInfo
-    #    if CcInfo in target:
-    #        return True
+    if CcInfo in target:
+        return True
     return False
 
 def make_target_key(label, aspect_ids):
@@ -400,7 +398,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates C++-specific output groups, returns false if not a C++ target."""
 
-    if CcInfo not in target or _is_language_specific_proto_library(ctx, target):
+    if CcInfo not in target:
         return False
 
     # ignore cc_proto_library, attach to proto_library with aspect attached instead
