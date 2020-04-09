@@ -48,19 +48,13 @@ public interface BuildResultHelper extends AutoCloseable {
   /**
    * Parses the BEP output data to collect all build flags used. Return all flags that pass filters
    */
-  BuildFlags getBlazeFlags(
-      Optional<String> completedBuildId,
-      Predicate<String> startupFlagsFilter,
-      Predicate<String> cmdlineFlagsFilter)
-      throws GetFlagssException;
+  BuildFlags getBlazeFlags(Optional<String> completedBuildId) throws GetFlagsException;
 
   /**
    * Parses the BEP output data to collect all build flags used. Return all flags that pass filters
    */
-  default BuildFlags getBlazeFlags(
-      Predicate<String> startupFlagsFilter, Predicate<String> cmdlineFlagsFilter)
-      throws GetFlagssException {
-    return getBlazeFlags(Optional.empty(), startupFlagsFilter, cmdlineFlagsFilter);
+  default BuildFlags getBlazeFlags() throws GetFlagsException {
+    return getBlazeFlags(Optional.empty());
   }
 
   /**
@@ -105,8 +99,8 @@ public interface BuildResultHelper extends AutoCloseable {
   }
 
   /** Indicates a failure to get artifact information */
-  class GetFlagssException extends Exception {
-    public GetFlagssException(String message) {
+  class GetFlagsException extends Exception {
+    public GetFlagsException(String message) {
       super(message);
     }
   }

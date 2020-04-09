@@ -21,33 +21,25 @@ import com.google.devtools.build.lib.runtime.proto.CommandLineOuterClass;
 import com.google.devtools.build.lib.runtime.proto.CommandLineOuterClass.CommandLineSection;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import java.io.InputStream;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.Set;
 
 /** A data class representing blaze's build options for a build. */
 public final class BuildFlags {
   private static final String STARTUP_OPTIONS_SECTION_LABEL = "startup options";
   private static final String CMDLINE_OPTIONS_SECTION_LABEL = "command options";
 
-  static BuildFlags parseBep(
-      InputStream bepStream,
-      Predicate<String> startupFlagsFilter,
-      Predicate<String> cmdlineFlagsFilter)
-      throws BuildEventStreamException {
-    return parseBep(
-        BuildEventStreamProvider.fromInputStream(bepStream),
-        startupFlagsFilter,
-        cmdlineFlagsFilter);
+  static BuildFlags parseBep(InputStream bepStream) throws BuildEventStreamException {
+    return parseBep(BuildEventStreamProvider.fromInputStream(bepStream));
   }
 
-  public static BuildFlags parseBep(
-      BuildEventStreamProvider stream,
-      Predicate<String> startupFlagsFilter,
-      Predicate<String> cmdlineFlagsFilter)
+  public static BuildFlags parseBep(BuildEventStreamProvider stream)
       throws BuildEventStreamException {
     BuildEventStreamProtos.BuildEvent event;
-    ImmutableList.Builder<String> startupOptionsBuilder = ImmutableList.builder();
-    ImmutableList.Builder<String> cmdlineOptionsBuilder = ImmutableList.builder();
+    // order matters for build options
+    Set<String> startupOptions = new LinkedHashSet<>();
+    Set<String> cmdlineOptions = new LinkedHashSet<>();
 
     while ((event = stream.getNext()) != null) {
       switch (event.getId().getIdCase()) {
@@ -57,15 +49,11 @@ public final class BuildFlags {
             switch (commandLineSection.getSectionLabel()) {
               case STARTUP_OPTIONS_SECTION_LABEL:
                 addOptionsToBuilder(
-                    startupOptionsBuilder,
-                    commandLineSection.getOptionList().getOptionList(),
-                    startupFlagsFilter);
+                    startupOptions, commandLineSection.getOptionList().getOptionList());
                 continue;
               case CMDLINE_OPTIONS_SECTION_LABEL:
                 addOptionsToBuilder(
-                    cmdlineOptionsBuilder,
-                    commandLineSection.getOptionList().getOptionList(),
-                    cmdlineFlagsFilter);
+                    cmdlineOptions, commandLineSection.getOptionList().getOptionList());
                 continue;
               default: // continue
             }
@@ -74,17 +62,15 @@ public final class BuildFlags {
         default: // continue
       }
     }
-    return new BuildFlags(startupOptionsBuilder.build(), cmdlineOptionsBuilder.build());
+    return new BuildFlags(
+        ImmutableList.copyOf(startupOptions), ImmutableList.copyOf(cmdlineOptions));
   }
 
   private static void addOptionsToBuilder(
-      ImmutableList.Builder<String> builder,
-      List<CommandLineOuterClass.Option> options,
-      Predicate<String> flagsFilter) {
+      Set<String> builder, List<CommandLineOuterClass.Option> options) {
     for (CommandLineOuterClass.Option option : options) {
-      String cmdlineOption = option.getCombinedForm().replace("'", "");
-      if (!cmdlineOption.isEmpty() && flagsFilter.test(option.getOptionName())) {
-        builder.add(cmdlineOption);
+      if (!option.getOptionName().isEmpty()) {
+        builder.add(option.getCombinedForm().replace("'", ""));
       }
     }
   }
@@ -96,7 +82,7 @@ public final class BuildFlags {
     this(ImmutableList.of(), ImmutableList.of());
   }
 
-  BuildFlags(ImmutableList<String> startupOptions, ImmutableList<String> cmdlineOptions) {
+  public BuildFlags(ImmutableList<String> startupOptions, ImmutableList<String> cmdlineOptions) {
     this.startupOptions = startupOptions;
     this.cmdlineOptions = cmdlineOptions;
   }
