@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Build event protocol implementation to get build results.
@@ -48,12 +49,26 @@ class BuildResultHelperBep implements BuildResultHelper {
   }
 
   @Override
-  public ParsedBepOutput getBuildOutput() throws GetArtifactsException {
+  public ParsedBepOutput getBuildOutput(Optional<String> completedBuildId)
+      throws GetArtifactsException {
     try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
       return ParsedBepOutput.parseBepArtifacts(inputStream);
     } catch (IOException | BuildEventStreamException e) {
       logger.error(e);
       throw new GetArtifactsException(e.getMessage());
+    }
+  }
+
+  @Override
+  public BuildFlags getBlazeFlags(
+      Optional<String> completedBuildId,
+      Predicate<String> startupFlagsFilter,
+      Predicate<String> cmdlineFlagsFilter)
+      throws GetFlagssException {
+    try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
+      return BuildFlags.parseBep(inputStream, startupFlagsFilter, cmdlineFlagsFilter);
+    } catch (IOException | BuildEventStreamException e) {
+      throw new GetFlagssException(e.getMessage());
     }
   }
 

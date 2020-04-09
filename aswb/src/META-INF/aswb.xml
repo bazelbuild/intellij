@@ -33,6 +33,7 @@
     <projectService serviceImplementation="com.google.idea.blaze.android.libraries.UnpackedAars"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.resources.BlazeLightResourceClassService"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemSyncManager$LastSyncResultCache"/>
+    <projectService serviceImplementation="com.google.idea.blaze.android.editor.ProjectUnresolvedResourceStatsCollector"/>
     <applicationService serviceImplementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettings"/>
     <applicationService serviceInterface="com.google.idea.blaze.android.sdk.BlazeSdkProvider"
       serviceImplementation="com.google.idea.blaze.android.sdk.BlazeSdkProviderImpl"/>
@@ -51,6 +52,7 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.MavenArtifactLocator" interface="com.google.idea.blaze.android.projectsystem.MavenArtifactLocator"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AndroidTestLaunchMethodsProvider" interface="com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.GeneratedResourceRetentionFilter" interface="com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceRetentionFilter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -70,6 +72,8 @@
     <TestContextProvider
         implementation="com.google.idea.blaze.android.run.test.AndroidTestContextProvider"
         order="first, before JavaTestContextProvider"/>
+    <BlazeHighlightStatsCollector implementation="com.google.idea.blaze.android.editor.UnresolvedResourceStatsCollector"/>
+    <SyncListener implementation="com.google.idea.blaze.android.editor.ProjectUnresolvedResourceStatsCollector$CollectorSyncListener"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">

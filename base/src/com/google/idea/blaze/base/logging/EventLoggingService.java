@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.logging;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.base.logging.utils.HighlightStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.intellij.openapi.components.ServiceManager;
 import java.time.Duration;
@@ -54,6 +55,8 @@ public interface EventLoggingService {
       String eventType,
       Map<String, String> keyValues,
       @Nullable Long durationInNanos);
+
+  void logHighlightStats(HighlightStats highlightStats);
 
   /** Information about an external command that was launched from the IDE. */
   @AutoValue

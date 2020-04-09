@@ -36,12 +36,12 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
@@ -315,6 +315,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 "Building targets for shard %s of %s...", count, shardedTargets.shardCount());
     Function<List<TargetExpression>, BuildResult> invocation =
         targets -> {
+
           BlazeBuildOutputs result =
               runBuildForTargets(
                   project,
@@ -362,16 +363,14 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         BuildResultHelperProvider.createForSync(project, blazeInfo)) {
 
       BlazeCommand.Builder builder =
-          BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.BUILD)
-              .addTargets(targets)
-              .addBlazeFlags(BlazeFlags.KEEP_GOING)
-              .addBlazeFlags(buildResultHelper.getBuildFlags())
-              .addBlazeFlags(
-                  BlazeFlags.blazeFlags(
-                      project,
-                      viewSet,
-                      BlazeCommandName.BUILD,
-                      BlazeInvocationContext.SYNC_CONTEXT));
+          BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.BUILD);
+      builder
+          .addTargets(targets)
+          .addBlazeFlags(BlazeFlags.KEEP_GOING)
+          .addBlazeFlags(buildResultHelper.getBuildFlags())
+          .addBlazeFlags(
+              BlazeFlags.blazeFlags(
+                  project, viewSet, BlazeCommandName.BUILD, BlazeInvocationContext.SYNC_CONTEXT));
 
       aspectStrategy.addAspectAndOutputGroups(
           builder,
@@ -379,27 +378,14 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           activeLanguages,
           onlyDirectDeps);
 
-      int retVal =
-          ExternalTask.builder(workspaceRoot)
-              .addBlazeCommand(builder.build())
-              .context(context)
-              .stderr(
-                  LineProcessingOutputStream.of(
-                      BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
-              .build()
-              .run();
-
-      BuildResult buildResult = BuildResult.fromExitCode(retVal);
-      if (buildResult.status == Status.FATAL_ERROR) {
-        return BlazeBuildOutputs.noOutputs(buildResult);
+      for (BlazeCommandRunner runner : BlazeCommandRunner.EP_NAME.getExtensions()) {
+        if (runner.isAvailable(project)) {
+          return runner.run(
+              project, builder, buildParams, buildResultHelper, workspaceRoot, context);
+        }
       }
-      try {
-        return BlazeBuildOutputs.fromParsedBepOutput(
-            buildResult, buildResultHelper.getBuildOutput());
-      } catch (GetArtifactsException e) {
-        IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
-        return BlazeBuildOutputs.noOutputs(buildResult);
-      }
+      IssueOutput.error("Failed to create build: no blaze command runner found");
+      return BlazeBuildOutputs.noOutputs(BuildResult.FATAL_ERROR);
     }
   }
 

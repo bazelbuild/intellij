@@ -17,20 +17,19 @@ package com.google.idea.blaze.base.async.process;
 
 import static com.google.common.base.StandardSystemProperty.JAVA_IO_TMPDIR;
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.process.ExternalTask.ExternalTaskImpl;
 import java.io.File;
 import java.io.IOException;
-import java.util.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Tests for {@link ExternalTaskImpl}. */
 @RunWith(JUnit4.class)
-public final class ExternalTaskImplTest {
+public final class ExternalTaskImplTest extends BlazeTestCase {
 
   private static File newTempFile() throws IOException {
     File temp = File.createTempFile("sadjfhjk-", "-sodiuflk");
@@ -39,31 +38,36 @@ public final class ExternalTaskImplTest {
     return temp;
   }
 
+  @Override
+  protected void initTest(Container applicationServices, Container projectServices) {
+    registerExtensionPoint(BinaryPathRemapper.EP_NAME, BinaryPathRemapper.class);
+  }
+
   @Test
   public void getCustomBinary_withoutCustomPath() throws Exception {
     System.clearProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY);
-    assertThat(ExternalTaskImpl.getCustomBinary("sh")).isEmpty();
+    assertThat(ExternalTaskImpl.getCustomBinary("sh")).isNull();
   }
 
   @Test
   public void getCustomBinary_multiArgCommand() throws Exception {
     System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, JAVA_IO_TMPDIR.value());
     File temp = newTempFile();
-    assertThat(ExternalTaskImpl.getCustomBinary(temp.getName() + " --withlog")).isEmpty();
+    assertThat(ExternalTaskImpl.getCustomBinary(temp.getName() + " --withlog")).isNull();
   }
 
   @Test
   public void getCustomBinary_fullPathCommand() throws Exception {
     System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, JAVA_IO_TMPDIR.value());
     File temp = newTempFile();
-    assertThat(ExternalTaskImpl.getCustomBinary(temp.getAbsolutePath())).isEmpty();
+    assertThat(ExternalTaskImpl.getCustomBinary(temp.getAbsolutePath())).isNull();
   }
 
   @Test
   public void getCustomBinary_nonExistent() throws Exception {
     System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, JAVA_IO_TMPDIR.value());
     assertThat(ExternalTaskImpl.getCustomBinary("this_is_almost_certainly_not_an_existing_file"))
-        .isEmpty();
+        .isNull();
   }
 
   @Test
@@ -73,16 +77,15 @@ public final class ExternalTaskImplTest {
     assertThat(tmpDir.isFile()).isFalse();
     System.setProperty(
         ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, tmpDir.getParentFile().getAbsolutePath());
-    assertThat(ExternalTaskImpl.getCustomBinary(tmpDir.getName())).isEmpty();
+    assertThat(ExternalTaskImpl.getCustomBinary(tmpDir.getName())).isNull();
   }
 
   @Test
   public void getCustomBinary_success() throws Exception {
     System.setProperty(ExternalTaskImpl.CUSTOM_PATH_SYSTEM_PROPERTY, JAVA_IO_TMPDIR.value());
     File temp = newTempFile();
-    Optional<File> fileOr = ExternalTaskImpl.getCustomBinary(temp.getName());
-    assertThat(fileOr).isPresent();
-    assertThat(fileOr.get().getAbsolutePath()).isEqualTo(temp.getAbsolutePath());
+    File file = ExternalTaskImpl.getCustomBinary(temp.getName());
+    assertThat(file.getAbsolutePath()).isEqualTo(temp.getAbsolutePath());
   }
 
   @Test

@@ -16,12 +16,13 @@
 
 package com.google.idea.blaze.java.sync.importer;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.IOException;
@@ -41,8 +42,10 @@ import java.util.jar.JarInputStream;
  */
 public class EmptyLibraryFilter implements Predicate<BlazeLibrary> {
   private static final String FN_MANIFEST = "MANIFEST.MF";
-  private static final BoolExperiment enabled =
-      new BoolExperiment("blaze.empty.jar.filter.enabled", true);
+
+  @VisibleForTesting
+  public static final FeatureRolloutExperiment filterExperiment =
+      new FeatureRolloutExperiment("blaze.empty.jar.filter");
   /**
    * Any JAR that is this size (in bytes) or smaller is assumed to be empty.
    *
@@ -73,7 +76,7 @@ public class EmptyLibraryFilter implements Predicate<BlazeLibrary> {
   }
 
   public static boolean isEnabled() {
-    return enabled.getValue();
+    return filterExperiment.isEnabled();
   }
 
   @Override

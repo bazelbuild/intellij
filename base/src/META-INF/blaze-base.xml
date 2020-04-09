@@ -333,6 +333,7 @@
     <renameInputValidator implementation="com.google.idea.blaze.base.lang.buildfile.refactor.TargetRenameValidator"/>
     <completion.confidence language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuildFileCompletionConfidence"/>
     <spellchecker.support language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.BuildSpellcheckingStrategy"/>
+    <highlightVisitor implementation="com.google.idea.blaze.base.editor.HighlightingStatsCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.lang">
@@ -356,12 +357,16 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncStatusContributor" interface="com.google.idea.blaze.base.syncstatus.SyncStatusContributor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildResultHelperProvider"
                     interface="com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.BlazeCommandRunner"
+                    interface="com.google.idea.blaze.base.command.BlazeCommandRunner"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputArtifactParser"
                     interface="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.RemoteOutputArtifactParser"
                     interface="com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact$Parser"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildBatchingService"
                     interface="com.google.idea.blaze.base.sync.sharding.BuildBatchingService"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.BlazeHighlightStatsCollector"
+                    interface="com.google.idea.blaze.base.editor.BlazeHighlightStatsCollector"/>
   </extensionPoints>
 
   <application-components>
@@ -440,6 +445,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputsProvider" interface="com.google.idea.blaze.base.model.OutputsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.VcsSyncListener" interface="com.google.idea.blaze.base.vcs.VcsSyncListener"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.CommonMacroContributor" interface="com.google.idea.blaze.base.lang.buildfile.completion.CommonMacroContributor"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.BinaryPathRemapper" interface="com.google.idea.blaze.base.async.process.BinaryPathRemapper"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -462,6 +468,7 @@
     <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" order="last"/>
     <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.BazelBuildifierBinaryProvider"/>
     <BuildResultHelperProvider order="last" implementation="com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep$Provider"/>
+    <BlazeCommandRunner order="last" implementation="com.google.idea.blaze.base.command.CommandLineBlazeCommandRunner"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider" order="last"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TargetNameHeuristic" id="TargetNameHeuristic"/>

@@ -18,6 +18,7 @@ package com.google.idea.blaze.base;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.logging.utils.HighlightStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.google.idea.testing.ServiceHelper;
 import com.intellij.openapi.Disposable;
@@ -52,4 +53,7 @@ public class MockEventLoggingService implements EventLoggingService {
       String eventType,
       Map<String, String> keyValues,
       @Nullable Long durationInNanos) {}
+
+  @Override
+  public void logHighlightStats(HighlightStats highlightStats) {}
 }

@@ -30,6 +30,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 /** A UI component for representing a setting in an {@link AutoConfigurable}. */
 public abstract class SettingComponent<T> {
@@ -142,6 +143,11 @@ public abstract class SettingComponent<T> {
           () -> new ComboBox<>(optionsEnum.getEnumConstants()),
           c -> c.getItemAt(c.getSelectedIndex()),
           JComboBox::setSelectedItem);
+    }
+
+    /** Creates a factory for plain {@link JTextField} components. */
+    public static ComponentFactory<LabeledComponent<String, JTextField>> textFieldFactory() {
+      return factory(JTextField::new, JTextField::getText, JTextField::setText);
     }
 
     private final JBLabel label;

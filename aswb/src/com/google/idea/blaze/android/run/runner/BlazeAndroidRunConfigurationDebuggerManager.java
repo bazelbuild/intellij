@@ -25,6 +25,7 @@ import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
 import com.google.idea.blaze.android.run.state.DebuggerSettingsState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -65,11 +66,22 @@ public final class BlazeAndroidRunConfigurationDebuggerManager {
     }
 
     AndroidDebuggerState androidDebuggerState = debuggerToUse.createState();
-    // Set our working directory to our workspace root for native debugging.
     if (androidDebuggerState instanceof NativeAndroidDebuggerState) {
       NativeAndroidDebuggerState nativeState = (NativeAndroidDebuggerState) androidDebuggerState;
       String workingDirPath = WorkspaceRoot.fromProject(project).directory().getPath();
       nativeState.setWorkingDir(workingDirPath);
+
+      // b/151821788 "/proc/self/cwd" used by linux built binaries isn't valid on MacOS.
+      if (SystemInfo.isMac) {
+        String sourceMapToWorkspaceRootCommand =
+            "settings set target.source-map /proc/self/cwd/ " + workingDirPath;
+        ImmutableList<String> startupCommands =
+            ImmutableList.<String>builder()
+                .addAll(nativeState.getUserStartupCommands())
+                .add(sourceMapToWorkspaceRootCommand)
+                .build();
+        nativeState.setUserStartupCommands(startupCommands);
+      }
     }
     return androidDebuggerState;
   }
