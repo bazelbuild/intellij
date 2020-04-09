@@ -1,3 +1,7 @@
+v2020.04.07
+===========
+* Bug fixes and internal cleanup.
+
 v2020.03.19
 ===========
 * Add support for multiple targets in bazel run configurations
