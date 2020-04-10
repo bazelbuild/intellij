@@ -105,6 +105,9 @@ public final class BlazeCommand {
     }
 
     public BlazeCommand build() {
+      for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
+        blazeStartupFlags.addAll(buildFlagsProvider.getStartupFlags());
+      }
       return new BlazeCommand(binaryPath, name, blazeStartupFlags.build(), getArguments());
     }
 
@@ -132,18 +135,6 @@ public final class BlazeCommand {
 
     public Builder addBlazeFlags(List<String> flags) {
       this.blazeCmdlineFlags.addAll(flags);
-      return this;
-    }
-
-    /**
-     * This function is designed to add start up flags to blaze build command only when blazerc file
-     * is not accessible (e.g. build api). If there is an already running Blaze server and the
-     * startup options do not match, it will be restarted. So do not use this function unless you
-     * cannot update blazerc used by blaze and you are sure new flags will not break running blaze
-     * server.
-     */
-    public BlazeCommand.Builder addBlazeStartupFlags(List<String> flags) {
-      this.blazeStartupFlags.addAll(flags);
       return this;
     }
   }

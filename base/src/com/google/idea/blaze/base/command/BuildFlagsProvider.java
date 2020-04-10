@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -33,4 +34,15 @@ public interface BuildFlagsProvider {
       BlazeCommandName command,
       BlazeInvocationContext invocationContext,
       List<String> flags);
+
+  /**
+   * This function is designed to provide a list of start up flags that force IDE build to use. It
+   * makes build does not totally reply on users' rc files which should be avoid in most of cases.
+   * Only override this function when you are sure adding those startup flags will not lead to
+   * server restart and the flags should be used for all cases no matter what is its original value
+   * in rc.
+   */
+  default List<String> getStartupFlags() {
+    return ImmutableList.of();
+  }
 }

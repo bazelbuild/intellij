@@ -315,7 +315,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 "Building targets for shard %s of %s...", count, shardedTargets.shardCount());
     Function<List<TargetExpression>, BuildResult> invocation =
         targets -> {
-
           BlazeBuildOutputs result =
               runBuildForTargets(
                   project,

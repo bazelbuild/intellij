@@ -41,6 +41,7 @@ public class BlazeCommandTest extends BlazeTestCase {
     ExperimentService experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
     applicationServices.register(BlazeUserSettings.class, new BlazeUserSettings());
+    registerExtensionPoint(BuildFlagsProvider.EP_NAME, BuildFlagsProvider.class);
   }
 
   @Test
