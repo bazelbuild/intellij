@@ -61,6 +61,12 @@ public class BlazeRClass extends ResourceRepositoryRClass {
         });
     this.androidFacet = androidFacet;
     setModuleInfo(getModule(), false);
+    /* TODO(b/152982790): Enable once plugin_sdk has the required symbols
+    VirtualFile virtualFile = myFile.getViewProvider().getVirtualFile();
+    virtualFile.putUserData(
+        MODULE_POINTER_KEY, ModulePointerManager.getInstance(getProject()).create(getModule()));
+    virtualFile.putUserData(LIGHT_CLASS_KEY, ResourceRepositoryRClass.class);
+     */
   }
 
   public Module getModule() {

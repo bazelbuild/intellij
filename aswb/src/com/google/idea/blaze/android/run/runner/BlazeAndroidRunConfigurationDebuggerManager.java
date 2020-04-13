@@ -21,6 +21,7 @@ import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;
 import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
 import com.google.idea.blaze.android.run.state.DebuggerSettingsState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -46,7 +47,7 @@ public final class BlazeAndroidRunConfigurationDebuggerManager {
   }
 
   @Nullable
-  AndroidDebugger getAndroidDebugger() {
+  public AndroidDebugger getAndroidDebugger() {
     String debuggerID = getDebuggerID();
 
     // Note: AndroidDebugger.EP_NAME includes native debugger(s).
@@ -59,7 +60,7 @@ public final class BlazeAndroidRunConfigurationDebuggerManager {
   }
 
   @Nullable
-  AndroidDebuggerState getAndroidDebuggerState(Project project) {
+  public AndroidDebuggerState getAndroidDebuggerState(Project project) {
     AndroidDebugger debuggerToUse = getAndroidDebugger();
     if (debuggerToUse == null) {
       return null;
@@ -84,6 +85,16 @@ public final class BlazeAndroidRunConfigurationDebuggerManager {
       }
     }
     return androidDebuggerState;
+  }
+
+  public List<AndroidDebugger> getAndroidDebuggers(Project project) {
+    List<AndroidDebugger> androidDebuggers = Lists.newArrayList();
+    for (AndroidDebugger androidDebugger : AndroidDebugger.EP_NAME.getExtensions()) {
+      if (androidDebugger.supportsProject(project)) {
+        androidDebuggers.add(androidDebugger);
+      }
+    }
+    return androidDebuggers;
   }
 
   private String getDebuggerID() {
