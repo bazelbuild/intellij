@@ -26,7 +26,6 @@ import com.android.tools.idea.run.LaunchTaskRunner;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.SwapInfo;
 import com.android.tools.idea.stats.RunStats;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
@@ -55,7 +54,7 @@ public final class BlazeAndroidRunState implements RunProfileState {
   private final Module module;
   private final ExecutionEnvironment env;
   private final String launchConfigName;
-  private final BlazeAndroidDeviceSelector.DeviceSession deviceSession;
+  private final DeviceSession deviceSession;
   private final BlazeAndroidRunContext runContext;
   private final LaunchOptions.Builder launchOptionsBuilder;
   private final boolean isDebug;
@@ -154,16 +153,18 @@ public final class BlazeAndroidRunState implements RunProfileState {
     LaunchInfo launchInfo = new LaunchInfo(executor, runner, env, runContext.getConsoleProvider());
 
     LaunchTaskRunner task =
-        LaunchTaskRunnerCompat.create(
+        new LaunchTaskRunner(
             module.getProject(),
             launchConfigName,
             applicationId,
+            env.getExecutionTarget().getDisplayName(),
             launchInfo,
             processHandler,
-            deviceSession.deviceFutures,
+            deviceFutures,
             launchTasksProvider,
             RunStats.from(env),
             console::printHyperlink);
+
     ProgressManager.getInstance().run(task);
 
     return console == null ? null : new DefaultExecutionResult(console, processHandler);
