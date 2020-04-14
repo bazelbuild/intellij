@@ -54,7 +54,15 @@ public class AndroidOutputsProvider implements OutputsProvider {
     AndroidIdeInfo androidInfo = target.getAndroidIdeInfo();
 
     ImmutableList.Builder<ArtifactLocation> list = ImmutableList.builder();
-    androidInfo.getResFolders().forEach(f -> addArtifact(list, f.getRoot()));
+    androidInfo
+        .getResFolders()
+        .forEach(
+            f -> {
+              if (f.getAar() != null) {
+                addArtifact(list, f.getAar());
+              }
+              addArtifact(list, f.getRoot());
+            });
     addLibrary(list, androidInfo.getResourceJar());
     addLibrary(list, androidInfo.getIdlJar());
     addArtifact(list, androidInfo.getManifest());
