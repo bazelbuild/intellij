@@ -46,8 +46,7 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
     // In practice, the stock runner will probably handle all non-incremental-install configs.
     if (DefaultDebugExecutor.EXECUTOR_ID.equals(executorId)
         || DefaultRunExecutor.EXECUTOR_ID.equals(executorId)
-        || (StartupProfilerSupport.SUPPORTS_STARTUP_PROFILING
-            && ProfileRunExecutor.EXECUTOR_ID.equals(executorId))) {
+        || ProfileRunExecutor.EXECUTOR_ID.equals(executorId)) {
       return true;
     }
     // Otherwise, the configuration must be a Blaze incremental install configuration running with
