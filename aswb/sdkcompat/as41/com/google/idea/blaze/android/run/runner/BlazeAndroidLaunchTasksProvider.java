@@ -39,7 +39,6 @@ import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -89,8 +88,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       packageName = applicationIdProvider.getPackageName();
     } catch (ApkProvisionException e) {
       LOG.error(e);
-      LaunchStatusCompat.terminateLaunch(
-          launchStatus, "Unable to determine application id: " + e, true);
+      launchStatus.terminateLaunch("Unable to determine application id: " + e, true);
       return ImmutableList.of();
     }
 
@@ -123,7 +121,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       launchTasks.addAll(deployTasks);
     }
     if (launchStatus.isLaunchTerminated()) {
-      return launchTasks;
+      return ImmutableList.copyOf(launchTasks);
     }
 
     try {
@@ -159,11 +157,10 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       }
     } catch (ApkProvisionException e) {
       LOG.error(e);
-      LaunchStatusCompat.terminateLaunch(
-          launchStatus, "Unable to determine application id: " + e, true);
+      launchStatus.terminateLaunch("Unable to determine application id: " + e, true);
       return ImmutableList.of();
     } catch (ExecutionException e) {
-      LaunchStatusCompat.terminateLaunch(launchStatus, e.getMessage(), true);
+      launchStatus.terminateLaunch(e.getMessage(), true);
       return ImmutableList.of();
     }
 
@@ -171,7 +168,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       launchTasks.add(new ShowLogcatTask(project, packageName));
     }
 
-    return launchTasks;
+    return ImmutableList.copyOf(launchTasks);
   }
 
   @Nullable
@@ -212,13 +209,8 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     try {
       return runContext.getDebuggerTask(androidDebugger, androidDebuggerState, packageIds);
     } catch (ExecutionException e) {
-      LaunchStatusCompat.terminateLaunch(launchStatus, e.getMessage(), true);
+      launchStatus.terminateLaunch(e.getMessage(), true);
       return null;
     }
-  }
-
-  // #api 3.4
-  public boolean createsNewProcess() {
-    return true;
   }
 }

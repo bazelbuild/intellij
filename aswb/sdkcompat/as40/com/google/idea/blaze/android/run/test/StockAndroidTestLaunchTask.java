@@ -26,7 +26,6 @@ import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.manifest.ManifestParser;
-import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.intellij.execution.Executor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,20 +66,17 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
     try {
       testPackage = applicationIdProvider.getTestPackageName();
       if (testPackage == null) {
-        LaunchStatusCompat.terminateLaunch(
-            launchStatus, "Unable to determine test package name", true);
+        launchStatus.terminateLaunch("Unable to determine test package name", true);
         return null;
       }
     } catch (ApkProvisionException e) {
-      LaunchStatusCompat.terminateLaunch(
-          launchStatus, "Unable to determine test package name", true);
+      launchStatus.terminateLaunch("Unable to determine test package name", true);
       return null;
     }
 
     List<String> availableRunners = getRunnersFromManifest(deployInfo);
     if (availableRunners.isEmpty()) {
-      LaunchStatusCompat.terminateLaunch(
-          launchStatus,
+      launchStatus.terminateLaunch(
           String.format(
               "No instrumentation test runner is defined in the manifest.\n"
                   + "At least one instrumentation tag must be defined for the\n"
@@ -105,8 +101,7 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
     String runner = configState.getInstrumentationRunnerClass();
     if (!StringUtil.isEmpty(runner)) {
       if (!availableRunners.contains(runner)) {
-        LaunchStatusCompat.terminateLaunch(
-            launchStatus,
+        launchStatus.terminateLaunch(
             String.format(
                 "Instrumentation test runner \"%2$s\"\n"
                     + "is not defined for the \"%1$s\" package in the manifest.\n"

@@ -22,7 +22,6 @@ import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.AndroidDebugState;
 import com.android.tools.idea.run.AndroidProcessText;
 import com.android.tools.idea.run.AndroidRunConfiguration;
-import com.android.tools.idea.run.AndroidRunConfigurationBase;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
@@ -32,8 +31,6 @@ import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.ConnectJavaDebuggerTask;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
-import com.google.idea.blaze.android.run.AndroidSessionInfoCompat;
-import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.debugger.ui.DebuggerPanelsManager;
 import com.intellij.execution.ExecutionException;
@@ -126,7 +123,7 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
     runContext.addLaunchTaskCompleteListener(
         () -> {
           AndroidDebugBridge.removeClientChangeListener(reattachingListener);
-          LaunchStatusCompat.terminateLaunch(launchStatus, "Test run completed.\n", true);
+          launchStatus.terminateLaunch("Test run completed.\n", true);
         });
   }
 
@@ -219,20 +216,18 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
     }
 
     RunProfile runProfile = currentLaunchInfo.env.getRunProfile();
-    int uniqueId =
-        runProfile instanceof AndroidRunConfigurationBase
-            ? ((AndroidRunConfigurationBase) runProfile).getUniqueID()
-            : -1;
     RunConfiguration runConfiguration =
         runProfile instanceof AndroidRunConfiguration ? (AndroidRunConfiguration) runProfile : null;
-    AndroidSessionInfo value =
-        AndroidSessionInfoCompat.create(
+    AndroidSessionInfo sessionInfo =
+        AndroidSessionInfo.create(
             debugProcessHandler,
             debugDescriptor,
-            uniqueId,
             runConfiguration,
-            currentLaunchInfo.env);
-    debugProcessHandler.putUserData(AndroidSessionInfo.KEY, value);
+            currentLaunchInfo.env.getExecutor().getId(),
+            currentLaunchInfo.env.getExecutor().getActionName(),
+            currentLaunchInfo.env.getExecutionTarget());
+
+    debugProcessHandler.putUserData(AndroidSessionInfo.KEY, sessionInfo);
     debugProcessHandler.putUserData(AndroidSessionInfo.ANDROID_DEBUG_CLIENT, client);
     debugProcessHandler.putUserData(
         AndroidSessionInfo.ANDROID_DEVICE_API_LEVEL, client.getDevice().getVersion());

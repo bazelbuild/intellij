@@ -24,7 +24,6 @@ import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.SpecificActivityLaunchTask;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.idea.blaze.android.manifest.ManifestParser;
-import com.google.idea.blaze.android.run.LaunchStatusCompat;
 import com.intellij.openapi.diagnostic.Logger;
 
 /** Provides the launch task for android_binary */
@@ -68,8 +67,7 @@ public class BlazeAndroidBinaryApplicationLaunchTaskProvider {
       return launchTask;
     } catch (ApkProvisionException e) {
       LOG.error(e);
-      LaunchStatusCompat.terminateLaunch(
-          processHandlerLaunchStatus, "Unable to identify application id", true);
+      processHandlerLaunchStatus.terminateLaunch("Unable to identify application id", true);
       return null;
     }
   }

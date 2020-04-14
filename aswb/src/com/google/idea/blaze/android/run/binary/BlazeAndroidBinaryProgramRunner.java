@@ -17,14 +17,12 @@ package com.google.idea.blaze.android.run.binary;
 
 import com.android.tools.idea.profilers.ProfileRunExecutor;
 import com.android.tools.idea.run.AndroidSessionInfo;
-import com.google.idea.blaze.android.run.AndroidSessionInfoCompat;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor;
 import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -68,15 +66,16 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
       assert processHandler != null;
 
       RunProfile runProfile = env.getRunProfile();
-      int uniqueId =
-          (runProfile instanceof RunConfigurationBase)
-              ? ((RunConfigurationBase) runProfile).getUniqueID()
-              : -1;
       RunConfiguration runConfiguration =
           (runProfile instanceof RunConfiguration) ? (RunConfiguration) runProfile : null;
       AndroidSessionInfo sessionInfo =
-          AndroidSessionInfoCompat.create(
-              processHandler, descriptor, uniqueId, runConfiguration, env);
+          AndroidSessionInfo.create(
+              processHandler,
+              descriptor,
+              runConfiguration,
+              env.getExecutor().getId(),
+              env.getExecutor().getActionName(),
+              env.getExecutionTarget());
 
       // #api3.5: not needed (along with the "uniqueId" calculation once 3.6 is in stable)
       processHandler.putUserData(AndroidSessionInfo.KEY, sessionInfo);

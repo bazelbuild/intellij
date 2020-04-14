@@ -25,7 +25,6 @@ import com.android.tools.idea.run.editor.DeployTargetState;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.android.run.AndroidSessionInfoCompat;
 import com.google.idea.blaze.android.run.BlazeAndroidRunState;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -105,7 +104,7 @@ public final class BlazeAndroidRunConfigurationRunner
 
     boolean isDebug = executor instanceof DefaultDebugExecutor;
     AndroidSessionInfo info =
-        AndroidSessionInfoCompat.findOldSession(project, null, runConfig, env.getExecutionTarget());
+        AndroidSessionInfo.findOldSession(project, null, runConfig, env.getExecutionTarget());
 
     BlazeAndroidDeviceSelector deviceSelector = runContext.getDeviceSelector();
     BlazeAndroidDeviceSelector.DeviceSession deviceSession =
