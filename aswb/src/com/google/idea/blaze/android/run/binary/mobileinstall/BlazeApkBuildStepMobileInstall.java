@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
+import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.DeviceFutures;
@@ -55,6 +56,7 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.net.InetSocketAddress;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
@@ -129,7 +131,17 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
             Blaze.getBuildSystemProvider(project).getBinaryPath(project),
             BlazeCommandName.MOBILE_INSTALL);
 
-    command.addBlazeFlags(BlazeFlags.DEVICE, device.getSerialNumber());
+    String deviceFlag = device.getSerialNumber();
+    InetSocketAddress adbAddr = AndroidDebugBridge.getSocketAddress();
+    if (adbAddr == null) {
+      IssueOutput.warn(
+              "Can't get ADB server port, please ensure ADB server is running. Will fallback to"
+                  + " the default adb server.")
+          .submit(context);
+    } else {
+      deviceFlag += ":tcp:" + adbAddr.getPort();
+    }
+    command.addBlazeFlags(BlazeFlags.DEVICE, deviceFlag);
     // Redundant, but we need this to get around bug in bazel.
     // https://github.com/bazelbuild/bazel/issues/4922
     command.addBlazeFlags(
