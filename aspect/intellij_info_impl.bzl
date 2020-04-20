@@ -870,6 +870,22 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
     update_sync_output_groups(output_groups, "intellij-info-java", depset([ide_info_file]))
     return True
 
+def artifact_to_path(artifact):
+    return artifact.root_execution_path_fragment + "/" + artifact.relative_path
+
+def collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups):
+    """Updates kotlin_toolchain-relevant output groups, returns false if not a kotlin_toolchain target."""
+    if not hasattr(target, "kt"):
+        return False
+    kt = target.kt
+    if not hasattr(kt, "language_version"):
+        return False
+    ide_info["kt_toolchain_ide_info"] = struct(
+        language_version = kt.language_version,
+    )
+    update_sync_output_groups(output_groups, "intellij-info-kotlin", depset([ide_info_file]))
+    return True
+
 def _is_proto_library_wrapper(target, ctx):
     """Returns True if the target is an empty shim around a proto library."""
     if not ctx.rule.kind.endswith("proto_library") or ctx.rule.kind == "proto_library":
@@ -1016,6 +1032,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
 
     # Any extra ide info
     if hasattr(semantics, "extra_ide_info"):
