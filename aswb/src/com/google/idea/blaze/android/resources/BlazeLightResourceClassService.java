@@ -167,8 +167,12 @@ public class BlazeLightResourceClassService implements LightResourceClassService
     }
 
     BlazeRClass rClass = workspaceRClasses.get(qualifiedName);
-    if (rClass != null && scope.isSearchInModuleContent(rClass.getModule())) {
-      return null;
+    if (rClass != null) {
+      if (scope.isSearchInModuleContent(rClass.getModule())) {
+        return rClass;
+      } else {
+        return null;
+      }
     }
 
     Module workspaceModule =
