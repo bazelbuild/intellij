@@ -168,9 +168,11 @@ def jars_from_output(output):
     """Collect jars for intellij-resolve-files from Java output."""
     if output == None:
         return []
+    source_jars = get_source_jars(output)
+    jars = source_jars
     return [
         jar
-        for jar in ([output.class_jar, output.ijar] + get_source_jars(output))
+        for jar in ([output.ijar if len(source_jars) > 0 and output.ijar else output.class_jar] + source_jars)
         if jar != None and not jar.is_source
     ]
 
@@ -664,12 +666,12 @@ def build_filtered_gen_jar(ctx, target, java, gen_java_sources, srcjars):
     for jar in java.outputs.jars:
         if jar.ijar:
             jar_artifacts.append(jar.ijar)
-        elif jar.class_jar:
-            jar_artifacts.append(jar.class_jar)
         if hasattr(jar, "source_jars") and jar.source_jars:
             source_jar_artifacts.extend(jar.source_jars)
         elif hasattr(jar, "source_jar") and jar.source_jar:
             source_jar_artifacts.append(jar.source_jar)
+    if len(source_jar_artifacts) == 0 or len(jar_artifacts) == 0:
+        jar_artifacts.extend([jar.class_jar for jar in java.outputs.jars if jar.class_jar])
 
     filtered_jar = ctx.actions.declare_file(target.label.name + "-filtered-gen.jar")
     filtered_source_jar = ctx.actions.declare_file(target.label.name + "-filtered-gen-src.jar")
