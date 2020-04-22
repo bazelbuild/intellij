@@ -36,7 +36,7 @@ public final class BaseSdkCompat {
 
   /** #api193: made public in 2020.1. */
   @SuppressWarnings("rawtypes")
-  public static ProjectExtensionPointName<EditorNotifications.Provider> getEditorNotificationsEp() {
+  public static ProjectExtensionPointName<EditorNotifications.Provider<?>> getEditorNotificationsEp() {
     return EditorNotificationsImpl.EP_PROJECT;
   }
 

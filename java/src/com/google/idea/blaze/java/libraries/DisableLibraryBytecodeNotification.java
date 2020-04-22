@@ -40,7 +40,7 @@ final class DisableLibraryBytecodeNotification implements StartupActivity {
     if (!enabled.getValue() || !Blaze.isBlazeProject(project)) {
       return;
     }
-    ProjectExtensionPointName<Provider> epName = BaseSdkCompat.getEditorNotificationsEp();
+    ProjectExtensionPointName<Provider<?>> epName = BaseSdkCompat.getEditorNotificationsEp();
     if (epName == null) {
       return;
     }

@@ -67,7 +67,7 @@ public final class FastBuildRunExecutor extends DefaultRunExecutor {
 
   @Override
   public Icon getDisabledIcon() {
-    return new LayeredIcon(AllIcons.Process.DisabledRun, BlazeIcons.LightningOverlay);
+    return new LayeredIcon(AllIcons.Plugins.Disabled, BlazeIcons.LightningOverlay);
   }
 
   @Override
