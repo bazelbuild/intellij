@@ -19,8 +19,21 @@
 # disable job control - don't want async msgs about background jobs
 set +m
 
+# These values can be injected via ~/.gdbserver_wrapper_options
 # inject extra parameters into the gdbserver commandline (e.g. --remote-debug)
-EXTRA_GDBSERVER_ARGS=""
+GDBSERVER_WRAPPER_EXTRA_ARGS=""
+
+# increase verbosity of output
+GDBSERVER_WRAPPER_VERBOSE=0
+
+# retain temporary work directory after execution is done
+GDBSERVER_WRAPPER_KEEP_WORK_DIRECTORY=0
+
+# End of options
+
+if [[ -r ~/.gdbserver_wrapper_options ]]; then
+  source ~/.gdbserver_wrapper_options
+fi
 
 gdbserver_wrapper::setup() {
   # create work directory for all temporary files
@@ -43,8 +56,8 @@ gdbserver_wrapper::parse_args() {
   inferior=0
   for old_arg in "${original_args[@]}"; do
     # first arg is path to gdbserver, but inject extra args after it
-    if [[ ${#new_args[@]} -eq 1 && -n "${EXTRA_GDBSERVER_ARGS}" ]]; then
-      new_args+=(${EXTRA_GDBSERVER_ARGS})
+    if [[ ${#new_args[@]} -eq 1 && -n "${GDBSERVER_WRAPPER_EXTRA_ARGS}" ]]; then
+      new_args+=(${GDBSERVER_WRAPPER_EXTRA_ARGS})
     fi
     if [[ $inferior -eq 0 ]]; then
       if [[ "${old_arg}" == "--keep_work_directory" ]]; then
@@ -134,8 +147,8 @@ gdbserver_wrapper::main() {
   local gdbserver_stderr gdbserver_stdout
   local inferior_stderr inferior_stdout
   local keep_work_directory verbose
-  keep_work_directory=0
-  verbose=0
+  keep_work_directory="${GDBSERVER_WRAPPER_KEEP_WORK_DIRECTORY}"
+  verbose="${GDB_WRAPPER_VERBOSE}"
 
   original_args=("$@")
 
