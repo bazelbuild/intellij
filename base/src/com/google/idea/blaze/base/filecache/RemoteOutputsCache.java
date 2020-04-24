@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -33,8 +34,10 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.OutputsProvider;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
+import com.google.idea.blaze.base.prefetch.RemoteFilePrefetchService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
@@ -61,6 +64,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -78,10 +82,12 @@ public final class RemoteOutputsCache {
 
   private static final Logger logger = Logger.getInstance(RemoteOutputsCache.class);
 
+  private final Project project;
   private final File cacheDir;
   private volatile Map<String, File> cachedFiles = ImmutableMap.of();
 
   private RemoteOutputsCache(Project project) {
+    this.project = project;
     this.cacheDir = getCacheDir(project);
   }
 
@@ -162,6 +168,13 @@ public final class RemoteOutputsCache {
           return;
         }
       }
+      ListenableFuture<?> prefetchFuture =
+          RemoteFilePrefetchService.getInstance()
+              .prefetchFiles(project, context, updatedOutputs.values());
+      FutureUtil.waitForFuture(context, prefetchFuture)
+          .timed("PrefetchRemoteOutput", EventType.Prefetching)
+          .withProgressMessage("Reading IDE info result...")
+          .run();
 
       List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(updatedOutputs));
       futures.addAll(deleteCacheFiles(removed));
@@ -183,7 +196,22 @@ public final class RemoteOutputsCache {
   }
 
   private Map<String, File> readCachedFiles() {
-    File[] files = cacheDir.listFiles();
+    // Files in this cached but does not included in to updatedOutputs will be treated as out of
+    // date and removed from
+    // directory. So we do not want cached objfs file to be included in this map to avoid remove
+    // them unexpected unless it has been cached more than 1 day since objfs will expire files after
+    // 1 day.
+    File[] files =
+        cacheDir.listFiles(
+            file -> {
+              if (file.isDirectory()
+                  || (file.getPath().contains("/objfs/")
+                      && (System.currentTimeMillis() - file.lastModified())
+                          <= TimeUnit.DAYS.toMillis(1))) {
+                return false;
+              }
+              return true;
+            });
     if (files == null) {
       return ImmutableMap.of();
     }
@@ -210,7 +238,7 @@ public final class RemoteOutputsCache {
     return builder.toString();
   }
 
-  private static File getCacheDir(Project project) {
+  public static File getCacheDir(Project project) {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     return new File(BlazeDataStorage.getProjectDataDir(importSettings), "remoteOutputCache");
