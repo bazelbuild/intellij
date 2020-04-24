@@ -229,8 +229,8 @@ http_archive(
 http_archive(
     name = "android_studio_3_6",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio36",
-    sha256 = "79c3e7069228de5db1c9252e078fcbe9b7d56cc54c8ce6f87034685b298f2413",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/3.6.2.0/android-studio-ide-192.6308749-linux.tar.gz",
+    sha256 = "33ec9f61b20b71ca175cd39083b1379ebba896de78b826ea5df5d440c6adfd2a",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/3.6.3.0/android-studio-ide-192.6392135-linux.tar.gz",
 )
 
 http_archive(
