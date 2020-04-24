@@ -158,6 +158,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.google.idea.blaze.base.plugin.BlazeSpecificStartupActivity"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.sync.BlazeSyncStartupActivity"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.project.DisableAndroidFrameworkActivity"/>
 
@@ -370,9 +371,6 @@
   </extensionPoints>
 
   <application-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.base.plugin.BlazeSpecificInitializer</implementation-class>
-    </component>
     <component>
       <interface-class>com.google.idea.common.experiments.ExperimentService</interface-class>
       <implementation-class>com.google.idea.blaze.base.experiments.BlazeExperimentService</implementation-class>
