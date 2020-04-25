@@ -28,7 +28,7 @@ import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.tasks.ApplyChangesTask;
 import com.android.tools.idea.run.tasks.ApplyCodeChangesTask;
-import com.android.tools.idea.run.tasks.DeployTask;
+import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.util.SwapInfo;
 import com.android.tools.idea.run.util.SwapInfo.SwapType;
@@ -140,7 +140,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
             DeploymentConfiguration.getInstance().APPLY_CODE_CHANGES_FALLBACK_TO_RUN);
       }
     }
-    return new DeployTask(project, filesToInstall, launchOptions.getPmInstallOptions());
+    return DeployTasksCompat.createDeployTask(project, filesToInstall, launchOptions);
   }
 
   @Nullable

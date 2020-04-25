@@ -114,6 +114,12 @@ public class BlazeAndroidBinaryNormalBuildRunContext
       Set<String> packageIds)
       throws ExecutionException {
     return androidDebugger.getConnectDebuggerTask(
-        env, null, packageIds, facet, androidDebuggerState, runConfiguration.getType().getId());
+        env,
+        null,
+        packageIds,
+        facet,
+        androidDebuggerState,
+        runConfiguration.getType().getId(),
+        null);
   }
 }

@@ -15,12 +15,17 @@
  */
 package com.google.idea.blaze.android.resources;
 
+import static org.jetbrains.android.AndroidResolveScopeEnlarger.LIGHT_CLASS_KEY;
+import static org.jetbrains.android.AndroidResolveScopeEnlarger.MODULE_POINTER_KEY;
+
 import com.android.ide.common.rendering.api.ResourceNamespace;
 import com.android.resources.ResourceType;
 import com.android.tools.idea.res.LocalResourceRepository;
 import com.android.tools.idea.res.ResourceRepositoryManager;
 import com.android.tools.idea.res.ResourceRepositoryRClass;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModulePointerManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.android.augment.AndroidLightField;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -61,12 +66,10 @@ public class BlazeRClass extends ResourceRepositoryRClass {
         });
     this.androidFacet = androidFacet;
     setModuleInfo(getModule(), false);
-    /* TODO(b/152982790): Enable once plugin_sdk has the required symbols
     VirtualFile virtualFile = myFile.getViewProvider().getVirtualFile();
     virtualFile.putUserData(
         MODULE_POINTER_KEY, ModulePointerManager.getInstance(getProject()).create(getModule()));
     virtualFile.putUserData(LIGHT_CLASS_KEY, ResourceRepositoryRClass.class);
-     */
   }
 
   public Module getModule() {
