@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.usages.Usage;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.UIUtil;
 import java.util.Collection;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
@@ -38,6 +39,20 @@ public final class BaseSdkCompat {
   @SuppressWarnings("rawtypes")
   public static ProjectExtensionPointName<EditorNotifications.Provider> getEditorNotificationsEp() {
     return null;
+  }
+
+  /** #api201: Provider added generic type in 2020.1 */
+  public static void unregisterExtension(Project project, Class<? extends EditorNotifications.Provider> providerClass) {
+    ProjectExtensionPointName<EditorNotifications.Provider> epName = BaseSdkCompat.getEditorNotificationsEp();
+    if (epName == null) {
+      return;
+    }
+    epName.getPoint(project).unregisterExtension(providerClass);
+  }
+
+  /** #api201: method was removed in 2020.1. */
+  public static void removeLeakingAppleListeners() {
+    UIUtil.removeLeakingAppleListeners();
   }
 
   /** #api193: constructor changed in 2020.1. */

@@ -15,12 +15,12 @@
  */
 package com.google.idea.testing;
 
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.UIUtil;
 import java.io.File;
 import java.util.Hashtable;
 import java.util.List;
@@ -83,7 +83,7 @@ public class IntellijTestSetupRule extends ExternalResource {
       throw new RuntimeException(e);
     }
 
-    UIUtil.removeLeakingAppleListeners();
+    BaseSdkCompat.removeLeakingAppleListeners();
   }
 
   private static boolean isRunThroughBlaze() {

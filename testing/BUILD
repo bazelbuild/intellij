@@ -36,6 +36,8 @@ java_library(
         ),
         "intellij-2019.2": glob(["testcompat/v192/**/*.java"]),
         "intellij-ue-2019.2": glob(["testcompat/v192/**/*.java"]),
+        "intellij-2020.1": glob(["testcompat/v201/**/*.java"]),
+        "intellij-ue-2020.1": glob(["testcompat/v201/**/*.java"]),
         "default": glob(["testcompat/v193/**/*.java"]),
     }),
     deps = [

@@ -20,7 +20,7 @@ import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -32,7 +32,6 @@ import org.picocontainer.defaults.UnsatisfiableDependenciesException;
 
 /** Utility class for registering project services, application services and extensions. */
 public class ServiceHelper {
-
   public static <T> void registerExtensionPoint(
       ExtensionPointName<T> name, Class<T> clazz, Disposable parentDisposable) {
     ExtensionsArea area = Extensions.getRootArea();
@@ -71,9 +70,9 @@ public class ServiceHelper {
   public static <T> void registerApplicationComponent(
       Class<T> key, T implementation, Disposable parentDisposable) {
     Application application = ApplicationManager.getApplication();
-    if (application instanceof ComponentManagerImpl) {
+    if (application instanceof ComponentManager) {
       ServiceHelperCompat.replaceComponentInstance(
-          (ComponentManagerImpl) application, key, implementation, parentDisposable);
+              application, key, implementation, parentDisposable);
     } else {
       registerComponentInstance(
           (MutablePicoContainer) application.getPicoContainer(),
@@ -90,9 +89,9 @@ public class ServiceHelper {
 
   public static <T> void registerProjectComponent(
       Project project, Class<T> key, T implementation, Disposable parentDisposable) {
-    if (project instanceof ComponentManagerImpl) {
+    if (project instanceof ComponentManager) {
       ServiceHelperCompat.replaceComponentInstance(
-          (ComponentManagerImpl) project, key, implementation, parentDisposable);
+          project, key, implementation, parentDisposable);
     } else {
       registerComponentInstance(
           (MutablePicoContainer) project.getPicoContainer(), key, implementation, parentDisposable);

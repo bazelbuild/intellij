@@ -40,7 +40,23 @@ public final class BaseSdkCompat {
     return EditorNotificationsImpl.EP_PROJECT;
   }
 
-  /** #api193: constructor changed in 2020.1. */
+  /** #api201: Provider added generic type in 2020.1 */
+  public static void unregisterExtension(Project project, Class<? extends EditorNotifications.Provider<?>> providerClass) {
+    ProjectExtensionPointName<EditorNotifications.Provider<?>> epName = BaseSdkCompat.getEditorNotificationsEp();
+    if (epName == null) {
+      return;
+    }
+    epName.getPoint(project).unregisterExtension(providerClass);
+  }
+
+  /** #api201: method was removed in 2020.1. */
+  public static void removeLeakingAppleListeners() {
+    // old behavior was checking
+    // SystemInfo.isMac && System.getProperty("java.runtime.version").startsWith("1.6.0_29")
+    // Is jdk 1.6 supported anymore?
+  }
+
+    /** #api193: constructor changed in 2020.1. */
   public static class DvcsBranchManagerAdapter extends DvcsBranchManager {
     protected DvcsBranchManagerAdapter(
         Project project, DvcsBranchSettings settings, BranchType[] branchTypes) {
