@@ -1,9 +1,9 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "source_only",
@@ -13,7 +13,7 @@ java_library(
 genrule(
     name = "gen_sources",
     outs = ["Gen.java"],
-    cmd = "echo 'class Gen {}' > $@",
+    cmd = "echo 'package com.google.idea.blaze.aspect.java.filteredgenjar;\nclass Gen {}' > $@",
 )
 
 java_library(
