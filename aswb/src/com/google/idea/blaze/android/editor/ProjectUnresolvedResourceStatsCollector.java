@@ -39,13 +39,14 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.serviceContainer.NonInjectable;
 import java.io.File;
 import java.util.ArrayList;
@@ -64,7 +65,7 @@ class ProjectUnresolvedResourceStatsCollector implements Disposable {
   private final WorkspacePathResolverProvider workspacePathResolverProvider;
   private final BlazeProjectDataManager blazeProjectDataManager;
   private final WorkspaceFileFinder.Provider workspaceFileFinderProvider;
-  private final PsiManager psiManager;
+  private final FileTypeRegistry fileTypeRegistry;
 
   private final Project project;
   private SyncMode lastSyncMode;
@@ -80,7 +81,7 @@ class ProjectUnresolvedResourceStatsCollector implements Disposable {
         WorkspacePathResolverProvider.getInstance(project),
         BlazeProjectDataManager.getInstance(project),
         WorkspaceFileFinder.Provider.getInstance(project),
-        PsiManager.getInstance(project));
+        FileTypeRegistry.getInstance());
   }
 
   @NonInjectable
@@ -89,7 +90,7 @@ class ProjectUnresolvedResourceStatsCollector implements Disposable {
       WorkspacePathResolverProvider workspacePathResolverProvider,
       BlazeProjectDataManager blazeProjectDataManager,
       WorkspaceFileFinder.Provider workspaceFileFinderProvider,
-      PsiManager psiManager) {
+      FileTypeRegistry fileTypeRegistry) {
 
     this.project = project;
     fileToHighlightStats = Collections.synchronizedMap(new HashMap<>());
@@ -97,7 +98,7 @@ class ProjectUnresolvedResourceStatsCollector implements Disposable {
     this.workspacePathResolverProvider = workspacePathResolverProvider;
     this.blazeProjectDataManager = blazeProjectDataManager;
     this.workspaceFileFinderProvider = workspaceFileFinderProvider;
-    this.psiManager = psiManager;
+    this.fileTypeRegistry = fileTypeRegistry;
 
     LowMemoryWatcher.register(this::clearMap, project);
   }
@@ -220,10 +221,6 @@ class ProjectUnresolvedResourceStatsCollector implements Disposable {
     if (vFile == null) {
       return null;
     }
-    PsiFile psiFile = psiManager.findFile(vFile);
-    if (psiFile == null) {
-      return null;
-    }
 
     String workspaceFilePath = filePath;
     SyncStatus fileSyncStatus = SyncStatus.UNSYNCED;
@@ -239,16 +236,18 @@ class ProjectUnresolvedResourceStatsCollector implements Disposable {
       BlazeProjectData blazeProjectData = blazeProjectDataManager.getBlazeProjectData();
       if (blazeProjectData != null) {
         fileSyncStatus = SyncStatusContributor.getSyncStatus(project, blazeProjectData, vFile);
+        fileSyncStatus = fileSyncStatus == null ? SyncStatus.UNSYNCED : fileSyncStatus;
       }
     }
 
     WorkspaceFileFinder workspaceFileFinder = workspaceFileFinderProvider.getWorkspaceFileFinder();
     boolean isProjectSource = workspaceFileFinder != null && workspaceFileFinder.isInProject(file);
+    FileType fileType = fileTypeRegistry.getFileTypeByFileName(vFile.getName());
 
     return FileHighlights.builder()
         .setFileName(file.getName())
         .setFilePath(workspaceFilePath)
-        .setFileType(psiFile.getFileType().getName())
+        .setFileType(fileType.getName())
         .setIsProjectSource(isProjectSource)
         .setSyncStatus(fileSyncStatus)
         .setHighlightInfos(ImmutableList.copyOf(highlightInfos))
