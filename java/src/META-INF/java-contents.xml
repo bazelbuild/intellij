@@ -89,7 +89,7 @@
         order="first, before testContextProducer"/>
     <applicationService serviceImplementation="com.google.idea.blaze.java.sync.source.JavaSourcePackageReader"/>
     <applicationService serviceImplementation="com.google.idea.blaze.java.sync.source.PackageManifestReader"/>
-    <programRunner implementation="com.google.idea.blaze.java.run.BlazeJavaDebuggerRunner"/>
+    <programRunner implementation="com.google.idea.blaze.java.run.BlazeJavaDebuggerRunner" id="BlazeJavaDebug"/>
     <projectService serviceImplementation="com.google.idea.blaze.java.libraries.AttachedSourceJarManager"/>
     <postStartupActivity implementation="com.google.idea.blaze.java.libraries.DisableLibraryBytecodeNotification"/>
 
