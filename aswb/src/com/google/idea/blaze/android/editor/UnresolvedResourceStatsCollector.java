@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType;
 public class UnresolvedResourceStatsCollector implements BlazeHighlightStatsCollector {
 
   static final BoolExperiment enabled =
-      new BoolExperiment("android.unresolved.resource.stats.enabled", true);
+      new BoolExperiment("android.unresolved.resource.stats.enabled.2", true);
 
   private static final ImmutableSet<FileType> SUPPORTED_FILE_TYPES =
       ImmutableSet.of(JavaFileType.INSTANCE, KotlinFileType.INSTANCE);
