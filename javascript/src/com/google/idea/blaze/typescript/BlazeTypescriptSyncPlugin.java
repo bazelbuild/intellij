@@ -111,7 +111,8 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
       @Nullable SyncState previousSyncState,
       SyncMode syncMode) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)
-        || !SyncMode.involvesBlazeBuild(syncMode)) {
+        || !SyncMode.involvesBlazeBuild(syncMode)
+        || syncMode == SyncMode.PARTIAL) {
       return;
     }
 
