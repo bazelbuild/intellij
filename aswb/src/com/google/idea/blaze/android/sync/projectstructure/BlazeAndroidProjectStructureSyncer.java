@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.sync.projectstructure;
 
+import static com.google.common.base.Verify.verify;
 import static java.util.stream.Collectors.toSet;
 
 import com.android.annotations.VisibleForTesting;
@@ -31,6 +32,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.manifest.ManifestParser;
+import com.google.idea.blaze.android.manifest.ManifestParser.ParsedManifest;
 import com.google.idea.blaze.android.manifest.ParsedManifestService;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
@@ -68,6 +70,7 @@ import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -85,8 +88,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.annotations.CalledWithReadLock;
 
 /** Updates the IDE's project structure. */
 public class BlazeAndroidProjectStructureSyncer {
@@ -346,7 +351,8 @@ public class BlazeAndroidProjectStructureSyncer {
         target.getAndroidIdeInfo().getResourceJavaPackage(),
         ImmutableList.of(),
         false,
-        null);
+        null,
+        ImmutableMap.of());
     return newModule;
   }
 
@@ -393,6 +399,40 @@ public class BlazeAndroidProjectStructureSyncer {
       Module workspaceModule,
       AndroidResourceModuleRegistry registry,
       BlazeLightResourceClassService.Builder rClassBuilder) {
+    BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
+    if (syncData == null) {
+      return;
+    }
+    AndroidSdkPlatform androidSdkPlatform = syncData.androidSdkPlatform;
+    if (androidSdkPlatform == null) {
+      return;
+    }
+
+    ReadAction.run(
+        () ->
+            updateInMemoryState(
+                project,
+                context,
+                workspaceRoot,
+                projectViewSet,
+                blazeProjectData,
+                workspaceModule,
+                registry,
+                rClassBuilder,
+                preparseManifests(project, projectViewSet, blazeProjectData)));
+  }
+
+  @CalledWithReadLock
+  private static void updateInMemoryState(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      Module workspaceModule,
+      AndroidResourceModuleRegistry registry,
+      BlazeLightResourceClassService.Builder rClassBuilder,
+      ImmutableMap<File, ParsedManifest> parsedManifests) {
     BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
     if (syncData == null) {
       return;
@@ -457,7 +497,8 @@ public class BlazeAndroidProjectStructureSyncer {
           androidIdeInfo.getResourceJavaPackage(),
           resources,
           configAndroidJava8Libs,
-          manifestParsingStatCollector);
+          manifestParsingStatCollector,
+          parsedManifests);
       String modulePackage = androidIdeInfo.getResourceJavaPackage();
       rClassBuilder.addRClass(modulePackage, module);
       sourcePackages.remove(modulePackage);
@@ -495,9 +536,67 @@ public class BlazeAndroidProjectStructureSyncer {
           androidIdeInfo.getResourceJavaPackage(),
           ImmutableList.of(),
           configAndroidJava8Libs,
-          manifestParsingStatCollector);
+          manifestParsingStatCollector,
+          parsedManifests);
     }
     manifestParsingStatCollector.submitLogEvent();
+  }
+
+  private static ImmutableMap<File, ParsedManifest> preparseManifests(
+      Project project, ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+    BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
+    Set<TargetKey> androidResourceModules =
+        syncData.importResult.androidResourceModules.stream()
+            .map(androidResourceModule -> androidResourceModule.targetKey)
+            .collect(toSet());
+    ModuleFinder moduleFinder = ModuleFinder.getInstance(project);
+    ImmutableList<TargetIdeInfo> manifestTargets =
+        ReadAction.compute(
+                () ->
+                    Stream.concat(
+                            syncData.importResult.androidResourceModules.stream()
+                                .map(
+                                    (resourceModule) ->
+                                        blazeProjectData
+                                            .getTargetMap()
+                                            .get(resourceModule.targetKey)),
+                            getRunConfigurationTargets(
+                                project, projectViewSet, blazeProjectData, androidResourceModules)
+                                .stream())
+                        .filter(
+                            (target) -> {
+                              String moduleName = moduleNameForAndroidModule(target.getKey());
+                              return moduleFinder.findModuleByName(moduleName) != null;
+                            }))
+            .collect(ImmutableList.toImmutableList());
+
+    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
+    ImmutableMap.Builder<File, ParsedManifest> parsedManifests = ImmutableMap.builder();
+    for (TargetIdeInfo target : manifestTargets) {
+      AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
+      verify(androidIdeInfo != null);
+
+      ArtifactLocation manifestArtifactLocation = androidIdeInfo.getManifest();
+      if (manifestArtifactLocation == null) {
+        continue;
+      }
+      File manifestFile =
+          OutputArtifactResolver.resolve(
+              project, artifactLocationDecoder, manifestArtifactLocation);
+      if (manifestFile == null) {
+        continue;
+      }
+      try {
+        ParsedManifest parsedManifest =
+            ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
+        if (parsedManifest != null) {
+          parsedManifests.put(manifestFile, parsedManifest);
+        }
+      } catch (IOException ignored) {
+        // Ignored.
+      }
+    }
+    return parsedManifests.build();
   }
 
   @VisibleForTesting
@@ -544,7 +643,8 @@ public class BlazeAndroidProjectStructureSyncer {
         resourceJavaPackage,
         ImmutableList.of(),
         configAndroidJava8Libs,
-        manifestParsingStatCollector);
+        manifestParsingStatCollector,
+        ImmutableMap.of());
   }
 
   private static void updateModuleFacetInMemoryState(
@@ -557,7 +657,8 @@ public class BlazeAndroidProjectStructureSyncer {
       String resourceJavaPackage,
       Collection<File> resources,
       boolean configAndroidJava8Libs,
-      @Nullable ManifestParsingStatCollector manifestParsingStatCollector) {
+      @Nullable ManifestParsingStatCollector manifestParsingStatCollector,
+      ImmutableMap<File, ParsedManifest> preparsedManifests) {
     List<PathString> manifests =
         manifestFile == null
             ? ImmutableList.of()
@@ -574,7 +675,12 @@ public class BlazeAndroidProjectStructureSyncer {
 
     String applicationId =
         getApplicationIdFromManifestOrDefault(
-            project, context, manifestFile, resourceJavaPackage, manifestParsingStatCollector);
+            project,
+            context,
+            manifestFile,
+            resourceJavaPackage,
+            manifestParsingStatCollector,
+            preparsedManifests);
 
     BlazeAndroidModel androidModel =
         new BlazeAndroidModel(
@@ -600,7 +706,8 @@ public class BlazeAndroidProjectStructureSyncer {
       @Nullable BlazeContext context,
       @Nullable File manifestFile,
       String defaultId,
-      @Nullable ManifestParsingStatCollector manifestParsingStatCollector) {
+      @Nullable ManifestParsingStatCollector manifestParsingStatCollector,
+      ImmutableMap<File, ParsedManifest> preparsedManifests) {
     if (manifestFile == null) {
       return defaultId;
     }
@@ -608,8 +715,10 @@ public class BlazeAndroidProjectStructureSyncer {
     String applicationId = defaultId;
     try {
       Stopwatch timer = Stopwatch.createStarted();
-      ManifestParser.ParsedManifest parsedManifest =
-          ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
+      ManifestParser.ParsedManifest parsedManifest = preparsedManifests.get(manifestFile);
+      if (parsedManifest == null) {
+        parsedManifest = ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
+      }
       if (manifestParsingStatCollector != null) {
         manifestParsingStatCollector.addDuration(timer.elapsed());
       }
