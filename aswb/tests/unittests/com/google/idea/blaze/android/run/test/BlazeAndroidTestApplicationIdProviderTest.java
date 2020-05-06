@@ -118,6 +118,6 @@ public class BlazeAndroidTestApplicationIdProviderTest {
   }
 
   private static ParsedManifest stubManifest(String packageName) {
-    return new ParsedManifest(packageName, ImmutableList.of(), null);
+    return new ParsedManifest(packageName, ImmutableList.of(), null, null);
   }
 }

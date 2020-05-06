@@ -68,7 +68,7 @@ public class BlazeApkDeployInfoProtoHelperTest extends BlazeTestCase {
 
     File mainApk = new File("execution_root/path/to/apk");
     File mainManifestFile = new File("execution_root/path/to/manifest");
-    ParsedManifest parsedMainManifest = new ParsedManifest("main", null, null);
+    ParsedManifest parsedMainManifest = new ParsedManifest("main", null, null, null);
     when(mockParsedManifestService.getParsedManifest(mainManifestFile))
         .thenReturn(parsedMainManifest);
 
@@ -100,8 +100,8 @@ public class BlazeApkDeployInfoProtoHelperTest extends BlazeTestCase {
     File testApk = new File("execution_root/path/to/testtarget/apk");
     File mainManifest = new File("execution_root/path/to/manifest");
     File testTargetManifest = new File("execution_root/path/to/testtarget/manifest");
-    ParsedManifest parsedMainManifest = new ParsedManifest("main", null, null);
-    ParsedManifest parsedTestManifest = new ParsedManifest("testtarget", null, null);
+    ParsedManifest parsedMainManifest = new ParsedManifest("main", null, null, null);
+    ParsedManifest parsedTestManifest = new ParsedManifest("testtarget", null, null, null);
     when(mockParsedManifestService.getParsedManifest(mainManifest)).thenReturn(parsedMainManifest);
     when(mockParsedManifestService.getParsedManifest(testTargetManifest))
         .thenReturn(parsedTestManifest);

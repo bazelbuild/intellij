@@ -42,6 +42,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
 
   public static final String LAUNCH_DEFAULT_ACTIVITY = "default_activity";
   public static final String LAUNCH_SPECIFIC_ACTIVITY = "specific_activity";
+  public static final String LAUNCH_SPECIFIC_WATCH_FACE = "specific_watch_face";
   public static final String DO_NOTHING = "do_nothing";
   public static final String LAUNCH_DEEP_LINK = "launch_deep_link";
 
@@ -63,10 +64,12 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
 
   private static final String DEEP_LINK = "DEEP_LINK";
   private static final String ACTIVITY_CLASS = "ACTIVITY_CLASS";
+  private static final String WATCH_FACE_CLASS = "WATCH_FACE_CLASS";
   private static final String MODE = "MODE";
   private static final String ACTIVITY_EXTRA_FLAGS = "ACTIVITY_EXTRA_FLAGS";
   private String deepLink = "";
   private String activityClass = "";
+  private String watchFaceClass = "";
   private String mode = LAUNCH_DEFAULT_ACTIVITY;
 
   private final BlazeAndroidRunConfigurationCommonState commonState;
@@ -136,8 +139,16 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     return activityClass;
   }
 
+  public String getWatchFaceClass() {
+    return watchFaceClass;
+  }
+
   public void setActivityClass(String activityClass) {
     this.activityClass = activityClass;
+  }
+
+  public void setWatchFaceClass(String watchFaceClass) {
+    this.watchFaceClass = watchFaceClass;
   }
 
   public String getMode() {
@@ -180,6 +191,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
 
     setDeepLink(Strings.nullToEmpty(element.getAttributeValue(DEEP_LINK)));
     setActivityClass(Strings.nullToEmpty(element.getAttributeValue(ACTIVITY_CLASS)));
+    setWatchFaceClass(Strings.nullToEmpty(element.getAttributeValue(WATCH_FACE_CLASS)));
     String modeValue = element.getAttributeValue(MODE);
     setMode(Strings.isNullOrEmpty(modeValue) ? LAUNCH_DEFAULT_ACTIVITY : modeValue);
     String launchMethodAttribute = element.getAttributeValue(LAUNCH_METHOD_ATTR);
@@ -237,6 +249,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
 
     element.setAttribute(DEEP_LINK, deepLink);
     element.setAttribute(ACTIVITY_CLASS, activityClass);
+    element.setAttribute(WATCH_FACE_CLASS, watchFaceClass);
     element.setAttribute(MODE, mode);
     element.setAttribute(LAUNCH_METHOD_ATTR, launchMethod.name());
     element.setAttribute(USE_SPLIT_APKS_IF_POSSIBLE, Boolean.toString(useSplitApksIfPossible));

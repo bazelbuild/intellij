@@ -96,7 +96,8 @@ public class BlazeAndroidBinaryMobileInstallRunContext
         deployInfo.getMergedManifest(),
         configState,
         startActivityFlagsProvider,
-        processHandlerLaunchStatus);
+        processHandlerLaunchStatus,
+        launchOptions.isDebug());
   }
 
   @Nullable

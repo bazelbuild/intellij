@@ -19,8 +19,21 @@ import static com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConf
 
 import com.android.tools.idea.run.activity.ActivityLocatorUtils;
 import com.android.tools.idea.run.editor.AndroidProfilersPanelCompat;
+import com.google.common.collect.Sets;
+import com.google.idea.blaze.android.manifest.ManifestParser;
+import com.google.idea.blaze.android.manifest.ParsedManifestService;
+import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
+import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.base.ui.ComboWrapper;
 import com.google.idea.blaze.base.ui.IntegerTextField;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -29,6 +42,8 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.Messages;
@@ -44,6 +59,9 @@ import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.components.JBTabbedPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.util.NavigableSet;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
@@ -53,6 +71,7 @@ import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NotNull;
 
 /** An editor for android binary run configs. */
 class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationStateEditor {
@@ -61,9 +80,11 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
 
   private Box mainContainer;
   private ComponentWithBrowseButton<EditorTextField> activityField;
+  private ComboWrapper<String> watchFaceCombo;
   private JRadioButton launchNothingButton;
   private JRadioButton launchDefaultButton;
   private JRadioButton launchCustomButton;
+  private JRadioButton launchWatchFaceButton;
   private JCheckBox useMobileInstallCheckBox;
   private JCheckBox useWorkProfileIfPresentCheckBox;
   private JCheckBox showLogcatAutomaticallyCheckBox;
@@ -71,6 +92,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
   private IntegerTextField userIdField;
 
   private boolean componentEnabled = true;
+  private boolean hasWatchFaces = false;
 
   BlazeAndroidBinaryRunConfigurationStateEditor(
       RunConfigurationStateEditor commonStateEditor,
@@ -78,6 +100,10 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
       Project project) {
     this.commonStateEditor = commonStateEditor;
     this.profilersPanelCompat = profilersPanelCompat;
+
+    NavigableSet<String> watchFaces = getManifestWatchFaces(project);
+    hasWatchFaces = !watchFaces.isEmpty();
+
     setupUI(project);
     userIdField.setMinValue(0);
 
@@ -121,7 +147,15 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
             }
           }
         });
+
+    if (hasWatchFaces) {
+      watchFaceCombo.setItems(watchFaces);
+    }
+
     ActionListener listener = e -> updateEnabledState();
+    if (hasWatchFaces) {
+      launchWatchFaceButton.addActionListener(listener);
+    }
     launchCustomButton.addActionListener(listener);
     launchDefaultButton.addActionListener(listener);
     launchNothingButton.addActionListener(listener);
@@ -132,6 +166,50 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     useWorkProfileIfPresentCheckBox.addActionListener(listener);
   }
 
+  @NotNull
+  private NavigableSet<String> getManifestWatchFaces(Project project) {
+    NavigableSet<String> watchFaces = Sets.newTreeSet();
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      return watchFaces;
+    }
+    TargetMap targetMap = blazeProjectData.getTargetMap();
+    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      AndroidResourceModule resourceModule =
+          AndroidResourceModuleRegistry.getInstance(project).get(module);
+      if (resourceModule == null) {
+        continue;
+      }
+      TargetIdeInfo target = targetMap.get(resourceModule.targetKey);
+      if (target == null) {
+        continue;
+      }
+      if (target.getAndroidIdeInfo() == null || target.getAndroidIdeInfo().getManifest() == null) {
+        continue;
+      }
+      ArtifactLocation manifestArtifactLocation = target.getAndroidIdeInfo().getManifest();
+
+      File manifestFile =
+          OutputArtifactResolver.resolve(project, decoder, manifestArtifactLocation);
+      if (manifestFile == null) {
+        continue;
+      }
+      try {
+        ManifestParser.ParsedManifest manifest =
+            ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
+        if (manifest != null) {
+          watchFaces.addAll(manifest.watchFaceClassNames);
+        }
+      } catch (IOException ignored) {
+        // Do nothing
+      }
+    }
+
+    return watchFaces;
+  }
+
   @Override
   public void resetEditorFrom(RunConfigurationState genericState) {
     BlazeAndroidBinaryRunConfigurationState state =
@@ -140,15 +218,25 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     profilersPanelCompat.resetFrom(state.getProfilerState());
     boolean launchSpecificActivity =
         state.getMode().equals(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
+    boolean launchSpecificWatchFace =
+        hasWatchFaces
+            && state
+                .getMode()
+                .equals(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_WATCH_FACE);
     if (state.getMode().equals(BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEFAULT_ACTIVITY)) {
       launchDefaultButton.setSelected(true);
     } else if (launchSpecificActivity) {
       launchCustomButton.setSelected(true);
+    } else if (launchSpecificWatchFace) {
+      launchWatchFaceButton.setSelected(true);
     } else {
       launchNothingButton.setSelected(true);
     }
     if (launchSpecificActivity) {
       activityField.getChildComponent().setText(state.getActivityClass());
+    }
+    if (launchSpecificWatchFace) {
+      watchFaceCombo.setSelectedItem(state.getWatchFaceClass());
     }
 
     useMobileInstallCheckBox.setSelected(
@@ -174,6 +262,9 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     } else if (launchCustomButton.isSelected()) {
       state.setMode(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
       state.setActivityClass(activityField.getChildComponent().getText());
+    } else if (hasWatchFaces && launchWatchFaceButton.isSelected()) {
+      state.setMode(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_WATCH_FACE);
+      state.setWatchFaceClass(watchFaceCombo.getSelectedItem());
     } else {
       state.setMode(BlazeAndroidBinaryRunConfigurationState.DO_NOTHING);
     }
@@ -203,6 +294,10 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     userIdField.setEnabled(componentEnabled && !useWorkProfile);
     commonStateEditor.setComponentEnabled(componentEnabled);
     activityField.setEnabled(componentEnabled && launchCustomButton.isSelected());
+    if (hasWatchFaces) {
+      watchFaceCombo.getCombo().setEnabled(componentEnabled && launchWatchFaceButton.isSelected());
+      launchWatchFaceButton.setEnabled(componentEnabled);
+    }
     launchNothingButton.setEnabled(componentEnabled);
     launchDefaultButton.setEnabled(componentEnabled);
     launchCustomButton.setEnabled(componentEnabled);
@@ -257,6 +352,13 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     launchCustomButton.setMnemonic('A');
     launchCustomButton.setDisplayedMnemonicIndex(1);
 
+    if (hasWatchFaces) {
+      launchWatchFaceButton = new JRadioButton();
+      launchWatchFaceButton.setText("Watch face:");
+      launchWatchFaceButton.setMnemonic('W');
+      launchWatchFaceButton.setDisplayedMnemonicIndex(0);
+    }
+
     final EditorTextField editorTextField =
         new LanguageTextField(PlainTextLanguage.INSTANCE, project, "") {
           @Override
@@ -289,6 +391,15 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
             UiUtil.createHorizontalBox(0, launchCustomButton, activityField));
     activityBox.setBorder(
         BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Activity"));
+
+    if (hasWatchFaces) {
+      buttonGroup.add(launchWatchFaceButton);
+      watchFaceCombo = ComboWrapper.create();
+      Box watchFaceBox =
+          UiUtil.createHorizontalBox(0, launchWatchFaceButton, watchFaceCombo.getCombo());
+      watchFaceBox.setAlignmentX(0);
+      activityBox.add(watchFaceBox);
+    }
 
     // Panel to hold all the above editable components.
     mainContainer = UiUtil.createBox(useMobileInstallCheckBox, activityBox, userBox, logcatBox);

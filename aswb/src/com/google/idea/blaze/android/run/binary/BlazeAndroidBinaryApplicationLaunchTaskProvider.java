@@ -36,7 +36,8 @@ public class BlazeAndroidBinaryApplicationLaunchTaskProvider {
       ManifestParser.ParsedManifest mergedManifestParsedManifest,
       BlazeAndroidBinaryRunConfigurationState configState,
       StartActivityFlagsProvider startActivityFlagsProvider,
-      ProcessHandlerLaunchStatus processHandlerLaunchStatus) {
+      ProcessHandlerLaunchStatus processHandlerLaunchStatus,
+      boolean isDebug) {
     try {
       String applicationId = applicationIdProvider.getPackageName();
 
@@ -54,6 +55,11 @@ public class BlazeAndroidBinaryApplicationLaunchTaskProvider {
           launchTask =
               new SpecificActivityLaunchTask(
                   applicationId, configState.getActivityClass(), startActivityFlagsProvider);
+          break;
+        case BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_WATCH_FACE:
+          launchTask =
+              new SpecificWatchFaceLaunchTask(
+                  applicationId, configState.getWatchFaceClass(), isDebug);
           break;
         case BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEEP_LINK:
           launchTask =

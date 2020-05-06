@@ -33,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -86,6 +87,13 @@ public class DefaultActivityLocatorCompat {
     return null;
   }
 
+  public static List<ActivityWrapper> getWatchFaceServices(
+      @NotNull List<ActivityWrapper> activities) {
+    List<ActivityWrapper> watchFaces =
+        ContainerUtil.filter(activities, service -> containsWatchFaceIntent(service));
+    return watchFaces;
+  }
+
   @NotNull
   private static List<ActivityWrapper> getLaunchableActivities(
       @NotNull List<ActivityWrapper> allActivities) {
@@ -133,13 +141,18 @@ public class DefaultActivityLocatorCompat {
     public abstract String getQualifiedName();
 
     public static List<ActivityWrapper> get(
-        @NotNull List<Element> activities, @NotNull List<Element> aliases) {
+        @NotNull List<Element> activities,
+        @NotNull List<Element> aliases,
+        @NotNull List<Element> services) {
       List<ActivityWrapper> list =
           Lists.newArrayListWithCapacity(activities.size() + aliases.size());
       for (Element element : activities) {
         list.add(new ElementActivityWrapper(element));
       }
       for (Element element : aliases) {
+        list.add(new ElementActivityWrapper(element));
+      }
+      for (Element element : services) {
         list.add(new ElementActivityWrapper(element));
       }
       return list;
@@ -241,6 +254,12 @@ public class DefaultActivityLocatorCompat {
     return activity.hasAction(AndroidUtils.LAUNCH_ACTION_NAME)
         && (activity.hasCategory(AndroidUtils.LAUNCH_CATEGORY_NAME)
             || activity.hasCategory(AndroidUtils.LEANBACK_LAUNCH_CATEGORY_NAME));
+  }
+
+  public static boolean containsWatchFaceIntent(
+      @NotNull DefaultActivityLocatorCompat.ActivityWrapper activity) {
+    return activity.hasAction(AndroidUtils.WALLPAPER_SERVICE_ACTION_NAME)
+        && activity.hasCategory(AndroidUtils.WATCHFACE_CATEGORY_NAME);
   }
 
   @Nullable

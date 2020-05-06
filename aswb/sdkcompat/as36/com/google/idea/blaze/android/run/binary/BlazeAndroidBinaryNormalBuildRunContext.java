@@ -93,7 +93,8 @@ public class BlazeAndroidBinaryNormalBuildRunContext
         deployInfo.getMergedManifest(),
         configState,
         startActivityFlagsProvider,
-        processHandlerLaunchStatus);
+        processHandlerLaunchStatus,
+        launchOptions.isDebug());
   }
 
   @Nullable

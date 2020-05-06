@@ -37,7 +37,7 @@ import org.junit.runners.JUnit4;
 public class BlazeAndroidBinaryApplicationIdProviderTest {
   @Test
   public void getApplicationId() throws Exception {
-    ParsedManifest manifest = new ParsedManifest("package.name", ImmutableList.of(), null);
+    ParsedManifest manifest = new ParsedManifest("package.name", ImmutableList.of(), null, null);
     BlazeAndroidDeployInfo deployInfo =
         new BlazeAndroidDeployInfo(manifest, null, ImmutableList.of());
     BlazeApkBuildStep mockBuildStep = mock(BlazeApkBuildStep.class);
@@ -50,7 +50,7 @@ public class BlazeAndroidBinaryApplicationIdProviderTest {
 
   @Test
   public void getApplicationId_noPackageNameInMergedManifest() throws Exception {
-    ParsedManifest manifest = new ParsedManifest(null, ImmutableList.of(), null);
+    ParsedManifest manifest = new ParsedManifest(null, ImmutableList.of(), null, null);
     BlazeAndroidDeployInfo deployInfo =
         new BlazeAndroidDeployInfo(manifest, null, ImmutableList.of());
     BlazeApkBuildStep mockBuildStep = mock(BlazeApkBuildStep.class);
