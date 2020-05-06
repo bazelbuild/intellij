@@ -106,7 +106,10 @@ public class AndroidOutputsProvider implements OutputsProvider {
       }
     fileSet.addAll(androidInfo.getResources());
     for (AndroidResFolder androidResFolder : androidInfo.getResFolders()) {
-        fileSet.add(androidResFolder.getRoot());
+      fileSet.add(androidResFolder.getRoot());
+      if (androidResFolder.getAar() != null) {
+        fileSet.add(androidResFolder.getAar());
+      }
     }
     return fileSet;
   }
