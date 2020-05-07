@@ -15,19 +15,18 @@
  */
 package com.google.idea.blaze.aspect;
 
+import static com.google.idea.blaze.aspect.OptionParser.parseParamFileIfUsed;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -128,18 +127,6 @@ public final class JarFilter {
           options.filterSourceJars,
           options.filteredSourceJar,
           string -> shouldKeepJavaFile(archiveFileNamePrefixes, string));
-    }
-  }
-
-  private static String[] parseParamFileIfUsed(String[] args) {
-    if (args.length != 1 || !args[0].startsWith("@")) {
-      return args;
-    }
-    File paramFile = new File(args[0].substring(1));
-    try {
-      return Files.readLines(paramFile, StandardCharsets.UTF_8).toArray(new String[0]);
-    } catch (IOException e) {
-      throw new RuntimeException("Error parsing param file: " + args[0], e);
     }
   }
 

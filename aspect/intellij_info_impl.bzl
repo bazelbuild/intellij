@@ -571,6 +571,20 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
             for jar in [java.annotation_processing.class_jar]
             if jar != None and not jar.is_source
         ]
+    else:
+        gen_outs = build_gen_jars_for_kotlin(target, ctx, java)
+        compile_files += [
+            out.class_jar
+            for out in gen_outs
+        ]
+        resolve_files += [
+            out.class_jar
+            for out in gen_outs
+        ] + [
+            out.source_jar
+            for out in gen_outs
+        ]
+        gen_jars = annotation_processing_jars(gen_outs[0]) if len(gen_outs) > 0 else []
 
     jdeps = None
     jdeps_file = None
@@ -625,6 +639,84 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_compile_time_jars)
         update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_source_jars)
     return True
+
+def build_gen_jars_for_kotlin(target, ctx, java):
+    """Generates a pseudo-gen JAR for kt_ rules to simulate annotation processed JARs
+
+    Args:
+        target: target
+        ctx: context
+        java: JavaInfo (or java provider) for target
+
+    Returns:
+        Filtered JARs
+    """
+    if (not ctx.rule.kind.startswith("kt_")):
+        return []
+
+    sources = _get_java_kt_sources(ctx)
+    output_gen_jars = []
+
+    for java_output in java.outputs.jars:
+        binary_jar = java_output.ijar
+        if (not binary_jar):
+            binary_jar = java_output.class_jar
+        if (not binary_jar):
+            continue
+
+        src_jars = get_source_jars(java_output)
+        src_jar = src_jars[0] if src_jars else None
+
+        jar_name = binary_jar.basename[:-4]
+        filtered_jar = ctx.actions.declare_file(jar_name + "-kt-gen.jar")
+
+        filtered_src_jar = None
+        if (src_jar):
+            src_jar_name = src_jar.basename[:-4]
+            filtered_src_jar = ctx.actions.declare_file(src_jar_name + "-kt-gen.jar")
+
+        args = ctx.actions.args()
+        args.add("--jar", binary_jar.path)
+        args.add("--filtered_jar", filtered_jar.path)
+        if filtered_src_jar:
+            args.add("--srcjar", src_jar.path)
+            args.add("--filtered_srcjar", filtered_src_jar.path)
+        args.add_joined("--sources", [source.path for source in sources], join_with = ",")
+
+        inputs = sources + [binary_jar]
+        outputs = [filtered_jar]
+
+        if (filtered_src_jar):
+            inputs = inputs + [src_jar]
+            outputs = outputs + [filtered_src_jar]
+        ctx.actions.run(
+            inputs = inputs,
+            outputs = outputs,
+            executable = ctx.executable._kotlin_gen_jar_filter,
+            arguments = [args],
+            mnemonic = "KotlinGenJarFilter",
+            progress_message = "Creating pseudo gen jar for " + str(target.label),
+        )
+
+        output_gen_jars.append(struct_omit_none(
+            class_jar = filtered_jar,
+            source_jar = filtered_src_jar,
+        ))
+
+    return output_gen_jars
+
+def _get_java_kt_sources(ctx):
+    if (not hasattr(ctx.rule.attr, "srcs")):
+        return []
+
+    sources = []
+    srcs = ctx.rule.attr.srcs
+    for src in srcs:
+        for f in src.files.to_list():
+            if (f.is_source) and (f.basename.endswith(".java") or f.basename.endswith(".kt")):
+                sources.append(f)
+
+    return sources
 
 def _package_manifest_file_argument(f):
     artifact = artifact_location(f)
@@ -1091,6 +1183,12 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         ),
         "_create_aar": attr.label(
             default = tool_label("CreateAar"),
+            cfg = "host",
+            executable = True,
+            allow_files = True,
+        ),
+        "_kotlin_gen_jar_filter": attr.label(
+            default = tool_label("KotlinGenJarFilter"),
             cfg = "host",
             executable = True,
             allow_files = True,

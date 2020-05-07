@@ -15,7 +15,12 @@
  */
 package com.google.idea.blaze.aspect;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -37,6 +42,7 @@ public final class OptionParser {
    *     programming error on the client side.
    */
   @Nullable
+  @SuppressWarnings("IncrementInForLoopAndHeader")
   static <T> T parseSingleOption(String[] args, String name, Function<String, T> parser) {
     String argName = "--" + name;
     for (int i = 0; i < args.length; i++) {
@@ -65,6 +71,7 @@ public final class OptionParser {
    *
    * <p>Returns an empty list if no occurrences of the flag are found.
    */
+  @SuppressWarnings("IncrementInForLoopAndHeader")
   static <T> List<T> parseMultiOption(String[] args, String name, Function<String, T> parser) {
     List<T> result = null;
     String argName = "--" + name;
@@ -85,5 +92,18 @@ public final class OptionParser {
       i++;
     }
     return result == null ? ImmutableList.of() : result;
+  }
+
+  @SuppressWarnings("ThrowSpecificExceptions")
+  static String[] parseParamFileIfUsed(String[] args) {
+    if (args.length != 1 || !args[0].startsWith("@")) {
+      return args;
+    }
+    File paramFile = new File(args[0].substring(1));
+    try {
+      return Files.readLines(paramFile, UTF_8).toArray(new String[0]);
+    } catch (IOException e) {
+      throw new RuntimeException("Error parsing param file: " + args[0], e);
+    }
   }
 }

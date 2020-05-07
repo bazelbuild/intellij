@@ -39,10 +39,21 @@ java_binary(
     visibility = ["//visibility:public"],
 )
 
-
 java_import(
     name = "create_aar_lib",
     jars = ["tools/CreateAar_deploy.jar"],
+)
+
+java_binary(
+    name = "KotlinGenJarFilter_bin",
+    main_class = "com.google.idea.blaze.aspect.KotlinGenJarFilter",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":kotlin_gen_jar_filter_lib"],
+)
+
+java_import(
+  name = "kotlin_gen_jar_filter_lib",
+  jars = ["tools/KotlinGenJarFilter_deploy.jar"]
 )
 
 define_flag_hack()

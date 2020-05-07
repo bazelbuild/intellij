@@ -15,16 +15,16 @@
  */
 package com.google.idea.blaze.aspect;
 
+import static com.google.idea.blaze.aspect.OptionParser.parseParamFileIfUsed;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.logging.Level;
@@ -110,18 +110,6 @@ public class CreateAar {
       zos.putNextEntry(zipEntry);
       ByteStreams.copy(fis, zos);
       zos.closeEntry();
-    }
-  }
-
-  private static String[] parseParamFileIfUsed(String[] args) {
-    if (args.length != 1 || !args[0].startsWith("@")) {
-      return args;
-    }
-    File paramFile = new File(args[0].substring(1));
-    try {
-      return Files.readLines(paramFile, StandardCharsets.UTF_8).toArray(new String[0]);
-    } catch (IOException e) {
-      throw new IllegalStateException("Error parsing param file: " + args[0], e);
     }
   }
 

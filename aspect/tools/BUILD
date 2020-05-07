@@ -53,6 +53,13 @@ java_binary(
     runtime_deps = [":lib"],
 )
 
+java_binary(
+    name = "KotlinGenJarFilter",
+    main_class = "com.google.idea.blaze.aspect.KotlinGenJarFilter",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":lib"],
+)
+
 java_library(
     name = "test_lib",
     testonly = 1,
@@ -103,5 +110,13 @@ java_test(
     size = "small",
     srcs = ["tests/unittests/com/google/idea/blaze/aspect/CreateAarTest.java"],
     test_class = "com.google.idea.blaze.aspect.CreateAarTest",
+    deps = [":test_lib"],
+)
+
+java_test(
+    name = "KotlinGenJarFilterTest",
+    size = "medium",
+    srcs = ["tests/unittests/com/google/idea/blaze/aspect/KotlinGenJarFilterTest.java"],
+    test_class = "com.google.idea.blaze.aspect.KotlinGenJarFilterTest",
     deps = [":test_lib"],
 )
