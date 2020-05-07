@@ -49,6 +49,7 @@ class BlazeJavaUserSettingsConfigurable extends AutoConfigurable {
                   Blaze.defaultBuildSystemName()))
           .getter(BlazeJavaUserSettings::getUseJarCache)
           .setter(BlazeJavaUserSettings::setUseJarCache)
+          .hideIf(() -> !BlazeJavaUserSettings.allowJarCache())
           .componentFactory(SimpleComponent::createCheckBox);
 
   private static final ImmutableList<ConfigurableSetting<?, ?>> SETTINGS =
