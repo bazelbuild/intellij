@@ -75,6 +75,8 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
   }
 
   static boolean allowJarCache() {
-    return !SystemInfo.isMac || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix());
+    return !SystemInfo.isMac
+        || BuildSystemProvider.defaultBuildSystem().buildSystem() == BuildSystem.Bazel
+        || "AndroidStudio".equals(PlatformUtils.getPlatformPrefix());
   }
 }
