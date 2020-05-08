@@ -366,7 +366,19 @@ public class JarCache {
       // TODO(brendandouglas): copy locally on the fly?
       return null;
     }
-    return ((LocalFileArtifact) output).getFile();
+    return patchExternalFilePath(((LocalFileArtifact) output).getFile());
+  }
+
+  /**
+   * A workaround for https://github.com/bazelbuild/intellij/issues/1256. Point external workspace
+   * symlinks to the corresponding fixed location.
+   */
+  private static File patchExternalFilePath(File maybeExternal) {
+    String externalString = maybeExternal.toString();
+    if (externalString.contains("/external/") && !externalString.contains("/bazel-out/")) {
+      return new File(externalString.replaceAll("/execroot.*/external/", "/external/"));
+    }
+    return maybeExternal;
   }
 
   private static String cacheKeyInternal(BlazeArtifact output) {
