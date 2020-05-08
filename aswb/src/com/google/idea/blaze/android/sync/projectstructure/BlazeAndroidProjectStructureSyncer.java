@@ -23,6 +23,7 @@ import com.android.ide.common.gradle.model.SourceProviderUtil;
 import com.android.ide.common.util.PathStringUtil;
 import com.android.projectmodel.AndroidPathType;
 import com.android.projectmodel.SourceSet;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -46,6 +47,7 @@ import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -75,6 +77,7 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -87,6 +90,27 @@ import org.jetbrains.android.facet.AndroidFacet;
 /** Updates the IDE's project structure. */
 public class BlazeAndroidProjectStructureSyncer {
   private static final Logger log = Logger.getInstance(BlazeAndroidProjectStructureSyncer.class);
+
+  private static class ManifestParsingStatCollector {
+    private Duration totalDuration = Duration.ZERO;
+    private int fileCount = 0;
+
+    /** Adds duration to total duration counter. Also increments file count. */
+    void addDuration(Duration duration) {
+      totalDuration = totalDuration.plus(duration);
+      fileCount++;
+    }
+
+    /** Logs the total number of files processed and the amount of time it took. */
+    void submitLogEvent() {
+      EventLoggingService.getInstance()
+          .logEvent(
+              BlazeAndroidProjectStructureSyncer.class,
+              "PostSyncManifestParsing",
+              ImmutableMap.of(
+                  "fileCount", "" + fileCount, "totalDurationMs", "" + totalDuration.toMillis()));
+    }
+  }
 
   public static void updateProjectStructure(
       Project project,
@@ -310,7 +334,8 @@ public class BlazeAndroidProjectStructureSyncer {
             moduleDirectory),
         target.getAndroidIdeInfo().getResourceJavaPackage(),
         ImmutableList.of(),
-        false);
+        false,
+        null);
     return newModule;
   }
 
@@ -365,7 +390,7 @@ public class BlazeAndroidProjectStructureSyncer {
     if (androidSdkPlatform == null) {
       return;
     }
-
+    ManifestParsingStatCollector manifestParsingStatCollector = new ManifestParsingStatCollector();
     boolean configAndroidJava8Libs = hasConfigAndroidJava8Libs(projectViewSet);
 
     updateWorkspaceModuleFacetInMemoryState(
@@ -374,7 +399,8 @@ public class BlazeAndroidProjectStructureSyncer {
         workspaceRoot,
         workspaceModule,
         androidSdkPlatform,
-        configAndroidJava8Libs);
+        configAndroidJava8Libs,
+        manifestParsingStatCollector);
 
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
     ModuleFinder moduleFinder = ModuleFinder.getInstance(project);
@@ -419,7 +445,8 @@ public class BlazeAndroidProjectStructureSyncer {
               moduleDirectoryForAndroidTarget(workspaceRoot, target)),
           androidIdeInfo.getResourceJavaPackage(),
           resources,
-          configAndroidJava8Libs);
+          configAndroidJava8Libs,
+          manifestParsingStatCollector);
       String modulePackage = androidIdeInfo.getResourceJavaPackage();
       rClassBuilder.addRClass(modulePackage, module);
       sourcePackages.remove(modulePackage);
@@ -456,8 +483,10 @@ public class BlazeAndroidProjectStructureSyncer {
               moduleDirectoryForAndroidTarget(workspaceRoot, target)),
           androidIdeInfo.getResourceJavaPackage(),
           ImmutableList.of(),
-          configAndroidJava8Libs);
+          configAndroidJava8Libs,
+          manifestParsingStatCollector);
     }
+    manifestParsingStatCollector.submitLogEvent();
   }
 
   @VisibleForTesting
@@ -490,7 +519,8 @@ public class BlazeAndroidProjectStructureSyncer {
       WorkspaceRoot workspaceRoot,
       Module workspaceModule,
       AndroidSdkPlatform androidSdkPlatform,
-      boolean configAndroidJava8Libs) {
+      boolean configAndroidJava8Libs,
+      @Nullable ManifestParsingStatCollector manifestParsingStatCollector) {
     File moduleDirectory = workspaceRoot.directory();
     File manifest = new File(workspaceRoot.directory(), "AndroidManifest.xml");
     String resourceJavaPackage = ":workspace";
@@ -503,7 +533,8 @@ public class BlazeAndroidProjectStructureSyncer {
         manifest,
         resourceJavaPackage,
         ImmutableList.of(),
-        configAndroidJava8Libs);
+        configAndroidJava8Libs,
+        manifestParsingStatCollector);
   }
 
   private static void updateModuleFacetInMemoryState(
@@ -515,7 +546,8 @@ public class BlazeAndroidProjectStructureSyncer {
       File manifestFile,
       String resourceJavaPackage,
       Collection<File> resources,
-      boolean configAndroidJava8Libs) {
+      boolean configAndroidJava8Libs,
+      @Nullable ManifestParsingStatCollector manifestParsingStatCollector) {
     SourceSet sourceSet =
         new SourceSet(
             ImmutableMap.of(
@@ -528,8 +560,12 @@ public class BlazeAndroidProjectStructureSyncer {
 
     String applicationId = resourceJavaPackage;
     try {
+      Stopwatch timer = Stopwatch.createStarted();
       ManifestParser.ParsedManifest parsedManifest =
           ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
+      if (manifestParsingStatCollector != null) {
+        manifestParsingStatCollector.addDuration(timer.elapsed());
+      }
       if (parsedManifest != null && parsedManifest.packageName != null) {
         applicationId = parsedManifest.packageName;
       }
