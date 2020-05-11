@@ -22,6 +22,7 @@ import static com.android.xml.AndroidManifest.NODE_ACTIVITY;
 import static com.android.xml.AndroidManifest.NODE_ACTIVITY_ALIAS;
 import static com.android.xml.AndroidManifest.NODE_APPLICATION;
 import static com.android.xml.AndroidManifest.NODE_INSTRUMENTATION;
+import static com.android.xml.AndroidManifest.NODE_SERVICE;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -31,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -44,6 +46,7 @@ import org.xml.sax.SAXException;
 /** Parses manifests from input streams. */
 public class ManifestParser {
   private static final Logger log = Logger.getInstance(ManifestParser.class);
+  private static List<DefaultActivityLocatorCompat.ActivityWrapper> manifest_info;
 
   public static ManifestParser getInstance(Project project) {
     return ServiceManager.getService(project, ManifestParser.class);
@@ -70,13 +73,21 @@ public class ManifestParser {
      */
     @Nullable public final String defaultActivityClassName;
 
+    /**
+     * List of the watch face classes defined in the parsed manifest. This is specific to WearOS
+     * targets.
+     */
+    public final ImmutableList<String> watchFaceClassNames;
+
     public ParsedManifest(
         @Nullable String packageName,
         ImmutableList<String> instrumentationClassNames,
-        @Nullable String defaultActivityClassName) {
+        @Nullable String defaultActivityClassName,
+        ImmutableList<String> watchFaceClassNames) {
       this.packageName = packageName;
       this.instrumentationClassNames = instrumentationClassNames;
       this.defaultActivityClassName = defaultActivityClassName;
+      this.watchFaceClassNames = watchFaceClassNames;
     }
   }
 
@@ -123,6 +134,7 @@ public class ManifestParser {
     ImmutableList.Builder<String> instrumentationClassNames = ImmutableList.builder();
     ImmutableList.Builder<Element> activities = new ImmutableList.Builder<>();
     ImmutableList.Builder<Element> activityAliases = new ImmutableList.Builder<>();
+    ImmutableList.Builder<Element> services = new ImmutableList.Builder<>();
     try {
       Node node = manifestRootElement.getFirstChild();
       while (node != null) {
@@ -140,6 +152,8 @@ public class ManifestParser {
                   activities.add((Element) child);
                 } else if (NODE_ACTIVITY_ALIAS.equals(childNodeName)) {
                   activityAliases.add((Element) child);
+                } else if (NODE_SERVICE.equals(childNodeName)) {
+                  services.add((Element) child);
                 }
               }
               child = child.getNextSibling();
@@ -160,12 +174,20 @@ public class ManifestParser {
       return null;
     }
 
+    manifest_info =
+        DefaultActivityLocatorCompat.ActivityWrapper.get(
+            activities.build(), activityAliases.build(), services.build());
+    ImmutableList<String> watchFaceServices =
+        DefaultActivityLocatorCompat.getWatchFaceServices(manifest_info).stream()
+            .map(DefaultActivityLocatorCompat.ActivityWrapper::getQualifiedName)
+            .collect(ImmutableList.toImmutableList());
     String defaultActivityClassName =
-        DefaultActivityLocatorCompat.computeDefaultActivity(
-            DefaultActivityLocatorCompat.ActivityWrapper.get(
-                activities.build(), activityAliases.build()));
+        DefaultActivityLocatorCompat.computeDefaultActivity(manifest_info);
 
     return new ParsedManifest(
-        packageName, instrumentationClassNames.build(), defaultActivityClassName);
+        packageName,
+        instrumentationClassNames.build(),
+        defaultActivityClassName,
+        watchFaceServices);
   }
 }
