@@ -54,6 +54,8 @@ def _fast_build_info_impl(target, ctx):
         launcher = None
         if hasattr(ctx.rule.attr, "_java_launcher") and ctx.rule.attr._java_launcher:
             launcher = str(ctx.rule.attr._java_launcher.label)
+        elif hasattr(ctx.rule.attr, "_javabase") and ctx.rule.attr._javabase:
+            launcher = str(ctx.rule.attr._javabase.label)
         java_info = {
             "sources": sources_from_target(ctx),
             "test_class": getattr(ctx.rule.attr, "test_class", None),
