@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.toSet;
 import com.android.annotations.VisibleForTesting;
 import com.android.builder.model.SourceProvider;
 import com.android.ide.common.gradle.model.SourceProviderUtil;
+import com.android.ide.common.util.PathString;
 import com.android.ide.common.util.PathStringUtil;
 import com.android.projectmodel.AndroidPathType;
 import com.android.projectmodel.SourceSet;
@@ -80,7 +81,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -522,7 +522,6 @@ public class BlazeAndroidProjectStructureSyncer {
       boolean configAndroidJava8Libs,
       @Nullable ManifestParsingStatCollector manifestParsingStatCollector) {
     File moduleDirectory = workspaceRoot.directory();
-    File manifest = new File(workspaceRoot.directory(), "AndroidManifest.xml");
     String resourceJavaPackage = ":workspace";
     updateModuleFacetInMemoryState(
         project,
@@ -530,7 +529,7 @@ public class BlazeAndroidProjectStructureSyncer {
         androidSdkPlatform,
         workspaceModule,
         moduleDirectory,
-        manifest,
+        null,
         resourceJavaPackage,
         ImmutableList.of(),
         configAndroidJava8Libs,
@@ -543,38 +542,28 @@ public class BlazeAndroidProjectStructureSyncer {
       AndroidSdkPlatform androidSdkPlatform,
       Module module,
       File moduleDirectory,
-      File manifestFile,
+      @Nullable File manifestFile,
       String resourceJavaPackage,
       Collection<File> resources,
       boolean configAndroidJava8Libs,
       @Nullable ManifestParsingStatCollector manifestParsingStatCollector) {
+    List<PathString> manifests =
+        manifestFile == null
+            ? ImmutableList.of()
+            : ImmutableList.of(PathStringUtil.toPathString(manifestFile));
     SourceSet sourceSet =
         new SourceSet(
             ImmutableMap.of(
                 AndroidPathType.RES,
                 PathStringUtil.toPathStrings(resources),
                 AndroidPathType.MANIFEST,
-                Collections.singletonList(PathStringUtil.toPathString(manifestFile))));
+                manifests));
     SourceProvider sourceProvider =
         SourceProviderUtil.toSourceProvider(sourceSet, module.getName());
 
-    String applicationId = resourceJavaPackage;
-    try {
-      Stopwatch timer = Stopwatch.createStarted();
-      ManifestParser.ParsedManifest parsedManifest =
-          ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
-      if (manifestParsingStatCollector != null) {
-        manifestParsingStatCollector.addDuration(timer.elapsed());
-      }
-      if (parsedManifest != null && parsedManifest.packageName != null) {
-        applicationId = parsedManifest.packageName;
-      }
-    } catch (IOException e) {
-      log.warn("Could not read from manifest file: " + manifestFile);
-      if (context != null) {
-        context.output(PrintOutput.log("Could not read from manifest file: " + manifestFile));
-      }
-    }
+    String applicationId =
+        getApplicationIdFromManifestOrDefault(
+            project, context, manifestFile, resourceJavaPackage, manifestParsingStatCollector);
 
     BlazeAndroidModel androidModel =
         new BlazeAndroidModel(
@@ -589,5 +578,47 @@ public class BlazeAndroidProjectStructureSyncer {
       BlazeAndroidProjectStructureSyncerCompat.updateAndroidFacetWithSourceAndModel(
           facet, sourceProvider, androidModel);
     }
+  }
+
+  /**
+   * Parses the provided manifest to calculate applicationId. Returns the provided default if the
+   * manifest file does not exist, or is invalid
+   */
+  private static String getApplicationIdFromManifestOrDefault(
+      Project project,
+      @Nullable BlazeContext context,
+      @Nullable File manifestFile,
+      String defaultId,
+      @Nullable ManifestParsingStatCollector manifestParsingStatCollector) {
+    if (manifestFile == null) {
+      return defaultId;
+    }
+
+    String applicationId = defaultId;
+    try {
+      Stopwatch timer = Stopwatch.createStarted();
+      ManifestParser.ParsedManifest parsedManifest =
+          ParsedManifestService.getInstance(project).getParsedManifest(manifestFile);
+      if (manifestParsingStatCollector != null) {
+        manifestParsingStatCollector.addDuration(timer.elapsed());
+      }
+
+      if (parsedManifest != null && parsedManifest.packageName != null) {
+        applicationId = parsedManifest.packageName;
+      } else {
+        String message = "Could not parse manifest file: " + manifestFile;
+        log.warn(message);
+        if (context != null) {
+          context.output(PrintOutput.log(message));
+        }
+      }
+    } catch (IOException e) {
+      String message = "Exception while reading manifest file: " + manifestFile;
+      log.warn(message, e);
+      if (context != null) {
+        context.output(PrintOutput.log(message));
+      }
+    }
+    return applicationId;
   }
 }
