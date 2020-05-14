@@ -75,6 +75,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import java.io.File;
 import java.io.IOException;
@@ -195,7 +196,17 @@ public class BlazeAndroidProjectStructureSyncer {
       ++totalOrderEntries;
 
       for (String libraryName : androidResourceModule.resourceLibraryKeys) {
-        modifiableRootModel.addLibraryEntry(libraryTable.getLibraryByName(libraryName));
+        Library lib = libraryTable.getLibraryByName(libraryName);
+        if (lib == null) {
+          String message =
+              String.format(
+                  "Could not find library '%s' for module '%s'. Re-syncing might fix this issue.",
+                  libraryName, moduleName);
+          log.warn(message);
+          context.output(PrintOutput.log(message));
+        } else {
+          modifiableRootModel.addLibraryEntry(lib);
+        }
       }
       // Add a dependency from the workspace to the resource module
       ModuleOrderEntry orderEntry = workspaceModifiableModel.addModuleOrderEntry(module);
