@@ -44,6 +44,14 @@ public interface BlazeArtifact {
         .collect(toImmutableList());
   }
 
+  static ImmutableList<RemoteOutputArtifact> getRemoteArtifacts(
+      Collection<? extends BlazeArtifact> artifacts) {
+    return artifacts.stream()
+        .filter(a -> a instanceof RemoteOutputArtifact)
+        .map(a -> ((RemoteOutputArtifact) a))
+        .collect(toImmutableList());
+  }
+
   /** A buffered input stream providing the contents of this artifact. */
   @MustBeClosed
   BufferedInputStream getInputStream() throws IOException;

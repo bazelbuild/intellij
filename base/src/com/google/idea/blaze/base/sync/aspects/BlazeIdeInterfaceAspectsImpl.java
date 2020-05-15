@@ -44,7 +44,6 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArt
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
@@ -62,9 +61,9 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.prefetch.PrefetchFileSource;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
+import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -231,26 +230,32 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 "Total rules: %d, new/changed: %d, removed: %d",
                 targetCount, diff.getUpdatedOutputs().size(), removedCount)));
 
-    // prefetch remote outputs
-    List<ListenableFuture<?>> futures = new ArrayList<>();
-    for (BlazeArtifact file : diff.getUpdatedOutputs()) {
-      if (file instanceof RemoteOutputArtifact) {
-        futures.add(FetchExecutor.EXECUTOR.submit(((RemoteOutputArtifact) file)::prefetch));
-      }
-    }
-    if (!futures.isEmpty()
-        && !FutureUtil.waitForFuture(context, Futures.allAsList(futures))
-            .timed("PrefetchRemoteAspectOutput", EventType.Prefetching)
-            .withProgressMessage("Reading IDE info result...")
-            .run()
-            .success()) {
+    ListenableFuture<?> downloadArtifactsFuture =
+        RemoteArtifactPrefetcher.getInstance()
+            .downloadArtifacts(
+                /* projectName= */ project.getName(),
+                /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(diff.getUpdatedOutputs()));
+    ListenableFuture<?> loadFilesInJvmFuture =
+        RemoteArtifactPrefetcher.getInstance()
+            .loadFilesInJvm(
+                /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(diff.getUpdatedOutputs()));
+
+    if (!FutureUtil.waitForFuture(
+            context, Futures.allAsList(downloadArtifactsFuture, loadFilesInJvmFuture))
+        .timed("PrefetchRemoteAspectOutput", EventType.Prefetching)
+        .withProgressMessage("Reading IDE info result...")
+        .run()
+        .success()) {
       return null;
     }
 
-    ListenableFuture<?> prefetchFuture =
+    ListenableFuture<?> fetchLocalFilesFuture =
         PrefetchService.getInstance()
-            .prefetchFiles(BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()), true, false);
-    if (!FutureUtil.waitForFuture(context, prefetchFuture)
+            .prefetchFiles(
+                /* files= */ BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()),
+                /* refetchCachedFiles= */ true,
+                /* fetchFileTypes= */ false);
+    if (!FutureUtil.waitForFuture(context, fetchLocalFilesFuture)
         .timed("FetchAspectOutput", EventType.Prefetching)
         .withProgressMessage("Reading IDE info result...")
         .run()

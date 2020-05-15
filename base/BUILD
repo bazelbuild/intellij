@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -15,6 +13,8 @@ load(
     "//intellij_platform_sdk:build_defs.bzl",
     "select_for_plugin_api",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "base",
@@ -245,6 +245,23 @@ java_library(
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
+    name = "remote_file_prefetcher",
+    srcs = [
+        "src/com/google/idea/blaze/base/async/FutureUtil.java",
+        "src/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
+        "src/com/google/idea/blaze/base/prefetch/FetchExecutor.java",
+        "src/com/google/idea/blaze/base/prefetch/RemoteArtifactPrefetcher.java",
+    ],
+    neverlink = 1,
+    deps = [
+        ":base",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+        "//proto:proto_deps",
     ],
 )
 

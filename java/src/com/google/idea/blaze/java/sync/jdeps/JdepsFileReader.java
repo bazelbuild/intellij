@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
+import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
@@ -42,6 +43,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.jdeps.JdepsState.JdepsData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -70,6 +72,7 @@ public class JdepsFileReader {
   /** Loads any updated jdeps files since the last invocation of this method. */
   @Nullable
   public JdepsMap loadJdepsFiles(
+      Project project,
       BlazeContext parentContext,
       ArtifactLocationDecoder artifactLocationDecoder,
       Collection<TargetIdeInfo> targetsToLoad,
@@ -83,7 +86,8 @@ public class JdepsFileReader {
             (context) -> {
               context.push(new TimingScope("LoadJdepsFiles", EventType.Other));
               try {
-                return doLoadJdepsFiles(context, artifactLocationDecoder, oldState, targetsToLoad);
+                return doLoadJdepsFiles(
+                    project, context, artifactLocationDecoder, oldState, targetsToLoad);
               } catch (InterruptedException e) {
                 throw new ProcessCanceledException(e);
               } catch (ExecutionException e) {
@@ -101,6 +105,7 @@ public class JdepsFileReader {
 
   @Nullable
   private JdepsState doLoadJdepsFiles(
+      Project project,
       BlazeContext context,
       ArtifactLocationDecoder decoder,
       @Nullable JdepsState oldState,
@@ -119,10 +124,18 @@ public class JdepsFileReader {
             oldState != null ? oldState.getArtifactState() : null, fileToTargetMap.keySet());
 
     // TODO: handle prefetching for arbitrary OutputArtifacts
-    ListenableFuture<?> fetchFuture =
+    List<OutputArtifact> outputArtifacts = diff.getUpdatedOutputs();
+
+    ListenableFuture<?> downloadArtifactsFuture =
+        RemoteArtifactPrefetcher.getInstance()
+            .downloadArtifacts(
+                /* projectName= */ project.getName(),
+                /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(outputArtifacts));
+    ListenableFuture<?> fetchLocalFilesFuture =
         PrefetchService.getInstance()
-            .prefetchFiles(BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()), true, false);
-    if (!FutureUtil.waitForFuture(context, fetchFuture)
+            .prefetchFiles(BlazeArtifact.getLocalFiles(outputArtifacts), true, false);
+    if (!FutureUtil.waitForFuture(
+            context, Futures.allAsList(downloadArtifactsFuture, fetchLocalFilesFuture))
         .timed("FetchJdeps", EventType.Prefetching)
         .withProgressMessage("Reading jdeps files...")
         .run()
@@ -133,7 +146,7 @@ public class JdepsFileReader {
     AtomicLong totalSizeLoaded = new AtomicLong(0);
 
     List<ListenableFuture<Result>> futures = Lists.newArrayList();
-    for (OutputArtifact updatedFile : diff.getUpdatedOutputs()) {
+    for (OutputArtifact updatedFile : outputArtifacts) {
       futures.add(
           FetchExecutor.EXECUTOR.submit(
               () -> {

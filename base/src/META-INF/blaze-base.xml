@@ -222,6 +222,8 @@
     <applicationService serviceImplementation="com.google.idea.blaze.base.sync.projectview.RelatedWorkspacePathFinder"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.prefetch.PrefetchService"
                         serviceImplementation="com.google.idea.blaze.base.prefetch.PrefetchServiceImpl"/>
+    <applicationService serviceInterface="com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher"
+                    serviceImplementation="com.google.idea.blaze.base.prefetch.DefaultPrefetcher"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.wizard2.BlazeWizardUserSettingsStorage"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.wizard2.BlazeWizardOptionProvider"
                         serviceImplementation="com.google.idea.blaze.base.wizard2.BazelWizardOptionProvider"/>
