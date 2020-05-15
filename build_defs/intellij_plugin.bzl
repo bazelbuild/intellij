@@ -240,7 +240,7 @@ _intellij_plugin_jar = rule(
     },
 )
 
-def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, **kwargs):
+def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, extra_runtime_deps = [], **kwargs):
     """Creates an intellij plugin from the given deps and plugin.xml.
 
     Args:
@@ -250,6 +250,7 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
       optional_plugin_xmls: A list of optional_plugin_xml targets.
       jar_name: The name of the final plugin jar, or <name>.jar if None
       **kwargs: Any further arguments to be passed to the final target
+      extra_runtime_deps: runtime_deps added to java_binary or java_test calls
     """
     java_deps_name = name + "_java_deps"
     binary_name = name + "_binary"
@@ -260,7 +261,7 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
     )
     native.java_binary(
         name = binary_name,
-        runtime_deps = [":" + java_deps_name],
+        runtime_deps = [":" + java_deps_name] + extra_runtime_deps,
         create_executable = 0,
     )
     jar_target_name = name + "_intellij_plugin_jar"
