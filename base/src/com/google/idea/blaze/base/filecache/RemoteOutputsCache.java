@@ -238,7 +238,7 @@ public final class RemoteOutputsCache {
             futures.add(
                 FetchExecutor.EXECUTOR.submit(
                     () -> {
-                      Path destination = Paths.get(new File(cacheDir, key).getPath());
+                      Path destination = new File(cacheDir, key).toPath();
                       try (InputStream stream = artifact.getInputStream()) {
                         Files.copy(stream, destination, StandardCopyOption.REPLACE_EXISTING);
                       } catch (IOException e) {
