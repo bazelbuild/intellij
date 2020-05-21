@@ -34,6 +34,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
 import java.io.File;
 import java.io.IOException;
@@ -52,8 +53,6 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
   private static final String TEMP_DIRECTORY_VARIABLE = "TEST_TMPDIR";
   private static final String TEST_FILTER_VARIABLE = "TESTBRIDGE_TEST_ONLY";
   private static final String WORKSPACE_VARIABLE = "TEST_WORKSPACE";
-  private static final String ALLOW_INSECURE_TEST_DIAGNOSTICS_DELETION_KEY =
-      "blaze.fastBuild.allowInsecureTestDiagnosticsDeletion";
 
   private static final ExtensionPointName<FastBuildTestEnvironmentCreator> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.FastBuildTestEnvironmentCreator");
@@ -244,7 +243,10 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
 
       try {
         if (testDiagnosticsDir.exists()) {
-          files.deleteRecursively(testDiagnosticsDir, shouldAllowInsecureTestDiagnosticsDeletion());
+          // macs don't support SecureDirectoryStream, so we need to instruct guava to allow
+          // insecure recursive deletion.
+          // TODO(brendandouglas): don't delete files recursively on macs
+          files.deleteRecursively(testDiagnosticsDir, /* allowInsecureDelete= */ SystemInfo.isMac);
         }
       } catch (IOException e) {
         throw new ExecutionException(e);
@@ -253,11 +255,6 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
       commandBuilder.addEnvironmentVariable(
           "TEST_DIAGNOSTICS_OUTPUT_DIR", testDiagnosticsDir.toString());
     }
-  }
-
-  /** Should we allow insecure deletion of test resources? */
-  private static boolean shouldAllowInsecureTestDiagnosticsDeletion() {
-    return Boolean.getBoolean(ALLOW_INSECURE_TEST_DIAGNOSTICS_DELETION_KEY);
   }
 
   private static void addJvmOptsFromBlazeFlags(
