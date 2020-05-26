@@ -17,11 +17,12 @@ package com.google.idea.blaze.java.run.coverage;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.logging.EventLoggingService;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.coverage.CoverageUtils;
-import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.coverage.CoverageHelper;
 import com.intellij.coverage.CoverageRunnerData;
 import com.intellij.execution.ExecutionException;
@@ -38,6 +39,7 @@ import com.intellij.execution.runners.DefaultProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -68,12 +70,20 @@ public class BlazeCoverageProgramRunner extends DefaultProgramRunner {
   }
 
   @Nullable
+  private static BlazeInfo getBlazeInfo(Project project) {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    return projectData != null ? projectData.getBlazeInfo() : null;
+  }
+
+  @Nullable
   @Override
   protected RunContentDescriptor doExecute(RunProfileState profile, ExecutionEnvironment env)
       throws ExecutionException {
-    WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(env.getProject());
-    if (root == null) {
-      return null;
+    BlazeInfo blazeInfo = getBlazeInfo(env.getProject());
+    if (blazeInfo == null) {
+      throw new ExecutionException(
+          "Can't run with coverage: no sync data found. Please sync your project and retry.");
     }
     RunContentDescriptor result = super.doExecute(profile, env);
     if (result == null) {
@@ -88,8 +98,7 @@ public class BlazeCoverageProgramRunner extends DefaultProgramRunner {
         (BlazeCoverageEnabledConfiguration) CoverageEnabledConfiguration.getOrCreate(blazeConfig);
 
     String coverageFilePath = config.getCoverageFilePath();
-    File blazeOutputFile =
-        CoverageUtils.getOutputFile(Blaze.getBuildSystem(env.getProject()), root);
+    File blazeOutputFile = CoverageUtils.getOutputFile(blazeInfo);
 
     ProcessHandler handler = result.getProcessHandler();
     if (handler != null) {

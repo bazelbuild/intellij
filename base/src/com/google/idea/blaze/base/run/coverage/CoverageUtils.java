@@ -17,17 +17,14 @@ package com.google.idea.blaze.base.run.coverage;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
-import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import javax.annotation.Nullable;
 
 /** Helper methods for coverage integration. */
@@ -68,18 +65,8 @@ public class CoverageUtils {
     return BLAZE_FLAGS;
   }
 
-  public static File getOutputFile(BuildSystem buildSystem, WorkspaceRoot root) {
-    Path relPath = Paths.get(blazeOut(buildSystem), "_coverage", "_coverage_report.dat");
-    return new File(root.directory(), relPath.toString());
-  }
-
-  private static String blazeOut(BuildSystem buildSystem) {
-    switch (buildSystem) {
-      case Bazel:
-        return "bazel-out";
-      case Blaze:
-        return "blaze-out";
-    }
-    throw new AssertionError("Unhandled build system: " + buildSystem);
+  public static File getOutputFile(BlazeInfo blazeInfo) {
+    File coverageRoot = new File(blazeInfo.get(BlazeInfo.OUTPUT_PATH_KEY), "_coverage");
+    return new File(coverageRoot, "_coverage_report.dat");
   }
 }
