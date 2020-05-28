@@ -277,7 +277,7 @@ public class UnpackedAars {
     FileOperationProvider fileOperationProvider = FileOperationProvider.getInstance();
     if (fileOperationProvider.exists(cacheDir)) {
       try {
-        fileOperationProvider.deleteRecursively(cacheDir);
+        fileOperationProvider.deleteRecursively(cacheDir, true);
       } catch (IOException e) {
         logger.warn("Failed to clear unpacked AAR directory: " + cacheDir, e);
       }
@@ -424,7 +424,7 @@ public class UnpackedAars {
     File aarDir = aarDirForKey(cacheKey);
     try {
       if (ops.exists(aarDir)) {
-        ops.deleteRecursively(aarDir);
+        ops.deleteRecursively(aarDir, true);
       }
       ops.mkdirs(aarDir);
       // TODO(brendandouglas): decompress via ZipInputStream so we don't require a local file
@@ -477,7 +477,7 @@ public class UnpackedAars {
                 FetchExecutor.EXECUTOR.submit(
                     () -> {
                       try {
-                        ops.deleteRecursively(aarDirForKey(key));
+                        ops.deleteRecursively(aarDirForKey(key), true);
                       } catch (IOException e) {
                         logger.warn(e);
                       }
