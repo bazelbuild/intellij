@@ -217,22 +217,8 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/1347/76628/scala-intellij-bin-2020.1.7.zip",
 )
 
-# The plugin api for Android Studio 3.5. This is required to build ASwB,
+# The plugin api for Android Studio 4.0. This is required to build ASwB,
 # and run integration tests.
-http_archive(
-    name = "android_studio_3_5",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio",
-    sha256 = "94fc392a148480a67299d83c1faaabc56db27188194748433534cf8b5ca4dd29",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/3.5.1.0/android-studio-ide-191.5900203-linux.tar.gz",
-)
-
-http_archive(
-    name = "android_studio_3_6",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio36",
-    sha256 = "33ec9f61b20b71ca175cd39083b1379ebba896de78b826ea5df5d440c6adfd2a",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/3.6.3.0/android-studio-ide-192.6392135-linux.tar.gz",
-)
-
 http_archive(
     name = "android_studio_4_0",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio40",
