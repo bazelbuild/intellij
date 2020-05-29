@@ -9,10 +9,6 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load(
-    "//intellij_platform_sdk:build_defs.bzl",
-    "select_for_plugin_api",
-)
 
 licenses(["notice"])  # Apache 2.0
 
@@ -332,13 +328,7 @@ intellij_unit_test_suite(
 
 intellij_integration_test_suite(
     name = "integration_tests",
-    srcs = select_for_plugin_api({
-        "android-studio-3.6": glob(
-            ["tests/integrationtests/**/*.java"],
-            exclude = ["tests/integrationtests/com/google/idea/blaze/base/run/BlazeCommandRunConfigurationRunManagerImplTest.java"],
-        ),
-        "default": glob(["tests/integrationtests/**/*.java"]),
-    }),
+    srcs = glob(["tests/integrationtests/**/*.java"]),
     required_plugins = "com.google.idea.blaze.base",
     test_package_root = "com.google.idea.blaze.base",
     runtime_deps = [
