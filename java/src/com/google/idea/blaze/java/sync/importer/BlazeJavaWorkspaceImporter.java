@@ -28,8 +28,12 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency.DependencyType;
+import com.google.idea.blaze.base.async.FutureUtil;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
@@ -40,6 +44,7 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
+import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
@@ -54,6 +59,7 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.JavaBlazeRules;
+import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.DuplicateSourceDetector;
 import com.google.idea.blaze.java.sync.jdeps.JdepsMap;
@@ -232,7 +238,7 @@ public final class BlazeJavaWorkspaceImporter {
     }
 
     // Filter out any libraries corresponding to empty jars
-    return removeEmptyLibraries(context, artifactLocationDecoder, result);
+    return removeEmptyLibraries(project, context, artifactLocationDecoder, result);
   }
 
   /**
@@ -245,10 +251,35 @@ public final class BlazeJavaWorkspaceImporter {
    * @see EmptyLibraryFilter
    */
   private static ImmutableMap<LibraryKey, BlazeJarLibrary> removeEmptyLibraries(
+      Project project,
       BlazeContext parentContext,
       ArtifactLocationDecoder locationDecoder,
       Map<LibraryKey, BlazeJarLibrary> allLibraries) {
     if (!EmptyLibraryFilter.isEnabled()) {
+      return ImmutableMap.copyOf(allLibraries);
+    }
+
+    // Prefetch all uncached libraries to local before testing
+    ImmutableList.Builder<RemoteOutputArtifact> toDownload = ImmutableList.builder();
+    for (BlazeJarLibrary blazeJarLibrary : allLibraries.values()) {
+      if (JarCache.getInstance(project).getCachedJar(locationDecoder, blazeJarLibrary) == null) {
+        BlazeArtifact blazeArtifact =
+            locationDecoder.resolveOutput(blazeJarLibrary.libraryArtifact.jarForIntellijLibrary());
+        if (blazeArtifact instanceof RemoteOutputArtifact) {
+          toDownload.add((RemoteOutputArtifact) blazeArtifact);
+        }
+      }
+    }
+
+    ListenableFuture<?> downloadArtifactsFuture =
+        RemoteArtifactPrefetcher.getInstance()
+            .downloadArtifacts(
+                /* projectName= */ project.getName(), /* outputArtifacts= */ toDownload.build());
+    if (!FutureUtil.waitForFuture(parentContext, downloadArtifactsFuture)
+        .timed("FetchJars", EventType.Prefetching)
+        .withProgressMessage("Fetching jar files...")
+        .run()
+        .success()) {
       return ImmutableMap.copyOf(allLibraries);
     }
     return Scope.push(
@@ -260,7 +291,9 @@ public final class BlazeJavaWorkspaceImporter {
           try {
             result =
                 filterByValueInParallel(
-                    allLibraries, new EmptyLibraryFilter(locationDecoder), FetchExecutor.EXECUTOR);
+                    allLibraries,
+                    new EmptyLibraryFilter(project, locationDecoder),
+                    FetchExecutor.EXECUTOR);
           } catch (ExecutionException e) {
             String warning = "Failed to filter out empty jars";
             if (e.getCause() != null) {

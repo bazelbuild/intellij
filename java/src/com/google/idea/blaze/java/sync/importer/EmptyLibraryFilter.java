@@ -18,13 +18,17 @@ package com.google.idea.blaze.java.sync.importer;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Predicate;
@@ -70,8 +74,10 @@ public class EmptyLibraryFilter implements Predicate<BlazeLibrary> {
   private static final Logger logger = Logger.getInstance(EmptyLibraryFilter.class);
 
   private final ArtifactLocationDecoder locationDecoder;
+  private final Project project;
 
-  EmptyLibraryFilter(ArtifactLocationDecoder locationDecoder) {
+  EmptyLibraryFilter(Project project, ArtifactLocationDecoder locationDecoder) {
+    this.project = project;
     this.locationDecoder = locationDecoder;
   }
 
@@ -84,6 +90,19 @@ public class EmptyLibraryFilter implements Predicate<BlazeLibrary> {
     if (!isEnabled() || !(blazeLibrary instanceof BlazeJarLibrary)) {
       return true;
     }
+    // Try to find jars from {@link JarCache} first since it saves fetching time for {@link
+    // RemoteOutputArtifact}
+    File cachedFile =
+        JarCache.getInstance(project).getCachedJar(locationDecoder, (BlazeJarLibrary) blazeLibrary);
+    if (cachedFile != null) {
+      try {
+        return !isEmpty(new SourceArtifact(cachedFile));
+      } catch (IOException e) {
+        logger.warn(e);
+        return true;
+      }
+    }
+
     ArtifactLocation location =
         ((BlazeJarLibrary) blazeLibrary).libraryArtifact.jarForIntellijLibrary();
     BlazeArtifact artifact = locationDecoder.resolveOutput(location);
@@ -94,7 +113,7 @@ public class EmptyLibraryFilter implements Predicate<BlazeLibrary> {
       return true;
     }
   }
-
+  
   /**
    * Returns true if the given JAR is effectively empty (i.e. it has nothing other than a manifest
    * and directories).

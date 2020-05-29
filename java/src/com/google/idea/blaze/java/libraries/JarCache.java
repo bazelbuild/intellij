@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
@@ -36,11 +37,13 @@ import com.google.idea.blaze.base.io.FileSizeScanner;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
+import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -187,6 +190,17 @@ public class JarCache {
                 .map(Map.Entry::getValue)
                 .collect(toImmutableList());
       }
+
+      // Prefetch all libraries to local before reading and copying content
+      ListenableFuture<?> downloadArtifactsFuture =
+          RemoteArtifactPrefetcher.getInstance()
+              .downloadArtifacts(
+                  /* projectName= */ project.getName(),
+                  /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(updated.values()));
+      FutureUtil.waitForFuture(context, downloadArtifactsFuture)
+          .timed("FetchJars", EventType.Prefetching)
+          .withProgressMessage("Fetching jar files...")
+          .run();
 
       // update cache files, and remove files if required
       List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(updated));

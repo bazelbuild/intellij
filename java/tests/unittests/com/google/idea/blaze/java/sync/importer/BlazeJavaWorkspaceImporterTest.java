@@ -21,11 +21,14 @@ import static org.junit.Assert.assertNotNull;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
@@ -47,6 +50,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.prefetch.MockPrefetchService;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
+import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.Glob;
@@ -69,6 +73,7 @@ import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
+import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.jdeps.MockJdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
@@ -83,7 +88,9 @@ import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -155,6 +162,9 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
 
+    MockRemoteArtifactPrefetcher remoteArtifactPrefetcher = new MockRemoteArtifactPrefetcher();
+    applicationServices.register(RemoteArtifactPrefetcher.class, remoteArtifactPrefetcher);
+
     ExtensionPointImpl<Kind.Provider> ep =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
     ep.registerExtension(new JavaBlazeRules());
@@ -195,6 +205,8 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
         .registerExtension(new BazelBuildSystemProvider());
+
+    projectServices.register(JarCache.class, new MockJarCache(project));
   }
 
   private BlazeJavaImportResult importWorkspace(
@@ -1575,5 +1587,37 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
   private static String jdepsPath(String relativePath) {
     return FAKE_GEN_ROOT_EXECUTION_PATH_FRAGMENT + "/" + relativePath;
+  }
+
+  private static class MockRemoteArtifactPrefetcher implements RemoteArtifactPrefetcher {
+
+    @Override
+    public ListenableFuture<?> loadFilesInJvm(Collection<RemoteOutputArtifact> outputArtifacts) {
+      return Futures.immediateFuture(null);
+    }
+
+    @Override
+    public ListenableFuture<?> downloadArtifacts(
+        String projectName, Collection<RemoteOutputArtifact> outputArtifacts) {
+      return Futures.immediateFuture(null);
+    }
+
+    @Override
+    public ListenableFuture<?> cleanupLocalCacheDir(String projectName) {
+      return Futures.immediateFuture(null);
+    }
+  }
+
+  private static class MockJarCache extends JarCache {
+
+    public MockJarCache(Project project) {
+      super(project);
+    }
+
+    @Override
+    @Nullable
+    public File getCachedJar(ArtifactLocationDecoder decoder, BlazeJarLibrary library) {
+      return null;
+    }
   }
 }
