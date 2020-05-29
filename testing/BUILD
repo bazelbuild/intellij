@@ -20,12 +20,10 @@ java_library(
                android_studio = glob(["studio/**/*.java"]),
                default = [],
            ) + select_for_plugin_api({
-        "android-studio-3.6": glob(["cidr/**/*.java"]),
         "android-studio-4.0": glob(["cidr/**/*.java"]),
         "android-studio-4.1": glob(["cidr/**/*.java"]),
         "default": [],
     }) + select_for_plugin_api({
-        "android-studio-3.6": glob(["testcompat/v192/**/*.java"]),
         "clion-2019.2": glob(
             ["testcompat/v192/**/*.java"],
             exclude = ["testcompat/v192/com/google/idea/sdkcompat/testframework/JavaResolveTestCase.java"],

@@ -10,7 +10,7 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-ue-latest-mac": "intellij-ue-2019.2-mac",
     "intellij-ue-beta": "intellij-ue-2019.3",
     "intellij-ue-canary": "intellij-ue-2020.1",
-    "android-studio-latest": "android-studio-3.6",
+    "android-studio-latest": "android-studio-4.0",
     "android-studio-beta": "android-studio-4.0",
     "android-studio-beta-mac": "android-studio-4.0-mac",
     "android-studio-canary": "android-studio-4.1",
@@ -66,14 +66,6 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-ue-2020.1-mac": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2020_1",
-    ),
-    "android-studio-3.6": struct(
-        ide = "android-studio",
-        directory = "android_studio_3_6",
-    ),
-    "android-studio-3.6-mac": struct(
-        ide = "android-studio",
-        directory = "android_studio_3_6",
     ),
     "android-studio-4.0": struct(
         ide = "android-studio",
