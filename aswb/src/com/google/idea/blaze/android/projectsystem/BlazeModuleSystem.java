@@ -29,7 +29,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import java.util.Map;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
@@ -82,7 +81,6 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
    * @see <a
    *     href="https://docs.bazel.build/versions/master/be/android.html#android_binary.manifest_values">manifest_values</a>
    */
-  @Nullable
   private static void processManifestValue(
       String key,
       String value,
