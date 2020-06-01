@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.sync.source;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -30,12 +31,15 @@ import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PackageManifest;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
+import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
+import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
@@ -43,13 +47,18 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Reads package manifests. */
 public class PackageManifestReader {
@@ -65,6 +74,7 @@ public class PackageManifestReader {
 
   /** @return A map from java source absolute file path to declared package string. */
   public Map<TargetKey, Map<ArtifactLocation, String>> readPackageManifestFiles(
+      Project project,
       BlazeContext context,
       ArtifactLocationDecoder decoder,
       Map<TargetKey, ArtifactLocation> javaPackageManifests,
@@ -90,10 +100,28 @@ public class PackageManifestReader {
       throw new AssertionError("Unhandled exception", e);
     }
 
+    // Find all not cached {@link RemoteOutputArtifact} and download them before parsing manifest
+    // file
+    ImmutableList.Builder<RemoteOutputArtifact> toDownload = ImmutableList.builder();
+    for (OutputArtifact outputArtifact : diff.getUpdatedOutputs()) {
+      if (!(outputArtifact instanceof RemoteOutputArtifact)) {
+        continue;
+      }
+      if (findArtifactInCache(project, outputArtifact) != null) {
+        continue;
+      }
+      toDownload.add((RemoteOutputArtifact) outputArtifact);
+    }
+
+    ListenableFuture<?> fetchRemoteArtifactFuture =
+        RemoteArtifactPrefetcher.getInstance()
+            .downloadArtifacts(project.getName(), toDownload.build());
     ListenableFuture<?> fetchFuture =
         PrefetchService.getInstance()
             .prefetchFiles(BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()), true, false);
-    if (!FutureUtil.waitForFuture(context, fetchFuture)
+
+    if (!FutureUtil.waitForFuture(
+            context, Futures.allAsList(fetchRemoteArtifactFuture, fetchFuture))
         .timed("FetchPackageManifests", EventType.Prefetching)
         .withProgressMessage("Reading package manifests...")
         .run()
@@ -106,7 +134,7 @@ public class PackageManifestReader {
       futures.add(
           executorService.submit(
               () -> {
-                Map<ArtifactLocation, String> manifest = parseManifestFile(file);
+                Map<ArtifactLocation, String> manifest = parseManifestFile(project, file);
                 manifestMap.put(fileToLabelMap.get(file), manifest);
                 return null;
               }));
@@ -131,11 +159,26 @@ public class PackageManifestReader {
     return manifestMap;
   }
 
-  private static Map<ArtifactLocation, String> parseManifestFile(OutputArtifact packageManifest) {
+  @Nullable
+  private static File findArtifactInCache(Project project, OutputArtifact outputArtifact) {
+    if (outputArtifact instanceof RemoteOutputArtifact) {
+      return RemoteOutputsCache.getInstance(project)
+          .resolveOutput((RemoteOutputArtifact) outputArtifact);
+    }
+    return null;
+  }
+
+  private static Map<ArtifactLocation, String> parseManifestFile(
+      Project project, OutputArtifact packageManifest) {
     Map<ArtifactLocation, String> outputMap = Maps.newHashMap();
     InputStreamProvider inputStreamProvider = InputStreamProvider.getInstance();
 
-    try (InputStream input = inputStreamProvider.forOutputArtifact(packageManifest)) {
+    // Read file from local cache if it's available
+    File cachedFile = findArtifactInCache(project, packageManifest);
+    try (InputStream input =
+        (cachedFile == null)
+            ? inputStreamProvider.forOutputArtifact(packageManifest)
+            : new BufferedInputStream(new FileInputStream(cachedFile))) {
       PackageManifest proto = PackageManifest.parseFrom(input);
       for (JavaSourcePackage source : proto.getSourcesList()) {
         outputMap.put(fromProto(source.getArtifactLocation()), source.getPackageString());

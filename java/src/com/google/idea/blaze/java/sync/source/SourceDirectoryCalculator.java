@@ -91,6 +91,7 @@ public final class SourceDirectoryCalculator {
               Map<TargetKey, Map<ArtifactLocation, String>> manifestMap =
                   PackageManifestReader.getInstance()
                       .readPackageManifestFiles(
+                          project,
                           childContext,
                           artifactLocationDecoder,
                           javaPackageManifests,

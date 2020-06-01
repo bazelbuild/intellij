@@ -38,11 +38,13 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.MockPrefetchService;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
+import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.sync.MockRemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
@@ -102,6 +104,9 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
     applicationServices.register(ExperimentService.class, experimentService);
 
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
+
+    applicationServices.register(
+        RemoteArtifactPrefetcher.class, new MockRemoteArtifactPrefetcher());
 
     registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class)
         .registerExtension(new JavaLikeLanguage.Java());
@@ -1208,7 +1213,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
       Map<TargetKey, ArtifactLocation> manifests, ArtifactLocationDecoder decoder) {
     return PackageManifestReader.getInstance()
         .readPackageManifestFiles(
-            context, decoder, manifests, MoreExecutors.newDirectExecutorService());
+            project, context, decoder, manifests, MoreExecutors.newDirectExecutorService());
   }
 
   static class MockFileOperationProvider extends FileOperationProvider {
