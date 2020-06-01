@@ -80,8 +80,7 @@ public class ManifestFixture {
   }
 
   public ManifestFixture setVersionCode(int versionCode) {
-    return updateManifest(
-        manifest -> ManifestFixtureCompat.getVersionCode(manifest).setValue(versionCode));
+    return updateManifest(manifest -> manifest.getVersionCode().setValue(versionCode));
   }
 
   public ManifestFixture addUsesPermission(String permissionName) {
@@ -92,8 +91,7 @@ public class ManifestFixture {
 
     return updateManifest(
         manifest -> {
-          AndroidAttributeValue<String> name =
-              ManifestFixtureCompat.addUsesPermission(manifest).getName();
+          AndroidAttributeValue<String> name = manifest.addUsesPermission().getName();
           if (name == null) {
             return;
           }

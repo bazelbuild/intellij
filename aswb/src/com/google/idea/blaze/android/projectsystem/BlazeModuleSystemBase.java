@@ -445,10 +445,10 @@ public abstract class BlazeModuleSystemBase implements AndroidModuleSystem, Blaz
     return new Triple<>(Collections.emptyList(), dependenciesToAdd, "");
   }
 
-  // #api3.5 @Override
+  @Override
   @Nullable
   public String getPackageName() {
-    return PackageNameCompat.getPackageName(module);
+    return PackageNameUtils.getPackageName(module);
   }
 
   // #api3.5 @Override

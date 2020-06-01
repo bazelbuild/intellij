@@ -36,15 +36,15 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.SourceProviderManager;
 import org.jetbrains.annotations.Nullable;
 
-/** Utilities to obtain the package name for a given module. #api3.6 */
-public class PackageNameCompat {
+/** Utilities to obtain the package name for a given module. */
+public class PackageNameUtils {
   /**
    * Determines whether we use the {@link AndroidManifestIndex} to obtain the raw text package name
    * from a module's primary manifest. Note that we still won't use the index if {@link
    * AndroidManifestIndex#indexEnabled()} returns false.
    *
-   * @see PackageNameCompat#getPackageName(Module)
-   * @see PackageNameCompat#doGetPackageName(AndroidFacet, boolean)
+   * @see PackageNameUtils#getPackageName(Module)
+   * @see PackageNameUtils#doGetPackageName(AndroidFacet, boolean)
    */
   private static final BoolExperiment USE_ANDROID_MANIFEST_INDEX =
       new BoolExperiment("use.android.manifest.index", true);
@@ -132,4 +132,6 @@ public class PackageNameCompat {
     AndroidManifestXmlFile primaryManifest = AndroidManifestUtils.getPrimaryManifestXml(facet);
     return primaryManifest == null ? null : primaryManifest.getPackageName();
   }
+
+  private PackageNameUtils() {}
 }
