@@ -28,8 +28,11 @@ import javax.annotation.Nullable;
 /** Hyperlinks test logs in the streamed output. */
 class TestLogFilter implements Filter {
 
-  private static final Pattern ABS_FILE_PATH_REGEX =
+  private static final Pattern OLD_REGEX =
       Pattern.compile("^\\s*(/[^:\\s]+/testlogs/[^:\\s]+/test\\.log)\\s*$");
+
+  private static final Pattern NEW_REGEX =
+      Pattern.compile(".*\\(see (/[^:\\s]+/testlogs/[^:\\s]+/test\\.log)\\)\\s*");
 
   private final Project project;
 
@@ -40,10 +43,14 @@ class TestLogFilter implements Filter {
   @Nullable
   @Override
   public Result applyFilter(String line, int entireLength) {
-    Matcher matcher = ABS_FILE_PATH_REGEX.matcher(line);
+    Matcher matcher = OLD_REGEX.matcher(line);
+    if (!matcher.matches()) {
+      matcher = NEW_REGEX.matcher(line);
+    }
     if (!matcher.matches()) {
       return null;
     }
+
     String filePath = matcher.group(1);
     if (filePath == null) {
       return null;

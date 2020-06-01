@@ -83,6 +83,15 @@ public class TestLogFilterTest extends BlazeTestCase {
     assertThat(findMatch("file/testlogs/path/test.log")).isNull();
   }
 
+  @Test
+  public void testNewFormat() {
+    filePathToFile.put("/absolute/path/testlogs/file/test.log", mockFile);
+    Result match =
+        findMatch(
+            "FAIL: //some/path/to/target:TestTarget (see /absolute/path/testlogs/file/test.log)");
+    assertLinksToMockFile(match);
+  }
+
   @Nullable
   private Result findMatch(String line) {
     return new TestLogFilter(project).applyFilter(line, line.length());
