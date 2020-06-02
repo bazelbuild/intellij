@@ -22,7 +22,6 @@ import com.android.tools.ndk.run.attach.AndroidNativeAttachConfiguration;
 import com.android.tools.ndk.run.editor.NativeAndroidDebugger;
 import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
