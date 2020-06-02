@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.skylark.debugger.impl;
 
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.PauseReason;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.PausedThread;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.PauseReason;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.PausedThread;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XExecutionStack;

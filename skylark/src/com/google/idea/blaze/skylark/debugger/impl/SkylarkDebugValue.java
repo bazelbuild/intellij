@@ -16,7 +16,7 @@
 package com.google.idea.blaze.skylark.debugger.impl;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -35,15 +35,15 @@ import javax.swing.Icon;
 class SkylarkDebugValue extends XNamedValue {
 
   static SkylarkDebugValue fromProto(
-      SkylarkStackFrame frameContext, SkylarkDebuggingProtos.Value value) {
+      SkylarkStackFrame frameContext, StarlarkDebuggingProtos.Value value) {
     return new SkylarkDebugValue(frameContext, value);
   }
 
-  static Icon getIcon(SkylarkDebuggingProtos.Value value) {
+  static Icon getIcon(StarlarkDebuggingProtos.Value value) {
     return parseType(value).icon;
   }
 
-  static Type parseType(SkylarkDebuggingProtos.Value value) {
+  static Type parseType(StarlarkDebuggingProtos.Value value) {
     String typeString = value.getType();
     if (ARRAY_TYPES.contains(typeString)) {
       return Type.ARRAY;
@@ -79,10 +79,10 @@ class SkylarkDebugValue extends XNamedValue {
   }
 
   private SkylarkStackFrame frameContext;
-  private final SkylarkDebuggingProtos.Value value;
+  private final StarlarkDebuggingProtos.Value value;
   private final Type type;
 
-  private SkylarkDebugValue(SkylarkStackFrame frameContext, SkylarkDebuggingProtos.Value value) {
+  private SkylarkDebugValue(SkylarkStackFrame frameContext, StarlarkDebuggingProtos.Value value) {
     super(value.getLabel());
     this.value = value;
     this.type = parseType(value);
@@ -136,7 +136,7 @@ class SkylarkDebugValue extends XNamedValue {
     ApplicationManager.getApplication()
         .executeOnPooledThread(
             () -> {
-              List<SkylarkDebuggingProtos.Value> response =
+              List<StarlarkDebuggingProtos.Value> response =
                   frameContext.debugProcess.getChildren(frameContext.threadId, value);
               if (response == null) {
                 node.setErrorMessage("Error querying children.");

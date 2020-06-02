@@ -16,10 +16,10 @@
 package com.google.idea.blaze.skylark.debugger.impl;
 
 import com.google.common.collect.ImmutableList;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.DebugEvent;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.DebugRequest;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.GetChildrenRequest;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.DebugEvent;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.DebugRequest;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.GetChildrenRequest;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 class SingleThreadChildCache {
 
   private final long threadId;
-  private final ConcurrentMap<Long, List<SkylarkDebuggingProtos.Value>> identifierToChildrenMap =
+  private final ConcurrentMap<Long, List<StarlarkDebuggingProtos.Value>> identifierToChildrenMap =
       new ConcurrentHashMap<>();
 
   SingleThreadChildCache(long threadId) {
@@ -40,8 +40,8 @@ class SingleThreadChildCache {
   }
 
   @Nullable
-  List<SkylarkDebuggingProtos.Value> getChildren(
-      DebugClientTransport transport, SkylarkDebuggingProtos.Value value) {
+  List<StarlarkDebuggingProtos.Value> getChildren(
+      DebugClientTransport transport, StarlarkDebuggingProtos.Value value) {
     // protocol specifies a non-zero ID for values with children
     if (!value.getHasChildren() || value.getId() == 0) {
       return ImmutableList.of();
@@ -51,8 +51,8 @@ class SingleThreadChildCache {
   }
 
   @Nullable
-  private List<SkylarkDebuggingProtos.Value> queryChildren(
-      DebugClientTransport transport, SkylarkDebuggingProtos.Value value) {
+  private List<StarlarkDebuggingProtos.Value> queryChildren(
+      DebugClientTransport transport, StarlarkDebuggingProtos.Value value) {
     GetChildrenRequest request =
         GetChildrenRequest.newBuilder().setThreadId(threadId).setValueId(value.getId()).build();
     DebugEvent response = transport.sendRequest(DebugRequest.newBuilder().setGetChildren(request));

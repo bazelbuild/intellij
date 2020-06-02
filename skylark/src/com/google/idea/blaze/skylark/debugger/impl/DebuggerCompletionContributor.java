@@ -18,7 +18,7 @@ package com.google.idea.blaze.skylark.debugger.impl;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PlatformPatterns.psiFile;
 
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.Value;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.Value;
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
 import com.intellij.codeInsight.completion.AutoCompletionContext;
 import com.intellij.codeInsight.completion.AutoCompletionDecision;

@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.skylark.debugger.impl;
 
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.Scope;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.Value;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.Scope;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.Value;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.XSourcePositionWrapper;
 import java.util.ArrayList;

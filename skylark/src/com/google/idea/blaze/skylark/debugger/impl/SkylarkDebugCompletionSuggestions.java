@@ -18,7 +18,7 @@ package com.google.idea.blaze.skylark.debugger.impl;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.Value;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.Value;
 import com.google.idea.blaze.skylark.debugger.impl.SkylarkDebugValue.Type;
 import com.intellij.util.Function;
 import java.util.HashMap;

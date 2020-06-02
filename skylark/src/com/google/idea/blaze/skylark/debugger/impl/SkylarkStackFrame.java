@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.skylark.debugger.impl;
 
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos;
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.Location;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.Location;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,10 +39,10 @@ class SkylarkStackFrame extends XStackFrame {
 
   final SkylarkDebugProcess debugProcess;
   final long threadId;
-  final SkylarkDebuggingProtos.Frame frame;
+  final StarlarkDebuggingProtos.Frame frame;
 
   SkylarkStackFrame(
-      SkylarkDebugProcess debugProcess, long threadId, SkylarkDebuggingProtos.Frame frame) {
+      SkylarkDebugProcess debugProcess, long threadId, StarlarkDebuggingProtos.Frame frame) {
     this.debugProcess = debugProcess;
     this.threadId = threadId;
     this.frame = frame;
@@ -101,9 +101,9 @@ class SkylarkStackFrame extends XStackFrame {
   private class SkylarkFrameScope extends XValueGroup {
 
     private final boolean autoExpand;
-    private final SkylarkDebuggingProtos.Scope scope;
+    private final StarlarkDebuggingProtos.Scope scope;
 
-    SkylarkFrameScope(SkylarkDebuggingProtos.Scope scope, boolean autoExpand) {
+    SkylarkFrameScope(StarlarkDebuggingProtos.Scope scope, boolean autoExpand) {
       super(scope.getName());
       this.scope = scope;
       this.autoExpand = autoExpand;

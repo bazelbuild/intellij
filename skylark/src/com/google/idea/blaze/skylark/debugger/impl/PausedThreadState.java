@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.skylark.debugger.impl;
 
-import com.google.devtools.build.lib.skylarkdebugging.SkylarkDebuggingProtos.PausedThread;
+import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos.PausedThread;
 
 final class PausedThreadState {
 
