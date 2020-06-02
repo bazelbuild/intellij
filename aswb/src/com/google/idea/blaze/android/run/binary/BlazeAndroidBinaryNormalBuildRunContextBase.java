@@ -26,16 +26,26 @@ import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
+import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
+import com.android.tools.idea.run.editor.AndroidDebugger;
+import com.android.tools.idea.run.editor.AndroidDebuggerState;
+import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.ApplyChangesTask;
 import com.android.tools.idea.run.tasks.ApplyCodeChangesTask;
 import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.android.tools.idea.run.tasks.LaunchTask;
+import com.android.tools.idea.run.tasks.LaunchTasksProvider;
+import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.android.tools.idea.run.util.SwapInfo;
 import com.android.tools.idea.run.util.SwapInfo.SwapType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
+import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
+import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStepNormalBuild;
@@ -96,6 +106,8 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   @Override
   public void augmentLaunchOptions(LaunchOptions.Builder options) {
     options.setDeploy(true).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
+    options.addExtraOptions(
+        ImmutableMap.of(ProfilerState.ANDROID_PROFILER_STATE_ID, configState.getProfilerState()));
   }
 
   @Override
@@ -181,5 +193,48 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
     } else {
       return ImmutableList.of(apkInfo.getFile());
     }
+  }
+
+  @Override
+  public LaunchTasksProvider getLaunchTasksProvider(
+      LaunchOptions.Builder launchOptionsBuilder,
+      boolean isDebug,
+      BlazeAndroidRunConfigurationDebuggerManager debuggerManager)
+      throws ExecutionException {
+    return new BlazeAndroidLaunchTasksProvider(
+        project, this, applicationIdProvider, launchOptionsBuilder, isDebug, debuggerManager);
+  }
+
+  @Override
+  public LaunchTask getApplicationLaunchTask(
+      LaunchOptions launchOptions,
+      @Nullable Integer userId,
+      @NotNull String contributorsAmStartOptions,
+      AndroidDebugger androidDebugger,
+      AndroidDebuggerState androidDebuggerState,
+      ProcessHandlerLaunchStatus processHandlerLaunchStatus)
+      throws ExecutionException {
+    String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
+    if (!contributorsAmStartOptions.isEmpty()) {
+      extraFlags += (extraFlags.isEmpty() ? "" : " ") + contributorsAmStartOptions;
+    }
+
+    final StartActivityFlagsProvider startActivityFlagsProvider =
+        new DefaultStartActivityFlagsProvider(
+            androidDebugger, androidDebuggerState, project, launchOptions.isDebug(), extraFlags);
+
+    BlazeAndroidDeployInfo deployInfo;
+    try {
+      deployInfo = buildStep.getDeployInfo();
+    } catch (ApkProvisionException e) {
+      throw new ExecutionException(e);
+    }
+
+    return BlazeAndroidBinaryApplicationLaunchTaskProvider.getApplicationLaunchTask(
+        applicationIdProvider,
+        deployInfo.getMergedManifest(),
+        configState,
+        startActivityFlagsProvider,
+        processHandlerLaunchStatus);
   }
 }
