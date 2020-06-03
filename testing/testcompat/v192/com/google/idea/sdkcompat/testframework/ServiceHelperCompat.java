@@ -17,7 +17,6 @@ package com.google.idea.sdkcompat.testframework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.defaults.UnsatisfiableDependenciesException;
@@ -26,7 +25,7 @@ import org.picocontainer.defaults.UnsatisfiableDependenciesException;
 public class ServiceHelperCompat {
   /** Replaces the component under the given key with the provided implementation. #api192 */
   public static <T> void replaceComponentInstance(
-      ComponentManagerImpl componentManager,
+      ComponentManager componentManager,
       Class<T> key,
       T implementation,
       Disposable parentDisposable) {

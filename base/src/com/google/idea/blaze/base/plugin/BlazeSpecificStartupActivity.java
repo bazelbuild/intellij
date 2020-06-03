@@ -17,30 +17,18 @@ package com.google.idea.blaze.base.plugin;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.actions.ReplaceActionHelper;
-import com.intellij.application.Topics;
-import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
-import javax.annotation.Nullable;
+import com.intellij.openapi.startup.StartupActivity;
+import org.jetbrains.annotations.NotNull;
 
 /** Runs on startup. */
-public class BlazeSpecificInitializer implements ApplicationComponent {
-
+public class BlazeSpecificStartupActivity implements StartupActivity {
   @Override
-  public void initComponent() {
-    // from 2020.1+, can't access actions until after application components have been initialized
-    Topics.subscribe(
-        AppLifecycleListener.TOPIC,
-        /* disposable= */ null,
-        new AppLifecycleListener() {
-          @Override
-          public void appStarting(@Nullable Project projectFromCommandLine) {
-            hideMakeActions();
-          }
-        });
+  public void runActivity(@NotNull final Project project) {
+      hideMakeActions();
   }
-
+  
   // The original actions will be visible only on plain IDEA projects.
   private static void hideMakeActions() {
     // 'Build' > 'Make Project' action
