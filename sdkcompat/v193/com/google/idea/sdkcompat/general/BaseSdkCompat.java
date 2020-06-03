@@ -35,8 +35,8 @@ public final class BaseSdkCompat {
 
   /** #api193: made public in 2020.1. */
   @Nullable
-  @SuppressWarnings("rawtypes")
-  public static ProjectExtensionPointName<EditorNotifications.Provider> getEditorNotificationsEp() {
+  public static ProjectExtensionPointName<EditorNotifications.Provider<?>>
+      getEditorNotificationsEp() {
     return null;
   }
 
@@ -107,6 +107,12 @@ public final class BaseSdkCompat {
 
     /** #api193: changed in 2020.1. */
     public static final Icon collapseAll = AllIcons.General.CollapseAll;
+
+    /** #api193: this is unavailable (and not used) in 2020.1 */
+    public static final Icon disabledRun = AllIcons.Process.DisabledRun;
+
+    /** #api193: this is unavailable (and not used) in 2020.1 */
+    public static final Icon disabledDebug = AllIcons.Process.DisabledDebug;
   }
 
   /** #api193: SdkConfigurationUtil changed in 2020.1. */

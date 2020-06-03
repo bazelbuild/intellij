@@ -41,6 +41,7 @@ import com.google.idea.blaze.base.sync.projectview.RelatedWorkspacePathFinder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.ui.WorkspaceFileTextField;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.AllIcons.Nodes;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -129,8 +130,7 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
       fileTextField =
           WorkspaceFileTextField.create(
               workspacePathResolver, descriptor, PATH_FIELD_WIDTH, myDisposable);
-      JBLabel directoryLabel =
-          new JBLabel("Directory:", AllIcons.Modules.SourceFolder, SwingConstants.LEFT);
+      JBLabel directoryLabel = new JBLabel("Directory:", Nodes.Package, SwingConstants.LEFT);
       JPanel directoryPanel =
           SwingHelper.newHorizontalPanel(
               Component.TOP_ALIGNMENT, directoryLabel, fileTextField.getField());

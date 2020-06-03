@@ -35,12 +35,11 @@ final class DisableLibraryBytecodeNotification implements StartupActivity {
       new BoolExperiment("disable.bytecode.notification", true);
 
   @Override
-  @SuppressWarnings("rawtypes")
   public void runActivity(Project project) {
     if (!enabled.getValue() || !Blaze.isBlazeProject(project)) {
       return;
     }
-    ProjectExtensionPointName<Provider> epName = BaseSdkCompat.getEditorNotificationsEp();
+    ProjectExtensionPointName<Provider<?>> epName = BaseSdkCompat.getEditorNotificationsEp();
     if (epName == null) {
       return;
     }

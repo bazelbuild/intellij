@@ -20,7 +20,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.serviceContainer.PlatformComponentManagerImpl;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,7 +42,7 @@ public class ServiceHelperCompat {
 
     Verify.verify(platformPlugin.isPresent());
 
-    ((PlatformComponentManagerImpl) componentManager)
+    ((ComponentManagerImpl) componentManager)
         .registerServiceInstance(key, implementation, platformPlugin.get());
   }
 

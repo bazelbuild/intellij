@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.run.fastbuild;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.general.BaseSdkCompat.AllIconsCompat;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
@@ -67,9 +68,9 @@ final class FastBuildDebugExecutor extends DefaultDebugExecutor {
     return new LayeredIcon(AllIcons.Actions.StartDebugger, BlazeIcons.LightningOverlay);
   }
 
-  @Override
+  // @Override #api193
   public Icon getDisabledIcon() {
-    return new LayeredIcon(AllIcons.Process.DisabledDebug, BlazeIcons.LightningOverlay);
+    return new LayeredIcon(AllIconsCompat.disabledDebug, BlazeIcons.LightningOverlay);
   }
 
   @Override
