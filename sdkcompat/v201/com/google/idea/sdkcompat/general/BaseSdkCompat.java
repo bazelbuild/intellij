@@ -126,14 +126,4 @@ public final class BaseSdkCompat {
     return SdkConfigurationUtil.createSdk(
         allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
   }
-
-  /**
-   * Returns whether the current API level is 2019.2. This may be a short lived workaround until we
-   * resolve all issues due to PluginManagerCore.BUILD_NUMBER being removed in 2020.1.
-   *
-   * <p>#api192.
-   */
-  public static boolean isApi192() {
-    return false;
-  }
 }
