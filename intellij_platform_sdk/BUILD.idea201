@@ -7,12 +7,14 @@ package(default_visibility = ["//visibility:public"])
 java_import(
     name = "sdk",
     jars = glob(
-        # temporarily include the newly extracted java plugin in the core SDK
+        # temporarily include the newly extracted java and platform-images plugins in the core SDK
         # see https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin/
         # api#191: expose the java plugin as a separate target
+        # api#193: platform-images has been extracted to a separate plugin in 2020.1
         [
             "lib/*.jar",
             "plugins/java/lib/*.jar",
+            "plugins/platform-images/lib/*.jar",
         ],
     ),
     tags = ["intellij-provided-by-sdk"],
