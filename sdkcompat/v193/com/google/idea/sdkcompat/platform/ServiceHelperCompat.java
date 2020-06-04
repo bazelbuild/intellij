@@ -23,15 +23,13 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.serviceContainer.PlatformComponentManagerImpl;
 import java.util.Optional;
 
-/** Compat APIs used to replace services. #api192. */
+/** #api193: wildcard generics added in 2020.1 */
 public class ServiceHelperCompat {
   public static <T> void registerService(
       ComponentManager componentManager,
       Class<T> key,
       T implementation,
       Disposable parentDisposable) {
-    // #api192: replace "IDEA CORE" reference with PluginManagerCore.CORE_ID
-    // once it is available in the plugin API.
     Optional<IdeaPluginDescriptor> platformPlugin =
         PluginManager.getLoadedPlugins().stream()
             .filter(descriptor -> descriptor.getName().startsWith("IDEA CORE"))

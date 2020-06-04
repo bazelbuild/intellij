@@ -15,7 +15,6 @@
  */
 package com.google.idea.common.formatter;
 
-import com.google.idea.sdkcompat.openapi.DelegatingCodeStyleManagerCompat;
 import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -35,14 +34,18 @@ import java.util.Collection;
 import javax.annotation.Nullable;
 
 /** A delegating {@link CodeStyleManager}. */
-public abstract class DelegatingCodeStyleManager extends DelegatingCodeStyleManagerCompat
+public abstract class DelegatingCodeStyleManager extends CodeStyleManager
     implements FormattingModeAwareIndentAdjuster {
 
   protected final CodeStyleManager delegate;
 
   protected DelegatingCodeStyleManager(CodeStyleManager delegate) {
-    super(delegate);
     this.delegate = delegate;
+  }
+
+  @Override
+  public void scheduleIndentAdjustment(Document document, int offset) {
+    delegate.scheduleIndentAdjustment(document, offset);
   }
 
   @Override

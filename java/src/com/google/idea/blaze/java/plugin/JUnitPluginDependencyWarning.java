@@ -41,7 +41,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
@@ -114,16 +113,11 @@ public class JUnitPluginDependencyWarning implements ApplicationComponent {
             Transactions.submitTransactionAndWait(() -> Notifications.Bus.notify(notification));
           }
 
-          // @Override #api192: removed in 2019.3
-          public void appFrameCreated(String[] commandLineArgs, Ref<Boolean> willOpenProject) {
-            appFrameCreated(Arrays.asList(commandLineArgs), willOpenProject);
-          }
-
-          // @Override #api192: changed in 2019.3
+          @Override
           public void appFrameCreated(
               List<String> commandLineArgs, Ref<? super Boolean> willOpenProject) {}
 
-          // @Override #api192: changed in 2019.3
+          @Override
           public void appFrameCreated(List<String> commandLineArgs) {
             // Popup dialog in welcome screen.
             app.invokeLater(() -> showPopupNotification(message));

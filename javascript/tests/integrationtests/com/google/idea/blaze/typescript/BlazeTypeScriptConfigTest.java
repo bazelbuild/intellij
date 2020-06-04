@@ -28,12 +28,9 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ListSection;
-import com.google.idea.sdkcompat.typescript.TypeScriptConfigServiceCompat;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
-import com.intellij.lang.typescript.library.TypeScriptLibraryProvider;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
-import com.intellij.lang.typescript.tsconfig.graph.TypeScriptConfigGraphCache;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Disposer;
@@ -168,13 +165,7 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
         ImmutableMap.of(
             Label.create("//project/foo:tsconfig"),
             new File("/src/workspace/project/foo/tsconfig.json")));
-    this.regularConfigService =
-        TypeScriptConfigServiceCompat.newImpl(
-            getProject(),
-            null,
-            PsiManager.getInstance(getProject()),
-            TypeScriptLibraryProvider.getService(getProject()),
-            new TypeScriptConfigGraphCache(getProject()));
+    this.regularConfigService = new TypeScriptConfigServiceImpl(getProject());
   }
 
   @Override
@@ -188,8 +179,7 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     assertThat(regularConfigService.getConfigFiles()).hasSize(1);
     TypeScriptConfig blazeConfig = blazeConfigService.getConfigs().get(0);
     TypeScriptConfig regularConfig =
-        ReadAction.compute(
-            () -> TypeScriptConfigServiceCompat.getConfigs(regularConfigService).get(0));
+        ReadAction.compute(() -> regularConfigService.getConfigs().get(0));
 
     assertThat(blazeConfig.isDirectoryBased()).isEqualTo(regularConfig.isDirectoryBased());
     assertThat(blazeConfig.getConfigFile()).isEqualTo(regularConfig.getConfigFile());

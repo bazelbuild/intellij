@@ -15,7 +15,6 @@
  */
 package com.google.idea.testing;
 
-import com.google.idea.sdkcompat.openapi.ExtensionsCompat;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +43,6 @@ public final class IntellijRule extends ExternalResource {
     project =
         TestUtils.mockProject(
             ApplicationManager.getApplication().getPicoContainer(), testDisposable);
-    ExtensionsCompat.cleanRootArea(testDisposable);
   }
 
   @Override

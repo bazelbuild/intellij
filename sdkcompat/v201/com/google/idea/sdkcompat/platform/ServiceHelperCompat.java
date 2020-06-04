@@ -24,15 +24,13 @@ import com.intellij.serviceContainer.ComponentManagerImpl;
 import java.util.List;
 import java.util.Optional;
 
-/** Compat APIs used to replace services. #api192. */
+/** #api193: wildcard generics added in 2020.1 */
 public class ServiceHelperCompat {
   public static <T> void registerService(
       ComponentManager componentManager,
       Class<T> key,
       T implementation,
       Disposable parentDisposable) {
-    // #api192: replace "IDEA CORE" reference with PluginManagerCore.CORE_ID
-    // once it is available in the plugin API.
     @SuppressWarnings({"rawtypes", "unchecked"}) // #api193: wildcard generics added in 2020.1
     List<? extends IdeaPluginDescriptor> loadedPlugins = (List) PluginManager.getLoadedPlugins();
     Optional<? extends IdeaPluginDescriptor> platformPlugin =
