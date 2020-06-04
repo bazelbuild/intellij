@@ -2,39 +2,23 @@
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "intellij-latest": "intellij-2019.2",
-    "intellij-latest-mac": "intellij-2019.2-mac",
+    "intellij-latest": "intellij-2019.3",
+    "intellij-latest-mac": "intellij-2019.3-mac",
     "intellij-beta": "intellij-2019.3",
     "intellij-canary": "intellij-2020.1",
-    "intellij-ue-latest": "intellij-ue-2019.2",
-    "intellij-ue-latest-mac": "intellij-ue-2019.2-mac",
+    "intellij-ue-latest": "intellij-ue-2019.3",
+    "intellij-ue-latest-mac": "intellij-ue-2019.3-mac",
     "intellij-ue-beta": "intellij-ue-2019.3",
     "intellij-ue-canary": "intellij-ue-2020.1",
     "android-studio-latest": "android-studio-4.0",
     "android-studio-beta": "android-studio-4.0",
     "android-studio-beta-mac": "android-studio-4.0-mac",
     "android-studio-canary": "android-studio-4.1",
-    "clion-latest": "clion-2019.2",
+    "clion-latest": "clion-2019.3",
     "clion-beta": "clion-2019.3",
 }
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2019.2": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2019_2",
-    ),
-    "intellij-2019.2-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2019_2",
-    ),
-    "intellij-ue-2019.2": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2019_2",
-    ),
-    "intellij-ue-2019.2-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2019_2",
-    ),
     "intellij-2019.3": struct(
         ide = "intellij",
         directory = "intellij_ce_2019_3",
@@ -78,10 +62,6 @@ DIRECT_IJ_PRODUCTS = {
     "android-studio-4.1": struct(
         ide = "android-studio",
         directory = "android_studio_4_1",
-    ),
-    "clion-2019.2": struct(
-        ide = "clion",
-        directory = "clion_2019_2",
     ),
     "clion-2019.3": struct(
         ide = "clion",
