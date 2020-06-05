@@ -214,6 +214,14 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "clion-2019.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=clion-2019.3",
+    },
+)
+
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
 # There will be additional versions added in the future
