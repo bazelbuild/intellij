@@ -82,7 +82,8 @@ test_suite(
 test_suite(
     name = "aswb_python_tests",
     tests = [
-        "//python:integration_tests",
+        # #api193: temporarily disabled: AS is on an earlier version of v193
+        #        "//python:integration_tests",
         "//python:unit_tests",
     ],
 )
