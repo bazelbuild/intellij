@@ -272,6 +272,16 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   }
 
   @Test
+  public void testBazelIgnoreParser_skipsComments() throws Exception {
+    workspace.createFile(
+        new WorkspacePath(".bazelignore"), "# a comment\nroot0\n#another\nroot1/dir/\n\n");
+    BazelIgnoreParser parser = new BazelIgnoreParser(workspaceRoot);
+    assertThat(parser.getIgnoredPaths())
+        .containsExactly(
+            new WorkspacePath("root0"), new WorkspacePath(new WorkspacePath("root1"), "dir"));
+  }
+
+  @Test
   public void testBazelIgnoreParser_skipsEmptyLines() throws Exception {
     workspace.createFile(new WorkspacePath(".bazelignore"), "root0\n     \n\nroot1/dir/\n\n");
     BazelIgnoreParser parser = new BazelIgnoreParser(workspaceRoot);

@@ -48,7 +48,7 @@ public class BazelIgnoreParser {
 
     try {
       for (String path : FileOperationProvider.getInstance().readAllLines(bazelIgnoreFile)) {
-        if (path.trim().isEmpty()) {
+        if (path.trim().isEmpty() || path.trim().startsWith("#")) {
           continue;
         }
 
