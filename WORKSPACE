@@ -83,8 +83,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "e6a1ca5936e910fbae27262fb8e9bab98a6cedf178ae1325a7835d89dccc679f",
-    url = "https://plugins.jetbrains.com/files/7322/76642/python-ce.zip",
+    sha256 = "a3d7217794619dfa0432d922218dd875f49658939c6e5a54c01f99b333d35e12",
+    url = "https://plugins.jetbrains.com/files/7322/88054/python-ce-201.7846.93.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
@@ -111,8 +111,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "c63475f156d6757d3a155876308fabd83a3f0380242aff748495796655cb9169",
-    url = "https://plugins.jetbrains.com/files/9568/76993/intellij-go-201.4515.17.504.zip",
+    sha256 = "af4ad5070d27788bece5bb9acb66d90acf42008febbcdac5d794c06f78621b19",
+    url = "https://plugins.jetbrains.com/files/9568/87978/intellij-go-201.7846.76.189.zip",
 )
 
 # Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
