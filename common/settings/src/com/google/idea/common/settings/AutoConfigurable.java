@@ -16,6 +16,7 @@
 package com.google.idea.common.settings;
 
 import com.google.common.collect.ImmutableList;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.uiDesigner.core.AbstractLayout;
@@ -104,7 +105,7 @@ public abstract class AutoConfigurable implements UnnamedConfigurable {
   }
 
   @Override
-  public void apply() {
+  public void apply() throws ConfigurationException {
     getBindings().applySettings();
   }
 
