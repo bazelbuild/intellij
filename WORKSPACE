@@ -41,13 +41,22 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.1.2/ideaIU-2020.1.2.zip",
 )
 
-# The prerelease plugin api for CLion 2019.3. This is required to build CLwB,
+# The plugin api for CLion 2019.3. This is required to build CLwB,
 # and run integration tests.
 http_archive(
     name = "clion_2019_3",
     build_file = "@//intellij_platform_sdk:BUILD.clion193",
     sha256 = "4034d47ec4bd3c8123099d4b9614031c975f8cd37977b8df31bf77b6e85caf06",
     url = "https://download.jetbrains.com/cpp/CLion-2019.3.6.tar.gz",
+)
+
+# The plugin api for CLion 2019.3. This is required to build CLwB,
+# and run integration tests.
+http_archive(
+    name = "clion_2020_1",
+    build_file = "@//intellij_platform_sdk:BUILD.clion201",
+    sha256 = "c7d52c5059883c71d3db1271e82f513d0a3d1054efb69cd7d1f3e99ac1b2ab60",
+    url = "https://download.jetbrains.com/cpp/CLion-2020.1.2.tar.gz",
 )
 
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
