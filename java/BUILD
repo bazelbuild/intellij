@@ -64,7 +64,6 @@ java_library(
         "//java/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
         "//java/com/google/devtools/intellij/blaze/plugin/ijwb:__pkg__",
     ],
-    deps = ["//third_party/java/jdk:langtools"],
 )
 
 # This is provided by the IDE at runtime
