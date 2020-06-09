@@ -58,6 +58,16 @@ public abstract class SettingComponent<T> {
   /** Returns a {@link Property} for the value of the UI component. */
   abstract Property<T> getProperty();
 
+  /** Returns the value of the UI component. */
+  public final T getValue() {
+    return getProperty().getValue();
+  }
+
+  /** Sets the value of the UI component. */
+  public final void setValue(T value) {
+    getProperty().setValue(value);
+  }
+
   /** A {@link SettingComponent} for a single Swing component. */
   public static final class SimpleComponent<T, C extends JComponent> extends SettingComponent<T> {
 
