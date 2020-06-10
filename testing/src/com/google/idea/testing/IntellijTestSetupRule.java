@@ -20,7 +20,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.UIUtil;
 import java.io.File;
 import java.util.Hashtable;
 import java.util.List;
@@ -82,8 +81,6 @@ public class IntellijTestSetupRule extends ExternalResource {
     } catch (Throwable e) {
       throw new RuntimeException(e);
     }
-
-    UIUtil.removeLeakingAppleListeners();
   }
 
   private static boolean isRunThroughBlaze() {

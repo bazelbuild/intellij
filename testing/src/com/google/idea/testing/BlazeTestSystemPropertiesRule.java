@@ -18,9 +18,9 @@ package com.google.idea.testing;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.util.PlatformUtils;
 import java.io.File;
@@ -61,10 +61,12 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
 
     // Some plugins have a since-build and until-build restriction, so we need
     // to update the build number here
-    PluginManagerCore.BUILD_NUMBER = readApiVersionNumber();
-
-    setIfEmpty(
-        PlatformUtils.PLATFORM_PREFIX_KEY, determinePlatformPrefix(PluginManagerCore.BUILD_NUMBER));
+    String buildNumber = readApiVersionNumber();
+    if (buildNumber == null) {
+      buildNumber = BuildNumber.currentVersion().asString();
+    }
+    setIfEmpty("idea.plugins.compatible.build", buildNumber);
+    setIfEmpty(PlatformUtils.PLATFORM_PREFIX_KEY, determinePlatformPrefix(buildNumber));
 
     // Tests fail if they access files outside of the project roots and other system directories.
     // Ensure runfiles and platform api are whitelisted.
@@ -105,6 +107,7 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
     }
   }
 
+  @Nullable
   private static String readApiVersionNumber() {
     String apiVersionFilePath = System.getProperty("blaze.idea.api.version.file");
     String runfilesWorkspaceRoot = System.getProperty("user.dir");

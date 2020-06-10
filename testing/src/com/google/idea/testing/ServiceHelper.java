@@ -15,18 +15,20 @@
  */
 package com.google.idea.testing;
 
-import com.google.idea.sdkcompat.testframework.ServiceHelperCompat;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.ServiceContainerUtil;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.defaults.UnsatisfiableDependenciesException;
 
@@ -64,16 +66,23 @@ public class ServiceHelper {
 
   public static <T> void registerApplicationService(
       Class<T> key, T implementation, Disposable parentDisposable) {
-    ServiceHelperCompat.registerService(
-        ApplicationManager.getApplication(), key, implementation, parentDisposable);
+    registerService(ApplicationManager.getApplication(), key, implementation, parentDisposable);
+  }
+
+  public static <T> void registerProjectService(
+      Project project, Class<T> key, T implementation, Disposable parentDisposable) {
+    registerService(project, key, implementation, parentDisposable);
   }
 
   public static <T> void registerApplicationComponent(
       Class<T> key, T implementation, Disposable parentDisposable) {
     Application application = ApplicationManager.getApplication();
-    if (application instanceof ComponentManagerImpl) {
-      ServiceHelperCompat.replaceComponentInstance(
-          (ComponentManagerImpl) application, key, implementation, parentDisposable);
+    // #api193 (or #api201?): ComponentManagerImpl moved in 2020.1 dot releases. Check
+    // ComponentManagerImpl directly when earlier releases are no longer supported
+    boolean isComponentManagerImpl = !(application instanceof MockApplication);
+    if (isComponentManagerImpl) {
+      ServiceContainerUtil.registerComponentInstance(
+          application, key, implementation, parentDisposable);
     } else {
       registerComponentInstance(
           (MutablePicoContainer) application.getPicoContainer(),
@@ -83,16 +92,14 @@ public class ServiceHelper {
     }
   }
 
-  public static <T> void registerProjectService(
-      Project project, Class<T> key, T implementation, Disposable parentDisposable) {
-    ServiceHelperCompat.registerService(project, key, implementation, parentDisposable);
-  }
-
   public static <T> void registerProjectComponent(
       Project project, Class<T> key, T implementation, Disposable parentDisposable) {
-    if (project instanceof ComponentManagerImpl) {
-      ServiceHelperCompat.replaceComponentInstance(
-          (ComponentManagerImpl) project, key, implementation, parentDisposable);
+    // #api193 (or #api201?): ComponentManagerImpl moved in 2020.1 dot releases. Check
+    // ComponentManagerImpl directly when earlier releases are no longer supported
+    boolean isComponentManagerImpl = project instanceof ProjectImpl;
+    if (isComponentManagerImpl) {
+      ServiceContainerUtil.registerComponentInstance(
+          project, key, implementation, parentDisposable);
     } else {
       registerComponentInstance(
           (MutablePicoContainer) project.getPicoContainer(), key, implementation, parentDisposable);
@@ -118,5 +125,26 @@ public class ServiceHelper {
             container.registerComponentInstance(key.getName(), finalOld);
           }
         });
+  }
+
+  private static <T> void registerService(
+      ComponentManager componentManager,
+      Class<T> key,
+      T implementation,
+      Disposable parentDisposable) {
+    boolean exists = componentManager.getService(key) != null;
+    if (exists) {
+      // upstream code can do it all for us
+      ServiceContainerUtil.replaceService(componentManager, key, implementation, parentDisposable);
+      return;
+    }
+
+    // otherwise we should manually unregister on disposal
+    ServiceContainerUtil.registerServiceInstance(componentManager, key, implementation);
+    Disposer.register(
+        parentDisposable,
+        () ->
+            ((MutablePicoContainer) componentManager.getPicoContainer())
+                .unregisterComponent(key.getName()));
   }
 }
