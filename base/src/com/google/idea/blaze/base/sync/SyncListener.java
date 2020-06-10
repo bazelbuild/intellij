@@ -22,6 +22,8 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
+import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
@@ -31,7 +33,8 @@ public interface SyncListener {
       ExtensionPointName.create("com.google.idea.blaze.SyncListener");
 
   /** Called after open documents have been saved, prior to starting the blaze sync. */
-  default void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {}
+  default void onSyncStart(Project project, BlazeContext context, SyncMode syncMode)
+      throws SyncFailedException, SyncCanceledException {}
 
   /**
    * Called just prior to starting a blaze build during sync.
