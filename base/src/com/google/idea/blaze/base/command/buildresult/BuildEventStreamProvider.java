@@ -15,7 +15,9 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
+import com.google.common.collect.ImmutableList;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.annotation.Nullable;
@@ -45,10 +47,23 @@ public interface BuildEventStreamProvider {
   }
 
   static BuildEventStreamProvider fromInputStream(InputStream stream) {
-    return () -> parseNextEventFromStream(stream);
+    return new BuildEventStreamProvider() {
+      @Nullable
+      @Override
+      public BuildEvent getNext() throws BuildEventStreamException {
+        return parseNextEventFromStream(stream);
+      }
+
+      @Override
+      public ImmutableList<String> getStderr() {
+        return ImmutableList.of();
+      }
+    };
   }
 
   /** Returns the next build event in the stream, or null if there are none remaining. */
   @Nullable
   BuildEventStreamProtos.BuildEvent getNext() throws BuildEventStreamException;
+
+  ImmutableList<String> getStderr() throws BuildEventStreamException;
 }

@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.sync.aspects;
 
+import java.util.Objects;
+
 /** The result of a blaze operation */
 public class BuildResult {
 
@@ -77,5 +79,19 @@ public class BuildResult {
     Status firstStatus = Status.fromExitCode(first);
     Status secondStatus = Status.fromExitCode(second);
     return firstStatus.ordinal() >= secondStatus.ordinal() ? first : second;
+  }
+
+  @Override
+  public boolean equals(Object object) {
+    if (!(object instanceof BuildResult)) {
+      return false;
+    }
+    BuildResult buildResult = (BuildResult) object;
+    return buildResult.status == status && buildResult.exitCode == exitCode;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(status, exitCode);
   }
 }
