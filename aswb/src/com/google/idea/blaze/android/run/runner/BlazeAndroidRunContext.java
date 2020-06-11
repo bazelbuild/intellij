@@ -76,4 +76,6 @@ public interface BlazeAndroidRunContext {
 
   @Nullable
   Integer getUserId(IDevice device, ConsolePrinter consolePrinter) throws ExecutionException;
+
+  String getAmStartOptions();
 }

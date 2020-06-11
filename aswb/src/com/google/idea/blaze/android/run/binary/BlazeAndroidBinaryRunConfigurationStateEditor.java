@@ -42,6 +42,7 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.ui.components.JBTextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
@@ -61,6 +62,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
 
   private Box mainContainer;
   private ComponentWithBrowseButton<EditorTextField> activityField;
+  private JBTextField launchOptionsField;
   private JRadioButton launchNothingButton;
   private JRadioButton launchDefaultButton;
   private JRadioButton launchCustomButton;
@@ -157,6 +159,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     userIdField.setValue(state.getUserId());
 
     showLogcatAutomaticallyCheckBox.setSelected(state.showLogcatAutomatically());
+    launchOptionsField.setText(state.getAmStartOptions());
 
     updateEnabledState();
   }
@@ -181,6 +184,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
         AndroidBinaryLaunchMethodsUtils.getLaunchMethod(useMobileInstallCheckBox.isSelected()));
     state.setUseWorkProfileIfPresent(useWorkProfileIfPresentCheckBox.isSelected());
     state.setShowLogcatAutomatically(showLogcatAutomaticallyCheckBox.isSelected());
+    state.setAmStartOptions(launchOptionsField.getText());
   }
 
   @Override
@@ -290,7 +294,15 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     activityBox.setBorder(
         BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Activity"));
 
-    // Panel to hold all the above editable components.
-    mainContainer = UiUtil.createBox(useMobileInstallCheckBox, activityBox, userBox, logcatBox);
+    launchOptionsField = new JBTextField();
+    Box launchOptionsBox = UiUtil.createBox(launchOptionsField);
+    launchOptionsBox.setBorder(
+        BorderFactory.createTitledBorder(
+            BorderFactory.createEtchedBorder(), "Launch Options (optiond to `am start` command)"));
+
+    // Panel for items under the "Miscellaneous" tab
+    mainContainer =
+        UiUtil.createBox(
+            useMobileInstallCheckBox, userBox, logcatBox, activityBox, launchOptionsBox);
   }
 }
