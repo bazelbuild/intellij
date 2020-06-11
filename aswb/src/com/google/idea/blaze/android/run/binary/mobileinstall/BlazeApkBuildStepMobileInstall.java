@@ -162,7 +162,9 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
           .addTargets(label)
           .addBlazeFlags(blazeFlags)
           .addBlazeFlags(buildResultHelper.getBuildFlags())
-          .addExeFlags(exeFlags);
+          .addExeFlags(exeFlags)
+          // MI launches apps by default. Defer app launch to BlazeAndroidLaunchTasksProvider.
+          .addExeFlags("--nolaunch_app");
 
       SaveUtil.saveAllFiles();
       int retVal =
