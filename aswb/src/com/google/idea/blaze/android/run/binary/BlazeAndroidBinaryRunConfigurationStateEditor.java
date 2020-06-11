@@ -298,7 +298,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     Box launchOptionsBox = UiUtil.createBox(launchOptionsField);
     launchOptionsBox.setBorder(
         BorderFactory.createTitledBorder(
-            BorderFactory.createEtchedBorder(), "Launch Options (optiond to `am start` command)"));
+            BorderFactory.createEtchedBorder(), "Launch (\"am start\") options"));
 
     // Panel for items under the "Miscellaneous" tab
     mainContainer =
