@@ -97,10 +97,4 @@
     <androidDebuggerInfoProvider implementation="com.google.idea.blaze.android.run.BlazeCommandAndroidDebuggerInfoProvider" />
   </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationCollector</implementation-class>
-    </component>
-  </project-components>
-
 </idea-plugin>
