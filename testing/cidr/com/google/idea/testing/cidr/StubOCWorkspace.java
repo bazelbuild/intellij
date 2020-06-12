@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /** A stub {@link OCWorkspace} to use for testing. */
 public class StubOCWorkspace implements OCWorkspace {
@@ -50,8 +49,18 @@ public class StubOCWorkspace implements OCWorkspace {
     return 0;
   }
 
+  // @Override #api193
+  public int getClientVersion(String clientKey) {
+    return 0;
+  }
+
   @Override
   public List<OCResolveConfiguration> getConfigurations() {
+    return resolveConfigurations;
+  }
+
+  // @Override #api193
+  public List<OCResolveConfiguration> getConfigurations(String clientKey) {
     return resolveConfigurations;
   }
 
@@ -63,13 +72,13 @@ public class StubOCWorkspace implements OCWorkspace {
   }
 
   @Override
-  public List<OCResolveConfiguration> getConfigurationsForFile(@NotNull String sourceFileUrl) {
+  public List<OCResolveConfiguration> getConfigurationsForFile(String sourceFileUrl) {
     throw new UnsupportedOperationException();
   }
 
   @Override
   @Nullable
-  public OCResolveConfiguration getConfigurationById(@NotNull String id) {
+  public OCResolveConfiguration getConfigurationById(String id) {
     return ContainerUtil.find(resolveConfigurations, it -> Objects.equals(id, it.getUniqueId()));
   }
 
@@ -80,6 +89,11 @@ public class StubOCWorkspace implements OCWorkspace {
 
   @Override
   public ModifiableModel getModifiableModel(boolean clear) {
+    throw new UnsupportedOperationException();
+  }
+
+  // @Override #api193
+  public ModifiableModel getModifiableModel(String clientKey, boolean clear) {
     throw new UnsupportedOperationException();
   }
 
