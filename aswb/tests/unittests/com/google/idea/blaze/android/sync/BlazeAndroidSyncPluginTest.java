@@ -304,7 +304,16 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
       return null;
     }
 
+    @Nullable
+    // @Override #api193
+    public String getProjectSdkTypeName() {
+      return null;
+    }
+
     @Override
     public void setProjectSdkName(String s) {}
+
+    // @Override #api193
+    public void setProjectSdkName(String name, String sdkTypeName) {}
   }
 }
