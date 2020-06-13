@@ -20,11 +20,13 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import java.util.EnumSet;
 import java.util.Set;
@@ -45,7 +47,12 @@ public class LanguageSupport {
     }
     // Should never happen, outside of tests without proper set up.
     checkState(
-        workspaceType != null, "No SyncPlugin present which provides a default workspace type.");
+        workspaceType != null,
+        PluginUtils.isPluginEnabled("JUnit")
+            ? "No SyncPlugin present which provides a default workspace type."
+            : String.format(
+                "The JUnit plugin is disabled, but it's required for the %s plugin to function.",
+                Blaze.defaultBuildSystemName()));
     return workspaceType;
   }
 
@@ -109,8 +116,7 @@ public class LanguageSupport {
    * different {@link WorkspaceType}.
    */
   public static Set<LanguageClass> languagesSupportedByCurrentIde() {
-    return supportedWorkspaceTypes()
-        .stream()
+    return supportedWorkspaceTypes().stream()
         .flatMap(w -> supportedLanguagesForWorkspaceType(w).stream())
         .collect(Collectors.toSet());
   }
