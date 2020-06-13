@@ -65,6 +65,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     state.setUserId(2);
     state.setShowLogcatAutomatically(true);
     state.setDeepLink("http://deeplink");
+    state.setAmStartOptions("-S");
 
     Element element = new Element("test");
     state.writeExternal(element);
@@ -87,6 +88,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     assertThat(readState.getUserId()).isEqualTo(2);
     assertThat(readState.showLogcatAutomatically()).isTrue();
     assertThat(readState.getDeepLink()).isEqualTo("http://deeplink");
+    assertThat(readState.getAmStartOptions()).isEqualTo("-S");
   }
 
   @Test
@@ -111,6 +113,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     assertThat(readState.useWorkProfileIfPresent()).isEqualTo(state.useWorkProfileIfPresent());
     assertThat(readState.getUserId()).isEqualTo(state.getUserId());
     assertThat(readState.getDeepLink()).isEqualTo(state.getDeepLink());
+    assertThat(readState.getAmStartOptions()).isEqualTo(state.getDeepLink());
   }
 
   @Test
@@ -154,6 +157,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     state.setUseWorkProfileIfPresent(true);
     state.setUserId(2);
     state.setShowLogcatAutomatically(true);
+    state.setAmStartOptions("-S");
     // We don't test DeepLink because it is not exposed in the editor.
     // state.setDeepLink("http://deeplink");
 
@@ -175,6 +179,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     assertThat(readState.useWorkProfileIfPresent()).isEqualTo(state.useWorkProfileIfPresent());
     assertThat(readState.getUserId()).isEqualTo(state.getUserId());
     assertThat(readState.showLogcatAutomatically()).isEqualTo(state.showLogcatAutomatically());
+    assertThat(readState.getAmStartOptions()).isEqualTo(state.getAmStartOptions());
     // We don't test DeepLink because it is not exposed in the editor.
     // assertThat(readState.getDeepLink()).isEqualTo(state.getDeepLink());
   }
@@ -201,6 +206,7 @@ public class BlazeAndroidBinaryRunConfigurationStateTest extends BlazeIntegratio
     assertThat(readState.useSplitApksIfPossible()).isEqualTo(state.useSplitApksIfPossible());
     assertThat(readState.useWorkProfileIfPresent()).isEqualTo(state.useWorkProfileIfPresent());
     assertThat(readState.getUserId()).isEqualTo(state.getUserId());
+    assertThat(readState.getAmStartOptions()).isEqualTo(state.getAmStartOptions());
     // We don't test DeepLink because it is not exposed in the editor.
     // assertThat(readState.getDeepLink()).isEqualTo(state.getDeepLink());
   }

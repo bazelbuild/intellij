@@ -288,6 +288,9 @@ final class SyncPhaseCoordinator {
     try {
       SaveUtil.saveAllFiles();
       onSyncStart(project, context, params.syncMode());
+      if (!context.shouldContinue()) {
+        return;
+      }
       BlazeProjectData oldProjectData = getOldProjectData(context, params.syncMode());
       if (oldProjectData == null) {
         String message = "Can't filter project targets: project has never been synced.";
@@ -349,6 +352,18 @@ final class SyncPhaseCoordinator {
     try {
       SaveUtil.saveAllFiles();
       onSyncStart(project, context, params.syncMode());
+      if (!context.shouldContinue()) {
+        finishSync(
+            params,
+            startTime,
+            context,
+            ProjectViewManager.getInstance(project).getProjectViewSet(),
+            ImmutableSet.of(buildId),
+            SyncResult.FAILURE,
+            SyncStats.builder());
+        return;
+      }
+
       if (params.syncMode() == SyncMode.STARTUP) {
         finishSync(
             params,
@@ -659,11 +674,14 @@ final class SyncPhaseCoordinator {
     return timedEvents;
   }
 
-  private static void onSyncStart(Project project, BlazeContext context, SyncMode syncMode) {
-    final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
-    for (SyncListener syncListener : syncListeners) {
-      syncListener.onSyncStart(project, context, syncMode);
-    }
+  private static void onSyncStart(Project project, BlazeContext parentContext, SyncMode syncMode) {
+    SyncScope.push(
+        parentContext,
+        context -> {
+          for (SyncListener listener : SyncListener.EP_NAME.getExtensions()) {
+            listener.onSyncStart(project, context, syncMode);
+          }
+        });
   }
 
   private static void afterSync(

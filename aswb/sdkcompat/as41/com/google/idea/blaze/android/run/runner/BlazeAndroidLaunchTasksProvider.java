@@ -129,14 +129,12 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
         launchTasks.add(new CheckApkDebuggableTask(runContext.getBuildStep().getDeployInfo()));
       }
 
-      StringBuilder amStartOptions = new StringBuilder();
-
+      ImmutableList.Builder<String> amStartOptions = ImmutableList.builder();
+      amStartOptions.add(runContext.getAmStartOptions());
       if (isProfilerLaunch(launchOptions)) {
-        String amOptions =
+        amStartOptions.add(
             AndroidProfilerLaunchTaskContributor.getAmStartOptions(
-                project, packageName, launchOptions, device);
-        amStartOptions.append(amStartOptions.length() == 0 ? "" : " ").append(amOptions);
-
+                project, packageName, launchOptions, device));
         launchTasks.add(
             new AndroidProfilerLaunchTaskContributor.AndroidProfilerToolWindowLaunchTask(
                 project, launchOptions, packageName));
@@ -148,7 +146,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
           runContext.getApplicationLaunchTask(
               launchOptions,
               userId,
-              amStartOptions.toString(),
+              String.join(" ", amStartOptions.build()),
               debuggerManager.getAndroidDebugger(),
               debuggerManager.getAndroidDebuggerState(project),
               processHandlerLaunchStatus);

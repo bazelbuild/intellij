@@ -69,6 +69,9 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
   private String activityClass = "";
   private String mode = LAUNCH_DEFAULT_ACTIVITY;
 
+  private static final String AM_START_OPTIONS = "AM_START_OPTIONS";
+  private String amStartOptions = "";
+
   private final BlazeAndroidRunConfigurationCommonState commonState;
 
   BlazeAndroidBinaryRunConfigurationState(String buildSystemName) {
@@ -152,6 +155,14 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     return profilerState;
   }
 
+  public void setAmStartOptions(String amStartOptions) {
+    this.amStartOptions = amStartOptions;
+  }
+
+  public String getAmStartOptions() {
+    return amStartOptions;
+  }
+
   /**
    * We collect errors rather than throwing to avoid missing fatal errors by exiting early for a
    * warning.
@@ -200,6 +211,11 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     setShowLogcatAutomatically(
         Boolean.parseBoolean(element.getAttributeValue(SHOW_LOGCAT_AUTOMATICALLY)));
 
+    String amStartOptionsString = element.getAttributeValue(AM_START_OPTIONS);
+    if (amStartOptionsString != null) {
+      setAmStartOptions(amStartOptionsString);
+    }
+
     for (Map.Entry<String, String> entry : getLegacyValues(element).entrySet()) {
       String value = entry.getValue();
       switch (entry.getKey()) {
@@ -242,6 +258,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     element.setAttribute(USE_SPLIT_APKS_IF_POSSIBLE, Boolean.toString(useSplitApksIfPossible));
     element.setAttribute(WORK_PROFILE_ATTR, Boolean.toString(useWorkProfileIfPresent));
     element.setAttribute(SHOW_LOGCAT_AUTOMATICALLY, Boolean.toString(showLogcatAutomatically));
+    element.setAttribute(AM_START_OPTIONS, amStartOptions);
 
     if (userId != null) {
       element.setAttribute(USER_ID_ATTR, Integer.toString(userId));

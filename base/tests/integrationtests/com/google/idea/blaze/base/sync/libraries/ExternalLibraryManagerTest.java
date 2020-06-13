@@ -70,7 +70,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
   }
 
   @Test
-  public void testFilesFound() {
+  public void testFilesFound() throws Exception {
     VirtualFile fooFile = workspace.createFile(new WorkspacePath("foo/Foo.java"));
     assertThat(fooFile).isNotNull();
     VirtualFile barFile = workspace.createFile(new WorkspacePath("bar/Bar.java"));
@@ -84,7 +84,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
   }
 
   @Test
-  public void testFileRemoved() throws InterruptedException {
+  public void testFileRemoved() throws Exception {
     VirtualFile fooFile = workspace.createFile(new WorkspacePath("foo/Foo.java"));
     assertThat(fooFile).isNotNull();
     VirtualFile barFile = workspace.createFile(new WorkspacePath("bar/Bar.java"));
@@ -103,7 +103,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
   }
 
   @Test
-  public void testSuccessfulSync() {
+  public void testSuccessfulSync() throws Exception {
     // both old and new files exist, project data is changed
     VirtualFile oldFile = workspace.createFile(new WorkspacePath("old/Old.java"));
     assertThat(oldFile).isNotNull();
@@ -120,7 +120,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
   }
 
   @Test
-  public void testFailedSync() {
+  public void testFailedSync() throws Exception {
     // both old and new files exist, project data is changed
     VirtualFile oldFile = workspace.createFile(new WorkspacePath("old/Old.java"));
     assertThat(oldFile).isNotNull();
@@ -138,7 +138,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
   }
 
   @Test
-  public void testDuringSuccessfulSync() {
+  public void testDuringSuccessfulSync() throws Exception {
     VirtualFile oldFile = workspace.createFile(new WorkspacePath("foo/Foo.java"));
     assertThat(oldFile).isNotNull();
 
@@ -168,7 +168,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
   }
 
   @Test
-  public void testDuringFailedSync() {
+  public void testDuringFailedSync() throws Exception {
     VirtualFile oldFile = workspace.createFile(new WorkspacePath("foo/Foo.java"));
     assertThat(oldFile).isNotNull();
 
@@ -185,7 +185,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
     assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isNotEmpty();
   }
 
-  private void mockSync(SyncResult syncResult) {
+  private void mockSync(SyncResult syncResult) throws Exception {
     BlazeContext context = new BlazeContext();
     syncListener.onSyncStart(getProject(), context, SyncMode.INCREMENTAL);
     if (syncResult.successful()) {

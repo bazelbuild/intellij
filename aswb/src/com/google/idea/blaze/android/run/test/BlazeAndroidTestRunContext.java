@@ -267,4 +267,9 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   public Integer getUserId(IDevice device, ConsolePrinter consolePrinter) {
     return null;
   }
+
+  @Override
+  public String getAmStartOptions() {
+    return "";
+  }
 }

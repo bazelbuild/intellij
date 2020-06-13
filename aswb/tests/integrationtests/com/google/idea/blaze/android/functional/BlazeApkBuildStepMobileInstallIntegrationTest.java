@@ -154,6 +154,7 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     assertThat(externalTaskInterceptor.context).isEqualTo(context);
     assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
     assertThat(externalTaskInterceptor.command).containsAllIn(execFlags);
+    assertThat(externalTaskInterceptor.command).contains("--nolaunch_app");
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
     // Note: Invoking mobile-install does not require adding android_deploy_info output group.
   }

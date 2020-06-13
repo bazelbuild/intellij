@@ -19,6 +19,7 @@ import static com.android.tools.idea.run.deployment.DeviceAndSnapshotComboBoxAct
 
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
@@ -33,6 +34,7 @@ import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -172,8 +174,16 @@ public class BlazeAndroidTestRunConfigurationHandler
             configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
     BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);
 
-    BlazeAndroidTestRunConfigurationCollector.getInstance(project)
-        .logLaunchMethod(configState.getLaunchMethod().name(), env.getExecutor().getId());
+    EventLoggingService.getInstance()
+        .logEvent(
+            BlazeAndroidTestRunConfigurationHandler.class,
+            "BlazeAndroidTestRun",
+            ImmutableMap.of(
+                "launchMethod",
+                configState.getLaunchMethod().name(),
+                "executorId",
+                env.getExecutor().getId()));
+
     return new BlazeAndroidRunConfigurationRunner(
         module,
         runContext,

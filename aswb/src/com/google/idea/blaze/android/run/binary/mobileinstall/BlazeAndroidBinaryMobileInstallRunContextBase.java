@@ -163,4 +163,9 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
         startActivityFlagsProvider,
         processHandlerLaunchStatus);
   }
+
+  @Override
+  public String getAmStartOptions() {
+    return configState.getAmStartOptions();
+  }
 }

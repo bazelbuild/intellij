@@ -237,4 +237,9 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
         startActivityFlagsProvider,
         processHandlerLaunchStatus);
   }
+
+  @Override
+  public String getAmStartOptions() {
+    return configState.getAmStartOptions();
+  }
 }

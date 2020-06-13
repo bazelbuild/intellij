@@ -68,15 +68,15 @@ final class SettingComponentBindings {
     }
 
     boolean isModified() {
-      return !Objects.equals(component.getProperty().getValue(), setting.getValue());
+      return !Objects.equals(component.getValue(), setting.getValue());
     }
 
     void applySetting() {
-      setting.setValue(component.getProperty().getValue());
+      setting.setValue(component.getValue());
     }
 
     void resetComponent() {
-      component.getProperty().setValue(setting.getValue());
+      component.setValue(setting.getValue());
     }
   }
 }

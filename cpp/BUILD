@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -13,6 +11,8 @@ load(
     "intellij_unit_test_suite",
 )
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
+
+licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "cpp",
@@ -47,9 +47,9 @@ intellij_plugin_library(
 )
 
 java_library(
-    name = "unit_test_utils",
+    name = "clion_sysprop_rule",
     testonly = 1,
-    srcs = glob(["tests/utils/**/*.java"]),
+    srcs = ["tests/utils/com/google/idea/blaze/cpp/ClionUnitTestSystemPropertiesRule.java"],
     visibility = ["//visibility:public"],
     deps = [
         "//intellij_platform_sdk:jsr305",
@@ -89,17 +89,19 @@ intellij_unit_test_suite(
     runtime_deps = ["//intellij_platform_sdk:test_libs"],
     deps = [
         ":cpp",
-        ":unit_test_utils",
         "//base",
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//sdkcompat",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "//sdkcompat",
         "@junit//jar",
-    ],
+    ] + select_for_ide(
+        clion = [":clion_sysprop_rule"],
+        default = [],
+    ),
 )
 
 stamped_plugin_xml(
