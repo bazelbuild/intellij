@@ -66,7 +66,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
 
   @After
   public final void after() {
-    getExternalLibrary().getSourceRoots().forEach(this::delete);
+    cleanUpLibraryFiles();
   }
 
   @Test
@@ -228,6 +228,16 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
                 throw new UncheckedIOException(e);
               }
             });
+  }
+
+  private void cleanUpLibraryFiles() {
+    for (File file : libraryProvider.files) {
+      VirtualFile vf = fileSystem.findFile(file.getPath());
+      if (vf != null) {
+        delete(vf);
+      }
+    }
+    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed();
   }
 
   private static final class MockExternalLibraryProvider extends BlazeExternalLibraryProvider {
