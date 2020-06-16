@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -176,9 +177,15 @@ class ProjectUnresolvedResourceStatsCollector implements Disposable {
    * <p>Map is cleared after flushing to prevent accidental double logging.
    */
   private synchronized void logStatsAndClearMap() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      clearMap();
+      return;
+    }
+
     if (fileToHighlightStats.isEmpty() || lastSyncResult == null) {
       return;
     }
+
     HighlightStats highlightStats =
         HighlightStats.builder()
             .setGroup(HighlightStats.Group.ANDROID_RESOURCE_MISSING_REF)

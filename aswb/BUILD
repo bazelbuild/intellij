@@ -65,6 +65,7 @@ java_library(
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]),
     deps = [
+        ":aswb_lib",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
@@ -73,6 +74,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//java",
+        "//java/com/google/devtools/build/runtime:runfiles",
         "//testing:lib",
         "@junit//jar",
     ],
@@ -93,7 +95,6 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
-        "//sdkcompat",
     ],
 )
 
@@ -135,6 +136,9 @@ intellij_integration_test_suite(
             "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
         ],
     ),
+    data = [
+        ":repacked_android_stable_sdk",
+    ],
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [
@@ -234,4 +238,24 @@ plugin_deploy_zip(
         ":plugin_jar",
     ],
     zip_filename = "aswb_bazel.zip",
+)
+
+Fileset(
+    name = "repacked_android_stable_sdk",
+    out = "androidSdk/platforms/test-sdk",
+    entries = [
+        FilesetEntry(
+            srcdir = "//third_party/java/android/android_sdk_linux/platforms/stable:BUILD",
+            files = [
+                "android.jar",
+                "build.prop",
+                "source.properties",
+            ],
+        ),
+        FilesetEntry(
+            srcdir = "//third_party/java/android/android_sdk_linux/platforms/stable:BUILD",
+            files = [":res"],
+            strip_prefix = "",
+        ),
+    ],
 )
