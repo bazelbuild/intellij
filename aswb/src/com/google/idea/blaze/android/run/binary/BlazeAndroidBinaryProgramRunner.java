@@ -18,9 +18,6 @@ package com.google.idea.blaze.android.run.binary;
 import com.android.tools.idea.profilers.ProfileRunExecutor;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
-import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod;
-import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor;
-import com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
@@ -41,20 +38,9 @@ public class BlazeAndroidBinaryProgramRunner extends DefaultProgramRunner {
     if (!(handler instanceof BlazeAndroidBinaryRunConfigurationHandler)) {
       return false;
     }
-    // In practice, the stock runner will probably handle all non-incremental-install configs.
-    if (DefaultDebugExecutor.EXECUTOR_ID.equals(executorId)
+    return (DefaultDebugExecutor.EXECUTOR_ID.equals(executorId)
         || DefaultRunExecutor.EXECUTOR_ID.equals(executorId)
-        || ProfileRunExecutor.EXECUTOR_ID.equals(executorId)) {
-      return true;
-    }
-    // Otherwise, the configuration must be a Blaze incremental install configuration running with
-    // an incremental install executor.
-    AndroidBinaryLaunchMethod launchMethod =
-        ((BlazeAndroidBinaryRunConfigurationHandler) handler).getState().getLaunchMethod();
-    return (AndroidBinaryLaunchMethod.MOBILE_INSTALL.equals(launchMethod)
-            || AndroidBinaryLaunchMethod.MOBILE_INSTALL_V2.equals(launchMethod))
-        && (IncrementalInstallDebugExecutor.EXECUTOR_ID.equals(executorId)
-            || IncrementalInstallRunExecutor.EXECUTOR_ID.equals(executorId));
+        || ProfileRunExecutor.EXECUTOR_ID.equals(executorId));
   }
 
   @Override
