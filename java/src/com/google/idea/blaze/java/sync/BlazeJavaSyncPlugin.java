@@ -147,7 +147,8 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
             sourceFilter,
             jdepsMap,
             javaWorkingSet,
-            artifactLocationDecoder);
+            artifactLocationDecoder,
+            previousSyncState);
     BlazeJavaImportResult importResult =
         Scope.push(
             context,

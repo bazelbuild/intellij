@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.workspace;
 
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import java.io.File;
@@ -35,6 +36,11 @@ public class MockArtifactLocationDecoder implements ArtifactLocationDecoder {
 
   @Override
   public BlazeArtifact resolveOutput(ArtifactLocation artifact) {
-    return new SourceArtifact(decode(artifact));
+    if (artifact.isSource()) {
+      return new SourceArtifact(decode(artifact));
+    } else {
+      return new LocalFileOutputArtifact(
+          decode(artifact), artifact.getRelativePath(), artifact.getExecutionRootRelativePath());
+    }
   }
 }

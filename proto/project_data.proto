@@ -69,12 +69,21 @@ message BlazeContentEntry {
   repeated BlazeSourceDirectory sources = 2;
 }
 
+message EmptyJarTracker {
+  message Entry {
+    LocalFileOrOutputArtifact artifact = 1;
+    bool is_empty = 2;
+  }
+  repeated Entry entries = 1;
+}
+
 message BlazeJavaImportResult {
   repeated BlazeContentEntry content_entries = 1;
   map<string, BlazeLibrary> libraries = 2;
   repeated ArtifactLocation build_output_jars = 3;
   repeated ArtifactLocation java_source_files = 4;
   string source_version = 5;
+  EmptyJarTracker empty_jar_tracker = 6;
 }
 
 message BlazeJavaSyncData {

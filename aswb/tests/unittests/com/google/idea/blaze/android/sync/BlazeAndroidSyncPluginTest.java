@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyJarTracker;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.intellij.openapi.module.Module;
@@ -123,12 +124,14 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
             .put(new BlazeAndroidSyncData(null, new AndroidSdkPlatform("android-26", 0)))
             .put(
                 new BlazeJavaSyncData(
-                    new BlazeJavaImportResult(
-                        ImmutableList.of(),
-                        ImmutableMap.of(),
-                        ImmutableList.of(),
-                        ImmutableSet.of(),
-                        "9"),
+                    BlazeJavaImportResult.builder()
+                        .setContentEntries(ImmutableList.of())
+                        .setLibraries(ImmutableMap.of())
+                        .setBuildOutputJars(ImmutableList.of())
+                        .setJavaSourceFiles(ImmutableSet.of())
+                        .setSourceVersion("9")
+                        .setEmptyJarTracker(EmptyJarTracker.builder().build())
+                        .build(),
                     null))
             .build();
 

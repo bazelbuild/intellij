@@ -227,7 +227,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             sourceFilter,
             jdepsMap,
             workingSet,
-            FAKE_ARTIFACT_DECODER);
+            FAKE_ARTIFACT_DECODER,
+            /* oldSyncState= */ null);
 
     return blazeWorkspaceImporter.importWorkspace(context);
   }

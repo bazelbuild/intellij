@@ -122,7 +122,8 @@ public final class BlazeImportFixture {
             getBlazeImportInput().createSourceFilter(),
             new MockJdepsMap(),
             null,
-            getDecoder());
+            getDecoder(),
+            getSyncState());
     return blazeWorkspaceImporter.importWorkspace(getContext());
   }
 

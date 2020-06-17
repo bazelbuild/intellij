@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.section.Glob.GlobSet;
+import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyJarTracker;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
@@ -86,8 +87,14 @@ public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
     JavaSourceFolderProvider provider =
         new JavaSourceFolderProvider(
             new BlazeJavaSyncData(
-                new BlazeJavaImportResult(
-                    contentEntries, ImmutableMap.of(), ImmutableList.of(), ImmutableSet.of(), null),
+                BlazeJavaImportResult.builder()
+                    .setContentEntries(contentEntries)
+                    .setLibraries(ImmutableMap.of())
+                    .setBuildOutputJars(ImmutableList.of())
+                    .setJavaSourceFiles(ImmutableSet.of())
+                    .setSourceVersion(null)
+                    .setEmptyJarTracker(EmptyJarTracker.builder().build())
+                    .build(),
                 new GlobSet(ImmutableList.of())));
 
     VirtualFile root = workspace.createDirectory(new WorkspacePath("java/apps"));
@@ -134,8 +141,14 @@ public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
     JavaSourceFolderProvider provider =
         new JavaSourceFolderProvider(
             new BlazeJavaSyncData(
-                new BlazeJavaImportResult(
-                    contentEntries, ImmutableMap.of(), ImmutableList.of(), ImmutableSet.of(), null),
+                BlazeJavaImportResult.builder()
+                    .setContentEntries(contentEntries)
+                    .setLibraries(ImmutableMap.of())
+                    .setBuildOutputJars(ImmutableList.of())
+                    .setJavaSourceFiles(ImmutableSet.of())
+                    .setSourceVersion(null)
+                    .setEmptyJarTracker(EmptyJarTracker.builder().build())
+                    .build(),
                 new GlobSet(ImmutableList.of())));
 
     VirtualFile root = workspace.createDirectory(new WorkspacePath("java/apps"));
@@ -170,8 +183,14 @@ public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
     JavaSourceFolderProvider provider =
         new JavaSourceFolderProvider(
             new BlazeJavaSyncData(
-                new BlazeJavaImportResult(
-                    contentEntries, ImmutableMap.of(), ImmutableList.of(), ImmutableSet.of(), null),
+                BlazeJavaImportResult.builder()
+                    .setContentEntries(contentEntries)
+                    .setLibraries(ImmutableMap.of())
+                    .setBuildOutputJars(ImmutableList.of())
+                    .setJavaSourceFiles(ImmutableSet.of())
+                    .setSourceVersion(null)
+                    .setEmptyJarTracker(EmptyJarTracker.builder().build())
+                    .build(),
                 new GlobSet(ImmutableList.of())));
 
     VirtualFile root = workspace.createDirectory(new WorkspacePath("java"));

@@ -75,6 +75,7 @@ import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
+import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilter;
 import com.google.idea.blaze.java.sync.jdeps.MockJdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -107,9 +108,16 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
   private static class MockFileOperationProvider extends FileOperationProvider {
     private final HashMap<File, Long> fileSizes = new HashMap<>();
+    private final HashMap<File, Long> lastModifiedTimes = new HashMap<>();
 
     void setFileSize(String relativePath, long size) {
       fileSizes.put(new File("/", relativePath), size);
+    }
+
+    @Override
+    public boolean setFileModifiedTime(File file, long time) {
+      lastModifiedTimes.put(file, time);
+      return true;
     }
 
     @Override
@@ -123,6 +131,14 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
         return 500L;
       }
       return super.getFileSize(file);
+    }
+
+    @Override
+    public long getFileModifiedTime(File file) {
+      if (lastModifiedTimes.containsKey(file)) {
+        return lastModifiedTimes.get(file);
+      }
+      return super.getFileModifiedTime(file);
     }
   }
 
@@ -228,7 +244,8 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
             sourceFilter,
             jdepsMap,
             workingSet,
-            FAKE_ARTIFACT_DECODER);
+            FAKE_ARTIFACT_DECODER,
+            null);
 
     return blazeWorkspaceImporter.importWorkspace(context);
   }
@@ -1102,7 +1119,13 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     jdepsMap.put(
         TargetKey.forPlainTarget(Label.create("//java/apps/example:example_debug")),
         Lists.newArrayList(jdepsPath("thirdparty/a.jar"), jdepsPath("thirdparty/c.jar")));
+
+    // Set fileModifiedTime so they don't default to being included. The exact time doesn't matter
+    // as long as it is not 0
+    fileOperationProvider.setFileModifiedTime(new File("/", "thirdparty/a.jar"), 176400L);
+
     fileOperationProvider.setFileSize("thirdparty/c.jar", 22L);
+    fileOperationProvider.setFileModifiedTime(new File("/", "thirdparty/c.jar"), 176400L);
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
     assertThat(

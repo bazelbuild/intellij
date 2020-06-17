@@ -678,7 +678,8 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
             sourceFilter,
             jdepsMap,
             null,
-            decoder)
+            decoder,
+            null)
         .importWorkspace(context);
   }
 
