@@ -12,7 +12,6 @@ docker_builder:
 
   env:
     matrix:
-      - IJ_PRODUCT: intellij-2019.2
       - IJ_PRODUCT: intellij-2019.3
 
   env:
