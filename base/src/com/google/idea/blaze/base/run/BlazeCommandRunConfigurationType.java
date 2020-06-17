@@ -38,6 +38,12 @@ public class BlazeCommandRunConfigurationType implements ConfigurationType {
     }
 
     @Override
+    public String getId() {
+      // must be left unchanged for backwards compatibility
+      return getName();
+    }
+
+    @Override
     public boolean isApplicable(Project project) {
       return Blaze.isBlazeProject(project);
     }

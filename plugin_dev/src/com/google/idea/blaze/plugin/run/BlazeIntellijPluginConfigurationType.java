@@ -84,8 +84,14 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
           }
         };
 
-    protected BlazeIntellijPluginConfigurationFactory(ConfigurationType type) {
+    private BlazeIntellijPluginConfigurationFactory(ConfigurationType type) {
       super(type);
+    }
+
+    @Override
+    public String getId() {
+      // must be left unchanged for backwards compatibility
+      return getName();
     }
 
     @Override
