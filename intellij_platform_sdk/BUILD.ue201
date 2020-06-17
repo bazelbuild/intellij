@@ -49,7 +49,10 @@ java_import(
 
 java_import(
     name = "css",
-    jars = glob(["plugins/CSS/lib/*.jar"]),
+    jars = glob([
+        "plugins/CSS/lib/*.jar",
+        "plugins/platform-images/lib/*.jar",
+    ]),
 )
 
 java_import(
