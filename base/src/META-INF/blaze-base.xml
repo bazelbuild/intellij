@@ -91,7 +91,7 @@
     <action id="Blaze.ExportRunConfigurations"
       class="com.google.idea.blaze.base.run.exporter.ExportRunConfigurationAction"
       text="Export Run Configurations"
-      icon="AllIcons.Actions.Export">
+      icon="AllIcons.ToolbarDecorator.Export">
     </action>
     <action id="Blaze.FileGitHubIssueAction"
         class="com.google.idea.blaze.base.actions.FileGitHubIssueAction"
