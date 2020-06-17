@@ -7,11 +7,13 @@ import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -21,11 +23,14 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
+import com.intellij.ui.EditorTextField;
 import com.intellij.usages.Usage;
 import com.intellij.util.Processor;
+import java.nio.file.Path;
 import java.util.Collection;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
@@ -126,4 +131,18 @@ public final class BaseSdkCompat {
     return SdkConfigurationUtil.createSdk(
         allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
   }
+
+  /** #api193: project opening requirements changed in 2020.1. */
+  public static void openProject(Project project, Path projectFile) {
+    ApplicationManager.getApplication()
+        .executeOnPooledThread(
+            () ->
+                PlatformProjectOpenProcessor.openExistingProject(
+                    /* file= */ projectFile,
+                    /* projectDir= */ projectFile,
+                    new OpenProjectTask(project)));
+  }
+
+  /** #api193: auto-disposed with UI component in 2020.1+ */
+  public static void disposeEditorTextField(EditorTextField field) {}
 }

@@ -12,8 +12,11 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -23,8 +26,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.EditorTextField;
 import com.intellij.usages.Usage;
 import com.intellij.util.Processor;
+import java.nio.file.Path;
 import java.util.Collection;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
@@ -124,5 +129,18 @@ public final class BaseSdkCompat {
       @Nullable String customSdkSuggestedName) {
     return SdkConfigurationUtil.createSdk(
         allSdks.toArray(new Sdk[0]), homeDir, sdkType, additionalData, customSdkSuggestedName);
+  }
+
+  /** #api193: project opening requirements changed in 2020.1. */
+  public static void openProject(Project project, Path projectFile) {
+    ProjectManagerEx.getInstanceEx().openProject(project);
+  }
+
+  /** #api193: auto-disposed with UI component in 2020.1+ */
+  public static void disposeEditorTextField(EditorTextField field) {
+    Editor editor = field.getEditor();
+    if (editor != null) {
+      EditorFactory.getInstance().releaseEditor(editor);
+    }
   }
 }

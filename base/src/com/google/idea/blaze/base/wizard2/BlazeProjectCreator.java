@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
+import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -23,7 +25,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
@@ -39,7 +40,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ui.UIUtil;
 import java.io.File;
 import java.io.IOException;
-import javax.annotation.Nullable;
+import java.nio.file.Paths;
 import javax.swing.SwingUtilities;
 
 class BlazeProjectCreator {
@@ -53,98 +54,89 @@ class BlazeProjectCreator {
     this.projectBuilder = projectBuilder;
   }
 
-  @Nullable
-  Project createFromWizard() {
+  void createFromWizard() {
     try {
-      return doCreate();
+      doCreate();
     } catch (final IOException e) {
       UIUtil.invokeLaterIfNeeded(
           () -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
-      return null;
     }
   }
 
-  @Nullable
-  private Project doCreate() throws IOException {
-    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
-    final String projectFilePath = wizardContext.getProjectFileDirectory();
+  private void doCreate() throws IOException {
+    String projectFilePath = wizardContext.getProjectFileDirectory();
 
-    try {
-      File projectDir = new File(projectFilePath).getParentFile();
-      logger.assertTrue(
-          projectDir != null,
-          "Cannot create project in '" + projectFilePath + "': no parent file exists");
-      FileUtil.ensureExists(projectDir);
-      if (wizardContext.getProjectStorageFormat() == StorageScheme.DIRECTORY_BASED) {
-        final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
-        FileUtil.ensureExists(ideaDir);
-      }
+    File projectDir = new File(projectFilePath).getParentFile();
+    logger.assertTrue(
+        projectDir != null,
+        "Cannot create project in '" + projectFilePath + "': no parent file exists");
+    FileUtil.ensureExists(projectDir);
+    if (wizardContext.getProjectStorageFormat() == StorageScheme.DIRECTORY_BASED) {
+      final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
+      FileUtil.ensureExists(ideaDir);
+    }
 
-      String name = wizardContext.getProjectName();
-      Project newProject = projectBuilder.createProject(name, projectFilePath);
-      if (newProject == null) {
-        return null;
-      }
+    String name = wizardContext.getProjectName();
+    Project newProject = projectBuilder.createProject(name, projectFilePath);
+    if (newProject == null) {
+      return;
+    }
 
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        newProject.save();
-      }
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      newProject.save();
+    }
 
-      if (!projectBuilder.validate(null, newProject)) {
-        return null;
-      }
+    if (!projectBuilder.validate(null, newProject)) {
+      return;
+    }
 
-      projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
+    projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
 
-      StartupManager.getInstance(newProject)
-          .registerPostStartupActivity(
-              () -> {
-                // ensure the dialog is shown after all startup activities are done
-                //noinspection SSBasedInspection
-                SwingUtilities.invokeLater(
-                    () -> {
-                      if (newProject.isDisposed()
-                          || ApplicationManager.getApplication().isUnitTestMode()) {
-                        return;
-                      }
-                      ApplicationManager.getApplication()
-                          .invokeLater(
-                              () -> {
-                                if (newProject.isDisposed()) {
-                                  return;
-                                }
-                                final ToolWindow toolWindow =
-                                    ToolWindowManager.getInstance(newProject)
-                                        .getToolWindow(ToolWindowId.PROJECT_VIEW);
-                                if (toolWindow != null) {
-                                  toolWindow.activate(null);
-                                }
-                              },
-                              ModalityState.NON_MODAL);
-                    });
-              });
+    StartupManager.getInstance(newProject)
+        .registerPostStartupActivity(
+            () -> {
+              // ensure the dialog is shown after all startup activities are done
+              //noinspection SSBasedInspection
+              SwingUtilities.invokeLater(
+                  () -> {
+                    if (newProject.isDisposed()
+                        || ApplicationManager.getApplication().isUnitTestMode()) {
+                      return;
+                    }
+                    ApplicationManager.getApplication()
+                        .invokeLater(
+                            () -> {
+                              if (newProject.isDisposed()) {
+                                return;
+                              }
+                              final ToolWindow toolWindow =
+                                  ToolWindowManager.getInstance(newProject)
+                                      .getToolWindow(ToolWindowId.PROJECT_VIEW);
+                              if (toolWindow != null) {
+                                toolWindow.activate(null);
+                              }
+                            },
+                            ModalityState.NON_MODAL);
+                  });
+            });
 
-      ProjectUtil.updateLastProjectLocation(projectFilePath);
+    ProjectUtil.updateLastProjectLocation(projectFilePath);
 
-      if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
-        IdeFocusManager instance = IdeFocusManager.findInstance();
-        IdeFrame lastFocusedFrame = instance.getLastFocusedFrame();
-        if (lastFocusedFrame instanceof IdeFrameEx) {
-          boolean fullScreen = ((IdeFrameEx) lastFocusedFrame).isInFullScreen();
-          if (fullScreen) {
-            newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
-          }
+    if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
+      IdeFocusManager instance = IdeFocusManager.findInstance();
+      IdeFrame lastFocusedFrame = instance.getLastFocusedFrame();
+      if (lastFocusedFrame instanceof IdeFrameEx) {
+        boolean fullScreen = ((IdeFrameEx) lastFocusedFrame).isInFullScreen();
+        if (fullScreen) {
+          newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
         }
       }
+    }
 
-      projectManager.openProject(newProject);
+    BaseSdkCompat.openProject(newProject, Paths.get(projectFilePath));
 
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        newProject.save();
-      }
-      return newProject;
-    } finally {
-      projectBuilder.cleanup();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
     }
   }
 }
