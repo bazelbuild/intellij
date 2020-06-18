@@ -52,19 +52,15 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
-import org.jetbrains.android.sdk.AndroidSdkUtils;
 
 /** Builds and installs the APK using mobile-install. */
 public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
-  private static final BoolExperiment USE_SDK_ADB = new BoolExperiment("use.sdk.adb", true);
-
   private final Project project;
   private final Label label;
   private final ImmutableList<String> blazeFlags;
@@ -146,13 +142,8 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
     // https://github.com/bazelbuild/bazel/issues/4922
     command.addBlazeFlags(
         BlazeFlags.ADB_ARG + "-s ", BlazeFlags.ADB_ARG + device.getSerialNumber());
-
-    if (USE_SDK_ADB.getValue()) {
-      File adb = AndroidSdkUtils.getAdb(project);
-      if (adb != null) {
-        command.addBlazeFlags(BlazeFlags.ADB, adb.toString());
-      }
-    }
+    MobileInstallAdbLocationProvider.getAdbLocationForMobileInstall(project)
+        .ifPresent((location) -> command.addBlazeFlags(BlazeFlags.ADB, location));
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     final String deployInfoSuffix = getDeployInfoSuffix(Blaze.getBuildSystem(project));

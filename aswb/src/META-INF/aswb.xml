@@ -53,6 +53,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.MavenArtifactLocator" interface="com.google.idea.blaze.android.projectsystem.MavenArtifactLocator"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AndroidTestLaunchMethodsProvider" interface="com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.GeneratedResourceRetentionFilter" interface="com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceRetentionFilter"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.MobileInstallAdbLocationProvider" interface="com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallAdbLocationProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
