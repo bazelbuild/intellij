@@ -93,13 +93,16 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     }
 
     Integer userId = runContext.getUserId(device, consolePrinter);
-    String pmInstallOption = UserIdHelper.getFlagsFromUserId(userId);
+    final String pmInstallOption;
     String skipVerification =
         ApkVerifierTracker.getSkipVerificationInstallationFlag(device, packageName);
     if (skipVerification != null) {
-      pmInstallOption = String.format("%s %s", pmInstallOption, skipVerification);
+      pmInstallOption =
+          String.format("%s %s", UserIdHelper.getFlagsFromUserId(userId), skipVerification);
+    } else {
+      pmInstallOption = UserIdHelper.getFlagsFromUserId(userId);
     }
-    launchOptionsBuilder.setPmInstallOptions(pmInstallOption);
+    launchOptionsBuilder.setPmInstallOptions(d -> pmInstallOption);
 
     LaunchOptions launchOptions = launchOptionsBuilder.build();
 
@@ -129,12 +132,14 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
         launchTasks.add(new CheckApkDebuggableTask(runContext.getBuildStep().getDeployInfo()));
       }
 
-      ImmutableList.Builder<String> amStartOptions = ImmutableList.builder();
-      amStartOptions.add(runContext.getAmStartOptions());
+      StringBuilder amStartOptions = new StringBuilder();
+
       if (isProfilerLaunch(launchOptions)) {
-        amStartOptions.add(
+        String amOptions =
             AndroidProfilerLaunchTaskContributor.getAmStartOptions(
-                project, packageName, launchOptions, device));
+                project, packageName, launchOptions, device);
+        amStartOptions.append(amStartOptions.length() == 0 ? "" : " ").append(amOptions);
+
         launchTasks.add(
             new AndroidProfilerLaunchTaskContributor.AndroidProfilerToolWindowLaunchTask(
                 project, launchOptions, packageName));
@@ -146,7 +151,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
           runContext.getApplicationLaunchTask(
               launchOptions,
               userId,
-              String.join(" ", amStartOptions.build()),
+              amStartOptions.toString(),
               debuggerManager.getAndroidDebugger(),
               debuggerManager.getAndroidDebuggerState(project),
               processHandlerLaunchStatus);
