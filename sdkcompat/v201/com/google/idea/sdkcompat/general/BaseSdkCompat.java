@@ -13,7 +13,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -134,13 +133,8 @@ public final class BaseSdkCompat {
 
   /** #api193: project opening requirements changed in 2020.1. */
   public static void openProject(Project project, Path projectFile) {
-    ApplicationManager.getApplication()
-        .executeOnPooledThread(
-            () ->
-                PlatformProjectOpenProcessor.openExistingProject(
-                    /* file= */ projectFile,
-                    /* projectDir= */ projectFile,
-                    new OpenProjectTask(project)));
+    PlatformProjectOpenProcessor.openExistingProject(
+        /* file= */ projectFile, /* projectDir= */ projectFile, new OpenProjectTask(project));
   }
 
   /** #api193: auto-disposed with UI component in 2020.1+ */
