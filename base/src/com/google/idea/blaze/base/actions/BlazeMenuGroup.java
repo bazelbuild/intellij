@@ -20,13 +20,15 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
 /** The "Blaze" menu group, only visible in blaze mode */
 public class BlazeMenuGroup extends DefaultActionGroup {
   @Override
   public final void update(AnActionEvent e) {
-    if (!isBlazeProject(e)) {
+    // Don't hide the menu if project is null: it will be null temporarily while loading a
+    // Blaze project, and sometimes stays hidden permanently if we hide it during loading.
+    Project project = e.getProject();
+    if (project != null && !Blaze.isBlazeProject(project)) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
@@ -48,10 +50,5 @@ public class BlazeMenuGroup extends DefaultActionGroup {
   @Override
   public boolean isDumbAware() {
     return true;
-  }
-
-  private static boolean isBlazeProject(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    return project != null && Blaze.isBlazeProject(project);
   }
 }
