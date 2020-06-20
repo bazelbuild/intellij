@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.buildmodifier;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.io.CharStreams;
+import com.google.idea.blaze.base.async.process.BinaryPathRemapper;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.common.formatter.FormatUtils.FileContentsProvider;
 import com.google.idea.common.formatter.FormatUtils.Replacements;
@@ -40,7 +41,7 @@ public class BuildFileFormatter {
     for (BuildifierBinaryProvider provider : BuildifierBinaryProvider.EP_NAME.getExtensions()) {
       File file = provider.getBuildifierBinary();
       if (file != null) {
-        return file;
+        return BinaryPathRemapper.remapBinary(file.getPath()).orElse(file);
       }
     }
     return null;
