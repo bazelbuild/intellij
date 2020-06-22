@@ -44,7 +44,7 @@ import com.google.idea.blaze.java.sync.jdeps.JdepsState.JdepsData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
@@ -163,8 +163,8 @@ public class JdepsFileReader {
                           .collect(toImmutableList());
                   TargetKey targetKey = fileToTargetMap.get(updatedFile);
                   return new Result(updatedFile, targetKey, deps);
-                } catch (FileNotFoundException e) {
-                  logger.info("Could not open jdeps file: " + updatedFile);
+                } catch (IOException e) {
+                  logger.info("Could not read jdeps file: " + updatedFile);
                   return null;
                 }
               }));
