@@ -15,20 +15,31 @@
  */
 package com.google.idea.blaze.base.async.process;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
-/** Simple adapter between stdout and context print output. */
+/** Simple adapter between stdout and context print output. Ignore lines in blacklist. */
 public class PrintOutputLineProcessor implements LineProcessingOutputStream.LineProcessor {
   private final BlazeContext context;
+  private final List<String> blacklist;
 
   public PrintOutputLineProcessor(BlazeContext context) {
+    this(context, ImmutableList.of());
+  }
+
+  public PrintOutputLineProcessor(BlazeContext context, List<String> blacklist) {
     this.context = context;
+    this.blacklist = blacklist;
   }
 
   @Override
   public boolean processLine(@NotNull String line) {
+    if (blacklist.contains(line)) {
+      return true;
+    }
     context.output(PrintOutput.output(line));
     return true;
   }
