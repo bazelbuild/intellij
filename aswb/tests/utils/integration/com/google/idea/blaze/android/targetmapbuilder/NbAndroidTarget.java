@@ -82,7 +82,7 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
       extractedPackagePath = extractedPackagePath.substring(5);
     }
 
-    androidIdeInfoBuilder.setResourceJavaPackage(extractedPackagePath.replaceAll("/", "."));
+    setResourceJavaPackage(extractedPackagePath.replaceAll("/", "."));
   }
 
   @Override
@@ -206,6 +206,11 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
     } else {
       androidIdeInfoBuilder.setInstruments(Label.create("//" + blazePackage + relativeLabel));
     }
+    return this;
+  }
+
+  public NbAndroidTarget setResourceJavaPackage(String resourceJavaPackage) {
+    androidIdeInfoBuilder.setResourceJavaPackage(resourceJavaPackage);
     return this;
   }
 }

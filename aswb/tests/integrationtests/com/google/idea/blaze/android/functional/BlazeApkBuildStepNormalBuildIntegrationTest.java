@@ -76,7 +76,7 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
         "public class MainActivity extends Activity {}");
 
     setTargetMap(android_binary("//java/com/foo/app:app").src("MainActivity.java"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
   }
 
   /** Setup build result helper to return BEP output with test execroot by default. */

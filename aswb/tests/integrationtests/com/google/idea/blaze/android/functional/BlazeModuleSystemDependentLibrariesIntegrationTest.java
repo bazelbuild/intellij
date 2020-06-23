@@ -180,7 +180,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
         android_library(recyclerView).res("res"),
         android_library(intermediateDependency).res("res").dep(constraintLayout),
         constraintLayoutTarget);
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     Module appModule =
         ModuleManager.getInstance(getProject()).findModuleByName("java.com.google.app");

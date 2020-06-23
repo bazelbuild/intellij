@@ -93,7 +93,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
             .test_app("//java/com/foo/app:test_app"),
         android_instrumentation_test("//java/com/foo/app:self_instrumenting_test")
             .test_app("//java/com/foo/app:test_app_self_instrumenting"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
   }
 
   /** Setup build result helper to return BEP output with test execroot by default. */
@@ -407,7 +407,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
             .src("Test.java")
             .instruments("//java/com/foo/app:app"),
         android_instrumentation_test("//java/com/foo/app:instrumentation_test"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     MessageCollector messageCollector = new MessageCollector();
     BlazeContext context = new BlazeContext();

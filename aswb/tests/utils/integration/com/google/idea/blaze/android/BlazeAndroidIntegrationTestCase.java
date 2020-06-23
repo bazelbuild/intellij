@@ -63,6 +63,16 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
     JdepsFileWriter.writeDefaultJdepsFiles(getExecRoot(), fileSystem, targetMap);
   }
 
+  protected final void runFullBlazeSyncWithNoIssues() {
+    runFullBlazeSync();
+    errorCollector.assertNoIssues();
+  }
+
+  protected final void runFullBlazeSyncWithExpectedIssues(String... expectedIssues) {
+    runFullBlazeSync();
+    errorCollector.assertIssues(expectedIssues);
+  }
+
   protected void runFullBlazeSync() {
     runBlazeSync(
         BlazeSyncParams.builder()
@@ -72,7 +82,6 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
             .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
-    errorCollector.assertNoIssues();
   }
 
   protected Module getModule(String moduleName) {

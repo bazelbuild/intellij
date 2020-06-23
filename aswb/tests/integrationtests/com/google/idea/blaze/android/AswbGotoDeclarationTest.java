@@ -92,7 +92,7 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
             .dep("//java/com/foo/libs:libs")
             .res("res"),
         android_library("//java/com/foo/libs:libs").res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     testFixture.configureFromExistingVirtualFile(mainActivity);
     assertGotoDeclarationOpensFile("Base_Highlight", stylesXml);
@@ -127,7 +127,7 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
         android_library("//java/com/foo/gallery/activities:activities")
             .src("MainActivity.java")
             .res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     testFixture.configureFromExistingVirtualFile(mainActivity);
     assertGotoDeclarationOpensFile("settings", settingsXml);
@@ -181,7 +181,7 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
             .dep("//third_party/aar:lib_aar")
             .res("res"),
         aarTarget);
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
     VirtualFile aarColorXml = getResourceFile(aarLibraryFile, "values/colors.xml");
     VirtualFile aarLayoutXml = getResourceFile(aarLibraryFile, "layout/activity_aar.xml");
     testFixture.configureFromExistingVirtualFile(mainActivity);
@@ -219,7 +219,7 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
             .dep("//third_party/aar:lib_aar")
             .res("res"),
         aarTarget);
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     VirtualFile aarColorXml = getResourceFile(aarLibraryFile, "values/colors.xml");
 
@@ -256,7 +256,7 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
             .dep("//third_party/aar:lib_aar")
             .res("res"),
         aarTarget);
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     VirtualFile aarColorXml = getResourceFile(aarLibraryFile, "values/colors.xml");
     testFixture.configureFromExistingVirtualFile(aarColorXml);
