@@ -369,6 +369,8 @@
                     interface="com.google.idea.blaze.base.sync.sharding.BuildBatchingService"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeHighlightStatsCollector"
                     interface="com.google.idea.blaze.base.editor.BlazeHighlightStatsCollector"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.AbsolutePathPatcher"
+                    interface="com.google.idea.blaze.base.util.AbsolutePathPatcher"/>
   </extensionPoints>
 
   <application-components>

@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.util.AbsolutePathPatcher.AbsolutePathPatcherUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -102,7 +103,7 @@ public class PrefetchServiceImpl implements PrefetchService {
   @Nullable
   private static File toCanonicalFile(FileOperationProvider provider, File file) {
     try {
-      File canonicalFile = file.getCanonicalFile();
+      File canonicalFile = AbsolutePathPatcherUtil.fixPath(file.getCanonicalFile());
       if (provider.exists(canonicalFile)) {
         return canonicalFile;
       }

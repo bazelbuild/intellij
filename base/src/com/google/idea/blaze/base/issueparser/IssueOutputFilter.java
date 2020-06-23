@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.issueparser.BlazeIssueParser.Parser;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.ui.problems.BlazeProblemsView;
+import com.google.idea.blaze.base.util.AbsolutePathPatcher.AbsolutePathPatcherUtil;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -146,7 +147,8 @@ public class IssueOutputFilter implements Filter {
    * virtual file if unsuccessful.
    */
   private static VirtualFile resolveSymlinks(VirtualFile file) {
-    VirtualFile resolved = file.getCanonicalFile();
+    VirtualFile resolved =
+        AbsolutePathPatcherUtil.fixPath(file.getCanonicalFile(), /* refreshIfNeeded= */ false);
     return resolved != null ? resolved : file;
   }
 
