@@ -156,7 +156,7 @@ public final class RemoteOutputsCache {
 
       List<File> removed =
           cachedFiles.entrySet().stream()
-              .filter(e -> !updatedOutputs.containsKey(e.getKey()))
+              .filter(e -> !newState.containsKey(e.getKey()))
               .map(Map.Entry::getValue)
               .collect(toImmutableList());
 
