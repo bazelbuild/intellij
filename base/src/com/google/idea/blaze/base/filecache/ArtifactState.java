@@ -175,7 +175,8 @@ public interface ArtifactState {
       if (!(obj instanceof RemoteOutputState)) {
         return false;
       }
-      return blazeOutPath.equals(((RemoteOutputState) obj).blazeOutPath);
+      return blazeOutPath.equals(((RemoteOutputState) obj).blazeOutPath)
+          && id.equals(((RemoteOutputState) obj).id);
     }
   }
 }
