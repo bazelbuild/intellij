@@ -148,7 +148,14 @@ public interface ArtifactState {
         return true;
       }
       RemoteOutputState state = (RemoteOutputState) output;
-      return !Objects.equals(id, state.id) && syncStartTimeMillis < state.syncStartTimeMillis;
+      // id (blobId) has the format /objfs/<backend_id>/<digest>. We have noticed that same
+      // generated file may have different <backend_id> but same <digest> when invoke blaze build
+      // multiple times one by one. Objfs team has confirmed that only the digest part of the file
+      // is relevant for caching. So only compare digest part instead of whole id.
+      String digest = id.replaceAll("/objfs/.+/", "");
+      String stateDigest = state.id.replaceAll("/objfs/.+/", "");
+      return !Objects.equals(digest, stateDigest)
+          && syncStartTimeMillis < state.syncStartTimeMillis;
     }
 
     @Override
