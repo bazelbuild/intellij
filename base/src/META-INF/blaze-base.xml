@@ -418,6 +418,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.SettingsUiContributor" interface="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable$UiContributor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazePsiDirectoryRootNodeNameModifier" interface="com.google.idea.blaze.base.treeview.BlazePsiDirectoryRootNodeNameModifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.FileCache" interface="com.google.idea.blaze.base.filecache.FileCache"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.ArtifactStateHelper" interface="com.google.idea.blaze.base.filecache.ArtifactStateProtoConverter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.TestTargetHeuristic" interface="com.google.idea.blaze.base.run.TestTargetHeuristic"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ProjectDataDirectoryValidator" interface="com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AspectStrategyProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategyProvider"/>
@@ -516,6 +517,7 @@
     <VcsSyncListener implementation="com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager$VcsListener"/>
     <SettingsUiContributor implementation="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable$UiContributor" order="first" id="base"/>
     <MacroTargetProvider implementation="com.google.idea.blaze.base.query.BlazeQueryMacroTargetProvider" order="last"/>
+    <ArtifactStateHelper implementation="com.google.idea.blaze.google3.objfs.RemoteOutputStateProtoConverter"/>
   </extensions>
 
 </idea-plugin>

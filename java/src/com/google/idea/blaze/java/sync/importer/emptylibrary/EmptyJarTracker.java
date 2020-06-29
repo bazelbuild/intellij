@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.filecache.ArtifactStateProtoConverter;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
@@ -79,7 +80,10 @@ public class EmptyJarTracker implements ProtoWrapper<ProjectData.EmptyJarTracker
 
     Builder emptyJarTrackerBuilder = builder();
     for (ProjectData.EmptyJarTracker.Entry entry : proto.getEntriesList()) {
-      ArtifactState artifactState = ArtifactState.fromProto(entry.getArtifact());
+      ArtifactState artifactState = ArtifactStateProtoConverter.fromProto(entry.getArtifact());
+      if (artifactState == null) {
+        continue;
+      }
       emptyJarTrackerBuilder.addEntry(artifactState, entry.getIsEmpty());
     }
 

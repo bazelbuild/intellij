@@ -15,13 +15,10 @@
  */
 package com.google.idea.blaze.base.filecache;
 
-import com.google.devtools.intellij.model.ProjectData;
 import com.google.devtools.intellij.model.ProjectData.LocalFile;
 import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import java.io.File;
-import java.util.Objects;
-import javax.annotation.Nullable;
 
 /** Used to diff blaze {@link BlazeArtifact}s from different builds. */
 public interface ArtifactState {
@@ -63,28 +60,18 @@ public interface ArtifactState {
 
   LocalFileOrOutputArtifact serializeToProto();
 
-  @Nullable
-  static ArtifactState fromProto(LocalFileOrOutputArtifact proto) {
-    if (proto.hasLocalFile()) {
-      LocalFile local = proto.getLocalFile();
-      String blazeOutPath =
-          !local.getRelativePath().isEmpty()
-              ? local.getRelativePath()
-              : migrateOldKeyFormat(local.getPath());
-      return new LocalFileState(blazeOutPath, proto.getLocalFile().getTimestamp());
-    }
-    if (proto.hasArtifact()) {
-      ProjectData.OutputArtifact output = proto.getArtifact();
-      return new RemoteOutputState(
-          output.getRelativePath(), output.getId(), output.getSyncStartTimeMillis());
-    }
-    return null;
-  }
-
   /** Serialization state related to local files. */
   class LocalFileState implements ArtifactState {
     private final String blazeOutPath;
     private final long timestamp;
+
+    public LocalFileState(LocalFile localFile) {
+      this.blazeOutPath =
+          !localFile.getRelativePath().isEmpty()
+              ? localFile.getRelativePath()
+              : migrateOldKeyFormat(localFile.getPath());
+      this.timestamp = localFile.getTimestamp();
+    }
 
     public LocalFileState(String blazeOutPath, long timestamp) {
       this.blazeOutPath = blazeOutPath;
@@ -114,7 +101,7 @@ public interface ArtifactState {
     }
 
     /**
-     * Returns true for {@link LocalFileState) with the same key, as described in {@link #getKey()}
+     * Returns true for {@link LocalFileState} with the same key, as described in {@link #getKey()}
      * See {@link ArtifactState#getKey()} for caveats abouts versioning.
      */
     @Override
@@ -126,64 +113,6 @@ public interface ArtifactState {
         return false;
       }
       return blazeOutPath.equals(((LocalFileState) obj).blazeOutPath);
-    }
-  }
-
-  /** Serialization state related to remotely-hosted output artifacts. */
-  class RemoteOutputState implements ArtifactState {
-    private final String blazeOutPath;
-    private final String id;
-    private final long syncStartTimeMillis;
-
-    public RemoteOutputState(String blazeOutPath, String id, long syncStartTimeMillis) {
-      this.blazeOutPath = blazeOutPath;
-      this.id = id;
-      this.syncStartTimeMillis = syncStartTimeMillis;
-    }
-
-    @Override
-    public String getKey() {
-      return blazeOutPath;
-    }
-
-    @Override
-    public boolean isMoreRecent(ArtifactState output) {
-      if (!(output instanceof RemoteOutputState)) {
-        return true;
-      }
-      RemoteOutputState state = (RemoteOutputState) output;
-      return !Objects.equals(id, state.id) && syncStartTimeMillis < state.syncStartTimeMillis;
-    }
-
-    @Override
-    public LocalFileOrOutputArtifact serializeToProto() {
-      return LocalFileOrOutputArtifact.newBuilder()
-          .setArtifact(
-              ProjectData.OutputArtifact.newBuilder()
-                  .setRelativePath(blazeOutPath)
-                  .setId(id)
-                  .setSyncStartTimeMillis(syncStartTimeMillis))
-          .build();
-    }
-
-    @Override
-    public int hashCode() {
-      return blazeOutPath.hashCode();
-    }
-
-    /**
-     * Returns true for {@link RemoteOutputState) with the same key, as described in
-     * {@link #getKey()}. See {@link ArtifactState#getKey()} for caveats abouts versioning.
-     */
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == this) {
-        return true;
-      }
-      if (!(obj instanceof RemoteOutputState)) {
-        return false;
-      }
-      return blazeOutPath.equals(((RemoteOutputState) obj).blazeOutPath);
     }
   }
 }

@@ -16,8 +16,6 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.devtools.intellij.model.ProjectData;
-import com.google.idea.blaze.base.filecache.ArtifactState;
-import com.google.idea.blaze.base.filecache.ArtifactState.RemoteOutputState;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Arrays;
@@ -35,11 +33,6 @@ public interface RemoteOutputArtifact
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
-  }
-
-  @Override
-  default ArtifactState toArtifactState() {
-    return new RemoteOutputState(getRelativePath(), getHashId(), getSyncTimeMillis());
   }
 
   @Override

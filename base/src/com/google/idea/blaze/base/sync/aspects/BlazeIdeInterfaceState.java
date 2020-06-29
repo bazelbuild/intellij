@@ -24,6 +24,7 @@ import com.google.common.collect.Maps;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.filecache.ArtifactStateProtoConverter;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import java.util.Map;
@@ -59,7 +60,7 @@ public final class BlazeIdeInterfaceState
             proto.getFileToTargetMap(), ArtifactState::migrateOldKeyFormat, TargetKey::fromProto);
     ImmutableMap.Builder<String, ArtifactState> artifacts = ImmutableMap.builder();
     for (LocalFileOrOutputArtifact output : proto.getIdeInfoFilesList()) {
-      ArtifactState state = ArtifactState.fromProto(output);
+      ArtifactState state = ArtifactStateProtoConverter.fromProto(output);
       if (state == null) {
         continue;
       }

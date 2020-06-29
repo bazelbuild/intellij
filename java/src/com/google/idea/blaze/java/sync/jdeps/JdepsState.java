@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.filecache.ArtifactState;
+import com.google.idea.blaze.base.filecache.ArtifactStateProtoConverter;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.SyncData;
@@ -73,7 +74,7 @@ final class JdepsState implements SyncData<ProjectData.JdepsState> {
                     JdepsData.create(
                         TargetKey.fromProto(e.getKey()),
                         ProtoWrapper.internStrings(e.getValueList()),
-                        ArtifactState.fromProto(e.getFile())))
+                        ArtifactStateProtoConverter.fromProto(e.getFile())))
             .collect(toImmutableList());
     return new JdepsState(data);
   }
@@ -91,7 +92,7 @@ final class JdepsState implements SyncData<ProjectData.JdepsState> {
                     e -> TargetKey.fromProto(e.getValue()), Map.Entry::getKey, (a, b) -> a));
     ImmutableMap<String, ArtifactState> artifacts =
         proto.getJdepsFilesList().stream()
-            .map(ArtifactState::fromProto)
+            .map(ArtifactStateProtoConverter::fromProto)
             .filter(Objects::nonNull)
             .collect(toImmutableMap(ArtifactState::getKey, s -> s, (a, b) -> a));
     ImmutableList.Builder<JdepsData> data = ImmutableList.builder();
