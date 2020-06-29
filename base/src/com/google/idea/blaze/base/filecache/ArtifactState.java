@@ -113,6 +113,10 @@ public interface ArtifactState {
       return blazeOutPath.hashCode();
     }
 
+    /**
+     * Returns true for {@link LocalFileState) with the same key, as described in {@link #getKey()}
+     * See {@link ArtifactState#getKey()} for caveats abouts versioning.
+     */
     @Override
     public boolean equals(Object obj) {
       if (obj == this) {
@@ -167,6 +171,10 @@ public interface ArtifactState {
       return blazeOutPath.hashCode();
     }
 
+    /**
+     * Returns true for {@link RemoteOutputState) with the same key, as described in
+     * {@link #getKey()}. See {@link ArtifactState#getKey()} for caveats abouts versioning.
+     */
     @Override
     public boolean equals(Object obj) {
       if (obj == this) {

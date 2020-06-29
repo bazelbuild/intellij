@@ -132,12 +132,15 @@ public class EmptyJarTracker implements ProtoWrapper<ProjectData.EmptyJarTracker
     private final Map<ArtifactState, Boolean> trackerBuilder = new HashMap<>();
 
     public Builder addEntry(ArtifactState artifactState, Boolean isEmpty) {
+      // Remove currently present entry to ensure the updated artifact is used as key
+      // No-op if artifactState is not present
+      trackerBuilder.remove(artifactState);
       trackerBuilder.put(artifactState, isEmpty);
       return this;
     }
 
     public Builder addAllEntries(Map<ArtifactState, Boolean> map) {
-      trackerBuilder.putAll(map);
+      map.forEach(this::addEntry);
       return this;
     }
 
