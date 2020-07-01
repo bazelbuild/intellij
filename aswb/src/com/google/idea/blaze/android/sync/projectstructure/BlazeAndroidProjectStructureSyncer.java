@@ -17,13 +17,13 @@ package com.google.idea.blaze.android.sync.projectstructure;
 
 import static java.util.stream.Collectors.toSet;
 
+import com.android.annotations.VisibleForTesting;
 import com.android.builder.model.SourceProvider;
 import com.android.ide.common.gradle.model.SourceProviderUtil;
 import com.android.ide.common.util.PathString;
 import com.android.ide.common.util.PathStringUtil;
 import com.android.projectmodel.AndroidPathType;
 import com.android.projectmodel.SourceSet;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
