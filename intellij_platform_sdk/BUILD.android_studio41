@@ -15,9 +15,9 @@ java_import(
         # api#191: expose the java plugin as a separate target
         # api#193: expose platform-images as a separate target
         [
-            "lib/*.jar",
-            "plugins/java/lib/*.jar",
-            "plugins/platform-images/lib/*.jar",
+            "android-studio/lib/*.jar",
+            "android-studio/plugins/java/lib/*.jar",
+            "android-studio/plugins/platform-images/lib/*.jar",
         ],
         # Plugin code shouldn't need junit, and plugin tests may be driven by a different version.
         # Exclude to avoid warnings: "Multiple versions of JUnit detected on classpath".
@@ -40,6 +40,9 @@ java_import(
         "android-studio/plugins/android-ndk/lib/*.jar",
         "android-studio/plugins/sdk-updates/lib/*.jar",
     ]),
+    runtime_deps = [
+        ":kotlin",
+    ],
 )
 
 java_import(
