@@ -189,7 +189,10 @@ class MultipleJavaClassesTestContextProvider implements TestContextProvider {
     }
     return Futures.transformAsync(
         classes,
-        set -> set == null ? null : ReadAction.compute(() -> getTestTargetIfUnique(project, set)),
+        set ->
+            set == null
+                ? Futures.immediateFuture(null)
+                : ReadAction.compute(() -> getTestTargetIfUnique(project, set)),
         EXECUTOR);
   }
 
