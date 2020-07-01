@@ -32,8 +32,6 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDirectory;
 import java.util.List;
 import org.junit.Before;
@@ -51,10 +49,7 @@ public class AllInPackageTestContextProviderTest extends BlazeRunConfigurationPr
 
   @Before
   public final void before() {
-    // disposed prior to calling parent class's @After methods
-    Disposable thisClassDisposable = Disposer.newDisposable();
-
-    projectViewManager = new MockProjectViewManager(getProject(), thisClassDisposable);
+    projectViewManager = new MockProjectViewManager(getProject());
     errorCollector = new ErrorCollector();
     context = new BlazeContext();
     context.addOutputSink(IssueOutput.class, errorCollector);

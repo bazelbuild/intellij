@@ -86,7 +86,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   @Before
   public void doSetup() {
     thisClassDisposable = Disposer.newDisposable();
-    projectViewManager = new MockProjectViewManager(getProject(), thisClassDisposable);
+    projectViewManager = new MockProjectViewManager(getProject());
     new MockBlazeVcsHandler(thisClassDisposable);
     blazeInfoData = new MockBlazeInfoRunner();
     blazeIdeInterface = new MockBlazeIdeInterface();

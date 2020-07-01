@@ -20,7 +20,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.testing.ServiceHelper;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
@@ -29,8 +28,8 @@ public class MockProjectViewManager extends ProjectViewManager {
 
   private ProjectViewSet projectViewSet = ProjectViewSet.builder().build();
 
-  public MockProjectViewManager(Project project, Disposable parentDisposable) {
-    ServiceHelper.registerProjectService(project, ProjectViewManager.class, this, parentDisposable);
+  public MockProjectViewManager(Project project) {
+    ServiceHelper.registerProjectService(project, ProjectViewManager.class, this, project);
   }
 
   public void setProjectView(ProjectViewSet projectView) {
