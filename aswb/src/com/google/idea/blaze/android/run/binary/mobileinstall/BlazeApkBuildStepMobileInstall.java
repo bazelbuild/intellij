@@ -125,7 +125,6 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
       return;
     }
 
-    context.output(new StatusOutput("Invoking mobile-install..."));
     BlazeCommand.Builder command =
         BlazeCommand.builder(
             Blaze.getBuildSystemProvider(project).getBinaryPath(project),
@@ -169,6 +168,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
           .addExeFlags("--nolaunch_app");
 
       SaveUtil.saveAllFiles();
+      context.output(new StatusOutput("Invoking mobile-install..."));
       int retVal =
           ExternalTask.builder(workspaceRoot)
               .addBlazeCommand(command.build())
