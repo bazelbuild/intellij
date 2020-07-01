@@ -25,6 +25,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
+import com.google.idea.blaze.android.run.binary.mobileinstall.AdbTunnelConfigurator.AdbTunnelConfiguratorProvider;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
@@ -53,14 +54,17 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
 
 /** Builds and installs the APK using mobile-install. */
 public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
+  private static final Logger log = Logger.getInstance(BlazeApkBuildStepMobileInstall.class);
   private final Project project;
   private final Label label;
   private final ImmutableList<String> blazeFlags;
@@ -127,17 +131,6 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
             Blaze.getBuildSystemProvider(project).getBinaryPath(project),
             BlazeCommandName.MOBILE_INSTALL);
 
-    String deviceFlag = device.getSerialNumber();
-    InetSocketAddress adbAddr = AndroidDebugBridge.getSocketAddress();
-    if (adbAddr == null) {
-      IssueOutput.warn(
-              "Can't get ADB server port, please ensure ADB server is running. Will fallback to"
-                  + " the default adb server.")
-          .submit(context);
-    } else {
-      deviceFlag += ":tcp:" + adbAddr.getPort();
-    }
-    command.addBlazeFlags(BlazeFlags.DEVICE, deviceFlag);
     // Redundant, but we need this to get around bug in bazel.
     // https://github.com/bazelbuild/bazel/issues/4922
     command.addBlazeFlags(
@@ -148,7 +141,25 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     final String deployInfoSuffix = getDeployInfoSuffix(Blaze.getBuildSystem(project));
 
-    try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
+    try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project);
+        AdbTunnelConfigurator tunnelConfig = getTunnelConfigurator(context)) {
+      tunnelConfig.setupConnection(context);
+      String deviceFlag = device.getSerialNumber();
+      if (tunnelConfig.isActive()) {
+        deviceFlag += ":tcp:" + tunnelConfig.getAdbServerPort();
+      } else {
+        InetSocketAddress adbAddr = AndroidDebugBridge.getSocketAddress();
+        if (adbAddr == null) {
+          IssueOutput.warn(
+                  "Can't get ADB server port, please ensure ADB server is running. Will fallback to"
+                      + " the default adb server.")
+              .submit(context);
+        } else {
+          deviceFlag += ":tcp:" + adbAddr.getPort();
+        }
+      }
+      command.addBlazeFlags(BlazeFlags.DEVICE, deviceFlag);
+
       command
           .addTargets(label)
           .addBlazeFlags(blazeFlags)
@@ -203,6 +214,34 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
       return deployInfo;
     }
     throw new ApkProvisionException("Failed to read APK deploy info");
+  }
+
+  private static AdbTunnelConfigurator getTunnelConfigurator(BlazeContext context) {
+    try {
+      return Iterables.getOnlyElement(AdbTunnelConfiguratorProvider.EP_NAME.getExtensionList())
+          .createConfigurator(context);
+    } catch (NoSuchElementException ex) {
+      // Fail quietly when there's no configurable registered.
+    } catch (IllegalArgumentException ex) {
+      log.warn("More than one provider registered; there should only be one!");
+    }
+    return new AdbTunnelConfigurator() {
+      @Override
+      public void setupConnection(BlazeContext context) {}
+
+      @Override
+      public void tearDownConnection() {}
+
+      @Override
+      public int getAdbServerPort() {
+        throw new IllegalStateException("Stub configurator is inactive.");
+      }
+
+      @Override
+      public boolean isActive() {
+        return false;
+      }
+    };
   }
 
   @Nullable
