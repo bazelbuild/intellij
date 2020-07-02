@@ -28,7 +28,13 @@ public class ReplaceActionHelper {
 
   /** Conditionally hides the action with the given ID, if one exists. */
   public static void conditionallyHideAction(String actionId, Predicate<Project> shouldHide) {
-    AnAction oldAction = ActionManager.getInstance().getAction(actionId);
+    conditionallyHideAction(ActionManager.getInstance(), actionId, shouldHide);
+  }
+
+  /** Conditionally hides the action with the given ID, if one exists. */
+  public static void conditionallyHideAction(
+      ActionManager actionManager, String actionId, Predicate<Project> shouldHide) {
+    AnAction oldAction = actionManager.getAction(actionId);
     if (oldAction != null) {
       replaceAction(actionId, new RemovedAction(oldAction, shouldHide));
     }
@@ -40,7 +46,17 @@ public class ReplaceActionHelper {
    */
   public static void conditionallyReplaceAction(
       String actionId, AnAction newAction, Predicate<Project> shouldReplace) {
-    ActionManager actionManager = ActionManager.getInstance();
+    conditionallyReplaceAction(ActionManager.getInstance(), actionId, newAction, shouldReplace);
+  }
+  /**
+   * Conditionally replaces the action with the given ID with the new action. If there's no existing
+   * action with the given ID, the new action is registered, and conditionally visible.
+   */
+  public static void conditionallyReplaceAction(
+      ActionManager actionManager,
+      String actionId,
+      AnAction newAction,
+      Predicate<Project> shouldReplace) {
     AnAction oldAction = actionManager.getAction(actionId);
     if (oldAction == null) {
       oldAction = new EmptyAction(false);
@@ -53,7 +69,14 @@ public class ReplaceActionHelper {
    * this ID, if one exists.
    */
   public static void replaceAction(String actionId, AnAction newAction) {
-    ActionManager actionManager = ActionManager.getInstance();
+    replaceAction(ActionManager.getInstance(), actionId, newAction);
+  }
+  /**
+   * Registers a new action against the provided action ID, unregistering any existing action with
+   * this ID, if one exists.
+   */
+  public static void replaceAction(
+      ActionManager actionManager, String actionId, AnAction newAction) {
     AnAction oldAction = actionManager.getAction(actionId);
     if (oldAction != null) {
       newAction.getTemplatePresentation().setIcon(oldAction.getTemplatePresentation().getIcon());

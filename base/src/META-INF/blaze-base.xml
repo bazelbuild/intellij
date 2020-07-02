@@ -375,9 +375,6 @@
 
   <application-components>
     <component>
-      <implementation-class>com.google.idea.blaze.base.plugin.BlazeSpecificInitializer</implementation-class>
-    </component>
-    <component>
       <interface-class>com.google.idea.common.experiments.ExperimentService</interface-class>
       <implementation-class>com.google.idea.blaze.base.experiments.BlazeExperimentService</implementation-class>
     </component>

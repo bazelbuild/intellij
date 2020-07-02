@@ -15,7 +15,13 @@ licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "base",
-    srcs = glob(["src/**/*.java"]),
+    srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
+        "android-studio-4.0": glob(["sdkcompat/v193/com/google/idea/blaze/base/plugin/*.java"]),
+        "intellij-2019.3": glob(["sdkcompat/v193/com/google/idea/blaze/base/plugin/*.java"]),
+        "intellij-ue-2019.3": glob(["sdkcompat/v193/com/google/idea/blaze/base/plugin/*.java"]),
+        "clion-2019.3": glob(["sdkcompat/v193/com/google/idea/blaze/base/plugin/*.java"]),
+        "default": glob(["sdkcompat/v201/com/google/idea/blaze/base/plugin/*.java"]),
+    }),
     javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
     resources = glob(["resources/**/*"]),
     visibility = ["//visibility:public"],
