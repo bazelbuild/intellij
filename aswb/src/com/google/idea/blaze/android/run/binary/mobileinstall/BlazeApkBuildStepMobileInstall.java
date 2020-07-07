@@ -218,8 +218,12 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
 
   private static AdbTunnelConfigurator getTunnelConfigurator(BlazeContext context) {
     try {
-      return Iterables.getOnlyElement(AdbTunnelConfiguratorProvider.EP_NAME.getExtensionList())
-          .createConfigurator(context);
+      AdbTunnelConfigurator configurator =
+          Iterables.getOnlyElement(AdbTunnelConfiguratorProvider.EP_NAME.getExtensionList())
+              .createConfigurator(context);
+      if (configurator != null) {
+        return configurator;
+      }
     } catch (NoSuchElementException ex) {
       // Fail quietly when there's no configurable registered.
     } catch (IllegalArgumentException ex) {

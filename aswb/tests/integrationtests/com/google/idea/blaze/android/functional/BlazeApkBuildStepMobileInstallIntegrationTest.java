@@ -173,7 +173,6 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     assertThat(externalTaskInterceptor.command)
         .containsAnyOf("serial-number", "serial-number:tcp:0");
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
-    // Note: Invoking mobile-install does not require adding android_deploy_info output group.
   }
 
   @Test
@@ -216,7 +215,6 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     assertThat(externalTaskInterceptor.command)
         .containsAnyOf("serial-number", "serial-number:tcp:0");
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
-    // Note: Invoking mobile-install does not require adding android_deploy_info output group.
   }
 
   @Test
@@ -257,7 +255,48 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     assertThat(externalTaskInterceptor.command).contains("--device");
     assertThat(externalTaskInterceptor.command).contains("serial-number:tcp:12345");
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
-    // Note: Invoking mobile-install does not require adding android_deploy_info output group.
+  }
+
+  @Test
+  public void deployInfoBuiltCorrectly_withNullAdbTunnelSetup() throws Exception {
+    // Mobile-install build step requires only one device be active.  DeviceFutures class is final,
+    // so we have to make one with a stub AndroidDevice.
+    DeviceFutures deviceFutures = new DeviceFutures(ImmutableList.of(new FakeDevice()));
+
+    // Return fake deploy info proto and mocked deploy info data object.
+    AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
+    BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
+    BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
+    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(fakeProto);
+    when(helper.extractDeployInfoAndInvalidateManifests(
+            getProject(), new File(getExecRoot()), fakeProto))
+        .thenReturn(mockDeployInfo);
+
+    // Setup mock AdbTunnelConfigurator for testing device port flags.
+    AdbTunnelConfigurator tunnelConfigurator = mock(AdbTunnelConfigurator.class);
+    when(tunnelConfigurator.isActive()).thenReturn(true);
+    when(tunnelConfigurator.getAdbServerPort()).thenReturn(12345);
+    registerExtension(AdbTunnelConfiguratorProvider.EP_NAME, providerCxt -> null);
+
+    // Perform
+    BlazeApkBuildStepMobileInstall buildStep =
+        new BlazeApkBuildStepMobileInstall(
+            getProject(), buildTarget, blazeFlags, execFlags, helper);
+    buildStep.build(context, new DeviceSession(null, deviceFutures, null));
+
+    // Verify
+    assertThat(buildStep.getDeployInfo()).isNotNull();
+    assertThat(buildStep.getDeployInfo()).isEqualTo(mockDeployInfo);
+    assertThat(externalTaskInterceptor.context).isEqualTo(context);
+    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAllIn(execFlags);
+    assertThat(externalTaskInterceptor.command).contains("--nolaunch_app");
+    assertThat(externalTaskInterceptor.command).contains("--device");
+    // workaround for inconsistent stateful AndroidDebugBridge class.
+    assertThat(externalTaskInterceptor.command)
+        .containsAnyOf("serial-number", "serial-number:tcp:0");
+    assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
   }
 
   @Test

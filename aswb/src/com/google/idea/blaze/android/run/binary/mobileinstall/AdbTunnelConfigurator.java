@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.run.binary.mobileinstall;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import javax.annotation.Nullable;
 
 /** Setup mobile-install specific ADB connection settings. */
 public interface AdbTunnelConfigurator extends AutoCloseable {
@@ -56,6 +57,7 @@ public interface AdbTunnelConfigurator extends AutoCloseable {
     ExtensionPointName<AdbTunnelConfiguratorProvider> EP_NAME =
         ExtensionPointName.create("com.google.idea.blaze.AdbTunnelConfiguratorProvider");
 
+    @Nullable
     AdbTunnelConfigurator createConfigurator(BlazeContext context);
   }
 }
