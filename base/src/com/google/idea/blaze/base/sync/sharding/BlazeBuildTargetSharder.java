@@ -51,13 +51,12 @@ import java.util.stream.Collectors;
 /** Utility methods for sharding blaze build invocations. */
 public class BlazeBuildTargetSharder {
 
-  /** Default number of individual targets per blaze build shard. Can be overridden by the user. */
+  /**
+   * Max number of individual targets per blaze build shard. Can be overridden by the user for local
+   * syncs.
+   */
   private static final IntExperiment targetShardSize =
-      new IntExperiment("blaze.target.shard.size", 1000);
-
-  /** Default # targets to keep the arg length below ARG_MAX. */
-  private static final IntExperiment argLengthShardSize =
-      new IntExperiment("arg.length.shard.size", 1000);
+      new IntExperiment("blaze.target.shard.size", 10000);
 
   /** If enabled, we'll automatically shard when we think it's appropriate. */
   private static final BoolExperiment shardAutomatically =
@@ -88,10 +87,15 @@ public class BlazeBuildTargetSharder {
   }
 
   /** Number of individual targets per blaze build shard. */
-  private static int getTargetShardSize(ProjectViewSet projectViewSet) {
-    return projectViewSet
-        .getScalarValue(TargetShardSizeSection.KEY)
-        .orElse(targetShardSize.getValue());
+  private static int getTargetShardSize(ProjectViewSet projectViewSet, boolean isRemote) {
+    int defaultLimit = targetShardSize.getValue();
+    int userSpecified =
+        projectViewSet.getScalarValue(TargetShardSizeSection.KEY).orElse(defaultLimit);
+    if (isRemote) {
+      return userSpecified;
+    }
+    Integer argMaxLimit = ArgMaxHelper.maxShardSize();
+    return argMaxLimit == null ? userSpecified : Math.min(argMaxLimit, userSpecified);
   }
 
   private enum ShardingApproach {
@@ -100,8 +104,7 @@ public class BlazeBuildTargetSharder {
     SHARD_WITHOUT_EXPANDING, // split unexpanded wildcard targets into batches
   }
 
-  private static ShardingApproach getShardingApproach(
-      BlazeBuildParams buildParams, ProjectViewSet viewSet) {
+  private static ShardingApproach getShardingApproach(ProjectViewSet viewSet, boolean isRemote) {
     if (shardingRequested(viewSet)) {
       return ShardingApproach.EXPAND_AND_SHARD;
     }
@@ -110,9 +113,7 @@ public class BlazeBuildTargetSharder {
     }
     // otherwise, only expand targets before sharding (a 'complete' batching of the build) if we're
     // syncing remotely
-    return buildParams.blazeBinaryType().isRemote
-        ? ShardingApproach.EXPAND_AND_SHARD
-        : ShardingApproach.SHARD_WITHOUT_EXPANDING;
+    return isRemote ? ShardingApproach.EXPAND_AND_SHARD : ShardingApproach.SHARD_WITHOUT_EXPANDING;
   }
 
   /** Expand wildcard target patterns and partition the resulting target list. */
@@ -124,17 +125,17 @@ public class BlazeBuildTargetSharder {
       ProjectViewSet viewSet,
       WorkspacePathResolver pathResolver,
       List<TargetExpression> targets) {
-    ShardingApproach approach = getShardingApproach(buildParams, viewSet);
+    boolean isRemote = buildParams.blazeBinaryType().isRemote;
+    ShardingApproach approach = getShardingApproach(viewSet, isRemote);
     switch (approach) {
       case NONE:
         return new ShardedTargetsResult(
             new ShardedTargetList(ImmutableList.of(ImmutableList.copyOf(targets))),
             BuildResult.SUCCESS);
       case SHARD_WITHOUT_EXPANDING:
-        // shard only to keep the arg length below ARG_MAX
         return new ShardedTargetsResult(
             new ShardedTargetList(
-                shardTargetsRetainingOrdering(targets, argLengthShardSize.getValue())),
+                shardTargetsRetainingOrdering(targets, getTargetShardSize(viewSet, isRemote))),
             BuildResult.SUCCESS);
       case EXPAND_AND_SHARD:
         ExpandedTargetsResult expandedTargets =
@@ -149,7 +150,7 @@ public class BlazeBuildTargetSharder {
             shardSingleTargets(
                 expandedTargets.singleTargets,
                 buildParams.blazeBinaryType().isRemote,
-                getTargetShardSize(viewSet)),
+                getTargetShardSize(viewSet, isRemote)),
             expandedTargets.buildResult);
     }
     throw new IllegalStateException("Unhandled sharding approach: " + approach);
