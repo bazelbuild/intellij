@@ -22,6 +22,7 @@ import com.intellij.ide.actions.BaseNavigateToSourceAction;
 import com.intellij.ide.actions.NextOccurenceToolbarAction; // NOTYPO
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction; // NOTYPO
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
+import com.intellij.ide.errorTreeView.NavigatableMessageElement;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -131,6 +132,12 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
   @Override
   protected boolean canHideWarnings() {
     return true;
+  }
+
+  void addNavigableMessageElement(String groupName, NavigatableMessageElement element) {
+    getErrorViewStructure().addNavigatableMessage(groupName, element);
+    updateAddedElement(element);
+    updateTree();
   }
 
   private void scrollToSource(Component tree) {

@@ -273,7 +273,7 @@ public class BlazeProblemsView {
             structure.removeElement(group);
           }
           if (openInConsole != null) {
-            structure.addNavigatableMessage(
+            panel.addNavigableMessageElement(
                 groupName,
                 new ProblemsViewMessageElement(
                     ErrorTreeElementKind.convertMessageFromCompilerErrorType(type),
@@ -283,7 +283,6 @@ public class BlazeProblemsView {
                     openInConsole,
                     exportTextPrefix,
                     rendererTextPrefix));
-            panel.updateTree();
           } else if (navigatable != null) {
             panel.addMessage(
                 type,
