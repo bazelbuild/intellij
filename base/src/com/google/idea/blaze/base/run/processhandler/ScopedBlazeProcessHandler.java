@@ -16,18 +16,21 @@
 package com.google.idea.blaze.base.run.processhandler;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.async.process.BinaryPathRemapper;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.util.ProcessGroupUtil;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Platform;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.project.Project;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -80,7 +83,7 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
       throws ExecutionException {
     super(
         ProcessGroupUtil.newProcessGroupFor(
-            new GeneralCommandLine(command)
+            new CommandLineWithRemappedPath(command)
                 .withWorkDirectory(workspaceRoot.directory().getPath())
                 .withRedirectErrorStream(true)));
 
@@ -119,5 +122,22 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
       FileCaches.refresh(project, context);
       context.release();
     }
+  }
+
+  private static class CommandLineWithRemappedPath extends GeneralCommandLine {
+    CommandLineWithRemappedPath(List<String> command) {
+      super(command);
+    }
+
+    @Override
+    protected List<String> prepareCommandLine(
+        String command, List<String> parameters, Platform platform) {
+      String remapped = remapBinaryPath(command);
+      return super.prepareCommandLine(remapped, parameters, platform);
+    }
+  }
+
+  static String remapBinaryPath(String command) {
+    return BinaryPathRemapper.remapBinary(command).map(File::getAbsolutePath).orElse(command);
   }
 }

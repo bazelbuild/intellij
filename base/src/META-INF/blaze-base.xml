@@ -518,6 +518,7 @@
     <SettingsUiContributor implementation="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsConfigurable$UiContributor" order="first" id="base"/>
     <MacroTargetProvider implementation="com.google.idea.blaze.base.query.BlazeQueryMacroTargetProvider" order="last"/>
     <ArtifactStateHelper implementation="com.google.idea.blaze.google3.objfs.RemoteOutputStateProtoConverter"/>
+    <BinaryPathRemapper implementation="com.google.idea.blaze.base.async.process.MacBinaryPathRemapper" order="last"/>
   </extensions>
 
 </idea-plugin>
