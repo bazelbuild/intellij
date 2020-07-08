@@ -60,6 +60,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
@@ -354,8 +355,7 @@ final class ProjectUpdateSyncTask {
       }
     }
     if (workspaceModuleType == null) {
-      workspaceModuleType = ModuleType.EMPTY;
-      IssueOutput.warn("Could not set module type for workspace module.").submit(context);
+      workspaceModuleType = ModuleTypeManager.getInstance().getDefaultModuleType();
     }
 
     Module workspaceModule =

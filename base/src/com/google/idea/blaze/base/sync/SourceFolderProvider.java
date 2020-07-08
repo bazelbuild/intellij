@@ -32,9 +32,7 @@ public interface SourceFolderProvider {
         return provider;
       }
     }
-    throw new RuntimeException(
-        "No SourceFolderProvider available for workspace type: "
-            + projectData.getWorkspaceLanguageSettings().getWorkspaceType());
+    return GenericSourceFolderProvider.INSTANCE;
   }
 
   /**

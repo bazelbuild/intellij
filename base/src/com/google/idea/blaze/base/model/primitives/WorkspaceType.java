@@ -31,7 +31,8 @@ public enum WorkspaceType implements ProtoWrapper<String> {
   PYTHON("python", LanguageClass.PYTHON),
   JAVASCRIPT("javascript", LanguageClass.JAVASCRIPT),
   GO("go", LanguageClass.GO),
-  INTELLIJ_PLUGIN("intellij_plugin", LanguageClass.JAVA);
+  INTELLIJ_PLUGIN("intellij_plugin", LanguageClass.JAVA),
+  NONE("none", LanguageClass.GENERIC);
 
   private final String name;
   // the languages active by default for this WorkspaceType

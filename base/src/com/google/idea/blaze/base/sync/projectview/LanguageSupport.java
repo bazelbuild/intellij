@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.sync.projectview;
 
-import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -43,10 +42,7 @@ public class LanguageSupport {
         workspaceType = recommendedType;
       }
     }
-    // Should never happen, outside of tests without proper set up.
-    checkState(
-        workspaceType != null, "No SyncPlugin present which provides a default workspace type.");
-    return workspaceType;
+    return workspaceType != null ? workspaceType : WorkspaceType.NONE;
   }
 
   /**
@@ -121,6 +117,7 @@ public class LanguageSupport {
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
       supportedTypes.addAll(syncPlugin.getSupportedWorkspaceTypes());
     }
+    supportedTypes.add(WorkspaceType.NONE);
     return supportedTypes;
   }
 
