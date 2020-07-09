@@ -86,6 +86,10 @@ public final class FormatUtils {
       return initialFileContents.equals(text) ? text : null;
     }
 
+    public String getFileName() {
+      return file.getName();
+    }
+
     public String getInitialFileContents() {
       return initialFileContents;
     }
