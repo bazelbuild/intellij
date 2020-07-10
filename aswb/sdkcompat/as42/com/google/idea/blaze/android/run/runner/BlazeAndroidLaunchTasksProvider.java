@@ -93,13 +93,16 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     }
 
     Integer userId = runContext.getUserId(device, consolePrinter);
-    String pmInstallOption = UserIdHelper.getFlagsFromUserId(userId);
+    String userIdFlags = UserIdHelper.getFlagsFromUserId(userId);
     String skipVerification =
         ApkVerifierTracker.getSkipVerificationInstallationFlag(device, packageName);
+    String pmInstallOption;
     if (skipVerification != null) {
-      pmInstallOption = String.format("%s %s", pmInstallOption, skipVerification);
+      pmInstallOption = userIdFlags + " " + skipVerification;
+    } else {
+      pmInstallOption = userIdFlags;
     }
-    launchOptionsBuilder.setPmInstallOptions(pmInstallOption);
+    launchOptionsBuilder.setPmInstallOptions(d -> pmInstallOption);
 
     LaunchOptions launchOptions = launchOptionsBuilder.build();
 

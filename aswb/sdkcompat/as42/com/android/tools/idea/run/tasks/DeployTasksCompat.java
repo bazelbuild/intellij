@@ -30,10 +30,12 @@ public class DeployTasksCompat {
       Project project,
       ImmutableMap<String, List<File>> filesToInstall,
       LaunchOptions launchOptions) {
+    // We don't have a device information, fallback to the most conservative
+    // install option.
     return new DeployTask(
         project,
         filesToInstall,
-        launchOptions.getPmInstallOptions(),
+        launchOptions.getPmInstallOptions(/*device=*/ null),
         launchOptions.getInstallOnAllUsers());
   }
 }

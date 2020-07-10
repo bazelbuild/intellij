@@ -19,30 +19,15 @@ import com.android.ddmlib.IDevice;
 import com.android.tools.idea.profilers.AndroidProfilerProgramRunner;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.tasks.LaunchResult;
-import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.tasks.LaunchTaskDurations;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.intellij.execution.Executor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
 /** Opens the profiler tool window. */
-public class BlazeAndroidOpenProfilerWindowTask implements LaunchTask {
-  private static final String ID = "OPEN_PROFILER_TOOLWINDOW";
-  private final Project project;
-
+public class BlazeAndroidOpenProfilerWindowTask extends BlazeAndroidOpenProfilerWindowTaskBase {
   public BlazeAndroidOpenProfilerWindowTask(Project project) {
-    this.project = project;
-  }
-
-  @Override
-  public String getDescription() {
-    return "Open the Profiler Tool Window";
-  }
-
-  @Override
-  public int getDuration() {
-    return LaunchTaskDurations.LAUNCH_ACTIVITY;
+    super(project);
   }
 
   @Override
@@ -51,10 +36,5 @@ public class BlazeAndroidOpenProfilerWindowTask implements LaunchTask {
     ApplicationManager.getApplication()
         .invokeLater(() -> AndroidProfilerProgramRunner.createProfilerToolWindow(project, null));
     return LaunchResult.success();
-  }
-
-  @Override
-  public String getId() {
-    return ID;
   }
 }

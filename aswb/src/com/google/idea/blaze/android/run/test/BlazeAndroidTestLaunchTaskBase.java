@@ -57,7 +57,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
  * An Android application launcher that invokes `blaze test` on an android_test target, and sets up
  * process handling and debugging for the test run.
  */
-class BlazeAndroidTestLaunchTask implements LaunchTask {
+abstract class BlazeAndroidTestLaunchTaskBase implements LaunchTask {
   private static final String ID = "BLAZE_ANDROID_TEST";
 
   // Uses a local device/emulator attached to adb to run an android_test.
@@ -80,7 +80,7 @@ class BlazeAndroidTestLaunchTask implements LaunchTask {
 
   private final boolean debug;
 
-  public BlazeAndroidTestLaunchTask(
+  protected BlazeAndroidTestLaunchTaskBase(
       Project project,
       Label target,
       List<String> buildFlags,
@@ -106,7 +106,6 @@ class BlazeAndroidTestLaunchTask implements LaunchTask {
     return LaunchTaskDurations.LAUNCH_ACTIVITY;
   }
 
-  @Override
   public LaunchResult run(
       @NotNull Executor executor,
       @NotNull IDevice device,

@@ -41,6 +41,7 @@ intellij_plugin_library(
     plugin_xmls = ["src/META-INF/blaze-base.xml"] + select_for_plugin_api({
         "android-studio-4.0": [],
         "android-studio-4.1": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
+        "android-studio-4.2": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
         "intellij-2019.3": [],
         "intellij-ue-2019.3": [],
         "intellij-2020.1": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],

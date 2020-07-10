@@ -22,6 +22,7 @@ import com.android.tools.ndk.run.attach.AndroidNativeAttachConfiguration;
 import com.android.tools.ndk.run.editor.NativeAndroidDebugger;
 import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -156,6 +157,13 @@ public class BlazeNativeAndroidDebugger extends NativeAndroidDebugger {
       extends AndroidNativeAttachConfiguration {
     BlazeAndroidNativeAttachConfiguration(Project project, ConfigurationFactory factory) {
       super(project, factory);
+    }
+
+    @Nullable
+    @Override
+    public String getPackageNameOverride() {
+      // "package name override" is not required in blaze projects.
+      return null;
     }
 
     /** Don't validate anything. */

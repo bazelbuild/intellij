@@ -35,7 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
-final class StockAndroidTestLaunchTask implements LaunchTask {
+abstract class StockAndroidTestLaunchTaskBase implements LaunchTask {
   private static final String ID = "STOCK_ANDROID_TEST";
 
   private static final Logger LOG = Logger.getInstance(StockAndroidTestLaunchTask.class);
@@ -45,7 +45,7 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
   private final String testApplicationId;
   private final boolean waitForDebugger;
 
-  private StockAndroidTestLaunchTask(
+  StockAndroidTestLaunchTaskBase(
       BlazeAndroidTestRunConfigurationState configState,
       String runner,
       String testPackage,
@@ -156,7 +156,6 @@ final class StockAndroidTestLaunchTask implements LaunchTask {
     return 2;
   }
 
-  @Override
   @SuppressWarnings("FutureReturnValueIgnored")
   public LaunchResult run(
       Executor executor,
