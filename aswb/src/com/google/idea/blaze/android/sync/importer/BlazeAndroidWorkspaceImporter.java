@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android.sync.importer;
 
+import static java.util.stream.Collectors.toCollection;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ComparisonChain;
@@ -36,6 +38,7 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.LibraryKey;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Output;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -47,8 +50,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -58,9 +64,19 @@ import org.jetbrains.annotations.Nullable;
 /** Builds a BlazeWorkspace. */
 public class BlazeAndroidWorkspaceImporter {
 
+  // Provides a dummy TargetKey that can be used to merge all resources need to be visible to
+  // .workspace module but are not a part of any resource module
+  public static final TargetKey WORKSPACE_RESOURCES_TARGET_KEY =
+      TargetKey.forPlainTarget(Label.create("//.workspace:resources"));
+  public static final String WORKSPACE_RESOURCES_MODULE_PACKAGE = "workspace.only.resources";
+
   @VisibleForTesting
   static final BoolExperiment mergeResourcesEnabled =
       new BoolExperiment("blaze.merge.conflicting.resources", true);
+
+  @VisibleForTesting
+  static final BoolExperiment workspaceOnlyResourcesEnabled =
+      new BoolExperiment("aswb.attach.workspace.only.resources", true);
 
   private final Project project;
   private final Consumer<Output> context;
@@ -93,6 +109,8 @@ public class BlazeAndroidWorkspaceImporter {
     List<TargetIdeInfo> sourceTargets = BlazeImportUtil.getSourceTargets(input);
     LibraryFactory libraries = new LibraryFactory();
     ImmutableList.Builder<AndroidResourceModule> resourceModules = new ImmutableList.Builder<>();
+    ImmutableList.Builder<AndroidResourceModule> workspaceResourceModules =
+        new ImmutableList.Builder<>();
     Map<TargetKey, AndroidResourceModule.Builder> targetKeyToAndroidResourceModuleBuilder =
         new HashMap<>();
 
@@ -104,6 +122,15 @@ public class BlazeAndroidWorkspaceImporter {
             getOrCreateResourceModuleBuilder(
                 target, libraries, targetKeyToAndroidResourceModuleBuilder);
         resourceModules.add(androidResourceModuleBuilder.build());
+      } else if (workspaceOnlyResourcesEnabled.getValue()
+          && dependsOnResourceDeclaringDependencies(target)) {
+        // Add the target to list of potential resource modules if any of target's dependencies
+        // declare resources. A target is allowed to consume resources even if it does not declare
+        // any of its own
+        AndroidResourceModule.Builder resourceModuleBuilder =
+            getOrCreateResourceModuleBuilder(
+                target, libraries, targetKeyToAndroidResourceModuleBuilder);
+        workspaceResourceModules.add(resourceModuleBuilder.build());
       }
     }
 
@@ -116,7 +143,7 @@ public class BlazeAndroidWorkspaceImporter {
         whitelistedGenResourcePaths);
 
     ImmutableList<AndroidResourceModule> androidResourceModules =
-        buildAndroidResourceModules(resourceModules.build());
+        buildAndroidResourceModules(resourceModules.build(), workspaceResourceModules.build());
 
     return new BlazeAndroidImportResult(
         androidResourceModules,
@@ -182,6 +209,15 @@ public class BlazeAndroidWorkspaceImporter {
     }
     return shouldGenerateResources(androidIdeInfo)
         && shouldGenerateResourceModule(androidIdeInfo, whitelistFilter);
+  }
+
+  /** Returns true if any direct dependency of `androidIdeInfo` declares resources. */
+  private boolean dependsOnResourceDeclaringDependencies(TargetIdeInfo androidIdeInfo) {
+    List<TargetKey> dependencies = DependencyUtil.getResourceDependencies(androidIdeInfo);
+    return dependencies.stream()
+        .map(input.targetMap::get)
+        .filter(Objects::nonNull)
+        .anyMatch(d -> shouldCreateModule(d.getAndroidIdeInfo()));
   }
 
   /**
@@ -250,7 +286,8 @@ public class BlazeAndroidWorkspaceImporter {
   }
 
   private ImmutableList<AndroidResourceModule> buildAndroidResourceModules(
-      ImmutableList<AndroidResourceModule> inputModules) {
+      ImmutableList<AndroidResourceModule> inputModules,
+      ImmutableList<AndroidResourceModule> workspaceResourceModules) {
     // Filter empty resource modules
     List<AndroidResourceModule> androidResourceModules =
         inputModules.stream()
@@ -304,12 +341,23 @@ public class BlazeAndroidWorkspaceImporter {
         }
       }
     }
+    if (!workspaceResourceModules.isEmpty() && workspaceOnlyResourcesEnabled.getValue()) {
+      // Create and add one module for all resources that are visible to .workspace module, but do
+      // not have an attached resource module of their own
+
+      // We lump all such targets into one module because chances are none of these targets have an
+      // associated manifest. {@link BlazeAndroidProjectStructureSyncer} expects all resource
+      // modules to have an associated target with a manifest, which is a behavior we want to keep.
+      // It makes an exception for this module and attaches the workspace resource module without a
+      // manifest.
+      result.add(createWorkspaceResourceModule(result, workspaceResourceModules));
+    }
 
     Collections.sort(result, Comparator.comparing(m -> m.targetKey));
     return ImmutableList.copyOf(result);
   }
 
-  private AndroidResourceModule selectBestAndroidResourceModule(
+  private static AndroidResourceModule selectBestAndroidResourceModule(
       Collection<AndroidResourceModule> androidResourceModulesWithJavaPackage) {
     return androidResourceModulesWithJavaPackage.stream()
         .max(
@@ -329,6 +377,47 @@ public class BlazeAndroidWorkspaceImporter {
                             .length()) // Shortest label wins - note lhs, rhs are flipped
                     .result())
         .get();
+  }
+
+  /**
+   * Creates a {@link AndroidResourceModule} that contains all dependencies of
+   * `workspaceResourceModules` that are not present in `existingModules` without attaching any
+   * sources. This module is meant to link resources used by .workspace module but not by any other
+   * resource modules.
+   */
+  private static AndroidResourceModule createWorkspaceResourceModule(
+      List<AndroidResourceModule> existingModules,
+      ImmutableList<AndroidResourceModule> workspaceResourceModules) {
+
+    Set<ArtifactLocation> newTransitiveResources =
+        workspaceResourceModules.stream()
+            .flatMap(m -> m.transitiveResources.stream())
+            .collect(Collectors.toSet());
+
+    Set<String> newLibraryKeys =
+        workspaceResourceModules.stream()
+            .flatMap(m -> m.resourceLibraryKeys.stream())
+            .collect(toCollection(HashSet::new));
+
+    Set<TargetKey> newResourceDeps =
+        workspaceResourceModules.stream()
+            .flatMap(m -> m.transitiveResourceDependencies.stream())
+            .collect(toCollection(HashSet::new));
+
+    existingModules.forEach(
+        m -> {
+          newTransitiveResources.removeAll(m.transitiveResources);
+          newLibraryKeys.removeAll(m.resourceLibraryKeys);
+          newResourceDeps.removeAll(m.transitiveResourceDependencies);
+        });
+
+    // We add library keys and resource dependencies only. This module should not contain any
+    // resource sources.
+    return AndroidResourceModule.builder(WORKSPACE_RESOURCES_TARGET_KEY)
+        .addTransitiveResources(newTransitiveResources)
+        .addResourceLibraryKeys(newLibraryKeys)
+        .addTransitiveResourceDependencies(newResourceDeps)
+        .build();
   }
 
   private static AndroidResourceModule mergeAndroidResourceModules(

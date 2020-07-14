@@ -693,6 +693,10 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     assertThat(result.androidResourceModules)
         .containsExactly(
             AndroidResourceModule.builder(
+                    BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY)
+                .addTransitiveResourceDependency("//java/example:resources")
+                .build(),
+            AndroidResourceModule.builder(
                     TargetKey.forPlainTarget(Label.create("//java/example:resources")))
                 .addResourceAndTransitiveResource(source("java/example/res"))
                 .build());

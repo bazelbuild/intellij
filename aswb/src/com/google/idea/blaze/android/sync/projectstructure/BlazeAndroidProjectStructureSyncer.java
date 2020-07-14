@@ -24,6 +24,7 @@ import com.android.ide.common.util.PathString;
 import com.android.ide.common.util.PathStringUtil;
 import com.android.projectmodel.AndroidPathType;
 import com.android.projectmodel.SourceSet;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -35,6 +36,7 @@ import com.google.idea.blaze.android.manifest.ParsedManifestService;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
+import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
 import com.google.idea.blaze.android.sync.importer.BlazeImportInput;
 import com.google.idea.blaze.android.sync.importer.BlazeImportUtil;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -170,27 +172,35 @@ public class BlazeAndroidProjectStructureSyncer {
     int totalOrderEntries = 0;
     Set<File> existingRoots = Sets.newHashSet();
     for (AndroidResourceModule androidResourceModule : targetToAndroidResourceModule.values()) {
-      TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
-      AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
-      assert androidIdeInfo != null;
+      ArtifactLocationDecoder artifactLocationDecoder =
+          blazeProjectData.getArtifactLocationDecoder();
 
-      String moduleName = moduleNameForAndroidModule(target.getKey());
+      File manifest = null;
+      if (!BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
+          androidResourceModule.targetKey)) {
+        // Calculate manifest if this is not the workspace resource module
+        TargetIdeInfo target =
+            Preconditions.checkNotNull(
+                blazeProjectData.getTargetMap().get(androidResourceModule.targetKey));
+        AndroidIdeInfo androidIdeInfo = Preconditions.checkNotNull(target.getAndroidIdeInfo());
+        File moduleDirectory =
+            moduleDirectoryForAndroidTarget(WorkspaceRoot.fromProject(project), target);
+        manifest =
+            manifestFileForAndroidTarget(
+                project, artifactLocationDecoder, androidIdeInfo, moduleDirectory);
+      }
+
+      String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
       Module module = moduleEditor.findModule(moduleName);
       assert module != null;
       ModifiableRootModel modifiableRootModel = moduleEditor.editModule(module);
       LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
-      ArtifactLocationDecoder artifactLocationDecoder =
-          blazeProjectData.getArtifactLocationDecoder();
-      File moduleDirectory =
-          moduleDirectoryForAndroidTarget(WorkspaceRoot.fromProject(project), target);
 
       ArrayList<File> newRoots =
           new ArrayList<>(
               OutputArtifactResolver.resolveAll(
                   project, artifactLocationDecoder, androidResourceModule.resources));
-      File manifest =
-          manifestFileForAndroidTarget(
-              project, artifactLocationDecoder, androidIdeInfo, moduleDirectory);
+
       if (manifest != null) {
         newRoots.add(manifest);
       }
@@ -448,18 +458,34 @@ public class BlazeAndroidProjectStructureSyncer {
 
     for (AndroidResourceModule androidResourceModule :
         syncData.importResult.androidResourceModules) {
-      TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
-      String moduleName = moduleNameForAndroidModule(target.getKey());
+      File manifestFile = null;
+      String modulePackage;
+      File moduleDirectory;
+      if (BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
+          androidResourceModule.targetKey)) {
+        // For workspace resource module, give it a dummy package name, and set module
+        // directory to workspace root. No manifest is attached to this module
+        modulePackage = BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_MODULE_PACKAGE;
+        moduleDirectory = workspaceRoot.directory();
+      } else {
+        TargetIdeInfo target =
+            Preconditions.checkNotNull(
+                blazeProjectData.getTargetMap().get(androidResourceModule.targetKey));
+        AndroidIdeInfo androidIdeInfo = Preconditions.checkNotNull(target.getAndroidIdeInfo());
+        modulePackage = BlazeImportUtil.javaResourcePackageFor(target, true);
+        moduleDirectory = moduleDirectoryForAndroidTarget(workspaceRoot, target);
+        manifestFile =
+            manifestFileForAndroidTarget(
+                project, artifactLocationDecoder, androidIdeInfo, moduleDirectory);
+      }
+
+      String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
       Module module = moduleFinder.findModuleByName(moduleName);
       if (module == null) {
-        log.warn("No module found for resource target: " + target.getKey());
+        log.warn("No module found for resource target: " + androidResourceModule.targetKey);
         continue;
       }
       registry.put(module, androidResourceModule);
-
-      AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
-      assert androidIdeInfo != null;
-
       List<File> resources =
           OutputArtifactResolver.resolveAll(
               project, artifactLocationDecoder, androidResourceModule.resources);
@@ -468,17 +494,12 @@ public class BlazeAndroidProjectStructureSyncer {
           context,
           androidSdkPlatform,
           module,
-          moduleDirectoryForAndroidTarget(workspaceRoot, target),
-          manifestFileForAndroidTarget(
-              project,
-              artifactLocationDecoder,
-              androidIdeInfo,
-              moduleDirectoryForAndroidTarget(workspaceRoot, target)),
-          androidIdeInfo.getResourceJavaPackage(),
+          moduleDirectory,
+          manifestFile,
+          modulePackage,
           resources,
           configAndroidJava8Libs,
           manifestParsingStatCollector);
-      String modulePackage = androidIdeInfo.getResourceJavaPackage();
       rClassBuilder.addRClass(modulePackage, module);
       sourcePackages.remove(modulePackage);
     }
