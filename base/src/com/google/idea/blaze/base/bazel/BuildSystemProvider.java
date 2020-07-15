@@ -91,7 +91,7 @@ public interface BuildSystemProvider {
   default boolean syncingRemotely() {
     // TODO(brendandouglas): make this configurable based on context, move somewhere more
     // appropriate
-    return getSyncBinaryType() == BuildBinaryType.RABBIT;
+    return getSyncBinaryType().isRemote;
   }
 
   WorkspaceRootProvider getWorkspaceRootProvider();

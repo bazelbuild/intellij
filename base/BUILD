@@ -229,6 +229,7 @@ java_library(
 java_library(
     name = "build_batching_service_api",
     srcs = [
+        "src/com/google/idea/blaze/base/settings/BuildBinaryType.java",
         "src/com/google/idea/blaze/base/sync/sharding/BuildBatchingService.java",
     ],
     neverlink = 1,
