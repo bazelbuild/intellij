@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.projectview.TargetExpressionList;
@@ -87,13 +88,10 @@ public class BlazeBuildTargetSharder {
   }
 
   /** Number of individual targets per blaze build shard. */
-  private static int getTargetShardSize(ProjectViewSet projectViewSet, boolean isRemote) {
+  private static int getTargetShardSize(ProjectViewSet projectViewSet) {
     int defaultLimit = targetShardSize.getValue();
     int userSpecified =
         projectViewSet.getScalarValue(TargetShardSizeSection.KEY).orElse(defaultLimit);
-    if (isRemote) {
-      return userSpecified;
-    }
     Integer argMaxLimit = ArgMaxHelper.maxShardSize();
     return argMaxLimit == null ? userSpecified : Math.min(argMaxLimit, userSpecified);
   }
@@ -125,8 +123,8 @@ public class BlazeBuildTargetSharder {
       ProjectViewSet viewSet,
       WorkspacePathResolver pathResolver,
       List<TargetExpression> targets) {
-    boolean isRemote = buildParams.blazeBinaryType().isRemote;
-    ShardingApproach approach = getShardingApproach(viewSet, isRemote);
+    BuildBinaryType buildType = buildParams.blazeBinaryType();
+    ShardingApproach approach = getShardingApproach(viewSet, buildType.isRemote);
     switch (approach) {
       case NONE:
         return new ShardedTargetsResult(
@@ -135,7 +133,7 @@ public class BlazeBuildTargetSharder {
       case SHARD_WITHOUT_EXPANDING:
         return new ShardedTargetsResult(
             new ShardedTargetList(
-                shardTargetsRetainingOrdering(targets, getTargetShardSize(viewSet, isRemote))),
+                shardTargetsRetainingOrdering(targets, getTargetShardSize(viewSet))),
             BuildResult.SUCCESS);
       case EXPAND_AND_SHARD:
         ExpandedTargetsResult expandedTargets =
@@ -148,9 +146,7 @@ public class BlazeBuildTargetSharder {
 
         return new ShardedTargetsResult(
             shardSingleTargets(
-                expandedTargets.singleTargets,
-                buildParams.blazeBinaryType().isRemote,
-                getTargetShardSize(viewSet, isRemote)),
+                expandedTargets.singleTargets, buildType, getTargetShardSize(viewSet)),
             expandedTargets.buildResult);
     }
     throw new IllegalStateException("Unhandled sharding approach: " + approach);
@@ -230,9 +226,9 @@ public class BlazeBuildTargetSharder {
   @SuppressWarnings("unchecked")
   @VisibleForTesting
   static ShardedTargetList shardSingleTargets(
-      List<TargetExpression> targets, boolean isRemote, int shardSize) {
+      List<TargetExpression> targets, BuildBinaryType buildType, int shardSize) {
     ImmutableList<ImmutableList<Label>> batches =
-        BuildBatchingService.batchTargets(canonicalizeSingleTargets(targets), isRemote, shardSize);
+        BuildBatchingService.batchTargets(canonicalizeSingleTargets(targets), buildType, shardSize);
     return new ShardedTargetList((ImmutableList) batches);
   }
 
