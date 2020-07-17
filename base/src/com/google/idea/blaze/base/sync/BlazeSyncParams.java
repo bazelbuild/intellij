@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import java.util.Collection;
 
 /** Parameters that control the sync. */
@@ -40,6 +41,12 @@ public abstract class BlazeSyncParams {
   public abstract boolean addWorkingSet();
 
   public abstract ImmutableSet<TargetExpression> targetExpressions();
+
+  /**
+   * Source files to be partially synced. Like 'targetExpressions', may reference files in the
+   * workspace, but outside the project directories / targets.
+   */
+  public abstract ImmutableSet<WorkspacePath> sourceFilesToSync();
 
   public abstract Builder toBuilder();
 
@@ -82,6 +89,13 @@ public abstract class BlazeSyncParams {
       return this;
     }
 
+    abstract ImmutableSet.Builder<WorkspacePath> sourceFilesToSyncBuilder();
+
+    public Builder addSourceFilesToSync(Collection<WorkspacePath> targets) {
+      sourceFilesToSyncBuilder().addAll(targets);
+      return this;
+    }
+
     public abstract BlazeSyncParams build();
   }
 
@@ -97,6 +111,8 @@ public abstract class BlazeSyncParams {
         .setBackgroundSync(first.backgroundSync() && second.backgroundSync())
         .addTargetExpressions(first.targetExpressions())
         .addTargetExpressions(second.targetExpressions())
+        .addSourceFilesToSync(first.sourceFilesToSync())
+        .addSourceFilesToSync(second.sourceFilesToSync())
         .setAddProjectViewTargets(first.addProjectViewTargets() || second.addProjectViewTargets())
         .setAddWorkingSet(first.addWorkingSet() || second.addWorkingSet())
         .build();

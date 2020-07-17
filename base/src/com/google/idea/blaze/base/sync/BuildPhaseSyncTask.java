@@ -52,7 +52,6 @@ import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedT
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.sharding.SuggestBuildShardingNotification;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -123,7 +122,7 @@ final class BuildPhaseSyncTask {
     List<TargetExpression> targets = Lists.newArrayList();
     ProjectViewSet viewSet = projectState.getProjectViewSet();
     if (syncParams.addWorkingSet() && projectState.getWorkingSet() != null) {
-      Collection<? extends TargetExpression> workingSetTargets = getWorkingSetTargets(context);
+      Collection<TargetExpression> workingSetTargets = getWorkingSetTargets(context);
       if (!workingSetTargets.isEmpty()) {
         targets.addAll(workingSetTargets);
         printTargets(context, "working set", workingSetTargets);
@@ -145,6 +144,15 @@ final class BuildPhaseSyncTask {
         printTargets(context, "project view targets", projectTargets.explicitTargets);
       }
       targets.addAll(projectTargets.getTargetsToSync());
+    }
+    if (!syncParams.sourceFilesToSync().isEmpty()) {
+      Collection<TargetExpression> targetsFromSources =
+          findTargetsBuildingSourceFiles(syncParams.sourceFilesToSync(), context);
+      if (!targetsFromSources.isEmpty()) {
+        targets.addAll(targetsFromSources);
+        printTargets(
+            context, syncParams.title() + " (targets derived from query)", targetsFromSources);
+      }
     }
     if (!syncParams.targetExpressions().isEmpty()) {
       targets.addAll(syncParams.targetExpressions());
@@ -201,10 +209,16 @@ final class BuildPhaseSyncTask {
     context.output(PrintOutput.log(sb.toString()));
   }
 
+  private ImportRoots getImportRoots() {
+    return ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
+        .add(projectState.getProjectViewSet())
+        .build();
+  }
+
   private static final BoolExperiment queryWorkingSetTargets =
       new BoolExperiment("query.working.set.targets", true);
 
-  private Collection<? extends TargetExpression> getWorkingSetTargets(BlazeContext context)
+  private Collection<TargetExpression> getWorkingSetTargets(BlazeContext context)
       throws SyncCanceledException, SyncFailedException {
     WorkingSet workingSet = projectState.getWorkingSet();
     if (workingSet == null) {
@@ -216,18 +230,12 @@ final class BuildPhaseSyncTask {
             .addAll(workingSet.modifiedFiles)
             .build();
 
-    ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
-            .add(projectState.getProjectViewSet())
-            .build();
-
     if (queryWorkingSetTargets.getValue()) {
-      return findTargetsBuildingSourceFiles(
-          importRoots, projectState.getWorkspacePathResolver(), sources, context);
+      return findTargetsBuildingSourceFiles(sources, context);
     }
 
     BuildTargetFinder buildTargetFinder =
-        new BuildTargetFinder(project, workspaceRoot, importRoots);
+        new BuildTargetFinder(project, workspaceRoot, getImportRoots());
 
     Set<TargetExpression> result = Sets.newHashSet();
     for (WorkspacePath workspacePath : sources) {
@@ -245,15 +253,13 @@ final class BuildPhaseSyncTask {
    * not covered by the .bazelproject directories.
    */
   private ImmutableList<TargetExpression> findTargetsBuildingSourceFiles(
-      ImportRoots importRoots,
-      WorkspacePathResolver pathResolver,
-      Collection<WorkspacePath> sources,
-      BlazeContext context)
+      Collection<WorkspacePath> sources, BlazeContext context)
       throws SyncCanceledException, SyncFailedException {
+    ImportRoots importRoots = getImportRoots();
     ImmutableList.Builder<TargetExpression> targets = ImmutableList.builder();
     ImmutableList.Builder<WorkspacePath> pathsToQuery = ImmutableList.builder();
     for (WorkspacePath source : sources) {
-      File file = pathResolver.resolveToFile(source);
+      File file = projectState.getWorkspacePathResolver().resolveToFile(source);
       if (FileOperationProvider.getInstance().isDirectory(file)) {
         continue;
       }

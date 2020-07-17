@@ -15,11 +15,13 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
@@ -163,6 +165,19 @@ public class BlazeSyncManager {
    * @param reason a description of what triggered this sync
    */
   public void partialSync(Collection<? extends TargetExpression> targetExpressions, String reason) {
+    partialSync(targetExpressions, ImmutableList.of(), reason);
+  }
+
+  /**
+   * Runs a partial sync of the given targets and source files. During sync, a query will be run to
+   * convert the source files to the targets building them.
+   *
+   * @param reason a description of what triggered this sync
+   */
+  public void partialSync(
+      Collection<? extends TargetExpression> targetExpressions,
+      Collection<WorkspacePath> sources,
+      String reason) {
     BlazeSyncParams syncParams =
         BlazeSyncParams.builder()
             .setTitle("Partial Sync")
@@ -170,6 +185,7 @@ public class BlazeSyncManager {
             .setSyncOrigin(reason)
             .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .addTargetExpressions(targetExpressions)
+            .addSourceFilesToSync(sources)
             .build();
     requestProjectSync(syncParams);
   }

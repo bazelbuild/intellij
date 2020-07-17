@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.common.actions.ActionPresentationHelper;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
@@ -48,10 +49,15 @@ public class PartialSyncAction extends BlazeProjectSyncAction {
   private static class PartialSyncData {
     final String description;
     final ImmutableSet<TargetExpression> targets;
+    final ImmutableSet<WorkspacePath> sources;
 
-    PartialSyncData(String description, ImmutableSet<TargetExpression> targets) {
+    PartialSyncData(
+        String description,
+        ImmutableSet<TargetExpression> targets,
+        ImmutableSet<WorkspacePath> sources) {
       this.description = description;
       this.targets = targets;
+      this.sources = sources;
     }
 
     static PartialSyncData merge(PartialSyncData first, PartialSyncData second) {
@@ -60,6 +66,10 @@ public class PartialSyncAction extends BlazeProjectSyncAction {
           ImmutableSet.<TargetExpression>builder()
               .addAll(first.targets)
               .addAll(second.targets)
+              .build(),
+          ImmutableSet.<WorkspacePath>builder()
+              .addAll(first.sources)
+              .addAll(second.sources)
               .build());
     }
   }
@@ -69,7 +79,7 @@ public class PartialSyncAction extends BlazeProjectSyncAction {
     PartialSyncData data = fromContext(project, e);
     if (data != null) {
       BlazeSyncManager.getInstance(project)
-          .partialSync(data.targets, /* reason= */ "PartialSyncAction");
+          .partialSync(data.targets, data.sources, /* reason= */ "PartialSyncAction");
     }
   }
 
@@ -99,7 +109,7 @@ public class PartialSyncAction extends BlazeProjectSyncAction {
     }
     Label label = target.resolveBuildLabel();
     return label != null
-        ? new PartialSyncData(":" + label.targetName().toString(), ImmutableSet.of(label))
+        ? new PartialSyncData(":" + label.targetName(), ImmutableSet.of(label), ImmutableSet.of())
         : null;
   }
 
@@ -117,6 +127,9 @@ public class PartialSyncAction extends BlazeProjectSyncAction {
         .orElse(null);
   }
 
+  private static final BoolExperiment useQueryForPartialSync =
+      new BoolExperiment("use.query.for.partial.sync", true);
+
   @Nullable
   private static PartialSyncData fromFiles(Project project, VirtualFile vf) {
     WorkspaceRoot root = WorkspaceRoot.fromProject(project);
@@ -126,30 +139,53 @@ public class PartialSyncAction extends BlazeProjectSyncAction {
           ? null
           : new PartialSyncData(
               vf.getName() + "/...:all",
-              ImmutableSet.of(TargetExpression.allFromPackageRecursive(path)));
+              ImmutableSet.of(TargetExpression.allFromPackageRecursive(path)),
+              ImmutableSet.of());
     }
     if (isBuildFile(project, vf)) {
       return path == null || path.getParent() == null
           ? null
           : new PartialSyncData(
               vf.getParent().getName() + ":all",
-              ImmutableSet.of(TargetExpression.allFromPackageNonRecursive(path.getParent())));
+              ImmutableSet.of(TargetExpression.allFromPackageNonRecursive(path.getParent())),
+              ImmutableSet.of());
     }
 
-    List<TargetExpression> targets =
-        new ArrayList<>(
-            SourceToTargetMap.getInstance(project)
-                .getTargetsToBuildForSourceFile(new File(vf.getPath())));
-    if (!targets.isEmpty()) {
-      return new PartialSyncData(vf.getName(), ImmutableSet.copyOf(targets));
+    // otherwise, check whether there's a parent BUILD file and return the source files unchanged,
+    // relying on sync to derive the targets
+    if (path == null) {
+      return null;
     }
+
+    if (!useQueryForPartialSync.getValue()) {
+      // initial check in project targets
+      List<TargetExpression> targets =
+          new ArrayList<>(
+              SourceToTargetMap.getInstance(project)
+                  .getTargetsToBuildForSourceFile(new File(vf.getPath())));
+      if (!targets.isEmpty()) {
+        return new PartialSyncData(vf.getName(), ImmutableSet.copyOf(targets), ImmutableSet.of());
+      }
+    }
+
     ImportRoots importRoots = ImportRoots.forProjectSafe(project);
     if (importRoots == null) {
       return null;
     }
     BuildTargetFinder buildTargetFinder = new BuildTargetFinder(project, root, importRoots);
-    TargetExpression target = buildTargetFinder.findTargetForFile(new File(vf.getPath()));
-    return target == null ? null : new PartialSyncData(vf.getName(), ImmutableSet.of(target));
+    File buildFile = buildTargetFinder.findBuildFileForFile(new File(vf.getPath()));
+    if (buildFile == null) {
+      return null;
+    }
+
+    if (useQueryForPartialSync.getValue()) {
+      return new PartialSyncData(vf.getName(), ImmutableSet.of(), ImmutableSet.of(path));
+    }
+
+    TargetExpression target =
+        TargetExpression.allFromPackageNonRecursive(
+            root.workspacePathFor(buildFile.getParentFile()));
+    return new PartialSyncData(vf.getName(), ImmutableSet.of(target), ImmutableSet.of());
   }
 
   private static boolean isBuildFile(Project project, VirtualFile vf) {
