@@ -15,11 +15,15 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
+import com.google.idea.blaze.base.dependencies.BlazeQuerySourceToTargetProvider;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -27,6 +31,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
@@ -34,6 +39,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper.ProjectTargets;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
@@ -46,6 +52,8 @@ import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedT
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.sharding.SuggestBuildShardingNotification;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
@@ -115,8 +123,7 @@ final class BuildPhaseSyncTask {
     List<TargetExpression> targets = Lists.newArrayList();
     ProjectViewSet viewSet = projectState.getProjectViewSet();
     if (syncParams.addWorkingSet() && projectState.getWorkingSet() != null) {
-      Collection<? extends TargetExpression> workingSetTargets =
-          getWorkingSetTargets(viewSet, projectState.getWorkingSet());
+      Collection<? extends TargetExpression> workingSetTargets = getWorkingSetTargets(context);
       if (!workingSetTargets.isEmpty()) {
         targets.addAll(workingSetTargets);
         printTargets(context, "working set", workingSetTargets);
@@ -194,18 +201,36 @@ final class BuildPhaseSyncTask {
     context.output(PrintOutput.log(sb.toString()));
   }
 
-  private Collection<? extends TargetExpression> getWorkingSetTargets(
-      ProjectViewSet projectViewSet, WorkingSet workingSet) {
+  private static final BoolExperiment queryWorkingSetTargets =
+      new BoolExperiment("query.working.set.targets", true);
+
+  private Collection<? extends TargetExpression> getWorkingSetTargets(BlazeContext context)
+      throws SyncCanceledException, SyncFailedException {
+    WorkingSet workingSet = projectState.getWorkingSet();
+    if (workingSet == null) {
+      return ImmutableList.of();
+    }
+    ImmutableList<WorkspacePath> sources =
+        ImmutableList.<WorkspacePath>builder()
+            .addAll(workingSet.addedFiles)
+            .addAll(workingSet.modifiedFiles)
+            .build();
+
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
-            .add(projectViewSet)
+            .add(projectState.getProjectViewSet())
             .build();
+
+    if (queryWorkingSetTargets.getValue()) {
+      return findTargetsBuildingSourceFiles(
+          importRoots, projectState.getWorkspacePathResolver(), sources, context);
+    }
+
     BuildTargetFinder buildTargetFinder =
         new BuildTargetFinder(project, workspaceRoot, importRoots);
 
     Set<TargetExpression> result = Sets.newHashSet();
-    for (WorkspacePath workspacePath :
-        Iterables.concat(workingSet.addedFiles, workingSet.modifiedFiles)) {
+    for (WorkspacePath workspacePath : sources) {
       File file = workspaceRoot.fileForPath(workspacePath);
       TargetExpression targetExpression = buildTargetFinder.findTargetForFile(file);
       if (targetExpression != null) {
@@ -213,6 +238,60 @@ final class BuildPhaseSyncTask {
       }
     }
     return result;
+  }
+
+  /**
+   * Finds the list of targets to sync for the given source files. Ignores directories, and sources
+   * not covered by the .bazelproject directories.
+   */
+  private ImmutableList<TargetExpression> findTargetsBuildingSourceFiles(
+      ImportRoots importRoots,
+      WorkspacePathResolver pathResolver,
+      Collection<WorkspacePath> sources,
+      BlazeContext context)
+      throws SyncCanceledException, SyncFailedException {
+    ImmutableList.Builder<TargetExpression> targets = ImmutableList.builder();
+    ImmutableList.Builder<WorkspacePath> pathsToQuery = ImmutableList.builder();
+    for (WorkspacePath source : sources) {
+      File file = pathResolver.resolveToFile(source);
+      if (FileOperationProvider.getInstance().isDirectory(file)) {
+        continue;
+      }
+      if (!importRoots.containsWorkspacePath(source)) {
+        continue;
+      }
+      if (Blaze.getBuildSystemProvider(project).isBuildFile(file.getName())) {
+        targets.add(TargetExpression.allFromPackageNonRecursive(source.getParent()));
+        continue;
+      }
+      pathsToQuery.add(source);
+    }
+    List<TargetInfo> result =
+        Scope.push(
+            context,
+            childContext -> {
+              childContext.push(new TimingScope("QuerySourceTargets", EventType.BlazeInvocation));
+              childContext.output(new StatusOutput("Querying targets building source files..."));
+              // We don't want blaze build errors to fail the whole sync
+              childContext.setPropagatesErrors(false);
+              return BlazeQuerySourceToTargetProvider.getTargetsBuildingSourceFiles(
+                  project, pathsToQuery.build(), childContext, ContextType.Sync);
+            });
+    if (context.isCancelled()) {
+      throw new SyncCanceledException();
+    }
+    if (result == null) {
+      String fileBugSuggestion =
+          Blaze.getBuildSystem(project) == BuildSystem.Bazel
+              ? ""
+              : " Please run 'Blaze > File a Bug'";
+      IssueOutput.error(
+              "Querying blaze targets building project source files failed." + fileBugSuggestion)
+          .submit(context);
+      throw new SyncFailedException();
+    }
+    targets.addAll(result.stream().map(t -> t.label).collect(toImmutableList()));
+    return targets.build();
   }
 
   private BlazeBuildOutputs getBlazeBuildResult(

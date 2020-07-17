@@ -15,13 +15,19 @@
  */
 package com.google.idea.blaze.base.dependencies;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.command.BlazeCommand;
+import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
 import com.google.idea.blaze.base.query.BlazeQueryOutputBaseProvider;
@@ -33,9 +39,12 @@ import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -47,12 +56,14 @@ import org.jetbrains.ide.PooledThreadExecutor;
  */
 public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider {
 
+  private static final Logger logger = Logger.getInstance(BlazeQuerySourceToTargetProvider.class);
+
   /**
    * Currently disabled for performance reasons. SourceToTargetProvider is called often, in the
    * background, and we don't want to monopolize the local blaze server.
    */
   private static final BoolExperiment enabled =
-      new BoolExperiment("use.blaze.query.for.rdeps", false);
+      new BoolExperiment("use.blaze.query.for.background.rdeps", false);
 
   @Override
   public Future<List<TargetInfo>> getTargetsBuildingSourceFile(
@@ -69,32 +80,60 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
             Scope.root(
                 context -> {
                   context.push(new IdeaLogScope());
-                  return runDirectRdepsQuery(project, label, context);
+                  return runDirectRdepsQuery(
+                      project, ImmutableList.of(label), context, ContextType.Other);
                 }));
+  }
+
+  /** Synchronously runs a blaze query to find the direct rdeps of the given source files. */
+  @Nullable
+  public static ImmutableList<TargetInfo> getTargetsBuildingSourceFiles(
+      Project project, Collection<WorkspacePath> sources, BlazeContext context, ContextType type) {
+    ImmutableList<Label> labels =
+        sources.stream()
+            .map(s -> getSourceLabel(project, s.relativePath()))
+            .filter(Objects::nonNull)
+            .collect(toImmutableList());
+    return runDirectRdepsQuery(project, labels, context, type);
   }
 
   @Nullable
   private static ImmutableList<TargetInfo> runDirectRdepsQuery(
-      Project project, Label label, BlazeContext context) {
-    String query = String.format("'same_pkg_direct_rdeps(%s)'", label);
-
-    ImmutableList.Builder<String> args = ImmutableList.builder();
-    args.add(getBinaryPath(project));
-
-    String outputBaseFlag = BlazeQueryOutputBaseProvider.getInstance(project).getOutputBaseFlag();
-    if (outputBaseFlag != null) {
-      // startup flag: must come before the 'query' arg
-      args.add(outputBaseFlag);
+      Project project, Collection<Label> sources, BlazeContext context, ContextType type) {
+    if (sources.isEmpty()) {
+      return ImmutableList.of();
     }
-    args.add("query", "--output=label_kind", query);
+    String expr = Joiner.on('+').join(sources);
+    String query = String.format("same_pkg_direct_rdeps(%s)", expr);
+
+    // never use a custom output base for queries during sync
+    String outputBaseFlag =
+        type == ContextType.Sync
+            ? null
+            : BlazeQueryOutputBaseProvider.getInstance(project).getOutputBaseFlag();
+
+    BlazeCommand command =
+        BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.QUERY)
+            .addBlazeFlags("--output=label_kind")
+            .addBlazeFlags("--keep_going")
+            .addBlazeFlags(query)
+            .addBlazeStartupFlags(
+                outputBaseFlag == null ? ImmutableList.of() : ImmutableList.of(outputBaseFlag))
+            .build();
 
     BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(t -> true);
     int retVal =
         ExternalTask.builder(WorkspaceRoot.fromProject(project))
-            .args(args.build())
+            .addBlazeCommand(command)
             .context(context)
             .stdout(LineProcessingOutputStream.of(outputProcessor))
-            .stderr(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))
+            .stderr(
+                LineProcessingOutputStream.of(
+                    line -> {
+                      // errors are expected, so limit logging to info level
+                      logger.info(line);
+                      return true;
+                    }))
             .build()
             .run();
     if (retVal != 0 && retVal != 3) {
