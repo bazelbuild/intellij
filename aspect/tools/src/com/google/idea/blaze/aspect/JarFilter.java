@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -266,6 +267,9 @@ public final class JarFilter {
             }
 
             ZipEntry newEntry = new ZipEntry(entry.getName());
+            // reset creation time of entry to make it deterministic
+            newEntry.setTime(0);
+            newEntry.setCreationTime(FileTime.fromMillis(0));
             outputStream.putNextEntry(newEntry);
             try (InputStream inputStream = sourceZipFile.getInputStream(entry)) {
               int len;
