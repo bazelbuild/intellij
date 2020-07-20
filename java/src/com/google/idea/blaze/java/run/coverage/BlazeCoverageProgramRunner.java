@@ -17,12 +17,25 @@ package com.google.idea.blaze.java.run.coverage;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.logging.EventLoggingService;
-import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.coverage.CoverageUtils;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.scope.Scope;
+import com.google.idea.blaze.base.scope.ScopedFunction;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BuildSystem;
 import com.intellij.coverage.CoverageHelper;
 import com.intellij.coverage.CoverageRunnerData;
 import com.intellij.execution.ExecutionException;
@@ -45,7 +58,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.function.IntConsumer;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /** Controls 'run with coverage' execution for blaze run configurations. */
@@ -70,17 +85,47 @@ public class BlazeCoverageProgramRunner extends DefaultProgramRunner {
   }
 
   @Nullable
-  private static BlazeInfo getBlazeInfo(Project project) {
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    return projectData != null ? projectData.getBlazeInfo() : null;
+  private static ListenableFuture<BlazeInfo> getBlazeInfo(
+      Project project, BlazeCommandRunConfiguration config) {
+    ProjectViewSet viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    if (viewSet == null) {
+      return null;
+    }
+    BlazeInvocationContext invocationContext =
+        BlazeInvocationContext.runConfigContext(
+            ExecutorType.COVERAGE,
+            BlazeCommandRunConfigurationType.getInstance(),
+            /* beforeRunTask= */ false);
+    List<String> infoFlags =
+        BlazeFlags.blazeFlags(project, viewSet, BlazeCommandName.INFO, invocationContext);
+    BuildSystem buildSystem = Blaze.getBuildSystem(project);
+    return Scope.push(
+        null,
+        (ScopedFunction<ListenableFuture<BlazeInfo>>)
+            context ->
+                BlazeInfoRunner.getInstance()
+                    .runBlazeInfo(
+                        context,
+                        buildSystem,
+                        getBlazeBinary(config),
+                        WorkspaceRoot.fromProject(project),
+                        infoFlags));
+  }
+
+  private static String getBlazeBinary(BlazeCommandRunConfiguration config) {
+    BlazeCommandRunConfigurationCommonState state =
+        (BlazeCommandRunConfigurationCommonState) config.getHandler().getState();
+    return state.getBlazeBinaryState().getBlazeBinary() != null
+        ? state.getBlazeBinaryState().getBlazeBinary()
+        : Blaze.getBuildSystemProvider(config.getProject()).getBinaryPath(config.getProject());
   }
 
   @Nullable
   @Override
   protected RunContentDescriptor doExecute(RunProfileState profile, ExecutionEnvironment env)
       throws ExecutionException {
-    BlazeInfo blazeInfo = getBlazeInfo(env.getProject());
+    BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) env.getRunProfile();
+    ListenableFuture<BlazeInfo> blazeInfo = getBlazeInfo(env.getProject(), blazeConfig);
     if (blazeInfo == null) {
       throw new ExecutionException(
           "Can't run with coverage: no sync data found. Please sync your project and retry.");
@@ -93,30 +138,48 @@ public class BlazeCoverageProgramRunner extends DefaultProgramRunner {
     // remove any old copy of the coverage data
 
     // retrieve coverage data and copy locally
-    BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) env.getRunProfile();
     BlazeCoverageEnabledConfiguration config =
         (BlazeCoverageEnabledConfiguration) CoverageEnabledConfiguration.getOrCreate(blazeConfig);
 
     String coverageFilePath = config.getCoverageFilePath();
-    File blazeOutputFile = CoverageUtils.getOutputFile(blazeInfo);
 
     ProcessHandler handler = result.getProcessHandler();
     if (handler != null) {
       ProcessHandler wrappedHandler =
           new ProcessHandlerWrapper(
-              handler, exitCode -> copyCoverageOutput(blazeOutputFile, coverageFilePath, exitCode));
+              handler,
+              exitCode ->
+                  copyCoverageOutput(
+                      () -> getCoverageOutputFile(blazeInfo), coverageFilePath, exitCode));
       CoverageHelper.attachToProcess(blazeConfig, wrappedHandler, env.getRunnerSettings());
     }
     return result;
   }
 
-  private static void copyCoverageOutput(File blazeOutputFile, String localPath, int exitCode) {
+  @Nullable
+  private static File getCoverageOutputFile(ListenableFuture<BlazeInfo> blazeInfo) {
+    try {
+      return CoverageUtils.getOutputFile(blazeInfo.get());
+    } catch (InterruptedException e) {
+      // ignore on user cancellation
+    } catch (java.util.concurrent.ExecutionException e) {
+      logger.error("Error running blaze info for coverage", e);
+    }
+    return null;
+  }
+
+  private static void copyCoverageOutput(Supplier<File> output, String localPath, int exitCode) {
+    File file = output.get();
+    if (file == null) {
+      // error reporting handled in supplier
+      return;
+    }
     if (exitCode != 0) {
       new File(localPath).delete();
       return;
     }
     try {
-      Files.copy(blazeOutputFile.toPath(), Paths.get(localPath), REPLACE_EXISTING);
+      Files.copy(file.toPath(), Paths.get(localPath), REPLACE_EXISTING);
     } catch (IOException e) {
       String msg = "Error copying output coverage file";
       logger.warn(msg, e);
