@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.plugin.dependency.PluginDependencyHelper;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
@@ -216,7 +215,6 @@ public final class BlazeNewProjectBuilder {
         .logEvent(getClass(), "blaze-project-created", ImmutableMap.copyOf(userSettings.values));
 
     BlazeImportSettingsManager.getInstance(project).setImportSettings(getImportSettings());
-    PluginDependencyHelper.addDependencyOnSyncPlugin(project);
     // Initial sync of the project happens in BlazeSyncStartupActivity
   }
 

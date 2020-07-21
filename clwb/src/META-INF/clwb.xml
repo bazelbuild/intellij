@@ -22,9 +22,6 @@
   <depends>org.jetbrains.plugins.clion.test.google</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
-                        serviceImplementation="com.google.idea.blaze.plugin.ClwbPluginId"/>
-
     <consoleFilterProvider implementation="com.google.idea.blaze.clwb.run.BlazeCppPathConsoleFilter$Provider"/>
 
     <programRunner implementation="com.google.idea.blaze.clwb.run.BlazeCppRunner"/>

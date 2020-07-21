@@ -15,8 +15,4 @@
   -->
 <idea-plugin>
   <vendor>Google</vendor>
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.google.idea.blaze.base.plugin.BlazePluginId"
-                        serviceImplementation="com.google.idea.blaze.ijwb.plugin.IjwbPluginId"/>
-  </extensions>
 </idea-plugin>
