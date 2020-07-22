@@ -81,6 +81,12 @@ public class ServiceHelper {
     // ComponentManagerImpl directly when earlier releases are no longer supported
     boolean isComponentManagerImpl = !(application instanceof MockApplication);
     if (isComponentManagerImpl) {
+      if (!application.hasComponent(key)) {
+        // registers component from scratch
+        ServiceContainerUtil.registerComponentImplementation(
+            application, key, key, /* shouldBeAlreadyRegistered=*/ false);
+      }
+      // replaces existing component
       ServiceContainerUtil.registerComponentInstance(
           application, key, implementation, parentDisposable);
     } else {

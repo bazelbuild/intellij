@@ -18,7 +18,7 @@ package com.google.idea.common.experiments;
 import com.google.common.annotations.VisibleForTesting;
 
 /**
- * Exposes a system property used to identify the current user as a blaze plugin developer.
+ * Used to identify whether the current user is a blaze plugin developer.
  *
  * <p>Used for the purposes of dogfooding experimental features, or turning on additional logging.
  */
@@ -28,17 +28,16 @@ public final class InternalDevFlag {
   static final DeveloperFlag disableInternalDevMarker =
       new DeveloperFlag("disable.internal.dev.marker");
 
-  private static final String INTERNAL_DEV_SYSTEM_PROPERTY = "blaze.internal.plugin.dev";
+  private static volatile boolean isInternalDev = false;
 
-  /** Set a system property marking the current user as an internal plugin dev. */
+  /** Marks the current user as an internal plugin dev. */
   public static void markUserAsInternalDev(boolean isInternalDev) {
-    System.setProperty(INTERNAL_DEV_SYSTEM_PROPERTY, isInternalDev ? "true" : "false");
+    InternalDevFlag.isInternalDev = isInternalDev;
   }
 
   /** Returns whether the current user is marked as an internal plugin dev. */
   public static boolean isInternalDev() {
-    return System.getProperty(INTERNAL_DEV_SYSTEM_PROPERTY, "false").equals("true")
-        && isInternalDevMarkerSupported();
+    return isInternalDev && isInternalDevMarkerSupported();
   }
 
   /**

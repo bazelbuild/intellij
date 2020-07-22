@@ -15,6 +15,8 @@
  */
 package com.google.idea.testing;
 
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
@@ -31,6 +33,7 @@ public abstract class AbstractIntegrationTestCase {
   @Rule public final EdtRule edtRule = new EdtRule();
 
   protected CodeInsightTestFixture testFixture;
+  protected MockExperimentService experimentService = new MockExperimentService();
 
   @Before
   public void setUp() throws Exception {
@@ -43,6 +46,9 @@ public abstract class AbstractIntegrationTestCase {
     testFixture.setUp();
 
     verifyRequiredPluginsEnabled();
+
+    ServiceHelper.registerApplicationComponent(
+        ExperimentService.class, experimentService, testFixture.getTestRootDisposable());
   }
 
   @After
