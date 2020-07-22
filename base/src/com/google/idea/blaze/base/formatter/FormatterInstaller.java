@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.common.formatter;
+package com.google.idea.blaze.base.formatter;
 
 import com.google.idea.sdkcompat.platform.ServiceHelperCompat;
 import com.intellij.openapi.project.Project;

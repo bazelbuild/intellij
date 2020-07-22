@@ -24,7 +24,6 @@ java_library(
         "//common/binaryhelper",
         "//common/concurrency",
         "//common/experiments",
-        "//common/formatter",
         "//common/settings",
         "//common/transactions",
         "//intellij_platform_sdk:jsr305",
@@ -67,6 +66,18 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+    ],
+)
+
+# self-contained custom formatter API, exposed so other plugins can optionally depend on it
+java_library(
+    name = "formatter_api",
+    srcs = glob(["src/com/google/idea/blaze/base/formatter/*.java"]),
+    neverlink = 1,
+    deps = [
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+        "//sdkcompat",
     ],
 )
 

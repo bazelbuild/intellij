@@ -18,9 +18,9 @@ package com.google.idea.blaze.base.buildmodifier;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.io.CharStreams;
+import com.google.idea.blaze.base.formatter.FormatUtils.FileContentsProvider;
+import com.google.idea.blaze.base.formatter.FormatUtils.Replacements;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
-import com.google.idea.common.formatter.FormatUtils.FileContentsProvider;
-import com.google.idea.common.formatter.FormatUtils.Replacements;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import java.io.BufferedReader;
@@ -73,8 +73,6 @@ public class BuildFileFormatter {
       }
       return output;
 
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
     } catch (IOException e) {
       logger.warn(e);
     }
@@ -87,7 +85,7 @@ public class BuildFileFormatter {
    */
   @Nullable
   private static String formatText(File buildifierBinary, BlazeFileType fileType, String inputText)
-      throws InterruptedException, IOException {
+      throws IOException {
     Process process = new ProcessBuilder(buildifierBinary.getPath(), fileTypeArg(fileType)).start();
     process.getOutputStream().write(inputText.getBytes(UTF_8));
     process.getOutputStream().close();
@@ -95,7 +93,12 @@ public class BuildFileFormatter {
     BufferedReader reader =
         new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8));
     String formattedText = CharStreams.toString(reader);
-    process.waitFor();
+    try {
+      process.waitFor();
+    } catch (InterruptedException e) {
+      process.destroy();
+      Thread.currentThread().interrupt();
+    }
     return process.exitValue() != 0 ? null : formattedText;
   }
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.common.formatter;
+package com.google.idea.blaze.base.formatter;
 
 import static java.util.Comparator.comparing;
 
@@ -68,7 +68,7 @@ public final class FormatUtils {
       return text == null ? null : new FileContentsProvider(file, text);
     }
 
-    final PsiFile file;
+    public final PsiFile file;
     private final String initialFileContents;
 
     private FileContentsProvider(PsiFile file, String initialFileContents) {

@@ -19,14 +19,14 @@ import static com.google.idea.blaze.base.buildmodifier.BuildFileFormatter.getRep
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.formatter.FileBasedFormattingSynchronizer;
+import com.google.idea.blaze.base.formatter.FileBasedFormattingSynchronizer.Formatter;
+import com.google.idea.blaze.base.formatter.FormatUtils;
+import com.google.idea.blaze.base.formatter.FormatUtils.FileContentsProvider;
+import com.google.idea.blaze.base.formatter.FormatUtils.Replacements;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.common.formatter.FileBasedFormattingSynchronizer;
-import com.google.idea.common.formatter.FileBasedFormattingSynchronizer.Formatter;
-import com.google.idea.common.formatter.FormatUtils;
-import com.google.idea.common.formatter.FormatUtils.FileContentsProvider;
-import com.google.idea.common.formatter.FormatUtils.Replacements;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;

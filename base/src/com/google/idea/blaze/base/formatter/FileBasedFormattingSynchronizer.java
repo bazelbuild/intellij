@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.common.formatter;
+package com.google.idea.blaze.base.formatter;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.idea.common.formatter.FormatUtils.FileContentsProvider;
-import com.google.idea.common.formatter.FormatUtils.Replacements;
+import com.google.idea.blaze.base.formatter.FormatUtils.FileContentsProvider;
+import com.google.idea.blaze.base.formatter.FormatUtils.Replacements;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import java.io.File;
