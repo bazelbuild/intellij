@@ -3,6 +3,7 @@
     <component>
       <interface-class>com.google.idea.common.experiments.ExperimentService</interface-class>
       <implementation-class>com.google.idea.common.experiments.MockExperimentService</implementation-class>
+      <option name="overrides" value="true"/>
     </component>
   </application-components>
 </idea-plugin>
