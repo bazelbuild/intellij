@@ -27,7 +27,7 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.protobuf.repackaged.TextFormat;
+import com.google.repackaged.protobuf.TextFormat;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;

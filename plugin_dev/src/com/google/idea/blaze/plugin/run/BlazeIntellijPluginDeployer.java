@@ -31,7 +31,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.protobuf.repackaged.TextFormat;
+import com.google.repackaged.protobuf.TextFormat;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;

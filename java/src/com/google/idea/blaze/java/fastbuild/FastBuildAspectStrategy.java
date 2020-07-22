@@ -22,7 +22,7 @@ import com.google.devtools.intellij.aspect.FastBuildInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
-import com.google.protobuf.repackaged.TextFormat;
+import com.google.repackaged.protobuf.TextFormat;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.io.BufferedInputStream;
 import java.io.File;

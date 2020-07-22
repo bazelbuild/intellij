@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -12,6 +10,8 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 _FAST_BUILD_JAVAC_SRCS = ["src/com/google/idea/blaze/java/fastbuild/FastBuildJavac.java"]
 
@@ -44,7 +44,6 @@ java_library(
         "//common/experiments",
         "//common/settings",
         "//common/transactions",
-        "//intellij_platform_sdk:coverage",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:junit",
         "//intellij_platform_sdk:plugin_api",
@@ -61,8 +60,7 @@ java_library(
     visibility = [
         "//aswb:__pkg__",
         "//ijwb:__pkg__",
-        "//java/com/google/devtools/intellij/blaze/plugin/aswb:__pkg__",
-        "//java/com/google/devtools/intellij/blaze/plugin/ijwb:__pkg__",
+        "//java/com/google/devtools/intellij/blaze/plugin:__subpackages__",
     ],
     deps = ["//third_party/java/jdk:langtools"],
 )

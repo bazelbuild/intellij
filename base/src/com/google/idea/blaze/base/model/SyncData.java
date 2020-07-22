@@ -19,7 +19,7 @@ import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
-import com.google.protobuf.repackaged.Message;
+import com.google.repackaged.protobuf.Message;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Arrays;
 import java.util.Objects;

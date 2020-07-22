@@ -38,11 +38,7 @@ optional_plugin_xml(
 intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_cidr"],
-    visibility = [
-        "//:__subpackages__",
-        "//java/com/google/devtools/intellij/blaze/plugin:__subpackages__",
-        "//javatests/com/google/devtools/intellij/blaze/plugin:__subpackages__",
-    ],
+    visibility = ["//visibility:public"],
     deps = [":cpp"],
 )
 
