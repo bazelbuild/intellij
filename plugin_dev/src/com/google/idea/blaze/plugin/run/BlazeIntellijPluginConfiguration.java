@@ -448,6 +448,13 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
       exeFlagsEditor.setComponentEnabled(enabled);
     }
 
+    @Nullable
+    private static Sdk getProjectJdk(@Nullable Sdk possibleClone) {
+      return possibleClone == null
+          ? null
+          : ProjectJdkTable.getInstance().findJdk(possibleClone.getName());
+    }
+
     @VisibleForTesting
     @Override
     public void resetEditorFrom(BlazeIntellijPluginConfiguration s) {
@@ -457,7 +464,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
       if (s.pluginSdk != null) {
         sdkCombo.setSelectedJdk(s.pluginSdk);
       } else {
-        s.pluginSdk = sdkCombo.getSelectedJdk();
+        s.pluginSdk = getProjectJdk(sdkCombo.getSelectedJdk());
       }
       if (s.vmParameters != null) {
         vmParameters.getComponent().setText(s.vmParameters);
@@ -481,7 +488,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
       }
       blazeFlagsEditor.applyEditorTo(s.blazeFlags);
       exeFlagsEditor.applyEditorTo(s.exeFlags);
-      s.pluginSdk = sdkCombo.getSelectedJdk();
+      s.pluginSdk = getProjectJdk(sdkCombo.getSelectedJdk());
       s.vmParameters = vmParameters.getComponent().getText();
       s.programParameters = programParameters.getComponent().getText();
       s.keepInSync = keepInSyncCheckBox.isVisible() ? keepInSyncCheckBox.isSelected() : null;
