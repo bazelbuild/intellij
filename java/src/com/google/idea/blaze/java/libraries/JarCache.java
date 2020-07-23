@@ -389,7 +389,9 @@ public class JarCache {
    */
   private static File patchExternalFilePath(File maybeExternal) {
     String externalString = maybeExternal.toString();
-    if (externalString.contains("/external/") && !externalString.contains("/bazel-out/")) {
+    if (externalString.contains("/external/")
+        && !externalString.contains("/bazel-out/")
+        && !externalString.contains("/blaze-out/")) {
       return new File(externalString.replaceAll("/execroot.*/external/", "/external/"));
     }
     return maybeExternal;
