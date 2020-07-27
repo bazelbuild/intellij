@@ -272,6 +272,7 @@ java_library(
     srcs = [
         "src/com/google/idea/blaze/base/async/FutureUtil.java",
         "src/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
+        "src/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
         "src/com/google/idea/blaze/base/prefetch/FetchExecutor.java",
         "src/com/google/idea/blaze/base/prefetch/RemoteArtifactPrefetcher.java",
     ],
