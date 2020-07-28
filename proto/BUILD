@@ -5,9 +5,9 @@
 
 licenses(["notice"])  # Apache 2.0
 
-java_import(
+alias(
     name = "proto_deps",
-    jars = ["proto_deps.jar"],
+    target = [":repackaged_proto_deps_deploy.jar"],
     visibility = ["//visibility:public"],
 )
 
