@@ -18,10 +18,11 @@ package com.google.idea.blaze.cpp;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.util.PlatformUtils;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -64,7 +65,12 @@ public class ClionUnitTestSystemPropertiesRule extends ExternalResource {
 
     // Some plugins have a since-build and until-build restriction, so we need
     // to update the build number here
-    PluginManagerCore.BUILD_NUMBER = readApiVersionNumber();
+    String buildNumber = readApiVersionNumber();
+    if (buildNumber == null) {
+      buildNumber = BuildNumber.currentVersion().asString();
+    }
+    setIfEmpty("idea.plugins.compatible.build", buildNumber);
+    setIfEmpty(PlatformUtils.PLATFORM_PREFIX_KEY, determinePlatformPrefix(buildNumber));
 
     // Tests fail if they access files outside of the project roots and other system directories.
     // Ensure runfiles and platform api are whitelisted.
@@ -92,6 +98,22 @@ public class ClionUnitTestSystemPropertiesRule extends ExternalResource {
     setIfEmpty("idea.plugins.path", Joiner.on(File.pathSeparator).join(pluginJars));
   }
 
+  @Nullable
+  private static String determinePlatformPrefix(String buildNumber) {
+    if (buildNumber.startsWith("AI")) { // Android Studio
+      return "AndroidStudio";
+    } else if (buildNumber.startsWith("IU")) { // IntelliJ Ultimate
+      return null;
+    } else if (buildNumber.startsWith("IC")) { // IntelliJ Community
+      return "Idea";
+    } else if (buildNumber.startsWith("CL")) { // CLion
+      return "CLion";
+    } else {
+      throw new RuntimeException("Unable to determine platform prefix for build: " + buildNumber);
+    }
+  }
+
+  @Nullable
   private static String readApiVersionNumber() {
     String apiVersionFilePath = System.getProperty("blaze.idea.api.version.file");
     String runfilesWorkspaceRoot = System.getProperty("user.dir");
