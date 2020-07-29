@@ -50,7 +50,7 @@ public class BlazeCppModuleType extends ModuleType<EmptyModuleBuilder> {
 
   @Override
   public Icon getNodeIcon(boolean b) {
-    return AllIcons.Modules.SourceFolder;
+    return AllIcons.Nodes.Package;
   }
 
   private static class BlazeCppModuleBuilder extends EmptyModuleBuilder {
