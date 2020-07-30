@@ -17,6 +17,7 @@ package com.google.idea.blaze.plugin;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.clwb.CMakeActionsToManipulate;
+import com.google.idea.common.actions.ActionCustomizer;
 import com.google.idea.common.actions.ReplaceActionHelper;
 import com.intellij.openapi.components.ApplicationComponent;
 
@@ -25,7 +26,7 @@ public class ClwbSpecificInitializer implements ApplicationComponent {
 
   @Override
   public void initComponent() {
-    hideCMakeActions();
+    ActionCustomizer.newCustomizerFor(ClwbSpecificInitializer::hideCMakeActions);
   }
 
   // The original actions will be visible only on plain IDEA projects.
