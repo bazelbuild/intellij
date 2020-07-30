@@ -16,13 +16,13 @@
 package com.google.idea.blaze.clwb.run;
 
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.sdkcompat.clion.CppRunnerCompat;
 import com.intellij.execution.configurations.RunProfile;
-import com.jetbrains.cidr.cpp.execution.CLionRunner;
 
 /**
  * A version of CPPRunner which can accept {@link BlazeCommandRunConfiguration} when appropriate.
  */
-public class BlazeCppRunner extends CLionRunner {
+public class BlazeCppRunner extends CppRunnerCompat {
 
   @Override
   public String getRunnerId() {
