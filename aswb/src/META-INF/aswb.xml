@@ -23,8 +23,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
     <programRunner implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestProgramRunner" order="first"/>
-    <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallRunExecutor" order="last"/>
-    <executor implementation="com.google.idea.blaze.android.run.binary.mobileinstall.IncrementalInstallDebugExecutor" order="last"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.manifest.ParsedManifestService"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.projectsystem.ExternalLibraryInterner"/>
