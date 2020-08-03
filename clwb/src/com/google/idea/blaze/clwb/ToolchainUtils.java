@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.clwb;
 
+import com.google.idea.sdkcompat.cpp.ToolchainCompat;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains.Toolchain;
 import com.jetbrains.cidr.toolchains.OSType;
@@ -25,7 +26,7 @@ public class ToolchainUtils {
     Toolchain toolchain = CPPToolchains.getInstance().getDefaultToolchain();
     if (toolchain == null) {
       toolchain = new Toolchain(OSType.getCurrent());
-      toolchain.setName(Toolchain.DEFAULT);
+      toolchain.setName(ToolchainCompat.getDefaultName());
     }
     return toolchain;
   }
