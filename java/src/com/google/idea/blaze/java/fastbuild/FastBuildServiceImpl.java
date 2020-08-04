@@ -282,7 +282,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
             .addBlazeFlags(buildParameters.buildFlags())
             .addBlazeFlags(resultHelper.getBuildFlags());
 
-    aspectStrategy.addAspectAndOutputGroups(command, /* additionalOutputGroups= */ "default");
+    aspectStrategy.addAspectAndOutputGroups(command, /* additionalOutputGroups...= */ "default");
 
     int exitCode =
         ExternalTask.builder(WorkspaceRoot.fromProject(project))
