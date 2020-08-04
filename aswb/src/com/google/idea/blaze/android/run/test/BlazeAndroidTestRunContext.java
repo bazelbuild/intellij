@@ -37,7 +37,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeApkBuildStepMobileInstall;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
-import com.google.idea.blaze.android.run.deployinfo.BlazeApkProvider;
+import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
@@ -104,7 +104,7 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
     }
 
     this.applicationIdProvider = new BlazeAndroidTestApplicationIdProvider(buildStep);
-    this.apkProvider = new BlazeApkProvider(project, buildStep);
+    this.apkProvider = BlazeApkProviderService.getInstance().getApkProvider(project, buildStep);
 
     BlazeTestUiSession testUiSession =
         canUseTestUi(env.getExecutor())

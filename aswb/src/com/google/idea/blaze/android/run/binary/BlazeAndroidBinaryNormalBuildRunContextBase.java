@@ -42,7 +42,7 @@ import com.android.tools.idea.run.util.SwapInfo.SwapType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
-import com.google.idea.blaze.android.run.deployinfo.BlazeApkProvider;
+import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
@@ -76,7 +76,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   protected final BlazeAndroidBinaryRunConfigurationState configState;
   protected final ConsoleProvider consoleProvider;
   protected final BlazeApkBuildStepNormalBuild buildStep;
-  protected final BlazeApkProvider apkProvider;
+  protected final ApkProvider apkProvider;
   protected final ApplicationIdProvider applicationIdProvider;
 
   BlazeAndroidBinaryNormalBuildRunContextBase(
@@ -94,7 +94,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
     this.configState = configState;
     this.consoleProvider = new BlazeAndroidBinaryConsoleProvider(project);
     this.buildStep = new BlazeApkBuildStepNormalBuild(project, label, blazeFlags);
-    this.apkProvider = new BlazeApkProvider(project, buildStep);
+    this.apkProvider = BlazeApkProviderService.getInstance().getApkProvider(project, buildStep);
     this.applicationIdProvider = new BlazeAndroidBinaryApplicationIdProvider(buildStep);
   }
 
