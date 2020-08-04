@@ -115,8 +115,7 @@ public interface BlazeAndroidDeviceSelector {
         }
       }
 
-      DeployTarget deployTarget =
-          deployTargetManager.getDeployTarget(executor, env, facet, runConfigId);
+      DeployTarget deployTarget = BlazeDeployTargetService.getInstance(project).getDeployTarget();
       if (deployTarget == null) {
         return null;
       }
