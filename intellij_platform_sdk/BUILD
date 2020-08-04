@@ -346,6 +346,7 @@ java_library(
         "clion-2020.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2019.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.1": ["@jsr305_annotations//jar"],
+        "android-studio-4.2": ["@jsr305_annotations//jar"],
         "default": [":plugin_api"],
     }),
 )

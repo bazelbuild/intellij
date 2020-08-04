@@ -214,4 +214,9 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       return null;
     }
   }
+
+  @Override
+  public String getLaunchTypeDisplayName() {
+    return "Launch";
+  }
 }

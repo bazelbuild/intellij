@@ -20,7 +20,6 @@ import com.android.tools.idea.run.tasks.LaunchContext;
 import com.android.tools.idea.run.tasks.LaunchResult;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
 
 /** Opens the profiler tool window. #api41 */
 public class BlazeAndroidOpenProfilerWindowTask extends BlazeAndroidOpenProfilerWindowTaskBase {
@@ -29,7 +28,7 @@ public class BlazeAndroidOpenProfilerWindowTask extends BlazeAndroidOpenProfiler
   }
 
   @Override
-  public LaunchResult run(@NotNull LaunchContext launchContext) {
+  public LaunchResult run(LaunchContext launchContext) {
     ApplicationManager.getApplication()
         .invokeLater(() -> ProfilerProgramRunner.createProfilerToolWindow(project, null));
     return LaunchResult.success();
