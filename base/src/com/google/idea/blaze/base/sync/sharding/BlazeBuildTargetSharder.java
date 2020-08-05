@@ -56,8 +56,15 @@ public class BlazeBuildTargetSharder {
    * Max number of individual targets per blaze build shard. Can be overridden by the user for local
    * syncs.
    */
-  private static final IntExperiment targetShardSize =
-      new IntExperiment("blaze.target.shard.size", 10000);
+  private static final IntExperiment maxTargetShardSize =
+      new IntExperiment("blaze.max.target.shard.size", 10000);
+
+  /**
+   * Default target shard size when sharding is requested but no shard size is specified. Purpose is
+   * to avoid OOMEs.
+   */
+  private static final IntExperiment defaultTargetShardSize =
+      new IntExperiment("blaze.default.target.shard.size", 1000);
 
   /** If enabled, we'll automatically shard when we think it's appropriate. */
   private static final BoolExperiment shardAutomatically =
@@ -89,7 +96,10 @@ public class BlazeBuildTargetSharder {
 
   /** Number of individual targets per blaze build shard. */
   private static int getTargetShardSize(ProjectViewSet projectViewSet) {
-    int defaultLimit = targetShardSize.getValue();
+    int defaultLimit =
+        shardingRequested(projectViewSet)
+            ? defaultTargetShardSize.getValue()
+            : maxTargetShardSize.getValue();
     int userSpecified =
         projectViewSet.getScalarValue(TargetShardSizeSection.KEY).orElse(defaultLimit);
     Integer argMaxLimit = ArgMaxHelper.maxShardSize();
