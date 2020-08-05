@@ -48,8 +48,6 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStepNormalBuild;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -75,7 +73,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   protected final ExecutionEnvironment env;
   protected final BlazeAndroidBinaryRunConfigurationState configState;
   protected final ConsoleProvider consoleProvider;
-  protected final BlazeApkBuildStepNormalBuild buildStep;
+  protected final BlazeApkBuildStep buildStep;
   protected final ApkProvider apkProvider;
   protected final ApplicationIdProvider applicationIdProvider;
 
@@ -85,15 +83,14 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
       RunConfiguration runConfiguration,
       ExecutionEnvironment env,
       BlazeAndroidBinaryRunConfigurationState configState,
-      Label label,
-      ImmutableList<String> blazeFlags) {
+      BlazeApkBuildStep buildStep) {
     this.project = project;
     this.facet = facet;
     this.runConfiguration = runConfiguration;
     this.env = env;
     this.configState = configState;
     this.consoleProvider = new BlazeAndroidBinaryConsoleProvider(project);
-    this.buildStep = new BlazeApkBuildStepNormalBuild(project, label, blazeFlags);
+    this.buildStep = buildStep;
     this.apkProvider = BlazeApkProviderService.getInstance().getApkProvider(project, buildStep);
     this.applicationIdProvider = new BlazeAndroidBinaryApplicationIdProvider(buildStep);
   }

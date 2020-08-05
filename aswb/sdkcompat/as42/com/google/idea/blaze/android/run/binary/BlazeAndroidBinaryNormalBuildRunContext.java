@@ -18,8 +18,7 @@ package com.google.idea.blaze.android.run.binary;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.tasks.DebugConnectorTask;
-import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -37,9 +36,8 @@ public class BlazeAndroidBinaryNormalBuildRunContext
       RunConfiguration runConfiguration,
       ExecutionEnvironment env,
       BlazeAndroidBinaryRunConfigurationState configState,
-      Label label,
-      ImmutableList<String> blazeFlags) {
-    super(project, facet, runConfiguration, env, configState, label, blazeFlags);
+      BlazeApkBuildStep buildStep) {
+    super(project, facet, runConfiguration, env, configState, buildStep);
   }
 
   @Nullable

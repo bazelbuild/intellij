@@ -25,10 +25,12 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationUtil;
+import com.google.idea.blaze.android.run.BlazeApkBuildService;
 import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeAndroidBinaryMobileInstallRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
+import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -138,6 +140,13 @@ public class BlazeAndroidBinaryRunConfigurationHandler
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
     BlazeAndroidRunConfigurationValidationUtil.validateExecution(module, facet, projectViewSet);
 
+    // Only suggest building with mobile-install if native debugging isn't enabled.
+    if (configState.getLaunchMethod() == AndroidBinaryLaunchMethod.NON_BLAZE
+        && !configState.getCommonState().isNativeDebuggingEnabled()) {
+      maybeShowMobileInstallOptIn(project, configuration);
+    }
+
+    // Create build step for matching launch method.
     ImmutableList<String> blazeFlags =
         configState
             .getCommonState()
@@ -150,7 +159,34 @@ public class BlazeAndroidBinaryRunConfigurationHandler
     ImmutableList<String> exeFlags =
         ImmutableList.copyOf(
             configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
-    BlazeAndroidRunContext runContext = createRunContext(project, facet, env, blazeFlags, exeFlags);
+    BlazeApkBuildStep buildStep =
+        BlazeApkBuildService.getInstance(project)
+            .getBuildStep(
+                AndroidBinaryLaunchMethodsUtils.useMobileInstall(configState.getLaunchMethod()),
+                getLabel(),
+                blazeFlags,
+                exeFlags);
+
+    // Create run context for matching launch method.
+    BlazeAndroidRunContext runContext = null;
+    switch (configState.getLaunchMethod()) {
+      case NON_BLAZE:
+        runContext =
+            new BlazeAndroidBinaryNormalBuildRunContext(
+                project, facet, configuration, env, configState, buildStep);
+        break;
+      case MOBILE_INSTALL_V2:
+        // Standardize on a single mobile-install launch method
+        configState.setLaunchMethod(AndroidBinaryLaunchMethod.MOBILE_INSTALL);
+        // fall through
+      case MOBILE_INSTALL:
+        runContext =
+            new BlazeAndroidBinaryMobileInstallRunContext(
+                project, facet, configuration, env, configState, buildStep);
+        break;
+      default:
+        throw new ExecutionException("No compatible launch methods.");
+    }
 
     EventLoggingService.getInstance()
         .logEvent(
@@ -171,30 +207,6 @@ public class BlazeAndroidBinaryRunConfigurationHandler
         getCommonState().getDeployTargetManager(),
         getCommonState().getDebuggerManager(),
         configuration);
-  }
-
-  private BlazeAndroidRunContext createRunContext(
-      Project project,
-      AndroidFacet facet,
-      ExecutionEnvironment env,
-      ImmutableList<String> blazeFlags,
-      ImmutableList<String> exeFlags) {
-    switch (configState.getLaunchMethod()) {
-      case NON_BLAZE:
-        if (!maybeShowMobileInstallOptIn(project, configuration)) {
-          return new BlazeAndroidBinaryNormalBuildRunContext(
-              project, facet, configuration, env, configState, getLabel(), blazeFlags);
-        }
-        // fall through
-      case MOBILE_INSTALL_V2:
-        // Standardize on a single mobile-install launch method
-        configState.setLaunchMethod(AndroidBinaryLaunchMethod.MOBILE_INSTALL);
-        // fall through
-      case MOBILE_INSTALL:
-        return new BlazeAndroidBinaryMobileInstallRunContext(
-            project, facet, configuration, env, configState, getLabel(), blazeFlags, exeFlags);
-    }
-    throw new AssertionError();
   }
 
   @Override
