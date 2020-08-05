@@ -19,7 +19,6 @@ import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDeployTargetManager;
 import com.google.idea.blaze.android.run.state.DebuggerSettingsState;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -55,7 +54,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   private static final ImmutableList<String> NATIVE_DEBUG_FLAGS =
       ImmutableList.of("--fission=no", "-c", "dbg");
 
-  private final BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager;
   private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
 
   private final RunConfigurationFlagsState blazeFlags;
@@ -63,7 +61,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   private final DebuggerSettingsState debuggerSettings;
 
   public BlazeAndroidRunConfigurationCommonState(String buildSystemName, boolean isAndroidTest) {
-    this.deployTargetManager = new BlazeAndroidRunConfigurationDeployTargetManager(isAndroidTest);
     this.blazeFlags =
         new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystemName + " flags:");
     this.exeFlags =
@@ -71,10 +68,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
             USER_EXE_FLAG_TAG, "Executable flags (mobile-install only):");
     this.debuggerSettings = new DebuggerSettingsState(false);
     this.debuggerManager = new BlazeAndroidRunConfigurationDebuggerManager(debuggerSettings);
-  }
-
-  public BlazeAndroidRunConfigurationDeployTargetManager getDeployTargetManager() {
-    return deployTargetManager;
   }
 
   public BlazeAndroidRunConfigurationDebuggerManager getDebuggerManager() {
@@ -125,7 +118,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
       return errors;
     }
 
-    errors.addAll(deployTargetManager.validate(facet));
     errors.addAll(debuggerManager.validate(facet));
     Project project = facet.getModule().getProject();
     BlazeProjectData blazeProjectData =
@@ -153,11 +145,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     blazeFlags.readExternal(element);
     exeFlags.readExternal(element);
     debuggerSettings.readExternal(element);
-
-    Element deployTargetStatesElement = element.getChild(DEPLOY_TARGET_STATES_TAG);
-    if (deployTargetStatesElement != null) {
-      deployTargetManager.readExternal(deployTargetStatesElement);
-    }
   }
 
   @Override
@@ -166,10 +153,8 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     exeFlags.writeExternal(element);
     debuggerSettings.writeExternal(element);
 
+    // Clear out legacy deploy target state element.
     element.removeChildren(DEPLOY_TARGET_STATES_TAG);
-    Element deployTargetStatesElement = new Element(DEPLOY_TARGET_STATES_TAG);
-    deployTargetManager.writeExternal(deployTargetStatesElement);
-    element.addContent(deployTargetStatesElement);
   }
 
   @Override

@@ -21,11 +21,11 @@ import com.android.tools.idea.run.AndroidSessionInfo;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.DeployTarget;
-import com.android.tools.idea.run.editor.DeployTargetState;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.run.BlazeAndroidRunState;
+import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.EmptyTargetState;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
@@ -76,19 +76,16 @@ public final class BlazeAndroidRunConfigurationRunner
 
   private final Module module;
   private final BlazeAndroidRunContext runContext;
-  private final BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager;
   private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
   private final RunConfiguration runConfig;
 
   public BlazeAndroidRunConfigurationRunner(
       Module module,
       BlazeAndroidRunContext runContext,
-      BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager,
       BlazeAndroidRunConfigurationDebuggerManager debuggerManager,
       RunConfiguration runConfig) {
     this.module = module;
     this.runContext = runContext;
-    this.deployTargetManager = deployTargetManager;
     this.debuggerManager = debuggerManager;
     this.runConfig = runConfig;
   }
@@ -111,7 +108,6 @@ public final class BlazeAndroidRunConfigurationRunner
         deviceSelector.getDevice(
             project,
             facet,
-            deployTargetManager,
             executor,
             env,
             info,
@@ -123,8 +119,7 @@ public final class BlazeAndroidRunConfigurationRunner
 
     DeployTarget deployTarget = deviceSession.deployTarget;
     if (deployTarget != null && deployTarget.hasCustomRunProfileState(executor)) {
-      DeployTargetState deployTargetState = deployTargetManager.getCurrentDeployTargetState();
-      return deployTarget.getRunProfileState(executor, env, deployTargetState);
+      return deployTarget.getRunProfileState(executor, env, new EmptyTargetState());
     }
 
     DeviceFutures deviceFutures = deviceSession.deviceFutures;

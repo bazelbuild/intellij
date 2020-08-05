@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.run.runner;
 
 import com.android.tools.idea.run.AndroidSessionInfo;
+import com.android.tools.idea.run.DeviceCount;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.editor.DeployTargetState;
@@ -52,7 +53,6 @@ public interface BlazeAndroidDeviceSelector {
   DeviceSession getDevice(
       Project project,
       AndroidFacet facet,
-      BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager,
       Executor executor,
       ExecutionEnvironment env,
       AndroidSessionInfo info,
@@ -100,7 +100,6 @@ public interface BlazeAndroidDeviceSelector {
     public DeviceSession getDevice(
         Project project,
         AndroidFacet facet,
-        BlazeAndroidRunConfigurationDeployTargetManager deployTargetManager,
         Executor executor,
         ExecutionEnvironment env,
         AndroidSessionInfo info,
@@ -121,11 +120,10 @@ public interface BlazeAndroidDeviceSelector {
       }
 
       DeviceFutures deviceFutures = null;
-      DeployTargetState deployTargetState = deployTargetManager.getCurrentDeployTargetState();
       if (!deployTarget.hasCustomRunProfileState(executor)) {
         deviceFutures =
             deployTarget.getDevices(
-                deployTargetState, facet, deployTargetManager.getDeviceCount(), debug, runConfigId);
+                new EmptyTargetState(), facet, DeviceCount.SINGLE, debug, runConfigId);
       }
       return new DeviceSession(deployTarget, deviceFutures, info);
     }
@@ -173,4 +171,7 @@ public interface BlazeAndroidDeviceSelector {
       return true;
     }
   }
+
+  /** An empty implementation of {@link DeployTargetState} for compatibility purposes. */
+  class EmptyTargetState extends DeployTargetState {}
 }
