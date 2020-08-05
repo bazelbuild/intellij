@@ -118,7 +118,7 @@ public abstract class FastBuildBlazeData {
                         .collect(toImmutableSet())));
   }
 
-  /** Data about an Android rule (android_library, android_roboelectric_test, etc.) */
+  /** Data about an Android rule (android_library, android_local_test, etc.) */
   @AutoValue
   public abstract static class AndroidInfo {
     public abstract Optional<ArtifactLocation> aar();

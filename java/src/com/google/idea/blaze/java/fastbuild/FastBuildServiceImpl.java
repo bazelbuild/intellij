@@ -85,7 +85,6 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
           .putAll(BuildSystem.Bazel, JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
           .putAll(
               BuildSystem.Blaze,
-              AndroidBlazeRules.RuleTypes.ANDROID_ROBOLECTRIC_TEST.getKind(),
               AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind(),
               JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
           .build();
