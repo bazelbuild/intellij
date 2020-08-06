@@ -29,20 +29,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class PyBinaryTest extends BazelIntellijAspectTest {
   @Test
-  public void testPy2Binary() throws Exception {
-    IntellijAspectTestFixture testFixture = loadTestFixture(":simple2_fixture");
-    TargetIdeInfo target = findTarget(testFixture, ":simple2");
-    assertThat(target.getKindString()).isEqualTo("py_binary");
-    assertThat(relativePathsForArtifacts(target.getPyIdeInfo().getSourcesList()))
-        .containsExactly(testRelative("simple.py"));
-    assertThat(target.getPyIdeInfo().getPythonVersion()).isEqualTo(PythonVersion.PY2);
-
-    assertThat(getOutputGroupFiles(testFixture, "intellij-info-py"))
-        .containsExactly(testRelative(intellijInfoFileName("simple2")));
-    assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
-  }
-
-  @Test
   public void testPy3Binary() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":simple3_fixture");
     TargetIdeInfo target = findTarget(testFixture, ":simple3");

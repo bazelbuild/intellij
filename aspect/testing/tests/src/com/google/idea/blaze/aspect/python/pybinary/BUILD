@@ -1,21 +1,14 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
 
+licenses(["notice"])  # Apache 2.0
+
 py_binary(
     name = "simple",
     srcs = ["simple.py"],
-    python_version = "PY2",
-)
-
-py_binary(
-    name = "simple2",
-    srcs = ["simple.py"],
-    main = "simple.py",
-    python_version = "PY2",
+    python_version = "PY3",
 )
 
 py_binary(
@@ -33,13 +26,6 @@ intellij_aspect_test_fixture(
 )
 
 intellij_aspect_test_fixture(
-    name = "simple2_fixture",
-    deps = [
-        ":simple2",
-    ],
-)
-
-intellij_aspect_test_fixture(
     name = "simple3_fixture",
     deps = [
         ":simple3",
@@ -50,7 +36,6 @@ java_test(
     name = "PyBinaryTest",
     srcs = ["PyBinaryTest.java"],
     data = [
-        ":simple2_fixture",
         ":simple3_fixture",
         ":simple_fixture",
     ],
