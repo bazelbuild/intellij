@@ -18,8 +18,8 @@ package com.google.idea.blaze.android.run.runner;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.android.tools.idea.run.DeviceCount;
 import com.android.tools.idea.run.DeviceFutures;
+import com.android.tools.idea.run.deployment.DeviceAndSnapshotComboBoxTargetProvider.State;
 import com.android.tools.idea.run.editor.DeployTarget;
-import com.android.tools.idea.run.editor.DeployTargetState;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -122,8 +122,7 @@ public interface BlazeAndroidDeviceSelector {
       DeviceFutures deviceFutures = null;
       if (!deployTarget.hasCustomRunProfileState(executor)) {
         deviceFutures =
-            deployTarget.getDevices(
-                new EmptyTargetState(), facet, DeviceCount.SINGLE, debug, runConfigId);
+            deployTarget.getDevices(new State(), facet, DeviceCount.SINGLE, debug, runConfigId);
       }
       return new DeviceSession(deployTarget, deviceFutures, info);
     }
@@ -171,7 +170,4 @@ public interface BlazeAndroidDeviceSelector {
       return true;
     }
   }
-
-  /** An empty implementation of {@link DeployTargetState} for compatibility purposes. */
-  class EmptyTargetState extends DeployTargetState {}
 }

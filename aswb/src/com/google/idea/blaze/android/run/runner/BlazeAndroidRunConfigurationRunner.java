@@ -20,12 +20,12 @@ import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.deployment.DeviceAndSnapshotComboBoxTargetProvider.State;
 import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.run.BlazeAndroidRunState;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.EmptyTargetState;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
@@ -119,7 +119,7 @@ public final class BlazeAndroidRunConfigurationRunner
 
     DeployTarget deployTarget = deviceSession.deployTarget;
     if (deployTarget != null && deployTarget.hasCustomRunProfileState(executor)) {
-      return deployTarget.getRunProfileState(executor, env, new EmptyTargetState());
+      return deployTarget.getRunProfileState(executor, env, new State());
     }
 
     DeviceFutures deviceFutures = deviceSession.deviceFutures;
