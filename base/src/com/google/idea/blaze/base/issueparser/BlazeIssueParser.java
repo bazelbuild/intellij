@@ -296,7 +296,8 @@ public class BlazeIssueParser {
     @Nullable
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
-      if (matcher.group(4).startsWith("Couldn't build file ")) {
+      if (matcher.group(4).startsWith("Couldn't build file ")
+          && !matcher.group(4).contains("Executing genrule")) {
         // This is usually accompanied by a more useful error from the compiler.
         return null;
       }
