@@ -1,24 +1,4 @@
-v2020.07.28
-===========
-* Bug fixes and internal cleanup.
-
-v2020.07.13
-===========
-* Bug fixes and internal cleanup.
-
-v2020.06.25
-===========
-* Bug fixes and internal cleanup.
-
-v2020.05.26
-===========
-* Bug fixes and internal cleanup.
-
-v2020.05.05
-===========
-* Bug fixes and internal cleanup.
-
-v2020.04.13
+v2020.08.10
 ===========
 * Bug fixes and internal cleanup.
 
@@ -33,90 +13,22 @@ v2020.02.24
 * Show gutter run markers next to BUILD targets.
 * BUILD files auto-complete updates.
 
-v2020.02.10
-===========
-* Bug fixes and internal cleanup.
-
-v2020.01.27
-===========
-* Bug fixes and internal cleanup.
-
-v2020.01.13
-===========
-* Bug fixes and internal cleanup.
-
-v2019.12.16
-===========
-* Bug fixes and internal cleanup.
-
-v2019.12.02
-===========
-* Bug fixes and internal cleanup.
-
-v2019.11.11
-===========
-* Bug fixes and internal cleanup.
-
-v2019.10.28
-===========
-* Bug fixes and internal cleanup.
-
-v2019.10.14
-===========
-* Bug fixes and internal cleanup.
-
 v2019.09.30
 ===========
 * CLion: fix unresolved genfiles after the first sync.
 
-v2019.09.16
-===========
-* Bug fixes and internal cleanup.
-
-v2019.09.03
-===========
-* Bug fixes and internal cleanup.
-
 v2019.08.19
 ===========
 * Add support for starlark debugging.
-
-v2019.08.05
-===========
-* Bug fixes and internal cleanup.
 
 v2019.07.22
 ===========
 * Add a .bazelproject option to automatically derive the relevant bazel
   targets from directories. This is enabled by default for new projects.
 
-v2019.07.08
-===========
-* Bug fixes and internal cleanup.
-
-v2019.06.17
-===========
-* Bug fixes and internal cleanup.
-
 v2019.06.03
 ===========
 * CLion: Fix debugging with bundled GDB
-
-v2019.05.13
-===========
-* Bug fixes and internal cleanup.
-
-v2019.04.29
-===========
-* Bug fixes and internal cleanup.
-
-v2019.04.15
-===========
-* Bug fixes and internal cleanup.
-
-v2019.04.01
-===========
-* Bug fixes and internal cleanup.
 
 v2019.03.18
 ===========
