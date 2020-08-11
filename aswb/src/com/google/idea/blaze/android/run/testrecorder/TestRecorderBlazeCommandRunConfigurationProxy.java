@@ -23,6 +23,8 @@ import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurati
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
@@ -49,7 +51,8 @@ public class TestRecorderBlazeCommandRunConfigurationProxy
 
   @Override
   public Module getModule() {
-    return myBaseConfigurationHandler.getModule();
+    return ModuleFinder.getInstance(myBaseConfiguration.getProject())
+        .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
   }
 
   @Override

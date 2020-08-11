@@ -29,11 +29,8 @@ import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 import org.jdom.Element;
-import org.jetbrains.android.facet.AndroidFacet;
 
 /** State specific to the android binary run configuration. */
 public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigurationState {
@@ -167,9 +164,9 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
    * We collect errors rather than throwing to avoid missing fatal errors by exiting early for a
    * warning.
    */
-  public List<ValidationError> validate(@Nullable AndroidFacet facet) {
+  public ImmutableList<ValidationError> validate(Project project) {
     ImmutableList.Builder<ValidationError> errors = ImmutableList.builder();
-    errors.addAll(commonState.validate(facet));
+    errors.addAll(commonState.validate(project));
     if (commonState.isNativeDebuggingEnabled()
         && AndroidBinaryLaunchMethodsUtils.useMobileInstall(launchMethod)) {
       errors.add(

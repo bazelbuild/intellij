@@ -41,7 +41,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import javax.annotation.Nullable;
@@ -51,7 +50,6 @@ public final class BlazeAndroidRunState implements RunProfileState {
   private static final Key<ConsoleView> CONSOLE_VIEW_KEY =
       new Key<>("android.run.state.consoleview");
 
-  private final Module module;
   private final ExecutionEnvironment env;
   private final String launchConfigName;
   private final DeviceSession deviceSession;
@@ -61,14 +59,12 @@ public final class BlazeAndroidRunState implements RunProfileState {
   private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
 
   public BlazeAndroidRunState(
-      Module module,
       ExecutionEnvironment env,
       LaunchOptions.Builder launchOptionsBuilder,
       boolean isDebug,
       DeviceSession deviceSession,
       BlazeAndroidRunContext runContext,
       BlazeAndroidRunConfigurationDebuggerManager debuggerManager) {
-    this.module = module;
     this.env = env;
     this.launchConfigName = env.getRunProfile().getName();
     this.deviceSession = deviceSession;
@@ -136,7 +132,7 @@ public final class BlazeAndroidRunState implements RunProfileState {
       console =
           runContext
               .getConsoleProvider()
-              .createAndAttach(module.getProject(), processHandler, executor);
+              .createAndAttach(env.getProject(), processHandler, executor);
       // Stash the console. When we swap, we need the console, as that has the method to print a
       // hyperlink.
       // (If we only need normal text output, we can call ProcessHandler#notifyTextAvailable
@@ -154,7 +150,7 @@ public final class BlazeAndroidRunState implements RunProfileState {
 
     LaunchTaskRunner task =
         new LaunchTaskRunner(
-            module.getProject(),
+            env.getProject(),
             launchConfigName,
             applicationId,
             env.getExecutionTarget().getDisplayName(),

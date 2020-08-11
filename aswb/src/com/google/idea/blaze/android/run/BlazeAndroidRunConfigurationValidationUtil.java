@@ -28,7 +28,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 
 /**
@@ -64,8 +64,11 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
     if (module == null) {
       errors.add(
           ValidationError.fatal(
-              "No run configuration module found. Have you successfully synced your project?"));
+              "No workspace module found. Have you successfully synced your project?"));
       return errors;
+    }
+    if (AndroidPlatform.getInstance(module) == null) {
+      errors.add(ValidationError.fatal(AndroidBundle.message("select.platform.error")));
     }
     final Project project = module.getProject();
     if (AndroidProjectInfo.getInstance(project).requiredAndroidModelMissing()) {
@@ -74,28 +77,12 @@ public final class BlazeAndroidRunConfigurationValidationUtil {
     return errors;
   }
 
-  public static List<ValidationError> validateFacet(@Nullable AndroidFacet facet, Module module) {
-    List<ValidationError> errors = Lists.newArrayList();
-    if (facet == null) {
-      errors.add(ValidationError.fatal(AndroidBundle.message("no.facet.error", module.getName())));
-      return errors;
-    }
-    if (AndroidPlatformCompat.getAndroidPlatform(facet) == null) {
-      errors.add(ValidationError.fatal(AndroidBundle.message("select.platform.error")));
-    }
-    return errors;
-  }
-
   public static void validateExecution(
       @Nullable Module module,
-      @Nullable AndroidFacet facet,
       @Nullable ProjectViewSet projectViewSet)
       throws ExecutionException {
     List<ValidationError> errors = Lists.newArrayList();
     errors.addAll(validateModule(module));
-    if (module != null) {
-      errors.addAll(validateFacet(facet, module));
-    }
     if (projectViewSet == null) {
       errors.add(ValidationError.fatal("Could not load project view. Please resync project"));
     }

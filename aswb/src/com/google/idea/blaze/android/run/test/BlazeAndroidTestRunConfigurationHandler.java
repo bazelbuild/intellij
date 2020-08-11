@@ -27,15 +27,9 @@ import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationU
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
-import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.ideinfo.Dependency;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.logging.EventLoggingService;
-import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -45,8 +39,8 @@ import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.java.AndroidBlazeRules;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaExecutionUtil;
@@ -55,7 +49,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.util.List;
-import java.util.Objects;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
@@ -97,43 +90,6 @@ public class BlazeAndroidTestRunConfigurationHandler
     return null;
   }
 
-  @Nullable
-  private Label getInstrumentationBinary(Label label) {
-    BlazeProjectData projectData =
-        BlazeProjectDataManager.getInstance(configuration.getProject()).getBlazeProjectData();
-    if (projectData == null) {
-      return null;
-    }
-    TargetMap targetMap = projectData.getTargetMap();
-    TargetIdeInfo instrumentationTest = targetMap.get(TargetKey.forPlainTarget(label));
-    if (instrumentationTest == null) {
-      return null;
-    }
-    for (Dependency dependency : instrumentationTest.getDependencies()) {
-      TargetIdeInfo dependencyInfo = targetMap.get(dependency.getTargetKey());
-      // Should exist via test_app attribute, and be unique.
-      if (dependencyInfo != null
-          && dependencyInfo.getKind() == AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind()) {
-        return dependency.getTargetKey().getLabel();
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private Module getModule() {
-    Label target = getLabel();
-    if (Objects.equals(
-        configuration.getTargetKind(),
-        AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind())) {
-      target = getInstrumentationBinary(target);
-    }
-    return target != null
-        ? BlazeAndroidProjectStructureSyncer.ensureRunConfigurationModule(
-            configuration.getProject(), target)
-        : null;
-  }
-
   @Override
   public BlazeCommandRunConfigurationRunner createRunner(
       Executor executor, ExecutionEnvironment env) throws ExecutionException {
@@ -155,10 +111,12 @@ public class BlazeAndroidTestRunConfigurationHandler
         BlazeAndroidRunConfigurationHandler.getCommandConfig(env);
     configuration.setTarget(configFromEnv.getSingleTarget());
 
-    Module module = getModule();
+    Module module =
+        ModuleFinder.getInstance(env.getProject())
+            .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
     AndroidFacet facet = module != null ? AndroidFacet.getInstance(module) : null;
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    BlazeAndroidRunConfigurationValidationUtil.validateExecution(module, facet, projectViewSet);
+    BlazeAndroidRunConfigurationValidationUtil.validateExecution(module, projectViewSet);
 
     ImmutableList<String> blazeFlags =
         configState
@@ -213,14 +171,11 @@ public class BlazeAndroidTestRunConfigurationHandler
    */
   private List<ValidationError> validate() {
     List<ValidationError> errors = Lists.newArrayList();
-    Module module = getModule();
+    Module module =
+        ModuleFinder.getInstance(configuration.getProject())
+            .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
     errors.addAll(BlazeAndroidRunConfigurationValidationUtil.validateModule(module));
-    AndroidFacet facet = null;
-    if (module != null) {
-      facet = AndroidFacet.getInstance(module);
-      errors.addAll(BlazeAndroidRunConfigurationValidationUtil.validateFacet(facet, module));
-    }
-    errors.addAll(configState.validate(facet));
+    errors.addAll(configState.validate(configuration.getProject()));
     return errors;
   }
 

@@ -28,14 +28,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.manifest.ParsedManifestService;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
-import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
 import com.google.idea.blaze.android.sync.importer.BlazeImportInput;
 import com.google.idea.blaze.android.sync.importer.BlazeImportUtil;
@@ -44,7 +42,6 @@ import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
-import com.google.idea.blaze.android.sync.sdk.SdkUtil;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -52,26 +49,15 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
-import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.AndroidBlazeRules;
-import com.google.idea.common.experiments.FeatureRolloutExperiment;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -95,14 +81,6 @@ import org.jetbrains.android.facet.AndroidFacet;
 /** Updates the IDE's project structure. */
 public class BlazeAndroidProjectStructureSyncer {
   private static final Logger log = Logger.getInstance(BlazeAndroidProjectStructureSyncer.class);
-
-  /**
-   * True if run configuration should use the workspace module instead of per-run-configuration
-   * modules.
-   */
-  @VisibleForTesting
-  public static final FeatureRolloutExperiment deprecateRunConfigModuleExperiment =
-      new FeatureRolloutExperiment("blaze.deprecate.run.config.modules");
 
   private static class ManifestParsingStatCollector {
     private Duration totalDuration = Duration.ZERO;
@@ -234,150 +212,15 @@ public class BlazeAndroidProjectStructureSyncer {
       orderEntry.setExported(true);
     }
 
-    String runConfigurationModuleCount;
-    if (deprecateRunConfigModuleExperiment.isEnabled()) {
-      runConfigurationModuleCount = "skipped";
-    } else {
-      List<TargetIdeInfo> runConfigurationTargets =
-          getRunConfigurationTargets(
-              project, projectViewSet, blazeProjectData, targetToAndroidResourceModule.keySet());
-      for (TargetIdeInfo target : runConfigurationTargets) {
-        TargetKey targetKey = target.getKey();
-        String moduleName = moduleNameForAndroidModule(targetKey);
-        Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
-        AndroidFacetModuleCustomizer.createAndroidFacet(module, true);
-      }
-      runConfigurationModuleCount = "" + runConfigurationTargets.size();
-    }
-
     int whitelistedGenResources =
         projectViewSet.listItems(GeneratedAndroidResourcesSection.KEY).size();
     context.output(
         PrintOutput.log(
             String.format(
-                "Android resource module count: %d, run config modules: %s, order entries: %d, "
-                    + "generated resources: %d",
+                "Android resource module count: %d, order entries: %d, generated resources: %d",
                 syncData.importResult.androidResourceModules.size(),
-                runConfigurationModuleCount,
                 totalOrderEntries,
                 whitelistedGenResources)));
-  }
-
-  // Collect potential android run configuration targets
-  private static List<TargetIdeInfo> getRunConfigurationTargets(
-      Project project,
-      ProjectViewSet projectViewSet,
-      BlazeProjectData blazeProjectData,
-      Set<TargetKey> androidResourceModules) {
-    List<TargetIdeInfo> result = Lists.newArrayList();
-    Set<Label> runConfigurationModuleTargets = Sets.newHashSet();
-
-    // Get all explicitly mentioned targets
-    // Doing this now will cut down on root changes later
-    for (TargetExpression targetExpression : projectViewSet.listItems(TargetSection.KEY)) {
-      if (!(targetExpression instanceof Label)) {
-        continue;
-      }
-      Label label = (Label) targetExpression;
-      runConfigurationModuleTargets.add(label);
-    }
-    // Get any pre-existing targets
-    for (RunConfiguration runConfiguration :
-        RunManager.getInstance(project).getAllConfigurationsList()) {
-      BlazeAndroidRunConfigurationHandler handler =
-          BlazeAndroidRunConfigurationHandler.getHandlerFrom(runConfiguration);
-      if (handler == null) {
-        continue;
-      }
-      runConfigurationModuleTargets.add(handler.getLabel());
-    }
-
-    for (Label label : runConfigurationModuleTargets) {
-      TargetKey targetKey = TargetKey.forPlainTarget(label);
-      // If it's a resource module, it will already have been created
-      if (androidResourceModules.contains(targetKey)) {
-        continue;
-      }
-      // Ensure the label is a supported android rule that exists
-      TargetIdeInfo target = blazeProjectData.getTargetMap().get(targetKey);
-      if (target == null) {
-        continue;
-      }
-      if (!target.kindIsOneOf(
-          AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind(),
-          AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind())) {
-        continue;
-      }
-      result.add(target);
-    }
-    return result;
-  }
-
-  /** Ensures a suitable module exists for the given android target. */
-  @Nullable
-  public static Module ensureRunConfigurationModule(Project project, Label label) {
-    if (deprecateRunConfigModuleExperiment.isEnabled()) {
-      return ModuleFinder.getInstance(project)
-          .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
-    }
-    TargetKey targetKey = TargetKey.forPlainTarget(label);
-    String moduleName = moduleNameForAndroidModule(targetKey);
-    Module module = ModuleFinder.getInstance(project).findModuleByName(moduleName);
-    if (module != null) {
-      return module;
-    }
-
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    if (blazeProjectData == null) {
-      return null;
-    }
-    AndroidSdkPlatform androidSdkPlatform = SdkUtil.getAndroidSdkPlatform(blazeProjectData);
-    if (androidSdkPlatform == null) {
-      return null;
-    }
-    TargetIdeInfo target = blazeProjectData.getTargetMap().get(targetKey);
-    if (target == null) {
-      return null;
-    }
-    if (target.getAndroidIdeInfo() == null) {
-      return null;
-    }
-    // We can't run a write action outside the dispatch thread, and can't
-    // invokeAndWait it because the caller may have a read action.
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
-      return null;
-    }
-
-    BlazeSyncPlugin.ModuleEditor moduleEditor =
-        ModuleEditorProvider.getInstance()
-            .getModuleEditor(
-                project, BlazeImportSettingsManager.getInstance(project).getImportSettings());
-    Module newModule = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
-    ApplicationManager.getApplication()
-        .runWriteAction(
-            () -> {
-              AndroidFacetModuleCustomizer.createAndroidFacet(newModule, true);
-              moduleEditor.commit();
-            });
-    File moduleDirectory =
-        moduleDirectoryForAndroidTarget(WorkspaceRoot.fromProject(project), target);
-    updateModuleFacetInMemoryState(
-        project,
-        null,
-        androidSdkPlatform,
-        newModule,
-        moduleDirectory,
-        manifestFileForAndroidTarget(
-            project,
-            blazeProjectData.getArtifactLocationDecoder(),
-            target.getAndroidIdeInfo(),
-            moduleDirectory),
-        target.getAndroidIdeInfo().getResourceJavaPackage(),
-        ImmutableList.of(),
-        false,
-        null);
-    return newModule;
   }
 
   public static String moduleNameForAndroidModule(TargetKey targetKey) {
@@ -505,44 +348,6 @@ public class BlazeAndroidProjectStructureSyncer {
     }
 
     rClassBuilder.addWorkspacePackages(sourcePackages);
-
-    if (deprecateRunConfigModuleExperiment.isEnabled()) {
-      manifestParsingStatCollector.submitLogEvent();
-      return;
-    }
-
-    Set<TargetKey> androidResourceModules =
-        syncData.importResult.androidResourceModules.stream()
-            .map(androidResourceModule -> androidResourceModule.targetKey)
-            .collect(toSet());
-    List<TargetIdeInfo> runConfigurationTargets =
-        getRunConfigurationTargets(
-            project, projectViewSet, blazeProjectData, androidResourceModules);
-    for (TargetIdeInfo target : runConfigurationTargets) {
-      String moduleName = moduleNameForAndroidModule(target.getKey());
-      Module module = moduleFinder.findModuleByName(moduleName);
-      if (module == null) {
-        log.warn("No module found for run configuration target: " + target.getKey());
-        continue;
-      }
-      AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
-      assert androidIdeInfo != null;
-      updateModuleFacetInMemoryState(
-          project,
-          context,
-          androidSdkPlatform,
-          module,
-          moduleDirectoryForAndroidTarget(workspaceRoot, target),
-          manifestFileForAndroidTarget(
-              project,
-              artifactLocationDecoder,
-              androidIdeInfo,
-              moduleDirectoryForAndroidTarget(workspaceRoot, target)),
-          androidIdeInfo.getResourceJavaPackage(),
-          ImmutableList.of(),
-          configAndroidJava8Libs,
-          manifestParsingStatCollector);
-    }
     manifestParsingStatCollector.submitLogEvent();
   }
 

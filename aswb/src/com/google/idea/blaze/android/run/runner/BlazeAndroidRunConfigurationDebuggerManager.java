@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
-import com.android.tools.idea.run.ValidationError;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;
@@ -29,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.jetbrains.android.facet.AndroidFacet;
 
 /** Manages android debugger state for the run configurations. */
 public final class BlazeAndroidRunConfigurationDebuggerManager {
@@ -37,13 +35,6 @@ public final class BlazeAndroidRunConfigurationDebuggerManager {
 
   public BlazeAndroidRunConfigurationDebuggerManager(DebuggerSettingsState debuggerSettings) {
     this.debuggerSettings = debuggerSettings;
-  }
-
-  public List<ValidationError> validate(AndroidFacet facet) {
-    // All of the AndroidDebuggerState classes implement a validate that
-    // either does nothing or is specific to gradle so there is no point
-    // in calling validate on our AndroidDebuggerState.
-    return ImmutableList.of();
   }
 
   @Nullable

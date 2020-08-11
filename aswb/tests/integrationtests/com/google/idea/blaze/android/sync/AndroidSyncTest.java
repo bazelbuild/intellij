@@ -27,7 +27,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
-import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.android.sync.sdk.SdkUtil;
 import com.google.idea.blaze.base.TestUtils;
@@ -46,8 +45,6 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
-import com.google.idea.common.experiments.ExperimentService;
-import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -197,38 +194,6 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
   }
 
   @Test
-  public void testSimpleSync_noRunConfigurationModules() {
-    TestProjectArguments testEnvArgument = createTestProjectArguments();
-
-    // Set the disabling experiment to 100% to effectively switch it on.
-    MockExperimentService experimentService = new MockExperimentService();
-    registerApplicationComponent(ExperimentService.class, experimentService);
-    experimentService.setFeatureRolloutExperiment(
-        BlazeAndroidProjectStructureSyncer.deprecateRunConfigModuleExperiment, 100);
-
-    setProjectView(
-        "directories:",
-        "  java/com/google",
-        "targets:",
-        "  //java/com/google:lib",
-        "android_sdk_platform: android-25");
-
-    setTargetMap(testEnvArgument.targetMap);
-    runBlazeSync(
-        BlazeSyncParams.builder()
-            .setTitle("Sync")
-            .setSyncMode(SyncMode.INCREMENTAL)
-            .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
-            .setAddProjectViewTargets(true)
-            .build());
-    assertSyncSuccess(testEnvArgument.targetMap, testEnvArgument.javaRoot);
-    ModuleManager moduleManager = ModuleManager.getInstance(getProject());
-    assertThat(moduleManager.findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME)).isNotNull();
-    assertThat(moduleManager.findModuleByName("java.com.google.lib")).isNotNull();
-  }
-
-  @Test
   public void testSimpleSync() {
     TestProjectArguments testEnvArgument = createTestProjectArguments();
     setProjectView(
@@ -276,15 +241,6 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
         ModuleFinder.getInstance(getProject()).findModuleByName("java.com.google.lib");
     assertThat(resourceModule).isNotNull();
     assertThat(AndroidFacet.getInstance(resourceModule)).isNotNull();
-
-    // Check that a module was created for the run configuration
-    Module appModule =
-        ModuleFinder.getInstance(getProject()).findModuleByName("java.com.android.app");
-    if (BlazeAndroidProjectStructureSyncer.deprecateRunConfigModuleExperiment.isEnabled()) {
-      assertThat(appModule).isNull();
-    } else {
-      assertThat(appModule).isNotNull();
-    }
 
     // The default language level should be whatever is specified in the toolchain info
     assertThat(LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel())
