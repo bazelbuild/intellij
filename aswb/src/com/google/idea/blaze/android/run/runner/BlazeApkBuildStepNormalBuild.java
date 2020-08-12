@@ -144,10 +144,9 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
     }
 
     if (FETCH_REMOTE_APKS.getValue() && deployInfo != null) {
-      context.output(new StatusOutput("Downloading APKs..."));
       ImmutableList<File> localApks =
           deployInfo.getApksToDeploy().stream()
-              .map(BlazeApkBuildStepNormalBuild::downloadApkIfRemote)
+              .map(apk -> BlazeApkBuildStepNormalBuild.downloadApkIfRemote(apk, context))
               .collect(ImmutableList.toImmutableList());
       deployInfo =
           new BlazeAndroidDeployInfo(
@@ -155,13 +154,15 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
     }
   }
 
-  private static File downloadApkIfRemote(File apk) {
+  private static File downloadApkIfRemote(File apk, BlazeContext context) {
     for (RemoteApkDownloader downloader : RemoteApkDownloader.EP_NAME.getExtensionList()) {
       if (downloader.canDownload(apk)) {
         try {
+          context.output(new StatusOutput("Downloading " + apk.getPath()));
           File tempFile = Files.createTempFile("localcopy", apk.getName()).toFile();
           tempFile.deleteOnExit();
           downloader.download(apk, tempFile);
+          context.output(new StatusOutput("Downloaded " + apk.getPath()));
           return tempFile;
         } catch (IOException ex) {
           // fallback to using original, don't want to block the whole app deployment process.
