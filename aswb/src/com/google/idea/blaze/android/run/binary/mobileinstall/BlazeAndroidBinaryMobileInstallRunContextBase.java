@@ -28,7 +28,7 @@ import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
-import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
+import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationIdProvider;
@@ -135,7 +135,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
       String contributorsAmStartOptions,
       AndroidDebugger androidDebugger,
       AndroidDebuggerState androidDebuggerState,
-      ProcessHandlerLaunchStatus processHandlerLaunchStatus)
+      LaunchStatus launchStatus)
       throws ExecutionException {
 
     String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
@@ -158,7 +158,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
         deployInfo.getMergedManifest(),
         configState,
         startActivityFlagsProvider,
-        processHandlerLaunchStatus);
+        launchStatus);
   }
 
   @Override

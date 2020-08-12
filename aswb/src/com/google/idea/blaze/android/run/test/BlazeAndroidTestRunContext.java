@@ -31,7 +31,7 @@ import com.android.tools.idea.run.tasks.DebugConnectorTask;
 import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
-import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
+import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -194,7 +194,7 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
       String contributorsAmStartOptions,
       AndroidDebugger androidDebugger,
       AndroidDebuggerState androidDebuggerState,
-      ProcessHandlerLaunchStatus processHandlerLaunchStatus)
+      LaunchStatus launchStatus)
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {
       case BLAZE_TEST:
@@ -217,12 +217,8 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
         } catch (ApkProvisionException e) {
           throw new ExecutionException(e);
         }
-        return StockAndroidTestLaunchTask.getStockTestLaunchTask(
-            configState,
-            applicationIdProvider,
-            launchOptions.isDebug(),
-            deployInfo,
-            processHandlerLaunchStatus);
+        return StockAndroidTestLaunchTaskBase.getStockTestLaunchTask(
+            configState, applicationIdProvider, launchOptions.isDebug(), deployInfo, launchStatus);
     }
     throw new AssertionError();
   }

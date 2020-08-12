@@ -22,7 +22,7 @@ import com.android.tools.idea.run.tasks.AndroidDeepLinkLaunchTask;
 import com.android.tools.idea.run.tasks.DefaultActivityLaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.SpecificActivityLaunchTask;
-import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
+import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -36,7 +36,7 @@ public class BlazeAndroidBinaryApplicationLaunchTaskProvider {
       ManifestParser.ParsedManifest mergedManifestParsedManifest,
       BlazeAndroidBinaryRunConfigurationState configState,
       StartActivityFlagsProvider startActivityFlagsProvider,
-      ProcessHandlerLaunchStatus processHandlerLaunchStatus) {
+      LaunchStatus launchStatus) {
     try {
       String applicationId = applicationIdProvider.getPackageName();
 
@@ -67,7 +67,7 @@ public class BlazeAndroidBinaryApplicationLaunchTaskProvider {
       return launchTask;
     } catch (ApkProvisionException e) {
       LOG.error(e);
-      processHandlerLaunchStatus.terminateLaunch("Unable to identify application id", true);
+      launchStatus.terminateLaunch("Unable to identify application id", true);
       return null;
     }
   }
