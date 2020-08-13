@@ -44,7 +44,7 @@ public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeIntegratio
 
   @Before
   public final void doSetup() {
-    state = new BlazeAndroidRunConfigurationCommonState(buildSystem().getName(), false);
+    state = new BlazeAndroidRunConfigurationCommonState(buildSystem().getName());
   }
 
   @Test
@@ -56,7 +56,7 @@ public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeIntegratio
     Element element = new Element("test");
     state.writeExternal(element);
     BlazeAndroidRunConfigurationCommonState readState =
-        new BlazeAndroidRunConfigurationCommonState(buildSystem().getName(), false);
+        new BlazeAndroidRunConfigurationCommonState(buildSystem().getName());
     readState.readExternal(element);
 
     assertThat(readState.getBlazeFlagsState().getRawFlags())
@@ -73,7 +73,7 @@ public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeIntegratio
     Element element = new Element("test");
     state.writeExternal(element);
     BlazeAndroidRunConfigurationCommonState readState =
-        new BlazeAndroidRunConfigurationCommonState(buildSystem().getName(), false);
+        new BlazeAndroidRunConfigurationCommonState(buildSystem().getName());
     readState.readExternal(element);
 
     assertThat(readState.getBlazeFlagsState().getRawFlags())
@@ -95,7 +95,7 @@ public class BlazeAndroidRunConfigurationCommonStateTest extends BlazeIntegratio
     Element element = new Element("test");
     state.writeExternal(element);
     BlazeAndroidRunConfigurationCommonState readState =
-        new BlazeAndroidRunConfigurationCommonState(buildSystem().getName(), false);
+        new BlazeAndroidRunConfigurationCommonState(buildSystem().getName());
     readState.readExternal(element);
 
     assertThat(readState.getBlazeFlagsState().getRawFlags())

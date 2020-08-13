@@ -72,7 +72,7 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
   private final BlazeAndroidRunConfigurationCommonState commonState;
 
   BlazeAndroidBinaryRunConfigurationState(String buildSystemName) {
-    commonState = new BlazeAndroidRunConfigurationCommonState(buildSystemName, false);
+    commonState = new BlazeAndroidRunConfigurationCommonState(buildSystemName);
     profilerState = new ProfilerState();
   }
 

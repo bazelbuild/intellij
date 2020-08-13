@@ -58,7 +58,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   private final RunConfigurationFlagsState exeFlags;
   private final DebuggerSettingsState debuggerSettings;
 
-  public BlazeAndroidRunConfigurationCommonState(String buildSystemName, boolean isAndroidTest) {
+  public BlazeAndroidRunConfigurationCommonState(String buildSystemName) {
     this.blazeFlags =
         new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystemName + " flags:");
     this.exeFlags =

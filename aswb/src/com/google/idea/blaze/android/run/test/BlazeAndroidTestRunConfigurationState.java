@@ -65,7 +65,7 @@ public final class BlazeAndroidTestRunConfigurationState implements RunConfigura
   private final BlazeAndroidRunConfigurationCommonState commonState;
 
   public BlazeAndroidTestRunConfigurationState(String buildSystemName) {
-    commonState = new BlazeAndroidRunConfigurationCommonState(buildSystemName, true);
+    commonState = new BlazeAndroidRunConfigurationCommonState(buildSystemName);
   }
 
   public BlazeAndroidRunConfigurationCommonState getCommonState() {
