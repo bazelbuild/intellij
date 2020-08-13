@@ -32,6 +32,7 @@ public class BlazeCppRunner extends CppRunnerCompat {
   @Override
   public boolean canRun(String executorId, RunProfile profile) {
     return profile instanceof BlazeCommandRunConfiguration
-        && RunConfigurationUtils.canUseClionRunner((BlazeCommandRunConfiguration) profile);
+        && RunConfigurationUtils.canUseClionRunner((BlazeCommandRunConfiguration) profile)
+        && super.canRun(executorId, profile);
   }
 }
