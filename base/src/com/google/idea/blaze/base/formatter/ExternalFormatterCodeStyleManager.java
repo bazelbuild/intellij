@@ -31,7 +31,9 @@ import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.util.IncorrectOperationException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -95,12 +97,25 @@ class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
   @Override
   public void reformatTextWithContext(PsiFile file, ChangedRangesInfo info) {
     CustomFormatter formatter = getCustomFormatterForFile(file);
-    if (formatter != null && formatter.alwaysFormatEntireFile()) {
+    if (formatter == null) {
+      super.reformatTextWithContext(file, info);
+      return;
+    }
+
+    if (formatter.alwaysFormatEntireFile()) {
       this.reformatText(file, 0, file.getTextLength());
     } else {
-      // otherwise let the default implementation calculate text ranges and pass back to us later
-      super.reformatTextWithContext(file, info);
+      formatInternal(formatter, file, info);
     }
+  }
+
+  private void formatInternal(CustomFormatter formatter, PsiFile file, ChangedRangesInfo info) {
+    List<TextRange> ranges = new ArrayList<>();
+    if (info.insertedRanges != null) {
+      ranges.addAll(info.insertedRanges);
+    }
+    ranges.addAll(info.allChangedRanges);
+    formatInternal(formatter, file, ranges);
   }
 
   private void formatInternal(
