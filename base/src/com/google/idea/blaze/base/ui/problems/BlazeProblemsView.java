@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.google.idea.blaze.base.util.AbsolutePathPatcher.AbsolutePathPatcherUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
@@ -203,7 +204,8 @@ public class BlazeProblemsView {
    * virtual file if unsuccessful.
    */
   private static VirtualFile resolveSymlinks(VirtualFile file) {
-    VirtualFile resolved = file.getCanonicalFile();
+    VirtualFile resolved =
+        AbsolutePathPatcherUtil.fixPath(file.getCanonicalFile(), /* refreshIfNeeded= */ false);
     return resolved != null ? resolved : file;
   }
 
