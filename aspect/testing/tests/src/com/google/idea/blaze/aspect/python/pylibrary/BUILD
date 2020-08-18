@@ -1,13 +1,14 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
 
+licenses(["notice"])
+
 py_library(
     name = "simple",
     srcs = ["simple.py"],
+    srcs_version = "PY3",
 )
 
 intellij_aspect_test_fixture(
