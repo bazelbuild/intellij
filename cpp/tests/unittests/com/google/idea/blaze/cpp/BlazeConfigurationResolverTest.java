@@ -97,7 +97,7 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     mockFileSystem = mock(LocalFileSystem.class);
     applicationServices.register(
         VirtualFileSystemProvider.class, mock(VirtualFileSystemProvider.class));
-    when(VirtualFileSystemProvider.getInstance().getSystem()).thenReturn(mockFileSystem);
+    when(VirtualFileSystemProvider.getInstance().getLocalFileSystem()).thenReturn(mockFileSystem);
 
     ExtensionPointImpl<Provider> ep =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);

@@ -415,6 +415,6 @@ final class ProjectUpdateSyncTask {
   private static String pathToUrl(File path) {
     String filePath = FileUtil.toSystemIndependentName(path.getPath());
     return VirtualFileManager.constructUrl(
-        VirtualFileSystemProvider.getInstance().getSystem().getProtocol(), filePath);
+        VirtualFileSystemProvider.getInstance().getLocalFileSystem().getProtocol(), filePath);
   }
 }

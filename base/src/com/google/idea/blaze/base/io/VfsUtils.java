@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import javax.annotation.Nullable;
 
-/** A helper class */
+/** Helper class for PSI / VirtualFile operations. */
 public final class VfsUtils {
 
   private VfsUtils() {}
@@ -36,7 +36,7 @@ public final class VfsUtils {
    */
   @Nullable
   public static VirtualFile resolveVirtualFile(File file, boolean refreshIfNeeded) {
-    LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getSystem();
+    LocalFileSystem fileSystem = VirtualFileSystemProvider.getInstance().getLocalFileSystem();
     VirtualFile vf = fileSystem.findFileByPathIfCached(file.getPath());
     if (vf != null) {
       return vf;

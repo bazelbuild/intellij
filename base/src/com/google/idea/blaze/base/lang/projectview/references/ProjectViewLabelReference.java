@@ -78,7 +78,7 @@ public class ProjectViewLabelReference extends PsiReferenceBase<ProjectViewPsiSe
       return null;
     }
     VirtualFile vf =
-        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
+        VirtualFileSystemProvider.getInstance().getLocalFileSystem().findFileByPath(file.getPath());
     if (vf == null) {
       return null;
     }

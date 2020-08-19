@@ -113,7 +113,7 @@ public class BlazeTypescriptGotoDeclarationHandler implements GotoDeclarationHan
       return null;
     }
     PsiManager psiManager = PsiManager.getInstance(project);
-    LocalFileSystem lfs = VirtualFileSystemProvider.getInstance().getSystem();
+    LocalFileSystem lfs = VirtualFileSystemProvider.getInstance().getLocalFileSystem();
     ExecutionRootPathResolver pathResolver = ExecutionRootPathResolver.fromProject(project);
     if (pathResolver == null) {
       return null;
