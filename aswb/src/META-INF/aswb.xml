@@ -23,6 +23,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
     <programRunner implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestProgramRunner" order="first"/>
+    <programRunner implementation="com.google.idea.blaze.android.run.robolectric.BlazeAndroidRobolectricDebuggerRunner"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.manifest.ParsedManifestService"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry"/>
     <projectService serviceImplementation="com.google.idea.blaze.android.projectsystem.ExternalLibraryInterner"/>
@@ -58,6 +59,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.MobileInstallAdbLocationProvider" interface="com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallAdbLocationProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AdbTunnelConfiguratorProvider" interface="com.google.idea.blaze.android.run.binary.mobileinstall.AdbTunnelConfigurator$AdbTunnelConfiguratorProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.RemoteApkDownloader" interface="com.google.idea.blaze.android.run.RemoteApkDownloader"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.BlazeRobolectricFlagProvider" interface="com.google.idea.blaze.android.run.robolectric.BlazeRobolectricFlagProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -70,6 +72,7 @@
     <OutputsProvider implementation="com.google.idea.blaze.android.sync.AndroidOutputsProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationHandlerProvider"/>
+    <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.android.run.robolectric.BlazeAndroidRobolectricRunConfigurationHandlerProvider"/>
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.android.run.test.smrunner.BlazeAndroidTestEventsHandler"/>
     <ProjectViewDefaultValueProvider implementation="com.google.idea.blaze.android.projectview.AndroidSdkPlatformSection$AndroidSdkPlatformProjectViewDefaultValueProvider"/>
     <AndroidTestLaunchMethodsProvider implementation="com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProviderImpl"/>
