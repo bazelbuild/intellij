@@ -165,7 +165,7 @@ public final class BlazeGoTestLocator implements SMTestLocator {
     }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    LocalFileSystem lfs = VirtualFileSystemProvider.getInstance().getSystem();
+    LocalFileSystem lfs = VirtualFileSystemProvider.getInstance().getLocalFileSystem();
     if (projectData == null) {
       return ImmutableList.of();
     }

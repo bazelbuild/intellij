@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 public class VirtualFileSystemProviderImpl implements VirtualFileSystemProvider {
 
   @Override
-  public LocalFileSystem getSystem() {
+  public LocalFileSystem getLocalFileSystem() {
     return LocalFileSystem.getInstance();
   }
 }

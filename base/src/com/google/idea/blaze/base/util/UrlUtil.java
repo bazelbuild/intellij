@@ -43,7 +43,7 @@ public class UrlUtil {
       return URLUtil.JAR_PROTOCOL + URLUtil.SCHEME_SEPARATOR + filePath;
     } else {
       return VirtualFileManager.constructUrl(
-          VirtualFileSystemProvider.getInstance().getSystem().getProtocol(), filePath);
+          VirtualFileSystemProvider.getInstance().getLocalFileSystem().getProtocol(), filePath);
     }
   }
 

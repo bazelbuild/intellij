@@ -262,7 +262,7 @@ public class BlazeCoverageEngine extends CoverageEngine {
     }
     PsiManager manager = PsiManager.getInstance(project);
     VirtualFile vf =
-        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
+        VirtualFileSystemProvider.getInstance().getLocalFileSystem().findFileByPath(file.getPath());
     if (vf == null) {
       return null;
     }

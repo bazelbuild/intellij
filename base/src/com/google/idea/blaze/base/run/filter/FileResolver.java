@@ -38,7 +38,11 @@ public interface FileResolver {
     return Arrays.stream(EP_NAME.getExtensions())
         .map(r -> r.resolve(project, fileString))
         .filter(Objects::nonNull)
-        .map(f -> VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(f.getPath()))
+        .map(
+            f ->
+                VirtualFileSystemProvider.getInstance()
+                    .getLocalFileSystem()
+                    .findFileByPath(f.getPath()))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);

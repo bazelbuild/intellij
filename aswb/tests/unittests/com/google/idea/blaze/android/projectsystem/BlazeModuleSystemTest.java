@@ -107,7 +107,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
     when(buildTargetPsi.getTextOffset()).thenReturn(1337);
 
     VirtualFile buildFile =
-        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath("/foo/BUILD");
+        VirtualFileSystemProvider.getInstance().getLocalFileSystem().findFileByPath("/foo/BUILD");
     assertThat(buildFile).isNotNull();
     when(psiFile.getVirtualFile()).thenReturn(buildFile);
 
@@ -132,7 +132,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
         .thenReturn(null);
 
     VirtualFile buildFile =
-        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath("/foo/BUILD");
+        VirtualFileSystemProvider.getInstance().getLocalFileSystem().findFileByPath("/foo/BUILD");
     assertThat(buildFile).isNotNull();
 
     BlazeModuleSystem.create(module)
@@ -237,7 +237,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
     }
 
     @Override
-    public LocalFileSystem getSystem() {
+    public LocalFileSystem getLocalFileSystem() {
       return fileSystem;
     }
   }
