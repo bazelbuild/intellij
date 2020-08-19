@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.util;
+package com.google.idea.blaze.base.io;
 
-import com.google.idea.blaze.base.io.VfsUtils;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
@@ -25,7 +24,7 @@ import javax.annotation.Nullable;
  * Extension point for fixing absolute paths.
  *
  * <p>Allows extensions to make system-specific adjustments to absolute paths from process output
- * and canonicalized files
+ * and canonicalized files.
  */
 public interface AbsolutePathPatcher {
   ExtensionPointName<AbsolutePathPatcher> EP_NAME =
@@ -38,12 +37,13 @@ public interface AbsolutePathPatcher {
   String fixPath(String path);
 
   /**
-   * Helper to for fixing absolute paths
+   * Helper for fixing absolute paths.
    *
-   * <p>Iterating over all {@link AbsolutePathPatcher} extensions to invoke fix path function for
-   * given paths
+   * <p>Applies all {@link AbsolutePathPatcher} extensions to the input string or file.
    */
   class AbsolutePathPatcherUtil {
+    private AbsolutePathPatcherUtil() {}
+
     /** Fixes all absolute paths found in a string */
     public static String fixAllPaths(String line) {
       for (AbsolutePathPatcher pathPatcher : AbsolutePathPatcher.EP_NAME.getExtensions()) {
@@ -88,7 +88,5 @@ public interface AbsolutePathPatcher {
       String fixedPath = fixPath(path);
       return path.equals(fixedPath) ? file : new File(fixedPath);
     }
-
-    private AbsolutePathPatcherUtil() {}
   }
 }
