@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.console;
 
+import com.google.idea.blaze.base.io.AbsolutePathPatcher.AbsolutePathPatcherUtil;
 import com.google.idea.blaze.base.issueparser.NonProblemHyperlinkInfo;
-import com.google.idea.blaze.base.util.AbsolutePathPatcher.AbsolutePathPatcherUtil;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.project.DumbAware;

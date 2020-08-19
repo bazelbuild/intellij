@@ -137,6 +137,34 @@ java_library(
 
 # neverlink library exposed so other plugins can optionally depend on it
 java_library(
+    name = "vfs_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/io/VfsUtils.java",
+        "src/com/google/idea/blaze/base/io/VirtualFileSystemProvider.java",
+    ],
+    neverlink = 1,
+    deps = [
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
+    name = "absolute_path_patcher_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/io/AbsolutePathPatcher.java",
+    ],
+    neverlink = 1,
+    deps = [
+        ":vfs_api",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
     name = "workspace_path_resolver_api",
     srcs = [
         "src/com/google/idea/blaze/base/model/primitives/WorkspacePath.java",

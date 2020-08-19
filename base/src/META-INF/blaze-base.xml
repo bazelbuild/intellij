@@ -371,7 +371,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeHighlightStatsCollector"
                     interface="com.google.idea.blaze.base.editor.BlazeHighlightStatsCollector"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AbsolutePathPatcher"
-                    interface="com.google.idea.blaze.base.util.AbsolutePathPatcher"/>
+                    interface="com.google.idea.blaze.base.io.AbsolutePathPatcher"/>
   </extensionPoints>
 
   <application-components>
