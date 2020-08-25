@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.repackaged.protobuf.TextFormat;
@@ -44,7 +45,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -227,7 +227,7 @@ class BlazeIntellijPluginDeployer {
   private static void copyFileToSandbox(File src, File dest) throws ExecutionException {
     try {
       dest.getParentFile().mkdirs();
-      Files.copy(src.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+      FileOperationProvider.getInstance().copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
       dest.deleteOnExit();
     } catch (IOException e) {
       throw new ExecutionException("Error copying plugin file to sandbox", e);

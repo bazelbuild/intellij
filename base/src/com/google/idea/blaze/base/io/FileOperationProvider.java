@@ -20,6 +20,7 @@ import com.google.common.io.RecursiveDeleteOption;
 import com.intellij.openapi.components.ServiceManager;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -74,6 +75,10 @@ public class FileOperationProvider {
 
   public File getCanonicalFile(File file) throws IOException {
     return file.getCanonicalFile();
+  }
+
+  public File copy(File source, File target, CopyOption... options) throws IOException {
+    return Files.copy(source.toPath(), target.toPath(), options).toFile();
   }
 
   public boolean mkdirs(File file) {
