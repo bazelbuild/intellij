@@ -35,9 +35,6 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.google.repackaged.protobuf.TextFormat;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.execution.ExecutionException;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Key;
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -51,7 +48,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
-import javax.annotation.Nullable;
 
 /** Handles finding files to deploy and copying these into the sandbox. */
 class BlazeIntellijPluginDeployer {
@@ -63,7 +59,6 @@ class BlazeIntellijPluginDeployer {
       Key.create(BlazeIntellijPluginDeployer.class.getName());
 
   private final String sandboxHome;
-  private final String buildNumber;
   private final Label pluginTarget;
   private final List<File> deployInfoFiles = new ArrayList<>();
   private final Map<File, File> filesToDeploy = Maps.newHashMap();
@@ -71,9 +66,8 @@ class BlazeIntellijPluginDeployer {
 
   private Future<Void> fileCopyingTask;
 
-  BlazeIntellijPluginDeployer(String sandboxHome, String buildNumber, Label pluginTarget) {
+  BlazeIntellijPluginDeployer(String sandboxHome, Label pluginTarget) {
     this.sandboxHome = sandboxHome;
-    this.buildNumber = buildNumber;
     this.pluginTarget = pluginTarget;
   }
 
@@ -130,7 +124,7 @@ class BlazeIntellijPluginDeployer {
                   return null;
                 });
 
-    return new DeployedPluginInfo(readPluginIds(filesToDeploy.keySet()), javaAgentJars);
+    return new DeployedPluginInfo(javaAgentJars);
   }
 
   /** Blocks until the plugin files have been copied to the sandbox */
@@ -194,36 +188,6 @@ class BlazeIntellijPluginDeployer {
     return new File(sandboxHome, "plugins");
   }
 
-  private ImmutableSet<String> readPluginIds(Collection<File> files) throws ExecutionException {
-    ImmutableSet.Builder<String> pluginIds = ImmutableSet.builder();
-    for (File file : files) {
-      if (file.getName().endsWith(".jar")) {
-        String pluginId = readPluginIdFromJar(buildNumber, file);
-        if (pluginId != null) {
-          pluginIds.add(pluginId);
-        }
-      }
-    }
-    return pluginIds.build();
-  }
-
-  @Nullable
-  private static String readPluginIdFromJar(String buildNumber, File jar)
-      throws ExecutionException {
-    IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.loadDescriptor(jar, "plugin.xml");
-    if (pluginDescriptor == null) {
-      return null;
-    }
-    if (PluginManagerCore.isIncompatible(pluginDescriptor, BuildNumber.fromString(buildNumber))) {
-      throw new ExecutionException(
-          String.format(
-              "Plugin SDK version '%s' is incompatible with this plugin "
-                  + "(since: '%s', until: '%s')",
-              buildNumber, pluginDescriptor.getSinceBuild(), pluginDescriptor.getUntilBuild()));
-    }
-    return pluginDescriptor.getPluginId().getIdString();
-  }
-
   private static void copyFileToSandbox(File src, File dest) throws ExecutionException {
     try {
       dest.getParentFile().mkdirs();
@@ -235,11 +199,9 @@ class BlazeIntellijPluginDeployer {
   }
 
   static class DeployedPluginInfo {
-    final ImmutableSet<String> pluginIds;
     final ImmutableSet<File> javaAgents;
 
-    DeployedPluginInfo(ImmutableSet<String> pluginIds, ImmutableSet<File> javaAgents) {
-      this.pluginIds = pluginIds;
+    DeployedPluginInfo(ImmutableSet<File> javaAgents) {
       this.javaAgents = javaAgents;
     }
   }
