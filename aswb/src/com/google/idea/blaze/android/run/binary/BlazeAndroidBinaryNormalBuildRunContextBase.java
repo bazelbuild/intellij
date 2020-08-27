@@ -39,6 +39,7 @@ import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.idea.run.util.SwapInfo;
 import com.android.tools.idea.run.util.SwapInfo.SwapType;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
@@ -238,5 +239,10 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   @Override
   public String getAmStartOptions() {
     return configState.getAmStartOptions();
+  }
+
+  @VisibleForTesting
+  public Collection<ApkInfo> getApkInfo(IDevice device) throws ApkProvisionException {
+    return apkProvider.getApks(device);
   }
 }

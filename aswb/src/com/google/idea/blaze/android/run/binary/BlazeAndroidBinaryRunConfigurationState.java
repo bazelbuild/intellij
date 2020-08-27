@@ -19,6 +19,7 @@ import com.android.tools.idea.run.ValidationError;
 import com.android.tools.idea.run.editor.AndroidProfilersPanelCompat;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.util.LaunchUtils;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -84,7 +85,8 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
     return launchMethod;
   }
 
-  void setLaunchMethod(AndroidBinaryLaunchMethod launchMethod) {
+  @VisibleForTesting
+  public void setLaunchMethod(AndroidBinaryLaunchMethod launchMethod) {
     this.launchMethod = launchMethod;
   }
 

@@ -26,6 +26,7 @@ import com.android.tools.idea.run.LaunchTaskRunner;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.SwapInfo;
 import com.android.tools.idea.stats.RunStats;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
@@ -164,5 +165,10 @@ public final class BlazeAndroidRunState implements RunProfileState {
     ProgressManager.getInstance().run(task);
 
     return console == null ? null : new DefaultExecutionResult(console, processHandler);
+  }
+
+  @VisibleForTesting
+  public BlazeAndroidRunContext getRunContext() {
+    return runContext;
   }
 }

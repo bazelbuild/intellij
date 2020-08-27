@@ -34,7 +34,6 @@ import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.tasks.ShowLogcatTask;
 import com.android.tools.idea.run.util.LaunchStatus;
-import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -127,8 +126,6 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
                 project, launchOptions, packageName));
       }
 
-      ProcessHandlerLaunchStatus processHandlerLaunchStatus =
-          (ProcessHandlerLaunchStatus) launchStatus;
       LaunchTask appLaunchTask =
           runContext.getApplicationLaunchTask(
               launchOptions,
@@ -136,7 +133,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
               String.join(" ", amStartOptions.build()),
               debuggerManager.getAndroidDebugger(),
               debuggerManager.getAndroidDebuggerState(project),
-              processHandlerLaunchStatus);
+              launchStatus);
       if (appLaunchTask != null) {
         launchTasks.add(appLaunchTask);
       }
