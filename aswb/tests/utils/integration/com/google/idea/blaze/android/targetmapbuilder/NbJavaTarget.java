@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.java.JavaBlazeRules;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Builder for a blaze java target's IDE info. Defines common attributes across all java targets.
@@ -66,6 +67,30 @@ public class NbJavaTarget extends NbBaseTargetBuilder {
   @Override
   public TargetIdeInfo.Builder getIdeInfoBuilder() {
     return target.getIdeInfoBuilder().setJavaInfo(javaIdeInfoBuilder);
+  }
+
+  public NbJavaTarget jar(String jarLabel, @Nullable String sourceLabel) {
+    String jarPath = workspacePathForLabel(blazePackage, jarLabel);
+    ArtifactLocation classJar =
+        ArtifactLocation.builder()
+            .setRootExecutionPathFragment(blazeInfoData.getRootExecutionPathFragment())
+            .setRelativePath(jarPath)
+            .setIsSource(false)
+            .build();
+    LibraryArtifact.Builder builder = LibraryArtifact.builder().setClassJar(classJar);
+
+    if (sourceLabel != null) {
+      ArtifactLocation sourceLocation =
+          ArtifactLocation.builder()
+              .setRootExecutionPathFragment(blazeInfoData.getRootExecutionPathFragment())
+              .setRelativePath(sourceLabel)
+              .setIsSource(true)
+              .build();
+      builder.addSourceJar(sourceLocation);
+    }
+
+    javaIdeInfoBuilder.addJar(builder);
+    return this;
   }
 
   public NbJavaTarget generated_jar(String jarLabel) {

@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.java.AndroidBlazeRules;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Builder for a blaze aar target's IDE info. Defines common attributes across all aar targets. This
@@ -59,6 +60,10 @@ public class NbAarTarget extends NbBaseTargetBuilder {
   }
 
   public NbAarTarget aar(String aarLabel) {
+    return aar(aarLabel, null);
+  }
+
+  public NbAarTarget aar(String aarLabel, String srcLabel) {
     aarArtifactLocationBuilder
         .setRelativePath(NbTargetMapUtils.workspacePathForLabel(blazePackage, aarLabel))
         .setIsSource(true);
@@ -66,7 +71,17 @@ public class NbAarTarget extends NbBaseTargetBuilder {
   }
 
   public NbAarTarget generated_jar(String jarLabel) {
-    javaTarget.generated_jar(jarLabel);
+    return generated_jar(jarLabel, null);
+  }
+
+  /**
+   * Sets the jar that is generated from within the aar, and the source jar for the aar.
+   *
+   * <p>Note that the source jar is specified over here, because in the ide info, the source jar is
+   * picked up by the java aspects and goes into the java_ide_info.
+   */
+  public NbAarTarget generated_jar(String jarLabel, @Nullable String srcJar) {
+    javaTarget.jar(jarLabel, srcJar);
     return this;
   }
 
