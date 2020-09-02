@@ -19,16 +19,11 @@ import com.android.ddmlib.Client;
 import com.android.tools.idea.run.ValidationError;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.ndk.run.attach.AndroidNativeAttachConfiguration;
-import com.android.tools.ndk.run.editor.NativeAndroidDebugger;
 import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
-import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
@@ -52,21 +47,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Extension of {@link NativeAndroidDebugger} with the following key differences compared to {@link
- * NativeAndroidDebugger}.
+ * API compat of {@link BlazeNativeAndroidDebuggerBase} with the following additions:
  *
  * <ul>
- *   <li>Sets blaze working directory for source file resolution. See {@link
- *       #createRunnerAndConfigurationSettings}.
  *   <li>Creates a run-config setting using {@link BlazeAndroidNativeAttachConfiguration} instead of
  *       {@link AndroidNativeAttachConfiguration} to override counterproductive validations.
  *   <li>Use {@link BlazeModuleSystem#getPackageName()} during compatible module search. See {@link
  *       #findModuleForProcess}.
  * </ul>
  *
- * <p>See {@link BlazeAndroidRunConfigurationDebuggerManager#getAndroidDebuggerState}.
+ * #api4.0
  */
-public class BlazeNativeAndroidDebugger extends NativeAndroidDebugger {
+public class BlazeNativeAndroidDebugger extends BlazeNativeAndroidDebuggerBase {
   public static final String ID = Blaze.defaultBuildSystemName() + "Native";
 
   @VisibleForTesting
@@ -220,25 +212,5 @@ public class BlazeNativeAndroidDebugger extends NativeAndroidDebugger {
         return new BlazeAndroidNativeAttachConfiguration(project, this);
       }
     }
-  }
-
-  @NotNull
-  @Override
-  public String getId() {
-    return ID;
-  }
-
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Native Only";
-  }
-
-  @Override
-  public boolean supportsProject(@NotNull Project project) {
-    BlazeProjectData blazeProjectData =
-        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    return blazeProjectData != null
-        && blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C);
   }
 }

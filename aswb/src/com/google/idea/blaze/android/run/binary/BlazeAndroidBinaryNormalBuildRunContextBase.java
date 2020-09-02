@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
+import static com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider.NATIVE_DEBUGGING_ENABLED;
+
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.deploy.DeploymentConfiguration;
 import com.android.tools.idea.gradle.util.DynamicAppUtils;
@@ -46,7 +48,6 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -105,7 +106,11 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   public void augmentLaunchOptions(LaunchOptions.Builder options) {
     options.setDeploy(true).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
     options.addExtraOptions(
-        ImmutableMap.of(ProfilerState.ANDROID_PROFILER_STATE_ID, configState.getProfilerState()));
+        ImmutableMap.of(
+            ProfilerState.ANDROID_PROFILER_STATE_ID,
+            configState.getProfilerState(),
+            NATIVE_DEBUGGING_ENABLED,
+            configState.getCommonState().isNativeDebuggingEnabled()));
   }
 
   @Override
@@ -194,13 +199,10 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   }
 
   @Override
-  public LaunchTasksProvider getLaunchTasksProvider(
-      LaunchOptions.Builder launchOptionsBuilder,
-      boolean isDebug,
-      BlazeAndroidRunConfigurationDebuggerManager debuggerManager)
+  public LaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
       throws ExecutionException {
     return new BlazeAndroidLaunchTasksProvider(
-        project, this, applicationIdProvider, launchOptionsBuilder, isDebug, debuggerManager);
+        project, this, applicationIdProvider, launchOptionsBuilder);
   }
 
   @Override

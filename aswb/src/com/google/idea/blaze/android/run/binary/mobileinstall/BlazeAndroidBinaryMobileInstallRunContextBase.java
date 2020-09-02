@@ -39,7 +39,6 @@ import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.intellij.execution.ExecutionException;
@@ -119,13 +118,10 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
   }
 
   @Override
-  public LaunchTasksProvider getLaunchTasksProvider(
-      LaunchOptions.Builder launchOptionsBuilder,
-      boolean isDebug,
-      BlazeAndroidRunConfigurationDebuggerManager debuggerManager)
+  public LaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
       throws ExecutionException {
     return new BlazeAndroidLaunchTasksProvider(
-        project, this, applicationIdProvider, launchOptionsBuilder, isDebug, debuggerManager);
+        project, this, applicationIdProvider, launchOptionsBuilder);
   }
 
   @Override

@@ -49,28 +49,23 @@ import org.jetbrains.annotations.Nullable;
 
 /** Normal launch tasks provider. #api4.1 */
 public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
+  public static final String NATIVE_DEBUGGING_ENABLED = "NATIVE_DEBUGGING_ENABLED";
   private static final Logger LOG = Logger.getInstance(BlazeAndroidLaunchTasksProvider.class);
 
   private final Project project;
   private final BlazeAndroidRunContext runContext;
   private final ApplicationIdProvider applicationIdProvider;
   private final LaunchOptions.Builder launchOptionsBuilder;
-  private final boolean isDebug;
-  private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
 
   public BlazeAndroidLaunchTasksProvider(
       Project project,
       BlazeAndroidRunContext runContext,
       ApplicationIdProvider applicationIdProvider,
-      LaunchOptions.Builder launchOptionsBuilder,
-      boolean isDebug,
-      BlazeAndroidRunConfigurationDebuggerManager debuggerManager) {
+      LaunchOptions.Builder launchOptionsBuilder) {
     this.project = project;
     this.runContext = runContext;
     this.applicationIdProvider = applicationIdProvider;
     this.launchOptionsBuilder = launchOptionsBuilder;
-    this.isDebug = isDebug;
-    this.debuggerManager = debuggerManager;
   }
 
   @NotNull
@@ -142,13 +137,20 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
                 project, launchOptions, packageName));
       }
 
+      // Do not get debugger state directly from the debugger itself.
+      // See BlazeAndroidDebuggerService#getDebuggerState for an explanation.
+      BlazeAndroidDebuggerService debuggerService =
+          BlazeAndroidDebuggerService.getInstance(project);
+      AndroidDebugger debugger =
+          debuggerService.getDebugger(isNativeDebuggingEnabled(launchOptions));
+      AndroidDebuggerState debuggerState = debuggerService.getDebuggerState(debugger);
       LaunchTask appLaunchTask =
           runContext.getApplicationLaunchTask(
               launchOptions,
               userId,
               String.join(" ", amStartOptions.build()),
-              debuggerManager.getAndroidDebugger(),
-              debuggerManager.getAndroidDebuggerState(project),
+              debugger,
+              debuggerState,
               launchStatus);
       if (appLaunchTask != null) {
         launchTasks.add(appLaunchTask);
@@ -173,7 +175,8 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
   @Override
   public DebugConnectorTask getConnectDebuggerTask(
       @NotNull LaunchStatus launchStatus, @Nullable AndroidVersion version) {
-    if (!isDebug) {
+    LaunchOptions launchOptions = launchOptionsBuilder.build();
+    if (!launchOptions.isDebug()) {
       return null;
     }
     Set<String> packageIds = Sets.newHashSet();
@@ -197,15 +200,17 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
                   + "if tests don't instantiate main application");
     }
 
-    AndroidDebugger androidDebugger = debuggerManager.getAndroidDebugger();
-    AndroidDebuggerState androidDebuggerState = debuggerManager.getAndroidDebuggerState(project);
-
-    if (androidDebugger == null || androidDebuggerState == null) {
+    // Do not get debugger state directly from the debugger itself.
+    // See BlazeAndroidDebuggerService#getDebuggerState for an explanation.
+    BlazeAndroidDebuggerService debuggerService = BlazeAndroidDebuggerService.getInstance(project);
+    AndroidDebugger debugger = debuggerService.getDebugger(isNativeDebuggingEnabled(launchOptions));
+    AndroidDebuggerState debuggerState = debuggerService.getDebuggerState(debugger);
+    if (debugger == null || debuggerState == null) {
       return null;
     }
 
     try {
-      return runContext.getDebuggerTask(androidDebugger, androidDebuggerState, packageIds);
+      return runContext.getDebuggerTask(debugger, debuggerState, packageIds);
     } catch (ExecutionException e) {
       launchStatus.terminateLaunch(e.getMessage(), true);
       return null;
@@ -215,5 +220,10 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
   @Override
   public String getLaunchTypeDisplayName() {
     return "Launch";
+  }
+
+  private boolean isNativeDebuggingEnabled(LaunchOptions launchOptions) {
+    Object flag = launchOptions.getExtraOption(NATIVE_DEBUGGING_ENABLED);
+    return flag instanceof Boolean && (Boolean) flag;
   }
 }

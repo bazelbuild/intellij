@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
@@ -43,7 +44,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -76,17 +76,12 @@ public final class BlazeAndroidRunConfigurationRunner
 
   private final Module module;
   private final BlazeAndroidRunContext runContext;
-  private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
-  private final RunConfiguration runConfig;
+  private final BlazeCommandRunConfiguration runConfig;
 
   public BlazeAndroidRunConfigurationRunner(
-      Module module,
-      BlazeAndroidRunContext runContext,
-      BlazeAndroidRunConfigurationDebuggerManager debuggerManager,
-      RunConfiguration runConfig) {
+      Module module, BlazeAndroidRunContext runContext, BlazeCommandRunConfiguration runConfig) {
     this.module = module;
     this.runContext = runContext;
-    this.debuggerManager = debuggerManager;
     this.runConfig = runConfig;
   }
 
@@ -147,8 +142,7 @@ public final class BlazeAndroidRunConfigurationRunner
     env.putCopyableUserData(RUN_CONTEXT_KEY, runContext);
     env.putCopyableUserData(DEVICE_SESSION_KEY, deviceSession);
 
-    return new BlazeAndroidRunState(
-        env, launchOptionsBuilder, isDebug, deviceSession, runContext, debuggerManager);
+    return new BlazeAndroidRunState(env, launchOptionsBuilder, deviceSession, runContext);
   }
 
   private static String canDebug(

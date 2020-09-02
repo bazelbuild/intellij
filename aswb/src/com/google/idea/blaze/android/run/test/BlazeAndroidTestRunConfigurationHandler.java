@@ -145,7 +145,6 @@ public class BlazeAndroidTestRunConfigurationHandler
     return new BlazeAndroidRunConfigurationRunner(
         module,
         runContext,
-        getCommonState().getDebuggerManager(),
         configuration);
   }
 

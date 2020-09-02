@@ -18,18 +18,22 @@ package com.google.idea.blaze.android.run;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerInfoProvider;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
+import com.android.tools.idea.run.editor.AndroidJavaDebugger;
+import com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebugger;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
+import com.google.idea.blaze.android.run.runner.BlazeAndroidDebuggerService;
+import com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationState;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
-/** Provider of blaze project compatible android debuggers. */
+/** Provider of blaze project compatible android debuggers. #api4.0 */
 public class BlazeCommandAndroidDebuggerInfoProvider implements AndroidDebuggerInfoProvider {
   @Override
   public boolean supportsProject(Project project) {
@@ -40,17 +44,8 @@ public class BlazeCommandAndroidDebuggerInfoProvider implements AndroidDebuggerI
 
   @Override
   public List<AndroidDebugger> getAndroidDebuggers(RunConfiguration configuration) {
-    if (configuration instanceof BlazeCommandRunConfiguration) {
-      BlazeAndroidBinaryRunConfigurationState state =
-          ((BlazeCommandRunConfiguration) configuration)
-              .getHandlerStateIfType(BlazeAndroidBinaryRunConfigurationState.class);
-
-      if (state != null) {
-        return state
-            .getCommonState()
-            .getDebuggerManager()
-            .getAndroidDebuggers(configuration.getProject());
-      }
+    if (getCommonState(configuration) != null) {
+      return Arrays.asList(new BlazeNativeAndroidDebugger(), new AndroidJavaDebugger());
     }
     return Collections.emptyList();
   }
@@ -58,29 +53,39 @@ public class BlazeCommandAndroidDebuggerInfoProvider implements AndroidDebuggerI
   @Nullable
   @Override
   public AndroidDebugger getSelectedAndroidDebugger(RunConfiguration configuration) {
-    if (configuration instanceof BlazeCommandRunConfiguration) {
-      BlazeAndroidBinaryRunConfigurationState state =
-          ((BlazeCommandRunConfiguration) configuration)
-              .getHandlerStateIfType(BlazeAndroidBinaryRunConfigurationState.class);
-      if (state != null) {
-        return state.getCommonState().getDebuggerManager().getAndroidDebugger();
-      }
+    BlazeAndroidRunConfigurationCommonState state = getCommonState(configuration);
+    if (state == null) {
+      return null;
     }
-    return null;
+    return BlazeAndroidDebuggerService.getInstance(configuration.getProject())
+        .getDebugger(state.isNativeDebuggingEnabled());
   }
 
   @Nullable
   @Override
   public AndroidDebuggerState getSelectedAndroidDebuggerState(RunConfiguration configuration) {
-    if (configuration instanceof BlazeCommandRunConfiguration) {
-      BlazeAndroidBinaryRunConfigurationState state =
-          ((BlazeCommandRunConfiguration) configuration)
-              .getHandlerStateIfType(BlazeAndroidBinaryRunConfigurationState.class);
-      if (state != null) {
-        BlazeAndroidRunConfigurationDebuggerManager debuggerManager =
-            state.getCommonState().getDebuggerManager();
-        return debuggerManager.getAndroidDebuggerState(configuration.getProject());
-      }
+    AndroidDebugger debugger = getSelectedAndroidDebugger(configuration);
+    if (debugger == null) {
+      return null;
+    }
+    return BlazeAndroidDebuggerService.getInstance(configuration.getProject())
+        .getDebuggerState(debugger);
+  }
+
+  private BlazeAndroidRunConfigurationCommonState getCommonState(RunConfiguration configuration) {
+    if (!(configuration instanceof BlazeCommandRunConfiguration)) {
+      return null;
+    }
+    BlazeCommandRunConfiguration blazeRunConfig = (BlazeCommandRunConfiguration) configuration;
+    BlazeAndroidBinaryRunConfigurationState binaryState =
+        blazeRunConfig.getHandlerStateIfType(BlazeAndroidBinaryRunConfigurationState.class);
+    if (binaryState != null) {
+      return binaryState.getCommonState();
+    }
+    BlazeAndroidTestRunConfigurationState testState =
+        blazeRunConfig.getHandlerStateIfType(BlazeAndroidTestRunConfigurationState.class);
+    if (testState != null) {
+      return binaryState.getCommonState();
     }
     return null;
   }

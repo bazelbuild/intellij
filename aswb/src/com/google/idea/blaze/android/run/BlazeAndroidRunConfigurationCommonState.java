@@ -18,7 +18,6 @@ package com.google.idea.blaze.android.run;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.android.run.state.DebuggerSettingsState;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -52,8 +51,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
   private static final ImmutableList<String> NATIVE_DEBUG_FLAGS =
       ImmutableList.of("--fission=no", "-c", "dbg");
 
-  private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
-
   private final RunConfigurationFlagsState blazeFlags;
   private final RunConfigurationFlagsState exeFlags;
   private final DebuggerSettingsState debuggerSettings;
@@ -65,11 +62,6 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
         new RunConfigurationFlagsState(
             USER_EXE_FLAG_TAG, "Executable flags (mobile-install only):");
     this.debuggerSettings = new DebuggerSettingsState(false);
-    this.debuggerManager = new BlazeAndroidRunConfigurationDebuggerManager(debuggerSettings);
-  }
-
-  public BlazeAndroidRunConfigurationDebuggerManager getDebuggerManager() {
-    return debuggerManager;
   }
 
   public RunConfigurationFlagsState getBlazeFlagsState() {

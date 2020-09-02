@@ -196,7 +196,6 @@ public class BlazeAndroidBinaryRunConfigurationHandler
     return new BlazeAndroidRunConfigurationRunner(
         module,
         runContext,
-        getCommonState().getDebuggerManager(),
         configuration);
   }
 

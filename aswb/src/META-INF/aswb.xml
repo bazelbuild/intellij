@@ -35,6 +35,8 @@
         serviceImplementation="com.google.idea.blaze.android.run.BlazeApkBuildService$DefaultBuildService"/>
     <projectService serviceInterface="com.google.idea.blaze.android.run.runner.BlazeDeployTargetService"
         serviceImplementation="com.google.idea.blaze.android.run.runner.BlazeDeployTargetService$DefaultService"/>
+    <projectService serviceInterface="com.google.idea.blaze.android.run.runner.BlazeAndroidDebuggerService"
+        serviceImplementation="com.google.idea.blaze.android.run.runner.BlazeAndroidDebuggerService$DefaultDebuggerService"/>
     <applicationService serviceImplementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettings"/>
     <applicationService serviceInterface="com.google.idea.blaze.android.sdk.BlazeSdkProvider"
       serviceImplementation="com.google.idea.blaze.android.sdk.BlazeSdkProviderImpl"/>

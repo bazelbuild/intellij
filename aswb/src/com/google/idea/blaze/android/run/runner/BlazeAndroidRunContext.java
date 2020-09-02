@@ -45,10 +45,7 @@ public interface BlazeAndroidRunContext {
 
   ApplicationIdProvider getApplicationIdProvider() throws ExecutionException;
 
-  LaunchTasksProvider getLaunchTasksProvider(
-      LaunchOptions.Builder launchOptionsBuilder,
-      boolean isDebug,
-      BlazeAndroidRunConfigurationDebuggerManager debuggerManager)
+  LaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
       throws ExecutionException;
 
   /** Returns the tasks to deploy the application. */

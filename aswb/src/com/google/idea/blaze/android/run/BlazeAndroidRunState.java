@@ -28,7 +28,6 @@ import com.android.tools.idea.run.util.SwapInfo;
 import com.android.tools.idea.stats.RunStats;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
-import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationDebuggerManager;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.intellij.execution.DefaultExecutionResult;
@@ -56,23 +55,17 @@ public final class BlazeAndroidRunState implements RunProfileState {
   private final DeviceSession deviceSession;
   private final BlazeAndroidRunContext runContext;
   private final LaunchOptions.Builder launchOptionsBuilder;
-  private final boolean isDebug;
-  private final BlazeAndroidRunConfigurationDebuggerManager debuggerManager;
 
   public BlazeAndroidRunState(
       ExecutionEnvironment env,
       LaunchOptions.Builder launchOptionsBuilder,
-      boolean isDebug,
       DeviceSession deviceSession,
-      BlazeAndroidRunContext runContext,
-      BlazeAndroidRunConfigurationDebuggerManager debuggerManager) {
+      BlazeAndroidRunContext runContext) {
     this.env = env;
     this.launchConfigName = env.getRunProfile().getName();
     this.deviceSession = deviceSession;
     this.runContext = runContext;
     this.launchOptionsBuilder = launchOptionsBuilder;
-    this.isDebug = isDebug;
-    this.debuggerManager = debuggerManager;
   }
 
   @Nullable
@@ -106,7 +99,7 @@ public final class BlazeAndroidRunState implements RunProfileState {
     }
 
     LaunchTasksProvider launchTasksProvider =
-        runContext.getLaunchTasksProvider(launchOptionsBuilder, isDebug, debuggerManager);
+        runContext.getLaunchTasksProvider(launchOptionsBuilder);
 
     DeviceFutures deviceFutures = deviceSession.deviceFutures;
     assert deviceFutures != null;
