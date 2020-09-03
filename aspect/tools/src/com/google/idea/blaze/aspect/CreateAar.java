@@ -38,6 +38,9 @@ import java.util.zip.ZipOutputStream;
 public class CreateAar {
   private static final Logger logger = Logger.getLogger(JarFilter.class.getName());
 
+  private static final String AAR_MANIFEST_NAME = "AndroidManifest.xml";
+  private static final String AAR_RESOURCE_DIR = "res";
+
   private static File fileParser(String string) {
     return new File(string);
   }
@@ -93,10 +96,11 @@ public class CreateAar {
       try (FileOutputStream fos = new FileOutputStream(options.outputAar.getPath());
           ZipOutputStream zos = new ZipOutputStream(fos)) {
         for (File resourceFile : options.resourceFiles) {
-          int startIndex = options.resourceRoot.length() - 3;
-          addFileToAar(resourceFile, resourceFile.getPath().substring(startIndex), zos);
+          int startIndex = options.resourceRoot.length();
+          addFileToAar(
+              resourceFile, AAR_RESOURCE_DIR + resourceFile.getPath().substring(startIndex), zos);
         }
-        addFileToAar(options.manifestFile, options.manifestFile.getName(), zos);
+        addFileToAar(options.manifestFile, AAR_MANIFEST_NAME, zos);
       } catch (FileNotFoundException e) {
         logger.log(Level.SEVERE, "Fail to generate aar file", e);
       } catch (IOException e) {
