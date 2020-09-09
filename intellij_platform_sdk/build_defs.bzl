@@ -2,12 +2,12 @@
 
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
-    "intellij-latest": "intellij-2019.3",
-    "intellij-latest-mac": "intellij-2019.3-mac",
+    "intellij-latest": "intellij-2020.1",
+    "intellij-latest-mac": "intellij-2020.1-mac",
     "intellij-beta": "intellij-2020.1",
     "intellij-canary": "intellij-2020.1",
-    "intellij-ue-latest": "intellij-ue-2019.3",
-    "intellij-ue-latest-mac": "intellij-ue-2019.3-mac",
+    "intellij-ue-latest": "intellij-ue-2020.1",
+    "intellij-ue-latest-mac": "intellij-ue-2020.1-mac",
     "intellij-ue-beta": "intellij-ue-2020.1",
     "intellij-ue-canary": "intellij-ue-2020.1",
     "android-studio-latest": "android-studio-4.0",
