@@ -208,4 +208,9 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
     }
     return this;
   }
+
+  public NbAndroidTarget setResourceJavaPackage(String javaPackage) {
+    androidIdeInfoBuilder.setResourceJavaPackage(javaPackage);
+    return this;
+  }
 }

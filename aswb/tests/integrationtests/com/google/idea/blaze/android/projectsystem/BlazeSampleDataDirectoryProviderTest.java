@@ -57,7 +57,7 @@ public class BlazeSampleDataDirectoryProviderTest extends BlazeAndroidIntegratio
     resDir = workspace.createFile(new WorkspacePath("com/google/example/res"));
 
     setTargetMap(android_binary("//com/google/example:main").res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     ModuleManager moduleManager = ModuleManager.getInstance(getProject());
     workspaceModule = moduleManager.findModuleByName(".workspace");

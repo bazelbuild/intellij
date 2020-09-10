@@ -88,7 +88,7 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
         "public class MainActivity extends Activity {}");
 
     setTargetMap(android_binary("//java/com/foo/app:app").src("MainActivity.java"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     buildTarget = Label.create("//java/com/foo/app:app");
     blazeFlags = ImmutableList.of("some_blaze_flag", "some_other_flag");

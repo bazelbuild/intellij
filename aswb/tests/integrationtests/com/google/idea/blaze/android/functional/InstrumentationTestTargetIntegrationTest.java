@@ -73,7 +73,7 @@ public class InstrumentationTestTargetIntegrationTest extends BlazeAndroidIntegr
             .instruments("//java/com/foo/app:app"),
         android_instrumentation_test("//java/com/foo/app:instrumentation_test")
             .test_app("//java/com/foo/app:test_app"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
   }
 
   @Test

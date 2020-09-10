@@ -97,7 +97,7 @@ public class BlazeModuleSystemExternalDependencyIntegrationTest
             .dep("//java/com/foo/libs:libs")
             .res("res"),
         android_library("//java/com/foo/libs:libs").res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     Module activityModule =
         ModuleFinder.getInstance(getProject())
@@ -115,7 +115,7 @@ public class BlazeModuleSystemExternalDependencyIntegrationTest
             .res("res"),
         android_library("//java/com/foo/libs:libs").res("res").dep(CONSTRAINT_LAYOUT_LABEL),
         android_library(CONSTRAINT_LAYOUT_LABEL));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     Module workspaceModule =
         ModuleFinder.getInstance(getProject())
@@ -131,7 +131,7 @@ public class BlazeModuleSystemExternalDependencyIntegrationTest
         android_library("//java/com/foo/gallery/activities:activities")
             .src("MainActivity.java")
             .res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     Module workspaceModule =
         ModuleFinder.getInstance(getProject())
@@ -150,7 +150,7 @@ public class BlazeModuleSystemExternalDependencyIntegrationTest
             .res("res"),
         android_library("//java/com/foo/libs:libs").res("res").dep(CONSTRAINT_LAYOUT_LABEL),
         android_library(CONSTRAINT_LAYOUT_LABEL));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     Module workspaceModule =
         ModuleFinder.getInstance(getProject())
@@ -171,7 +171,7 @@ public class BlazeModuleSystemExternalDependencyIntegrationTest
             .res("res")
             .dep(CONSTRAINT_LAYOUT_LABEL),
         android_library(CONSTRAINT_LAYOUT_LABEL));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     Module workspaceModule =
         ModuleFinder.getInstance(getProject())

@@ -96,7 +96,7 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
   public void manifestBelongsToResourceModule() {
     ManifestFixture manifest = manifestFactory.fromPackage("com.example.target");
     setTargetMap(android_binary("//java/com/example/target:target").manifest(manifest).res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
     AndroidFacet targetFacet = getFacet("java.com.example.target.target");
 
     // Verify the mapping from resource module to manifest.
@@ -135,7 +135,7 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
                     .fromPackage("com.example.irrelevant")
                     .addUsesPermission("android.permission.WRITE_EXTERNAL_STORAGE"))
             .res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     Module targetModule = getModule("java.com.example.target.target");
     PermissionHolder permissions =
@@ -157,7 +157,7 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
             .fromPackage("com.example.target")
             .addUsesPermission("android.permission.SEND_SMS");
     setTargetMap(android_binary("//java/com/example/target:target").manifest(manifest).res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     Module targetModule = getModule("java.com.example.target.target");
     AsyncSupplier<MergedManifestSnapshot> mergedManifest =
@@ -192,7 +192,7 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
         android_library("//java/com/example/transitive:transitive")
             .manifest(transitiveDependencyManifest)
             .res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     Set<Module> modules =
         getModules(
@@ -233,7 +233,7 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
         android_binary("//java/com/example/target:target")
             .manifest(manifestFactory.fromPackage("com.example.target"))
             .res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     Module module = getModule("java.com.example.target.target");
     workspace.createDirectory(new WorkspacePath("java/com/example/target/res/navigation"));
@@ -253,7 +253,7 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
         android_binary("//java/com/example/target:target")
             .manifest(manifestFactory.fromPackage("com.example.target"))
             .res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
     Module module = getModule("java.com.example.target.target");
     AndroidModuleSystem moduleSystem = ProjectSystemUtil.getModuleSystem(module);
 
@@ -288,7 +288,7 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
             .manifest_value("targetSdkVersion", "29")
             .manifest_value("packageName", "com.example.ignored")
             .res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
     Module module = getModule("java.com.example.target.target");
 
     MergedManifestSnapshot manifest =
@@ -310,7 +310,7 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
                     .addUsesPermission("${permissionPlaceholder}"))
             .manifest_value("permissionPlaceholder", "android.permission.SEND_SMS")
             .res("res"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
     Module module = getModule("java.com.example.target.target");
 
     MergedManifestSnapshot manifest =

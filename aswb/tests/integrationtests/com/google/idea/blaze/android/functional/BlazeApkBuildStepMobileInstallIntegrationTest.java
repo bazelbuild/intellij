@@ -100,7 +100,7 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
         "public class MainActivity extends Activity {}");
 
     setTargetMap(android_binary("//java/com/foo/app:app").src("MainActivity.java"));
-    runFullBlazeSync();
+    runFullBlazeSyncWithNoIssues();
 
     // MI invocation flags
     buildTarget = Label.create("//java/com/foo/app:app");
