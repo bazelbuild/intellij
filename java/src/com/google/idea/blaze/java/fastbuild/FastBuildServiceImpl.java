@@ -56,6 +56,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService.ChangedSources;
 import com.google.idea.blaze.java.fastbuild.FastBuildException.BlazeBuildError;
@@ -82,7 +83,11 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
   private static final ImmutableSetMultimap<BuildSystem, Kind> SUPPORTED_KINDS =
       ImmutableSetMultimap.<BuildSystem, Kind>builder()
           .putAll(BuildSystem.Bazel, JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
-          .putAll(BuildSystem.Blaze, JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
+          .putAll(
+              BuildSystem.Blaze,
+              AndroidBlazeRules.RuleTypes.ANDROID_ROBOLECTRIC_TEST.getKind(),
+              AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind(),
+              JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
           .build();
 
   private final Project project;
