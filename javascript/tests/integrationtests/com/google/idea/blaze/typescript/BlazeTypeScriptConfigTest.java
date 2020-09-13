@@ -31,9 +31,7 @@ import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -50,8 +48,6 @@ import org.junit.runners.JUnit4;
 /** Unit tests for {@link BlazeTypeScriptConfig} */
 @RunWith(JUnit4.class)
 public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
-  // disposed prior to calling parent class's @After methods
-  private final Disposable thisClassDisposable = Disposer.newDisposable();
 
   private BlazeTypeScriptConfigServiceImpl blazeConfigService;
   private TypeScriptConfigServiceImpl regularConfigService;
@@ -148,8 +144,7 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
                 "/src/workspace/blaze-bin", "/src/out/execroot/bin",
                 "/src/workspace/blaze-genfiles", "/src/out/execroot/genfiles")));
 
-    MockProjectViewManager projectViewManager =
-        new MockProjectViewManager(getProject(), thisClassDisposable);
+    MockProjectViewManager projectViewManager = new MockProjectViewManager(getProject());
     projectViewManager.setProjectView(
         new ProjectViewSet.Builder()
             .add(
