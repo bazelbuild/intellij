@@ -287,12 +287,11 @@ public class JarCache {
   private static void copyLocally(BlazeArtifact output, File destination) throws IOException {
     if (output instanceof LocalFileArtifact) {
       File source = ((LocalFileArtifact) output).getFile();
-      FileOperationProvider.getInstance()
-          .copy(
-              source,
-              destination,
-              StandardCopyOption.REPLACE_EXISTING,
-              StandardCopyOption.COPY_ATTRIBUTES);
+      Files.copy(
+          Paths.get(source.getPath()),
+          Paths.get(destination.getPath()),
+          StandardCopyOption.REPLACE_EXISTING,
+          StandardCopyOption.COPY_ATTRIBUTES);
       return;
     }
     try (InputStream stream = output.getInputStream()) {
