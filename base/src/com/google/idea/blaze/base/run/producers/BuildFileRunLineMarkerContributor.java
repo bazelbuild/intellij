@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.run.producers;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -38,6 +40,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.util.containers.ContainerUtil;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /** Generates run/debug gutter icons for BUILD files. */
@@ -88,11 +91,11 @@ public class BuildFileRunLineMarkerContributor extends RunLineMarkerContributor 
     ListenableFuture<TargetInfo> future =
         TargetFinder.findTargetInfoFuture(element.getProject(), data.label);
     try {
-      TargetInfo target = future.get();
+      TargetInfo target = future.get(2, SECONDS);
       return target != null && HANDLED_RULE_TYPES.contains(target.getRuleType());
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
-    } catch (ExecutionException e) {
+    } catch (TimeoutException | ExecutionException e) {
       // ignore
     }
     return false;
