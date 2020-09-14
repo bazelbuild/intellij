@@ -43,6 +43,7 @@ java_library(
         "//common/experiments",
         "//common/settings",
         "//common/util:concurrency",
+        "//common/util:platform",
         "//common/util:transactions",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:junit",

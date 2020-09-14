@@ -37,4 +37,8 @@ public final class MorePlatformUtils {
     }
     return platformPrefix;
   }
+
+  public static boolean isAndroidStudio() {
+    return "AndroidStudio".equals(PlatformUtils.getPlatformPrefix());
+  }
 }
