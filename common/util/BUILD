@@ -21,6 +21,14 @@ java_library(
 )
 
 java_library(
+    name = "platform",
+    srcs = ["src/com/google/idea/common/util/MorePlatformUtils.java"],
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
     name = "transactions",
     srcs = ["src/com/google/idea/common/util/Transactions.java"],
     deps = [

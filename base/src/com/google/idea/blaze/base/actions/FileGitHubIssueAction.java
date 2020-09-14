@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.util.MorePlatformUtils;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -30,7 +31,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.PlatformUtils;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -112,7 +112,10 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
     // Get the IDE version.
     // e.g. IdeaCommunity: 2019.1.2
     bodyParam.append(
-        String.format("%s: %s\n", getProductId(), ApplicationInfo.getInstance().getFullVersion()));
+        String.format(
+            "%s: %s\n",
+            MorePlatformUtils.getProductIdForLogs(),
+            ApplicationInfo.getInstance().getFullVersion()));
 
     // Get information about the operating system.
     // e.g. Platform: Linux 4.19.37-amd64
@@ -147,18 +150,5 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
       logger.error(ex);
       return null;
     }
-  }
-
-  private static String getProductId() {
-    String platformPrefix = PlatformUtils.getPlatformPrefix();
-
-    // IDEA Community Edition is "Idea", whereas IDEA Ultimate Edition is "idea". Let's make them
-    // more useful.
-    if (PlatformUtils.isIdeaCommunity()) {
-      platformPrefix = "IdeaCommunity";
-    } else if (PlatformUtils.isIdeaUltimate()) {
-      platformPrefix = "IdeaUltimate";
-    }
-    return platformPrefix;
   }
 }

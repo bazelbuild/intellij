@@ -25,6 +25,7 @@ java_library(
         "//common/settings",
         "//common/util:binaryhelper",
         "//common/util:concurrency",
+        "//common/util:platform",
         "//common/util:transactions",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
