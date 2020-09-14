@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.util;
 
-import com.google.idea.common.transactions.Transactions;
+import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 
 /** Utility for saving all files. */

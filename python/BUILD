@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -13,6 +11,8 @@ load(
     "intellij_unit_test_suite",
 )
 
+licenses(["notice"])
+
 java_library(
     name = "python",
     srcs = glob(["src/**/*.java"]),
@@ -20,11 +20,10 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//common/transactions",
+        "//common/util:transactions",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
-        "//sdkcompat",
         "//third_party/python",
     ],
 )

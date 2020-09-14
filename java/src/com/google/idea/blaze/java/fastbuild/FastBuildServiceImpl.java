@@ -62,7 +62,7 @@ import com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService.Changed
 import com.google.idea.blaze.java.fastbuild.FastBuildException.BlazeBuildError;
 import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope.FastBuildLogOutput;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
-import com.google.idea.common.concurrency.ConcurrencyUtil;
+import com.google.idea.common.util.ConcurrencyUtil;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;

@@ -20,10 +20,8 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//common/transactions",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
-        "//sdkcompat",
         "//third_party/javascript",
     ],
 )
@@ -91,7 +89,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "//sdkcompat",
         "//third_party/javascript:javascript_for_tests",
         "@junit//jar",
     ],

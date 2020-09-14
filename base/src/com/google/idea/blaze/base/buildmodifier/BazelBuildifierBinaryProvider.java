@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.buildmodifier;
 
-import com.google.idea.common.binaryhelper.HelperBinaryUtil;
+import com.google.idea.common.util.HelperBinaryUtil;
 import java.io.File;
 import javax.annotation.Nullable;
 

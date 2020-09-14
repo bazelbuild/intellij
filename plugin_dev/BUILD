@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -7,6 +5,12 @@ load(
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
+load(
+    "//testing:test_defs.bzl",
+    "intellij_integration_test_suite",
+)
+
+licenses(["notice"])
 
 java_library(
     name = "plugin_dev",
@@ -14,13 +18,12 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//common/transactions",
+        "//common/util:transactions",
         "//intellij_platform_sdk:devkit",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
-        "//sdkcompat",
     ],
 )
 
@@ -52,11 +55,6 @@ intellij_plugin(
         "//base:plugin_library",
         "//java:plugin_library",
     ],
-)
-
-load(
-    "//testing:test_defs.bzl",
-    "intellij_integration_test_suite",
 )
 
 intellij_integration_test_suite(
