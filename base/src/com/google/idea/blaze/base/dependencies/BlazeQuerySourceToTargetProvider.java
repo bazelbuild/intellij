@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -124,6 +125,7 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
             .addBlazeCommand(command)
             .context(context)
             .stdout(LineProcessingOutputStream.of(outputProcessor))
+            .stderr(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))
             .build()
             .run();
     if (retVal != 0 && retVal != 3) {
