@@ -300,6 +300,7 @@ java_library(
     exports = [
         ":objenesis",
         "//third_party:truth",
+        "//third_party:diffutils",
         "@bytebuddy-agent//jar",
         "@bytebuddy//jar",
         "@mockito//jar",

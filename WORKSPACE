@@ -196,6 +196,14 @@ jvm_maven_import_external(
 )
 
 jvm_maven_import_external(
+    name = "diffutils",
+    artifact = "com.googlecode.java-diff-utils:diffutils:1.2.1",
+    artifact_sha256 = "c98697c3b8dd745353cd0a83b109c1c999fec43b4a5cedb2f579452d8da2c171",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+jvm_maven_import_external(
     name = "truth8",
     artifact = "com.google.truth.extensions:truth-java8-extension:0.42",
     artifact_sha256 = "cf9e095a6763bc33633b8844c3ebadffe3b082c81dd97a4d79b64ad88d305bc1",
