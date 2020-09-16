@@ -157,8 +157,8 @@ http_archive(
 http_archive(
     name = "android_studio_4_1",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio41",
-    sha256 = "dd6f9e51c7df464ee56716ef7f75ff369e21930014a94e75b10d3ad5747b0dd7",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/4.1.0.17/android-studio-ide-201.6776251-linux.tar.gz",
+    sha256 = "a9bc6647d83c0d22b370fd3d6c9b9cf9a9bbf41497586dfd510c4511bd5b67cf",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/4.1.0.18/android-studio-ide-201.6823847-linux.tar.gz",
 )
 
 # The plugin api for Android Studio 4.2. This is required to build ASwB,
