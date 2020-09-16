@@ -15,7 +15,8 @@
  */
 package com.google.idea.blaze.base.run.processhandler;
 
-import com.google.common.base.Charsets;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -35,7 +36,7 @@ public final class LineProcessingProcessAdapter extends ProcessAdapter {
     String text = event.getText();
     if (text != null) {
       try {
-        myOutputStream.write(text.getBytes(Charsets.UTF_8));
+        myOutputStream.write(text.getBytes(UTF_8));
       } catch (IOException e) {
         // Ignore -- cannot happen
       }
