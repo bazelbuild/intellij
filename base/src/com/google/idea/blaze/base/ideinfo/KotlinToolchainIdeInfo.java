@@ -25,16 +25,27 @@ public final class KotlinToolchainIdeInfo
     implements ProtoWrapper<IntellijIdeInfo.KotlinToolchainIdeInfo> {
   private final String languageVersion;
   private final ImmutableList<Label> sdkTargets;
+  /*
+   * default kotlinc flags to use in all compilations, as specified in
+   * third_party/bazel_rules/rules_kotlin/toolchains/kotlin_jvm/toolchain.bzl. Note that this cannot
+   * collect compiler flags that specific for individual target.
+   */
+  private final ImmutableList<String> kotlinCompilerCommonFlags;
 
-  private KotlinToolchainIdeInfo(String languageVersion, ImmutableList<Label> sdkTargets) {
+  private KotlinToolchainIdeInfo(
+      String languageVersion,
+      ImmutableList<Label> sdkTargets,
+      ImmutableList<String> kotlinCompilerCommonFlags) {
     this.languageVersion = languageVersion;
     this.sdkTargets = sdkTargets;
+    this.kotlinCompilerCommonFlags = kotlinCompilerCommonFlags;
   }
 
   static KotlinToolchainIdeInfo fromProto(IntellijIdeInfo.KotlinToolchainIdeInfo proto) {
     return new KotlinToolchainIdeInfo(
         proto.getLanguageVersion(),
-        ProtoWrapper.map(proto.getSdkLibraryTargetsList(), Label::fromProto));
+        ProtoWrapper.map(proto.getSdkLibraryTargetsList(), Label::fromProto),
+        ProtoWrapper.internStrings(proto.getKotlinCompilerCommonFlagsList()));
   }
 
   @Override
@@ -42,6 +53,7 @@ public final class KotlinToolchainIdeInfo
     return IntellijIdeInfo.KotlinToolchainIdeInfo.newBuilder()
         .setLanguageVersion(languageVersion)
         .addAllSdkLibraryTargets(ProtoWrapper.mapToProtos(sdkTargets))
+        .addAllKotlinCompilerCommonFlags(kotlinCompilerCommonFlags)
         .build();
   }
 
@@ -53,6 +65,10 @@ public final class KotlinToolchainIdeInfo
     return sdkTargets;
   }
 
+  public ImmutableList<String> getKotlinCompilerCommonFlags() {
+    return kotlinCompilerCommonFlags;
+  }
+
   @Override
   public String toString() {
     return "KotlinToolchainIdeInfo{"
@@ -62,6 +78,9 @@ public final class KotlinToolchainIdeInfo
         + "\n"
         + "  sdkTargets="
         + getSdkTargets()
+        + "\n"
+        + "  kotlinCompilerCommonFlags="
+        + getKotlinCompilerCommonFlags()
         + "\n"
         + '}';
   }
@@ -76,12 +95,13 @@ public final class KotlinToolchainIdeInfo
     }
     KotlinToolchainIdeInfo that = (KotlinToolchainIdeInfo) o;
     return Objects.equals(languageVersion, that.languageVersion)
-        && Objects.equals(sdkTargets, that.sdkTargets);
+        && Objects.equals(sdkTargets, that.sdkTargets)
+        && Objects.equals(kotlinCompilerCommonFlags, that.kotlinCompilerCommonFlags);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(languageVersion, sdkTargets);
+    return Objects.hash(languageVersion, sdkTargets, kotlinCompilerCommonFlags);
   }
 
   public static KotlinToolchainIdeInfo.Builder builder() {
@@ -92,6 +112,7 @@ public final class KotlinToolchainIdeInfo
   public static class Builder {
     String languageVersion;
     ImmutableList<Label> sdkTargets;
+    ImmutableList<String> kotlinCompilerCommonFlags;
 
     public KotlinToolchainIdeInfo.Builder setLanguageVersion(String languageVersion) {
       this.languageVersion = languageVersion;
@@ -103,8 +124,14 @@ public final class KotlinToolchainIdeInfo
       return this;
     }
 
+    public KotlinToolchainIdeInfo.Builder setKotlinCompilerCommonFlags(
+        ImmutableList<String> kotlinCompilerCommonFlags) {
+      this.kotlinCompilerCommonFlags = kotlinCompilerCommonFlags;
+      return this;
+    }
+
     public KotlinToolchainIdeInfo build() {
-      return new KotlinToolchainIdeInfo(languageVersion, sdkTargets);
+      return new KotlinToolchainIdeInfo(languageVersion, sdkTargets, kotlinCompilerCommonFlags);
     }
   }
 }

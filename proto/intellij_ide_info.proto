@@ -169,6 +169,7 @@ message JavaToolchainIdeInfo {
 message KotlinToolchainIdeInfo {
   string language_version = 1;
   repeated string sdk_library_targets = 2;
+  repeated string kotlin_compiler_common_flags = 3;
 }
 
 message TargetKey {
