@@ -52,6 +52,10 @@ public final class BlazeFlags {
 
   public static final String DELETED_PACKAGES = "--deleted_packages";
 
+  // Avoid running validation actions at the end of build. This flag is expected to be set only
+  // during syncing projects.
+  public static final String DISABLE_VALIDATIONS = "--noexperimental_run_validations";
+
   /**
    * Flags to add to blaze/bazel invocations of the given type.
    *

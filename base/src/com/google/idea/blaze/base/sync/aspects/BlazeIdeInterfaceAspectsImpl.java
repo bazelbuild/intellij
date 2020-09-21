@@ -85,6 +85,7 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -112,6 +113,8 @@ import javax.annotation.Nullable;
 public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
   private static final Logger logger = Logger.getInstance(BlazeIdeInterfaceAspectsImpl.class);
+  private static final BoolExperiment disableValidationActionExperiment =
+      new BoolExperiment("blaze.sync.disable.valication.action", true);
 
   @Override
   public BlazeBuildOutputs buildIdeArtifacts(
@@ -376,6 +379,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           .addBlazeFlags(
               BlazeFlags.blazeFlags(
                   project, viewSet, BlazeCommandName.BUILD, BlazeInvocationContext.SYNC_CONTEXT));
+      if (disableValidationActionExperiment.getValue()) {
+        builder.addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS);
+      }
 
       aspectStrategy.addAspectAndOutputGroups(
           builder,
