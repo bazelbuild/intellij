@@ -56,6 +56,8 @@ public final class BlazeFlags {
   // during syncing projects.
   public static final String DISABLE_VALIDATIONS = "--noexperimental_run_validations";
 
+  public static final String DISABLE_REMOTE_UPLOAD_LOCAL_RESULTS = "--remote_upload_local_results=false";
+
   /**
    * Flags to add to blaze/bazel invocations of the given type.
    *
