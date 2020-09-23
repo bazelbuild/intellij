@@ -111,12 +111,12 @@ public class BlazeAndroidTestRunConfigurationHandler
         BlazeAndroidRunConfigurationHandler.getCommandConfig(env);
     configuration.setTarget(configFromEnv.getSingleTarget());
 
+    BlazeAndroidRunConfigurationValidationUtil.validate(project);
     Module module =
         ModuleFinder.getInstance(env.getProject())
             .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
     AndroidFacet facet = module != null ? AndroidFacet.getInstance(module) : null;
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    BlazeAndroidRunConfigurationValidationUtil.validateExecution(module, projectViewSet);
 
     ImmutableList<String> blazeFlags =
         configState
@@ -170,10 +170,9 @@ public class BlazeAndroidTestRunConfigurationHandler
    */
   private List<ValidationError> validate() {
     List<ValidationError> errors = Lists.newArrayList();
-    Module module =
-        ModuleFinder.getInstance(configuration.getProject())
-            .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
-    errors.addAll(BlazeAndroidRunConfigurationValidationUtil.validateModule(module));
+    errors.addAll(
+        BlazeAndroidRunConfigurationValidationUtil.validateWorkspaceModule(
+            configuration.getProject()));
     errors.addAll(configState.validate(configuration.getProject()));
     return errors;
   }

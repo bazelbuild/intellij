@@ -125,12 +125,12 @@ public class BlazeAndroidBinaryRunConfigurationHandler
         BlazeAndroidRunConfigurationHandler.getCommandConfig(env);
     configuration.setTarget(configFromEnv.getSingleTarget());
 
+    BlazeAndroidRunConfigurationValidationUtil.validate(project);
     Module module =
         ModuleFinder.getInstance(env.getProject())
             .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
     AndroidFacet facet = module != null ? AndroidFacet.getInstance(module) : null;
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    BlazeAndroidRunConfigurationValidationUtil.validateExecution(module, projectViewSet);
 
     // Only suggest building with mobile-install if native debugging isn't enabled.
     if (configState.getLaunchMethod() == AndroidBinaryLaunchMethod.NON_BLAZE
@@ -193,10 +193,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
                 configuration.getSingleTarget().toString(),
                 "nativeDebuggingEnabled",
                 Boolean.toString(configState.getCommonState().isNativeDebuggingEnabled())));
-    return new BlazeAndroidRunConfigurationRunner(
-        module,
-        runContext,
-        configuration);
+    return new BlazeAndroidRunConfigurationRunner(module, runContext, configuration);
   }
 
   @Override
@@ -211,16 +208,11 @@ public class BlazeAndroidBinaryRunConfigurationHandler
    */
   private ImmutableList<ValidationError> validate() {
     ImmutableList.Builder<ValidationError> errors = ImmutableList.builder();
-    Module module =
-        ModuleFinder.getInstance(configuration.getProject())
-            .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
-    errors.addAll(BlazeAndroidRunConfigurationValidationUtil.validateModule(module));
-
-    // BlazeAndroidRunConfigurationValidationUtil.validateModule(module) handles null module error.
-    if (module != null) {
-      errors.addAll(getCommonState().validate(configuration.getProject()));
-      errors.addAll(configState.validate(configuration.getProject()));
-    }
+    errors.addAll(
+        BlazeAndroidRunConfigurationValidationUtil.validateWorkspaceModule(
+            configuration.getProject()));
+    errors.addAll(getCommonState().validate(configuration.getProject()));
+    errors.addAll(configState.validate(configuration.getProject()));
     return errors.build();
   }
 
