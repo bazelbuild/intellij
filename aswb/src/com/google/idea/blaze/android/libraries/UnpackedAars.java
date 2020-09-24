@@ -209,11 +209,21 @@ public class UnpackedAars {
     ImmutableMap<String, File> cacheState = this.cacheState;
     BlazeArtifact artifact = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
     if (cacheState.isEmpty()) {
+      logger.warn("Cache state is empty");
       return getFallbackFile(artifact);
     }
     String cacheKey = cacheKeyForAar(decoder.resolveOutput(library.aarArtifact));
     // check if it was actually cached
     if (!cacheState.containsKey(cacheKey)) {
+      // if artifact is RemoteOutputArtifact, cacheState is expected to contains cacheKey. So it's
+      // unexpected when it runs into this case.
+      if (artifact instanceof RemoteOutputArtifact) {
+        logger.warn(
+            String.format(
+                "Fail to look up %s from cache state for library [aarArtifact = %s, jar = %s]",
+                cacheKey, decoder.resolveOutput(library.aarArtifact), artifact));
+        logger.debug("Cache state contains the following keys: " + cacheState.keySet());
+      }
       return getFallbackFile(artifact);
     }
     return jarFileForKey(cacheKey);
