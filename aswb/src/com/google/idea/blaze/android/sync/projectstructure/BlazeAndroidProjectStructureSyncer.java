@@ -108,26 +108,51 @@ public class BlazeAndroidProjectStructureSyncer {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData,
+      @Nullable BlazeProjectData projectDataFromPreviousSync,
       BlazeSyncPlugin.ModuleEditor moduleEditor,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel,
       boolean isAndroidWorkspace) {
     if (!isAndroidWorkspace) {
       AndroidFacetModuleCustomizer.removeAndroidFacet(workspaceModule);
+      // This is an error and not a warning because the workspace type should always be ANDROID
+      // as long as the blaze android plugin is present.  If this method executes but the workspace
+      // isn't type ANDROID then something fundamentally wrong happened.
+      log.error(
+          "No android workspace found for project \""
+              + project.getName()
+              + "\". Removing AndroidFacet from workspace module.");
       return;
     }
+    AndroidFacetModuleCustomizer.createAndroidFacet(workspaceModule, false);
 
     BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
     if (syncData == null) {
+      // It's possible for the sync to have failed in a way that BlazeAndroidSyncData isn't
+      // populated in BlazeProjectData.  E.g. If post-sync tasks crashed before
+      // BlazeAndroidSyncPlugin#updateSyncState could run.  These scenarios are likely caused by
+      // errors such as connection issues or a system service level failures. These errors
+      // are reported in Blaze Console and the only thing to do is to fix them and re-sync.
+      //
+      // There is a special case where the first directory-only syncs after importing a new project
+      // will always have no BlazeAndroidSyncData. We can differentiate these from real failures
+      // by checking if there's project data from a previous sync.  If there is, then this sync
+      // isn't a special case directory-only sync. Note directory-only syncs reuse cached blaze
+      // project data so only the first directory-only syncs before a real sync will have
+      // no blaze project data.
+      if (projectDataFromPreviousSync != null) {
+        context.output(
+            PrintOutput.error(
+                "The IDE was not able to retrieve the necessary information from Blaze. Many"
+                    + " android specific features may not work. Please try [Blaze > Sync > Sync"
+                    + " project with BUILD files] again."));
+      }
       return;
     }
     AndroidSdkPlatform androidSdkPlatform = syncData.androidSdkPlatform;
     if (androidSdkPlatform == null) {
       return;
     }
-
-    // Configure workspace module as an android module
-    AndroidFacetModuleCustomizer.createAndroidFacet(workspaceModule, false);
 
     // Create android resource modules
     // Because we're setting up dependencies, the modules have to exist before we configure them

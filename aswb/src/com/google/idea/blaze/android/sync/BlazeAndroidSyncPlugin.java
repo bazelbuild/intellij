@@ -172,6 +172,11 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
       androidSdkPlatform = AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
     }
     if (androidSdkPlatform == null) {
+      IssueOutput.error(
+              "No android SDK configured. Please ensure the SDK defined under"
+                  + " \"android_sdk_platform\" attribute points to a valid SDK. Android"
+                  + " Studio functionalities will fail without the SDK.")
+          .submit(context);
       return;
     }
     Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
@@ -204,6 +209,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
         context,
         projectViewSet,
         blazeProjectData,
+        oldBlazeProjectData,
         moduleEditor,
         workspaceModule,
         workspaceModifiableModel,

@@ -199,6 +199,72 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
   }
 
   @Test
+  public void testSimpleSync_noAndroidProjectData_workspaceModuleHasAndroidFacet() {
+    TestProjectArguments testEnvArgument = createTestProjectArguments();
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "targets:",
+        "  //java/com/google:lib",
+        "android_sdk_platform: android-25");
+
+    setTargetMap(testEnvArgument.targetMap);
+
+    // A directory-only sync (a sync with SyncMode == NO_BUILD) won't generate blaze project data.
+    runBlazeSync(
+        BlazeSyncParams.builder()
+            .setTitle("Sync")
+            .setSyncMode(SyncMode.NO_BUILD)
+            .setSyncOrigin("test")
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setAddProjectViewTargets(true)
+            .build());
+
+    errorCollector.assertIssues("Android model missing for module: .workspace");
+    // Even if there was no sync data it's still good to create the .workspace module and attach an
+    // AndroidFacet to it.  Some IDE functionalities will work as long as that's available, such as
+    // logcat window.
+    Module workspaceModule =
+        ModuleManager.getInstance(getProject())
+            .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
+    assertThat(workspaceModule).isNotNull();
+    assertThat(AndroidFacet.getInstance(workspaceModule)).isNotNull();
+  }
+
+  @Test
+  public void testSimpleSync_directoryOnlySyncAfterSuccessfulSync_reusesProjectData() {
+    TestProjectArguments testEnvArgument = createTestProjectArguments();
+    setProjectView(
+        "directories:",
+        "  java/com/google",
+        "targets:",
+        "  //java/com/google:lib",
+        "android_sdk_platform: android-25");
+
+    setTargetMap(testEnvArgument.targetMap);
+    runBlazeSync(
+        BlazeSyncParams.builder()
+            .setTitle("Sync")
+            .setSyncMode(SyncMode.INCREMENTAL)
+            .setSyncOrigin("test")
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setAddProjectViewTargets(true)
+            .build());
+    assertSyncSuccess(testEnvArgument.targetMap, testEnvArgument.javaRoot);
+
+    // Syncing again with SyncMode.NO_BUILD should still yield the same success.
+    runBlazeSync(
+        BlazeSyncParams.builder()
+            .setTitle("Sync")
+            .setSyncMode(SyncMode.NO_BUILD)
+            .setSyncOrigin("test")
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setAddProjectViewTargets(true)
+            .build());
+    assertSyncSuccess(testEnvArgument.targetMap, testEnvArgument.javaRoot);
+  }
+
+  @Test
   public void testSimpleSync() {
     TestProjectArguments testEnvArgument = createTestProjectArguments();
     setProjectView(
