@@ -188,12 +188,7 @@ class MultipleJavaClassesTestContextProvider implements TestContextProvider {
       return null;
     }
     return Futures.transformAsync(
-        classes,
-        set ->
-            set == null
-                ? Futures.immediateFuture(null)
-                : ReadAction.compute(() -> getTestTargetIfUnique(project, set)),
-        EXECUTOR);
+        classes, set -> ReadAction.compute(() -> getTestTargetIfUnique(project, set)), EXECUTOR);
   }
 
   private static final int MAX_DEPTH_TO_SEARCH = 8;
@@ -235,9 +230,11 @@ class MultipleJavaClassesTestContextProvider implements TestContextProvider {
     }
   }
 
-  @Nullable
   private static ListenableFuture<TargetInfo> getTestTargetIfUnique(
-      Project project, Set<PsiClass> classes) {
+      Project project, @Nullable Set<PsiClass> classes) {
+    if (classes == null) {
+      return Futures.immediateFuture(null);
+    }
     Set<File> files =
         classes.stream()
             .map(PsiElement::getContainingFile)
@@ -247,7 +244,7 @@ class MultipleJavaClassesTestContextProvider implements TestContextProvider {
     ListenableFuture<Collection<TargetInfo>> targets =
         SourceToTargetFinder.findTargetInfoFuture(project, files, Optional.of(RuleType.TEST));
     if (futureEmpty(targets)) {
-      return null;
+      return Futures.immediateFuture(null);
     }
     Executor executor =
         ApplicationManager.getApplication().isUnitTestMode()
