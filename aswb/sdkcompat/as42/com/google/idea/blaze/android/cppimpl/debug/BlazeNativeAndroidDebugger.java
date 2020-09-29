@@ -20,10 +20,9 @@ import com.android.tools.idea.run.ValidationError;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.ndk.run.attach.AndroidNativeAttachConfiguration;
 import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
@@ -32,7 +31,6 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -41,7 +39,6 @@ import icons.BlazeIcons;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.Icon;
-import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,44 +49,29 @@ import org.jetbrains.annotations.Nullable;
  * <ul>
  *   <li>Creates a run-config setting using {@link BlazeAndroidNativeAttachConfiguration} instead of
  *       {@link AndroidNativeAttachConfiguration} to override counterproductive validations.
- *   <li>Use {@link BlazeModuleSystem#getPackageName()} during compatible module search. See {@link
- *       #findModuleForProcess}.
  * </ul>
  *
  * #api4.0
  */
 public class BlazeNativeAndroidDebugger extends BlazeNativeAndroidDebuggerBase {
-  @VisibleForTesting
   @Override
   @Nullable
   public Module findModuleForProcess(Project project, String packageName) {
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (AndroidFacet.getInstance(module) == null) {
-        continue; // A module must have an attached AndroidFacet to have a package name.
-      }
-
-      BlazeModuleSystem moduleSystem = BlazeModuleSystem.getInstance(module);
-      String modulePackageName = ReadAction.compute(() -> moduleSystem.getPackageName());
-      if (modulePackageName != null && modulePackageName.equals(packageName)) {
-        return module;
-      }
-    }
-    return null;
+    // Blaze plugin uses the workspace module for all run/debug related tasks.
+    return ModuleManager.getInstance(project)
+        .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
   }
 
   @Override
   protected void handleModuleNotFound(String packageName) {
-    String noMatchingModuleMsg =
-        String.format(
-            "No android target with application ID (or package name) '%s' found in the current"
-                + " project.\n"
-                + "Please ensure a matching target is included in project view (Blaze > Project"
-                + " > Open Project View File).",
-            packageName);
+    // Can only happen if the workspace module is missing.  The workspace module should always
+    // be present as long as there's been a successful sync.
     ApplicationManager.getApplication()
         .invokeLater(
             () ->
-                Messages.showErrorDialog(noMatchingModuleMsg, "No Target Matching Debug Process"));
+                Messages.showErrorDialog(
+                    "Module information missing.\nPlease try again after a successful sync.",
+                    "Module Information Missing"));
   }
 
   @NotNull
