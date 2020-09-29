@@ -42,8 +42,6 @@ intellij_plugin_library(
         "android-studio-4.0": [],
         "android-studio-4.1": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
         "android-studio-4.2": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-        "intellij-2019.3": [],
-        "intellij-ue-2019.3": [],
         "intellij-2020.1": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
         "intellij-ue-2020.1": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
         "clion-2019.3": [],

@@ -20,22 +20,6 @@ INDIRECT_IJ_PRODUCTS = {
 }
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2019.3": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2019_3",
-    ),
-    "intellij-2019.3-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2019_3",
-    ),
-    "intellij-ue-2019.3": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2019_3",
-    ),
-    "intellij-ue-2019.3-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2019_3",
-    ),
     "intellij-2020.1": struct(
         ide = "intellij",
         directory = "intellij_ce_2020_1",

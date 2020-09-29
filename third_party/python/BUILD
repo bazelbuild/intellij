@@ -8,8 +8,6 @@ java_library(
     name = "python_internal",
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-2019.3": ["@python_2019_3//:python"],
-        "intellij-ue-2019.3": ["@python_2019_3//:python"],
         "intellij-2020.1": ["@python_2020_1//:python"],
         "intellij-ue-2020.1": ["@python_2020_1//:python"],
         "clion-2019.3": ["@clion_2019_3//:python"],
