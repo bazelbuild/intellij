@@ -18,9 +18,14 @@ package com.google.idea.blaze.android.run.runner;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;
-import com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebugger;
+import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 
 /** Provides android debuggers and debugger states for blaze projects. */
 public interface BlazeAndroidDebuggerService {
@@ -44,24 +49,44 @@ public interface BlazeAndroidDebuggerService {
   /** Default debugger service. */
   class DefaultDebuggerService implements BlazeAndroidDebuggerService {
     private final Project project;
+    private final boolean isMac;
 
     public DefaultDebuggerService(Project project) {
+      this(project, SystemInfo.isMac);
+    }
+
+    @VisibleForTesting
+    public DefaultDebuggerService(Project project, boolean isMac) {
       this.project = project;
+      this.isMac = isMac;
     }
 
     @Override
     public AndroidDebugger getDebugger(boolean isNativeDebuggingEnabled) {
-      return isNativeDebuggingEnabled
-          ? new BlazeNativeAndroidDebugger()
-          : new AndroidJavaDebugger();
+      return isNativeDebuggingEnabled ? new BlazeAutoAndroidDebugger() : new AndroidJavaDebugger();
     }
 
     @Override
     public AndroidDebuggerState getDebuggerState(AndroidDebugger debugger) {
-      if (debugger instanceof BlazeNativeAndroidDebugger) {
-        return ((BlazeNativeAndroidDebugger) debugger).createState(project);
+      AndroidDebuggerState debuggerState = debugger.createState();
+      if (debuggerState instanceof NativeAndroidDebuggerState) {
+        NativeAndroidDebuggerState nativeState = (NativeAndroidDebuggerState) debuggerState;
+        String workingDirPath = WorkspaceRoot.fromProject(project).directory().getPath();
+        nativeState.setWorkingDir(workingDirPath);
+
+        // "/proc/self/cwd" used by linux built binaries isn't valid on MacOS.
+        if (isMac) {
+          String sourceMapToWorkspaceRootCommand =
+              "settings set target.source-map /proc/self/cwd/ " + workingDirPath;
+          ImmutableList<String> startupCommands =
+              ImmutableList.<String>builder()
+                  .addAll(nativeState.getUserStartupCommands())
+                  .add(sourceMapToWorkspaceRootCommand)
+                  .build();
+          nativeState.setUserStartupCommands(startupCommands);
+        }
       }
-      return debugger.createState();
+      return debuggerState;
     }
   }
 }
