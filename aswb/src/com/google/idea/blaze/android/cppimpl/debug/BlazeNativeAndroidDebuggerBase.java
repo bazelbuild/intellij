@@ -32,7 +32,12 @@ import com.intellij.openapi.project.Project;
  * </ul>
  */
 public class BlazeNativeAndroidDebuggerBase extends NativeAndroidDebugger {
-  public static final String ID = Blaze.defaultBuildSystemName() + "Native";
+  /**
+   * This ID needs to be lexicographically larger than "Java" so it come after the "Java" debugger
+   * when sorted lexicographically in the "Attach Debugger to Android Process" dialog. See {@link
+   * org.jetbrains.android.actions.AndroidProcessChooserDialog#populateDebuggerTypeCombo}.
+   */
+  public static final String ID = "Native" + Blaze.defaultBuildSystemName();
 
   @Override
   public String getId() {

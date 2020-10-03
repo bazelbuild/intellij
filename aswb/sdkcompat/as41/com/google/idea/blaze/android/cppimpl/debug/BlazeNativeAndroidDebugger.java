@@ -54,8 +54,6 @@ import org.jetbrains.annotations.Nullable;
  * #api4.0
  */
 public class BlazeNativeAndroidDebugger extends BlazeNativeAndroidDebuggerBase {
-  public static final String ID = Blaze.defaultBuildSystemName() + "Native";
-
   @Override
   @Nullable
   public Module findModuleForProcess(Project project, String packageName) {
