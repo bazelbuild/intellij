@@ -296,10 +296,12 @@ public final class BlazeJavaWorkspaceImporter {
         workspaceBuilder.buildOutputJars.add(classJar);
       }
     }
-    workspaceBuilder.generatedJarsFromSourceTargets.addAll(
-        javaIdeInfo.getGeneratedJars().stream()
-            .map(jar -> new BlazeJarLibrary(jar, targetKey))
-            .collect(toList()));
+    if (augmenters.stream().allMatch(argument -> argument.shouldAttachGenJar(target))) {
+      workspaceBuilder.generatedJarsFromSourceTargets.addAll(
+          javaIdeInfo.getGeneratedJars().stream()
+              .map(jar -> new BlazeJarLibrary(jar, targetKey))
+              .collect(toList()));
+    }
     if (javaIdeInfo.getFilteredGenJar() != null) {
       workspaceBuilder.generatedJarsFromSourceTargets.add(
           new BlazeJarLibrary(javaIdeInfo.getFilteredGenJar(), targetKey));

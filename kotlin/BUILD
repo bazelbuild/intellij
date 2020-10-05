@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
@@ -12,6 +10,8 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+
+licenses(["notice"])
 
 java_library(
     name = "kotlin",
@@ -69,6 +69,8 @@ intellij_unit_test_suite(
         ":kotlin",
         "//base",
         "//base:unit_test_utils",
+        "//common/experiments",
+        "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:kotlin_for_tests",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",

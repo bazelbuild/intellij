@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.sync.importer;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth8.assertThat;
 import static org.junit.Assert.assertNotNull;
 
 import com.google.common.collect.ImmutableList;
@@ -89,6 +90,7 @@ import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1524,7 +1526,67 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testSyncAugmenter() {
+  public void testSyncAugmenter_notAttachGenerateJar() {
+    augmenters.registerExtension(
+        new BlazeJavaSyncAugmenter() {
+
+          @Override
+          public void addJarsForSourceTarget(
+              WorkspaceLanguageSettings workspaceLanguageSettings,
+              ProjectViewSet projectViewSet,
+              TargetIdeInfo target,
+              Collection<BlazeJarLibrary> jars,
+              Collection<BlazeJarLibrary> genJars) {
+            if (target.getKey().getLabel().equals(Label.create("//java/example:kotlinlib"))) {
+              jars.add(
+                  new BlazeJarLibrary(
+                      LibraryArtifact.builder().setInterfaceJar(gen("source.jar")).build(),
+                      target.getKey()));
+            }
+          }
+
+          @Override
+          public boolean shouldAttachGenJar(TargetIdeInfo target) {
+            return !target.getKey().getLabel().equals(Label.create("//java/example:kotlinlib"));
+          }
+        });
+
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/example:kotlinlib")
+                    .setBuildFile(source("java/example/BUILD"))
+                    .setKind("java_library")
+                    .addSource(source("Source.java"))
+                    .addDependency("//java/lib:lib")
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addGeneratedJar(
+                                LibraryArtifact.builder().setInterfaceJar(gen("generated.jar")))))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/lib:lib")
+                    .setBuildFile(source("java/lib/BUILD"))
+                    .setKind("java_library")
+                    .addSource(source("Lib.java"))
+                    .setJavaInfo(JavaIdeInfo.builder()));
+
+    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    assertThat(
+            result.libraries.values().stream().map(BlazeJavaWorkspaceImporterTest::libraryFileName))
+        .containsExactly("source.jar");
+  }
+
+  @Test
+  public void testSyncAugmenter_attachGeneratedJar() {
     augmenters.registerExtension(
         (workspaceLanguageSettings, projectViewSet, target, jars, genJars) -> {
           if (target.getKey().getLabel().equals(Label.create("//java/example:source"))) {
@@ -1551,7 +1613,10 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                     .setKind("java_library")
                     .addSource(source("Source.java"))
                     .addDependency("//java/lib:lib")
-                    .setJavaInfo(JavaIdeInfo.builder()))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addGeneratedJar(
+                                LibraryArtifact.builder().setInterfaceJar(gen("generated.jar")))))
             .addTarget(
                 TargetIdeInfo.builder()
                     .setLabel("//java/lib:lib")
@@ -1562,13 +1627,10 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     assertThat(
-            result
-                .libraries
-                .values()
-                .stream()
+            result.libraries.values().stream()
                 .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
                 .collect(Collectors.toList()))
-        .containsExactly("source.jar");
+        .containsExactly("source.jar", "generated.jar");
   }
 
   /* Utility methods */

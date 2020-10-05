@@ -39,4 +39,14 @@ public interface BlazeJavaSyncAugmenter {
       TargetIdeInfo target,
       Collection<BlazeJarLibrary> jars,
       Collection<BlazeJarLibrary> genJars);
+
+  /**
+   * Return true when generated jar should be attached with workspace. This function provide ability
+   * to not attach generated jar for specific target.
+   *
+   * <p>TODO(b/157683101): remove once https://youtrack.jetbrains.com/issue/KT-24309 is fixed.
+   */
+  default boolean shouldAttachGenJar(TargetIdeInfo target) {
+    return true;
+  }
 }
