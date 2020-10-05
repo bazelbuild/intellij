@@ -23,7 +23,6 @@ import com.android.tools.idea.run.editor.AndroidDebuggerInfoProvider;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
-import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
 import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -71,7 +70,8 @@ public class DebuggerInfoProviderTest extends BlazeAndroidIntegrationTestCase {
   public void getDebuggerFromProvider_withNativeDebugging_returnsBlazeAndroidNativeDebugger() {
     AndroidDebugger debugger =
         debuggerInfoProvider.getSelectedAndroidDebugger(createAndroidBinaryRunConfiguration(true));
-    assertThat(debugger).isInstanceOf(BlazeAutoAndroidDebugger.class);
+    // Always prefer "Java" debugger for the "Connect Debugger to Android Process" dialog.
+    assertThat(debugger).isInstanceOf(AndroidJavaDebugger.class);
   }
 
   private BlazeCommandRunConfiguration createAndroidBinaryRunConfiguration(

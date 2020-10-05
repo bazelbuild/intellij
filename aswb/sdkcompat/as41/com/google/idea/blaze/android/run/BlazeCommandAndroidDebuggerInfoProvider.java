@@ -53,12 +53,9 @@ public class BlazeCommandAndroidDebuggerInfoProvider implements AndroidDebuggerI
   @Nullable
   @Override
   public AndroidDebugger getSelectedAndroidDebugger(RunConfiguration configuration) {
-    BlazeAndroidRunConfigurationCommonState state = getCommonState(configuration);
-    if (state == null) {
-      return null;
-    }
-    return BlazeAndroidDebuggerService.getInstance(configuration.getProject())
-        .getDebugger(state.isNativeDebuggingEnabled());
+    // b/170159822 Always return java debugger because BlazeAutoAndroidDebugger doesn't work and
+    //             users likely want the java debugger not the native debugger.
+    return new AndroidJavaDebugger();
   }
 
   @Nullable
