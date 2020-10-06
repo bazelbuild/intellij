@@ -1,6 +1,7 @@
 package com.google.idea.sdkcompat.general;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.dvcs.branch.BranchType;
 import com.intellij.dvcs.branch.DvcsBranchManager;
 import com.intellij.dvcs.branch.DvcsBranchSettings;
@@ -8,11 +9,13 @@ import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -20,6 +23,7 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.platform.PlatformProjectOpenProcessor;
@@ -29,6 +33,7 @@ import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.ui.EditorTextField;
 import com.intellij.usages.Usage;
 import com.intellij.util.Processor;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
 import javax.annotation.Nullable;
@@ -131,7 +136,7 @@ public final class BaseSdkCompat {
         allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
   }
 
-  /** #api193: project opening requirements changed in 2020.1. */
+  /** #api201: project opening API changed in 2020.2. */
   public static void openProject(Project project, Path projectFile) {
     PlatformProjectOpenProcessor.openExistingProject(
         /* file= */ projectFile, /* projectDir= */ projectFile, new OpenProjectTask(project));
@@ -139,4 +144,15 @@ public final class BaseSdkCompat {
 
   /** #api193: auto-disposed with UI component in 2020.1+ */
   public static void disposeEditorTextField(EditorTextField field) {}
+
+  /** #api201: changed in 2020.2 */
+  public static boolean isDisabledPlugin(PluginId id) {
+    return PluginManagerCore.getDisabledPlugins().contains(id.getIdString());
+  }
+
+  /** #api201: changed in 2020.2 */
+  public static Charset guessCharsetFromVcsRevisionData(
+      Project project, byte[] revisionContent, FilePath filePath) {
+    return DiffContentFactoryImpl.guessCharset(revisionContent, filePath);
+  }
 }
