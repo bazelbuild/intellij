@@ -1,5 +1,7 @@
 package com.google.idea.sdkcompat.general;
 
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.dvcs.branch.BranchType;
@@ -31,13 +33,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.usages.Usage;
+import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
+import javax.swing.JComponent;
 
 /** Provides SDK compatibility shims for base plugin API classes, available to all IDEs. */
 public final class BaseSdkCompat {
@@ -97,6 +103,18 @@ public final class BaseSdkCompat {
         ViewSettings settings);
   }
 
+  /** #api201: wildcard generics added in 2020.2. */
+  public interface LineMarkerProviderAdapter extends LineMarkerProvider {
+    @Override
+    default void collectSlowLineMarkers(
+        List<PsiElement> elements, Collection<LineMarkerInfo> result) {
+      doCollectSlowLineMarkers(elements, result);
+    }
+
+    void doCollectSlowLineMarkers(
+        List<? extends PsiElement> elements, Collection<? super LineMarkerInfo<?>> result);
+  }
+
   /** #api193: changed in 2020.1 */
   public static final String SCRATCHES_SCOPE_NAME = ScratchesNamedScope.scratchesAndConsoles();
 
@@ -154,5 +172,16 @@ public final class BaseSdkCompat {
   public static Charset guessCharsetFromVcsRevisionData(
       Project project, byte[] revisionContent, FilePath filePath) {
     return DiffContentFactoryImpl.guessCharset(revisionContent, filePath);
+  }
+
+  /** #api201: ContentUtilEx changed in 2020.2 */
+  public static void addTabbedContent(
+      ContentManager manager,
+      JComponent contentComponent,
+      String groupPrefix,
+      String tabName,
+      boolean select,
+      @Nullable Disposable childDisposable) {
+    ContentUtilEx.addTabbedContent(manager, contentComponent, groupPrefix, tabName, select);
   }
 }
