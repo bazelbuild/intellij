@@ -14,6 +14,15 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.1.4/ideaIC-2020.1.4.zip",
 )
 
+# The plugin api for IntelliJ 2020.1. This is required to build IJwB,
+# and run integration tests.
+http_archive(
+    name = "intellij_ce_2020_2",
+    build_file = "@//intellij_platform_sdk:BUILD.idea202",
+    sha256 = "4fbaa21efdfbfcf75074d8e70509cb94dbc1c3181e921f0920582ce5fa469908",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.2.2/ideaIC-2020.2.2.zip",
+)
+
 # The plugin api for IntelliJ UE 2020.1. This is required to run UE-specific
 # integration tests.
 http_archive(
