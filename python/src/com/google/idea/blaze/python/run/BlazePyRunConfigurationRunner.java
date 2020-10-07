@@ -151,7 +151,10 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
             Collections.addAll(modifiedPatchers, patchers);
           }
           modifiedPatchers.add(applyHelperPydevFlags);
-          return super.startProcess(starter, modifiedPatchers.toArray(new CommandLinePatcher[0]));
+          ProcessHandler process =
+              super.startProcess(starter, modifiedPatchers.toArray(new CommandLinePatcher[0]));
+          BlazePyDebugHelper.attachProcessListeners(target, process);
+          return process;
         }
 
         @Override

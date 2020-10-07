@@ -18,6 +18,7 @@ package com.google.idea.blaze.python.run;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
@@ -54,15 +55,27 @@ public interface BlazePyDebugHelper {
     return null;
   }
 
-  ImmutableList<String> getBlazeDebugFlags(Project project, TargetExpression target);
+  static void attachProcessListeners(TargetExpression target, ProcessHandler process) {
+    for (BlazePyDebugHelper provider : EP_NAME.getExtensions()) {
+      provider.attachListeners(target, process);
+    }
+  }
 
-  void patchBlazeDebugCommandline(
-      Project project, TargetExpression target, GeneralCommandLine commandLine);
+  default ImmutableList<String> getBlazeDebugFlags(Project project, TargetExpression target) {
+    return ImmutableList.of();
+  }
+
+  default void patchBlazeDebugCommandline(
+      Project project, TargetExpression target, GeneralCommandLine commandLine) {}
 
   /**
    * Attempts to check whether the given target can be debugged by the Blaze plugin. If there's a
    * known problem, returns an error message with the details.
    */
   @Nullable
-  String validatePyDebugTarget(Project project, @Nullable TargetExpression target);
+  default String validatePyDebugTarget(Project project, @Nullable TargetExpression target) {
+    return null;
+  }
+
+  default void attachListeners(TargetExpression target, ProcessHandler process) {}
 }

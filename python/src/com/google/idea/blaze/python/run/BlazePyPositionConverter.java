@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.python.run;
 
+import com.google.idea.blaze.base.io.AbsolutePathPatcher.AbsolutePathPatcherUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -84,11 +85,11 @@ public class BlazePyPositionConverter implements PyPositionConverter {
   private static String convertFilePath(String filePath) {
     File file = new File(filePath);
     try {
-      return file.getCanonicalPath();
+      filePath = file.getCanonicalPath();
     } catch (IOException e) {
       logger.warn(e);
-      return filePath;
     }
+    return AbsolutePathPatcherUtil.fixPath(filePath);
   }
 
   private static VirtualFile getVirtualFile(String filePath) {
