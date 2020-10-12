@@ -18,11 +18,11 @@ package com.google.idea.blaze.base.dependencies;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
 import com.google.idea.blaze.base.query.BlazeQueryOutputBaseProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
+import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
@@ -41,6 +42,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
@@ -120,16 +122,21 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
             .build();
 
     BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(t -> true);
+    ByteArrayOutputStream stderr = new ByteArrayOutputStream();
     int retVal =
         ExternalTask.builder(WorkspaceRoot.fromProject(project))
             .addBlazeCommand(command)
             .context(context)
             .stdout(LineProcessingOutputStream.of(outputProcessor))
-            .stderr(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))
+            .stderr(stderr)
             .build()
             .run();
     if (retVal != 0 && retVal != 3) {
       // exit code of 3 represents a potentially expected, non-fatal error
+      // only display error output for non-3 exit code, when there's an unexpected error
+      Splitter.on('\n')
+          .split(stderr.toString())
+          .forEach(line -> context.output(PrintOutput.output(line)));
       return null;
     }
     return outputProcessor.getTargets();
