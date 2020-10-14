@@ -81,7 +81,6 @@ java_library(
 java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "android-studio-4.0": glob(["sdkcompat/as40/**/*.java"]),
         "android-studio-4.1": glob(["sdkcompat/as41/**/*.java"]),
         "android-studio-4.2": glob(["sdkcompat/as42/**/*.java"]),
     }),
@@ -135,12 +134,9 @@ intellij_integration_test_suite(
             "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
             "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
             "tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
+            "tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
         ],
-    ) + select_for_plugin_api({
-        "android-studio-4.0": [],
-        "android-studio-4.1": ["tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java"],
-        "android-studio-4.2": ["tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java"],
-    }),
+    ),
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [
