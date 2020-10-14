@@ -181,7 +181,7 @@ config_setting(
 config_setting(
     name = "android-studio-4.2",
     values = {
-        "define": "ij_product=android-studio-4.1",
+        "define": "ij_product=android-studio-4.2",
     },
 )
 
