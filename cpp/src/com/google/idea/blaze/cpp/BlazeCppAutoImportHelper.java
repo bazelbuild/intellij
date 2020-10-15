@@ -17,6 +17,7 @@ package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.cpp.IncludedHeadersRootCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,7 +86,7 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
         continue;
       }
       IncludedHeadersRoot includedHeadersRoot = (IncludedHeadersRoot) root;
-      if (asUserHeader != includedHeadersRoot.isUserHeaders()) {
+      if (asUserHeader != IncludedHeadersRootCompat.isUserHeaders(includedHeadersRoot)) {
         continue;
       }
       VirtualFile rootBase = root.getVirtualFile();

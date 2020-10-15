@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.sdkcompat.cpp.IncludedHeadersRootCompat;
 import com.google.idea.testing.cidr.StubOCResolveConfiguration;
 import com.google.idea.testing.cidr.StubOCWorkspace;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -29,7 +30,6 @@ import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
-import com.jetbrains.cidr.lang.workspace.headerRoots.IncludedHeadersRoot;
 import java.util.List;
 import org.junit.Before;
 
@@ -97,7 +97,7 @@ public class BlazeCppResolvingTestCase extends BlazeCppIntegrationTestCase {
   private HeadersSearchRoot searchRootFromExecRoot(
       ExecutionRootPathResolver resolver, ExecutionRootPath path, boolean isUserHeader) {
     VirtualFile vf = fileSystem.findFile(resolver.resolveExecutionRootPath(path).getAbsolutePath());
-    return IncludedHeadersRoot.create(getProject(), vf, /* recursive */ false, isUserHeader);
+    return IncludedHeadersRootCompat.create(getProject(), vf, /* recursive */ false, isUserHeader);
   }
 
   private void resetFileSymbols(OCFile file) {
