@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.sdkcompat.cpp.OCWorkspaceEventCompat;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -373,10 +374,11 @@ public final class BlazeCWorkspace implements ProjectComponent {
             return;
           }
           OCWorkspaceEventImpl event =
-              new OCWorkspaceEventImpl(
+              OCWorkspaceEventCompat.newEvent(
                   /* resolveConfigurationsChanged= */ true,
                   /* sourceFilesChanged= */ true,
-                  /* compilerSettingsChanged= */ true);
+                  /* compilerSettingsChanged= */ true,
+                  /* clientVersionChanged */ false);
           ((OCWorkspaceModificationTrackersImpl)
                   OCWorkspace.getInstance(project).getModificationTrackers())
               .fireWorkspaceChanged(event);
