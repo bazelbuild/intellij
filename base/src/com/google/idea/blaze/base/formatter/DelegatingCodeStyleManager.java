@@ -204,4 +204,9 @@ abstract class DelegatingCodeStyleManager extends CodeStyleManager
   public <T> T performActionWithFormatterDisabled(Computable<T> r) {
     return delegate.performActionWithFormatterDisabled(r);
   }
+
+  @Override
+  public void scheduleReformatWhenSettingsComputed(PsiFile file) {
+    delegate.scheduleReformatWhenSettingsComputed(file);
+  }
 }
