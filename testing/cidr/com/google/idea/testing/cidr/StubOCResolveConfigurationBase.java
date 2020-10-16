@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCFileTypeHelpers;
 import com.jetbrains.cidr.lang.OCLanguageKind;
-import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCLanguageKindCalculator;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
@@ -37,13 +36,13 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** Stub {@link OCResolveConfiguration} for testing. */
-public class StubOCResolveConfiguration extends UserDataHolderBase
+public abstract class StubOCResolveConfigurationBase extends UserDataHolderBase
     implements OCResolveConfiguration {
 
   private final Project project;
   private final StubOCCompilerSettings compilerSettings;
 
-  StubOCResolveConfiguration(Project project) {
+  StubOCResolveConfigurationBase(Project project) {
     this.project = project;
     this.compilerSettings = new StubOCCompilerSettings(project);
   }
@@ -76,11 +75,6 @@ public class StubOCResolveConfiguration extends UserDataHolderBase
   @Override
   public String getDisplayName() {
     return getName();
-  }
-
-  @Override
-  public String getFileSeparators() {
-    return CidrToolEnvironment.UNIX_FILE_SEPARATORS;
   }
 
   @Override

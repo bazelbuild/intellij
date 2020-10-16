@@ -434,7 +434,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     TransactionGuard.getInstance()
         .submitTransactionAndWait(
             () -> {
-              ApplicationManager.getApplication().runWriteAction(model::commit);
+              ApplicationManager.getApplication().runWriteAction((Runnable) model::commit);
             });
     return issues;
   }
