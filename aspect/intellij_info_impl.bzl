@@ -419,7 +419,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     if hasattr(ctx.rule.attr, "copts"):
         target_copts += ctx.rule.attr.copts
     if hasattr(semantics, "cc") and hasattr(semantics.cc, "get_default_copts"):
-        target_copts += semantics.cc.get_default_copts(ctx)
+        target_copts += semantics.cc.get_default_copts(target, ctx)
 
     target_copts = [expand_make_variables("copt", copt, ctx) for copt in target_copts]
 
