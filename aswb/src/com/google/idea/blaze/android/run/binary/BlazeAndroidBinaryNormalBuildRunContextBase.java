@@ -35,7 +35,6 @@ import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.ApplyChangesTask;
 import com.android.tools.idea.run.tasks.ApplyCodeChangesTask;
-import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchStatus;
@@ -44,6 +43,7 @@ import com.android.tools.idea.run.util.SwapInfo.SwapType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
@@ -155,7 +155,8 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
             DeploymentConfiguration.getInstance().APPLY_CODE_CHANGES_FALLBACK_TO_RUN);
       }
     }
-    return DeployTasksCompat.createDeployTask(project, filesToInstall, launchOptions);
+    return BlazeAndroidDeploymentService.getInstance(project)
+        .getDeployTask(filesToInstall, launchOptions);
   }
 
   @Nullable

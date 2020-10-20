@@ -28,13 +28,13 @@ import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerCompat;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.tasks.DebugConnectorTask;
-import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeApkBuildStepMobileInstall;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
@@ -167,7 +167,8 @@ class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
         ImmutableMap<String, List<File>> filesToInstall =
             getFilesToInstall(device, launchOptions, apkProvider);
         return ImmutableList.of(
-            DeployTasksCompat.createDeployTask(project, filesToInstall, launchOptions));
+            BlazeAndroidDeploymentService.getInstance(project)
+                .getDeployTask(filesToInstall, launchOptions));
       case MOBILE_INSTALL:
         return ImmutableList.of();
     }
