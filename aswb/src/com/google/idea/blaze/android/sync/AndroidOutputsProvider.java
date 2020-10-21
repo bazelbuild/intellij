@@ -17,7 +17,6 @@ package com.google.idea.blaze.android.sync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
-import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -25,8 +24,6 @@ import com.google.idea.blaze.base.model.OutputsProvider;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Used to track blaze artifacts relevant to android projects. */
@@ -92,25 +89,11 @@ public class AndroidOutputsProvider implements OutputsProvider {
       return target.getJavaToolchainIdeInfo().getJavacJars();
     }
     if (target.getAndroidIdeInfo() != null) {
-      return getAndroidSources(target.getAndroidIdeInfo());
+      ArtifactLocation manifest = target.getAndroidIdeInfo().getManifest();
+      if (manifest != null) {
+        return ImmutableList.of(manifest);
+      }
     }
     return ImmutableList.of();
-  }
-
-  private static Collection<ArtifactLocation> getAndroidSources(AndroidIdeInfo androidInfo) {
-    Set<ArtifactLocation> fileSet = new HashSet<>();
-
-    ArtifactLocation manifest = androidInfo.getManifest();
-      if (manifest != null) {
-        fileSet.add(manifest);
-      }
-    fileSet.addAll(androidInfo.getResources());
-    for (AndroidResFolder androidResFolder : androidInfo.getResFolders()) {
-      fileSet.add(androidResFolder.getRoot());
-      if (androidResFolder.getAar() != null) {
-        fileSet.add(androidResFolder.getAar());
-      }
-    }
-    return fileSet;
   }
 }

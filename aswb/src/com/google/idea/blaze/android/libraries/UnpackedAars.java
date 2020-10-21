@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
+import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
@@ -37,10 +38,12 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
+import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -95,6 +98,7 @@ import javax.annotation.Nullable;
 public class UnpackedAars {
   private static final Logger logger = Logger.getInstance(UnpackedAars.class);
 
+  private final Project project;
   private final File cacheDir;
 
   /** The state of the cache as of the last call to {@link #readFileState}. */
@@ -107,6 +111,7 @@ public class UnpackedAars {
   public UnpackedAars(Project project) {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    this.project = project;
     this.cacheDir = getCacheDir(importSettings);
   }
 
@@ -166,6 +171,17 @@ public class UnpackedAars {
 
       Set<String> updatedKeys =
           FileCacheDiffer.findUpdatedOutputs(aarOutputs, cacheFiles, previousOutputs).keySet();
+      Set<BlazeArtifact> artifactsToDownload = new HashSet<>();
+
+      for (String key : updatedKeys) {
+        artifactsToDownload.add(projectState.get(key).aar);
+        BlazeArtifact jar = projectState.get(key).jar;
+        // jar file is introduced as a separate artifact (not jar in aar) which asks to download
+        // separately. Only update jar when we decide that aar need to be updated.
+        if (jar != null) {
+          artifactsToDownload.add(jar);
+        }
+      }
 
       Set<String> removedKeys = new HashSet<>();
       if (removeMissingFiles) {
@@ -174,6 +190,18 @@ public class UnpackedAars {
                 .filter(file -> !projectState.containsKey(file))
                 .collect(toImmutableSet());
       }
+
+      // Prefetch all libraries to local before reading and copying content
+      ListenableFuture<?> downloadArtifactsFuture =
+          RemoteArtifactPrefetcher.getInstance()
+              .downloadArtifacts(
+                  /* projectName= */ project.getName(),
+                  /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(artifactsToDownload));
+
+      FutureUtil.waitForFuture(context, downloadArtifactsFuture)
+          .timed("FetchAars", EventType.Prefetching)
+          .withProgressMessage("Fetching aar files...")
+          .run();
 
       // update cache files, and remove files if required
       List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(projectState, updatedKeys));
