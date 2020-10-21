@@ -838,6 +838,7 @@ def _collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
     ide_info["android_aar_ide_info"] = struct(
         aar = artifact_location(aar_file),
     )
+    update_sync_output_groups(output_groups, "intellij-resolve-android", depset([aar_file]))
     return True
 
 def build_test_info(ctx):
