@@ -33,7 +33,9 @@ java_library(
         "clion-2020.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-2020.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-ue-2020.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]),
-        "default": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]),
+        "intellij-2020.2": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]),
+        "intellij-ue-2020.2": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]),
+        "default": [],
     }),
     deps = [
         "//common/experiments",
