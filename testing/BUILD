@@ -23,9 +23,17 @@ java_library(
                ]),
                default = [],
            ) + select_for_plugin_api({
-        "android-studio-4.1": ["testcompat/v201/com/google/idea/testing/cidr/StubOCResolveConfiguration.java"],
-        "android-studio-4.2": ["testcompat/v201/com/google/idea/testing/cidr/StubOCResolveConfiguration.java"],
-        "default": [],
+        "android-studio-4.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]) + [
+            "testcompat/v201/com/google/idea/testing/cidr/StubOCResolveConfiguration.java",
+        ],
+        "android-studio-4.2": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]) + [
+            "testcompat/v201/com/google/idea/testing/cidr/StubOCResolveConfiguration.java",
+        ],
+        "clion-2019.3": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]),
+        "clion-2020.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]),
+        "intellij-2020.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]),
+        "intellij-ue-2020.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]),
+        "default": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]),
     }),
     deps = [
         "//common/experiments",
