@@ -191,9 +191,11 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
               return true;
             }
 
+            // #api201: Super method uses different generic type for list in 2020.2.
+            @SuppressWarnings({"rawtypes", "unchecked"})
             @Nullable
             @Override
-            public List<String> getBuildingTarget() {
+            public List getBuildingTarget() {
               return null;
             }
 
