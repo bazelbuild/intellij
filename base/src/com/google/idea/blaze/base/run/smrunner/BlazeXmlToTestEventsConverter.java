@@ -351,7 +351,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       processor.onTestOutput(new TestOutputEvent(displayName, test.sysOut, true));
     }
     if (test.sysErr != null) {
-      processor.onTestOutput(new TestOutputEvent(displayName, test.sysErr, true));
+      processor.onTestOutput(new TestOutputEvent(displayName, test.sysErr, false));
     }
 
     if (isIgnored(test)) {
