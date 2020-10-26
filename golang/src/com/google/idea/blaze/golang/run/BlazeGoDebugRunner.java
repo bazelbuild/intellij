@@ -85,7 +85,7 @@ public class BlazeGoDebugRunner extends GoBuildingRunner {
             new XDebugProcessStarter() {
               @Override
               public XDebugProcess start(XDebugSession session) throws ExecutionException {
-                RemoteVmConnection connection = new DlvRemoteVmConnection(true);
+                RemoteVmConnection<?> connection = new DlvRemoteVmConnection(true);
                 XDebugProcess process =
                     new DlvDebugProcess(session, connection, executionResult, true, false);
                 connection.open(goState.getDebugAddress());

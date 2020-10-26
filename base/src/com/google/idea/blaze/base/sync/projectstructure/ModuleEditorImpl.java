@@ -68,7 +68,7 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
   }
 
   @Override
-  public Module createModule(String moduleName, ModuleType moduleType) {
+  public Module createModule(String moduleName, ModuleType<?> moduleType) {
     Module module = moduleModel.findModuleByName(moduleName);
     if (module == null) {
       File imlFile = new File(imlDirectory, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);

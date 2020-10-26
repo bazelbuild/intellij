@@ -81,7 +81,7 @@ public class ProjectViewParser {
 
     List<SectionParser> sectionParsers = Sections.getParsers();
     while (!parseContext.atEnd()) {
-      Section section = null;
+      Section<?> section = null;
       for (SectionParser sectionParser : sectionParsers) {
         section = sectionParser.parse(this, parseContext);
         if (section != null) {

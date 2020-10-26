@@ -53,7 +53,7 @@ public interface BlazeSyncPlugin {
    */
   interface ModuleEditor {
     /** Creates a new module and registers it with the module editor. */
-    Module createModule(String moduleName, ModuleType moduleType);
+    Module createModule(String moduleName, ModuleType<?> moduleType);
 
     /**
      * Edits a module. It will be committed when commit is called.
@@ -87,7 +87,7 @@ public interface BlazeSyncPlugin {
 
   /** @return The module type for the workspace given the workspace type. */
   @Nullable
-  default ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
+  default ModuleType<?> getWorkspaceModuleType(WorkspaceType workspaceType) {
     return null;
   }
 

@@ -21,7 +21,7 @@ import com.intellij.execution.configurations.coverage.CoverageEnabledConfigurati
 
 /** A run configuration wrapper needed by IntelliJ's coverage plugin. */
 public class BlazeCoverageEnabledConfiguration extends CoverageEnabledConfiguration {
-  public BlazeCoverageEnabledConfiguration(RunConfigurationBase configuration) {
+  public BlazeCoverageEnabledConfiguration(RunConfigurationBase<?> configuration) {
     super(configuration);
     setCoverageRunner(CoverageRunner.getInstance(BlazeCoverageRunner.class));
   }

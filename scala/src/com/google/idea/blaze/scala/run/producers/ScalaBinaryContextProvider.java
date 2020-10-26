@@ -63,7 +63,7 @@ class ScalaBinaryContextProvider implements BinaryContextProvider {
 
   @Nullable
   static ScObject getMainObject(ConfigurationContext context) {
-    Location location = context.getLocation();
+    Location<?> location = context.getLocation();
     if (location == null) {
       return null;
     }

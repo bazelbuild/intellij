@@ -88,7 +88,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
 
   @Nullable
   @Override
-  public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
+  public ModuleType<?> getWorkspaceModuleType(WorkspaceType workspaceType) {
     if (workspaceType == WorkspaceType.PYTHON && supportsPythonWorkspaceType()) {
       return PythonModuleTypeBase.getInstance();
     }

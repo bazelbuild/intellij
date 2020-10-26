@@ -647,12 +647,13 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
     }
   }
 
+  @SuppressWarnings("unchecked") // Instanceof check is right before cast.
   private static <T> List<T> getTopLevelNodesOfType(ASTNode node, Class<T> clazz) {
-    return (List)
-        Arrays.stream(node.getChildren(null))
-            .map(ASTNode::getPsi)
-            .filter(psiElement -> clazz.isInstance(psiElement))
-            .collect(Collectors.toList());
+    return Arrays.stream(node.getChildren(null))
+        .map(ASTNode::getPsi)
+        .filter(clazz::isInstance)
+        .map(psiElement -> (T) psiElement)
+        .collect(Collectors.toList());
   }
 
   private PsiElement[] getChildBuildPsis(ASTNode node) {

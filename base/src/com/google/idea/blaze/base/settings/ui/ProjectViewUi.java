@@ -182,9 +182,9 @@ public class ProjectViewUi {
   }
 
   private void setProjectViewText(String projectViewText) {
-    new WriteAction() {
+    new WriteAction<Object>() {
       @Override
-      protected void run(@NotNull Result result) throws Throwable {
+      protected void run(@NotNull Result<Object> result) {
         projectViewEditor.getDocument().setReadOnly(false);
         projectViewEditor.getDocument().setText(projectViewText);
       }

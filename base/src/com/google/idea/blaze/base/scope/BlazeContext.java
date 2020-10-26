@@ -170,6 +170,7 @@ public class BlazeContext {
   }
 
   /** Add matching scopes to {@param scopesCollector}. Search from {@param maxIndex} - 1 to 0. */
+  @SuppressWarnings("unchecked") // Instanceof check is right before cast.
   @VisibleForTesting
   <T extends BlazeScope> void getScopes(
       List<T> scopesCollector, Class<T> scopeClass, int maxIndex) {

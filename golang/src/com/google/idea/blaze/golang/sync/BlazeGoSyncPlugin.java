@@ -77,7 +77,7 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
 
   @Nullable
   @Override
-  public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
+  public ModuleType<?> getWorkspaceModuleType(WorkspaceType workspaceType) {
     return workspaceType == WorkspaceType.GO
         ? ModuleTypeManager.getInstance().getDefaultModuleType()
         : null;

@@ -25,28 +25,28 @@ import com.google.idea.blaze.base.projectview.section.sections.Sections;
 /** Section parser keywords accepted in project view files. */
 public class ProjectViewKeywords {
 
-  public static final ImmutableMap<String, ListSectionParser> LIST_KEYWORD_MAP =
+  public static final ImmutableMap<String, ListSectionParser<?>> LIST_KEYWORD_MAP =
       getListKeywordMap();
-  public static final ImmutableMap<String, ScalarSectionParser> SCALAR_KEYWORD_MAP =
+  public static final ImmutableMap<String, ScalarSectionParser<?>> SCALAR_KEYWORD_MAP =
       getScalarKeywordMap();
   public static final ImmutableMap<String, ItemType> ITEM_TYPES = getItemTypes();
 
-  private static ImmutableMap<String, ListSectionParser> getListKeywordMap() {
-    ImmutableMap.Builder<String, ListSectionParser> builder = ImmutableMap.builder();
+  private static ImmutableMap<String, ListSectionParser<?>> getListKeywordMap() {
+    ImmutableMap.Builder<String, ListSectionParser<?>> builder = ImmutableMap.builder();
     for (SectionParser parser : Sections.getParsers()) {
       if (parser instanceof ListSectionParser) {
-        builder.put(parser.getName(), (ListSectionParser) parser);
+        builder.put(parser.getName(), (ListSectionParser<?>) parser);
       }
     }
     return builder.build();
   }
 
   /** We get the parser so we have access to both the keyword and the divider char. */
-  private static ImmutableMap<String, ScalarSectionParser> getScalarKeywordMap() {
-    ImmutableMap.Builder<String, ScalarSectionParser> builder = ImmutableMap.builder();
+  private static ImmutableMap<String, ScalarSectionParser<?>> getScalarKeywordMap() {
+    ImmutableMap.Builder<String, ScalarSectionParser<?>> builder = ImmutableMap.builder();
     for (SectionParser parser : Sections.getParsers()) {
       if (parser instanceof ScalarSectionParser) {
-        builder.put(parser.getName(), (ScalarSectionParser) parser);
+        builder.put(parser.getName(), (ScalarSectionParser<?>) parser);
       }
     }
     return builder.build();

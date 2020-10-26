@@ -83,7 +83,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
             .map((s) -> s.replaceAll("JavaClass", "NewName"))
             .collect(Collectors.toSet());
 
-    assertThat(expectedNewStrings).containsExactlyElementsIn(newStrings);
+    assertThat(newStrings).containsExactlyElementsIn(expectedNewStrings);
   }
 
   @Test
@@ -313,6 +313,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
     assertThat(suggestions[0]).isEqualTo("build_defs.bzl");
   }
 
+  @SuppressWarnings("unchecked") // Instanceof check is right before cast.
   private static <T> List<T> findAllReferencingElementsOfType(
       PsiElement target, Class<T> referenceType) {
     return Arrays.stream(FindUsages.findAllReferences(target))

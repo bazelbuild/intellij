@@ -81,7 +81,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducer
       PsiClass psiClass = method.getContainingClass();
       return hasTestSubclasses(psiClass) ? new AbstractTestLocation(psiClass, method) : null;
     }
-    Location location = context.getLocation();
+    Location<?> location = context.getLocation();
     if (location == null) {
       return null;
     }

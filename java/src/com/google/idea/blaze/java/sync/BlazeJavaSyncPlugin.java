@@ -94,7 +94,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
 
   @Nullable
   @Override
-  public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
+  public ModuleType<?> getWorkspaceModuleType(WorkspaceType workspaceType) {
     if (workspaceType == WorkspaceType.JAVA) {
       return StdModuleTypes.JAVA;
     }

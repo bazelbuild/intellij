@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.lang.projectview.parser;
 
 import com.google.idea.blaze.base.lang.projectview.language.ProjectViewKeywords;
 import com.google.idea.blaze.base.lang.projectview.lexer.ProjectViewTokenType;
-import com.google.idea.blaze.base.lang.projectview.psi.ProjectViewElementType;
 import com.google.idea.blaze.base.lang.projectview.psi.ProjectViewElementTypes;
 import com.google.idea.blaze.base.projectview.section.ScalarSectionParser;
 import com.intellij.lang.PsiBuilder;
@@ -54,7 +53,7 @@ public class ProjectViewPsiParser {
       return;
     }
     if (currentToken() == ProjectViewTokenType.SCALAR_KEYWORD) {
-      ScalarSectionParser parser =
+      ScalarSectionParser<?> parser =
           ProjectViewKeywords.SCALAR_KEYWORD_MAP.get(builder.getTokenText());
       if (parser != null) {
         parseScalarSection(parser);
@@ -90,7 +89,7 @@ public class ProjectViewPsiParser {
     }
   }
 
-  private void parseScalarSection(ScalarSectionParser parser) {
+  private void parseScalarSection(ScalarSectionParser<?> parser) {
     boolean whitespaceDivider = builder.rawLookup(1) == ProjectViewTokenType.WHITESPACE;
     builder.advanceLexer();
 
@@ -189,11 +188,5 @@ public class ProjectViewPsiParser {
       }
       builder.advanceLexer();
     }
-  }
-
-  private void buildTokenElement(ProjectViewElementType type) {
-    PsiBuilder.Marker marker = builder.mark();
-    builder.advanceLexer();
-    marker.done(type);
   }
 }

@@ -108,7 +108,7 @@ public class PsiUtils {
   public static <T extends PsiElement> List<T> findAllChildrenOfClassRecursive(
       PsiElement parent, Class<T> psiClass) {
     List<T> result = Lists.newArrayList();
-    processChildrenOfType(parent, new CommonProcessors.CollectProcessor(result), psiClass);
+    processChildrenOfType(parent, new CommonProcessors.CollectProcessor<>(result), psiClass);
     return result;
   }
 
@@ -127,6 +127,7 @@ public class PsiUtils {
    *
    * @return true if processing was stopped by the processor
    */
+  @SuppressWarnings("unchecked") // Instanceof check is right before cast.
   private static <T extends PsiElement> boolean processChildrenOfType(
       PsiElement element, Processor<T> processor, Class<T> psiClass, boolean reverseOrder) {
     PsiElement child = reverseOrder ? element.getLastChild() : element.getFirstChild();
