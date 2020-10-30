@@ -29,6 +29,9 @@ import javax.annotation.Nullable;
 public interface SyncData<P extends Message> extends ProtoWrapper<P> {
   void insert(ProjectData.SyncState.Builder builder);
 
+  // SyncData#getClass omits generic types and hence we need to omit the generic type for the map
+  // key.
+  @SuppressWarnings("rawtypes")
   @Nullable
   static ImmutableMap<Class<? extends SyncData>, SyncData<?>> extract(
       ProjectData.SyncState syncState) {

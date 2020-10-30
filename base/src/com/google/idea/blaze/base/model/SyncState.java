@@ -23,6 +23,8 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Used to save arbitrary state with the sync task. */
+// SyncData#getClass omits generic types and hence we need to omit the generic type for the map key.
+@SuppressWarnings("rawtypes")
 public final class SyncState implements ProtoWrapper<ProjectData.SyncState> {
   private final ImmutableMap<Class<? extends SyncData>, SyncData<?>> syncStateMap;
 
