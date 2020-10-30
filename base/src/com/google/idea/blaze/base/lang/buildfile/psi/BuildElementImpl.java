@@ -25,8 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import java.lang.reflect.Array;
-import java.util.Arrays;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -51,34 +49,6 @@ public abstract class BuildElementImpl extends ASTWrapperPsiElement implements B
   @Override
   public <P extends PsiElement> P firstChildOfClass(Class<P> psiClass) {
     return findChildByClass(psiClass);
-  }
-
-  /**
-   * Returns the BuildElement child at the specified index, where index is calculated after
-   * filtering out non-BuildElement children.
-   *
-   * @return null if index >= number of BuildElement children
-   */
-  @Nullable
-  protected BuildElement getBuildElementChild(int index) {
-    BuildElement[] children = buildElementChildren();
-    return children.length <= index ? null : children[index];
-  }
-
-  public BuildElement[] buildElementChildren() {
-    return Arrays.stream(getNode().getChildren(null))
-        .map(ASTNode::getPsi)
-        .filter(psiElement -> psiElement instanceof BuildElement)
-        .toArray(BuildElement[]::new);
-  }
-
-  protected <T extends BuildElement> T[] childrenToPsi(TokenSet filterSet, T[] array) {
-    final ASTNode[] nodes = getNode().getChildren(filterSet);
-    T[] psiElements = (T[]) Array.newInstance(array.getClass().getComponentType(), nodes.length);
-    for (int i = 0; i < nodes.length; i++) {
-      psiElements[i] = (T) nodes[i].getPsi();
-    }
-    return psiElements;
   }
 
   /** Finds the n'th child of the specified type */
