@@ -36,7 +36,6 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
   private static final String KOTLIN_PLUGIN_ID = "org.jetbrains.kotlin";
   private static final String ANDROID_PLUGIN_ID = "org.jetbrains.android";
   private static final String GRADLE_PLUGIN_ID = "org.jetbrains.plugins.gradle";
-  private static final String JUNIT_PLUGIN_ID = "JUnit";
 
   private static final ImmutableList<String> KOTLIN_PRODUCERS =
       ImmutableList.of(
@@ -88,8 +87,7 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
       return ImmutableList.of();
     }
     ClassLoader loader = plugin.getPluginClassLoader();
-    return qualifiedClassNames
-        .stream()
+    return qualifiedClassNames.stream()
         .map((qualifiedName) -> loadClass(loader, qualifiedName))
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
