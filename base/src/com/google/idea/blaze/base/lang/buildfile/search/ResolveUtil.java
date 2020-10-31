@@ -60,7 +60,7 @@ public class ResolveUtil {
           }
         }
       } else if (parent instanceof StatementList) {
-        if (!visitChildAssignmentStatements((BuildElement) parent, (Processor) processor)) {
+        if (!visitChildAssignmentStatements((BuildElement) parent, processor)) {
           return;
         }
       }
@@ -98,7 +98,7 @@ public class ResolveUtil {
 
   /** @return false if processing was stopped */
   public static boolean visitChildAssignmentStatements(
-      BuildElement parent, Processor<TargetExpression> processor) {
+      BuildElement parent, Processor<BuildElement> processor) {
     for (AssignmentStatement stmt : parent.childrenOfClass(AssignmentStatement.class)) {
       TargetExpression target = stmt.getLeftHandSideExpression();
       if (target != null && !processor.process(target)) {
@@ -106,21 +106,6 @@ public class ResolveUtil {
       }
     }
     return true;
-  }
-
-  @Nullable
-  public static TargetExpression searchChildAssignmentStatements(BuildElement parent, String name) {
-    TargetExpression[] resultHolder = new TargetExpression[1];
-    visitChildAssignmentStatements(
-        parent,
-        targetExpr -> {
-          if (name.equals(targetExpr.getName())) {
-            resultHolder[0] = targetExpr;
-            return false;
-          }
-          return true;
-        });
-    return resultHolder[0];
   }
 
   /**
