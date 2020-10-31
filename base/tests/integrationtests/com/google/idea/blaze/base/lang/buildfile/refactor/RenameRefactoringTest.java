@@ -83,7 +83,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
             .map((s) -> s.replaceAll("JavaClass", "NewName"))
             .collect(Collectors.toSet());
 
-    assertThat(expectedNewStrings).containsExactlyElementsIn(newStrings);
+    assertThat(newStrings).containsExactlyElementsIn(expectedNewStrings);
   }
 
   @Test
