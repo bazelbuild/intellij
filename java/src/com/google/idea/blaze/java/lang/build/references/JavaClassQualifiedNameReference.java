@@ -46,7 +46,7 @@ public class JavaClassQualifiedNameReference
               psiElement(Keyword.class)
                   .with(nameCondition(StandardPatterns.string().oneOf(JAVA_CLASS_STRING_TYPES))));
 
-  private static PatternCondition<PsiElementBase> nameCondition(final ElementPattern pattern) {
+  private static PatternCondition<PsiElementBase> nameCondition(final ElementPattern<?> pattern) {
     return new PatternConditionPlus<PsiElementBase, String>("_withPsiName", pattern) {
       @Override
       public boolean processValues(

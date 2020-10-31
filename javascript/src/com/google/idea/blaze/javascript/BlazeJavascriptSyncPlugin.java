@@ -54,7 +54,7 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
 
   @Nullable
   @Override
-  public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
+  public ModuleType<?> getWorkspaceModuleType(WorkspaceType workspaceType) {
     if (workspaceType == WorkspaceType.JAVASCRIPT) {
       return WebModuleType.getInstance();
     }

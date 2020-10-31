@@ -27,6 +27,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.GenericProgramRunner;
@@ -40,7 +41,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import javax.annotation.Nullable;
 
 /** Activates the 'debug' button, and delegates debugging to {@link SkylarkDebugProcess}. */
-class SkylarkDebugRunner extends GenericProgramRunner {
+class SkylarkDebugRunner extends GenericProgramRunner<RunnerSettings> {
 
   private static final Logger logger = Logger.getInstance(SkylarkDebugRunner.class);
 

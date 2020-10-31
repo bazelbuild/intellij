@@ -90,7 +90,7 @@ import org.jdom.Element;
  * A run configuration that builds a plugin jar via blaze, copies it to the SDK sandbox, then runs
  * IJ with the plugin loaded.
  */
-public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
+public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase<Object>
     implements BlazeRunConfiguration, ModuleRunConfiguration {
 
   private static final String TARGET_TAG = "blaze-target";

@@ -103,7 +103,7 @@ public class SkylarkDebugProcess extends XDebugProcess {
 
   @Override
   public XBreakpointHandler<?>[] getBreakpointHandlers() {
-    return new XBreakpointHandler[] {new SkylarkLineBreakpointHandler(this)};
+    return new XBreakpointHandler<?>[] {new SkylarkLineBreakpointHandler(this)};
   }
 
   @Override

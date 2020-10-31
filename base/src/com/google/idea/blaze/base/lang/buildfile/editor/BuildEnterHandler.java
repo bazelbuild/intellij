@@ -162,7 +162,7 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
     }
 
     if (parent instanceof BuildListType) {
-      BuildListType list = (BuildListType) parent;
+      BuildListType<?> list = (BuildListType<?>) parent;
       if (endsList(list, element) && element.getTextOffset() < offset) {
         return null;
       }
@@ -173,7 +173,7 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
         // take the minimum of the current line's indent and the current caret position
         return indentOfLineUpToCaret(doc, caretPosition.line, offset);
       }
-      BuildElement firstChild = ((BuildListType) parent).getFirstElement();
+      BuildElement firstChild = ((BuildListType<?>) parent).getFirstElement();
       if (firstChild != null && firstChild.getNode().getStartOffset() < offset) {
         return getIndent(doc, firstChild);
       }
@@ -214,7 +214,7 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
     return Math.min(indentOffset, caretOffset) - startOffset;
   }
 
-  private static boolean endsList(BuildListType list, PsiElement element) {
+  private static boolean endsList(BuildListType<?> list, PsiElement element) {
     String text = element.getText();
     return text.length() == 1 && list.getEndChars().contains(text.charAt(0));
   }

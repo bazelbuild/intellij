@@ -140,7 +140,7 @@ class DeployableJarRunConfigurationProducer
         && target.getJavaIdeInfo() != null;
   }
 
-  private void setDeployableJarGeneratorTask(RunConfigurationBase config) {
+  private void setDeployableJarGeneratorTask(RunConfigurationBase<?> config) {
     Project project = config.getProject();
     RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
     runManager.setBeforeRunTasks(

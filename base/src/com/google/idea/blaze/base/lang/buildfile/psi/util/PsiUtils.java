@@ -108,7 +108,7 @@ public class PsiUtils {
   public static <T extends PsiElement> List<T> findAllChildrenOfClassRecursive(
       PsiElement parent, Class<T> psiClass) {
     List<T> result = Lists.newArrayList();
-    processChildrenOfType(parent, new CommonProcessors.CollectProcessor(result), psiClass);
+    processChildrenOfType(parent, new CommonProcessors.CollectProcessor<>(result), psiClass);
     return result;
   }
 

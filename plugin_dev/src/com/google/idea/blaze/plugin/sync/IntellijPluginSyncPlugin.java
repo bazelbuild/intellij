@@ -50,7 +50,7 @@ public class IntellijPluginSyncPlugin implements BlazeSyncPlugin {
 
   @Nullable
   @Override
-  public ModuleType getWorkspaceModuleType(WorkspaceType workspaceType) {
+  public ModuleType<?> getWorkspaceModuleType(WorkspaceType workspaceType) {
     if (workspaceType == WorkspaceType.INTELLIJ_PLUGIN) {
       return StdModuleTypes.JAVA;
     }

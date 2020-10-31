@@ -101,7 +101,7 @@ public abstract class BlazeSelectOptionControl<T extends BlazeWizardOption> {
       optionUiEntryList.add(new OptionUiEntry<>(option, radioButton));
     }
 
-    OptionUiEntry selected = null;
+    OptionUiEntry<?> selected = null;
     String previouslyChosenOption = userSettings.get(getOptionKey(), null);
     if (previouslyChosenOption != null) {
       for (OptionUiEntry<T> entry : optionUiEntryList) {

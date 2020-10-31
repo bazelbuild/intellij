@@ -68,12 +68,12 @@ public final class BlazeCommandState implements RunConfigurationState {
   private static class BlazeCommandStateEditor implements RunConfigurationStateEditor {
     private final String buildSystemName;
 
-    private final ComboBox commandCombo;
+    private final ComboBox<?> commandCombo;
 
     BlazeCommandStateEditor(Project project) {
       buildSystemName = Blaze.buildSystemName(project);
       commandCombo =
-          new ComboBox(new DefaultComboBoxModel<>(BlazeCommandName.knownCommands().toArray()));
+          new ComboBox<>(new DefaultComboBoxModel<>(BlazeCommandName.knownCommands().toArray()));
       // Allow the user to manually specify an unlisted command.
       commandCombo.setEditable(true);
     }

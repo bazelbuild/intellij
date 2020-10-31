@@ -63,7 +63,7 @@ public class BlazeTreeStructureProvider implements TreeStructureProviderAdapter,
 
     Collection<AbstractTreeNode<?>> result = Lists.newArrayList();
     result.add(rootNode);
-    for (AbstractTreeNode treeNode : children) {
+    for (AbstractTreeNode<?> treeNode : children) {
       if (keepOriginalNode(treeNode)) {
         result.add(treeNode);
       }
@@ -75,7 +75,7 @@ public class BlazeTreeStructureProvider implements TreeStructureProviderAdapter,
    * We replace the project tree with our own list of nodes, but keep some of the originals
    * (external libraries, scratches).
    */
-  private static boolean keepOriginalNode(AbstractTreeNode node) {
+  private static boolean keepOriginalNode(AbstractTreeNode<?> node) {
     return node instanceof ExternalLibrariesNode
         || BaseSdkCompat.SCRATCHES_SCOPE_NAME.equals(node.getValue());
   }

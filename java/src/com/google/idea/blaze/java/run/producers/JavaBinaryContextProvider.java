@@ -63,7 +63,7 @@ public class JavaBinaryContextProvider implements BinaryContextProvider {
 
   @Nullable
   private static PsiClass getMainClass(ConfigurationContext context) {
-    Location location = context.getLocation();
+    Location<?> location = context.getLocation();
     if (location == null) {
       return null;
     }

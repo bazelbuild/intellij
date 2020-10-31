@@ -251,7 +251,7 @@ public final class BlazeEditProjectViewControl {
     ProjectView projectView = projectViewFile.projectView;
 
     // Sort default value providers to match the section order
-    List<SectionKey> sectionKeys =
+    List<SectionKey<?, ?>> sectionKeys =
         Sections.getParsers().stream().map(SectionParser::getSectionKey).collect(toList());
     List<ProjectViewDefaultValueProvider> defaultValueProviders =
         Lists.newArrayList(ProjectViewDefaultValueProvider.EP_NAME.getExtensions());
