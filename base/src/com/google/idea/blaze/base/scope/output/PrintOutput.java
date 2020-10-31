@@ -16,8 +16,6 @@
 package com.google.idea.blaze.base.scope.output;
 
 import com.google.idea.blaze.base.scope.Output;
-import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 /** Output that can be printed to a log. */
@@ -31,11 +29,7 @@ public class PrintOutput implements Output {
   public enum OutputType {
     NORMAL,
     LOGGED,
-    ERROR;
-
-    public static OutputType fromProcessOutputKey(Key outputKey) {
-      return outputKey == ProcessOutputTypes.STDERR ? ERROR : NORMAL;
-    }
+    ERROR
   }
 
   public PrintOutput(@NotNull String text, @NotNull OutputType outputType) {
