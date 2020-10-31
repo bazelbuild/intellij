@@ -176,6 +176,7 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
    */
   private static class DummyRunProfileState implements RunProfileState {
     @Override
+    @SuppressWarnings("rawtypes") // #api193: Use ProgramRunner<?> as super method from 2020.1 on.
     public ExecutionResult execute(Executor executor, ProgramRunner runner) {
       throw new RuntimeException("Unexpected code path");
     }

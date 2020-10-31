@@ -148,6 +148,7 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
   }
 
   @Override
+  @SuppressWarnings("rawtypes") // #api193: Use ProgramRunner<?> as super method from 2020.1 on.
   public ExecutionResult execute(Executor executor, ProgramRunner runner)
       throws ExecutionException {
     if (BlazeCommandRunConfigurationRunner.isDebugging(getEnvironment())) {

@@ -211,7 +211,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
 
     @Nullable
     @Override
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings("rawtypes") // #api193: Use ProgramRunner<?> as super method from 2020.1 on.
     public ExecutionResult execute(Executor executor, ProgramRunner runner) {
       return null;
     }
