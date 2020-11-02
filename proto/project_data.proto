@@ -20,7 +20,7 @@ syntax = "proto3";
 
 package blaze;
 
-import "third_party/bazel/src/main/protobuf/build.proto";
+import "bazel/src/main/protobuf/build.proto";
 import "proto/common.proto";
 import "proto/intellij_ide_info.proto";
 

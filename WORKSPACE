@@ -1,5 +1,6 @@
 workspace(name = "intellij_with_bazel")
 
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 
@@ -262,6 +263,12 @@ jvm_maven_import_external(
     artifact_sha256 = "524b43ea15ca97c68f10d5f417c4068dc88144b620d2203f0910441a769fd42f",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+git_repository(
+    name = "bazel",
+    branch = "master",
+    remote = "https://github.com/bazelbuild/bazel",
 )
 
 http_archive(
