@@ -242,7 +242,8 @@ public final class RemoteOutputsCache {
                       try (InputStream stream = artifact.getInputStream()) {
                         Files.copy(stream, destination, StandardCopyOption.REPLACE_EXISTING);
                       } catch (IOException e) {
-                        logger.warn(e);
+                        logger.warn(
+                            String.format("Fail to copy artifact %s to %s", artifact, cacheDir), e);
                       }
                     })));
     return futures;

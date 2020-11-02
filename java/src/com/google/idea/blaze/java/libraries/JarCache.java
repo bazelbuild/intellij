@@ -278,7 +278,8 @@ public class JarCache {
                       try {
                         copyLocally(artifact, cacheFileForKey(key));
                       } catch (IOException e) {
-                        logger.warn(e);
+                        logger.warn(
+                            String.format("Fail to copy artifact %s to %s", artifact, cacheDir), e);
                       }
                     })));
     return futures;
