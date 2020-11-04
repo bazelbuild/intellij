@@ -99,7 +99,7 @@ def _intellij_plugin_debug_target_impl(ctx):
         java_agent_deploy_files = [_build_deploy_info_file(f) for f in java_agent_deploy_files],
     )
     output = ctx.actions.declare_file(ctx.label.name + SUFFIX)
-    ctx.actions.write(output, deploy_info.to_proto())
+    ctx.actions.write(output, proto.encode_text(deploy_info))
 
     # We've already consumed any dependent intellij_plugin_debug_targets into our own,
     # do not build or report these
