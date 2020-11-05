@@ -1,0 +1,18 @@
+
+build --strategy=Scalac=remote
+build --action_env=PATH=/bin:/usr/bin:/usr/local/bin
+build --jobs=500
+build --remote_timeout=600
+build --crosstool_top=@buildbuddy_toolchain//:toolchain
+
+# Configuration to build and test Bazel on RBE on Ubuntu 16.04 with Java 8
+build --javabase=@buildbuddy_toolchain//:javabase_jdk8
+build --host_javabase=@buildbuddy_toolchain//:javabase_jdk8
+build --java_toolchain=@buildbuddy_toolchain//:toolchain_jdk8
+
+build --bes_results_url=https://app.buildbuddy.io/invocation/
+build --bes_backend=grpcs://cloud.buildbuddy.io
+build --remote_cache=grpcs://cloud.buildbuddy.io
+build --remote_executor=grpcs://cloud.buildbuddy.io
+
+build --remote_download_minimal

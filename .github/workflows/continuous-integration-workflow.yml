@@ -1,0 +1,37 @@
+name: Run all tests
+
+on: [push]
+
+jobs:
+  
+  build:
+    # Job name is Greeting
+    name: test with ${{ matrix.ij_product }}
+    # This job runs on Linux
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ij_product: ['intellij-2019.3','intellij-2020.1']
+
+    container:
+      image: l.gcr.io/google/bazel:3.5.0
+    steps:
+      - name: install bazelisk
+        run: |
+            curl -L --output /usr/local/bin/bazel https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64
+            chmod +x /usr/local/bin/bazel
+            which bazel
+      - uses: actions/checkout@v2
+
+      - name: bazel cache
+        uses: actions/cache@v2
+        with:
+          path: /github/home/.bazel_cache
+          key: ${{ github.ref }}
+          restore-keys: |
+            ${{ github.ref }}
+            refs/heads/master
+      - name: run bazel
+        run: |
+            bazel --bazelrc=.bazelrc.remote test --repository_cache=/github/home/.bazel_cache -k --define=ij_product=${{ matrix.ij_product }} //:ijwb_tests 
