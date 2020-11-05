@@ -371,6 +371,15 @@ new_git_repository(
     shallow_since = "1518210648 -0800",
 )
 
+bazel_version="31082327bdb64b7bf52dd55ae18d29e920e61025"
+bazel_repo_sha256 = "e8e1ac4bcab303f8f99c9b14ad3afbd059b84c516b7e76f6d9b89b8d5175594f"
+http_archive(
+    name = "bazel",
+    sha256 = bazel_repo_sha256,
+    url = "https://github.com/bazelbuild/bazel/archive/%s.zip" % bazel_version,
+    strip_prefix = "bazel-" + bazel_version
+)
+
 http_archive(
     name = "bazel_skylib",
     sha256 = "2ef429f5d7ce7111263289644d233707dba35e39696377ebab8b0bc701f7818e",
@@ -462,3 +471,18 @@ http_archive(
 load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
 
 kotlin_repositories()
+
+http_archive(
+    name = "io_buildbuddy_buildbuddy_toolchain",
+    sha256 = "9055a3e6f45773cd61931eba7b7cf35d6477ab6ad8fb2f18bf9815271fc682fe",
+    strip_prefix = "buildbuddy-toolchain-52aa5d2cc6c9ba7ee4063de35987be7d1b75f8e2",
+    urls = ["https://github.com/buildbuddy-io/buildbuddy-toolchain/archive/52aa5d2cc6c9ba7ee4063de35987be7d1b75f8e2.tar.gz"],
+)
+
+load("@io_buildbuddy_buildbuddy_toolchain//:deps.bzl", "buildbuddy_deps")
+
+buildbuddy_deps()
+
+load("@io_buildbuddy_buildbuddy_toolchain//:rules.bzl", "buildbuddy")
+
+buildbuddy(name = "buildbuddy_toolchain")
