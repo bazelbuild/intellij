@@ -265,8 +265,8 @@ jvm_maven_import_external(
     server_urls = ["https://repo1.maven.org/maven2"],
 )
 
-bazel_version="3.5.0"
-bazel_repo_sha256 = "5884fb3cd4f424150d0536f3b05235c8052097e3052027c0e8d269008c11a275"
+bazel_version="31082327bdb64b7bf52dd55ae18d29e920e61025"
+bazel_repo_sha256 = "e8e1ac4bcab303f8f99c9b14ad3afbd059b84c516b7e76f6d9b89b8d5175594f"
 http_archive(
     name = "bazel",
     sha256 = bazel_repo_sha256,
