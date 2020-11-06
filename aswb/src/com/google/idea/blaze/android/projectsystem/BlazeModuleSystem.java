@@ -50,6 +50,7 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
@@ -58,6 +59,7 @@ import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -93,6 +95,16 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   SampleDataDirectoryProvider sampleDataDirectoryProvider;
   BlazeClassFileFinder classFileFinder;
   final boolean isWorkspaceModule;
+
+  /**
+   * Experiment used to control whether the calculation of library dependencies for the workspace
+   * module ought to be cached.
+   *
+   * <p>b/171082532: Collecting the Library dependencies for the workspace module using *
+   * BlazeLibraryCollector is quite slow and negatively impacts editing performance in 4.1+.
+   */
+  private final BoolExperiment cacheLibraryComputation =
+      new BoolExperiment("aswb.cache.workspace.libraries", true);
 
   BlazeModuleSystem(Module module) {
     this.module = module;
@@ -340,30 +352,17 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
       return ImmutableList.of();
     }
 
-    ImmutableList.Builder<Library> libraries = ImmutableList.builder();
-    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
-    AndroidResourceModuleRegistry registry = AndroidResourceModuleRegistry.getInstance(project);
-    ExternalLibraryInterner externalLibraryInterner = ExternalLibraryInterner.getInstance(project);
-    TargetIdeInfo target = blazeProjectData.getTargetMap().get(registry.getTargetKey(module));
-
     if (isWorkspaceModule) {
-      for (BlazeLibrary library :
-          BlazeLibraryCollector.getLibraries(
-              ProjectViewManager.getInstance(project).getProjectViewSet(), blazeProjectData)) {
-        if (library instanceof AarLibrary) {
-          ExternalLibrary externalLibrary = toExternalLibrary((AarLibrary) library, decoder);
-          if (externalLibrary != null) {
-            libraries.add(externalLibraryInterner.intern(externalLibrary));
-          }
-        } else if (library instanceof BlazeJarLibrary) {
-          ExternalLibrary externalLibrary = toExternalLibrary((BlazeJarLibrary) library, decoder);
-          if (externalLibrary != null) {
-            libraries.add(externalLibraryInterner.intern(externalLibrary));
-          }
-        }
+      if (cacheLibraryComputation.getValue()) {
+        return SyncCache.getInstance(project)
+            .get(BlazeModuleSystem.class, BlazeModuleSystem::getLibrariesForWorkspaceModule);
+      } else {
+        return getLibrariesForWorkspaceModule(project, blazeProjectData);
       }
-      return libraries.build();
     }
+
+    AndroidResourceModuleRegistry registry = AndroidResourceModuleRegistry.getInstance(project);
+    TargetIdeInfo target = blazeProjectData.getTargetMap().get(registry.getTargetKey(module));
     if (target == null) {
       // this can happen if the module points to the <android-resources>, <project-data-dir>
       // <project-data-dir> does not contain any resource
@@ -378,10 +377,38 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
       return ImmutableList.of();
     }
 
+    ImmutableList.Builder<Library> libraries = ImmutableList.builder();
+    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
+    ExternalLibraryInterner externalLibraryInterner = ExternalLibraryInterner.getInstance(project);
     for (String libraryKey : registry.get(module).resourceLibraryKeys) {
       ImmutableMap<String, AarLibrary> aarLibraries = androidSyncData.importResult.aarLibraries;
       if (aarLibraries != null && aarLibraries.containsKey(libraryKey)) {
-        ExternalLibrary externalLibrary = toExternalLibrary(aarLibraries.get(libraryKey), decoder);
+        ExternalLibrary externalLibrary =
+            toExternalLibrary(project, aarLibraries.get(libraryKey), decoder);
+        if (externalLibrary != null) {
+          libraries.add(externalLibraryInterner.intern(externalLibrary));
+        }
+      }
+    }
+    return libraries.build();
+  }
+
+  private static ImmutableList<Library> getLibrariesForWorkspaceModule(
+      Project project, BlazeProjectData blazeProjectData) {
+    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
+    ExternalLibraryInterner externalLibraryInterner = ExternalLibraryInterner.getInstance(project);
+    ImmutableList.Builder<Library> libraries = ImmutableList.builder();
+    for (BlazeLibrary library :
+        BlazeLibraryCollector.getLibraries(
+            ProjectViewManager.getInstance(project).getProjectViewSet(), blazeProjectData)) {
+      if (library instanceof AarLibrary) {
+        ExternalLibrary externalLibrary = toExternalLibrary(project, (AarLibrary) library, decoder);
+        if (externalLibrary != null) {
+          libraries.add(externalLibraryInterner.intern(externalLibrary));
+        }
+      } else if (library instanceof BlazeJarLibrary) {
+        ExternalLibrary externalLibrary =
+            toExternalLibrary(project, (BlazeJarLibrary) library, decoder);
         if (externalLibrary != null) {
           libraries.add(externalLibraryInterner.intern(externalLibrary));
         }
@@ -391,7 +418,8 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   }
 
   @Nullable
-  private ExternalLibrary toExternalLibrary(AarLibrary library, ArtifactLocationDecoder decoder) {
+  private static ExternalLibrary toExternalLibrary(
+      Project project, AarLibrary library, ArtifactLocationDecoder decoder) {
     UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
     File aarFile = unpackedAars.getAarDir(decoder, library);
     if (aarFile == null) {
@@ -420,8 +448,8 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   }
 
   @Nullable
-  private ExternalLibrary toExternalLibrary(
-      BlazeJarLibrary library, ArtifactLocationDecoder decoder) {
+  private static ExternalLibrary toExternalLibrary(
+      Project project, BlazeJarLibrary library, ArtifactLocationDecoder decoder) {
     File cachedJar = JarCache.getInstance(project).getCachedJar(decoder, library);
     if (cachedJar == null) {
       logger.warn(
