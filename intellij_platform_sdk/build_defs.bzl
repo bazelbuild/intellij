@@ -17,6 +17,7 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-latest": "clion-2019.3",
     "clion-latest-mac": "clion-2019.3-mac",
     "clion-beta": "clion-2020.1",
+#    "clion-gamma": "clion-2020.2",
 }
 
 DIRECT_IJ_PRODUCTS = {
@@ -79,6 +80,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2020.1-mac": struct(
         ide = "clion",
         directory = "clion_2020_1",
+    ),
+    "clion-2020.2": struct(
+        ide = "clion",
+        directory = "clion_2020_2",
+    ),
+    "clion-2020.2-mac": struct(
+        ide = "clion",
+        directory = "clion_2020_2",
     ),
 }
 
