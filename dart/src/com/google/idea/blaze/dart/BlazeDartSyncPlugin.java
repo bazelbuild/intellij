@@ -75,8 +75,9 @@ public class BlazeDartSyncPlugin implements BlazeSyncPlugin {
     } else {
       IssueOutput.error(
               "Dart language support is requested, but the Dart SDK was not found. "
-                  + "You must manually enable Dart support from "
-                  + "File > Settings > Languages & Frameworks > Dart.")
+                  + "Non-mac: You must manually enable Dart support from "
+                  + "File > Settings > Languages & Frameworks > Dart. "
+                  + "Mac: Go to go/flutter-ide-mac#install-the-dart-and-flutter-plugins.")
           .submit(context);
     }
   }
