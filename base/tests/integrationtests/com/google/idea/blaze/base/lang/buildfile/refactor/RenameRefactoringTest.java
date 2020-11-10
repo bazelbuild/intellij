@@ -78,8 +78,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
         references.stream().map(StringLiteral::getStringContents).collect(Collectors.toSet());
 
     Set<String> expectedNewStrings =
-        oldStrings
-            .stream()
+        oldStrings.stream()
             .map((s) -> s.replaceAll("JavaClass", "NewName"))
             .collect(Collectors.toSet());
 
@@ -318,7 +317,7 @@ public class RenameRefactoringTest extends BuildFileIntegrationTestCase {
     return Arrays.stream(FindUsages.findAllReferences(target))
         .map(PsiReference::getElement)
         .filter(referenceType::isInstance)
-        .map(e -> (T) e)
+        .map(referenceType::cast)
         .collect(Collectors.toList());
   }
 

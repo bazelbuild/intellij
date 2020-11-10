@@ -93,13 +93,14 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
         .collect(Collectors.toList());
   }
 
+  @SuppressWarnings("unchecked") // Instanceof check is right before cast.
   @Nullable
-  private static Class<RunConfigurationProducer<?>> loadClass(
+  private static Class<? extends RunConfigurationProducer<?>> loadClass(
       ClassLoader loader, String qualifiedName) {
     try {
       Class<?> clazz = loader.loadClass(qualifiedName);
       if (RunConfigurationProducer.class.isAssignableFrom(clazz)) {
-        return (Class<RunConfigurationProducer<?>>) clazz;
+        return (Class<? extends RunConfigurationProducer<?>>) clazz;
       }
       return null;
     } catch (PluginException | ClassNotFoundException | NoClassDefFoundError ignored) {

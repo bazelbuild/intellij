@@ -648,11 +648,11 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
   }
 
   private static <T> List<T> getTopLevelNodesOfType(ASTNode node, Class<T> clazz) {
-    return (List)
-        Arrays.stream(node.getChildren(null))
-            .map(ASTNode::getPsi)
-            .filter(psiElement -> clazz.isInstance(psiElement))
-            .collect(Collectors.toList());
+    return Arrays.stream(node.getChildren(null))
+        .map(ASTNode::getPsi)
+        .filter(clazz::isInstance)
+        .map(clazz::cast)
+        .collect(Collectors.toList());
   }
 
   private PsiElement[] getChildBuildPsis(ASTNode node) {
