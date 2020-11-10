@@ -88,7 +88,7 @@ import org.jetbrains.annotations.TestOnly;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
 @SuppressWarnings("NullableProblems")
-public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFinder {
+abstract class BlazeModuleSystemBase implements AndroidModuleSystem, BlazeClassFileFinder {
   private static final Logger logger = Logger.getInstance(BlazeModuleSystem.class);
   protected Module module;
   protected final Project project;
@@ -106,7 +106,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
   private final BoolExperiment cacheLibraryComputation =
       new BoolExperiment("aswb.cache.workspace.libraries", true);
 
-  BlazeModuleSystem(Module module) {
+  BlazeModuleSystemBase(Module module) {
     this.module = module;
     this.project = module.getProject();
     classFileFinder = BlazeClassFileFinderFactory.createBlazeClassFileFinder(module);
@@ -338,13 +338,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
         .collect(Collectors.toList());
   }
 
-  // @Override #api4.0
-  public Collection<Library> getResolvedLibraryDependencies() {
-    return getResolvedDependentLibraries();
-  }
-
-  // @Override #api4.0
-  public Collection<Library> getResolvedDependentLibraries() {
+  public Collection<? extends Library> getDependentLibraries() {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
@@ -355,7 +349,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
     if (isWorkspaceModule) {
       if (cacheLibraryComputation.getValue()) {
         return SyncCache.getInstance(project)
-            .get(BlazeModuleSystem.class, BlazeModuleSystem::getLibrariesForWorkspaceModule);
+            .get(BlazeModuleSystem.class, BlazeModuleSystemBase::getLibrariesForWorkspaceModule);
       } else {
         return getLibrariesForWorkspaceModule(project, blazeProjectData);
       }
@@ -393,11 +387,11 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
     return libraries.build();
   }
 
-  private static ImmutableList<Library> getLibrariesForWorkspaceModule(
+  private static ImmutableList<ExternalLibrary> getLibrariesForWorkspaceModule(
       Project project, BlazeProjectData blazeProjectData) {
     ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
     ExternalLibraryInterner externalLibraryInterner = ExternalLibraryInterner.getInstance(project);
-    ImmutableList.Builder<Library> libraries = ImmutableList.builder();
+    ImmutableList.Builder<ExternalLibrary> libraries = ImmutableList.builder();
     for (BlazeLibrary library :
         BlazeLibraryCollector.getLibraries(
             ProjectViewManager.getInstance(project).getProjectViewSet(), blazeProjectData)) {
@@ -431,7 +425,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
     }
     File resFolder = unpackedAars.getResourceDirectory(decoder, library);
     PathString resFolderPathString = resFolder == null ? null : new PathString(resFolder);
-    return new ExternalLibrary(library.key.toString())
+    return ExternalLibraryCompat.create(library.key.toString())
         .withLocation(new PathString(aarFile))
         .withManifestFile(
             resFolderPathString == null
@@ -457,7 +451,7 @@ public class BlazeModuleSystem implements AndroidModuleSystem, BlazeClassFileFin
               "Failed to locate jar file %s. Re-sync project may solve the problem", library));
       return null;
     }
-    return new ExternalLibrary(library.toString())
+    return ExternalLibraryCompat.create(library.toString())
         .withClassJars(ImmutableList.of(new PathString(cachedJar)));
   }
 
