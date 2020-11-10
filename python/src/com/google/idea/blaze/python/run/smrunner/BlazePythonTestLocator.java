@@ -43,6 +43,8 @@ public final class BlazePythonTestLocator implements SMTestLocator {
 
   private BlazePythonTestLocator() {}
 
+  // Super method uses raw Location. Check super method again after #api202.
+  @SuppressWarnings("rawtypes")
   @Override
   public List<Location> getLocation(
       String protocol, String path, Project project, GlobalSearchScope scope) {
@@ -61,6 +63,8 @@ public final class BlazePythonTestLocator implements SMTestLocator {
     return ImmutableList.of();
   }
 
+  // Super method of getLocation() uses raw Location. Check super method again after #api202.
+  @SuppressWarnings("rawtypes")
   private static List<Location> findTestMethod(
       Project project, GlobalSearchScope scope, String className, @Nullable String methodName) {
     List<Location> results = new ArrayList<>();
@@ -80,6 +84,8 @@ public final class BlazePythonTestLocator implements SMTestLocator {
     return results;
   }
 
+  // Super method of getLocation() uses raw Location. Check super method again after #api202.
+  @SuppressWarnings("rawtypes")
   private static List<Location> findTestClass(
       Project project, GlobalSearchScope scope, String className) {
     List<Location> results = new ArrayList<>();

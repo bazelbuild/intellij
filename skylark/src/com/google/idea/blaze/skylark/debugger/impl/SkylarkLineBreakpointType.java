@@ -48,11 +48,17 @@ class SkylarkLineBreakpointType extends XLineBreakpointTypeBase {
     return BuildFileType.INSTANCE.equals(file.getFileType());
   }
 
+  // SkylarkLineBreakpointType extends from XLineBreakpointTypeBase which uses raw
+  // XBreakpointProperties. The raw use of XBreakpointProperties needs to propagate to all affected
+  // classes. Check XLineBreakpointTypeBase again after #api202.
+  @SuppressWarnings("rawtypes")
   @Override
   public String getDisplayText(XLineBreakpoint<XBreakpointProperties> breakpoint) {
     return getText(breakpoint);
   }
 
+  // Check XLineBreakpointTypeBase for raw use of XBreakpointProperties after #api202.
+  @SuppressWarnings("rawtypes")
   @Override
   public String getShortText(XLineBreakpoint<XBreakpointProperties> breakpoint) {
     return getText(breakpoint);

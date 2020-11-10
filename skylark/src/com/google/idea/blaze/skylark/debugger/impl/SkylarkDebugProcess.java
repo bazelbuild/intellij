@@ -81,9 +81,14 @@ public class SkylarkDebugProcess extends XDebugProcess {
   // TODO(brendandouglas): Here for backwards-compatibility, remove in v2018.10+
   private volatile boolean debuggingStarted = false;
 
+  // SkylarkLineBreakpointType extends from XLineBreakpointTypeBase which uses raw
+  // XBreakpointProperties. The raw use of XBreakpointProperties needs to propagate to all affected
+  // classes. Check XLineBreakpointTypeBase again after #api202.
+  @SuppressWarnings("rawtypes")
   // state shared with debug server
   private final ConcurrentMap<Location, XLineBreakpoint<XBreakpointProperties>> lineBreakpoints =
       new ConcurrentHashMap<>();
+
   private final ConcurrentMap<Long, PausedThreadState> pausedThreads = new ConcurrentHashMap<>();
   // the currently-stepping thread gets priority in the UI -- we always grab focus when it's paused
   private volatile long currentlySteppingThreadId = 0;
@@ -205,6 +210,8 @@ public class SkylarkDebugProcess extends XDebugProcess {
     registerBreakpoints();
   }
 
+  // Check XLineBreakpointTypeBase for raw use of XBreakpointProperties after #api202.
+  @SuppressWarnings("rawtypes")
   private static StarlarkDebuggingProtos.Breakpoint getBreakpointProto(
       Location location, XLineBreakpoint<XBreakpointProperties> breakpoint) {
     StarlarkDebuggingProtos.Breakpoint.Builder builder =
@@ -257,6 +264,8 @@ public class SkylarkDebugProcess extends XDebugProcess {
     return false;
   }
 
+  // Check XLineBreakpointTypeBase for raw use of XBreakpointProperties after #api202.
+  @SuppressWarnings("rawtypes")
   private Location convertLocation(XLineBreakpoint<XBreakpointProperties> breakpoint) {
     // TODO(brendandouglas): handle local changes?
     return Location.newBuilder()
@@ -346,6 +355,8 @@ public class SkylarkDebugProcess extends XDebugProcess {
     return 0;
   }
 
+  // Check XLineBreakpointTypeBase for raw use of XBreakpointProperties after #api202.
+  @SuppressWarnings("rawtypes")
   void addBreakpoint(XLineBreakpoint<XBreakpointProperties> breakpoint) {
     lineBreakpoints.put(convertLocation(breakpoint), breakpoint);
     if (isConnected()) {
@@ -353,6 +364,8 @@ public class SkylarkDebugProcess extends XDebugProcess {
     }
   }
 
+  // Check XLineBreakpointTypeBase for raw use of XBreakpointProperties after #api202.
+  @SuppressWarnings("rawtypes")
   void removeBreakpoint(XLineBreakpoint<XBreakpointProperties> breakpoint) {
     boolean changed = lineBreakpoints.remove(convertLocation(breakpoint)) != null;
     if (changed && isConnected()) {
@@ -485,6 +498,8 @@ public class SkylarkDebugProcess extends XDebugProcess {
     }
   }
 
+  // Check XLineBreakpointTypeBase for raw use of XBreakpointProperties after #api202.
+  @SuppressWarnings("rawtypes")
   private void handleThreadPausedEvent(PausedThread thread) {
     // ignore threads paused during initialization
     if (!debuggingStarted && thread.getPauseReason() == PauseReason.ALL_THREADS_PAUSED) {
@@ -512,6 +527,8 @@ public class SkylarkDebugProcess extends XDebugProcess {
     notifyThreadPaused(new PausedThreadState(thread), /* alwaysNotify= */ false);
   }
 
+  // Check XLineBreakpointTypeBase for raw use of XBreakpointProperties after #api202.
+  @SuppressWarnings("rawtypes")
   private void notifyThreadPaused(PausedThreadState threadState, boolean alwaysNotify) {
     pausedThreads.put(threadState.thread.getId(), threadState);
     XLineBreakpoint<XBreakpointProperties> breakpoint =
@@ -554,6 +571,8 @@ public class SkylarkDebugProcess extends XDebugProcess {
     return true;
   }
 
+  // Check XLineBreakpointTypeBase for raw use of XBreakpointProperties after #api202.
+  @SuppressWarnings("rawtypes")
   private void handleConditionalBreakpointError(
       XLineBreakpoint<XBreakpointProperties> breakpoint, PausedThread thread) {
     // TODO(brendandouglas): also navigate to the problematic breakpoint
