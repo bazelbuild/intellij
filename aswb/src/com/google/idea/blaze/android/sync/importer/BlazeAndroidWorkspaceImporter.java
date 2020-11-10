@@ -249,7 +249,10 @@ public class BlazeAndroidWorkspaceImporter {
         if (shouldCreateFakeAar.test(artifactLocation)) {
           // we are creating aar libraries, and this resource isn't inside the project view
           // so we can skip adding it to the module
-          String libraryKey = libraryFactory.createAarLibrary(androidResFolder.getAar());
+          String libraryKey =
+              libraryFactory.createAarLibrary(
+                  androidResFolder.getAar(),
+                  BlazeImportUtil.javaResourcePackageFor(target, /* inferPackage = */ true));
           if (libraryKey != null) {
             androidResourceModule.addResourceLibraryKey(libraryKey);
           }
@@ -464,13 +467,17 @@ public class BlazeAndroidWorkspaceImporter {
         return null;
       }
 
+      String resourcePackage =
+          BlazeImportUtil.javaResourcePackageFor(target, /* inferPackage = */ true);
+
       String libraryKey =
           LibraryKey.libraryNameFromArtifactLocation(target.getAndroidAarIdeInfo().getAar());
       if (!aarLibraries.containsKey(libraryKey)) {
         // aar_import should only have one jar (a merged jar from the AAR's jars).
         LibraryArtifact firstJar = target.getJavaIdeInfo().getJars().iterator().next();
         aarLibraries.put(
-            libraryKey, new AarLibrary(firstJar, target.getAndroidAarIdeInfo().getAar()));
+            libraryKey,
+            new AarLibrary(firstJar, target.getAndroidAarIdeInfo().getAar(), resourcePackage));
       }
       return libraryKey;
     }
@@ -482,14 +489,15 @@ public class BlazeAndroidWorkspaceImporter {
      * imported by user will fail to cache jar file in this Aar.
      */
     @Nullable
-    private String createAarLibrary(@Nullable ArtifactLocation aar) {
+    private String createAarLibrary(
+        @Nullable ArtifactLocation aar, @Nullable String resourcePackage) {
       if (aar == null) {
         return null;
       }
       String libraryKey = LibraryKey.libraryNameFromArtifactLocation(aar);
       if (!aarLibraries.containsKey(libraryKey)) {
         // aar_import should only have one jar (a merged jar from the AAR's jars).
-        aarLibraries.put(libraryKey, new AarLibrary(aar));
+        aarLibraries.put(libraryKey, new AarLibrary(aar, resourcePackage));
       }
       return libraryKey;
     }

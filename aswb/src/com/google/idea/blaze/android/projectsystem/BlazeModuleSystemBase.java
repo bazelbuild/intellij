@@ -438,7 +438,8 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem, BlazeClassF
         .withSymbolFile(
             resFolderPathString == null
                 ? null
-                : resFolderPathString.getParentOrRoot().resolve("R.txt"));
+                : resFolderPathString.getParentOrRoot().resolve("R.txt"))
+        .withPackageName(library.resourcePackage);
   }
 
   @Nullable
