@@ -30,8 +30,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
@@ -51,7 +50,6 @@ import javax.annotation.Nullable;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.UIManager;
-import org.jetbrains.annotations.NotNull;
 
 /** UI for changing the ProjectView. */
 public class ProjectViewUi {
@@ -182,13 +180,12 @@ public class ProjectViewUi {
   }
 
   private void setProjectViewText(String projectViewText) {
-    new WriteAction<Object>() {
-      @Override
-      protected void run(@NotNull Result<Object> result) throws Throwable {
-        projectViewEditor.getDocument().setReadOnly(false);
-        projectViewEditor.getDocument().setText(projectViewText);
-      }
-    }.execute();
+    ApplicationManager.getApplication()
+        .runWriteAction(
+            () -> {
+              projectViewEditor.getDocument().setReadOnly(false);
+              projectViewEditor.getDocument().setText(projectViewText);
+            });
     updateTextAreasEnabled();
   }
 
