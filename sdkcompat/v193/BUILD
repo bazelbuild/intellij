@@ -12,28 +12,14 @@ java_library(
         "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
-        android_studio = glob([
-            "com/google/idea/sdkcompat/cpp/**",
-            "com/google/idea/sdkcompat/java/**",
-        ]),
         clion = glob([
             "com/google/idea/sdkcompat/clion/**",
             "com/google/idea/sdkcompat/cpp/**",
         ]),
-        intellij = glob([
-            "com/google/idea/sdkcompat/java/**",
-            "com/google/idea/sdkcompat/scala/**",
-        ]),
-        intellij_ue = glob([
-            "com/google/idea/sdkcompat/java/**",
-            "com/google/idea/sdkcompat/scala/**",
-        ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//third_party/python",
-        "//third_party/scala",
     ],
 )
