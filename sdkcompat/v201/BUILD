@@ -9,6 +9,7 @@ java_library(
     srcs = glob([
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/platform/**",
+        "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
         android_studio = glob([
@@ -32,6 +33,7 @@ java_library(
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//third_party/python",
         "//third_party/scala",
     ],
 )
