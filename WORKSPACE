@@ -98,7 +98,7 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "fa9524db2f5b6e42be559ffdab73a963ca06ca057e27a290f5665d38e581764a",
+    sha256 = "61eb876781f3fd75f2d9e76cac192672a02e008725ad9d7ac0fbd4e3dcf25b16",
     url = "https://plugins.jetbrains.com/files/7322/97141/python-ce-202.7319.64.zip",
 )
 
