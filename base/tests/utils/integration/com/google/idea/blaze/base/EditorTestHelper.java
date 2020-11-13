@@ -110,7 +110,7 @@ public class EditorTestHelper {
   /** Simulates a user typing action, at current caret position of document. */
   public void performTypingAction(Editor editor, char typedChar) {
     EditorTestUtil.performTypingAction(editor, typedChar);
-    project.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
   }
 
