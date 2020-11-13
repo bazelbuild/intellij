@@ -15,14 +15,22 @@
  */
 package com.android.tools.idea.run.tasks;
 
+import com.android.tools.idea.deploy.DeploymentConfiguration;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.util.SwapInfo;
+import com.android.tools.idea.run.util.SwapInfo.SwapType;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.List;
 
 /** Compat class for {@link DeployTask} */
 public class DeployTasksCompat {
+  private static final BoolExperiment updateCodeViaJvmti =
+      new BoolExperiment("android.apply.changes", false);
+
   private DeployTasksCompat() {}
 
   // #api4.0 : Constructor signature changed in 4.1
@@ -36,6 +44,33 @@ public class DeployTasksCompat {
         project,
         filesToInstall,
         launchOptions.getPmInstallOptions(/*device=*/ null),
-        launchOptions.getInstallOnAllUsers());
+        launchOptions.getInstallOnAllUsers(),
+        launchOptions.getAlwaysInstallWithPm());
+  }
+
+  public static LaunchTask getDeployTask(
+      Project project,
+      ExecutionEnvironment env,
+      LaunchOptions launchOptions,
+      ImmutableMap<String, List<File>> filesToInstall) {
+    if (updateCodeViaJvmti.getValue()) {
+      // Set the appropriate action based on which deployment we're doing.
+      SwapInfo swapInfo = env.getUserData(SwapInfo.SWAP_INFO_KEY);
+      SwapInfo.SwapType swapType = swapInfo == null ? null : swapInfo.getType();
+      if (swapType == SwapType.APPLY_CHANGES) {
+        return new ApplyChangesTask(
+            project,
+            filesToInstall,
+            DeploymentConfiguration.getInstance().APPLY_CHANGES_FALLBACK_TO_RUN,
+            false);
+      } else if (swapType == SwapType.APPLY_CODE_CHANGES) {
+        return new ApplyCodeChangesTask(
+            project,
+            filesToInstall,
+            DeploymentConfiguration.getInstance().APPLY_CODE_CHANGES_FALLBACK_TO_RUN,
+            false);
+      }
+    }
+    return createDeployTask(project, filesToInstall, launchOptions);
   }
 }

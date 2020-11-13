@@ -25,7 +25,7 @@ import static com.google.idea.blaze.android.targetmapbuilder.NbJavaTarget.java_l
 import com.android.ide.common.repository.GradleCoordinate;
 import com.android.ide.common.util.PathString;
 import com.android.projectmodel.ExternalLibrary;
-import com.android.projectmodel.Library;
+import com.android.projectmodel.ExternalLibraryImpl;
 import com.android.projectmodel.SelectiveResourceFolder;
 import com.android.tools.idea.projectsystem.GoogleMavenArtifactId;
 import com.google.common.collect.ImmutableList;
@@ -49,6 +49,7 @@ import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -204,7 +205,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
     UnpackedAars unpackedAars = UnpackedAars.getInstance(getProject());
     PathString aarFile = new PathString(unpackedAars.getAarDir(cacheKey));
     PathString resFolder = new PathString(unpackedAars.getResourceDirectory(cacheKey));
-    return new ExternalLibrary(LibraryKey.libraryNameFromArtifactLocation(source(aarPath)))
+    return new ExternalLibraryImpl(LibraryKey.libraryNameFromArtifactLocation(source(aarPath)))
         .withLocation(aarFile)
         .withManifestFile(
             resFolder == null ? null : resFolder.getParentOrRoot().resolve("AndroidManifest.xml"))
@@ -215,26 +216,19 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
 
   @Test
   public void getDependencies_multipleModulesGetSameLibraryInstances() {
-    List<Library> workspaceModuleLibraries =
+    List<ExternalLibrary> workspaceModuleLibraries =
         workspaceModuleSystem.getResolvedDependentLibraries().stream()
-            .filter(
-                library ->
-                    library instanceof ExternalLibrary
-                        && ((ExternalLibrary) library).getClassJars().isEmpty())
-            .sorted(Comparator.comparing(Library::getAddress))
+            .filter(library -> library.getClassJars().isEmpty())
+            .sorted(Comparator.comparing(ExternalLibrary::getAddress))
             .collect(Collectors.toList());
-    List<Library> appModuleLibraries =
+    List<ExternalLibrary> appModuleLibraries =
         appModuleSystem.getResolvedDependentLibraries().stream()
-            .filter(
-                library ->
-                    library instanceof ExternalLibrary
-                        && ((ExternalLibrary) library).getClassJars().isEmpty())
-            .sorted(Comparator.comparing(Library::getAddress))
+            .filter(library -> library.getClassJars().isEmpty())
+            .sorted(Comparator.comparing(ExternalLibrary::getAddress))
             .collect(Collectors.toList());
     assertThat(workspaceModuleLibraries.size()).isEqualTo(appModuleLibraries.size());
     // Two modules depend on same resource libraries, so the reference of libraries should be the
-    // same
-    // i.e. there should not be duplicate library instances
+    // same i.e. there should not be duplicate library instances
     for (int i = 0; i < workspaceModuleLibraries.size(); i++) {
       assertThat(workspaceModuleLibraries.get(i)).isSameAs(appModuleLibraries.get(i));
     }
@@ -243,8 +237,8 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
   @Test
   public void getDependencies_appModule() {
     PathString rootPath = new PathString(workspaceRoot.directory());
-    Collection<Library> libraries = appModuleSystem.getResolvedDependentLibraries();
-    assertThat(libraries.stream().filter(library -> library instanceof ExternalLibrary))
+    Collection<ExternalLibrary> libraries = appModuleSystem.getResolvedDependentLibraries();
+    assertThat(new ArrayList<>(libraries))
         .containsExactly(
             getAarLibrary(rootPath, "third_party/aar/lib_aar.aar", "third_party.aar"),
             getAarLibrary(rootPath, "java/com/google/app-third_party-shared-res.aar", "com.google"),
@@ -259,10 +253,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
 
     assertThat(
             libraries.stream()
-                .filter(
-                    library ->
-                        library instanceof ExternalLibrary
-                            && !((ExternalLibrary) library).getClassJars().isEmpty())
+                .filter(library -> !library.getClassJars().isEmpty())
                 .collect(Collectors.toList()))
         .isEmpty();
   }
@@ -270,8 +261,8 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
   @Test
   public void getDependencies_workspaceModule() {
     PathString rootPath = new PathString(workspaceRoot.directory());
-    Collection<Library> libraries = workspaceModuleSystem.getResolvedDependentLibraries();
-    assertThat(libraries.stream().filter(library -> library instanceof ExternalLibrary))
+    Collection<ExternalLibrary> libraries = workspaceModuleSystem.getResolvedDependentLibraries();
+    assertThat(new ArrayList<>(libraries))
         .containsExactly(
             getAarLibrary(
                 rootPath,
@@ -283,7 +274,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
                 "third_party/constraint_layout/constraint_layout-third_party-constraint_layout-res.aar",
                 "third_party.constraint_layout"),
             getAarLibrary(rootPath, "third_party/aar/lib_aar.aar", "third_party.aar"),
-            new ExternalLibrary(
+            new ExternalLibraryImpl(
                 LibraryKey.libraryNameFromArtifactLocation(source("third_party/guava-21.jar")),
                 null,
                 null,

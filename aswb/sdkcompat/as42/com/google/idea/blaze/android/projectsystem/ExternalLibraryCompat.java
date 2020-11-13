@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
-import com.android.projectmodel.ExternalLibrary;
+import com.android.projectmodel.ExternalLibraryImpl;
 
 /**
  * Compat class for {@link com.android.projectmodel.ExternalLibrary}.
@@ -23,8 +23,8 @@ import com.android.projectmodel.ExternalLibrary;
  * <p>#api42
  */
 public class ExternalLibraryCompat {
-  public static ExternalLibrary create(String address) {
-    return new ExternalLibrary(address);
+  public static ExternalLibraryImpl create(String address) {
+    return new ExternalLibraryImpl(address);
   }
 
   private ExternalLibraryCompat() {}

@@ -18,12 +18,6 @@ package com.google.idea.blaze.android.sync.projectstructure;
 import static java.util.stream.Collectors.toSet;
 
 import com.android.annotations.VisibleForTesting;
-import com.android.builder.model.SourceProvider;
-import com.android.ide.common.gradle.model.SourceProviderUtil;
-import com.android.ide.common.util.PathString;
-import com.android.ide.common.util.PathStringUtil;
-import com.android.projectmodel.AndroidPathType;
-import com.android.projectmodel.SourceSet;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
@@ -41,7 +35,6 @@ import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
-import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -71,18 +64,16 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.jetbrains.android.facet.AndroidFacet;
 
 /** Updates the IDE's project structure. */
 public class BlazeAndroidProjectStructureSyncer {
   private static final Logger log = Logger.getInstance(BlazeAndroidProjectStructureSyncer.class);
 
-  private static class ManifestParsingStatCollector {
+  static class ManifestParsingStatCollector {
     private Duration totalDuration = Duration.ZERO;
     private int fileCount = 0;
 
@@ -357,7 +348,7 @@ public class BlazeAndroidProjectStructureSyncer {
       List<File> resources =
           OutputArtifactResolver.resolveAll(
               project, artifactLocationDecoder, androidResourceModule.resources);
-      updateModuleFacetInMemoryState(
+      BlazeAndroidProjectStructureSyncerCompat.updateModuleFacetInMemoryState(
           project,
           context,
           androidSdkPlatform,
@@ -410,7 +401,7 @@ public class BlazeAndroidProjectStructureSyncer {
       @Nullable ManifestParsingStatCollector manifestParsingStatCollector) {
     File moduleDirectory = workspaceRoot.directory();
     String resourceJavaPackage = ":workspace";
-    updateModuleFacetInMemoryState(
+    BlazeAndroidProjectStructureSyncerCompat.updateModuleFacetInMemoryState(
         project,
         context,
         androidSdkPlatform,
@@ -423,55 +414,11 @@ public class BlazeAndroidProjectStructureSyncer {
         manifestParsingStatCollector);
   }
 
-  private static void updateModuleFacetInMemoryState(
-      Project project,
-      @Nullable BlazeContext context,
-      AndroidSdkPlatform androidSdkPlatform,
-      Module module,
-      File moduleDirectory,
-      @Nullable File manifestFile,
-      String resourceJavaPackage,
-      Collection<File> resources,
-      boolean configAndroidJava8Libs,
-      @Nullable ManifestParsingStatCollector manifestParsingStatCollector) {
-    List<PathString> manifests =
-        manifestFile == null
-            ? ImmutableList.of()
-            : ImmutableList.of(PathStringUtil.toPathString(manifestFile));
-    SourceSet sourceSet =
-        new SourceSet(
-            ImmutableMap.of(
-                AndroidPathType.RES,
-                PathStringUtil.toPathStrings(resources),
-                AndroidPathType.MANIFEST,
-                manifests));
-    SourceProvider sourceProvider =
-        SourceProviderUtil.toSourceProvider(sourceSet, module.getName());
-
-    String applicationId =
-        getApplicationIdFromManifestOrDefault(
-            project, context, manifestFile, resourceJavaPackage, manifestParsingStatCollector);
-
-    BlazeAndroidModel androidModel =
-        new BlazeAndroidModel(
-            project,
-            moduleDirectory,
-            sourceProvider,
-            applicationId,
-            androidSdkPlatform.androidMinSdkLevel,
-            configAndroidJava8Libs);
-    AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet != null) {
-      BlazeAndroidProjectStructureSyncerCompat.updateAndroidFacetWithSourceAndModel(
-          facet, sourceProvider, androidModel);
-    }
-  }
-
   /**
    * Parses the provided manifest to calculate applicationId. Returns the provided default if the
    * manifest file does not exist, or is invalid
    */
-  private static String getApplicationIdFromManifestOrDefault(
+  static String getApplicationIdFromManifestOrDefault(
       Project project,
       @Nullable BlazeContext context,
       @Nullable File manifestFile,

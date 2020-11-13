@@ -18,7 +18,6 @@ package com.google.idea.blaze.android.run.binary;
 import static com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider.NATIVE_DEBUGGING_ENABLED;
 
 import com.android.ddmlib.IDevice;
-import com.android.tools.idea.deploy.DeploymentConfiguration;
 import com.android.tools.idea.gradle.util.DynamicAppUtils;
 import com.android.tools.idea.run.ApkFileUnit;
 import com.android.tools.idea.run.ApkInfo;
@@ -33,24 +32,19 @@ import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.ProfilerState;
-import com.android.tools.idea.run.tasks.ApplyChangesTask;
-import com.android.tools.idea.run.tasks.ApplyCodeChangesTask;
+import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchStatus;
-import com.android.tools.idea.run.util.SwapInfo;
-import com.android.tools.idea.run.util.SwapInfo.SwapType;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -66,9 +60,6 @@ import org.jetbrains.annotations.NotNull;
 /** Run context for android_binary. */
 public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
     implements BlazeAndroidRunContext {
-  private static final BoolExperiment updateCodeViaJvmti =
-      new BoolExperiment("android.apply.changes", false);
-
   protected final Project project;
   protected final AndroidFacet facet;
   protected final RunConfiguration runConfiguration;
@@ -134,29 +125,8 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
       throws ExecutionException {
     ImmutableMap<String, List<File>> filesToInstall =
         getFilesToInstall(device, launchOptions, apkProvider);
-    return ImmutableList.of(getDeployTask(launchOptions, filesToInstall));
-  }
-
-  private LaunchTask getDeployTask(
-      LaunchOptions launchOptions, ImmutableMap<String, List<File>> filesToInstall) {
-    if (updateCodeViaJvmti.getValue()) {
-      // Set the appropriate action based on which deployment we're doing.
-      SwapInfo swapInfo = env.getUserData(SwapInfo.SWAP_INFO_KEY);
-      SwapInfo.SwapType swapType = swapInfo == null ? null : swapInfo.getType();
-      if (swapType == SwapType.APPLY_CHANGES) {
-        return new ApplyChangesTask(
-            project,
-            filesToInstall,
-            DeploymentConfiguration.getInstance().APPLY_CODE_CHANGES_FALLBACK_TO_RUN);
-      } else if (swapType == SwapType.APPLY_CODE_CHANGES) {
-        return new ApplyCodeChangesTask(
-            project,
-            filesToInstall,
-            DeploymentConfiguration.getInstance().APPLY_CODE_CHANGES_FALLBACK_TO_RUN);
-      }
-    }
-    return BlazeAndroidDeploymentService.getInstance(project)
-        .getDeployTask(filesToInstall, launchOptions);
+    return ImmutableList.of(
+        DeployTasksCompat.getDeployTask(project, env, launchOptions, filesToInstall));
   }
 
   @Nullable

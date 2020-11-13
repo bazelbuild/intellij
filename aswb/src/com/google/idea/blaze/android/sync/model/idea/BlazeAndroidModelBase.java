@@ -15,14 +15,11 @@
  */
 package com.google.idea.blaze.android.sync.model.idea;
 
-import com.android.builder.model.AaptOptions;
-import com.android.builder.model.SourceProvider;
 import com.android.sdklib.AndroidVersion;
 import com.android.tools.idea.databinding.DataBindingMode;
 import com.android.tools.idea.model.AndroidModel;
 import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.lint.detector.api.Desugaring;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.actions.BlazeBuildService;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +36,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
-import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -48,50 +44,24 @@ import org.jetbrains.annotations.NotNull;
  * Contains Android-Blaze related state necessary for configuring an IDEA project based on a
  * user-selected build variant.
  */
-public class BlazeAndroidModel implements AndroidModel {
+abstract class BlazeAndroidModelBase implements AndroidModel {
   private Project project;
   private final File rootDirPath;
-  private final SourceProvider sourceProvider;
-  private final List<SourceProvider> sourceProviders; // Singleton list of sourceProvider
   private final String applicationId;
   private final int minSdkVersion;
   private boolean desugarJava8Libs;
 
-  /** Creates a new {@link BlazeAndroidModel}. */
-  public BlazeAndroidModel(
+  protected BlazeAndroidModelBase(
       Project project,
       File rootDirPath,
-      SourceProvider sourceProvider,
       String applicationId,
       int minSdkVersion,
       boolean desugarJava8Libs) {
     this.project = project;
     this.rootDirPath = rootDirPath;
-    this.sourceProvider = sourceProvider;
-    this.sourceProviders = ImmutableList.of(sourceProvider);
     this.applicationId = applicationId;
     this.minSdkVersion = minSdkVersion;
     this.desugarJava8Libs = desugarJava8Libs;
-  }
-
-  // @Override #api3.6
-  public SourceProvider getDefaultSourceProvider() {
-    return sourceProvider;
-  }
-
-  // @Override #api3.6
-  public List<SourceProvider> getActiveSourceProviders() {
-    return sourceProviders;
-  }
-
-  // @Override #api3.6
-  public List<SourceProvider> getTestSourceProviders() {
-    return sourceProviders;
-  }
-
-  // @Override #api3.6
-  public List<SourceProvider> getAllSourceProviders() {
-    return sourceProviders;
   }
 
   @Override
@@ -227,12 +197,6 @@ public class BlazeAndroidModel implements AndroidModel {
     }
 
     return false;
-  }
-
-  @NotNull
-  @Override
-  public AaptOptions.Namespacing getNamespacing() {
-    return AaptOptions.Namespacing.DISABLED;
   }
 
   @NotNull

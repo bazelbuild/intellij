@@ -18,7 +18,6 @@ package com.google.idea.blaze.android.run.runner;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.android.tools.idea.run.DeviceCount;
 import com.android.tools.idea.run.DeviceFutures;
-import com.android.tools.idea.run.deployment.DeviceAndSnapshotComboBoxTargetProvider.State;
 import com.android.tools.idea.run.editor.DeployTarget;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -122,7 +121,8 @@ public interface BlazeAndroidDeviceSelector {
       DeviceFutures deviceFutures = null;
       if (!deployTarget.hasCustomRunProfileState(executor)) {
         deviceFutures =
-            deployTarget.getDevices(new State(), facet, DeviceCount.SINGLE, debug, runConfigId);
+            DeployTargetCompat.getDevices(
+                deployTarget, facet, DeviceCount.SINGLE, debug, runConfigId);
       }
       return new DeviceSession(deployTarget, deviceFutures, info);
     }

@@ -16,7 +16,6 @@
 package com.google.idea.blaze.android.projectsystem;
 
 import static org.jetbrains.android.dom.manifest.AndroidManifestUtils.getPackageName;
-import static org.jetbrains.android.facet.SourceProviderUtil.createIdeaSourceProviderFromModelSourceProvider;
 import static org.jetbrains.android.facet.SourceProviderUtil.createSourceProvidersForLegacyModule;
 
 import com.android.tools.apk.analyzer.AaptInvoker;
@@ -24,7 +23,6 @@ import com.android.tools.idea.log.LogWrapper;
 import com.android.tools.idea.model.AndroidModel;
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.AndroidProjectSystem;
-import com.android.tools.idea.projectsystem.NamedIdeaSourceProvider;
 import com.android.tools.idea.projectsystem.ProjectSystemSyncManager;
 import com.android.tools.idea.projectsystem.SourceProviders;
 import com.android.tools.idea.projectsystem.SourceProvidersFactory;
@@ -50,7 +48,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.SourceProviderManager;
-import org.jetbrains.android.facet.SourceProvidersImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -138,15 +135,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
       public SourceProviders createSourceProvidersFor(@NotNull AndroidFacet facet) {
         BlazeAndroidModel model = ((BlazeAndroidModel) AndroidModel.get(facet));
         if (model != null) {
-          NamedIdeaSourceProvider mainSourceProvider =
-              createIdeaSourceProviderFromModelSourceProvider(model.getDefaultSourceProvider());
-          return new SourceProvidersImpl(
-              mainSourceProvider,
-              ImmutableList.of(mainSourceProvider),
-              ImmutableList.of(mainSourceProvider),
-              ImmutableList.of(mainSourceProvider),
-              ImmutableList.of(mainSourceProvider),
-              ImmutableList.of(mainSourceProvider));
+          return SourceProvidersCompat.forModel(model);
         } else {
           return createSourceProvidersForLegacyModule(facet);
         }
