@@ -21,7 +21,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.ui.components.JBList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -50,26 +49,22 @@ public class SubclassTestChooser {
     }
     PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
     classes.sort(renderer.getComparator());
-    JBList<PsiClass> list = new JBList<>(classes);
-    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(renderer);
     JBPopupFactory.getInstance()
-        .createListPopupBuilder(list)
+        .createPopupChooserBuilder(classes)
         .setTitle("Choose test class to run")
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
         .setCancelOnWindowDeactivation(false)
-        .setItemChoosenCallback(
-            () -> callbackOnClassSelection.accept((PsiClass) list.getSelectedValue()))
+        .setRenderer(renderer)
+        .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        .setItemChosenCallback(callbackOnClassSelection::accept)
         .createPopup()
         .showInBestPositionFor(context.getDataContext());
   }
 
   static List<PsiClass> findTestSubclasses(PsiClass testClass) {
-    return ClassInheritorsSearch.search(testClass)
-        .findAll()
-        .stream()
+    return ClassInheritorsSearch.search(testClass).findAll().stream()
         .filter(ProducerUtils::isTestClass)
         .collect(Collectors.toList());
   }

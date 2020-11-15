@@ -26,6 +26,8 @@ import com.intellij.openapi.project.Project;
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
 public class NonBlazeProducerSuppressor implements ProjectComponent {
 
+  // PyTestsConfigurationProducer has internal visibility. We need to reference it to suppress it.
+  @SuppressWarnings("KotlinInternal")
   private static final ImmutableList<Class<?>> PRODUCERS_TO_SUPPRESS =
       ImmutableList.of(
           com.jetbrains.python.run.PythonRunConfigurationProducer.class,

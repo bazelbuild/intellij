@@ -13,12 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.sdkcompat.scala;
+package com.google.idea.blaze.android.projectsystem;
 
-import org.jetbrains.plugins.scala.testingSupport.test.ScalaTestRunLineMarkerProvider;
+import com.android.projectmodel.ExternalLibrary;
 
 /**
- * Compat class for {@link ScalaTestRunLineMarkerProvider} which was moved to a different package in
- * 2020.2. #api193
+ * Compat class for {@link com.android.projectmodel.ExternalLibrary}.
+ *
+ * <p>#api42
  */
-public class ScalaTestRunLineMarkerProviderCompat extends ScalaTestRunLineMarkerProvider {}
+public class ExternalLibraryCompat {
+  public static ExternalLibrary create(String address) {
+    return new ExternalLibrary(address);
+  }
+
+  private ExternalLibraryCompat() {}
+}

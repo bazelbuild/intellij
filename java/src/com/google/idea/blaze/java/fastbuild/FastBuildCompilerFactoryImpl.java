@@ -171,7 +171,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
         boolean result = output.result;
         Command command =
             Command.builder()
-                .setExecutable(javacJars.get(0).getPath())
+                .setExecutable("javac")
                 .setArguments(javacArgs)
                 .setExitCode(result ? 0 : 1)
                 .setSubcommandName("javac")
@@ -200,8 +200,17 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
     for (int i = 0; i < jars.size(); ++i) {
       urls[i] = jars.get(i).toURI().toURL();
     }
-    URLClassLoader urlClassLoader = new URLClassLoader(urls, /* parent= */ null);
+    URLClassLoader urlClassLoader = new URLClassLoader(urls, platformClassLoader());
     return urlClassLoader.loadClass(javaCompilerClass);
+  }
+
+  private static ClassLoader platformClassLoader() {
+    try {
+      return (ClassLoader) ClassLoader.class.getMethod("getPlatformClassLoader").invoke(null);
+    } catch (ReflectiveOperationException e) {
+      // Java 8
+      return null;
+    }
   }
 
   private static class JavacRunner implements FastBuildCompiler {

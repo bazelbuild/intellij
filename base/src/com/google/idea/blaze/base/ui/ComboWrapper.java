@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ListCellRendererWrapper;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.Vector;
 import javax.swing.DefaultComboBoxModel;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,24 +28,26 @@ import org.jetbrains.annotations.NotNull;
  * use.
  */
 public final class ComboWrapper<T> {
-  @NotNull private final ComboBox combo;
+  @NotNull private final ComboBox<T> combo;
 
   public static <T> ComboWrapper<T> create() {
-    return new ComboWrapper<T>();
+    return new ComboWrapper<>();
   }
 
   private ComboWrapper() {
-    combo = new ComboBox();
+    combo = new ComboBox<>();
   }
 
+  @SuppressWarnings("JdkObsolete") // Swing uses a Vector for the elements.
   public void setItems(@NotNull Collection<T> values) {
-    combo.setModel(new DefaultComboBoxModel(values.toArray()));
+    combo.setModel(new DefaultComboBoxModel<>(new Vector<>(values)));
   }
 
   public void setSelectedItem(T value) {
     combo.setSelectedItem(value);
   }
 
+  @SuppressWarnings("unchecked") // The wrapper class ensures that only items of type T are present.
   public T getSelectedItem() {
     return (T) combo.getSelectedItem();
   }
@@ -58,7 +61,7 @@ public final class ComboWrapper<T> {
   }
 
   @NotNull
-  public ComboBox getCombo() {
+  public ComboBox<T> getCombo() {
     return combo;
   }
 }

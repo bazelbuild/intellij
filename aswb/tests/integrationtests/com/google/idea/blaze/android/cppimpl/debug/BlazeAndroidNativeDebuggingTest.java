@@ -58,7 +58,7 @@ public class BlazeAndroidNativeDebuggingTest extends BlazeIntegrationTestCase {
     state.getCommonState().setNativeDebuggingEnabled(true);
 
     try {
-      CidrDebuggerLanguageSupportManager.createEditor(getProject(), runProfile);
+      CidrDebuggerLanguageSupportManager.getInstance().createEditor(getProject(), runProfile);
     } catch (ExecutionException e) {
       fail("BlazeNativeDebuggerLanguageSupport extension not registered correctly.");
     }

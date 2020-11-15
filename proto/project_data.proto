@@ -167,6 +167,7 @@ message BlazeJarLibrary {
 message AarLibrary {
   LibraryArtifact library_artifact = 1;
   ArtifactLocation aar_artifact = 2;
+  string resource_package = 3;
 }
 
 message BlazeResourceLibrary {

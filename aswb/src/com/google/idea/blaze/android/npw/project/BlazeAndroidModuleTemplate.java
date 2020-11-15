@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.npw.project;
 import com.android.tools.idea.projectsystem.AndroidModulePaths;
 import com.android.tools.idea.projectsystem.IdeaSourceProvider;
 import com.android.tools.idea.projectsystem.NamedModuleTemplate;
+import com.google.common.collect.Streams;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -172,14 +173,14 @@ public class BlazeAndroidModuleTemplate implements AndroidModulePaths {
       // People usually put the manifest file with their sources.
       //noinspection OptionalGetWithoutIsPresent
       paths.srcDirectory =
-          sourceProvider.getManifestDirectoryUrls().stream()
+          Streams.stream(sourceProvider.getManifestDirectoryUrls())
               .map(it -> new File(VfsUtilCore.urlToPath(it)))
               .findFirst()
               .get();
     }
     // We have a res dir if this happens to be a resource module.
     paths.resDirectories =
-        sourceProvider.getResDirectoryUrls().stream()
+        Streams.stream(sourceProvider.getResDirectoryUrls())
             .map(it -> new File(VfsUtilCore.urlToPath(it)))
             .collect(Collectors.toList());
     return Collections.singletonList(new NamedModuleTemplate(name, paths));

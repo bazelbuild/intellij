@@ -20,7 +20,6 @@ import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.AndroidSessionInfo;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchOptions;
-import com.android.tools.idea.run.deployment.DeviceAndSnapshotComboBoxTargetProvider.State;
 import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.util.concurrent.Futures;
@@ -101,20 +100,14 @@ public final class BlazeAndroidRunConfigurationRunner
     BlazeAndroidDeviceSelector deviceSelector = runContext.getDeviceSelector();
     BlazeAndroidDeviceSelector.DeviceSession deviceSession =
         deviceSelector.getDevice(
-            project,
-            facet,
-            executor,
-            env,
-            info,
-            isDebug,
-            runConfig.getUniqueID());
+            project, facet, executor, env, info, isDebug, runConfig.getUniqueID());
     if (deviceSession == null) {
       return null;
     }
 
     DeployTarget deployTarget = deviceSession.deployTarget;
     if (deployTarget != null && deployTarget.hasCustomRunProfileState(executor)) {
-      return deployTarget.getRunProfileState(executor, env, new State());
+      return DeployTargetCompat.getRunProfileState(deployTarget, executor, env);
     }
 
     DeviceFutures deviceFutures = deviceSession.deviceFutures;

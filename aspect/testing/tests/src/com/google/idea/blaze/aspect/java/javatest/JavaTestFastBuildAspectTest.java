@@ -15,13 +15,11 @@
  */
 package com.google.idea.blaze.aspect.java.javatest;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.devtools.intellij.aspect.FastBuildAspectTestFixtureOuterClass.FastBuildAspectTestFixture;
 import com.google.devtools.intellij.aspect.FastBuildInfo.FastBuildBlazeData;
 import com.google.idea.blaze.aspect.FastBuildAspectRule;
-import java.util.List;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;

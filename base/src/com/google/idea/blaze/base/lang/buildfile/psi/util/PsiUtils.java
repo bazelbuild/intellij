@@ -132,7 +132,7 @@ public class PsiUtils {
     PsiElement child = reverseOrder ? element.getLastChild() : element.getFirstChild();
     while (child != null) {
       if (psiClass.isInstance(child)) {
-        if (!processor.process((T) child)) {
+        if (!processor.process(psiClass.cast(child))) {
           return true;
         }
       }

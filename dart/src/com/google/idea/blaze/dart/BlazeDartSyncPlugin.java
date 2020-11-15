@@ -31,6 +31,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.SystemInfo;
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -76,7 +77,9 @@ public class BlazeDartSyncPlugin implements BlazeSyncPlugin {
       IssueOutput.error(
               "Dart language support is requested, but the Dart SDK was not found. "
                   + "You must manually enable Dart support from "
-                  + "File > Settings > Languages & Frameworks > Dart.")
+                  + (SystemInfo.isMac
+                      ? "Preferences... > Languages & Frameworks > Dart."
+                      : "File > Settings > Languages & Frameworks > Dart."))
           .submit(context);
     }
   }

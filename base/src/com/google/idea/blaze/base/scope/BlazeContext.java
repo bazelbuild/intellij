@@ -175,8 +175,8 @@ public class BlazeContext {
       List<T> scopesCollector, Class<T> scopeClass, int maxIndex) {
     for (int i = maxIndex - 1; i >= 0; --i) {
       BlazeScope scope = scopes.get(i);
-      if (scope.getClass() == scopeClass) {
-        scopesCollector.add((T) scope);
+      if (scopeClass.isInstance(scope)) {
+        scopesCollector.add(scopeClass.cast(scope));
       }
     }
     if (parentContext != null) {

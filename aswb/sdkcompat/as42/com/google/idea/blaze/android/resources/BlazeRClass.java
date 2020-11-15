@@ -44,6 +44,11 @@ public class BlazeRClass extends ResourceRepositoryRClass {
             return packageName;
           }
 
+          // @Override #api4.1
+          public Transitivity getTransitivity() {
+            return Transitivity.TRANSITIVE;
+          }
+
           @Override
           public LocalResourceRepository getResourceRepository() {
             return ResourceRepositoryManager.getAppResources(androidFacet);

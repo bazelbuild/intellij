@@ -16,7 +16,7 @@ java_library(
         "clion-2020.1": ["@clion_2020_1//:python"],
         "clion-2020.2": ["@clion_2020_2//:python"],
         "android-studio-4.1": ["@python_2020_1//:python"],
-        "android-studio-4.2": ["@python_2020_1//:python"],
+        "android-studio-4.2": ["@python_2020_2//:python"],
     }),
 )
 
