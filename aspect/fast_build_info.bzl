@@ -52,7 +52,9 @@ def _fast_build_info_impl(target, ctx):
     if JavaInfo in target:
         write_output = True
         launcher = None
-        if hasattr(ctx.rule.attr, "_java_launcher") and ctx.rule.attr._java_launcher:
+        if hasattr(ctx.rule.attr, "use_launcher") and not ctx.rule.attr.use_launcher:
+            launcher = None
+        elif hasattr(ctx.rule.attr, "_java_launcher") and ctx.rule.attr._java_launcher:
             launcher = str(ctx.rule.attr._java_launcher.label)
         elif hasattr(ctx.rule.attr, "_javabase") and ctx.rule.attr._javabase:
             launcher = str(ctx.rule.attr._javabase.label)
