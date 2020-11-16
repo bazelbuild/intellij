@@ -62,7 +62,7 @@ import javax.annotation.Nullable;
 
 /** Reads package manifests. */
 public class PackageManifestReader {
-  private static final Logger logger = Logger.getInstance(SourceDirectoryCalculator.class);
+  private static final Logger logger = Logger.getInstance(PackageManifestReader.class);
 
   public static PackageManifestReader getInstance() {
     return ServiceManager.getService(PackageManifestReader.class);

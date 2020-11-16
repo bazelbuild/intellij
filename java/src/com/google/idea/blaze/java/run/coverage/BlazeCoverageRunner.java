@@ -37,8 +37,9 @@ import javax.annotation.Nullable;
 
 /** Loads coverage data when blaze invocation is complete. */
 public class BlazeCoverageRunner extends CoverageRunner {
-  private static final String ID = "BlazeCoverageRunner";
   private static final Logger logger = Logger.getInstance(BlazeCoverageRunner.class);
+
+  private static final String ID = "BlazeCoverageRunner";
 
   @Nullable
   @Override

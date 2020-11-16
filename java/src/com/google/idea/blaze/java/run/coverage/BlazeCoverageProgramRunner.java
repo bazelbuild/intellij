@@ -65,9 +65,9 @@ import javax.annotation.Nullable;
 
 /** Controls 'run with coverage' execution for blaze run configurations. */
 public class BlazeCoverageProgramRunner extends DefaultProgramRunner {
+  private static final Logger logger = Logger.getInstance(BlazeCoverageProgramRunner.class);
 
   private static final String ID = "BlazeCoverageProgramRunner";
-  private static final Logger logger = Logger.getInstance(BlazeCoverageRunner.class);
 
   @Override
   public String getRunnerId() {
