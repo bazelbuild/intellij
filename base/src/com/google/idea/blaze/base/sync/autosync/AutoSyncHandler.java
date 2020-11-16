@@ -55,11 +55,10 @@ import javax.annotation.Nullable;
  * kicks off automatic syncs in response, where appropriate.
  */
 public class AutoSyncHandler implements ProjectComponent {
+  private static final Logger logger = Logger.getInstance(AutoSyncHandler.class);
 
   private static final BoolExperiment autoSyncEnabled =
       new BoolExperiment("blaze.auto.sync.enabled", true);
-
-  private static Logger logger = Logger.getInstance(AutoSyncHandler.class);
 
   /** Auto-syncs will only be run when there are no relevant file events for this length of time. */
   private static final Duration AUTO_SYNC_DELAY = Duration.ofSeconds(5);
