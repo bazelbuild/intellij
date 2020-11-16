@@ -20,6 +20,7 @@ import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.util.SwapInfo;
 import com.android.tools.idea.run.util.SwapInfo.SwapType;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
@@ -71,6 +72,7 @@ public class DeployTasksCompat {
             false);
       }
     }
-    return createDeployTask(project, filesToInstall, launchOptions);
+    return BlazeAndroidDeploymentService.getInstance(project)
+        .getDeployTask(filesToInstall, launchOptions);
   }
 }
