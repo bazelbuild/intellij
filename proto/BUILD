@@ -78,7 +78,7 @@ java_proto_library(
 
 java_binary(
     name = "jarjar_runner",
-    main_class = "com.tonicsystems.jarjar.Main",
+    main_class = "org.pantsbuild.jarjar.Main",
     runtime_deps = ["@jarjar//jar"],
 )
 
