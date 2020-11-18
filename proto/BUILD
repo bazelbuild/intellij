@@ -78,8 +78,7 @@ java_proto_library(
 
 java_binary(
     name = "jarjar_runner",
-    main_class = "org.pantsbuild.jarjar.Main",
-    visibility = ["//visibility:public"],
+    main_class = "com.tonicsystems.jarjar.Main",
     runtime_deps = ["@jarjar//jar"],
 )
 
