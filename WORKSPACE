@@ -235,8 +235,8 @@ jvm_maven_import_external(
 
 jvm_maven_import_external(
     name = "jarjar",
-    artifact = "com.googlecode.jarjar:jarjar:1.1",
-    artifact_sha256 = "4838f4f29a027522363cef1bcda1b48808880b0de4953fab6db4121ee27b649b",
+    artifact = "com.googlecode.jarjar:jarjar:1.3",
+    artifact_sha256 = "4225c8ee1bf3079c4b07c76fe03c3e28809a22204db6249c9417efa4f804b3a7",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
