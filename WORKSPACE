@@ -122,7 +122,7 @@ http_archive(
     build_file_content = "\n".join([
         "java_import(",
         "    name = 'go',",
-        "    jars = glob(['intellij-go/lib/*.jar']),",
+        "    jars = glob(['go/lib/*.jar']),",
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
