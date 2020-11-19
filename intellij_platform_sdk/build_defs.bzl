@@ -4,11 +4,11 @@
 INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2020.1",
     "intellij-latest-mac": "intellij-2020.1-mac",
-    "intellij-beta": "intellij-2020.2",
+    "intellij-beta": "intellij-2020.1",
     "intellij-canary": "intellij-2020.2",
     "intellij-ue-latest": "intellij-ue-2020.1",
     "intellij-ue-latest-mac": "intellij-ue-2020.1-mac",
-    "intellij-ue-beta": "intellij-ue-2020.2",
+    "intellij-ue-beta": "intellij-ue-2020.1",
     "intellij-ue-canary": "intellij-ue-2020.2",
     "android-studio-latest": "android-studio-4.1",
     "android-studio-beta": "android-studio-4.1",
