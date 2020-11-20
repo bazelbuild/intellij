@@ -27,7 +27,7 @@ licenses(["notice"])  # Apache 2.0
 
 optional_plugin_xml(
     name = "optional_java",
-    module = "com.intellij.modules.java",
+    module = "com.intellij.java",
     plugin_xml = "src/META-INF/java-contents.xml",
 )
 
