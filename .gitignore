@@ -4,3 +4,4 @@ bazel-*
 /.ijwb/
 /.aswb/
 /.clwb/
+.vscode/settings.json
