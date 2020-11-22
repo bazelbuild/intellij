@@ -36,12 +36,11 @@ import javax.annotation.Nullable;
 
 /** Parse package string directly from java source */
 public class JavaSourcePackageReader extends JavaPackageReader {
+  private static final Logger logger = Logger.getInstance(JavaSourcePackageReader.class);
 
   public static JavaSourcePackageReader getInstance() {
     return ServiceManager.getService(JavaSourcePackageReader.class);
   }
-
-  private static final Logger logger = Logger.getInstance(SourceDirectoryCalculator.class);
 
   // Package declaration of java-like languages.
   private static final Pattern PACKAGE_PATTERN = Pattern.compile("^\\s*package\\s+([\\w\\.]+)");

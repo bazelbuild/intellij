@@ -15,7 +15,7 @@
   -->
 <idea-plugin>
   <depends>JUnit</depends>
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.java</depends>
 
   <actions>
     <action class="com.google.idea.blaze.java.libraries.ExcludeLibraryAction"
