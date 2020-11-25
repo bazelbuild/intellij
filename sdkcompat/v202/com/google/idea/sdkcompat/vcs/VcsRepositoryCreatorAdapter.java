@@ -30,7 +30,10 @@ public abstract class VcsRepositoryCreatorAdapter implements VcsRepositoryCreato
 
   // #api201: Project parameter necessary to support implementation of createRepositoryIfValid() for
   // versions <2020.2.
-  public VcsRepositoryCreatorAdapter(Project myProject) {}
+  protected VcsRepositoryCreatorAdapter(Project myProject) {}
+
+  // #api201: No-arg constructor necessary to avoid an exception from 2020.2 on.
+  protected VcsRepositoryCreatorAdapter() {}
 
   @Nullable
   public abstract Repository createRepository(

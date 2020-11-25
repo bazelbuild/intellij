@@ -33,6 +33,12 @@ public abstract class VcsRepositoryCreatorAdapter extends VcsRepositoryCreator {
     this.myProject = myProject;
   }
 
+  // #api201: No-arg constructor necessary to avoid an exception from 2020.2 on.
+  public VcsRepositoryCreatorAdapter() {
+    throw new UnsupportedOperationException(
+        "This version of IntelliJ should use the constructor with the project parameter.");
+  }
+
   @Nullable
   public abstract Repository createRepository(
       Project project, VirtualFile root, Disposable parentDisposable);
