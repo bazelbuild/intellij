@@ -24,6 +24,24 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.2.2/ideaIC-2020.2.2.zip",
 )
 
+# The plugin api for IntelliJ 2020.2.3. This is required to build IJwB,
+# and run integration tests.
+http_archive(
+    name = "intellij_ce_2020_2_3",
+    build_file = "@//intellij_platform_sdk:BUILD.idea203",
+    sha256 = "",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.2.3/ideaIC-2020.2.3.zip",
+)
+
+# The plugin api for IntelliJ 2020.2.4. This is required to build IJwB,
+# and run integration tests.
+http_archive(
+    name = "intellij_ce_2020_2_4",
+    build_file = "@//intellij_platform_sdk:BUILD.idea204",
+    sha256 = "",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.2.4/ideaIC-2020.2.4.zip",
+)
+
 # The plugin api for IntelliJ UE 2020.1. This is required to run UE-specific
 # integration tests.
 http_archive(
@@ -40,6 +58,24 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.ue202",
     sha256 = "434adfaa3e98e7eac8ab3d292086958c9f453b6ab2390e8d5c0a53e945e3f857",
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.2.2/ideaIU-2020.2.2.zip",
+)
+
+# The plugin api for IntelliJ UE 2020.2.3. This is required to run UE-specific
+# integration tests.
+http_archive(
+    name = "intellij_ue_2020_2_3",
+    build_file = "@//intellij_platform_sdk:BUILD.ue202023",
+    sha256 = "",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.2.3/ideaIU-2020.2.3.zip",
+)
+
+# The plugin api for IntelliJ UE 2020.2.4. This is required to run UE-specific
+# integration tests.
+http_archive(
+    name = "intellij_ue_2020_2_4",
+    build_file = "@//intellij_platform_sdk:BUILD.ue202024",
+    sha256 = "",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.2.4/ideaIU-2020.2.4.zip",
 )
 
 # The plugin api for CLion 2019.3. This is required to build CLwB,
