@@ -28,7 +28,7 @@ http_archive(
 # and run integration tests.
 http_archive(
     name = "intellij_ce_2020_2_3",
-    build_file = "@//intellij_platform_sdk:BUILD.idea203",
+    build_file = "@//intellij_platform_sdk:BUILD.idea202023",
     sha256 = "",
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.2.3/ideaIC-2020.2.3.zip",
 )
@@ -37,7 +37,7 @@ http_archive(
 # and run integration tests.
 http_archive(
     name = "intellij_ce_2020_2_4",
-    build_file = "@//intellij_platform_sdk:BUILD.idea204",
+    build_file = "@//intellij_platform_sdk:BUILD.idea202024",
     sha256 = "",
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.2.4/ideaIC-2020.2.4.zip",
 )
