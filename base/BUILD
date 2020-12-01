@@ -295,6 +295,29 @@ java_library(
     ],
 )
 
+# exposed so g3plugins tests can optionally depend on it
+java_library(
+    name = "remote_file_prefetcher_for_tests",
+    testonly = 1,
+    srcs = [
+        "src/com/google/idea/blaze/base/async/FutureUtil.java",
+        "src/com/google/idea/blaze/base/command/buildresult/BlazeArtifact.java",
+        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
+        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactParser.java",
+        "src/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
+        "src/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java",
+        "src/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
+        "src/com/google/idea/blaze/base/prefetch/FetchExecutor.java",
+        "src/com/google/idea/blaze/base/prefetch/RemoteArtifactPrefetcher.java",
+    ],
+    deps = [
+        ":base",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+        "//proto:proto_deps",
+    ],
+)
+
 java_library(
     name = "remote_file_prefetcher",
     srcs = [
