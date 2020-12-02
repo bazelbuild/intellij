@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Arrays;
+import java.util.List;
 
 /** Provides output line processors run by default on blaze console output. */
 public interface BlazeConsoleLineProcessorProvider {
@@ -36,8 +37,33 @@ public interface BlazeConsoleLineProcessorProvider {
         .collect(toImmutableList());
   }
 
+  /**
+   * Iterator over extensions to collect all {@link LineProcessor} that will process context lines
+   * that not in blacklist
+   *
+   * @param blacklist a list of lines that do not want to be processed or printed out in context
+   *     console
+   */
+  static ImmutableList<LineProcessor> getAllStderrLineProcessors(
+      BlazeContext context, List<String> blacklist) {
+    return Arrays.stream(EP_NAME.getExtensions())
+        .flatMap(p -> p.getStderrLineProcessors(context, blacklist).stream())
+        .collect(toImmutableList());
+  }
+
   default ImmutableList<LineProcessor> getStderrLineProcessors(BlazeContext context) {
     return ImmutableList.of();
+  }
+
+  /**
+   * Provide a list of LineProcessor that will process context lines that not in blacklist.
+   *
+   * @param blacklist a list of lines that do not want to be processed or printed out in context
+   *     console
+   */
+  default ImmutableList<LineProcessor> getStderrLineProcessors(
+      BlazeContext context, List<String> blacklist) {
+    return getStderrLineProcessors(context);
   }
 
   /** Line processors which should be used for all blaze invocations. */
@@ -46,6 +72,12 @@ public interface BlazeConsoleLineProcessorProvider {
     @Override
     public ImmutableList<LineProcessor> getStderrLineProcessors(BlazeContext context) {
       return ImmutableList.of(new PrintOutputLineProcessor(context));
+    }
+
+    @Override
+    public ImmutableList<LineProcessor> getStderrLineProcessors(
+        BlazeContext context, List<String> blacklist) {
+      return ImmutableList.of(new PrintOutputLineProcessor(context, blacklist));
     }
   }
 }
