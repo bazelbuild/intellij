@@ -1,12 +1,24 @@
 ---
-platforms:
-  ubuntu1604:
+tasks:
+  ubuntu1604_intellij_beta:
+    name: "Plugin for IntelliJ CE Beta"
+    platform: ubuntu1604
     build_flags:
       - --define=ij_product=intellij-beta
     build_targets:
       - //ijwb/...
     test_flags:
       - --define=ij_product=intellij-beta
-      - --test_output=errors
+    test_targets:
+      - //:ijwb_tests
+  ubuntu1604_intellij_ue_beta:
+    name: "Plugin for IntelliJ UE Beta"
+    platform: ubuntu1604
+    build_flags:
+      - --define=ij_product=intellij-ue-beta
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-ue-beta
     test_targets:
       - //:ijwb_tests
