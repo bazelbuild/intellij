@@ -23,8 +23,6 @@ java_library(
     exports = select_for_plugin_api({
         "android-studio-4.1": ["//sdkcompat/v201"],
         "android-studio-4.2": ["//sdkcompat/v202"],
-        "intellij-2020.1": ["//sdkcompat/v201"],
-        "intellij-ue-2020.1": ["//sdkcompat/v201"],
         "intellij-2020.2": ["//sdkcompat/v202"],
         "intellij-ue-2020.2": ["//sdkcompat/v202"],
         "clion-2019.3": ["//sdkcompat/v193"],
