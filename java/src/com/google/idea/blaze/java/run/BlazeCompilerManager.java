@@ -30,9 +30,9 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.compiler.CompilerManagerImpl;
-import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.compiler.CompilationException;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.Structure;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.MessageBus;
 import java.io.File;
@@ -58,7 +58,7 @@ public class BlazeCompilerManager extends CompilerManagerImpl {
   }
 
   @Override
-  public Collection<ClassObject> compileJavaCode(
+  public Collection<Structure> compileJavaCode(
       List<String> options,
       Collection<? extends File> platformCp,
       Collection<? extends File> classpath,
