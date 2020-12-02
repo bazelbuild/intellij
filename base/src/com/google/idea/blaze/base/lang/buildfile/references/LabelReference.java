@@ -101,8 +101,9 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
       return BuildLookupElement.EMPTY_ARRAY;
     }
     String packagePrefix = LabelUtils.getPackagePathComponent(labelString);
+    String workspaceComponent = LabelUtils.getExternalWorkspaceComponent(labelString);
     BuildFile referencedBuildFile =
-        LabelUtils.getReferencedBuildFile(myElement.getContainingFile(), packagePrefix);
+        LabelUtils.getReferencedBuildFile(myElement.getContainingFile(), packagePrefix, workspaceComponent);
     if (referencedBuildFile == null) {
       return BuildLookupElement.EMPTY_ARRAY;
     }
@@ -150,6 +151,7 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
       return BuildLookupElement.EMPTY_ARRAY;
     }
     String packagePrefix = LabelUtils.getPackagePathComponent(labelString);
+    String workspaceComponent = LabelUtils.getExternalWorkspaceComponent(labelString);
     BuildFile parentFile = myElement.getContainingFile();
     if (parentFile == null) {
       return BuildLookupElement.EMPTY_ARRAY;
@@ -159,7 +161,7 @@ public class LabelReference extends PsiReferenceBase<StringLiteral> {
       return BuildLookupElement.EMPTY_ARRAY;
     }
     BuildFile referencedBuildFile =
-        LabelUtils.getReferencedBuildFile(containingPackage.buildFile, packagePrefix);
+        LabelUtils.getReferencedBuildFile(containingPackage.buildFile, packagePrefix, workspaceComponent);
 
     // Directories before the colon are already covered.
     // We're only concerned with package-local directories.

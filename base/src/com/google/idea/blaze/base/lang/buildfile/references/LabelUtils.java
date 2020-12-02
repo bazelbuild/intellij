@@ -20,9 +20,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.util.PathUtil;
 import java.util.ArrayList;
@@ -108,15 +110,17 @@ public class LabelUtils {
   /** The blaze file referenced by the label. */
   @Nullable
   public static BuildFile getReferencedBuildFile(
-      @Nullable BuildFile containingFile, String packagePathComponent) {
+      @Nullable BuildFile containingFile, String packagePathComponent,
+      String externalWorkspaceComponent) {
     if (containingFile == null) {
       return null;
     }
-    if (!packagePathComponent.startsWith("//")) {
+
+    if (!packagePathComponent.startsWith("//") && externalWorkspaceComponent == "") {
       return containingFile;
     }
     return BuildReferenceManager.getInstance(containingFile.getProject())
-        .resolveBlazePackage(packagePathComponent);
+        .resolveBlazePackage(externalWorkspaceComponent, packagePathComponent);
   }
 
   public static String getRuleComponent(String labelString) {

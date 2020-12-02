@@ -32,6 +32,8 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFileWithCustomCompleti
 import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StatementList;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.codeInsight.completion.AutoCompletionContext;
 import com.intellij.codeInsight.completion.AutoCompletionDecision;
 import com.intellij.codeInsight.completion.CompletionContributor;
@@ -102,6 +104,8 @@ public class BuiltInFunctionCompletionContributor extends CompletionContributor 
                       .withIcon(BlazeIcons.BuildRule)
                       .withInsertHandler(getInsertHandler(ruleName, spec)));
             }
+
+            BlazeProjectData projectData = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
           }
         });
   }
