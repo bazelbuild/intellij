@@ -87,11 +87,14 @@ public class BlazePyResolverUtils {
   @Nullable
   public static PsiFileSystemItem resolveFile(PsiManager manager, File file) {
     VirtualFile vf =
-        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
+        VirtualFileSystemProvider.getInstance().getLocalFileSystem().findFileByPath(file.getPath());
     if (vf != null) {
       return vf.isDirectory() ? manager.findDirectory(vf) : manager.findFile(vf);
     }
-    vf = VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath() + ".py");
+    vf =
+        VirtualFileSystemProvider.getInstance()
+            .getLocalFileSystem()
+            .findFileByPath(file.getPath() + ".py");
     return vf != null ? manager.findFile(vf) : null;
   }
 }

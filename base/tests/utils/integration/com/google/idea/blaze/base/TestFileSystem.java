@@ -242,7 +242,7 @@ public class TestFileSystem {
     final TempFileSystem fileSystem = TempFileSystem.getInstance();
 
     @Override
-    public LocalFileSystem getSystem() {
+    public LocalFileSystem getLocalFileSystem() {
       return fileSystem;
     }
   }

@@ -25,5 +25,5 @@ public interface VirtualFileSystemProvider {
     return ServiceManager.getService(VirtualFileSystemProvider.class);
   }
 
-  LocalFileSystem getSystem();
+  LocalFileSystem getLocalFileSystem();
 }

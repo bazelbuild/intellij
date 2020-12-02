@@ -180,7 +180,8 @@ final class BlazeResolveConfiguration {
 
     for (ArtifactLocation sourceArtifact : targetIdeInfo.getSources()) {
       File file = blazeProjectData.getArtifactLocationDecoder().decode(sourceArtifact);
-      VirtualFile vf = VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(file);
+      VirtualFile vf =
+          VirtualFileSystemProvider.getInstance().getLocalFileSystem().findFileByIoFile(file);
       if (vf == null) {
         continue;
       }

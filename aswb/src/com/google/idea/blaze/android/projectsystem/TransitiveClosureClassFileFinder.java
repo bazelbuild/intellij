@@ -124,7 +124,9 @@ public class TransitiveClosureClassFileFinder extends ModuleBasedClassFileFinder
               "Fail to find file %s",
               classJar.getRelativePath());
       VirtualFile classJarVF =
-          VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
+          VirtualFileSystemProvider.getInstance()
+              .getLocalFileSystem()
+              .findFileByIoFile(classJarFile);
       if (classJarVF == null) {
         if (classJarFile.exists()) {
           missingClassJars.add(classJarFile);

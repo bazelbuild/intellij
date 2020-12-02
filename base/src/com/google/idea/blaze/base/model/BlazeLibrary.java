@@ -82,7 +82,7 @@ public abstract class BlazeLibrary implements ProtoWrapper<ProjectData.BlazeLibr
     String protocol =
         isJarFile
             ? StandardFileSystems.JAR_PROTOCOL
-            : VirtualFileSystemProvider.getInstance().getSystem().getProtocol();
+            : VirtualFileSystemProvider.getInstance().getLocalFileSystem().getProtocol();
     String filePath = FileUtil.toSystemIndependentName(path.getPath());
     String url = VirtualFileManager.constructUrl(protocol, filePath);
     if (isJarFile) {
