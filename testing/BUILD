@@ -29,11 +29,8 @@ java_library(
         "android-studio-2020.3": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]) + glob([
             "testcompat/v203/com/google/idea/testing/cidr/*.java",
         ]),
-        "clion-2020.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2020.2": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2020.3": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
-        "intellij-2020.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]),
-        "intellij-ue-2020.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-2020.2": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-ue-2020.2": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-2020.3": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),

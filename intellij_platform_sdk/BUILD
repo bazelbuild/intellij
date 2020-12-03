@@ -75,21 +75,6 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2020.1",
-    values = {
-        "define": "ij_product=intellij-2020.1",
-    },
-)
-
-config_setting(
-    name = "intellij-2020.1-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-2020.1",
-    },
-)
-
-config_setting(
     name = "intellij-2020.2",
     values = {
         "define": "ij_product=intellij-2020.2",
@@ -116,21 +101,6 @@ config_setting(
     values = {
         "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-2020.3",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2020.1",
-    values = {
-        "define": "ij_product=intellij-ue-2020.1",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2020.1-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-ue-2020.1",
     },
 )
 
@@ -234,21 +204,6 @@ config_setting(
     name = "clion-beta",
     values = {
         "define": "ij_product=clion-beta",
-    },
-)
-
-config_setting(
-    name = "clion-2020.1",
-    values = {
-        "define": "ij_product=clion-2020.1",
-    },
-)
-
-config_setting(
-    name = "clion-2020.1-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=clion-2020.1",
     },
 )
 
@@ -385,13 +340,10 @@ java_library(
 java_library(
     name = "jsr305",
     exports = select_for_plugin_api({
-        "clion-2020.1": [":bundled_jsr305"],
         "clion-2020.2": [":bundled_jsr305"],
         "clion-2020.3": [":bundled_jsr305"],
-        "intellij-2020.1": [":bundled_jsr305"],
         "intellij-2020.2": [":bundled_jsr305"],
         "intellij-2020.3": [":bundled_jsr305"],
-        "intellij-ue-2020.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.3": [":bundled_jsr305"],
         "android-studio-4.2": ["@jsr305_annotations//jar"],

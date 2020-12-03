@@ -9,7 +9,6 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-ue-2020.1": ["@intellij_ue_2020_1//:javascript"],
         "intellij-ue-2020.2": ["@intellij_ue_2020_2//:javascript"],
         "intellij-ue-2020.3": ["@intellij_ue_2020_3//:javascript"],
         "clion-2020.1": ["@clion_2020_1//:javascript"],
@@ -24,7 +23,6 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-ue-2020.1": ["@intellij_ue_2020_1//:css"],
         "intellij-ue-2020.2": ["@intellij_ue_2020_2//:css"],
         "intellij-ue-2020.3": ["@intellij_ue_2020_3//:css"],
         "clion-2020.1": ["@clion_2020_1//:css"],
@@ -39,7 +37,6 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-ue-2020.1": ["@intellij_ue_2020_1//:tslint"],
         "intellij-ue-2020.2": ["@intellij_ue_2020_2//:tslint"],
         "intellij-ue-2020.3": ["@intellij_ue_2020_3//:tslint"],
         "clion-2020.1": ["@clion_2020_1//:tslint"],
@@ -54,7 +51,6 @@ java_library(
     tags = ["no-ide"],
     visibility = ["//visibility:private"],
     exports = select_for_plugin_api({
-        "intellij-ue-2020.1": ["@intellij_ue_2020_1//:angular"],
         "intellij-ue-2020.2": ["@intellij_ue_2020_2//:angular"],
         "intellij-ue-2020.3": ["@intellij_ue_2020_3//:angular"],
         "clion-2020.1": ["@intellij_ue_2020_1//:angular"],
