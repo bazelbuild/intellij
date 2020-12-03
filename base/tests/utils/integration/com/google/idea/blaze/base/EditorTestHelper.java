@@ -55,9 +55,20 @@ public class EditorTestHelper {
   }
 
   public Editor openFileInEditor(VirtualFile file) {
-    EdtTestUtil.runInEdtAndWait(
+    try {
+      EdtTestUtil.runInEdtAndWait(
         (ThrowableRunnable<Throwable>) () -> testFixture.openFileInEditor(file));
-    return testFixture.getEditor();
+      return testFixture.getEditor();
+    } catch (Throwable t) {
+      if (t instanceof RuntimeException) {
+        throw (RuntimeException) t;
+      }
+      if (t instanceof Error) {
+        throw (Error) t;
+      }
+
+      throw new RuntimeException(t);
+    }
   }
 
   /** @return null if the only item was auto-completed */
@@ -125,12 +136,22 @@ public class EditorTestHelper {
   }
 
   public void setCaretPosition(Editor editor, int lineNumber, int columnNumber) {
-    final CaretInfo info = new CaretInfo(new LogicalPosition(lineNumber, columnNumber), null);
-    EdtTestUtil.runInEdtAndWait(
+    try {
+      final CaretInfo info = new CaretInfo(new LogicalPosition(lineNumber, columnNumber), null);
+      EdtTestUtil.runInEdtAndWait(
         (ThrowableRunnable<Throwable>)
-            () ->
-                EditorTestUtil.setCaretsAndSelection(
-                    editor, new CaretAndSelectionState(ImmutableList.of(info), null)));
+          () ->
+            EditorTestUtil.setCaretsAndSelection(
+              editor, new CaretAndSelectionState(ImmutableList.of(info), null)));
+    } catch (Throwable t) {
+      if (t instanceof RuntimeException) {
+        throw (RuntimeException) t;
+      }
+      if (t instanceof Error) {
+        throw (Error) t;
+      }
+      throw new RuntimeException(t);
+    }
   }
 
   public void assertCaretPosition(Editor editor, int lineNumber, int columnNumber) {

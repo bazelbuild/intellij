@@ -50,7 +50,7 @@ public class BuildLabelAutoCompletionTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testPopupAutocompleteAfterSlash() {
+  public void testPopupAutocompleteAfterSlash() throws Throwable {
     completionTester.runWithAutoPopupEnabled(
         () -> {
           createBuildFile(new WorkspacePath("java/com/foo/BUILD"));
@@ -70,7 +70,7 @@ public class BuildLabelAutoCompletionTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testPopupAutocompleteAfterColon() {
+  public void testPopupAutocompleteAfterColon() throws Throwable {
     completionTester.runWithAutoPopupEnabled(
         () -> {
           createBuildFile(new WorkspacePath("java/com/foo/BUILD"), "java_library(name = 'target')");
@@ -90,7 +90,7 @@ public class BuildLabelAutoCompletionTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testPopupAutocompleteAfterLetter() {
+  public void testPopupAutocompleteAfterLetter() throws Throwable {
     // test for IntelliJ's standard autocomplete popup trigger
     completionTester.runWithAutoPopupEnabled(
         () -> {

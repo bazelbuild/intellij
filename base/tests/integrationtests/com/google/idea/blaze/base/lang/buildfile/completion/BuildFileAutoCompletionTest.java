@@ -51,15 +51,16 @@ public class BuildFileAutoCompletionTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testNoPopupAfterNumber() {
-    completionTester.runWithAutoPopupEnabled(
+    try {
+      completionTester.runWithAutoPopupEnabled(
         () -> {
           createBuildFile(new WorkspacePath("java/com/foo/BUILD"));
           BuildFile file =
-              createBuildFile(
-                  new WorkspacePath("BUILD"),
-                  "java_library(",
-                  "    name = 'lib',",
-                  "    testonly = ");
+            createBuildFile(
+              new WorkspacePath("BUILD"),
+              "java_library(",
+              "    name = 'lib',",
+              "    testonly = ");
 
           Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
           editorTest.setCaretPosition(editor, 2, "    testonly = ".length());
@@ -67,6 +68,15 @@ public class BuildFileAutoCompletionTest extends BuildFileIntegrationTestCase {
           completionTester.typeWithPauses("1");
           assertThat(currentLookupStrings()).isEmpty();
         });
+    } catch (Throwable t) {
+      if (t instanceof RuntimeException) {
+        throw (RuntimeException) t;
+      }
+      if (t instanceof Error) {
+        throw (Error) t;
+      }
+      throw new RuntimeException(t);
+    }
   }
 
   private List<String> currentLookupStrings() {

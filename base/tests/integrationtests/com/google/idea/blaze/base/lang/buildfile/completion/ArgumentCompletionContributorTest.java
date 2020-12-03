@@ -46,7 +46,7 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
   }
 
   @Test
-  public void testIncompleteFuncall() {
+  public void testIncompleteFuncall() throws Throwable {
     completionTester.runWithAutoPopupEnabled(
         () -> {
           BuildFile file =
@@ -69,7 +69,7 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
   }
 
   @Test
-  public void testExistingKeywordArg() {
+  public void testExistingKeywordArg() throws Throwable {
     completionTester.runWithAutoPopupEnabled(
         () -> {
           BuildFile file =
@@ -90,7 +90,7 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
   }
 
   @Test
-  public void testNoArgumentCompletionInComment() {
+  public void testNoArgumentCompletionInComment() throws Throwable {
     completionTester.runWithAutoPopupEnabled(
         () -> {
           BuildFile file =

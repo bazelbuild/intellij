@@ -10,6 +10,8 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-2020.2": ["@scala_2020_2//:scala"],
         "intellij-ue-2020.2": ["@scala_2020_2//:scala"],
+        "intellij-2020.3": ["@scala_2020_3//:scala"],
+        "intellij-ue-2020.3": ["@scala_2020_3//:scala"],
         "default": [],
     }),
 )

@@ -41,6 +41,8 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.psi.impl.SyntheticFileSystemItem;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
@@ -215,7 +217,7 @@ class BlazeGoImportResolver implements GoImportResolver {
     }
 
     @Override
-    public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> psiElementProcessor) {
+    public boolean processChildren(@NotNull PsiElementProcessor<? super PsiFileSystemItem> psiElementProcessor) {
       return false;
     }
   }

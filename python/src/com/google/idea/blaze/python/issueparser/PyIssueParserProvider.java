@@ -34,12 +34,13 @@ import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
+
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.regex.Matcher;
-import javax.annotation.Nullable;
 
 /** Finds python-specific errors in blaze build output. */
 public class PyIssueParserProvider implements BlazeIssueParserProvider {
@@ -130,7 +131,7 @@ public class PyIssueParserProvider implements BlazeIssueParserProvider {
       if (projectScope.contains(vf)) {
         return 0;
       }
-      return PythonSdkType.isStdLib(vf, sdk) ? 2 : 1;
+      return PythonSdkUtil.isStdLib(vf, sdk) ? 2 : 1;
     }
 
     /** defaults to -1 if no line number can be parsed. */

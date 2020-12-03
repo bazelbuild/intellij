@@ -10,6 +10,8 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-2020.2": ["@go_2020_2//:go"],
         "intellij-ue-2020.2": ["@go_2020_2//:go"],
+        "intellij-2020.3": ["@go_2020_3//:go"],
+        "intellij-ue-2020.3": ["@go_2020_3//:go"],
         "default": [],
     }),
 )
