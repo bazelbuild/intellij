@@ -46,6 +46,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
   private final boolean generateResourceClass;
   @Nullable private final Label legacyResources;
   @Nullable private final Label instruments;
+  @Nullable private final ArtifactLocation renderResolveJar;
 
   private AndroidIdeInfo(
       List<AndroidResFolder> resources,
@@ -57,7 +58,8 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
       @Nullable LibraryArtifact resourceJar,
       boolean hasIdlSources,
       @Nullable Label legacyResources,
-      @Nullable Label instruments) {
+      @Nullable Label instruments,
+      @Nullable ArtifactLocation renderResolveJar) {
     this.resources = ImmutableList.copyOf(resources);
     this.resourceJavaPackage = resourceJavaPackage;
     this.generateResourceClass = generateResourceClass;
@@ -68,6 +70,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     this.hasIdlSources = hasIdlSources;
     this.legacyResources = legacyResources;
     this.instruments = instruments;
+    this.renderResolveJar = renderResolveJar;
   }
 
   static AndroidIdeInfo fromProto(IntellijIdeInfo.AndroidIdeInfo proto) {
@@ -87,6 +90,9 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
             : null,
         !Strings.isNullOrEmpty(proto.getInstruments())
             ? Label.create(proto.getInstruments())
+            : null,
+        proto.hasRenderResolveJar()
+            ? ArtifactLocation.fromProto(proto.getRenderResolveJar())
             : null);
   }
 
@@ -104,6 +110,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setResourceJar, resourceJar);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setLegacyResources, legacyResources);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setInstruments, instruments);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setRenderResolveJar, renderResolveJar);
     return builder.build();
   }
 
@@ -158,6 +165,11 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     return instruments;
   }
 
+  @Nullable
+  public ArtifactLocation getRenderResolveJar() {
+    return renderResolveJar;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -174,6 +186,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     private boolean generateResourceClass;
     private Label legacyResources;
     private Label instruments;
+    private ArtifactLocation deployJar;
 
     public Builder setManifestFile(ArtifactLocation artifactLocation) {
       this.manifest = artifactLocation;
@@ -229,6 +242,11 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
       return this;
     }
 
+    public Builder setDeployJar(@Nullable ArtifactLocation deployJar) {
+      this.deployJar = deployJar;
+      return this;
+    }
+
     public AndroidIdeInfo build() {
       if (!resources.isEmpty() || manifest != null) {
         if (!generateResourceClass) {
@@ -247,7 +265,8 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
           resourceJar,
           hasIdlSources,
           legacyResources,
-          instruments);
+          instruments,
+          deployJar);
     }
   }
 
