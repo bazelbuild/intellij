@@ -76,6 +76,13 @@ java_proto_library(
     deps = [":intellij_plugin_target_deploy_info_proto"],
 )
 
+# Required for bazel.
+java_binary(
+    name = "jarjar_runner",
+    main_class = "org.pantsbuild.jarjar.Main",
+    runtime_deps = ["@jarjar//jar"],
+)
+
 genrule(
     name = "repackaged_proto_deps",
     srcs = [
@@ -84,13 +91,13 @@ genrule(
     ],
     outs = [":repackaged_proto_deps.jar"],
     cmd = """
-    $(location @bazel_tools//third_party/jarjar:jarjar_bin) \
+    $(location :jarjar_runner) \
         process \
         $(location :jarjar_protobuf_rule.txt) \
         $(location :proto_deps_binary_deploy.jar) \
         $@
     """,
-    tools = ["@bazel_tools//third_party/jarjar:jarjar_bin"],
+    tools = [":jarjar_runner"],
 )
 
 java_binary(
