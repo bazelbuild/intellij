@@ -16,7 +16,6 @@
 package com.google.idea.blaze.android.sync.model.idea;
 
 import com.android.sdklib.AndroidVersion;
-import com.android.tools.idea.databinding.DataBindingMode;
 import com.android.tools.idea.model.AndroidModel;
 import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.lint.detector.api.Desugaring;
@@ -38,18 +37,16 @@ import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Contains Android-Blaze related state necessary for configuring an IDEA project based on a
  * user-selected build variant.
  */
 abstract class BlazeAndroidModelBase implements AndroidModel {
-  private Project project;
-  private final File rootDirPath;
+  private final Project project;
   private final String applicationId;
   private final int minSdkVersion;
-  private boolean desugarJava8Libs;
+  private final boolean desugarJava8Libs;
 
   protected BlazeAndroidModelBase(
       Project project,
@@ -58,7 +55,6 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
       int minSdkVersion,
       boolean desugarJava8Libs) {
     this.project = project;
-    this.rootDirPath = rootDirPath;
     this.applicationId = applicationId;
     this.minSdkVersion = minSdkVersion;
     this.desugarJava8Libs = desugarJava8Libs;
@@ -110,27 +106,9 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
     return null;
   }
 
-  // @Override #api 3.6
-  public File getRootDirPath() {
-    return rootDirPath;
-  }
-
   @Override
   public boolean isGenerated(VirtualFile file) {
     return false;
-  }
-
-  // @Override #api 3.6
-  public VirtualFile getRootDir() {
-    File rootDirPath = getRootDirPath();
-    VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(rootDirPath);
-    assert virtualFile != null;
-    return virtualFile;
-  }
-
-  // @Override #api3.6
-  public DataBindingMode getDataBindingMode() {
-    return DataBindingMode.NONE;
   }
 
   @Override
@@ -144,7 +122,7 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
   }
 
   public static boolean testIsClassFileOutOfDate(
-      @NotNull Project project, @NotNull String fqcn, @NotNull VirtualFile classFile) {
+      Project project, String fqcn, VirtualFile classFile) {
     VirtualFile sourceFile =
         ApplicationManager.getApplication()
             .runReadAction(
@@ -199,7 +177,6 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
     return false;
   }
 
-  @NotNull
   @Override
   public Set<Desugaring> getDesugaring() {
     return desugarJava8Libs ? Desugaring.FULL : Desugaring.DEFAULT;
