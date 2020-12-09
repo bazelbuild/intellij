@@ -68,6 +68,7 @@ import org.jetbrains.annotations.Nullable;
  * then it is in experimental status under the blaze.class.file.finder.name flag.
  */
 public class PsiBasedClassFileFinder implements BlazeClassFileFinder {
+  static final String CLASS_FINDER_KEY = "PsiBasedClassFileFinder";
   private static final Logger LOG = Logger.getInstance(PsiBasedClassFileFinder.class);
 
   private final Module module;

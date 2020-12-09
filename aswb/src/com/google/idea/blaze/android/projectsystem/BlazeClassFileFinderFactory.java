@@ -31,26 +31,37 @@ public class BlazeClassFileFinderFactory {
   public static final StringExperiment CLASS_FILE_FINDER_NAME =
       new StringExperiment("blaze.class.file.finder.name");
 
-  private static final String DEFAULT_CLASS_FILE_FINDER_NAME = "PsiBasedClassFileFinder";
+  private static final String DEFAULT_CLASS_FILE_FINDER_NAME =
+      PsiBasedClassFileFinder.CLASS_FINDER_KEY;
 
   private static final ImmutableMap<String, Function<Module, BlazeClassFileFinder>>
       CLASS_FILE_FINDER_CONSTRUCTORS =
           ImmutableMap.<String, Function<Module, BlazeClassFileFinder>>builder()
-              .put("TransitiveClosureClassFileFinder", TransitiveClosureClassFileFinder::new)
-              .put("PsiBasedClassFileFinder", PsiBasedClassFileFinder::new)
+              .put(
+                  TransitiveClosureClassFileFinder.CLASS_FINDER_KEY,
+                  TransitiveClosureClassFileFinder::new)
+              .put(PsiBasedClassFileFinder.CLASS_FINDER_KEY, PsiBasedClassFileFinder::new)
+              .put(RenderJarClassFileFinder.CLASS_FINDER_KEY, RenderJarClassFileFinder::new)
               .build();
+
+  /**
+   * Returns value of {@link #CLASS_FILE_FINDER_NAME} if it's a key in {@link
+   * #CLASS_FILE_FINDER_CONSTRUCTORS} or {@link #DEFAULT_CLASS_FILE_FINDER_NAME} otherwise.
+   */
+  public static String getClassFileFinderName() {
+    String finderName = CLASS_FILE_FINDER_NAME.getValue();
+    if (!CLASS_FILE_FINDER_CONSTRUCTORS.containsKey(finderName)) {
+      finderName = DEFAULT_CLASS_FILE_FINDER_NAME;
+    }
+
+    return finderName;
+  }
 
   /**
    * Returns a new BlazeClassFileFinder for the given module. The particular implementation used is
    * determined by the value of the CLASS_FILE_FINDER_NAME flag.
    */
   public static BlazeClassFileFinder createBlazeClassFileFinder(Module module) {
-    String finderName = CLASS_FILE_FINDER_NAME.getValue();
-
-    if (!CLASS_FILE_FINDER_CONSTRUCTORS.containsKey(finderName)) {
-      finderName = DEFAULT_CLASS_FILE_FINDER_NAME;
-    }
-
-    return CLASS_FILE_FINDER_CONSTRUCTORS.get(finderName).apply(module);
+    return CLASS_FILE_FINDER_CONSTRUCTORS.get(getClassFileFinderName()).apply(module);
   }
 }

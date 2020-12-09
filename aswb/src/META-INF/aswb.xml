@@ -38,6 +38,8 @@
         serviceImplementation="com.google.idea.blaze.android.run.runner.BlazeDeployTargetService$DefaultService"/>
     <projectService serviceInterface="com.google.idea.blaze.android.run.runner.BlazeAndroidDebuggerService"
         serviceImplementation="com.google.idea.blaze.android.run.runner.BlazeAndroidDebuggerService$DefaultDebuggerService"/>
+    <projectService serviceInterface="com.google.idea.blaze.android.targetmaps.TargetToBinaryMap"
+        serviceImplementation="com.google.idea.blaze.android.targetmaps.TargetToBinaryMapImpl" />
     <applicationService serviceImplementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettings"/>
     <applicationService serviceInterface="com.google.idea.blaze.android.sdk.BlazeSdkProvider"
       serviceImplementation="com.google.idea.blaze.android.sdk.BlazeSdkProviderImpl"/>
@@ -83,6 +85,7 @@
         order="first, before JavaTestContextProvider"/>
     <BlazeHighlightStatsCollector implementation="com.google.idea.blaze.android.editor.UnresolvedResourceStatsCollector"/>
     <SyncListener implementation="com.google.idea.blaze.android.editor.ProjectUnresolvedResourceStatsCollector$CollectorSyncListener"/>
+    <SyncListener implementation="com.google.idea.blaze.android.targetmaps.TargetToBinaryMapImpl$Adapter"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">
