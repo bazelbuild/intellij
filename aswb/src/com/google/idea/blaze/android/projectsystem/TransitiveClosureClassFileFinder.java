@@ -58,7 +58,7 @@ import javax.annotation.Nullable;
  */
 public class TransitiveClosureClassFileFinder extends ModuleBasedClassFileFinder
     implements BlazeClassFileFinder {
-  static final String CLASS_FINDER_KEY = "TransitiveClosureClassFileFinder";
+  public static final String CLASS_FINDER_KEY = "TransitiveClosureClassFileFinder";
 
   private final AtomicBoolean pendingJarsRefresh;
 

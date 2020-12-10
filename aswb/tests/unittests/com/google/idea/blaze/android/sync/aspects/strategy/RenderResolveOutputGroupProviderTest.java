@@ -60,6 +60,8 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
     experiments.setExperimentString(
         BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME,
         RenderJarClassFileFinder.CLASS_FINDER_KEY);
+    experiments.setFeatureRolloutExperiment(
+        BlazeClassFileFinderFactory.nonDefaultFinderEnableExperiment, 100);
   }
 
   /**
