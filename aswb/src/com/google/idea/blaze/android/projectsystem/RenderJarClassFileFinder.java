@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.projectsystem;
 
 import com.android.tools.idea.projectsystem.ClassFileFinderUtil;
 import com.android.tools.pixelprobe.util.Strings;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
@@ -60,7 +61,7 @@ import org.jetbrains.annotations.Nullable;
  * in comments below.
  */
 public class RenderJarClassFileFinder implements BlazeClassFileFinder {
-  static final String CLASS_FINDER_KEY = "RenderJarClassFileFinder";
+  @VisibleForTesting public static final String CLASS_FINDER_KEY = "RenderJarClassFileFinder";
 
   private static final Logger log = Logger.getInstance(RenderJarClassFileFinder.class);
 

@@ -45,6 +45,7 @@ public class AspectStrategyTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     experiments = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experiments);
+    registerExtensionPoint(OutputGroupsProvider.EP_NAME, OutputGroupsProvider.class);
   }
 
   @Test

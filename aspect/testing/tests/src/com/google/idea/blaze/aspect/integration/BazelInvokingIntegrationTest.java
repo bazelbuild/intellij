@@ -108,7 +108,7 @@ public class BazelInvokingIntegrationTest {
             .flatMap(
                 g ->
                     strategy
-                        .getOutputGroups(g, languageClasses, /* directDepsOnly= */ false)
+                        .getBaseOutputGroups(g, languageClasses, /* directDepsOnly= */ false)
                         .stream())
             .collect(Collectors.joining(","));
     return "--output_groups=" + outputGroupNames;

@@ -783,6 +783,13 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     if hasattr(ctx.rule.attr, "instruments") and ctx.rule.attr.instruments:
         instruments = str(ctx.rule.attr.instruments.label)
 
+    render_resolve_jar = None
+    if android_semantics and hasattr(android_semantics, "build_render_resolve_jar"):
+        render_resolve_jar = android_semantics.build_render_resolve_jar(target, ctx)
+
+    if render_resolve_jar:
+        update_sync_output_groups(output_groups, "intellij-render-resolve-android", depset([render_resolve_jar]))
+
     android_info = struct_omit_none(
         java_package = android.java_package,
         idl_import_root = android.idl.import_root if hasattr(android.idl, "import_root") else None,
@@ -797,6 +804,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
         res_folders = res_folders,
         resource_jar = library_artifact(android.resource_jar),
         instruments = instruments,
+        render_resolve_jar = artifact_location(render_resolve_jar) if render_resolve_jar else None,
         **extra_ide_info
     )
 
@@ -1099,6 +1107,10 @@ def make_intellij_info_aspect(aspect_impl, semantics):
             allow_files = True,
         ),
     }
+
+    # add attrs required by semantics
+    if hasattr(semantics, "attrs"):
+        attrs.update(semantics.attrs)
 
     return aspect(
         attrs = attrs,
