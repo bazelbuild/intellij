@@ -16,6 +16,7 @@
 package com.google.idea.blaze.golang.run;
 
 import com.goide.dlv.DlvDebugProcess;
+import com.goide.dlv.DlvDisconnectOption;
 import com.goide.dlv.DlvRemoteVmConnection;
 import com.goide.execution.GoBuildingRunner;
 import com.goide.execution.application.GoApplicationRunningState;
@@ -38,6 +39,7 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.debugger.connection.RemoteVmConnection;
 
 /** Blaze plugin specific {@link com.goide.execution.GoBuildingRunner}. */
@@ -68,15 +70,15 @@ public class BlazeGoDebugRunner extends GoBuildingRunner {
   @Override
   protected Promise<RunContentDescriptor> execute(
       ExecutionEnvironment environment, RunProfileState state) throws ExecutionException {
-    return Promise.resolve(doExecute(environment, state));
+    if (!(state instanceof BlazeGoDummyDebugProfileState)) {
+      return Promises.resolvedPromise();
+    }
+    return Promises.resolvedPromise(doExecute(environment, (BlazeGoDummyDebugProfileState) state));
   }
 
-  private RunContentDescriptor doExecute(ExecutionEnvironment environment, RunProfileState state)
+  protected RunContentDescriptor doExecute(
+      ExecutionEnvironment environment, BlazeGoDummyDebugProfileState blazeState)
       throws ExecutionException {
-    if (!(state instanceof BlazeGoDummyDebugProfileState)) {
-      return null;
-    }
-    BlazeGoDummyDebugProfileState blazeState = (BlazeGoDummyDebugProfileState) state;
     GoApplicationRunningState goState = blazeState.toNativeState(environment);
     ExecutionResult executionResult = goState.execute(environment.getExecutor(), this);
     return XDebuggerManager.getInstance(environment.getProject())
@@ -84,10 +86,11 @@ public class BlazeGoDebugRunner extends GoBuildingRunner {
             environment,
             new XDebugProcessStarter() {
               @Override
-              public XDebugProcess start(XDebugSession session) throws ExecutionException {
-                RemoteVmConnection<?> connection = new DlvRemoteVmConnection(true);
+              public XDebugProcess start(XDebugSession session) {
+                RemoteVmConnection<?> connection =
+                    new DlvRemoteVmConnection(DlvDisconnectOption.KILL);
                 XDebugProcess process =
-                    new DlvDebugProcess(session, connection, executionResult, true, false);
+                    new DlvDebugProcess(session, connection, executionResult, /* remote= */ true);
                 connection.open(goState.getDebugAddress());
                 return process;
               }
