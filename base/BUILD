@@ -47,6 +47,7 @@ intellij_plugin_library(
         "intellij-ue-2020.2": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
         "clion-2019.3": [],
         "clion-2020.1": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
+        "clion-2020.2": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
     }),
     visibility = ["//visibility:public"],
     deps = [":base"],
