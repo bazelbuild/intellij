@@ -53,10 +53,10 @@ public class TargetToBinaryMapImpl implements TargetToBinaryMap {
   @Override
   public synchronized ImmutableSet<TargetKey> getBinariesDependingOn(
       Collection<TargetKey> targetKeys) {
-    Set<TargetKey> uncachedKeys =
+    ImmutableSet<TargetKey> uncachedKeys =
         targetKeys.stream()
             .filter(t -> !targetToBinaries.containsKey(t))
-            .collect(Collectors.toSet());
+            .collect(ImmutableSet.toImmutableSet());
     if (!uncachedKeys.isEmpty()) {
       cacheBinariesForTargetKeys(uncachedKeys);
     }
@@ -73,7 +73,7 @@ public class TargetToBinaryMapImpl implements TargetToBinaryMap {
    * <p>The calculation is performed by traversing the build tree of each binary once to look for
    * every target in {@code targetKeys}
    */
-  private void cacheBinariesForTargetKeys(Set<TargetKey> targetKeys) {
+  private void cacheBinariesForTargetKeys(ImmutableSet<TargetKey> targetKeys) {
     // builder map to hold intermediate values before putting the entries in targetToBinaries
     Map<TargetKey, ImmutableSet.Builder<TargetKey>> builderMap =
         targetKeys.stream().collect(Collectors.toMap(t -> t, t -> ImmutableSet.builder()));
