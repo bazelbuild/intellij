@@ -16,7 +16,6 @@
 package com.google.idea.blaze.android.projectsystem;
 
 import com.android.tools.idea.projectsystem.ClassFileFinderUtil;
-import com.android.tools.pixelprobe.util.Strings;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -134,9 +133,9 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
             "Could not find %s\nModule: %s\nBinary Targets:\n  %s",
             fqcn,
             module.getName(),
-            Strings.join(
-                binaryTargets.stream().map(TargetKey::getLabel).collect(Collectors.toList()),
-                "\n  ")));
+            binaryTargets.stream()
+                .map(t -> t.getLabel().toString())
+                .collect(Collectors.joining("\n  "))));
 
     return null;
   }
