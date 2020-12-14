@@ -186,7 +186,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     private boolean generateResourceClass;
     private Label legacyResources;
     private Label instruments;
-    private ArtifactLocation deployJar;
+    private ArtifactLocation renderResolveJar;
 
     public Builder setManifestFile(ArtifactLocation artifactLocation) {
       this.manifest = artifactLocation;
@@ -242,8 +242,8 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
       return this;
     }
 
-    public Builder setDeployJar(@Nullable ArtifactLocation deployJar) {
-      this.deployJar = deployJar;
+    public Builder setRenderResolveJar(@Nullable ArtifactLocation renderResolveJar) {
+      this.renderResolveJar = renderResolveJar;
       return this;
     }
 
@@ -266,7 +266,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
           hasIdlSources,
           legacyResources,
           instruments,
-          deployJar);
+          renderResolveJar);
     }
   }
 
