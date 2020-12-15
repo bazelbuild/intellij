@@ -37,7 +37,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import java.io.File;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
@@ -223,10 +222,12 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
     return ClassFileFinderUtil.findClassFileInOutputRoot(jarRoot, fqcn);
   }
 
-  /** Test aware method to redirect JARs {@link TempFileSystem} for unit tests */
+  /** Test aware method to redirect JARs to {@link VirtualFileSystemProvider} for tests */
   private static VirtualFile getJarRootForLocalFile(VirtualFile file) {
     return ApplicationManager.getApplication().isUnitTestMode()
-        ? TempFileSystem.getInstance().findFileByPath(file.getPath() + JarFileSystem.JAR_SEPARATOR)
+        ? VirtualFileSystemProvider.getInstance()
+            .getSystem()
+            .findFileByPath(file.getPath() + JarFileSystem.JAR_SEPARATOR)
         : JarFileSystem.getInstance().getJarRootForLocalFile(file);
   }
 
