@@ -56,8 +56,8 @@ public interface ExternalTask {
     final File workingDirectory;
     final Map<String, String> environmentVariables = Maps.newHashMap();
     @VisibleForTesting @Nullable public BlazeContext context;
-    @Nullable OutputStream stdout;
-    @Nullable OutputStream stderr;
+    @VisibleForTesting @Nullable public OutputStream stdout;
+    @VisibleForTesting @Nullable public OutputStream stderr;
     @Nullable BlazeCommand blazeCommand;
     boolean redirectErrorStream = false;
 

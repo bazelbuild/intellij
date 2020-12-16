@@ -105,7 +105,10 @@ public class BlazeClassJarProviderIntegrationTest extends BlazeIntegrationTestCa
     MockExperimentService experimentService = new MockExperimentService();
     registerApplicationComponent(ExperimentService.class, experimentService);
     experimentService.setExperimentString(
-        BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME, "TransitiveClosureClassFileFinder");
+        BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME,
+        TransitiveClosureClassFileFinder.CLASS_FINDER_KEY);
+    experimentService.setFeatureRolloutExperiment(
+        BlazeClassFileFinderFactory.nonDefaultFinderEnableExperiment, 100);
     classFileFinder = BlazeClassFileFinderFactory.createBlazeClassFileFinder(module);
   }
 

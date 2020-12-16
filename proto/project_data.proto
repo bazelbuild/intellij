@@ -157,6 +157,9 @@ message AndroidResourceModule {
   repeated ArtifactLocation transitive_resources = 3;
   repeated string resource_library_keys = 4;  // added in 3.3
   repeated TargetKey transitive_resource_dependencies = 5;
+  // targets that contribute resources to the AndroidResourceModule,
+  // including target_key
+  repeated TargetKey source_target_keys = 6;
 }
 
 message BlazeJarLibrary {

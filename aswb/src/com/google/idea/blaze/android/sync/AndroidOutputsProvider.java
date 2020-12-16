@@ -63,6 +63,7 @@ public class AndroidOutputsProvider implements OutputsProvider {
     addLibrary(list, androidInfo.getResourceJar());
     addLibrary(list, androidInfo.getIdlJar());
     addArtifact(list, androidInfo.getManifest());
+    addArtifact(list, androidInfo.getRenderResolveJar());
     return list.build();
   }
 
@@ -88,12 +89,24 @@ public class AndroidOutputsProvider implements OutputsProvider {
     if (target.getJavaToolchainIdeInfo() != null) {
       return target.getJavaToolchainIdeInfo().getJavacJars();
     }
-    if (target.getAndroidIdeInfo() != null) {
-      ArtifactLocation manifest = target.getAndroidIdeInfo().getManifest();
-      if (manifest != null) {
-        return ImmutableList.of(manifest);
-      }
+
+    if (target.getAndroidIdeInfo() == null) {
+      return ImmutableList.of();
     }
-    return ImmutableList.of();
+
+    ImmutableList.Builder<ArtifactLocation> builder = ImmutableList.builder();
+    AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
+
+    ArtifactLocation manifest = androidIdeInfo.getManifest();
+    if (manifest != null) {
+      builder.add(manifest);
+    }
+
+    ArtifactLocation deployJar = androidIdeInfo.getRenderResolveJar();
+    if (deployJar != null) {
+      builder.add(deployJar);
+    }
+
+    return builder.build();
   }
 }

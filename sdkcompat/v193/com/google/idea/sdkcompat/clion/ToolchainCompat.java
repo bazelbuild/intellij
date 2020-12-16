@@ -1,4 +1,4 @@
-package com.google.idea.sdkcompat.cpp;
+package com.google.idea.sdkcompat.clion;
 
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains.Toolchain;
 

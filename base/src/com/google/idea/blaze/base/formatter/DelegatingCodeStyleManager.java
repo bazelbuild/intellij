@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.formatter;
 
+import com.google.idea.sdkcompat.formatter.DelegatingCodeStyleManagerCompat;
 import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -203,5 +204,12 @@ abstract class DelegatingCodeStyleManager extends CodeStyleManager
   @Override
   public <T> T performActionWithFormatterDisabled(Computable<T> r) {
     return delegate.performActionWithFormatterDisabled(r);
+  }
+
+  // #api201: Method introduced in 2020.2. If not overridden, an exception is thrown upon class
+  // creation.
+  @SuppressWarnings("override")
+  public void scheduleReformatWhenSettingsComputed(PsiFile file) {
+    DelegatingCodeStyleManagerCompat.scheduleReformatWhenSettingsComputed(delegate, file);
   }
 }

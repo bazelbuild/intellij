@@ -35,11 +35,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 
 /** Blaze implementation of {@link ProjectSystemSyncManager} */
 public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
-  private Project project;
+  private final Project project;
 
   BlazeProjectSystemSyncManager(Project project) {
     this.project = project;
@@ -60,13 +59,7 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
     return LastSyncResultCache.getInstance(project).lastSyncResult;
   }
 
-  // @Override #api 3.6
-  public ListenableFuture<SyncResult> syncProject(
-      ProjectSystemSyncManager.SyncReason reason, boolean requireSourceGeneration) {
-    return syncProject(reason);
-  }
-
-  // @Override #api 3.6
+  @Override
   public ListenableFuture<SyncResult> syncProject(ProjectSystemSyncManager.SyncReason reason) {
     SettableFuture<ProjectSystemSyncManager.SyncResult> syncResult = SettableFuture.create();
 
@@ -92,7 +85,7 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
           PROJECT_SYSTEM_SYNC_TOPIC,
           new SyncResultListener() {
             @Override
-            public void syncEnded(@NotNull SyncResult result) {
+            public void syncEnded(SyncResult result) {
               connection.disconnect();
               syncResult.set(result);
             }

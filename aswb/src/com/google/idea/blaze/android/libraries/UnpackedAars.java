@@ -115,6 +115,15 @@ public class UnpackedAars {
     this.cacheDir = getCacheDir(importSettings);
   }
 
+  @VisibleForTesting
+  public File getCacheDir() {
+    return this.cacheDir;
+  }
+
+  private static File getCacheDir(BlazeImportSettings importSettings) {
+    return new File(BlazeDataStorage.getProjectDataDir(importSettings), "aar_libraries");
+  }
+
   private static class AarAndJar {
     private final BlazeArtifact aar;
     @Nullable private final BlazeArtifact jar;
@@ -347,10 +356,6 @@ public class UnpackedAars {
   private static String cacheKeyInternal(String key) {
     String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(key));
     return name + "_" + Integer.toHexString(key.hashCode());
-  }
-
-  private static File getCacheDir(BlazeImportSettings importSettings) {
-    return new File(BlazeDataStorage.getProjectDataDir(importSettings), "aar_libraries");
   }
 
   static class FileCacheAdapter implements FileCache {

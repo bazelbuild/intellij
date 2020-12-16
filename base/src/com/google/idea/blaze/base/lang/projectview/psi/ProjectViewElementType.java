@@ -27,7 +27,7 @@ import java.lang.reflect.Constructor;
  */
 public class ProjectViewElementType extends IElementType {
 
-  private static final Class[] PARAMETER_TYPES = new Class[] {ASTNode.class};
+  private static final Class<?>[] PARAMETER_TYPES = new Class<?>[] {ASTNode.class};
   private final Class<? extends PsiElement> psiElementClass;
   private Constructor<? extends PsiElement> constructor;
 

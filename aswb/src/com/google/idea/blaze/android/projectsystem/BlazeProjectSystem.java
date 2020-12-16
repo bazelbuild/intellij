@@ -44,11 +44,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.SourceProviderManager;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Base class to implement common methods in {@link AndroidProjectSystem} for blaze with different
@@ -92,18 +90,6 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     BlazeBuildService.getInstance().buildProject(project);
   }
 
-  // @Override #api3.6
-  public String mergeBuildFiles(
-      String dependencies, String destinationContents, @Nullable String supportLibVersionFilter) {
-    // TODO: check if necessary to implement.
-    return "";
-  }
-
-  // #api 3.4
-  public boolean upgradeProjectToSupportInstantRun() {
-    return false;
-  }
-
   @Override
   public AndroidModuleSystem getModuleSystem(Module module) {
     return BlazeModuleSystem.getInstance(module);
@@ -114,25 +100,21 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     return syncManager;
   }
 
-  @Nonnull
   @Override
   public Collection<PsiElementFinder> getPsiElementFinders() {
     return myFinders;
   }
 
-  @Nonnull
   @Override
   public BlazeLightResourceClassService getLightResourceClassService() {
     return BlazeLightResourceClassService.getInstance(project);
   }
 
-  @NotNull
   @Override
   public SourceProvidersFactory getSourceProvidersFactory() {
     return new SourceProvidersFactory() {
-      @Nullable
       @Override
-      public SourceProviders createSourceProvidersFor(@NotNull AndroidFacet facet) {
+      public SourceProviders createSourceProvidersFor(AndroidFacet facet) {
         BlazeAndroidModel model = ((BlazeAndroidModel) AndroidModel.get(facet));
         if (model != null) {
           return SourceProvidersCompat.forModel(model);
@@ -143,10 +125,9 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     };
   }
 
-  @NotNull
-  // #api41 @Override
+  @Override
   public Collection<AndroidFacet> getAndroidFacetsWithPackageName(
-      @NotNull Project project, @NotNull String packageName, @NotNull GlobalSearchScope scope) {
+      Project project, String packageName, GlobalSearchScope scope) {
     List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);
     return facets.stream()
         .filter(facet -> hasPackageName(facet, packageName))
@@ -162,7 +143,6 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
         .collect(Collectors.toList());
   }
 
-  @NotNull
   @Override
   public Collection<Module> getSubmodules() {
     return ImmutableList.of();

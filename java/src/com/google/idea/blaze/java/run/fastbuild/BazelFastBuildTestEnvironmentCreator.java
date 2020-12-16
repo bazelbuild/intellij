@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.run.fastbuild;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.BuildSystem;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -37,7 +38,8 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
   }
 
   @Override
-  File getJavaBinFromLauncher(Label label, @Nullable Label javaLauncher, boolean swigdeps) {
+  File getJavaBinFromLauncher(
+      Project project, Label label, @Nullable Label javaLauncher, boolean swigdeps) {
     if (javaLauncher == null) {
       return STANDARD_JAVA_BINARY;
     } else {

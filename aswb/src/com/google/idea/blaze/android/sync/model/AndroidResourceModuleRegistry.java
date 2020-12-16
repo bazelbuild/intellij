@@ -24,6 +24,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /** Keeps track of which resource modules correspond to which resource target. */
 public class AndroidResourceModuleRegistry {
@@ -43,6 +44,7 @@ public class AndroidResourceModuleRegistry {
     return moduleToTarget.get(module);
   }
 
+  @Nullable
   public AndroidResourceModule get(Module module) {
     TargetKey target = moduleToTarget.get(module);
     return target == null ? null : targetToResourceModule.get(target);

@@ -27,16 +27,22 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Output;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
 import java.util.Collections;
@@ -139,6 +145,26 @@ public class BlazeImportUtil {
    */
   public static Stream<TargetIdeInfo> getSourceTargetsStream(BlazeImportInput input) {
     return getSourceTargetsStream(input.targetMap, input.createImportFilter());
+  }
+
+  /**
+   * Returns the stream of {@link TargetIdeInfo} corresponding to source targets in the given {@link
+   * Project}
+   */
+  public static Stream<TargetIdeInfo> getSourceTargetsStream(Project project) {
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData == null) {
+      return Stream.empty();
+    }
+
+    ProjectViewTargetImportFilter importFilter =
+        new ProjectViewTargetImportFilter(
+            Blaze.getBuildSystem(project),
+            WorkspaceRoot.fromProject(project),
+            ProjectViewManager.getInstance(project).getProjectViewSet());
+
+    return getSourceTargetsStream(projectData.getTargetMap(), importFilter);
   }
 
   /** Returns the source targets for the given {@link BlazeImportInput} as a {@link List}. */

@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.clwb;
 
-import com.google.idea.sdkcompat.cpp.ToolchainCompat;
+import com.google.idea.sdkcompat.clion.ToolchainCompat;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains;
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains.Toolchain;
 import com.jetbrains.cidr.toolchains.OSType;

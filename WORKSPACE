@@ -65,8 +65,8 @@ http_archive(
 http_archive(
     name = "clion_2020_2",
     build_file = "@//intellij_platform_sdk:BUILD.clion202",
-    sha256 = "b863b5b1ed664c21428e5afafb39ebf7f30d062ef53731f3d093d7ee74abb4cd",
-    url = "https://download.jetbrains.com/cpp/CLion-2020.2.3.tar.gz",
+    sha256 = "3f7b37574ec4106fb92377722c12200a759d12487409e14214166acc11ecef48",
+    url = "https://download.jetbrains.com/cpp/CLion-2020.2.5.tar.gz",
 )
 
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
@@ -244,8 +244,25 @@ jvm_maven_import_external(
 
 jvm_maven_import_external(
     name = "jarjar",
-    artifact = "com.googlecode.jarjar:jarjar:1.3",
-    artifact_sha256 = "4225c8ee1bf3079c4b07c76fe03c3e28809a22204db6249c9417efa4f804b3a7",
+    artifact = "org.pantsbuild:jarjar:1.7.2",
+    artifact_sha256 = "0706a455e17b67718abe212e3a77688bbe8260852fc74e3e836d9f2e76d91c27",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+    deps = ["@asm", "@asm-commons"]
+)
+
+jvm_maven_import_external(
+    name = "asm",
+    artifact = "org.ow2.asm:asm:7.0",
+    artifact_sha256 = "b88ef66468b3c978ad0c97fd6e90979e56155b4ac69089ba7a44e9aa7ffe9acf",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+jvm_maven_import_external(
+    name = "asm-commons",
+    artifact = "org.ow2.asm:asm-commons:7.0",
+    artifact_sha256 = "fed348ef05958e3e846a3ac074a12af5f7936ef3d21ce44a62c4fa08a771927d",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )

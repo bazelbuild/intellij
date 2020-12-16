@@ -78,6 +78,10 @@ message AndroidIdeInfo {
   repeated ResFolderLocation res_folders = 13;
   // Label for the target android_binary to instrument.
   string instruments = 14;
+  // Jar used for resolving render time dependencies. Contains all runtime
+  // dependencies of a binary without the desugared APIs. This field is not set
+  // for non-binary targets
+  ArtifactLocation render_resolve_jar = 15;
 }
 
 // Details about an Android res folder

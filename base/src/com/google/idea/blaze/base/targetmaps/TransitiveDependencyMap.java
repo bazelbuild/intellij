@@ -64,6 +64,28 @@ public class TransitiveDependencyMap {
         .anyMatch(possibleDependency::equals);
   }
 
+  /**
+   * Returns the set of targets in {@code possibleDependencies} that {@code possibleDependent}
+   * depends on.
+   *
+   * <p>The returned set will not include {@code possibleDependent} even if it is included in {@code
+   * possibleDependencies}.
+   */
+  public ImmutableSet<TargetKey> filterPossibleTransitiveDeps(
+      TargetKey possibleDependent, Collection<TargetKey> possibleDependencies) {
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (blazeProjectData == null) {
+      return ImmutableSet.of();
+    }
+    ImmutableSet<TargetKey> possibleDepsSet = ImmutableSet.copyOf(possibleDependencies);
+    return getTransitiveDependenciesStream(possibleDependent, blazeProjectData.getTargetMap())
+        .filter(possibleDepsSet::contains)
+        .distinct()
+        .limit(possibleDepsSet.size())
+        .collect(ImmutableSet.toImmutableSet());
+  }
+
   public ImmutableCollection<TargetKey> getTransitiveDependencies(TargetKey targetKey) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();

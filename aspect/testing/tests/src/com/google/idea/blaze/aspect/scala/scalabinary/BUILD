@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
@@ -9,6 +7,8 @@ load(
     "scala_binary",
     "scala_library",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 scala_library(
     name = "foolib",

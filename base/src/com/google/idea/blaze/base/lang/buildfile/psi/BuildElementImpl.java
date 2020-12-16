@@ -35,9 +35,12 @@ public abstract class BuildElementImpl extends ASTWrapperPsiElement implements B
     super(astNode);
   }
 
+  @Nullable
   public <P extends PsiElement> P getPsiChild(IElementType type, Class<P> psiClass) {
     ASTNode childNode = getNode().findChildByType(type);
-    return childNode != null ? (P) childNode.getPsi() : null;
+    return childNode != null && psiClass.isInstance(childNode.getPsi())
+        ? psiClass.cast(childNode.getPsi())
+        : null;
   }
 
   @Override
