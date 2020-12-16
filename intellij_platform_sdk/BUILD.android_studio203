@@ -42,6 +42,13 @@ java_import(
     ]),
 )
 
+filegroup(
+    name = "layoutlib_data",
+    srcs = glob([
+        "android-studio/plugins/android/lib/layoutlib/**/*",
+    ]),
+)
+
 java_import(
     name = "test_recorder",
     jars = glob([

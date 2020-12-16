@@ -280,6 +280,13 @@ java_library(
 java_library(
     name = "plugin_api_for_tests",
     testonly = 1,
+    data = select_from_plugin_api_directory(
+        android_studio = [
+            ":layoutlib_data",
+        ],
+        clion = [],
+        intellij = [],
+    ),
     exports = [":plugin_api_internal"],
 )
 

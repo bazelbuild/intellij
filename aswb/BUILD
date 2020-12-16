@@ -142,6 +142,7 @@ intellij_integration_test_suite(
                 "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",
                 "tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
                 "tests/integrationtests/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
+                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",
             ],
         ),
         "android-studio-4.2": glob(
