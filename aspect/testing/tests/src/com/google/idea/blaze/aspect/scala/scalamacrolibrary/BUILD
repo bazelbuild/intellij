@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
@@ -8,6 +6,8 @@ load(
     "@io_bazel_rules_scala//scala:scala.bzl",
     "scala_macro_library",
 )
+
+licenses(["notice"])  # Apache 2.0
 
 scala_macro_library(
     name = "simple",
