@@ -45,6 +45,11 @@ java_import(
     ],
 )
 
+filegroup(
+    name = "layoutlib_data",
+    srcs = [],  # empty because this target isn't used by tests in as41.
+)
+
 java_import(
     name = "test_recorder",
     jars = glob([
