@@ -45,6 +45,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -68,6 +69,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -234,8 +236,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem, BlazeClassF
   }
 
   @Nullable
-  @Override
-  public GradleCoordinate getResolvedDependency(GradleCoordinate coordinate) {
+  private TargetKey getResolvedTarget(GradleCoordinate coordinate) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(module.getProject()).getBlazeProjectData();
 
@@ -248,24 +249,48 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem, BlazeClassF
     TransitiveDependencyMap transitiveDependencyMap =
         TransitiveDependencyMap.getInstance(module.getProject());
 
-    boolean moduleHasDependency =
-        locateArtifactsFor(coordinate)
-            .anyMatch(
-                artifactKey ->
-                    resourceModuleKey == null
-                        // If this isn't a resource module, then it must be the .workspace module,
-                        // which
-                        // transitively depends on everything in the project. So we can just check
-                        // to see
-                        // if the artifact is included in the project by checking the keys of the
-                        // target map.
-                        ? projectData.getTargetMap().contains(artifactKey)
-                        // Otherwise, we actually need to search the transitive dependencies of the
-                        // resource module.
-                        : transitiveDependencyMap.hasTransitiveDependency(
-                            resourceModuleKey, artifactKey));
+    return locateArtifactsFor(coordinate)
+        .filter(
+            artifactKey ->
+                resourceModuleKey == null
+                    // If this isn't a resource module, then it must be the .workspace module,
+                    // which
+                    // transitively depends on everything in the project. So we can just check
+                    // to see
+                    // if the artifact is included in the project by checking the keys of the
+                    // target map.
+                    ? projectData.getTargetMap().contains(artifactKey)
+                    // Otherwise, we actually need to search the transitive dependencies of the
+                    // resource module.
+                    : transitiveDependencyMap.hasTransitiveDependency(
+                        resourceModuleKey, artifactKey))
+        .findFirst()
+        .orElse(null);
+  }
 
-    return moduleHasDependency ? coordinate : null;
+  @Nullable
+  @Override
+  public GradleCoordinate getResolvedDependency(GradleCoordinate coordinate) {
+    TargetKey target = getResolvedTarget(coordinate);
+    return target != null ? coordinate : null;
+  }
+
+  /**
+   * Returns the absolute path of the dependency, if it exists.
+   *
+   * @param coordinate external coordinates for the dependency.
+   * @return the absolute path of the dependency including workspace root and path.
+   */
+  @Nullable
+  // @Override #api42
+  public Path getDependencyPath(GradleCoordinate coordinate) {
+    TargetKey target = getResolvedTarget(coordinate);
+    if (target != null) {
+      return WorkspaceRoot.fromProject(project)
+          .fileForPath(target.getLabel().blazePackage())
+          .toPath();
+    }
+    return null;
   }
 
   private Stream<TargetKey> locateArtifactsFor(GradleCoordinate coordinate) {

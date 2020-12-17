@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.intellij.openapi.module.Module;
+import java.nio.file.Path;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -179,5 +180,25 @@ public class BlazeModuleSystemExternalDependencyIntegrationTest
     BlazeModuleSystem workspaceModuleSystem = BlazeModuleSystem.getInstance(workspaceModule);
     assertThat(workspaceModuleSystem.getRegisteredDependency(CONSTRAINT_LAYOUT_COORDINATE))
         .isNotNull();
+  }
+
+  @Test
+  public void getDependencyArtifactLocation() {
+    setTargetMap(
+        android_library("//java/com/foo/gallery/activities:activities")
+            .src("MainActivity.java")
+            .dep("//java/com/foo/libs:libs")
+            .res("res"),
+        android_library("//java/com/foo/libs:libs").res("res").dep(CONSTRAINT_LAYOUT_LABEL),
+        android_library(CONSTRAINT_LAYOUT_LABEL));
+    runFullBlazeSyncWithNoIssues();
+
+    Module workspaceModule =
+        ModuleFinder.getInstance(getProject())
+            .findModuleByName("java.com.foo.gallery.activities.activities");
+    BlazeModuleSystem workspaceModuleSystem = BlazeModuleSystem.getInstance(workspaceModule);
+    Path artifactPath = workspaceModuleSystem.getDependencyPath(CONSTRAINT_LAYOUT_COORDINATE);
+    assertThat(artifactPath.toString())
+        .endsWith(Label.create(CONSTRAINT_LAYOUT_LABEL).blazePackage().relativePath());
   }
 }
