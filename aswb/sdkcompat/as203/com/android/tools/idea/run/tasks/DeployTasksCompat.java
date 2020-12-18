@@ -44,6 +44,7 @@ public class DeployTasksCompat {
     return new DeployTask(
         project,
         filesToInstall,
+        null, // Live update not supported
         launchOptions.getPmInstallOptions(/*device=*/ null),
         launchOptions.getInstallOnAllUsers(),
         launchOptions.getAlwaysInstallWithPm());

@@ -491,13 +491,13 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
       return null;
     }
 
-    @Override
+    // @Override #api42
     public boolean renderLabel(
         SimpleColoredComponent simpleColoredComponent, boolean b, @Nullable String s) {
       return false;
     }
 
-    @Override
+    // @Override #api42
     public void prepareToRenderLabel() {}
 
     // api40: see new API for canRun below
