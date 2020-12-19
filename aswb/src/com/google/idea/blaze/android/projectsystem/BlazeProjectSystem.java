@@ -23,6 +23,7 @@ import com.android.tools.idea.log.LogWrapper;
 import com.android.tools.idea.model.AndroidModel;
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.AndroidProjectSystem;
+import com.android.tools.idea.projectsystem.ProjectSystemBuildManager;
 import com.android.tools.idea.projectsystem.ProjectSystemSyncManager;
 import com.android.tools.idea.projectsystem.SourceProviders;
 import com.android.tools.idea.projectsystem.SourceProvidersFactory;
@@ -56,10 +57,12 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
   protected final Project project;
   protected final ProjectSystemSyncManager syncManager;
   protected final List<PsiElementFinder> myFinders;
+  private final BlazeProjectSystemBuildManager buildManager;
 
   public BlazeProjectSystem(Project project) {
     this.project = project;
     syncManager = new BlazeProjectSystemSyncManager(project);
+    buildManager = new BlazeProjectSystemBuildManager(project);
 
     myFinders =
         Arrays.asList(
@@ -85,9 +88,14 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
         new LogWrapper(BlazeProjectSystem.class));
   }
 
-  @Override
+  // @Override #api42
   public void buildProject() {
     BlazeBuildService.getInstance().buildProject(project);
+  }
+
+  // @Override #api42
+  public ProjectSystemBuildManager getBuildManager() {
+    return buildManager;
   }
 
   @Override
