@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.functional;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_library;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
 import com.android.ide.common.rendering.api.Result;
@@ -29,6 +30,7 @@ import com.android.tools.idea.rendering.RenderResult;
 import com.android.tools.idea.rendering.RenderService;
 import com.android.tools.idea.rendering.RenderTask;
 import com.google.common.util.concurrent.Futures;
+import com.google.idea.blaze.android.AswbImageDiffUtil;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.fixtures.ManifestFixture;
@@ -46,11 +48,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ImmutableList;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
+import javax.imageio.ImageIO;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -65,17 +74,25 @@ public class AswbRenderTaskTest extends BlazeAndroidIntegrationTestCase {
           + "              android:layout_width=\"match_parent\"\n"
           + "              android:layout_height=\"match_parent\"\n"
           + "              android:orientation=\"vertical\">\n"
-          + "  <LinearLayout\n"
+          + "  <Button\n"
+          + "      android:layout_width=\"@dimen/ref_width\"\n"
           + "      android:layout_height=\"@dimen/ref_height\"\n"
-          + "      android:layout_width=\"@dimen/ref_width\"/>\n"
+          + "      android:background=\"#00F\"\n" // TODO(b/176114646) Remove solid background when
+          // fixed.
+          + "      android:text=\"ButtonText\"/>\n"
+          + "  \n"
+          + "  <ImageView\n"
+          + "      android:layout_width=\"wrap_content\"\n"
+          + "      android:layout_height=\"wrap_content\"\n"
+          + "      android:src=\"@drawable/ic_banner\" />\n"
           + "</LinearLayout>";
 
   @Language("XML")
   private static final String DIMENS_XML =
       "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
           + "<resources>\n"
-          + "  <dimen name=\"ref_height\">25px</dimen>\n"
-          + "  <dimen name=\"ref_width\">150px</dimen>\n"
+          + "  <dimen name=\"ref_height\">100px</dimen>\n"
+          + "  <dimen name=\"ref_width\">200px</dimen>\n"
           + "</resources>";
 
   @Before
@@ -95,6 +112,12 @@ public class AswbRenderTaskTest extends BlazeAndroidIntegrationTestCase {
         workspace.createFile(
             new WorkspacePath("java/com/foo/res/layout/activity_main.xml"), LAYOUT_XML);
     workspace.createFile(new WorkspacePath("java/com/foo/res/values/dimens.xml"), DIMENS_XML);
+    VirtualFile icBannerPng =
+        workspace.createFile(new WorkspacePath("java/com/foo/res/drawable/ic_banner.png"));
+    WriteAction.run(
+        () ->
+            icBannerPng.setBinaryContent(
+                Files.readAllBytes(getTestResource("testdata/ic_banner.png"))));
 
     setProjectView(
         "directories:",
@@ -122,6 +145,12 @@ public class AswbRenderTaskTest extends BlazeAndroidIntegrationTestCase {
         workspace.createFile(
             new WorkspacePath("java/com/foo/res/layout/activity_main.xml"), LAYOUT_XML);
     workspace.createFile(new WorkspacePath("java/com/bar/res/values/dimens.xml"), DIMENS_XML);
+    VirtualFile icBannerPng =
+        workspace.createFile(new WorkspacePath("java/com/bar/res/drawable/ic_banner.png"));
+    WriteAction.run(
+        () ->
+            icBannerPng.setBinaryContent(
+                Files.readAllBytes(getTestResource("testdata/ic_banner.png"))));
 
     // Module foo is dependent on module bar; bar is a module because it's included under
     // "directories" in project view.
@@ -149,6 +178,7 @@ public class AswbRenderTaskTest extends BlazeAndroidIntegrationTestCase {
     checkRenderResult(renderResult);
   }
 
+  @Ignore("b/174590445")
   @Test
   public void testLayoutReferenceResourceFromLibraryDependency() throws Exception {
     Sdk sdk = MockSdkUtil.registerSdk(workspace, "29");
@@ -171,6 +201,9 @@ public class AswbRenderTaskTest extends BlazeAndroidIntegrationTestCase {
             .res_folder("//java/com/bar/res", "bar-java-com-bar-res.aar");
     AarLibraryFileBuilder.aar(workspaceRoot, bar.getAarList().get(0).getRelativePath())
         .src("res/values/dimens.xml", ImmutableList.singleton(DIMENS_XML))
+        .src(
+            "res/drawable/ic_banner.png",
+            Files.readAllBytes(getTestResource("testdata/ic_banner.png")))
         .build();
 
     setTargetMap(
@@ -209,6 +242,7 @@ public class AswbRenderTaskTest extends BlazeAndroidIntegrationTestCase {
             .withLogger(logger)
             .withPsiFile(psiFile)
             .disableSecurityManager()
+            .disableDecorations()
             .build()
             .get();
 
@@ -223,13 +257,41 @@ public class AswbRenderTaskTest extends BlazeAndroidIntegrationTestCase {
   /**
    * Asserts that the given result matches what is expected from {@link #LAYOUT_XML}. Here we expect
    * the inner linear layout's dimensions to match the dimensions declared in {@link #DIMENS_XML}
+   * and the rendered image is identical to the golden image.
    */
   private static void checkRenderResult(RenderResult result) {
     assertThat(result.getRenderResult().getStatus()).isEqualTo(Result.Status.SUCCESS);
     ViewInfo view = result.getRootViews().get(0).getChildren().get(0);
-    // The inner linear layout should be 150px wide and 25px high as defined in #DIMENS_XML.
+    // The inner linear layout should be 200px wide and 100px high as defined in #DIMENS_XML.
     // We get the width and height by looking at the difference between layout bounds.
-    assertThat(view.getRight() - view.getLeft()).isEqualTo(150);
-    assertThat(view.getBottom() - view.getTop()).isEqualTo(25);
+    assertThat(view.getRight() - view.getLeft()).isEqualTo(200);
+    assertThat(view.getBottom() - view.getTop()).isEqualTo(100);
+
+    try {
+      BufferedImage golden = ImageIO.read(getTestResource("testdata/golden.png").toFile());
+      BufferedImage rendered = result.getRenderedImage().getCopy();
+      AswbImageDiffUtil.assertImageSimilar("renderedLayout", golden, rendered, 0);
+    } catch (IOException e) {
+      fail(e.getMessage());
+    }
+  }
+
+  private static Path getTestResource(String relPath) {
+    // When running from the IDE the working directory is the module containing the test sources.
+    Path ideLocalPath = Paths.get(relPath);
+    if (ideLocalPath.toFile().exists()) {
+      return ideLocalPath;
+    }
+
+    // When running from bazel the working directory is the workspace root. Test data files
+    // are located in the same directory as the test target itself.  Directory to the test
+    // target is exposed as "TEST_BINARY" environment variable.
+    Path bazelLocalPath = Paths.get(System.getenv("TEST_BINARY")).getParent().resolve(relPath);
+    if (bazelLocalPath.toFile().exists()) {
+      return bazelLocalPath;
+    }
+
+    fail("Test resource file " + relPath + " doesn't exist.");
+    return null;
   }
 }

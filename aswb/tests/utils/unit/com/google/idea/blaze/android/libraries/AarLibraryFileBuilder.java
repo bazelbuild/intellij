@@ -51,6 +51,11 @@ public class AarLibraryFileBuilder {
     return this;
   }
 
+  public AarLibraryFileBuilder src(String relativePath, byte[] content) {
+    resourceNameToContent.put(relativePath, content);
+    return this;
+  }
+
   public File build() {
     try {
       // create aarFilePath if it does not exist

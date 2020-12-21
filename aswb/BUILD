@@ -156,6 +156,10 @@ intellij_integration_test_suite(
             ],
         ),
     }),
+    data = [
+        "testdata/golden.png",
+        "testdata/ic_banner.png",
+    ],
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [
