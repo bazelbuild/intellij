@@ -17,7 +17,6 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-latest": "clion-2019.3",
     "clion-latest-mac": "clion-2019.3-mac",
     "clion-beta": "clion-2020.1",
-#    "clion-gamma": "clion-2020.2",
 }
 
 DIRECT_IJ_PRODUCTS = {
