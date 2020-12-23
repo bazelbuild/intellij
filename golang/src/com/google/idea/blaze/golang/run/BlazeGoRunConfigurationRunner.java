@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.golang.run;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.goide.execution.application.GoApplicationConfiguration;
 import com.goide.execution.application.GoApplicationConfiguration.Kind;
 import com.goide.execution.application.GoApplicationRunConfigurationType;
@@ -72,12 +74,14 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
@@ -107,7 +111,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
   }
 
   private static final BoolExperiment scriptPathEnabled =
-      new BoolExperiment("blaze.go.script.path.enabled", true);
+      new BoolExperiment("blaze.go.script.path.enabled.2", true);
 
   /** Used to store a runner to an {@link ExecutionEnvironment}. */
   private static final Key<AtomicReference<ExecutableInfo>> EXECUTABLE_KEY =
@@ -291,15 +295,21 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         flags.add("--compilation_mode=dbg");
       }
 
-      File scriptPathFile = null;
+      Optional<Path> scriptPath = Optional.empty();
       if (scriptPathEnabled.getValue()) {
-        scriptPathFile = BlazeBeforeRunCommandHelper.createScriptPathFile();
-        flags.add("--script_path=" + scriptPathFile);
+        try {
+          scriptPath = Optional.of(BlazeBeforeRunCommandHelper.createScriptPathFile());
+          flags.add("--script_path=" + scriptPath.get());
+        } catch (IOException e) {
+          // Could still work without script path.
+          // Script path is only needed to parse arguments from target.
+          logger.warn("Failed to create script path file. Target arguments will not be parsed.", e);
+        }
       }
 
       ListenableFuture<BuildResult> buildOperation =
           BlazeBeforeRunCommandHelper.runBlazeCommand(
-              scriptPathEnabled.getValue() ? BlazeCommandName.RUN : BlazeCommandName.BUILD,
+              scriptPath.isPresent() ? BlazeCommandName.RUN : BlazeCommandName.BUILD,
               configuration,
               buildResultHelper,
               flags.build(),
@@ -325,17 +335,17 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       } catch (java.util.concurrent.ExecutionException e) {
         throw new ExecutionException(e);
       }
-      if (scriptPathEnabled.getValue()) {
-        if (!scriptPathFile.exists()) {
+      if (scriptPath.isPresent()) {
+        if (!Files.exists(scriptPath.get())) {
           throw new ExecutionException(
               String.format(
                   "No debugger executable script path file produced. Expected file at: %s",
-                  scriptPathFile));
+                  scriptPath.get()));
         }
         WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
         BlazeInfo blazeInfo =
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData().getBlazeInfo();
-        return parseScriptPathFile(workspaceRoot, blazeInfo.getExecutionRoot(), scriptPathFile);
+        return parseScriptPathFile(workspaceRoot, blazeInfo.getExecutionRoot(), scriptPath.get());
       } else {
         List<File> candidateFiles;
         try {
@@ -393,14 +403,12 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
   private static final Pattern ARGS = Pattern.compile("([^\']\\S*|\'.+?\')\\s*");
 
   private static ExecutableInfo parseScriptPathFile(
-      WorkspaceRoot workspaceRoot, File execRoot, File scriptPathFile) throws ExecutionException {
+      WorkspaceRoot workspaceRoot, File execRoot, Path scriptPath) throws ExecutionException {
     String text;
     try {
-      text =
-          MoreFiles.asCharSource(Paths.get(scriptPathFile.getPath()), StandardCharsets.UTF_8)
-              .read();
+      text = MoreFiles.asCharSource(scriptPath, UTF_8).read();
     } catch (IOException e) {
-      throw new ExecutionException("Could not read script_path: " + scriptPathFile, e);
+      throw new ExecutionException("Could not read script_path: " + scriptPath, e);
     }
     String lastLine = Iterables.getLast(Splitter.on('\n').split(text));
     List<String> args = new ArrayList<>();
@@ -418,7 +426,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     if (testScrDir.find()) {
       // Format is <wrapper-script> <executable> arg0 arg1 arg2 ... argN "@"
       if (args.size() < 3) {
-        throw new ExecutionException("Failed to parse args in script_path: " + scriptPathFile);
+        throw new ExecutionException("Failed to parse args in script_path: " + scriptPath);
       }
       envVars.put("TEST_SRCDIR", testScrDir.group(1));
       workingDir = workspaceRoot.directory();
@@ -435,7 +443,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     } else {
       // Format is <executable> [arg0 arg1 arg2 ... argN] "@"
       if (args.size() < 2) {
-        throw new ExecutionException("Failed to parse args in script_path: " + scriptPathFile);
+        throw new ExecutionException("Failed to parse args in script_path: " + scriptPath);
       }
       binary = new File(args.get(0));
       workingDir = getWorkingDirectory(workspaceRoot, binary);

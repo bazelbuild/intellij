@@ -195,6 +195,8 @@
     <applicationService serviceInterface="com.google.idea.blaze.base.command.info.BlazeInfoRunner"
                         serviceImplementation="com.google.idea.blaze.base.command.info.BlazeInfoRunnerImpl"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.model.primitives.Kind$ApplicationState"/>
+    <applicationService serviceInterface="com.google.idea.blaze.base.io.TempDirectoryProvider"
+                        serviceImplementation="com.google.idea.blaze.base.io.TempDirectoryProviderImpl"/>
 
     <treeStructureProvider implementation="com.google.idea.blaze.base.treeview.BlazeTreeStructureProvider" id="blaze" order="last"/>
 

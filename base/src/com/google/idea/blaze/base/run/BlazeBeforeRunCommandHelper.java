@@ -25,6 +25,8 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.base.io.TempDirectoryProvider;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -39,10 +41,9 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtilRt;
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Runs a blaze build command associated with a {@link BlazeCommandRunConfiguration configuration},
@@ -123,12 +124,11 @@ public final class BlazeBeforeRunCommandHelper {
   }
 
   /** Creates a temporary output file to write the shell script to. */
-  public static File createScriptPathFile() {
-    File tempDir = new File(FileUtilRt.getTempDirectory());
-    String suffix = UUID.randomUUID().toString().substring(0, 8);
-    String fileName = "blaze-script-" + suffix;
-    File tempFile = new File(tempDir, fileName);
-    tempFile.deleteOnExit();
+  public static Path createScriptPathFile() throws IOException {
+    Path tempDir = TempDirectoryProvider.getInstance().getTempDirectory();
+    Path tempFile =
+        FileOperationProvider.getInstance().createTempFile(tempDir, "blaze-script-", "");
+    tempFile.toFile().deleteOnExit();
     return tempFile;
   }
 }

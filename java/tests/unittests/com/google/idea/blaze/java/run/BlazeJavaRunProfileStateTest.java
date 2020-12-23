@@ -23,11 +23,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.base.io.TempDirectoryProvider;
+import com.google.idea.blaze.base.io.TempDirectoryProviderImpl;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -54,6 +58,8 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.project.Project;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
 import java.util.List;
 import java.util.concurrent.Future;
 import javax.annotation.Nullable;
@@ -79,6 +85,8 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     ExperimentService experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
     applicationServices.register(BlazeUserSettings.class, new BlazeUserSettings());
+    applicationServices.register(TempDirectoryProvider.class, new TempDirectoryProviderImpl());
+    applicationServices.register(FileOperationProvider.class, new FakeFileOperationProvider());
 
     ExtensionPointImpl<Kind.Provider> ep =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
@@ -183,6 +191,26 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 "--wrapper_script_flag=--debug=5005"));
   }
 
+  @Test
+  public void getBashCommandsToRunScript() throws Exception {
+    BlazeCommand.Builder commandBuilder =
+        BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD)
+            .addTargets(Label.create("//label:java_binary_rule"));
+    List<String> command = BlazeJavaRunProfileState.getBashCommandsToRunScript(commandBuilder);
+    Path tempDirectory = TempDirectoryProvider.getInstance().getTempDirectory();
+    assertThat(command)
+        .containsExactly(
+            "/bin/bash",
+            "-c",
+            String.format(
+                "/usr/bin/blaze build %s "
+                    + "--script_path=%s/blaze-script-1337 "
+                    + "-- //label:java_binary_rule "
+                    + "&& %s/blaze-script-1337",
+                BlazeFlags.getToolTagFlag(), tempDirectory, tempDirectory))
+        .inOrder();
+  }
+
   private static class MockTargetFinder implements TargetFinder {
     @Override
     public Future<TargetInfo> findTarget(Project project, Label label) {
@@ -231,5 +259,13 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
     @Override
     public void resetBuild(Label label) {}
+  }
+
+  private static class FakeFileOperationProvider extends FileOperationProvider {
+    @Override
+    public Path createTempFile(
+        Path tempDirectory, String prefix, String suffix, FileAttribute<?>... attributes) {
+      return tempDirectory.resolve(prefix + "1337" + suffix);
+    }
   }
 }

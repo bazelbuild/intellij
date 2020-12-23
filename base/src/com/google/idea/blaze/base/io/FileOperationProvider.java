@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -75,6 +77,12 @@ public class FileOperationProvider {
 
   public File getCanonicalFile(File file) throws IOException {
     return file.getCanonicalFile();
+  }
+
+  public Path createTempFile(
+      Path tempDirectory, String prefix, String suffix, FileAttribute<?>... attributes)
+      throws IOException {
+    return Files.createTempFile(tempDirectory, prefix, suffix, attributes);
   }
 
   public File copy(File source, File target, CopyOption... options) throws IOException {
