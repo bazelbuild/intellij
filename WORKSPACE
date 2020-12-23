@@ -181,8 +181,8 @@ http_archive(
 http_archive(
     name = "android_studio_4_2",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio42",
-    sha256 = "d97874191e011d923aa1f772308da272bced236066887593fb56c4648679f081",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.16/android-studio-ide-202.6939830-linux.tar.gz",
+    sha256 = "b0d269547d299a75db9229efa32f9aa235f500310120afd7f904adc82a89430c",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.18/android-studio-ide-202.7008469-linux.tar.gz",
 )
 
 # LICENSE: Common Public License 1.0
@@ -248,7 +248,10 @@ jvm_maven_import_external(
     artifact_sha256 = "0706a455e17b67718abe212e3a77688bbe8260852fc74e3e836d9f2e76d91c27",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
-    deps = ["@asm", "@asm-commons"]
+    deps = [
+        "@asm",
+        "@asm-commons",
+    ],
 )
 
 jvm_maven_import_external(
