@@ -18,7 +18,7 @@ package com.google.idea.blaze.android;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder.targetMap;
 
-import com.android.sdklib.repository.AndroidSdkHandler;
+import com.android.sdklib.repository.AndroidSdkHandlerCompat;
 import com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.settings.BuildSystem;
@@ -54,7 +54,7 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
 
   @After
   public void cleanUpAndroidSdkHandler() {
-    AndroidSdkHandler.resetInstance(workspaceRoot.fileForPath(MockSdkUtil.SDK_DIR));
+    AndroidSdkHandlerCompat.resetInstance(workspaceRoot.fileForPath(MockSdkUtil.SDK_DIR));
   }
 
   public void setTargetMap(NbTargetBuilder... builders) {

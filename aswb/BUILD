@@ -64,7 +64,10 @@ java_library(
 java_library(
     name = "integration_test_utils",
     testonly = 1,
-    srcs = glob(["tests/utils/integration/**/*.java"]),
+    srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
+        "android-studio-4.1": glob(["tests/utils/sdkcompat/as41/com/android/sdklib/repository/*.java"]),
+        "android-studio-4.2": glob(["tests/utils/sdkcompat/as41/com/android/sdklib/repository/*.java"]),
+    }),
     deps = [
         "//base",
         "//base:integration_test_utils",
