@@ -45,6 +45,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Imports run configurations specified in the project view, and creates run configurations for
@@ -59,12 +60,12 @@ public class BlazeRunConfigurationSyncListener implements SyncListener {
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       ImmutableSet<Integer> buildIds,
-      BlazeProjectData blazeProjectData,
+      @Nullable BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {
     updateExistingRunConfigurations(project);
     removeInvalidRunConfigurations(project);
-    if (syncMode == SyncMode.STARTUP || syncMode == SyncMode.NO_BUILD) {
+    if (blazeProjectData == null || syncMode == SyncMode.STARTUP || syncMode == SyncMode.NO_BUILD) {
       return;
     }
 

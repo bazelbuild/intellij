@@ -77,7 +77,7 @@ public class SyncCache {
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         ImmutableSet<Integer> buildIds,
-        BlazeProjectData blazeProjectData,
+        @Nullable BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {
       SyncCache syncCache = getInstance(project);

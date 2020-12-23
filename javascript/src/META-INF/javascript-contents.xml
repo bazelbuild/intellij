@@ -44,6 +44,7 @@
         implementation="com.google.idea.blaze.javascript.run.producers.JavascriptTestTargetHeuristic"/>
     <BlazeTestEventsHandler
         implementation="com.google.idea.blaze.javascript.run.smrunner.BlazeJavascriptTestEventsHandler"/>
+    <PrefetchFileSource implementation="com.google.idea.blaze.typescript.TypeScriptPrefetchFileSource"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">

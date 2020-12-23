@@ -55,6 +55,7 @@ import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nullable;
 
 /**
  * Rebuilds symbol tables if there are many file changes. Workaround (or partial solution?) for
@@ -205,9 +206,12 @@ public class BulkSymbolTableBuildingChangeListener implements BulkFileListener {
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         ImmutableSet<Integer> buildIds,
-        BlazeProjectData blazeProjectData,
+        @Nullable BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {
+      if (blazeProjectData == null) {
+        return;
+      }
       BulkSymbolTableBuildingChangeListener.getInstance(project)
           .updateForBlazeProject(blazeProjectData);
     }

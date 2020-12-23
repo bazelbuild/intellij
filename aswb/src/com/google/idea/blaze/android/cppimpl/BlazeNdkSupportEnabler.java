@@ -34,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.workspace.OCWorkspace;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceEventImpl;
 import com.jetbrains.cidr.lang.workspace.OCWorkspaceModificationTrackersImpl;
+import javax.annotation.Nullable;
 
 final class BlazeNdkSupportEnabler implements SyncListener {
 
@@ -44,9 +45,12 @@ final class BlazeNdkSupportEnabler implements SyncListener {
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       ImmutableSet<Integer> buildIds,
-      BlazeProjectData blazeProjectData,
+      @Nullable BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {
+    if (blazeProjectData == null) {
+      return;
+    }
     boolean enabled =
         blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C);
     enableCSupportInIde(project, enabled);

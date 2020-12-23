@@ -80,7 +80,7 @@ public class ParsedManifestService {
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         ImmutableSet<Integer> buildIds,
-        BlazeProjectData blazeProjectData,
+        @Nullable BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {
       getInstance(project).manifestFileToParsedManifests.clear();

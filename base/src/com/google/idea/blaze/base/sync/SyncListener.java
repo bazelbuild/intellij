@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import javax.annotation.Nullable;
 
 /** Extension interface for listening to syncs. */
 public interface SyncListener {
@@ -57,7 +58,7 @@ public interface SyncListener {
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       ImmutableSet<Integer> buildIds,
-      BlazeProjectData blazeProjectData,
+      @Nullable BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {}
 

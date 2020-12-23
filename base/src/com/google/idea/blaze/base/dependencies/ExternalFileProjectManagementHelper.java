@@ -191,7 +191,7 @@ public class ExternalFileProjectManagementHelper
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         ImmutableSet<Integer> buildIds,
-        BlazeProjectData blazeProjectData,
+        @Nullable BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {
       // update the editor notifications if the target map might have changed

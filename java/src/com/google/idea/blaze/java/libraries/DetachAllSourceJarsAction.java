@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import java.util.List;
+import javax.annotation.Nullable;
 
 class DetachAllSourceJarsAction extends BlazeProjectAction {
 
@@ -99,7 +100,7 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         ImmutableSet<Integer> buildIds,
-        BlazeProjectData blazeProjectData,
+        @Nullable BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {
       if (syncMode == SyncMode.FULL) {

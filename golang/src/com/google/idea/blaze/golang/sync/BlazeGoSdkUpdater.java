@@ -51,10 +51,11 @@ public class BlazeGoSdkUpdater implements SyncListener {
       BlazeImportSettings importSettings,
       ProjectViewSet projectViewSet,
       ImmutableSet<Integer> buildIds,
-      BlazeProjectData blazeProjectData,
+      @Nullable BlazeProjectData blazeProjectData,
       SyncMode syncMode,
       SyncResult syncResult) {
-    if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO)) {
+    if (blazeProjectData == null
+        || !blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO)) {
       return;
     }
     Module workspaceModule = getWorkspaceModule(project);

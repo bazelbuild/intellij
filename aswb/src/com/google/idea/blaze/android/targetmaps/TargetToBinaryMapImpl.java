@@ -129,7 +129,7 @@ public class TargetToBinaryMapImpl implements TargetToBinaryMap {
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         ImmutableSet<Integer> buildIds,
-        BlazeProjectData blazeProjectData,
+        @Nullable BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {
       TargetToBinaryMap instance = TargetToBinaryMap.getInstance(project);

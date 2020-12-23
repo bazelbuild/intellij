@@ -293,7 +293,7 @@ class ProjectUnresolvedResourceStatsCollector implements Disposable {
         BlazeImportSettings importSettings,
         ProjectViewSet projectViewSet,
         ImmutableSet<Integer> buildIds,
-        BlazeProjectData blazeProjectData,
+        @Nullable BlazeProjectData blazeProjectData,
         SyncMode syncMode,
         SyncResult syncResult) {
       if (!UnresolvedResourceStatsCollector.enabled.getValue()) {
