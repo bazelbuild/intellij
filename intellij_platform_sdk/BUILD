@@ -186,6 +186,13 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-2020.3",
+    values = {
+        "define": "ij_product=android-studio-2020.3",
+    },
+)
+
+config_setting(
     name = "clion-latest",
     values = {
         "define": "ij_product=clion-latest",
@@ -363,6 +370,7 @@ java_library(
         "intellij-ue-2020.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.2": ["@jsr305_annotations//jar"],
         "android-studio-4.2": ["@jsr305_annotations//jar"],
+        "android-studio-2020.3": ["@jsr305_annotations//jar"],
         "default": [":plugin_api"],
     }),
 )
