@@ -163,7 +163,9 @@ public class PsiBasedClassFileFinder implements BlazeClassFileFinder {
                 "Fail to find file %s",
                 classJar.getRelativePath());
         VirtualFile classJarVF =
-            VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
+            VirtualFileSystemProvider.getInstance()
+                .getLocalFileSystem()
+                .findFileByIoFile(classJarFile);
 
         if (classJarVF != null) {
           VirtualFile classFile = findClassInJar(classJarVF, fqcn);
@@ -226,7 +228,7 @@ public class PsiBasedClassFileFinder implements BlazeClassFileFinder {
             "Fail to find file %s",
             classJarArtifactLocation.getRelativePath());
     VirtualFile classJar =
-        VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
+        VirtualFileSystemProvider.getInstance().getLocalFileSystem().findFileByIoFile(classJarFile);
     if (classJar == null) {
       LOG.warn("Missing class jar: " + classJarFile);
       return null;

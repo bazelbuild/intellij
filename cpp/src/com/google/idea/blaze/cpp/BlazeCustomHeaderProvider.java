@@ -97,7 +97,7 @@ public class BlazeCustomHeaderProvider extends CustomHeaderProvider {
             return oldValue;
           }
           return Optional.ofNullable(
-              VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(file));
+              VirtualFileSystemProvider.getInstance().getLocalFileSystem().findFileByIoFile(file));
         });
   }
 

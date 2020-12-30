@@ -101,7 +101,7 @@ public class BuildReferenceManager {
   @Nullable
   public PsiFileSystemItem resolveFile(File file) {
     VirtualFile vf =
-        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
+        VirtualFileSystemProvider.getInstance().getLocalFileSystem().findFileByPath(file.getPath());
     if (vf == null) {
       return null;
     }
@@ -155,7 +155,7 @@ public class BuildReferenceManager {
       return BuildLookupElement.EMPTY_ARRAY;
     }
     VirtualFile vf =
-        VirtualFileSystemProvider.getInstance().getSystem().findFileByPath(file.getPath());
+        VirtualFileSystemProvider.getInstance().getLocalFileSystem().findFileByPath(file.getPath());
     if (vf == null || !vf.isDirectory()) {
       return BuildLookupElement.EMPTY_ARRAY;
     }
@@ -226,7 +226,7 @@ public class BuildReferenceManager {
     }
     VirtualFile vf =
         VirtualFileSystemProvider.getInstance()
-            .getSystem()
+            .getLocalFileSystem()
             .findFileByPath(packageDirectory.getPath());
     if (vf == null) {
       return null;
