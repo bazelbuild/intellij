@@ -87,6 +87,15 @@ http_archive(
     url = "https://download.jetbrains.com/cpp/CLion-2020.2.5.tar.gz",
 )
 
+# The plugin api for CLion 2020.2. This is required to build CLwB,
+# and run integration tests.
+http_archive(
+    name = "clion_2020_3",
+    build_file = "@//intellij_platform_sdk:BUILD.clion203",
+    sha256 = "9a5f61360ed1fea699c3b692800e7df42e41589d6b994e2b6613e87472e4dbc9",
+    url = "https://download.jetbrains.com/cpp/CLion-2020.3.1.tar.gz",
+)
+
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
 http_archive(
     name = "python_2019_3",

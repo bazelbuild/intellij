@@ -273,6 +273,13 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "clion-2020.3",
+    values = {
+        "define": "ij_product=clion-2020.3",
+    },
+)
+
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
 # There will be additional versions added in the future
@@ -381,6 +388,7 @@ java_library(
         "clion-2019.3": ["@jsr305_annotations//jar"],
         "clion-2020.1": ["@jsr305_annotations//jar"],
         "clion-2020.2": ["@jsr305_annotations//jar"],
+        "clion-2020.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.3": ["@jsr305_annotations//jar"],
