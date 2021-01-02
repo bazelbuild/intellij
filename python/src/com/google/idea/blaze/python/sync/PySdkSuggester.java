@@ -21,7 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PyDetectedSdk;
 import javax.annotation.Nullable;
+
+import java.util.Arrays;
 
 /** Extension to allow suggestion of Python SDK to use for a particular project */
 public abstract class PySdkSuggester {
@@ -87,9 +90,6 @@ public abstract class PySdkSuggester {
   /** Utility method for PySdkSuggester to resolve a homepath to a registered SDK. */
   @Nullable
   private static Sdk findPythonSdk(String homePath) {
-    return PythonSdkType.getAllSdks().stream()
-        .filter(sdk -> homePath.equals(sdk.getHomePath()))
-        .findAny()
-        .orElse(null);
+    return new PyDetectedSdk(homePath);
   }
 }

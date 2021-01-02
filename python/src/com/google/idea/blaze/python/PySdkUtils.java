@@ -34,7 +34,7 @@ public class PySdkUtils {
       return projectSdk;
     }
     // look for a SDK associated with a python facet instead.
-    return PythonSdkType.findPythonSdk(
+    return PythonSdkType.findPython2Sdk(
         ModuleManager.getInstance(project)
             .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME));
   }

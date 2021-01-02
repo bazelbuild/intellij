@@ -50,6 +50,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
+import org.jetbrains.annotations.NotNull;
+
+
 /** Converts each go target in the {@link TargetMap} into a corresponding {@link BlazeGoPackage}. */
 class BlazeGoImportResolver implements GoImportResolver {
   private static final String GO_PACKAGE_MAP_KEY = "BlazeGoPackageMap";
@@ -215,7 +218,7 @@ class BlazeGoImportResolver implements GoImportResolver {
     }
 
     @Override
-    public boolean processChildren(PsiElementProcessor<PsiFileSystemItem> psiElementProcessor) {
+    public boolean processChildren(@NotNull PsiElementProcessor<? super PsiFileSystemItem> psiElementProcessor) {
       return false;
     }
   }

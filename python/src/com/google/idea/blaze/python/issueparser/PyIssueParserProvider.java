@@ -130,7 +130,8 @@ public class PyIssueParserProvider implements BlazeIssueParserProvider {
       if (projectScope.contains(vf)) {
         return 0;
       }
-      return PythonSdkType.isStdLib(vf, sdk) ? 2 : 1;
+      return 2;
+      // return PythonSdkType.isStdLib(vf, sdk) ? 2 : 1;
     }
 
     /** defaults to -1 if no line number can be parsed. */

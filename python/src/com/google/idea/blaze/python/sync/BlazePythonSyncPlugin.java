@@ -234,7 +234,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
     }
     // facets aren't properly updated when SDKs change (e.g. when they're deleted), so we need to
     // manually check against the full list.
-    if (!PythonSdkType.getAllSdks().contains(sdk)) {
+    if (!Arrays.asList(PythonSdkType.getAllTypes()).contains(sdk)) {
       return false;
     }
 
