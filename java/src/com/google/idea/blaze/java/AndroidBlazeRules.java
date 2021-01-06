@@ -41,7 +41,9 @@ public final class AndroidBlazeRules implements Kind.Provider {
         "android_instrumentation_test", LanguageClass.ANDROID, RuleType.TEST),
     ANDROID_SDK("android_sdk", LanguageClass.ANDROID, RuleType.UNKNOWN),
     AAR_IMPORT("aar_import", LanguageClass.ANDROID, RuleType.UNKNOWN),
-    ANDROID_RESOURCES("android_resources", LanguageClass.ANDROID, RuleType.UNKNOWN);
+    ANDROID_RESOURCES("android_resources", LanguageClass.ANDROID, RuleType.UNKNOWN),
+    KT_ANDROID_LIBRARY_HELPER("kt_android_library_helper", LanguageClass.ANDROID, RuleType.LIBRARY),
+    ;
 
     private final String name;
     private final LanguageClass languageClass;

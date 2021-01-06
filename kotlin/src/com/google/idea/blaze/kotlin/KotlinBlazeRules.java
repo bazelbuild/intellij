@@ -34,7 +34,6 @@ public final class KotlinBlazeRules implements Kind.Provider {
     KT_JVM_TOOLCHAIN("kt_jvm_toolchain", LanguageClass.KOTLIN, RuleType.UNKNOWN),
     // TODO(b/157683101): remove once https://youtrack.jetbrains.com/issue/KT-24309 is fixed
     KT_JVM_LIBRARY_HELPER("kt_jvm_library_helper", LanguageClass.KOTLIN, RuleType.LIBRARY),
-    KT_ANDROID_LIBRARY_HELPER("kt_android_library_helper", LanguageClass.KOTLIN, RuleType.LIBRARY),
     // bazel only kotlin rules:
     KT_JVM_LIBRARY("kt_jvm_library", LanguageClass.KOTLIN, RuleType.LIBRARY),
     KT_JVM_BINARY("kt_jvm_binary", LanguageClass.KOTLIN, RuleType.BINARY),
