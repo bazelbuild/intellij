@@ -171,16 +171,16 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-4.1-mac",
+    name = "android-studio-4.2",
     values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-4.1",
+        "define": "ij_product=android-studio-4.2",
     },
 )
 
 config_setting(
-    name = "android-studio-4.2",
+    name = "android-studio-4.2-mac",
     values = {
+        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-4.2",
     },
 )
