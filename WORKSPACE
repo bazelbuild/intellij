@@ -294,10 +294,13 @@ jvm_maven_import_external(
     server_urls = ["https://repo1.maven.org/maven2"],
 )
 
-git_repository(
+bazel_version="31082327bdb64b7bf52dd55ae18d29e920e61025"
+bazel_repo_sha256 = "e8e1ac4bcab303f8f99c9b14ad3afbd059b84c516b7e76f6d9b89b8d5175594f"
+http_archive(
     name = "bazel",
-    branch = "master",
-    remote = "https://github.com/bazelbuild/bazel",
+    sha256 = bazel_repo_sha256,
+    url = "https://github.com/bazelbuild/bazel/archive/%s.zip" % bazel_version,
+    strip_prefix = "bazel-" + bazel_version
 )
 
 http_archive(
