@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.producer.BlazeRunConfigurationProducerTestCase;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info;
 import com.intellij.icons.AllIcons.RunConfigurations.TestState;
 import com.intellij.lang.javascript.psi.JSCallExpression;
@@ -36,6 +37,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import javax.swing.Icon;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -44,8 +46,14 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeJavaScriptTestRunLineMarkerContributorTest
     extends BlazeRunConfigurationProducerTestCase {
-  private final BlazeJavaScriptTestRunLineMarkerContributor markerContributor =
-      new BlazeJavaScriptTestRunLineMarkerContributor();
+  private RunLineMarkerContributor markerContributor;
+
+  @Before
+  public void setup() {
+    // Must happen after BlazeRunConfigurationProducerTestCase#doSetup,
+    // because icons are statically loaded.
+    markerContributor = new BlazeJavaScriptTestRunLineMarkerContributor();
+  }
 
   @Test
   public void testGetClosureTestInfo() {

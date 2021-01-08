@@ -40,8 +40,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.ui.IconManager;
 import java.util.Arrays;
 import javax.annotation.Nullable;
+import org.junit.After;
 import org.junit.Before;
 
 /** Run configuration producer integration test base */
@@ -63,6 +65,15 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
         ApplicationManager.getApplication(),
         DataManager.class,
         new FunctionalHeadlessDataManager());
+
+    // IntelliJ will use a dummy icon manager that returns the same exact icon.
+    // This will cause uniqueness issues for gutter icons.
+    IconManager.activate();
+  }
+
+  @After
+  public final void doTeardown() {
+    IconManager.deactivate();
   }
 
   protected PsiFile createAndIndexFile(WorkspacePath path, String... contents) {
