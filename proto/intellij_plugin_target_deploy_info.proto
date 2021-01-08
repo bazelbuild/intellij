@@ -16,6 +16,7 @@ syntax = "proto3";
 
 package intellij;
 
+// option java_api_version = 2;
 
 option java_package = "com.google.devtools.intellij.plugin";
 

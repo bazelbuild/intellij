@@ -19,6 +19,7 @@ import "proto/intellij_ide_info.proto";
 package blaze;
 
 option java_package = "com.google.devtools.intellij";
+// option java_api_version = 2;
 
 message IntellijAspectTestFixture {
   repeated TargetIdeInfo targets = 1;
