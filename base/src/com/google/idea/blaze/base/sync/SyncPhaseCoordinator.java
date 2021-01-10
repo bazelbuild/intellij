@@ -491,6 +491,7 @@ final class SyncPhaseCoordinator {
       }
     } catch (Throwable e) {
       logSyncError(context, e);
+      syncResult = SyncResult.FAILURE;
     } finally {
       SyncProjectState projectState = updateTask.projectState();
       finishSync(
