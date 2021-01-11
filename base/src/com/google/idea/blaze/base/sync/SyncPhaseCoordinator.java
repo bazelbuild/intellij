@@ -533,19 +533,17 @@ final class SyncPhaseCoordinator {
       if (syncResult.successful()) {
         Preconditions.checkNotNull(projectViewSet);
         BlazeProjectData projectData =
-            BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+            Preconditions.checkNotNull(
+                BlazeProjectDataManager.getInstance(project).getBlazeProjectData());
         if (syncParams.syncMode() != SyncMode.NO_BUILD) {
           stats.addTimedEvents(
               updateInMemoryState(
                   project, context, projectViewSet, projectData, syncParams.syncMode()));
         }
-        if (projectData != null) {
-          int librariesCount =
-              BlazeLibraryCollector.getLibraries(projectViewSet, projectData).size();
-          stats
-              .setTargetMapSize(projectData.getTargetMap().targets().size())
-              .setLibraryCount(librariesCount);
-        }
+        int librariesCount = BlazeLibraryCollector.getLibraries(projectViewSet, projectData).size();
+        stats
+            .setTargetMapSize(projectData.getTargetMap().targets().size())
+            .setLibraryCount(librariesCount);
         onSyncComplete(
             project, context, projectViewSet, buildIds, projectData, syncParams, syncResult);
       }
