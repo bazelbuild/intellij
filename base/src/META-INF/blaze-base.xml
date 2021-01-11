@@ -208,6 +208,7 @@
                         serviceImplementation="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceAspectsImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.console.BlazeConsoleService"
                     serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleServiceImpl"/>
+    <projectService serviceImplementation="com.google.idea.blaze.base.toolwindow.TasksToolWindowService"/>
     <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.SourceToTargetMap"
                     serviceImplementation="com.google.idea.blaze.base.targetmaps.SourceToTargetMapImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap"
