@@ -117,6 +117,46 @@ public class BlazeXmlSchemaTest {
   }
 
   @Test
+  public void systemOutCanBeParsed() {
+    TestSuite parsed =
+        parseXml(
+            "<?xml version='1.0' encoding='UTF-8'?>",
+            "<testsuites>",
+            "  <testsuite>",
+            "    <system-out>System output on testsuite</system-out>",
+            "    <testcase>",
+            "      <system-out>System output on testcase</system-out>",
+            "    </testcase>",
+            "  </testsuite>",
+            "</testsuites>");
+
+    TestSuite testSuite = Iterables.getOnlyElement(parsed.testSuites);
+    assertThat(testSuite.sysOut).isEqualTo("System output on testsuite");
+    TestCase testCase = Iterables.getOnlyElement(testSuite.testCases);
+    assertThat(testCase.sysOut).isEqualTo("System output on testcase");
+  }
+
+  @Test
+  public void systemErrCanBeParsed() {
+    TestSuite parsed =
+        parseXml(
+            "<?xml version='1.0' encoding='UTF-8'?>",
+            "<testsuites>",
+            "  <testsuite>",
+            "    <system-err>Error output on testsuite</system-err>",
+            "    <testcase>",
+            "      <system-err>Error output on testcase</system-err>",
+            "    </testcase>",
+            "  </testsuite>",
+            "</testsuites>");
+
+    TestSuite testSuite = Iterables.getOnlyElement(parsed.testSuites);
+    assertThat(testSuite.sysErr).isEqualTo("Error output on testsuite");
+    TestCase testCase = Iterables.getOnlyElement(testSuite.testCases);
+    assertThat(testCase.sysErr).isEqualTo("Error output on testcase");
+  }
+
+  @Test
   public void testMergeShardedTests() {
     TestSuite shard1 =
         parseXml(
@@ -149,9 +189,7 @@ public class BlazeXmlSchemaTest {
     assertThat(mergedInner.failures).isEqualTo(2);
     assertThat(mergedInner.testCases).hasSize(4);
     assertThat(
-            mergedInner
-                .testCases
-                .stream()
+            mergedInner.testCases.stream()
                 .map(testCase -> testCase.name)
                 .collect(Collectors.toList()))
         .containsExactly("testCase1", "testCase2", "testCase3", "testCase4");

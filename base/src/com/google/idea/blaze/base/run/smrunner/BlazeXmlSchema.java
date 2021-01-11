@@ -81,10 +81,10 @@ public class BlazeXmlSchema {
     @XmlAttribute public int disabled;
     @XmlAttribute public double time;
 
-    @XmlAttribute(name = "system-out")
+    @XmlElement(name = "system-out")
     public String sysOut;
 
-    @XmlAttribute(name = "system-err")
+    @XmlElement(name = "system-err")
     public String sysErr;
 
     @XmlElement(name = "error", type = ErrorOrFailureOrSkipped.class)
