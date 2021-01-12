@@ -47,7 +47,7 @@ final class BuildFileUtils {
       new BoolExperiment("buildfile.macro.prefix.matching.enabled", true);
 
   @Nullable
-  static BlazePackage getBuildFile(Project project, @Nullable VirtualFile vf) {
+  public static BlazePackage getBuildFile(Project project, @Nullable VirtualFile vf) {
     if (vf == null) {
       return null;
     }
@@ -60,7 +60,7 @@ final class BuildFileUtils {
   }
 
   @Nullable
-  static PsiElement findBuildTarget(Project project, BlazePackage parentPackage, File file) {
+  public static PsiElement findBuildTarget(Project project, BlazePackage parentPackage, File file) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
