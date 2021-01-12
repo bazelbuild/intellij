@@ -125,7 +125,7 @@ java_import(
             "android-studio/plugins/properties/lib/*.jar",
             "android-studio/plugins/smali/lib/*.jar",
             "android-studio/plugins/IntelliLang/lib/*.jar",
-            "plugins/webp/lib/*.jar",
+            "android-studio/plugins/webp/lib/*.jar",
         ],
         exclude = [
             # Conflict with lib/guava-*.jar
