@@ -16,7 +16,7 @@
 package com.google.idea.blaze.aspect;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.repackaged.protobuf.MessageLite;
+import com.google.repackaged.bazel.protobuf.MessageLite;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;

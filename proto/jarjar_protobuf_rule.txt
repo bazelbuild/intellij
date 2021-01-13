@@ -1,1 +1,1 @@
-rule com.google.protobuf.** com.google.repackaged.protobuf.@1
+rule com.google.protobuf.** com.google.repackaged.bazel.protobuf.@1
