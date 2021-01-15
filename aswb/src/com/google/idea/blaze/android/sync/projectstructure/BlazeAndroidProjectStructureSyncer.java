@@ -331,11 +331,22 @@ public class BlazeAndroidProjectStructureSyncer {
       Module module;
       if (BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
           androidResourceModule.targetKey)) {
-        // For workspace resource module, give it a dummy package name, and set module
-        // directory to workspace root. No manifest is attached to this module
+        // Until ~Jan 2021, we used to create a separate module (.workspace.resources) that included
+        // resources that were used by project, but not included in any other resource module.
+        // Starting with cl/350385526, these resources are attached to the workspace module itself
+        // and we don't create a separate module for workspace resources.
         modulePackage = BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_MODULE_PACKAGE;
         moduleDirectory = workspaceRoot.directory();
-        module = workspaceModule;
+        // b/177279296 revealed an issue when we removed the workspace module. To work around this
+        // we still use the workspace.resources module as long as such a module still exists in the
+        // project. Hopefully, in a couple of months, there won't be any projects around with the
+        // resources module, and we can delete this code.
+        module =
+            moduleFinder.findModuleByName(
+                moduleNameForAndroidModule(androidResourceModule.targetKey));
+        if (module == null) {
+          module = workspaceModule;
+        }
       } else {
         TargetIdeInfo target =
             Preconditions.checkNotNull(
