@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.sync;
 
+import com.android.tools.idea.model.AndroidModel;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.projectview.AndroidMinSdkSection;
@@ -254,7 +255,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
     boolean valid = true;
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       AndroidFacet facet = AndroidFacet.getInstance(module);
-      if (BlazeAndroidSyncPluginCompat.facetHasAndroidModel(facet)) {
+      if (facet != null && AndroidModel.isRequired(facet) && AndroidModel.get(facet) == null) {
         IssueOutput.error("Android model missing for module: " + module.getName()).submit(context);
         valid = false;
       }
