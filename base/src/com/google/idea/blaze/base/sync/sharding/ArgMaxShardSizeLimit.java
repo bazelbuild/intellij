@@ -20,41 +20,35 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.ByteArrayOutputStream;
+import java.util.OptionalInt;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
- * Uses heuristics to determine a safe max target shard size to keep blaze sync invocations below
- * ARG_MAX.
+ * A {@link TargetShardSizeLimit} using heuristics to keep blaze invocations below system ARG_MAX.
  */
-final class ArgMaxHelper {
-  private ArgMaxHelper() {}
-
-  private static final Logger logger = Logger.getInstance(ArgMaxHelper.class);
-
-  private static final Supplier<Integer> systemArgMax =
-      Suppliers.memoize(ArgMaxHelper::queryArgMax);
+final class ArgMaxShardSizeLimit implements TargetShardSizeLimit {
+  private static final Logger logger = Logger.getInstance(ArgMaxShardSizeLimit.class);
 
   private static final BoolExperiment enabled =
       new BoolExperiment("blaze.shard.use.arg.max.heuristic", true);
 
-  /**
-   * Returns the max number of blaze targets per shard to stay under the system arg max, or null if
-   * no such limit can be determined.
-   */
-  @Nullable
-  public static Integer maxShardSize() {
+  private final Supplier<Integer> systemArgMax =
+      Suppliers.memoize(ArgMaxShardSizeLimit::queryArgMax);
+
+  @Override
+  public OptionalInt getShardSizeLimit() {
     if (!enabled.getValue()) {
-      return null;
+      return OptionalInt.empty();
     }
     Integer argMax = systemArgMax.get();
     if (argMax == null || argMax <= 0) {
-      return null;
+      return OptionalInt.empty();
     }
     // a very rough heuristic with fixed, somewhat arbitrary env size and average target size
-    int envSizeBytes = 10000;
-    int targetStringSizeBytes = 300;
-    return (argMax - envSizeBytes) / targetStringSizeBytes;
+    int envSizeBytes = 20000;
+    int targetStringSizeBytes = 150;
+    return OptionalInt.of((argMax - envSizeBytes) / targetStringSizeBytes);
   }
 
   /** Synchronously runs 'getconf ARG_MAX', returning null if unsuccessful. */

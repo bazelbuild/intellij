@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.sharding;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.lang.Math.min;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -102,8 +103,7 @@ public class BlazeBuildTargetSharder {
             : maxTargetShardSize.getValue();
     int userSpecified =
         projectViewSet.getScalarValue(TargetShardSizeSection.KEY).orElse(defaultLimit);
-    Integer argMaxLimit = ArgMaxHelper.maxShardSize();
-    return argMaxLimit == null ? userSpecified : Math.min(argMaxLimit, userSpecified);
+    return min(userSpecified, TargetShardSizeLimit.getMaxTargetsPerShard().orElse(userSpecified));
   }
 
   private enum ShardingApproach {
@@ -267,7 +267,7 @@ public class BlazeBuildTargetSharder {
     }
     List<ImmutableList<TargetExpression>> output = new ArrayList<>();
     for (int index = 0; index < targets.size(); index += shardSize) {
-      int endIndex = Math.min(targets.size(), index + shardSize);
+      int endIndex = min(targets.size(), index + shardSize);
       List<TargetExpression> shard = new ArrayList<>(targets.subList(index, endIndex));
       if (shard.stream().filter(TargetExpression::isExcluded).count() == shard.size()) {
         continue;
