@@ -30,7 +30,7 @@ import com.intellij.pom.Navigatable;
 import java.io.File;
 
 /**
- * Action to whitelist a generated resource directory in the local project view file.
+ * Action to include a generated resource directory in the local project view file.
  *
  * <p>This is unfortunately wrapped in a navigatable, because the IntelliJ ProblemsView class
  * doesn't have an extension point or action group ID for extending the right-click actions.
@@ -57,9 +57,9 @@ class AddGeneratedResourceDirectoryNavigatable implements Navigatable {
     int addToProjectView =
         Messages.showYesNoDialog(
             String.format(
-                "Whitelist generated resource directory \"%s\" in project view?",
+                "Include generated resource directory \"%s\" in project view?",
                 generatedResDir.getRelativePath()),
-            "Whitelist generated resource",
+            "Include generated resource",
             null);
     if (addToProjectView == Messages.YES) {
       addDirectoryToProjectView(project, projectViewFile, generatedResDir);

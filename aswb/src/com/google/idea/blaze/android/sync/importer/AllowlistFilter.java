@@ -23,21 +23,20 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 /**
- * Predicate that returns true for artifacts whose relative paths are present in the whitelist. Also
+ * Predicate that returns true for artifacts whose relative paths are present in the allowlist. Also
  * records all the {@link ArtifactLocation} objects that have been used as part of the test, which
- * can be used to determine whitelist entries that are no longer needed.
+ * can be used to determine allowlist entries that are no longer needed.
  *
  * <p>Note that any artifacts which pass the {@link GeneratedResourceRetentionFilter} are simply
- * retained without checking them against the whitelist.
+ * retained without checking them against the allowlist.
  */
-public class WhitelistFilter implements Predicate<ArtifactLocation> {
-  final Set<ArtifactLocation> testedAgainstWhitelist = Sets.newHashSet();
-  private final ImmutableSet<String> whitelistedGenResourcePaths;
+public class AllowlistFilter implements Predicate<ArtifactLocation> {
+  final Set<ArtifactLocation> testedAgainstAllowlist = Sets.newHashSet();
+  private final ImmutableSet<String> allowedPaths;
   private final Predicate<ArtifactLocation> retentionFilter;
 
-  public WhitelistFilter(
-      Set<String> whitelistedGenResourcePaths, Predicate<ArtifactLocation> retentionFilter) {
-    this.whitelistedGenResourcePaths = ImmutableSet.copyOf(whitelistedGenResourcePaths);
+  public AllowlistFilter(Set<String> allowedPaths, Predicate<ArtifactLocation> retentionFilter) {
+    this.allowedPaths = ImmutableSet.copyOf(allowedPaths);
     this.retentionFilter = retentionFilter;
   }
 
@@ -46,7 +45,7 @@ public class WhitelistFilter implements Predicate<ArtifactLocation> {
     if (retentionFilter.test(location)) {
       return true;
     }
-    testedAgainstWhitelist.add(location);
-    return whitelistedGenResourcePaths.contains(location.getRelativePath());
+    testedAgainstAllowlist.add(location);
+    return allowedPaths.contains(location.getRelativePath());
   }
 }

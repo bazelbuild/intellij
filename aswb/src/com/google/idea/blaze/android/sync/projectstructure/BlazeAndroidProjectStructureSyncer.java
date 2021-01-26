@@ -236,15 +236,14 @@ public class BlazeAndroidProjectStructureSyncer {
       }
     }
 
-    int whitelistedGenResources =
-        projectViewSet.listItems(GeneratedAndroidResourcesSection.KEY).size();
+    int allowedGenResources = projectViewSet.listItems(GeneratedAndroidResourcesSection.KEY).size();
     context.output(
         PrintOutput.log(
             String.format(
                 "Android resource module count: %d, order entries: %d, generated resources: %d",
                 syncData.importResult.androidResourceModules.size(),
                 totalOrderEntries,
-                whitelistedGenResources)));
+                allowedGenResources)));
   }
 
   public static String moduleNameForAndroidModule(TargetKey targetKey) {

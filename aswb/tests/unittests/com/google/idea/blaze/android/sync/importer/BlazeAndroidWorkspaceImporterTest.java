@@ -997,7 +997,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testMixingGeneratedAndNonGeneratedSourcesWhitelisted() {
+  public void testMixingGeneratedAndNonGeneratedSourcesAllowed() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -1036,7 +1036,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   private BlazeAndroidImportResult
-      getBlazeAndroidImportResult_testMixingGeneratedAndNonGeneratedSourcesPartlyWhitelisted() {
+      getBlazeAndroidImportResult_testMixingGeneratedAndNonGeneratedSourcesPartlyAllowed() {
 
     ProjectView projectView =
         ProjectView.builder()
@@ -1048,7 +1048,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             .add(
                 ListSection.builder(GeneratedAndroidResourcesSection.KEY)
                     .add(new GenfilesPath("java/example/res"))
-                    .add(new GenfilesPath("unused/whitelisted/path/res")))
+                    .add(new GenfilesPath("unused/allowed/path/res")))
             .build();
 
     TargetMapBuilder targetMapBuilder =
@@ -1096,7 +1096,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testMixingGeneratedAndNonGeneratedSourcesPartlyWhitelisted_createAarLibrary() {
+  public void testMixingGeneratedAndNonGeneratedSourcesPartlyAllowed_createAarLibrary() {
     String expectedString1 =
         "Dropping 1 generated resource directories.\n"
             + "R classes will not contain resources from these directories.\n"
@@ -1107,9 +1107,9 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             + " w/ 2 subdirs";
     String expectedString3 =
         "1 unused entries in project view section \"generated_android_resource_directories\":\n"
-            + "unused/whitelisted/path/res";
+            + "unused/allowed/path/res";
 
-    getBlazeAndroidImportResult_testMixingGeneratedAndNonGeneratedSourcesPartlyWhitelisted();
+    getBlazeAndroidImportResult_testMixingGeneratedAndNonGeneratedSourcesPartlyAllowed();
     errorCollector.assertIssues(expectedString1, expectedString2, expectedString3);
   }
 

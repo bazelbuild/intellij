@@ -40,76 +40,80 @@ public class GeneratedResourceWarnings {
       ProjectViewSet projectViewSet,
       ArtifactLocationDecoder artifactLocationDecoder,
       Set<ArtifactLocation> generatedResourceLocations,
-      Set<String> whitelistedLocations) {
+      Set<String> allowlistedLocations) {
     if (generatedResourceLocations.isEmpty()) {
       return;
     }
-    Set<ArtifactLocation> nonWhitelistedLocations = new HashSet<>();
-    Set<String> unusedWhitelistEntries = new HashSet<>();
-    filterWhitelistedEntries(
+    Set<ArtifactLocation> nonAllowlistedLocations = new HashSet<>();
+    Set<String> unusedAllowlistEntries = new HashSet<>();
+    filterAllowlistedEntries(
         generatedResourceLocations,
-        whitelistedLocations,
-        nonWhitelistedLocations,
-        unusedWhitelistEntries);
+        allowlistedLocations,
+        nonAllowlistedLocations,
+        unusedAllowlistEntries);
     // Tag any warnings with the project view file.
     File projectViewFile = projectViewSet.getTopLevelProjectViewFile().projectViewFile;
-    if (!nonWhitelistedLocations.isEmpty()) {
+    if (!nonAllowlistedLocations.isEmpty()) {
       GeneratedResourceClassifier classifier =
           new GeneratedResourceClassifier(
               project,
-              nonWhitelistedLocations,
+              nonAllowlistedLocations,
               artifactLocationDecoder,
               BlazeExecutor.getInstance().getExecutor());
       ImmutableSortedMap<ArtifactLocation, Integer> interestingDirectories =
           classifier.getInterestingDirectories();
       if (!interestingDirectories.isEmpty()) {
-        context.accept(IssueOutput.warn(
-                String.format(
-                    "Dropping %d generated resource directories.\n"
-                        + "R classes will not contain resources from these directories.\n"
-                        + "Double-click to add to project view if needed to resolve references.",
-                    interestingDirectories.size()))
-            .inFile(projectViewFile)
-            .onLine(1)
-            .inColumn(1)
-            .build());
+        context.accept(
+            IssueOutput.warn(
+                    String.format(
+                        "Dropping %d generated resource directories.\n"
+                            + "R classes will not contain resources from these directories.\n"
+                            + "Double-click to add to project view if needed to resolve"
+                            + " references.",
+                        interestingDirectories.size()))
+                .inFile(projectViewFile)
+                .onLine(1)
+                .inColumn(1)
+                .build());
         for (Map.Entry<ArtifactLocation, Integer> entry : interestingDirectories.entrySet()) {
-          context.accept(IssueOutput.warn(
-                  String.format(
-                      "Dropping generated resource directory '%s' w/ %d subdirs",
-                      entry.getKey(), entry.getValue()))
-              .inFile(projectViewFile)
-              .navigatable(
-                  new AddGeneratedResourceDirectoryNavigatable(
-                      project, projectViewFile, entry.getKey()))
-              .build());
+          context.accept(
+              IssueOutput.warn(
+                      String.format(
+                          "Dropping generated resource directory '%s' w/ %d subdirs",
+                          entry.getKey(), entry.getValue()))
+                  .inFile(projectViewFile)
+                  .navigatable(
+                      new AddGeneratedResourceDirectoryNavigatable(
+                          project, projectViewFile, entry.getKey()))
+                  .build());
         }
       }
     }
-    // Warn about unused parts of the whitelist.
-    if (!unusedWhitelistEntries.isEmpty()) {
-      context.accept(IssueOutput.warn(
-              String.format(
-                  "%d unused entries in project view section \"%s\":\n%s",
-                  unusedWhitelistEntries.size(),
-                  GeneratedAndroidResourcesSection.KEY.getName(),
-                  String.join("\n  ", unusedWhitelistEntries)))
-          .inFile(projectViewFile)
-          .build());
+    // Warn about unused parts of the allowlist.
+    if (!unusedAllowlistEntries.isEmpty()) {
+      context.accept(
+          IssueOutput.warn(
+                  String.format(
+                      "%d unused entries in project view section \"%s\":\n%s",
+                      unusedAllowlistEntries.size(),
+                      GeneratedAndroidResourcesSection.KEY.getName(),
+                      String.join("\n  ", unusedAllowlistEntries)))
+              .inFile(projectViewFile)
+              .build());
     }
   }
 
-  private static void filterWhitelistedEntries(
+  private static void filterAllowlistedEntries(
       Set<ArtifactLocation> generatedResourceLocations,
-      Set<String> whitelistedLocations,
-      Set<ArtifactLocation> nonWhitelistedLocations,
-      Set<String> unusedWhitelistEntries) {
-    unusedWhitelistEntries.addAll(whitelistedLocations);
+      Set<String> allowlistedLocations,
+      Set<ArtifactLocation> nonAllowlistedLocations,
+      Set<String> unusedAllowlistEntries) {
+    unusedAllowlistEntries.addAll(allowlistedLocations);
     for (ArtifactLocation location : generatedResourceLocations) {
-      if (whitelistedLocations.contains(location.getRelativePath())) {
-        unusedWhitelistEntries.remove(location.getRelativePath());
+      if (allowlistedLocations.contains(location.getRelativePath())) {
+        unusedAllowlistEntries.remove(location.getRelativePath());
       } else {
-        nonWhitelistedLocations.add(location);
+        nonAllowlistedLocations.add(location);
       }
     }
   }

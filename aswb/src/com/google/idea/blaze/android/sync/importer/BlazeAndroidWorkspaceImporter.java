@@ -83,8 +83,8 @@ public class BlazeAndroidWorkspaceImporter {
   private final BlazeImportInput input;
   // filter used to get all ArtifactLocation that under project view resource directories
   private final Predicate<ArtifactLocation> shouldCreateFakeAar;
-  ImmutableSet<String> whitelistedGenResourcePaths;
-  private final WhitelistFilter whitelistFilter;
+  ImmutableSet<String> allowedGenResourcePaths;
+  private final AllowlistFilter allowlistFilter;
 
   public BlazeAndroidWorkspaceImporter(
       Project project, BlazeContext context, BlazeImportInput input) {
@@ -98,11 +98,9 @@ public class BlazeAndroidWorkspaceImporter {
     this.input = input;
     this.project = project;
     this.shouldCreateFakeAar = BlazeImportUtil.getShouldCreateFakeAarFilter(input);
-    whitelistedGenResourcePaths =
-        BlazeImportUtil.getWhitelistedGenResourcePaths(input.projectViewSet);
-    whitelistFilter =
-        new WhitelistFilter(
-            whitelistedGenResourcePaths, GeneratedResourceRetentionFilter.getFilter());
+    allowedGenResourcePaths = BlazeImportUtil.getAllowedGenResourcePaths(input.projectViewSet);
+    allowlistFilter =
+        new AllowlistFilter(allowedGenResourcePaths, GeneratedResourceRetentionFilter.getFilter());
   }
 
   public BlazeAndroidImportResult importWorkspace() {
@@ -114,8 +112,8 @@ public class BlazeAndroidWorkspaceImporter {
     Map<TargetKey, AndroidResourceModule.Builder> targetKeyToAndroidResourceModuleBuilder =
         new HashMap<>();
 
-    ImmutableSet<String> whitelistedGenResourcePaths =
-        BlazeImportUtil.getWhitelistedGenResourcePaths(input.projectViewSet);
+    ImmutableSet<String> allowedGenResourcePaths =
+        BlazeImportUtil.getAllowedGenResourcePaths(input.projectViewSet);
     for (TargetIdeInfo target : sourceTargets) {
       if (shouldCreateModule(target.getAndroidIdeInfo())) {
         AndroidResourceModule.Builder androidResourceModuleBuilder =
@@ -139,8 +137,8 @@ public class BlazeAndroidWorkspaceImporter {
         project,
         input.projectViewSet,
         input.artifactLocationDecoder,
-        whitelistFilter.testedAgainstWhitelist,
-        whitelistedGenResourcePaths);
+        allowlistFilter.testedAgainstAllowlist,
+        allowedGenResourcePaths);
 
     ImmutableList<AndroidResourceModule> androidResourceModules =
         buildAndroidResourceModules(resourceModules.build(), workspaceResourceModules.build());
@@ -208,7 +206,7 @@ public class BlazeAndroidWorkspaceImporter {
       return false;
     }
     return shouldGenerateResources(androidIdeInfo)
-        && shouldGenerateResourceModule(androidIdeInfo, whitelistFilter);
+        && shouldGenerateResourceModule(androidIdeInfo, allowlistFilter);
   }
 
   /** Returns true if any direct dependency of `androidIdeInfo` declares resources. */
@@ -236,7 +234,7 @@ public class BlazeAndroidWorkspaceImporter {
       String libraryKey = libraryFactory.createAarLibrary(target);
       if (libraryKey != null) {
         ArtifactLocation artifactLocation = target.getAndroidAarIdeInfo().getAar();
-        if (isSourceOrWhitelistedGenPath(artifactLocation, whitelistFilter)) {
+        if (isSourceOrAllowedGenPath(artifactLocation, allowlistFilter)) {
           androidResourceModule.addResourceLibraryKey(libraryKey);
         }
       }
@@ -245,7 +243,7 @@ public class BlazeAndroidWorkspaceImporter {
 
     for (AndroidResFolder androidResFolder : androidIdeInfo.getResFolders()) {
       ArtifactLocation artifactLocation = androidResFolder.getRoot();
-      if (isSourceOrWhitelistedGenPath(artifactLocation, whitelistFilter)) {
+      if (isSourceOrAllowedGenPath(artifactLocation, allowlistFilter)) {
         if (shouldCreateFakeAar.test(artifactLocation)) {
           // we are creating aar libraries, and this resource isn't inside the project view
           // so we can skip adding it to the module
@@ -277,13 +275,13 @@ public class BlazeAndroidWorkspaceImporter {
   }
 
   public static boolean shouldGenerateResourceModule(
-      AndroidIdeInfo androidIdeInfo, Predicate<ArtifactLocation> whitelistTester) {
+      AndroidIdeInfo androidIdeInfo, Predicate<ArtifactLocation> allowlistTester) {
     return androidIdeInfo.getResFolders().stream()
         .map(resource -> resource.getRoot())
-        .anyMatch(location -> isSourceOrWhitelistedGenPath(location, whitelistTester));
+        .anyMatch(location -> isSourceOrAllowedGenPath(location, allowlistTester));
   }
 
-  public static boolean isSourceOrWhitelistedGenPath(
+  public static boolean isSourceOrAllowedGenPath(
       ArtifactLocation artifactLocation, Predicate<ArtifactLocation> tester) {
     return artifactLocation.isSource() || tester.test(artifactLocation);
   }

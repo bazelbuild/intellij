@@ -97,7 +97,7 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
     if (target == null) {
       return null;
     }
-    // To start with, we whitelist only library rules
+    // To start with, we allow only library rules
     // It makes no sense to add directories for java_imports and the like
     if (!target.getKind().getRuleType().equals(RuleType.LIBRARY)) {
       return null;

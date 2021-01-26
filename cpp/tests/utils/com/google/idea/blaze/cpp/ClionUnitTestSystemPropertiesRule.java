@@ -73,7 +73,7 @@ public class ClionUnitTestSystemPropertiesRule extends ExternalResource {
     setIfEmpty(PlatformUtils.PLATFORM_PREFIX_KEY, determinePlatformPrefix(buildNumber));
 
     // Tests fail if they access files outside of the project roots and other system directories.
-    // Ensure runfiles and platform api are whitelisted.
+    // Ensure runfiles and platform api are allowed.
     VfsRootAccess.allowRootAccess(RUNFILES_PATH);
     String platformApi = getPlatformApiPath();
     if (platformApi != null) {

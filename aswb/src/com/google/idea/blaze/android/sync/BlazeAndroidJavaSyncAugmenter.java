@@ -15,9 +15,9 @@
  */
 package com.google.idea.blaze.android.sync;
 
+import com.google.idea.blaze.android.sync.importer.AllowlistFilter;
 import com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter;
 import com.google.idea.blaze.android.sync.importer.BlazeImportUtil;
-import com.google.idea.blaze.android.sync.importer.WhitelistFilter;
 import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceRetentionFilter;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -53,8 +53,8 @@ public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
     if (BlazeAndroidWorkspaceImporter.shouldGenerateResources(androidIdeInfo)
         && !BlazeAndroidWorkspaceImporter.shouldGenerateResourceModule(
             androidIdeInfo,
-            new WhitelistFilter(
-                BlazeImportUtil.getWhitelistedGenResourcePaths(projectViewSet),
+            new AllowlistFilter(
+                BlazeImportUtil.getAllowedGenResourcePaths(projectViewSet),
                 GeneratedResourceRetentionFilter.getFilter()))) {
       // Add blaze's output unless it's a top level rule.
       // In these cases the resource jar contains the entire

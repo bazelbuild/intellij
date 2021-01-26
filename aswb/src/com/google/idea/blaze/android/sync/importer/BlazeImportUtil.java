@@ -196,7 +196,7 @@ public class BlazeImportUtil {
   }
 
   /** Returns the set of relative generated resource paths for the given {@link ProjectViewSet}. */
-  public static ImmutableSet<String> getWhitelistedGenResourcePaths(ProjectViewSet projectViewSet) {
+  public static ImmutableSet<String> getAllowedGenResourcePaths(ProjectViewSet projectViewSet) {
     return ImmutableSet.copyOf(
         projectViewSet.listItems(GeneratedAndroidResourcesSection.KEY).stream()
             .map(genfilesPath -> genfilesPath.relativePath)
