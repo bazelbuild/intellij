@@ -80,7 +80,7 @@ class PyBinaryContextProvider implements BinaryContextProvider {
   private static boolean acceptTarget(String fileName, TargetInfo target) {
     Kind kind = target.getKind();
     if (kind == null
-        || !kind.getLanguageClass().equals(LanguageClass.PYTHON)
+        || !kind.hasLanguage(LanguageClass.PYTHON)
         || !kind.getRuleType().equals(RuleType.BINARY)) {
       return false;
     }

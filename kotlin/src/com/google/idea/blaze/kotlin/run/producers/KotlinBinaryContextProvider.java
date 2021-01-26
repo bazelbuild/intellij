@@ -131,7 +131,6 @@ class KotlinBinaryContextProvider implements BinaryContextProvider {
     if (kind.getRuleType() != RuleType.BINARY) {
       return false;
     }
-    LanguageClass languageClass = kind.getLanguageClass();
-    return languageClass == LanguageClass.KOTLIN || languageClass == LanguageClass.JAVA;
+    return kind.hasAnyLanguageIn(LanguageClass.KOTLIN, LanguageClass.JAVA);
   }
 }

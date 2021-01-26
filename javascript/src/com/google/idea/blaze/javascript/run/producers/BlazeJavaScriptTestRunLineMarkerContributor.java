@@ -138,7 +138,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributor extends RunLineMarkerCo
                       Optional.of(RuleType.TEST))
                   .stream()
                   .filter(t -> t.getKind() != null)
-                  .filter(t -> t.getKind().getLanguageClass() == LanguageClass.JAVASCRIPT)
+                  .filter(t -> t.getKind().hasLanguage(LanguageClass.JAVASCRIPT))
                   .map(t -> t.label)
                   .map(TargetKey::forPlainTarget)
                   .map(rdeps::get)

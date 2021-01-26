@@ -37,7 +37,7 @@ public class BlazeGoTestEventsHandler implements BlazeTestEventsHandler {
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
     return kind != null
-        && kind.getLanguageClass().equals(LanguageClass.GO)
+        && kind.hasLanguage(LanguageClass.GO)
         && kind.getRuleType().equals(RuleType.TEST);
   }
 

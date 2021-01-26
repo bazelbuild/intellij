@@ -133,7 +133,7 @@ public class JavaBinaryContextProvider implements BinaryContextProvider {
         projectData.getTargetMap(),
         target ->
             target.isPlainTarget()
-                && target.getKind().getLanguageClass().equals(LanguageClass.JAVA)
+                && target.getKind().hasLanguage(LanguageClass.JAVA)
                 && target.getKind().getRuleType().equals(RuleType.BINARY));
   }
 }

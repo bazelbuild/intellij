@@ -174,7 +174,7 @@ class ScalaBinaryContextProvider implements BinaryContextProvider {
         projectData.getTargetMap(),
         target ->
             target.isPlainTarget()
-                && target.getKind().getLanguageClass().equals(LanguageClass.SCALA)
+                && target.getKind().hasLanguage(LanguageClass.SCALA)
                 && target.getKind().getRuleType().equals(RuleType.BINARY));
   }
 }

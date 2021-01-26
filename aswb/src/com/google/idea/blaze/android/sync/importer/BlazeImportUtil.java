@@ -133,7 +133,7 @@ public class BlazeImportUtil {
   static Stream<TargetIdeInfo> getSourceTargetsStream(
       TargetMap targetMap, ProjectViewTargetImportFilter importFilter) {
     return targetMap.targets().stream()
-        .filter(target -> target.getKind().getLanguageClass() == LanguageClass.ANDROID)
+        .filter(target -> target.getKind().hasLanguage(LanguageClass.ANDROID))
         .filter(target -> target.getAndroidIdeInfo() != null)
         .filter(importFilter::isSourceTarget)
         .filter(target -> !importFilter.excludeTarget(target));

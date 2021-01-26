@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Android-specific blaze rules. This class is in the java module because android support is
@@ -42,17 +43,24 @@ public final class AndroidBlazeRules implements Kind.Provider {
     ANDROID_SDK("android_sdk", LanguageClass.ANDROID, RuleType.UNKNOWN),
     AAR_IMPORT("aar_import", LanguageClass.ANDROID, RuleType.UNKNOWN),
     ANDROID_RESOURCES("android_resources", LanguageClass.ANDROID, RuleType.UNKNOWN),
-    KT_ANDROID_LIBRARY_HELPER("kt_android_library_helper", LanguageClass.ANDROID, RuleType.LIBRARY),
+    KT_ANDROID_LIBRARY_HELPER(
+        "kt_android_library_helper",
+        ImmutableSet.of(LanguageClass.ANDROID, LanguageClass.KOTLIN),
+        RuleType.LIBRARY),
     ;
 
     private final String name;
-    private final LanguageClass languageClass;
+    private final ImmutableSet<LanguageClass> languageClasses;
     private final RuleType ruleType;
 
-    RuleTypes(String name, LanguageClass languageClass, RuleType ruleType) {
+    RuleTypes(String name, Collection<LanguageClass> languageClasses, RuleType ruleType) {
       this.name = name;
-      this.languageClass = languageClass;
+      this.languageClasses = ImmutableSet.copyOf(languageClasses);
       this.ruleType = ruleType;
+    }
+
+    RuleTypes(String name, LanguageClass languageClass, RuleType ruleType) {
+      this(name, ImmutableSet.of(languageClass), ruleType);
     }
 
     public Kind getKind() {
@@ -63,7 +71,7 @@ public final class AndroidBlazeRules implements Kind.Provider {
   @Override
   public ImmutableSet<Kind> getTargetKinds() {
     return Arrays.stream(RuleTypes.values())
-        .map(e -> Kind.Provider.create(e.name, e.languageClass, e.ruleType))
+        .map(e -> Kind.Provider.create(e.name, e.languageClasses, e.ruleType))
         .collect(toImmutableSet());
   }
 }

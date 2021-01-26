@@ -37,7 +37,7 @@ public class BlazeCidrTestEventsHandler implements BlazeTestEventsHandler {
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
     return kind != null
-        && kind.getLanguageClass().equals(LanguageClass.C)
+        && kind.hasLanguage(LanguageClass.C)
         && kind.getRuleType().equals(RuleType.TEST);
   }
 

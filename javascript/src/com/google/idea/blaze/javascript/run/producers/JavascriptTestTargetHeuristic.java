@@ -41,7 +41,7 @@ class JavascriptTestTargetHeuristic implements TestTargetHeuristic {
     Kind kind = target.getKind();
     return sourcePsiFile instanceof JSFile
         && kind != null
-        && kind.getLanguageClass() == LanguageClass.JAVASCRIPT
+        && kind.hasLanguage(LanguageClass.JAVASCRIPT)
         && kind.getRuleType() == RuleType.TEST;
   }
 }

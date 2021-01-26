@@ -99,7 +99,7 @@ public final class BlazeGoTestLocator implements SMTestLocator {
     if (rule instanceof FuncallExpression) {
       Kind kind = ((FuncallExpression) rule).getRuleKind();
       return kind != null
-              && kind.getLanguageClass().equals(LanguageClass.GO)
+              && kind.hasLanguage(LanguageClass.GO)
               && kind.getRuleType().equals(RuleType.TEST)
           ? rule
           : null;
@@ -152,7 +152,7 @@ public final class BlazeGoTestLocator implements SMTestLocator {
     }
     TargetIdeInfo target = projectData.getTargetMap().get(TargetKey.forPlainTarget(label));
     if (target != null
-        && target.getKind().getLanguageClass().equals(LanguageClass.GO)
+        && target.getKind().hasLanguage(LanguageClass.GO)
         && target.getKind().getRuleType().equals(RuleType.TEST)) {
       return target;
     }

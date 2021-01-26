@@ -30,7 +30,7 @@ public class BlazeGoRunConfigurationHandlerProvider
   @Override
   public boolean canHandleKind(TargetState state, @Nullable Kind kind) {
     return kind != null
-        && kind.getLanguageClass().equals(LanguageClass.GO)
+        && kind.hasLanguage(LanguageClass.GO)
         && (kind.getRuleType().equals(RuleType.BINARY) || kind.getRuleType().equals(RuleType.TEST));
   }
 

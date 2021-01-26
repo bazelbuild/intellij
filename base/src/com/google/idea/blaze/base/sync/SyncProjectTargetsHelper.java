@@ -135,7 +135,8 @@ public final class SyncProjectTargetsHelper {
             .filter(
                 t ->
                     t.getKind() != null
-                        && languageSettings.isLanguageActive(t.getKind().getLanguageClass()))
+                        && t.getKind().getLanguageClasses().stream()
+                            .anyMatch(languageSettings::isLanguageActive))
             .map(t -> t.label)
             .collect(toImmutableList());
     context.output(

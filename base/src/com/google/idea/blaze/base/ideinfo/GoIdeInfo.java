@@ -55,7 +55,7 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
 
   private static ImmutableList<Label> extractLibraryLabels(
       Kind kind, List<String> libraryLabels, @Nullable String libraryLabel) {
-    if (kind.getLanguageClass() != LanguageClass.GO || kind.getRuleType() != RuleType.TEST) {
+    if (!kind.hasLanguage(LanguageClass.GO) || kind.getRuleType() != RuleType.TEST) {
       return ImmutableList.of();
     }
     if (!libraryLabels.isEmpty()) {

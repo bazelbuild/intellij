@@ -67,7 +67,12 @@ public abstract class Kind {
     }
 
     static Kind create(String ruleName, LanguageClass languageClass, RuleType ruleType) {
-      return new AutoValue_Kind(ruleName, languageClass, ruleType);
+      return create(ruleName, ImmutableSet.of(languageClass), ruleType);
+    }
+
+    static Kind create(
+        String ruleName, Collection<LanguageClass> languageClasses, RuleType ruleType) {
+      return new AutoValue_Kind(ruleName, ImmutableSet.copyOf(languageClasses), ruleType);
     }
   }
 
@@ -103,7 +108,7 @@ public abstract class Kind {
       if (existing != null) {
         return existing;
       }
-      perLanguageKinds.put(kind.getLanguageClass(), kind);
+      kind.getLanguageClasses().forEach(languageClass -> perLanguageKinds.put(languageClass, kind));
       return kind;
     }
   }
@@ -151,7 +156,7 @@ public abstract class Kind {
 
   public abstract String getKindString();
 
-  public abstract LanguageClass getLanguageClass();
+  public abstract ImmutableSet<LanguageClass> getLanguageClasses();
 
   public abstract RuleType getRuleType();
 
@@ -161,6 +166,14 @@ public abstract class Kind {
 
   public boolean isWebTest() {
     return getRuleType() == RuleType.TEST && getKindString().endsWith("web_test");
+  }
+
+  public boolean hasLanguage(LanguageClass languageClass) {
+    return getLanguageClasses().contains(languageClass);
+  }
+
+  public boolean hasAnyLanguageIn(LanguageClass... languageClass) {
+    return Arrays.stream(languageClass).anyMatch(getLanguageClasses()::contains);
   }
 
   @Override

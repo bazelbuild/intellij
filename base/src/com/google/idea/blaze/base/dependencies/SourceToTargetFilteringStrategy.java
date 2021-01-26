@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -68,7 +69,8 @@ public interface SourceToTargetFilteringStrategy {
     private static boolean supportedLanguage(TargetInfo target) {
       Kind kind = target.getKind();
       return kind != null
-          && LanguageSupport.languagesSupportedByCurrentIde().contains(kind.getLanguageClass());
+          && !Collections.disjoint(
+              LanguageSupport.languagesSupportedByCurrentIde(), kind.getLanguageClasses());
     }
   }
 

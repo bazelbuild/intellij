@@ -61,7 +61,7 @@ public final class BlazeScalaWorkspaceImporter {
     List<TargetKey> scalaSourceTargets =
         targetMap.targets().stream()
             .filter(target -> target.getJavaIdeInfo() != null)
-            .filter(target -> target.getKind().getLanguageClass() == LanguageClass.SCALA)
+            .filter(target -> target.getKind().hasLanguage(LanguageClass.SCALA))
             .filter(importFilter::isSourceTarget)
             .map(TargetIdeInfo::getKey)
             .collect(Collectors.toList());

@@ -131,7 +131,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
     if (target.getPyIdeInfo() != null) {
       return target.getPyIdeInfo().getSources();
     }
-    if (target.getKind().getLanguageClass() == LanguageClass.PYTHON) {
+    if (target.getKind().hasLanguage(LanguageClass.PYTHON)) {
       return target.getSources();
     }
     return ImmutableList.of();

@@ -138,7 +138,7 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
     TargetIdeInfo target = targetMap.get(TargetKey.forPlainTarget(label));
     if (target == null
         || target.getKind().getRuleType() != RuleType.TEST
-        || target.getKind().getLanguageClass() != LanguageClass.JAVASCRIPT) {
+        || !target.getKind().hasLanguage(LanguageClass.JAVASCRIPT)) {
       return null;
     }
     if (target.getKind().getKindString().endsWith("web_test")) {
@@ -150,7 +150,7 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
               .filter(
                   t ->
                       t.getKind().getRuleType() == RuleType.TEST
-                          && t.getKind().getLanguageClass() == LanguageClass.JAVASCRIPT)
+                          && t.getKind().hasLanguage(LanguageClass.JAVASCRIPT))
               .findFirst()
               .orElse(null);
     }
@@ -238,7 +238,7 @@ public final class BlazeJavascriptTestLocator implements SMTestLocator {
         .map(Dependency::getTargetKey)
         .map(targetMap::get)
         .filter(Objects::nonNull)
-        .filter(t -> t.getKind().getLanguageClass() == LanguageClass.JAVASCRIPT)
+        .filter(t -> t.getKind().hasLanguage(LanguageClass.JAVASCRIPT))
         .map(TargetIdeInfo::getSources)
         .flatMap(Collection::stream)
         .collect(ImmutableSet.toImmutableSet());

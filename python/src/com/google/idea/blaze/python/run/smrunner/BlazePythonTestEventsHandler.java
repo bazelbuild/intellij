@@ -40,7 +40,7 @@ public class BlazePythonTestEventsHandler implements BlazeTestEventsHandler {
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
     return kind != null
-        && kind.getLanguageClass().equals(LanguageClass.PYTHON)
+        && kind.hasLanguage(LanguageClass.PYTHON)
         && kind.getRuleType().equals(RuleType.TEST);
   }
 

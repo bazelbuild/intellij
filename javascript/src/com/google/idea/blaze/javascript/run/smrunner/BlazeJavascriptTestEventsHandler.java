@@ -42,7 +42,7 @@ public class BlazeJavascriptTestEventsHandler implements BlazeTestEventsHandler 
   @Override
   public boolean handlesKind(@Nullable Kind kind) {
     return kind != null
-        && kind.getLanguageClass().equals(LanguageClass.JAVASCRIPT)
+        && kind.hasLanguage(LanguageClass.JAVASCRIPT)
         && kind.getRuleType().equals(RuleType.TEST);
   }
 

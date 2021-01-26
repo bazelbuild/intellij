@@ -25,7 +25,7 @@ public class PyDebugUtils {
 
   static boolean canUsePyDebugger(@Nullable Kind kind) {
     return kind != null
-        && kind.getLanguageClass() == LanguageClass.PYTHON
+        && kind.hasLanguage(LanguageClass.PYTHON)
         && (kind.getRuleType() == RuleType.BINARY || kind.getRuleType() == RuleType.TEST);
   }
 }

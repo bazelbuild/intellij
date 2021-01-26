@@ -588,11 +588,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       TargetIdeInfo target,
       Set<LanguageClass> ignoredLanguages) {
     Kind kind = target.getKind();
-    if (languageSettings.isLanguageActive(kind.getLanguageClass())) {
+    if (kind.getLanguageClasses().stream().anyMatch(languageSettings::isLanguageActive)) {
       return false;
     }
     if (importRoots.importAsSource(target.getKey().getLabel())) {
-      ignoredLanguages.add(kind.getLanguageClass());
+      ignoredLanguages.addAll(kind.getLanguageClasses());
     }
     return true;
   }
@@ -608,12 +608,12 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     if (kind == null) {
       return null;
     }
-    if (languageSettings.isLanguageActive(kind.getLanguageClass())) {
+    if (kind.getLanguageClasses().stream().anyMatch(languageSettings::isLanguageActive)) {
       return TargetIdeInfo.fromProto(message, syncTime);
     }
     TargetKey key = message.hasKey() ? TargetKey.fromProto(message.getKey()) : null;
     if (key != null && importRoots.importAsSource(key.getLabel())) {
-      ignoredLanguages.add(kind.getLanguageClass());
+      ignoredLanguages.addAll(kind.getLanguageClasses());
     }
     return null;
   }

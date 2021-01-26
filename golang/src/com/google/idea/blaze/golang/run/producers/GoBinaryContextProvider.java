@@ -93,7 +93,7 @@ class GoBinaryContextProvider implements BinaryContextProvider {
     List<TargetKey> libraryKeys = new ArrayList<>();
     for (TargetKey key : rulesForFile) {
       TargetIdeInfo target = targetMap.get(key);
-      if (target == null || target.getKind().getLanguageClass() != LanguageClass.GO) {
+      if (target == null || !target.getKind().hasLanguage(LanguageClass.GO)) {
         continue;
       }
       switch (target.getKind().getRuleType()) {
@@ -113,7 +113,7 @@ class GoBinaryContextProvider implements BinaryContextProvider {
         .flatMap(Collection::stream)
         .map(targetMap::get)
         .filter(Objects::nonNull)
-        .filter(t -> t.getKind().getLanguageClass() == LanguageClass.GO)
+        .filter(t -> t.getKind().hasLanguage(LanguageClass.GO))
         .filter(t -> t.getKind().getRuleType() == RuleType.BINARY)
         .map(TargetIdeInfo::toTargetInfo)
         .findFirst()
