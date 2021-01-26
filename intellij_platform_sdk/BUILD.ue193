@@ -95,6 +95,8 @@ java_import(
     jars = glob(["lib/objenesis-*.jar"]),
 )
 
+java_library(name = "jsr305") # not bundled
+
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
 java_import(

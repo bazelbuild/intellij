@@ -110,6 +110,8 @@ java_import(
     jars = glob(["android-studio/lib/objenesis-*.jar"]),
 )
 
+java_library(name = "jsr305") # not bundled
+
 # The plugins required by ASwB. We need to include them
 # when running integration tests.
 java_import(

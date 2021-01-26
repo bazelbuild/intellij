@@ -74,6 +74,11 @@ java_import(
     jars = glob(["clion-*/lib/objenesis-*.jar"]),
 )
 
+java_import(
+    name = "jsr305",
+    jars = glob(["clion-*/lib/jsr305.jar"]),
+)
+
 # The plugins required by CLwB. Presumably there will be some, when we write
 # some integration tests.
 java_import(
