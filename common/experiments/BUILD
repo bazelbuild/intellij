@@ -13,6 +13,7 @@ java_library(
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//java/com/google/security/annotations:suppress_ban_serializable_for_legacy",
     ],
 )
 

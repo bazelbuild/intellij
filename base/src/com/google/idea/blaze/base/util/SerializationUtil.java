@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.util;
 
 import com.google.common.io.Closeables;
+import com.google.security.annotations.SuppressBanSerializableForLegacyCode;
 import com.intellij.CommonBundle;
 import java.io.File;
 import java.io.FileInputStream;
@@ -56,6 +57,7 @@ public class SerializationUtil {
    *
    * @throws IOException if deserialization fails.
    */
+  @SuppressBanSerializableForLegacyCode
   @Nullable
   public static Object loadFromDisk(File file, final Iterable<ClassLoader> classLoaders)
       throws IOException {
@@ -65,6 +67,7 @@ public class SerializationUtil {
     try (FileInputStream fin = new FileInputStream(file)) {
       ObjectInputStream ois =
           new ObjectInputStream(fin) {
+            @SuppressBanSerializableForLegacyCode
             @Override
             protected Class<?> resolveClass(ObjectStreamClass desc)
                 throws IOException, ClassNotFoundException {

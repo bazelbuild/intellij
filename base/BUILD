@@ -29,6 +29,7 @@ java_library(
         "//common/util:transactions",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//java/com/google/security/annotations:suppress_ban_serializable_for_legacy",
         "//proto:proto_deps",
         "//sdkcompat",
         "//third_party/auto_value",

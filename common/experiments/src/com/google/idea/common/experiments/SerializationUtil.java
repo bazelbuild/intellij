@@ -15,6 +15,7 @@
  */
 package com.google.idea.common.experiments;
 
+import com.google.security.annotations.SuppressBanSerializableForLegacyCode;
 import com.intellij.CommonBundle;
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,6 +39,7 @@ final class SerializationUtil {
     }
   }
 
+  @SuppressBanSerializableForLegacyCode
   @Nullable
   static Object loadFromDisk(File file) throws IOException {
     if (!file.exists()) {
