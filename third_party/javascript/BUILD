@@ -11,6 +11,7 @@ java_library(
     exports = select_for_plugin_api({
         "intellij-ue-2020.1": ["@intellij_ue_2020_1//:javascript"],
         "intellij-ue-2020.2": ["@intellij_ue_2020_2//:javascript"],
+        "intellij-ue-2020.3": ["@intellij_ue_2020_3//:javascript"],
         "clion-2019.3": ["@clion_2019_3//:javascript"],
         "clion-2020.1": ["@clion_2020_1//:javascript"],
         "clion-2020.2": ["@clion_2020_2//:javascript"],
