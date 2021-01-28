@@ -5,11 +5,11 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2020.1",
     "intellij-latest-mac": "intellij-2020.1-mac",
     "intellij-beta": "intellij-2020.2",
-    "intellij-canary": "intellij-2020.2",
+    "intellij-canary": "intellij-2020.3",
     "intellij-ue-latest": "intellij-ue-2020.1",
     "intellij-ue-latest-mac": "intellij-ue-2020.1-mac",
     "intellij-ue-beta": "intellij-ue-2020.2",
-    "intellij-ue-canary": "intellij-ue-2020.2",
+    "intellij-ue-canary": "intellij-ue-2020.3",
     "android-studio-latest": "android-studio-4.1",
     "android-studio-beta": "android-studio-4.2",
     "android-studio-beta-mac": "android-studio-4.2-mac",
@@ -36,6 +36,14 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2020_2",
     ),
+    "intellij-2020.3": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2020_3",
+    ),
+    "intellij-2020.3-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2020_3",
+    ),
     "intellij-ue-2020.1": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2020_1",
@@ -51,6 +59,14 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-ue-2020.2-mac": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2020_2",
+    ),
+    "intellij-ue-2020.3": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2020_3",
+    ),
+    "intellij-ue-2020.3-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2020_3",
     ),
     "android-studio-4.1": struct(
         ide = "android-studio",
