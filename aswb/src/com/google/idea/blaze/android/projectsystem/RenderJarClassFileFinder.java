@@ -35,6 +35,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
@@ -62,6 +63,8 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
   @VisibleForTesting public static final String CLASS_FINDER_KEY = "RenderJarClassFileFinder";
 
   private static final Logger log = Logger.getInstance(RenderJarClassFileFinder.class);
+
+  private static final String INTERNAL_PACKAGE = "_layoutlib_._internal_.";
 
   private final Module module;
   private final Project project;
@@ -115,6 +118,9 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
               module.getName()));
       return null;
     }
+
+    // Remove internal package prefix if present
+    fqcn = StringUtil.trimStart(fqcn, INTERNAL_PACKAGE);
 
     // Look through render resolve JARs of the binaries that depend on the given
     // androidResourceModule. One androidResourceModule can comprise of multiple resource targets.
