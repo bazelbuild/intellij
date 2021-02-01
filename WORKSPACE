@@ -58,6 +58,7 @@ http_archive(
     sha256 = "3cfecf42c77c0797cfb698202c9ad9ba16e318574b985a53f5bddf037bf7f763 ",
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.2.3/ideaIU-2020.2.3.zip",
 )
+
 # The plugin api for CLion 2019.3. This is required to build CLwB,
 # and run integration tests.
 http_archive(
@@ -211,7 +212,6 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/1347/97067/scala-intellij-bin-2020.2.27.zip",
 )
 
-
 # Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
 http_archive(
     name = "scala_2020_3",
@@ -225,7 +225,6 @@ http_archive(
     sha256 = "4924ccda4a5d6ee830813efb86966bed8f7caf5a19e9cc1b27fa4e288e57a250",
     url = "https://plugins.jetbrains.com/files/1347/105697/scala-intellij-bin-2020.3.18.zip",
 )
-
 
 # The plugin api for Android Studio 4.1. This is required to build ASwB,
 # and run integration tests.
@@ -241,8 +240,8 @@ http_archive(
 http_archive(
     name = "android_studio_4_2",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio42",
-    sha256 = "84c7bb88cf26d4f6946f39d165fade4495ee8dc3204df38d77c09b60614af90c",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.19/android-studio-ide-202.7033425-linux.tar.gz",
+    sha256 = "3f322d40ad5c0cb8644627320c4c3d817f4ba1cf7740a411d2efa566b0c38481",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.20/android-studio-ide-202.7094744-linux.tar.gz",
 )
 
 # The plugin api for Android Studio 2020.3. This is required to build ASwB,
