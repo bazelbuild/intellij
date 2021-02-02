@@ -166,7 +166,7 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "c020553701939692d165d3607dd94532f97c48d81435f1cb6d927a6723888327",
+    sha256 = "4df0c9ddd51f08176a4b37194ecce1c1b37a3d9bbd484b3129a754a22c7dc79d",
     url = "https://plugins.jetbrains.com/files/9568/97011/go-202.7319.50.zip",
 )
 
