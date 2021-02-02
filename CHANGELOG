@@ -1,6 +1,6 @@
-v2021.01.19
+v2021.02.02
 ===========
-* Bug fixes and internal cleanup.
+* ASwB: Fix unresolved Kotlin symbols when using Dagger/Sting
 
 v2020.03.19
 ===========
