@@ -194,7 +194,7 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "bbc019e7cde3baf21b11f0abde21f42d4606ca5ca9100b3bdace3292f70cceef",
+    sha256 = "626b9c9bc2f90d64498524bd7138558edacf50bbc72a02f882401118a1fc1403",
     url = "https://plugins.jetbrains.com/files/1347/76628/scala-intellij-bin-2020.1.7.zip",
 )
 
