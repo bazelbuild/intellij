@@ -158,6 +158,7 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
       if (vmoptionsFile != null) {
         vmoptions += String.format(" -Djb.vmOptionsFile=\"%s\"", vmoptionsFile);
       }
+      vmoptions += " -Didea.is.internal=true";
       return vmoptions;
     }
   }
