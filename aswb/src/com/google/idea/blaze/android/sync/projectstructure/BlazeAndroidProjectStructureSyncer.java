@@ -448,7 +448,6 @@ public class BlazeAndroidProjectStructureSyncer {
       return defaultId;
     }
 
-    String applicationId = defaultId;
     try {
       Stopwatch timer = Stopwatch.createStarted();
       ManifestParser.ParsedManifest parsedManifest =
@@ -456,15 +455,16 @@ public class BlazeAndroidProjectStructureSyncer {
       if (manifestParsingStatCollector != null) {
         manifestParsingStatCollector.addDuration(timer.elapsed());
       }
-
-      if (parsedManifest != null && parsedManifest.packageName != null) {
-        applicationId = parsedManifest.packageName;
-      } else {
-        String message = "Could not parse manifest file: " + manifestFile;
+      if (parsedManifest == null) {
+        String message = "Could not parse malformed manifest file: " + manifestFile;
         log.warn(message);
         if (context != null) {
           context.output(PrintOutput.log(message));
         }
+        return defaultId;
+      }
+      if (parsedManifest.packageName != null) {
+        return parsedManifest.packageName;
       }
     } catch (IOException e) {
       String message = "Exception while reading manifest file: " + manifestFile;
@@ -473,6 +473,6 @@ public class BlazeAndroidProjectStructureSyncer {
         context.output(PrintOutput.log(message));
       }
     }
-    return applicationId;
+    return defaultId;
   }
 }

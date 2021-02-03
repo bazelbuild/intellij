@@ -23,6 +23,7 @@ import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.and
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder.targetMap;
 import static com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes.ANDROID_BINARY;
 
+import com.android.tools.idea.model.AndroidModel;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
@@ -284,6 +285,60 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setAddProjectViewTargets(true)
             .build());
     assertSyncSuccess(testEnvArgument.targetMap, testEnvArgument.javaRoot);
+  }
+
+  @Test
+  public void testPackageNameParsing() {
+    setProjectView(
+        "directories:",
+        "  java/com",
+        "targets:",
+        "  //java/com/withpackage:lib",
+        "  //java/com/nopackage:lib",
+        "android_sdk_platform: android-25");
+
+    MockSdkUtil.registerSdk(workspace, "25");
+    workspace.createFile(
+        new WorkspacePath("java/com/withpackage/AndroidManifest.xml"),
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?><manifest package=\"com.android.testapp\"/>");
+    workspace.createFile(
+        new WorkspacePath("java/com/nopackage/AndroidManifest.xml"),
+        "<?xml version=\"1.0\" encoding=\"utf-8\"?><manifest package=\"\"/>");
+    TargetMap targetMap =
+        targetMap(
+            android_library("//java/com/withpackage:lib")
+                .java_toolchain_version("8")
+                .res("res/values/strings.xml")
+                .manifest("AndroidManifest.xml"),
+            android_library("//java/com/nopackage:lib")
+                .java_toolchain_version("8")
+                .res("res/values/strings.xml")
+                .manifest("AndroidManifest.xml"));
+
+    setTargetMap(targetMap);
+    runBlazeSync(
+        BlazeSyncParams.builder()
+            .setTitle("Sync")
+            .setSyncMode(SyncMode.INCREMENTAL)
+            .setSyncOrigin("test")
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setAddProjectViewTargets(true)
+            .build());
+
+    // Resource module without a package name defined in its manifest uses a default name derived
+    // from the module name as its resource package name.
+    Module defaultAppIdModule =
+        ModuleFinder.getInstance(getProject()).findModuleByName("java.com.nopackage.lib");
+    assertThat(defaultAppIdModule).isNotNull();
+    assertThat(AndroidModel.get(defaultAppIdModule).getApplicationId()).isEqualTo("com.nopackage");
+
+    // Resource module with a custom defined package name defined in its manifest uses it as the
+    // resource package name.
+    Module customAppIdModule =
+        ModuleFinder.getInstance(getProject()).findModuleByName("java.com.withpackage.lib");
+    assertThat(customAppIdModule).isNotNull();
+    assertThat(AndroidModel.get(customAppIdModule).getApplicationId())
+        .isEqualTo("com.android.testapp");
   }
 
   /**

@@ -223,6 +223,29 @@ public class ManifestParserTest {
           + "  </application>\n"
           + "</manifest>";
 
+  /**
+   * This is an example partial manifest with an empty package name that only defines a startup
+   * activity. Manifests like these aren't final like merged manifests but we should still extract
+   * what we can from it (in this case the startup activity).
+   */
+  @Language("XML")
+  public static final String PARTIAL_MANIFEST_XML_CONTENTS =
+      "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+          + "<manifest\n"
+          + "    xmlns:android=\"http://schemas.android.com/apk/res/android\"\n"
+          + "    package=\"\">\n"
+          + "  <application>\n"
+          + "    <activity\n"
+          + "       "
+          + " android:name=\"com.google.android.samples.hellogoogle3.activities.MainActivity\">\n"
+          + "      <intent-filter>\n"
+          + "        <action android:name=\"android.intent.action.MAIN\"/>\n"
+          + "        <category android:name=\"android.intent.category.LAUNCHER\"/>\n"
+          + "      </intent-filter>\n"
+          + "    </activity>\n"
+          + "  </application>\n"
+          + "</manifest>";
+
   @Test
   public void extractTestAttributes() throws Exception {
     InputStream manifestInputStream =
@@ -249,6 +272,20 @@ public class ManifestParserTest {
         ManifestParser.parseManifestFromInputStream(manifestInputStream);
     assertThat(parsedManifest).isNotNull();
     assertThat(parsedManifest.packageName).isEqualTo("com.google.android.samples.hellogoogle3");
+    assertThat(parsedManifest.defaultActivityClassName)
+        .isEqualTo("com.google.android.samples.hellogoogle3.activities.MainActivity");
+    assertThat(parsedManifest.instrumentationClassNames).isEmpty();
+  }
+
+  @Test
+  public void extractPartialAttributes() throws Exception {
+    InputStream manifestInputStream =
+        new ByteArrayInputStream(PARTIAL_MANIFEST_XML_CONTENTS.getBytes(UTF_8));
+
+    ManifestParser.ParsedManifest parsedManifest =
+        ManifestParser.parseManifestFromInputStream(manifestInputStream);
+    assertThat(parsedManifest).isNotNull();
+    assertThat(parsedManifest.packageName).isNull();
     assertThat(parsedManifest.defaultActivityClassName)
         .isEqualTo("com.google.android.samples.hellogoogle3.activities.MainActivity");
     assertThat(parsedManifest.instrumentationClassNames).isEmpty();

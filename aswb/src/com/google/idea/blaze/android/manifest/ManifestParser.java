@@ -52,8 +52,9 @@ public class ManifestParser {
   /** Container class for common manifest attributes required by the blaze plugin. */
   public static class ParsedManifest {
     /**
-     * Package name of the application and should always be non-null in normal cases. A null package
-     * name indicates something went wrong when parsing the manifest. E.g. Invalid manifest.
+     * Package name of the application and should always be non-null in complete manifests. The
+     * package name can be null for manifests that are meant to be merged together with others to
+     * form the final "merged" manifest.
      */
     @Nullable public final String packageName;
 
@@ -116,9 +117,6 @@ public class ManifestParser {
   private static ParsedManifest parseManifestElement(Element manifestRootElement) {
     String packageName =
         Strings.emptyToNull(manifestRootElement.getAttributeNS(null, ATTRIBUTE_PACKAGE));
-    if (packageName == null) {
-      return null; // Return early because a manifest with no package name is not a valid manifest.
-    }
 
     ImmutableList.Builder<String> instrumentationClassNames = ImmutableList.builder();
     ImmutableList.Builder<Element> activities = new ImmutableList.Builder<>();
