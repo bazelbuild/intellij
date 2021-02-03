@@ -79,7 +79,7 @@ java_import(
 
 java_import(
     name = "jsr305",
-    jars = ["lib/jsr305.jar"],
+    jars = ["lib/jsr305-3.0.2.jar"],
 )
 
 # The plugins required by IJwB. We need to include them
