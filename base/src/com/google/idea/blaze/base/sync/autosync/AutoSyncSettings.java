@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.sync.autosync;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.logging.LoggedSettingsProvider;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -28,7 +27,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 @State(name = "AutoSyncSettings", storages = @Storage("blaze.user.settings.xml"))
 public class AutoSyncSettings implements PersistentStateComponent<AutoSyncSettings> {
 
-  public boolean migratedOldAutoSyncSettings = false;
   public boolean onlyAutoSyncWhenSyncingRemotely = true;
   public boolean autoSyncOnBuildChanges = false;
   public boolean autoSyncOnProtoChanges = false;
@@ -46,20 +44,6 @@ public class AutoSyncSettings implements PersistentStateComponent<AutoSyncSettin
   @Override
   public void loadState(AutoSyncSettings state) {
     XmlSerializerUtil.copyBean(state, this);
-
-    // temporary migration code. Load order guaranteed by plugin xml.
-    // TODO(brendandouglas): Remove migration code in August 2019
-    BlazeUserSettings settings = BlazeUserSettings.getInstance();
-    migrateOldSettings(settings.getResyncAutomatically(), settings.getResyncOnProtoChanges());
-  }
-
-  private void migrateOldSettings(boolean autoSyncOnBuildChanges, boolean autoSyncOnProtoChanges) {
-    if (migratedOldAutoSyncSettings) {
-      return;
-    }
-    this.migratedOldAutoSyncSettings = true;
-    this.autoSyncOnBuildChanges = autoSyncOnBuildChanges;
-    this.autoSyncOnProtoChanges = autoSyncOnProtoChanges;
   }
 
   static class SettingsLogger implements LoggedSettingsProvider {

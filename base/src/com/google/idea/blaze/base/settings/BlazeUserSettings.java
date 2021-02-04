@@ -68,8 +68,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private FocusBehavior showBlazeProblemsViewOnSync = FocusBehavior.ALWAYS;
   private FocusBehavior showBlazeConsoleOnRun = FocusBehavior.ALWAYS;
   private FocusBehavior showProblemsViewOnRun = FocusBehavior.NEVER;
-  private boolean resyncAutomatically = false;
-  private boolean resyncOnProtoChanges = false;
   private boolean syncStatusPopupShown = false;
   private boolean expandSyncToWorkingSet = true;
   private boolean showPerformanceWarnings = false;
@@ -100,44 +98,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
       blazeBinaryPath = DEFAULT_BLAZE_PATH;
       migratedBlazeDefaultPath = true;
     }
-  }
-
-  /**
-   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
-   *     {@link AutoSyncSettings} instead.
-   */
-  @Deprecated
-  public void setResyncAutomatically(boolean resyncAutomatically) {
-    this.resyncAutomatically = resyncAutomatically;
-  }
-
-  /**
-   * Whether we should re-sync on changes to BUILD and project view files.
-   *
-   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
-   *     {@link AutoSyncSettings} instead.
-   */
-  @Deprecated
-  public boolean getResyncAutomatically() {
-    return resyncAutomatically;
-  }
-
-  /**
-   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
-   *     {@link AutoSyncSettings} instead.
-   */
-  @Deprecated
-  public void setResyncOnProtoChanges(boolean resyncOnProtoChanges) {
-    this.resyncOnProtoChanges = resyncOnProtoChanges;
-  }
-
-  /**
-   * @deprecated DO NOT USE: left here temporarily while migrating to a new settings format. Use
-   *     {@link AutoSyncSettings} instead.
-   */
-  @Deprecated
-  public boolean getResyncOnProtoChanges() {
-    return resyncOnProtoChanges;
   }
 
   public FocusBehavior getShowBlazeConsoleOnSync() {
@@ -268,8 +228,6 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
       builder.put("showBlazeProblemsViewOnSync", settings.showBlazeProblemsViewOnSync.name());
       builder.put("showBlazeConsoleOnRun", settings.showBlazeConsoleOnRun.name());
       builder.put("showProblemsViewOnRun", settings.showProblemsViewOnRun.name());
-      builder.put("resyncAutomatically", Boolean.toString(settings.resyncAutomatically));
-      builder.put("resyncOnProtoChanges", Boolean.toString(settings.resyncOnProtoChanges));
       builder.put("expandSyncToWorkingSet", Boolean.toString(settings.expandSyncToWorkingSet));
       builder.put("formatBuildFilesOnSave", Boolean.toString(settings.formatBuildFilesOnSave));
       builder.put(
