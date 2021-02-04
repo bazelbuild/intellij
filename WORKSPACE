@@ -28,8 +28,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2020_3",
     build_file = "@//intellij_platform_sdk:BUILD.idea203",
-    sha256 = "402911261dbd0ed5e40bee7c8ff06fb6e1051097481d4fd489504d8231a4ae91",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.2.3/ideaIC-2020.2.3.zip",
+    sha256 = "2c621e40a8a965c7ea5e1005652d1d1dd80b8fe4241be13ef3d4df2c0b2d72c5",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.3.1/ideaIC-2020.3.1.zip",
 )
 
 # The plugin api for IntelliJ UE 2020.1. This is required to run UE-specific
@@ -55,8 +55,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2020_3",
     build_file = "@//intellij_platform_sdk:BUILD.ue203",
-    sha256 = "3cfecf42c77c0797cfb698202c9ad9ba16e318574b985a53f5bddf037bf7f763 ",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.2.3/ideaIU-2020.2.3.zip",
+    sha256 = "ffd4e98b7a3e7cd40a66e518b01e1fb160fe03071aa6085a543decd7b825b4c3",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.3.1/ideaIU-2020.3.1.zip",
 )
 
 # The plugin api for CLion 2019.3. This is required to build CLwB,
