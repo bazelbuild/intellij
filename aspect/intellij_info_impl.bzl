@@ -421,6 +421,11 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     if hasattr(semantics, "cc") and hasattr(semantics.cc, "get_default_copts"):
         target_copts += semantics.cc.get_default_copts(ctx)
 
+    # first, expand all starlark predefined paths:
+    #   location, locations, rootpath, rootpaths, execpath, execpaths
+    target_copts = [ctx.expand_location(copt) for copt in target_copts]
+
+    # then expand any regular GNU make style variables
     target_copts = [expand_make_variables("copt", copt, ctx) for copt in target_copts]
 
     compilation_context = target[CcInfo].compilation_context
