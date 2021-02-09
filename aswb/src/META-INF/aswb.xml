@@ -64,6 +64,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.MobileInstallAdbLocationProvider" interface="com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallAdbLocationProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AdbTunnelConfiguratorProvider" interface="com.google.idea.blaze.android.run.binary.mobileinstall.AdbTunnelConfigurator$AdbTunnelConfiguratorProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.RemoteApkDownloader" interface="com.google.idea.blaze.android.run.RemoteApkDownloader"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.ComposeStatusProvider" interface="com.google.idea.blaze.android.compose.ComposeStatusProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -87,6 +88,7 @@
     <SyncListener implementation="com.google.idea.blaze.android.editor.ProjectUnresolvedResourceStatsCollector$CollectorSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.android.targetmaps.TargetToBinaryMapImpl$Adapter"/>
     <OutputGroupsProvider implementation="com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider"/>
+    <ComposeStatusProvider implementation="com.google.idea.blaze.android.compose.ExperimentComposeStatusProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">

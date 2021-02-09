@@ -32,6 +32,7 @@ import com.android.tools.idea.projectsystem.ScopeType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.android.compose.ComposeStatusProvider;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.npw.project.BlazeAndroidModuleTemplate;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
@@ -488,6 +489,11 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem, BlazeClassF
     // expressed this circular dependency, IntelliJ blows up due to the large heavily connected
     // dependency graph. Instead, we just redirect the scopes in the few places that we need.
     return ProjectScope.getAllScope(module.getProject());
+  }
+
+  @Override
+  public boolean getUsesCompose() {
+    return ComposeStatusProvider.isComposeEnabled(project);
   }
 
   @TestOnly

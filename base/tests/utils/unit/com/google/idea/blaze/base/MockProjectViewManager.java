@@ -28,6 +28,8 @@ public class MockProjectViewManager extends ProjectViewManager {
 
   private ProjectViewSet projectViewSet = ProjectViewSet.builder().build();
 
+  public MockProjectViewManager() {}
+
   public MockProjectViewManager(Project project) {
     ServiceHelper.registerProjectService(project, ProjectViewManager.class, this, project);
   }
