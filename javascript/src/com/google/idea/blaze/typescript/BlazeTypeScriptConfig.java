@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.javascript.library.JSLibraryUtil;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
@@ -42,7 +41,6 @@ import com.intellij.lang.typescript.tsconfig.TypeScriptImportResolveContext;
 import com.intellij.lang.typescript.tsconfig.TypeScriptImportsResolverProvider;
 import com.intellij.lang.typescript.tsconfig.checkers.TypeScriptConfigFilesInclude;
 import com.intellij.lang.typescript.tsconfig.checkers.TypeScriptConfigIncludeBase;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -60,7 +58,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -77,8 +74,6 @@ import javax.annotation.Nullable;
  */
 class BlazeTypeScriptConfig implements TypeScriptConfig {
   private static final Logger logger = Logger.getInstance(BlazeTypeScriptConfig.class);
-  private static final BoolExperiment typesScriptSuppressWildcardImports =
-      new BoolExperiment("typescript.suppress.wildcard.imports", true);
 
   private final Project project;
   private final Label label;
@@ -431,25 +426,8 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
       runfilesPrefix = "./" + label.targetName() + ".runfiles/" + workspaceRoot.getName();
     }
 
-    boolean suppressWildcards =
-        typesScriptSuppressWildcardImports.getValue()
-            && ApplicationInfo.getInstance().getBuild().getBaselineVersion() >= 193;
-    Set<String> keys = json.keySet();
     for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
       String name = entry.getKey();
-      if (suppressWildcards
-          && name.endsWith("/*")
-          && keys.contains(name.substring(0, name.length() - 2))) {
-        // If we include both the exact match (e.g., @foo/bar) and the wildcard match (@foo/bar/*)
-        // for the same path, the less accurate wildcard path will always be chosen.
-        // Disabling the wildcard match entirely should be a net positive for user experience as
-        // users are more likely to want the exact match as opposed to the wildcard match.
-        // The [TS] import suggestions provided by the typescript service should still provides
-        // options from the wildcard matches if the user still needs them.
-        // Fixed in 2019.3.2: https://youtrack.jetbrains.com/issue/WEB-42689
-        // TODO: remove after 2019.2 is obsolete #api192
-        continue;
-      }
       List<String> mappings = new ArrayList<>();
       for (JsonElement path : entry.getValue().getAsJsonArray()) {
         String pathString = path.getAsString();
