@@ -168,6 +168,12 @@
                       conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"
                       icon="BlazeIcons.ToolWindow"
                       factoryClass="com.google.idea.blaze.base.console.BlazeConsoleToolWindowFactory"/>
+    <toolWindow id="Build Tasks"
+        anchor="bottom"
+        secondary="false"
+        conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"
+        icon="BlazeIcons.ToolWindow"
+        factoryClass="com.google.idea.blaze.base.toolwindow.TasksToolWindowFactory"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleView"/>
     <fileTypeFactory implementation="com.google.idea.blaze.base.plugin.BlazeFileTypeFactory" />
 

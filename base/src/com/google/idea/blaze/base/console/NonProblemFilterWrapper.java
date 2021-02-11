@@ -25,9 +25,9 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Wraps up a filter result, identifying it as not to be included in occurrence navigation. */
-final class NonProblemFilterWrapper implements Filter, PossiblyDumbAware {
+public final class NonProblemFilterWrapper implements Filter, PossiblyDumbAware {
 
-  static NonProblemFilterWrapper wrap(Filter delegate) {
+  public static NonProblemFilterWrapper wrap(Filter delegate) {
     return new NonProblemFilterWrapper(delegate);
   }
 

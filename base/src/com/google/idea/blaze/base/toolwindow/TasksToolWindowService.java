@@ -37,7 +37,7 @@ public final class TasksToolWindowService {
     Instant now();
   }
 
-  public static final BoolExperiment enabled = new BoolExperiment("blazeconsole.v2", false);
+  private static final BoolExperiment ENABLED = new BoolExperiment("blazeconsole.v2", false);
 
   private final TimeSource timeSource;
 
@@ -84,5 +84,9 @@ public final class TasksToolWindowService {
 
   public static TasksToolWindowService getInstance(Project project) {
     return ServiceManager.getService(project, TasksToolWindowService.class);
+  }
+
+  public static boolean isExperimentEnabled() {
+    return ENABLED.getValue();
   }
 }

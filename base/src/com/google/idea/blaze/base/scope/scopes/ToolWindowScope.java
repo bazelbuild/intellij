@@ -95,7 +95,7 @@ public final class ToolWindowScope implements BlazeScope {
     }
 
     public BlazeScope build() {
-      if (!TasksToolWindowService.enabled.getValue()) {
+      if (!TasksToolWindowService.isExperimentEnabled()) {
         return NO_OP_SCOPE_INSTANCE;
       }
       return new ToolWindowScope(
