@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.ValidationError;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
@@ -77,7 +78,8 @@ public final class BlazeAndroidTestRunConfigurationState implements RunConfigura
     return launchMethod;
   }
 
-  void setLaunchMethod(AndroidTestLaunchMethod launchMethod) {
+  @VisibleForTesting
+  public void setLaunchMethod(AndroidTestLaunchMethod launchMethod) {
     this.launchMethod = launchMethod;
   }
 

@@ -17,14 +17,18 @@ package com.google.idea.blaze.android.run;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes.ANDROID_BINARY;
+import static com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST;
 
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerInfoProvider;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
+import com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebugger;
 import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
+import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
+import com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationState;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -32,6 +36,8 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunManagerImpl;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,6 +53,7 @@ public class DebuggerInfoProviderTest extends BlazeAndroidIntegrationTestCase {
     setProjectView(
         "targets:",
         "  //java/com/foo/app:app",
+        "  //javatests/com/foo/app:test",
         "android_sdk_platform: android-27",
         "additional_languages:",
         "  c");
@@ -74,6 +81,26 @@ public class DebuggerInfoProviderTest extends BlazeAndroidIntegrationTestCase {
     assertThat(debugger).isInstanceOf(AndroidJavaDebugger.class);
   }
 
+  @Test
+  public void getAndroidDebuggers_withAndroidBinaryRunConfiguration_returnsJavaAndNative() {
+    List<AndroidDebugger> debuggers =
+        debuggerInfoProvider.getAndroidDebuggers(createAndroidBinaryRunConfiguration(true));
+
+    List<Class> classList = debuggers.stream().map(Object::getClass).collect(Collectors.toList());
+    assertThat(classList)
+        .containsExactly(AndroidJavaDebugger.class, BlazeNativeAndroidDebugger.class);
+  }
+
+  @Test
+  public void getAndroidDebuggers_withAndroidTestRunConfiguration_returnsJavaAndNative() {
+    List<AndroidDebugger> debuggers =
+        debuggerInfoProvider.getAndroidDebuggers(createAndroidTestRunConfiguration(true));
+
+    List<Class> classList = debuggers.stream().map(Object::getClass).collect(Collectors.toList());
+    assertThat(classList)
+        .containsExactly(AndroidJavaDebugger.class, BlazeNativeAndroidDebugger.class);
+  }
+
   private BlazeCommandRunConfiguration createAndroidBinaryRunConfiguration(
       boolean enableNativeDebugging) {
     RunManager runManager = RunManagerImpl.getInstanceImpl(getProject());
@@ -94,6 +121,29 @@ public class DebuggerInfoProviderTest extends BlazeAndroidIntegrationTestCase {
     androidBinaryConfig.setLaunchMethod(
         AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod.NON_BLAZE);
     androidBinaryConfig.getCommonState().setNativeDebuggingEnabled(enableNativeDebugging);
+    return runConfig;
+  }
+
+  private BlazeCommandRunConfiguration createAndroidTestRunConfiguration(
+      boolean enableNativeDebugging) {
+    RunManager runManager = RunManagerImpl.getInstanceImpl(getProject());
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings =
+        runManager.createConfiguration(
+            "Blaze Instrumentation Test Run Configuration",
+            BlazeCommandRunConfigurationType.getInstance().getFactory());
+    runManager.addConfiguration(runnerAndConfigurationSettings, false);
+    BlazeCommandRunConfiguration runConfig =
+        (BlazeCommandRunConfiguration) runnerAndConfigurationSettings.getConfiguration();
+    TargetInfo target =
+        TargetInfo.builder(
+                Label.create("//javatests/com/foo/app:test"),
+                ANDROID_INSTRUMENTATION_TEST.getKind().getKindString())
+            .build();
+    runConfig.setTargetInfo(target);
+    BlazeAndroidTestRunConfigurationState androidTestConfig =
+        (BlazeAndroidTestRunConfigurationState) runConfig.getHandler().getState();
+    androidTestConfig.setLaunchMethod(AndroidTestLaunchMethod.NON_BLAZE);
+    androidTestConfig.getCommonState().setNativeDebuggingEnabled(enableNativeDebugging);
     return runConfig;
   }
 }

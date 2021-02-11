@@ -82,7 +82,7 @@ public class BlazeCommandAndroidDebuggerInfoProvider implements AndroidDebuggerI
     BlazeAndroidTestRunConfigurationState testState =
         blazeRunConfig.getHandlerStateIfType(BlazeAndroidTestRunConfigurationState.class);
     if (testState != null) {
-      return binaryState.getCommonState();
+      return testState.getCommonState();
     }
     return null;
   }
