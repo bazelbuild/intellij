@@ -28,6 +28,8 @@ java_library(
         "intellij-ue-2020.1": ["//sdkcompat/v201"],
         "intellij-2020.2": ["//sdkcompat/v202"],
         "intellij-ue-2020.2": ["//sdkcompat/v202"],
+        "intellij-2020.3": ["//sdkcompat/v202"],
+        "intellij-ue-2020.3": ["//sdkcompat/v202"],
         "clion-2019.3": ["//sdkcompat/v193"],
         "clion-2020.1": ["//sdkcompat/v201"],
         "clion-2020.2": ["//sdkcompat/v202"],
