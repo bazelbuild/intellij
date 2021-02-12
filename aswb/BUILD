@@ -142,26 +142,23 @@ intellij_integration_test_suite(
             exclude = [
                 "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
                 "tests/integrationtests/com/google/idea/blaze/android/cppimpl/debug/BlazeAndroidNativeDebuggingTest.java",
-                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
                 "tests/integrationtests/com/google/idea/blaze/android/functional/BlazeModuleSystemDependentLibrariesIntegrationTest.java",
-                "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",
-                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",
+                "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
+                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",  # Required SDK APIs aren't present in api41
             ],
         ),
         "android-studio-4.2": glob(
             ["tests/integrationtests/**/*.java"],
             exclude = [
                 "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
-                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
-                "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",
+                "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
             ],
         ),
         "android-studio-2020.3": glob(
             ["tests/integrationtests/**/*.java"],
             exclude = [
                 "tests/integrationtests/com/google/idea/blaze/android/AswbGotoDeclarationTest.java",
-                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",
-                "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",
+                "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
                 # b/177371104
                 "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",
             ],

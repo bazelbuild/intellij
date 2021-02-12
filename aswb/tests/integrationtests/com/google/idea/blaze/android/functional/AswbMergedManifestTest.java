@@ -36,6 +36,7 @@ import com.intellij.openapi.module.Module;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -72,16 +73,18 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
       throws Exception {
     HashSet<Module> notUpdated = new HashSet<>(modules);
     CountDownLatch manifestsUpdated = new CountDownLatch(modules.size());
-    modules.forEach(
-        module ->
-            MergedManifestManager.setUpdateCallback(
-                module,
-                () -> {
-                  MergedManifestManager.setUpdateCallback(module, null);
-                  notUpdated.remove(module);
-                  manifestsUpdated.countDown();
-                }));
     toRun.run();
+    modules.forEach(
+        module -> {
+          try {
+            MergedManifestManager.getMergedManifest(module).get();
+            notUpdated.remove(module);
+            manifestsUpdated.countDown();
+            System.out.println("Manifest updated for module " + module);
+          } catch (InterruptedException | ExecutionException e) {
+            fail(e.getMessage());
+          }
+        });
     if (manifestsUpdated.await(5, TimeUnit.SECONDS)) {
       return;
     }
