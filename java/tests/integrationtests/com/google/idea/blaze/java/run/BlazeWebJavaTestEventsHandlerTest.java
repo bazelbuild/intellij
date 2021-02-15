@@ -39,6 +39,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import javax.annotation.Nullable;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -47,7 +48,12 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BlazeWebJavaTestEventsHandlerTest extends BlazeIntegrationTestCase {
 
-  private final BlazeWebTestEventsHandler handler = new BlazeWebTestEventsHandler();
+  private BlazeWebTestEventsHandler handler;
+
+  @Before
+  public final void doSetUp() {
+    handler = new BlazeWebTestEventsHandler();
+  }
 
   @Test
   public void testSuiteLocationResolves() {
