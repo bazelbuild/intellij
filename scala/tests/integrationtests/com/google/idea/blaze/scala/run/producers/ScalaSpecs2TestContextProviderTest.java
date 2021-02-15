@@ -43,7 +43,7 @@ import org.junit.runners.JUnit4;
 public class ScalaSpecs2TestContextProviderTest extends BlazeRunConfigurationProducerTestCase {
 
   @Test
-  public void testSpecs2TestProducedFromPsiClass() {
+  public void testSpecs2TestProducedFromPsiClass() throws Throwable {
     PsiFile file = createTestPsiFile();
 
     assertThat(file).isInstanceOf(ScalaFile.class);
@@ -84,7 +84,7 @@ public class ScalaSpecs2TestContextProviderTest extends BlazeRunConfigurationPro
     // TODO: also test BlazeScalaTestEventsHandler
   }
 
-  private PsiFile createTestPsiFile() {
+  private PsiFile createTestPsiFile() throws Throwable {
     createAndIndexFile(
         WorkspacePath.createIfValid("scala/org/junit/Test.scala"),
         "package org.junit",

@@ -28,7 +28,7 @@ import org.junit.runners.JUnit4;
 public class EnterInLineCommentTest extends BuildFileIntegrationTestCase {
 
   @Test
-  public void testInternalNewlineCommented() {
+  public void testInternalNewlineCommented() throws Throwable {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("BUILD"), "# first line comment", "# second line comment");
@@ -41,7 +41,7 @@ public class EnterInLineCommentTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testNewlineAtEndOfComment() {
+  public void testNewlineAtEndOfComment() throws Throwable {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("BUILD"), "# first line comment", "# second line comment");

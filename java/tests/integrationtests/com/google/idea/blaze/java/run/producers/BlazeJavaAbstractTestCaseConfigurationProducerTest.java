@@ -67,7 +67,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
   }
 
   @Test
-  public void testIgnoreTestClassWithNoTestSubclasses() {
+  public void testIgnoreTestClassWithNoTestSubclasses() throws Throwable {
     PsiFile javaFile =
         createAndIndexFile(
             new WorkspacePath("java/com/google/test/TestClass.java"),
@@ -91,7 +91,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
   }
 
   @Test
-  public void testIgnoreAbstractTestClassWithNoTestSubclasses() {
+  public void testIgnoreAbstractTestClassWithNoTestSubclasses() throws Throwable {
     PsiFile javaFile =
         createAndIndexFile(
             new WorkspacePath("java/com/google/test/TestClass.java"),
@@ -115,7 +115,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
   }
 
   @Test
-  public void testHandlesNonAbstractClassWithTestSubclass() {
+  public void testHandlesNonAbstractClassWithTestSubclass() throws Throwable {
     workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
     PsiFile superClassFile =
         createAndIndexFile(
@@ -158,7 +158,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
   }
 
   @Test
-  public void testConfigurationCreatedFromAbstractClass() {
+  public void testConfigurationCreatedFromAbstractClass() throws Throwable {
     workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
     PsiFile abstractClassFile =
         createAndIndexFile(
@@ -219,7 +219,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
   }
 
   @Test
-  public void testConfigurationCreatedFromMethodInAbstractClass() {
+  public void testConfigurationCreatedFromMethodInAbstractClass() throws Throwable {
     PsiFile abstractClassFile =
         createAndIndexFile(
             new WorkspacePath("java/com/google/test/AbstractTestCase.java"),

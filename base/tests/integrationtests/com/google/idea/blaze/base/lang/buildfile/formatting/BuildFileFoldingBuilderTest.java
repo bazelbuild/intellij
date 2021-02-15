@@ -33,7 +33,7 @@ import org.junit.runners.JUnit4;
 public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
 
   @Test
-  public void testEndOfFileFunctionDelcaration() {
+  public void testEndOfFileFunctionDelcaration() throws Throwable {
     // bug 28618935: test no NPE in the case where there's no
     // statement list following the func-def colon
     BuildFile file = createBuildFile(new WorkspacePath("java/com/google/BUILD"), "def function():");
@@ -42,7 +42,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testMultilineCommentFolded() {
+  public void testMultilineCommentFolded() throws Throwable {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -61,7 +61,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testMultilineCommentIncludingBlankLinesIsFolded() {
+  public void testMultilineCommentIncludingBlankLinesIsFolded() throws Throwable {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -75,7 +75,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testMultilineStringFoldedToFirstLine() {
+  public void testMultilineStringFoldedToFirstLine() throws Throwable {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -89,7 +89,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testFuncDefStatementsFolded() {
+  public void testFuncDefStatementsFolded() throws Throwable {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -108,7 +108,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testRulesFolded() {
+  public void testRulesFolded() throws Throwable {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -123,7 +123,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testLoadStatementFolded() {
+  public void testLoadStatementFolded() throws Throwable {
     BuildFile file =
         createBuildFile(
             new WorkspacePath("java/com/google/BUILD"),
@@ -139,7 +139,7 @@ public class BuildFileFoldingBuilderTest extends BuildFileIntegrationTestCase {
         .isEqualTo(file.findChildByClass(LoadStatement.class));
   }
 
-  private FoldingDescriptor[] getFoldingRegions(BuildFile file) {
+  private FoldingDescriptor[] getFoldingRegions(BuildFile file) throws Throwable {
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
     return new BuildFileFoldingBuilder().buildFoldRegions(file.getNode(), editor.getDocument());
   }

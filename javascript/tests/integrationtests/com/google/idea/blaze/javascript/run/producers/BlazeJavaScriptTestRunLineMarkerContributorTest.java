@@ -56,7 +56,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributorTest
   }
 
   @Test
-  public void testGetClosureTestInfo() {
+  public void testGetClosureTestInfo() throws Throwable {
     TargetMapBuilder targetMapBuilder =
         TargetMapBuilder.builder()
             .addTarget(
@@ -101,7 +101,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributorTest
   }
 
   @Test
-  public void testGetClosureTestSuiteInfo() {
+  public void testGetClosureTestSuiteInfo() throws Throwable {
     TargetMapBuilder targetMapBuilder =
         TargetMapBuilder.builder()
             .addTarget(
@@ -151,7 +151,7 @@ public class BlazeJavaScriptTestRunLineMarkerContributorTest
   }
 
   @Test
-  public void testGetJasmineTestInfo() {
+  public void testGetJasmineTestInfo() throws Throwable {
     TargetMapBuilder targetMapBuilder =
         TargetMapBuilder.builder()
             .addTarget(

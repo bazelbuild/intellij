@@ -21,10 +21,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.sdkcompat.testframework.fixtures.CompletionAutoPopupTesterAdapter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
+import com.intellij.util.ThrowableRunnable;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Before;
@@ -36,11 +37,11 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BuildLabelAutoCompletionTest extends BuildFileIntegrationTestCase {
 
-  private CompletionAutoPopupTester completionTester;
+  private CompletionAutoPopupTesterAdapter completionTester;
 
   @Before
   public final void before() {
-    completionTester = new CompletionAutoPopupTester(testFixture);
+    completionTester = new CompletionAutoPopupTesterAdapter(testFixture);
   }
 
   /** Completion UI testing can't be run on the EDT. */
@@ -50,64 +51,71 @@ public class BuildLabelAutoCompletionTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testPopupAutocompleteAfterSlash() {
+  public void testPopupAutocompleteAfterSlash() throws Throwable {
+    // #api202: remove redundant cast "(ThrowableRunnable<Throwable>)"
     completionTester.runWithAutoPopupEnabled(
-        () -> {
-          createBuildFile(new WorkspacePath("java/com/foo/BUILD"));
-          BuildFile file =
-              createBuildFile(
-                  new WorkspacePath("BUILD"),
-                  "java_library(",
-                  "    name = 'lib',",
-                  "    srcs = [''],");
+        (ThrowableRunnable<Throwable>)
+            () -> {
+              createBuildFile(new WorkspacePath("java/com/foo/BUILD"));
+              BuildFile file =
+                  createBuildFile(
+                      new WorkspacePath("BUILD"),
+                      "java_library(",
+                      "    name = 'lib',",
+                      "    srcs = [''],");
 
-          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "    srcs = ['".length());
+              Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+              editorTest.setCaretPosition(editor, 2, "    srcs = ['".length());
 
-          completionTester.typeWithPauses("/");
-          assertThat(currentLookupStrings()).containsExactly("'//java/com/foo'");
-        });
+              completionTester.typeWithPauses("/");
+              assertThat(currentLookupStrings()).containsExactly("'//java/com/foo'");
+            });
   }
 
   @Test
-  public void testPopupAutocompleteAfterColon() {
+  public void testPopupAutocompleteAfterColon() throws Throwable {
+    // #api202: remove redundant cast "(ThrowableRunnable<Throwable>)"
     completionTester.runWithAutoPopupEnabled(
-        () -> {
-          createBuildFile(new WorkspacePath("java/com/foo/BUILD"), "java_library(name = 'target')");
-          BuildFile file =
+        (ThrowableRunnable<Throwable>)
+            () -> {
               createBuildFile(
-                  new WorkspacePath("BUILD"),
-                  "java_library(",
-                  "    name = 'lib',",
-                  "    srcs = ['//java/com/foo'],");
+                  new WorkspacePath("java/com/foo/BUILD"), "java_library(name = 'target')");
+              BuildFile file =
+                  createBuildFile(
+                      new WorkspacePath("BUILD"),
+                      "java_library(",
+                      "    name = 'lib',",
+                      "    srcs = ['//java/com/foo'],");
 
-          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "    srcs = ['//java/com/foo".length());
+              Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+              editorTest.setCaretPosition(editor, 2, "    srcs = ['//java/com/foo".length());
 
-          completionTester.typeWithPauses(":");
-          assertThat(currentLookupStrings()).containsExactly("'//java/com/foo:target'");
-        });
+              completionTester.typeWithPauses(":");
+              assertThat(currentLookupStrings()).containsExactly("'//java/com/foo:target'");
+            });
   }
 
   @Test
-  public void testPopupAutocompleteAfterLetter() {
-    // test for IntelliJ's standard autocomplete popup trigger
+  public void testPopupAutocompleteAfterLetter() throws Throwable {
+    // #api202: remove redundant cast "(ThrowableRunnable<Throwable>)"
     completionTester.runWithAutoPopupEnabled(
-        () -> {
-          createBuildFile(new WorkspacePath("java/com/foo/BUILD"), "java_library(name = 'target')");
-          BuildFile file =
+        (ThrowableRunnable<Throwable>)
+            () -> {
               createBuildFile(
-                  new WorkspacePath("BUILD"),
-                  "java_library(",
-                  "    name = 'lib',",
-                  "    srcs = ['//'],");
+                  new WorkspacePath("java/com/foo/BUILD"), "java_library(name = 'target')");
+              BuildFile file =
+                  createBuildFile(
+                      new WorkspacePath("BUILD"),
+                      "java_library(",
+                      "    name = 'lib',",
+                      "    srcs = ['//'],");
 
-          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "    srcs = ['//".length());
+              Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+              editorTest.setCaretPosition(editor, 2, "    srcs = ['//".length());
 
-          completionTester.typeWithPauses("j");
-          assertThat(currentLookupStrings()).containsExactly("'//java/com/foo'");
-        });
+              completionTester.typeWithPauses("j");
+              assertThat(currentLookupStrings()).containsExactly("'//java/com/foo'");
+            });
   }
 
   private List<String> currentLookupStrings() {
@@ -115,9 +123,7 @@ public class BuildLabelAutoCompletionTest extends BuildFileIntegrationTestCase {
     if (lookup == null) {
       return ImmutableList.of();
     }
-    return lookup
-        .getItems()
-        .stream()
+    return lookup.getItems().stream()
         .map(LookupElement::getLookupString)
         .collect(Collectors.toList());
   }

@@ -32,7 +32,7 @@ import org.junit.runners.JUnit4;
 public class JavaClassQualifiedNameCompletionTest extends BuildFileIntegrationTestCase {
 
   @Test
-  public void testCompleteClassName() {
+  public void testCompleteClassName() throws Throwable {
     workspace.createPsiFile(
         new WorkspacePath("java/com/google/bin/Main.java"),
         "package com.google.bin;",
@@ -61,7 +61,7 @@ public class JavaClassQualifiedNameCompletionTest extends BuildFileIntegrationTe
   }
 
   @Test
-  public void testNoCompletionForOtherAttributes() {
+  public void testNoCompletionForOtherAttributes() throws Throwable {
     workspace.createPsiFile(
         new WorkspacePath("java/com/google/bin/Main.java"),
         "package com.google.bin;",

@@ -36,7 +36,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class KotlinBinaryContextProviderTest extends BlazeRunConfigurationProducerTestCase {
   @Test
-  public void testMainMethodIsRunnable() {
+  public void testMainMethodIsRunnable() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -69,7 +69,7 @@ public class KotlinBinaryContextProviderTest extends BlazeRunConfigurationProduc
   }
 
   @Test
-  public void testMainClassInterpretedCorrectly() {
+  public void testMainClassInterpretedCorrectly() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()

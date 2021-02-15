@@ -38,7 +38,7 @@ public class BlazeScalaTestRunLineMarkerContributorTest
       new BlazeScalaTestRunLineMarkerContributor();
 
   @Test
-  public void testIgnoreNonTest() {
+  public void testIgnoreNonTest() throws Throwable {
     PsiFile scalaFile =
         createAndIndexFile(
             WorkspacePath.createIfValid("src/main/scala/com/google/library/Library.scala"),
@@ -52,7 +52,7 @@ public class BlazeScalaTestRunLineMarkerContributorTest
   }
 
   @Test
-  public void testGetJunitTestInfo() {
+  public void testGetJunitTestInfo() throws Throwable {
     PsiFile junitTestFile =
         createAndIndexFile(
             WorkspacePath.createIfValid("src/test/scala/com/google/test/JunitTest.scala"),
@@ -66,14 +66,12 @@ public class BlazeScalaTestRunLineMarkerContributorTest
     List<LeafPsiElement> elements =
         PsiUtils.findAllChildrenOfClassRecursive(junitTestFile, LeafPsiElement.class);
     LeafPsiElement classIdentifier =
-        elements
-            .stream()
+        elements.stream()
             .filter(e -> Objects.equal(e.getText(), "JunitTest"))
             .findFirst()
             .orElse(null);
     LeafPsiElement methodIdentifier =
-        elements
-            .stream()
+        elements.stream()
             .filter(e -> Objects.equal(e.getText(), "testMethod"))
             .findFirst()
             .orElse(null);
@@ -88,14 +86,13 @@ public class BlazeScalaTestRunLineMarkerContributorTest
     assertThat(methodInfo).isNotNull();
     assertThat(methodInfo.icon).isEqualTo(AllIcons.RunConfigurations.TestState.Run);
 
-    elements
-        .stream()
+    elements.stream()
         .filter(e -> !Objects.equal(e, classIdentifier) && !Objects.equal(e, methodIdentifier))
         .forEach(e -> assertThat(markerContributor.getInfo(e)).isNull());
   }
 
   @Test
-  public void testGetSpecs2TestInfo() {
+  public void testGetSpecs2TestInfo() throws Throwable {
     createAndIndexFile(
         WorkspacePath.createIfValid("scala/org/junit/runner/RunWith.scala"),
         "package org.junit.runner",
@@ -138,8 +135,7 @@ public class BlazeScalaTestRunLineMarkerContributorTest
     List<LeafPsiElement> elements =
         PsiUtils.findAllChildrenOfClassRecursive(specs2TestFile, LeafPsiElement.class);
     LeafPsiElement classIdentifier =
-        elements
-            .stream()
+        elements.stream()
             .filter(e -> Objects.equal(e.getText(), "Specs2Test"))
             .findFirst()
             .orElse(null);
@@ -149,14 +145,13 @@ public class BlazeScalaTestRunLineMarkerContributorTest
     assertThat(info).isNotNull();
     assertThat(info.icon).isEqualTo(AllIcons.RunConfigurations.TestState.Run_run);
 
-    elements
-        .stream()
+    elements.stream()
         .filter(e -> !Objects.equal(e, classIdentifier))
         .forEach(e -> assertThat(markerContributor.getInfo(e)).isNull());
   }
 
   @Test
-  public void testGetScalaTestInfo() {
+  public void testGetScalaTestInfo() throws Throwable {
     PsiFile scalaTestFile =
         createAndIndexFile(
             WorkspacePath.createIfValid("src/test/scala/com/google/test/ScalaTest.scala"),
@@ -172,8 +167,7 @@ public class BlazeScalaTestRunLineMarkerContributorTest
     List<LeafPsiElement> elements =
         PsiUtils.findAllChildrenOfClassRecursive(scalaTestFile, LeafPsiElement.class);
     LeafPsiElement classIdentifier =
-        elements
-            .stream()
+        elements.stream()
             .filter(e -> Objects.equal(e.getText(), "ScalaTest"))
             .findFirst()
             .orElse(null);
@@ -183,8 +177,7 @@ public class BlazeScalaTestRunLineMarkerContributorTest
     assertThat(info).isNotNull();
     assertThat(info.icon).isEqualTo(AllIcons.RunConfigurations.TestState.Run_run);
 
-    elements
-        .stream()
+    elements.stream()
         .filter(e -> !Objects.equal(e, classIdentifier))
         .forEach(e -> assertThat(markerContributor.getInfo(e)).isNull());
   }

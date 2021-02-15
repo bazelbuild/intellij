@@ -51,7 +51,7 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromPyFile() {
+  public void testProducedFromPyFile() throws Throwable {
     PsiFile pyFile =
         createAndIndexFile(
             new WorkspacePath("py/test/unittest.py"),
@@ -90,7 +90,7 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromPyClass() {
+  public void testProducedFromPyClass() throws Throwable {
     PsiFile pyFile =
         createAndIndexFile(
             new WorkspacePath("py/test/unittest.py"),
@@ -132,7 +132,7 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromTestCase() {
+  public void testProducedFromTestCase() throws Throwable {
     PsiFile pyFile =
         createAndIndexFile(
             new WorkspacePath("py/test/unittest.py"),
@@ -174,7 +174,7 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromTestCaseWithParameters() {
+  public void testProducedFromTestCaseWithParameters() throws Throwable {
     PsiFile pyFile =
         createAndIndexFile(
             new WorkspacePath("py/test/unittest.py"),
@@ -218,7 +218,7 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromTestCaseWithNamedParametersDict() {
+  public void testProducedFromTestCaseWithNamedParametersDict() throws Throwable {
     PsiFile pyFile =
         createAndIndexFile(
             new WorkspacePath("py/test/unittest.py"),
@@ -265,7 +265,7 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromTestCaseWithNamedParametersTuple() {
+  public void testProducedFromTestCaseWithNamedParametersTuple() throws Throwable {
     PsiFile pyFile =
         createAndIndexFile(
             new WorkspacePath("py/test/unittest.py"),
@@ -312,7 +312,7 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromTestCaseWithNamedParametersTupleAndUnderscores() {
+  public void testProducedFromTestCaseWithNamedParametersTupleAndUnderscores() throws Throwable {
     PsiFile pyFile =
         createAndIndexFile(
             new WorkspacePath("py/test/unittest.py"),
@@ -360,7 +360,7 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromTestCaseWithParametersList() {
+  public void testProducedFromTestCaseWithParametersList() throws Throwable {
     PsiFile pyFile =
         createAndIndexFile(
             new WorkspacePath("py/test/unittest.py"),
@@ -404,7 +404,7 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromTestCaseWithNamedParametersDictList() {
+  public void testProducedFromTestCaseWithNamedParametersDictList() throws Throwable {
     PsiFile pyFile =
         createAndIndexFile(
             new WorkspacePath("py/test/unittest.py"),
@@ -451,7 +451,7 @@ public class BlazePyTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromTestCaseWithEmptyParametersList() {
+  public void testProducedFromTestCaseWithEmptyParametersList() throws Throwable {
     PsiFile pyFile =
         createAndIndexFile(
             new WorkspacePath("py/test/unittest.py"),
