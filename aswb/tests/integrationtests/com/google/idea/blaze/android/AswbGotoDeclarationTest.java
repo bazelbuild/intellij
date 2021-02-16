@@ -31,9 +31,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.io.URLUtil;
 import java.io.File;
-import org.jetbrains.android.dom.wrappers.LazyValueResourceElementWrapper;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -57,6 +57,7 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
     AarResourceRepositoryCache.getInstance().clear();
   }
 
+  @Ignore("b/180144913")
   @Test
   public void gotoDeclaration_withExternalResources() {
     VirtualFile mainActivity =
@@ -268,9 +269,8 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
   private void assertGotoDeclarationOpensFile(String highLightElement, VirtualFile expectedFile) {
     int referenceIndex = testFixture.getEditor().getDocument().getText().indexOf(highLightElement);
     PsiElement foundElement =
-        LazyValueResourceElementWrapper.computeLazyElement(
-            GotoDeclarationAction.findTargetElement(
-                getProject(), testFixture.getEditor(), referenceIndex));
+        GotoDeclarationAction.findTargetElement(
+            getProject(), testFixture.getEditor(), referenceIndex);
 
     assertThat(foundElement).isNotNull();
     assertThat(foundElement.getContainingFile()).isNotNull();
