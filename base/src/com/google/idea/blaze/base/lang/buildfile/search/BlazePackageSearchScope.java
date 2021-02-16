@@ -81,7 +81,7 @@ public class BlazePackageSearchScope extends GlobalSearchScope {
   }
 
   @Override
-  public int hashCode() {
+  public int calcHashCode() {
     return Objects.hash(blazePackage, onlyBlazeFiles);
   }
 
