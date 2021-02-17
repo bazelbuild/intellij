@@ -16,8 +16,8 @@
 package com.google.idea.blaze.dart;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import javax.annotation.Nullable;
 
 /** Handles changes to the Dart plugin libraries between our supported versions. */
@@ -27,6 +27,8 @@ final class DartSdkUtils {
 
   @Nullable
   static Library findDartLibrary(Project project) {
-    return ProjectLibraryTable.getInstance(project).getLibraryByName(DART_SDK_LIBRARY_NAME);
+    return LibraryTablesRegistrar.getInstance()
+        .getLibraryTable(project)
+        .getLibraryByName(DART_SDK_LIBRARY_NAME);
   }
 }

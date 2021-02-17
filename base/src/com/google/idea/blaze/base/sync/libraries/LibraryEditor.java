@@ -29,9 +29,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -50,7 +50,8 @@ public class LibraryEditor {
       BlazeProjectData blazeProjectData,
       Collection<BlazeLibrary> libraries) {
     Set<LibraryKey> intelliJLibraryState = Sets.newHashSet();
-    for (Library library : ProjectLibraryTable.getInstance(project).getLibraries()) {
+    LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
+    for (Library library : libraryTable.getLibraries()) {
       String name = library.getName();
       if (name != null) {
         intelliJLibraryState.add(LibraryKey.fromIntelliJLibraryName(name));
@@ -58,7 +59,6 @@ public class LibraryEditor {
     }
     context.output(PrintOutput.log(String.format("Workspace has %d libraries", libraries.size())));
 
-    LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
     LibraryTable.ModifiableModel libraryTableModel = libraryTable.getModifiableModel();
     try {
       for (BlazeLibrary library : libraries) {
@@ -79,8 +79,7 @@ public class LibraryEditor {
         }
       }
       Predicate<Library> gcRetentionFilter =
-          librarySources
-              .stream()
+          librarySources.stream()
               .map(LibrarySource::getGcRetentionFilter)
               .filter(Objects::nonNull)
               .reduce(Predicate::or)
@@ -141,7 +140,8 @@ public class LibraryEditor {
   }
 
   private static void updateLibraryDependency(ModifiableRootModel model, LibraryKey libraryKey) {
-    LibraryTable libraryTable = ProjectLibraryTable.getInstance(model.getProject());
+    LibraryTable libraryTable =
+        LibraryTablesRegistrar.getInstance().getLibraryTable(model.getProject());
     Library library = libraryTable.getLibraryByName(libraryKey.getIntelliJLibraryName());
     if (library == null) {
       logger.error(

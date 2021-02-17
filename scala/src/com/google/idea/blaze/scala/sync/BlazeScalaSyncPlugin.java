@@ -40,8 +40,8 @@ import com.google.idea.blaze.scala.sync.model.BlazeScalaSyncData;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -71,7 +71,8 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
     if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.SCALA)) {
       return;
     }
-    for (Library library : ProjectLibraryTable.getInstance(project).getLibraries()) {
+    for (Library library :
+        LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
       // Convert the type of the SDK library to prevent the scala plugin from
       // showing the missing SDK notification.
       // TODO: use a canonical class in the SDK (e.g., scala.App) instead of the name?

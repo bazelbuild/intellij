@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.java.libraries;
 
-
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -28,9 +27,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -101,7 +100,7 @@ public final class LibraryActionHelper {
       if (node != null) {
         String libraryName = node.getName();
         if (StringUtil.isNotEmpty(libraryName)) {
-          LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
+          LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
           return libraryTable.getLibraryByName(libraryName);
         }
       }

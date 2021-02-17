@@ -24,8 +24,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 
 class AttachSourceJarAction extends BlazeProjectAction {
 
@@ -71,7 +71,8 @@ class AttachSourceJarAction extends BlazeProjectAction {
     ApplicationManager.getApplication()
         .runWriteAction(
             () -> {
-              LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
+              LibraryTable libraryTable =
+                  LibraryTablesRegistrar.getInstance().getLibraryTable(project);
               LibraryTable.ModifiableModel libraryTableModel = libraryTable.getModifiableModel();
               LibraryEditor.updateLibrary(
                   project,

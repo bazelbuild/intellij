@@ -32,9 +32,9 @@ import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import java.util.List;
 
 class DetachAllSourceJarsAction extends BlazeProjectAction {
@@ -53,7 +53,8 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
 
     List<Library> librariesToDetach = Lists.newArrayList();
     AttachedSourceJarManager sourceJarManager = AttachedSourceJarManager.getInstance(project);
-    for (Library library : ProjectLibraryTable.getInstance(project).getLibraries()) {
+    for (Library library :
+        LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
       if (library.getName() == null) {
         continue;
       }
@@ -70,7 +71,7 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
     Transactions.submitWriteActionTransaction(
         project,
         () -> {
-          LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
+          LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
           LibraryTable.ModifiableModel libraryTableModel = libraryTable.getModifiableModel();
           for (Library library : librariesToDetach) {
             BlazeJarLibrary blazeLibrary =
