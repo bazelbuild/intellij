@@ -29,14 +29,9 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.ex.IdeFrameEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ui.UIUtil;
 import java.io.File;
 import java.io.IOException;
@@ -121,17 +116,6 @@ class BlazeProjectCreator {
             });
 
     ProjectUtil.updateLastProjectLocation(projectFilePath);
-
-    if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
-      IdeFocusManager instance = IdeFocusManager.findInstance();
-      IdeFrame lastFocusedFrame = instance.getLastFocusedFrame();
-      if (lastFocusedFrame instanceof IdeFrameEx) {
-        boolean fullScreen = ((IdeFrameEx) lastFocusedFrame).isInFullScreen();
-        if (fullScreen) {
-          newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
-        }
-      }
-    }
 
     BaseSdkCompat.openProject(newProject, Paths.get(projectFilePath));
 
