@@ -3,6 +3,7 @@ package com.google.idea.sdkcompat.general;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.diagnostic.VMOptions;
 import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.dvcs.branch.BranchType;
 import com.intellij.dvcs.branch.DvcsBranchManager;
@@ -37,6 +38,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.usages.Usage;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
+import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -183,5 +185,12 @@ public final class BaseSdkCompat {
       boolean select,
       @Nullable Disposable childDisposable) {
     ContentUtilEx.addTabbedContent(manager, contentComponent, groupPrefix, tabName, select);
+  }
+
+  // #api202: Method return type changed in 2020.3 from File to Path
+  @Nullable
+  public static Path getVMOptionsWriteFile() {
+    File file = VMOptions.getWriteFile();
+    return file == null ? null : file.toPath();
   }
 }
