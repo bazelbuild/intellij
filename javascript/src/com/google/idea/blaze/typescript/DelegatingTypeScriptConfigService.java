@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.typescript;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -88,9 +89,17 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
     return impl.parseConfigFile(file);
   }
 
+  /** Removed in 2021.1. #api203 https://github.com/bazelbuild/intellij/issues/2329 */
   @Override
   public List<TypeScriptConfig> getConfigs() {
     return impl.getConfigs();
+  }
+
+  public List<TypeScriptConfig> getTypeScriptConfigs() {
+    if (impl instanceof BlazeTypeScriptConfigServiceImpl) {
+      return ((BlazeTypeScriptConfigServiceImpl) impl).getTypeScriptConfigs();
+    }
+    return ImmutableList.of();
   }
 
   @Override

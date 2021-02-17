@@ -157,7 +157,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
           service.update(updatedTsconfigs.build());
           PrefetchService.getInstance()
               .prefetchFiles(
-                  service.getConfigs().parallelStream()
+                  service.getTypeScriptConfigs().parallelStream()
                       .map(TypeScriptConfig::getFileList)
                       .flatMap(Collection::stream)
                       .distinct()

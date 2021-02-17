@@ -170,11 +170,11 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
 
   @Test
   public void testSameOptions() {
-    assertThat(blazeConfigService.getConfigs()).hasSize(1);
-    assertThat(regularConfigService.getConfigFiles()).hasSize(1);
-    TypeScriptConfig blazeConfig = blazeConfigService.getConfigs().get(0);
+    assertThat(blazeConfigService.getTypeScriptConfigs()).hasSize(1);
+    TypeScriptConfig blazeConfig = blazeConfigService.getTypeScriptConfigs().get(0);
     TypeScriptConfig regularConfig =
-        ReadAction.compute(() -> regularConfigService.getConfigs().get(0));
+        ReadAction.compute(() -> regularConfigService.parseConfigFile(blazeConfig.getConfigFile()));
+    assertThat(regularConfig).isNotNull();
 
     assertThat(blazeConfig.isDirectoryBased()).isEqualTo(regularConfig.isDirectoryBased());
     assertThat(blazeConfig.getConfigFile()).isEqualTo(regularConfig.getConfigFile());
@@ -225,7 +225,7 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     // regularConfig can't correctly parse the file list in test mode,
     // so these values are manually checked
 
-    TypeScriptConfig blazeConfig = blazeConfigService.getConfigs().get(0);
+    TypeScriptConfig blazeConfig = blazeConfigService.getTypeScriptConfigs().get(0);
     VirtualFile includedSource = vf("/src/workspace/project/foo/included.ts");
     VirtualFile excludedSource = vf("/src/workspace/project/foo/excluded.ts");
 
@@ -246,7 +246,7 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
 
   @Test
   public void testDifferentOptions() {
-    TypeScriptConfig blazeConfig = blazeConfigService.getConfigs().get(0);
+    TypeScriptConfig blazeConfig = blazeConfigService.getTypeScriptConfigs().get(0);
     assertThat(blazeConfig.getBaseUrl()).isEqualTo(vf("/src/out/execroot/bin/project/foo"));
     assertThat(blazeConfig.getDependencies())
         .containsExactly(vf("/src/out/execroot/bin/project/foo/tsconfig_editor.json"));

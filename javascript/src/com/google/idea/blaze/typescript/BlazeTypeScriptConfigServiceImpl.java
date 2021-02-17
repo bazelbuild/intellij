@@ -139,8 +139,13 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
     return null;
   }
 
+  /** Removed in 2021.1. #api203 https://github.com/bazelbuild/intellij/issues/2329 */
   @Override
   public List<TypeScriptConfig> getConfigs() {
+    return getTypeScriptConfigs();
+  }
+
+  public List<TypeScriptConfig> getTypeScriptConfigs() {
     return configs.values().asList();
   }
 

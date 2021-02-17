@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -98,7 +99,13 @@ public final class BlazeTypeScriptAdditionalLibraryRootsProvider
       return Stream.of();
     }
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    return TypeScriptConfigService.Provider.get(project).getConfigs().stream()
+    TypeScriptConfigService service = TypeScriptConfigService.Provider.get(project);
+    if (!(service instanceof DelegatingTypeScriptConfigService)) {
+      return Stream.of();
+    }
+    List<TypeScriptConfig> configs =
+        ((DelegatingTypeScriptConfigService) service).getTypeScriptConfigs();
+    return configs.stream()
         .map(TypeScriptConfig::getFileList)
         .flatMap(Collection::stream)
         .map(VfsUtil::virtualToIoFile)
