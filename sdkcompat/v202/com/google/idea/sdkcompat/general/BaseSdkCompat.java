@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -29,7 +30,6 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
@@ -158,10 +158,8 @@ public final class BaseSdkCompat {
 
   /** #api201: project opening API changed in 2020.2. */
   public static void openProject(Project project, Path projectFile) {
-    PlatformProjectOpenProcessor.openExistingProject(
-        /* file= */ projectFile,
-        /* projectDir= */ projectFile,
-        OpenProjectTask.withCreatedProject(project));
+    ProjectManagerEx.getInstanceEx()
+        .openProject(projectFile, OpenProjectTask.withCreatedProject(project));
   }
 
   /** #api193: auto-disposed with UI component in 2020.1+ */
