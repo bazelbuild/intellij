@@ -214,9 +214,10 @@ class BlazeGoImportResolver implements GoImportResolver {
       return false;
     }
 
-    /**
+    /*
      * SyntheticFileSystemItemHelper.processChildren has a new `? super ` bounded wildcard parameter
-     * since 2020.3. Replace type with <? super PsiFileSystemItem> when cleaning up #api202
+     * since 2020.3. Replace type with "PsiElementProcessor<? super PsiFileSystemItem>"
+     * when cleaning up #api202
      */
     @SuppressWarnings({"rawtypes", "RedundantSuppression"})
     @Override
