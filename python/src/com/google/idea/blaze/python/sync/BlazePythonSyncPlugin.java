@@ -60,6 +60,7 @@ import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -234,7 +235,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
     }
     // facets aren't properly updated when SDKs change (e.g. when they're deleted), so we need to
     // manually check against the full list.
-    if (!PythonSdkType.getAllSdks().contains(sdk)) {
+    if (!PythonSdkUtil.getAllSdks().contains(sdk)) {
       return false;
     }
 

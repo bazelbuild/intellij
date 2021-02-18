@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import javax.annotation.Nullable;
 
 /** Helper methods related to the python SDK. */
@@ -34,7 +35,7 @@ public class PySdkUtils {
       return projectSdk;
     }
     // look for a SDK associated with a python facet instead.
-    return PythonSdkType.findPythonSdk(
+    return PythonSdkUtil.findPythonSdk(
         ModuleManager.getInstance(project)
             .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME));
   }
