@@ -33,7 +33,6 @@ import com.intellij.util.io.URLUtil;
 import java.io.File;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -57,7 +56,6 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
     AarResourceRepositoryCache.getInstance().clear();
   }
 
-  @Ignore("b/180144913")
   @Test
   public void gotoDeclaration_withExternalResources() {
     VirtualFile mainActivity =
@@ -67,36 +65,47 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
             "import android.app.Activity;",
             "public class MainActivity extends Activity {",
             "  public void referenceResources() {",
-            "    System.out.println(R.style.Base_Highlight); // External resource",
+            "    System.out.println(R.style.Highlight); // External resource",
             "  }",
             "}");
 
-    VirtualFile stylesXml =
-        workspace.createFile(
-            new WorkspacePath("java/com/foo/libs/res/values/styles.xml"),
-            "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
-            "<resources>",
-            "    <style name=\"Base.Highlight\" parent=\"android:Theme.DeviceDefault\">",
-            "        <item name=\"android:textSize\">30dp</item>",
-            "        <item name=\"android:textColor\">#FF0000</item>",
-            "        <item name=\"android:textStyle\">bold</item>",
-            "    </style>",
-            "    <style name=\"Base.Normal\" parent=\"android:Theme.DeviceDefault\">",
-            "        <item name=\"android:textSize\">15dp</item>",
-            "        <item name=\"android:textColor\">#C0C0C0</item>",
-            "    </style>",
-            "</resources>");
+    // External libraries are exposed as AARs that are unpacked post-sync.  Instead of creating a
+    // normal source file, we need to add it to an AAR and then expose it through the target map
+    // as the resource folder of the android_library external library target.  When
+    // go-to-declaration
+    // is invoked on elements declared in the AAR, the IDE should open the resource file inside the
+    // unpacked AAR.
+    File aarContainingStylesXml =
+        AarLibraryFileBuilder.aar(workspaceRoot, "java/com/foo/libs/libs_aar.aar")
+            .src(
+                "res/values/styles.xml",
+                ImmutableList.of(
+                    "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
+                    "<resources>",
+                    "    <style name=\"Highlight\" parent=\"android:Theme.DeviceDefault\">",
+                    "        <item name=\"android:textSize\">30dp</item>",
+                    "        <item name=\"android:textColor\">#FF0000</item>",
+                    "        <item name=\"android:textStyle\">bold</item>",
+                    "    </style>",
+                    "    <style name=\"Normal\" parent=\"android:Theme.DeviceDefault\">",
+                    "        <item name=\"android:textSize\">15dp</item>",
+                    "        <item name=\"android:textColor\">#C0C0C0</item>",
+                    "    </style>",
+                    "</resources>"))
+            .build();
 
     setTargetMap(
         android_library("//java/com/foo/gallery/activities:activities")
             .src("MainActivity.java")
             .dep("//java/com/foo/libs:libs")
             .res("res"),
-        android_library("//java/com/foo/libs:libs").res("res"));
+        android_library("//java/com/foo/libs:libs")
+            .res_folder("//java/com/foo/libs/res", "libs_aar.aar"));
     runFullBlazeSyncWithNoIssues();
 
     testFixture.configureFromExistingVirtualFile(mainActivity);
-    assertGotoDeclarationOpensFile("Base_Highlight", stylesXml);
+    assertGotoDeclarationOpensFile(
+        "Highlight", getResourceFile(aarContainingStylesXml, "values/styles.xml"));
   }
 
   @Test
