@@ -19,9 +19,8 @@ jobs:
           args: build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-canary
       - name: build
         run: |
-          ls
-          ls bazel-bin
-          find ./ -name "*.zip"
+          ls -al
+          ls bazel-bin/
       - uses: actions/upload-artifact@v2
         with:
           name: intellij-canary
