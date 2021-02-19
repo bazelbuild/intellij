@@ -28,7 +28,7 @@ jobs:
 
       - name: Build
         run: |
-          "${GITHUB_WORKSPACE}/bin/bazel" build //clwb:clwb_bazel_zip --define=ij_product=clion-2020.2-mac
+          "${GITHUB_WORKSPACE}/bin/bazel" build //clwb:clwb_bazel_zip --define=ij_product=clion-2020.2
 
       - uses: actions/upload-artifact@v2
         with:
