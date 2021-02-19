@@ -1,0 +1,24 @@
+name: bazel CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  bazel-intellij-canary:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: run
+        uses: ngalaiko/bazel-action/1.2.1@master
+        with:
+          args: build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-canary
+      - uses: actions/upload-artifact@v2
+        with:
+          name: intellij-canary
+          path: |
+            bazel-bin/ijwb/ijwb_bazel.zip
