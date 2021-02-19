@@ -20,9 +20,8 @@ jobs:
       - name: build
         run: |
           ls -al
-          ls bazel-bin/
       - uses: actions/upload-artifact@v2
         with:
           name: intellij-canary
           path: |
-            bazel-bin/ijwb/ijwb_bazel.zip
+            /github/home/.cache/bazel
