@@ -28,10 +28,10 @@ jobs:
 
       - name: Build
         run: |
-          "${GITHUB_WORKSPACE}/bin/bazel" build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-canary
+          "${GITHUB_WORKSPACE}/bin/bazel" build //ijwb:ijwb_bazel_zip --define=ij_product=clion-latest-mac
 
       - uses: actions/upload-artifact@v2
         with:
-          name: intellij-canary
+          name: clion-latest
           path: |
             bazel-bin/ijwb/ijwb_bazel.zip
