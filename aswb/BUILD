@@ -144,6 +144,7 @@ intellij_integration_test_suite(
                 "tests/integrationtests/com/google/idea/blaze/android/functional/BlazeModuleSystemDependentLibrariesIntegrationTest.java",  # Required SDK APIs aren't present in api41
                 "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
                 "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",  # Required SDK APIs aren't present in api41
+                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbThemePopulationTest.java",  # Required SDK APIs aren't present in api41
             ],
         ),
         "android-studio-4.2": glob(

@@ -30,6 +30,7 @@ import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
+import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.android.sync.sdk.SdkUtil;
 import com.google.idea.blaze.base.TestUtils;
@@ -445,6 +446,8 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
         ModuleFinder.getInstance(getProject()).findModuleByName("java.com.google.lib");
     assertThat(resourceModule).isNotNull();
     assertThat(AndroidFacet.getInstance(resourceModule)).isNotNull();
+    assertThat(AndroidResourceModuleRegistry.getInstance(getProject()).getTargetKey(resourceModule))
+        .isNotNull();
 
     // The default language level should be whatever is specified in the toolchain info
     assertThat(LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel())

@@ -52,12 +52,15 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.AndroidBlazeRules;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -382,7 +385,13 @@ public class BlazeAndroidProjectStructureSyncer {
       rClassBuilder.addRClass(modulePackage, module);
       sourcePackages.remove(modulePackage);
     }
-
+    ApplicationManager.getApplication()
+        .invokeLater(
+            () ->
+                WriteAction.run(
+                    () ->
+                        ProjectRootManagerEx.getInstanceEx(project)
+                            .makeRootsChange(() -> {}, false, true)));
     rClassBuilder.addWorkspacePackages(sourcePackages);
     manifestParsingStatCollector.submitLogEvent();
   }
