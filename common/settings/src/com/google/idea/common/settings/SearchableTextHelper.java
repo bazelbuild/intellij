@@ -15,24 +15,18 @@
  */
 package com.google.idea.common.settings;
 
-import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
-import com.intellij.openapi.options.SearchableConfigurable;
-import java.util.Set;
-import javax.annotation.Nullable;
+import com.intellij.ide.ui.search.SearchableOptionProcessor;
 
 /** A helper class to make settings text searchable. */
 public final class SearchableTextHelper {
 
-  private final SearchableOptionsRegistrar registrar;
+  private final SearchableOptionProcessor processor;
   private final String configurableId;
   private final String displayName;
 
-  public SearchableTextHelper(SearchableConfigurable configurable) {
-    this(configurable.getId(), configurable.getDisplayName());
-  }
-
-  public SearchableTextHelper(String configurableId, String displayName) {
-    this.registrar = SearchableOptionsRegistrar.getInstance();
+  public SearchableTextHelper(
+      SearchableOptionProcessor processor, String configurableId, String displayName) {
+    this.processor = processor;
     this.configurableId = configurableId;
     this.displayName = displayName;
   }
@@ -42,14 +36,17 @@ public final class SearchableTextHelper {
    * SearchableText#label()} and {@link SearchableText#tags()}.
    */
   public void registerText(SearchableText text) {
-    registerWords(
-        registrar.getProcessedWordsWithoutStemming(text.label()), /* searchResult= */ text.label());
-    registerWords(text.tags(), /* searchResult= */ text.label());
+    registerText(text.label(), /* searchResult= */ text.label());
+    text.tags().forEach(tag -> registerText(tag, /* searchResult= */ text.label()));
   }
 
-  private void registerWords(Set<String> words, @Nullable String searchResult) {
-    words.forEach(
-        word ->
-            registrar.addOption(word, /* path= */ null, searchResult, configurableId, displayName));
+  private void registerText(String text, String searchResult) {
+    processor.addOptions(
+        text,
+        /* path= */ null,
+        searchResult,
+        configurableId,
+        displayName,
+        /* applyStemming= */ false);
   }
 }
