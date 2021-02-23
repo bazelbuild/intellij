@@ -3,6 +3,7 @@ package com.google.idea.sdkcompat.general;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.conversion.ConversionContext;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.dvcs.branch.BranchType;
@@ -38,10 +39,12 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.usages.Usage;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
+import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -55,6 +58,7 @@ public final class BaseSdkCompat {
       getEditorNotificationsEp() {
     return EditorNotificationsImpl.EP_PROJECT;
   }
+
 
   /** #api193: constructor changed in 2020.1. */
   public static class DvcsBranchManagerAdapter extends DvcsBranchManager {
@@ -191,5 +195,15 @@ public final class BaseSdkCompat {
   @Nullable
   public static Path getVMOptionsWriteFile() {
     return VMOptions.getWriteFile();
+  }
+
+  /**
+   * #api202: {@link ConversionContext#getSettingsBaseDir()} returns Path instead of File since
+   * 2020.3
+   */
+  public static Optional<File> getExternalDependenciesXml(
+      ConversionContext context, String dependenciesFileName) {
+    return Optional.ofNullable(context.getSettingsBaseDir())
+        .map(baseDir -> new File(baseDir.toFile(), dependenciesFileName));
   }
 }
