@@ -26,10 +26,6 @@ import org.junit.rules.ExternalResource;
 public class UsernameRule extends ExternalResource {
   @Nullable private String originalUsername;
 
-  public void setUsername(String userName) {
-    System.setProperty(StandardSystemProperty.USER_NAME.key(), userName);
-  }
-
   @Override
   protected void before() {
     originalUsername = StandardSystemProperty.USER_NAME.value();
@@ -42,5 +38,9 @@ public class UsernameRule extends ExternalResource {
     } else {
       setUsername(originalUsername);
     }
+  }
+
+  public void setUsername(String userName) {
+    System.setProperty(StandardSystemProperty.USER_NAME.key(), userName);
   }
 }
