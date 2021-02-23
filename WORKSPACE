@@ -152,7 +152,7 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "af4ad5070d27788bece5bb9acb66d90acf42008febbcdac5d794c06f78621b19",
+    sha256 = "1f7c47c2a3f6799f921d077da1d056414c9f67bea568a2053dd0dbdc526933a3",
     url = "https://plugins.jetbrains.com/files/9568/87978/intellij-go-201.7846.76.189.zip",
 )
 
