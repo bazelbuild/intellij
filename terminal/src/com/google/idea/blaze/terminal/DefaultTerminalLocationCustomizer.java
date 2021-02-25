@@ -17,6 +17,7 @@ package com.google.idea.blaze.terminal;
 
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.project.Project;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer;
 
@@ -26,6 +27,21 @@ public class DefaultTerminalLocationCustomizer extends LocalTerminalCustomizer {
   @Override
   @Nullable
   protected String getDefaultFolder(Project project) {
+    return getWorkspaceRootPath(project);
+  }
+
+  @Override
+  public String[] customizeCommandAndEnvironment(
+      Project project, String[] command, Map<String, String> envs) {
+    String workspaceRootPath = getWorkspaceRootPath(project);
+    if (workspaceRootPath != null) {
+      envs.put("PWD", workspaceRootPath);
+    }
+    return super.customizeCommandAndEnvironment(project, command, envs);
+  }
+
+  @Nullable
+  private static String getWorkspaceRootPath(Project project) {
     WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);
     return root != null ? root.toString() : null;
   }
