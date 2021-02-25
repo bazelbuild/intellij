@@ -23,8 +23,7 @@ import org.jetbrains.plugins.terminal.LocalTerminalCustomizer;
 /** Set the default terminal path to the workspace root. */
 public class DefaultTerminalLocationCustomizer extends LocalTerminalCustomizer {
 
-  // added in 2017.1, so foregoing the override annotation for backwards compatibility.
-  @SuppressWarnings("Overrides")
+  @Override
   @Nullable
   protected String getDefaultFolder(Project project) {
     WorkspaceRoot root = WorkspaceRoot.fromProjectSafe(project);
