@@ -49,8 +49,11 @@ public class CMakeNotificationFilter extends EditorNotifications.Provider<JCompo
 
   @Nullable
   @Override
-  public JComponent createNotificationPanel(VirtualFile virtualFile, FileEditor fileEditor) {
-    return delegate == null ? null : delegate.createNotificationPanel(virtualFile, fileEditor);
+  public JComponent createNotificationPanel(
+      VirtualFile virtualFile, FileEditor fileEditor, Project project) {
+    return delegate == null
+        ? null
+        : delegate.createNotificationPanel(virtualFile, fileEditor, project);
   }
 
   public static void overrideProjectExtension(Project project) {
