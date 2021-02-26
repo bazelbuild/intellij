@@ -23,11 +23,13 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.testing.IntellijRule;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -38,6 +40,8 @@ public class RelatedWorkspacePathFinderTest {
 
   private static final File WORKSPACE_ROOT = new File("/workspace");
 
+  @Rule public IntellijRule intellij = new IntellijRule();
+
   private MockFileOperationProvider files;
   private RelatedWorkspacePathFinder relatedPathFinder;
   private WorkspacePathResolver workspacePathResolver;
@@ -45,7 +49,8 @@ public class RelatedWorkspacePathFinderTest {
   @Before
   public void setUp() throws IOException {
     files = new MockFileOperationProvider();
-    relatedPathFinder = new RelatedWorkspacePathFinder(files);
+    intellij.registerApplicationService(FileOperationProvider.class, files);
+    relatedPathFinder = new RelatedWorkspacePathFinder();
     workspacePathResolver = new WorkspacePathResolverImpl(new WorkspaceRoot(WORKSPACE_ROOT));
   }
 
