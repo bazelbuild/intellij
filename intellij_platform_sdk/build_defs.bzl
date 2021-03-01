@@ -84,14 +84,6 @@ DIRECT_IJ_PRODUCTS = {
         ide = "android-studio",
         directory = "android_studio_2020_3",
     ),
-    "clion-2019.3": struct(
-        ide = "clion",
-        directory = "clion_2019_3",
-    ),
-    "clion-2019.3-mac": struct(
-        ide = "clion",
-        directory = "clion_2019_3",
-    ),
     "clion-2020.1": struct(
         ide = "clion",
         directory = "clion_2020_1",
