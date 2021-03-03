@@ -14,7 +14,6 @@ java_library(
         "intellij-ue-2020.2": ["@python_2020_2//:python"],
         "intellij-2020.3": ["@python_2020_3//:python"],
         "intellij-ue-2020.3": ["@python_2020_3//:python"],
-        "clion-2019.3": ["@clion_2019_3//:python"],
         "clion-2020.1": ["@clion_2020_1//:python"],
         "clion-2020.2": ["@clion_2020_2//:python"],
         "android-studio-4.1": ["@python_2020_1//:python"],

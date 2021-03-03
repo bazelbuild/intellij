@@ -27,12 +27,6 @@ import java.nio.file.Paths;
 /** Utility class to find WorkspacePaths that are related */
 public final class RelatedWorkspacePathFinder {
 
-  private final FileOperationProvider fileOperationProvider;
-
-  RelatedWorkspacePathFinder(FileOperationProvider fileOperationProvider) {
-    this.fileOperationProvider = fileOperationProvider;
-  }
-
   public static RelatedWorkspacePathFinder getInstance() {
     return ServiceManager.getService(RelatedWorkspacePathFinder.class);
   }
@@ -65,6 +59,6 @@ public final class RelatedWorkspacePathFinder {
   }
 
   private boolean exists(File file) {
-    return fileOperationProvider.exists(file);
+    return FileOperationProvider.getInstance().exists(file);
   }
 }

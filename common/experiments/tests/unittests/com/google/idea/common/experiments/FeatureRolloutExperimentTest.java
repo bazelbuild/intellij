@@ -19,12 +19,11 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.idea.testing.IntellijRule;
-import com.intellij.util.SystemProperties;
+import com.google.idea.testing.UsernameRule;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,7 +35,7 @@ import org.junit.runners.JUnit4;
 public class FeatureRolloutExperimentTest {
 
   @Rule public IntellijRule intellij = new IntellijRule();
-
+  @Rule public UsernameRule usernameRule = new UsernameRule();
   private MockExperimentService experimentService;
   private FeatureRolloutExperiment rolloutExperiment;
 
@@ -50,10 +49,6 @@ public class FeatureRolloutExperimentTest {
     rolloutExperiment = new FeatureRolloutExperiment("feature.name.for.canary.rollout");
   }
 
-  @After
-  public void tearDown() {
-    SystemProperties.setTestUserName(null); // Reset to real username
-  }
 
   private void setFeatureRolloutPercentage(int percentage) {
     experimentService.setFeatureRolloutExperiment(rolloutExperiment, percentage);
@@ -225,7 +220,7 @@ public class FeatureRolloutExperimentTest {
   }
 
   private boolean isEnabled(String userName) {
-    SystemProperties.setTestUserName(userName);
+    usernameRule.setUsername(userName);
     return rolloutExperiment.isEnabled();
   }
 

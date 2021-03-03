@@ -59,15 +59,6 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.3.1/ideaIU-2020.3.1.zip",
 )
 
-# The plugin api for CLion 2019.3. This is required to build CLwB,
-# and run integration tests.
-http_archive(
-    name = "clion_2019_3",
-    build_file = "@//intellij_platform_sdk:BUILD.clion193",
-    sha256 = "4034d47ec4bd3c8123099d4b9614031c975f8cd37977b8df31bf77b6e85caf06",
-    url = "https://download.jetbrains.com/cpp/CLion-2019.3.6.tar.gz",
-)
-
 # The plugin api for CLion 2020.1. This is required to build CLwB,
 # and run integration tests.
 http_archive(
@@ -84,20 +75,6 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.clion202",
     sha256 = "3f7b37574ec4106fb92377722c12200a759d12487409e14214166acc11ecef48",
     url = "https://download.jetbrains.com/cpp/CLion-2020.2.5.tar.gz",
-)
-
-# Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
-http_archive(
-    name = "python_2019_3",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'python',",
-        "    jars = ['python-ce/lib/python-ce.jar'],",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
-    sha256 = "718750acf836c9e9c85fe4d342a619afb26932bc0d77e7adfa25be1facb8a23f",
-    url = "https://plugins.jetbrains.com/files/7322/85764/python-ce.zip",
 )
 
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
@@ -152,7 +129,7 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "af4ad5070d27788bece5bb9acb66d90acf42008febbcdac5d794c06f78621b19",
+    sha256 = "1f7c47c2a3f6799f921d077da1d056414c9f67bea568a2053dd0dbdc526933a3",
     url = "https://plugins.jetbrains.com/files/9568/87978/intellij-go-201.7846.76.189.zip",
 )
 

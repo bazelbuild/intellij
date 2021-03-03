@@ -3,6 +3,7 @@ package com.google.idea.sdkcompat.general;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.conversion.ConversionContext;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.dvcs.branch.BranchType;
@@ -18,6 +19,8 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -27,10 +30,13 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.ui.EditorTextField;
@@ -43,6 +49,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -193,5 +200,34 @@ public final class BaseSdkCompat {
   public static Path getVMOptionsWriteFile() {
     File file = VMOptions.getWriteFile();
     return file == null ? null : file.toPath();
+  }
+  /**
+   * #api202: {@link ConversionContext#getSettingsBaseDir()} returns Path instead of File since
+   * 2020.3
+   */
+  @SuppressWarnings("UnstableApiUsage")
+  public static Optional<File> getExternalDependenciesXml(
+      ConversionContext context, String dependenciesFileName) {
+    return Optional.ofNullable(context.getSettingsBaseDir())
+        .map(baseDir -> new File(baseDir, dependenciesFileName));
+  }
+
+  // #api202 doWrapLongLinesIfNecessary not available anymore in CodeFormatterFacade
+  @SuppressWarnings({"deprecation", "UnstableApiUsage"})
+  public static void doWrapLongLinesIfNecessary(
+      Editor editor,
+      Project project,
+      Document document,
+      int startOffset,
+      int endOffset,
+      List<TextRange> enabledRanges,
+      int rightMargin,
+      PsiElement element) {
+    CodeFormatterFacade codeFormatter =
+        new CodeFormatterFacade(
+            CodeStyleSettingsManager.getSettings(project), element.getLanguage());
+
+    codeFormatter.doWrapLongLinesIfNecessary(
+        editor, element.getProject(), document, startOffset, endOffset, enabledRanges);
   }
 }

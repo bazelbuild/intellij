@@ -160,10 +160,12 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
       Set<String> commonFlags =
           new LinkedHashSet<>(kotlinToolchainIdeInfo.getKotlinCompilerCommonFlags());
       Collections.addAll(commonFlags, compilerSettings.getAdditionalArguments().split(" "));
-      // "-Xallow-jvm-ir-dependencies" is not available in common flags list of
-      // kotlinToolchainIdeInfo. So we add it manually to avoid users to receive false alarm.
-      // TODO(b/174682353): remove it once it's in common flags list.
+      // "-Xallow-jvm-ir-dependencies" and "-Xallow-unstable-dependencies" are not available in
+      // the common flags list of kotlinToolchainIdeInfo. To avoid that users receive unnecessary
+      // errors, we temporarily add those flags manually.
+      // TODO(b/174682353): Remove these two flags once they are in the common flags list.
       commonFlags.add("-Xallow-jvm-ir-dependencies");
+      commonFlags.add("-Xallow-unstable-dependencies");
       compilerSettings.setAdditionalArguments(String.join(" ", commonFlags));
       KotlinCompilerSettings.Companion.getInstance(project).setSettings(compilerSettings);
     }

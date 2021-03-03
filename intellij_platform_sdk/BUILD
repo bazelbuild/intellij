@@ -245,21 +245,6 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-2019.3",
-    values = {
-        "define": "ij_product=clion-2019.3",
-    },
-)
-
-config_setting(
-    name = "clion-2019.3-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=clion-2019.3",
-    },
-)
-
-config_setting(
     name = "clion-2020.1",
     values = {
         "define": "ij_product=clion-2020.1",
@@ -394,7 +379,6 @@ java_library(
 java_library(
     name = "jsr305",
     exports = select_for_plugin_api({
-        "clion-2019.3": [":bundled_jsr305"],
         "clion-2020.1": [":bundled_jsr305"],
         "clion-2020.2": [":bundled_jsr305"],
         "intellij-2020.1": [":bundled_jsr305"],

@@ -37,13 +37,10 @@ import java.util.Optional;
 
 final class FastBuildTestClassFinder {
 
-  private final PsiManager psiManager;
-  private final BlazeProjectDataManager blazeProjectDataManager;
+  private final Project project;
 
-  public FastBuildTestClassFinder(
-      PsiManager psiManager, BlazeProjectDataManager blazeProjectDataManager) {
-    this.psiManager = psiManager;
-    this.blazeProjectDataManager = blazeProjectDataManager;
+  public FastBuildTestClassFinder(Project project) {
+    this.project = project;
   }
 
   static FastBuildTestClassFinder getInstance(Project project) {
@@ -55,31 +52,36 @@ final class FastBuildTestClassFinder {
       return targetJavaInfo.testClass().get();
     } else {
 
+      PsiManager psiManager = PsiManager.getInstance(project);
       // If there's no 'test_class' attribute specified, we have to guess it. The class name is the
       // same as the Label name, but we have to try to figure out the package. Bazel does this in
       // JavaCommon.determinePrimaryClass.
-      BlazeProjectData blazeProjectData = blazeProjectDataManager.getBlazeProjectData();
+      BlazeProjectData blazeProjectData =
+          BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
       Optional<String> testClass =
-          determineTestClassFromSources(blazeProjectData, label, targetJavaInfo);
+          determineTestClassFromSources(psiManager, blazeProjectData, label, targetJavaInfo);
       if (testClass.isPresent()) { // In Java9, we could chain these with Optional.or()
         return testClass.get();
       }
 
-      return determineTestClassFromPackage(blazeProjectData, label)
+      return determineTestClassFromPackage(psiManager, blazeProjectData, label)
           .orElseThrow(() -> new ExecutionException("Couldn't determine test class."));
     }
   }
 
   // This is the first part of Bazel's JavaCommon.determinePrimaryClass()
-  private Optional<String> determineTestClassFromSources(
-      BlazeProjectData blazeProjectData, Label label, JavaInfo targetJavaInfo) {
+  private static Optional<String> determineTestClassFromSources(
+      PsiManager psiManager,
+      BlazeProjectData blazeProjectData,
+      Label label,
+      JavaInfo targetJavaInfo) {
 
     String targetName = label.targetName().toString();
     List<File> targetSources =
         blazeProjectData.getArtifactLocationDecoder().decodeAll(targetJavaInfo.sources());
     return targetSources.stream()
-        .flatMap(source -> stream(getMatchingClassName(targetName, source)))
+        .flatMap(source -> stream(getMatchingClassName(psiManager, targetName, source)))
         .findFirst();
   }
 
@@ -87,17 +89,18 @@ final class FastBuildTestClassFinder {
   // complicated logic based on directory names (see JavaUtil.getJavaFullClassName()). Rather than
   // copy/pasting that logic, we'll just read the class name from a source file with the appropriate
   // name. It won't always be the same as what Bazel comes up with, but it should be close enough.
-  private Optional<String> determineTestClassFromPackage(
-      BlazeProjectData blazeProjectData, Label label) {
+  private static Optional<String> determineTestClassFromPackage(
+      PsiManager psiManager, BlazeProjectData blazeProjectData, Label label) {
 
     File file =
         new File(
             blazeProjectData.getWorkspacePathResolver().resolveToFile(label.blazePackage()),
             label.targetName() + ".java");
-    return getMatchingClassName(label.targetName().toString(), file);
+    return getMatchingClassName(psiManager, label.targetName().toString(), file);
   }
 
-  private Optional<String> getMatchingClassName(String className, File file) {
+  private static Optional<String> getMatchingClassName(
+      PsiManager psiManager, String className, File file) {
     VirtualFile virtualFile = VfsUtils.resolveVirtualFile(file, /* refreshIfNeeded= */ true);
     if (virtualFile == null) {
       return Optional.empty();

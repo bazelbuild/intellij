@@ -10,13 +10,13 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-ue-latest-mac": "intellij-ue-2020.2-mac",
     "intellij-ue-beta": "intellij-ue-2020.2",
     "intellij-ue-canary": "intellij-ue-2020.3",
-    "android-studio-latest": "android-studio-4.1",
+    "android-studio-latest": "android-studio-4.2",
     "android-studio-beta": "android-studio-4.2",
     "android-studio-beta-mac": "android-studio-4.2-mac",
     "android-studio-canary": "android-studio-2020.3",
     "clion-latest": "clion-2020.1",
     "clion-latest-mac": "clion-2020.1-mac",
-    "clion-beta": "clion-2020.1",
+    "clion-beta": "clion-2020.2",
 }
 
 DIRECT_IJ_PRODUCTS = {
@@ -83,14 +83,6 @@ DIRECT_IJ_PRODUCTS = {
     "android-studio-2020.3": struct(
         ide = "android-studio",
         directory = "android_studio_2020_3",
-    ),
-    "clion-2019.3": struct(
-        ide = "clion",
-        directory = "clion_2019_3",
-    ),
-    "clion-2019.3-mac": struct(
-        ide = "clion",
-        directory = "clion_2019_3",
     ),
     "clion-2020.1": struct(
         ide = "clion",

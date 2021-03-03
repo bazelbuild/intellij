@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.intellij.execution.ExecutionException;
-import com.intellij.openapi.components.ServiceManager;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,12 +38,11 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class FastBuildTestClassFinderTest extends BlazeIntegrationTestCase {
 
-  private BlazeProjectData blazeProjectData;
   private ArtifactLocationDecoder artifactLocationDecoder;
 
   @Before
   public void setUpProjectData() {
-    blazeProjectData =
+    BlazeProjectData blazeProjectData =
         MockBlazeProjectDataBuilder.builder(workspaceRoot)
             // the default outputBase is outside our test fileSystem, so we can't create files there
             .setOutputBase(workspaceRoot.toString() + "/output-base")
@@ -61,7 +59,7 @@ public class FastBuildTestClassFinderTest extends BlazeIntegrationTestCase {
             FastBuildInfo.JavaInfo.newBuilder().setTestClass("my.fake.TestClass").build());
 
     String testClass =
-        ServiceManager.getService(getProject(), FastBuildTestClassFinder.class)
+        FastBuildTestClassFinder.getInstance(getProject())
             .getTestClass(Label.create("//javatests/com/google/devtools:AllTests"), javaInfo);
 
     assertThat(testClass).isEqualTo("my.fake.TestClass");
@@ -95,7 +93,7 @@ public class FastBuildTestClassFinderTest extends BlazeIntegrationTestCase {
         "class Irrelevant {}");
 
     String testClass =
-        ServiceManager.getService(getProject(), FastBuildTestClassFinder.class)
+        FastBuildTestClassFinder.getInstance(getProject())
             .getTestClass(Label.create("//javatests:AllTests"), javaInfo);
 
     assertThat(testClass).isEqualTo("com.google.hello.AllTests");
@@ -113,7 +111,7 @@ public class FastBuildTestClassFinderTest extends BlazeIntegrationTestCase {
         "class AllTests {}");
 
     String testClass =
-        ServiceManager.getService(getProject(), FastBuildTestClassFinder.class)
+        FastBuildTestClassFinder.getInstance(getProject())
             .getTestClass(Label.create("//javatests:AllTests"), javaInfo);
 
     assertThat(testClass).isEqualTo("com.google.hello.AllTests");

@@ -82,7 +82,7 @@ public class BlazeUserSettingsCompositeConfigurable
   static class BlazeUserSettingsSearchableOptionContributor extends SearchableOptionContributor {
     @Override
     public void processOptions(SearchableOptionProcessor processor) {
-      SearchableTextHelper helper = new SearchableTextHelper(ID, DISPLAY_NAME);
+      SearchableTextHelper helper = new SearchableTextHelper(processor, ID, DISPLAY_NAME);
       Arrays.stream(UiContributor.EP_NAME.getExtensions())
           .flatMap(uiContributor -> uiContributor.getSearchableText().stream())
           .forEach(helper::registerText);
