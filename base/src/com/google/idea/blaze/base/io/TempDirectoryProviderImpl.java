@@ -24,6 +24,10 @@ public final class TempDirectoryProviderImpl implements TempDirectoryProvider {
 
   @Override
   public Path getTempDirectory() {
+    return getDefaultTempDirectory();
+  }
+
+  public static Path getDefaultTempDirectory() {
     return Paths.get(FileUtilRt.getTempDirectory());
   }
 }
