@@ -12,6 +12,7 @@ import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -224,5 +225,10 @@ public final class BaseSdkCompat {
     EditorFacade.getInstance()
         .doWrapLongLinesIfNecessary(
             editor, project, document, startOffset, endOffset, enabledRanges, rightMargin);
+  }
+
+  /** #api202: use "SearchEverywhereManager.setSelectedTabID directly" */
+  public static void setSelectedTabID(SearchEverywhereManager manager, String id) {
+    manager.setSelectedTabID(id);
   }
 }
