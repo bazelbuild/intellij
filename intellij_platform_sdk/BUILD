@@ -323,6 +323,7 @@ package_group(
         "//javatests/com/google/dart/intellij/...",
         "//javatests/com/google/devtools/intellij/blaze/plugin/...",
         "//javatests/com/google/firebase/rules/plugins/intellij/...",
+        "//javatests/com/google/gws/plugins/local/businessdirectory/...",
         "//third_party/java/jetbrains/dart/...",
         "//third_party/java_src/intellijprotobufplugin/...",
         "//third_party/java_src/pytype_pycharm/...",
