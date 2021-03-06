@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.common.experiments.InternalDevFlag;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -39,6 +40,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +67,9 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
   private static final Logger log = Logger.getInstance(RenderJarClassFileFinder.class);
 
   private static final String INTERNAL_PACKAGE = "_layoutlib_._internal_.";
+
+  // matches foo.bar.R or foo.bar.R$baz
+  private static final Pattern RESOURCE_CLASS_NAME = Pattern.compile(".+\\.R(\\$[^.]+)?$");
 
   private final Module module;
   private final Project project;
@@ -101,6 +106,8 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
   @Nullable
   @Override
   public VirtualFile findClassFile(String fqcn) {
+    logOrFailIfRClass(fqcn);
+
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {
@@ -143,6 +150,35 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
                 .collect(Collectors.joining("\n  "))));
 
     return null;
+  }
+
+  /**
+   * Checks if given {@code fqcn} is an R class. If {@code fqcn} is an R class: logs a warning for
+   * prod users, or throws an exception for internal devs. No-op if {@code fqcn} is not an R class.
+   */
+  private void logOrFailIfRClass(String fqcn) {
+    if (!isResourceClass(fqcn)) {
+      return;
+    }
+
+    if (InternalDevFlag.isInternalDev() || ApplicationManager.getApplication().isInternal()) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Attempting to load '%s' from Render JAR: R classes are expected to be supplied by"
+                  + " the IDE, not the Render JAR",
+              fqcn));
+    }
+
+    log.warn(
+        String.format(
+            "Attempting to load '%s 'from Render JAR. Loading R classes from Render JAR may lead"
+                + " to errors during layout rendering.",
+            fqcn));
+  }
+
+  @VisibleForTesting
+  static boolean isResourceClass(String fqcn) {
+    return RESOURCE_CLASS_NAME.matcher(fqcn).matches();
   }
 
   /**
