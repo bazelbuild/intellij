@@ -23,9 +23,6 @@ java_library(
                ]),
                default = [],
            ) + select_for_plugin_api({
-        "android-studio-4.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]) + [
-            "testcompat/v201/com/google/idea/testing/cidr/StubOCResolveConfiguration.java",
-        ],
         "android-studio-4.2": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]) + [
             "testcompat/v202/com/google/idea/testing/cidr/StubOCResolveConfiguration.java",
         ],

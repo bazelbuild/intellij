@@ -68,10 +68,6 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij-ue",
         directory = "intellij_ue_2020_3",
     ),
-    "android-studio-4.1": struct(
-        ide = "android-studio",
-        directory = "android_studio_4_1",
-    ),
     "android-studio-4.2": struct(
         ide = "android-studio",
         directory = "android_studio_4_2",

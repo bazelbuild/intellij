@@ -194,13 +194,6 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-4.1",
-    values = {
-        "define": "ij_product=android-studio-4.1",
-    },
-)
-
-config_setting(
     name = "android-studio-4.2",
     values = {
         "define": "ij_product=android-studio-4.2",
@@ -387,7 +380,6 @@ java_library(
         "intellij-ue-2020.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.3": [":bundled_jsr305"],
-        "android-studio-4.1": [":bundled_jsr305"],
         "android-studio-4.2": ["@jsr305_annotations//jar"],
         "android-studio-2020.3": ["@jsr305_annotations//jar"],
         # Some test libraries depend on this, yet can be used without ij_product.
