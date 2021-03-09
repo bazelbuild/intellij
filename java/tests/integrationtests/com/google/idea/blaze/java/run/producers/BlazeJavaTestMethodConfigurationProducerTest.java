@@ -68,7 +68,7 @@ public class BlazeJavaTestMethodConfigurationProducerTest
   }
 
   @Test
-  public void testProducedFromPsiMethod() {
+  public void testProducedFromPsiMethod() throws Throwable {
     // Arrange
     PsiFile javaFile =
         createAndIndexFile(
@@ -119,7 +119,7 @@ public class BlazeJavaTestMethodConfigurationProducerTest
   }
 
   @Test
-  public void testConfigFromContextRecognizesItsOwnConfig() {
+  public void testConfigFromContextRecognizesItsOwnConfig() throws Throwable {
     PsiMethod method = setupGenericJunitTestClassAndBlazeTarget();
     ConfigurationContext context = createContextFromPsi(method);
     BlazeCommandRunConfiguration config =
@@ -132,7 +132,7 @@ public class BlazeJavaTestMethodConfigurationProducerTest
   }
 
   @Test
-  public void testConfigWithDifferentLabelIsIgnored() {
+  public void testConfigWithDifferentLabelIsIgnored() throws Throwable {
     // Arrange
     PsiMethod method = setupGenericJunitTestClassAndBlazeTarget();
     ConfigurationContext context = createContextFromPsi(method);
@@ -150,7 +150,7 @@ public class BlazeJavaTestMethodConfigurationProducerTest
   }
 
   @Test
-  public void testConfigWithDifferentFilterIgnored() {
+  public void testConfigWithDifferentFilterIgnored() throws Throwable {
     // Arrange
     PsiMethod method = setupGenericJunitTestClassAndBlazeTarget();
     ConfigurationContext context = createContextFromPsi(method);
@@ -178,7 +178,7 @@ public class BlazeJavaTestMethodConfigurationProducerTest
    * class. Used when the implementation details (class name, target string, etc.) aren't relevant
    * to the test.
    */
-  private PsiMethod setupGenericJunitTestClassAndBlazeTarget() {
+  private PsiMethod setupGenericJunitTestClassAndBlazeTarget() throws Throwable {
     PsiFile javaFile =
         createAndIndexFile(
             new WorkspacePath("java/com/google/test/TestClass.java"),

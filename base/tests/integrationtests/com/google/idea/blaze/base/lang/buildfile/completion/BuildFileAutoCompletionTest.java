@@ -21,10 +21,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.sdkcompat.testframework.fixtures.CompletionAutoPopupTesterAdapter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
+import com.intellij.util.ThrowableRunnable;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Before;
@@ -36,11 +37,11 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BuildFileAutoCompletionTest extends BuildFileIntegrationTestCase {
 
-  private CompletionAutoPopupTester completionTester;
+  private CompletionAutoPopupTesterAdapter completionTester;
 
   @Before
   public final void before() {
-    completionTester = new CompletionAutoPopupTester(testFixture);
+    completionTester = new CompletionAutoPopupTesterAdapter(testFixture);
   }
 
   /** Completion UI testing can't be run on the EDT. */
@@ -50,23 +51,25 @@ public class BuildFileAutoCompletionTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testNoPopupAfterNumber() {
+  public void testNoPopupAfterNumber() throws Throwable {
+    // #api202: remove redundant cast "(ThrowableRunnable<Throwable>)"
     completionTester.runWithAutoPopupEnabled(
-        () -> {
-          createBuildFile(new WorkspacePath("java/com/foo/BUILD"));
-          BuildFile file =
-              createBuildFile(
-                  new WorkspacePath("BUILD"),
-                  "java_library(",
-                  "    name = 'lib',",
-                  "    testonly = ");
+        (ThrowableRunnable<Throwable>)
+            () -> {
+              createBuildFile(new WorkspacePath("java/com/foo/BUILD"));
+              BuildFile file =
+                  createBuildFile(
+                      new WorkspacePath("BUILD"),
+                      "java_library(",
+                      "    name = 'lib',",
+                      "    testonly = ");
 
-          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "    testonly = ".length());
+              Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+              editorTest.setCaretPosition(editor, 2, "    testonly = ".length());
 
-          completionTester.typeWithPauses("1");
-          assertThat(currentLookupStrings()).isEmpty();
-        });
+              completionTester.typeWithPauses("1");
+              assertThat(currentLookupStrings()).isEmpty();
+            });
   }
 
   private List<String> currentLookupStrings() {
@@ -74,9 +77,7 @@ public class BuildFileAutoCompletionTest extends BuildFileIntegrationTestCase {
     if (lookup == null) {
       return ImmutableList.of();
     }
-    return lookup
-        .getItems()
-        .stream()
+    return lookup.getItems().stream()
         .map(LookupElement::getLookupString)
         .collect(Collectors.toList());
   }

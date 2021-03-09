@@ -38,7 +38,7 @@ import org.junit.runners.JUnit4;
 public class JavaBinaryContextProviderTest extends BlazeRunConfigurationProducerTestCase {
 
   @Test
-  public void testUniqueJavaBinaryChosen() {
+  public void testUniqueJavaBinaryChosen() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -70,7 +70,7 @@ public class JavaBinaryContextProviderTest extends BlazeRunConfigurationProducer
   }
 
   @Test
-  public void testNoJavaBinaryChosenIfNotInRDeps() {
+  public void testNoJavaBinaryChosenIfNotInRDeps() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -98,7 +98,7 @@ public class JavaBinaryContextProviderTest extends BlazeRunConfigurationProducer
   }
 
   @Test
-  public void testNoResultForClassWithoutMainMethod() {
+  public void testNoResultForClassWithoutMainMethod() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -123,7 +123,7 @@ public class JavaBinaryContextProviderTest extends BlazeRunConfigurationProducer
   }
 
   @Test
-  public void testJavaBinaryWithMatchingNameChosen() {
+  public void testJavaBinaryWithMatchingNameChosen() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -160,7 +160,7 @@ public class JavaBinaryContextProviderTest extends BlazeRunConfigurationProducer
   }
 
   @Test
-  public void testJavaBinaryWithMatchingMainClassChosen() {
+  public void testJavaBinaryWithMatchingMainClassChosen() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()

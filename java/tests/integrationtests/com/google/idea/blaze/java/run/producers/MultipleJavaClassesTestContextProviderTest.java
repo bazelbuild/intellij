@@ -106,7 +106,7 @@ public class MultipleJavaClassesTestContextProviderTest
   }
 
   @Test
-  public void testProducedFromDirectory() throws Exception {
+  public void testProducedFromDirectory() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -149,7 +149,7 @@ public class MultipleJavaClassesTestContextProviderTest
   }
 
   @Test
-  public void testProducedFromDirectoryWithNestedTests() throws Exception {
+  public void testProducedFromDirectoryWithNestedTests() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -192,7 +192,7 @@ public class MultipleJavaClassesTestContextProviderTest
   }
 
   @Test
-  public void testNotProducedForDirectoryNotUnderTestRoots() {
+  public void testNotProducedForDirectoryNotUnderTestRoots() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -244,7 +244,7 @@ public class MultipleJavaClassesTestContextProviderTest
   }
 
   @Test
-  public void testProducedFromTestFiles() {
+  public void testProducedFromTestFiles() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -297,7 +297,7 @@ public class MultipleJavaClassesTestContextProviderTest
   }
 
   @Test
-  public void testNotProducedFromTestFilesInDifferentTestTargets() {
+  public void testNotProducedFromTestFilesInDifferentTestTargets() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -347,7 +347,7 @@ public class MultipleJavaClassesTestContextProviderTest
   }
 
   @Test
-  public void testNotProducedFromNonTestFiles() {
+  public void testNotProducedFromNonTestFiles() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()

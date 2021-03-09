@@ -50,7 +50,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   }
 
   @Test
-  public void testSimpleCompletion() {
+  public void testSimpleCompletion() throws Throwable {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(");
@@ -63,7 +63,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   }
 
   @Test
-  public void testSimpleSingleCompletion() {
+  public void testSimpleSingleCompletion() throws Throwable {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(", "    nam");
@@ -77,7 +77,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   }
 
   @Test
-  public void testNoCompletionInUnknownRule() {
+  public void testNoCompletionInUnknownRule() throws Throwable {
     ServiceHelper.unregisterLanguageExtensionPoint(
         "com.intellij.completion.contributor",
         BuiltInSymbolCompletionContributor.class,
@@ -99,7 +99,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   }
 
   @Test
-  public void testNoCompletionInComment() {
+  public void testNoCompletionInComment() throws Throwable {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(#");
@@ -110,7 +110,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   }
 
   @Test
-  public void testNoCompletionAfterInteger() {
+  public void testNoCompletionAfterInteger() throws Throwable {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(testonly = 1,");
@@ -121,7 +121,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   }
 
   @Test
-  public void testDoNotShowExistingAttributesInAutocompleteSuggestions() {
+  public void testDoNotShowExistingAttributesInAutocompleteSuggestions() throws Throwable {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "sh_binary(name = 'bin', )");
@@ -135,7 +135,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   }
 
   @Test
-  public void testCompletionAtEndOfElement() {
+  public void testCompletionAtEndOfElement() throws Throwable {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
     BuildFile file =
@@ -158,7 +158,7 @@ public class BuiltInFunctionAttributeCompletionContributorTest
   }
 
   @Test
-  public void testCompletionInSkylarkExtension() {
+  public void testCompletionInSkylarkExtension() throws Throwable {
     setRuleAndAttributes("sh_binary", "name", "deps", "srcs", "data");
 
     BuildFile file = createBuildFile(new WorkspacePath("skylark.bzl"), "native.sh_binary(");

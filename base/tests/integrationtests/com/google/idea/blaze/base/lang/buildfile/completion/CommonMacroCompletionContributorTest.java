@@ -49,14 +49,14 @@ public class CommonMacroCompletionContributorTest extends BuildFileIntegrationTe
     macros.clear();
   }
 
-  private String[] getCompletionItems(BuildFile file, int line, int column) {
+  private String[] getCompletionItems(BuildFile file, int line, int column) throws Throwable {
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
     editorTest.setCaretPosition(editor, line, column);
     return editorTest.getCompletionItemsAsStrings();
   }
 
   @Test
-  public void completionResults_trivialExample_containsMacro() {
+  public void completionResults_trivialExample_containsMacro() throws Throwable {
     macros.add(
         CommonMacros.builder()
             .setLocation("//foo/bar.bzl")
@@ -68,7 +68,7 @@ public class CommonMacroCompletionContributorTest extends BuildFileIntegrationTe
   }
 
   @Test
-  public void completionResults_ignoreExistingSymbols() {
+  public void completionResults_ignoreExistingSymbols() throws Throwable {
     macros.add(
         CommonMacros.builder()
             .setLocation("//foo/bar.bzl")

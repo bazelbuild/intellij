@@ -35,9 +35,9 @@ java_library(
         "intellij-ue-2020.1": glob(["testcompat/v201/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-2020.2": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-ue-2020.2": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]),
-        "intellij-2020.3": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]),
-        "intellij-ue-2020.3": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]),
-        "default": [],
+        "intellij-2020.3": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
+        "intellij-ue-2020.3": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
+        "default": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
     }),
     deps = [
         "//common/experiments",

@@ -41,7 +41,7 @@ import org.junit.runners.JUnit4;
 public class PyBinaryContextProviderTest extends BlazeRunConfigurationProducerTestCase {
 
   @Test
-  public void testProducedFromPyFile() {
+  public void testProducedFromPyFile() throws Throwable {
     PsiFile pyFile =
         createAndIndexFile(
             new WorkspacePath("py/bin/main.py"),

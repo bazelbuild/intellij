@@ -41,7 +41,7 @@ import org.junit.runners.JUnit4;
 public class GoBinaryContextProviderTest extends BlazeRunConfigurationProducerTestCase {
 
   @Test
-  public void contextProducedFromBinaryGoFileIsBinaryTarget() {
+  public void contextProducedFromBinaryGoFileIsBinaryTarget() throws Throwable {
     PsiFile goFile =
         createAndIndexFile(new WorkspacePath("foo/bar/main.go"), "package main", "func main() {}");
 
@@ -75,7 +75,7 @@ public class GoBinaryContextProviderTest extends BlazeRunConfigurationProducerTe
   }
 
   @Test
-  public void contextProducedFromLibraryGoFileIsBinaryTarget() {
+  public void contextProducedFromLibraryGoFileIsBinaryTarget() throws Throwable {
     PsiFile goFile =
         createAndIndexFile(new WorkspacePath("foo/bar/main.go"), "package main", "func main() {}");
 

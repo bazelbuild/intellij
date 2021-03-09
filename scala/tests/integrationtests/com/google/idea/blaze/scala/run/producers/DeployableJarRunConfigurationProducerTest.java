@@ -45,7 +45,7 @@ public class DeployableJarRunConfigurationProducerTest
   }
 
   @Test
-  public void testCorrectMainAppAndTargetChosen() {
+  public void testCorrectMainAppAndTargetChosen() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
