@@ -49,6 +49,9 @@ If you are  using the most recent version of your IDE, you likely want
 build of an upcoming version. A complete mapping of all currently defined 
 versions can be found in  `intellij_platform_sdk/build_defs.bzl`.
 
+You can import the project into IntelliJ (with the Bazel plugin)
+via importing the `ijwb/ijwb.bazelproject` file.
+
 ## Contributions
 
 We may be able to accept contributions in some circumstances. Some caveats:
