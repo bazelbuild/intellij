@@ -15,7 +15,7 @@
  */
 package com.google.idea.common.experiments;
 
-import com.intellij.CommonBundle;
+import com.intellij.UtilBundle;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -54,7 +54,7 @@ final class SerializationUtil {
   private static void ensureExists(File dir) throws IOException {
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException(
-          CommonBundle.message("exception.directory.can.not.create", dir.getPath()));
+          UtilBundle.message("exception.directory.can.not.create", dir.getPath()));
     }
   }
 }
