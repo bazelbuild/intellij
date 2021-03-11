@@ -44,7 +44,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProducerTestCase {
   @Test
-  public void testClosureTestSuite() {
+  public void testClosureTestSuite() throws Throwable {
     PsiFile jsTestFile =
         configure(
             ImmutableList.of("chrome-linux"),
@@ -65,7 +65,7 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
   }
 
   @Test
-  public void testOldStyleClosureTestSuite() {
+  public void testOldStyleClosureTestSuite() throws Throwable {
     createAndIndexFile(
         WorkspacePath.createIfValid("javascript/closure/testing/testsuite.js"),
         "goog.provide('goog.testing.testSuite');",
@@ -90,7 +90,7 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
   }
 
   @Test
-  public void testTopLevelFunctions() {
+  public void testTopLevelFunctions() throws Throwable {
     PsiFile jsTestFile = configure(ImmutableList.of("chrome-linux"), "function testFoo() {}");
 
     ConfigurationContext context = createContextFromPsi(jsTestFile);
@@ -103,7 +103,7 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
   }
 
   @Test
-  public void testMultipleBrowsers() {
+  public void testMultipleBrowsers() throws Throwable {
     PsiFile jsTestFile =
         configure(ImmutableList.of("chrome-linux", "firefox-linux"), "function testFoo() {}");
 
@@ -126,7 +126,7 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
   }
 
   @Test
-  public void testNoTests() {
+  public void testNoTests() throws Throwable {
     PsiFile jsTestFile = configure(ImmutableList.of("chrome-linux"), "function foo() {}");
 
     ConfigurationContext context = createContextFromPsi(jsTestFile);
@@ -134,7 +134,7 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
   }
 
   @Test
-  public void testClosureTestSuiteImportedButUnused() {
+  public void testClosureTestSuiteImportedButUnused() throws Throwable {
     PsiFile jsTestFile =
         configure(
             ImmutableList.of("chrome-linux"),
@@ -147,7 +147,7 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
   }
 
   @Test
-  public void testClosureTestSuiteImportedWrongSymbol() {
+  public void testClosureTestSuiteImportedWrongSymbol() throws Throwable {
     PsiFile jsTestFile =
         configure(
             ImmutableList.of("chrome-linux"),
@@ -162,7 +162,8 @@ public class JavascriptTestContextProviderTest extends BlazeRunConfigurationProd
     assertThat(context.getConfigurationsFromContext()).isNull();
   }
 
-  private PsiFile configure(ImmutableList<String> browsers, String... filesContents) {
+  private PsiFile configure(ImmutableList<String> browsers, String... filesContents)
+      throws Throwable {
     TargetMapBuilder targetMapBuilder =
         TargetMapBuilder.builder()
             .addTarget(

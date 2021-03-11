@@ -44,7 +44,7 @@ public class BlazeScalaTestClassConfigurationProducerTest
     extends BlazeRunConfigurationProducerTestCase {
 
   @Test
-  public void testJunitTestProducedFromPsiClass() {
+  public void testJunitTestProducedFromPsiClass() throws Throwable {
     PsiFile file =
         createAndIndexFile(
             new WorkspacePath("scala/com/google/test/TestClass.scala"),
@@ -92,7 +92,7 @@ public class BlazeScalaTestClassConfigurationProducerTest
   }
 
   @Test
-  public void testScalaTestProducedFromPsiClass() {
+  public void testScalaTestProducedFromPsiClass() throws Throwable {
     PsiFile file =
         createAndIndexFile(
             WorkspacePath.createIfValid("scala/com/google/test/TestClass.scala"),

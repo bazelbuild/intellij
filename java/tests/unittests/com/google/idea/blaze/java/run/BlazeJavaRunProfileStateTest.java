@@ -53,6 +53,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildService;
+import com.google.idea.blaze.java.run.hotswap.HotSwapCommandBuilder;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -88,10 +89,10 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     applicationServices.register(TempDirectoryProvider.class, new TempDirectoryProviderImpl());
     applicationServices.register(FileOperationProvider.class, new FakeFileOperationProvider());
 
-    ExtensionPointImpl<Kind.Provider> ep =
+    ExtensionPointImpl<Kind.Provider> kindProviderEp =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);
-    ep.registerExtension(new GenericBlazeRules());
-    ep.registerExtension(new JavaBlazeRules());
+    kindProviderEp.registerExtension(new GenericBlazeRules(), testDisposable);
+    kindProviderEp.registerExtension(new JavaBlazeRules(), testDisposable);
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
     projectServices.register(FastBuildService.class, new DisabledFastBuildService());
@@ -99,24 +100,30 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
     ExtensionPointImpl<TargetFinder> targetFinderEp =
         registerExtensionPoint(TargetFinder.EP_NAME, TargetFinder.class);
-    targetFinderEp.registerExtension(new MockTargetFinder());
+    targetFinderEp.registerExtension(new MockTargetFinder(), testDisposable);
 
     ExtensionPointImpl<JavaLikeLanguage> javaLikeEp =
         registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class);
-    javaLikeEp.registerExtension(new JavaLikeLanguage.Java());
+    javaLikeEp.registerExtension(new JavaLikeLanguage.Java(), testDisposable);
 
     registerExtensionPoint(BuildFlagsProvider.EP_NAME, BuildFlagsProvider.class);
+
     ExtensionPointImpl<BlazeCommandRunConfigurationHandlerProvider> handlerProviderEp =
         registerExtensionPoint(
             BlazeCommandRunConfigurationHandlerProvider.EP_NAME,
             BlazeCommandRunConfigurationHandlerProvider.class);
-    handlerProviderEp.registerExtension(new BlazeJavaRunConfigurationHandlerProvider());
-    handlerProviderEp.registerExtension(new BlazeCommandGenericRunConfigurationHandlerProvider());
-    ExtensionPointImpl<BuildSystemProvider> buildSystemProviderExtensionPoint =
+    handlerProviderEp.registerExtension(
+        new BlazeJavaRunConfigurationHandlerProvider(), testDisposable);
+    handlerProviderEp.registerExtension(
+        new BlazeCommandGenericRunConfigurationHandlerProvider(), testDisposable);
+
+    ExtensionPointImpl<BuildSystemProvider> buildSystemProviderEp =
         registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
     BuildSystemProvider buildSystemProvider = mock(BuildSystemProvider.class);
     when(buildSystemProvider.getBinaryPath(project)).thenReturn("/usr/bin/blaze");
-    buildSystemProviderExtensionPoint.registerExtension(buildSystemProvider);
+    buildSystemProviderEp.registerExtension(buildSystemProvider, testDisposable);
+
+    registerExtensionPoint(HotSwapCommandBuilder.EP_NAME, HotSwapCommandBuilder.class);
 
     configuration =
         new BlazeCommandRunConfigurationType().getFactory().createTemplateConfiguration(project);
@@ -196,7 +203,8 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     BlazeCommand.Builder commandBuilder =
         BlazeCommand.builder("/usr/bin/blaze", BlazeCommandName.BUILD)
             .addTargets(Label.create("//label:java_binary_rule"));
-    List<String> command = BlazeJavaRunProfileState.getBashCommandsToRunScript(commandBuilder);
+    List<String> command =
+        HotSwapCommandBuilder.getBashCommandsToRunScript(getProject(), commandBuilder);
     Path tempDirectory = TempDirectoryProvider.getInstance().getTempDirectory();
     assertThat(command)
         .containsExactly(

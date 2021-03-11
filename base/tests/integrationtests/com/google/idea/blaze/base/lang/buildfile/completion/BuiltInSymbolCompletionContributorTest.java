@@ -49,7 +49,7 @@ public class BuiltInSymbolCompletionContributorTest extends BuildFileIntegration
   }
 
   @Test
-  public void testSimpleTopLevelCompletion() {
+  public void testSimpleTopLevelCompletion() throws Throwable {
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
@@ -61,7 +61,7 @@ public class BuiltInSymbolCompletionContributorTest extends BuildFileIntegration
   }
 
   @Test
-  public void testUniqueTopLevelCompletion() {
+  public void testUniqueTopLevelCompletion() throws Throwable {
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "PACKAGE_N");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
@@ -75,7 +75,7 @@ public class BuiltInSymbolCompletionContributorTest extends BuildFileIntegration
   }
 
   @Test
-  public void testNoCompletionInComment() {
+  public void testNoCompletionInComment() throws Throwable {
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "#PACK");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
@@ -85,7 +85,7 @@ public class BuiltInSymbolCompletionContributorTest extends BuildFileIntegration
   }
 
   @Test
-  public void testNoCompletionAfterInteger() {
+  public void testNoCompletionAfterInteger() throws Throwable {
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "123");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
@@ -95,7 +95,7 @@ public class BuiltInSymbolCompletionContributorTest extends BuildFileIntegration
   }
 
   @Test
-  public void testNoCompletionInFuncall() {
+  public void testNoCompletionInFuncall() throws Throwable {
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "java_library()");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());

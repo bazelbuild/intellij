@@ -76,7 +76,7 @@ public class BlazeRunConfigurationProducerTestCase extends BlazeIntegrationTestC
     IconManager.deactivate();
   }
 
-  protected PsiFile createAndIndexFile(WorkspacePath path, String... contents) {
+  protected PsiFile createAndIndexFile(WorkspacePath path, String... contents) throws Throwable {
     PsiFile file = workspace.createPsiFile(path, contents);
     editorTest.openFileInEditor(file); // open file to trigger update of indices
     return file;

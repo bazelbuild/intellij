@@ -38,7 +38,7 @@ import org.junit.runners.JUnit4;
 public class ScalaBinaryContextProviderTest extends BlazeRunConfigurationProducerTestCase {
 
   @Test
-  public void testUniqueScalaBinaryChosen() {
+  public void testUniqueScalaBinaryChosen() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -73,7 +73,7 @@ public class ScalaBinaryContextProviderTest extends BlazeRunConfigurationProduce
   }
 
   @Test
-  public void testNoScalaBinaryChosenIfNotInRDeps() {
+  public void testNoScalaBinaryChosenIfNotInRDeps() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -103,7 +103,7 @@ public class ScalaBinaryContextProviderTest extends BlazeRunConfigurationProduce
   }
 
   @Test
-  public void testNoResultForObjectWithoutMainMethod() {
+  public void testNoResultForObjectWithoutMainMethod() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -129,7 +129,7 @@ public class ScalaBinaryContextProviderTest extends BlazeRunConfigurationProduce
   }
 
   @Test
-  public void testScalaBinaryWithMatchingNameChosen() {
+  public void testScalaBinaryWithMatchingNameChosen() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()
@@ -169,7 +169,7 @@ public class ScalaBinaryContextProviderTest extends BlazeRunConfigurationProduce
   }
 
   @Test
-  public void testScalaBinaryWithMatchingMainClassChosen() {
+  public void testScalaBinaryWithMatchingMainClassChosen() throws Throwable {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
     builder.setTargetMap(
         TargetMapBuilder.builder()

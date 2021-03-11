@@ -185,7 +185,7 @@ public class LabelReferenceTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testNoTargetFoundFromNameAttributeLabel() {
+  public void testNoTargetFoundFromNameAttributeLabel() throws Throwable {
     // we want 'GoToDeclaration' to trigger 'find usages' from a name attribute, which won't happen
     // if it's pointing to a target element different from the 'find usages target'
     BuildFile file =

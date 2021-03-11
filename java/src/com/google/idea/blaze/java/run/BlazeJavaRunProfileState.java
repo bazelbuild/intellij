@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
@@ -46,6 +45,7 @@ import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.java.run.hotswap.HotSwapCommandBuilder;
 import com.google.idea.blaze.java.run.hotswap.HotSwapUtils;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
@@ -59,9 +59,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.execution.ParametersListUtil;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -115,7 +113,7 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
     List<String> command;
     if (HotSwapUtils.canHotSwap(getEnvironment())) {
       try {
-        command = getBashCommandsToRunScript(blazeCommand);
+        command = HotSwapCommandBuilder.getBashCommandsToRunScript(project, blazeCommand);
       } catch (IOException e) {
         logger.warn("Failed to create script path. Hot swap will be disabled.", e);
         command = blazeCommand.build().toList();
@@ -147,16 +145,6 @@ final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState 
             return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
           }
         });
-  }
-
-  /** Appends '--script_path' to blaze flags, then runs 'bash -c blaze build ... && run_script' */
-  @VisibleForTesting
-  static ImmutableList<String> getBashCommandsToRunScript(BlazeCommand.Builder blazeCommand)
-      throws IOException {
-    Path scriptPath = BlazeBeforeRunCommandHelper.createScriptPathFile();
-    blazeCommand.addBlazeFlags("--script_path=" + scriptPath);
-    String blaze = ParametersListUtil.join(blazeCommand.build().toList());
-    return ImmutableList.of("/bin/bash", "-c", blaze + " && " + scriptPath);
   }
 
   @Override

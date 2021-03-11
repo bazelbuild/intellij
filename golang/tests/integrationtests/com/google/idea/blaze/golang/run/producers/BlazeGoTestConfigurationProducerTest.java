@@ -50,7 +50,7 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromGoFile() {
+  public void testProducedFromGoFile() throws Throwable {
     PsiFile goFile =
         createAndIndexFile(
             new WorkspacePath("foo/bar/foo_test.go"),
@@ -89,7 +89,7 @@ public class BlazeGoTestConfigurationProducerTest extends BlazeRunConfigurationP
   }
 
   @Test
-  public void testProducedFromTestCase() {
+  public void testProducedFromTestCase() throws Throwable {
     PsiFile goFile =
         createAndIndexFile(
             new WorkspacePath("foo/bar/foo_test.go"),

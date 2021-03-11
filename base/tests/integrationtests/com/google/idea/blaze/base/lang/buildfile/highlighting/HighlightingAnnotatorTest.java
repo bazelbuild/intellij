@@ -33,7 +33,7 @@ import org.junit.runners.JUnit4;
 public class HighlightingAnnotatorTest extends BuildFileIntegrationTestCase {
 
   @Test
-  public void testBuiltInNamesSimple() {
+  public void testBuiltInNamesSimple() throws Throwable {
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "None");
 
     ReferenceExpression ref = file.findChildByClass(ReferenceExpression.class);
@@ -48,7 +48,7 @@ public class HighlightingAnnotatorTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testBuiltInNames() {
+  public void testBuiltInNames() throws Throwable {
     BuildFile file =
         createBuildFile(new WorkspacePath("BUILD"), "a = True", "b = False", "type(a)");
 

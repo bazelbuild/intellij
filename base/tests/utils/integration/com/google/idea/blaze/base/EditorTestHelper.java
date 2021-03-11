@@ -18,6 +18,7 @@ package com.google.idea.blaze.base;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.google.idea.sdkcompat.testframework.EdtTestUtilWrapper;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -34,9 +35,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EditorTestUtil.CaretAndSelectionState;
 import com.intellij.testFramework.EditorTestUtil.CaretInfo;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.util.ThrowableRunnable;
 import java.util.Arrays;
 import javax.annotation.Nullable;
 
@@ -50,13 +49,12 @@ public class EditorTestHelper {
     this.testFixture = testFixture;
   }
 
-  public Editor openFileInEditor(PsiFile file) {
+  public Editor openFileInEditor(PsiFile file) throws Throwable {
     return openFileInEditor(file.getVirtualFile());
   }
 
-  public Editor openFileInEditor(VirtualFile file) {
-    EdtTestUtil.runInEdtAndWait(
-        (ThrowableRunnable<Throwable>) () -> testFixture.openFileInEditor(file));
+  public Editor openFileInEditor(VirtualFile file) throws Throwable {
+    EdtTestUtilWrapper.runInEdtAndWait(() -> testFixture.openFileInEditor(file));
     return testFixture.getEditor();
   }
 
@@ -103,7 +101,7 @@ public class EditorTestHelper {
   }
 
   /** Simulates a user typing action, at current caret position of file. */
-  public void performTypingAction(PsiFile file, char typedChar) {
+  public void performTypingAction(PsiFile file, char typedChar) throws Throwable {
     performTypingAction(openFileInEditor(file.getVirtualFile()), typedChar);
   }
 
@@ -124,13 +122,12 @@ public class EditorTestHelper {
         .executeCommand(project, () -> testFixture.performEditorAction(action), "", null);
   }
 
-  public void setCaretPosition(Editor editor, int lineNumber, int columnNumber) {
+  public void setCaretPosition(Editor editor, int lineNumber, int columnNumber) throws Throwable {
     final CaretInfo info = new CaretInfo(new LogicalPosition(lineNumber, columnNumber), null);
-    EdtTestUtil.runInEdtAndWait(
-        (ThrowableRunnable<Throwable>)
-            () ->
-                EditorTestUtil.setCaretsAndSelection(
-                    editor, new CaretAndSelectionState(ImmutableList.of(info), null)));
+    EdtTestUtilWrapper.runInEdtAndWait(
+        () ->
+            EditorTestUtil.setCaretsAndSelection(
+                editor, new CaretAndSelectionState(ImmutableList.of(info), null)));
   }
 
   public void assertCaretPosition(Editor editor, int lineNumber, int columnNumber) {

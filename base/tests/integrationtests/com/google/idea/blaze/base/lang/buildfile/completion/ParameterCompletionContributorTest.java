@@ -31,7 +31,7 @@ import org.junit.runners.JUnit4;
 public class ParameterCompletionContributorTest extends BuildFileIntegrationTestCase {
 
   @Test
-  public void testArgsCompletion() {
+  public void testArgsCompletion() throws Throwable {
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "def function(arg1, *");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
@@ -44,7 +44,7 @@ public class ParameterCompletionContributorTest extends BuildFileIntegrationTest
   }
 
   @Test
-  public void testKwargsCompletion() {
+  public void testKwargsCompletion() throws Throwable {
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "def function(arg1, **");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());

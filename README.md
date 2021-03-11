@@ -41,12 +41,13 @@ from the IDE. `<PRODUCT>` can be one of `ijwb, clwb, aswb`.
 If the IDE refuses to load the plugin because of version issues, specify the
 correct `ij_product`. These are in the form `<IDE>-<VERSION>` with `<IDE>`
 being one of `intellij, clion, android-studio`, and `<VERSION>` being one
-of `latest, beta`.
+of `latest, beta, canary`.
 
 If you are  using the most recent version of your IDE, you likely want
 `--define=ij_product=<IDE>-beta` which will be the next version after
-`<IDE>-latest`.  A complete mapping of all currently defined versions can
-be found in  `intellij_platform_sdk/build_defs.bzl`.
+`<IDE>-latest`. Additionally, `canary` can be a largely untested `alpha` 
+build of an upcoming version. A complete mapping of all currently defined 
+versions can be found in  `intellij_platform_sdk/build_defs.bzl`.
 
 ## Contributions
 

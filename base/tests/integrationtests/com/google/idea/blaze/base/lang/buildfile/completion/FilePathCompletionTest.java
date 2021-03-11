@@ -32,7 +32,7 @@ import org.junit.runners.JUnit4;
 public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
 
   @Test
-  public void testUniqueDirectoryCompleted() {
+  public void testUniqueDirectoryCompleted() throws Throwable {
     BuildFile file = createBuildFile(new WorkspacePath("java/BUILD"), "'//'");
 
     Editor editor = editorTest.openFileInEditor(file);
@@ -45,7 +45,7 @@ public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testInsertPairQuoteOptionRespected() {
+  public void testInsertPairQuoteOptionRespected() throws Throwable {
     boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE;
     try {
       CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE = false;
@@ -69,7 +69,7 @@ public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testUniqueMultiSegmentDirectoryCompleted() {
+  public void testUniqueMultiSegmentDirectoryCompleted() throws Throwable {
     BuildFile file = createBuildFile(new WorkspacePath("java/com/google/BUILD"), "'//'");
 
     Editor editor = editorTest.openFileInEditor(file);
@@ -80,7 +80,7 @@ public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
-  public void testStopDirectoryTraversalAtBuildPackage() {
+  public void testStopDirectoryTraversalAtBuildPackage() throws Throwable {
     workspace.createFile(new WorkspacePath("foo/bar/BUILD"));
     workspace.createFile(new WorkspacePath("foo/bar/baz/BUILD"));
 
@@ -96,7 +96,7 @@ public class FilePathCompletionTest extends BuildFileIntegrationTestCase {
   // get the possibilities, then start typing
   // next segment and complete again
   @Test
-  public void testMultiStageCompletion() {
+  public void testMultiStageCompletion() throws Throwable {
     workspace.createDirectory(new WorkspacePath("foo"));
     workspace.createDirectory(new WorkspacePath("bar"));
     workspace.createDirectory(new WorkspacePath("other"));

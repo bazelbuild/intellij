@@ -20,9 +20,10 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.sdkcompat.testframework.fixtures.CompletionAutoPopupTesterAdapter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
+import com.intellij.util.ThrowableRunnable;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,11 +33,11 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestCase {
 
-  private CompletionAutoPopupTester completionTester;
+  private CompletionAutoPopupTesterAdapter completionTester;
 
   @Before
   public final void before() {
-    completionTester = new CompletionAutoPopupTester(testFixture);
+    completionTester = new CompletionAutoPopupTesterAdapter(testFixture);
   }
 
   /** Completion UI testing can't be run on the EDT. */
@@ -47,64 +48,72 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
 
   @Test
   public void testIncompleteFuncall() throws Throwable {
+    // #api202: remove redundant cast "(ThrowableRunnable<Throwable>)"
     completionTester.runWithAutoPopupEnabled(
-        () -> {
-          BuildFile file =
-              createBuildFile(
-                  new WorkspacePath("BUILD"),
-                  "def function(name, deps, srcs):",
-                  "  # empty function",
-                  "function(de");
+        (ThrowableRunnable<Throwable>)
+            () -> {
+              BuildFile file =
+                  createBuildFile(
+                      new WorkspacePath("BUILD"),
+                      "def function(name, deps, srcs):",
+                      "  # empty function",
+                      "function(de");
 
-          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "function(de".length());
+              Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+              editorTest.setCaretPosition(editor, 2, "function(de".length());
 
-          completionTester.typeWithPauses("p");
-          LookupElement[] completionItems = testFixture.completeBasic();
-          assertThat(completionItems).isNull();
+              completionTester.typeWithPauses("p");
+              LookupElement[] completionItems = testFixture.completeBasic();
+              assertThat(completionItems).isNull();
 
-          assertFileContents(
-              file, "def function(name, deps, srcs):", "  # empty function", "function(deps");
-        });
+              assertFileContents(
+                  file, "def function(name, deps, srcs):", "  # empty function", "function(deps");
+            });
   }
 
   @Test
   public void testExistingKeywordArg() throws Throwable {
+    // #api202: remove redundant cast "(ThrowableRunnable<Throwable>)"
     completionTester.runWithAutoPopupEnabled(
-        () -> {
-          BuildFile file =
-              createBuildFile(
-                  new WorkspacePath("BUILD"),
-                  "def function(name, deps, srcs):",
-                  "  # empty function",
-                  "function(name = \"lib\")");
+        (ThrowableRunnable<Throwable>)
+            () -> {
+              BuildFile file =
+                  createBuildFile(
+                      new WorkspacePath("BUILD"),
+                      "def function(name, deps, srcs):",
+                      "  # empty function",
+                      "function(name = \"lib\")");
 
-          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "function(".length());
+              Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+              editorTest.setCaretPosition(editor, 2, "function(".length());
 
-          completionTester.joinAutopopup();
-          completionTester.joinCompletion();
-          String[] completionItems = editorTest.getCompletionItemsAsStrings();
-          assertThat(completionItems).asList().containsAllOf("name", "deps", "srcs", "function");
-        });
+              completionTester.joinAutopopup();
+              completionTester.joinCompletion();
+              String[] completionItems = editorTest.getCompletionItemsAsStrings();
+              assertThat(completionItems)
+                  .asList()
+                  .containsAllOf("name", "deps", "srcs", "function");
+            });
   }
 
   @Test
   public void testNoArgumentCompletionInComment() throws Throwable {
+    // #api202: remove redundant cast "(ThrowableRunnable<Throwable>)"
     completionTester.runWithAutoPopupEnabled(
-        () -> {
-          BuildFile file =
-              createBuildFile(
-                  new WorkspacePath("BUILD"),
-                  "def function(name, deps, srcs):",
-                  "  # empty function",
-                  "function(#");
+        (ThrowableRunnable<Throwable>)
+            () -> {
+              BuildFile file =
+                  createBuildFile(
+                      new WorkspacePath("BUILD"),
+                      "def function(name, deps, srcs):",
+                      "  # empty function",
+                      "function(#");
 
-          Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
-          editorTest.setCaretPosition(editor, 2, "function(#".length());
+              Editor editor = editorTest.openFileInEditor(file.getVirtualFile());
+              editorTest.setCaretPosition(editor, 2, "function(#".length());
 
-          completionTester.typeWithPauses("n");
-          assertThat(testFixture.getLookup()).isNull();
-        });
+              completionTester.typeWithPauses("n");
+              assertThat(testFixture.getLookup()).isNull();
+            });
   }
 }

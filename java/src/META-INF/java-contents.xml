@@ -169,5 +169,7 @@
                     interface="com.google.idea.blaze.java.fastbuild.FastBuildCompilationModification"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.AttachSourcesFilter"
                     interface="com.google.idea.blaze.java.sync.model.AttachSourcesFilter"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.HotSwapCommandBuilder"
+                    interface="com.google.idea.blaze.java.run.hotswap.HotSwapCommandBuilder"/>
   </extensionPoints>
 </idea-plugin>

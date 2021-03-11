@@ -50,7 +50,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   }
 
   @Test
-  public void testSimpleTopLevelCompletion() {
+  public void testSimpleTopLevelCompletion() throws Throwable {
     setRules("rule_one", "rule_two");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "");
@@ -64,7 +64,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   }
 
   @Test
-  public void testUniqueTopLevelCompletion() {
+  public void testUniqueTopLevelCompletion() throws Throwable {
     setRules("rule_one", "rule_two");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "rule_o");
@@ -77,7 +77,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   }
 
   @Test
-  public void testSkylarkNativeCompletion() {
+  public void testSkylarkNativeCompletion() throws Throwable {
     setRules("rule_one", "rule_two");
 
     BuildFile file =
@@ -94,7 +94,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   }
 
   @Test
-  public void testNoCompletionInsideRule() {
+  public void testNoCompletionInsideRule() throws Throwable {
     ServiceHelper.unregisterLanguageExtensionPoint(
         "com.intellij.completion.contributor",
         BuiltInSymbolCompletionContributor.class,
@@ -115,7 +115,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   }
 
   @Test
-  public void testNoCompletionInComment() {
+  public void testNoCompletionInComment() throws Throwable {
     setRules("rule_one", "rule_two");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "#rule");
@@ -127,7 +127,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   }
 
   @Test
-  public void testNoCompletionAfterInteger() {
+  public void testNoCompletionAfterInteger() throws Throwable {
     setRules("rule_one", "rule_two");
 
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "1");
@@ -139,7 +139,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   }
 
   @Test
-  public void testGlobalFunctions() {
+  public void testGlobalFunctions() throws Throwable {
     BuildFile file = createBuildFile(new WorkspacePath("BUILD"), "licen");
 
     Editor editor = editorTest.openFileInEditor(file.getVirtualFile());

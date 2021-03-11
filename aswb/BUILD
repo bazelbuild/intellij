@@ -65,8 +65,7 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
-        "android-studio-4.1": glob(["tests/utils/sdkcompat/as41/com/android/sdklib/repository/*.java"]),
-        "android-studio-4.2": glob(["tests/utils/sdkcompat/as41/com/android/sdklib/repository/*.java"]),
+        "android-studio-4.2": glob(["tests/utils/sdkcompat/as42/com/android/sdklib/repository/*.java"]),
         "android-studio-2020.3": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
     }),
     deps = [
@@ -86,7 +85,6 @@ java_library(
 java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "android-studio-4.1": glob(["sdkcompat/as41/**/*.java"]),
         "android-studio-4.2": glob(["sdkcompat/as42/**/*.java"]),
         "android-studio-2020.3": glob(["sdkcompat/as203/**/*.java"]),
     }),
@@ -137,15 +135,6 @@ test_suite(
 intellij_integration_test_suite(
     name = "normal_integration_tests",
     srcs = select_for_plugin_api({
-        "android-studio-4.1": glob(
-            ["tests/integrationtests/**/*.java"],
-            exclude = [
-                "tests/integrationtests/com/google/idea/blaze/android/cppimpl/debug/BlazeAndroidNativeDebuggingTest.java",  # Required SDK APIs aren't present in api41
-                "tests/integrationtests/com/google/idea/blaze/android/functional/BlazeModuleSystemDependentLibrariesIntegrationTest.java",  # Required SDK APIs aren't present in api41
-                "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
-                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",  # Required SDK APIs aren't present in api41
-            ],
-        ),
         "android-studio-4.2": glob(
             ["tests/integrationtests/**/*.java"],
             exclude = [

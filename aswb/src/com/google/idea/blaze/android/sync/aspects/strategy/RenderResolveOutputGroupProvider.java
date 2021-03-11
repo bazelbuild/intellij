@@ -29,16 +29,14 @@ public class RenderResolveOutputGroupProvider implements OutputGroupsProvider {
   @Override
   public ImmutableSet<String> getAdditionalOutputGroups(
       OutputGroup outputGroup, ImmutableSet<LanguageClass> activeLanguages) {
-    // Skip this output group if
-    //   - OutputGroup.RESOLVE is not being considered
-    //   - Android language is not enabled
-    //   - RenderJarClassFileFinder is disabled
-    if (!outputGroup.equals(OutputGroup.RESOLVE)
+    if (!(outputGroup.equals(OutputGroup.RESOLVE) || outputGroup.equals(OutputGroup.COMPILE))
         || !activeLanguages.contains(LanguageClass.ANDROID)
         || !RenderJarClassFileFinder.isEnabled()) {
       return ImmutableSet.of();
     }
 
+    // we want Render Jars to be built for syncs (OutputGroup.RESOLVE) and builds
+    // (OutputGroup.COMPILE) for android projects whenever RenderJarClassFileFinder is enabled
     return RESOLVE_OUTPUT_GROUP;
   }
 }
