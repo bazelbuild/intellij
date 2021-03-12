@@ -26,7 +26,6 @@ import com.android.tools.idea.ui.designer.EditorDesignSurface;
 import com.android.utils.HtmlBuilder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.Maps;
 import com.google.common.collect.SortedSetMultimap;
 import com.google.common.collect.TreeMultimap;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -59,11 +58,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
 
 /** Contribute blaze specific render errors. */
@@ -102,66 +97,9 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
       return getIssues();
     }
 
-    reportGeneratedResources(resourceModule, targetMap, decoder);
     reportNonStandardAndroidManifestName(target, decoder);
     reportResourceTargetShouldDependOnClassTarget(target, targetMap, decoder);
     return getIssues();
-  }
-
-  /**
-   * We can't find generated resources. If a layout uses them, the layout won't render correctly.
-   */
-  private void reportGeneratedResources(
-      AndroidResourceModule resourceModule, TargetMap targetMap, ArtifactLocationDecoder decoder) {
-    Map<String, Throwable> brokenClasses = logger.getBrokenClasses();
-    if (brokenClasses == null || brokenClasses.isEmpty()) {
-      return;
-    }
-
-    // Sorted entries for deterministic error message.
-    SortedMap<ArtifactLocation, TargetIdeInfo> generatedResources =
-        Maps.newTreeMap(getGeneratedResources(targetMap.get(resourceModule.targetKey)));
-
-    for (TargetKey dependency : resourceModule.transitiveResourceDependencies) {
-      generatedResources.putAll(getGeneratedResources(targetMap.get(dependency)));
-    }
-
-    if (generatedResources.isEmpty()) {
-      return;
-    }
-
-    HtmlBuilder builder = new HtmlBuilder();
-    builder.add("Generated resources will not be discovered by the IDE:");
-    builder.beginList();
-    for (Map.Entry<ArtifactLocation, TargetIdeInfo> entry : generatedResources.entrySet()) {
-      ArtifactLocation resource = entry.getKey();
-      TargetIdeInfo target = entry.getValue();
-      builder.listItem().add(resource.getRelativePath()).add(" from ");
-      addTargetLink(builder, target, decoder);
-    }
-    builder
-        .endList()
-        .add("Please avoid using generated resources, ")
-        .addLink("then ", "sync the project", " ", getLinkManager().createSyncProjectUrl())
-        .addLink("and ", "refresh the layout", ".", getLinkManager().createRefreshRenderUrl());
-    addIssue()
-        .setSeverity(HighlightSeverity.ERROR, HIGH_PRIORITY + 1) // Reported above broken classes
-        .setSummary("Generated resources")
-        .setHtmlContent(builder)
-        .build();
-  }
-
-  private static SortedMap<ArtifactLocation, TargetIdeInfo> getGeneratedResources(
-      TargetIdeInfo target) {
-    if (target == null || target.getAndroidIdeInfo() == null) {
-      return Collections.emptySortedMap();
-    }
-    SortedMap<ArtifactLocation, TargetIdeInfo> generatedResources = Maps.newTreeMap();
-    generatedResources.putAll(
-        target.getAndroidIdeInfo().getResources().stream()
-            .filter(ArtifactLocation::isGenerated)
-            .collect(Collectors.toMap(Function.identity(), resource -> target)));
-    return generatedResources;
   }
 
   /**

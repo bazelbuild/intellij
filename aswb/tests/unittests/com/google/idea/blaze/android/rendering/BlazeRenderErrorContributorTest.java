@@ -65,21 +65,23 @@ import com.intellij.openapi.fileTypes.MockFileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JvmPsiConversionHelper;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.JavaPsiFacadeImpl;
 import com.intellij.psi.impl.JvmPsiConversionHelperImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.search.ProjectScopeBuilderImpl;
 import java.io.File;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -103,6 +105,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     applicationServices.register(FileTypeManager.class, new MockFileTypeManager());
 
     projectServices.register(ProjectFileIndex.class, mock(ProjectFileIndex.class));
+    projectServices.register(FileIndexFacade.class, mock(FileIndexFacade.class));
     projectServices.register(BuildReferenceManager.class, new MockBuildReferenceManager(project));
     projectServices.register(TransitiveDependencyMap.class, new TransitiveDependencyMap(project));
     projectServices.register(ProjectScopeBuilder.class, new ProjectScopeBuilderImpl(project));
@@ -173,43 +176,6 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
   }
 
   @Test
-  public void testReportGeneratedResources() {
-    createTargetMapWithGeneratedResources();
-    RenderErrorModel errorModel = createRenderErrorModelWithBrokenClasses();
-
-    RenderErrorModel.Issue generatedResourcesIssue =
-        Iterables.getOnlyElement(
-            errorModel.getIssues().stream()
-                .filter(issue -> issue.getSummary().equals(GENERATED_RESOURCES_ERROR))
-                .collect(Collectors.toList()));
-
-    assertThat(generatedResourcesIssue.getHtmlContent())
-        .isEqualTo(
-            "Generated resources will not be discovered by the IDE:"
-                + "<DL>"
-                + "<DD>-&NBSP;"
-                + "com/google/example/dependency/generated/res "
-                + "from <A HREF=\"file:///src/com/google/example/dependency/BUILD\">"
-                + "//com/google/example:generated</A>"
-                + "<DD>-&NBSP;"
-                + "com/google/example/main/generated/res "
-                + "from <A HREF=\"file:///src/com/google/example/main/BUILD\">"
-                + "//com/google/example:main</A>"
-                + "<DD>-&NBSP;"
-                + "com/google/example/transitive/generated/one/res "
-                + "from <A HREF=\"file:///src/com/google/example/transitive/BUILD\">"
-                + "//com/google/example/transitive:generated</A>"
-                + "<DD>-&NBSP;"
-                + "com/google/example/transitive/generated/two/res "
-                + "from <A HREF=\"file:///src/com/google/example/transitive/BUILD\">"
-                + "//com/google/example/transitive:generated</A>"
-                + "</DL>"
-                + "Please avoid using generated resources, then "
-                + "<A HREF=\"action:sync\">sync the project</A> and "
-                + "<A HREF=\"refreshRender\">refresh the layout</A>.");
-  }
-
-  @Test
   public void testReportNonStandardAndroidManifestName() {
     createTargetMapWithNonStandardAndroidManifestName();
     RenderErrorModel errorModel = createRenderErrorModelWithBrokenClasses();
@@ -244,7 +210,6 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
             issue -> assertThat(issue.getSummary()).isNotEqualTo(NON_STANDARD_MANIFEST_NAME_ERROR));
   }
 
-  @Ignore("b/145809318")
   @Test
   public void testReportMissingClassDependencies() {
     createTargetMapWithMissingClassDependency();
@@ -297,7 +262,6 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
                 + "but the layout editor needs them to be correct.</B>");
   }
 
-  @Ignore("b/145809318")
   @Test
   public void testNoReportMissingClassDependenciesIfClassInSameTarget() {
     createTargetMapWithMissingClassDependency();
@@ -310,7 +274,6 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
             issue -> assertThat(issue.getSummary()).isNotEqualTo(MISSING_CLASS_DEPENDENCIES_ERROR));
   }
 
-  @Ignore("b/145809318")
   @Test
   public void testNoReportMissingClassDependenciesIfClassInDependency() {
     createTargetMapWithMissingClassDependency();
@@ -349,161 +312,6 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
         .setRootExecutionPathFragment(isSource ? "" : BLAZE_BIN)
         .setRelativePath(relativePath)
         .build();
-  }
-
-  private void createTargetMapWithGeneratedResources() {
-    Label mainResourcesTarget = Label.create("//com/google/example:main");
-    Label dependencyGeneratedResourceTarget = Label.create("//com/google/example:generated");
-    Label dependencySourceResourceTarget = Label.create("//com/google/example:source");
-    Label transitiveGeneratedResourcesTarget =
-        Label.create("//com/google/example/transitive:generated");
-    Label transitiveSourceResourceTarget = Label.create("//com/google/example/transitive:source");
-    Label unrelatedGeneratedResourceTarget = Label.create("//com/google/unrelated:generated");
-    Label unrelatedSourceResourceTarget = Label.create("//com/google/unrelated:source");
-
-    ArtifactLocation mainGeneratedResource =
-        artifact("com/google/example/main/generated/res", false);
-    ArtifactLocation mainSourceResource = artifact("com/google/example/main/source/res", true);
-    ArtifactLocation dependencyGeneratedResource =
-        artifact("com/google/example/dependency/generated/res", false);
-    ArtifactLocation dependencySourceResource =
-        artifact("com/google/example/dependency/source/res", true);
-    ArtifactLocation transitiveGeneratedResourceOne =
-        artifact("com/google/example/transitive/generated/one/res", false);
-    ArtifactLocation transitiveGeneratedResourceTwo =
-        artifact("com/google/example/transitive/generated/two/res", false);
-    ArtifactLocation transitiveSourceResource =
-        artifact("com/google/example/transitive/source/res", true);
-    ArtifactLocation unrelatedGeneratedResource =
-        artifact("com/google/unrelated/generated/res", false);
-    ArtifactLocation unrelatedSourceResource = artifact("com/google/unrelated/source/res", true);
-
-    ArtifactLocation mainBuildFile = artifact("com/google/example/main/BUILD", true);
-    ArtifactLocation dependencyBuildFile = artifact("com/google/example/dependency/BUILD", true);
-    ArtifactLocation transitiveBuildFile = artifact("com/google/example/transitive/BUILD", true);
-    ArtifactLocation unrelatedBuildFile = artifact("com/google/unrelated/BUILD", true);
-
-    AndroidResourceModuleRegistry registry = AndroidResourceModuleRegistry.getInstance(project);
-    registry.put(
-        module,
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(mainResourcesTarget))
-            // .addResource(mainGeneratedResource) // Dropped.
-            .addResource(mainSourceResource)
-            .addTransitiveResourceDependency(dependencyGeneratedResourceTarget)
-            .addTransitiveResource(dependencyGeneratedResource)
-            .addTransitiveResourceDependency(dependencySourceResourceTarget)
-            .addTransitiveResource(dependencySourceResource)
-            .addTransitiveResourceDependency(transitiveGeneratedResourcesTarget)
-            .addTransitiveResource(transitiveGeneratedResourceOne)
-            .addTransitiveResource(transitiveGeneratedResourceTwo)
-            .addTransitiveResourceDependency(transitiveSourceResourceTarget)
-            .addTransitiveResource(transitiveSourceResource)
-            .build());
-    // Not using these, but they should be in the registry.
-    registry.put(
-        mock(Module.class),
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(dependencyGeneratedResourceTarget))
-            // .addResource(dependencyGeneratedResource) // Dropped.
-            .addTransitiveResourceDependency(transitiveSourceResourceTarget)
-            .addTransitiveResource(transitiveSourceResource)
-            .build());
-    registry.put(
-        mock(Module.class),
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(dependencySourceResourceTarget))
-            .addResource(dependencySourceResource)
-            .addTransitiveResourceDependency(transitiveGeneratedResourcesTarget)
-            .addTransitiveResource(transitiveGeneratedResourceOne)
-            .addTransitiveResource(transitiveGeneratedResourceTwo)
-            .build());
-    registry.put(
-        mock(Module.class),
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(transitiveGeneratedResourcesTarget))
-            // .addResource(transitiveGeneratedResourceOne) // Dropped.
-            // .addResource(transitiveGeneratedResourceTwo) // Dropped.
-            .build());
-    registry.put(
-        mock(Module.class),
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(transitiveSourceResourceTarget))
-            .addResource(transitiveSourceResource)
-            .build());
-    registry.put(
-        mock(Module.class),
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(unrelatedGeneratedResourceTarget))
-            // .addResource(unrelatedGeneratedResource) // Dropped.
-            .build());
-    registry.put(
-        mock(Module.class),
-        AndroidResourceModule.builder(TargetKey.forPlainTarget(unrelatedSourceResourceTarget))
-            .addResource(unrelatedSourceResource)
-            .build());
-
-    TargetMap targetMap =
-        TargetMapBuilder.builder()
-            .addTarget(
-                mockTargetIdeInfoBuilder()
-                    .setLabel(mainResourcesTarget)
-                    .setBuildFile(mainBuildFile)
-                    .setAndroidInfo(
-                        AndroidIdeInfo.builder()
-                            .setGenerateResourceClass(true)
-                            .addResource(mainGeneratedResource)
-                            .addResource(mainSourceResource))
-                    .addDependency(dependencyGeneratedResourceTarget)
-                    .addDependency(dependencySourceResourceTarget))
-            .addTarget(
-                mockTargetIdeInfoBuilder()
-                    .setLabel(dependencyGeneratedResourceTarget)
-                    .setBuildFile(dependencyBuildFile)
-                    .setAndroidInfo(
-                        AndroidIdeInfo.builder()
-                            .setGenerateResourceClass(true)
-                            .addResource(dependencyGeneratedResource))
-                    .addDependency(transitiveSourceResourceTarget))
-            .addTarget(
-                mockTargetIdeInfoBuilder()
-                    .setLabel(dependencySourceResourceTarget)
-                    .setBuildFile(dependencyBuildFile)
-                    .setAndroidInfo(
-                        AndroidIdeInfo.builder()
-                            .setGenerateResourceClass(true)
-                            .addResource(dependencySourceResource))
-                    .addDependency(transitiveGeneratedResourcesTarget))
-            .addTarget(
-                mockTargetIdeInfoBuilder()
-                    .setLabel(transitiveGeneratedResourcesTarget)
-                    .setBuildFile(transitiveBuildFile)
-                    .setAndroidInfo(
-                        AndroidIdeInfo.builder()
-                            .setGenerateResourceClass(true)
-                            .addResource(transitiveGeneratedResourceOne)
-                            .addResource(transitiveGeneratedResourceTwo)))
-            .addTarget(
-                mockTargetIdeInfoBuilder()
-                    .setLabel(transitiveSourceResourceTarget)
-                    .setBuildFile(transitiveBuildFile)
-                    .setAndroidInfo(
-                        AndroidIdeInfo.builder()
-                            .setGenerateResourceClass(true)
-                            .addResource(transitiveSourceResource)))
-            .addTarget(
-                mockTargetIdeInfoBuilder()
-                    .setLabel(unrelatedGeneratedResourceTarget)
-                    .setBuildFile(unrelatedBuildFile)
-                    .setAndroidInfo(
-                        AndroidIdeInfo.builder()
-                            .setGenerateResourceClass(true)
-                            .addResource(unrelatedGeneratedResource)))
-            .addTarget(
-                mockTargetIdeInfoBuilder()
-                    .setLabel(unrelatedSourceResourceTarget)
-                    .setBuildFile(unrelatedBuildFile)
-                    .setAndroidInfo(
-                        AndroidIdeInfo.builder()
-                            .setGenerateResourceClass(true)
-                            .addResource(unrelatedSourceResource)))
-            .build();
-
-    projectDataManager.setTargetMap(targetMap);
   }
 
   private void createTargetMapWithNonStandardAndroidManifestName() {
@@ -646,8 +454,6 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
   }
 
   private void createPsiClassesAndSourceToTargetMap(Container projectServices) {
-    PsiManager psiManager = new MockPsiManager(project);
-
     VirtualFile independentLibraryView =
         new MockVirtualFile("src/com/google/example/independent/LibraryView.java");
     VirtualFile independentLibraryView2 =
@@ -684,11 +490,26 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
             VfsUtilCore.virtualToIoFile(resourceView),
             TargetKey.forPlainTarget(Label.create("//com/google/example:resources")));
 
-    /* b/145809318
-        projectServices.register(
-            JavaPsiFacade.class, new MockJavaPsiFacade(project, classes));
-    b/145809318 */
+    projectServices.register(JavaPsiFacade.class, new MockJavaPsiFacade(project, classes));
     projectServices.register(SourceToTargetMap.class, new MockSourceToTargetMap(sourceToTarget));
+  }
+
+  static class MockJavaPsiFacade extends JavaPsiFacadeImpl {
+    private final ImmutableMap<String, PsiClass> classes;
+
+    MockJavaPsiFacade(Project project, ImmutableMap<String, PsiClass> classes) {
+      super(project);
+      this.classes = classes;
+    }
+
+    @Nullable
+    @Override
+    public PsiClass findClass(String qualifiedName, GlobalSearchScope scope) {
+      if (scope.equals(GlobalSearchScope.projectScope(getProject()))) {
+        return classes.get(qualifiedName);
+      }
+      return null;
+    }
   }
 
   private static TargetIdeInfo.Builder mockTargetIdeInfoBuilder() {
