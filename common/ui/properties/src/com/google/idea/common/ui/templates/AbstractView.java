@@ -23,11 +23,11 @@ import javax.swing.event.AncestorEvent;
  * The view of the ViewModel architectural pattern that allows binding of the model's properties to
  * the Swing components of the view.
  */
-public abstract class AbstractView implements View {
-  private JComponent component;
+public abstract class AbstractView<C extends JComponent> implements View<C> {
+  private C component;
 
   @Override
-  public JComponent getComponent() {
+  public C getComponent() {
     if (component == null) {
       component = createComponent();
       component.addAncestorListener(
@@ -47,7 +47,7 @@ public abstract class AbstractView implements View {
   }
 
   /** Create a Swing component corresponding to the view. */
-  protected abstract JComponent createComponent();
+  protected abstract C createComponent();
 
   /** Bind properties of the model to Swing UI elements */
   protected abstract void bind();

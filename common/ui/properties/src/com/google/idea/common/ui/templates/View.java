@@ -18,8 +18,8 @@ package com.google.idea.common.ui.templates;
 import javax.swing.JComponent;
 
 /** The views of the ViewModel architectural pattern should implement this interface. */
-public interface View {
+public interface View<C extends JComponent> {
 
   /** Provides the Swing component that represents the view. */
-  JComponent getComponent();
+  C getComponent();
 }

@@ -23,6 +23,7 @@ java_library(
         "//common/actions",
         "//common/experiments",
         "//common/settings",
+        "//common/ui/properties",
         "//common/util:binaryhelper",
         "//common/util:concurrency",
         "//common/util:platform",

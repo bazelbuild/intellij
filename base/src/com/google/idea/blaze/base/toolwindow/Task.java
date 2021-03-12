@@ -16,6 +16,9 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -24,18 +27,40 @@ public final class Task {
   private final String name;
   private final Type type;
   @Nullable private Task parent;
+  private final List<Task> children;
+  private final List<Task> childrenReadOnlyView;
   private String status = "";
   @Nullable private Instant startTime;
   @Nullable private Instant endTime;
+  private boolean hasErrors;
 
+  /**
+   * Creates a new top level task without a parent.
+   *
+   * @param name name of new task
+   * @param type type of new task
+   */
   public Task(String name, Type type) {
     this(name, type, null);
   }
 
+  /**
+   * Creates a new task. If parent task is provided this new task will be listed in the parent's
+   * children.
+   *
+   * @param name name of new task
+   * @param type type of new task
+   * @param parent parent of the new task, null if the new task is a top level task.
+   */
   public Task(String name, Type type, @Nullable Task parent) {
     this.name = name;
     this.type = type;
     this.parent = parent;
+    children = new ArrayList<>();
+    childrenReadOnlyView = Collections.unmodifiableList(children);
+    if (parent != null) {
+      parent.children.add(this);
+    }
   }
 
   String getName() {
@@ -52,6 +77,14 @@ public final class Task {
 
   void setEndTime(Instant endTime) {
     this.endTime = endTime;
+  }
+
+  boolean getHasErrors() {
+    return hasErrors;
+  }
+
+  void setHasErrors(boolean hasErrors) {
+    this.hasErrors = hasErrors;
   }
 
   boolean isFinished() {
@@ -82,6 +115,14 @@ public final class Task {
     return Optional.ofNullable(endTime);
   }
 
+  /**
+   * Read-only view of the current children of the task. Callers shouldn't attempt to modify the
+   * returned unmodifiable list.
+   */
+  List<Task> getChildren() {
+    return childrenReadOnlyView;
+  }
+
   /** Type of the task. */
   public enum Type {
     // TODO(olegsa) consider merging some categories
@@ -94,7 +135,8 @@ public final class Task {
     DEPLOYABLE_JAR("DeployableJar"),
     BLAZE_MAKE("Blaze Make"),
     BLAZE_BEFORE_RUN("Blaze Before Run"),
-    BLAZE_SYNC("Blaze Sync");
+    BLAZE_SYNC("Blaze Sync"),
+    OTHER("Other");
 
     private final String displayName;
 
