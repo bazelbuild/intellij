@@ -47,12 +47,10 @@ import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.FileContentImpl;
-import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -207,12 +205,11 @@ public final class BaseSdkCompat {
 
   /**
    * #api202: {@link ConversionContext#getSettingsBaseDir()} returns Path instead of File since
-   * 2020.3
+   * 2020.3.
    */
-  public static Optional<File> getExternalDependenciesXml(
-      ConversionContext context, String dependenciesFileName) {
-    return Optional.ofNullable(context.getSettingsBaseDir())
-        .map(baseDir -> new File(baseDir.toFile(), dependenciesFileName));
+  @Nullable
+  public static Path getSettingsBaseDirWrapper(ConversionContext context) {
+    return context.getSettingsBaseDir();
   }
 
   // #api202 TODO(b/181105847) Replace EditorFacade.getInstance() in the future

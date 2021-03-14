@@ -53,7 +53,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 import javax.swing.JComponent;
@@ -206,13 +205,11 @@ public final class BaseSdkCompat {
   }
   /**
    * #api202: {@link ConversionContext#getSettingsBaseDir()} returns Path instead of File since
-   * 2020.3
+   * 2020.3.
    */
-  @SuppressWarnings("UnstableApiUsage")
-  public static Optional<File> getExternalDependenciesXml(
-      ConversionContext context, String dependenciesFileName) {
-    return Optional.ofNullable(context.getSettingsBaseDir())
-        .map(baseDir -> new File(baseDir, dependenciesFileName));
+  @Nullable
+  public static Path getSettingsBaseDirWrapper(ConversionContext context) {
+    return context.getSettingsBaseDir() == null ? null : context.getSettingsBaseDir().toPath();
   }
 
   // #api202 doWrapLongLinesIfNecessary not available anymore in CodeFormatterFacade
