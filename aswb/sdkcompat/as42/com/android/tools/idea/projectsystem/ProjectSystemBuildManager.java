@@ -30,16 +30,25 @@ public interface ProjectSystemBuildManager {
   void addBuildListener(Disposable parentDisposable, BuildListener buildListener);
 
   /** Status of a build. */
-  enum BuildStatus {};
+  enum BuildStatus {
+    SUCCESS,
+    FAILED,
+    UNKNOWN
+  };
 
   /** Type of build invocation. */
-  enum BuildMode {};
+  enum BuildMode {
+    COMPILE,
+    UNKNOWN
+  };
 
   /** Result of a build invocation. */
   public static class BuildResult {
     public static BuildResult createUnknownBuildResult() {
-      return new BuildResult();
+      return new BuildResult(BuildMode.UNKNOWN, BuildStatus.UNKNOWN, System.currentTimeMillis());
     }
+
+    public BuildResult(BuildMode buildMode, BuildStatus buildStatus, long timestampMillis) {}
   }
 
   /** Callbacks on build events. */

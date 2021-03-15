@@ -41,6 +41,7 @@
         serviceImplementation="com.google.idea.blaze.android.run.runner.BlazeAndroidDebuggerService$DefaultDebuggerService"/>
     <projectService serviceInterface="com.google.idea.blaze.android.targetmaps.TargetToBinaryMap"
         serviceImplementation="com.google.idea.blaze.android.targetmaps.TargetToBinaryMapImpl" />
+    <projectService serviceImplementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemBuildManager$LastBuildResultCache"/>
     <applicationService serviceImplementation="com.google.idea.blaze.android.settings.BlazeAndroidUserSettings"/>
     <applicationService serviceInterface="com.google.idea.blaze.android.sdk.BlazeSdkProvider"
       serviceImplementation="com.google.idea.blaze.android.sdk.BlazeSdkProviderImpl"/>
@@ -91,6 +92,7 @@
     <SyncListener implementation="com.google.idea.blaze.android.targetmaps.TargetToBinaryMapImpl$Adapter"/>
     <OutputGroupsProvider implementation="com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider"/>
     <ComposeStatusProvider implementation="com.google.idea.blaze.android.compose.ExperimentComposeStatusProvider"/>
+    <BlazeBuildListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemBuildManager$BuildCallbackPublisher"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">
