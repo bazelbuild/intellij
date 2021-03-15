@@ -16,7 +16,7 @@
 package com.google.idea.blaze.android.projectsystem;
 
 import com.android.tools.idea.projectsystem.ProjectSystemBuildManager;
-import com.google.idea.blaze.base.actions.BlazeBuildService;
+import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +31,7 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
 
   @Override
   public void compileProject() {
-    BlazeBuildService.getInstance().buildProject(project);
+    BlazeBuildService.getInstance(project).buildProject();
   }
 
   @Override

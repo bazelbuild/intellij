@@ -33,7 +33,7 @@ import com.android.tools.idea.sdk.AndroidSdks;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
-import com.google.idea.blaze.base.actions.BlazeBuildService;
+import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -90,7 +90,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
 
   // @Override #api42
   public void buildProject() {
-    BlazeBuildService.getInstance().buildProject(project);
+    BlazeBuildService.getInstance(project).buildProject();
   }
 
   // @Override #api42
