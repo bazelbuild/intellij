@@ -33,7 +33,11 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
-          name: clion-latest
+          name: clion-latest.zip
           path: |
             bazel-bin/clwb/clwb_bazel.zip
+      - uses: actions/upload-artifact@v2
+        with:
+          name: intellij-canary.zip
+          path: |
             bazel-bin/ijwb/ijwb_bazel.zip
