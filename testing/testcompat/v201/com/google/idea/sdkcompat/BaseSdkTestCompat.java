@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Bazel Authors. All rights reserved.
+ * Copyright 2021 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.common.ui.templates;
+package com.google.idea.sdkcompat;
 
-import javax.swing.JComponent;
+import java.io.File;
+import org.jetbrains.annotations.Nullable;
 
-/** The views of the ViewModel architectural pattern should implement this interface. */
-public interface View<C extends JComponent> {
-
-  /** Provides the Swing component that represents the view. */
-  C getComponent();
+/**
+ * Provides SDK compatibility shims for base plugin API classes, available to all IDEs during
+ * testtime.
+ */
+public final class BaseSdkTestCompat {
+  private BaseSdkTestCompat() {}
+  /** #api202 {@link TemporaryFolder#getRoot} mock call needs to return Path since 2020.3 */
+  @Nullable
+  public static File getRootWrapper(@Nullable File file) {
+    return file;
+  }
 }

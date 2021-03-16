@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.actions;
+package com.google.idea.blaze.base.build;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.Lists;
@@ -62,15 +62,21 @@ public class BlazeBuildService {
   private static final Key<Long> PROJECT_LAST_BUILD_TIMESTAMP_KEY =
       Key.create("blaze.project.last.build.timestamp");
 
-  public static BlazeBuildService getInstance() {
-    return ServiceManager.getService(BlazeBuildService.class);
+  public static BlazeBuildService getInstance(Project project) {
+    return ServiceManager.getService(project, BlazeBuildService.class);
   }
 
   public static Long getLastBuildTimeStamp(Project project) {
     return project.getUserData(PROJECT_LAST_BUILD_TIMESTAMP_KEY);
   }
 
-  public void buildFile(Project project, String fileName, ImmutableCollection<Label> targets) {
+  private final Project project;
+
+  public BlazeBuildService(Project project) {
+    this.project = project;
+  }
+
+  public void buildFile(String fileName, ImmutableCollection<Label> targets) {
     if (!Blaze.isBlazeProject(project) || fileName == null) {
       return;
     }
@@ -93,7 +99,7 @@ public class BlazeBuildService {
             "Make " + fileName + " failed"));
   }
 
-  public void buildProject(Project project) {
+  public void buildProject() {
     if (!Blaze.isBlazeProject(project)) {
       return;
     }
@@ -103,6 +109,7 @@ public class BlazeBuildService {
     if (projectView == null || projectData == null) {
       return;
     }
+
     ScopedFunction<List<TargetExpression>> targets =
         context -> {
           try {
@@ -184,6 +191,8 @@ public class BlazeBuildService {
                     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
                     SaveUtil.saveAllFiles();
+                    BlazeBuildListener.EP_NAME.extensions().forEach(e -> e.buildStarting(project));
+
                     ShardedTargetsResult shardedTargets =
                         BlazeBuildTargetSharder.expandAndShardTargets(
                             project,
@@ -212,6 +221,9 @@ public class BlazeBuildService {
                     if (buildResult.status != BuildResult.Status.SUCCESS) {
                       context.setHasError();
                     }
+                    BlazeBuildListener.EP_NAME
+                        .extensions()
+                        .forEach(ep -> ep.buildCompleted(project, buildResult));
                     return null;
                   }
                 });

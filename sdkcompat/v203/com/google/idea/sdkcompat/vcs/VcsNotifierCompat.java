@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2021 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.actions;
+package com.google.idea.sdkcompat.vcs;
 
-import com.google.idea.blaze.base.build.BlazeBuildService;
-import com.google.idea.blaze.base.logging.EventLoggingService;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsNotifier;
+import org.jetbrains.annotations.NonNls;
 
-class BlazeMakeProjectAction extends BlazeProjectAction {
+/**
+ * Compat for {@link VcsNotifier}. Logging methods take an additional displayId starting with
+ * 2020.3.
+ *
+ * <p>#api202
+ */
+public final class VcsNotifierCompat {
+  private VcsNotifierCompat() {}
 
-  @Override
-  protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    EventLoggingService.getInstance().logEvent(getClass(), "make");
-    BlazeBuildService.getInstance(project).buildProject();
+  public static void logInfo(
+      Project project, @NonNls String displayId, String title, String message) {
+    VcsNotifier.getInstance(project).logInfo(displayId, title, message);
   }
 }

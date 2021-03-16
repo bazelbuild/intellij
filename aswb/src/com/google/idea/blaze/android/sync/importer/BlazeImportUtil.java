@@ -157,13 +157,19 @@ public class BlazeImportUtil {
     if (projectData == null) {
       return Stream.empty();
     }
+    return getSourceTargetsStream(
+        project, projectData, ProjectViewManager.getInstance(project).getProjectViewSet());
+  }
 
+  /**
+   * Returns the stream of {@link TargetIdeInfo} corresponding to source targets in the given {@link
+   * Project}, {@link BlazeProjectData}, and {@link ProjectViewSet}
+   */
+  public static Stream<TargetIdeInfo> getSourceTargetsStream(
+      Project project, BlazeProjectData projectData, ProjectViewSet projectViewSet) {
     ProjectViewTargetImportFilter importFilter =
         new ProjectViewTargetImportFilter(
-            Blaze.getBuildSystem(project),
-            WorkspaceRoot.fromProject(project),
-            ProjectViewManager.getInstance(project).getProjectViewSet());
-
+            Blaze.getBuildSystem(project), WorkspaceRoot.fromProject(project), projectViewSet);
     return getSourceTargetsStream(projectData.getTargetMap(), importFilter);
   }
 

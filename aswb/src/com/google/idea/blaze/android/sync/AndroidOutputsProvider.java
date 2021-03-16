@@ -90,23 +90,16 @@ public class AndroidOutputsProvider implements OutputsProvider {
       return target.getJavaToolchainIdeInfo().getJavacJars();
     }
 
-    if (target.getAndroidIdeInfo() == null) {
+    AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
+    if (androidIdeInfo == null) {
       return ImmutableList.of();
     }
 
-    ImmutableList.Builder<ArtifactLocation> builder = ImmutableList.builder();
-    AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
-
     ArtifactLocation manifest = androidIdeInfo.getManifest();
-    if (manifest != null) {
-      builder.add(manifest);
+    if (manifest == null) {
+      return ImmutableList.of();
     }
 
-    ArtifactLocation deployJar = androidIdeInfo.getRenderResolveJar();
-    if (deployJar != null) {
-      builder.add(deployJar);
-    }
-
-    return builder.build();
+    return ImmutableList.of(manifest);
   }
 }

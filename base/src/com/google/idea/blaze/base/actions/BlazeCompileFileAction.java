@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.actions;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.common.actions.ActionPresentationHelper;
@@ -39,7 +40,7 @@ class BlazeCompileFileAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    BlazeBuildService.getInstance().buildFile(project, getFileName(e), getTargets(e));
+    BlazeBuildService.getInstance(project).buildFile(getFileName(e), getTargets(e));
   }
 
   private ImmutableCollection<Label> getTargets(AnActionEvent e) {

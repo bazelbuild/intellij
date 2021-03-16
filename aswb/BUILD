@@ -120,6 +120,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
+        "//testing:lib",
         "@junit//jar",
     ],
 )

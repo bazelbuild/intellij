@@ -41,6 +41,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.module.Module;
 import java.util.List;
+import org.jdom.Element;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -57,10 +58,12 @@ public class TestRecorderBlazeCommandRunConfigurationTest extends BlazeIntegrati
       new AndroidIntegrationTestSetupRule();
 
   private RunManagerImpl runManager;
+  private Element defaultRunManagerState;
 
   @Before
   public final void doSetup() {
     runManager = RunManagerImpl.getInstanceImpl(getProject());
+    defaultRunManagerState = runManager.getState();
     // Without BlazeProjectData, the configuration editor is always disabled.
     BlazeProjectDataManager mockProjectDataManager =
         new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
@@ -90,6 +93,7 @@ public class TestRecorderBlazeCommandRunConfigurationTest extends BlazeIntegrati
   @After
   public final void doTeardown() {
     runManager.clearAll();
+    runManager.loadState(defaultRunManagerState);
     // We don't need to do this at setup, because it is handled by RunManagerImpl's constructor.
     // However, clearAll() clears the configuration types, so we need to reinitialize them.
     runManager.initializeConfigurationTypes(

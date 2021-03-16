@@ -18,12 +18,10 @@ package com.google.idea.blaze.android.projectsystem;
 import com.android.tools.idea.projectsystem.ClassFileFinderUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.android.libraries.RenderJarCache;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.targetmaps.TargetToBinaryMap;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
-import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
@@ -221,24 +219,11 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
       return null;
     }
 
-    AndroidIdeInfo androidIdeInfo = ideInfo.getAndroidIdeInfo();
-    if (androidIdeInfo == null) {
-      return null;
-    }
-
-    ArtifactLocation renderResolveJar = androidIdeInfo.getRenderResolveJar();
-    if (renderResolveJar == null) {
-      return null;
-    }
-
     File renderResolveJarFile =
-        OutputArtifactResolver.resolve(
-            project, projectData.getArtifactLocationDecoder(), renderResolveJar);
+        RenderJarCache.getInstance(project)
+            .getCachedJarForBinaryTarget(projectData.getArtifactLocationDecoder(), ideInfo);
+
     if (renderResolveJarFile == null) {
-      log.warn(
-          String.format(
-              "Could not find render resolve jar for %s : %s",
-              binaryTarget.getLabel(), renderResolveJar));
       return null;
     }
 
