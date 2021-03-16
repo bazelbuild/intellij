@@ -28,10 +28,12 @@ jobs:
 
       - name: Build
         run: |
-          "${GITHUB_WORKSPACE}/bin/bazel" build //clwb:clwb_bazel_zip --define=ij_product=clion-2020.2
+          "${GITHUB_WORKSPACE}/bin/bazel" build //clwb:clwb_bazel_zip --define=ij_product=clion-beta
+          "${GITHUB_WORKSPACE}/bin/bazel" build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-canary
 
       - uses: actions/upload-artifact@v2
         with:
           name: clion-latest
           path: |
             bazel-bin/clwb/clwb_bazel.zip
+            bazel-bin/ijwb/ijwb_bazel.zip
