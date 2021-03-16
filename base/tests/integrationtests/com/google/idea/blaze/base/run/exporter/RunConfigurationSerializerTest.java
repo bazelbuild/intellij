@@ -52,11 +52,13 @@ import org.junit.runners.JUnit4;
 public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
 
   private RunManagerImpl runManager;
+  private Element defaultRunManagerState;
   private BlazeCommandRunConfiguration configuration;
 
   @Before
   public final void doSetup() {
     runManager = RunManagerImpl.getInstanceImpl(getProject());
+    defaultRunManagerState = runManager.getState();
     // Without BlazeProjectData, the configuration editor is always disabled.
     BlazeProjectDataManager mockProjectDataManager =
         new MockBlazeProjectDataManager(MockBlazeProjectDataBuilder.builder(workspaceRoot).build());
@@ -65,7 +67,8 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
     RunnerAndConfigurationSettings runnerAndConfigurationSettings =
         runManager.createConfiguration(
             "Bazel Configuration", BlazeCommandRunConfigurationType.getInstance().getFactory());
-    runManager.addConfiguration(runnerAndConfigurationSettings, false);
+    runnerAndConfigurationSettings.storeInLocalWorkspace();
+    runManager.addConfiguration(runnerAndConfigurationSettings);
     configuration =
         (BlazeCommandRunConfiguration) runnerAndConfigurationSettings.getConfiguration();
   }
@@ -73,6 +76,15 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
   @After
   public final void doTeardown() {
     clearRunManager();
+  }
+
+  private void clearRunManager() {
+    runManager.clearAll();
+    runManager.loadState(defaultRunManagerState);
+    // We don't need to do this at setup, because it is handled by RunManagerImpl's constructor.
+    // However, clearAll() clears the configuration types, so we need to reinitialize them.
+    runManager.initializeConfigurationTypes(
+        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList());
   }
 
   @Test
@@ -122,14 +134,6 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
     assertThat(normalizedConfig.getName()).isEqualTo("ExampleConfig");
   }
 
-  private void clearRunManager() {
-    runManager.clearAll();
-    // We don't need to do this at setup, because it is handled by RunManagerImpl's constructor.
-    // However, clearAll() clears the configuration types, so we need to reinitialize them.
-    runManager.initializeConfigurationTypes(
-        ConfigurationType.CONFIGURATION_TYPE_EP.getExtensionList());
-  }
-
   @Test
   public void testRunConfigurationUnalteredBySerializationRoundTrip() throws InvalidDataException {
     configuration.setTarget(Label.create("//package:rule"));
@@ -160,7 +164,7 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
     clearRunManager(); // remove configuration from project
     RunConfigurationSerializer.loadFromXmlElementIgnoreExisting(getProject(), element);
 
-    RunConfiguration config = runManager.getAllConfigurations()[0];
+    RunConfiguration config = runManager.getAllConfigurationsList().get(0);
     assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
     assertThat(((BlazeCommandRunConfiguration) config).getKeepInSync()).isTrue();
   }
@@ -179,6 +183,7 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
   @Test
   public void testConvertAbsolutePathToWorkspacePathVariableWhenSerializing() {
     WorkspacePath binaryPath = WorkspacePath.createIfValid("path/to/binary/blaze");
+    assertThat(binaryPath).isNotNull();
     String absoluteBinaryPath = workspaceRoot.fileForPath(binaryPath).getPath();
     setBlazeBinaryPath(configuration, absoluteBinaryPath);
 
@@ -191,7 +196,7 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
     clearRunManager(); // remove configuration from project
     RunConfigurationSerializer.loadFromXmlElementIgnoreExisting(getProject(), element);
 
-    RunConfiguration config = runManager.getAllConfigurations()[0];
+    RunConfiguration config = runManager.getAllConfigurationsList().get(0);
     assertThat(config).isInstanceOf(BlazeCommandRunConfiguration.class);
     assertThat(getBlazeBinaryPath((BlazeCommandRunConfiguration) config))
         .isEqualTo(absoluteBinaryPath);
@@ -200,6 +205,7 @@ public class RunConfigurationSerializerTest extends BlazeIntegrationTestCase {
   private static void setBlazeBinaryPath(BlazeCommandRunConfiguration configuration, String path) {
     BlazeCommandRunConfigurationCommonState state =
         configuration.getHandlerStateIfType(BlazeCommandRunConfigurationCommonState.class);
+    assertThat(state).isNotNull();
     state.getBlazeBinaryState().setBlazeBinary(path);
   }
 
