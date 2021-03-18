@@ -6,14 +6,7 @@ package(default_visibility = ["//visibility:public"])
 
 java_import(
     name = "sdk",
-    jars = glob(
-        [
-            "clion-*/lib/*.jar",
-            "clion-*/plugins/clion-test-google/lib/*.jar",
-            "clion-*/plugins/clion-test-catch/lib/*.jar",
-            "clion-*/plugins/clion-test-boost/lib/*.jar",
-        ],
-    ),
+    jars = glob(["clion-*/lib/*.jar"]),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
 )
@@ -23,6 +16,20 @@ java_import(
     jars = glob([
         "clion-*/lib/failureaccess-*.jar",
         "clion-*/lib/guava-*.jar",
+    ]),
+)
+
+java_import(
+    name = "jsr305",
+    jars = glob(["clion-*/lib/jsr305.jar"]),
+)
+
+java_import(
+    name = "clion_test",
+    jars = glob([
+        "clion-*/plugins/clion-test-google/lib/*.jar",
+        "clion-*/plugins/clion-test-catch/lib/*.jar",
+        "clion-*/plugins/clion-test-boost/lib/*.jar",
     ]),
 )
 
@@ -62,21 +69,6 @@ java_import(
 java_import(
     name = "python",
     jars = glob(["clion-*/plugins/python-ce/lib/*.jar"]),
-)
-
-java_import(
-    name = "forms_rt",
-    jars = glob(["clion-*/lib/forms_rt.jar"]),
-)
-
-java_import(
-    name = "objenesis",
-    jars = glob(["clion-*/lib/objenesis-*.jar"]),
-)
-
-java_import(
-    name = "jsr305",
-    jars = glob(["clion-*/lib/jsr305.jar"]),
 )
 
 # The plugins required by CLwB. Presumably there will be some, when we write
