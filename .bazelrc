@@ -1,0 +1,4 @@
+build --java_language_version=11
+
+build --host_javabase=@bazel_tools//tools/jdk:remote_jdk11
+build --javabase=@bazel_tools//tools/jdk:remote_jdk11
