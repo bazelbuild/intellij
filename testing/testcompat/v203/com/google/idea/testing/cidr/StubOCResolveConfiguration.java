@@ -16,8 +16,10 @@
 package com.google.idea.testing.cidr;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.toolchains.CidrFileSeparators;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Stub {@link OCResolveConfiguration} for testing.
@@ -32,5 +34,10 @@ public class StubOCResolveConfiguration extends StubOCResolveConfigurationBase {
   @Override
   public CidrFileSeparators getFileSeparators() {
     return CidrFileSeparators.UNIX;
+  }
+
+  @Override
+  public boolean hasSourceFile(@NotNull VirtualFile virtualFile) {
+    return false;
   }
 }
