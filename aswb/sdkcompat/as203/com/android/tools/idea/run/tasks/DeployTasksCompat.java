@@ -16,16 +16,15 @@
 package com.android.tools.idea.run.tasks;
 
 import com.android.tools.idea.deploy.DeploymentConfiguration;
+import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.util.SwapInfo;
 import com.android.tools.idea.run.util.SwapInfo.SwapType;
-import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
-import java.io.File;
-import java.util.List;
+import java.util.Collection;
 
 /** Compat class for {@link DeployTask} */
 public class DeployTasksCompat {
@@ -34,17 +33,13 @@ public class DeployTasksCompat {
 
   private DeployTasksCompat() {}
 
-  // #api4.0 : Constructor signature changed in 4.1
   public static LaunchTask createDeployTask(
-      Project project,
-      ImmutableMap<String, List<File>> filesToInstall,
-      LaunchOptions launchOptions) {
+      Project project, Collection<ApkInfo> packages, LaunchOptions launchOptions) {
     // We don't have a device information, fallback to the most conservative
     // install option.
     return new DeployTask(
         project,
-        filesToInstall,
-        null, // Live update not supported
+        packages,
         launchOptions.getPmInstallOptions(/*device=*/ null),
         launchOptions.getInstallOnAllUsers(),
         launchOptions.getAlwaysInstallWithPm());
@@ -54,7 +49,7 @@ public class DeployTasksCompat {
       Project project,
       ExecutionEnvironment env,
       LaunchOptions launchOptions,
-      ImmutableMap<String, List<File>> filesToInstall) {
+      Collection<ApkInfo> packages) {
     if (updateCodeViaJvmti.getValue()) {
       // Set the appropriate action based on which deployment we're doing.
       SwapInfo swapInfo = env.getUserData(SwapInfo.SWAP_INFO_KEY);
@@ -62,18 +57,18 @@ public class DeployTasksCompat {
       if (swapType == SwapType.APPLY_CHANGES) {
         return new ApplyChangesTask(
             project,
-            filesToInstall,
+            packages,
             DeploymentConfiguration.getInstance().APPLY_CHANGES_FALLBACK_TO_RUN,
             false);
       } else if (swapType == SwapType.APPLY_CODE_CHANGES) {
         return new ApplyCodeChangesTask(
             project,
-            filesToInstall,
+            packages,
             DeploymentConfiguration.getInstance().APPLY_CODE_CHANGES_FALLBACK_TO_RUN,
             false);
       }
     }
     return BlazeAndroidDeploymentService.getInstance(project)
-        .getDeployTask(filesToInstall, launchOptions);
+        .getDeployTask(packages, launchOptions);
   }
 }

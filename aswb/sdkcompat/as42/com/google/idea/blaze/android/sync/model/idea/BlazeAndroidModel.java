@@ -43,4 +43,10 @@ public class BlazeAndroidModel extends BlazeAndroidModelBase {
   public Namespacing getNamespacing() {
     return Namespacing.DISABLED;
   }
+
+  @Nullable
+  @Override
+  public Integer getVersionCode() {
+    return null;
+  }
 }

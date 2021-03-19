@@ -36,7 +36,7 @@ import com.intellij.openapi.project.Project;
 import java.util.Collection;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
-public class BlazeModuleSystem extends BlazeModuleSystemBase {
+public class BlazeModuleSystem extends BlazeModuleSystemBase implements BlazeClassFileFinder {
   BlazeModuleSystem(Module module) {
     super(module);
   }
@@ -49,6 +49,17 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
   // @Override #api4.0
   public Collection<ExternalLibrary> getResolvedDependentLibraries() {
     return getDependentLibraries();
+  }
+
+  @Override
+  public boolean shouldSkipResourceRegistration() {
+    return classFileFinder.shouldSkipResourceRegistration();
+  }
+
+  @Override
+  @Nullable
+  public VirtualFile findClassFile(String fqcn) {
+    return classFileFinder.findClassFile(fqcn);
   }
 
   public Collection<ExternalLibrary> getDependentLibraries() {

@@ -57,4 +57,47 @@ public class BlazeAndroidBinaryNormalBuildRunContext
         runConfiguration.getType().getId(),
         null);
   }
+
+  @Nullable
+  @Override
+  public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
+      throws ExecutionException {
+    ImmutableMap<String, List<File>> filesToInstall =
+        getFilesToInstall(device, launchOptions, apkProvider);
+    return ImmutableList.of(
+        DeployTasksCompat.getDeployTask(project, env, launchOptions, filesToInstall));
+  }
+
+  /**
+   * Returns a map from applicationId to the list of files to install for that applicationId,
+   * excluding any files for features that are disabled.
+   */
+  public static ImmutableMap<String, List<File>> getFilesToInstall(
+      IDevice device, LaunchOptions launchOptions, ApkProvider apkProvider)
+      throws ExecutionException {
+    Collection<ApkInfo> apks;
+    try {
+      apks = apkProvider.getApks(device);
+    } catch (ApkProvisionException e) {
+      throw new ExecutionException(e);
+    }
+    ImmutableMap.Builder<String, List<File>> filesToInstall = ImmutableMap.builder();
+    List<String> disabledFeatures = launchOptions.getDisabledDynamicFeatures();
+    for (ApkInfo apkInfo : apks) {
+      filesToInstall.put(apkInfo.getApplicationId(), getFilesToInstall(apkInfo, disabledFeatures));
+    }
+    return filesToInstall.build();
+  }
+
+  @NotNull
+  private static List<File> getFilesToInstall(ApkInfo apkInfo, List<String> disabledFeatures) {
+    if (apkInfo.getFiles().size() > 1) {
+      return apkInfo.getFiles().stream()
+          .filter(feature -> DynamicAppUtils.isFeatureEnabled(disabledFeatures, feature))
+          .map(ApkFileUnit::getApkFile)
+          .collect(Collectors.toList());
+    } else {
+      return ImmutableList.of(apkInfo.getFile());
+    }
+  }
 }

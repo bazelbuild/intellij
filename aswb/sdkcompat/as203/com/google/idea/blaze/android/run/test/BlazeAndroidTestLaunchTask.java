@@ -32,7 +32,7 @@ class BlazeAndroidTestLaunchTask extends BlazeAndroidTestLaunchTaskBase {
       Label target,
       List<String> buildFlags,
       BlazeAndroidTestFilter testFilter,
-      BlazeAndroidTestRunContext runContext,
+      BlazeAndroidTestRunContextBase runContext,
       boolean debug) {
     super(project, target, buildFlags, testFilter, runContext, debug);
   }

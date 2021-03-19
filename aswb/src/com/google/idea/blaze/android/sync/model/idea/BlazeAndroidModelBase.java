@@ -100,12 +100,6 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
     return null;
   }
 
-  @Nullable
-  @Override
-  public Integer getVersionCode() {
-    return null;
-  }
-
   @Override
   public boolean isGenerated(VirtualFile file) {
     return false;
