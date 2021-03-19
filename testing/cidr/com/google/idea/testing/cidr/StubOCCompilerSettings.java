@@ -98,8 +98,8 @@ class StubOCCompilerSettings implements OCCompilerSettings {
   }
 
   @Override
-  public String getPreprocessorDefines() {
-    return "";
+  public List<String> getPreprocessorDefines() {
+    return Collections.emptyList();
   }
 
   @Override
