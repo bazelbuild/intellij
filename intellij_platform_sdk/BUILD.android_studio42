@@ -9,20 +9,7 @@ exports_files(["LICENSE"])
 
 java_import(
     name = "sdk",
-    jars = glob(
-        # temporarily include the newly extracted java plugin and platform-images plugins in the core SDK
-        # see https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin/
-        # api#191: expose the java plugin as a separate target
-        # api#193: expose platform-images as a separate target
-        [
-            "android-studio/lib/*.jar",
-            "android-studio/plugins/java/lib/*.jar",
-            "android-studio/plugins/platform-images/lib/*.jar",
-        ],
-        # Plugin code shouldn't need junit, and plugin tests may be driven by a different version.
-        # Exclude to avoid warnings: "Multiple versions of JUnit detected on classpath".
-        exclude = glob(["lib/junit*.jar"]),
-    ),
+    jars = glob(["android-studio/lib/*.jar"]),
     tags = ["intellij-provided-by-sdk"],
     deps = [
         # guava v20+ requires this at compile-time when using annotation processors.
@@ -31,7 +18,27 @@ java_import(
 )
 
 java_import(
-    name = "android_plugin",
+    name = "guava",
+    jars = glob([
+        "android-studio/lib/failureaccess-*.jar",
+        "android-studio/lib/guava-*.jar",
+    ]),
+)
+
+java_library(name = "jsr305")  # not bundled
+
+java_import(
+    name = "java",
+    jars = glob(["android-studio/plugins/java/lib/*.jar"]),
+)
+
+java_import(
+    name = "platform_images",
+    jars = glob(["android-studio/plugins/platform-images/lib/*.jar"]),
+)
+
+java_import(
+    name = "android",
     jars = glob([
         "android-studio/plugins/android/lib/*.jar",
         "android-studio/plugins/android-layoutlib/lib/*.jar",
@@ -65,14 +72,6 @@ java_import(
 )
 
 java_import(
-    name = "guava",
-    jars = glob([
-        "android-studio/lib/failureaccess-*.jar",
-        "android-studio/lib/guava-*.jar",
-    ]),
-)
-
-java_import(
     name = "coverage",
     jars = glob(["android-studio/plugins/coverage/lib/*.jar"]),
 )
@@ -99,18 +98,6 @@ java_import(
     name = "terminal",
     jars = ["android-studio/plugins/terminal/lib/terminal.jar"],
 )
-
-java_import(
-    name = "forms_rt",
-    jars = ["android-studio/lib/forms_rt.jar"],
-)
-
-java_import(
-    name = "objenesis",
-    jars = glob(["android-studio/lib/objenesis-*.jar"]),
-)
-
-java_library(name = "jsr305") # not bundled
 
 # The plugins required by ASwB. We need to include them
 # when running integration tests.

@@ -6,15 +6,7 @@ package(default_visibility = ["//visibility:public"])
 
 java_import(
     name = "sdk",
-    jars = glob(
-        # temporarily include the newly extracted java plugin in the core SDK
-        # see https://blog.jetbrains.com/platform/2019/06/java-functionality-extracted-as-a-plugin/
-        # api#191: expose the java plugin as a separate target
-        [
-            "lib/*.jar",
-            "plugins/java/lib/*.jar",
-        ],
-    ),
+    jars = glob(["lib/*.jar"]),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
 )
@@ -25,6 +17,18 @@ java_import(
         "lib/failureaccess-*.jar",
         "lib/guava-*.jar",
     ]),
+)
+
+java_library(name = "jsr305")  # not bundled
+
+java_import(
+    name = "java",
+    jars = glob(["plugins/java/lib/*.jar"]),
+)
+
+java_import(
+    name = "platform_images",
+    jars = glob(["plugins/platform-images/lib/*.jar"]),
 )
 
 java_import(
@@ -87,18 +91,6 @@ java_import(
     name = "terminal",
     jars = glob(["plugins/terminal/lib/terminal.jar"]),
 )
-
-java_import(
-    name = "forms_rt",
-    jars = ["lib/forms_rt.jar"],
-)
-
-java_import(
-    name = "objenesis",
-    jars = glob(["lib/objenesis-*.jar"]),
-)
-
-java_library(name = "jsr305") # not bundled
 
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
