@@ -31,5 +31,6 @@ java_library(
         "intellij-ue-2020.3": ["//sdkcompat/v203"],
         "clion-2020.1": ["//sdkcompat/v201"],
         "clion-2020.2": ["//sdkcompat/v202"],
+        "clion-2020.3": ["//sdkcompat/v203"],
     }),
 )

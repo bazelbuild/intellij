@@ -27,6 +27,9 @@ java_import(
 java_import(
     name = "clion_plugins",
     jars = glob([
+        "clion-*/plugins/c-plugin/lib/*.jar",
+        "clion-*/plugins/cidr-base-plugin/lib/*.jar",
+        "clion-*/plugins/clion/lib/*.jar",
         "clion-*/plugins/clion-test-google/lib/*.jar",
         "clion-*/plugins/clion-test-catch/lib/*.jar",
         "clion-*/plugins/clion-test-boost/lib/*.jar",
