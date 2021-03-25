@@ -217,8 +217,8 @@ http_archive(
 http_archive(
     name = "android_studio_4_2",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio42",
-    sha256 = "ab67c136edad5ae269da4d06bc685ddc0436626481b5f33e272974cd429ffc57",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.22/android-studio-ide-202.7188722-linux.tar.gz",
+    sha256 = "c2d862f0d6b2aff485e7ba21de18bbb955db60f5a1c115bceadfce2644feae78",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.8/android-studio-ide-202.6787931-linux.tar.gz",
 )
 
 # The plugin api for Android Studio 2020.3. This is required to build ASwB,
