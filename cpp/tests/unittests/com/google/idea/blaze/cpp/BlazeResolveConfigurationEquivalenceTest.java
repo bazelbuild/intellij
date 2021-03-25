@@ -200,9 +200,9 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
     List<BlazeResolveConfiguration> configurations = resolve(projectView, targetMap);
     assertThat(configurations).hasSize(2);
     assertThat(get(configurations, "//foo/bar:one and 1 other target(s)").getTargetCopts())
-        .isEqualTo(ImmutableList.of("-DSAME=1"));
+        .containsExactly("-DSAME=1");
     assertThat(get(configurations, "//foo/bar:three").getTargetCopts())
-        .isEqualTo(ImmutableList.of("-DDIFFERENT=1"));
+        .containsExactly("-DDIFFERENT=1");
     for (BlazeResolveConfiguration configuration : configurations) {
       assertThat(getHeaders(configuration)).isEmpty();
     }
