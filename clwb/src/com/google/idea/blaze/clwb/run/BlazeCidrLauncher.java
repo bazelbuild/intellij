@@ -302,7 +302,7 @@ public final class BlazeCidrLauncher extends CidrLauncherAdapter {
   }
 
   @Override
-  protected Project getProject() {
+  public Project getProject() {
     return project;
   }
 
