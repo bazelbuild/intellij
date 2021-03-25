@@ -31,4 +31,14 @@ public final class BaseSdkTestCompat {
   public static Path getRootWrapper(@Nullable File file) {
     return file == null ? null : file.toPath();
   }
+
+  /** #api202 Creating a StubVirtualFile requires a filesystem parameter in 2020.3 */
+  public static StubVirtualFile newValidStubVirtualFile(VirtualFileSystem fileSystem) {
+    return new StubVirtualFile(fileSystem) {
+      @Override
+      public boolean isValid() {
+        return true;
+      }
+    };
+  }
 }
