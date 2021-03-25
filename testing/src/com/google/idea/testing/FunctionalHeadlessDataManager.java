@@ -18,6 +18,7 @@ package com.google.idea.testing;
 import com.intellij.ide.impl.HeadlessDataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.Key;
+import java.awt.Component;
 import javax.annotation.Nullable;
 
 /**
@@ -36,6 +37,12 @@ public class FunctionalHeadlessDataManager extends HeadlessDataManager {
 
   @Override
   public DataContext getDataContext() {
+    return dataContext != null ? dataContext : super.getDataContext();
+  }
+
+  @Override
+  public DataContext getDataContext(Component component) {
+    // ignore component in this mock version
     return dataContext != null ? dataContext : super.getDataContext();
   }
 }
