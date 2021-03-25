@@ -20,7 +20,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.intellij.application.options.CodeStyleAbstractConfigurable;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
-import com.intellij.openapi.options.Configurable;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -30,26 +30,27 @@ import javax.annotation.Nullable;
 public class BuildCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Override
-  public Configurable createSettingsPage(
+  public CodeStyleConfigurable createConfigurable(
       CodeStyleSettings settings, CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(
         settings, originalSettings, BuildFileType.INSTANCE.getDescription()) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
-        return new TabbedLanguageCodeStylePanel(
-            BuildFileLanguage.INSTANCE, getCurrentSettings(), settings) {
-          @Override
-          protected void initTabs(CodeStyleSettings settings) {
-            addIndentOptionsTab(settings);
-          }
-        };
-      }
-
-      @Override
-      public String getHelpTopic() {
-        return null;
+      protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+        return new SimpleCodeStyleMainPanel(getCurrentSettings(), settings) {};
       }
     };
+  }
+
+  private static class SimpleCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
+
+    public SimpleCodeStyleMainPanel(CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+      super(BuildFileLanguage.INSTANCE, currentSettings, settings);
+    }
+
+    @Override
+    protected void initTabs(CodeStyleSettings settings) {
+      addIndentOptionsTab(settings);
+    }
   }
 
   @Nullable

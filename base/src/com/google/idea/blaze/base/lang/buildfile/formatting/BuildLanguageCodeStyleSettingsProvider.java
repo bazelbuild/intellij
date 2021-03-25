@@ -17,11 +17,10 @@ package com.google.idea.blaze.base.lang.buildfile.formatting;
 
 import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
 import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.application.options.SmartIndentOptionsEditor;
 import com.intellij.lang.Language;
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
-import javax.annotation.Nullable;
 
 /** Allows BUILD language-specific code style settings */
 public class BuildLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
@@ -33,32 +32,24 @@ public class BuildLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSet
 
   @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
-    return new BuildIndentOptionsEditor();
-    // TODO(brendandouglas): use upstream API directly, once it's implemented
-    // return new SmartIndentOptionsEditor().withDeclarationParameterIndent();
-  }
-
-  @Override
-  public void customizeSettings(CodeStyleSettingsCustomizable consumer, SettingsType settingsType) {
-    super.customizeSettings(consumer, settingsType);
+    return new SmartIndentOptionsEditor().withDeclarationParameterIndent();
   }
 
   @Override
   public String getCodeSample(SettingsType settingsType) {
-    return "";
+    return "# Code sample live editing\n"
+        + "# is not supported until\n"
+        + "# we have a proper formatter implemented.\n\n"
+        + "# Please create a new BUILD file\n"
+        + "# to see changes in effect.";
   }
 
-  @Nullable
   @Override
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings defaultSettings =
-        new CommonCodeStyleSettings(BuildFileLanguage.INSTANCE);
-    CommonCodeStyleSettings.IndentOptions indentOptions = defaultSettings.initIndentOptions();
+  protected void customizeDefaults(
+      CommonCodeStyleSettings commonSettings, CommonCodeStyleSettings.IndentOptions indentOptions) {
     indentOptions.TAB_SIZE = 4;
     indentOptions.INDENT_SIZE = 4;
     indentOptions.CONTINUATION_INDENT_SIZE = 4;
-    // TODO(brendandouglas): use upstream API directly, once it's implemented
-    // indentOptions.DECLARATION_PARAMETER_INDENT = 8;
-    return defaultSettings;
+    indentOptions.DECLARATION_PARAMETER_INDENT = 8;
   }
 }
