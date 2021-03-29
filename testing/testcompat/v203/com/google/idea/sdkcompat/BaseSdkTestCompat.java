@@ -15,6 +15,8 @@
  */
 package com.google.idea.sdkcompat;
 
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import java.io.File;
 import java.nio.file.Path;
 import org.jetbrains.annotations.Nullable;
