@@ -19,8 +19,9 @@ import com.android.tools.idea.model.Namespacing;
 import com.android.tools.idea.projectsystem.NamedIdeaSourceProvider;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import javax.annotation.Nullable;
 
-/** Blaze model for an androidp project. #api42. */
+/** Blaze model for an android project. #api42. */
 public class BlazeAndroidModel extends BlazeAndroidModelBase {
   private final NamedIdeaSourceProvider sourceProvider;
 
@@ -42,5 +43,11 @@ public class BlazeAndroidModel extends BlazeAndroidModelBase {
   @Override
   public Namespacing getNamespacing() {
     return Namespacing.DISABLED;
+  }
+
+  @Nullable
+  @Override
+  public Integer getVersionCode() {
+    return null;
   }
 }

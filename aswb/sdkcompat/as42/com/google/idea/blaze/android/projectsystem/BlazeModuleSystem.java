@@ -33,10 +33,12 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.util.Collection;
+import javax.annotation.Nullable;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
-public class BlazeModuleSystem extends BlazeModuleSystemBase {
+public class BlazeModuleSystem extends BlazeModuleSystemBase implements BlazeClassFileFinder {
   BlazeModuleSystem(Module module) {
     super(module);
   }
@@ -49,6 +51,17 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
   // @Override #api4.0
   public Collection<ExternalLibrary> getResolvedDependentLibraries() {
     return getDependentLibraries();
+  }
+
+  @Override
+  public boolean shouldSkipResourceRegistration() {
+    return classFileFinder.shouldSkipResourceRegistration();
+  }
+
+  @Override
+  @Nullable
+  public VirtualFile findClassFile(String fqcn) {
+    return classFileFinder.findClassFile(fqcn);
   }
 
   public Collection<ExternalLibrary> getDependentLibraries() {

@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.projectsystem;
 
 import com.android.projectmodel.ExternalLibrary;
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
+import com.android.tools.idea.projectsystem.ClassFileFinder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
@@ -33,7 +34,9 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.util.Collection;
+import javax.annotation.Nullable;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
 public class BlazeModuleSystem extends BlazeModuleSystemBase {
@@ -49,6 +52,17 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
   // @Override #api4.0
   public Collection<ExternalLibrary> getResolvedDependentLibraries() {
     return getDependentLibraries();
+  }
+
+  @Override
+  public ClassFileFinder getModuleClassFileFinder() {
+    return classFileFinder;
+  }
+
+  @Override
+  public ClassFileFinder getClassFileFinderForSourceFile(@Nullable VirtualFile sourceFile) {
+    // TODO(b/174518908): Use the appropriate filtering given the sourceFile
+    return classFileFinder;
   }
 
   public Collection<ExternalLibrary> getDependentLibraries() {

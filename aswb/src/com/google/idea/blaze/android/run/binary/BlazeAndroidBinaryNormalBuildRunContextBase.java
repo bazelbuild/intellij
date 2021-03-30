@@ -18,8 +18,6 @@ package com.google.idea.blaze.android.run.binary;
 import static com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider.NATIVE_DEBUGGING_ENABLED;
 
 import com.android.ddmlib.IDevice;
-import com.android.tools.idea.gradle.util.DynamicAppUtils;
-import com.android.tools.idea.run.ApkFileUnit;
 import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApkProvisionException;
@@ -32,12 +30,10 @@ import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.ProfilerState;
-import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
@@ -49,10 +45,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
-import java.io.File;
 import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
@@ -121,52 +114,9 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
 
   @Nullable
   @Override
-  public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
-      throws ExecutionException {
-    ImmutableMap<String, List<File>> filesToInstall =
-        getFilesToInstall(device, launchOptions, apkProvider);
-    return ImmutableList.of(
-        DeployTasksCompat.getDeployTask(project, env, launchOptions, filesToInstall));
-  }
-
-  @Nullable
-  @Override
   public Integer getUserId(IDevice device, ConsolePrinter consolePrinter)
       throws ExecutionException {
     return UserIdHelper.getUserIdFromConfigurationState(device, consolePrinter, configState);
-  }
-
-  /**
-   * Returns a map from applicationId to the list of files to install for that applicationId,
-   * excluding any files for features that are disabled.
-   */
-  public static ImmutableMap<String, List<File>> getFilesToInstall(
-      IDevice device, LaunchOptions launchOptions, ApkProvider apkProvider)
-      throws ExecutionException {
-    Collection<ApkInfo> apks;
-    try {
-      apks = apkProvider.getApks(device);
-    } catch (ApkProvisionException e) {
-      throw new ExecutionException(e);
-    }
-    ImmutableMap.Builder<String, List<File>> filesToInstall = ImmutableMap.builder();
-    List<String> disabledFeatures = launchOptions.getDisabledDynamicFeatures();
-    for (ApkInfo apkInfo : apks) {
-      filesToInstall.put(apkInfo.getApplicationId(), getFilesToInstall(apkInfo, disabledFeatures));
-    }
-    return filesToInstall.build();
-  }
-
-  @NotNull
-  private static List<File> getFilesToInstall(ApkInfo apkInfo, List<String> disabledFeatures) {
-    if (apkInfo.getFiles().size() > 1) {
-      return apkInfo.getFiles().stream()
-          .filter(feature -> DynamicAppUtils.isFeatureEnabled(disabledFeatures, feature))
-          .map(ApkFileUnit::getApkFile)
-          .collect(Collectors.toList());
-    } else {
-      return ImmutableList.of(apkInfo.getFile());
-    }
   }
 
   @Override

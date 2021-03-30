@@ -21,7 +21,6 @@ import com.android.ddmlib.IDevice;
 import com.android.sdklib.AndroidVersion;
 import com.android.tools.deployer.ApkVerifierTracker;
 import com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContributor;
-import com.android.tools.idea.run.AndroidLaunchTasksProvider;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
@@ -37,13 +36,11 @@ import com.android.tools.idea.run.tasks.ShowLogcatTask;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.List;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,26 +176,6 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     if (!launchOptions.isDebug()) {
       return null;
     }
-    Set<String> packageIds = Sets.newHashSet();
-    try {
-      String packageName = applicationIdProvider.getPackageName();
-      packageIds.add(packageName);
-    } catch (ApkProvisionException e) {
-      Logger.getInstance(AndroidLaunchTasksProvider.class).error(e);
-    }
-
-    try {
-      String packageName = applicationIdProvider.getTestPackageName();
-      if (packageName != null) {
-        packageIds.add(packageName);
-      }
-    } catch (ApkProvisionException e) {
-      // not as severe as failing to obtain package id for main application
-      Logger.getInstance(AndroidLaunchTasksProvider.class)
-          .warn(
-              "Unable to obtain test package name, will not connect debugger "
-                  + "if tests don't instantiate main application");
-    }
 
     // Do not get debugger state directly from the debugger itself.
     // See BlazeAndroidDebuggerService#getDebuggerState for an explanation.
@@ -210,7 +187,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     }
 
     try {
-      return runContext.getDebuggerTask(debugger, debuggerState, packageIds);
+      return runContext.getDebuggerTask(debugger, debuggerState);
     } catch (ExecutionException e) {
       launchStatus.terminateLaunch(e.getMessage(), true);
       return null;

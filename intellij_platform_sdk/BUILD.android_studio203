@@ -9,7 +9,14 @@ exports_files(["LICENSE"])
 
 java_import(
     name = "sdk",
-    jars = glob(["android-studio/lib/*.jar"]),
+    jars = glob(
+      [
+        "android-studio/lib/*.jar",
+        "android-studio/plugins/cidr-base-plugin/lib/*.jar",
+        "android-studio/plugins/c-clangd/lib/c-clangd.jar",
+        "android-studio/plugins/c-plugin/lib/*.jar",
+      ]
+     ),
     tags = ["intellij-provided-by-sdk"],
     deps = [
         # guava v20+ requires this at compile-time when using annotation processors.
