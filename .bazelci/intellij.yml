@@ -1,15 +1,5 @@
 ---
 platforms:
-  ubuntu1604:
-    build_flags:
-      - --define=ij_product=intellij-beta
-    build_targets:
-      - //ijwb/...
-    test_flags:
-      - --define=ij_product=intellij-beta
-      - --test_output=errors
-    test_targets:
-      - //:ijwb_tests
   ubuntu1804:
     build_flags:
       - --define=ij_product=intellij-beta
@@ -20,4 +10,3 @@ platforms:
       - --test_output=errors
     test_targets:
       - //:ijwb_tests
-
