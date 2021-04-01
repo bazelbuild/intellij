@@ -103,6 +103,7 @@ message AndroidSdkIdeInfo {
 
 message AndroidAarIdeInfo {
   ArtifactLocation aar = 1;
+  string java_package = 2;
 }
 
 // Details about an android instrumentation test.

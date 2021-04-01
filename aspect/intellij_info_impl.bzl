@@ -853,8 +853,9 @@ def _collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
     if not hasattr(ctx.rule.attr, "aar"):
         return False
     aar_file = ctx.rule.attr.aar.files.to_list()[0]
-    ide_info["android_aar_ide_info"] = struct(
+    ide_info["android_aar_ide_info"] = struct_omit_none(
         aar = artifact_location(aar_file),
+        java_package = ctx.rule.attr.package,
     )
     update_sync_output_groups(output_groups, "intellij-resolve-android", depset([aar_file]))
     return True
