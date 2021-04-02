@@ -766,6 +766,12 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
 
             aar = ctx.actions.declare_file(aar_file_name + ".aar")
             args = ctx.actions.args()
+
+            # using param file to get around argument length limitation
+            # the name of param file (%s) is automatically filled in by blaze
+            args.use_param_file("@%s")
+            args.set_param_file_format("multiline")
+
             args.add("--aar", aar)
             args.add("--manifest_file", android.manifest)
             args.add_joined("--resources", res_files, join_with = ",")
