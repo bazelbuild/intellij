@@ -234,3 +234,16 @@ def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_u
     params["default"] = params[INDIRECT_IJ_PRODUCTS["intellij-latest"]]
 
     return select_for_plugin_api(params)
+
+def no_mockito_extensions(name, jars):
+    for jar in jars:
+        native.genrule(
+            name = name + "_" + jar.replace("/", "_"),
+            srcs = [jar],
+            outs = [name + "/" + jar],
+            cmd = """
+            cp "$<" "$@"
+            chmod u+w "$@"
+            zip -d "$@" mockito-extensions/*
+            """,
+        )
