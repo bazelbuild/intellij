@@ -4,11 +4,11 @@
 INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2020.2",
     "intellij-latest-mac": "intellij-2020.2-mac",
-    "intellij-beta": "intellij-2020.2",
+    "intellij-beta": "intellij-2020.3",
     "intellij-canary": "intellij-2020.3",
     "intellij-ue-latest": "intellij-ue-2020.2",
     "intellij-ue-latest-mac": "intellij-ue-2020.2-mac",
-    "intellij-ue-beta": "intellij-ue-2020.2",
+    "intellij-ue-beta": "intellij-ue-2020.3",
     "intellij-ue-canary": "intellij-ue-2020.3",
     "android-studio-latest": "android-studio-4.2",
     "android-studio-beta": "android-studio-4.2",
@@ -234,3 +234,16 @@ def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_u
     params["default"] = params[INDIRECT_IJ_PRODUCTS["intellij-latest"]]
 
     return select_for_plugin_api(params)
+
+def no_mockito_extensions(name, jars):
+    for jar in jars:
+        native.genrule(
+            name = name + "_" + jar.replace("/", "_"),
+            srcs = [jar],
+            outs = [name + "/" + jar],
+            cmd = """
+            cp "$<" "$@"
+            chmod u+w "$@"
+            zip -d "$@" mockito-extensions/*
+            """,
+        )
