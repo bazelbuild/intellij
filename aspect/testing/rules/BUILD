@@ -1,10 +1,11 @@
 # Testing infrastructure for the plugin's Skylark aspect
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 proto_library(
     name = "intellij_aspect_test_fixture_proto",
     srcs = ["intellij_aspect_test_fixture.proto"],
+    #
     deps = ["//proto:intellij_ide_info_proto"],
 )
 
@@ -13,6 +14,7 @@ java_proto_library(
     visibility = [
         "//aspect/testing/tests:__subpackages__",
     ],
+    #
     deps = [":intellij_aspect_test_fixture_proto"],
 )
 
@@ -23,6 +25,7 @@ java_binary(
     visibility = [
         "//aspect/testing/tests:__subpackages__",
     ],
+    #
     deps = [
         ":intellij_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
@@ -38,6 +41,7 @@ java_library(
     visibility = [
         "//aspect/testing:__subpackages__",
     ],
+    #
     deps = [
         ":intellij_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
@@ -52,6 +56,7 @@ proto_library(
     name = "fast_build_aspect_test_fixture_proto",
     testonly = True,
     srcs = ["fast_build_aspect_test_fixture.proto"],
+    #
     deps = ["//proto:fast_build_info_proto"],
 )
 
@@ -61,6 +66,7 @@ java_proto_library(
     visibility = [
         "//aspect/testing:__subpackages__",
     ],
+    #
     deps = [":fast_build_aspect_test_fixture_proto"],
 )
 
@@ -71,6 +77,7 @@ java_binary(
     visibility = [
         "//aspect/testing:__subpackages__",
     ],
+    #
     deps = [
         ":fast_build_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
@@ -86,6 +93,7 @@ java_library(
     visibility = [
         "//aspect/testing:__subpackages__",
     ],
+    #
     deps = [
         ":fast_build_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",

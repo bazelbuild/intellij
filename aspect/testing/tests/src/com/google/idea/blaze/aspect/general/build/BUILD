@@ -1,9 +1,9 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
+
+licenses(["notice"])
 
 java_library(
     name = "simple",
@@ -12,6 +12,7 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "simple_fixture",
+    #
     deps = [":simple"],
 )
 
@@ -19,6 +20,7 @@ java_test(
     name = "BuildFileTest",
     srcs = ["BuildFileTest.java"],
     data = [":simple_fixture"],
+    #
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",

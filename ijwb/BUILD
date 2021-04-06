@@ -35,6 +35,7 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_java"],
     plugin_xmls = ["src/META-INF/ijwb.xml"],
+    #
     deps = [":ijwb_lib"],
 )
 
@@ -52,6 +53,7 @@ stamped_plugin_xml(
 java_library(
     name = "ijwb_lib",
     srcs = glob(["src/**/*.java"]),
+    #
     deps = [
         "//base",
         "//intellij_platform_sdk:jsr305",
@@ -65,6 +67,7 @@ java_library(
 intellij_plugin(
     name = "ijwb_bazel",
     plugin_xml = ":stamped_plugin_xml",
+    #
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -106,6 +109,7 @@ repackaged_files(
 
 intellij_plugin_debug_target(
     name = "ijwb_bazel_dev",
+    #
     deps = [
         ":aspect_directory",
         ":fast_build_javac",
@@ -127,6 +131,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.ijwb",
+    #
     deps = [
         ":ijwb_lib",
         "//base",
@@ -148,6 +153,7 @@ intellij_integration_test_suite(
     runtime_deps = [
         ":ijwb_bazel",
     ],
+    #
     deps = [
         ":ijwb_lib",
         "//base",

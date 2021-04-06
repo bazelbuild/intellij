@@ -31,6 +31,7 @@ java_library(
         ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],
+    #
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",

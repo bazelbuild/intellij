@@ -1,9 +1,9 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
+
+licenses(["notice"])
 
 java_library(
     name = "foo",
@@ -18,6 +18,7 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "tags_fixture",
+    #
     deps = [":foo"],
 )
 
@@ -27,6 +28,7 @@ java_test(
     data = [
         ":tags_fixture",
     ],
+    #
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",

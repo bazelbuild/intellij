@@ -18,6 +18,7 @@ java_library(
     name = "cpp",
     srcs = glob(["src/**/*.java"]),
     visibility = ["//visibility:public"],
+    #
     deps = [
         "//base",
         "//common/experiments",
@@ -39,6 +40,7 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_cidr"],
     visibility = ["//visibility:public"],
+    #
     deps = [":cpp"],
 )
 
@@ -47,6 +49,7 @@ java_library(
     testonly = 1,
     srcs = ["tests/utils/com/google/idea/blaze/cpp/ClionUnitTestSystemPropertiesRule.java"],
     visibility = ["//visibility:public"],
+    #
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -59,6 +62,7 @@ java_library(
     name = "compiler_version_checker",
     srcs = ["src/com/google/idea/blaze/cpp/CompilerVersionChecker.java"],
     neverlink = 1,
+    #
     deps = ["//intellij_platform_sdk:plugin_api"],
 )
 
@@ -67,6 +71,7 @@ java_library(
     name = "compiler_wrapper_provider",
     srcs = ["src/com/google/idea/blaze/cpp/CompilerWrapperProvider.java"],
     neverlink = 1,
+    #
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -83,6 +88,7 @@ intellij_unit_test_suite(
     test_package_root = "com.google.idea.blaze.cpp",
     # Needed to work around one-version issue
     runtime_deps = ["//intellij_platform_sdk:test_libs"],
+    #
     deps = [
         ":cpp",
         "//base",
@@ -109,6 +115,7 @@ intellij_plugin(
     name = "cpp_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":cpp_plugin_xml",
+    #
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -123,6 +130,7 @@ java_library(
         "tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppResolvingTestCase.java",
     ],
     visibility = ["//visibility:public"],
+    #
     deps = [
         "//base",
         "//base:integration_test_utils",
@@ -149,6 +157,7 @@ intellij_integration_test_suite(
     runtime_deps = [
         ":cpp_integration_test_plugin",
     ],
+    #
     deps = [
         ":cpp",
         ":integration_test_utils",

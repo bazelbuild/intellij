@@ -17,6 +17,7 @@ java_library(
     name = "javascript",
     srcs = glob(["src/**/*.java"]),
     visibility = ["//java/com/google/devtools/intellij/blaze/plugin/javascript:__pkg__"],
+    #
     deps = [
         "//base",
         "//common/experiments",
@@ -37,6 +38,7 @@ intellij_plugin_library(
     optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-javascript.xml"],
     visibility = ["//visibility:public"],
+    #
     deps = [":javascript"],
 )
 
@@ -51,6 +53,7 @@ intellij_plugin(
     name = "javascript_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":javascript_plugin_xml",
+    #
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -62,6 +65,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze",
+    #
     deps = [
         ":javascript",
         "//base",
@@ -81,6 +85,7 @@ intellij_integration_test_suite(
     required_plugins = "com.google.idea.blaze.javascript,JavaScript",
     test_package_root = "com.google.idea.blaze",
     runtime_deps = [":javascript_integration_test_plugin"],
+    #
     deps = [
         ":javascript",
         "//base",

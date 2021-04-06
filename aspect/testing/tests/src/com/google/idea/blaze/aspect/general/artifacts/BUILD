@@ -3,7 +3,7 @@ load(
     "intellij_aspect_test_fixture",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 genrule(
     name = "gen_source",
@@ -23,6 +23,7 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "gen_sources_fixture",
+    #
     deps = [
         ":gen",
         ":source",
@@ -35,6 +36,7 @@ java_test(
     data = [
         ":gen_sources_fixture",
     ],
+    #
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",

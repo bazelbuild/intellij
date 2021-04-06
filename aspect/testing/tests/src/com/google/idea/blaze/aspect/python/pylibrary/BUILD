@@ -13,6 +13,7 @@ py_library(
 
 intellij_aspect_test_fixture(
     name = "simple_fixture",
+    #
     deps = [":simple"],
 )
 
@@ -20,6 +21,7 @@ java_test(
     name = "PyLibraryTest",
     srcs = ["PyLibraryTest.java"],
     data = [":simple_fixture"],
+    #
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",

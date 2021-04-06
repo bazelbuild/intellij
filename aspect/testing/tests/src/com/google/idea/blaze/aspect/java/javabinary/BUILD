@@ -1,9 +1,9 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
+
+licenses(["notice"])
 
 java_library(
     name = "foolib",
@@ -14,11 +14,13 @@ java_binary(
     name = "foo",
     srcs = ["FooMain.java"],
     main_class = "com.google.MyMainClass",
+    #
     deps = [":foolib"],
 )
 
 intellij_aspect_test_fixture(
     name = "foo_fixture",
+    #
     deps = [":foo"],
 )
 
@@ -26,6 +28,7 @@ java_test(
     name = "JavaBinaryTest",
     srcs = ["JavaBinaryTest.java"],
     data = [":foo_fixture"],
+    #
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",

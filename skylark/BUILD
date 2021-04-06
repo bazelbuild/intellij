@@ -2,13 +2,14 @@
 # Description: A Skylark debugging client for IntelliJ.
 #
 
-licenses(["notice"])  # Apache 2.0
-
 load("//build_defs:build_defs.bzl", "intellij_plugin_library")
+
+licenses(["notice"])
 
 java_library(
     name = "skylark",
     srcs = glob(["src/**/*.java"]),
+    #
     deps = [
         "//base",
         "//common/experiments",
@@ -24,5 +25,6 @@ intellij_plugin_library(
     name = "plugin_library",
     plugin_xmls = ["src/META-INF/blaze-skylark.xml"],
     visibility = ["//visibility:public"],
+    #
     deps = [":skylark"],
 )

@@ -25,6 +25,7 @@ licenses(["notice"])  # Apache 2.0
 intellij_plugin_library(
     name = "plugin_library",
     plugin_xmls = ["src/META-INF/clwb.xml"],
+    #
     deps = [":clwb_lib"],
 )
 
@@ -42,6 +43,7 @@ stamped_plugin_xml(
 java_library(
     name = "clwb_lib",
     srcs = glob(["src/**/*.java"]),
+    #
     deps = [
         "//base",
         "//common/actions",
@@ -56,6 +58,7 @@ java_library(
 intellij_plugin(
     name = "clwb_bazel",
     plugin_xml = ":stamped_plugin_xml",
+    #
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -90,6 +93,7 @@ repackaged_files(
 
 intellij_plugin_debug_target(
     name = "clwb_bazel_dev",
+    #
     deps = [
         ":aspect_directory",
         ":clwb_bazel_gdbserver_wrapper",
@@ -111,6 +115,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.clwb",
+    #
     deps = [
         ":clwb_lib",
         "//base",

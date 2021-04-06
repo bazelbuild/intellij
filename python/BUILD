@@ -17,6 +17,7 @@ java_library(
     name = "python",
     srcs = glob(["src/**/*.java"]),
     visibility = ["//java/com/google/devtools/intellij/blaze/plugin/python:__pkg__"],
+    #
     deps = [
         "//base",
         "//common/experiments",
@@ -39,6 +40,7 @@ intellij_plugin_library(
     optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-python.xml"],
     visibility = ["//visibility:public"],
+    #
     deps = [":python"],
 )
 
@@ -52,6 +54,7 @@ intellij_plugin(
     name = "python_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":python_plugin_xml",
+    #
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -66,6 +69,7 @@ intellij_integration_test_suite(
     runtime_deps = [
         ":python_integration_test_plugin",
     ],
+    #
     deps = [
         ":integration_test_utils",
         ":python",
@@ -84,6 +88,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.python",
+    #
     deps = [
         ":python",
         "//base",
@@ -102,6 +107,7 @@ java_library(
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]),
     visibility = ["//visibility:public"],
+    #
     deps = [
         "//base",
         "//base:integration_test_utils",

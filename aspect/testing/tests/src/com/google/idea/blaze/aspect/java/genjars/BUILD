@@ -1,9 +1,9 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
+
+licenses(["notice"])
 
 java_library(
     name = "no_plugin",
@@ -12,17 +12,20 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "no_plugin_fixture",
+    #
     deps = [":no_plugin"],
 )
 
 java_library(
     name = "has_plugin",
     srcs = ["Foo.java"],
+    #
     deps = ["//third_party/auto_value"],
 )
 
 intellij_aspect_test_fixture(
     name = "has_plugin_fixture",
+    #
     deps = [":has_plugin"],
 )
 
@@ -33,6 +36,7 @@ java_test(
         ":has_plugin_fixture",
         ":no_plugin_fixture",
     ],
+    #
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",

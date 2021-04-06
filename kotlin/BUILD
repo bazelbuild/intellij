@@ -17,6 +17,7 @@ java_library(
     name = "kotlin",
     srcs = glob(["src/**/*.java"]),
     visibility = ["//java/com/google/devtools/intellij/blaze/plugin/aswb:__subpackages__"],
+    #
     deps = [
         "//base",
         "//common/experiments",
@@ -40,6 +41,7 @@ intellij_plugin_library(
     optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-kotlin.xml"],
     visibility = ["//visibility:public"],
+    #
     deps = [":kotlin"],
 )
 
@@ -54,6 +56,7 @@ intellij_plugin(
     testonly = 1,
     optional_plugin_xmls = [":optional_xml"],
     plugin_xml = ":kotlin_plugin_xml",
+    #
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -65,6 +68,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze",
+    #
     deps = [
         ":kotlin",
         "//base",
@@ -85,6 +89,7 @@ intellij_integration_test_suite(
     required_plugins = "org.jetbrains.kotlin,com.google.idea.blaze.kotlin",
     test_package_root = "com.google.idea.blaze.kotlin",
     runtime_deps = [":kotlin_integration_test_plugin"],
+    #
     deps = [
         ":kotlin",
         "//base",
