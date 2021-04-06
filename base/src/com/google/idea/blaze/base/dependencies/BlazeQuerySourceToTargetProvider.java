@@ -131,9 +131,13 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
             .stderr(stderr)
             .build()
             .run();
+    // exit code of 3 represents a potentially expected, non-fatal error
+    // only display error output for non-3 exit code, when there's an unexpected error
     if (retVal != 0 && retVal != 3) {
-      // exit code of 3 represents a potentially expected, non-fatal error
-      // only display error output for non-3 exit code, when there's an unexpected error
+      // the command would have been logged previously, but that would be truncated
+      // logging it again for easier repro from logs without blowing up the log size
+      context.output(PrintOutput.output("Failed to execute: " + command));
+      context.output(PrintOutput.output("Query command returned: " + retVal));
       Splitter.on('\n')
           .split(stderr.toString())
           .forEach(line -> context.output(PrintOutput.output(line)));
