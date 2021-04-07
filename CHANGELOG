@@ -1,6 +1,9 @@
-v2021.03.22
+v2021.04.07
 ===========
-* Bug fixes and internal cleanup.
+* IntelliJ: Compatible with IntelliJ CE/UE 2020.3.
+* 2020.3+ versions: Integrate Bazel-based IntelliJ projects into the new
+  IntelliJ Welcome screen.
+* Fix displaying/modifying code style settings for BUILD files.
 
 v2021.02.02
 ===========
