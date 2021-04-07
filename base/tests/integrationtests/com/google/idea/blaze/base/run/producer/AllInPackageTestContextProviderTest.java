@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,15 +68,15 @@ public class AllInPackageTestContextProviderTest extends BlazeRunConfigurationPr
   }
 
   @Test
-  public void testProducedFromPsiDirectory() {
+  public void testProducedFromBuildFile() {
     setProjectView(
         "directories:", "  java/com/google/test", "targets:", "  //java/com/google/test:lib");
-    PsiDirectory directory =
-        workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
-    workspace.createPsiFile(
-        new WorkspacePath("java/com/google/test/BUILD"), "java_test(name='unit_tests'");
 
-    ConfigurationContext context = createContextFromPsi(directory);
+    PsiFile buildFile =
+        workspace.createPsiFile(
+            new WorkspacePath("java/com/google/test/BUILD"), "java_test(name='unit_tests'");
+
+    ConfigurationContext context = createContextFromPsi(buildFile);
     List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
     assertThat(configurations).hasSize(1);
 
@@ -91,7 +92,28 @@ public class AllInPackageTestContextProviderTest extends BlazeRunConfigurationPr
   }
 
   @Test
-  public void testDirectoryWithoutBlazePackageChildIsIgnored() {
+  public void testProducedFromBlazePackage() {
+    setProjectView("directories:", "  java/com/google/test");
+    PsiDirectory directory =
+        workspace
+            .createPsiFile(
+                new WorkspacePath("java/com/google/test/BUILD"), "java_test(name='unit_tests'")
+            .getParent();
+
+    ConfigurationContext context = createContextFromPsi(directory);
+
+    TestContextRunConfigurationProducer producer = new TestContextRunConfigurationProducer();
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration)
+            producer.createConfigurationFromContext(context).getConfiguration();
+
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test/...:all"));
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+  }
+
+  @Test
+  public void testProducedFromNonBlazePackage() {
     setProjectView("directories:", "  java/com/google/test");
     PsiDirectory directory =
         workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
@@ -99,6 +121,27 @@ public class AllInPackageTestContextProviderTest extends BlazeRunConfigurationPr
     ConfigurationContext context = createContextFromPsi(directory);
 
     TestContextRunConfigurationProducer producer = new TestContextRunConfigurationProducer();
-    assertThat(producer.createConfigurationFromContext(context)).isNull();
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration)
+            producer.createConfigurationFromContext(context).getConfiguration();
+
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test/...:all"));
+    assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
+  }
+
+  @Test
+  public void testProducedFromNonBuildFile() {
+    setProjectView(
+        "directories:", "  java/com/google/test", "targets:", "  //java/com/google/test:lib");
+
+    PsiFile buildFile =
+        workspace.createPsiFile(
+            new WorkspacePath("java/com/google/test/whatever"), "I am just a random file!");
+
+    List<ConfigurationFromContext> configurations =
+        createContextFromPsi(buildFile).getConfigurationsFromContext();
+
+    assertThat(configurations).isNull();
   }
 }

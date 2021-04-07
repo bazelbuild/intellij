@@ -16,14 +16,15 @@
 package com.google.idea.blaze.base.run.producers;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import java.io.File;
 import javax.annotation.Nullable;
 
@@ -33,22 +34,50 @@ class AllInPackageTestContextProvider implements TestContextProvider {
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {
-    PsiElement location = context.getPsiLocation();
-    if (!(location instanceof PsiDirectory)) {
-      return null;
-    }
     WorkspaceRoot root = WorkspaceRoot.fromProject(context.getProject());
-    PsiDirectory dir = (PsiDirectory) location;
-    if (!isInWorkspace(root, dir)) {
-      return null;
+    PsiElement location = context.getPsiLocation();
+
+    // A BUILD file is selected.
+    if (location instanceof PsiFile) {
+      PsiFile file = (PsiFile) location;
+      if (!isBuildFile(context, file) || file.getParent() == null) {
+        return null;
+      }
+      return fromDirectoryNonRecursive(root, file.getParent());
     }
-    // only check if the directory itself is a blaze package
-    // TODO(brendandouglas): otherwise check off the EDT, and return PendingRunConfigurationContext?
-    return BlazePackage.isBlazePackage(dir) ? fromDirectory(root, dir) : null;
+
+    // A Blaze package is selected.
+    // TODO(giathuan): Figure out how to do this for non-Blaze package without interfering with Java
+    //  rules (e.g. MultipleJavaClassesTestContextProvider).
+    if ((location instanceof PsiDirectory)) {
+      PsiDirectory dir = (PsiDirectory) location;
+      // if (!BlazePackage.isBlazePackage(dir)) {
+      //   return null;
+      // }
+      return fromDirectoryRecursive(root, dir);
+    }
+
+    return null;
+  }
+
+  private static boolean isBuildFile(ConfigurationContext context, PsiFile file) {
+    return Blaze.getBuildSystemProvider(context.getProject()).isBuildFile(file.getName());
   }
 
   @Nullable
-  private static RunConfigurationContext fromDirectory(WorkspaceRoot root, PsiDirectory dir) {
+  private static RunConfigurationContext fromDirectoryRecursive(
+      WorkspaceRoot root, PsiDirectory dir) {
+    WorkspacePath packagePath = getWorkspaceRelativePath(root, dir.getVirtualFile());
+    if (packagePath == null) {
+      return null;
+    }
+    return RunConfigurationContext.fromKnownTarget(
+        TargetExpression.allFromPackageRecursive(packagePath), BlazeCommandName.TEST, dir);
+  }
+
+  @Nullable
+  private static RunConfigurationContext fromDirectoryNonRecursive(
+      WorkspaceRoot root, PsiDirectory dir) {
     WorkspacePath packagePath = getWorkspaceRelativePath(root, dir.getVirtualFile());
     if (packagePath == null) {
       return null;
@@ -60,9 +89,5 @@ class AllInPackageTestContextProvider implements TestContextProvider {
   @Nullable
   private static WorkspacePath getWorkspaceRelativePath(WorkspaceRoot root, VirtualFile vf) {
     return root.workspacePathForSafe(new File(vf.getPath()));
-  }
-
-  private static boolean isInWorkspace(WorkspaceRoot root, PsiDirectory dir) {
-    return root.isInWorkspace(dir.getVirtualFile());
   }
 }
