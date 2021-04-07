@@ -2,21 +2,30 @@
 #
 # Plugin source jars for IntelliJ UE, accessed remotely.
 
+load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
+
 package(default_visibility = ["//visibility:public"])
 
 java_import(
     name = "sdk",
-    jars = glob(["lib/*.jar"]),
+    jars = glob(
+        ["lib/*.jar"],
+        exclude = [
+            # mockito-extensions needs to be removed from this jar.
+            "lib/testFramework.jar",
+        ],
+    ) + [
+        ":no_mockito_extensions/lib/testFramework.jar",
+    ],
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
 )
 
-java_import(
-    name = "guava",
-    jars = glob([
-        "lib/failureaccess-*.jar",
-        "lib/guava-*.jar",
-    ]),
+no_mockito_extensions(
+    name = "no_mockito_extensions",
+    jars = [
+        "lib/testFramework.jar",
+    ],
 )
 
 java_import(
