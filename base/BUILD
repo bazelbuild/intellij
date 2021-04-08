@@ -19,6 +19,7 @@ java_library(
     javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
     resources = glob(["resources/**/*"]),
     visibility = ["//visibility:public"],
+    #
     deps = [
         "//common/actions",
         "//common/experiments",
@@ -54,6 +55,7 @@ intellij_plugin_library(
         "clion-2020.3": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
     }),
     visibility = ["//visibility:public"],
+    #
     deps = [":base"],
 )
 
@@ -65,6 +67,7 @@ java_library(
     ],
     neverlink = 1,
     visibility = ["//visibility:private"],
+    #
     deps = [
         ":base",
         "//common/experiments",
@@ -79,6 +82,7 @@ java_library(
     name = "formatter_api",
     srcs = glob(["src/com/google/idea/blaze/base/formatter/*.java"]),
     neverlink = 1,
+    #
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -103,6 +107,7 @@ java_library(
         "src/com/google/idea/blaze/base/model/primitives/WorkspacePath.java",
     ],
     neverlink = 1,
+    #
     deps = [
         ":proto_wrapper",
         "//intellij_platform_sdk:jsr305",
@@ -122,6 +127,7 @@ java_library(
     ],
     neverlink = 1,
     visibility = ["//visibility:public"],
+    #
     deps = [
         "//intellij_platform_sdk:plugin_api",
     ],
@@ -135,6 +141,7 @@ java_library(
     ],
     neverlink = 1,
     visibility = ["//visibility:public"],
+    #
     deps = [
         "//intellij_platform_sdk:plugin_api",
     ],
@@ -148,6 +155,7 @@ java_library(
         "src/com/google/idea/blaze/base/io/VirtualFileSystemProvider.java",
     ],
     neverlink = 1,
+    #
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -161,6 +169,7 @@ java_library(
         "src/com/google/idea/blaze/base/io/AbsolutePathPatcher.java",
     ],
     neverlink = 1,
+    #
     deps = [
         ":vfs_api",
         "//intellij_platform_sdk:jsr305",
@@ -181,6 +190,7 @@ java_library(
         "src/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolverProvider.java",
     ],
     neverlink = 1,
+    #
     deps = [
         ":proto_wrapper",
         "//intellij_platform_sdk:jsr305",
@@ -196,6 +206,7 @@ java_library(
         "src/com/google/idea/blaze/base/sync/projectview/WorkspaceFileFinder.java",
     ],
     neverlink = 1,
+    #
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -210,6 +221,7 @@ java_library(
         "src/com/google/idea/blaze/base/sync/projectview/WorkspaceLanguageChecker.java",
     ],
     neverlink = 1,
+    #
     deps = [
         ":proto_wrapper",
         "//intellij_platform_sdk:jsr305",
@@ -225,6 +237,7 @@ java_library(
         "src/com/google/idea/blaze/base/logging/LoggedSettingsProvider.java",
     ],
     neverlink = 1,
+    #
     deps = [
         "//common/experiments",
         "//intellij_platform_sdk:jsr305",
@@ -239,6 +252,7 @@ java_library(
         "src/com/google/idea/blaze/base/settings/BlazeUserSettings.java",
     ],
     neverlink = 1,
+    #
     deps = [
         ":logging_api",
         "//intellij_platform_sdk:jsr305",
@@ -259,6 +273,7 @@ java_library(
         "src/com/google/idea/blaze/base/run/targetfinder/TargetFinder.java",
     ],
     neverlink = 1,
+    #
     deps = [
         ":label_api",
         ":proto_wrapper",
@@ -280,6 +295,7 @@ java_library(
     exports = [
         ":label_api",
     ],
+    #
     deps = [
         ":label_api",
         "//intellij_platform_sdk:jsr305",
@@ -294,6 +310,7 @@ java_library(
         "src/com/google/idea/blaze/base/buildmodifier/BuildifierBinaryProvider.java",
     ],
     neverlink = 1,
+    #
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -315,6 +332,7 @@ java_library(
         "src/com/google/idea/blaze/base/prefetch/FetchExecutor.java",
         "src/com/google/idea/blaze/base/prefetch/RemoteArtifactPrefetcher.java",
     ],
+    #
     deps = [
         ":base",
         "//intellij_platform_sdk:jsr305",
@@ -333,6 +351,7 @@ java_library(
         "src/com/google/idea/blaze/base/prefetch/RemoteArtifactPrefetcher.java",
     ],
     neverlink = 1,
+    #
     deps = [
         ":base",
         "//intellij_platform_sdk:jsr305",
@@ -346,6 +365,7 @@ java_library(
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]),
     visibility = ["//visibility:public"],
+    #
     deps = [
         "//base",
         "//intellij_platform_sdk:jsr305",
@@ -362,6 +382,7 @@ java_library(
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]),
     visibility = ["//visibility:public"],
+    #
     deps = [
         ":unit_test_utils",
         "//base",
@@ -385,6 +406,7 @@ intellij_plugin(
     name = "base_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":base_plugin_xml",
+    #
     deps = [":plugin_library"],
 )
 
@@ -392,6 +414,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.base",
+    #
     deps = [
         ":base",
         ":unit_test_utils",
@@ -415,6 +438,7 @@ intellij_integration_test_suite(
     runtime_deps = [
         ":base_integration_test_plugin",
     ],
+    #
     deps = [
         ":base",
         ":integration_test_utils",

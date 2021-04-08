@@ -1,9 +1,9 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
+
+licenses(["notice"])
 
 cc_library(
     name = "simple",
@@ -22,6 +22,7 @@ cc_library(
 
 intellij_aspect_test_fixture(
     name = "simple_fixture",
+    #
     deps = [":simple"],
 )
 
@@ -43,11 +44,13 @@ cc_library(
     ],
     defines = ["VERSION2"],
     includes = ["foo/bar"],
+    #
     deps = [":lib2"],
 )
 
 intellij_aspect_test_fixture(
     name = "dep_fixture",
+    #
     deps = [":lib1"],
 )
 
@@ -58,6 +61,7 @@ java_test(
         ":dep_fixture",
         ":simple_fixture",
     ],
+    #
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",

@@ -35,6 +35,7 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_ndk_xml"],
     plugin_xmls = ["src/META-INF/aswb.xml"],
+    #
     deps = [":aswb_lib"],
 )
 
@@ -53,6 +54,7 @@ java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]),
+    #
     deps = [
         ":aswb_lib",
         "//base",
@@ -68,6 +70,7 @@ java_library(
         "android-studio-4.2": glob(["tests/utils/sdkcompat/as42/com/android/sdklib/repository/*.java"]),
         "android-studio-2020.3": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
     }),
+    #
     deps = [
         "//base",
         "//base:integration_test_utils",
@@ -89,6 +92,7 @@ java_library(
         "android-studio-2020.3": glob(["sdkcompat/as203/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
+    #
     deps = [
         "//base",
         "//common/experiments",
@@ -108,6 +112,7 @@ intellij_unit_test_suite(
         exclude = ["tests/unittests/com/google/idea/blaze/android/sync/model/idea/BlazeAndroidModelTest.java"],  # b/145809318
     ),
     test_package_root = "com.google.idea.blaze.android",
+    #
     deps = [
         ":aswb_lib",
         ":unit_test_utils",
@@ -161,6 +166,7 @@ intellij_integration_test_suite(
         # Needed to work around one-version issue
         "//intellij_platform_sdk:test_libs",
     ],
+    #
     deps = [
         ":aswb_lib",
         ":integration_test_utils",
@@ -189,6 +195,7 @@ intellij_integration_test_suite(
         "//cpp",
         "//java",
     ],
+    #
     deps = [
         ":aswb_lib",
         "//base",
@@ -204,6 +211,7 @@ intellij_integration_test_suite(
 intellij_plugin(
     name = "aswb_bazel",
     plugin_xml = ":stamped_plugin_xml",
+    #
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -238,6 +246,7 @@ repackaged_files(
 
 intellij_plugin_debug_target(
     name = "aswb_bazel_dev",
+    #
     deps = [
         ":aspect_directory",
         ":fast_build_javac",

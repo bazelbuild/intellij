@@ -3,23 +3,26 @@ load(
     "intellij_aspect_test_fixture",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 java_library(
     name = "foo",
     srcs = ["Foo.java"],
+    #
     deps = [":direct"],
 )
 
 java_library(
     name = "direct",
     srcs = ["Direct.java"],
+    #
     deps = [":indirect"],
 )
 
 java_library(
     name = "indirect",
     srcs = ["Indirect.java"],
+    #
     deps = [":distant"],
 )
 
@@ -30,12 +33,14 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "foo_fixture",
+    #
     deps = [":foo"],
 )
 
 java_library(
     name = "foo_exports",
     srcs = ["Foo.java"],
+    #
     deps = [":exports_direct"],
 )
 
@@ -56,6 +61,7 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "foo_exports_fixture",
+    #
     deps = [":foo_exports"],
 )
 
@@ -66,6 +72,7 @@ java_test(
         "foo_exports_fixture",
         ":foo_fixture",
     ],
+    #
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing/rules:IntellijAspectTest",

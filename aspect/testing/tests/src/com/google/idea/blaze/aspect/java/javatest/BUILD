@@ -1,5 +1,3 @@
-licenses(["notice"])  # Apache 2.0
-
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
@@ -9,15 +7,19 @@ load(
     "fast_build_aspect_test_fixture",
 )
 
+licenses(["notice"])
+
 java_test(
     name = "FooTest",
     size = "large",
     srcs = ["FooTest.java"],
+    #
     deps = ["@junit//jar"],
 )
 
 intellij_aspect_test_fixture(
     name = "footest_fixture",
+    #
     deps = [":FooTest"],
 )
 
@@ -25,6 +27,7 @@ java_test(
     name = "JavaTestTest",
     srcs = ["JavaTestTest.java"],
     data = [":footest_fixture"],
+    #
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",
@@ -40,11 +43,13 @@ java_test(
     name = "FooTestNoLauncher",
     srcs = ["FooTest.java"],
     test_class = "com.google.idea.blaze.aspect.java.javatest.FooTest",
+    #
     deps = ["@junit//jar"],
 )
 
 fast_build_aspect_test_fixture(
     name = "footest_no_launcher_fast_build_fixture",
+    #
     deps = [":FooTestNoLauncher"],
 )
 
@@ -58,11 +63,13 @@ java_test(
     srcs = ["FooTest.java"],
     launcher = ":custom_java_launcher",
     test_class = "com.google.idea.blaze.aspect.java.javatest.FooTest",
+    #
     deps = ["@junit//jar"],
 )
 
 fast_build_aspect_test_fixture(
     name = "footest_with_custom_launcher_fast_build_fixture",
+    #
     deps = [":FooTestWithCustomLauncher"],
 )
 
@@ -73,6 +80,7 @@ java_test(
         ":footest_no_launcher_fast_build_fixture",
         ":footest_with_custom_launcher_fast_build_fixture",
     ],
+    #
     deps = [
         "//aspect/testing:guava",
         "//aspect/testing/rules:FastBuildAspectLoader",

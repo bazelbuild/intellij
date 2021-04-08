@@ -16,6 +16,7 @@ licenses(["notice"])  # Apache 2.0
 java_library(
     name = "scala",
     srcs = glob(["src/**/*.java"]),
+    #
     deps = [
         "//base",
         "//intellij_platform_sdk:jsr305",
@@ -38,6 +39,7 @@ intellij_plugin_library(
     optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-scala.xml"],
     visibility = ["//visibility:public"],
+    #
     deps = [":scala"],
 )
 
@@ -51,6 +53,7 @@ intellij_plugin(
     name = "scala_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":scala_plugin_xml",
+    #
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -62,6 +65,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze",
+    #
     deps = [
         ":scala",
         "//base",
@@ -83,6 +87,7 @@ intellij_integration_test_suite(
     required_plugins = "org.intellij.scala,com.google.idea.blaze.scala",
     test_package_root = "com.google.idea.blaze.scala",
     runtime_deps = [":scala_integration_test_plugin"],
+    #
     deps = [
         ":scala",
         "//base",

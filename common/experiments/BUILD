@@ -10,6 +10,7 @@ java_library(
     name = "experiments",
     srcs = glob(["src/**/*.java"]),
     visibility = ["//visibility:public"],
+    #
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -23,6 +24,7 @@ intellij_plugin_library(
     name = "mock_experiment_service",
     testonly = 1,
     plugin_xmls = ["tests/utils/mock_experiment_service.xml"],
+    #
     deps = [":unit_test_utils"],
 )
 
@@ -31,6 +33,7 @@ java_library(
     testonly = 1,
     srcs = glob(["tests/utils/**/*.java"]),
     visibility = ["//visibility:public"],
+    #
     deps = [
         ":experiments",
         "//intellij_platform_sdk:jsr305",
@@ -42,6 +45,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.common.experiments",
+    #
     deps = [
         ":experiments",
         ":unit_test_utils",

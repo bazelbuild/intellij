@@ -15,6 +15,7 @@ licenses(["notice"])
 java_library(
     name = "plugin_dev",
     srcs = glob(["src/**/*.java"]),
+    #
     deps = [
         "//base",
         "//common/experiments",
@@ -37,6 +38,7 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_xml"],
     visibility = ["//visibility:public"],
+    #
     deps = [":plugin_dev"],
 )
 
@@ -50,6 +52,7 @@ intellij_plugin(
     name = "plugin_dev_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":plugin_dev_plugin_xml",
+    #
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -65,6 +68,7 @@ intellij_integration_test_suite(
     runtime_deps = [
         ":plugin_dev_integration_test_plugin",
     ],
+    #
     deps = [
         ":plugin_dev",
         "//base",

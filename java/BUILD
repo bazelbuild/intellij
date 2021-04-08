@@ -35,6 +35,7 @@ java_library(
     ),
     javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
     visibility = ["//visibility:public"],
+    #
     deps = [
         ":fast_build_javac_interface",
         ":neverlinked_jpda-jdi",
@@ -63,6 +64,7 @@ java_library(
         "//ijwb:__pkg__",
         "//java/com/google/devtools/intellij/blaze/plugin:__subpackages__",
     ],
+    #
     deps = ["//third_party/java/jdk:langtools"],
 )
 
@@ -99,6 +101,7 @@ intellij_plugin_library(
     ],
     plugin_xmls = ["src/META-INF/blaze-java.xml"],
     visibility = ["//visibility:public"],
+    #
     deps = [":java"],
 )
 
@@ -106,6 +109,7 @@ intellij_plugin(
     name = "java_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":java_plugin_xml",
+    #
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -133,6 +137,7 @@ intellij_unit_test_suite(
         "-Dtruth.jar=$(location :truth_lib_deploy.jar)",
     ],
     test_package_root = "com.google.idea.blaze.java",
+    #
     deps = [
         ":java",
         "//base",
@@ -189,6 +194,7 @@ intellij_integration_test_suite(
     runtime_deps = [
         ":java_integration_test_plugin",
     ],
+    #
     deps = [
         ":java",
         "//base",

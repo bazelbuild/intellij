@@ -20,6 +20,7 @@ java_library(
         "//java/com/google/devtools/intellij/blaze/plugin/golang:__pkg__",
         "//javatests/com/google/devtools/intellij/blaze/plugin/golang:__pkg__",
     ],
+    #
     deps = [
         "//base",
         "//common/experiments",
@@ -42,6 +43,7 @@ intellij_plugin_library(
     optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-go.xml"],
     visibility = ["//visibility:public"],
+    #
     deps = [":golang"],
 )
 
@@ -55,6 +57,7 @@ intellij_plugin(
     name = "golang_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":golang_plugin_xml",
+    #
     deps = [
         ":plugin_library",
         "//base:plugin_library",
@@ -65,6 +68,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.golang",
+    #
     deps = [
         ":golang",
         "//base",
@@ -86,6 +90,7 @@ intellij_integration_test_suite(
     runtime_deps = [
         ":golang_integration_test_plugin",
     ],
+    #
     deps = [
         ":golang",
         "//base",

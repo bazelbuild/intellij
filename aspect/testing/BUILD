@@ -1,6 +1,6 @@
 # Integration tests for the plugin's Skylark aspect
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 # To prevent versioning conflicts when developing internally, we always use the same
 # guava version bundled with the IntelliJ plugin API.
@@ -16,6 +16,7 @@ java_library(
     testonly = 1,
     srcs = ["tests/src/com/google/idea/blaze/BazelIntellijAspectTest.java"],
     visibility = ["//aspect/testing:__subpackages__"],
+    #
     deps = [
         "//aspect/testing/rules:IntellijAspectTest",
     ],

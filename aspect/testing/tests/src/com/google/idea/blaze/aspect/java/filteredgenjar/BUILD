@@ -3,7 +3,7 @@ load(
     "intellij_aspect_test_fixture",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 java_library(
     name = "source_only",
@@ -31,16 +31,19 @@ java_library(
 
 intellij_aspect_test_fixture(
     name = "source_only_fixture",
+    #
     deps = [":source_only"],
 )
 
 intellij_aspect_test_fixture(
     name = "gen_only_fixture",
+    #
     deps = [":gen_only"],
 )
 
 intellij_aspect_test_fixture(
     name = "mixed_fixture",
+    #
     deps = [":mixed"],
 )
 
@@ -52,6 +55,7 @@ java_test(
         ":mixed_fixture",
         ":source_only_fixture",
     ],
+    #
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",

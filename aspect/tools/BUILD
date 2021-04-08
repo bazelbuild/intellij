@@ -5,7 +5,7 @@
 
 package(default_visibility = ["//aspect:__pkg__"])
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 # To prevent versioning conflicts when developing internally, we always use the same
 # guava version bundled with the IntelliJ plugin API.
@@ -18,6 +18,7 @@ java_library(
 java_library(
     name = "lib",
     srcs = glob(["src/**/*.java"]),
+    #
     deps = [
         ":guava",
         "//intellij_platform_sdk:jsr305",
@@ -71,6 +72,7 @@ java_test(
     size = "medium",
     srcs = ["tests/unittests/com/google/idea/blaze/aspect/JarFilterTest.java"],
     test_class = "com.google.idea.blaze.aspect.JarFilterTest",
+    #
     deps = [":test_lib"],
 )
 
@@ -79,6 +81,7 @@ java_test(
     size = "small",
     srcs = ["tests/unittests/com/google/idea/blaze/aspect/PackageParserTest.java"],
     test_class = "com.google.idea.blaze.aspect.PackageParserTest",
+    #
     deps = [":test_lib"],
 )
 
@@ -87,6 +90,7 @@ java_test(
     size = "small",
     srcs = ["tests/unittests/com/google/idea/blaze/aspect/OptionParserTest.java"],
     test_class = "com.google.idea.blaze.aspect.OptionParserTest",
+    #
     deps = [":test_lib"],
 )
 
@@ -95,6 +99,7 @@ java_test(
     size = "small",
     srcs = ["tests/unittests/com/google/idea/blaze/aspect/ArtifactLocationParserTest.java"],
     test_class = "com.google.idea.blaze.aspect.ArtifactLocationParserTest",
+    #
     deps = [":test_lib"],
 )
 
@@ -103,5 +108,6 @@ java_test(
     size = "small",
     srcs = ["tests/unittests/com/google/idea/blaze/aspect/CreateAarTest.java"],
     test_class = "com.google.idea.blaze.aspect.CreateAarTest",
+    #
     deps = [":test_lib"],
 )

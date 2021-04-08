@@ -3,7 +3,7 @@ load(
     "intellij_aspect_test_fixture",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 py_binary(
     name = "simple",
@@ -20,6 +20,7 @@ py_binary(
 
 intellij_aspect_test_fixture(
     name = "simple_fixture",
+    #
     deps = [
         ":simple",
     ],
@@ -27,6 +28,7 @@ intellij_aspect_test_fixture(
 
 intellij_aspect_test_fixture(
     name = "simple3_fixture",
+    #
     deps = [
         ":simple3",
     ],
@@ -39,6 +41,7 @@ java_test(
         ":simple3_fixture",
         ":simple_fixture",
     ],
+    #
     deps = [
         "//aspect/testing:BazelIntellijAspectTest",
         "//aspect/testing:guava",
