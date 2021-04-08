@@ -521,8 +521,8 @@
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.settings.BlazeUserSettings$SettingsLogger" id="BlazeUserSettingsLogger"/>
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.sync.autosync.AutoSyncSettings$SettingsLogger" order="after BlazeUserSettingsLogger"/>
     <TargetKindProvider implementation="com.google.idea.blaze.base.model.primitives.GenericBlazeRules"/>
-    <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.VirtualFileTestContextProvider"/>
-    <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.AllInPackageTestContextProvider"/>
+    <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.VirtualFileTestContextProvider" order="last, before AllInPackageTestContextProvider" />
+    <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.AllInPackageTestContextProvider" id="AllInPackageTestContextProvider" order="last"/>
     <OutputArtifactParser implementation="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser$LocalFileParser"/>
     <BuildBatchingService implementation="com.google.idea.blaze.base.sync.sharding.LexicographicTargetSharder" order="last"/>
     <TargetShardSizeLimit implementation="com.google.idea.blaze.base.sync.sharding.ArgMaxShardSizeLimit"/>
