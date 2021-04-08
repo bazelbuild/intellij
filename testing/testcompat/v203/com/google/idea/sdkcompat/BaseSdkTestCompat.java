@@ -15,8 +15,11 @@
  */
 package com.google.idea.sdkcompat;
 
+import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileContentImpl;
 import java.io.File;
 import java.nio.file.Path;
 import org.jetbrains.annotations.Nullable;
@@ -42,5 +45,11 @@ public final class BaseSdkTestCompat {
         return true;
       }
     };
+  }
+
+  /* #api202: Switch FileContentImpl.createByText to static factory method */
+  public static FileContent createVirtualFile(String... contents) {
+    return FileContentImpl.createByText(
+        MockVirtualFile.file("Test.java"), String.join("\n", contents));
   }
 }
