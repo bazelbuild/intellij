@@ -31,16 +31,16 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
-import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link AllInPackageTestContextProvider}. */
+/** Integration tests for {@link AllInBuildFileTestContextProvider}. */
 @RunWith(JUnit4.class)
-public class AllInPackageTestContextProviderTest extends BlazeRunConfigurationProducerTestCase {
+public class AllInBuildFileTestContextProviderTest extends BlazeRunConfigurationProducerTestCase {
 
   private ErrorCollector errorCollector;
   private BlazeContext context;
@@ -66,15 +66,15 @@ public class AllInPackageTestContextProviderTest extends BlazeRunConfigurationPr
   }
 
   @Test
-  public void testProducedFromPsiDirectory() {
+  public void testProducedFromBuildFile() {
     setProjectView(
         "directories:", "  java/com/google/test", "targets:", "  //java/com/google/test:lib");
-    PsiDirectory directory =
-        workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
-    workspace.createPsiFile(
-        new WorkspacePath("java/com/google/test/BUILD"), "java_test(name='unit_tests'");
 
-    ConfigurationContext context = createContextFromPsi(directory);
+    PsiFile buildFile =
+        workspace.createPsiFile(
+            new WorkspacePath("java/com/google/test/BUILD"), "java_test(name='unit_tests'");
+
+    ConfigurationContext context = createContextFromPsi(buildFile);
     List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
     assertThat(configurations).hasSize(1);
 
@@ -90,14 +90,18 @@ public class AllInPackageTestContextProviderTest extends BlazeRunConfigurationPr
   }
 
   @Test
-  public void testDirectoryWithoutBlazePackageChildIsIgnored() {
-    setProjectView("directories:", "  java/com/google/test");
-    PsiDirectory directory =
-        workspace.createPsiDirectory(new WorkspacePath("java/com/google/test"));
+  public void testProducedFromNonBuildFile() {
+    setProjectView(
+        "directories:", "  java/com/google/test", "targets:", "  //java/com/google/test:lib");
 
-    ConfigurationContext context = createContextFromPsi(directory);
+    PsiFile nonBuildFile =
+        workspace.createPsiFile(
+            new WorkspacePath("java/com/google/test/i_am_not_a_build_file"),
+            "I am not a build file!");
 
-    TestContextRunConfigurationProducer producer = new TestContextRunConfigurationProducer();
-    assertThat(producer.createConfigurationFromContext(context)).isNull();
+    List<ConfigurationFromContext> configurations =
+        createContextFromPsi(nonBuildFile).getConfigurationsFromContext();
+
+    assertThat(configurations).isNull();
   }
 }

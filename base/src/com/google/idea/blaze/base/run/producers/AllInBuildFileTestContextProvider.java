@@ -16,39 +16,42 @@
 package com.google.idea.blaze.base.run.producers;
 
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.lang.buildfile.search.BlazePackage;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import java.io.File;
 import javax.annotation.Nullable;
 
-/** Runs all tests in a single selected blaze package directory. */
-class AllInPackageTestContextProvider implements TestContextProvider {
+/** Runs all tests in a single selected BUILD file. */
+class AllInBuildFileTestContextProvider implements TestContextProvider {
 
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {
     PsiElement location = context.getPsiLocation();
-    if (!(location instanceof PsiDirectory)) {
+
+    if (!(location instanceof PsiFile)) {
       return null;
     }
+
+    PsiFile file = (PsiFile) location;
+    if (!isBuildFile(context, file) || file.getParent() == null) {
+      return null;
+    }
+
     WorkspaceRoot root = WorkspaceRoot.fromProject(context.getProject());
-    PsiDirectory dir = (PsiDirectory) location;
-    if (!isInWorkspace(root, dir)) {
-      return null;
-    }
-    // only check if the directory itself is a blaze package
-    // TODO(brendandouglas): otherwise check off the EDT, and return PendingRunConfigurationContext?
-    return BlazePackage.isBlazePackage(dir) ? fromDirectory(root, dir) : null;
+    return fromDirectoryNonRecursive(root, file.getParent());
   }
 
   @Nullable
-  private static RunConfigurationContext fromDirectory(WorkspaceRoot root, PsiDirectory dir) {
+  private static RunConfigurationContext fromDirectoryNonRecursive(
+      WorkspaceRoot root, PsiDirectory dir) {
     WorkspacePath packagePath = getWorkspaceRelativePath(root, dir.getVirtualFile());
     if (packagePath == null) {
       return null;
@@ -62,7 +65,7 @@ class AllInPackageTestContextProvider implements TestContextProvider {
     return root.workspacePathForSafe(new File(vf.getPath()));
   }
 
-  private static boolean isInWorkspace(WorkspaceRoot root, PsiDirectory dir) {
-    return root.isInWorkspace(dir.getVirtualFile());
+  private static boolean isBuildFile(ConfigurationContext context, PsiFile file) {
+    return Blaze.getBuildSystemProvider(context.getProject()).isBuildFile(file.getName());
   }
 }

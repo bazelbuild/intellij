@@ -217,8 +217,16 @@ public class MultipleJavaClassesTestContextProviderTest
         "}");
 
     ConfigurationContext context = createContextFromPsi(directory);
-    assertThat(new TestContextRunConfigurationProducer().createConfigurationFromContext(context))
-        .isNull();
+    ConfigurationFromContext fromContext =
+        new TestContextRunConfigurationProducer().createConfigurationFromContext(context);
+    assertThat(fromContext).isNotNull();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/...:all"));
+    assertThat(getTestFilterContents(config)).isNull();
   }
 
   @Test
@@ -239,8 +247,16 @@ public class MultipleJavaClassesTestContextProviderTest
     PsiDirectory directory = workspace.createPsiDirectory(new WorkspacePath("java/com/other"));
 
     ConfigurationContext context = createContextFromPsi(directory);
-    assertThat(new TestContextRunConfigurationProducer().createConfigurationFromContext(context))
-        .isNull();
+    ConfigurationFromContext fromContext =
+        new TestContextRunConfigurationProducer().createConfigurationFromContext(context);
+    assertThat(fromContext).isNotNull();
+    assertThat(fromContext.getConfiguration()).isInstanceOf(BlazeCommandRunConfiguration.class);
+
+    BlazeCommandRunConfiguration config =
+        (BlazeCommandRunConfiguration) fromContext.getConfiguration();
+    assertThat(config.getTargets())
+        .containsExactly(TargetExpression.fromStringSafe("//java/com/other/...:all"));
+    assertThat(getTestFilterContents(config)).isNull();
   }
 
   @Test
