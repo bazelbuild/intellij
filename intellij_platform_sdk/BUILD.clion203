@@ -9,23 +9,21 @@ package(default_visibility = ["//visibility:public"])
 java_import(
     name = "sdk",
     jars = glob(
-        ["clion-*/lib/*.jar"],
-        exclude = [
-            # mockito-extensions needs to be removed from this jar.
-            "lib/testFramework.jar",
+        ["clion-*/lib/*.jar",
+        ":no_mockito_extensions/clion-*/lib/testFramework.jar",
         ],
-    ) + [
-        ":no_mockito_extensions/lib/testFramework.jar",
-    ],
+        exclude = glob([
+            # mockito-extensions needs to be removed from this jar.
+            "clion-*/lib/testFramework.jar",
+        ]),
+    ),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
 )
 
 no_mockito_extensions(
     name = "no_mockito_extensions",
-    jars = [
-        "lib/testFramework.jar",
-    ],
+    jars = glob(["clion-*/lib/testFramework.jar"]),
 )
 
 java_import(
