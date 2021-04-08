@@ -14,18 +14,15 @@ java_import(
             # mockito-extensions needs to be removed from this jar.
             "lib/testFramework.jar",
         ],
-    ) + [
-        ":no_mockito_extensions/lib/testFramework.jar",
-    ],
+    ),
     tags = ["intellij-provided-by-sdk"],
+    exports = [":jars_without_mockito_extensions"],
     deps = ["@error_prone_annotations//jar"],
 )
 
 no_mockito_extensions(
-    name = "no_mockito_extensions",
-    jars = [
-        "lib/testFramework.jar",
-    ],
+    name = "jars_without_mockito_extensions",
+    jars = ["lib/testFramework.jar"],
 )
 
 java_import(

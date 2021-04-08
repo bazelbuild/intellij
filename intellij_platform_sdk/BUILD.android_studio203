@@ -22,12 +22,9 @@ java_import(
             "lib/idea.jar",
             "lib/testFramework.jar",
         ],
-    ) + [
-        "android-studio/plugins/c-clangd/lib/c-clangd.jar",
-        ":no_mockito_extensions/lib/idea.jar",
-        ":no_mockito_extensions/lib/testFramework.jar",
-    ],
+    ) + ["android-studio/plugins/c-clangd/lib/c-clangd.jar"],
     tags = ["intellij-provided-by-sdk"],
+    exports = [":jars_without_mockito_extensions"],
     deps = [
         # guava v20+ requires this at compile-time when using annotation processors.
         "@error_prone_annotations//jar",
@@ -35,7 +32,7 @@ java_import(
 )
 
 no_mockito_extensions(
-    name = "no_mockito_extensions",
+    name = "jars_without_mockito_extensions",
     jars = [
         "lib/idea.jar",
         "lib/testFramework.jar",

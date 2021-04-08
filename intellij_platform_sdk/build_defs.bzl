@@ -235,15 +235,33 @@ def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_u
 
     return select_for_plugin_api(params)
 
-def no_mockito_extensions(name, jars):
-    for jar in jars:
+def no_mockito_extensions(name, jars, **kwargs):
+    """Removes mockito extensions from jars.
+
+    Args:
+        name: Name of the resulting java_import target.
+        jars: List of jars from which to remove mockito extensions.
+        **kwargs: Arbitrary attributes for the java_import target.
+    """
+
+    output_jars = []
+    for input_jar in jars:
+        output_jar_name = name + "_" + input_jar.replace("/", "_")
+        output_jar = name + "/" + input_jar
         native.genrule(
-            name = name + "_" + jar.replace("/", "_"),
-            srcs = [jar],
-            outs = [name + "/" + jar],
+            name = output_jar_name,
+            srcs = [input_jar],
+            outs = [output_jar],
             cmd = """
             cp "$<" "$@"
             chmod u+w "$@"
             zip -d "$@" mockito-extensions/*
             """,
         )
+        output_jars.append(output_jar_name)
+
+    native.java_import(
+        name = name,
+        jars = output_jars,
+        **kwargs
+    )
