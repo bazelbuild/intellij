@@ -15,9 +15,14 @@
  */
 package com.google.idea.blaze.base.formatter;
 
-import com.google.idea.sdkcompat.platform.ServiceHelperCompat;
+import com.google.common.base.Verify;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.serviceContainer.ComponentManagerImpl;
+import java.util.List;
+import java.util.Optional;
 
 /** A utility class to replace the default IntelliJ {@link CodeStyleManager}. */
 public final class FormatterInstaller {
@@ -32,7 +37,18 @@ public final class FormatterInstaller {
    */
   public static void replaceFormatter(Project project, CodeStyleManagerFactory newFormatter) {
     CodeStyleManager currentManager = CodeStyleManager.getInstance(project);
-    ServiceHelperCompat.registerService(
-        project, CodeStyleManager.class, newFormatter.createFormatter(currentManager), project);
+    List<? extends IdeaPluginDescriptor> loadedPlugins = PluginManager.getLoadedPlugins();
+    Optional<? extends IdeaPluginDescriptor> platformPlugin =
+        loadedPlugins.stream()
+            .filter(descriptor -> descriptor.getName().startsWith("IDEA CORE"))
+            .findAny();
+
+    Verify.verify(platformPlugin.isPresent());
+
+    ((ComponentManagerImpl) project)
+        .registerServiceInstance(
+            CodeStyleManager.class,
+            newFormatter.createFormatter(currentManager),
+            platformPlugin.get());
   }
 }

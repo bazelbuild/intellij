@@ -193,7 +193,7 @@ public class BlazeCoverageEngine extends CoverageEngine {
     }
     CoverageAnnotator annotator = getCoverageAnnotator(project);
     return new DirectoryCoverageViewExtension(project, annotator, suites, stateBean) {
-      private List<CoverageListNode> topLevelNodes;
+      private List<AbstractTreeNode<?>> topLevelNodes;
 
       @Override
       public AbstractTreeNode createRootNode() {
@@ -203,17 +203,15 @@ public class BlazeCoverageEngine extends CoverageEngine {
         }
         return new CoverageListRootNode(
             project, resolveFile(project, root.directory()), suites, stateBean) {
-          @SuppressWarnings({"rawtypes", "unchecked"}) // #api193: wildcard generics added in 2020.1
           @Override
-          public Collection getChildren() {
+          public Collection<? extends AbstractTreeNode<?>> getChildren() {
             return getRootChildren(this);
           }
         };
       }
 
-      @SuppressWarnings({"unchecked", "rawtypes"}) // #api193: wildcard generics added in 2020.1
       @Override
-      public List getChildrenNodes(AbstractTreeNode node) {
+      public List<AbstractTreeNode<?>> getChildrenNodes(AbstractTreeNode node) {
         if (node instanceof CoverageListRootNode && topLevelDirectories.size() != 1) {
           return getRootChildren((CoverageListRootNode) node);
         }
@@ -222,7 +220,7 @@ public class BlazeCoverageEngine extends CoverageEngine {
             .collect(Collectors.toList());
       }
 
-      private List<CoverageListNode> getRootChildren(CoverageListRootNode root) {
+      private List<AbstractTreeNode<?>> getRootChildren(CoverageListRootNode root) {
         if (topLevelNodes == null) {
           topLevelNodes = ReadAction.compute(() -> getTopLevelNodes(project, suites, stateBean));
           for (AbstractTreeNode<?> node : topLevelNodes) {
@@ -241,10 +239,9 @@ public class BlazeCoverageEngine extends CoverageEngine {
         .collect(Collectors.toSet());
   }
 
-  private static List<CoverageListNode> getTopLevelNodes(
+  private static List<AbstractTreeNode<?>> getTopLevelNodes(
       Project project, CoverageSuitesBundle suites, StateBean stateBean) {
-    return getTopLevelDirectories(suites)
-        .stream()
+    return getTopLevelDirectories(suites).stream()
         .map(file -> resolveFile(project, file))
         .filter(Objects::nonNull)
         .map(psiFile -> new CoverageListNode(project, psiFile, suites, stateBean))

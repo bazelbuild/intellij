@@ -183,8 +183,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
     @Nullable
     @Override
-    @SuppressWarnings("rawtypes") // #api193: Use ProgramRunner<?> as super method from 2020.1 on.
-    public ExecutionResult execute(Executor executor, ProgramRunner runner)
+    public ExecutionResult execute(Executor executor, ProgramRunner<?> runner)
         throws ExecutionException {
       return null;
     }

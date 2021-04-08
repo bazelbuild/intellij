@@ -68,7 +68,7 @@ final class FastBuildDebugExecutor extends DefaultDebugExecutor {
     return new LayeredIcon(AllIcons.Actions.StartDebugger, BlazeIcons.LightningOverlay);
   }
 
-  // @Override #api193
+  @Override
   public Icon getDisabledIcon() {
     return new LayeredIcon(AllIconsCompat.disabledDebug, BlazeIcons.LightningOverlay);
   }

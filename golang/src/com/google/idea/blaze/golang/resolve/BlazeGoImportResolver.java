@@ -88,7 +88,7 @@ class BlazeGoImportResolver implements GoImportResolver {
         .orElse(null);
   }
 
-  // @Override #api193
+  @Override
   public ThreeState supportsRelativeImportPaths(Project project, @Nullable Module module) {
     return ThreeState.NO;
   }
