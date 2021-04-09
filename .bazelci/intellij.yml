@@ -9,4 +9,4 @@ platforms:
       - --define=ij_product=intellij-beta
       - --test_output=errors
     test_targets:
-      - //:ijwb_tests
+      - //:ijwb_ce_tests
