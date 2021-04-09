@@ -21,7 +21,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.java.AndroidBlazeRules;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /**
  * Builder for a blaze aar target's IDE info. Defines common attributes across all aar targets. This
@@ -36,27 +36,30 @@ public class NbAarTarget extends NbBaseTargetBuilder {
   private final NbJavaTarget javaTarget;
   private final ArtifactLocation.Builder aarArtifactLocationBuilder;
   private final WorkspacePath blazePackage;
+  @Nullable private final String javaPackage;
 
   public static NbAarTarget aar_import(String label) {
     return aar_import(label, BlazeInfoData.DEFAULT);
   }
 
   public static NbAarTarget aar_import(String label, BlazeInfoData environment) {
-    return new NbAarTarget(environment, label, AndroidBlazeRules.RuleTypes.AAR_IMPORT.getKind());
+    return new NbAarTarget(
+        environment, label, AndroidBlazeRules.RuleTypes.AAR_IMPORT.getKind(), null);
   }
 
-  NbAarTarget(BlazeInfoData blazeInfoData, String label, Kind kind) {
+  NbAarTarget(BlazeInfoData blazeInfoData, String label, Kind kind, @Nullable String javaPackage) {
     super(blazeInfoData);
     this.blazePackage = NbTargetMapUtils.blazePackageForLabel(label);
     this.javaTarget = new NbJavaTarget(blazeInfoData, label, kind);
     this.aarArtifactLocationBuilder = ArtifactLocation.builder();
+    this.javaPackage = javaPackage;
   }
 
   @Override
   public TargetIdeInfo.Builder getIdeInfoBuilder() {
     return javaTarget
         .getIdeInfoBuilder()
-        .setAndroidAarInfo(new AndroidAarIdeInfo(aarArtifactLocationBuilder.build()));
+        .setAndroidAarInfo(new AndroidAarIdeInfo(aarArtifactLocationBuilder.build(), javaPackage));
   }
 
   public NbAarTarget aar(String aarLabel) {

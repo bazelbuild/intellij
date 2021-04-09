@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.projectview.GeneratedAndroidResourcesSection;
+import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -72,6 +73,12 @@ public class BlazeImportUtil {
     if (ideInfo != null) {
       return ideInfo.getResourceJavaPackage();
     }
+
+    AndroidAarIdeInfo aarIdeInfo = target.getAndroidAarIdeInfo();
+    if (aarIdeInfo != null) {
+      return aarIdeInfo.getCustomJavaPackage();
+    }
+
     return null;
   }
 

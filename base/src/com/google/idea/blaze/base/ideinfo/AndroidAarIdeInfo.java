@@ -15,28 +15,43 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
+import com.google.common.base.Strings;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /** aar_import ide info */
 public final class AndroidAarIdeInfo implements ProtoWrapper<IntellijIdeInfo.AndroidAarIdeInfo> {
   private final ArtifactLocation aar;
 
-  public AndroidAarIdeInfo(ArtifactLocation aar) {
+  /** Custom resource package, if defined. */
+  @Nullable private final String customJavaPackage;
+
+  public AndroidAarIdeInfo(ArtifactLocation aar, @Nullable String customJavaPackage) {
     this.aar = aar;
+    this.customJavaPackage = customJavaPackage;
   }
 
   static AndroidAarIdeInfo fromProto(IntellijIdeInfo.AndroidAarIdeInfo proto) {
-    return new AndroidAarIdeInfo(ArtifactLocation.fromProto(proto.getAar()));
+    return new AndroidAarIdeInfo(
+        ArtifactLocation.fromProto(proto.getAar()), Strings.emptyToNull(proto.getJavaPackage()));
   }
 
   @Override
   public IntellijIdeInfo.AndroidAarIdeInfo toProto() {
-    return IntellijIdeInfo.AndroidAarIdeInfo.newBuilder().setAar(aar.toProto()).build();
+    IntellijIdeInfo.AndroidAarIdeInfo.Builder builder =
+        IntellijIdeInfo.AndroidAarIdeInfo.newBuilder().setAar(aar.toProto());
+    ProtoWrapper.setIfNotNull(builder::setJavaPackage, customJavaPackage);
+    return builder.build();
   }
 
   public ArtifactLocation getAar() {
     return aar;
+  }
+
+  @Nullable
+  public String getCustomJavaPackage() {
+    return customJavaPackage;
   }
 
   @Override
@@ -53,7 +68,8 @@ public final class AndroidAarIdeInfo implements ProtoWrapper<IntellijIdeInfo.And
       return false;
     }
     AndroidAarIdeInfo that = (AndroidAarIdeInfo) o;
-    return Objects.equals(aar, that.aar);
+    return Objects.equals(aar, that.aar)
+        && Objects.equals(customJavaPackage, that.customJavaPackage);
   }
 
   @Override
