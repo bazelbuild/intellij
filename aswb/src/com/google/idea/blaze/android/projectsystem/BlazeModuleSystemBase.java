@@ -84,7 +84,7 @@ import org.jetbrains.annotations.TestOnly;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
 @SuppressWarnings("NullableProblems")
-abstract class BlazeModuleSystemBase implements AndroidModuleSystem, BlazeClassFileFinder {
+abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   protected static final Logger logger = Logger.getInstance(BlazeModuleSystem.class);
   protected Module module;
   protected final Project project;
@@ -113,17 +113,6 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem, BlazeClassF
   @Override
   public Module getModule() {
     return module;
-  }
-
-  @Override
-  public boolean shouldSkipResourceRegistration() {
-    return classFileFinder.shouldSkipResourceRegistration();
-  }
-
-  @Override
-  @Nullable
-  public VirtualFile findClassFile(String fqcn) {
-    return classFileFinder.findClassFile(fqcn);
   }
 
   @Override

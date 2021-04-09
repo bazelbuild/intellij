@@ -18,9 +18,11 @@ package com.google.idea.testing;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.util.PlatformUtils;
 import java.io.File;
@@ -38,16 +40,24 @@ import org.junit.rules.ExternalResource;
  */
 public class BlazeTestSystemPropertiesRule extends ExternalResource {
 
+  private Disposable disposable;
+
   @Override
   protected void before() throws Throwable {
+    disposable = Disposer.newDisposable();
     configureSystemProperties();
+  }
+
+  @Override
+  protected void after() {
+    Disposer.dispose(disposable);
   }
 
   /** The absolute path to the runfiles directory. */
   private static final String RUNFILES_PATH = TestUtils.getUserValue("TEST_SRCDIR");
 
   /** Sets up the necessary system properties for running IntelliJ tests via blaze/bazel. */
-  private static void configureSystemProperties() throws IOException {
+  private void configureSystemProperties() throws IOException {
     File sandbox = new File(TestUtils.getTmpDirFile(), "_intellij_test_sandbox");
 
     setSandboxPath("idea.home.path", new File(sandbox, "home"));
@@ -77,10 +87,10 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
 
     // Tests fail if they access files outside of the project roots and other system directories.
     // Ensure runfiles and platform api are allowed.
-    VfsRootAccess.allowRootAccess(RUNFILES_PATH);
+    VfsRootAccess.allowRootAccess(disposable, RUNFILES_PATH);
     String platformApi = getPlatformApiPath();
     if (platformApi != null) {
-      VfsRootAccess.allowRootAccess(platformApi);
+      VfsRootAccess.allowRootAccess(disposable, platformApi);
     }
 
     List<String> pluginJars = Lists.newArrayList();

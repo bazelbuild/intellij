@@ -28,8 +28,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2020_3",
     build_file = "@//intellij_platform_sdk:BUILD.idea203",
-    sha256 = "2c621e40a8a965c7ea5e1005652d1d1dd80b8fe4241be13ef3d4df2c0b2d72c5",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.3.1/ideaIC-2020.3.1.zip",
+    sha256 = "fce0df34d30c8495667ab2c2df0dbb374caeb0707e5efd7fc3dcf27f1c54902d",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2020.3.3/ideaIC-2020.3.3.zip",
 )
 
 # The plugin api for IntelliJ UE 2020.1. This is required to run UE-specific
@@ -55,8 +55,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2020_3",
     build_file = "@//intellij_platform_sdk:BUILD.ue203",
-    sha256 = "ffd4e98b7a3e7cd40a66e518b01e1fb160fe03071aa6085a543decd7b825b4c3",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.3.1/ideaIU-2020.3.1.zip",
+    sha256 = "330aa9a89e2277de52d02c1c18696ff5137bd9ee5a47706562199aa3be02eeac",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2020.3.3/ideaIU-2020.3.3.zip",
 )
 
 # The plugin api for CLion 2020.1. This is required to build CLwB,
@@ -75,6 +75,15 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.clion202",
     sha256 = "3f7b37574ec4106fb92377722c12200a759d12487409e14214166acc11ecef48",
     url = "https://download.jetbrains.com/cpp/CLion-2020.2.5.tar.gz",
+)
+
+# The plugin api for CLion 2020.3. This is required to build CLwB,
+# and run integration tests.
+http_archive(
+    name = "clion_2020_3",
+    build_file = "@//intellij_platform_sdk:BUILD.clion203",
+    sha256 = "5d49bd88b6457271464687453ff65880a4a38974575bb76f969036c692072280",
+    url = "https://download.jetbrains.com/cpp/CLion-2020.3.2.tar.gz",
 )
 
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
@@ -115,8 +124,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "510303a863ea138554777d18968accdd1320aa41e63e62170012b9b6566b4a7e",
-    url = "https://plugins.jetbrains.com/files/7322/106700/python-ce-203.6682.179.zip",
+    sha256 = "722fb54b503de61989d65bc544f25f03891614467e62f4faef677cefbcd51340",
+    url = "https://plugins.jetbrains.com/files/7322/114033/python-ce-203.7717.65.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
@@ -157,8 +166,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "4570ea6145590d92fa984e7ae5e7e75a0dc948dc2866e227f22986abed5527a3",
-    url = "https://plugins.jetbrains.com/files/9568/106609/go-203.6682.168.zip",
+    sha256 = "996231c0bdeedfe4ea2ae66f72e9687818004fc363a415f814cb58f4563579c3",
+    url = "https://plugins.jetbrains.com/files/9568/112071/go-203.7717.11.zip",
 )
 
 # Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
@@ -199,8 +208,8 @@ http_archive(
         "    visibility = ['//visibility:public'],",
         ")",
     ]),
-    sha256 = "f20594572b6468c37fd0f725f6169741e065839dfc750c6d19ec99a8940e7f01",
-    url = "https://plugins.jetbrains.com/files/1347/105697/scala-intellij-bin-2020.3.18.zip",
+    sha256 = "d6411ae778eea6b04d8e27365925448851dc83852a9ed52317094d3442c84d7e",
+    url = "https://plugins.jetbrains.com/files/1347/113954/scala-intellij-bin-2020.3.23.zip",
 )
 
 # The plugin api for Android Studio 4.2. This is required to build ASwB,
@@ -217,8 +226,8 @@ http_archive(
 http_archive(
     name = "android_studio_2020_3",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio203",
-    sha256 = "64eae480f415cad604e37d50154e4f8cedba0d13ee6a5b1e3e63019c1f81b915",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2020.3.1.4/android-studio-2020.3.1.4-linux.tar.gz",
+    sha256 = "b347ae37538242ef01313b72ff1c50287d92c6bc2ede7d621c746fcce54d8b63",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2020.3.1.13/android-studio-2020.3.1.13-linux.tar.gz",
 )
 
 # LICENSE: Common Public License 1.0
@@ -376,8 +385,8 @@ http_archive(
     sha256 = "aa1ee19226f707d44bee44c720915199c20c84a23318bb0597ed4e5c873ccbd5",
     strip_prefix = "rules_proto-40298556293ae502c66579620a7ce867d5f57311",
     urls = [
-    "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/40298556293ae502c66579620a7ce867d5f57311.tar.gz",
-    "https://github.com/bazelbuild/rules_proto/archive/40298556293ae502c66579620a7ce867d5f57311.tar.gz",
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_proto/archive/40298556293ae502c66579620a7ce867d5f57311.tar.gz",
+        "https://github.com/bazelbuild/rules_proto/archive/40298556293ae502c66579620a7ce867d5f57311.tar.gz",
     ],
 )
 

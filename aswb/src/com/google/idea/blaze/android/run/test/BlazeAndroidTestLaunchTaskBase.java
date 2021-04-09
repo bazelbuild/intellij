@@ -76,7 +76,7 @@ abstract class BlazeAndroidTestLaunchTaskBase implements LaunchTask {
 
   private ListenableFuture<Boolean> blazeResult;
 
-  private final BlazeAndroidTestRunContext runContext;
+  private final BlazeAndroidTestRunContextBase runContext;
 
   private final boolean debug;
 
@@ -85,7 +85,7 @@ abstract class BlazeAndroidTestLaunchTaskBase implements LaunchTask {
       Label target,
       List<String> buildFlags,
       BlazeAndroidTestFilter testFilter,
-      BlazeAndroidTestRunContext runContext,
+      BlazeAndroidTestRunContextBase runContext,
       boolean debug) {
     this.project = project;
     this.target = target;

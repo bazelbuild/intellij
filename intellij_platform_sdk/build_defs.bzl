@@ -4,19 +4,19 @@
 INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2020.2",
     "intellij-latest-mac": "intellij-2020.2-mac",
-    "intellij-beta": "intellij-2020.2",
+    "intellij-beta": "intellij-2020.3",
     "intellij-canary": "intellij-2020.3",
     "intellij-ue-latest": "intellij-ue-2020.2",
     "intellij-ue-latest-mac": "intellij-ue-2020.2-mac",
-    "intellij-ue-beta": "intellij-ue-2020.2",
+    "intellij-ue-beta": "intellij-ue-2020.3",
     "intellij-ue-canary": "intellij-ue-2020.3",
     "android-studio-latest": "android-studio-4.2",
     "android-studio-beta": "android-studio-4.2",
     "android-studio-beta-mac": "android-studio-4.2-mac",
     "android-studio-canary": "android-studio-2020.3",
-    "clion-latest": "clion-2020.1",
-    "clion-latest-mac": "clion-2020.1-mac",
-    "clion-beta": "clion-2020.2",
+    "clion-latest": "clion-2020.2",
+    "clion-latest-mac": "clion-2020.2-mac",
+    "clion-beta": "clion-2020.3",
 }
 
 DIRECT_IJ_PRODUCTS = {
@@ -95,6 +95,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2020.2-mac": struct(
         ide = "clion",
         directory = "clion_2020_2",
+    ),
+    "clion-2020.3": struct(
+        ide = "clion",
+        directory = "clion_2020_3",
+    ),
+    "clion-2020.3-mac": struct(
+        ide = "clion",
+        directory = "clion_2020_3",
     ),
 }
 
@@ -226,3 +234,34 @@ def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_u
     params["default"] = params[INDIRECT_IJ_PRODUCTS["intellij-latest"]]
 
     return select_for_plugin_api(params)
+
+def no_mockito_extensions(name, jars, **kwargs):
+    """Removes mockito extensions from jars.
+
+    Args:
+        name: Name of the resulting java_import target.
+        jars: List of jars from which to remove mockito extensions.
+        **kwargs: Arbitrary attributes for the java_import target.
+    """
+
+    output_jars = []
+    for input_jar in jars:
+        output_jar_name = name + "_" + input_jar.replace("/", "_")
+        output_jar = name + "/" + input_jar
+        native.genrule(
+            name = output_jar_name,
+            srcs = [input_jar],
+            outs = [output_jar],
+            cmd = """
+            cp "$<" "$@"
+            chmod u+w "$@"
+            zip -d "$@" mockito-extensions/*
+            """,
+        )
+        output_jars.append(output_jar_name)
+
+    native.java_import(
+        name = name,
+        jars = output_jars,
+        **kwargs
+    )

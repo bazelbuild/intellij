@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.editor;
 
-import com.google.idea.blaze.base.lang.buildfile.formatting.BuildCodeStyleSettings;
+import com.google.idea.blaze.base.lang.buildfile.language.BuildFileLanguage;
 import com.google.idea.blaze.base.lang.buildfile.lexer.BuildToken;
 import com.google.idea.blaze.base.lang.buildfile.psi.Argument;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildElement;
@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.PassStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReturnStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.StatementListContainer;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
@@ -45,8 +46,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -84,8 +84,8 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
     Document doc = editor.getDocument();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);
 
-    // #api173: get file, language specific settings instead
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+    CommonCodeStyleSettings settings =
+        CodeStyle.getLanguageSettings(file, BuildFileLanguage.INSTANCE);
     Integer indent = determineIndent(file, editor, offset, settings);
     if (indent == null) {
       return Result.Continue;
@@ -131,10 +131,7 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
     }
     Boolean isSplitLine =
         DataManager.getInstance().loadFromDataContext(dataContext, SplitLineAction.SPLIT_LINE_KEY);
-    if (isSplitLine != null) {
-      return false;
-    }
-    return true;
+    return isSplitLine == null;
   }
 
   /**
@@ -143,7 +140,7 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
    */
   @Nullable
   private static Integer determineIndent(
-      PsiFile file, Editor editor, int offset, CodeStyleSettings settings) {
+      PsiFile file, Editor editor, int offset, CommonCodeStyleSettings settings) {
     if (offset == 0) {
       return null;
     }
@@ -154,11 +151,11 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
       return null;
     }
 
-    IndentOptions indentOptions = settings.getIndentOptions(file.getFileType());
-    BuildCodeStyleSettings buildSettings = settings.getCustomSettings(BuildCodeStyleSettings.class);
+    IndentOptions indentOptions = settings.getIndentOptions();
     if (endsBlock(element)) {
       // current line indent subtract block indent
-      return Math.max(0, getIndent(doc, element) - indentOptions.INDENT_SIZE);
+      return Math.max(
+          0, getIndent(doc, element) - (indentOptions != null ? indentOptions.INDENT_SIZE : 0));
     }
 
     if (parent instanceof BuildListType) {
@@ -177,19 +174,17 @@ public class BuildEnterHandler extends EnterHandlerDelegateAdapter {
       if (firstChild != null && firstChild.getNode().getStartOffset() < offset) {
         return getIndent(doc, firstChild);
       }
-      return lineIndent(doc, listStart.line)
-          + additionalIndent(parent, buildSettings, indentOptions);
+      return lineIndent(doc, listStart.line) + additionalIndent(parent, indentOptions);
     }
     if (parent instanceof StatementListContainer && afterColon(doc, offset)) {
-      return getIndent(doc, parent) + additionalIndent(parent, buildSettings, indentOptions);
+      return getIndent(doc, parent) + additionalIndent(parent, indentOptions);
     }
     return null;
   }
 
-  private static int additionalIndent(
-      PsiElement parent, BuildCodeStyleSettings buildSettings, IndentOptions indentOptions) {
+  private static int additionalIndent(PsiElement parent, IndentOptions indentOptions) {
     if (parent instanceof ParameterList) {
-      return buildSettings.declarationParameterIndent;
+      return indentOptions.DECLARATION_PARAMETER_INDENT;
     }
     return parent instanceof StatementListContainer
         ? indentOptions.INDENT_SIZE

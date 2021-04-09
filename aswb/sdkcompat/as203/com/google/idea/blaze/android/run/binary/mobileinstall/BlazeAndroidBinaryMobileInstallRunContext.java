@@ -24,7 +24,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
-import java.util.Set;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
@@ -45,17 +44,14 @@ public class BlazeAndroidBinaryMobileInstallRunContext
   @Override
   @SuppressWarnings("unchecked")
   public DebugConnectorTask getDebuggerTask(
-      AndroidDebugger androidDebugger,
-      AndroidDebuggerState androidDebuggerState,
-      Set<String> packageIds)
+      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
       throws ExecutionException {
     return androidDebugger.getConnectDebuggerTask(
         env,
         null,
-        packageIds,
+        applicationIdProvider,
         facet,
         androidDebuggerState,
-        runConfiguration.getType().getId(),
-        null);
+        runConfiguration.getType().getId());
   }
 }

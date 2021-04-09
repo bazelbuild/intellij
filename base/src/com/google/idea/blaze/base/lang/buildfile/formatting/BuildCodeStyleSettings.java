@@ -18,14 +18,8 @@ package com.google.idea.blaze.base.lang.buildfile.formatting;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 
-/**
- * BUILD/Skylark-specific code style settings.
- *
- * <p>#api183: use IndentOptions#DECLARATION_PARAMETER_INDENT directly (if it's ever actually used)
- */
+/** BUILD/Starlark-specific code style settings. */
 public class BuildCodeStyleSettings extends CustomCodeStyleSettings {
-
-  public int declarationParameterIndent = 8;
 
   BuildCodeStyleSettings(CodeStyleSettings container) {
     super("BuildCodeStyleSettings", container);

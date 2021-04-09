@@ -15,6 +15,8 @@
  */
 package com.google.idea.sdkcompat;
 
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import java.io.File;
 import java.nio.file.Path;
 import org.jetbrains.annotations.Nullable;
@@ -30,5 +32,15 @@ public final class BaseSdkTestCompat {
   @Nullable
   public static Path getRootWrapper(@Nullable File file) {
     return file == null ? null : file.toPath();
+  }
+
+  /** #api202 Creating a StubVirtualFile requires a filesystem parameter in 2020.3 */
+  public static StubVirtualFile newValidStubVirtualFile(VirtualFileSystem fileSystem) {
+    return new StubVirtualFile(fileSystem) {
+      @Override
+      public boolean isValid() {
+        return true;
+      }
+    };
   }
 }

@@ -19,7 +19,6 @@ import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -45,8 +44,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.usages.Usage;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.FileContentImpl;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -64,7 +61,6 @@ public final class BaseSdkCompat {
       getEditorNotificationsEp() {
     return EditorNotificationsImpl.EP_PROJECT;
   }
-
 
   /** #api193: constructor changed in 2020.1. */
   public static class DvcsBranchManagerAdapter extends DvcsBranchManager {
@@ -231,11 +227,5 @@ public final class BaseSdkCompat {
   /** #api202: use "SearchEverywhereManager.setSelectedTabID directly" */
   public static void setSelectedTabID(SearchEverywhereManager manager, String id) {
     manager.setSelectedTabID(id);
-  }
-
-  /* #api202: Switch FileContentImpl.createByText to static factory method */
-  public static FileContent createVirtualFile(String... contents) {
-    return FileContentImpl.createByText(
-        MockVirtualFile.file("Test.java"), String.join("\n", contents));
   }
 }

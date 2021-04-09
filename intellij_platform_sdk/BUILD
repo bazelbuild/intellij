@@ -267,6 +267,21 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "clion-2020.3",
+    values = {
+        "define": "ij_product=clion-2020.3",
+    },
+)
+
+config_setting(
+    name = "clion-2020.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=clion-2020.3",
+    },
+)
+
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
 # There will be additional versions added in the future
@@ -283,7 +298,7 @@ java_library(
         ],
         clion = [
             ":sdk",
-            ":clion_test",
+            ":clion_plugins",
         ],
         intellij = [
             ":sdk",
@@ -372,6 +387,7 @@ java_library(
     exports = select_for_plugin_api({
         "clion-2020.1": [":bundled_jsr305"],
         "clion-2020.2": [":bundled_jsr305"],
+        "clion-2020.3": [":bundled_jsr305"],
         "intellij-2020.1": [":bundled_jsr305"],
         "intellij-2020.2": [":bundled_jsr305"],
         "intellij-2020.3": [":bundled_jsr305"],

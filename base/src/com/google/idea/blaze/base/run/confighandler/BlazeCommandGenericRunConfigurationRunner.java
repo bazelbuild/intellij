@@ -109,8 +109,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
     }
 
     @Override
-    @SuppressWarnings("rawtypes") // #api193: Use ProgramRunner<?> as super method from 2020.1 on.
-    public ExecutionResult execute(Executor executor, ProgramRunner runner)
+    public ExecutionResult execute(Executor executor, ProgramRunner<?> runner)
         throws ExecutionException {
       DefaultExecutionResult result = (DefaultExecutionResult) super.execute(executor, runner);
       return SmRunnerUtils.attachRerunFailedTestsAction(result);

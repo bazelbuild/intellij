@@ -30,24 +30,10 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class DefaultDebuggerServiceImplTest extends BlazeIntegrationTestCase {
   @Test
-  public void getDebuggerState_nativeDebuggerNonMac_setsWorkspaceRoot() {
+  public void getDebuggerState_nativeDebugger_setsWorkspaceRootAndSourceRemap() {
     String workspaceRoot = WorkspaceRoot.fromProject(getProject()).directory().getPath();
 
-    DefaultDebuggerService debuggerService =
-        new DefaultDebuggerService(getProject(), /* isMac */ false);
-    BlazeAutoAndroidDebugger nativeDebugger = new BlazeAutoAndroidDebugger();
-    NativeAndroidDebuggerState state =
-        (NativeAndroidDebuggerState) debuggerService.getDebuggerState(nativeDebugger);
-
-    assertThat(state.getWorkingDir()).isEqualTo(workspaceRoot);
-  }
-
-  @Test
-  public void getDebuggerState_nativeDebuggerMac_setsWorkspaceRootAndSourceRemap() {
-    String workspaceRoot = WorkspaceRoot.fromProject(getProject()).directory().getPath();
-
-    DefaultDebuggerService debuggerService =
-        new DefaultDebuggerService(getProject(), /* isMac */ true);
+    DefaultDebuggerService debuggerService = new DefaultDebuggerService(getProject());
     BlazeAutoAndroidDebugger nativeDebugger = new BlazeAutoAndroidDebugger();
     NativeAndroidDebuggerState state =
         (NativeAndroidDebuggerState) debuggerService.getDebuggerState(nativeDebugger);

@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.sync.model.idea;
 
-import static com.android.tools.idea.projectsystem.ProjectSystemUtil.getModuleSystem;
 
 import com.android.ide.common.rendering.api.ResourceNamespace;
 import com.android.tools.idea.model.ClassJarProvider;
@@ -26,7 +25,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.ResourceRepositoryManagerCompat;
-import com.google.idea.blaze.android.projectsystem.BlazeClassFileFinder;
+import com.google.idea.blaze.android.projectsystem.BlazeClassFileFinderCompat;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
@@ -74,7 +73,7 @@ public class BlazeClassJarProvider implements ClassJarProvider {
     }
 
     boolean skipResourceRegistration =
-        ((BlazeClassFileFinder) getModuleSystem(module)).shouldSkipResourceRegistration();
+        BlazeClassFileFinderCompat.shouldSkipResourceRegistration(module);
 
     ImmutableList.Builder<File> results = ImmutableList.builder();
     for (TargetKey dependencyTargetKey :

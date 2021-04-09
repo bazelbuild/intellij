@@ -15,6 +15,8 @@
  */
 package com.google.idea.sdkcompat;
 
+import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import java.io.File;
 import org.jetbrains.annotations.Nullable;
 import org.junit.rules.TemporaryFolder;
@@ -29,5 +31,15 @@ public final class BaseSdkTestCompat {
   @Nullable
   public static File getRootWrapper(@Nullable File file) {
     return file;
+  }
+
+  /** #api202 Creating a StubVirtualFile requires a filesystem parameter in 2020.3 */
+  public static StubVirtualFile newValidStubVirtualFile(VirtualFileSystem fileSystem) {
+    return new StubVirtualFile() {
+      @Override
+      public boolean isValid() {
+        return true;
+      }
+    };
   }
 }

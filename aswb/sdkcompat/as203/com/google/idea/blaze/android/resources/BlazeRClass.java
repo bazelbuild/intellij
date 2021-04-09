@@ -19,7 +19,6 @@ import static org.jetbrains.android.AndroidResolveScopeEnlarger.LIGHT_CLASS_KEY;
 import static org.jetbrains.android.AndroidResolveScopeEnlarger.MODULE_POINTER_KEY;
 
 import com.android.ide.common.rendering.api.ResourceNamespace;
-import com.android.resources.ResourceType;
 import com.android.tools.idea.res.LocalResourceRepository;
 import com.android.tools.idea.res.ResourceRepositoryManager;
 import com.android.tools.idea.res.ResourceRepositoryRClass;
@@ -50,6 +49,11 @@ public class BlazeRClass extends ResourceRepositoryRClass {
           }
 
           @Override
+          public ResourceRepositoryManager getResourceRepositoryManager() {
+            return ResourceRepositoryManager.getInstance(androidFacet);
+          }
+
+          @Override
           public LocalResourceRepository getResourceRepository() {
             return ResourceRepositoryManager.getAppResources(androidFacet);
           }
@@ -62,11 +66,6 @@ public class BlazeRClass extends ResourceRepositoryRClass {
           @Override
           public AndroidLightField.FieldModifier getFieldModifier() {
             return AndroidLightField.FieldModifier.NON_FINAL;
-          }
-
-          @Override
-          public boolean isPublic(ResourceType resourceType, String resourceName) {
-            return true;
           }
         });
     this.androidFacet = androidFacet;

@@ -51,7 +51,7 @@ public class BuildFileRunLineMarkerContributor extends RunLineMarkerContributor 
   private static final ImmutableSet<RuleType> HANDLED_RULE_TYPES =
       ImmutableSet.of(RuleType.TEST, RuleType.BINARY);
 
-  @SuppressWarnings("MissingOverride") // #api193: method added in 2020.1
+  @Override
   public boolean producesAllPossibleConfigurations(PsiFile file) {
     return false;
   }

@@ -46,10 +46,9 @@ public class BlazePsiDirectoryNode extends PsiDirectoryNode {
     return false;
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"}) // #api193: wildcard generics added in 2020.1
   @Override
-  public Collection getChildrenImpl() {
-    return wrapChildren((Collection) super.getChildrenImpl());
+  public Collection<AbstractTreeNode<?>> getChildrenImpl() {
+    return wrapChildren(super.getChildrenImpl());
   }
 
   static Collection<AbstractTreeNode<?>> wrapChildren(Collection<AbstractTreeNode<?>> children) {

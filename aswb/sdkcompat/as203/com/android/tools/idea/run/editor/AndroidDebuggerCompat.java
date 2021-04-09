@@ -16,9 +16,9 @@
 package com.android.tools.idea.run.editor;
 
 import com.android.sdklib.AndroidVersion;
+import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.tasks.DebugConnectorTask;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import java.util.Set;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Compat class for {@link AndroidDebugger} */
@@ -31,11 +31,11 @@ public final class AndroidDebuggerCompat {
       AndroidDebugger androidDebugger,
       ExecutionEnvironment env,
       AndroidVersion o,
-      Set<String> packageIds,
+      ApplicationIdProvider applicationIdProvider,
       AndroidFacet facet,
       AndroidDebuggerState androidDebuggerState,
       String id) {
     return androidDebugger.getConnectDebuggerTask(
-        env, o, packageIds, facet, androidDebuggerState, id, null);
+        env, o, applicationIdProvider, facet, androidDebuggerState, id);
   }
 }

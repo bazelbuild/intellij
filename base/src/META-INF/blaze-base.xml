@@ -327,7 +327,6 @@
     <readWriteAccessDetector implementation="com.google.idea.blaze.base.lang.buildfile.findusages.BuildReadWriteAccessDetector"/>
     <elementDescriptionProvider implementation="com.google.idea.blaze.base.lang.buildfile.findusages.BuildElementDescriptionProvider"/>
     <usageGroupingRuleProvider implementation="com.google.idea.blaze.base.lang.buildfile.findusages.UsageGroupingRuleProviderOverride" order="first"/>
-    <useScopeOptimizer implementation="com.google.idea.blaze.base.lang.buildfile.search.ExcludeBuildFilesScope"/>
     <targetElementEvaluator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.findusages.BuildTargetElementEvaluator"/>
     <quoteHandler fileType="BUILD" className="com.google.idea.blaze.base.lang.buildfile.editor.BuildQuoteHandler"/>
     <enterHandlerDelegate implementation="com.google.idea.blaze.base.lang.buildfile.editor.BuildEnterBetweenBracketsHandler" order="before EnterBetweenBracesHandler"/>
@@ -522,8 +521,18 @@
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.settings.BlazeUserSettings$SettingsLogger" id="BlazeUserSettingsLogger"/>
     <LoggedSettingsProvider implementation="com.google.idea.blaze.base.sync.autosync.AutoSyncSettings$SettingsLogger" order="after BlazeUserSettingsLogger"/>
     <TargetKindProvider implementation="com.google.idea.blaze.base.model.primitives.GenericBlazeRules"/>
-    <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.VirtualFileTestContextProvider"/>
-    <TestContextProvider implementation="com.google.idea.blaze.base.run.producers.AllInPackageTestContextProvider"/>
+    <TestContextProvider
+        implementation="com.google.idea.blaze.base.run.producers.VirtualFileTestContextProvider"
+        order="last, before AllInBuildFileTestContextProvider, before AllInDirectoryRecursiveTestContextProvider"
+    />
+    <TestContextProvider
+        implementation="com.google.idea.blaze.base.run.producers.AllInBuildFileTestContextProvider"
+        id="AllInBuildFileTestContextProvider"
+        order="last"/>
+    <TestContextProvider
+        implementation="com.google.idea.blaze.base.run.producers.AllInDirectoryRecursiveTestContextProvider"
+        id="AllInDirectoryRecursiveTestContextProvider"
+        order="last"/>
     <OutputArtifactParser implementation="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser$LocalFileParser"/>
     <BuildBatchingService implementation="com.google.idea.blaze.base.sync.sharding.LexicographicTargetSharder" order="last"/>
     <TargetShardSizeLimit implementation="com.google.idea.blaze.base.sync.sharding.ArgMaxShardSizeLimit"/>
