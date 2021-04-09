@@ -86,16 +86,18 @@ http_archive(
     url = "https://download.jetbrains.com/cpp/CLion-2020.3.2.tar.gz",
 )
 
+_PYTHON_CE_BUILD_FILE = """
+java_import(
+    name = "python",
+    jars = ["python-ce/lib/python-ce.jar"],
+    visibility = ["//visibility:public"],
+)
+"""
+
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
 http_archive(
     name = "python_2020_1",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'python',",
-        "    jars = ['python-ce/lib/python-ce.jar'],",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
+    build_file_content = _PYTHON_CE_BUILD_FILE,
     sha256 = "648438d26e85072f90a62f9f5b9f9b983a49f3cb752e87d01f915cb6a03644b9",
     url = "https://plugins.jetbrains.com/files/7322/88054/python-ce-201.7846.93.zip",
 )
@@ -103,13 +105,7 @@ http_archive(
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
 http_archive(
     name = "python_2020_2",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'python',",
-        "    jars = ['python-ce/lib/python-ce.jar'],",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
+    build_file_content = _PYTHON_CE_BUILD_FILE,
     sha256 = "6712a9726e9b37ebe39c7b62d2a0835b97f1a366a1d8fcfbd5e81fd6bd414d9e",
     url = "https://plugins.jetbrains.com/files/7322/97141/python-ce-202.7319.64.zip",
 )
@@ -117,27 +113,31 @@ http_archive(
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
 http_archive(
     name = "python_2020_3",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'python',",
-        "    jars = ['python-ce/lib/python-ce.jar'],",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
+    build_file_content = _PYTHON_CE_BUILD_FILE,
     sha256 = "722fb54b503de61989d65bc544f25f03891614467e62f4faef677cefbcd51340",
     url = "https://plugins.jetbrains.com/files/7322/114033/python-ce-203.7717.65.zip",
 )
 
+_GO_201_BUILD_FILE = """
+java_import(
+    name = "go",
+    jars = glob(["intellij-go/lib/*.jar"]),
+    visibility = ["//visibility:public"],
+)
+"""
+
+_GO_BUILD_FILE = """
+java_import(
+    name = "go",
+    jars = glob(["go/lib/*.jar"]),
+    visibility = ["//visibility:public"],
+)
+"""
+
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
 http_archive(
     name = "go_2020_1",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'go',",
-        "    jars = glob(['intellij-go/lib/*.jar']),",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
+    build_file_content = _GO_201_BUILD_FILE,
     sha256 = "1f7c47c2a3f6799f921d077da1d056414c9f67bea568a2053dd0dbdc526933a3",
     url = "https://plugins.jetbrains.com/files/9568/87978/intellij-go-201.7846.76.189.zip",
 )
@@ -145,13 +145,7 @@ http_archive(
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
 http_archive(
     name = "go_2020_2",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'go',",
-        "    jars = glob(['go/lib/*.jar']),",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
+    build_file_content = _GO_BUILD_FILE,
     sha256 = "4df0c9ddd51f08176a4b37194ecce1c1b37a3d9bbd484b3129a754a22c7dc79d",
     url = "https://plugins.jetbrains.com/files/9568/97011/go-202.7319.50.zip",
 )
@@ -159,27 +153,23 @@ http_archive(
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
 http_archive(
     name = "go_2020_3",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'go',",
-        "    jars = glob(['go/lib/*.jar']),",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
+    build_file_content = _GO_BUILD_FILE,
     sha256 = "996231c0bdeedfe4ea2ae66f72e9687818004fc363a415f814cb58f4563579c3",
     url = "https://plugins.jetbrains.com/files/9568/112071/go-203.7717.11.zip",
 )
 
+_SCALA_BUILD_FILE = """
+java_import(
+    name = "scala",
+    jars = glob(["Scala/lib/*.jar"]),
+    visibility = ["//visibility:public"],
+)
+"""
+
 # Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
 http_archive(
     name = "scala_2020_1",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'scala',",
-        "    jars = glob(['Scala/lib/*.jar']),",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
+    build_file_content = _SCALA_BUILD_FILE,
     sha256 = "626b9c9bc2f90d64498524bd7138558edacf50bbc72a02f882401118a1fc1403",
     url = "https://plugins.jetbrains.com/files/1347/76628/scala-intellij-bin-2020.1.7.zip",
 )
@@ -187,13 +177,7 @@ http_archive(
 # Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
 http_archive(
     name = "scala_2020_2",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'scala',",
-        "    jars = glob(['Scala/lib/*.jar']),",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
+    build_file_content = _SCALA_BUILD_FILE,
     sha256 = "6c29fe5cf0ea2b242adfa2265c8c6e409358640302b6666afc8e023eca237010",
     url = "https://plugins.jetbrains.com/files/1347/97067/scala-intellij-bin-2020.2.27.zip",
 )
@@ -201,13 +185,7 @@ http_archive(
 # Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
 http_archive(
     name = "scala_2020_3",
-    build_file_content = "\n".join([
-        "java_import(",
-        "    name = 'scala',",
-        "    jars = glob(['Scala/lib/*.jar']),",
-        "    visibility = ['//visibility:public'],",
-        ")",
-    ]),
+    build_file_content = _SCALA_BUILD_FILE,
     sha256 = "d6411ae778eea6b04d8e27365925448851dc83852a9ed52317094d3442c84d7e",
     url = "https://plugins.jetbrains.com/files/1347/113954/scala-intellij-bin-2020.3.23.zip",
 )
