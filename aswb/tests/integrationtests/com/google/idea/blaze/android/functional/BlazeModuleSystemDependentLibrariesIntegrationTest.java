@@ -230,7 +230,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
     // Two modules depend on same resource libraries, so the reference of libraries should be the
     // same i.e. there should not be duplicate library instances
     for (int i = 0; i < workspaceModuleLibraries.size(); i++) {
-      assertThat(workspaceModuleLibraries.get(i)).isSameAs(appModuleLibraries.get(i));
+      assertThat(workspaceModuleLibraries.get(i)).isSameInstanceAs(appModuleLibraries.get(i));
     }
   }
 

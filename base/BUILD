@@ -401,6 +401,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
         "//testing:lib",
+        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )

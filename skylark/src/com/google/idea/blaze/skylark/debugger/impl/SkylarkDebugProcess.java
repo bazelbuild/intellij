@@ -576,7 +576,8 @@ public class SkylarkDebugProcess extends XDebugProcess {
   private void handleConditionalBreakpointError(
       XLineBreakpoint<XBreakpointProperties> breakpoint, PausedThread thread) {
     // TODO(brendandouglas): also navigate to the problematic breakpoint
-    String error = Preconditions.checkNotNull(thread.getConditionalBreakpointError().getMessage());
+    String error = thread.getConditionalBreakpointError().getMessage();
+    Preconditions.checkState(!error.isEmpty());
     String title = "Breakpoint Condition Error";
     String message =
         String.format(

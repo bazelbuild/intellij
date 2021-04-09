@@ -22,6 +22,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import _jetbrains_.com.google.common.util.concurrent.Futures;
+import _jetbrains_.com.google.common.util.concurrent.ListenableFuture;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.IDevice.HardwareFeature;
 import com.android.sdklib.IAndroidTarget;
@@ -30,8 +32,6 @@ import com.android.tools.idea.run.AndroidDevice;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchCompatibility;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MessageCollector;
@@ -167,8 +167,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     assertThat(buildStep.getDeployInfo()).isNotNull();
     assertThat(buildStep.getDeployInfo()).isEqualTo(mockDeployInfo);
     assertThat(externalTaskInterceptor.context).isEqualTo(context);
-    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
-    assertThat(externalTaskInterceptor.command).containsAllIn(execFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(execFlags);
     assertThat(externalTaskInterceptor.command).contains("--nolaunch_app");
     assertThat(externalTaskInterceptor.command)
         .containsAnyOf("serial-number", "serial-number:tcp:0");
@@ -207,8 +207,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     assertThat(buildStep.getDeployInfo()).isNotNull();
     assertThat(buildStep.getDeployInfo()).isEqualTo(mockDeployInfo);
     assertThat(externalTaskInterceptor.context).isEqualTo(context);
-    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
-    assertThat(externalTaskInterceptor.command).containsAllIn(execFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(execFlags);
     assertThat(externalTaskInterceptor.command).contains("--nolaunch_app");
     assertThat(externalTaskInterceptor.command).contains("--device");
     // workaround for inconsistent stateful AndroidDebugBridge class.
@@ -249,8 +249,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     assertThat(buildStep.getDeployInfo()).isNotNull();
     assertThat(buildStep.getDeployInfo()).isEqualTo(mockDeployInfo);
     assertThat(externalTaskInterceptor.context).isEqualTo(context);
-    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
-    assertThat(externalTaskInterceptor.command).containsAllIn(execFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(execFlags);
     assertThat(externalTaskInterceptor.command).contains("--nolaunch_app");
     assertThat(externalTaskInterceptor.command).contains("--device");
     assertThat(externalTaskInterceptor.command).contains("serial-number:tcp:12345");
@@ -289,8 +289,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     assertThat(buildStep.getDeployInfo()).isNotNull();
     assertThat(buildStep.getDeployInfo()).isEqualTo(mockDeployInfo);
     assertThat(externalTaskInterceptor.context).isEqualTo(context);
-    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
-    assertThat(externalTaskInterceptor.command).containsAllIn(execFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(execFlags);
     assertThat(externalTaskInterceptor.command).contains("--nolaunch_app");
     assertThat(externalTaskInterceptor.command).contains("--device");
     // workaround for inconsistent stateful AndroidDebugBridge class.

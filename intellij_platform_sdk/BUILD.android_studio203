@@ -1,7 +1,8 @@
 # Description:
 #
 # Plugin source jars for Android Studio (version encoded in directory name)
-load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
+
+load("//build_defs:repackage.bzl", "repackaged_jetbrains_jars")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -9,57 +10,31 @@ licenses(["restricted"])
 
 exports_files(["LICENSE"])
 
-java_import(
+repackaged_jetbrains_jars(
     name = "sdk",
-    jars = glob(
-        [
-            "android-studio/lib/*.jar",
-            "android-studio/plugins/cidr-base-plugin/lib/*.jar",
-            "android-studio/plugins/c-plugin/lib/*.jar",
-        ],
-        exclude = [
-            # mockito-extensions needs to be removed from these jars.
-            "lib/idea.jar",
-            "lib/testFramework.jar",
-        ],
-    ) + ["android-studio/plugins/c-clangd/lib/c-clangd.jar"],
+    jars = glob([
+        "android-studio/lib/*.jar",
+        "android-studio/plugins/cidr-base-plugin/lib/*.jar",
+        "android-studio/plugins/c-plugin/lib/*.jar",
+    ]) + ["android-studio/plugins/c-clangd/lib/c-clangd.jar"],
     tags = ["intellij-provided-by-sdk"],
-    exports = [":jars_without_mockito_extensions"],
     deps = [
         # guava v20+ requires this at compile-time when using annotation processors.
         "@error_prone_annotations//jar",
     ],
 )
 
-no_mockito_extensions(
-    name = "jars_without_mockito_extensions",
-    jars = [
-        "lib/idea.jar",
-        "lib/testFramework.jar",
-    ],
-)
-
-java_import(
-    name = "guava",
-    jars = glob([
-        "android-studio/lib/failureaccess-*.jar",
-        "android-studio/lib/guava-*.jar",
-    ]),
-)
-
-java_library(name = "jsr305")  # not bundled
-
-java_import(
+repackaged_jetbrains_jars(
     name = "java",
     jars = glob(["android-studio/plugins/java/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "platform_images",
     jars = glob(["android-studio/plugins/platform-images/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "android",
     jars = glob([
         "android-studio/plugins/android/lib/*.jar",
@@ -78,7 +53,7 @@ filegroup(
     ]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "test_recorder",
     jars = glob([
         "android-studio/plugins/test-recorder/lib/*.jar",
@@ -88,27 +63,27 @@ java_import(
     ],
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "kotlin",
     jars = glob(["android-studio/plugins/Kotlin/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "coverage",
     jars = glob(["android-studio/plugins/coverage/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "hg4idea",
     jars = ["android-studio/plugins/hg4idea/lib/hg4idea.jar"],
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "junit",
     jars = glob(["android-studio/plugins/junit/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "tasks",
     jars = [
         "android-studio/plugins/tasks/lib/tasks-api.jar",
@@ -116,14 +91,14 @@ java_import(
     ],
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "terminal",
     jars = ["android-studio/plugins/terminal/lib/terminal.jar"],
 )
 
 # The plugins required by ASwB. We need to include them
 # when running integration tests.
-java_import(
+repackaged_jetbrains_jars(
     name = "bundled_plugins",
     jars = glob(
         [
