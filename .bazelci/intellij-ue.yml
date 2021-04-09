@@ -1,0 +1,12 @@
+---
+platforms:
+  ubuntu1804:
+    build_flags:
+      - --define=ij_product=intellij-ue-beta
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-ue-beta
+      - --test_output=errors
+    test_targets:
+      - //:ijwb_ue_tests
