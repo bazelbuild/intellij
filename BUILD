@@ -43,14 +43,6 @@ test_suite(
     ],
 )
 
-# Preserve previous behavior on buildkite TODO: remove this
-test_suite(
-    name = "ijwb_tests",
-    tests = [
-        ":ijwb_ce_tests",
-    ],
-)
-
 # UE-compatible IJwB tests
 test_suite(
     name = "ijwb_ue_tests",
