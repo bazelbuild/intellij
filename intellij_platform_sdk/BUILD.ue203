@@ -26,6 +26,14 @@ no_mockito_extensions(
 )
 
 java_import(
+    name = "guava",
+    jars = glob([
+        "lib/failureaccess-*.jar",
+        "lib/guava-*.jar",
+    ]),
+)
+
+java_import(
     name = "jsr305",
     jars = ["lib/jsr305-3.0.2.jar"],
 )
