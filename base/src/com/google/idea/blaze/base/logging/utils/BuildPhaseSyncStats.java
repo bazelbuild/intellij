@@ -48,6 +48,8 @@ public abstract class BuildPhaseSyncStats {
 
   public abstract Duration totalTime();
 
+  public abstract ShardStats shardStats();
+
   public static Builder builder() {
     return new AutoValue_BuildPhaseSyncStats.Builder()
         .setTargets(ImmutableList.of())
@@ -83,6 +85,8 @@ public abstract class BuildPhaseSyncStats {
     public abstract Builder setBuildIds(ImmutableList<String> buildIds);
 
     public abstract Builder setTotalTime(Duration totalTime);
+
+    public abstract Builder setShardStats(ShardStats shardStats);
 
     public abstract BuildPhaseSyncStats build();
   }

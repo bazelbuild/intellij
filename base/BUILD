@@ -273,6 +273,7 @@ java_library(
 java_library(
     name = "build_batching_service_api",
     srcs = [
+        "src/com/google/idea/blaze/base/logging/utils/ShardStats.java",
         "src/com/google/idea/blaze/base/settings/BuildBinaryType.java",
         "src/com/google/idea/blaze/base/sync/sharding/BuildBatchingService.java",
     ],
@@ -281,9 +282,10 @@ java_library(
         ":label_api",
     ],
     deps = [
-        ":label_api",
+        ":base",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//third_party/auto_value",
     ],
 )
 
@@ -397,11 +399,9 @@ intellij_unit_test_suite(
         ":unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
-        "//sdkcompat",
         "//testing:lib",
         "@junit//jar",
     ],

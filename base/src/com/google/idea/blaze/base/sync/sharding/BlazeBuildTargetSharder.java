@@ -22,6 +22,7 @@ import static java.lang.Math.min;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.logging.utils.ShardStats;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
@@ -68,7 +69,8 @@ public class BlazeBuildTargetSharder {
       new IntExperiment("blaze.default.target.shard.size", 1000);
 
   /** If enabled, we'll automatically shard when we think it's appropriate. */
-  private static final BoolExperiment shardAutomatically =
+  @VisibleForTesting
+  public static final BoolExperiment shardAutomatically =
       new BoolExperiment("blaze.shard.automatically.2", true);
 
   // number of packages per blaze query shard
@@ -138,12 +140,18 @@ public class BlazeBuildTargetSharder {
     switch (approach) {
       case NONE:
         return new ShardedTargetsResult(
-            new ShardedTargetList(ImmutableList.of(ImmutableList.copyOf(targets))),
+            new ShardedTargetList(
+                ImmutableList.of(ImmutableList.copyOf(targets)),
+                ShardStats.ShardingApproach.NONE,
+                0),
             BuildResult.SUCCESS);
       case SHARD_WITHOUT_EXPANDING:
+        int suggestedSize = getTargetShardSize(viewSet);
         return new ShardedTargetsResult(
             new ShardedTargetList(
-                shardTargetsRetainingOrdering(targets, getTargetShardSize(viewSet))),
+                shardTargetsRetainingOrdering(targets, suggestedSize),
+                ShardStats.ShardingApproach.PARTITION_WITHOUT_EXPANDING,
+                suggestedSize),
             BuildResult.SUCCESS);
       case EXPAND_AND_SHARD:
         ExpandedTargetsResult expandedTargets =
@@ -151,7 +159,8 @@ public class BlazeBuildTargetSharder {
                 project, context, workspaceRoot, buildParams, viewSet, pathResolver, targets);
         if (expandedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
           return new ShardedTargetsResult(
-              new ShardedTargetList(ImmutableList.of()), expandedTargets.buildResult);
+              new ShardedTargetList(ImmutableList.of(), ShardStats.ShardingApproach.ERROR, 0),
+              expandedTargets.buildResult);
         }
 
         return new ShardedTargetsResult(
@@ -233,13 +242,11 @@ public class BlazeBuildTargetSharder {
    * Shards a list of individual blaze targets (with no wildcard expressions other than for excluded
    * target patterns).
    */
-  @SuppressWarnings("unchecked")
   @VisibleForTesting
   static ShardedTargetList shardSingleTargets(
       List<TargetExpression> targets, BuildBinaryType buildType, int shardSize) {
-    ImmutableList<ImmutableList<Label>> batches =
-        BuildBatchingService.batchTargets(canonicalizeSingleTargets(targets), buildType, shardSize);
-    return new ShardedTargetList((ImmutableList) batches);
+    return BuildBatchingService.batchTargets(
+        canonicalizeSingleTargets(targets), buildType, shardSize);
   }
 
   /**
