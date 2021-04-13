@@ -1,5 +1,6 @@
 workspace(name = "intellij_with_bazel")
 
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "new_git_repository")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 
@@ -266,34 +267,6 @@ jvm_maven_import_external(
 )
 
 jvm_maven_import_external(
-    name = "jarjar",
-    artifact = "org.pantsbuild:jarjar:1.7.2",
-    artifact_sha256 = "0706a455e17b67718abe212e3a77688bbe8260852fc74e3e836d9f2e76d91c27",
-    licenses = ["notice"],  # Apache 2.0
-    server_urls = ["https://repo1.maven.org/maven2"],
-    deps = [
-        "@asm",
-        "@asm-commons",
-    ],
-)
-
-jvm_maven_import_external(
-    name = "asm",
-    artifact = "org.ow2.asm:asm:7.0",
-    artifact_sha256 = "b88ef66468b3c978ad0c97fd6e90979e56155b4ac69089ba7a44e9aa7ffe9acf",
-    licenses = ["notice"],  # Apache 2.0
-    server_urls = ["https://repo1.maven.org/maven2"],
-)
-
-jvm_maven_import_external(
-    name = "asm-commons",
-    artifact = "org.ow2.asm:asm-commons:7.0",
-    artifact_sha256 = "fed348ef05958e3e846a3ac074a12af5f7936ef3d21ce44a62c4fa08a771927d",
-    licenses = ["notice"],  # Apache 2.0
-    server_urls = ["https://repo1.maven.org/maven2"],
-)
-
-jvm_maven_import_external(
     name = "auto_value",
     artifact = "com.google.auto.value:auto-value:1.6.2",
     artifact_sha256 = "edbe65a5c53e3d4f5cb10b055d4884ae7705a7cd697be4b2a5d8427761b8ba12",
@@ -315,6 +288,45 @@ jvm_maven_import_external(
     artifact_sha256 = "524b43ea15ca97c68f10d5f417c4068dc88144b620d2203f0910441a769fd42f",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+_JARJAR_BUILD_FILE = """
+java_binary(
+    name = "jarjar_bin",
+    srcs = glob(
+        ["src/main/**/*.java"],
+        exclude = [
+            "src/main/com/tonicsystems/jarjar/JarJarMojo.java",
+            "src/main/com/tonicsystems/jarjar/util/AntJarProcessor.java",
+            "src/main/com/tonicsystems/jarjar/JarJarTask.java",
+        ],
+    ),
+    main_class = "com.tonicsystems.jarjar.Main",
+    resources = [":help"],
+    use_launcher = False,
+    visibility = ["//visibility:public"],
+    deps = [":asm"],
+)
+
+java_import(
+    name = "asm",
+    jars = glob(["lib/asm-*.jar"]),
+)
+
+genrule(
+    name = "help",
+    srcs = ["src/main/com/tonicsystems/jarjar/help.txt"],
+    outs = ["com/tonicsystems/jarjar/help.txt"],
+    cmd = "cp $< $@",
+)
+"""
+
+new_git_repository(
+    name = "jarjar",
+    build_file_content = _JARJAR_BUILD_FILE,
+    commit = "38ff702d10baec78f30d5f57485ae452f0fe33b5",
+    remote = "https://github.com/google/jarjar",
+    shallow_since = "1518210648 -0800",
 )
 
 http_archive(
