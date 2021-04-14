@@ -29,9 +29,12 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
+import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import java.util.ArrayList;
+import com.intellij.psi.util.QualifiedName;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -79,12 +82,16 @@ public class BazelPyImportResolverStrategyTest extends PyImportResolverStrategyT
                     .setLabel("//foo:foo")
                     .setBuildFile(source("foo/BUILD"))
                     .setKind("py_library")
-                    .addSource(source("foo/lib/bar.py")))
+                    .addSource(source("foo/lib/bar.py"))
+                    // Dependency installed with pip.
+                    .addSource(source("pypi__foo_external_module/foo/external/bar.py"))
+            )
             .build());
     registerProjectService(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
 
     workspace.createPsiFile(WorkspacePath.createIfValid("foo/lib/bar.py"));
+    workspace.createPsiFile(WorkspacePath.createIfValid("pypi__foo_external_module/foo/external/bar.py"));
     PsiFile source = workspace.createPsiFile(WorkspacePath.createIfValid("baz/source.py"), "bar");
 
     PyReferenceExpression ref =
@@ -93,11 +100,14 @@ public class BazelPyImportResolverStrategyTest extends PyImportResolverStrategyT
 
     AutoImportQuickFix quickFix = getImportQuickFix(ref);
     assertThat(quickFix.isAvailable()).isTrue();
-    assertThat(quickFix.getText()).isEqualTo("Import 'foo.lib.bar'");
+    assertThat(quickFix.getCandidates()).hasSize(2);
+    assertThat(quickFix.getCandidates().get(0).getPath()).isEqualTo(QualifiedName.fromDottedString("foo.external"));
+    assertThat(quickFix.getCandidates().get(1).getPath()).isEqualTo(QualifiedName.fromDottedString("foo.lib"));
+    assertThat(quickFix.getText()).isEqualTo("Import this name");
     quickFix.applyFix();
 
     assertThat(source.getText())
-        .isEqualTo(Joiner.on('\n').join("from foo.lib import bar", "", "bar"));
+        .isEqualTo(Joiner.on('\n').join("from foo.external import bar", "", "bar"));
   }
 
   private static ArtifactLocation source(String relativePath) {
