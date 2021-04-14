@@ -326,6 +326,18 @@ java_library(
 )
 
 java_library(
+    name = "file_size_scanner",
+    srcs = [
+        "src/com/google/idea/blaze/base/io/FileSizeScanner.java",
+    ],
+    neverlink = 1,
+    deps = [
+        ":base",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
     name = "remote_file_prefetcher",
     srcs = [
         "src/com/google/idea/blaze/base/async/FutureUtil.java",
