@@ -52,7 +52,7 @@ public class BuildFileFormatter {
    */
   @Nullable
   static Replacements getReplacements(
-      BlazeFileType fileType, FileContentsProvider fileContents, Collection<TextRange> ranges) {
+      BlazeFileType fileType, FileContentsProvider fileContents, Collection<? extends TextRange> ranges) {
     File buildifierBinary = getBuildifierBinary();
     if (buildifierBinary == null) {
       return null;

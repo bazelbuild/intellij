@@ -22,10 +22,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.javascript.BlazeTypeScriptConfigServiceAdapter;
 import com.intellij.lang.typescript.compiler.TypeScriptCompilerService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
-import com.intellij.lang.typescript.tsconfig.TypeScriptConfigUtil;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigsChangedListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,6 +36,8 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -45,9 +47,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
 
-class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
+class BlazeTypeScriptConfigServiceImpl extends BlazeTypeScriptConfigServiceAdapter {
   private static final Logger logger = Logger.getInstance(BlazeTypeScriptConfigServiceImpl.class);
   private static final BoolExperiment restartTypeScriptService =
       new BoolExperiment("restart.typescript.service", true);
@@ -55,7 +56,6 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   private final Project project;
   private final List<TypeScriptConfigsChangedListener> listeners;
 
-  private volatile ImmutableMap<VirtualFile, TypeScriptConfig> configs;
   private final AtomicInteger configsHash = new AtomicInteger(Objects.hash());
 
   BlazeTypeScriptConfigServiceImpl(Project project) {
@@ -126,27 +126,15 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
     return i -> true;
   }
 
-  @Nullable
   @Override
-  public TypeScriptConfig getPreferableConfig(VirtualFile scopeFile) {
-    return configs.get(
-        TypeScriptConfigUtil.getNearestParentConfigFile(scopeFile, configs.keySet()));
+  public TypeScriptConfig getPreferableConfig(@NotNull VirtualFile scopeFile) {
+    // TODO - TypeScript is currently unsupported by this version.
+    throw new RuntimeException("TypeScript support not implemented");
   }
 
-  @Nullable
   @Override
   public TypeScriptConfig parseConfigFile(VirtualFile file) {
-    return null;
-  }
-
-  /** Removed in 2021.1. #api203 https://github.com/bazelbuild/intellij/issues/2329 */
-  @Override
-  public List<TypeScriptConfig> getConfigs() {
-    return getTypeScriptConfigs();
-  }
-
-  public List<TypeScriptConfig> getTypeScriptConfigs() {
-    return configs.values().asList();
+    throw new RuntimeException("TypeScript support not implemented");
   }
 
   @Override
@@ -171,12 +159,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   }
 
   @Override
-  public boolean hasConfigs() {
-    return !configs.isEmpty();
-  }
-
-  @Override
-  public ModificationTracker getConfigTracker(@Nullable VirtualFile file) {
+  public ModificationTracker getConfigTracker(VirtualFile file) {
     return BlazeSyncModificationTracker.getInstance(project);
   }
 

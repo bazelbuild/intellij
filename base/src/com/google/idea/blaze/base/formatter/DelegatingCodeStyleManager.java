@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.formatter;
 
+import com.google.idea.sdkcompat.formatter.DelegatingCodeStyleManagerAdapter;
 import com.google.idea.sdkcompat.formatter.DelegatingCodeStyleManagerCompat;
 import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.ASTNode;
@@ -31,28 +32,19 @@ import com.intellij.psi.codeStyle.FormattingModeAwareIndentAdjuster;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
-import java.util.Collection;
+
 import javax.annotation.Nullable;
 
 /** A delegating {@link CodeStyleManager}. */
-abstract class DelegatingCodeStyleManager extends CodeStyleManager
-    implements FormattingModeAwareIndentAdjuster {
-
-  protected final CodeStyleManager delegate;
+public abstract class DelegatingCodeStyleManager extends DelegatingCodeStyleManagerAdapter {
 
   protected DelegatingCodeStyleManager(CodeStyleManager delegate) {
-    this.delegate = delegate;
+    super(delegate);
   }
 
   @Override
   public void scheduleIndentAdjustment(Document document, int offset) {
     delegate.scheduleIndentAdjustment(document, offset);
-  }
-
-  @Override
-  public void reformatTextWithContext(PsiFile file, ChangedRangesInfo info)
-      throws IncorrectOperationException {
-    delegate.reformatTextWithContext(file, info);
   }
 
   @Override
@@ -120,15 +112,9 @@ abstract class DelegatingCodeStyleManager extends CodeStyleManager
   }
 
   @Override
-  public void reformatText(PsiFile file, Collection<TextRange> ranges)
+  public void reformatTextWithContext(PsiFile file, ChangedRangesInfo info)
       throws IncorrectOperationException {
-    delegate.reformatText(file, ranges);
-  }
-
-  @Override
-  public void reformatTextWithContext(PsiFile file, Collection<TextRange> ranges)
-      throws IncorrectOperationException {
-    delegate.reformatTextWithContext(file, ranges);
+    delegate.reformatTextWithContext(file, info);
   }
 
   @Override

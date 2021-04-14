@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.javascript.DelegatingTypeScriptConfigServiceAdapter;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
@@ -37,17 +38,21 @@ import javax.annotation.Nullable;
  * Switches between {@link BlazeTypeScriptConfigServiceImpl} if the project is an applicable blaze
  * project, or {@link TypeScriptConfigServiceImpl} if it isn't.
  */
-class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
-  private final TypeScriptConfigService impl;
+class DelegatingTypeScriptConfigService extends DelegatingTypeScriptConfigServiceAdapter {
 
   private static final BoolExperiment useBlazeTypeScriptConfig =
       new BoolExperiment("use.blaze.typescript.config", true);
 
   DelegatingTypeScriptConfigService(Project project) {
+    super(project);
+  }
+
+  @Override
+  protected TypeScriptConfigService getConfigServiceInstance(Project project) {
     if (useBlazeTypeScriptConfig.getValue() && Blaze.isBlazeProject(project)) {
-      this.impl = new BlazeTypeScriptConfigServiceImpl(project);
+      return new BlazeTypeScriptConfigServiceImpl(project);
     } else {
-      this.impl = new TypeScriptConfigServiceImpl(project);
+      return new TypeScriptConfigServiceImpl(project);
     }
   }
 
@@ -89,12 +94,6 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
     return impl.parseConfigFile(file);
   }
 
-  /** Removed in 2021.1. #api203 https://github.com/bazelbuild/intellij/issues/2329 */
-  @Override
-  public List<TypeScriptConfig> getConfigs() {
-    return impl.getConfigs();
-  }
-
   public List<TypeScriptConfig> getTypeScriptConfigs() {
     if (impl instanceof BlazeTypeScriptConfigServiceImpl) {
       return ((BlazeTypeScriptConfigServiceImpl) impl).getTypeScriptConfigs();
@@ -105,11 +104,6 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
   @Override
   public void addChangeListener(TypeScriptConfigsChangedListener listener) {
     impl.addChangeListener(listener);
-  }
-
-  @Override
-  public boolean hasConfigs() {
-    return impl.hasConfigs();
   }
 
   @Override
