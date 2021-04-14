@@ -67,12 +67,32 @@ public class AndroidResourceModuleRegistryTest extends BlazeTestCase {
     assertThat(registry.getTargetKey(moduleOne)).isEqualTo(resourceModuleOne.targetKey);
     assertThat(registry.getTargetKey(moduleTwo)).isEqualTo(resourceModuleTwo.targetKey);
     assertThat(registry.getTargetKey(moduleThree)).isEqualTo(resourceModuleThree.targetKey);
-    assertThat(registry.getLabel(moduleOne)).isEqualTo(resourceModuleOne.targetKey.getLabel());
-    assertThat(registry.getLabel(moduleTwo)).isEqualTo(resourceModuleTwo.targetKey.getLabel());
-    assertThat(registry.getLabel(moduleThree)).isEqualTo(resourceModuleThree.targetKey.getLabel());
-    assertThat(registry.getModule(keyOne)).isEqualTo(moduleOne);
-    assertThat(registry.getModule(keyTwo)).isEqualTo(moduleTwo);
-    assertThat(registry.getModule(keyThree)).isEqualTo(moduleThree);
+    assertThat(registry.getModuleContainingResourcesOf(keyOne)).isEqualTo(moduleOne);
+    assertThat(registry.getModuleContainingResourcesOf(keyTwo)).isEqualTo(moduleTwo);
+    assertThat(registry.getModuleContainingResourcesOf(keyThree)).isEqualTo(moduleThree);
+  }
+
+  @Test
+  public void testPutAndGetMergedResources() {
+    Module moduleOne = mock(Module.class);
+    Module moduleTwo = mock(Module.class);
+    TargetKey keyOne = TargetKey.forPlainTarget(Label.create("//foo/bar:one"));
+    TargetKey keyTwoFirst = TargetKey.forPlainTarget(Label.create("//foo/bar:two_first"));
+    TargetKey keyTwoSecond = TargetKey.forPlainTarget(Label.create("//foo/bar:two_second"));
+    AndroidResourceModule resourceModuleOne = AndroidResourceModule.builder(keyOne).build();
+    AndroidResourceModule resourceModuleTwo =
+        AndroidResourceModule.builder(keyTwoFirst).addSourceTarget(keyTwoSecond).build();
+
+    registry.put(moduleOne, resourceModuleOne);
+    registry.put(moduleTwo, resourceModuleTwo);
+
+    assertThat(registry.get(moduleOne)).isEqualTo(resourceModuleOne);
+    assertThat(registry.get(moduleTwo)).isEqualTo(resourceModuleTwo);
+    assertThat(registry.getTargetKey(moduleOne)).isEqualTo(resourceModuleOne.targetKey);
+    assertThat(registry.getTargetKey(moduleTwo)).isEqualTo(resourceModuleTwo.targetKey);
+    assertThat(registry.getModuleContainingResourcesOf(keyOne)).isEqualTo(moduleOne);
+    assertThat(registry.getModuleContainingResourcesOf(keyTwoFirst)).isEqualTo(moduleTwo);
+    assertThat(registry.getModuleContainingResourcesOf(keyTwoFirst)).isEqualTo(moduleTwo);
   }
 
   @Test
@@ -111,15 +131,16 @@ public class AndroidResourceModuleRegistryTest extends BlazeTestCase {
   public void testGetNull() {
     assertThat(registry.get(null)).isNull();
     assertThat(registry.getTargetKey(null)).isNull();
-    assertThat(registry.getLabel(null)).isNull();
-    assertThat(registry.getModule(null)).isNull();
+    assertThat(registry.getModuleContainingResourcesOf(null)).isNull();
   }
 
   @Test
   public void testGetWithoutPut() {
     assertThat(registry.get(mock(Module.class))).isNull();
     assertThat(registry.getTargetKey(mock(Module.class))).isNull();
-    assertThat(registry.getLabel(mock(Module.class))).isNull();
-    assertThat(registry.getModule(TargetKey.forPlainTarget(Label.create("//a/b:c")))).isNull();
+    assertThat(
+            registry.getModuleContainingResourcesOf(
+                TargetKey.forPlainTarget(Label.create("//a/b:c"))))
+        .isNull();
   }
 }

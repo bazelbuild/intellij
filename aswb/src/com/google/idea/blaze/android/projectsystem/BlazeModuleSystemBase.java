@@ -317,7 +317,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     }
 
     return resourceModule.transitiveResourceDependencies.stream()
-        .map(resourceModuleRegistry::getModule)
+        .map(resourceModuleRegistry::getModuleContainingResourcesOf)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
   }
@@ -341,7 +341,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
         .map(projectData.getTargetMap()::get)
         .filter(Objects::nonNull)
         .map(TargetIdeInfo::getKey)
-        .map(resourceModuleRegistry::getModule)
+        .map(resourceModuleRegistry::getModuleContainingResourcesOf)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
   }

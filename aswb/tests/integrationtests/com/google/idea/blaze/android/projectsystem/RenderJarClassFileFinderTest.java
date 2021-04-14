@@ -199,7 +199,8 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
   public void resourceModule_canFindSourceClasses() {
     AndroidResourceModuleRegistry moduleRegistry =
         AndroidResourceModuleRegistry.getInstance(getProject());
-    Module aResourceModule = moduleRegistry.getModule(getTargetKey("/src_a:src_a"));
+    Module aResourceModule =
+        moduleRegistry.getModuleContainingResourcesOf(getTargetKey("/src_a:src_a"));
     RenderJarClassFileFinder aClassFileFinder = new RenderJarClassFileFinder(aResourceModule);
 
     File cacheDir = RenderJarCache.getInstance(getProject()).getCacheDir();
@@ -234,7 +235,8 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
         .isEqualTo(
             fileSystem.findFile(binBJar + "!/com/google/example/simple/src_b/SrcB$Inner.class"));
 
-    Module cResourceModule = moduleRegistry.getModule(getTargetKey("/src_c:src_c"));
+    Module cResourceModule =
+        moduleRegistry.getModuleContainingResourcesOf(getTargetKey("/src_c:src_c"));
     RenderJarClassFileFinder cClassFileFinder = new RenderJarClassFileFinder(cResourceModule);
     assertThat(cClassFileFinder.findClassFile("com.google.example.simple.src_c.SrcC"))
         .isEqualTo(fileSystem.findFile(binCJar + "!/com/google/example/simple/src_c/SrcC.class"));
@@ -251,7 +253,8 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
   public void resourceModule_canFindDependencyClasses() {
     AndroidResourceModuleRegistry moduleRegistry =
         AndroidResourceModuleRegistry.getInstance(getProject());
-    Module aResourceModule = moduleRegistry.getModule(getTargetKey("/src_a:src_a"));
+    Module aResourceModule =
+        moduleRegistry.getModuleContainingResourcesOf(getTargetKey("/src_a:src_a"));
     RenderJarClassFileFinder aClassFileFinder = new RenderJarClassFileFinder(aResourceModule);
 
     File cacheDir = RenderJarCache.getInstance(getProject()).getCacheDir();
@@ -294,7 +297,8 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
             fileSystem.findFile(
                 binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB$Inner.class"));
 
-    Module cResourceModule = moduleRegistry.getModule(getTargetKey("/src_c:src_c"));
+    Module cResourceModule =
+        moduleRegistry.getModuleContainingResourcesOf(getTargetKey("/src_c:src_c"));
     RenderJarClassFileFinder cClassFileFinder = new RenderJarClassFileFinder(cResourceModule);
     assertThat(cClassFileFinder.findClassFile("com.google.example.simple.trans_dep_c.TransDepC"))
         .isEqualTo(

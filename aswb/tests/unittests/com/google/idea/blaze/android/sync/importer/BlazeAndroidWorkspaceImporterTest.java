@@ -909,6 +909,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     AndroidResourceModule expectedAndroidResourceModule =
         AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//java/example:lib")))
+            .addSourceTarget(TargetKey.forPlainTarget(Label.create("//java/example:lib2")))
             .addResourceAndTransitiveResource(source("java/example/res"))
             .addResourceAndTransitiveResource(source("java/example/res2"))
             .build();
