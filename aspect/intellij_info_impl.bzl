@@ -161,11 +161,11 @@ def library_artifact(java_output):
         source_jars = [artifact_location(f) for f in src_jars],
     )
 
-def annotation_processing_jars(annotation_processing):
+def annotation_processing_jars(generated_class_jar, generated_source_jar):
     """Creates a LibraryArtifact representing Java annotation processing jars."""
-    src_jar = annotation_processing.source_jar
+    src_jar = generated_source_jar
     return struct_omit_none(
-        jar = artifact_location(annotation_processing.class_jar),
+        jar = artifact_location(generated_class_jar),
         source_jar = artifact_location(src_jar),
         source_jars = [artifact_location(src_jar)] if src_jar else None,
     )
@@ -548,6 +548,20 @@ def get_java_provider(target):
         return target[JavaInfo]
     return None
 
+def _collect_generated_files(java):
+    """Collects generated files from a Java target"""
+    if hasattr(java, "java_outputs"):
+        return [
+            (outputs.generated_class_jar, outputs.generated_source_jar)
+            for outputs in java.java_outputs
+            if outputs.generated_class_jar != None
+        ]
+
+    # Handles Bazel versions before 5.0.0.
+    if (hasattr(java, "annotation_processing") and java.annotation_processing and java.annotation_processing.enabled):
+        return [(java.annotation_processing.class_jar, java.annotation_processing.source_jar)]
+    return []
+
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Java-specific output groups, returns false if not a Java target."""
     java = get_java_provider(target)
@@ -567,21 +581,19 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     compile_files = class_jars
 
     gen_jars = []
-    if (hasattr(java, "annotation_processing") and
-        java.annotation_processing and
-        java.annotation_processing.enabled):
-        gen_jars = [annotation_processing_jars(java.annotation_processing)]
+    for generated_class_jar, generated_source_jar in _collect_generated_files(java):
+        gen_jars.append(annotation_processing_jars(generated_class_jar, generated_source_jar))
         resolve_files += [
             jar
             for jar in [
-                java.annotation_processing.class_jar,
-                java.annotation_processing.source_jar,
+                generated_class_jar,
+                generated_source_jar,
             ]
             if jar != None and not jar.is_source
         ]
         compile_files += [
             jar
-            for jar in [java.annotation_processing.class_jar]
+            for jar in [generated_class_jar]
             if jar != None and not jar.is_source
         ]
 
