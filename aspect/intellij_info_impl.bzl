@@ -898,9 +898,9 @@ def is_test_rule(ctx):
 
 def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
     """Updates java_toolchain-relevant output groups, returns false if not a java_toolchain target."""
-    if not hasattr(target, "java_toolchain"):
+    if not java_common.JavaToolchainInfo in target:
         return False
-    toolchain = target.java_toolchain
+    toolchain = target[java_common.JavaToolchainInfo]
     javac_jars = []
     if hasattr(toolchain, "tools"):
         javac_jars = [

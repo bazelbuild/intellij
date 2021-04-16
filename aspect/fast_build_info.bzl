@@ -34,9 +34,9 @@ def _fast_build_info_impl(target, ctx):
             for datadep in ctx.rule.attr.data
         ]
 
-    if hasattr(target, "java_toolchain"):
+    if java_common.JavaToolchainInfo in target:
         write_output = True
-        toolchain = target.java_toolchain
+        toolchain = target[java_common.JavaToolchainInfo]
         javac_jars = []
         if hasattr(toolchain, "tools"):
             javac_jars = [artifact_location(f) for f in toolchain.tools.to_list()]
