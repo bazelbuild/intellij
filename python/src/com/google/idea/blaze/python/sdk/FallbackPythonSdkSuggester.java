@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonVersion;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.python.sync.PySdkSuggester;
+import com.google.idea.sdkcompat.python.FallbackPythonSdkSuggesterCompat.FallbackPythonSdkSuggesterAdapter;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -36,7 +37,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /** A PySdkSuggester that returns the most recent system interpreter for a given Python version. */
-public final class FallbackPythonSdkSuggester extends PySdkSuggester {
+public final class FallbackPythonSdkSuggester extends PySdkSuggester implements FallbackPythonSdkSuggesterAdapter {
 
   /** Initializes SDK information on first blaze project open */
   static class SdkInitializer implements StartupActivity, DumbAware {
@@ -58,24 +59,14 @@ public final class FallbackPythonSdkSuggester extends PySdkSuggester {
     ImmutableMap.Builder<PythonVersion, String> builder = ImmutableMap.builder();
     List<PyDetectedSdk> detectedSdks = PySdkExtKt.detectSystemWideSdks(null, ImmutableList.of());
     detectedSdks.stream()
-        .filter(sdk -> sdk.getHomePath() != null && getSdkLanguageLevel(sdk).isPython2())
-        .max(Comparator.comparingInt(sdk -> getSdkLanguageLevel(sdk).getVersion()))
+        .filter(sdk -> sdk.getHomePath() != null && FallbackPythonSdkSuggesterAdapter.getSdkLanguageLevel(sdk).isPython2())
+        .max(FallbackPythonSdkSuggesterAdapter::sdkVersionComparator)
         .ifPresent((sdk) -> builder.put(PythonVersion.PY2, sdk.getHomePath()));
     detectedSdks.stream()
-        .filter(sdk -> sdk.getHomePath() != null && getSdkLanguageLevel(sdk).isPy3K())
-        .max(Comparator.comparingInt(sdk -> getSdkLanguageLevel(sdk).getVersion()))
+        .filter(sdk -> sdk.getHomePath() != null && FallbackPythonSdkSuggesterAdapter.getSdkLanguageLevel(sdk).isPy3K())
+        .max(FallbackPythonSdkSuggesterAdapter::sdkVersionComparator)
         .ifPresent((sdk) -> builder.put(PythonVersion.PY3, sdk.getHomePath()));
     return builder.build();
-  }
-
-  // PyDetectedSdk does not have a proper version/language level, so go via PythonSdkFlavor
-  private static LanguageLevel getSdkLanguageLevel(PyDetectedSdk sdk) {
-    String sdkHomepath = sdk.getHomePath();
-    PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHomepath);
-    if (flavor == null) {
-      return LanguageLevel.getDefault();
-    }
-    return flavor.getLanguageLevel(sdkHomepath);
   }
 
   @Nullable

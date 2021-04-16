@@ -37,7 +37,7 @@ final class BuildifierCustomFormatter implements CustomFormatter {
   @Nullable
   @Override
   public Replacements getReplacements(
-      Project project, FileContentsProvider fileContents, Collection<TextRange> ranges) {
+      Project project, FileContentsProvider fileContents, Collection<? extends TextRange> ranges) {
     if (!(fileContents.file instanceof BuildFile)) {
       return null;
     }

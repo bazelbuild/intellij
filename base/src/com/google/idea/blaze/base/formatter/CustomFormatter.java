@@ -43,7 +43,7 @@ public interface CustomFormatter {
    */
   @Nullable
   Replacements getReplacements(
-      Project project, FileContentsProvider fileContents, Collection<TextRange> ranges);
+      Project project, FileContentsProvider fileContents, Collection<? extends TextRange> ranges);
 
   /** If true, then when formatting VCS changed text will actually format the entire file. */
   default boolean alwaysFormatEntireFile() {
