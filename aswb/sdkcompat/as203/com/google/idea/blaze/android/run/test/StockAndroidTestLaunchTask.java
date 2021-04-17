@@ -23,9 +23,10 @@ class StockAndroidTestLaunchTask extends StockAndroidTestLaunchTaskBase {
   StockAndroidTestLaunchTask(
       BlazeAndroidTestRunConfigurationState configState,
       String runner,
+      String appPackage,
       String testPackage,
       boolean waitForDebugger) {
-    super(configState, runner, testPackage, waitForDebugger);
+    super(configState, runner, appPackage, testPackage, waitForDebugger);
   }
 
   @Override

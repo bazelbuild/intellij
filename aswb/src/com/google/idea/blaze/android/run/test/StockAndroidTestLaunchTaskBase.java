@@ -35,6 +35,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+import com.android.ddmlib.AdbCommandRejectedException;
+import com.android.ddmlib.CollectingOutputReceiver;
+import com.android.ddmlib.IShellOutputReceiver;
+import com.android.ddmlib.ShellCommandUnresponsiveException;
+import com.android.ddmlib.TimeoutException;
+import java.io.IOException;
+
 abstract class StockAndroidTestLaunchTaskBase implements LaunchTask {
   private static final String ID = "STOCK_ANDROID_TEST";
 
@@ -43,16 +51,19 @@ abstract class StockAndroidTestLaunchTaskBase implements LaunchTask {
   private final BlazeAndroidTestRunConfigurationState configState;
   private final String instrumentationTestRunner;
   private final String testApplicationId;
+  private final String appApplicationId;
   private final boolean waitForDebugger;
 
   StockAndroidTestLaunchTaskBase(
       BlazeAndroidTestRunConfigurationState configState,
       String runner,
+      String appPackage,
       String testPackage,
       boolean waitForDebugger) {
     this.configState = configState;
     this.instrumentationTestRunner = runner;
     this.waitForDebugger = waitForDebugger;
+    this.appApplicationId = appPackage;
     this.testApplicationId = testPackage;
   }
 
@@ -63,8 +74,10 @@ abstract class StockAndroidTestLaunchTaskBase implements LaunchTask {
       BlazeAndroidDeployInfo deployInfo,
       LaunchStatus launchStatus) {
     String testPackage;
+    String appPackage;
     try {
       testPackage = applicationIdProvider.getTestPackageName();
+      appPackage = applicationIdProvider.getPackageName();
       if (testPackage == null) {
         launchStatus.terminateLaunch("Unable to determine test package name", true);
         return null;
@@ -128,7 +141,7 @@ abstract class StockAndroidTestLaunchTaskBase implements LaunchTask {
       runner = availableRunners.get(0);
     }
 
-    return new StockAndroidTestLaunchTask(configState, runner, testPackage, waitForDebugger);
+    return new StockAndroidTestLaunchTask(configState, runner, appPackage, testPackage, waitForDebugger);
   }
 
   private static ImmutableList<String> getRunnersFromManifest(
@@ -162,6 +175,7 @@ abstract class StockAndroidTestLaunchTaskBase implements LaunchTask {
       IDevice device,
       final LaunchStatus launchStatus,
       final ConsolePrinter printer) {
+    clearAppData(device, printer);
     printer.stdout("Running tests\n");
 
     final RemoteAndroidTestRunner runner =
@@ -200,6 +214,21 @@ abstract class StockAndroidTestLaunchTaskBase implements LaunchTask {
             });
 
     return LaunchResult.success();
+  }
+
+  private void clearAppData(
+          final IDevice device,
+          final ConsolePrinter printer
+  ) {
+    printer.stdout("Clearing app data for " + appApplicationId + "\n");
+    IShellOutputReceiver receiver = new CollectingOutputReceiver();
+    try {
+      device.executeShellCommand("pm clear " + appApplicationId, receiver, 5L, TimeUnit.SECONDS);
+      printer.stdout("App data cleared!\n");
+    } catch (TimeoutException | AdbCommandRejectedException | ShellCommandUnresponsiveException | IOException e) {
+      printer.stderr(e.toString());
+      printer.stderr("Clearing app data for " + appApplicationId + " failed! Keep running tests...\n");
+    }
   }
 
   @NotNull
