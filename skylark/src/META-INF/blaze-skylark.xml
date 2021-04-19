@@ -16,7 +16,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <xdebugger.breakpointType implementation="com.google.idea.blaze.skylark.debugger.impl.SkylarkLineBreakpointType"/>
-    <programRunner implementation="com.google.idea.blaze.skylark.debugger.run.SkylarkDebugRunner"/>
+    <programRunner implementation="com.google.idea.blaze.skylark.debugger.run.SkylarkDebugRunner" id="SkylarkDebugRunner"/>
     <completion.contributor language="BUILD" implementationClass="com.google.idea.blaze.skylark.debugger.impl.DebuggerCompletionContributor"/>
   </extensions>
   <extensions defaultExtensionNs="com.google.idea.blaze">
