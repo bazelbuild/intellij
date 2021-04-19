@@ -24,6 +24,9 @@ import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.CapabilityNotSupported;
 import com.android.tools.idea.projectsystem.CapabilityStatus;
 import com.android.tools.idea.projectsystem.CapabilitySupported;
+import com.android.tools.idea.projectsystem.ClassFileFinder;
+import com.android.tools.idea.projectsystem.DependencyManagementException;
+import com.android.tools.idea.projectsystem.DependencyScopeType;
 import com.android.tools.idea.projectsystem.DependencyType;
 import com.android.tools.idea.projectsystem.ManifestOverrides;
 import com.android.tools.idea.projectsystem.NamedModuleTemplate;
@@ -38,6 +41,7 @@ import com.google.idea.blaze.android.npw.project.BlazeAndroidModuleTemplate;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.Dependency;
@@ -45,11 +49,15 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
+import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
@@ -72,6 +80,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -113,6 +122,105 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   @Override
   public Module getModule() {
     return module;
+  }
+
+  // @Override #as42: Method added in AS 203
+  public ClassFileFinder getModuleClassFileFinder() {
+    return classFileFinder;
+  }
+
+  // @Override #as42: Method added in AS 203
+  public ClassFileFinder getClassFileFinderForSourceFile(VirtualFile sourceFile) {
+    return classFileFinder;
+  }
+
+  @Override
+  public Collection<ExternalLibrary> getResolvedLibraryDependencies() {
+    return getResolvedDependentLibraries();
+  }
+
+  // @Override
+  public Collection<ExternalLibrary> getResolvedDependentLibraries() {
+    return getDependentLibraries();
+  }
+
+  // @Override #as42: Method added in AS 203
+  public Collection<ExternalLibrary> getResolvedLibraryDependencies(
+      DependencyScopeType dependencyScopeType) {
+    return getDependentLibraries();
+  }
+
+  public Collection<ExternalLibrary> getDependentLibraries() {
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+
+    if (blazeProjectData == null) {
+      return ImmutableList.of();
+    }
+
+    if (isWorkspaceModule) {
+      if (cacheLibraryComputation.getValue()) {
+        return SyncCache.getInstance(project)
+            .get(BlazeModuleSystem.class, BlazeModuleSystemBase::getLibrariesForWorkspaceModule);
+      } else {
+        return getLibrariesForWorkspaceModule(project, blazeProjectData);
+      }
+    }
+
+    AndroidResourceModuleRegistry registry = AndroidResourceModuleRegistry.getInstance(project);
+    TargetIdeInfo target = blazeProjectData.getTargetMap().get(registry.getTargetKey(module));
+    if (target == null) {
+      // this can happen if the module points to the <android-resources>, <project-data-dir>
+      // <project-data-dir> does not contain any resource
+      // <android-resources> contains all external resources as module's local resources, so there's
+      // no dependent libraries
+      return ImmutableList.of();
+    }
+
+    BlazeAndroidSyncData androidSyncData =
+        blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
+    if (androidSyncData == null) {
+      return ImmutableList.of();
+    }
+
+    ImmutableList.Builder<ExternalLibrary> libraries = ImmutableList.builder();
+    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
+    ExternalLibraryInterner externalLibraryInterner = ExternalLibraryInterner.getInstance(project);
+    for (String libraryKey : registry.get(module).resourceLibraryKeys) {
+      ImmutableMap<String, AarLibrary> aarLibraries = androidSyncData.importResult.aarLibraries;
+      if (aarLibraries != null && aarLibraries.containsKey(libraryKey)) {
+        ExternalLibrary externalLibrary =
+            toExternalLibrary(project, aarLibraries.get(libraryKey), decoder);
+        if (externalLibrary != null) {
+          libraries.add(externalLibraryInterner.intern(externalLibrary));
+        }
+      }
+    }
+    return libraries.build();
+  }
+
+  private static ImmutableList<ExternalLibrary> getLibrariesForWorkspaceModule(
+      Project project, BlazeProjectData blazeProjectData) {
+    ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
+    ExternalLibraryInterner externalLibraryInterner = ExternalLibraryInterner.getInstance(project);
+    ImmutableList.Builder<ExternalLibrary> libraries = ImmutableList.builder();
+    for (BlazeLibrary library :
+        BlazeLibraryCollector.getLibraries(
+            ProjectViewManager.getInstance(project).getProjectViewSet(), blazeProjectData)) {
+      if (library instanceof AarLibrary) {
+        ExternalLibrary externalLibrary = toExternalLibrary(project, (AarLibrary) library, decoder);
+        if (externalLibrary != null) {
+          libraries.add(externalLibraryInterner.intern(externalLibrary));
+        }
+      } else if (library instanceof BlazeJarLibrary) {
+        ExternalLibrary externalLibrary =
+            toExternalLibrary(project, (BlazeJarLibrary) library, decoder);
+        if (externalLibrary != null) {
+          libraries.add(externalLibraryInterner.intern(externalLibrary));
+        }
+      }
+    }
+    return libraries.build();
   }
 
   @Override
@@ -261,8 +369,16 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   @Nullable
   @Override
   public GradleCoordinate getResolvedDependency(GradleCoordinate coordinate) {
-    TargetKey target = getResolvedTarget(coordinate);
-    return target != null ? coordinate : null;
+    return getResolvedDependency(coordinate, DependencyScopeType.MAIN);
+  }
+
+  // @Override #api42 : Method added in api203
+  @Nullable
+  public GradleCoordinate getResolvedDependency(
+      GradleCoordinate gradleCoordinate, DependencyScopeType dependencyScopeType)
+      throws DependencyManagementException {
+    TargetKey target = getResolvedTarget(gradleCoordinate);
+    return target != null ? gradleCoordinate : null;
   }
 
   /**
