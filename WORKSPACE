@@ -335,6 +335,11 @@ http_archive(
     url = "https://github.com/bazelbuild/bazel-skylib/releases/download/0.8.0/bazel-skylib.0.8.0.tar.gz",
 )
 
+# specify a minimum version for bazel otherwise users on old versions may see
+# unexpressive errors when new features are used
+load("@bazel_skylib//lib:versions.bzl", "versions")
+versions.check(minimum_bazel_version = "4.0.0")
+
 http_archive(
     name = "build_bazel_integration_testing",
     sha256 = "e055ff971787a27d6942a83ffd182953988c88dfa82e89138ccc83bf410a65d6",
