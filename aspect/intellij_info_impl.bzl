@@ -986,23 +986,19 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     direct_exports = []
     if JavaInfo in target:
         direct_exports = collect_targets_from_attrs(rule_attrs, ["exports"])
-        transitive_exports = target[JavaInfo].transitive_exports
-        export_deps = [
-            make_dep_from_label(label, COMPILE_TIME)
-            for label in transitive_exports.to_list()
-        ]
+        export_deps.extend(make_deps(direct_exports, COMPILE_TIME))
+
+        # Collect transitive exports
+        for export in direct_exports:
+            export_deps.extend(export.intellij_info.export_deps)
 
         if ctx.rule.kind == "android_library":
             # Empty android libraries export all their dependencies.
             if not hasattr(rule_attrs, "srcs") or not ctx.rule.attr.srcs:
-                export_deps = export_deps + compiletime_deps
+                export_deps.extend(compiletime_deps)
 
-            # Starlark android libraries do not produce transitive_exports.
-            if not transitive_exports:
-                export_deps = export_deps + make_deps(direct_exports, COMPILE_TIME)
-        elif ctx.rule.kind == "aar_import":
-            export_deps = export_deps + make_deps(direct_exports, COMPILE_TIME)
-    export_deps = depset(export_deps).to_list()
+        # Deduplicate the entries
+        export_deps = depset(export_deps).to_list()
 
     # runtime_deps
     runtime_dep_targets = collect_targets_from_attrs(
