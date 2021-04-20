@@ -189,26 +189,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         throw new ExecutionException("Workspace module not found");
       }
       GoApplicationRunningState nativeState =
-          new GoApplicationRunningState(env, module, nativeConfig) {
-            @Override
-            public boolean isDebug() {
-              return true;
-            }
-
-            // #api201: Super method uses different generic type for list in 2020.2.
-            @SuppressWarnings({"rawtypes", "unchecked"})
-            @Nullable
-            @Override
-            public List getBuildingTarget() {
-              return null;
-            }
-
-            @Nullable
-            @Override
-            public GoExecutor createBuildExecutor() {
-              return null;
-            }
-          };
+          new DerivedGoApplicationRunningState(env, module, nativeConfig);
       nativeState.setOutputFilePath(executable.binary.getPath());
       return nativeState;
     }
@@ -217,6 +198,36 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     @Override
     public ExecutionResult execute(Executor executor, ProgramRunner<?> runner) {
       return null;
+    }
+
+    // #api201: Remove 'unchecked' warning suppression, necessary for getBuildingTarget().
+    // (background: b/148802231)
+    @SuppressWarnings("unchecked")
+    private static class DerivedGoApplicationRunningState extends GoApplicationRunningState {
+
+      public DerivedGoApplicationRunningState(
+          ExecutionEnvironment env, Module module, GoApplicationConfiguration configuration) {
+        super(env, module, configuration);
+      }
+
+      @Override
+      public boolean isDebug() {
+        return true;
+      }
+
+      // #api201: Super method uses different generic type for list in 2020.2.
+      @SuppressWarnings({"rawtypes", "unchecked"})
+      @Nullable
+      @Override
+      public List getBuildingTarget() {
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public GoExecutor createBuildExecutor() {
+        return null;
+      }
     }
   }
 

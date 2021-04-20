@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.plugin.run;
 
+import static java.util.stream.Collectors.toCollection;
+
+import com.google.common.base.Splitter;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -36,6 +39,8 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.util.execution.ParametersListUtil;
+import java.util.ArrayList;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -149,17 +154,25 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
     }
 
     private static String defaultVmOptions() {
-      String vmoptions = VMOptions.read();
-      if (vmoptions == null) {
+      String vmoptionsText = VMOptions.read();
+      if (vmoptionsText == null) {
         return null;
       }
-      vmoptions = vmoptions.replaceAll("#.*", "").replaceAll("\\s+", " ").trim();
+      ArrayList<String> vmoptions =
+          Splitter.on("\n")
+              .trimResults()
+              .omitEmptyStrings()
+              .splitToStream(vmoptionsText)
+              .filter(opt -> !opt.startsWith("#"))
+              .collect(toCollection(ArrayList::new));
+
       String vmoptionsFile = System.getProperty("jb.vmOptionsFile");
       if (vmoptionsFile != null) {
-        vmoptions += String.format(" -Djb.vmOptionsFile=\"%s\"", vmoptionsFile);
+        vmoptions.add("-Djb.vmOptionsFile=" + vmoptionsFile);
       }
-      vmoptions += " -Didea.is.internal=true";
-      return vmoptions;
+      vmoptions.add("-Didea.is.internal=true");
+
+      return ParametersListUtil.join(vmoptions);
     }
   }
 

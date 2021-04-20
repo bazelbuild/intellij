@@ -375,7 +375,10 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
    * including a stack trace).
    */
   @Nullable
-  private static String pruneErrorMessage(String message, @Nullable String content) {
+  private static String pruneErrorMessage(@Nullable String message, @Nullable String content) {
+    if (message == null) {
+      return null;
+    }
     return content != null ? content.replace(message, "") : null;
   }
 

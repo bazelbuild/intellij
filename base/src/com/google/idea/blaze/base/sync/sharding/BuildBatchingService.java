@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.sharding;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.logging.utils.ShardStats.ShardingApproach;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -49,6 +50,8 @@ public interface BuildBatchingService {
   ImmutableList<ImmutableList<Label>> calculateTargetBatches(
       Set<Label> targets, BuildBinaryType buildType, int suggestedShardSize);
 
+  ShardingApproach getShardingApproach();
+
   /**
    * Given a list of individual, un-excluded blaze targets (no wildcard target patterns), returns a
    * list of target batches.
@@ -56,12 +59,32 @@ public interface BuildBatchingService {
    * <p>Iterates through all available implementations, returning the first successful result, or
    * else falling back to returning a single batch.
    */
-  static ImmutableList<ImmutableList<Label>> batchTargets(
+  static ShardedTargetList batchTargets(
       Set<Label> targets, BuildBinaryType buildType, int suggestedShardSize) {
     return Arrays.stream(EP_NAME.getExtensions())
-        .map(s -> s.calculateTargetBatches(targets, buildType, suggestedShardSize))
+        .map(s -> s.getShardedTargetList(targets, buildType, suggestedShardSize))
         .filter(Objects::nonNull)
         .findFirst()
-        .orElse(ImmutableList.of(ImmutableList.copyOf(targets)));
+        .orElse(
+            new ShardedTargetList(
+                ImmutableList.of(ImmutableList.copyOf(targets)),
+                ShardingApproach.ERROR,
+                suggestedShardSize));
+  }
+  /**
+   * Given a list of individual, un-excluded blaze targets (no wildcard target patterns), create
+   * ShardedTargetList according to inputs.
+   *
+   * <p>This is a util function mainly designed for batchTargets. We would switch the method to
+   * private when Java 11 language features are available.
+   */
+  @Nullable
+  default ShardedTargetList getShardedTargetList(
+      Set<Label> targets, BuildBinaryType buildType, int suggestedShardSize) {
+    ImmutableList<ImmutableList<Label>> targetBatches =
+        calculateTargetBatches(targets, buildType, suggestedShardSize);
+    return targetBatches == null
+        ? null
+        : new ShardedTargetList(targetBatches, getShardingApproach(), suggestedShardSize);
   }
 }

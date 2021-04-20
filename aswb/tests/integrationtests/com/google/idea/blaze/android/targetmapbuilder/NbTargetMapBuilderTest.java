@@ -200,7 +200,8 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                             ArtifactLocation.builder()
                                 .setRelativePath("import/lib_aar.aar")
                                 .setIsSource(true)
-                                .build()))
+                                .build(),
+                            /*customJavaPackage=*/ null))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
                             .setJdepsFile(gen("import/aar.jdeps"))
@@ -343,7 +344,9 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                     .setLabel(aarFile)
                     .setBuildFile(source("third_party/aar/BUILD"))
                     .setKind(AndroidBlazeRules.RuleTypes.AAR_IMPORT.getKind())
-                    .setAndroidAarInfo(new AndroidAarIdeInfo(source("third_party/aar/lib_aar.aar")))
+                    .setAndroidAarInfo(
+                        new AndroidAarIdeInfo(
+                            source("third_party/aar/lib_aar.aar"), /*customJavaPackage=*/ null))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
                             .setJdepsFile(gen("third_party/aar/an_aar.jdeps"))

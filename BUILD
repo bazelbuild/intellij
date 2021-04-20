@@ -43,14 +43,6 @@ test_suite(
     ],
 )
 
-# Preserve previous behavior on buildkite TODO: remove this
-test_suite(
-    name = "ijwb_tests",
-    tests = [
-        ":ijwb_ce_tests",
-    ],
-)
-
 # UE-compatible IJwB tests
 test_suite(
     name = "ijwb_ue_tests",
@@ -82,8 +74,7 @@ test_suite(
 test_suite(
     name = "aswb_python_tests",
     tests = [
-        # #api193: temporarily disabled: AS is on an earlier version of v193
-        #        "//python:integration_tests",
+        "//python:integration_tests",
         "//python:unit_tests",
     ],
 )

@@ -35,8 +35,14 @@ def _fast_build_info_impl(target, ctx):
         ]
 
     if hasattr(target, "java_toolchain"):
-        write_output = True
         toolchain = target.java_toolchain
+    elif java_common.JavaToolchainInfo != platform_common.ToolchainInfo and \
+         java_common.JavaToolchainInfo in target:
+        toolchain = target[java_common.JavaToolchainInfo]
+    else:
+        toolchain = None
+    if toolchain:
+        write_output = True
         javac_jars = []
         if hasattr(toolchain, "tools"):
             javac_jars = [artifact_location(f) for f in toolchain.tools.to_list()]

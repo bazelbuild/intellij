@@ -76,13 +76,6 @@ java_proto_library(
     deps = [":intellij_plugin_target_deploy_info_proto"],
 )
 
-# Used in GitHub only.
-java_binary(
-    name = "jarjar_runner",
-    main_class = "org.pantsbuild.jarjar.Main",
-    runtime_deps = ["@jarjar//jar"],
-)
-
 genrule(
     name = "repackaged_proto_deps",
     srcs = [
@@ -91,13 +84,13 @@ genrule(
     ],
     outs = [":repackaged_proto_deps.jar"],
     cmd = """
-    $(location :jarjar_runner) \
+    $(location @jarjar//:jarjar_bin) \
         process \
         $(location :jarjar_protobuf_rule.txt) \
         $(location :proto_deps_binary_deploy.jar) \
         $@
     """,
-    tools = [":jarjar_runner"],
+    tools = ["@jarjar//:jarjar_bin"],
 )
 
 java_binary(

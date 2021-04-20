@@ -909,6 +909,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     AndroidResourceModule expectedAndroidResourceModule =
         AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//java/example:lib")))
+            .addSourceTarget(TargetKey.forPlainTarget(Label.create("//java/example:lib2")))
             .addResourceAndTransitiveResource(source("java/example/res"))
             .addResourceAndTransitiveResource(source("java/example/res2"))
             .build();
@@ -1180,7 +1181,9 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .setLabel("//third_party/lib:an_aar")
                     .setBuildFile(source("third_party/lib/BUILD"))
                     .setKind(AndroidBlazeRules.RuleTypes.AAR_IMPORT.getKind())
-                    .setAndroidAarInfo(new AndroidAarIdeInfo(source("third_party/lib/lib_aar.aar")))
+                    .setAndroidAarInfo(
+                        new AndroidAarIdeInfo(
+                            source("third_party/lib/lib_aar.aar"), /*customJavaPackage=*/ null))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
                             .addJar(
@@ -1251,7 +1254,9 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .setLabel("//third_party/lib:an_aar")
                     .setBuildFile(source("third_party/lib/BUILD"))
                     .setKind(AndroidBlazeRules.RuleTypes.AAR_IMPORT.getKind())
-                    .setAndroidAarInfo(new AndroidAarIdeInfo(source("third_party/lib/lib_aar.aar")))
+                    .setAndroidAarInfo(
+                        new AndroidAarIdeInfo(
+                            source("third_party/lib/lib_aar.aar"), /*customJavaPackage=*/ null))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
                             .addJar(
@@ -1308,7 +1313,9 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .setLabel("//java/example:an_aar")
                     .setBuildFile(source("java/example/BUILD"))
                     .setKind(AndroidBlazeRules.RuleTypes.AAR_IMPORT.getKind())
-                    .setAndroidAarInfo(new AndroidAarIdeInfo(source("java/example/an_aar.aar")))
+                    .setAndroidAarInfo(
+                        new AndroidAarIdeInfo(
+                            source("java/example/an_aar.aar"), /*customJavaPackage=*/ null))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
                             .addJar(
@@ -1394,7 +1401,9 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .setLabel("//java/example:an_aar")
                     .setBuildFile(source("java/example/BUILD"))
                     .setKind(AndroidBlazeRules.RuleTypes.AAR_IMPORT.getKind())
-                    .setAndroidAarInfo(new AndroidAarIdeInfo(source("java/example/an_aar.aar")))
+                    .setAndroidAarInfo(
+                        new AndroidAarIdeInfo(
+                            source("java/example/an_aar.aar"), /*customJavaPackage=*/ null))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
                             .addJar(
@@ -1462,7 +1471,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .setBuildFile(source("third_party/lib/BUILD"))
                     .setKind(AndroidBlazeRules.RuleTypes.AAR_IMPORT.getKind())
                     .setAndroidAarInfo(
-                        new AndroidAarIdeInfo(source("third_party/lib/lib1_aar.aar")))
+                        new AndroidAarIdeInfo(
+                            source("third_party/lib/lib1_aar.aar"), /*customJavaPackage=*/ null))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
                             .addJar(
@@ -1479,7 +1489,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                     .setBuildFile(source("third_party/lib/BUILD"))
                     .setKind(AndroidBlazeRules.RuleTypes.AAR_IMPORT.getKind())
                     .setAndroidAarInfo(
-                        new AndroidAarIdeInfo(source("third_party/lib/lib2_aar.aar")))
+                        new AndroidAarIdeInfo(
+                            source("third_party/lib/lib2_aar.aar"), /*customJavaPackage=*/ null))
                     .setJavaInfo(
                         JavaIdeInfo.builder()
                             .addJar(

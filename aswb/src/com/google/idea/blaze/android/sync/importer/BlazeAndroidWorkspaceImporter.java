@@ -421,7 +421,8 @@ public class BlazeAndroidWorkspaceImporter {
         .build();
   }
 
-  private static AndroidResourceModule mergeAndroidResourceModules(
+  @VisibleForTesting
+  public static AndroidResourceModule mergeAndroidResourceModules(
       Collection<AndroidResourceModule> modules) {
     // Choose the shortest label as the canonical label (arbitrarily chosen from the original
     // filtering logic)
@@ -435,6 +436,7 @@ public class BlazeAndroidWorkspaceImporter {
     modules.forEach(
         m ->
             moduleBuilder
+                .addSourceTarget(m.targetKey)
                 .addResources(m.resources)
                 .addTransitiveResources(m.transitiveResources)
                 .addResourceLibraryKeys(m.resourceLibraryKeys)

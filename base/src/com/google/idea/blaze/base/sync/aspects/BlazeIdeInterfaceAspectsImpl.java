@@ -321,9 +321,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         count ->
             String.format(
                 "Building targets for shard %s of %s...", count, shardedTargets.shardCount());
-    Function<List<TargetExpression>, BuildResult> invocation =
+    Function<List<? extends TargetExpression>, BuildResult> invocation =
         targets -> {
-
           BlazeBuildOutputs result =
               runBuildForTargets(
                   project,
@@ -362,7 +361,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ProjectViewSet viewSet,
       BlazeInfo blazeInfo,
       ImmutableSet<LanguageClass> activeLanguages,
-      List<TargetExpression> targets,
+      List<? extends TargetExpression> targets,
       AspectStrategy aspectStrategy) {
     boolean onlyDirectDeps =
         viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
@@ -655,7 +654,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         count ->
             String.format(
                 "Compiling targets for shard %s of %s...", count, shardedTargets.shardCount());
-    Function<List<TargetExpression>, BuildResult> invocation =
+    Function<List<? extends TargetExpression>, BuildResult> invocation =
         targets ->
             doCompileIdeArtifacts(
                 project,
@@ -679,7 +678,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ProjectViewSet projectViewSet,
       BlazeVersionData blazeVersionData,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      List<TargetExpression> targets) {
+      List<? extends TargetExpression> targets) {
     BlazeCommand.Builder blazeCommandBuilder =
         BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.BUILD)
             .addTargets(targets)

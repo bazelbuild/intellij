@@ -287,7 +287,9 @@ public final class BlazeImportFixture {
                 .setLabel(aarFile)
                 .setBuildFile(source("third_party/aar/BUILD"))
                 .setKind(AndroidBlazeRules.RuleTypes.AAR_IMPORT.getKind())
-                .setAndroidAarInfo(new AndroidAarIdeInfo(source("third_party/aar/lib_aar.aar")))
+                .setAndroidAarInfo(
+                    new AndroidAarIdeInfo(
+                        source("third_party/aar/lib_aar.aar"), /*customJavaPackage=*/ null))
                 .setJavaInfo(
                     javaInfoWithJars("third_party/aar/_aar/an_aar/classes_and_libs_merged.jar"))
                 .build())

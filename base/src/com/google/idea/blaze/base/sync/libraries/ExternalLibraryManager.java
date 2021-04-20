@@ -32,11 +32,14 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.vcs.VcsSyncListener;
+import com.google.idea.common.util.Transactions;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -50,7 +53,7 @@ import javax.annotation.Nullable;
  * External library manager that rebuilds {@link BlazeExternalSyntheticLibrary}s during sync, and
  * updates individual {@link VirtualFile} entries in response to VFS events.
  */
-public class ExternalLibraryManager {
+public class ExternalLibraryManager implements Disposable {
   private final Project project;
   private volatile boolean duringBlazeSync;
   private volatile ImmutableMap<
@@ -80,7 +83,7 @@ public class ExternalLibraryManager {
                 libraries.values().forEach(library -> library.removeInvalidFiles(deletedFiles));
               }
             },
-            project);
+            this);
   }
 
   @Nullable
@@ -108,6 +111,9 @@ public class ExternalLibraryManager {
             .collect(toImmutableMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
+  @Override
+  public void dispose() {}
+
   /**
    * Sync listener to prevent external libraries from being accessed during sync to avoid spamming
    * {@link VirtualFile#isValid()} errors.
@@ -131,6 +137,15 @@ public class ExternalLibraryManager {
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
         if (blazeProjectData != null) {
           manager.initialize(blazeProjectData);
+          manager.duringBlazeSync = false;
+          if (!manager.libraries.isEmpty()) {
+            Transactions.submitWriteActionTransaction(
+                manager,
+                () ->
+                    // notify that roots changed so the external libraries can be indexed
+                    ProjectRootManagerEx.getInstanceEx(project)
+                        .makeRootsChange(() -> {}, /* fileTypes= */ false, /* fireEvents= */ true));
+          }
         }
       }
       manager.duringBlazeSync = false;

@@ -52,10 +52,12 @@ PREREQUISITE_DEPS = []
 
 # Dependency type enum
 COMPILE_TIME = 0
+
 RUNTIME = 1
 
 # PythonVersion enum; must match PyIdeInfo.PythonVersion
 PY2 = 1
+
 PY3 = 2
 
 ##### Begin bazel-flag-hack
@@ -71,8 +73,8 @@ def _flag_hack_impl(ctx):
     return [FlagHackInfo(incompatible_py2_outputs_are_suffixed = ctx.attr.incompatible_py2_outputs_are_suffixed)]
 
 _flag_hack_rule = rule(
-    implementation = _flag_hack_impl,
     attrs = {"incompatible_py2_outputs_are_suffixed": attr.bool()},
+    implementation = _flag_hack_impl,
 )
 
 def define_flag_hack():
@@ -93,9 +95,13 @@ def define_flag_hack():
 
 # PythonCompatVersion enum; must match PyIdeInfo.PythonSrcsVersion
 SRC_PY2 = 1
+
 SRC_PY3 = 2
+
 SRC_PY2AND3 = 3
+
 SRC_PY2ONLY = 4
+
 SRC_PY3ONLY = 5
 
 ##### Helpers
@@ -149,17 +155,17 @@ def library_artifact(java_output):
         return None
     src_jars = get_source_jars(java_output)
     return struct_omit_none(
-        jar = artifact_location(java_output.class_jar),
         interface_jar = artifact_location(java_output.ijar),
+        jar = artifact_location(java_output.class_jar),
         source_jar = artifact_location(src_jars[0]) if src_jars else None,
         source_jars = [artifact_location(f) for f in src_jars],
     )
 
-def annotation_processing_jars(annotation_processing):
+def annotation_processing_jars(generated_class_jar, generated_source_jar):
     """Creates a LibraryArtifact representing Java annotation processing jars."""
-    src_jar = annotation_processing.source_jar
+    src_jar = generated_source_jar
     return struct_omit_none(
-        jar = artifact_location(annotation_processing.class_jar),
+        jar = artifact_location(generated_class_jar),
         source_jar = artifact_location(src_jar),
         source_jars = [artifact_location(src_jar)] if src_jar else None,
     )
@@ -230,15 +236,15 @@ def _is_language_specific_proto_library(ctx, target):
 def make_target_key(label, aspect_ids):
     """Returns a TargetKey proto struct from a target."""
     return struct_omit_none(
-        label = str(label),
         aspect_ids = tuple(aspect_ids) if aspect_ids else None,
+        label = str(label),
     )
 
 def make_dep(dep, dependency_type):
     """Returns a Dependency proto struct."""
     return struct(
-        target = dep.intellij_info.target_key,
         dependency_type = dependency_type,
+        target = dep.intellij_info.target_key,
     )
 
 def make_deps(deps, dependency_type):
@@ -248,8 +254,8 @@ def make_deps(deps, dependency_type):
 def make_dep_from_label(label, dependency_type):
     """Returns a Dependency proto struct from a label."""
     return struct(
-        target = struct(label = str(label)),
         dependency_type = dependency_type,
+        target = struct(label = str(label)),
     )
 
 def update_sync_output_groups(groups_dict, key, new_set):
@@ -314,9 +320,9 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     to_build = target[PyInfo].transitive_sources
 
     ide_info["py_ide_info"] = struct_omit_none(
-        sources = sources,
         launcher = py_launcher,
         python_version = _get_python_version(ctx),
+        sources = sources,
         srcs_version = _get_python_srcs_version(ctx),
     )
 
@@ -382,11 +388,11 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
             library_labels = [str(library.label) for library in ctx.rule.attr.embed]
 
     ide_info["go_ide_info"] = struct_omit_none(
-        sources = [artifact_location(f) for f in sources],
         import_path = import_path,
         # TODO(chaorenl): deprecated, remove after plugin update
         library_label = library_labels[0] if library_labels else None,
         library_labels = library_labels,
+        sources = [artifact_location(f) for f in sources],
     )
 
     compile_files = target[OutputGroupInfo].compilation_outputs if hasattr(target[OutputGroupInfo], "compilation_outputs") else depset([])
@@ -431,13 +437,13 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     compilation_context = target[CcInfo].compilation_context
 
     c_info = struct_omit_none(
-        source = sources,
         header = headers,
-        textual_header = textual_headers,
+        source = sources,
         target_copt = target_copts,
+        textual_header = textual_headers,
+        transitive_define = compilation_context.defines.to_list(),
         transitive_include_directory = compilation_context.includes.to_list(),
         transitive_quote_include_directory = compilation_context.quote_includes.to_list(),
-        transitive_define = compilation_context.defines.to_list(),
         transitive_system_include_directory = compilation_context.system_includes.to_list(),
     )
     ide_info["c_ide_info"] = c_info
@@ -518,11 +524,11 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
         cpp_options = []
 
     c_toolchain_info = struct_omit_none(
-        target_name = cpp_toolchain.target_gnu_system_name,
-        c_option = c_options,
-        cpp_option = cpp_options,
-        cpp_executable = str(cpp_toolchain.compiler_executable),
         built_in_include_directory = [str(d) for d in cpp_toolchain.built_in_include_directories],
+        c_option = c_options,
+        cpp_executable = str(cpp_toolchain.compiler_executable),
+        cpp_option = cpp_options,
+        target_name = cpp_toolchain.target_gnu_system_name,
     )
     ide_info["c_toolchain_ide_info"] = c_toolchain_info
     update_sync_output_groups(output_groups, "intellij-info-cpp", depset([ide_info_file]))
@@ -541,6 +547,20 @@ def get_java_provider(target):
     if JavaInfo in target:
         return target[JavaInfo]
     return None
+
+def _collect_generated_files(java):
+    """Collects generated files from a Java target"""
+    if hasattr(java, "java_outputs"):
+        return [
+            (outputs.generated_class_jar, outputs.generated_source_jar)
+            for outputs in java.java_outputs
+            if outputs.generated_class_jar != None
+        ]
+
+    # Handles Bazel versions before 5.0.0.
+    if (hasattr(java, "annotation_processing") and java.annotation_processing and java.annotation_processing.enabled):
+        return [(java.annotation_processing.class_jar, java.annotation_processing.source_jar)]
+    return []
 
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Java-specific output groups, returns false if not a Java target."""
@@ -561,21 +581,19 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     compile_files = class_jars
 
     gen_jars = []
-    if (hasattr(java, "annotation_processing") and
-        java.annotation_processing and
-        java.annotation_processing.enabled):
-        gen_jars = [annotation_processing_jars(java.annotation_processing)]
+    for generated_class_jar, generated_source_jar in _collect_generated_files(java):
+        gen_jars.append(annotation_processing_jars(generated_class_jar, generated_source_jar))
         resolve_files += [
             jar
             for jar in [
-                java.annotation_processing.class_jar,
-                java.annotation_processing.source_jar,
+                generated_class_jar,
+                generated_source_jar,
             ]
             if jar != None and not jar.is_source
         ]
         compile_files += [
             jar
-            for jar in [java.annotation_processing.class_jar]
+            for jar in [generated_class_jar]
             if jar != None and not jar.is_source
         ]
 
@@ -611,13 +629,13 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         resolve_files += filtered_gen_resolve_files
 
     java_info = struct_omit_none(
-        sources = sources,
+        filtered_gen_jar = filtered_gen_jar,
+        generated_jars = gen_jars,
         jars = jars,
         jdeps = jdeps,
-        generated_jars = gen_jars,
-        package_manifest = artifact_location(package_manifest),
-        filtered_gen_jar = filtered_gen_jar,
         main_class = getattr(ctx.rule.attr, "main_class", None),
+        package_manifest = artifact_location(package_manifest),
+        sources = sources,
         test_class = getattr(ctx.rule.attr, "test_class", None),
     )
 
@@ -754,7 +772,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     resources = []
     res_folders = []
     resolve_files = jars_from_output(android.idl.output)
-    if (hasattr(ctx.rule.attr, "resource_files")):
+    if hasattr(ctx.rule.attr, "resource_files"):
         for artifact_path_fragments, res_files in get_res_artifacts(ctx.rule.attr.resource_files).items():
             # Generate unique ArtifactLocation for resource directories.
             root = to_artifact_location(*artifact_path_fragments)
@@ -788,7 +806,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
             resolve_files.append(aar)
 
             # Generate unique ResFolderLocation for resource files.
-            res_folders.append(struct_omit_none(root = root, aar = artifact_location(aar)))
+            res_folders.append(struct_omit_none(aar = artifact_location(aar), root = root))
 
     instruments = None
     if hasattr(ctx.rule.attr, "instruments") and ctx.rule.attr.instruments:
@@ -859,8 +877,9 @@ def _collect_aar_import_info(ctx, ide_info, ide_info_file, output_groups):
     if not hasattr(ctx.rule.attr, "aar"):
         return False
     aar_file = ctx.rule.attr.aar.files.to_list()[0]
-    ide_info["android_aar_ide_info"] = struct(
+    ide_info["android_aar_ide_info"] = struct_omit_none(
         aar = artifact_location(aar_file),
+        java_package = getattr(ctx.rule.attr, "package", None),
     )
     update_sync_output_groups(output_groups, "intellij-resolve-android", depset([aar_file]))
     return True
@@ -879,9 +898,13 @@ def is_test_rule(ctx):
 
 def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
     """Updates java_toolchain-relevant output groups, returns false if not a java_toolchain target."""
-    if not hasattr(target, "java_toolchain"):
+    if hasattr(target, "java_toolchain"):
+        toolchain = target.java_toolchain
+    elif java_common.JavaToolchainInfo != platform_common.ToolchainInfo and \
+         java_common.JavaToolchainInfo in target:
+        toolchain = target[java_common.JavaToolchainInfo]
+    else:
         return False
-    toolchain = target.java_toolchain
     javac_jars = []
     if hasattr(toolchain, "tools"):
         javac_jars = [
@@ -890,9 +913,9 @@ def collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups):
             if f.basename.endswith(".jar")
         ]
     ide_info["java_toolchain_ide_info"] = struct_omit_none(
+        javac_jars = javac_jars,
         source_version = toolchain.source_version,
         target_version = toolchain.target_version,
-        javac_jars = javac_jars,
     )
     update_sync_output_groups(output_groups, "intellij-info-java", depset([ide_info_file]))
     return True
@@ -1011,7 +1034,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
             if k.endswith("-direct-deps"):
                 continue
             if k.endswith("-outputs"):
-                directs = k[:-(len("outputs"))] + "direct-deps"
+                directs = k[:-len("outputs")] + "direct-deps"
                 output_groups[directs] = output_groups[directs] + [v] if directs in output_groups else [v]
                 continue
 
@@ -1040,12 +1063,12 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
     target_key = make_target_key(target.label, aspect_ids)
     ide_info = dict(
+        build_file_artifact_location = build_file_artifact_location(ctx),
+        features = ctx.features,
         key = target_key,
         kind_string = ctx.rule.kind,
-        deps = list(all_deps),
-        build_file_artifact_location = build_file_artifact_location(ctx),
         tags = tags,
-        features = ctx.features,
+        deps = list(all_deps),
     )
 
     # Collect test info
@@ -1075,13 +1098,13 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
     # Return providers.
     return struct_omit_none(
-        output_groups = output_groups,
         intellij_info = struct(
-            target_key = target_key,
+            export_deps = export_deps,
             kind = ctx.rule.kind,
             output_groups = output_groups,
-            export_deps = export_deps,
+            target_key = target_key,
         ),
+        output_groups = output_groups,
     )
 
 def semantics_extra_deps(base, semantics, name):
@@ -1129,9 +1152,9 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         attrs.update(semantics.attrs)
 
     return aspect(
-        attrs = attrs,
         attr_aspects = attr_aspects,
+        attrs = attrs,
         fragments = ["cpp"],
-        implementation = aspect_impl,
         required_aspect_providers = [[JavaInfo], [CcInfo], ["dart"], ["aspect_proto_go_api_info"]],
+        implementation = aspect_impl,
     )
