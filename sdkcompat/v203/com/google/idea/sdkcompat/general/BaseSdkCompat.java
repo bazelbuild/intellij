@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -37,8 +36,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.EditorNotifications;
-import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.usages.Usage;
@@ -55,12 +52,6 @@ import javax.swing.JComponent;
 /** Provides SDK compatibility shims for base plugin API classes, available to all IDEs. */
 public final class BaseSdkCompat {
   private BaseSdkCompat() {}
-
-  /** #api193: made public in 2020.1. */
-  public static ProjectExtensionPointName<EditorNotifications.Provider<?>>
-      getEditorNotificationsEp() {
-    return EditorNotificationsImpl.EP_PROJECT;
-  }
 
   /** #api193: constructor changed in 2020.1. */
   public static class DvcsBranchManagerAdapter extends DvcsBranchManager {
