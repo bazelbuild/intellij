@@ -545,4 +545,10 @@
     <CustomFormatter implementation="com.google.idea.blaze.base.buildmodifier.BuildifierCustomFormatter"/>
   </extensions>
 
+  <projectListeners>
+    <listener
+        class="com.google.idea.blaze.base.actions.ProjectFrameUpdater"
+        activeInHeadlessMode="false" activeInTestMode="false"
+        topic="com.intellij.openapi.project.ProjectManagerListener"/>
+  </projectListeners>
 </idea-plugin>

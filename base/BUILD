@@ -9,7 +9,6 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -39,20 +38,7 @@ java_library(
 
 intellij_plugin_library(
     name = "plugin_library",
-    plugin_xmls = ["src/META-INF/blaze-base.xml"] + select_for_plugin_api({
-        # #api193 Remove compat directory now that all versions need this.
-        "android-studio-4.2": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-        "android-studio-2020.3": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-        "intellij-2020.1": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-        "intellij-ue-2020.1": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-        "intellij-2020.2": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-        "intellij-ue-2020.2": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-        "intellij-2020.3": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-        "intellij-ue-2020.3": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-        "clion-2020.1": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-        "clion-2020.2": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-        "clion-2020.3": ["sdkcompat/v201/META-INF/blaze-base-v201.xml"],
-    }),
+    plugin_xmls = ["src/META-INF/blaze-base.xml"],
     visibility = ["//visibility:public"],
     deps = [":base"],
 )
