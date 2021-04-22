@@ -11,9 +11,6 @@ import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.projectView.TreeStructureProvider;
-import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -43,33 +40,6 @@ public final class BaseSdkCompat {
         Project project, DvcsBranchSettings settings, BranchType[] branchTypes) {
       super(project, settings, branchTypes);
     }
-  }
-
-  /** #api193: wildcard generics added in 2020.1. */
-  public interface TreeStructureProviderAdapter extends TreeStructureProvider {
-    @Nullable
-    default Object doGetData(Collection<AbstractTreeNode<?>> selected, String dataId) {
-      return null;
-    }
-
-    @Nullable
-    @Override
-    default Object getData(Collection<AbstractTreeNode<?>> selected, String dataId) {
-      return doGetData(selected, dataId);
-    }
-
-    @Override
-    default Collection<AbstractTreeNode<?>> modify(
-        AbstractTreeNode<?> parent,
-        Collection<AbstractTreeNode<?>> children,
-        ViewSettings settings) {
-      return doModify(parent, children, settings);
-    }
-
-    Collection<AbstractTreeNode<?>> doModify(
-        AbstractTreeNode<?> parent,
-        Collection<AbstractTreeNode<?>> children,
-        ViewSettings settings);
   }
 
   /** #api201: wildcard generics added in 2020.2. */
