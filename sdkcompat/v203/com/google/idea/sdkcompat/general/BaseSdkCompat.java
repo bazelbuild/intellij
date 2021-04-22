@@ -11,7 +11,6 @@ import com.intellij.dvcs.branch.DvcsBranchManager;
 import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.find.findUsages.CustomUsageSearcher;
 import com.intellij.find.findUsages.FindUsagesOptions;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -44,7 +43,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
-import javax.swing.Icon;
 import javax.swing.JComponent;
 
 /** Provides SDK compatibility shims for base plugin API classes, available to all IDEs. */
@@ -120,20 +118,6 @@ public final class BaseSdkCompat {
   @Nullable
   public static String getActiveToolWindowId(Project project) {
     return ToolWindowManager.getInstance(project).getActiveToolWindowId();
-  }
-
-  /** Compat class for {@link AllIcons}. */
-  public static final class AllIconsCompat {
-    private AllIconsCompat() {}
-
-    /** #api193: changed in 2020.1. */
-    public static final Icon collapseAll = AllIcons.Actions.Collapseall;
-
-    /** #api193: this is unavailable (and not used) in 2020.1 */
-    public static final Icon disabledRun = AllIcons.Process.Stop;
-
-    /** #api193: this is unavailable (and not used) in 2020.1 */
-    public static final Icon disabledDebug = AllIcons.Process.Stop;
   }
 
   /** #api193: SdkConfigurationUtil changed in 2020.1. */
