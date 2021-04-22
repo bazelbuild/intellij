@@ -8,8 +8,6 @@ import com.intellij.diff.DiffContentFactoryImpl;
 import com.intellij.dvcs.branch.BranchType;
 import com.intellij.dvcs.branch.DvcsBranchManager;
 import com.intellij.dvcs.branch.DvcsBranchSettings;
-import com.intellij.find.findUsages.CustomUsageSearcher;
-import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -27,9 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.usages.Usage;
 import com.intellij.util.ContentUtilEx;
-import com.intellij.util.Processor;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -47,19 +43,6 @@ public final class BaseSdkCompat {
         Project project, DvcsBranchSettings settings, BranchType[] branchTypes) {
       super(project, settings, branchTypes);
     }
-  }
-
-  /** #api193: wildcard generics added in 2020.1. */
-  public abstract static class CustomUsageSearcherAdapter extends CustomUsageSearcher {
-    /** #api193: wildcard generics added in 2020.1. */
-    @Override
-    public void processElementUsages(
-        PsiElement element, Processor<? super Usage> processor, FindUsagesOptions options) {
-      doProcessElementUsages(element, processor, options);
-    }
-
-    protected abstract void doProcessElementUsages(
-        PsiElement element, Processor<? super Usage> processor, FindUsagesOptions options);
   }
 
   /** #api193: wildcard generics added in 2020.1. */
