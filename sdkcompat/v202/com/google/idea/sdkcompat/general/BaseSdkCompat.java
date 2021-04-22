@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
@@ -102,12 +101,6 @@ public final class BaseSdkCompat {
 
     void doCollectSlowLineMarkers(
         List<? extends PsiElement> elements, Collection<? super LineMarkerInfo<?>> result);
-  }
-
-  /** #api193: changed in 2020.1. */
-  @Nullable
-  public static String getActiveToolWindowId(Project project) {
-    return ToolWindowManager.getInstance(project).getActiveToolWindowId();
   }
 
   /** #api201: project opening API changed in 2020.2. */
