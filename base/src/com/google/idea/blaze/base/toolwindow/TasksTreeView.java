@@ -19,7 +19,7 @@ import com.google.idea.common.ui.templates.AbstractView;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnimatedIcon;
-import com.intellij.ui.JBDefaultTreeCellRenderer;
+import com.intellij.ui.render.LabelBasedRenderer;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import java.awt.Component;
@@ -93,12 +93,8 @@ final class TasksTreeView extends AbstractView<Tree> {
     }
   }
 
-  /**
-   * Swing's TreeCellRenderer that defines the representation of the tree node. Replace {@link
-   * JBDefaultTreeCellRenderer} with {@link com.intellij.ui.render.LabelBasedRenderer.Tree} when
-   * #api193 fully goes away.
-   */
-  private static final class TreeCellRenderer extends JBDefaultTreeCellRenderer {
+  /** Swing's TreeCellRenderer that defines the representation of the tree node. */
+  private static final class TreeCellRenderer extends LabelBasedRenderer.Tree {
     static final Icon NODE_ICON_RUNNING = new AnimatedIcon.Default();
     private static final Icon NODE_ICON_OK = AllIcons.RunConfigurations.TestPassed;
     private static final Icon NODE_ICON_ERROR = AllIcons.RunConfigurations.TestError;
