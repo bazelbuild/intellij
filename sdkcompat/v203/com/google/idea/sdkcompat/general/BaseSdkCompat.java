@@ -24,14 +24,8 @@ import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentManager;
@@ -118,17 +112,6 @@ public final class BaseSdkCompat {
   @Nullable
   public static String getActiveToolWindowId(Project project) {
     return ToolWindowManager.getInstance(project).getActiveToolWindowId();
-  }
-
-  /** #api193: SdkConfigurationUtil changed in 2020.1. */
-  public static ProjectJdkImpl createSdk(
-      Collection<? extends Sdk> allSdks,
-      VirtualFile homeDir,
-      SdkType sdkType,
-      @Nullable SdkAdditionalData additionalData,
-      @Nullable String customSdkSuggestedName) {
-    return SdkConfigurationUtil.createSdk(
-        allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
   }
 
   /** #api201: project opening API changed in 2020.2. */
