@@ -2,7 +2,6 @@ package com.google.idea.sdkcompat.general;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.conversion.ConversionContext;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.diff.DiffContentFactoryImpl;
@@ -103,11 +102,6 @@ public final class BaseSdkCompat {
 
     void doCollectSlowLineMarkers(
         List<? extends PsiElement> elements, Collection<? super LineMarkerInfo<?>> result);
-  }
-
-  /** #api193: 'project' param removed in 2020.1 */
-  public static void setTemplateTesting(Project project, Disposable parentDisposable) {
-    TemplateManagerImpl.setTemplateTesting(parentDisposable);
   }
 
   /** #api193: changed in 2020.1. */
