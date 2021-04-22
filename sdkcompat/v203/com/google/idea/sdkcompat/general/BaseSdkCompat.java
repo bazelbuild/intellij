@@ -17,7 +17,6 @@ import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
@@ -112,9 +111,6 @@ public final class BaseSdkCompat {
     void doCollectSlowLineMarkers(
         List<? extends PsiElement> elements, Collection<? super LineMarkerInfo<?>> result);
   }
-
-  /** #api193: changed in 2020.1 */
-  public static final String SCRATCHES_SCOPE_NAME = ScratchesNamedScope.scratchesAndConsoles();
 
   /** #api193: 'project' param removed in 2020.1 */
   public static void setTemplateTesting(Project project, Disposable parentDisposable) {
