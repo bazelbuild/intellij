@@ -35,7 +35,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.EditorTextField;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.usages.Usage;
 import com.intellij.util.ContentUtilEx;
@@ -153,9 +152,6 @@ public final class BaseSdkCompat {
     ProjectManagerEx.getInstanceEx()
         .openProject(projectFile, OpenProjectTask.withCreatedProject(project));
   }
-
-  /** #api193: auto-disposed with UI component in 2020.1+ */
-  public static void disposeEditorTextField(EditorTextField field) {}
 
   /** #api201: changed in 2020.2 */
   public static boolean isDisabledPlugin(PluginId id) {
