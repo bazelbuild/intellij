@@ -5,9 +5,6 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.conversion.ConversionContext;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.diff.DiffContentFactoryImpl;
-import com.intellij.dvcs.branch.BranchType;
-import com.intellij.dvcs.branch.DvcsBranchManager;
-import com.intellij.dvcs.branch.DvcsBranchSettings;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -33,14 +30,6 @@ import javax.swing.JComponent;
 /** Provides SDK compatibility shims for base plugin API classes, available to all IDEs. */
 public final class BaseSdkCompat {
   private BaseSdkCompat() {}
-
-  /** #api193: constructor changed in 2020.1. */
-  public static class DvcsBranchManagerAdapter extends DvcsBranchManager {
-    protected DvcsBranchManagerAdapter(
-        Project project, DvcsBranchSettings settings, BranchType[] branchTypes) {
-      super(project, settings, branchTypes);
-    }
-  }
 
   /** #api201: wildcard generics added in 2020.2. */
   public interface LineMarkerProviderAdapter extends LineMarkerProvider {
