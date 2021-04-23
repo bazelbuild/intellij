@@ -49,7 +49,7 @@ public class StubOCWorkspace implements OCWorkspace {
     return 0;
   }
 
-  // @Override #api193
+  @Override
   public int getClientVersion(String clientKey) {
     return 0;
   }
@@ -59,7 +59,7 @@ public class StubOCWorkspace implements OCWorkspace {
     return resolveConfigurations;
   }
 
-  // @Override #api193
+  @Override
   public List<OCResolveConfiguration> getConfigurations(String clientKey) {
     return resolveConfigurations;
   }
@@ -92,7 +92,7 @@ public class StubOCWorkspace implements OCWorkspace {
     throw new UnsupportedOperationException();
   }
 
-  // @Override #api193
+  @Override
   public ModifiableModel getModifiableModel(String clientKey, boolean clear) {
     throw new UnsupportedOperationException();
   }
