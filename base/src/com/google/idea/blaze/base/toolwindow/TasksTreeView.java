@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.base.toolwindow;
 
+import com.google.idea.common.ui.properties.ChangeListener;
+import com.google.idea.common.ui.properties.ObservableValue;
+import com.google.idea.common.ui.properties.Property;
 import com.google.idea.common.ui.templates.AbstractView;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,13 +25,18 @@ import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.render.LabelBasedRenderer;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.tree.TreeUtil;
 import java.awt.Component;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.swing.Icon;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
@@ -37,19 +45,23 @@ import javax.swing.tree.TreePath;
 
 /** The view that represents the tree of the hierarchy of tasks. */
 final class TasksTreeView extends AbstractView<Tree> {
-  private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
-
   private final TasksTreeModel model;
+  private final JTreeModel jTreeModel = new JTreeModel();
 
   private final TreeSelectionListener treeSelectionListener = this::onTaskSelected;
+  private final ChangeListener<Task> modelSelectedTaskListener = this::selectTask;
 
   TasksTreeView(TasksTreeModel model) {
     this.model = model;
+    // looks like the insertion and removal listeners for the JTree's model need to be executed even
+    // when the tree is not displayed
+    model.tasksTreeProperty().addAdditionListener(jTreeModel::newTaskAdded);
+    model.tasksTreeProperty().addRemovalListener(jTreeModel::taskRemoved);
   }
 
   @Override
   protected Tree createComponent() {
-    Tree tree = new Tree(new TreeModel());
+    Tree tree = new Tree(jTreeModel);
     tree.setRootVisible(false);
     tree.setCellRenderer(new TreeCellRenderer());
     return tree;
@@ -58,11 +70,15 @@ final class TasksTreeView extends AbstractView<Tree> {
   @Override
   protected void bind() {
     getComponent().addTreeSelectionListener(treeSelectionListener);
+    Property<Task> selectedTaskProperty = model.selectedTaskProperty();
+    selectedTaskProperty.addListener(modelSelectedTaskListener);
+    selectTask(selectedTaskProperty, null, selectedTaskProperty.getValue());
   }
 
   @Override
   protected void unbind() {
     getComponent().removeTreeSelectionListener(treeSelectionListener);
+    model.selectedTaskProperty().removeListener(modelSelectedTaskListener);
   }
 
   private void onTaskSelected(TreeSelectionEvent event) {
@@ -71,33 +87,71 @@ final class TasksTreeView extends AbstractView<Tree> {
     model.selectedTaskProperty().setValue(selection instanceof Task ? (Task) selection : null);
   }
 
-  /** Swing's TreeModel implementation that reflects the hierarchy of the tasks. */
-  private final class TreeModel extends BaseTreeModel<Task> {
-    /** The invisible root of the tree. */
-    final Object root = new Object();
+  private void selectTask(
+      ObservableValue<? extends Task> observable, @Nullable Task oldTask, @Nullable Task task) {
+    if (Objects.equals(task, getComponent().getLastSelectedPathComponent())) {
+      return;
+    }
+    JTree tree = getComponent();
+    if (task == null) {
+      tree.clearSelection();
+    }
+    TreeUtil.selectPath(tree, taskToTreePath(task), false);
+    tree.repaint();
+  }
 
+  private TreePath taskToTreePath(Task task) {
+    Task root = model.tasksTreeProperty().getRoot();
+    if (root.equals(task)) {
+      return new TreePath(root);
+    }
+    Deque<Object> path = new ArrayDeque<>();
+    path.push(task);
+    while (task.getParent().isPresent()) {
+      Task parent = task.getParent().get();
+      path.push(parent);
+      task = parent;
+    }
+    path.push(root);
+    return new TreePath(path.toArray());
+  }
+
+  /** Swing's TreeModel implementation that reflects the hierarchy of the tasks. */
+  private final class JTreeModel extends BaseTreeModel<Task> {
     @Override
     public List<Task> getChildren(Object parent) {
-      if (parent == root) {
-        return model.getTopLevelTasks();
-      }
       if (!(parent instanceof Task)) {
         throw new IllegalStateException("Task trees can only contain Task instances");
       }
-      return ((Task) parent).getChildren();
+      return model.tasksTreeProperty().getChildren((Task) parent);
     }
 
     @Override
     public Object getRoot() {
-      return root;
+      return model.tasksTreeProperty().getRoot();
+    }
+
+    void newTaskAdded(Task task, int taskIndex) {
+      treeNodesInserted(
+          /* path= */ taskToTreePath(model.tasksTreeProperty().getParent(task)),
+          /* indices= */ new int[] {taskIndex},
+          /* children= */ new Task[] {task});
+    }
+
+    void taskRemoved(Task task, int taskIndex) {
+      treeNodesRemoved(
+          /* path= */ taskToTreePath(model.tasksTreeProperty().getParent(task)),
+          /* indices= */ new int[] {taskIndex},
+          /* children= */ new Task[] {task});
     }
   }
 
   /** Swing's TreeCellRenderer that defines the representation of the tree node. */
   private static final class TreeCellRenderer extends LabelBasedRenderer.Tree {
     static final Icon NODE_ICON_RUNNING = new AnimatedIcon.Default();
-    private static final Icon NODE_ICON_OK = AllIcons.RunConfigurations.TestPassed;
-    private static final Icon NODE_ICON_ERROR = AllIcons.RunConfigurations.TestError;
+    static final Icon NODE_ICON_OK = AllIcons.RunConfigurations.TestPassed;
+    static final Icon NODE_ICON_ERROR = AllIcons.RunConfigurations.TestError;
+    static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     @Override
     public Component getTreeCellRendererComponent(
@@ -120,20 +174,27 @@ final class TasksTreeView extends AbstractView<Tree> {
       } else {
         setIcon(NODE_ICON_RUNNING);
       }
-      setText(makeLabelText(task));
+      setText(makeLabelText(task, selected));
 
       return this;
     }
 
-    private static String makeLabelText(Task task) {
-      return String.format("<html>%s%s</html>", task.getName(), timesLabel(task));
+    private static String makeLabelText(Task task, boolean selected) {
+      return String.format(
+          "<html>%s%s</html>", nameLabel(task.getName()), timesLabel(task, selected));
     }
 
-    private static CharSequence timesLabel(Task task) {
+    private static CharSequence nameLabel(String name) {
+      // truncate the name to avoid very long horizontal scroll in the tree
+      return name.length() < 81 ? name : name.substring(0, 80) + "...";
+    }
+
+    private static CharSequence timesLabel(Task task, boolean selected) {
       return startTimeLabel(task)
           .map(
               s ->
-                  " <font color=gray>"
+                  " <font"
+                      + (selected ? '>' : " color=gray>")
                       + s
                       + durationLabel(task).map(d -> " [" + d + ']').orElse("")
                       + "</font>")

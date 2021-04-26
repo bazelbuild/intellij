@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.toolwindow.TasksToolWindowService;
-import com.google.idea.blaze.base.ui.problems.BlazeProblemsView;
+import com.google.idea.blaze.base.ui.problems.BuildTasksProblemsView;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -86,11 +86,11 @@ public class ToolWindowTaskIssueOutputFilter implements Filter {
     int offset = entireLength - line.length();
     if (linkToBlazeConsole) {
       ResultItem dummyResult = dummyResult(offset);
-      BlazeProblemsView.getInstance(project)
+      BuildTasksProblemsView.getInstance(project)
           .addMessage(issue, openConsoleToHyperlink(dummyResult.getHyperlinkInfo(), offset));
       links.add(dummyResult);
     } else {
-      BlazeProblemsView.getInstance(project).addMessage(issue, null);
+      BuildTasksProblemsView.getInstance(project).addMessage(issue, null);
     }
     ResultItem hyperlink = hyperlinkItem(issue, offset);
     if (hyperlink != null) {

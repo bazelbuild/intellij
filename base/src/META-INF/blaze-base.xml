@@ -179,6 +179,7 @@
         factoryClass="com.google.idea.blaze.base.toolwindow.TasksToolWindowFactory"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleView"/>
     <fileTypeFactory implementation="com.google.idea.blaze.base.plugin.BlazeFileTypeFactory" />
+    <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.BuildTasksProblemsView"/>
 
     <applicationConfigurable instance="com.google.idea.blaze.base.settings.ui.BlazeUserSettingsCompositeConfigurable"
                          id ="blaze.view" />

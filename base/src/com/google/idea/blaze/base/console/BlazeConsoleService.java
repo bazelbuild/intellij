@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 
 /** Prints text to the blaze console. */
 public interface BlazeConsoleService {
+
   static BlazeConsoleService getInstance(Project project) {
     return ServiceManager.getService(project, BlazeConsoleService.class);
   }

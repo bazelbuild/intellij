@@ -15,10 +15,8 @@
  */
 package com.google.idea.blaze.base.toolwindow;
 
+import com.google.common.base.MoreObjects;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -27,8 +25,6 @@ public final class Task {
   private final String name;
   private final Type type;
   @Nullable private Task parent;
-  private final List<Task> children;
-  private final List<Task> childrenReadOnlyView;
   private String status = "";
   @Nullable private Instant startTime;
   @Nullable private Instant endTime;
@@ -56,11 +52,6 @@ public final class Task {
     this.name = name;
     this.type = type;
     this.parent = parent;
-    children = new ArrayList<>();
-    childrenReadOnlyView = Collections.unmodifiableList(children);
-    if (parent != null) {
-      parent.children.add(this);
-    }
   }
 
   String getName() {
@@ -115,12 +106,14 @@ public final class Task {
     return Optional.ofNullable(endTime);
   }
 
-  /**
-   * Read-only view of the current children of the task. Callers shouldn't attempt to modify the
-   * returned unmodifiable list.
-   */
-  List<Task> getChildren() {
-    return childrenReadOnlyView;
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("name", name)
+        .add("parent", (parent == null ? null : parent.name))
+        .add("startTime", startTime)
+        .add("endTime", endTime)
+        .toString();
   }
 
   /** Type of the task. */

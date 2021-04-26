@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.scope.scopes;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.console.BlazeConsoleService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
@@ -33,6 +34,12 @@ import javax.annotation.Nullable;
 
 /** Moves print output to the blaze console. */
 public class BlazeConsoleScope implements BlazeScope {
+
+  /**
+   * The scope implementation that doesn't do anything. It's used when the Blaze Console experiment
+   * is turned off.
+   */
+  private static final NoOpBlazeScope NO_OP_SCOPE_INSTANCE = new NoOpBlazeScope();
 
   /** Builder for blaze console scope */
   public static class Builder {
@@ -66,7 +73,10 @@ public class BlazeConsoleScope implements BlazeScope {
       return this;
     }
 
-    public BlazeConsoleScope build() {
+    public BlazeScope build() {
+      if (!BlazeConsoleExperimentManager.isBlazeConsoleV1Enabled()) {
+        return NO_OP_SCOPE_INSTANCE;
+      }
       return new BlazeConsoleScope(
           project, progressIndicator, popupBehavior, clearPreviousState, filters.build());
     }

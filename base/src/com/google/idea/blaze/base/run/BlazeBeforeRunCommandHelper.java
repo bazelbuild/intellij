@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.TempDirectoryProvider;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -37,9 +38,11 @@ import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.toolwindow.Task;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -53,6 +56,7 @@ import java.util.List;
  * user-specified flags.
  */
 public final class BlazeBeforeRunCommandHelper {
+  private static final String TASK_TITLE = "Blaze before run task";
 
   private BlazeBeforeRunCommandHelper() {}
 
@@ -76,12 +80,21 @@ public final class BlazeBeforeRunCommandHelper {
             ? handlerState.getBlazeBinaryState().getBlazeBinary()
             : Blaze.getBuildSystemProvider(project).getBinaryPath(project);
 
-    return ProgressiveTaskWithProgressIndicator.builder(project, "Blaze before run task")
+    return ProgressiveTaskWithProgressIndicator.builder(project, TASK_TITLE)
         .submitTaskWithResult(
             new ScopedTask<BuildResult>() {
               @Override
               protected BuildResult execute(BlazeContext context) {
                 context
+                    .push(
+                        new ToolWindowScope.Builder(
+                                project, new Task(TASK_TITLE, Task.Type.BLAZE_BEFORE_RUN))
+                            .setPopupBehavior(
+                                BlazeUserSettings.getInstance().getShowBlazeConsoleOnRun())
+                            .setIssueParsers(
+                                BlazeIssueParser.defaultIssueParsers(
+                                    project, workspaceRoot, invocationContext.type()))
+                            .build())
                     .push(
                         new ProblemsViewScope(
                             project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
