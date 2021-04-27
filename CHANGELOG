@@ -1,3 +1,9 @@
+v2021.04.26
+===========
+* GoLand: Fixed an issue with importing a Bazel project in Goland.
+* Tests: Run all targets recursively under a chosen directory.
+* Fixed resolution of generated code (e.g. protobufs) after project restart in Typescript and Go.
+
 v2021.04.07
 ===========
 * IntelliJ: Compatible with IntelliJ CE/UE 2020.3.
