@@ -14,6 +14,8 @@ java_library(
         "intellij-ue-2020.2": ["@go_2020_2//:go"],
         "intellij-2020.3": ["@go_2020_3//:go"],
         "intellij-ue-2020.3": ["@go_2020_3//:go"],
+        "intellij-2021.1": ["@go_2021_1//:go"],
+        "intellij-ue-2021.1": ["@go_2021_1//:go"],
         "default": [],
     }),
 )
