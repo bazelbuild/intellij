@@ -17,19 +17,24 @@ package com.google.idea.blaze.base.console;
 
 import com.google.idea.common.experiments.BoolExperiment;
 
-/** The experiments that turn on/off the new (v2) and old (v1) Blaze Consoles. */
+/**
+ * The experiments that turn on/off the new (v2) and old (v1) Blaze Consoles. The IDE restart is
+ * needed for the new experiment values to take effect.
+ */
 public final class BlazeConsoleExperimentManager {
 
-  private static final BoolExperiment v1Enabled = new BoolExperiment("blazeconsole.v1", true);
-  private static final BoolExperiment v2Enabled = new BoolExperiment("blazeconsole.v2", false);
+  // The values of experiments are being read once on startup. This because dynamic switching
+  // between v1 and v2 consoles is not supported.
+  private static final boolean V1_ENABLED = new BoolExperiment("blazeconsole.v1", true).getValue();
+  private static final boolean V2_ENABLED = new BoolExperiment("blazeconsole.v2", false).getValue();
 
   private BlazeConsoleExperimentManager() {}
 
   public static boolean isBlazeConsoleV1Enabled() {
-    return v1Enabled.getValue() || !v2Enabled.getValue();
+    return V1_ENABLED || !V2_ENABLED;
   }
 
   public static boolean isBlazeConsoleV2Enabled() {
-    return v2Enabled.getValue();
+    return V2_ENABLED;
   }
 }
