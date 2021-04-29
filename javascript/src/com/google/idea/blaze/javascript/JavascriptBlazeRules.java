@@ -31,8 +31,6 @@ class JavascriptBlazeRules implements Kind.Provider {
         Kind.Provider.create("js_puppet_test", LanguageClass.JAVASCRIPT, RuleType.TEST),
         Kind.Provider.create("jsunit_test", LanguageClass.JAVASCRIPT, RuleType.TEST),
         Kind.Provider.create("jspb_proto_library", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
-        Kind.Provider.create("pinto_library", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
-        Kind.Provider.create("pinto_library_mod", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
         Kind.Provider.create("pinto_module", LanguageClass.JAVASCRIPT, RuleType.UNKNOWN),
         Kind.Provider.create("_nodejs_binary", LanguageClass.JAVASCRIPT, RuleType.BINARY),
         Kind.Provider.create("_nodejs_module", LanguageClass.JAVASCRIPT, RuleType.LIBRARY),
