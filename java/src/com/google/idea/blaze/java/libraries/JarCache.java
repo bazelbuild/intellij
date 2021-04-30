@@ -45,10 +45,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.SyncMode;
-import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -84,14 +81,10 @@ public class JarCache {
     return ServiceManager.getService(project, JarCache.class);
   }
 
-  private static File getCacheDir(BlazeImportSettings importSettings) {
-    return new File(BlazeDataStorage.getProjectDataDir(importSettings), "libraries");
-  }
-
   private static final Logger logger = Logger.getInstance(JarCache.class);
 
   private final Project project;
-  private final File cacheDir;
+  private final JarCacheFolderProvider jarCacheFolderProvider;
 
   /** The state of the cache as of the last call to {@link #readFileState}. */
   private volatile ImmutableMap<String, File> cacheState = ImmutableMap.of();
@@ -99,10 +92,8 @@ public class JarCache {
   private boolean enabled;
 
   public JarCache(Project project) {
-    BlazeImportSettings importSettings =
-        BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.project = project;
-    this.cacheDir = getCacheDir(importSettings);
+    this.jarCacheFolderProvider = JarCacheFolderProvider.getInstance(project);
   }
 
   public boolean isEnabled() {
@@ -122,7 +113,9 @@ public class JarCache {
   private ImmutableMap<String, File> readFileState() {
     FileOperationProvider ops = FileOperationProvider.getInstance();
     File[] files =
-        cacheDir.listFiles((dir, name) -> ops.isFile(new File(dir, name)) && name.endsWith(".jar"));
+        jarCacheFolderProvider
+            .getJarCacheFolder()
+            .listFiles((dir, name) -> ops.isFile(new File(dir, name)) && name.endsWith(".jar"));
     ImmutableMap<String, File> cacheState =
         files == null
             ? ImmutableMap.of()
@@ -168,11 +161,12 @@ public class JarCache {
       return;
     }
     // Ensure the cache dir exists
-    if (!cacheDir.exists()) {
-      if (!cacheDir.mkdirs()) {
-        logger.error("Could not create jar cache directory");
-        return;
-      }
+    if (!jarCacheFolderProvider.isJarCacheFolderReady()) {
+      logger.error(
+          String.format(
+              "Could not create jar cache directory %s",
+              JarCacheFolderProvider.getInstance(project).getJarCacheFolder().getPath()));
+      return;
     }
 
     ImmutableMap<String, BlazeArtifact> projectState =
@@ -276,10 +270,13 @@ public class JarCache {
                 FetchExecutor.EXECUTOR.submit(
                     () -> {
                       try {
-                        copyLocally(artifact, cacheFileForKey(key));
+                        copyLocally(artifact, jarCacheFolderProvider.getCacheFileByKey(key));
                       } catch (IOException e) {
                         logger.warn(
-                            String.format("Fail to copy artifact %s to %s", artifact, cacheDir), e);
+                            String.format(
+                                "Fail to copy artifact %s to %s",
+                                artifact, jarCacheFolderProvider.getJarCacheFolder().getPath()),
+                            e);
                       }
                     })));
     return futures;
@@ -315,13 +312,9 @@ public class JarCache {
         .collect(toImmutableList());
   }
 
-  private File cacheFileForKey(String key) {
-    return new File(cacheDir, key);
-  }
-
   private void clearCache(BlazeContext context, boolean blockOnCompletion) {
     cacheState = ImmutableMap.of();
-    File[] cacheFiles = cacheDir.listFiles();
+    File[] cacheFiles = jarCacheFolderProvider.getJarCacheFolder().listFiles();
     if (cacheFiles == null) {
       return;
     }
