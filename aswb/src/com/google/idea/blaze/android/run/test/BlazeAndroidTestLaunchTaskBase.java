@@ -174,7 +174,7 @@ abstract class BlazeAndroidTestLaunchTaskBase implements LaunchTask {
                                 .stderr(LineProcessingOutputStream.of(stderrLineProcessor))
                                 .build()
                                 .run();
-                        FileCaches.refresh(project, context);
+                        ListenableFuture<Void> unusedFuture = FileCaches.refresh(project, context);
 
                         if (retVal != 0) {
                           context.setHasError();

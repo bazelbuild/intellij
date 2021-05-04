@@ -33,6 +33,7 @@ import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.fixtures.ManifestFixture;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.module.Module;
+import com.intellij.testFramework.PlatformTestUtil;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -74,6 +75,8 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
     HashSet<Module> notUpdated = new HashSet<>(modules);
     CountDownLatch manifestsUpdated = new CountDownLatch(modules.size());
     toRun.run();
+    Thread.sleep(60);
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     modules.forEach(
         module -> {
           try {
