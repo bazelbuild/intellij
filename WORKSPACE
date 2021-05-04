@@ -247,8 +247,8 @@ http_archive(
 http_archive(
     name = "android_studio_2020_3",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio203",
-    sha256 = "740d2e2275738b9c6de62c6cb2a8294a0fab3f1b2f97769cee9e39afb02203a9",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2020.3.1.14/android-studio-2020.3.1.14-linux.tar.gz",
+    sha256 = "7b47d076739a26172bdd504c4f0c3196cb4f5ad882971caf7ab4714cdd8ac64c",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2020.3.1.15/android-studio-2020.3.1.15-linux.tar.gz",
 )
 
 # LICENSE: Common Public License 1.0
@@ -380,6 +380,7 @@ http_archive(
 # specify a minimum version for bazel otherwise users on old versions may see
 # unexpressive errors when new features are used
 load("@bazel_skylib//lib:versions.bzl", "versions")
+
 versions.check(minimum_bazel_version = "4.0.0")
 
 http_archive(
