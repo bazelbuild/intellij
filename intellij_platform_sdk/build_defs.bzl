@@ -129,6 +129,14 @@ DIRECT_IJ_PRODUCTS = {
         ide = "clion",
         directory = "clion_2020_3",
     ),
+    "clion-2021.1": struct(
+        ide = "clion",
+        directory = "clion_2021_1",
+    ),
+    "clion-2021.1-mac": struct(
+        ide = "clion",
+        directory = "clion_2021_1",
+    ),
 }
 
 def select_for_plugin_api(params):
