@@ -27,22 +27,25 @@ import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.ProjectSystemUtil;
 import com.android.tools.lint.checks.PermissionHolder;
 import com.android.utils.concurrency.AsyncSupplier;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.fixtures.ManifestFixture;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.module.Module;
+import com.intellij.testFramework.PlatformTestUtil;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.IdeaSourceProviderUtil;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -50,6 +53,7 @@ import org.junit.runners.JUnit4;
 /** Tests that merged manifest calculations are accurate for Blaze Android projects. */
 @RunWith(JUnit4.class)
 public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
+  private static Duration MANIFEST_UPDATE_TIMEOUT = Duration.ofSeconds(60);
   private ManifestFixture.Factory manifestFactory;
 
   @Before
@@ -73,26 +77,37 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
       throws Exception {
     HashSet<Module> notUpdated = new HashSet<>(modules);
     CountDownLatch manifestsUpdated = new CountDownLatch(modules.size());
+    Stopwatch verificationTimer = Stopwatch.createStarted();
+
+    // Manifest re-computations are throttled via a ThrottlingAsyncSupplier.  Technically we have
+    // no guarantee that the computation will happen immediately after toRun.run() is executed.
+    // To compensate for this possible scheduling delay the manifest update verification step below
+    // will retry rather than blocking on manifest computation.
+    // If it doesn't get scheduled on the first run, it should on a subsequent one.  If the test
+    // is actually broken then the verificationTimer will timeout and break early to avoid
+    // unnecessary waiting.
     toRun.run();
-    modules.forEach(
-        module -> {
-          try {
-            MergedManifestManager.getMergedManifest(module).get();
-            notUpdated.remove(module);
-            manifestsUpdated.countDown();
-            System.out.println("Manifest updated for module " + module);
-          } catch (InterruptedException | ExecutionException e) {
-            fail(e.getMessage());
-          }
-        });
-    if (manifestsUpdated.await(5, TimeUnit.SECONDS)) {
-      return;
+
+    while (manifestsUpdated.getCount() > 0
+        && verificationTimer.elapsed().minus(MANIFEST_UPDATE_TIMEOUT).isNegative()) {
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+      modules.forEach(
+          module -> {
+            try {
+              MergedManifestManager.getMergedManifest(module).get(50, TimeUnit.MILLISECONDS);
+              notUpdated.remove(module);
+              manifestsUpdated.countDown();
+            } catch (TimeoutException e) {
+              // The manifest update task might not have been scheduled yet. Try again.
+            } catch (InterruptedException | ExecutionException e) {
+              fail(e.getMessage());
+            }
+          });
     }
-    String notUpdatedText =
-        notUpdated.stream().map(Module::getName).collect(Collectors.joining(", "));
-    fail(
-        "Merged manifests for the following modules were not updated as expected: "
-            + notUpdatedText);
+
+    if (manifestsUpdated.getCount() > 0) {
+      fail("Not all manifests were updated.");
+    }
   }
 
   @Test
@@ -152,7 +167,6 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
     assertThat(permissions.hasPermission("android.permission.WRITE_EXTERNAL_STORAGE")).isFalse();
   }
 
-  @Ignore("b/135927686")
   @Test
   public void updatesWhenManifestChanges() throws Exception {
     ManifestFixture manifest =
