@@ -238,8 +238,8 @@ http_archive(
 http_archive(
     name = "android_studio_4_2",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio42",
-    sha256 = "2ac04177a96161b2ece526404ee40f12aa3afba49c580ca92b257c6b84f7dd69",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.23/android-studio-ide-202.7231092-linux.tar.gz",
+    sha256 = "9f3132d181bfe4d46aca667fddf2557f3c428b6c6c726e0ac5be9f5d91fb21c6",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.24/android-studio-ide-202.7322048-linux.tar.gz",
 )
 
 # The plugin api for Android Studio 2020.3. This is required to build ASwB,
@@ -380,6 +380,7 @@ http_archive(
 # specify a minimum version for bazel otherwise users on old versions may see
 # unexpressive errors when new features are used
 load("@bazel_skylib//lib:versions.bzl", "versions")
+
 versions.check(minimum_bazel_version = "4.0.0")
 
 http_archive(
