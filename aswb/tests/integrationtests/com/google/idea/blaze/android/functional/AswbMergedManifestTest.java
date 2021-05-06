@@ -75,7 +75,6 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
 
   private static void runAndWaitForMergedManifestUpdates(Set<Module> modules, Runnable toRun)
       throws Exception {
-    HashSet<Module> notUpdated = new HashSet<>(modules);
     CountDownLatch manifestsUpdated = new CountDownLatch(modules.size());
     Stopwatch verificationTimer = Stopwatch.createStarted();
 
@@ -95,7 +94,6 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
           module -> {
             try {
               MergedManifestManager.getMergedManifest(module).get(50, TimeUnit.MILLISECONDS);
-              notUpdated.remove(module);
               manifestsUpdated.countDown();
             } catch (TimeoutException e) {
               // The manifest update task might not have been scheduled yet. Try again.
@@ -223,19 +221,33 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
         () -> transitiveDependencyManifest.addUsesPermission("android.permission.SEND_SMS"));
 
     // The merged manifest of //java/com/example/transitive:transitive and everything that depends
-    // on it
-    // should have been automatically updated to include the newly-added permission.
-    Set<Module> modulesMissingPermission =
-        modules.stream()
-            .filter(
-                module -> {
-                  PermissionHolder permissions =
-                      MergedManifestManager.getMergedManifestSupplier(module)
-                          .getNow()
-                          .getPermissionHolder();
-                  return !permissions.hasPermission("android.permission.SEND_SMS");
-                })
-            .collect(Collectors.toSet());
+    // on it should automatically update to include the newly-added permission.  This update is not
+    // instantaneous and may not be reflected in an immediate manifest snapshot request.  This is by
+    // design; chains of manifest computations should not block into one single big event.  The code
+    // below verifies that the manifests are updated within a certain amount of time.
+    Stopwatch verificationTimer = Stopwatch.createStarted();
+    HashSet<Module> modulesMissingPermission = new HashSet<>(modules);
+    while (!modulesMissingPermission.isEmpty()
+        && verificationTimer.elapsed().minus(MANIFEST_UPDATE_TIMEOUT).isNegative()) {
+      modules.forEach(
+          module -> {
+            try {
+              PermissionHolder permissions =
+                  MergedManifestManager.getMergedManifestSupplier(module)
+                      .get()
+                      .get(50, TimeUnit.MILLISECONDS)
+                      .getPermissionHolder();
+              if (permissions.hasPermission("android.permission.SEND_SMS")) {
+                modulesMissingPermission.remove(module);
+              }
+            } catch (TimeoutException e) {
+              // Manifest may not be updated yet.  Try again.
+            } catch (InterruptedException | ExecutionException e) {
+              e.printStackTrace();
+              fail(e.getMessage());
+            }
+          });
+    }
     String missingPermissionsText =
         "Merged manifests for the following modules are missing the added permission: "
             + modulesMissingPermission.stream()
