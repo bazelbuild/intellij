@@ -266,6 +266,27 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-oss-stable",
+    values = {
+        "define": "ij_product=android-studio-oss-stable",
+    },
+)
+
+config_setting(
+    name = "android-studio-oss-beta",
+    values = {
+        "define": "ij_product=android-studio-oss-beta",
+    },
+)
+
+config_setting(
+    name = "android-studio-oss-under-dev",
+    values = {
+        "define": "ij_product=android-studio-oss-under-dev",
+    },
+)
+
+config_setting(
     name = "android-studio-4.2",
     values = {
         "define": "ij_product=android-studio-4.2",
@@ -306,6 +327,27 @@ config_setting(
     name = "clion-beta",
     values = {
         "define": "ij_product=clion-beta",
+    },
+)
+
+config_setting(
+    name = "clion-oss-stable",
+    values = {
+        "define": "ij_product=clion-oss-stable",
+    },
+)
+
+config_setting(
+    name = "clion-oss-beta",
+    values = {
+        "define": "ij_product=clion-oss-beta",
+    },
+)
+
+config_setting(
+    name = "clion-oss-under-dev",
+    values = {
+        "define": "ij_product=clion-oss-under-dev",
     },
 )
 
