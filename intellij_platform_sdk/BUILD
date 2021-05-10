@@ -61,20 +61,6 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-canary",
-    values = {
-        "define": "ij_product=intellij-canary",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-canary",
-    values = {
-        "define": "ij_product=intellij-ue-canary",
-    },
-)
-
-config_setting(
     name = "intellij-oss-stable",
     values = {
         "define": "ij_product=intellij-oss-stable",
@@ -117,17 +103,16 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2020.1",
+    name = "intellij-canary",
     values = {
-        "define": "ij_product=intellij-2020.1",
+        "define": "ij_product=intellij-canary",
     },
 )
 
 config_setting(
-    name = "intellij-2020.1-mac",
+    name = "intellij-ue-canary",
     values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-2020.1",
+        "define": "ij_product=intellij-ue-canary",
     },
 )
 
@@ -147,21 +132,6 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2020.3",
-    values = {
-        "define": "ij_product=intellij-2020.3",
-    },
-)
-
-config_setting(
-    name = "intellij-2020.3-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-2020.3",
-    },
-)
-
-config_setting(
     name = "intellij-2021.1",
     values = {
         "define": "ij_product=intellij-2021.1",
@@ -177,17 +147,17 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-ue-2020.1",
+    name = "intellij-2020.3",
     values = {
-        "define": "ij_product=intellij-ue-2020.1",
+        "define": "ij_product=intellij-2020.3",
     },
 )
 
 config_setting(
-    name = "intellij-ue-2020.1-mac",
+    name = "intellij-2020.3-mac",
     values = {
         "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-ue-2020.1",
+        "define": "ij_product=intellij-2020.3",
     },
 )
 
@@ -316,21 +286,6 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-latest-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=clion-latest",
-    },
-)
-
-config_setting(
-    name = "clion-beta",
-    values = {
-        "define": "ij_product=clion-beta",
-    },
-)
-
-config_setting(
     name = "clion-oss-stable",
     values = {
         "define": "ij_product=clion-oss-stable",
@@ -352,17 +307,17 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-2020.1",
+    name = "clion-latest-mac",
     values = {
-        "define": "ij_product=clion-2020.1",
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=clion-latest",
     },
 )
 
 config_setting(
-    name = "clion-2020.1-mac",
+    name = "clion-beta",
     values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=clion-2020.1",
+        "define": "ij_product=clion-beta",
     },
 )
 
@@ -499,14 +454,11 @@ java_library(
 java_library(
     name = "jsr305",
     exports = select_for_plugin_api({
-        "clion-2020.1": [":bundled_jsr305"],
         "clion-2020.2": [":bundled_jsr305"],
         "clion-2020.3": [":bundled_jsr305"],
-        "intellij-2020.1": [":bundled_jsr305"],
         "intellij-2020.2": [":bundled_jsr305"],
-        "intellij-2020.3": [":bundled_jsr305"],
         "intellij-2021.1": [":bundled_jsr305"],
-        "intellij-ue-2020.1": ["@jsr305_annotations//jar"],
+        "intellij-2020.3": [":bundled_jsr305"],
         "intellij-ue-2020.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.3": [":bundled_jsr305"],
         "intellij-ue-2021.1": ["@jsr305_annotations//jar"],
