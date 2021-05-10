@@ -24,8 +24,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.truth.Correspondence;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.ideinfo.TestIdeInfo;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
@@ -58,6 +60,9 @@ public class KotlinTestContextProviderTest extends BlazeRunConfigurationProducer
       transforming(BlazeCommandRunConfiguration.class::isInstance, "is a Blaze run configuration");
   private static final Correspondence<BlazeCommandRunConfiguration, TestBlazeCall> HAS_BLAZE_CALL =
       transforming(TestBlazeCall::fromRunConfig, "has a Blaze invocation using");
+  private static final Correspondence<BlazeCommandRunConfiguration, TargetExpression>
+      HAS_ONLY_TARGET =
+          transforming(BlazeCommandRunConfiguration::getSingleTarget, "has the only target");
 
   @Before
   public final void setup() {
@@ -76,6 +81,10 @@ public class KotlinTestContextProviderTest extends BlazeRunConfigurationProducer
         new WorkspacePath("org/junit/runners/JUnit4.java"),
         "package org.junit.runners;",
         "public class JUnit4 {}");
+    workspace.createPsiFile(
+        new WorkspacePath("com/google/testing/testsize/MediumTest.java"),
+        "package com.google.testing.testsize;",
+        "public @interface MediumTest {}");
   }
 
   @Test
@@ -212,6 +221,54 @@ public class KotlinTestContextProviderTest extends BlazeRunConfigurationProducer
                 BlazeCommandName.TEST,
                 TargetExpression.fromStringSafe("//com/google/test:TestClass"),
                 "--test_filter=com.google.test.TestClass.testMethod1"));
+  }
+
+  @Test
+  public void correctTargetChosenForGivenTestSize() throws Throwable {
+    // Fake a test file in the file system.
+    String testFilePath = "com/google/test/TestClass.kt";
+    PsiFile testFile =
+        createAndIndexFile(
+            new WorkspacePath(testFilePath),
+            "package com.google.test;",
+            "@com.google.testing.testsize.MediumTest",
+            "@org.junit.runner.RunWith(org.junit.runners.JUnit4::class)",
+            "class TestClass {",
+            "  @org.junit.Test",
+            "  fun testMethod() {}",
+            "}");
+    KtClass testClass = findClass(testFile);
+
+    // Fake the BUILD file. It's important that we don't directly include the test file in the
+    // sources of the actual test target as otherwise another source->target heuristic kicks in.
+    String testLibraryTargetLabel = "//com/google/test:TestClass";
+    TargetIdeInfo testLibraryTarget =
+        TargetIdeInfo.builder()
+            .setKind("kt_jvm_library")
+            .setLabel(testLibraryTargetLabel)
+            .addSource(sourceRoot(testFilePath))
+            .build();
+    TargetIdeInfo mediumTestsTarget =
+        TargetIdeInfo.builder()
+            .setKind("kt_jvm_test")
+            .setLabel("//com/google/test:medium_tests")
+            .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.MEDIUM))
+            .addDependency(testLibraryTargetLabel)
+            .build();
+    TargetIdeInfo smallTestsTarget =
+        TargetIdeInfo.builder()
+            .setKind("kt_jvm_test")
+            .setLabel("//com/google/test:small_tests")
+            .setTestInfo(TestIdeInfo.builder().setTestSize(TestSize.SMALL))
+            .addDependency(testLibraryTargetLabel)
+            .build();
+    registerTargets(testLibraryTarget, mediumTestsTarget, smallTestsTarget);
+
+    List<BlazeCommandRunConfiguration> runConfigurations = getBlazeRunConfigurations(testClass);
+
+    assertThat(runConfigurations)
+        .comparingElementsUsing(HAS_ONLY_TARGET)
+        .containsExactly(TargetExpression.fromStringSafe("//com/google/test:medium_tests"));
   }
 
   private void registerTargets(TargetIdeInfo target, TargetIdeInfo... additionalTargets) {

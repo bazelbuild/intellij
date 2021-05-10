@@ -17,6 +17,7 @@ package com.google.idea.blaze.kotlin.run.producers;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
@@ -26,6 +27,7 @@ import com.google.idea.blaze.base.run.producers.TestContextProvider;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.psi.PsiElement;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.psi.KtClass;
@@ -46,9 +48,9 @@ class KotlinTestContextProvider implements TestContextProvider {
     if (testClass == null) {
       return null;
     }
-    // TODO: detect test size from kotlin source code
+    TestSize testSize = getTestSize(testMethod, testClass).orElse(null);
     ListenableFuture<TargetInfo> target =
-        TestTargetHeuristic.targetFutureForPsiElement(testClass, /* testSize= */ null);
+        TestTargetHeuristic.targetFutureForPsiElement(testClass, testSize);
     if (target == null) {
       return null;
     }
@@ -63,6 +65,13 @@ class KotlinTestContextProvider implements TestContextProvider {
         .setTestFilter(filter)
         .setDescription(description)
         .build();
+  }
+
+  private static Optional<TestSize> getTestSize(
+      @Nullable KtNamedFunction testMethod, KtClass testClass) {
+    return testMethod != null
+        ? KotlinTestSizeFinder.getTestSize(testMethod)
+        : KotlinTestSizeFinder.getTestSize(testClass);
   }
 
   @Nullable
