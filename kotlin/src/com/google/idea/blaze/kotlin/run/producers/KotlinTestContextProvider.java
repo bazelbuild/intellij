@@ -38,27 +38,43 @@ class KotlinTestContextProvider implements TestContextProvider {
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {
-    Location<?> location = context.getLocation();
-    if (location == null) {
-      return null;
-    }
-    PsiElement element = location.getPsiElement();
-    KtNamedFunction testMethod = PsiUtils.getParentOfType(element, KtNamedFunction.class, false);
-    KtClass testClass = PsiUtils.getParentOfType(element, KtClass.class, false);
+    return getPsiElement(context).flatMap(KotlinTestContextProvider::getTestContext).orElse(null);
+  }
+
+  private static Optional<TestContext> getTestContext(PsiElement element) {
+    KtNamedFunction testMethod =
+        PsiUtils.getParentOfType(element, KtNamedFunction.class, /* strict= */ false);
+    KtClass testClass = PsiUtils.getParentOfType(element, KtClass.class, /* strict= */ false);
     if (testClass == null) {
-      return null;
+      return Optional.empty();
     }
-    TestSize testSize = getTestSize(testMethod, testClass).orElse(null);
-    ListenableFuture<TargetInfo> target =
-        TestTargetHeuristic.targetFutureForPsiElement(testClass, testSize);
-    if (target == null) {
-      return null;
-    }
+    return findTarget(testClass, testMethod)
+        .map(target -> createTestContext(testClass, testMethod, target));
+  }
+
+  private static Optional<PsiElement> getPsiElement(ConfigurationContext context) {
+    return Optional.ofNullable(context.getLocation()).map(Location::getPsiElement);
+  }
+
+  private static Optional<ListenableFuture<TargetInfo>> findTarget(
+      KtClass testClass, @Nullable KtNamedFunction testMethod) {
+    TestSize testSize = getTestSize(testClass, testMethod).orElse(null);
+    return Optional.ofNullable(TestTargetHeuristic.targetFutureForPsiElement(testClass, testSize));
+  }
+
+  private static Optional<TestSize> getTestSize(
+      KtClass testClass, @Nullable KtNamedFunction testMethod) {
+    return testMethod != null
+        ? KotlinTestSizeFinder.getTestSize(testMethod)
+        : KotlinTestSizeFinder.getTestSize(testClass);
+  }
+
+  private static TestContext createTestContext(
+      KtClass testClass,
+      @Nullable KtNamedFunction testMethod,
+      ListenableFuture<TargetInfo> target) {
     String filter = getTestFilter(testClass, testMethod);
-    String description = testClass.getName();
-    if (testMethod != null) {
-      description += "." + testMethod.getName();
-    }
+    String description = getDescription(testClass, testMethod);
     PsiElement contextElement = testMethod != null ? testMethod : testClass;
     return TestContext.builder(contextElement, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
@@ -67,16 +83,17 @@ class KotlinTestContextProvider implements TestContextProvider {
         .build();
   }
 
-  private static Optional<TestSize> getTestSize(
-      @Nullable KtNamedFunction testMethod, KtClass testClass) {
-    return testMethod != null
-        ? KotlinTestSizeFinder.getTestSize(testMethod)
-        : KotlinTestSizeFinder.getTestSize(testClass);
+  @Nullable
+  private static String getTestFilter(KtClass testClass, @Nullable KtNamedFunction testMethod) {
+    FqName fqName = testMethod != null ? testMethod.getFqName() : testClass.getFqName();
+    return fqName != null ? fqName.toString() : null;
   }
 
   @Nullable
-  private static String getTestFilter(KtClass testClass, KtNamedFunction testMethod) {
-    FqName fqName = testMethod != null ? testMethod.getFqName() : testClass.getFqName();
-    return fqName != null ? fqName.toString() : null;
+  private static String getDescription(KtClass testClass, @Nullable KtNamedFunction testMethod) {
+    if (testMethod == null) {
+      return testClass.getName();
+    }
+    return testClass.getName() + "." + testMethod.getName();
   }
 }
