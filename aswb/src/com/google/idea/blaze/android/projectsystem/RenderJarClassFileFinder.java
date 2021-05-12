@@ -233,11 +233,7 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
       return null;
     }
 
-    VirtualFile classFile = findClassInJar(renderResolveJarVF, fqcn);
-    // #as41: This call can be removed once as4.1 is paved
-    // Try to register the resource package for the found class
-    ResourceRepositoryUpdater.registerResourcePackageForClass(module, classFile, fqcn);
-    return classFile;
+    return findClassInJar(renderResolveJarVF, fqcn);
   }
 
   @Nullable

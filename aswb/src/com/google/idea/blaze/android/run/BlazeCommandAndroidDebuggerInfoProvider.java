@@ -33,7 +33,7 @@ import java.util.Collections;
 import java.util.List;
 import org.jetbrains.annotations.Nullable;
 
-/** Provider of blaze project compatible android debuggers. #api4.0 */
+/** Provider of blaze project compatible android debuggers. */
 public class BlazeCommandAndroidDebuggerInfoProvider implements AndroidDebuggerInfoProvider {
   @Override
   public boolean supportsProject(Project project) {

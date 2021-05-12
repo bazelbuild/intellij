@@ -232,10 +232,7 @@ public class PsiBasedClassFileFinder implements BlazeClassFileFinder {
       return null;
     }
 
-    VirtualFile classFile = findClassInJar(classJar, fqcn);
-    // #as41: This call can be removed once as4.1 is paved
-    ResourceRepositoryUpdater.registerResourcePackageForClass(module, classFile, fqcn);
-    return classFile;
+    return findClassInJar(classJar, fqcn);
   }
 
   private void registerResourcePackage(TargetIdeInfo resourceDependencyTarget) {
