@@ -20,7 +20,6 @@ import static com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryNormalB
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerCompat;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.tasks.DebugConnectorTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
@@ -86,14 +85,14 @@ public class BlazeAndroidTestRunContext extends BlazeAndroidTestRunContextBase {
             env.getProject(), androidDebugger, packageIds, applicationIdProvider, this);
       case NON_BLAZE:
       case MOBILE_INSTALL:
-        return AndroidDebuggerCompat.getConnectDebuggerTask(
-            androidDebugger,
+        return androidDebugger.getConnectDebuggerTask(
             env,
             null,
             packageIds,
             facet,
             androidDebuggerState,
-            runConfiguration.getType().getId());
+            runConfiguration.getType().getId(),
+            null);
     }
     throw new AssertionError();
   }
