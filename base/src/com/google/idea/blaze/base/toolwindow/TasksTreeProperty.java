@@ -83,7 +83,7 @@ final class TasksTreeProperty {
   private void cleanUpDetachedSubtree(Task task) {
     List<Task> children = adjacencyList.remove(task);
     if (children != null) {
-      for (Task child : adjacencyList.get(task)) {
+      for (Task child : children) {
         cleanUpDetachedSubtree(child);
       }
     }
