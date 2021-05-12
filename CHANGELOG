@@ -1,3 +1,7 @@
+v2021.05.11
+===========
+* Kotlin: Generate correct run configurations for non-small tests.
+
 v2021.04.26
 ===========
 * GoLand: Fixed an issue with importing a Bazel project in Goland.
