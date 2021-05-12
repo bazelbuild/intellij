@@ -16,7 +16,7 @@
 package com.google.idea.blaze.android.run.binary;
 
 import com.android.tools.idea.run.ValidationError;
-import com.android.tools.idea.run.editor.AndroidProfilersPanelCompat;
+import com.android.tools.idea.run.editor.AndroidProfilersPanel;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.annotations.VisibleForTesting;
@@ -280,8 +280,6 @@ public final class BlazeAndroidBinaryRunConfigurationState implements RunConfigu
   @Override
   public RunConfigurationStateEditor getEditor(Project project) {
     return new BlazeAndroidBinaryRunConfigurationStateEditor(
-        commonState.getEditor(project),
-        new AndroidProfilersPanelCompat(project, profilerState),
-        project);
+        commonState.getEditor(project), new AndroidProfilersPanel(project, profilerState), project);
   }
 }
