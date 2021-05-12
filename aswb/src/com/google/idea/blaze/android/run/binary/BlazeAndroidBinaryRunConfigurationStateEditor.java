@@ -195,9 +195,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     JComponent generalPanel = UiUtil.createBox(commonStateEditor.createComponent(), mainContainer);
     generalPanel.setOpaque(true);
     tabbedPane.addTab("General", generalPanel);
-    if (profilersPanel != null) {
-      tabbedPane.addTab("Profiler", profilersPanel.getComponent());
-    }
+    tabbedPane.addTab("Profiler", profilersPanel.getComponent());
     return UiUtil.createBox(tabbedPane);
   }
 
