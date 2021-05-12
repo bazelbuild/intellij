@@ -36,6 +36,8 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:ijwb_ce_tests
+    soft_fail:
+      - exit_status: 1
   IntelliJ-CE-OSS-stable:
     name: IntelliJ CE OSS Stable
     platform: ubuntu1804

@@ -24,8 +24,8 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:aswb_tests
-  Android-Studio-internal-canary:
-    name: Android Studio Internal Canary
+  Android-Studio-internal-under-dev:
+    name: Android Studio Internal Under Development
     platform: ubuntu1804
     build_flags:
       - --define=ij_product=android-studio-canary
@@ -36,6 +36,8 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:aswb_tests
+    soft_fail:
+      - exit_status: 1
   Android-Studio-OSS-stable:
     name: Android Studio OSS Stable
     platform: ubuntu1804

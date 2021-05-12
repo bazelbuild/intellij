@@ -36,6 +36,8 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:ijwb_ue_tests
+    soft_fail:
+      - exit_status: 1
   IntelliJ-UE-OSS-stable:
     name: IntelliJ UE OSS Stable
     platform: ubuntu1804
