@@ -15,11 +15,11 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import com.android.ddmlib.IDevice;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
+import com.android.tools.idea.run.tasks.LaunchContext;
 import com.android.tools.idea.run.tasks.LaunchResult;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.util.LaunchStatus;
@@ -27,7 +27,6 @@ import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
-import com.intellij.execution.Executor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
@@ -35,7 +34,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 
-abstract class StockAndroidTestLaunchTaskBase implements LaunchTask {
+class StockAndroidTestLaunchTask implements LaunchTask {
   private static final String ID = "STOCK_ANDROID_TEST";
 
   private static final Logger LOG = Logger.getInstance(StockAndroidTestLaunchTask.class);
@@ -45,7 +44,7 @@ abstract class StockAndroidTestLaunchTaskBase implements LaunchTask {
   private final String testApplicationId;
   private final boolean waitForDebugger;
 
-  StockAndroidTestLaunchTaskBase(
+  StockAndroidTestLaunchTask(
       BlazeAndroidTestRunConfigurationState configState,
       String runner,
       String testPackage,
@@ -156,16 +155,14 @@ abstract class StockAndroidTestLaunchTaskBase implements LaunchTask {
     return 2;
   }
 
-  @SuppressWarnings("FutureReturnValueIgnored")
-  public LaunchResult run(
-      Executor executor,
-      IDevice device,
-      final LaunchStatus launchStatus,
-      final ConsolePrinter printer) {
+  @Override
+  public LaunchResult run(@NotNull LaunchContext launchContext) {
+    ConsolePrinter printer = launchContext.getConsolePrinter();
     printer.stdout("Running tests\n");
 
     final RemoteAndroidTestRunner runner =
-        new RemoteAndroidTestRunner(testApplicationId, instrumentationTestRunner, device);
+        new RemoteAndroidTestRunner(
+            testApplicationId, instrumentationTestRunner, launchContext.getDevice());
     switch (configState.getTestingType()) {
       case BlazeAndroidTestRunConfigurationState.TEST_ALL_IN_MODULE:
         break;

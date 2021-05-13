@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.resources.actions;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.tools.idea.res.IdeResourceNameValidator;
-import com.google.idea.blaze.android.resources.AndroidResourceUtilCompat;
+import com.android.tools.idea.res.IdeResourcesUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -122,8 +122,7 @@ public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Pare
     setupResourceDirectoryCombo();
 
     if (defaultFile == null) {
-      final String defaultFileName =
-          AndroidResourceUtilCompat.getDefaultResourceFileName(myResourceType);
+      final String defaultFileName = IdeResourcesUtil.getDefaultResourceFileName(myResourceType);
 
       if (defaultFileName != null) {
         myFileNameCombo.getEditor().setItem(defaultFileName);
@@ -169,7 +168,7 @@ public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Pare
 
   @Override
   public void resetToDefault() {
-    String defaultFileName = AndroidResourceUtilCompat.getDefaultResourceFileName(myResourceType);
+    String defaultFileName = IdeResourcesUtil.getDefaultResourceFileName(myResourceType);
     if (defaultFileName != null) {
       myFileNameCombo.getEditor().setItem(defaultFileName);
     }
@@ -237,7 +236,7 @@ public class BlazeCreateXmlResourcePanel implements CreateXmlResourcePanel, Pare
     if (myNameField.isVisible() && resourceName.isEmpty()) {
       return new ValidationInfo("specify resource name", myNameField);
     } else if (myNameField.isVisible()
-        && !AndroidResourceUtilCompat.isCorrectAndroidResourceName(resourceName)) {
+        && !IdeResourcesUtil.isCorrectAndroidResourceName(resourceName)) {
       return new ValidationInfo(resourceName + " is not correct resource name", myNameField);
     } else if (fileName.isEmpty()) {
       return new ValidationInfo("specify file name", myFileNameCombo);

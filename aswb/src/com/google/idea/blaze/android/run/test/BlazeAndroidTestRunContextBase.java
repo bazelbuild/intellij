@@ -188,7 +188,7 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
         } catch (ApkProvisionException e) {
           throw new ExecutionException(e);
         }
-        return StockAndroidTestLaunchTaskBase.getStockTestLaunchTask(
+        return StockAndroidTestLaunchTask.getStockTestLaunchTask(
             configState, applicationIdProvider, launchOptions.isDebug(), deployInfo, launchStatus);
     }
     throw new AssertionError();

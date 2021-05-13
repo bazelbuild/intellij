@@ -18,13 +18,33 @@ package com.google.idea.blaze.android.run.runner;
 import com.android.tools.idea.profilers.ProfilerProgramRunner;
 import com.android.tools.idea.run.tasks.LaunchContext;
 import com.android.tools.idea.run.tasks.LaunchResult;
+import com.android.tools.idea.run.tasks.LaunchTask;
+import com.android.tools.idea.run.tasks.LaunchTaskDurations;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
-/** Opens the profiler tool window. #api41 */
-public class BlazeAndroidOpenProfilerWindowTask extends BlazeAndroidOpenProfilerWindowTaskBase {
+/** Opens the profiler tool window. */
+public class BlazeAndroidOpenProfilerWindowTask implements LaunchTask {
+  private static final String ID = "OPEN_PROFILER_TOOLWINDOW";
+  private final Project project;
+
   public BlazeAndroidOpenProfilerWindowTask(Project project) {
-    super(project);
+    this.project = project;
+  }
+
+  @Override
+  public String getDescription() {
+    return "Open the Profiler Tool Window";
+  }
+
+  @Override
+  public int getDuration() {
+    return LaunchTaskDurations.LAUNCH_ACTIVITY;
+  }
+
+  @Override
+  public String getId() {
+    return ID;
   }
 
   @Override

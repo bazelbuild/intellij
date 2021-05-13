@@ -21,6 +21,7 @@ import com.android.tools.idea.run.AndroidSessionInfo;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.DeployTarget;
+import com.android.tools.idea.run.editor.DeployTargetState;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -107,7 +108,7 @@ public final class BlazeAndroidRunConfigurationRunner
 
     DeployTarget deployTarget = deviceSession.deployTarget;
     if (deployTarget != null && deployTarget.hasCustomRunProfileState(executor)) {
-      return DeployTargetCompat.getRunProfileState(deployTarget, executor, env);
+      return deployTarget.getRunProfileState(executor, env, DeployTargetState.DEFAULT_STATE);
     }
 
     DeviceFutures deviceFutures = deviceSession.deviceFutures;

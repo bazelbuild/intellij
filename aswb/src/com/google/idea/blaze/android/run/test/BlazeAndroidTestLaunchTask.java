@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.ConsolePrinter;
+import com.android.tools.idea.run.tasks.LaunchContext;
 import com.android.tools.idea.run.tasks.LaunchResult;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTaskDurations;
@@ -40,7 +40,6 @@ import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.intellij.execution.Executor;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -57,7 +56,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
  * An Android application launcher that invokes `blaze test` on an android_test target, and sets up
  * process handling and debugging for the test run.
  */
-abstract class BlazeAndroidTestLaunchTaskBase implements LaunchTask {
+public class BlazeAndroidTestLaunchTask implements LaunchTask {
   private static final String ID = "BLAZE_ANDROID_TEST";
 
   // Uses a local device/emulator attached to adb to run an android_test.
@@ -80,7 +79,7 @@ abstract class BlazeAndroidTestLaunchTaskBase implements LaunchTask {
 
   private final boolean debug;
 
-  protected BlazeAndroidTestLaunchTaskBase(
+  public BlazeAndroidTestLaunchTask(
       Project project,
       Label target,
       List<String> buildFlags,
@@ -106,15 +105,12 @@ abstract class BlazeAndroidTestLaunchTaskBase implements LaunchTask {
     return LaunchTaskDurations.LAUNCH_ACTIVITY;
   }
 
-  public LaunchResult run(
-      @NotNull Executor executor,
-      @NotNull IDevice device,
-      @NotNull LaunchStatus launchStatus,
-      @NotNull ConsolePrinter printer) {
+  @Override
+  public LaunchResult run(@NotNull LaunchContext launchContext) {
     BlazeExecutor blazeExecutor = BlazeExecutor.getInstance();
 
     ProcessHandlerLaunchStatus processHandlerLaunchStatus =
-        (ProcessHandlerLaunchStatus) launchStatus;
+        (ProcessHandlerLaunchStatus) launchContext.getLaunchStatus();
     final ProcessHandler processHandler = processHandlerLaunchStatus.getProcessHandler();
 
     blazeResult =
@@ -144,7 +140,8 @@ abstract class BlazeAndroidTestLaunchTaskBase implements LaunchTask {
                         // Run the test on the selected local device/emulator.
                         commandBuilder
                             .addBlazeFlags(TEST_LOCAL_DEVICE, BlazeFlags.TEST_OUTPUT_STREAMED)
-                            .addBlazeFlags(testDeviceSerialFlags(device.getSerialNumber()))
+                            .addBlazeFlags(
+                                testDeviceSerialFlags(launchContext.getDevice().getSerialNumber()))
                             .addBlazeFlags(testFilter.getBlazeFlags());
                         if (debug) {
                           commandBuilder.addBlazeFlags(
@@ -152,6 +149,7 @@ abstract class BlazeAndroidTestLaunchTaskBase implements LaunchTask {
                         }
                         BlazeCommand command = commandBuilder.build();
 
+                        ConsolePrinter printer = launchContext.getConsolePrinter();
                         printer.stdout(
                             String.format("Starting %s test...\n", Blaze.buildSystemName(project)));
                         printer.stdout(command + "\n");
@@ -190,7 +188,7 @@ abstract class BlazeAndroidTestLaunchTaskBase implements LaunchTask {
 
     // The debug case is set up in ConnectBlazeTestDebuggerTask
     if (!debug) {
-      waitAndSetUpForKillingBlazeOnStop(processHandler, launchStatus);
+      waitAndSetUpForKillingBlazeOnStop(processHandler, launchContext.getLaunchStatus());
     }
     return LaunchResult.success();
   }

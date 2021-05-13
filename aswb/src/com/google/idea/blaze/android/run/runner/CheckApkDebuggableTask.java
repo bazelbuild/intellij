@@ -19,6 +19,8 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.ConsolePrinter;
+import com.android.tools.idea.run.tasks.LaunchContext;
+import com.android.tools.idea.run.tasks.LaunchResult;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -33,13 +35,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.zip.ZipFile;
+import org.jetbrains.annotations.NotNull;
 
 /** Checks APKs to see if they are debuggable and warn the user if they aren't. */
-public abstract class CheckApkDebuggableTaskBase implements LaunchTask {
+public class CheckApkDebuggableTask implements LaunchTask {
   private static final String ID = "APK_DEBUGGABILITY_CHECKER";
-  protected final BlazeAndroidDeployInfo deployInfo;
+  private final BlazeAndroidDeployInfo deployInfo;
 
-  CheckApkDebuggableTaskBase(BlazeAndroidDeployInfo deployInfo) {
+  public CheckApkDebuggableTask(BlazeAndroidDeployInfo deployInfo) {
     this.deployInfo = deployInfo;
   }
 
@@ -56,6 +59,13 @@ public abstract class CheckApkDebuggableTaskBase implements LaunchTask {
   @Override
   public String getId() {
     return ID;
+  }
+
+  @Override
+  public LaunchResult run(@NotNull LaunchContext launchContext) {
+    checkApkDebuggableTaskDelegate(
+        deployInfo, launchContext.getDevice(), launchContext.getConsolePrinter());
+    return LaunchResult.success(); // Don't block deployment.
   }
 
   /**
