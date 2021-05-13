@@ -34,6 +34,7 @@ java_library(
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//third_party/go",
         "//third_party/python",
         "//third_party/scala",
     ],

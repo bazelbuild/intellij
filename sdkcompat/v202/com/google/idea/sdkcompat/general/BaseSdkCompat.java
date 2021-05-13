@@ -1,5 +1,6 @@
 package com.google.idea.sdkcompat.general;
 
+import com.goide.execution.GoApplicationConfiguration.Kind;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.conversion.ConversionContext;
@@ -43,6 +44,26 @@ public final class BaseSdkCompat {
 
     void doCollectSlowLineMarkers(
         List<? extends PsiElement> elements, Collection<? super LineMarkerInfo<?>> result);
+  }
+
+  /**
+   * #api203: Kind enum moved from GoApplicationConfiguration to GoBuildingRunConfiguration in
+   * 2021.1
+   */
+  public enum KindWrapper {
+    DIRECTORY(Kind.DIRECTORY),
+    PACKAGE(Kind.PACKAGE),
+    FILE(Kind.FILE);
+
+    private Kind kind;
+
+    private KindWrapper(Kind kind) {
+      this.kind = kind;
+    }
+
+    public Kind getKind() {
+      return this.kind;
+    }
   }
 
   /** #api201: project opening API changed in 2020.2. */

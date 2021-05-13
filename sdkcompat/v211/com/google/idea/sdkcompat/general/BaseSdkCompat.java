@@ -1,6 +1,6 @@
 package com.google.idea.sdkcompat.general;
 
-import com.goide.execution.GoApplicationConfiguration.Kind;
+import com.goide.execution.GoBuildingRunConfiguration.Kind;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.conversion.ConversionContext;
