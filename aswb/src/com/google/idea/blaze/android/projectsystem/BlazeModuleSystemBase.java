@@ -19,6 +19,7 @@ import com.android.ide.common.repository.GradleCoordinate;
 import com.android.ide.common.util.PathString;
 import com.android.manifmerger.ManifestSystemProperty;
 import com.android.projectmodel.ExternalLibrary;
+import com.android.projectmodel.ExternalLibraryImpl;
 import com.android.projectmodel.SelectiveResourceFolder;
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.CapabilityNotSupported;
@@ -476,7 +477,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     }
     File resFolder = unpackedAars.getResourceDirectory(decoder, library);
     PathString resFolderPathString = resFolder == null ? null : new PathString(resFolder);
-    return ExternalLibraryCompat.create(library.key.toString())
+    return new ExternalLibraryImpl(library.key.toString())
         .withLocation(new PathString(aarFile))
         .withManifestFile(
             resFolderPathString == null
@@ -503,7 +504,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
               "Failed to locate jar file %s. Re-sync project may solve the problem", library));
       return null;
     }
-    return ExternalLibraryCompat.create(library.toString())
+    return new ExternalLibraryImpl(library.toString())
         .withClassJars(ImmutableList.of(new PathString(cachedJar)));
   }
 

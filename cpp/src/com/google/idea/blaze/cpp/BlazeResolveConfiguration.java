@@ -26,12 +26,12 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
-import com.google.idea.sdkcompat.cpp.OCImportGraphCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCFileTypeHelpers;
 import com.jetbrains.cidr.lang.OCLanguageKind;
+import com.jetbrains.cidr.lang.preprocessor.OCImportGraph;
 import com.jetbrains.cidr.lang.workspace.OCLanguageKindCalculator;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
 import java.io.File;
@@ -122,7 +122,8 @@ final class BlazeResolveConfiguration {
 
   @Nullable
   private VirtualFile getSourceFileForHeaderFile(VirtualFile headerFile) {
-    Collection<VirtualFile> roots = OCImportGraphCompat.getAllHeaderRoots(project, headerFile);
+    Collection<VirtualFile> roots =
+        OCImportGraph.getInstance(project).getAllHeaderRoots(headerFile);
 
     final String headerNameWithoutExtension = headerFile.getNameWithoutExtension();
     for (VirtualFile root : roots) {

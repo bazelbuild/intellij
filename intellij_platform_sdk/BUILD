@@ -61,6 +61,48 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-oss-stable",
+    values = {
+        "define": "ij_product=intellij-oss-stable",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-oss-stable",
+    values = {
+        "define": "ij_product=intellij-ue-oss-stable",
+    },
+)
+
+config_setting(
+    name = "intellij-oss-beta",
+    values = {
+        "define": "ij_product=intellij-oss-beta",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-oss-beta",
+    values = {
+        "define": "ij_product=intellij-ue-oss-beta",
+    },
+)
+
+config_setting(
+    name = "intellij-oss-under-dev",
+    values = {
+        "define": "ij_product=intellij-oss-under-dev",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-oss-under-dev",
+    values = {
+        "define": "ij_product=intellij-ue-oss-under-dev",
+    },
+)
+
+config_setting(
     name = "intellij-canary",
     values = {
         "define": "ij_product=intellij-canary",
@@ -71,21 +113,6 @@ config_setting(
     name = "intellij-ue-canary",
     values = {
         "define": "ij_product=intellij-ue-canary",
-    },
-)
-
-config_setting(
-    name = "intellij-2020.1",
-    values = {
-        "define": "ij_product=intellij-2020.1",
-    },
-)
-
-config_setting(
-    name = "intellij-2020.1-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-2020.1",
     },
 )
 
@@ -105,6 +132,21 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2021.1",
+    values = {
+        "define": "ij_product=intellij-2021.1",
+    },
+)
+
+config_setting(
+    name = "intellij-2021.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-2021.1",
+    },
+)
+
+config_setting(
     name = "intellij-2020.3",
     values = {
         "define": "ij_product=intellij-2020.3",
@@ -116,21 +158,6 @@ config_setting(
     values = {
         "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-2020.3",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2020.1",
-    values = {
-        "define": "ij_product=intellij-ue-2020.1",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2020.1-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-ue-2020.1",
     },
 )
 
@@ -165,6 +192,21 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-ue-2021.1",
+    values = {
+        "define": "ij_product=intellij-ue-2021.1",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2021.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-2021.1",
+    },
+)
+
+config_setting(
     name = "android-studio-latest",
     values = {
         "define": "ij_product=android-studio-latest",
@@ -190,6 +232,27 @@ config_setting(
     name = "android-studio-canary",
     values = {
         "define": "ij_product=android-studio-canary",
+    },
+)
+
+config_setting(
+    name = "android-studio-oss-stable",
+    values = {
+        "define": "ij_product=android-studio-oss-stable",
+    },
+)
+
+config_setting(
+    name = "android-studio-oss-beta",
+    values = {
+        "define": "ij_product=android-studio-oss-beta",
+    },
+)
+
+config_setting(
+    name = "android-studio-oss-under-dev",
+    values = {
+        "define": "ij_product=android-studio-oss-under-dev",
     },
 )
 
@@ -223,6 +286,27 @@ config_setting(
 )
 
 config_setting(
+    name = "clion-oss-stable",
+    values = {
+        "define": "ij_product=clion-oss-stable",
+    },
+)
+
+config_setting(
+    name = "clion-oss-beta",
+    values = {
+        "define": "ij_product=clion-oss-beta",
+    },
+)
+
+config_setting(
+    name = "clion-oss-under-dev",
+    values = {
+        "define": "ij_product=clion-oss-under-dev",
+    },
+)
+
+config_setting(
     name = "clion-latest-mac",
     values = {
         "cpu": "darwin_x86_64",
@@ -234,21 +318,6 @@ config_setting(
     name = "clion-beta",
     values = {
         "define": "ij_product=clion-beta",
-    },
-)
-
-config_setting(
-    name = "clion-2020.1",
-    values = {
-        "define": "ij_product=clion-2020.1",
-    },
-)
-
-config_setting(
-    name = "clion-2020.1-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=clion-2020.1",
     },
 )
 
@@ -385,15 +454,14 @@ java_library(
 java_library(
     name = "jsr305",
     exports = select_for_plugin_api({
-        "clion-2020.1": [":bundled_jsr305"],
         "clion-2020.2": [":bundled_jsr305"],
         "clion-2020.3": [":bundled_jsr305"],
-        "intellij-2020.1": [":bundled_jsr305"],
         "intellij-2020.2": [":bundled_jsr305"],
+        "intellij-2021.1": [":bundled_jsr305"],
         "intellij-2020.3": [":bundled_jsr305"],
-        "intellij-ue-2020.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.3": [":bundled_jsr305"],
+        "intellij-ue-2021.1": ["@jsr305_annotations//jar"],
         "android-studio-4.2": ["@jsr305_annotations//jar"],
         "android-studio-2020.3": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.

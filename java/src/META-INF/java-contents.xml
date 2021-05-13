@@ -102,6 +102,8 @@
     <refactoring.safeDeleteProcessor id="build_file_safe_delete" order="first"
             implementation="com.google.idea.blaze.java.lang.build.BuildFileSafeDeleteProcessor"/>
 
+    <projectService serviceInterface="com.google.idea.blaze.java.libraries.JarCacheFolderProvider"
+        serviceImplementation="com.google.idea.blaze.java.libraries.JarCacheFolderProvider"/>
     <projectService serviceImplementation="com.google.idea.blaze.java.libraries.JarCache"/>
 
     <attachSourcesProvider implementation="com.google.idea.blaze.java.libraries.AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider"/>

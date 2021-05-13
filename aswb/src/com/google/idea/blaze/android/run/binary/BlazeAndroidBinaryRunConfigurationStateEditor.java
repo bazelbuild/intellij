@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.run.binary;
 import static com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandler.MI_NEVER_ASK_AGAIN;
 
 import com.android.tools.idea.run.activity.ActivityLocatorUtils;
-import com.android.tools.idea.run.editor.AndroidProfilersPanelCompat;
+import com.android.tools.idea.run.editor.AndroidProfilersPanel;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
 import com.google.idea.blaze.base.ui.IntegerTextField;
@@ -58,7 +58,7 @@ import org.jetbrains.android.util.AndroidUtils;
 /** An editor for android binary run configs. */
 class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationStateEditor {
   private final RunConfigurationStateEditor commonStateEditor;
-  private final AndroidProfilersPanelCompat profilersPanelCompat;
+  private final AndroidProfilersPanel profilersPanel;
 
   private Box mainContainer;
   private ComponentWithBrowseButton<EditorTextField> activityField;
@@ -76,10 +76,10 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
 
   BlazeAndroidBinaryRunConfigurationStateEditor(
       RunConfigurationStateEditor commonStateEditor,
-      AndroidProfilersPanelCompat profilersPanelCompat,
+      AndroidProfilersPanel profilersPanel,
       Project project) {
     this.commonStateEditor = commonStateEditor;
-    this.profilersPanelCompat = profilersPanelCompat;
+    this.profilersPanel = profilersPanel;
     setupUI(project);
     userIdField.setMinValue(0);
 
@@ -139,7 +139,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     BlazeAndroidBinaryRunConfigurationState state =
         (BlazeAndroidBinaryRunConfigurationState) genericState;
     commonStateEditor.resetEditorFrom(state.getCommonState());
-    profilersPanelCompat.resetFrom(state.getProfilerState());
+    profilersPanel.resetFrom(state.getProfilerState());
     boolean launchSpecificActivity =
         state.getMode().equals(BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY);
     if (state.getMode().equals(BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEFAULT_ACTIVITY)) {
@@ -169,7 +169,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     BlazeAndroidBinaryRunConfigurationState state =
         (BlazeAndroidBinaryRunConfigurationState) genericState;
     commonStateEditor.applyEditorTo(state.getCommonState());
-    profilersPanelCompat.applyTo(state.getProfilerState());
+    profilersPanel.applyTo(state.getProfilerState());
 
     state.setUserId((Integer) userIdField.getValue());
     if (launchDefaultButton.isSelected()) {
@@ -195,9 +195,7 @@ class BlazeAndroidBinaryRunConfigurationStateEditor implements RunConfigurationS
     JComponent generalPanel = UiUtil.createBox(commonStateEditor.createComponent(), mainContainer);
     generalPanel.setOpaque(true);
     tabbedPane.addTab("General", generalPanel);
-    if (profilersPanelCompat.getPanel() != null) {
-      tabbedPane.addTab("Profiler", profilersPanelCompat.getPanel().getComponent());
-    }
+    tabbedPane.addTab("Profiler", profilersPanel.getComponent());
     return UiUtil.createBox(tabbedPane);
   }
 

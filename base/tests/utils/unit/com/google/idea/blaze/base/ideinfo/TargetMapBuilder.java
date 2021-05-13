@@ -17,11 +17,12 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import java.util.Collection;
 import java.util.List;
 
 /** Builds a target map. */
 public class TargetMapBuilder {
-  private List<TargetIdeInfo> targets = Lists.newArrayList();
+  private final List<TargetIdeInfo> targets = Lists.newArrayList();
 
   public static TargetMapBuilder builder() {
     return new TargetMapBuilder();
@@ -34,6 +35,11 @@ public class TargetMapBuilder {
 
   public TargetMapBuilder addTarget(TargetIdeInfo.Builder target) {
     return addTarget(target.build());
+  }
+
+  public TargetMapBuilder addTargets(Collection<? extends TargetIdeInfo> targets) {
+    this.targets.addAll(targets);
+    return this;
   }
 
   public TargetMap build() {

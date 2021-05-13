@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -46,12 +47,15 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
+import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.lang.AdditionalLanguagesHelper;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -73,8 +77,10 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectState;
@@ -85,6 +91,7 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
+import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -105,6 +112,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -321,25 +329,57 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         count ->
             String.format(
                 "Building targets for shard %s of %s...", count, shardedTargets.shardCount());
-    Function<List<? extends TargetExpression>, BuildResult> invocation =
-        targets -> {
-          BlazeBuildOutputs result =
-              runBuildForTargets(
-                  project,
-                  context,
-                  workspaceRoot,
-                  buildParams,
-                  projectViewSet,
-                  blazeInfo,
-                  activeLanguages,
-                  targets,
-                  aspectStrategy);
-          if (!result.buildResult.outOfMemory()) {
-            combinedResult.set(
-                combinedResult.isNull() ? result : combinedResult.get().updateOutputs(result));
-          }
-          return result.buildResult;
-        };
+    BiFunction<List<? extends TargetExpression>, Integer, BuildResult> invocation =
+        (targets, shard) ->
+            Scope.push(
+                context,
+                (childContext) -> {
+                  ToolWindowScope parentToolWindowScope = context.getScope(ToolWindowScope.class);
+                  childContext.push(
+                      new ToolWindowScope.Builder(
+                              project,
+                              new Task(
+                                  "Build shard " + shard,
+                                  Task.Type.BLAZE_SYNC,
+                                  parentToolWindowScope != null
+                                      ? parentToolWindowScope.getTask()
+                                      : null))
+                          .setIssueParsers(
+                              BlazeIssueParser.defaultIssueParsers(
+                                  project, workspaceRoot, ContextType.Sync))
+                          .build());
+                  if (BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()) {
+                    childContext.push(
+                        new BlazeConsoleScope.Builder(project)
+                            .addConsoleFilters(
+                                new IssueOutputFilter(
+                                    project,
+                                    WorkspaceRoot.fromProject(project),
+                                    ContextType.Sync,
+                                    true))
+                            .setClearPreviousState(false)
+                            .build());
+                  }
+
+                  BlazeBuildOutputs result =
+                      runBuildForTargets(
+                          project,
+                          childContext,
+                          workspaceRoot,
+                          buildParams,
+                          projectViewSet,
+                          blazeInfo,
+                          activeLanguages,
+                          targets,
+                          aspectStrategy);
+                  if (!result.buildResult.outOfMemory()) {
+                    combinedResult.set(
+                        combinedResult.isNull()
+                            ? result
+                            : combinedResult.get().updateOutputs(result));
+                  }
+                  return result.buildResult;
+                });
     BuildResult result =
         shardedTargets.runShardedCommand(
             project, context, progressMessage, invocation, parallelize);
@@ -654,8 +694,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         count ->
             String.format(
                 "Compiling targets for shard %s of %s...", count, shardedTargets.shardCount());
-    Function<List<? extends TargetExpression>, BuildResult> invocation =
-        targets ->
+    BiFunction<List<? extends TargetExpression>, Integer, BuildResult> invocation =
+        (targets, shard) ->
             doCompileIdeArtifacts(
                 project,
                 context,

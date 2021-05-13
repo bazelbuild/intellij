@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndi
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -37,6 +38,7 @@ import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
@@ -49,6 +51,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedTargetsResult;
+import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -86,17 +89,16 @@ public class BlazeBuildService {
     if (projectView == null || projectData == null) {
       return;
     }
+
+    String title = "Make " + fileName;
     buildTargetExpressions(
         project,
         projectView,
         projectData,
         context -> Lists.newArrayList(targets),
         new NotificationScope(
-            project,
-            "Make",
-            "Make " + fileName,
-            "Make " + fileName + " completed successfully",
-            "Make " + fileName + " failed"));
+            project, "Make", title, title + " completed successfully", title + " failed"),
+        title);
   }
 
   public void buildProject() {
@@ -139,7 +141,8 @@ public class BlazeBuildService {
             "Make",
             "Make project",
             "Make project completed successfully",
-            "Make project failed"));
+            "Make project failed"),
+        "Make project");
 
     // In case the user touched a file, but didn't change its content. The user will get a false
     // positive for class file out of date. We need a way for the user to suppress the false
@@ -152,7 +155,8 @@ public class BlazeBuildService {
       ProjectViewSet projectView,
       BlazeProjectData projectData,
       ScopedFunction<List<TargetExpression>> targetsFunction,
-      NotificationScope notificationScope) {
+      NotificationScope notificationScope,
+      String taskName) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // a gross hack to avoid breaking change detector tests. We had a few tests which relied on
       // this never being called *and* relied on PROJECT_LAST_BUILD_TIMESTAMP_KEY being set
@@ -166,7 +170,16 @@ public class BlazeBuildService {
                 new ScopedTask<Void>() {
                   @Override
                   public Void execute(BlazeContext context) {
+                    Task task = new Task(taskName, Task.Type.BLAZE_MAKE);
                     context
+                        .push(
+                            new ToolWindowScope.Builder(project, task)
+                                .setIssueParsers(
+                                    BlazeIssueParser.defaultIssueParsers(
+                                        project,
+                                        WorkspaceRoot.fromProject(project),
+                                        BlazeInvocationContext.ContextType.Sync))
+                                .build())
                         .push(new ExperimentScope())
                         .push(
                             new BlazeConsoleScope.Builder(project)

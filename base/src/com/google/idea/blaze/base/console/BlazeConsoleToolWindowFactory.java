@@ -34,4 +34,9 @@ public class BlazeConsoleToolWindowFactory implements DumbAware, ToolWindowFacto
     toolWindow.setStripeTitle(title);
     BlazeConsoleView.getInstance(project).createToolWindowContent(toolWindow);
   }
+
+  @Override
+  public boolean shouldBeAvailable(Project project) {
+    return BlazeConsoleExperimentManager.isBlazeConsoleV1Enabled();
+  }
 }

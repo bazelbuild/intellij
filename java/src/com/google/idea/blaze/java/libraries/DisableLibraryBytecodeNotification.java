@@ -17,12 +17,10 @@ package com.google.idea.blaze.java.libraries;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider;
-import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.ui.EditorNotifications.Provider;
+import com.intellij.ui.EditorNotificationsImpl;
 
 /**
  * Attempt to disable 'library source doesn't match bytecode' butter bar warnings, which are
@@ -39,10 +37,8 @@ final class DisableLibraryBytecodeNotification implements StartupActivity {
     if (!enabled.getValue() || !Blaze.isBlazeProject(project)) {
       return;
     }
-    ProjectExtensionPointName<Provider<?>> epName = BaseSdkCompat.getEditorNotificationsEp();
-    if (epName == null) {
-      return;
-    }
-    epName.getPoint(project).unregisterExtension(LibrarySourceNotificationProvider.class);
+    EditorNotificationsImpl.EP_PROJECT
+        .getPoint(project)
+        .unregisterExtension(LibrarySourceNotificationProvider.class);
   }
 }

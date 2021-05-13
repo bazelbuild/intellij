@@ -74,7 +74,7 @@ public final class AaptUtil {
       throw new AaptUtilException(
           "Could not find Android platform sdk for project " + project.getName());
     }
-    BuildToolInfo toolInfo = androidPlatform.getSdkData().getLatestBuildTool();
+    BuildToolInfo toolInfo = androidPlatform.getSdkData().getLatestBuildTool(true);
     if (toolInfo == null) {
       throw new AaptUtilException(
           "Could not find Android sdk build-tools for project " + project.getName());

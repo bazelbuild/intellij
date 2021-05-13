@@ -23,6 +23,7 @@ import com.android.tools.idea.log.LogWrapper;
 import com.android.tools.idea.model.AndroidModel;
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.AndroidProjectSystem;
+import com.android.tools.idea.projectsystem.NamedIdeaSourceProvider;
 import com.android.tools.idea.projectsystem.ProjectSystemBuildManager;
 import com.android.tools.idea.projectsystem.ProjectSystemSyncManager;
 import com.android.tools.idea.projectsystem.SourceProviders;
@@ -48,6 +49,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.SourceProviderManager;
+import org.jetbrains.android.facet.SourceProvidersImpl;
 
 /**
  * Base class to implement common methods in {@link AndroidProjectSystem} for blaze with different
@@ -125,10 +127,21 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
       public SourceProviders createSourceProvidersFor(AndroidFacet facet) {
         BlazeAndroidModel model = ((BlazeAndroidModel) AndroidModel.get(facet));
         if (model != null) {
-          return SourceProvidersCompat.forModel(model);
+          return createForModel(model);
         } else {
           return createSourceProvidersForLegacyModule(facet);
         }
+      }
+
+      private SourceProviders createForModel(BlazeAndroidModel model) {
+        NamedIdeaSourceProvider mainSourceProvider = model.getDefaultSourceProvider();
+        return new SourceProvidersImpl(
+            mainSourceProvider,
+            ImmutableList.of(mainSourceProvider),
+            ImmutableList.of(mainSourceProvider),
+            ImmutableList.of(mainSourceProvider),
+            ImmutableList.of(mainSourceProvider),
+            ImmutableList.of(mainSourceProvider));
       }
     };
   }

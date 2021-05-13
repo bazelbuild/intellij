@@ -27,22 +27,25 @@ import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.ProjectSystemUtil;
 import com.android.tools.lint.checks.PermissionHolder;
 import com.android.utils.concurrency.AsyncSupplier;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.fixtures.ManifestFixture;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.openapi.module.Module;
+import com.intellij.testFramework.PlatformTestUtil;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.IdeaSourceProviderUtil;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -50,6 +53,7 @@ import org.junit.runners.JUnit4;
 /** Tests that merged manifest calculations are accurate for Blaze Android projects. */
 @RunWith(JUnit4.class)
 public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
+  private static Duration MANIFEST_UPDATE_TIMEOUT = Duration.ofSeconds(60);
   private ManifestFixture.Factory manifestFactory;
 
   @Before
@@ -71,28 +75,37 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
 
   private static void runAndWaitForMergedManifestUpdates(Set<Module> modules, Runnable toRun)
       throws Exception {
-    HashSet<Module> notUpdated = new HashSet<>(modules);
     CountDownLatch manifestsUpdated = new CountDownLatch(modules.size());
+    Stopwatch verificationTimer = Stopwatch.createStarted();
+
+    // Manifest re-computations are throttled via a ThrottlingAsyncSupplier.  Technically we have
+    // no guarantee that the computation will happen immediately after toRun.run() is executed.
+    // To compensate for this possible scheduling delay the manifest update verification step below
+    // will retry rather than blocking on manifest computation.
+    // If it doesn't get scheduled on the first run, it should on a subsequent one.  If the test
+    // is actually broken then the verificationTimer will timeout and break early to avoid
+    // unnecessary waiting.
     toRun.run();
-    modules.forEach(
-        module -> {
-          try {
-            MergedManifestManager.getMergedManifest(module).get();
-            notUpdated.remove(module);
-            manifestsUpdated.countDown();
-            System.out.println("Manifest updated for module " + module);
-          } catch (InterruptedException | ExecutionException e) {
-            fail(e.getMessage());
-          }
-        });
-    if (manifestsUpdated.await(5, TimeUnit.SECONDS)) {
-      return;
+
+    while (manifestsUpdated.getCount() > 0
+        && verificationTimer.elapsed().minus(MANIFEST_UPDATE_TIMEOUT).isNegative()) {
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+      modules.forEach(
+          module -> {
+            try {
+              MergedManifestManager.getMergedManifest(module).get(50, TimeUnit.MILLISECONDS);
+              manifestsUpdated.countDown();
+            } catch (TimeoutException e) {
+              // The manifest update task might not have been scheduled yet. Try again.
+            } catch (InterruptedException | ExecutionException e) {
+              fail(e.getMessage());
+            }
+          });
     }
-    String notUpdatedText =
-        notUpdated.stream().map(Module::getName).collect(Collectors.joining(", "));
-    fail(
-        "Merged manifests for the following modules were not updated as expected: "
-            + notUpdatedText);
+
+    if (manifestsUpdated.getCount() > 0) {
+      fail("Not all manifests were updated.");
+    }
   }
 
   @Test
@@ -152,7 +165,6 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
     assertThat(permissions.hasPermission("android.permission.WRITE_EXTERNAL_STORAGE")).isFalse();
   }
 
-  @Ignore("b/135927686")
   @Test
   public void updatesWhenManifestChanges() throws Exception {
     ManifestFixture manifest =
@@ -209,19 +221,33 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
         () -> transitiveDependencyManifest.addUsesPermission("android.permission.SEND_SMS"));
 
     // The merged manifest of //java/com/example/transitive:transitive and everything that depends
-    // on it
-    // should have been automatically updated to include the newly-added permission.
-    Set<Module> modulesMissingPermission =
-        modules.stream()
-            .filter(
-                module -> {
-                  PermissionHolder permissions =
-                      MergedManifestManager.getMergedManifestSupplier(module)
-                          .getNow()
-                          .getPermissionHolder();
-                  return !permissions.hasPermission("android.permission.SEND_SMS");
-                })
-            .collect(Collectors.toSet());
+    // on it should automatically update to include the newly-added permission.  This update is not
+    // instantaneous and may not be reflected in an immediate manifest snapshot request.  This is by
+    // design; chains of manifest computations should not block into one single big event.  The code
+    // below verifies that the manifests are updated within a certain amount of time.
+    Stopwatch verificationTimer = Stopwatch.createStarted();
+    HashSet<Module> modulesMissingPermission = new HashSet<>(modules);
+    while (!modulesMissingPermission.isEmpty()
+        && verificationTimer.elapsed().minus(MANIFEST_UPDATE_TIMEOUT).isNegative()) {
+      modules.forEach(
+          module -> {
+            try {
+              PermissionHolder permissions =
+                  MergedManifestManager.getMergedManifestSupplier(module)
+                      .get()
+                      .get(50, TimeUnit.MILLISECONDS)
+                      .getPermissionHolder();
+              if (permissions.hasPermission("android.permission.SEND_SMS")) {
+                modulesMissingPermission.remove(module);
+              }
+            } catch (TimeoutException e) {
+              // Manifest may not be updated yet.  Try again.
+            } catch (InterruptedException | ExecutionException e) {
+              e.printStackTrace();
+              fail(e.getMessage());
+            }
+          });
+    }
     String missingPermissionsText =
         "Merged manifests for the following modules are missing the added permission: "
             + modulesMissingPermission.stream()

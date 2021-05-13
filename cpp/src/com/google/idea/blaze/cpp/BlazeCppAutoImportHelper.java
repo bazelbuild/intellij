@@ -75,7 +75,10 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
     specification =
         findMatchingRoot(
             fileToImport, getHeaderRoots(rootAndConfiguration), /* asUserHeader= */ true);
-    return specification == null || processor.process(specification);
+    if (specification != null) {
+      processor.process(specification);
+    }
+    return false;
   }
 
   @Nullable

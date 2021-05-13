@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.toolwindow;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.console.NonProblemFilterWrapper;
 import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
@@ -34,15 +35,19 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -70,7 +75,7 @@ final class ConsoleView implements Disposable {
   private static long consoleIdCounter;
 
   private static final Class<?>[] IGNORED_CONSOLE_ACTION_TYPES = {
-    PreviousOccurenceToolbarAction.class,
+    PreviousOccurenceToolbarAction.class, // common_typos_disable
     NextOccurenceToolbarAction.class,
     ClearConsoleAction.class,
     PrintAction.class
@@ -78,26 +83,27 @@ final class ConsoleView implements Disposable {
 
   private final Project project;
   private final ConsoleViewImpl consoleView;
-  private final JComponent content;
   private final CompositeFilter customFilters = new CompositeFilter();
-
   private final AnsiEscapeDecoder ansiEscapeDecoder = new AnsiEscapeDecoder();
 
-  static ConsoleView create(Project project) {
-    ConsoleViewImpl consoleView =
+  private volatile Runnable stopHandler;
+
+  private JComponent content;
+
+  static ConsoleView create(Project project, ImmutableList<Filter> consoleFilters) {
+    ConsoleView view = new ConsoleView(project);
+    view.setCustomFilters(consoleFilters);
+    return view;
+  }
+
+  private ConsoleView(Project project) {
+    this.project = project;
+    consoleView =
         new ConsoleViewImpl(
             project,
             GlobalSearchScope.allScope(project),
             /* viewer= */ false,
             /* usePredefinedFilters= */ false);
-
-    return new ConsoleView(project, consoleView, createContent(project, consoleView));
-  }
-
-  private ConsoleView(Project project, ConsoleViewImpl consoleView, JComponent content) {
-    this.project = project;
-    this.consoleView = consoleView;
-    this.content = content;
 
     consoleView.addMessageFilter(customFilters);
     addWrappedPredefinedFilters();
@@ -108,6 +114,10 @@ final class ConsoleView implements Disposable {
 
   void setCustomFilters(List<Filter> filters) {
     customFilters.setCustomFilters(filters);
+  }
+
+  public void setStopHandler(@Nullable Runnable stopHandler) {
+    this.stopHandler = stopHandler;
   }
 
   void navigateToHyperlink(HyperlinkInfo link, int originalOffset) {
@@ -157,7 +167,7 @@ final class ConsoleView implements Disposable {
 
   private static final String TOOLBAR_ACTION_PLACE = "OutputView.Toolbar";
 
-  private static JComponent createContent(Project project, ConsoleViewImpl consoleView) {
+  private JComponent createContent() {
     // Create runner UI layout
     RunnerLayoutUi.Factory factory = RunnerLayoutUi.Factory.getInstance(project);
     RunnerLayoutUi layoutUi = factory.create("", "", "session", project);
@@ -188,6 +198,7 @@ final class ConsoleView implements Disposable {
         group.add(action);
       }
     }
+    group.add(new StopAction());
 
     JComponent layoutComponent = layoutUi.getComponent();
     layoutComponent.setFocusTraversalPolicyProvider(true);
@@ -240,6 +251,26 @@ final class ConsoleView implements Disposable {
   @Override
   public void dispose() {}
 
+  private class StopAction extends DumbAwareAction {
+    public StopAction() {
+      super(IdeBundle.message("action.stop"), null, AllIcons.Actions.Suspend);
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent e) {
+      Runnable handler = stopHandler;
+      if (handler != null) {
+        handler.run();
+        stopHandler = null;
+      }
+    }
+
+    @Override
+    public void update(AnActionEvent event) {
+      event.getPresentation().setEnabled(stopHandler != null);
+    }
+  }
+
   /** A composite filter composed of a modifiable list of custom filters. */
   private static class CompositeFilter implements Filter {
     private final List<Filter> customFilters = new ArrayList<>();
@@ -252,8 +283,7 @@ final class ConsoleView implements Disposable {
     @Nullable
     @Override
     public Result applyFilter(String line, int entireLength) {
-      return customFilters
-          .stream()
+      return customFilters.stream()
           .map(f -> f.applyFilter(line, entireLength))
           .filter(Objects::nonNull)
           .reduce(this::combine)
@@ -326,6 +356,9 @@ final class ConsoleView implements Disposable {
   }
 
   public JComponent getContent() {
+    if (content == null) {
+      content = createContent();
+    }
     return content;
   }
 }

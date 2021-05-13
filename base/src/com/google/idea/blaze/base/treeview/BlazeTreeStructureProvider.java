@@ -20,12 +20,12 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
-import com.google.idea.sdkcompat.general.BaseSdkCompat.TreeStructureProviderAdapter;
 import com.intellij.ide.projectView.ProjectViewSettings;
+import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
+import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -43,10 +43,10 @@ import javax.annotation.Nullable;
  * <p>- Replaces the root with a single workspace root - Removes rendering of module names and
  * source roots
  */
-public class BlazeTreeStructureProvider implements TreeStructureProviderAdapter, DumbAware {
+public class BlazeTreeStructureProvider implements TreeStructureProvider, DumbAware {
 
   @Override
-  public Collection<AbstractTreeNode<?>> doModify(
+  public Collection<AbstractTreeNode<?>> modify(
       AbstractTreeNode<?> parent, Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
     Project project = parent.getProject();
     if (!Blaze.isBlazeProject(project)) {
@@ -77,7 +77,7 @@ public class BlazeTreeStructureProvider implements TreeStructureProviderAdapter,
    */
   private static boolean keepOriginalNode(AbstractTreeNode<?> node) {
     return node instanceof ExternalLibrariesNode
-        || BaseSdkCompat.SCRATCHES_SCOPE_NAME.equals(node.getValue());
+        || ScratchesNamedScope.scratchesAndConsoles().equals(node.getValue());
   }
 
   @Nullable

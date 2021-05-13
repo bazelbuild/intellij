@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.console.BlazeConsoleService;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -32,9 +33,11 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.java.fastbuild.FastBuildException;
 import com.google.idea.blaze.java.fastbuild.FastBuildException.BlazeBuildError;
@@ -120,6 +123,16 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     FocusBehavior problemsViewFocus = BlazeUserSettings.getInstance().getShowProblemsViewOnRun();
     BlazeContext context =
         new BlazeContext()
+            .push(
+                new ToolWindowScope.Builder(
+                        project, new Task("Fast Build " + label.targetName(), Task.Type.FAST_BUILD))
+                    .setPopupBehavior(consolePopupBehavior)
+                    .setIssueParsers(
+                        BlazeIssueParser.defaultIssueParsers(
+                            project,
+                            WorkspaceRoot.fromProject(project),
+                            ContextType.RunConfiguration))
+                    .build())
             .push(new ProblemsViewScope(project, problemsViewFocus))
             .push(new IdeaLogScope())
             .push(

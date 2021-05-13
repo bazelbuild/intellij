@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -40,6 +41,7 @@ import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -215,6 +217,18 @@ class GenerateDeployableJarTaskProvider
               @Override
               protected BuildResult execute(BlazeContext context) {
                 context
+                    .push(
+                        new ToolWindowScope.Builder(
+                                project,
+                                new com.google.idea.blaze.base.toolwindow.Task(
+                                    title,
+                                    com.google.idea.blaze.base.toolwindow.Task.Type.DEPLOYABLE_JAR))
+                            .setPopupBehavior(
+                                BlazeUserSettings.getInstance().getShowBlazeConsoleOnRun())
+                            .setIssueParsers(
+                                BlazeIssueParser.defaultIssueParsers(
+                                    project, workspaceRoot, invocationContext.type()))
+                            .build())
                     .push(
                         new ProblemsViewScope(
                             project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))

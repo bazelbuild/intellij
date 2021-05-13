@@ -17,6 +17,7 @@ package com.google.idea.blaze.kotlin.run.producers;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.dependencies.TestSize;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
@@ -26,6 +27,7 @@ import com.google.idea.blaze.base.run.producers.TestContextProvider;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.psi.PsiElement;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.psi.KtClass;
@@ -36,27 +38,43 @@ class KotlinTestContextProvider implements TestContextProvider {
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {
-    Location<?> location = context.getLocation();
-    if (location == null) {
-      return null;
-    }
-    PsiElement element = location.getPsiElement();
-    KtNamedFunction testMethod = PsiUtils.getParentOfType(element, KtNamedFunction.class, false);
-    KtClass testClass = PsiUtils.getParentOfType(element, KtClass.class, false);
+    return getPsiElement(context).flatMap(KotlinTestContextProvider::getTestContext).orElse(null);
+  }
+
+  private static Optional<TestContext> getTestContext(PsiElement element) {
+    KtNamedFunction testMethod =
+        PsiUtils.getParentOfType(element, KtNamedFunction.class, /* strict= */ false);
+    KtClass testClass = PsiUtils.getParentOfType(element, KtClass.class, /* strict= */ false);
     if (testClass == null) {
-      return null;
+      return Optional.empty();
     }
-    // TODO: detect test size from kotlin source code
-    ListenableFuture<TargetInfo> target =
-        TestTargetHeuristic.targetFutureForPsiElement(testClass, /* testSize= */ null);
-    if (target == null) {
-      return null;
-    }
+    return findTarget(testClass, testMethod)
+        .map(target -> createTestContext(testClass, testMethod, target));
+  }
+
+  private static Optional<PsiElement> getPsiElement(ConfigurationContext context) {
+    return Optional.ofNullable(context.getLocation()).map(Location::getPsiElement);
+  }
+
+  private static Optional<ListenableFuture<TargetInfo>> findTarget(
+      KtClass testClass, @Nullable KtNamedFunction testMethod) {
+    TestSize testSize = getTestSize(testClass, testMethod).orElse(null);
+    return Optional.ofNullable(TestTargetHeuristic.targetFutureForPsiElement(testClass, testSize));
+  }
+
+  private static Optional<TestSize> getTestSize(
+      KtClass testClass, @Nullable KtNamedFunction testMethod) {
+    return testMethod != null
+        ? KotlinTestSizeFinder.getTestSize(testMethod)
+        : KotlinTestSizeFinder.getTestSize(testClass);
+  }
+
+  private static TestContext createTestContext(
+      KtClass testClass,
+      @Nullable KtNamedFunction testMethod,
+      ListenableFuture<TargetInfo> target) {
     String filter = getTestFilter(testClass, testMethod);
-    String description = testClass.getName();
-    if (testMethod != null) {
-      description += "." + testMethod.getName();
-    }
+    String description = getDescription(testClass, testMethod);
     PsiElement contextElement = testMethod != null ? testMethod : testClass;
     return TestContext.builder(contextElement, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
@@ -66,8 +84,16 @@ class KotlinTestContextProvider implements TestContextProvider {
   }
 
   @Nullable
-  private static String getTestFilter(KtClass testClass, KtNamedFunction testMethod) {
+  private static String getTestFilter(KtClass testClass, @Nullable KtNamedFunction testMethod) {
     FqName fqName = testMethod != null ? testMethod.getFqName() : testClass.getFqName();
     return fqName != null ? fqName.toString() : null;
+  }
+
+  @Nullable
+  private static String getDescription(KtClass testClass, @Nullable KtNamedFunction testMethod) {
+    if (testMethod == null) {
+      return testClass.getName();
+    }
+    return testClass.getName() + "." + testMethod.getName();
   }
 }

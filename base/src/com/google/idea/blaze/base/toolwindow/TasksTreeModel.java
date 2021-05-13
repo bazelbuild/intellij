@@ -16,24 +16,14 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.google.idea.common.ui.properties.Property;
-import java.util.ArrayList;
-import java.util.List;
 
 /** Model for tree of tasks. */
 final class TasksTreeModel {
-  private final Property<List<Task>> topLevelTasks = new Property<>(new ArrayList<>());
+  private final TasksTreeProperty tasksTreeProperty = new TasksTreeProperty();
   private final Property<Task> selectedTask = new Property<>();
 
-  List<Task> getTopLevelTasks() {
-    return topLevelTasks.getValue();
-  }
-
-  Property<List<Task>> topLevelTasksProperty() {
-    return topLevelTasks;
-  }
-
-  Task getSelectedTask() {
-    return selectedTask.getValue();
+  TasksTreeProperty tasksTreeProperty() {
+    return tasksTreeProperty;
   }
 
   Property<Task> selectedTaskProperty() {
