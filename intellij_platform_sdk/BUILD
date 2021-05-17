@@ -8,7 +8,6 @@
 load(
     ":build_defs.bzl",
     "select_for_ide",
-    "select_for_plugin_api",
     "select_from_plugin_api_directory",
 )
 
@@ -374,7 +373,32 @@ java_library(
             ":java",
             ":platform_images",
         ],
-    ),
+    ) + [
+        # TODO(b/188322932): remove
+        # switching to google3 versions of these
+        # transitional deps to avoid making too many changes in one CL
+        # remove these and add the actual dependencies to the targets that
+        # depend on plugin_api
+        "//java/com/google/common/annotations",
+        "//java/com/google/common/base",
+        "//java/com/google/common/cache",
+        "//java/com/google/common/collect",
+        "//java/com/google/common/graph",
+        "//java/com/google/common/hash",
+        "//java/com/google/common/io",
+        "//java/com/google/common/net",
+        "//java/com/google/common/primitives",
+        "//java/com/google/common/reflect",
+        "//java/com/google/common/util/concurrent",
+        "@com_google_protobuf//:protobuf_java",
+        "//third_party/java/apache_commons_compress",
+        "//third_party/java/apache_httpclient",
+        "@error_prone_annotations//jar",
+        "//third_party/java/gson",
+        "//third_party/java/jakarta_commons_codec",
+        "//third_party/java/netty4:common",
+        "//third_party/java/netty4:transport",
+    ],
 )
 
 # The outward facing plugin api
@@ -413,90 +437,53 @@ package_group(
     ],
 )
 
-# These libraries should only be used by open-source plugins.
-# Otherwise, prefer using the google3 versions of these libraries. Note that
-# //third_party/java/truth must be repackaged, because it pulls in Guava.
+# TODO(b/188322932): remove
 java_library(
     name = "test_libs",
     testonly = 1,
     visibility = [":test_libs_visibility"],
     exports = [
-        "//third_party:truth",
         "@bytebuddy-agent//jar",
         "@bytebuddy//jar",
         "@mockito//jar",
+        "@truth//jar",
     ],
 )
 
-# The version of guava bundled with the IntelliJ plugin API.
+# TODO(b/188322932): remove
 java_library(
     name = "guava",
     testonly = True,
-    exports = select_from_plugin_api_directory(
-        android_studio = [":guava"],
-        clion = [":guava"],
-        intellij = [":guava"],
-    ),
+    exports = [
+        "//java/com/google/common/base",
+        "//java/com/google/common/collect",
+    ],
 )
 
+# TODO(b/188322932): remove
 java_library(
     name = "guava_for_external_binaries",
     visibility = ["//aspect/tools:__pkg__"],
-    exports = select_from_plugin_api_directory(
-        android_studio = [":guava"],
-        clion = [":guava"],
-        intellij = [":guava"],
-    ),
+    exports = [
+        "//java/com/google/common/annotations",
+        "//java/com/google/common/base",
+        "//java/com/google/common/collect",
+        "//java/com/google/common/io",
+        "//java/com/google/common/util/concurrent",
+    ],
 )
 
-# Some versions of the IDE include jsr305.jar, but others don't. So we need to include the JSR 305
-# classes (@Nullable, etc.) in the plugin jars for IDEs that don't already have it on the classpath.
+# TODO(b/188322932): remove
 java_library(
     name = "jsr305",
-    exports = select_for_plugin_api({
-        "clion-2020.2": [":bundled_jsr305"],
-        "clion-2020.3": [":bundled_jsr305"],
-        "intellij-2020.2": [":bundled_jsr305"],
-        "intellij-2021.1": [":bundled_jsr305"],
-        "intellij-2020.3": [":bundled_jsr305"],
-        "intellij-ue-2020.2": ["@jsr305_annotations//jar"],
-        "intellij-ue-2020.3": [":bundled_jsr305"],
-        "intellij-ue-2021.1": ["@jsr305_annotations//jar"],
-        "android-studio-4.2": ["@jsr305_annotations//jar"],
-        "android-studio-2020.3": ["@jsr305_annotations//jar"],
-        # We default to intellij-latest when no plugin api is selected.
-        "default": [":bundled_jsr305"],
-    }),
+    exports = ["@jsr305_annotations//jar"],
 )
 
-# The version of jsr305 bundled with the IntelliJ plugin API.
-java_library(
-    name = "bundled_jsr305",
-    neverlink = 1,
-    visibility = ["//visibility:private"],
-    exports = select_from_plugin_api_directory(
-        android_studio = [":jsr305"],
-        clion = [":jsr305"],
-        intellij = [":jsr305"],
-    ),
-)
-
-# The version of truth bundled with the IntelliJ plugin API.
+# TODO(b/188322932): remove
 java_library(
     name = "truth",
     testonly = 1,
-    exports = ["//third_party:truth"],
-)
-
-# IntelliJ Coverage plugin
-java_library(
-    name = "coverage",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        android_studio = [":coverage"],
-        clion = [],
-        intellij = [":coverage"],
-    ),
+    exports = ["@truth//jar"],
 )
 
 # IntelliJ Coverage plugin

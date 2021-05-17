@@ -205,7 +205,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     assertThat(externalTaskInterceptor.command).contains(instrumentorTarget.toString());
     assertThat(externalTaskInterceptor.command).contains(appTarget.toString());
     assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
-    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
   }
 
   @Test
@@ -244,7 +244,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     assertThat(externalTaskInterceptor.context).isEqualTo(context);
     assertThat(externalTaskInterceptor.command).contains(instrumentorTarget.toString());
     assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
-    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
   }
 
   @Test

@@ -50,10 +50,10 @@ public class JavaTestTest extends BazelIntellijAspectTest {
     // intellij-info groups
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("FooTest.java-manifest"), testRelative(intellijInfoFileName("FooTest")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("FooTest.java-manifest"), testRelative(intellijInfoFileName("FooTest")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-outputs"))
         .containsExactly(
@@ -61,12 +61,12 @@ public class JavaTestTest extends BazelIntellijAspectTest {
 
     // intellij-resolve groups
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("FooTest.jar"),
             testRelative("FooTest-src.jar"),
             testRelative("FooTest.jdeps"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java-direct-deps"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("FooTest.jar"),
             testRelative("FooTest-src.jar"),
             testRelative("FooTest.jdeps"));

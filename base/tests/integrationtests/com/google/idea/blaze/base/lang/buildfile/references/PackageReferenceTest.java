@@ -79,6 +79,6 @@ public class PackageReferenceTest extends BuildFileIntegrationTestCase {
 
     PsiReference[] references = string.getReferences();
     assertThat(Arrays.stream(references).map(PsiReference::resolve).collect(Collectors.toList()))
-        .containsAllOf(libTarget, buildFile1);
+        .containsAtLeast(libTarget, buildFile1);
   }
 }

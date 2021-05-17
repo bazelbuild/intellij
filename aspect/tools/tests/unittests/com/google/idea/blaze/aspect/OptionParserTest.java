@@ -49,7 +49,7 @@ public class OptionParserTest {
       OptionParser.parseSingleOption(new String[] {"--foo", "1", "--bar"}, "bar", String::toString);
       fail("Expected failure");
     } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("Expected value after --bar");
+      assertThat(e).hasMessageThat().isEqualTo("Expected value after --bar");
     }
     // Test that a single-value flag should not appear multiple times.
     try {
@@ -57,7 +57,7 @@ public class OptionParserTest {
           new String[] {"--foo", "1", "--foo", "2"}, "foo", String::toString);
       fail("Expected failure");
     } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("Expected --foo to appear at most once");
+      assertThat(e).hasMessageThat().isEqualTo("Expected --foo to appear at most once");
     }
   }
 
@@ -89,7 +89,7 @@ public class OptionParserTest {
           new String[] {"--foo", "1", "--bar", "2", "--foo"}, "foo", String::toString);
       fail("Expected failure");
     } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("Expected value after --foo");
+      assertThat(e).hasMessageThat().isEqualTo("Expected value after --foo");
     }
   }
 }

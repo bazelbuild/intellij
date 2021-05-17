@@ -143,7 +143,7 @@ public class ProjectViewParserIntegrationTest extends ProjectViewIntegrationTest
   }
 
   private void assertContainsErrors(String... errors) {
-    assertThat(this.errors).containsAllIn(Arrays.asList(errors));
+    assertThat(this.errors).containsAtLeastElementsIn(Arrays.asList(errors));
   }
 
   private void collectErrors(PsiElement psi) {
