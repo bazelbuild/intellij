@@ -27,10 +27,7 @@ no_mockito_extensions(
 
 java_import(
     name = "guava",
-    jars = glob([
-        "lib/failureaccess-*.jar",
-        "lib/guava-*.jar",
-    ]),
+    jars = ["lib/guava.jar"],
 )
 
 java_import(
