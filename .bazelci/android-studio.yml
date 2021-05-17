@@ -24,8 +24,8 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:aswb_tests
-  Android-Studio-internal-under-dev:
-    name: Android Studio Internal Under Development
+  Android-Studio-internal-canary:
+    name: Android Studio Internal Canary
     platform: ubuntu1804
     build_flags:
       - --define=ij_product=android-studio-canary

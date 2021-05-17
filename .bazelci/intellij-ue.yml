@@ -24,8 +24,8 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:ijwb_ue_tests
-  IntelliJ-UE-internal-canary:
-    name: IntelliJ UE Internal Canary
+  IntelliJ-UE-internal-under-dev:
+    name: IntelliJ UE Internal Under Development
     platform: ubuntu1804
     build_flags:
       - --define=ij_product=intellij-ue-canary
