@@ -1,6 +1,20 @@
 ---
-platforms:
-  ubuntu1804:
+tasks:
+  CLion-internal-stable:
+    name: CLion Internal Stable
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=clion-latest
+    build_targets:
+      - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-latest
+      - --test_output=errors
+    test_targets:
+      - //:clwb_tests
+  CLion-internal-beta:
+    name: CLion Internal Beta
+    platform: ubuntu1804
     build_flags:
       - --define=ij_product=clion-beta
     build_targets:
@@ -10,3 +24,41 @@ platforms:
       - --test_output=errors
     test_targets:
       - //:clwb_tests
+  CLion-OSS-stable:
+    name: CLion OSS Stable
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=clion-oss-stable
+    build_targets:
+      - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-oss-stable
+      - --test_output=errors
+    test_targets:
+      - //:clwb_tests
+  CLion-OSS-beta:
+    name: CLion OSS Beta
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=clion-oss-beta
+    build_targets:
+      - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-oss-beta
+      - --test_output=errors
+    test_targets:
+      - //:clwb_tests
+  CLion-OSS-under-dev:
+    name: CLion OSS Under Development
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=clion-oss-under-dev
+    build_targets:
+      - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-oss-under-dev
+      - --test_output=errors
+    test_targets:
+      - //:clwb_tests
+    soft_fail:
+      - exit_status: 1

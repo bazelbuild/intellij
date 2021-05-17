@@ -1,6 +1,20 @@
 ---
-platforms:
-  ubuntu1804:
+tasks:
+  IntelliJ-CE-internal-stable:
+    name: IntelliJ CE Internal Stable
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-latest
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-latest
+      - --test_output=errors
+    test_targets:
+      - //:ijwb_ce_tests
+  IntelliJ-CE-internal-beta:
+    name: IntelliJ CE Internal Beta
+    platform: ubuntu1804
     build_flags:
       - --define=ij_product=intellij-beta
     build_targets:
@@ -10,3 +24,56 @@ platforms:
       - --test_output=errors
     test_targets:
       - //:ijwb_ce_tests
+  IntelliJ-CE-internal-under-dev:
+    name: IntelliJ CE Internal Under Development
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-canary
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-canary
+      - --test_output=errors
+    test_targets:
+      - //:ijwb_ce_tests
+    soft_fail:
+      - exit_status: 1
+  IntelliJ-CE-OSS-stable:
+    name: IntelliJ CE OSS Stable
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-oss-stable
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-oss-stable
+      - --test_output=errors
+    test_targets:
+      - //:ijwb_ce_tests
+  IntelliJ-CE-OSS-beta:
+    name: IntelliJ CE OSS Beta
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-oss-beta
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-oss-beta
+      - --test_output=errors
+    test_targets:
+      - //:ijwb_ce_tests
+  IntelliJ-CE-OSS-under-dev:
+    name: IntelliJ CE OSS Under Development
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-oss-under-dev
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-oss-under-dev
+      - --test_output=errors
+    test_targets:
+      - //:ijwb_ce_tests
+    soft_fail:
+      - exit_status: 1
+
