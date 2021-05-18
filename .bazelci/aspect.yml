@@ -8,5 +8,6 @@ platforms:
     test_flags:
       - --define=ij_product=intellij-beta
       - --test_output=errors
+      - --notrim_test_configuration
     test_targets:
       - //aspect/testing/...
