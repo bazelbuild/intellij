@@ -80,9 +80,10 @@ public class AndroidSdkFromProjectView {
     if (androidSdk == null) {
       ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
       IssueOutput.error(
-              ("No android_sdk_platform set. Please set to an android platform. "
-                  + "Available android_sdk_platforms are: "
-                  + getAvailableTargetHashesAsList(sdks)))
+              ("No android platform configured, please select one using the `android_sdk_platform`"
+                  + " flag in the project view file. Available android_sdk_platforms are: "
+                  + getAvailableTargetHashesAsList(sdks)
+                  + ". To install more android SDKs, use the SDK manager."))
           .inFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
           .submit(context);
       return null;
