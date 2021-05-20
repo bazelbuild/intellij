@@ -19,6 +19,7 @@ import com.intellij.mock.MockComponentManager;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -115,7 +116,8 @@ public class BlazeTestCase {
 
   protected <T> ExtensionPointImpl<T> registerExtensionPoint(
       ExtensionPointName<T> name, Class<T> type) {
-    extensionsArea.registerExtensionPoint(name.getName(), type.getName());
+    extensionsArea.registerExtensionPoint(
+        name.getName(), type.getName(), ExtensionPoint.Kind.INTERFACE);
     return extensionsArea.getExtensionPoint(name.getName());
   }
 }
