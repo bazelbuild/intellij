@@ -137,14 +137,22 @@ intellij_integration_test_suite(
     name = "normal_integration_tests",
     srcs = select_for_plugin_api({
         "android-studio-4.2": glob(
-            ["tests/integrationtests/**/*.java"],
+            [
+                "tests/integrationtests/**/*.java",
+                "tests/integrationtests/as42/**/*.java",
+            ],
             exclude = [
+                "tests/integrationtests/as203/**/*.java",
                 "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
             ],
         ),
         "android-studio-2020.3": glob(
-            ["tests/integrationtests/**/*.java"],
+            [
+                "tests/integrationtests/**/*.java",
+                "tests/integrationtests/as203/**/*.java",
+            ],
             exclude = [
+                "tests/integrationtests/as42/**/*.java",
                 "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
                 "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",  # b/177371104
             ],
