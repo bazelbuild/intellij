@@ -37,6 +37,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -167,9 +170,16 @@ public abstract class BlazeIntegrationTestCase {
     SyncCache.getInstance(getProject()).clear();
     runWriteAction(
         () -> {
+          // Clear attached jdks
           ProjectJdkTable table = ProjectJdkTable.getInstance();
           for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
             table.removeJdk(sdk);
+          }
+          // Clear attached libraries
+          LibraryTable libraryTable =
+              LibraryTablesRegistrar.getInstance().getLibraryTable(getProject());
+          for (Library library : libraryTable.getLibraries()) {
+            libraryTable.removeLibrary(library);
           }
         });
     testFixture.tearDown();

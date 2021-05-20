@@ -16,17 +16,13 @@
 package com.google.idea.blaze.kotlin.sync;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.idea.blaze.kotlin.sync.KotlinUtils.findToolchain;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.KotlinToolchainIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -40,7 +36,6 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
-import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
@@ -56,7 +51,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -178,12 +172,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.KOTLIN)) {
       return null;
     }
-    return new LibrarySource.Adapter() {
-      @Override
-      public List<? extends BlazeLibrary> getLibraries() {
-        return findKotlinSdkLibraries(blazeProjectData);
-      }
-    };
+    return new KotlinLibrarySource(blazeProjectData);
   }
 
   private static LanguageVersion getLanguageVersion(@Nullable KotlinToolchainIdeInfo toolchain) {
@@ -192,35 +181,6 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     }
     LanguageVersion version = LanguageVersion.fromVersionString(toolchain.getLanguageVersion());
     return version != null ? version : DEFAULT_VERSION;
-  }
-
-  private static ImmutableList<BlazeJarLibrary> findKotlinSdkLibraries(
-      BlazeProjectData blazeProjectData) {
-    KotlinToolchainIdeInfo toolchain = findToolchain(blazeProjectData.getTargetMap());
-    if (toolchain == null) {
-      return ImmutableList.of();
-    }
-    ImmutableList.Builder<BlazeJarLibrary> libraries = ImmutableList.builder();
-    for (Label label : toolchain.getSdkTargets()) {
-      TargetIdeInfo target = blazeProjectData.getTargetMap().get(TargetKey.forPlainTarget(label));
-      if (target == null || target.getJavaIdeInfo() == null) {
-        continue;
-      }
-      libraries.addAll(
-          target.getJavaIdeInfo().getJars().stream()
-              .map(jar -> new BlazeJarLibrary(jar, target.getKey()))
-              .collect(Collectors.toList()));
-    }
-    return libraries.build();
-  }
-
-  @Nullable
-  private static KotlinToolchainIdeInfo findToolchain(TargetMap targets) {
-    return targets.targets().stream()
-        .map(TargetIdeInfo::getKotlinToolchainIdeInfo)
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
   }
 
   @Nullable

@@ -15,13 +15,19 @@
  */
 package com.google.idea.blaze.kotlin.sync;
 
+import com.google.idea.blaze.base.ideinfo.KotlinToolchainIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.common.experiments.BoolExperiment;
+import java.util.Objects;
+import javax.annotation.Nullable;
 
 class KotlinUtils {
+  private KotlinUtils() {}
 
   // whether kotlin language support is enabled for internal users
   private static final BoolExperiment blazeKotlinSupport =
@@ -33,5 +39,17 @@ class KotlinUtils {
     }
     // enable for all external users, behind an experiment for internal users
     return Blaze.defaultBuildSystem().equals(BuildSystem.Bazel) || blazeKotlinSupport.getValue();
+  }
+
+  /**
+   * Returns {@link KotlinToolchainIdeInfo} from the given {@link TargetMap}, or null if not found
+   */
+  @Nullable
+  static KotlinToolchainIdeInfo findToolchain(TargetMap targets) {
+    return targets.targets().stream()
+        .map(TargetIdeInfo::getKotlinToolchainIdeInfo)
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
   }
 }
