@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonVersion;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.python.sync.PySdkSuggester;
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -59,11 +60,15 @@ public final class FallbackPythonSdkSuggester extends PySdkSuggester {
     List<PyDetectedSdk> detectedSdks = PySdkExtKt.detectSystemWideSdks(null, ImmutableList.of());
     detectedSdks.stream()
         .filter(sdk -> sdk.getHomePath() != null && getSdkLanguageLevel(sdk).isPython2())
-        .max(Comparator.comparingInt(sdk -> getSdkLanguageLevel(sdk).getVersion()))
+        .max(
+            Comparator.comparing(
+                sdk -> getSdkLanguageLevel(sdk), BaseSdkCompat.getLanguageLevelComparator()))
         .ifPresent((sdk) -> builder.put(PythonVersion.PY2, sdk.getHomePath()));
     detectedSdks.stream()
         .filter(sdk -> sdk.getHomePath() != null && getSdkLanguageLevel(sdk).isPy3K())
-        .max(Comparator.comparingInt(sdk -> getSdkLanguageLevel(sdk).getVersion()))
+        .max(
+            Comparator.comparing(
+                sdk -> getSdkLanguageLevel(sdk), BaseSdkCompat.getLanguageLevelComparator()))
         .ifPresent((sdk) -> builder.put(PythonVersion.PY3, sdk.getHomePath()));
     return builder.build();
   }

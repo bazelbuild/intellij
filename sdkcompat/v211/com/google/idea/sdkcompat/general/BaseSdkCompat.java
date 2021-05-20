@@ -20,9 +20,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentUtilEx;
+import com.jetbrains.python.psi.LanguageLevel;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
@@ -106,5 +108,15 @@ public final class BaseSdkCompat {
   /** #api202: use "SearchEverywhereManager.setSelectedTabID directly" */
   public static void setSelectedTabID(SearchEverywhereManager manager, String id) {
     manager.setSelectedTabID(id);
+  }
+
+  /**
+   * #api202: getVersion was deprecated in 2020.3 and it was removed and replaced by getMajorVersion
+   * and getMinorVersion in 2021.1. We create a different language level comparator for different
+   * IDE versions.
+   */
+  public static Comparator<LanguageLevel> getLanguageLevelComparator() {
+    return Comparator.comparingInt(LanguageLevel::getMajorVersion)
+        .thenComparingInt(LanguageLevel::getMinorVersion);
   }
 }
