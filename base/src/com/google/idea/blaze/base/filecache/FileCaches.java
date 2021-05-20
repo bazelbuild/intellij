@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.filecache;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -51,9 +52,12 @@ public class FileCaches {
     LocalFileSystem.getInstance().refresh(true);
   }
 
-  /** Call at the end of a blaze build when you want the IDE to pick up any changes. */
-  public static void refresh(Project project, BlazeContext context) {
-    ProgressiveTaskWithProgressIndicator.builder(project, "Updating file caches")
+  /**
+   * Call at the end of a blaze build when you want the IDE to pick up any changes. Returns the
+   * future corresponding to file cache refresh task.
+   */
+  public static ListenableFuture<Void> refresh(Project project, BlazeContext context) {
+    return ProgressiveTaskWithProgressIndicator.builder(project, "Updating file caches")
         .submitTask(
             indicator -> {
               indicator.setIndeterminate(true);

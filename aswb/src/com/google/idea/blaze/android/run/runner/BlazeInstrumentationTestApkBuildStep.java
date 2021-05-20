@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.run.runner;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
@@ -122,7 +123,7 @@ public class BlazeInstrumentationTestApkBuildStep implements BlazeApkBuildStep {
                       BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
               .build()
               .run();
-      FileCaches.refresh(project, context);
+      ListenableFuture<Void> unusedFuture = FileCaches.refresh(project, context);
 
       if (retVal != 0) {
         IssueOutput.error("Blaze build failed. See Blaze Console for details.").submit(context);

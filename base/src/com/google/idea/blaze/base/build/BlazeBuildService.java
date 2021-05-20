@@ -17,6 +17,10 @@ package com.google.idea.blaze.base.build;
 
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
@@ -59,6 +63,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import java.util.List;
 import java.util.concurrent.Future;
+import javax.annotation.Nullable;
 
 /** Utility to build various collections of targets. */
 public class BlazeBuildService {
@@ -229,16 +234,44 @@ public class BlazeBuildService {
                                 projectData.getBlazeVersionData(),
                                 projectData.getWorkspaceLanguageSettings(),
                                 shardedTargets.shardedTargets);
-                    FileCaches.refresh(project, context);
+
+                    refreshFileCachesAndNotifyListeners(context, buildResult, project);
 
                     if (buildResult.status != BuildResult.Status.SUCCESS) {
                       context.setHasError();
                     }
-                    BlazeBuildListener.EP_NAME
-                        .extensions()
-                        .forEach(ep -> ep.buildCompleted(project, buildResult));
                     return null;
                   }
                 });
+  }
+
+  /**
+   * Asynchronously refreshes the registered file caches and calls {@link
+   * BlazeBuildListener#buildCompleted} after all file caches are done refreshing.
+   */
+  private static void refreshFileCachesAndNotifyListeners(
+      BlazeContext context, BuildResult buildResult, Project project) {
+    ListenableFuture<Void> refreshFuture = FileCaches.refresh(project, context);
+    // Notify the build listeners after file caches are done refreshing.
+    Futures.addCallback(
+        refreshFuture,
+        new FutureCallback<Void>() {
+          @Override
+          public void onSuccess(@Nullable Void unused) {
+            BlazeBuildListener.EP_NAME
+                .extensions()
+                .forEach(ep -> ep.buildCompleted(project, buildResult));
+          }
+
+          @Override
+          public void onFailure(Throwable throwable) {
+            // No additional steps for failures. The file caches notify users and
+            // print logs as required.
+            BlazeBuildListener.EP_NAME
+                .extensions()
+                .forEach(ep -> ep.buildCompleted(project, buildResult));
+          }
+        },
+        MoreExecutors.directExecutor());
   }
 }
