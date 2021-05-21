@@ -119,14 +119,24 @@ abstract class DelegatingCodeStyleManager extends CodeStyleManager
     delegate.reformatText(file, startOffset, endOffset);
   }
 
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
   @Override
-  public void reformatText(PsiFile file, Collection<TextRange> ranges)
+  public void reformatText(
+      PsiFile file,
+      // #api203 replace with "Collection<? extends TextRange>"
+      Collection ranges)
       throws IncorrectOperationException {
     delegate.reformatText(file, ranges);
   }
 
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
   @Override
-  public void reformatTextWithContext(PsiFile file, Collection<TextRange> ranges)
+  public void reformatTextWithContext(
+      PsiFile file,
+      // #api203 replace with "Collection<? extends TextRange>"
+      Collection ranges)
       throws IncorrectOperationException {
     delegate.reformatTextWithContext(file, ranges);
   }
