@@ -23,7 +23,6 @@ import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -90,7 +89,6 @@ public class TestUtils {
   @NotNull
   public static MockProject mockProject(
       @Nullable PicoContainer container, Disposable parentDisposable) {
-    Extensions.registerAreaClass("IDEA_PROJECT", null);
     container = container != null ? container : new DefaultPicoContainer();
     return new MockProject(container, parentDisposable);
   }
