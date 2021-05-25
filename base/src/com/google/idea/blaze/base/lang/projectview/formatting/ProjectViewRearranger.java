@@ -73,23 +73,29 @@ public class ProjectViewRearranger implements Rearranger<Entry>, ArrangementStan
     }
   }
 
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
   @Nullable
   @Override
   public Pair<Entry, List<Entry>> parseWithNew(
       PsiElement root,
       @Nullable Document document,
-      Collection<TextRange> ranges,
+      // #api203 replace with "Collection<? extends TextRange>"
+      Collection ranges,
       PsiElement element,
       ArrangementSettings settings) {
     // no support for generating new elements
     return null;
   }
 
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
   public List<Entry> parse(
       PsiElement root,
       @Nullable Document document,
-      Collection<TextRange> ranges,
+      // #api203 replace with "Collection<? extends TextRange>"
+      Collection ranges,
       ArrangementSettings settings) {
     if (root instanceof ProjectViewPsiListSection) {
       Entry entry = fromListSection(ranges, (ProjectViewPsiListSection) root);
