@@ -119,8 +119,8 @@ abstract class DelegatingCodeStyleManager extends CodeStyleManager
     delegate.reformatText(file, startOffset, endOffset);
   }
 
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
   public void reformatText(
       PsiFile file,
@@ -130,8 +130,8 @@ abstract class DelegatingCodeStyleManager extends CodeStyleManager
     delegate.reformatText(file, ranges);
   }
 
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
   public void reformatTextWithContext(
       PsiFile file,

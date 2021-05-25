@@ -73,8 +73,8 @@ class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
     }
   }
 
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
   public void reformatText(
       PsiFile file,
@@ -89,8 +89,8 @@ class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
     }
   }
 
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
   public void reformatTextWithContext(
       PsiFile file,
