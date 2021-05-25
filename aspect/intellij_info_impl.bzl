@@ -1163,6 +1163,7 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         attr_aspects = attr_aspects,
         attrs = attrs,
         fragments = ["cpp"],
-        required_aspect_providers = [[JavaInfo], [CcInfo], ["dart"], ["aspect_proto_go_api_info"]],
+        required_providers = ["dart"],
+        required_aspect_providers = [[JavaInfo], [CcInfo], ["aspect_proto_go_api_info"]],
         implementation = aspect_impl,
     )
