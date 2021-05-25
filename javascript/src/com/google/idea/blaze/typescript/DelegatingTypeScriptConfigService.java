@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.typescript.TypeScriptSDKCompat;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
@@ -83,6 +84,23 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
     return impl.getPreferableConfig(scopeFile);
   }
 
+  /** #api203: Added in 2021.1, therefore @Override is ommitted. */
+  @Nullable
+  public TypeScriptConfig getPreferableOrParentConfig(@Nullable VirtualFile virtualFile) {
+    return TypeScriptSDKCompat.getPreferableOrParentConfig(impl, virtualFile);
+  }
+
+  /** #api203: Added in 2021.1, therefore @Override is ommitted. */
+  @Nullable
+  public TypeScriptConfig getDirectIncludePreferableConfig(@Nullable VirtualFile virtualFile) {
+    return TypeScriptSDKCompat.getDirectIncludePreferableConfig(impl, virtualFile);
+  }
+
+  /** #api203: Added in 2021.1, therefore @Override is ommitted. */
+  public List<VirtualFile> getRootConfigFiles() {
+    return TypeScriptSDKCompat.getRootConfigFiles(impl);
+  }
+
   @Nullable
   @Override
   public TypeScriptConfig parseConfigFile(VirtualFile file) {
@@ -90,9 +108,8 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
   }
 
   /** Removed in 2021.1. #api203 https://github.com/bazelbuild/intellij/issues/2329 */
-  @Override
   public List<TypeScriptConfig> getConfigs() {
-    return impl.getConfigs();
+    return TypeScriptSDKCompat.getConfigs(impl);
   }
 
   public List<TypeScriptConfig> getTypeScriptConfigs() {
@@ -107,9 +124,9 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
     impl.addChangeListener(listener);
   }
 
-  @Override
+  /** #api203: Removed in 2021.1, therefore @Override is ommitted. */
   public boolean hasConfigs() {
-    return impl.hasConfigs();
+    return TypeScriptSDKCompat.hasConfigs(impl);
   }
 
   @Override
