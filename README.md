@@ -77,11 +77,9 @@ The current corresponding IDE versions of these aliases can be found [here](./in
 We welcome contributions to support new IDE versions. However, to make
 the review process faster and easier, we recommend the following:
 
-  * We can only accept small pull requests. A smaller pull request would likely have less review
-    comments and hence can get submitted much faster. For us, it is also much easier to integrate
-    such a small, focused pull request as it likely conflicts less with our internal code base. 
-    For example, you should have separate pull requests each focusing on a certain incompatible change
-    rather than having a large pull request fixing multiple ones.
+  * We can only accept small pull requests. Smaller pull requests tend to have 
+    less review comments and hence can get submitted much faster. They also tend
+    to conflict less with our internal code base, simplifying the integration for us.
     
   * Since we continue to support a number of IDE versions while working on a new
     one, you need to make sure that your proposed changes do not break
@@ -98,10 +96,10 @@ the review process faster and easier, we recommend the following:
       * Switching to a raw class by removing a generic type parameter which differs across versions. Example: [pr/2631](https://github.com/bazelbuild/intellij/pull/2631)
     
     * For non-trivial incompatible changes, the code for maintaining SDK compatibility lives
-      in [sdkcompat](./sdkcompat) and [testing/testcompat](./testing/testcompat) directories. Where `testing/testcompat`
+      in [sdkcompat](./sdkcompat) and [testing/testcompat](./testing/testcompat) directories, where `testing/testcompat`
       holds test-only SDK compatibility changes. Each of the two directories contains a sub-folder per supported IDE version with 
-      version-specific implementations. The outside API of all classes must be the same across versions. 
-      Just the implementation may differ. When introducing a new file in this directory, make sure to duplicate
+      version-specific implementations. The outside API of all classes must be the same across versions, just 
+      the implementation may differ. When introducing a new file in this directory, make sure to duplicate
       it appropriately across all versions.  
       We follow these three techniques for non-trivial incompatible changes.
     
