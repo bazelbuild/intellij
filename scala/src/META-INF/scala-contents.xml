@@ -33,11 +33,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer
         implementation="com.google.idea.blaze.scala.run.producers.DeployableJarRunConfigurationProducer"/>
-    <!-- Need to come before the one in the scala plugin to override the icon. -->
-    <runLineMarkerContributor
-        implementationClass="com.google.idea.blaze.scala.run.producers.BlazeScalaRunLineMarkerContributor"
-        language="Scala"
-        order="first"/>
+    <!-- Need to come before the one in the scala plugin to override the behavior. -->
     <runLineMarkerContributor
         implementationClass="com.google.idea.blaze.scala.run.producers.BlazeScalaTestRunLineMarkerContributor"
         language="Scala"
