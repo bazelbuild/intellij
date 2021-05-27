@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Copyright 2019 Google LLC
 #
@@ -21,12 +21,6 @@ import argparse
 import sys
 from xml.dom.minidom import parse  # pylint: disable=g-importing-member
 
-try:
-  from itertools import izip  # pylint: disable=g-importing-member,g-import-not-at-top
-except ImportError:
-  # Python 3.x already has a built-in `zip` that takes `izip`'s place.
-  izip = zip
-
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
@@ -40,7 +34,7 @@ parser.add_argument(
 
 def pairwise(t):
   it = iter(t)
-  return izip(it, it)
+  return zip(it, it)
 
 
 def main():
@@ -62,13 +56,7 @@ def main():
     with open(args.output, "wb") as f:
       f.write(dom.toxml(encoding="utf-8"))
   else:
-    if hasattr(sys.stdout, "buffer"):
-      sys.stdout.buffer.write(dom.toxml(encoding="utf-8"))
-    else:
-      # Python 2.x has no sys.stdout.buffer, but `print` still accepts byte
-      # strings.
-      print(dom.toxml(encoding="utf-8"))  # pylint: disable=superfluous-parens
-
+    sys.stdout.buffer.write(dom.toxml(encoding="utf-8"))
 
 if __name__ == "__main__":
   main()

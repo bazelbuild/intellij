@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Copyright 2019 Google LLC
 #
@@ -21,16 +21,6 @@ import os
 import stat
 import zipfile
 
-# Keep this script executable from python2 in the host configuration.
-# Python2's open() does not have the "encoding" parameter.
-from io import open  # pylint: disable=redefined-builtin,g-bad-import-order,g-importing-member
-
-try:
-  from itertools import izip  # pylint: disable=g-importing-member,g-import-not-at-top
-except ImportError:
-  # Python 3.x already has a built-in `zip` that takes `izip`'s place.
-  izip = zip
-
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--output", help="The output filename.", required=True)
@@ -40,7 +30,7 @@ parser.add_argument(
 
 def pairwise(t):
   it = iter(t)
-  return izip(it, it)
+  return zip(it, it)
 
 
 def main():
