@@ -79,7 +79,9 @@ the review process faster and easier, we recommend the following:
 
   * We can only accept small pull requests. Smaller pull requests tend to have 
     less review comments and hence can get submitted much faster. They also tend
-    to conflict less with our internal code base, simplifying the integration for us.
+    to conflict less with our internal code base, simplifying the integration for us. 
+    For example, you should have separate pull requests each focusing on a certain incompatible change
+    rather than having a large pull request fixing multiple ones.
     
   * Since we continue to support a number of IDE versions while working on a new
     one, you need to make sure that your proposed changes do not break
