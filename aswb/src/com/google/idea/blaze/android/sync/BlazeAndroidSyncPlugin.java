@@ -189,8 +189,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
     }
 
     LanguageLevel javaLanguageLevel =
-        JavaLanguageLevelHelper.getJavaLanguageLevel(
-            projectViewSet, blazeProjectData, LanguageLevel.JDK_1_8);
+        JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData);
     setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
   }
 

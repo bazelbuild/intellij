@@ -191,8 +191,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
     assertLanguageLevel(
         ModuleFinder.getInstance(getProject())
             .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME),
-        JavaLanguageLevelHelper.getJavaLanguageLevel(
-            getProjectViewSet(), blazeProjectData, LanguageLevel.JDK_1_8));
+        JavaLanguageLevelHelper.getJavaLanguageLevel(getProjectViewSet(), blazeProjectData));
     assertThat(blazeProjectData).isNotNull();
     assertThat(blazeProjectData.getTargetMap()).isEqualTo(targetMap);
     assertThat(blazeProjectData.getWorkspaceLanguageSettings())

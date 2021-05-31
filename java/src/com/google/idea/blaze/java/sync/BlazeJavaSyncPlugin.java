@@ -194,8 +194,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
       BlazeProjectData blazeProjectData) {
 
     LanguageLevel javaLanguageLevel =
-        JavaLanguageLevelHelper.getJavaLanguageLevel(
-            projectViewSet, blazeProjectData, LanguageLevel.JDK_1_8);
+        JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData);
 
     final Sdk sdk = Jdks.chooseOrCreateJavaSdk(javaLanguageLevel);
     if (sdk == null) {

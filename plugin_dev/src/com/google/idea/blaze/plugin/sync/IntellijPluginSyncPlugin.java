@@ -90,8 +90,7 @@ public class IntellijPluginSyncPlugin implements BlazeSyncPlugin {
     }
 
     LanguageLevel javaLanguageLevel =
-        JavaLanguageLevelHelper.getJavaLanguageLevel(
-            projectViewSet, blazeProjectData, LanguageLevel.JDK_1_8);
+        JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData);
 
     // Leave the SDK, but set the language level
     Transactions.submitWriteActionTransactionAndWait(

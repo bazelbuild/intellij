@@ -240,8 +240,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
             .collect(Collectors.toList()));
     setJavaLanguageLevel(
         kotlinFacet,
-        JavaLanguageLevelHelper.getJavaLanguageLevel(
-            projectViewSet, blazeProjectData, LanguageLevel.JDK_1_8));
+        JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData));
   }
 
   /**
