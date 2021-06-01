@@ -5,17 +5,21 @@ import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import java.util.Collection;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Provides SDK compatibility shims for Typescript classes, available to IntelliJ UE and CLion. */
 public class TypeScriptSDKCompat {
   private TypeScriptSDKCompat() {}
 
-  /** #api203: TypeScriptConfigUtil.getNearestParentConfigFile is removed in 2021.1 */
-  public static TypeScriptConfig getPreferableConfig(
-      VirtualFile scopeFile, ImmutableMap<VirtualFile, TypeScriptConfig> configs) {
-    return configs.get(
-        TypeScriptConfigUtil.getNearestParentConfigFile(scopeFile, configs.keySet()));
+  /**
+   * #api203: TypeScriptConfigUtil.getNearestParentConfigFiles was removed and
+   * TypeScriptConfigServiceImpl.getNearestParentTsConfigs was added in 2021.1
+   */
+  public static Collection<? extends VirtualFile> getNearestParentTsConfigs(
+      @Nullable VirtualFile scopeFile, ImmutableMap<VirtualFile, TypeScriptConfig> configs) {
+    return TypeScriptConfigUtil.getNearestParentConfigFiles(scopeFile, configs.keySet());
   }
 
   /**

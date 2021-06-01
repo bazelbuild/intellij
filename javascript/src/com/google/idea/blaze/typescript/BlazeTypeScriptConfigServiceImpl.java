@@ -128,34 +128,61 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
 
   @Nullable
   @Override
-  public TypeScriptConfig getPreferableConfig(VirtualFile scopeFile) {
-    return TypeScriptSDKCompat.getPreferableConfig(scopeFile, configs);
+  public TypeScriptConfig getPreferableConfig(@Nullable VirtualFile scopeFile) {
+    if (scopeFile == null || !scopeFile.isValid()) {
+      return null;
+    }
+    for (VirtualFile configFile :
+        TypeScriptSDKCompat.getNearestParentTsConfigs(scopeFile, configs)) {
+      TypeScriptConfig config = configs.get(configFile);
+      if (config != null && this.configGraphIncludesFile(scopeFile, config)) {
+        return config;
+      }
+    }
+    return null;
   }
 
-  /** #api203: Added in 2021.1, therefore @Override is ommitted. */
+  /** #api203: Added in 2021.1, therefore @Override is omitted. */
   @Nullable
-  public TypeScriptConfig getPreferableOrParentConfig(@Nullable VirtualFile virtualFile) {
-    // TODO(messa): Fix Typescript Support for 2021.1 (b/188883814)
-    throw new UnsupportedOperationException("Not implemented");
+  public TypeScriptConfig getPreferableOrParentConfig(@Nullable VirtualFile scopeFile) {
+    if (scopeFile == null) {
+      return null;
+    }
+    TypeScriptConfig configForFile = getPreferableConfig(scopeFile);
+    if (configForFile != null) {
+      return configForFile;
+    }
+    return TypeScriptSDKCompat.getNearestParentTsConfigs(scopeFile, configs).stream()
+        .map(configs::get)
+        .findFirst()
+        .orElse(null);
   }
 
-  /** #api203: Added in 2021.1, therefore @Override is ommitted. */
+  /** #api203: Added in 2021.1, therefore @Override is omitted. */
   @Nullable
-  public TypeScriptConfig getDirectIncludePreferableConfig(@Nullable VirtualFile virtualFile) {
-    // TODO(messa): Fix Typescript Support for 2021.1 (b/188883814)
-    throw new UnsupportedOperationException("Not implemented");
+  public TypeScriptConfig getDirectIncludePreferableConfig(@Nullable VirtualFile scopeFile) {
+    if (scopeFile == null) {
+      return null;
+    }
+    for (VirtualFile configFile :
+        TypeScriptSDKCompat.getNearestParentTsConfigs(scopeFile, configs)) {
+      TypeScriptConfig config = configs.get(configFile);
+      if (config != null && config.getInclude().accept(scopeFile)) {
+        return config;
+      }
+    }
+    return null;
   }
 
-  /** #api203: Added in 2021.1, therefore @Override is ommitted. */
+  /** #api203: Added in 2021.1, therefore @Override is omitted. */
   public List<VirtualFile> getRootConfigFiles() {
-    // TODO(messa): Fix Typescript Support for 2021.1 (b/188883814)
-    throw new UnsupportedOperationException("Not implemented");
+    return configs.keySet().asList();
   }
 
   @Nullable
   @Override
   public TypeScriptConfig parseConfigFile(VirtualFile file) {
-    return null;
+    return configs.get(file);
   }
 
   /** #api203: Removed in 2021.1. #api203 https://github.com/bazelbuild/intellij/issues/2329 */
@@ -188,7 +215,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
     listeners.add(listener);
   }
 
-  /** #api203: Removed in 2021.1, therefore @Override is ommitted. */
+  /** #api203: Removed in 2021.1, therefore @Override is omitted. */
   public boolean hasConfigs() {
     return !configs.isEmpty();
   }
