@@ -18,19 +18,16 @@ package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.testartifacts.instrumented.AndroidTestRunConfiguration;
 import com.google.common.base.Strings;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.TestTargetHeuristic;
 import com.google.idea.blaze.base.run.producers.RunConfigurationContext;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.psi.KtClass;
@@ -41,8 +38,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction;
  * Kotlin sources consumed by 'android_test' and 'android_instrumentation_test' targets.
  */
 abstract class AndroidTestContext implements RunConfigurationContext {
-  private static final Logger LOGGER = Logger.getInstance(AndroidTestContext.class);
-
   private final TargetInfo target;
 
   private AndroidTestContext(TargetInfo targetInfo) {
@@ -152,24 +147,11 @@ abstract class AndroidTestContext implements RunConfigurationContext {
    */
   @Nullable
   private static TargetInfo getTargetInfo(PsiElement klass) {
-    ListenableFuture<TargetInfo> targetFuture =
-        TestTargetHeuristic.targetFutureForPsiElement(klass, null);
-    if (targetFuture == null) {
-      return null;
-    }
-    TargetInfo target;
-    try {
-      // wait for future to return - makes the method synchronous
-      target = targetFuture.get();
-    } catch (InterruptedException e) {
-      // Ignore interrupted exceptions
-      return null;
-    } catch (ExecutionException e) {
-      LOGGER.warn("Failed to get target for class", e);
-      return null;
-    }
-
-    return target;
+    // Using deprecated `testTargetForPsiElement` because AndroidTestContext cannot correctly handle
+    // `targetFutureForPsiElement` and immediately calling `.get()` to the future returned by
+    // `targetFutureForPsiElement` can result in a deadlock (see b/189640193#comment6).
+    // TODO(b/189874361): Adapt AndroidTestContext to support targetFutureForPsiElement
+    return TestTargetHeuristic.testTargetForPsiElement(klass, null);
   }
 
   /** AndroidTestContext for extracting fqcn and method name from Java PSI */
