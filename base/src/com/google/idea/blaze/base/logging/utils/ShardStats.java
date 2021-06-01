@@ -29,7 +29,10 @@ public abstract class ShardStats {
   public abstract ShardingApproach shardingApproach();
 
   public static ShardStats.Builder builder() {
-    return new AutoValue_ShardStats.Builder();
+    return new AutoValue_ShardStats.Builder()
+        .setActualTargetSizePerShard(ImmutableList.of())
+        .setSuggestedTargetSizePerShard(0)
+        .setShardingApproach(ShardingApproach.NONE);
   }
 
   /** Auto value builder for SyncStats. */
