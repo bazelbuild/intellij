@@ -186,7 +186,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   private void reportTestRuntimeError(String errorName, String errorMessage) {
     GeneralTestEventsProcessor processor = getProcessor();
     processor.onTestFailure(
-        getTestFailedEvent(errorName, errorMessage, null, BlazeComparisonFailureData.NONE, 0));
+        getTestFailedEvent(errorName, errorMessage, null, BlazeComparisonFailureData.NONE, 0, true));
   }
 
   /** Return false if there's output XML which should be parsed. */
@@ -221,7 +221,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
                 + " See console output for details",
             /* content= */ null,
             BlazeComparisonFailureData.NONE,
-            /* duration= */ 0));
+            /* duration= */ 0, true));
     processor.onTestFinished(new TestFinishedEvent(targetName, /*duration=*/ 0L));
     processor.onSuiteFinished(new TestSuiteFinishedEvent(label.toString()));
   }
@@ -351,7 +351,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       processor.onTestOutput(new TestOutputEvent(displayName, test.sysOut, true));
     }
     if (test.sysErr != null) {
-      processor.onTestOutput(new TestOutputEvent(displayName, test.sysErr, true));
+      processor.onTestOutput(new TestOutputEvent(displayName, test.sysErr, false));
     }
 
     if (isIgnored(test)) {
@@ -363,8 +363,9 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
           !test.failures.isEmpty()
               ? test.failures
               : !test.errors.isEmpty() ? test.errors : ImmutableList.of(NO_ERROR);
+      boolean isError = test.failures.isEmpty();
       for (ErrorOrFailureOrSkipped err : errors) {
-        processor.onTestFailure(getTestFailedEvent(displayName, err, parseTimeMillis(test.time)));
+        processor.onTestFailure(getTestFailedEvent(displayName, err, parseTimeMillis(test.time), isError));
       }
     }
     processor.onTestFinished(new TestFinishedEvent(displayName, parseTimeMillis(test.time)));
@@ -383,11 +384,11 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   }
 
   private static TestFailedEvent getTestFailedEvent(
-      String name, ErrorOrFailureOrSkipped error, long duration) {
+      String name, ErrorOrFailureOrSkipped error, long duration, boolean isError) {
     String message =
         error.message != null ? error.message : "Test failed (no error message present)";
     String content = pruneErrorMessage(error.message, BlazeXmlSchema.getErrorContent(error));
-    return getTestFailedEvent(name, message, content, parseComparisonData(error), duration);
+    return getTestFailedEvent(name, message, content, parseComparisonData(error), duration, isError);
   }
 
   private static TestFailedEvent getTestFailedEvent(
@@ -395,13 +396,14 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       String message,
       @Nullable String content,
       BlazeComparisonFailureData comparisonData,
-      long duration) {
+      long duration,
+      boolean isError) {
     return new TestFailedEvent(
         name,
         null,
         message,
         content,
-        true,
+        isError,
         comparisonData.actual,
         comparisonData.expected,
         null,
