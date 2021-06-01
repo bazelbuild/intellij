@@ -1,6 +1,21 @@
 ---
-platforms:
-  ubuntu1804:
+tasks:
+  Aspect-internal-stable:
+    name: Aspect Tests for IJ Internal Stable
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-latest
+    build_targets:
+      - //aspect:aspect_files
+    test_flags:
+      - --define=ij_product=intellij-latest
+      - --test_output=errors
+      - --notrim_test_configuration
+    test_targets:
+      - //aspect/testing/...
+  Aspect-internal-beta:
+    name: Aspect Tests for IJ Internal Beta
+    platform: ubuntu1804
     build_flags:
       - --define=ij_product=intellij-beta
     build_targets:
@@ -11,3 +26,59 @@ platforms:
       - --notrim_test_configuration
     test_targets:
       - //aspect/testing/...
+  Aspect-internal-under-dev:
+    name: Aspect Tests for IJ Internal Under Development
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-canary
+    build_targets:
+      - //aspect:aspect_files
+    test_flags:
+      - --define=ij_product=intellij-canary
+      - --test_output=errors
+      - --notrim_test_configuration
+    test_targets:
+      - //aspect/testing/...
+    soft_fail:
+      - exit_status: 1
+  Aspect-oss-stable:
+    name: Aspect Tests for IJ OSS Stable
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-oss-stable
+    build_targets:
+      - //aspect:aspect_files
+    test_flags:
+      - --define=ij_product=intellij-oss-stable
+      - --test_output=errors
+      - --notrim_test_configuration
+    test_targets:
+      - //aspect/testing/...
+  Aspect-oss-beta:
+    name: Aspect Tests for IJ OSS Beta
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-oss-beta
+    build_targets:
+      - //aspect:aspect_files
+    test_flags:
+      - --define=ij_product=intellij-oss-beta
+      - --test_output=errors
+      - --notrim_test_configuration
+    test_targets:
+      - //aspect/testing/...
+  Aspect-oss-under-dev:
+    name: Aspect Tests for IJ OSS Under Development
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-oss-under-dev
+    build_targets:
+      - //aspect:aspect_files
+    test_flags:
+      - --define=ij_product=intellij-oss-under-dev
+      - --test_output=errors
+      - --notrim_test_configuration
+    test_targets:
+      - //aspect/testing/...
+    soft_fail:
+      - exit_status: 1
