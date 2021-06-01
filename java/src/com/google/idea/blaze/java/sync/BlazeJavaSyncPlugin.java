@@ -132,7 +132,8 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
             artifactLocationDecoder,
             sourceFilter.getSourceTargets(),
             syncStateBuilder,
-            previousSyncState);
+            previousSyncState,
+            syncMode);
     if (context.isCancelled() || jdepsMap == null) {
       return;
     }
