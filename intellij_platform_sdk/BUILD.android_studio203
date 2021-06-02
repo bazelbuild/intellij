@@ -1,8 +1,6 @@
 # Description:
 #
 # Plugin source jars for Android Studio (version encoded in directory name)
-load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
-
 package(default_visibility = ["//visibility:public"])
 
 licenses(["restricted"])
@@ -17,25 +15,11 @@ java_import(
             "android-studio/plugins/cidr-base-plugin/lib/*.jar",
             "android-studio/plugins/c-plugin/lib/*.jar",
         ],
-        exclude = [
-            # mockito-extensions needs to be removed from these jars.
-            "lib/idea.jar",
-            "lib/testFramework.jar",
-        ],
     ) + ["android-studio/plugins/c-clangd/lib/c-clangd.jar"],
     tags = ["intellij-provided-by-sdk"],
-    exports = [":jars_without_mockito_extensions"],
     deps = [
         # guava v20+ requires this at compile-time when using annotation processors.
         "@error_prone_annotations//jar",
-    ],
-)
-
-no_mockito_extensions(
-    name = "jars_without_mockito_extensions",
-    jars = [
-        "lib/idea.jar",
-        "lib/testFramework.jar",
     ],
 )
 
