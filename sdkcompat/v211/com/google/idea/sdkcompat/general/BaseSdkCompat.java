@@ -19,6 +19,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.usageView.UsageTreeColors;
+import com.intellij.usages.TextChunk;
 import com.intellij.util.ContentUtilEx;
 import com.jetbrains.python.psi.LanguageLevel;
 import java.nio.charset.Charset;
@@ -118,5 +120,13 @@ public final class BaseSdkCompat {
   public static Comparator<LanguageLevel> getLanguageLevelComparator() {
     return Comparator.comparingInt(LanguageLevel::getMajorVersion)
         .thenComparingInt(LanguageLevel::getMinorVersion);
+  }
+
+  /** #api203: refactor this function back into CodesearchResultData and make it private. */
+  public static void addLineNumber(int lineNumber, List<TextChunk> chunks) {
+    chunks.add(
+        new TextChunk(
+            UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes(),
+            String.valueOf(lineNumber)));
   }
 }

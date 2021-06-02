@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.util.EditorFacade;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -19,6 +20,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.usageView.UsageTreeColors;
+import com.intellij.usageView.UsageTreeColorsScheme;
+import com.intellij.usages.TextChunk;
 import com.intellij.util.ContentUtilEx;
 import com.jetbrains.python.psi.LanguageLevel;
 import java.nio.charset.Charset;
@@ -118,5 +122,14 @@ public final class BaseSdkCompat {
   public static Comparator<LanguageLevel> getLanguageLevelComparator() {
     return Comparator.comparingInt(LanguageLevel::getMajorVersion)
         .thenComparingInt(LanguageLevel::getMinorVersion);
+  }
+
+  /** #api203: refactor this function back into CodesearchResultData and make it private. */
+  public static void addLineNumber(int lineNumber, List<TextChunk> chunks) {
+    EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
+    chunks.add(
+        new TextChunk(
+            colorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION),
+            String.valueOf(lineNumber)));
   }
 }
