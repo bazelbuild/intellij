@@ -47,8 +47,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2021_1",
     build_file = "@//intellij_platform_sdk:BUILD.ue211",
-    sha256 = "099f3e974642441196a762e948da4e01d33f59526109f4be9f8e724d8b221598",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2021.1/ideaIU-2021.1.zip",
+    sha256 = "858b37cc64f52be55c6dac8fed147803310e7f243ffdaa81e538f10df59b0cf5",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2021.1.2/ideaIU-2021.1.2.zip",
 )
 
 # The plugin api for IntelliJ UE 2020.3. This is required to run UE-specific
