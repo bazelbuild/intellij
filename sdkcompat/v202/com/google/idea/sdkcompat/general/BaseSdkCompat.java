@@ -9,6 +9,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -17,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
@@ -32,6 +34,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 
@@ -135,5 +138,13 @@ public final class BaseSdkCompat {
         new TextChunk(
             colorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION),
             String.valueOf(lineNumber)));
+  }
+
+  /** #api203: refactor back into MoveChangesToChangeListAction#getUnversionedFileStreamFromEvent */
+  @SuppressWarnings("StreamToIterable") // the iterable will be immediately converted to a stream
+  @Nullable
+  public static Iterable<FilePath> getFilePaths(AnActionEvent e) {
+    Stream<FilePath> filePathStream = e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
+    return (filePathStream == null) ? null : filePathStream::iterator;
   }
 }
