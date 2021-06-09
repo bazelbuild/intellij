@@ -9,6 +9,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorFacade;
@@ -17,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.usageView.UsageTreeColors;
@@ -128,5 +130,11 @@ public final class BaseSdkCompat {
         new TextChunk(
             UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes(),
             String.valueOf(lineNumber)));
+  }
+
+  /** #api203: refactor back into MoveChangesToChangeListAction#getUnversionedFileStreamFromEvent */
+  @Nullable
+  public static Iterable<FilePath> getFilePaths(AnActionEvent e) {
+    return e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
   }
 }
