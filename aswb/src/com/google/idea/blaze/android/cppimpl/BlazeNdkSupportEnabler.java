@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
-import com.google.idea.sdkcompat.cpp.OCWorkspaceEventCompat;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
@@ -86,7 +85,7 @@ final class BlazeNdkSupportEnabler implements SyncListener {
     // See b/23087433 for more information.
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       OCWorkspaceEventImpl event =
-          OCWorkspaceEventCompat.newEvent(
+          new OCWorkspaceEventImpl(
               /* resolveConfigurationsChanged= */ false,
               /* sourceFilesChanged= */ false,
               /* compilerSettingsChanged= */ true,

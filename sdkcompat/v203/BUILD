@@ -14,11 +14,9 @@ java_library(
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
         android_studio = glob([
-            "com/google/idea/sdkcompat/cpp/**",
             "com/google/idea/sdkcompat/java/**",
         ]),
         clion = glob([
-            "com/google/idea/sdkcompat/cpp/**",
             "com/google/idea/sdkcompat/typescript/**",
         ]),
         intellij = glob([

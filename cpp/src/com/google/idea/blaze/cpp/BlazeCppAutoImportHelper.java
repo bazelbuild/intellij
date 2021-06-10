@@ -17,7 +17,6 @@ package com.google.idea.blaze.cpp;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.sdkcompat.cpp.IncludedHeadersRootCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,6 +25,7 @@ import com.jetbrains.cidr.lang.autoImport.OCDefaultAutoImportHelper;
 import com.jetbrains.cidr.lang.preprocessor.OCResolveRootAndConfiguration;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
+import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchPath;
 import com.jetbrains.cidr.lang.workspace.headerRoots.HeadersSearchRoot;
 import com.jetbrains.cidr.lang.workspace.headerRoots.IncludedHeadersRoot;
 import java.util.List;
@@ -89,7 +89,7 @@ public class BlazeCppAutoImportHelper extends OCDefaultAutoImportHelper {
         continue;
       }
       IncludedHeadersRoot includedHeadersRoot = (IncludedHeadersRoot) root;
-      if (asUserHeader != IncludedHeadersRootCompat.isUserHeaders(includedHeadersRoot)) {
+      if (asUserHeader != (includedHeadersRoot.getKind() == HeadersSearchPath.Kind.USER)) {
         continue;
       }
       VirtualFile rootBase = root.getVirtualFile();
