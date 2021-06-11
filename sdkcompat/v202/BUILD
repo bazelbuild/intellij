@@ -8,7 +8,6 @@ java_library(
     name = "v202",
     srcs = glob([
         "com/google/idea/sdkcompat/general/**",
-        "com/google/idea/sdkcompat/formatter/**",
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/vcs/**",
