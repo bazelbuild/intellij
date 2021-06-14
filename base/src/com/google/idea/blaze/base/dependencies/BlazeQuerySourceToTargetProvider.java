@@ -104,7 +104,7 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
       return ImmutableList.of();
     }
     String expr = Joiner.on('+').join(sources);
-    String query = String.format("same_pkg_direct_rdeps(%s)", expr);
+    String query = String.format("same_pkg_direct_rdeps('%s')", expr);
 
     // never use a custom output base for queries during sync
     String outputBaseFlag =
