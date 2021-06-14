@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCFileTypeHelpers;
 import com.jetbrains.cidr.lang.OCLanguageKind;
+import com.jetbrains.cidr.lang.toolchains.CidrFileSeparators;
 import com.jetbrains.cidr.lang.workspace.OCCompilerSettings;
 import com.jetbrains.cidr.lang.workspace.OCLanguageKindCalculator;
 import com.jetbrains.cidr.lang.workspace.OCResolveConfiguration;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /** Stub {@link OCResolveConfiguration} for testing. */
 public abstract class StubOCResolveConfigurationBase extends UserDataHolderBase
@@ -136,5 +138,16 @@ public abstract class StubOCResolveConfigurationBase extends UserDataHolderBase
   @Override
   public int compareTo(OCResolveConfiguration o) {
     return OCResolveConfigurationImpl.compareConfigurations(this, o);
+  }
+
+  @Override
+  public CidrFileSeparators getFileSeparators() {
+    return CidrFileSeparators.UNIX;
+  }
+
+  // #api202: add @Override annotation
+  @SuppressWarnings("override")
+  public boolean hasSourceFile(@NotNull VirtualFile virtualFile) {
+    return false;
   }
 }
