@@ -78,6 +78,14 @@ http_archive(
     url = "https://download.jetbrains.com/cpp/CLion-2020.3.2.tar.gz",
 )
 
+# The plugin api for clion_2021_1. This is required to build CLwB, and run integration tests.
+http_archive(
+    name = "clion_2021_1",
+    build_file = "@//intellij_platform_sdk:BUILD.clion211",
+    sha256 = "9f4d096918c140d28c766a149ab0c52bddddf5919e1ce28bc092c3d325c7a9ff",
+    url = "https://download.jetbrains.com/cpp/CLion-2021.1.2.tar.gz",
+)
+
 _PYTHON_CE_BUILD_FILE = """
 java_import(
     name = "python",
