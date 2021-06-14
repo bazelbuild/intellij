@@ -303,6 +303,15 @@ def _get_python_srcs_version(ctx):
     srcs_version = getattr(ctx.rule.attr, "srcs_version", "PY2AND3")
     return _SRCS_VERSION_MAPPING.get(srcs_version, default = SRC_PY2AND3)
 
+def _do_starlark_string_expansion(ctx, name, strings):
+    # first, expand all starlark predefined paths:
+    #   location, locations, rootpath, rootpaths, execpath, execpaths
+    strings = [ctx.expand_location(value) for value in strings]
+
+    # then expand any regular GNU make style variables
+    strings = [expand_make_variables(name, value, ctx) for value in strings]
+    return strings
+
 ##### Builders for individual parts of the aspect output
 
 def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -318,12 +327,15 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
 
     sources = sources_from_target(ctx)
     to_build = target[PyInfo].transitive_sources
+    args = getattr(ctx.rule.attr, "args", [])
+    args = _do_starlark_string_expansion(ctx, "args", args)
 
     ide_info["py_ide_info"] = struct_omit_none(
         launcher = py_launcher,
         python_version = _get_python_version(ctx),
         sources = sources,
         srcs_version = _get_python_srcs_version(ctx),
+        args = args,
     )
 
     update_sync_output_groups(output_groups, "intellij-info-py", depset([ide_info_file]))
@@ -427,12 +439,7 @@ def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_gro
     if hasattr(semantics, "cc") and hasattr(semantics.cc, "get_default_copts"):
         target_copts += semantics.cc.get_default_copts(ctx)
 
-    # first, expand all starlark predefined paths:
-    #   location, locations, rootpath, rootpaths, execpath, execpaths
-    target_copts = [ctx.expand_location(copt) for copt in target_copts]
-
-    # then expand any regular GNU make style variables
-    target_copts = [expand_make_variables("copt", copt, ctx) for copt in target_copts]
+    target_copts = _do_starlark_string_expansion(ctx, "copt", target_copts)
 
     compilation_context = target[CcInfo].compilation_context
 
