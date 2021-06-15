@@ -35,7 +35,7 @@ java_import(
 
 java_import(
     name = "jsr305",
-    jars = glob(["clion-*/lib/jsr305.jar"]),
+    jars = glob(["clion-*/lib/jsr305-3.0.2.jar"]),
 )
 
 java_import(

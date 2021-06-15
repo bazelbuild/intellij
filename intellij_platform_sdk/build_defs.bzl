@@ -18,6 +18,7 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-latest": "clion-2020.3",
     "clion-latest-mac": "clion-2020.3-mac",
     "clion-beta": "clion-2020.3",
+    "clion-under-dev": "clion-2021.1",
     # Indirect ij_product mapping for Bazel Plugin OSS
     "intellij-oss-stable": "intellij-2020.3",
     "intellij-oss-beta": "intellij-2021.1",
@@ -30,7 +31,7 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-oss-under-dev": "android-studio-2020.3",
     "clion-oss-stable": "clion-2020.3",
     "clion-oss-beta": "clion-2020.3",
-    "clion-oss-under-dev": "clion-2020.3",
+    "clion-oss-under-dev": "clion-2021.1",
 }
 
 DIRECT_IJ_PRODUCTS = {
@@ -109,6 +110,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2020.3-mac": struct(
         ide = "clion",
         directory = "clion_2020_3",
+    ),
+    "clion-2021.1": struct(
+        ide = "clion",
+        directory = "clion_2021_1",
+    ),
+    "clion-2021.1-mac": struct(
+        ide = "clion",
+        directory = "clion_2021_1",
     ),
 }
 
