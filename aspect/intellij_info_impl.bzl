@@ -466,7 +466,7 @@ def collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, ou
     # https://github.com/bazelbuild/bazel/commit/3aedb2f6de80630f88ffb6b60795c44e351a5810
     # but will switch back to cc_toolchain providing CcToolchainProvider once we migrate C++ rules
     # to generic platforms and toolchains.
-    if ctx.rule.kind != "cc_toolchain" and ctx.rule.kind != "cc_toolchain_suite":
+    if ctx.rule.kind != "cc_toolchain" and ctx.rule.kind != "cc_toolchain_suite" and ctx.rule.kind != "cc_toolchain_alias":
         return False
     if cc_common.CcToolchainInfo not in target:
         return False
