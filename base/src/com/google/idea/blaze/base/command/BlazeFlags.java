@@ -48,8 +48,6 @@ public final class BlazeFlags {
   // Re-run the test even if the results are cached.
   public static final String NO_CACHE_TEST_RESULTS = "--nocache_test_results";
 
-  public static final String EXPERIMENTAL_SHOW_ARTIFACTS = "--experimental_show_artifacts";
-
   public static final String DELETED_PACKAGES = "--deleted_packages";
 
   // Avoid running validation actions at the end of build. This flag is expected to be set only
