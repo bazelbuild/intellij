@@ -106,8 +106,8 @@ http_archive(
 http_archive(
     name = "python_2020_3",
     build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "722fb54b503de61989d65bc544f25f03891614467e62f4faef677cefbcd51340",
-    url = "https://plugins.jetbrains.com/files/7322/114033/python-ce-203.7717.65.zip",
+    sha256 = "e30f300a582cb919859a9d715cb5171f18037d4774a29bf5b0183f5edb996980",
+    url = "https://plugins.jetbrains.com/files/7322/118338/python-ce-203.8084.24.zip",
 )
 
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
