@@ -277,6 +277,17 @@ java_library(
 
 # neverlink library exposed so other plugins can optionally depend on it
 java_library(
+    name = "blaze_sync_modification_tracker_api",
+    srcs = ["src/com/google/idea/blaze/base/sync/BlazeSyncModificationTracker.java"],
+    neverlink = 1,
+    deps = [
+        ":base",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
     name = "buildifier_binary_provider_api",
     srcs = [
         "src/com/google/idea/blaze/base/buildmodifier/BuildifierBinaryProvider.java",

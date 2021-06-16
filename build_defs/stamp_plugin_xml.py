@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Copyright 2019 Google LLC
 #
@@ -244,12 +244,7 @@ def main():
   for new_element in new_elements:
     idea_plugin.appendChild(new_element)
 
-  if hasattr(sys.stdout, "buffer"):
-    sys.stdout.buffer.write(dom.toxml(encoding="utf-8"))
-  else:
-    # Python 2.x has no sys.stdout.buffer, but `print` still accepts byte
-    # strings.
-    print(dom.toxml(encoding="utf-8"))  # pylint: disable=superfluous-parens
+  sys.stdout.buffer.write(dom.toxml(encoding="utf-8"))
 
 
 if __name__ == "__main__":

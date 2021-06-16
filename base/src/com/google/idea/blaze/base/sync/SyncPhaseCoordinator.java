@@ -70,7 +70,6 @@ import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.util.ConcurrencyUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -694,24 +693,19 @@ final class SyncPhaseCoordinator {
               new TimingScope("UpdateInMemoryState", EventType.Other)
                   .addScopeListener((events, duration) -> timedEvents.addAll(events)));
           context.output(new StatusOutput("Updating in-memory state..."));
-          ApplicationManager.getApplication()
-              .runReadAction(
-                  () -> {
-                    Module workspaceModule =
-                        ModuleFinder.getInstance(project)
-                            .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
-                    for (BlazeSyncPlugin blazeSyncPlugin :
-                        BlazeSyncPlugin.EP_NAME.getExtensions()) {
-                      blazeSyncPlugin.updateInMemoryState(
-                          project,
-                          context,
-                          WorkspaceRoot.fromProject(project),
-                          projectViewSet,
-                          blazeProjectData,
-                          workspaceModule,
-                          syncMode);
-                    }
-                  });
+          Module workspaceModule =
+              ModuleFinder.getInstance(project)
+                  .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
+          for (BlazeSyncPlugin blazeSyncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
+            blazeSyncPlugin.updateInMemoryState(
+                project,
+                context,
+                WorkspaceRoot.fromProject(project),
+                projectViewSet,
+                blazeProjectData,
+                workspaceModule,
+                syncMode);
+          }
         });
     return timedEvents;
   }

@@ -16,7 +16,6 @@
 package com.google.idea.testing;
 
 import com.intellij.lang.LanguageExtensionPoint;
-import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,8 +25,8 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.defaults.UnsatisfiableDependenciesException;
@@ -39,7 +38,7 @@ public class ServiceHelper {
       ExtensionPointName<T> name, Class<T> clazz, Disposable parentDisposable) {
     ExtensionsArea area = Extensions.getRootArea();
     String epName = name.getName();
-    area.registerExtensionPoint(epName, clazz.getName());
+    area.registerExtensionPoint(epName, clazz.getName(), ExtensionPoint.Kind.INTERFACE);
     Disposer.register(parentDisposable, () -> area.unregisterExtensionPoint(epName));
   }
 
@@ -77,10 +76,7 @@ public class ServiceHelper {
   public static <T> void registerApplicationComponent(
       Class<T> key, T implementation, Disposable parentDisposable) {
     Application application = ApplicationManager.getApplication();
-    // #api193 (or #api201?): ComponentManagerImpl moved in 2020.1 dot releases. Check
-    // ComponentManagerImpl directly when earlier releases are no longer supported
-    boolean isComponentManagerImpl = !(application instanceof MockApplication);
-    if (isComponentManagerImpl) {
+    if (application instanceof ComponentManagerImpl) {
       if (!application.hasComponent(key)) {
         // registers component from scratch
         ServiceContainerUtil.registerComponentImplementation(
@@ -100,10 +96,7 @@ public class ServiceHelper {
 
   public static <T> void registerProjectComponent(
       Project project, Class<T> key, T implementation, Disposable parentDisposable) {
-    // #api193 (or #api201?): ComponentManagerImpl moved in 2020.1 dot releases. Check
-    // ComponentManagerImpl directly when earlier releases are no longer supported
-    boolean isComponentManagerImpl = project instanceof ProjectImpl;
-    if (isComponentManagerImpl) {
+    if (project instanceof ComponentManagerImpl) {
       ServiceContainerUtil.registerComponentInstance(
           project, key, implementation, parentDisposable);
     } else {

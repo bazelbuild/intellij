@@ -18,9 +18,9 @@ package com.google.idea.blaze.golang.run;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.goide.execution.application.GoApplicationConfiguration;
-import com.goide.execution.application.GoApplicationConfiguration.Kind;
 import com.goide.execution.application.GoApplicationRunConfigurationType;
 import com.goide.execution.application.GoApplicationRunningState;
+import com.goide.util.GoCommandLineParameter;
 import com.goide.util.GoExecutor;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -54,6 +54,7 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.golang.GoLangCompat.KindWrapper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -165,7 +166,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
               GoApplicationRunConfigurationType.getInstance()
                   .getConfigurationFactories()[0]
                   .createTemplateConfiguration(project, RunManager.getInstance(project));
-      nativeConfig.setKind(Kind.PACKAGE);
+      nativeConfig.setKind(KindWrapper.PACKAGE.getKind());
       // prevents binary from being deleted by
       // GoBuildingRunningState$ProcessHandler#processTerminated
       nativeConfig.setOutputDirectory(executable.binary.getParent());
@@ -189,7 +190,25 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         throw new ExecutionException("Workspace module not found");
       }
       GoApplicationRunningState nativeState =
-          new DerivedGoApplicationRunningState(env, module, nativeConfig);
+          new GoApplicationRunningState(env, module, nativeConfig) {
+
+            @Override
+            public boolean isDebug() {
+              return true;
+            }
+
+            @Nullable
+            @Override
+            public List<GoCommandLineParameter> getBuildingTarget() {
+              return null;
+            }
+
+            @Nullable
+            @Override
+            public GoExecutor createBuildExecutor() {
+              return null;
+            }
+          };
       nativeState.setOutputFilePath(executable.binary.getPath());
       return nativeState;
     }
@@ -198,36 +217,6 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     @Override
     public ExecutionResult execute(Executor executor, ProgramRunner<?> runner) {
       return null;
-    }
-
-    // #api201: Remove 'unchecked' warning suppression, necessary for getBuildingTarget().
-    // (background: b/148802231)
-    @SuppressWarnings("unchecked")
-    private static class DerivedGoApplicationRunningState extends GoApplicationRunningState {
-
-      public DerivedGoApplicationRunningState(
-          ExecutionEnvironment env, Module module, GoApplicationConfiguration configuration) {
-        super(env, module, configuration);
-      }
-
-      @Override
-      public boolean isDebug() {
-        return true;
-      }
-
-      // #api201: Super method uses different generic type for list in 2020.2.
-      @SuppressWarnings({"rawtypes", "unchecked"})
-      @Nullable
-      @Override
-      public List getBuildingTarget() {
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public GoExecutor createBuildExecutor() {
-        return null;
-      }
     }
   }
 

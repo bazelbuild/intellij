@@ -61,7 +61,8 @@ public abstract class BuildPhaseSyncStats {
         .setBuildResult(BuildResult.FATAL_ERROR)
         .setTimedEvents(ImmutableList.of())
         .setBuildIds(ImmutableList.of())
-        .setTotalTime(Duration.ZERO);
+        .setTotalTime(Duration.ZERO)
+        .setShardStats(ShardStats.builder().build());
   }
   /** Auto value builder for SyncStats. */
   @AutoValue.Builder

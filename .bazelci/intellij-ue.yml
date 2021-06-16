@@ -1,6 +1,20 @@
 ---
-platforms:
-  ubuntu1804:
+tasks:
+  IntelliJ-UE-internal-stable:
+    name: IntelliJ UE Internal Stable
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-ue-latest
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-ue-latest
+      - --test_output=errors
+    test_targets:
+      - //:ijwb_ue_tests
+  IntelliJ-UE-internal-beta:
+    name: IntelliJ UE Internal Beta
+    platform: ubuntu1804
     build_flags:
       - --define=ij_product=intellij-ue-beta
     build_targets:
@@ -10,3 +24,56 @@ platforms:
       - --test_output=errors
     test_targets:
       - //:ijwb_ue_tests
+  IntelliJ-UE-internal-under-dev:
+    name: IntelliJ UE Internal Under Development
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-ue-canary
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-ue-canary
+      - --test_output=errors
+    test_targets:
+      - //:ijwb_ue_tests
+    soft_fail:
+      - exit_status: 1
+  IntelliJ-UE-OSS-stable:
+    name: IntelliJ UE OSS Stable
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-ue-oss-stable
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-ue-oss-stable
+      - --test_output=errors
+    test_targets:
+      - //:ijwb_ue_tests
+  IntelliJ-UE-OSS-beta:
+    name: IntelliJ UE OSS Beta
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-ue-oss-beta
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-ue-oss-beta
+      - --test_output=errors
+    test_targets:
+      - //:ijwb_ue_tests
+  IntelliJ-UE-OSS-under-dev:
+    name: IntelliJ UE OSS Under Development
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+    build_targets:
+      - //ijwb/...
+    test_flags:
+      - --define=ij_product=intellij-ue-oss-under-dev
+      - --test_output=errors
+    test_targets:
+      - //:ijwb_ue_tests
+    soft_fail:
+      - exit_status: 1
+

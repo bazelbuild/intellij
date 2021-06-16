@@ -189,8 +189,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
     }
 
     LanguageLevel javaLanguageLevel =
-        JavaLanguageLevelHelper.getJavaLanguageLevel(
-            projectViewSet, blazeProjectData, LanguageLevel.JDK_1_8);
+        JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData);
     setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
   }
 
@@ -226,14 +225,17 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
       BlazeProjectData blazeProjectData,
       Module workspaceModule,
       SyncMode syncMode) {
-    BlazeAndroidProjectStructureSyncer.updateInMemoryState(
-        project,
-        context,
-        workspaceRoot,
-        projectViewSet,
-        blazeProjectData,
-        workspaceModule,
-        isAndroidWorkspace(blazeProjectData.getWorkspaceLanguageSettings()));
+    ApplicationManager.getApplication()
+        .runReadAction(
+            () ->
+                BlazeAndroidProjectStructureSyncer.updateInMemoryState(
+                    project,
+                    context,
+                    workspaceRoot,
+                    projectViewSet,
+                    blazeProjectData,
+                    workspaceModule,
+                    isAndroidWorkspace(blazeProjectData.getWorkspaceLanguageSettings())));
   }
 
   @Nullable

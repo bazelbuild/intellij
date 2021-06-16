@@ -22,10 +22,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.typescript.TypeScriptSDKCompat;
 import com.intellij.lang.typescript.compiler.TypeScriptCompilerService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
-import com.intellij.lang.typescript.tsconfig.TypeScriptConfigUtil;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigsChangedListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -128,19 +128,64 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
 
   @Nullable
   @Override
-  public TypeScriptConfig getPreferableConfig(VirtualFile scopeFile) {
-    return configs.get(
-        TypeScriptConfigUtil.getNearestParentConfigFile(scopeFile, configs.keySet()));
+  public TypeScriptConfig getPreferableConfig(@Nullable VirtualFile scopeFile) {
+    if (scopeFile == null || !scopeFile.isValid()) {
+      return null;
+    }
+    for (VirtualFile configFile :
+        TypeScriptSDKCompat.getNearestParentTsConfigs(scopeFile, configs)) {
+      TypeScriptConfig config = configs.get(configFile);
+      if (config != null && this.configGraphIncludesFile(scopeFile, config)) {
+        return config;
+      }
+    }
+    return null;
+  }
+
+  /** #api203: Added in 2021.1, therefore @Override is omitted. */
+  @Nullable
+  public TypeScriptConfig getPreferableOrParentConfig(@Nullable VirtualFile scopeFile) {
+    if (scopeFile == null) {
+      return null;
+    }
+    TypeScriptConfig configForFile = getPreferableConfig(scopeFile);
+    if (configForFile != null) {
+      return configForFile;
+    }
+    return TypeScriptSDKCompat.getNearestParentTsConfigs(scopeFile, configs).stream()
+        .map(configs::get)
+        .findFirst()
+        .orElse(null);
+  }
+
+  /** #api203: Added in 2021.1, therefore @Override is omitted. */
+  @Nullable
+  public TypeScriptConfig getDirectIncludePreferableConfig(@Nullable VirtualFile scopeFile) {
+    if (scopeFile == null) {
+      return null;
+    }
+    for (VirtualFile configFile :
+        TypeScriptSDKCompat.getNearestParentTsConfigs(scopeFile, configs)) {
+      TypeScriptConfig config = configs.get(configFile);
+      if (config != null && config.getInclude().accept(scopeFile)) {
+        return config;
+      }
+    }
+    return null;
+  }
+
+  /** #api203: Added in 2021.1, therefore @Override is omitted. */
+  public List<VirtualFile> getRootConfigFiles() {
+    return configs.keySet().asList();
   }
 
   @Nullable
   @Override
   public TypeScriptConfig parseConfigFile(VirtualFile file) {
-    return null;
+    return configs.get(file);
   }
 
-  /** Removed in 2021.1. #api203 https://github.com/bazelbuild/intellij/issues/2329 */
-  @Override
+  /** #api203: Removed in 2021.1. #api203 https://github.com/bazelbuild/intellij/issues/2329 */
   public List<TypeScriptConfig> getConfigs() {
     return getTypeScriptConfigs();
   }
@@ -170,7 +215,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
     listeners.add(listener);
   }
 
-  @Override
+  /** #api203: Removed in 2021.1, therefore @Override is omitted. */
   public boolean hasConfigs() {
     return !configs.isEmpty();
   }

@@ -109,10 +109,14 @@ public class TestFileSystem {
   }
 
   /** Finds PsiFile, and asserts that it's not null. */
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
   public PsiFile getPsiFile(VirtualFile file) {
     return new ReadAction<PsiFile>() {
       @Override
-      protected void run(Result<PsiFile> result) throws Throwable {
+      protected void run(
+          // #api203 replace with "Result<? super PsiFile>"
+          Result result) {
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
         assertThat(psiFile).isNotNull();
         result.setResult(psiFile);
@@ -121,10 +125,14 @@ public class TestFileSystem {
   }
 
   /** Finds PsiDirectory, and asserts that it's not null. */
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
   public PsiDirectory getPsiDirectory(VirtualFile file) {
     return new ReadAction<PsiDirectory>() {
       @Override
-      protected void run(Result<PsiDirectory> result) throws Throwable {
+      protected void run(
+          // #api203 replace with "Result<? super PsiDirectory>"
+          Result result) {
         PsiDirectory psiFile = PsiManager.getInstance(project).findDirectory(file);
         assertThat(psiFile).isNotNull();
         result.setResult(psiFile);

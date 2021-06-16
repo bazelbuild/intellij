@@ -70,7 +70,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
   private static final Logger LOG =
       Logger.getInstance(BlazeAndroidBinaryRunConfigurationHandler.class);
 
-  private final BlazeCommandRunConfiguration configuration;
+  private final Project project;
   private final BlazeAndroidBinaryRunConfigurationState configState;
 
   // Keys to store state for the MI migration prompt
@@ -80,7 +80,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
 
   @VisibleForTesting
   protected BlazeAndroidBinaryRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    this.configuration = configuration;
+    project = configuration.getProject();
     configState =
         new BlazeAndroidBinaryRunConfigurationState(
             Blaze.buildSystemName(configuration.getProject()));
@@ -98,32 +98,11 @@ public class BlazeAndroidBinaryRunConfigurationHandler
   }
 
   @Override
-  @Nullable
-  public Label getLabel() {
-    TargetExpression target = configuration.getSingleTarget();
-    return target instanceof Label ? (Label) target : null;
-  }
-
-  @Override
   public BlazeCommandRunConfigurationRunner createRunner(
       Executor executor, ExecutionEnvironment env) throws ExecutionException {
     Project project = env.getProject();
-
-    // This is a workaround for b/134587683
-    // Due to the way blaze run configuration editors update the underlying configuration state,
-    // it's possible for the configuration referenced in this handler to be out of date. This can
-    // cause tricky side-effects such as incorrect build target and target validation settings.
-    // Fortunately, the only field that can come out of sync is the target label and it's target
-    // kind. The handlers are designed to only handle their supported target kinds, so we can
-    // safely ignore all fields other than target label itself and extract an up to date target
-    // label from the execution environment.
-    // Validation of the updated target label is not needed here because:
-    // 1. The target kind is guaranteed to be an android instrumentation test kind or else this
-    //    specific handler will not be used.
-    // 2. Any other validation is done during edit-time of the run configuration before saving.
-    BlazeCommandRunConfiguration configFromEnv =
+    BlazeCommandRunConfiguration configuration =
         BlazeAndroidRunConfigurationHandler.getCommandConfig(env);
-    configuration.setTarget(configFromEnv.getSingleTarget());
 
     BlazeAndroidRunConfigurationValidationUtil.validate(project);
     Module module =
@@ -155,7 +134,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
         BlazeApkBuildService.getInstance(project)
             .getBuildStep(
                 AndroidBinaryLaunchMethodsUtils.useMobileInstall(configState.getLaunchMethod()),
-                getLabel(),
+                Label.create(configuration.getSingleTarget().toString()),
                 blazeFlags,
                 exeFlags);
 
@@ -208,23 +187,21 @@ public class BlazeAndroidBinaryRunConfigurationHandler
    */
   private ImmutableList<ValidationError> validate() {
     ImmutableList.Builder<ValidationError> errors = ImmutableList.builder();
-    errors.addAll(
-        BlazeAndroidRunConfigurationValidationUtil.validateWorkspaceModule(
-            configuration.getProject()));
-    errors.addAll(getCommonState().validate(configuration.getProject()));
-    errors.addAll(configState.validate(configuration.getProject()));
+    errors.addAll(BlazeAndroidRunConfigurationValidationUtil.validateWorkspaceModule(project));
+    errors.addAll(getCommonState().validate(project));
+    errors.addAll(configState.validate(project));
     return errors.build();
   }
 
   @Override
   @Nullable
   public String suggestedName(BlazeCommandRunConfiguration configuration) {
-    Label target = getLabel();
+    TargetExpression target = configuration.getSingleTarget();
     if (target == null) {
       return null;
     }
     // buildSystemName and commandName are intentionally omitted.
-    return new BlazeConfigurationNameBuilder().setTargetString(target).build();
+    return new BlazeConfigurationNameBuilder().setTargetString(target.toString()).build();
   }
 
   @Override

@@ -43,6 +43,8 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyJarTracker;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -98,6 +100,8 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
         MOCK_ANDROID_SDK_TARGET_HASH_26, "android-sdk-26", mockBlazeSdkProvider);
     LightWeightMockSdkUtil.registerSdk(
         MOCK_ANDROID_SDK_TARGET_HASH_28, "android-sdk-28", mockBlazeSdkProvider);
+
+    applicationServices.register(ExperimentService.class, new MockExperimentService());
 
     projectServices.register(ProjectRootManager.class, new MockProjectRootManagerEx());
 

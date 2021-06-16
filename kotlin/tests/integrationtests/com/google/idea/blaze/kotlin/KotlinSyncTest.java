@@ -17,12 +17,19 @@ package com.google.idea.blaze.kotlin;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
+import com.google.idea.blaze.base.ideinfo.KotlinToolchainIdeInfo;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -32,15 +39,21 @@ import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
+import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
+import com.google.idea.blaze.kotlin.sync.KotlinLibrarySource;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder;
@@ -178,8 +191,7 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
     assertLanguageLevel(
         ModuleFinder.getInstance(getProject())
             .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME),
-        JavaLanguageLevelHelper.getJavaLanguageLevel(
-            getProjectViewSet(), blazeProjectData, LanguageLevel.JDK_1_8));
+        JavaLanguageLevelHelper.getJavaLanguageLevel(getProjectViewSet(), blazeProjectData));
     assertThat(blazeProjectData).isNotNull();
     assertThat(blazeProjectData.getTargetMap()).isEqualTo(targetMap);
     assertThat(blazeProjectData.getWorkspaceLanguageSettings())
@@ -187,6 +199,99 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
             new WorkspaceLanguageSettings(
                 WorkspaceType.JAVA,
                 ImmutableSet.of(LanguageClass.GENERIC, LanguageClass.KOTLIN, LanguageClass.JAVA)));
+  }
+
+  /** Tests that ijars are omitted in libraries corresponding to Kotlin SDK targets */
+  @Test
+  public void testCompileJarsAreAttachedForKotlinSdkTargets() {
+    MockExperimentService experimentService = new MockExperimentService();
+    registerApplicationComponent(ExperimentService.class, experimentService);
+    experimentService.setExperiment(KotlinLibrarySource.dontUseSdkIjars, true);
+
+    setProjectView(
+        "directories:",
+        "  src/main/kotlin/com/google",
+        "targets:",
+        "  //src/main/kotlin/com/google:lib",
+        "additional_languages:",
+        "  kotlin");
+
+    workspace.createDirectory(new WorkspacePath("src/main/kotlin/com/google"));
+    workspace.createFile(new WorkspacePath("bin/kotlinsdk/stdlib.jar"));
+    workspace.createFile(new WorkspacePath("bin/kotlinsdk/stdlib-ijar.jar"));
+
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setBuildFile(sourceRoot("src/main/kotlin/com/google/BUILD"))
+                    .setLabel("//src/main/kotlin/com/google:lib")
+                    .setKind("kt_jvm_library_helper")
+                    .setJavaInfo(JavaIdeInfo.builder())
+                    .setKotlinToolchainIdeInfo(
+                        KotlinToolchainIdeInfo.builder()
+                            .setSdkTargets(ImmutableList.of(Label.create("//kotlinsdk:stdlib")))
+                            .setKotlinCompilerCommonFlags(ImmutableList.of())))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//kotlinsdk:stdlib")
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addJar(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(
+                                        ArtifactLocation.builder()
+                                            .setRelativePath("kotlinsdk/stdlib-ijar.jar")
+                                            .setRootExecutionPathFragment("bin")
+                                            .build())
+                                    .setClassJar(
+                                        ArtifactLocation.builder()
+                                            .setRelativePath("kotlinsdk/stdlib.jar")
+                                            .setRootExecutionPathFragment("bin")
+                                            .build()))))
+            .build();
+
+    setTargetMap(targetMap);
+
+    runBlazeSync(
+        BlazeSyncParams.builder()
+            .setTitle("Sync")
+            .setSyncMode(SyncMode.INCREMENTAL)
+            .setSyncOrigin("test")
+            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setAddProjectViewTargets(true)
+            .build());
+
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData();
+
+    List<BlazeLibrary> libraries =
+        BlazeLibraryCollector.getLibraries(getProjectViewSet(), blazeProjectData);
+    assertThat(libraries).isNotEmpty();
+
+    // Check that there is one (and only one) BlazeJarLibrary corresponding to Kotlin sdk target
+    List<BlazeJarLibrary> sdkLibraries =
+        libraries.stream()
+            .filter(l -> l instanceof BlazeJarLibrary)
+            .map(l -> (BlazeJarLibrary) l)
+            .filter(l -> l.targetKey != null)
+            .filter(
+                l ->
+                    l.targetKey.equals(
+                        TargetKey.forPlainTarget(Label.create("//kotlinsdk:stdlib"))))
+            .collect(Collectors.toList());
+    assertThat(sdkLibraries).hasSize(1);
+
+    // Ensure Kotlin SDK library does not have an interface jar. We want to attach the compile jar
+    // instead
+    BlazeJarLibrary jarLibrary = (BlazeJarLibrary) libraries.get(0);
+    assertThat(jarLibrary.libraryArtifact.getInterfaceJar()).isNull();
+    assertThat(jarLibrary.libraryArtifact.getClassJar())
+        .isEqualTo(
+            ArtifactLocation.builder()
+                .setRelativePath("kotlinsdk/stdlib.jar")
+                .setRootExecutionPathFragment("bin")
+                .build());
   }
 
   private void assertLanguageLevel(Module module, LanguageLevel languageLevel) {

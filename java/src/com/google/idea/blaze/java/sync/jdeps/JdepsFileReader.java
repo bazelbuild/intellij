@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.jdeps.JdepsState.JdepsData;
 import com.intellij.openapi.diagnostic.Logger;
@@ -77,7 +78,8 @@ public class JdepsFileReader {
       ArtifactLocationDecoder artifactLocationDecoder,
       Collection<TargetIdeInfo> targetsToLoad,
       SyncState.Builder syncStateBuilder,
-      @Nullable SyncState previousSyncState) {
+      @Nullable SyncState previousSyncState,
+      SyncMode syncMode) {
     JdepsState oldState =
         previousSyncState != null ? previousSyncState.get(JdepsState.class) : null;
     JdepsState jdepsState =
@@ -87,7 +89,7 @@ public class JdepsFileReader {
               context.push(new TimingScope("LoadJdepsFiles", EventType.Other));
               try {
                 return doLoadJdepsFiles(
-                    project, context, artifactLocationDecoder, oldState, targetsToLoad);
+                    project, context, artifactLocationDecoder, oldState, targetsToLoad, syncMode);
               } catch (InterruptedException e) {
                 throw new ProcessCanceledException(e);
               } catch (ExecutionException e) {
@@ -109,7 +111,8 @@ public class JdepsFileReader {
       BlazeContext context,
       ArtifactLocationDecoder decoder,
       @Nullable JdepsState oldState,
-      Collection<TargetIdeInfo> targetsToLoad)
+      Collection<TargetIdeInfo> targetsToLoad,
+      SyncMode syncMode)
       throws InterruptedException, ExecutionException {
     Map<OutputArtifact, TargetKey> fileToTargetMap = Maps.newHashMap();
     for (TargetIdeInfo target : targetsToLoad) {
@@ -125,6 +128,28 @@ public class JdepsFileReader {
 
     // TODO: handle prefetching for arbitrary OutputArtifacts
     List<OutputArtifact> outputArtifacts = diff.getUpdatedOutputs();
+    // b/187759986: if there was no build, then all the needed artifacts should've been cached
+    // already. Additional logging to identify what is going wrong.
+    if (!outputArtifacts.isEmpty() && !SyncMode.involvesBlazeBuild(syncMode)) {
+      logger.warn(
+          "ArtifactDiff: "
+              + outputArtifacts.size()
+              + " outputs need to be updated during SyncMode.NO_BUILD ");
+      if (oldState == null) {
+        logger.warn("ArtifactDiff: oldState == null, we failed to load prior JdepsState.");
+      } else {
+        // Do not list all artifacts since it may be pretty long.
+        if (oldState.getArtifactState().size() != fileToTargetMap.size()) {
+          logger.warn(
+              "Existing artifact state does not match with target map."
+                  + " [oldState.getArtifactState().size() = "
+                  + oldState.getArtifactState().size()
+                  + ", fileToTargetMap.size() = "
+                  + fileToTargetMap.size()
+                  + "]");
+        }
+      }
+    }
 
     ListenableFuture<?> downloadArtifactsFuture =
         RemoteArtifactPrefetcher.getInstance()

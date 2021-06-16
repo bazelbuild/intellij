@@ -132,7 +132,8 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
             artifactLocationDecoder,
             sourceFilter.getSourceTargets(),
             syncStateBuilder,
-            previousSyncState);
+            previousSyncState,
+            syncMode);
     if (context.isCancelled() || jdepsMap == null) {
       return;
     }
@@ -194,8 +195,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
       BlazeProjectData blazeProjectData) {
 
     LanguageLevel javaLanguageLevel =
-        JavaLanguageLevelHelper.getJavaLanguageLevel(
-            projectViewSet, blazeProjectData, LanguageLevel.JDK_1_8);
+        JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData);
 
     final Sdk sdk = Jdks.chooseOrCreateJavaSdk(javaLanguageLevel);
     if (sdk == null) {

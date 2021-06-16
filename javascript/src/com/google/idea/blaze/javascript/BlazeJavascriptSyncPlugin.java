@@ -36,7 +36,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.module.WebModuleType;
+import com.intellij.openapi.module.WebModuleTypeBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
@@ -56,7 +56,7 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
   @Override
   public ModuleType<?> getWorkspaceModuleType(WorkspaceType workspaceType) {
     if (workspaceType == WorkspaceType.JAVASCRIPT) {
-      return WebModuleType.getInstance();
+      return WebModuleTypeBase.getInstance();
     }
     return null;
   }

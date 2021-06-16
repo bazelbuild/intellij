@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.formatter;
 
-import com.google.idea.sdkcompat.formatter.DelegatingCodeStyleManagerCompat;
 import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
@@ -119,14 +118,24 @@ abstract class DelegatingCodeStyleManager extends CodeStyleManager
     delegate.reformatText(file, startOffset, endOffset);
   }
 
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
-  public void reformatText(PsiFile file, Collection<TextRange> ranges)
+  public void reformatText(
+      PsiFile file,
+      // #api203 replace with "Collection<? extends TextRange>"
+      Collection ranges)
       throws IncorrectOperationException {
     delegate.reformatText(file, ranges);
   }
 
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
-  public void reformatTextWithContext(PsiFile file, Collection<TextRange> ranges)
+  public void reformatTextWithContext(
+      PsiFile file,
+      // #api203 replace with "Collection<? extends TextRange>"
+      Collection ranges)
       throws IncorrectOperationException {
     delegate.reformatTextWithContext(file, ranges);
   }
@@ -206,10 +215,8 @@ abstract class DelegatingCodeStyleManager extends CodeStyleManager
     return delegate.performActionWithFormatterDisabled(r);
   }
 
-  // #api201: Method introduced in 2020.2. If not overridden, an exception is thrown upon class
-  // creation.
-  @SuppressWarnings("override")
+  @Override
   public void scheduleReformatWhenSettingsComputed(PsiFile file) {
-    DelegatingCodeStyleManagerCompat.scheduleReformatWhenSettingsComputed(delegate, file);
+    delegate.scheduleReformatWhenSettingsComputed(file);
   }
 }

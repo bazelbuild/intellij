@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.run.processhandler;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.process.BinaryPathRemapper;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.filecache.FileCaches;
@@ -119,7 +120,7 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
 
     @Override
     public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
-      FileCaches.refresh(project, context);
+      ListenableFuture<Void> unusedFuture = FileCaches.refresh(project, context);
       context.release();
     }
   }

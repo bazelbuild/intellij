@@ -73,8 +73,13 @@ class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
     }
   }
 
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
-  public void reformatText(PsiFile file, Collection<TextRange> ranges)
+  public void reformatText(
+      PsiFile file,
+      // #api203 replace with "Collection<? extends TextRange>"
+      Collection ranges)
       throws IncorrectOperationException {
     CustomFormatter formatter = getCustomFormatterForFile(file);
     if (formatter != null) {
@@ -84,8 +89,14 @@ class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
     }
   }
 
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
-  public void reformatTextWithContext(PsiFile file, Collection<TextRange> ranges) {
+  public void reformatTextWithContext(
+      PsiFile file,
+      // #api203 replace with "Collection<? extends TextRange>"
+      Collection ranges)
+      throws IncorrectOperationException {
     CustomFormatter formatter = getCustomFormatterForFile(file);
     if (formatter != null) {
       formatInternal(formatter, file, ranges);

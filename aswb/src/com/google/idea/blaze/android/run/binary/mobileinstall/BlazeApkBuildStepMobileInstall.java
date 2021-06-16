@@ -23,6 +23,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
 import com.google.idea.blaze.android.run.binary.mobileinstall.AdbTunnelConfigurator.AdbTunnelConfiguratorProvider;
@@ -179,7 +180,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
                       BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
               .build()
               .run();
-      FileCaches.refresh(project, context);
+      ListenableFuture<Void> unusedFuture = FileCaches.refresh(project, context);
 
       if (retVal != 0) {
         IssueOutput.error("Blaze build failed. See Blaze Console for details.").submit(context);

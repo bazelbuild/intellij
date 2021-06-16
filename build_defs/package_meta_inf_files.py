@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #
 # Copyright 2019 Google LLC
 #
@@ -21,12 +21,6 @@ import argparse
 import shutil
 import zipfile
 
-try:
-  from itertools import izip  # pylint: disable=g-importing-member,g-import-not-at-top
-except ImportError:
-  # Python 3.x already has a built-in `zip` that takes `izip`'s place.
-  izip = zip
-
 # Set to Jan 1 1980, the earliest date supported by zipfile
 ZIP_DATE = (1980, 1, 1, 0, 0, 0)
 
@@ -48,7 +42,7 @@ parser.add_argument(
 
 def pairwise(t):
   it = iter(t)
-  return izip(it, it)
+  return zip(it, it)
 
 
 def main():

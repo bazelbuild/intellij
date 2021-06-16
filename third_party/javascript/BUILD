@@ -14,6 +14,7 @@ java_library(
         "intellij-ue-2020.3": ["@intellij_ue_2020_3//:javascript"],
         "clion-2020.2": ["@clion_2020_2//:javascript"],
         "clion-2020.3": ["@clion_2020_3//:javascript"],
+        "clion-2021.1": ["@clion_2021_1//:javascript"],
         "default": [],
     }),
 )
@@ -28,6 +29,7 @@ java_library(
         "intellij-ue-2020.3": ["@intellij_ue_2020_3//:css"],
         "clion-2020.2": ["@clion_2020_2//:css"],
         "clion-2020.3": ["@clion_2020_3//:css"],
+        "clion-2021.1": ["@clion_2021_1//:css"],
         "default": [],
     }),
 )
@@ -42,6 +44,7 @@ java_library(
         "intellij-ue-2020.3": ["@intellij_ue_2020_3//:tslint"],
         "clion-2020.2": ["@clion_2020_2//:tslint"],
         "clion-2020.3": ["@clion_2020_3//:tslint"],
+        "clion-2021.1": ["@clion_2021_1//:tslint"],
         "default": [],
     }),
 )
@@ -56,6 +59,7 @@ java_library(
         "intellij-ue-2020.3": ["@intellij_ue_2020_3//:angular"],
         "clion-2020.2": ["@intellij_ue_2020_2//:angular"],
         "clion-2020.3": ["@intellij_ue_2020_3//:angular"],
+        "clion-2021.1": ["@intellij_ue_2021_1//:angular"],
         "default": [],
     }),
 )

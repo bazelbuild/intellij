@@ -17,7 +17,6 @@ package com.google.idea.blaze.scala.run.producers;
 
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.scala.run.Specs2Utils;
-import com.google.idea.sdkcompat.scala.ScalaTestRunLineMarkerProviderCompat;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
@@ -37,6 +36,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.expr.ScInfixExpr;
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunctionDefinition;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScClass;
 import org.jetbrains.plugins.scala.testingSupport.test.structureView.TestNodeProvider;
+import org.jetbrains.plugins.scala.testingSupport.test.ui.ScalaTestRunLineMarkerProvider;
 
 /**
  * Generates run/debug gutter icons for scala_test, and scala_junit_tests.
@@ -46,7 +46,7 @@ import org.jetbrains.plugins.scala.testingSupport.test.structureView.TestNodePro
  * generate icons for a test without run state (i.e., newly written tests).
  * https://github.com/JetBrains/intellij-scala/pull/381
  */
-public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMarkerProviderCompat {
+public class BlazeScalaTestRunLineMarkerContributor extends ScalaTestRunLineMarkerProvider {
   @Nullable
   @Override
   public Info getInfo(PsiElement element) {

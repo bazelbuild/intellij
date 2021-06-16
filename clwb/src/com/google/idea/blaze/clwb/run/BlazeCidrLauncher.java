@@ -45,8 +45,6 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
-import com.google.idea.sdkcompat.clion.CidrConsoleBuilderAdapter;
-import com.google.idea.sdkcompat.clion.CidrLauncherAdapter;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.CommandLineState;
@@ -65,6 +63,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.cidr.cpp.execution.CLionRunParameters;
 import com.jetbrains.cidr.cpp.toolchains.CPPDebugger.Kind;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
+import com.jetbrains.cidr.execution.CidrLauncher;
 import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
@@ -81,7 +80,7 @@ import javax.annotation.Nullable;
  * Handles running/debugging cc_test and cc_binary targets in CLion. Sets up gdb when debugging, and
  * uses the Google Test infrastructure for presenting test results.
  */
-public final class BlazeCidrLauncher extends CidrLauncherAdapter {
+public final class BlazeCidrLauncher extends CidrLauncher {
   private final Project project;
   private final BlazeCommandRunConfiguration configuration;
   private final BlazeCidrRunConfigState handlerState;
@@ -322,7 +321,7 @@ public final class BlazeCidrLauncher extends CidrLauncherAdapter {
       // hook up the test tree UI
       return new GoogleTestConsoleBuilder(configuration.getProject(), testUiSession);
     }
-    return new CidrConsoleBuilderAdapter(configuration.getProject());
+    return new CidrConsoleBuilder(configuration.getProject(), null, null);
   }
 
   private ImmutableList<String> getGdbStartupCommands(File workspaceRootDirectory) {
@@ -340,11 +339,11 @@ public final class BlazeCidrLauncher extends CidrLauncherAdapter {
     return BlazeCommandName.TEST.equals(handlerState.getCommandState().getCommand());
   }
 
-  private final class GoogleTestConsoleBuilder extends CidrConsoleBuilderAdapter {
+  private final class GoogleTestConsoleBuilder extends CidrConsoleBuilder {
     @Nullable private final BlazeTestUiSession testUiSession;
 
     private GoogleTestConsoleBuilder(Project project, @Nullable BlazeTestUiSession testUiSession) {
-      super(project);
+      super(project, null, null);
       this.testUiSession = testUiSession;
       addFilter(new BlazeCidrTestOutputFilter(project));
     }

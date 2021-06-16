@@ -15,12 +15,9 @@
  */
 package com.google.idea.blaze.android.run;
 
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.intellij.execution.ExecutionException;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import org.jetbrains.annotations.Nullable;
@@ -49,27 +46,18 @@ public interface BlazeAndroidRunConfigurationHandler extends BlazeCommandRunConf
   /** @return This handler's common state. */
   BlazeAndroidRunConfigurationCommonState getCommonState();
 
-  /**
-   * @return The {@link Label} this handler's configuration targets, or null if it does not target a
-   *     Label.
-   */
-  @Nullable
-  Label getLabel();
-
   /** Extract {@link BlazeCommandRunConfiguration} from the execution environment. */
   static BlazeCommandRunConfiguration getCommandConfig(ExecutionEnvironment env)
       throws ExecutionException {
-    RunnerAndConfigurationSettings settings = env.getRunnerAndConfigurationSettings();
-    if (settings == null) {
-      throw new ExecutionException(
-          "Invalid run configuration. Is the project sync state out of date?");
+    RunProfile runProfile = env.getRunProfile();
+    if (runProfile instanceof BlazeCommandRunConfiguration) {
+      return (BlazeCommandRunConfiguration) runProfile;
     }
-    RunConfiguration configFromEnv = settings.getConfiguration();
-    if (!(configFromEnv instanceof BlazeCommandRunConfiguration)) {
-      throw new ExecutionException(
-          "Invalid run configurations. Is the project sync state out of date?");
-    }
-
-    return (BlazeCommandRunConfiguration) configFromEnv;
+    throw new ExecutionException(
+        "Cannot cast "
+            + runProfile
+            + " of type "
+            + runProfile.getClass().getName()
+            + " to BlazeCommandRunConfiguration.");
   }
 }

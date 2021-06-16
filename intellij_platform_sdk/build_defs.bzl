@@ -6,11 +6,11 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2020.3",
     "intellij-latest-mac": "intellij-2020.3-mac",
     "intellij-beta": "intellij-2020.3",
-    "intellij-canary": "intellij-2020.3",
+    "intellij-canary": "intellij-2021.1",
     "intellij-ue-latest": "intellij-ue-2020.3",
     "intellij-ue-latest-mac": "intellij-ue-2020.3-mac",
     "intellij-ue-beta": "intellij-ue-2020.3",
-    "intellij-ue-canary": "intellij-ue-2020.3",
+    "intellij-ue-canary": "intellij-ue-2021.1",
     "android-studio-latest": "android-studio-4.2",
     "android-studio-beta": "android-studio-4.2",
     "android-studio-beta-mac": "android-studio-4.2-mac",
@@ -18,19 +18,20 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-latest": "clion-2020.3",
     "clion-latest-mac": "clion-2020.3-mac",
     "clion-beta": "clion-2020.3",
+    "clion-under-dev": "clion-2021.1",
     # Indirect ij_product mapping for Bazel Plugin OSS
     "intellij-oss-stable": "intellij-2020.3",
-    "intellij-oss-beta": "intellij-2020.3",
+    "intellij-oss-beta": "intellij-2021.1",
     "intellij-oss-under-dev": "intellij-2021.1",
     "intellij-ue-oss-stable": "intellij-ue-2020.3",
-    "intellij-ue-oss-beta": "intellij-ue-2020.3",
+    "intellij-ue-oss-beta": "intellij-ue-2021.1",
     "intellij-ue-oss-under-dev": "intellij-ue-2021.1",
     "android-studio-oss-stable": "android-studio-4.2",
     "android-studio-oss-beta": "android-studio-4.2",
     "android-studio-oss-under-dev": "android-studio-2020.3",
     "clion-oss-stable": "clion-2020.3",
     "clion-oss-beta": "clion-2020.3",
-    "clion-oss-under-dev": "clion-2020.3",
+    "clion-oss-under-dev": "clion-2021.1",
 }
 
 DIRECT_IJ_PRODUCTS = {
@@ -109,6 +110,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2020.3-mac": struct(
         ide = "clion",
         directory = "clion_2020_3",
+    ),
+    "clion-2021.1": struct(
+        ide = "clion",
+        directory = "clion_2021_1",
+    ),
+    "clion-2021.1-mac": struct(
+        ide = "clion",
+        directory = "clion_2021_1",
     ),
 }
 
