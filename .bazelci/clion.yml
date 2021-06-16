@@ -24,6 +24,20 @@ tasks:
       - --test_output=errors
     test_targets:
       - //:clwb_tests
+  CLion-internal-under-dev:
+    name: CLion Internal Under Development
+    platform: ubuntu1804
+    build_flags:
+      - --define=ij_product=clion-under-dev
+    build_targets:
+      - //clwb/...
+    test_flags:
+      - --define=ij_product=clion-under-dev
+      - --test_output=errors
+    test_targets:
+      - //:clwb_tests
+    soft_fail:
+      - exit_status: 1
   CLion-OSS-stable:
     name: CLion OSS Stable
     platform: ubuntu1804
