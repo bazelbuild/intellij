@@ -114,8 +114,8 @@ http_archive(
 http_archive(
     name = "python_2021_1",
     build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "8627aab085d44cb5be68cad93d7cf974430b83bbf7950a6fea5d686669195cab",
-    url = "https://plugins.jetbrains.com/files/7322/121576/python-ce-211.7442.45.zip",
+    sha256 = "76960b404e11011cc227edfd2a7e7fb59ebff52f2c2955d80c933f69e887a7c5",
+    url = "https://plugins.jetbrains.com/files/7322/122104/python-ce-211.7442.53.zip",
 )
 
 _GO_BUILD_FILE = """
