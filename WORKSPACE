@@ -138,8 +138,8 @@ http_archive(
 http_archive(
     name = "go_2020_3",
     build_file_content = _GO_BUILD_FILE,
-    sha256 = "996231c0bdeedfe4ea2ae66f72e9687818004fc363a415f814cb58f4563579c3",
-    url = "https://plugins.jetbrains.com/files/9568/112071/go-203.7717.11.zip",
+    sha256 = "41e5ca13cc8bfb033963ff890d9c51d24cd9595a7a41046416e61a5fc8f0e2a4",
+    url = "https://plugins.jetbrains.com/files/9568/117680/go-203.8084.17.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
