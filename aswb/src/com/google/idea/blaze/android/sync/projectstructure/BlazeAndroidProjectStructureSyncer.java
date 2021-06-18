@@ -57,6 +57,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.AndroidBlazeRules;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -83,6 +84,8 @@ import org.jetbrains.android.facet.AndroidFacetProperties;
 /** Updates the IDE's project structure. */
 public class BlazeAndroidProjectStructureSyncer {
   private static final Logger log = Logger.getInstance(BlazeAndroidProjectStructureSyncer.class);
+  private static final BoolExperiment attachAarForResourceModule =
+      new BoolExperiment("blaze.attach.aar.resource.module.enable", false);
 
   static class ManifestParsingStatCollector {
     private Duration totalDuration = Duration.ZERO;
@@ -231,17 +234,22 @@ public class BlazeAndroidProjectStructureSyncer {
         modifiableRootModel = workspaceModifiableModel;
       }
 
-      for (String libraryName : androidResourceModule.resourceLibraryKeys) {
-        Library lib = libraryTable.getLibraryByName(libraryName);
-        if (lib == null) {
-          String message =
-              String.format(
-                  "Could not find library '%s' for module '%s'. Re-syncing might fix this issue.",
-                  libraryName, moduleName);
-          log.warn(message);
-          context.output(PrintOutput.log(message));
-        } else {
-          modifiableRootModel.addLibraryEntry(lib);
+      // Since each module will depend on workspace module, it's not necessary to attach its aar
+      // library as deps. Extra deps will lead to more library order entry than needed. As a result,
+      // Kotlin may get a larger graph to compute library dependencies.
+      if (attachAarForResourceModule.getValue()) {
+        for (String libraryName : androidResourceModule.resourceLibraryKeys) {
+          Library lib = libraryTable.getLibraryByName(libraryName);
+          if (lib == null) {
+            String message =
+                String.format(
+                    "Could not find library '%s' for module '%s'. Re-syncing might fix this issue.",
+                    libraryName, moduleName);
+            log.warn(message);
+            context.output(PrintOutput.log(message));
+          } else {
+            modifiableRootModel.addLibraryEntry(lib);
+          }
         }
       }
     }
