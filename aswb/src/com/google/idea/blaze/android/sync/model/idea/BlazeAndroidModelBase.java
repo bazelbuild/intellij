@@ -15,13 +15,17 @@
  */
 package com.google.idea.blaze.android.sync.model.idea;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import com.android.sdklib.AndroidVersion;
 import com.android.tools.idea.model.AndroidModel;
 import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.lint.detector.api.Desugaring;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -36,6 +40,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
@@ -44,14 +50,14 @@ import javax.annotation.Nullable;
  */
 abstract class BlazeAndroidModelBase implements AndroidModel {
   private final Project project;
-  private final String applicationId;
+  private final ListenableFuture<String> applicationId;
   private final int minSdkVersion;
   private final boolean desugarJava8Libs;
 
   protected BlazeAndroidModelBase(
       Project project,
       File rootDirPath,
-      String applicationId,
+      ListenableFuture<String> applicationId,
       int minSdkVersion,
       boolean desugarJava8Libs) {
     this.project = project;
@@ -62,8 +68,17 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
 
   @Override
   public String getApplicationId() {
-    return applicationId;
+    try {
+      return applicationId.get(1, SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (TimeoutException | ExecutionException e) {
+      Logger.getInstance(BlazeAndroidModelBase.class).warn("Application Id not initialized yet", e);
+    }
+    return uninitializedApplicationId();
   }
+
+  protected abstract String uninitializedApplicationId();
 
   @Override
   public Set<String> getAllApplicationIds() {
