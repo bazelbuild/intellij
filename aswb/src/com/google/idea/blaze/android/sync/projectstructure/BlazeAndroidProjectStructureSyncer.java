@@ -71,6 +71,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -459,6 +460,8 @@ public class BlazeAndroidProjectStructureSyncer {
       if (parsedManifest.packageName != null) {
         return parsedManifest.packageName;
       }
+    } catch (FileNotFoundException e) {
+      log.warn("Existing sync data points to `" + manifestFile + "` which is not present anymore.");
     } catch (IOException e) {
       String message = "Exception while reading manifest file: " + manifestFile;
       log.warn(message, e);
