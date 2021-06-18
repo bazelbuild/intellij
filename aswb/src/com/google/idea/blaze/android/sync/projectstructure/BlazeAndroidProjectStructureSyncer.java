@@ -27,6 +27,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -88,8 +89,11 @@ public class BlazeAndroidProjectStructureSyncer {
       MoreExecutors.listeningDecorator(
           AppExecutorUtil.createBoundedApplicationPoolExecutor("ManifestParser", 8));
   private static final Logger log = Logger.getInstance(BlazeAndroidProjectStructureSyncer.class);
+
   private static final BoolExperiment attachAarForResourceModule =
       new BoolExperiment("blaze.attach.aar.resource.module.enable", false);
+  private static final BoolExperiment asyncFetchApplicationId =
+      new BoolExperiment("aswb.sync.async.appid", true);
 
   public static void updateProjectStructure(
       Project project,
@@ -492,8 +496,12 @@ public class BlazeAndroidProjectStructureSyncer {
             .build();
 
     ListenableFuture<String> applicationId =
-        EXECUTOR.submit(
-            () ->
+        asyncFetchApplicationId.getValue()
+            ? EXECUTOR.submit(
+                () ->
+                    getApplicationIdFromManifestOrDefault(
+                        project, context, manifestFile, resourceJavaPackage))
+            : Futures.immediateFuture(
                 getApplicationIdFromManifestOrDefault(
                     project, context, manifestFile, resourceJavaPackage));
 
