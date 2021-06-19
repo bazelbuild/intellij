@@ -152,18 +152,19 @@ public class BlazeAndroidProjectStructureSyncer {
     for (AndroidResourceModule androidResourceModule :
         syncData.importResult.androidResourceModules) {
       targetToAndroidResourceModule.put(androidResourceModule.targetKey, androidResourceModule);
-      if (!BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
+      if (BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
           androidResourceModule.targetKey)) {
-        String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
-        Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
-        TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
-        AndroidFacetModuleCustomizer.createAndroidFacet(
-            module,
-            target != null
-                && target.kindIsOneOf(
-                    AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind(),
-                    AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind()));
+        continue;
       }
+      String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
+      Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
+      TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
+      AndroidFacetModuleCustomizer.createAndroidFacet(
+          module,
+          target != null
+              && target.kindIsOneOf(
+                  AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind(),
+                  AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind()));
     }
 
     // Configure android resource modules
@@ -171,59 +172,58 @@ public class BlazeAndroidProjectStructureSyncer {
     Set<File> existingRoots = Sets.newHashSet();
     LibraryTable libraryTable = ProjectLibraryTable.getInstance(project);
     for (AndroidResourceModule androidResourceModule : targetToAndroidResourceModule.values()) {
+      if (BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
+          androidResourceModule.targetKey)) {
+        continue;
+      }
+
       ArtifactLocationDecoder artifactLocationDecoder =
           blazeProjectData.getArtifactLocationDecoder();
 
-      File manifest = null;
-      String moduleName;
-      ModifiableRootModel modifiableRootModel;
-      if (!BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
-          androidResourceModule.targetKey)) {
-        // Calculate manifest if this is not the workspace resource module
-        TargetIdeInfo target =
-            Preconditions.checkNotNull(
-                blazeProjectData.getTargetMap().get(androidResourceModule.targetKey));
-        AndroidIdeInfo androidIdeInfo = Preconditions.checkNotNull(target.getAndroidIdeInfo());
-        File moduleDirectory =
-            moduleDirectoryForAndroidTarget(WorkspaceRoot.fromProject(project), target);
-        manifest =
-            manifestFileForAndroidTarget(
-                project, artifactLocationDecoder, androidIdeInfo, moduleDirectory);
-        moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
-        Module module = moduleEditor.findModule(moduleName);
-        verify(module != null);
-        modifiableRootModel = moduleEditor.editModule(module);
+      // Calculate manifest if this is not the workspace resource module
+      TargetIdeInfo target =
+          Preconditions.checkNotNull(
+              blazeProjectData.getTargetMap().get(androidResourceModule.targetKey));
+      AndroidIdeInfo androidIdeInfo = Preconditions.checkNotNull(target.getAndroidIdeInfo());
 
-        ArrayList<File> newRoots =
-            new ArrayList<>(
-                OutputArtifactResolver.resolveAll(
-                    project, artifactLocationDecoder, androidResourceModule.resources));
+      ArrayList<File> newRoots =
+          new ArrayList<>(
+              OutputArtifactResolver.resolveAll(
+                  project, artifactLocationDecoder, androidResourceModule.resources));
 
-        if (manifest != null) {
-          newRoots.add(manifest);
-        }
-
-        // Remove existing resource roots to silence the duplicate content root error.
-        // We can only do this if we have cyclic resource dependencies, since otherwise we risk
-        // breaking dependencies within this resource module.
-        newRoots.removeAll(existingRoots);
-        existingRoots.addAll(newRoots);
-        ResourceModuleContentRootCustomizer.setupContentRoots(modifiableRootModel, newRoots);
-        modifiableRootModel.addModuleOrderEntry(workspaceModule);
-        ++totalOrderEntries;
-
-        // Add a dependency from the workspace to the resource module
-        ModuleOrderEntry orderEntry = workspaceModifiableModel.addModuleOrderEntry(module);
-        ++totalOrderEntries;
-        orderEntry.setExported(true);
-      } else {
-        moduleName = workspaceModule.getName();
-        modifiableRootModel = workspaceModifiableModel;
+      File moduleDirectory =
+          moduleDirectoryForAndroidTarget(WorkspaceRoot.fromProject(project), target);
+      File manifest =
+          manifestFileForAndroidTarget(
+              project, artifactLocationDecoder, androidIdeInfo, moduleDirectory);
+      if (manifest != null) {
+        newRoots.add(manifest);
       }
 
-      // Since each module will depend on workspace module, it's not necessary to attach its aar
-      // library as deps. Extra deps will lead to more library order entry than needed. As a result,
-      // Kotlin may get a larger graph to compute library dependencies.
+      // Remove existing resource roots to silence the duplicate content root error.
+      // We can only do this if we have cyclic resource dependencies, since otherwise we risk
+      // breaking dependencies within this resource module.
+      newRoots.removeAll(existingRoots);
+      existingRoots.addAll(newRoots);
+
+      String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
+      Module module = moduleEditor.findModule(moduleName);
+      verify(module != null);
+      ModifiableRootModel modifiableRootModel = moduleEditor.editModule(module);
+      ResourceModuleContentRootCustomizer.setupContentRoots(modifiableRootModel, newRoots);
+      modifiableRootModel.addModuleOrderEntry(workspaceModule);
+      ++totalOrderEntries;
+
+      // Add a dependency from the workspace to the resource module
+      ModuleOrderEntry orderEntry = workspaceModifiableModel.addModuleOrderEntry(module);
+      ++totalOrderEntries;
+      orderEntry.setExported(true);
+
+      // The workspace module depends on all libraries (including aars). All resource modules
+      // depend on the workspace module, and hence transitively depend on all the libraries. As a
+      // result, there is no need to explicitly attach libraries to each resource module. Doing
+      // so only increases the number of order entries, which exacerbates issues like b/187413558
+      // where the Kotlin plugin does calculations proportional to the # of order entries.
       if (attachAarForResourceModule.getValue()) {
         for (String libraryName : androidResourceModule.resourceLibraryKeys) {
           Library lib = libraryTable.getLibraryByName(libraryName);
