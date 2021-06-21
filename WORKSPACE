@@ -198,6 +198,14 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/1347/120940/scala-intellij-bin-2021.1.21.zip",
 )
 
+# Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
+http_archive(
+    name = "scala_2021_2",
+    build_file_content = _SCALA_BUILD_FILE,
+    sha256 = "c3156577ba6233171099a49c1f419040aa89d390c8fa1e6a094cd1c566a02775",
+    url = "https://plugins.jetbrains.com/files/1347/121879/scala-intellij-bin-2021.2.9.zip",
+)
+
 # The plugin api for Android Studio 4.2. This is required to build ASwB,
 # and run integration tests.
 http_archive(
