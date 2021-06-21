@@ -150,6 +150,14 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/9568/120583/go-211.7442.27.zip",
 )
 
+# Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
+http_archive(
+    name = "go_2021_2",
+    build_file_content = _GO_BUILD_FILE,
+    sha256 = "ebee14208d10049ea564d4797393cf6206b40f3e573aeabd90f3d7a099f4b8ed",
+    url = "https://plugins.jetbrains.com/files/9568/122271/go-212.4037.9.zip",
+)
+
 _SCALA_BUILD_FILE = """
 java_import(
     name = "scala",
