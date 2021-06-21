@@ -118,6 +118,14 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/7322/122104/python-ce-211.7442.53.zip",
 )
 
+# Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
+http_archive(
+    name = "python_2021_2",
+    build_file_content = _PYTHON_CE_BUILD_FILE,
+    sha256 = "ada2dbf435cc8678fcf8b0bd3d87094cf65a4e5ec1d09f79c81b155f6252646a",
+    url = "https://plugins.jetbrains.com/files/7322/122402/python-ce-212.4037.52.zip",
+)
+
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
