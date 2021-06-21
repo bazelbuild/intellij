@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.sync.projectstructure;
 
 import static com.google.common.base.Verify.verify;
+import static com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY;
 import static java.util.stream.Collectors.toSet;
 
 import com.android.annotations.VisibleForTesting;
@@ -25,7 +26,6 @@ import com.android.tools.idea.projectsystem.NamedIdeaSourceProviderBuilder;
 import com.android.tools.idea.projectsystem.ScopeType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -77,8 +77,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetProperties;
@@ -146,16 +146,14 @@ public class BlazeAndroidProjectStructureSyncer {
       return;
     }
 
-    // Create android resource modules
-    // Because we're setting up dependencies, the modules have to exist before we configure them
-    Map<TargetKey, AndroidResourceModule> targetToAndroidResourceModule = Maps.newHashMap();
-    for (AndroidResourceModule androidResourceModule :
-        syncData.importResult.androidResourceModules) {
-      targetToAndroidResourceModule.put(androidResourceModule.targetKey, androidResourceModule);
-      if (BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
-          androidResourceModule.targetKey)) {
-        continue;
-      }
+    // Create android resource modules for all targets excluding those that end up getting
+    // associated with the workspace module.
+    List<AndroidResourceModule> nonWorkspaceResourceModules =
+        syncData.importResult.androidResourceModules.stream()
+            .filter(m -> !WORKSPACE_RESOURCES_TARGET_KEY.equals(m.targetKey))
+            .collect(Collectors.toList());
+
+    for (AndroidResourceModule androidResourceModule : nonWorkspaceResourceModules) {
       String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
       Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
       TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
@@ -170,17 +168,9 @@ public class BlazeAndroidProjectStructureSyncer {
     // Configure android resource modules
     int totalOrderEntries = 0;
     Set<File> existingRoots = Sets.newHashSet();
+    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
     LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
-    for (AndroidResourceModule androidResourceModule : targetToAndroidResourceModule.values()) {
-      if (BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
-          androidResourceModule.targetKey)) {
-        continue;
-      }
-
-      ArtifactLocationDecoder artifactLocationDecoder =
-          blazeProjectData.getArtifactLocationDecoder();
-
-      // Calculate manifest if this is not the workspace resource module
+    for (AndroidResourceModule androidResourceModule : nonWorkspaceResourceModules) {
       TargetIdeInfo target =
           Preconditions.checkNotNull(
               blazeProjectData.getTargetMap().get(androidResourceModule.targetKey));
@@ -331,8 +321,7 @@ public class BlazeAndroidProjectStructureSyncer {
       String modulePackage;
       File moduleDirectory;
       Module module;
-      if (BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY.equals(
-          androidResourceModule.targetKey)) {
+      if (WORKSPACE_RESOURCES_TARGET_KEY.equals(androidResourceModule.targetKey)) {
         // Until ~Jan 2021, we used to create a separate module (.workspace.resources) that included
         // resources that were used by project, but not included in any other resource module.
         // Starting with cl/350385526, these resources are attached to the workspace module itself
