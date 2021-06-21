@@ -348,6 +348,10 @@ public class BlazeAndroidProjectStructureSyncer {
                 moduleNameForAndroidModule(androidResourceModule.targetKey));
         if (module == null) {
           module = workspaceModule;
+        } else {
+          // b/177279296: log a warning so we check our metrics for whether there are still users
+          // who have workspace resource modules.
+          log.warn("Still using a separate module for workspace resources.");
         }
       } else {
         TargetIdeInfo target =
