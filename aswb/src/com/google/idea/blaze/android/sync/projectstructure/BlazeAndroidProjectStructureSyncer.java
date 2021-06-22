@@ -386,28 +386,6 @@ public class BlazeAndroidProjectStructureSyncer {
         : new File(moduleDirectory, "AndroidManifest.xml");
   }
 
-  /** Updates the shared workspace module with android info. */
-  private static void updateWorkspaceModuleFacetInMemoryState(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      Module workspaceModule,
-      AndroidSdkPlatform androidSdkPlatform,
-      boolean configAndroidJava8Libs) {
-    File moduleDirectory = workspaceRoot.directory();
-    String resourceJavaPackage = ":workspace";
-    updateModuleFacetInMemoryState(
-        project,
-        context,
-        androidSdkPlatform,
-        workspaceModule,
-        moduleDirectory,
-        null,
-        resourceJavaPackage,
-        ImmutableList.of(),
-        configAndroidJava8Libs);
-  }
-
   /**
    * Parses the provided manifest to calculate applicationId. Returns the provided default if the
    * manifest file does not exist, or is invalid
@@ -449,6 +427,28 @@ public class BlazeAndroidProjectStructureSyncer {
       }
     }
     return defaultId;
+  }
+
+  /** Updates the shared workspace module with android info. */
+  private static void updateWorkspaceModuleFacetInMemoryState(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      Module workspaceModule,
+      AndroidSdkPlatform androidSdkPlatform,
+      boolean configAndroidJava8Libs) {
+    File moduleDirectory = workspaceRoot.directory();
+    String resourceJavaPackage = ":workspace";
+    updateModuleFacetInMemoryState(
+        project,
+        context,
+        androidSdkPlatform,
+        workspaceModule,
+        moduleDirectory,
+        null,
+        resourceJavaPackage,
+        ImmutableList.of(),
+        configAndroidJava8Libs);
   }
 
   private static void updateModuleFacetInMemoryState(
