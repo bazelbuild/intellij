@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.sync.projectstructure;
 
-import static com.google.common.base.Verify.verify;
 import static com.google.idea.blaze.android.sync.importer.BlazeAndroidWorkspaceImporter.WORKSPACE_RESOURCES_TARGET_KEY;
 import static java.util.stream.Collectors.toSet;
 
@@ -25,6 +24,7 @@ import com.android.tools.idea.projectsystem.NamedIdeaSourceProvider;
 import com.android.tools.idea.projectsystem.NamedIdeaSourceProviderBuilder;
 import com.android.tools.idea.projectsystem.ScopeType;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
@@ -57,7 +57,7 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.java.AndroidBlazeRules;
+import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -95,6 +95,10 @@ public class BlazeAndroidProjectStructureSyncer {
   private static final BoolExperiment asyncFetchApplicationId =
       new BoolExperiment("aswb.sync.async.appid", true);
 
+  /**
+   * Updates the IntelliJ project structure to have a module per android_library with resources that
+   * is present in the source view.
+   */
   public static void updateProjectStructure(
       Project project,
       BlazeContext context,
@@ -107,9 +111,7 @@ public class BlazeAndroidProjectStructureSyncer {
       boolean isAndroidWorkspace) {
     if (!isAndroidWorkspace) {
       AndroidFacetModuleCustomizer.removeAndroidFacet(workspaceModule);
-      // This is an error and not a warning because the workspace type should always be ANDROID
-      // as long as the blaze android plugin is present.  If this method executes but the workspace
-      // isn't type ANDROID then something fundamentally wrong happened.
+      // Workspace type should always be ANDROID as long as the blaze android plugin is present.
       log.error(
           "No android workspace found for project \""
               + project.getName()
@@ -120,19 +122,9 @@ public class BlazeAndroidProjectStructureSyncer {
 
     BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
     if (syncData == null) {
-      // It's possible for the sync to have failed in a way that BlazeAndroidSyncData isn't
-      // populated in BlazeProjectData.  E.g. If post-sync tasks crashed before
-      // BlazeAndroidSyncPlugin#updateSyncState could run.  These scenarios are likely caused by
-      // errors such as connection issues or a system service level failures. These errors
-      // are reported in Blaze Console and the only thing to do is to fix them and re-sync.
-      //
-      // There is a special case where the first directory-only syncs after importing a new project
-      // will always have no BlazeAndroidSyncData. We can differentiate these from real failures
-      // by checking if there's project data from a previous sync.  If there is, then this sync
-      // isn't a special case directory-only sync. Note directory-only syncs reuse cached blaze
-      // project data so only the first directory-only syncs before a real sync will have
-      // no blaze project data.
       if (projectDataFromPreviousSync != null) {
+        // If the prior sync had android sync data, but the current one doesn't, then something
+        // really bad happened. Nothing's gonna work until this is fixed.
         context.output(
             PrintOutput.error(
                 "The IDE was not able to retrieve the necessary information from Blaze. Many"
@@ -146,36 +138,29 @@ public class BlazeAndroidProjectStructureSyncer {
       return;
     }
 
-    // Create android resource modules for all targets excluding those that end up getting
-    // associated with the workspace module.
+    // We need to create android resource modules for all targets excluding those that end up
+    // getting associated with the workspace module.
     List<AndroidResourceModule> nonWorkspaceResourceModules =
         syncData.importResult.androidResourceModules.stream()
             .filter(m -> !WORKSPACE_RESOURCES_TARGET_KEY.equals(m.targetKey))
             .collect(Collectors.toList());
 
-    for (AndroidResourceModule androidResourceModule : nonWorkspaceResourceModules) {
-      String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
-      Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
-      TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
-      AndroidFacetModuleCustomizer.createAndroidFacet(
-          module,
-          target != null
-              && target.kindIsOneOf(
-                  AndroidBlazeRules.RuleTypes.ANDROID_BINARY.getKind(),
-                  AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind()));
-    }
-
-    // Configure android resource modules
     int totalOrderEntries = 0;
     Set<File> existingRoots = Sets.newHashSet();
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
     LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project);
-    for (AndroidResourceModule androidResourceModule : nonWorkspaceResourceModules) {
-      TargetIdeInfo target =
-          Preconditions.checkNotNull(
-              blazeProjectData.getTargetMap().get(androidResourceModule.targetKey));
-      AndroidIdeInfo androidIdeInfo = Preconditions.checkNotNull(target.getAndroidIdeInfo());
 
+    for (AndroidResourceModule androidResourceModule : nonWorkspaceResourceModules) {
+      String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
+      Module module = moduleEditor.createModule(moduleName, StdModuleTypes.JAVA);
+
+      TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
+      Verify.verifyNotNull(target);
+      boolean isApp =
+          target.kindIsOneOf(RuleTypes.ANDROID_BINARY.getKind(), RuleTypes.ANDROID_TEST.getKind());
+      AndroidFacetModuleCustomizer.createAndroidFacet(module, isApp);
+
+      AndroidIdeInfo androidIdeInfo = Verify.verifyNotNull(target.getAndroidIdeInfo());
       ArrayList<File> newRoots =
           new ArrayList<>(
               OutputArtifactResolver.resolveAll(
@@ -190,15 +175,12 @@ public class BlazeAndroidProjectStructureSyncer {
         newRoots.add(manifest);
       }
 
-      // Remove existing resource roots to silence the duplicate content root error.
-      // We can only do this if we have cyclic resource dependencies, since otherwise we risk
-      // breaking dependencies within this resource module.
+      // Multiple libraries may end up pointing to files from the same res folder. If we've already
+      // added something as a root, then we skip registering it as a root in another res module.
+      // This works since our dependency graph is cyclic via the workspace module.
       newRoots.removeAll(existingRoots);
       existingRoots.addAll(newRoots);
 
-      String moduleName = moduleNameForAndroidModule(androidResourceModule.targetKey);
-      Module module = moduleEditor.findModule(moduleName);
-      verify(module != null);
       ModifiableRootModel modifiableRootModel = moduleEditor.editModule(module);
       ResourceModuleContentRootCustomizer.setupContentRoots(modifiableRootModel, newRoots);
       modifiableRootModel.addModuleOrderEntry(workspaceModule);
@@ -206,8 +188,8 @@ public class BlazeAndroidProjectStructureSyncer {
 
       // Add a dependency from the workspace to the resource module
       ModuleOrderEntry orderEntry = workspaceModifiableModel.addModuleOrderEntry(module);
-      ++totalOrderEntries;
       orderEntry.setExported(true);
+      ++totalOrderEntries;
 
       // The workspace module depends on all libraries (including aars). All resource modules
       // depend on the workspace module, and hence transitively depend on all the libraries. As a
