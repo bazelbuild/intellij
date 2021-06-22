@@ -43,6 +43,7 @@ java_import(
     jars = glob([
         "clion-*/plugins/c-plugin/lib/*.jar",
         "clion-*/plugins/cidr-base-plugin/lib/*.jar",
+        "clion-*/plugins/cidr-debugger-plugin/lib/*.jar",
         "clion-*/plugins/clion/lib/*.jar",
         "clion-*/plugins/clion-test-google/lib/*.jar",
         "clion-*/plugins/clion-test-catch/lib/*.jar",
