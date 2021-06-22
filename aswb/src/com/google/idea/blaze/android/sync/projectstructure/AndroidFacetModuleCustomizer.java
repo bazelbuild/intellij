@@ -15,11 +15,13 @@
  */
 package com.google.idea.blaze.android.sync.projectstructure;
 
+import com.android.AndroidProjectTypes;
 import com.android.builder.model.AndroidProject;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidFacetProperties;
 
 /** Adds the Android facet to modules imported from {@link AndroidProject}s. */
 public class AndroidFacetModuleCustomizer {
@@ -52,6 +54,13 @@ public class AndroidFacetModuleCustomizer {
   }
 
   private static void configureFacet(AndroidFacet facet, boolean isApp) {
-    AndroidFacetModuleCustomizerCompat.configureFacet(facet, isApp);
+    AndroidFacetProperties facetState = facet.getProperties();
+    facetState.ALLOW_USER_CONFIGURATION = false;
+    facetState.PROJECT_TYPE =
+        isApp ? AndroidProjectTypes.PROJECT_TYPE_APP : AndroidProjectTypes.PROJECT_TYPE_LIBRARY;
+    facetState.MANIFEST_FILE_RELATIVE_PATH = "";
+    facetState.RES_FOLDER_RELATIVE_PATH = "";
+    facetState.ASSETS_FOLDER_RELATIVE_PATH = "";
+    facetState.ENABLE_SOURCES_AUTOGENERATION = false;
   }
 }
