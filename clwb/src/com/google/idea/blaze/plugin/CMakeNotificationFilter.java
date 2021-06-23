@@ -37,7 +37,7 @@ public class CMakeNotificationFilter extends EditorNotifications.Provider<JCompo
   private static final Key<JComponent> KEY = Key.create("CMakeNotificationFilter");
 
   private CMakeNotificationFilter(Project project) {
-    this.delegate = Blaze.isBlazeProject(project) ? null : new CMakeNotificationProvider(project);
+    this.delegate = Blaze.isBlazeProject(project) ? null : new CMakeNotificationProvider();
   }
 
   @Override

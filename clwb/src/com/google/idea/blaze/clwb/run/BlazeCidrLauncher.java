@@ -60,11 +60,11 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.xdebugger.XDebugSession;
-import com.jetbrains.cidr.cpp.execution.CLionRunParameters;
 import com.jetbrains.cidr.cpp.toolchains.CPPDebugger.Kind;
 import com.jetbrains.cidr.execution.CidrConsoleBuilder;
 import com.jetbrains.cidr.execution.CidrLauncher;
 import com.jetbrains.cidr.execution.TrivialInstaller;
+import com.jetbrains.cidr.execution.TrivialRunParameters;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration;
@@ -231,8 +231,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
       TrivialInstaller installer = new TrivialInstaller(commandLine);
       ImmutableList<String> startupCommands = getGdbStartupCommands(workspaceRootDirectory);
-      CLionRunParameters parameters =
-          new CLionRunParameters(
+      TrivialRunParameters parameters =
+          new TrivialRunParameters(
               ToolchainUtils.getToolchain().getDebuggerKind() == Kind.BUNDLED_LLDB
                   ? new LLDBDriverConfiguration()
                   : new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot),
