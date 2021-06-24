@@ -54,6 +54,7 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -678,7 +679,8 @@ public class BlazeCommandRunConfiguration
 
       // finally, update the handler
       config.targetPatterns = targetsUi.getTargetExpressions();
-      config.updateTargetKindAsync(() -> UIUtil.invokeLaterIfNeeded(this::fireEditorStateChanged));
+      config.updateTargetKindAsync(
+          () -> ApplicationManager.getApplication().invokeLater(this::fireEditorStateChanged));
       updateEditor(config);
       if (config.handlerProvider != handlerProvider) {
         updateHandlerEditor(config);

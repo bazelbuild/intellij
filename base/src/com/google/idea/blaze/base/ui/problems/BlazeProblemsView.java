@@ -24,6 +24,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.ErrorTreeElementKind;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -40,7 +41,6 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.MessageCategory;
-import com.intellij.util.ui.UIUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -97,7 +97,7 @@ public class BlazeProblemsView {
               createToolWindow(project, ToolWindowManager.getInstance(project), panel);
               return panel;
             });
-    UIUtil.invokeLaterIfNeeded(uiFuture);
+    ApplicationManager.getApplication().invokeLater(uiFuture);
   }
 
   @Nullable
@@ -302,27 +302,29 @@ public class BlazeProblemsView {
   }
 
   private void updateIcon(BlazeProblemsViewPanel panel) {
-    UIUtil.invokeLaterIfNeeded(
-        () -> {
-          if (project.isDisposed()) {
-            return;
-          }
-          ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
-          if (tw == null) {
-            return;
-          }
-          boolean active = panel.getErrorViewStructure().hasMessages(ALL_MESSAGE_KINDS);
-          tw.setIcon(active ? activeIcon : passiveIcon);
-        });
+    ApplicationManager.getApplication()
+        .invokeLater(
+            () -> {
+              if (project.isDisposed()) {
+                return;
+              }
+              ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
+              if (tw == null) {
+                return;
+              }
+              boolean active = panel.getErrorViewStructure().hasMessages(ALL_MESSAGE_KINDS);
+              tw.setIcon(active ? activeIcon : passiveIcon);
+            });
   }
 
   private void focusProblemsView() {
-    UIUtil.invokeLaterIfNeeded(
-        () -> {
-          ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
-          if (tw != null) {
-            tw.activate(null, false, false);
-          }
-        });
+    ApplicationManager.getApplication()
+        .invokeLater(
+            () -> {
+              ToolWindow tw = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
+              if (tw != null) {
+                tw.activate(null, false, false);
+              }
+            });
   }
 }

@@ -33,7 +33,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.util.ui.UIUtil;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -54,8 +53,9 @@ class BlazeProjectCreator {
     try {
       doCreate();
     } catch (final IOException e) {
-      UIUtil.invokeLaterIfNeeded(
-          () -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
+      ApplicationManager.getApplication()
+          .invokeLater(
+              () -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
     }
   }
 
