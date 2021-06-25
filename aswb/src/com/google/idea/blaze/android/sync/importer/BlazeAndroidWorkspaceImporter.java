@@ -31,13 +31,13 @@ import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceWar
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
+import com.google.idea.blaze.android.sync.model.MergedAarLibrary;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Output;
@@ -56,6 +56,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
@@ -445,10 +446,13 @@ public class BlazeAndroidWorkspaceImporter {
   }
 
   static class LibraryFactory {
-    private Map<String, AarLibrary> aarLibraries = new HashMap<>();
+    private final Map<String, MergedAarLibrary.Builder> aarLibraries = new HashMap<>();
 
-    public ImmutableMap<String, AarLibrary> getAarLibs() {
-      return ImmutableMap.copyOf(aarLibraries);
+    public ImmutableMap<String, MergedAarLibrary> getAarLibs() {
+      return aarLibraries.keySet().stream()
+          .collect(
+              ImmutableMap.toImmutableMap(
+                  Function.identity(), key -> aarLibraries.get(key).build()));
     }
 
     /**
@@ -470,15 +474,16 @@ public class BlazeAndroidWorkspaceImporter {
       String resourcePackage =
           BlazeImportUtil.javaResourcePackageFor(target, /* inferPackage = */ true);
 
+      // aar_import should only have one jar (a merged jar from the AAR's jars).
+      LibraryArtifact firstJar = target.getJavaIdeInfo().getJars().get(0);
+      AarLibrary aarLibrary = new AarLibrary(firstJar, target.getAndroidAarIdeInfo().getAar());
       String libraryKey =
-          LibraryKey.libraryNameFromArtifactLocation(target.getAndroidAarIdeInfo().getAar());
-      if (!aarLibraries.containsKey(libraryKey)) {
-        // aar_import should only have one jar (a merged jar from the AAR's jars).
-        LibraryArtifact firstJar = target.getJavaIdeInfo().getJars().iterator().next();
-        aarLibraries.put(
-            libraryKey,
-            new AarLibrary(firstJar, target.getAndroidAarIdeInfo().getAar(), resourcePackage));
-      }
+          MergedAarLibrary.Builder.computeLibraryKey(resourcePackage, aarLibrary).toString();
+      aarLibraries
+          .computeIfAbsent(
+              libraryKey, key -> new MergedAarLibrary.Builder().setResourcePackage(resourcePackage))
+          .addAar(aarLibrary);
+
       return libraryKey;
     }
 
@@ -494,11 +499,14 @@ public class BlazeAndroidWorkspaceImporter {
       if (aar == null) {
         return null;
       }
-      String libraryKey = LibraryKey.libraryNameFromArtifactLocation(aar);
-      if (!aarLibraries.containsKey(libraryKey)) {
-        // aar_import should only have one jar (a merged jar from the AAR's jars).
-        aarLibraries.put(libraryKey, new AarLibrary(aar, resourcePackage));
-      }
+
+      AarLibrary aarLibrary = new AarLibrary(aar);
+      String libraryKey =
+          MergedAarLibrary.Builder.computeLibraryKey(resourcePackage, aarLibrary).toString();
+      aarLibraries
+          .computeIfAbsent(
+              libraryKey, key -> new MergedAarLibrary.Builder().setResourcePackage(resourcePackage))
+          .addAar(aarLibrary);
       return libraryKey;
     }
   }

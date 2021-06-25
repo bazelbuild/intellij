@@ -23,6 +23,7 @@ import com.android.tools.idea.res.AarResourceRepositoryCache;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
+import com.google.idea.blaze.android.library.UnpackedAarsTestUtil;
 import com.google.idea.blaze.android.targetmapbuilder.NbAarTarget;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
@@ -287,8 +288,9 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
   }
 
   private VirtualFile getResourceFile(File aarLibraryFile, String relativePathToResourceFile) {
-    String cacheKey = UnpackedAars.cacheKeyForAar(aarLibraryFile.getAbsolutePath());
-    File resourceDir = UnpackedAars.getInstance(getProject()).getResourceDirectory(cacheKey);
+    String cacheKey = UnpackedAars.cacheKeyForSingleAar(aarLibraryFile.getAbsolutePath());
+    File aarDir = UnpackedAars.getInstance(getProject()).getSingleAarDir(cacheKey);
+    File resourceDir = UnpackedAarsTestUtil.getResourceDirectory(aarDir);
     return VirtualFileManager.getInstance()
         .findFileByUrl(
             URLUtil.FILE_PROTOCOL

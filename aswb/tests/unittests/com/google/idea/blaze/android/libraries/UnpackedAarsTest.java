@@ -27,13 +27,13 @@ import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
+import com.google.idea.blaze.android.sync.model.MergedAarLibrary;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -146,19 +146,21 @@ public class UnpackedAarsTest extends BlazeTestCase {
     UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
     File aarCacheDir = unpackedAars.getCacheDir();
     new File(aarCacheDir, "outOfDate.aar").mkdirs();
+    // out of date merged aar directory
+    new File(aarCacheDir, "foo.merged.aar").mkdirs();
 
     // non-existent aar. It's not expected but for some corner cases, aars may not be accessible
     // e.g. objfs has been expired which cannot be read any more.
     String resourceAar = "resource.aar";
     ArtifactLocation resourceAarArtifactLocation = generateArtifactLocation(resourceAar);
-    AarLibrary resourceAarLibrary = new AarLibrary(resourceAarArtifactLocation, null);
+    AarLibrary resourceAarLibrary = new AarLibrary(resourceAarArtifactLocation);
+    MergedAarLibrary mergedAarLibrary =
+        new MergedAarLibrary(null, ImmutableList.of(resourceAarLibrary));
 
     BlazeAndroidImportResult importResult =
         new BlazeAndroidImportResult(
             ImmutableList.of(),
-            ImmutableMap.of(
-                LibraryKey.libraryNameFromArtifactLocation(resourceAarArtifactLocation),
-                resourceAarLibrary),
+            ImmutableMap.of(mergedAarLibrary.key.toString(), mergedAarLibrary),
             ImmutableList.of(),
             ImmutableList.of());
     BlazeAndroidSyncData syncData =
@@ -197,18 +199,37 @@ public class UnpackedAarsTest extends BlazeTestCase {
     String stringsXmlRelativePath = "res/values/strings.xml";
     new File(aarCacheDir, "outOFDate.aar").mkdirs();
 
-    // new aar without jar files
+    // new single aar without jar files
     String resourceAar = "resource.aar";
     AarLibraryFileBuilder.aar(workspaceRoot, resourceAar)
         .src(stringsXmlRelativePath, ImmutableList.of(STRINGS_XML_CONTENT))
         .build();
     ArtifactLocation resourceAarArtifactLocation = generateArtifactLocation(resourceAar);
-    AarLibrary resourceAarLibrary = new AarLibrary(resourceAarArtifactLocation, null);
+    AarLibrary resourceAarLibrary = new AarLibrary(resourceAarArtifactLocation);
+    MergedAarLibrary mergedResourceAarLibrary =
+        new MergedAarLibrary(null, ImmutableList.of(resourceAarLibrary));
 
-    // new aar with jar files
+    // new aars share package name which should be merged after sync
+    String fooAar = "foo.aar";
+    AarLibraryFileBuilder.aar(workspaceRoot, fooAar)
+        .src(stringsXmlRelativePath, ImmutableList.of(STRINGS_XML_CONTENT))
+        .build();
+    ArtifactLocation fooAarAarArtifactLocation = generateArtifactLocation(fooAar);
+    AarLibrary fooAarLibrary = new AarLibrary(fooAarAarArtifactLocation);
+
+    String barAar = "bar.aar";
+    String colorsXmlRelativePath = "res/values/colors.xml";
+    AarLibraryFileBuilder.aar(workspaceRoot, barAar)
+        .src(colorsXmlRelativePath, ImmutableList.of(COLORS_XML_CONTENT))
+        .build();
+    ArtifactLocation barAarAarArtifactLocation = generateArtifactLocation(barAar);
+    AarLibrary barAarLibrary = new AarLibrary(barAarAarArtifactLocation);
+    MergedAarLibrary foobarMergedResourceAarLibrary =
+        new MergedAarLibrary("foo.bar", ImmutableList.of(fooAarLibrary, barAarLibrary));
+
+    // new single aar with jar files
     String importedAar = "import.aar";
     String importedAarJar = "importAar.jar";
-    String colorsXmlRelativePath = "res/values/colors.xml";
     AarLibraryFileBuilder.aar(workspaceRoot, importedAar)
         .src(colorsXmlRelativePath, ImmutableList.of(COLORS_XML_CONTENT))
         .build();
@@ -222,17 +243,20 @@ public class UnpackedAarsTest extends BlazeTestCase {
     ArtifactLocation jarArtifactLocation = generateArtifactLocation(importedAarJar);
     LibraryArtifact libraryArtifact =
         LibraryArtifact.builder().setInterfaceJar(jarArtifactLocation).build();
-    AarLibrary importedAarLibrary =
-        new AarLibrary(libraryArtifact, importedAarArtifactLocation, null);
+    AarLibrary importedAarLibrary = new AarLibrary(libraryArtifact, importedAarArtifactLocation);
+    MergedAarLibrary mergedImportedAarLibrary =
+        new MergedAarLibrary("com.google.foo.gen", ImmutableList.of(importedAarLibrary));
 
     BlazeAndroidImportResult importResult =
         new BlazeAndroidImportResult(
             ImmutableList.of(),
             ImmutableMap.of(
-                LibraryKey.libraryNameFromArtifactLocation(resourceAarArtifactLocation),
-                resourceAarLibrary,
-                LibraryKey.libraryNameFromArtifactLocation(importedAarArtifactLocation),
-                importedAarLibrary),
+                mergedResourceAarLibrary.key.toString(),
+                mergedResourceAarLibrary,
+                foobarMergedResourceAarLibrary.key.toString(),
+                foobarMergedResourceAarLibrary,
+                mergedImportedAarLibrary.key.toString(),
+                mergedImportedAarLibrary),
             ImmutableList.of(),
             ImmutableList.of());
     BlazeAndroidSyncData syncData =
@@ -256,15 +280,27 @@ public class UnpackedAarsTest extends BlazeTestCase {
                     null,
                     SyncMode.INCREMENTAL));
 
-    assertThat(aarCacheDir.list()).hasLength(2);
-    File resourceAarDir = unpackedAars.getAarDir(artifactLocationDecoder, resourceAarLibrary);
-    File importedAarDir = unpackedAars.getAarDir(artifactLocationDecoder, importedAarLibrary);
-    assertThat(aarCacheDir.listFiles()).asList().containsExactly(resourceAarDir, importedAarDir);
+    assertThat(aarCacheDir.list()).hasLength(5);
+    File resourceAarDir = unpackedAars.getSingleAarDir(artifactLocationDecoder, resourceAarLibrary);
+    File importedAarDir = unpackedAars.getSingleAarDir(artifactLocationDecoder, importedAarLibrary);
+    File fooAarDir = unpackedAars.getSingleAarDir(artifactLocationDecoder, fooAarLibrary);
+    File barAarDir = unpackedAars.getSingleAarDir(artifactLocationDecoder, barAarLibrary);
+    File mergedAarDir =
+        unpackedAars.getMergedAarDir(artifactLocationDecoder, foobarMergedResourceAarLibrary);
+    assertThat(aarCacheDir.listFiles())
+        .asList()
+        .containsExactly(resourceAarDir, importedAarDir, fooAarDir, barAarDir, mergedAarDir);
     assertThat(resourceAarDir.list()).asList().containsExactly("aar.timestamp", "res");
     assertThat(importedAarDir.list()).asList().containsExactly("aar.timestamp", "res", "jars");
+    assertThat(fooAarDir.list()).asList().containsExactly("aar.timestamp", "res");
+    assertThat(barAarDir.list()).asList().containsExactly("aar.timestamp", "res");
+    assertThat(mergedAarDir.list()).asList().containsExactly("aar.timestamp", "res");
 
     assertThat(new File(resourceAarDir, "res").list()).hasLength(1);
     assertThat(new File(importedAarDir, "res").list()).hasLength(1);
+    assertThat(new File(fooAarDir, "res").list()).hasLength(1);
+    assertThat(new File(barAarDir, "res").list()).hasLength(1);
+    assertThat(new File(mergedAarDir, "res").list()).hasLength(1);
 
     assertThat(
             new String(
@@ -276,13 +312,29 @@ public class UnpackedAarsTest extends BlazeTestCase {
                 Files.readAllBytes(new File(importedAarDir, colorsXmlRelativePath).toPath()),
                 UTF_8))
         .isEqualTo(COLORS_XML_CONTENT);
+    assertThat(
+            new String(
+                Files.readAllBytes(new File(fooAarDir, stringsXmlRelativePath).toPath()), UTF_8))
+        .isEqualTo(STRINGS_XML_CONTENT);
+    assertThat(
+            new String(
+                Files.readAllBytes(new File(barAarDir, colorsXmlRelativePath).toPath()), UTF_8))
+        .isEqualTo(COLORS_XML_CONTENT);
+    assertThat(
+            new String(
+                Files.readAllBytes(new File(mergedAarDir, stringsXmlRelativePath).toPath()), UTF_8))
+        .isEqualTo(STRINGS_XML_CONTENT);
+    assertThat(
+            new String(
+                Files.readAllBytes(new File(mergedAarDir, colorsXmlRelativePath).toPath()), UTF_8))
+        .isEqualTo(COLORS_XML_CONTENT);
     byte[] actualJarContent =
         Files.readAllBytes(new File(importedAarDir, "jars/classes_and_libs_merged.jar").toPath());
     byte[] expectedJarContent = Files.readAllBytes(jar.toPath());
     assertThat(actualJarContent).isEqualTo(expectedJarContent);
 
     String messages = writingOutputSink.getMessages();
-    assertThat(messages).contains("Copied 2 AARs");
+    assertThat(messages).contains("Copied 4 AARs");
     assertThat(messages).contains("Removed 1 AARs");
   }
 

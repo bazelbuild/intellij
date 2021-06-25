@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.base.io;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import com.intellij.openapi.components.ServiceManager;
@@ -25,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** File system operations. Mocked out in tests involving file manipulations. */
@@ -63,6 +67,15 @@ public class FileOperationProvider {
     return file.listFiles();
   }
 
+  public ImmutableList<Path> listFilesRecursively(Path path) {
+    try (Stream<Path> stream =
+        Files.find(path, Integer.MAX_VALUE, (filePath, fileAttr) -> fileAttr.isRegularFile())) {
+      return stream.collect(toImmutableList());
+    } catch (IOException e) {
+      return ImmutableList.of();
+    }
+  }
+
   public void createSymbolicLink(File link, File target) throws IOException {
     Files.createSymbolicLink(link.toPath(), target.toPath());
   }
@@ -86,11 +99,19 @@ public class FileOperationProvider {
   }
 
   public File copy(File source, File target, CopyOption... options) throws IOException {
-    return Files.copy(source.toPath(), target.toPath(), options).toFile();
+    return copy(source.toPath(), target.toPath(), options).toFile();
+  }
+
+  public Path copy(Path source, Path target, CopyOption... options) throws IOException {
+    return Files.copy(source, target, options);
   }
 
   public boolean mkdirs(File file) {
     return file.mkdirs();
+  }
+
+  public Path mkdirs(Path path) throws IOException {
+    return Files.createDirectories(path);
   }
 
   public void deleteRecursively(File file) throws IOException {
@@ -104,10 +125,20 @@ public class FileOperationProvider {
    * @see RecursiveDeleteOption#ALLOW_INSECURE
    */
   public void deleteRecursively(File file, boolean allowInsecureDelete) throws IOException {
+    deleteRecursively(file.toPath(), allowInsecureDelete);
+  }
+
+  /**
+   * Deletes the file or directory at the given path recursively, allowing insecure delete according
+   * to {@code allowInsecureDelete}.
+   *
+   * @see RecursiveDeleteOption#ALLOW_INSECURE
+   */
+  public void deleteRecursively(Path path, boolean allowInsecureDelete) throws IOException {
     if (allowInsecureDelete) {
-      MoreFiles.deleteRecursively(file.toPath(), RecursiveDeleteOption.ALLOW_INSECURE);
+      MoreFiles.deleteRecursively(path, RecursiveDeleteOption.ALLOW_INSECURE);
     } else {
-      MoreFiles.deleteRecursively(file.toPath());
+      MoreFiles.deleteRecursively(path);
     }
   }
 

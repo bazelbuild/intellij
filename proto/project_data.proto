@@ -171,7 +171,12 @@ message BlazeJarLibrary {
 message AarLibrary {
   LibraryArtifact library_artifact = 1;
   ArtifactLocation aar_artifact = 2;
-  string resource_package = 3;
+  string resource_package = 3 [deprecated = true];
+}
+
+message MergedAarLibrary {
+  repeated AarLibrary aars = 1;
+  string resource_package = 2;
 }
 
 message BlazeResourceLibrary {
@@ -187,6 +192,7 @@ message BlazeLibrary {
     BlazeJarLibrary blaze_jar_library = 2;
     AarLibrary aar_library = 3;
     BlazeResourceLibrary blaze_resource_library = 4;
+    MergedAarLibrary merged_aar_library = 5;
   }
 }
 

@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
+import com.google.idea.blaze.android.sync.model.MergedAarLibrary;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -91,21 +92,24 @@ public class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
 
     private final Set<String> aarJarsPaths;
 
-    public AarJarFilter(Collection<AarLibrary> aarLibraries) {
+    public AarJarFilter(Collection<MergedAarLibrary> aarLibraries) {
       Set<String> aarJarsPaths = new HashSet<>();
-      for (AarLibrary aarLibrary : aarLibraries) {
-        if (aarLibrary.libraryArtifact != null) {
-          ArtifactLocation location = aarLibrary.libraryArtifact.jarForIntellijLibrary();
-          // Keep track of the relative paths of the "configuration". It might be that we have a
-          // host
-          // config (x86-64) and various target configurations (armv7a, aarch64).
-          // In the TargetMap we pick one of the configuration targets. We then use the TargetMap
-          // to figure out aar libraries. However, what we picked might not match up with jdeps, and
-          // we'd end up creating a jar library from jdeps. Then when we compare the aar
-          // against the jar library, it won't match unless we ignore the configuration segment.
-          String configurationLessPath = location.getRelativePath();
-          if (!configurationLessPath.isEmpty()) {
-            aarJarsPaths.add(configurationLessPath);
+      for (MergedAarLibrary mergedAarLibrary : aarLibraries) {
+        for (AarLibrary aarLibrary : mergedAarLibrary.aars) {
+          if (aarLibrary.libraryArtifact != null) {
+            ArtifactLocation location = aarLibrary.libraryArtifact.jarForIntellijLibrary();
+            // Keep track of the relative paths of the "configuration". It might be that we have a
+            // host
+            // config (x86-64) and various target configurations (armv7a, aarch64).
+            // In the TargetMap we pick one of the configuration targets. We then use the TargetMap
+            // to figure out aar libraries. However, what we picked might not match up with jdeps,
+            // and
+            // we'd end up creating a jar library from jdeps. Then when we compare the aar
+            // against the jar library, it won't match unless we ignore the configuration segment.
+            String configurationLessPath = location.getRelativePath();
+            if (!configurationLessPath.isEmpty()) {
+              aarJarsPaths.add(configurationLessPath);
+            }
           }
         }
       }

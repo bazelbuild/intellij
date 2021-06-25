@@ -35,6 +35,7 @@ import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceRet
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
+import com.google.idea.blaze.android.sync.model.MergedAarLibrary;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
@@ -47,7 +48,6 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.io.FileOperationProvider;
-import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Kind.Provider;
@@ -263,21 +263,26 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .res_folder("res", "resources.aar"));
 
     BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
+
+    MergedAarLibrary expectedAarLibrary1 =
+        new MergedAarLibrary(
+            "aarLibrary", ImmutableList.of(new AarLibrary(source("aarLibrary/resources.aar"))));
+    MergedAarLibrary expectedAarLibrary2 =
+        new MergedAarLibrary(
+            "example", ImmutableList.of(new AarLibrary(source("aarLibrary/resources.aar"))));
     AndroidResourceModule expectedAndroidResourceModule1 =
         AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//example:lib")))
-            .addResourceLibraryKey(
-                LibraryKey.libraryNameFromArtifactLocation(source("aarLibrary/resources.aar")))
+            .addResourceLibraryKey(expectedAarLibrary2.key.toString())
             .build();
     AndroidResourceModule expectedAndroidResourceModule2 =
         AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//example1:lib")))
             .addResourceAndTransitiveResource(source("example1/res"))
-            .addResourceLibraryKey(
-                LibraryKey.libraryNameFromArtifactLocation(source("aarLibrary/resources.aar")))
+            .addResourceLibraryKey(expectedAarLibrary1.key.toString())
             .addTransitiveResourceDependency("//aarLibrary:lib")
             .build();
 
     assertThat(result.aarLibraries.values())
-        .containsExactly(new AarLibrary(source("aarLibrary/resources.aar"), "aarLibrary"));
+        .containsExactly(expectedAarLibrary1, expectedAarLibrary2);
     assertThat(result.androidResourceModules)
         .containsExactly(expectedAndroidResourceModule1, expectedAndroidResourceModule2);
   }
@@ -328,9 +333,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             .addResourceAndTransitiveResource(source("java/apps/example/res"))
             .addTransitiveResource(source("java/apps/example/lib0/res"))
             .addTransitiveResource(source("java/apps/example/lib1/res"))
-            .addResourceLibraryKey(
-                LibraryKey.libraryNameFromArtifactLocation(
-                    source("java/libraries/shared/resources.aar")))
+            .addResourceLibraryKey("libraries.shared")
             .addTransitiveResourceDependency("//java/apps/example/lib0:lib0")
             .addTransitiveResourceDependency("//java/apps/example/lib1:lib1")
             .addTransitiveResourceDependency("//java/libraries/shared:shared")
@@ -340,9 +343,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 TargetKey.forPlainTarget(Label.create("//java/apps/example/lib0:lib0")))
             .addResourceAndTransitiveResource(source("java/apps/example/lib0/res"))
             .addTransitiveResource(source("java/apps/example/lib1/res"))
-            .addResourceLibraryKey(
-                LibraryKey.libraryNameFromArtifactLocation(
-                    source("java/libraries/shared/resources.aar")))
+            .addResourceLibraryKey("libraries.shared")
             .addTransitiveResourceDependency("//java/apps/example/lib1:lib1")
             .addTransitiveResourceDependency("//java/libraries/shared:shared")
             .build();
@@ -350,9 +351,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         AndroidResourceModule.builder(
                 TargetKey.forPlainTarget(Label.create("//java/apps/example/lib1:lib1")))
             .addResourceAndTransitiveResource(source("java/apps/example/lib1/res"))
-            .addResourceLibraryKey(
-                LibraryKey.libraryNameFromArtifactLocation(
-                    source("java/libraries/shared/resources.aar")))
+            .addResourceLibraryKey("libraries.shared")
             .addTransitiveResourceDependency("//java/libraries/shared:shared")
             .build();
     errorCollector.assertNoIssues();
@@ -486,21 +485,75 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
     errorCollector.assertNoIssues();
+    MergedAarLibrary expectedAar =
+        new MergedAarLibrary(
+            "com.google.android.assets.quantum",
+            ImmutableList.of(
+                new AarLibrary(source("java/com/google/android/assets/quantum/resources.aar"))));
     assertThat(result.androidResourceModules)
         .containsExactly(
             AndroidResourceModule.builder(
                     TargetKey.forPlainTarget(Label.create("//java/example:resources")))
                 .addResourceAndTransitiveResource(source("java/example/res"))
                 .addTransitiveResourceDependency("//java/com/google/android/assets/quantum:values")
-                .addResourceLibraryKey(
-                    LibraryKey.libraryNameFromArtifactLocation(
-                        source("java/com/google/android/assets/quantum/resources.aar")))
+                .addResourceLibraryKey(expectedAar.key.toString())
+                .build());
+    assertThat(result.aarLibraries.values()).containsExactly(expectedAar);
+  }
+
+  @Test
+  public void testAndroidResourceImport_mergedAarsWithSamePackageName() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/example"))))
+            .build();
+    TargetMap targetMap =
+        targetMap(
+            android_library("//foo/bar:values")
+                .manifest("AndroidManifest.xml")
+                .res_folder("res", "resources.aar"),
+            android_library("//java/com/google/android/assets/quantum:values")
+                .manifest("AndroidManifest.xml")
+                .res_folder("res", "resources.aar"),
+            android_library("//java/com/google/android/assets/quantum:drawable")
+                .manifest("AndroidManifest.xml")
+                .res_folder("res", "drawable.aar"),
+            android_library("//java/example:resources")
+                .manifest("AndroidManifest.xml")
+                .res("res")
+                .dep(
+                    "//java/com/google/android/assets/quantum:values",
+                    "//java/com/google/android/assets/quantum:drawable",
+                    "//foo/bar:values"));
+
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
+    errorCollector.assertNoIssues();
+
+    MergedAarLibrary expectedMergedAarLibrary =
+        new MergedAarLibrary(
+            "com.google.android.assets.quantum",
+            ImmutableList.of(
+                new AarLibrary(source("java/com/google/android/assets/quantum/resources.aar")),
+                new AarLibrary(source("java/com/google/android/assets/quantum/drawable.aar"))));
+    MergedAarLibrary expectedSingleAarLibrary =
+        new MergedAarLibrary(
+            "foo.bar", ImmutableList.of(new AarLibrary(source("foo/bar/resources.aar"))));
+    assertThat(result.androidResourceModules)
+        .containsExactly(
+            AndroidResourceModule.builder(
+                    TargetKey.forPlainTarget(Label.create("//java/example:resources")))
+                .addResourceAndTransitiveResource(source("java/example/res"))
+                .addTransitiveResourceDependency("//java/com/google/android/assets/quantum:values")
+                .addTransitiveResourceDependency(
+                    "//java/com/google/android/assets/quantum:drawable")
+                .addTransitiveResourceDependency("//foo/bar:values")
+                .addResourceLibraryKey(expectedMergedAarLibrary.key.toString())
+                .addResourceLibraryKey(expectedSingleAarLibrary.key.toString())
                 .build());
     assertThat(result.aarLibraries.values())
-        .containsExactly(
-            new AarLibrary(
-                source("java/com/google/android/assets/quantum/resources.aar"),
-                "com.google.android.assets.quantum"));
+        .containsExactly(expectedMergedAarLibrary, expectedSingleAarLibrary);
   }
 
   @Test
@@ -522,8 +575,11 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .res_folder("res", "resources.aar"));
     BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
     errorCollector.assertNoIssues();
-    ImmutableCollection<AarLibrary> library = result.aarLibraries.values();
-    assertSameElements(library, new AarLibrary(source("java/example2/resources.aar"), "example2"));
+    ImmutableCollection<MergedAarLibrary> library = result.aarLibraries.values();
+    assertSameElements(
+        library,
+        new MergedAarLibrary(
+            "example2", ImmutableList.of(new AarLibrary(source("java/example2/resources.aar")))));
   }
 
   @Test
@@ -776,12 +832,12 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     assertThat(androidResult.aarLibraries).hasSize(1);
     assertThat(
             androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarJarName)
+                .flatMap(aar -> aarJarNames(aar).stream())
                 .collect(Collectors.toList()))
         .containsExactly("classes_and_libs_merged.jar");
     assertThat(
             androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .flatMap(aar -> aarNames(aar).stream())
                 .collect(Collectors.toList()))
         .containsExactly("lib_aar.aar");
     // Check that BlazeAndroidLibrarySource can filter out the java one, so that only the
@@ -819,7 +875,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     assertThat(javaResult.libraries).isEmpty();
     assertThat(
             androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .flatMap(aar -> aarNames(aar).stream())
                 .collect(Collectors.toList()))
         .containsExactly("lib_aar.aar");
   }
@@ -853,12 +909,12 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     assertThat(
             androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarJarName)
+                .flatMap(aar -> aarJarNames(aar).stream())
                 .collect(Collectors.toList()))
         .containsExactly("classes_and_libs_merged.jar");
     assertThat(
             androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .flatMap(aar -> aarNames(aar).stream())
                 .collect(Collectors.toList()))
         .containsExactly("an_aar.aar");
     assertThat(javaResult.libraries).hasSize(1);
@@ -872,12 +928,12 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     assertThat(
             androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarJarName)
+                .flatMap(aar -> aarJarNames(aar).stream())
                 .collect(Collectors.toList()))
         .containsExactly("classes_and_libs_merged.jar");
     assertThat(
             androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .flatMap(aar -> aarNames(aar).stream())
                 .collect(Collectors.toList()))
         .containsExactly("an_aar.aar");
     assertThat(javaResult.libraries).hasSize(1);
@@ -912,7 +968,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     assertThat(javaResult.libraries).isEmpty();
     assertThat(
             androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .flatMap(aar -> aarNames(aar).stream())
                 .collect(Collectors.toList()))
         .containsExactly("an_aar.aar");
     androidResult = importWorkspace(workspaceRoot, targetMap, projectView);
@@ -921,7 +977,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     assertThat(
             androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .flatMap(aar -> aarNames(aar).stream())
                 .collect(Collectors.toList()))
         .containsExactly("an_aar.aar");
   }
@@ -941,15 +997,15 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .manifest("AndroidManifest.xml")
                 .res("res")
                 .src("Source.java")
-                .dep("//third_party/lib:consume_export_aar", "//third_party/lib:dep_library"),
-            aar_import("//third_party/lib:consume_export_aar")
+                .dep("//third_party/lib1:consume_export_aar", "//third_party/lib2:dep_library"),
+            aar_import("//third_party/lib1:consume_export_aar")
                 .aar("lib1_aar.aar")
                 .generated_jar("_aar/consume_export_aar/classes_and_libs_merged.jar")
-                .dep("//third_party/lib:dep_aar"),
-            aar_import("//third_party/lib:dep_aar")
+                .dep("//third_party/lib2:dep_aar"),
+            aar_import("//third_party/lib2:dep_aar")
                 .aar("lib2_aar.aar")
                 .generated_jar("_aar/dep_aar/classes_and_libs_merged.jar"),
-            android_library("//third_party/lib:dep_library")
+            android_library("//third_party/lib2:dep_library")
                 .manifest("AndroidManifest.xml")
                 .res("res")
                 .src("SharedActivity.java")
@@ -957,8 +1013,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     jdepsMap.put(
         TargetKey.forPlainTarget(Label.create("//java/example:lib")),
         ImmutableList.of(
-            jdepsPath("third_party/lib/_aar/dep_aar/classes_and_libs_merged.jar"),
-            jdepsPath("third_party/lib/_aar/consume_export_aar/classes_and_libs_merged.jar"),
+            jdepsPath("third_party/lib2/_aar/dep_aar/classes_and_libs_merged.jar"),
+            jdepsPath("third_party/lib1/_aar/consume_export_aar/classes_and_libs_merged.jar"),
             jdepsPath("third_party/lib/dep_library.jar")));
     BlazeJavaImportResult javaResult = importJavaWorkspace(workspaceRoot, targetMap, projectView);
     BlazeAndroidImportResult androidResult = importWorkspace(workspaceRoot, targetMap, projectView);
@@ -969,12 +1025,12 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     assertThat(androidResult.aarLibraries).hasSize(2);
     assertThat(
             androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarJarName)
+                .flatMap(aar -> aarJarNames(aar).stream())
                 .collect(Collectors.toList()))
         .containsExactly("classes_and_libs_merged.jar", "classes_and_libs_merged.jar");
     assertThat(
             androidResult.aarLibraries.values().stream()
-                .map(BlazeAndroidWorkspaceImporterTest::aarName)
+                .flatMap(aar -> aarNames(aar).stream())
                 .collect(Collectors.toList()))
         .containsExactly("lib1_aar.aar", "lib2_aar.aar");
     BlazeAndroidLibrarySource.AarJarFilter aarFilter =
@@ -1216,8 +1272,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
             .addResourceAndTransitiveResource(source("foo/res"))
             .addTransitiveResource(source("bar/res"))
             .addTransitiveResource(source("baz/res"))
-            .addResourceLibraryKey(
-                LibraryKey.libraryNameFromArtifactLocation(source("qux/resources.aar")))
+            .addResourceLibraryKey("qux")
             .addTransitiveResourceDependency("//bar:lib")
             .addTransitiveResourceDependency("//baz:lib")
             .addTransitiveResourceDependency("//qux:lib")
@@ -1226,23 +1281,20 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//bar:lib")))
             .addResourceAndTransitiveResource(source("bar/res"))
             .addTransitiveResource(source("baz/res"))
-            .addResourceLibraryKey(
-                LibraryKey.libraryNameFromArtifactLocation(source("qux/resources.aar")))
+            .addResourceLibraryKey("qux")
             .addTransitiveResourceDependency("//baz:lib")
             .addTransitiveResourceDependency("//qux:lib")
             .build();
     AndroidResourceModule expectedAndroidResourceModule3 =
         AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//baz:lib")))
             .addResourceAndTransitiveResource(source("baz/res"))
-            .addResourceLibraryKey(
-                LibraryKey.libraryNameFromArtifactLocation(source("qux/resources.aar")))
+            .addResourceLibraryKey("qux")
             .addTransitiveResourceDependency("//qux:lib")
             .build();
     AndroidResourceModule expectedAndroidResourceModule4 =
         AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//unrelated:lib")))
             .addResourceAndTransitiveResource(source("unrelated/res"))
-            .addResourceLibraryKey(
-                LibraryKey.libraryNameFromArtifactLocation(source("qux/resources.aar")))
+            .addResourceLibraryKey("qux")
             .addTransitiveResourceDependency("//qux:lib")
             .build();
     BlazeAndroidImportResult importResult = mockBlazeAndroidWorkspaceImporter.importWorkspace();
@@ -1282,23 +1334,22 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
     errorCollector.assertNoIssues();
+    MergedAarLibrary expectedAarLibrary =
+        new MergedAarLibrary(
+            "dino.google.android.assets.quantum",
+            ImmutableList.of(
+                new AarLibrary(source("java/com/google/android/assets/quantum/resources.aar"))));
     assertThat(result.androidResourceModules)
         .containsExactly(
             AndroidResourceModule.builder(
                     TargetKey.forPlainTarget(Label.create("//java/example:resources")))
                 .addResourceAndTransitiveResource(source("java/example/res"))
                 .addTransitiveResourceDependency("//java/com/google/android/assets/quantum:values")
-                .addResourceLibraryKey(
-                    LibraryKey.libraryNameFromArtifactLocation(
-                        source("java/com/google/android/assets/quantum/resources.aar")))
+                .addResourceLibraryKey(expectedAarLibrary.key.toString())
                 .build());
-    assertThat(result.aarLibraries.values())
-        .containsExactly(
-            new AarLibrary(
-                source("java/com/google/android/assets/quantum/resources.aar"),
-                "dino.google.android.assets.quantum"));
+    assertThat(result.aarLibraries.values()).containsExactly(expectedAarLibrary);
 
-    assertThat(result.aarLibraries.values().stream().map(a -> a.resourcePackage))
+    assertThat(result.aarLibraries.values().stream().map(a -> a.getResourcePackage()))
         .containsExactly("dino.google.android.assets.quantum");
   }
 
@@ -1327,23 +1378,23 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
     errorCollector.assertNoIssues();
+
+    MergedAarLibrary expectedAarLibrary =
+        new MergedAarLibrary(
+            "com.google.android.assets.quantum",
+            ImmutableList.of(
+                new AarLibrary(source("java/com/google/android/assets/quantum/resources.aar"))));
     assertThat(result.androidResourceModules)
         .containsExactly(
             AndroidResourceModule.builder(
                     TargetKey.forPlainTarget(Label.create("//java/example:resources")))
                 .addResourceAndTransitiveResource(source("java/example/res"))
                 .addTransitiveResourceDependency("//java/com/google/android/assets/quantum:values")
-                .addResourceLibraryKey(
-                    LibraryKey.libraryNameFromArtifactLocation(
-                        source("java/com/google/android/assets/quantum/resources.aar")))
+                .addResourceLibraryKey(expectedAarLibrary.key.toString())
                 .build());
-    assertThat(result.aarLibraries.values())
-        .containsExactly(
-            new AarLibrary(
-                source("java/com/google/android/assets/quantum/resources.aar"),
-                "com.google.android.assets.quantum"));
+    assertThat(result.aarLibraries.values()).containsExactly(expectedAarLibrary);
 
-    assertThat(result.aarLibraries.values().stream().map(a -> a.resourcePackage))
+    assertThat(result.aarLibraries.values().stream().map(a -> a.getResourcePackage()))
         .containsExactly("com.google.android.assets.quantum");
   }
 
@@ -1385,13 +1436,19 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     }
   }
 
-  private static String aarJarName(AarLibrary library) {
-    return new File(library.libraryArtifact.jarForIntellijLibrary().getExecutionRootRelativePath())
-        .getName();
+  private static List<String> aarJarNames(MergedAarLibrary library) {
+    return library.aars.stream()
+        .map(
+            aar ->
+                new File(aar.libraryArtifact.jarForIntellijLibrary().getExecutionRootRelativePath())
+                    .getName())
+        .collect(Collectors.toList());
   }
 
-  private static String aarName(AarLibrary library) {
-    return new File(library.aarArtifact.getExecutionRootRelativePath()).getName();
+  private static List<String> aarNames(MergedAarLibrary library) {
+    return library.aars.stream()
+        .map(aar -> new File(aar.aarArtifact.getExecutionRootRelativePath()).getName())
+        .collect(Collectors.toList());
   }
 
   private static String libraryJarName(BlazeJarLibrary library) {
