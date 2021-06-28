@@ -17,9 +17,11 @@ package com.google.idea.blaze.android.projectsystem;
 
 import com.android.tools.idea.projectsystem.ClassFileFinder;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.google.idea.common.experiments.StringExperiment;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.SystemInfo;
 import java.util.function.Function;
 
 /** Factory to create a {@link BlazeClassFileFinder}. */
@@ -41,6 +43,16 @@ public class BlazeClassFileFinderFactory {
   public static final FeatureRolloutExperiment nonDefaultFinderEnableExperiment =
       new FeatureRolloutExperiment("aswb.blaze.class.file.finder.percent");
 
+  /**
+   * Experiment to enable non-default {@link BlazeClassFileFinder} in MacOS. This is a temporary
+   * patch to allow disabling {@link RenderJarClassFileFinder} on MacOS until we stop refreshing
+   * {@link com.google.idea.blaze.android.libraries.RenderJarCache} at the end of syncs.
+   *
+   * <p>TODO(b/191680137): Remove MacOS specific logic after b/191680137 is fixed.
+   */
+  public static final BoolExperiment allowNonDefaultFinderOnMac =
+      new BoolExperiment("aswb.allow.non.default.finder.mac", true);
+
   private static final String DEFAULT_CLASS_FILE_FINDER_NAME =
       PsiBasedClassFileFinder.CLASS_FINDER_KEY;
 
@@ -59,6 +71,11 @@ public class BlazeClassFileFinderFactory {
    * #CLASS_FILE_FINDER_CONSTRUCTORS} or {@link #DEFAULT_CLASS_FILE_FINDER_NAME} otherwise.
    */
   public static String getClassFileFinderName() {
+    // Return the default class file finder if non-default class file finder is not allowed on macs
+    if (SystemInfo.isMac && !allowNonDefaultFinderOnMac.getValue()) {
+      return DEFAULT_CLASS_FILE_FINDER_NAME;
+    }
+
     String finderName = CLASS_FILE_FINDER_NAME.getValue();
     if (!CLASS_FILE_FINDER_CONSTRUCTORS.containsKey(finderName)) {
       finderName = DEFAULT_CLASS_FILE_FINDER_NAME;
