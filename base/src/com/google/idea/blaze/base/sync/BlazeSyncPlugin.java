@@ -122,7 +122,7 @@ public interface BlazeSyncPlugin {
    *
    * <p>Called prior to updateProjectSdk and updateProjectStructure.
    */
-  default boolean refreshExecutionRoot(BlazeProjectData blazeProjectData) {
+  default boolean refreshExecutionRoot(Project project, BlazeProjectData blazeProjectData) {
     return false;
   }
 

@@ -138,7 +138,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
   }
 
   @Override
-  public boolean refreshExecutionRoot(BlazeProjectData blazeProjectData) {
+  public boolean refreshExecutionRoot(Project project, BlazeProjectData blazeProjectData) {
     return blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.PYTHON);
   }
 

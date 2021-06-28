@@ -25,13 +25,12 @@ import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager.SyncPlugin;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
@@ -150,16 +149,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
     syncListener.onSyncStart(getProject(), context, SyncMode.INCREMENTAL);
     assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isEmpty();
 
-    syncPlugin.updateProjectStructure(
-        getProject(),
-        context,
-        null,
-        new ProjectViewSet(ImmutableList.of()),
-        MockBlazeProjectDataBuilder.builder().build(),
-        null,
-        null,
-        null,
-        null);
+    syncPlugin.refreshExecutionRoot(getProject(), MockBlazeProjectDataBuilder.builder().build());
     assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isNotEmpty();
 
     syncListener.afterSync(
@@ -189,16 +179,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
     BlazeContext context = new BlazeContext();
     syncListener.onSyncStart(getProject(), context, SyncMode.INCREMENTAL);
     if (syncResult.successful()) {
-      syncPlugin.updateProjectStructure(
-          getProject(),
-          context,
-          null,
-          new ProjectViewSet(ImmutableList.of()),
-          MockBlazeProjectDataBuilder.builder().build(),
-          null,
-          null,
-          null,
-          null);
+      syncPlugin.refreshExecutionRoot(getProject(), MockBlazeProjectDataBuilder.builder().build());
     }
     syncListener.afterSync(
         getProject(), context, SyncMode.INCREMENTAL, syncResult, ImmutableSet.of());
@@ -219,8 +200,8 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
   }
 
   private void delete(VirtualFile file) {
-    TransactionGuard.getInstance()
-        .submitTransactionAndWait(
+    ApplicationManager.getApplication()
+        .invokeAndWait(
             () -> {
               try {
                 WriteAction.run(() -> file.delete(this));

@@ -229,7 +229,7 @@ final class ProjectUpdateSyncTask {
         DirectoryStructure.getRootDirectoryStructure(
             project, workspaceRoot, projectState.getProjectViewSet());
 
-    refreshVirtualFileSystem(context, newProjectData);
+    refreshVirtualFileSystem(context, project, newProjectData);
 
     DirectoryStructure directoryStructure =
         FutureUtil.waitForFuture(context, directoryStructureFuture)
@@ -256,7 +256,7 @@ final class ProjectUpdateSyncTask {
   }
 
   private static void refreshVirtualFileSystem(
-      BlazeContext context, BlazeProjectData blazeProjectData) {
+      BlazeContext context, Project project, BlazeProjectData blazeProjectData) {
     Scope.push(
         context,
         (childContext) -> {
@@ -267,7 +267,7 @@ final class ProjectUpdateSyncTask {
                 .submit(childContext);
             logger.warn("Attempted to refresh file system while holding read lock");
           } else if (Arrays.stream(BlazeSyncPlugin.EP_NAME.getExtensions())
-              .anyMatch(p -> p.refreshExecutionRoot(blazeProjectData))) {
+              .anyMatch(p -> p.refreshExecutionRoot(project, blazeProjectData))) {
             // this refresh should happen off EDT and without read lock.
             VirtualFile root =
                 VfsUtil.findFileByIoFile(blazeProjectData.getBlazeInfo().getExecutionRoot(), true);

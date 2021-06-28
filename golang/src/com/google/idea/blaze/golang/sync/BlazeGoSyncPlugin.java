@@ -131,9 +131,4 @@ public class BlazeGoSyncPlugin implements BlazeSyncPlugin {
     }
     return BlazeGoLibrarySource.INSTANCE;
   }
-
-  @Override
-  public boolean refreshExecutionRoot(BlazeProjectData blazeProjectData) {
-    return blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.GO);
-  }
 }

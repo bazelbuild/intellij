@@ -55,8 +55,7 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
     this.validFiles =
         Sets.newConcurrentHashSet(
             files.stream()
-                // this happens on the EDT, don't refresh
-                .map(f -> VfsUtils.resolveVirtualFile(f, /* refreshIfNeeded= */ false))
+                .map(f -> VfsUtils.resolveVirtualFile(f, /* refreshIfNeeded= */ true))
                 .filter(Objects::nonNull)
                 .collect(toImmutableSet()));
   }

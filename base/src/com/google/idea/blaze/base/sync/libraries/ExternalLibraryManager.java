@@ -23,8 +23,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncListener;
@@ -35,10 +33,8 @@ import com.google.idea.blaze.base.vcs.VcsSyncListener;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -158,19 +154,11 @@ public class ExternalLibraryManager implements Disposable {
    */
   static class SyncPlugin implements BlazeSyncPlugin {
     @Override
-    public void updateProjectStructure(
-        Project project,
-        BlazeContext context,
-        WorkspaceRoot workspaceRoot,
-        ProjectViewSet projectViewSet,
-        BlazeProjectData blazeProjectData,
-        @Nullable BlazeProjectData oldBlazeProjectData,
-        ModuleEditor moduleEditor,
-        Module workspaceModule,
-        ModifiableRootModel workspaceModifiableModel) {
+    public boolean refreshExecutionRoot(Project project, BlazeProjectData blazeProjectData) {
       ExternalLibraryManager manager = ExternalLibraryManager.getInstance(project);
       manager.initialize(blazeProjectData);
       manager.duringBlazeSync = false;
+      return true;
     }
   }
 
