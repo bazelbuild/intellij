@@ -125,8 +125,6 @@ public class RenderJarCacheTest {
     experimentService.setExperimentString(
         BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME,
         RenderJarClassFileFinder.CLASS_FINDER_KEY);
-    experimentService.setFeatureRolloutExperiment(
-        BlazeClassFileFinderFactory.nonDefaultFinderEnableExperiment, 100);
     intellijRule.registerApplicationService(ExperimentService.class, experimentService);
 
     // Setup needed for setting a projectview

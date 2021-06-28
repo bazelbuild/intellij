@@ -18,7 +18,6 @@ package com.google.idea.blaze.android.projectsystem;
 import com.android.tools.idea.projectsystem.ClassFileFinder;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.google.idea.common.experiments.StringExperiment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.SystemInfo;
@@ -33,15 +32,6 @@ public class BlazeClassFileFinderFactory {
    */
   public static final StringExperiment CLASS_FILE_FINDER_NAME =
       new StringExperiment("blaze.class.file.finder.name");
-
-  /**
-   * Experiment to control the rollout of a non-default {@link BlazeClassFileFinder} as defined in
-   * {@link #DEFAULT_CLASS_FILE_FINDER_NAME}. To roll out a non-default finder, set {@link
-   * #CLASS_FILE_FINDER_NAME} to the desired finder, and set the rollout percent through this
-   * experiment. For global rollout of a non-default finder, set this experiment to 100
-   */
-  public static final FeatureRolloutExperiment nonDefaultFinderEnableExperiment =
-      new FeatureRolloutExperiment("aswb.blaze.class.file.finder.percent");
 
   /**
    * Experiment to enable non-default {@link BlazeClassFileFinder} in MacOS. This is a temporary
@@ -78,12 +68,6 @@ public class BlazeClassFileFinderFactory {
 
     String finderName = CLASS_FILE_FINDER_NAME.getValue();
     if (!CLASS_FILE_FINDER_CONSTRUCTORS.containsKey(finderName)) {
-      finderName = DEFAULT_CLASS_FILE_FINDER_NAME;
-    }
-
-    // Revert back to default class file finder if feature rollout experiment is not enabled.
-    if (!DEFAULT_CLASS_FILE_FINDER_NAME.equals(finderName)
-        && !nonDefaultFinderEnableExperiment.isEnabled()) {
       finderName = DEFAULT_CLASS_FILE_FINDER_NAME;
     }
 

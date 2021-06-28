@@ -101,8 +101,6 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     experimentService.setExperimentString(
         BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME,
         RenderJarClassFileFinder.CLASS_FINDER_KEY);
-    experimentService.setFeatureRolloutExperiment(
-        BlazeClassFileFinderFactory.nonDefaultFinderEnableExperiment, 100);
 
     ApplicationManager.getApplication().runWriteAction(this::createAndRegisterModules);
 
