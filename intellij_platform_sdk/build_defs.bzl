@@ -30,7 +30,7 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-oss-beta": "android-studio-4.2",
     "android-studio-oss-under-dev": "android-studio-2020.3",
     "clion-oss-stable": "clion-2020.3",
-    "clion-oss-beta": "clion-2020.3",
+    "clion-oss-beta": "clion-2021.1",
     "clion-oss-under-dev": "clion-2021.1",
 }
 
