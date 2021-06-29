@@ -97,6 +97,7 @@ intellij_integration_test_suite(
         "//java",
         "//proto:proto_deps",
         "//third_party/auto_value",
+        "@jsr305_annotations//jar",
         "@junit//jar",
     ],
 )

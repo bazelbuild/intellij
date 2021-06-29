@@ -59,9 +59,8 @@ public class ProjectViewCompletionTest extends BlazeIntegrationTestCase {
 
     assertThat(types)
         .asList()
-        .containsAllIn(
-            LanguageSupport.availableAdditionalLanguages(WorkspaceType.JAVA)
-                .stream()
+        .containsAtLeastElementsIn(
+            LanguageSupport.availableAdditionalLanguages(WorkspaceType.JAVA).stream()
                 .map(LanguageClass::getName)
                 .collect(Collectors.toList()));
   }

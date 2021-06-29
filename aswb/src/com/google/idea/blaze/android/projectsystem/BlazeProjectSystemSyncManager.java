@@ -17,11 +17,11 @@ package com.google.idea.blaze.android.projectsystem;
 
 import static com.android.tools.idea.projectsystem.ProjectSystemSyncUtil.PROJECT_SYSTEM_SYNC_TOPIC;
 
+import _jetbrains_.com.google.common.util.concurrent.ListenableFuture;
+import _jetbrains_.com.google.common.util.concurrent.SettableFuture;
 import com.android.annotations.VisibleForTesting;
 import com.android.tools.idea.projectsystem.ProjectSystemSyncManager;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeBuildParams;

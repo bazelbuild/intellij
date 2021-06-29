@@ -2,29 +2,18 @@
 #
 # Plugin source jars for CLion, accessed remotely.
 
+load("//build_defs:repackage.bzl", "repackaged_jetbrains_jars")
+
 package(default_visibility = ["//visibility:public"])
 
-java_import(
+repackaged_jetbrains_jars(
     name = "sdk",
     jars = glob(["clion-*/lib/*.jar"]),
     tags = ["intellij-provided-by-sdk"],
     deps = ["@error_prone_annotations//jar"],
 )
 
-java_import(
-    name = "guava",
-    jars = glob([
-        "clion-*/lib/failureaccess-*.jar",
-        "clion-*/lib/guava-*.jar",
-    ]),
-)
-
-java_import(
-    name = "jsr305",
-    jars = glob(["clion-*/lib/jsr305.jar"]),
-)
-
-java_import(
+repackaged_jetbrains_jars(
     name = "clion_plugins",
     jars = glob([
         "clion-*/plugins/clion-test-google/lib/*.jar",
@@ -33,27 +22,27 @@ java_import(
     ]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "hg4idea",
     jars = glob(["clion-*/plugins/hg4idea/lib/hg4idea.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "javascript",
     jars = glob(["clion-*/plugins/JavaScriptLanguage/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "css",
     jars = glob(["clion-*/plugins/CSS/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "tslint",
     jars = glob(["clion-*/plugins/tslint/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "tasks",
     jars = glob([
         "clion-*/plugins/tasks/lib/tasks-api.jar",
@@ -61,19 +50,19 @@ java_import(
     ]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "terminal",
     jars = glob(["clion-*/plugins/terminal/lib/terminal.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "python",
     jars = glob(["clion-*/plugins/python-ce/lib/*.jar"]),
 )
 
 # The plugins required by CLwB. Presumably there will be some, when we write
 # some integration tests.
-java_import(
+repackaged_jetbrains_jars(
     name = "bundled_plugins",
     jars = [],
     tags = ["intellij-provided-by-sdk"],

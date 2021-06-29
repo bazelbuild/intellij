@@ -37,6 +37,8 @@ intellij_plugin(
 
 """
 
+load(":repackage.bzl", "repackaged_plugin_jars")
+
 _OptionalPluginXmlInfo = provider(fields = ["optional_plugin_xmls"])
 
 def _optional_plugin_xml_impl(ctx):
@@ -255,6 +257,8 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
     java_deps_name = name + "_java_deps"
     binary_name = name + "_binary"
     deploy_jar = binary_name + "_deploy.jar"
+    repackaged_name = name + "_repackaged"
+    repackaged_jar = repackaged_name + "_" + deploy_jar  # see repackage.bzl
     _intellij_plugin_java_deps(
         name = java_deps_name,
         deps = deps,
@@ -264,10 +268,14 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         runtime_deps = [":" + java_deps_name] + extra_runtime_deps,
         create_executable = 0,
     )
+    repackaged_plugin_jars(
+        name = repackaged_name,
+        jars = [deploy_jar],
+    )
     jar_target_name = name + "_intellij_plugin_jar"
     _intellij_plugin_jar(
         name = jar_target_name,
-        deploy_jar = deploy_jar,
+        deploy_jar = repackaged_jar,
         jar_name = jar_name or (name + ".jar"),
         deps = deps,
         plugin_xml = plugin_xml,

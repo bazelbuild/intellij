@@ -152,7 +152,7 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
     assertThat(buildStep.getDeployInfo().getApksToDeploy()).containsExactly(apkFile);
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
     assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
-    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
   }
 
   @Test
@@ -187,7 +187,7 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
         .contains("localcopy");
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
     assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
-    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
     verify(mockDownloader, times(1)).download(any(), any());
   }
 
@@ -227,7 +227,7 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
     assertThat(buildStep.getDeployInfo().getApksToDeploy()).containsExactly(apkFile);
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
     assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
-    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
+    assertThat(externalTaskInterceptor.command).containsAtLeastElementsIn(blazeFlags);
     verify(mockDownloader, times(0)).download(any(), any());
   }
 

@@ -60,7 +60,7 @@ public interface OutputArtifactParser {
         String configurationMnemonic,
         long syncStartTimeMillis) {
       String uri = file.getUri();
-      if (uri == null || !uri.startsWith(URLUtil.FILE_PROTOCOL)) {
+      if (!file.hasUri() || !uri.startsWith(URLUtil.FILE_PROTOCOL)) {
         return null;
       }
       try {

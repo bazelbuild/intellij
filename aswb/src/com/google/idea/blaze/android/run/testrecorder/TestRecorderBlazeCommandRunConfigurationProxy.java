@@ -15,9 +15,9 @@
  */
 package com.google.idea.blaze.android.run.testrecorder;
 
+import _jetbrains_.com.google.common.util.concurrent.ListenableFuture;
 import com.android.annotations.Nullable;
 import com.android.ddmlib.IDevice;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gct.testrecorder.run.TestRecorderRunConfigurationProxy;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationHandler;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
