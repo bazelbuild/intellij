@@ -22,10 +22,10 @@ INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for Bazel Plugin OSS
     "intellij-oss-stable": "intellij-2020.3",
     "intellij-oss-beta": "intellij-2021.1",
-    "intellij-oss-under-dev": "intellij-2021.1",
+    "intellij-oss-under-dev": "intellij-2021.2",
     "intellij-ue-oss-stable": "intellij-ue-2020.3",
     "intellij-ue-oss-beta": "intellij-ue-2021.1",
-    "intellij-ue-oss-under-dev": "intellij-ue-2021.1",
+    "intellij-ue-oss-under-dev": "intellij-ue-2021.2",
     "android-studio-oss-stable": "android-studio-4.2",
     "android-studio-oss-beta": "android-studio-4.2",
     "android-studio-oss-under-dev": "android-studio-2020.3",
@@ -43,6 +43,14 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2020_2",
     ),
+    "intellij-2020.3": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2020_3",
+    ),
+    "intellij-2020.3-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2020_3",
+    ),
     "intellij-2021.1": struct(
         ide = "intellij",
         directory = "intellij_ce_2021_1",
@@ -51,13 +59,13 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2021_1",
     ),
-    "intellij-2020.3": struct(
+    "intellij-2021.2": struct(
         ide = "intellij",
-        directory = "intellij_ce_2020_3",
+        directory = "intellij_ce_2021_2",
     ),
-    "intellij-2020.3-mac": struct(
+    "intellij-2021.2-mac": struct(
         ide = "intellij",
-        directory = "intellij_ce_2020_3",
+        directory = "intellij_ce_2021_2",
     ),
     "intellij-ue-2020.2": struct(
         ide = "intellij-ue",
@@ -82,6 +90,14 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-ue-2021.1-mac": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2021_1",
+    ),
+    "intellij-ue-2021.2": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2021_2",
+    ),
+    "intellij-ue-2021.2-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2021_2",
     ),
     "android-studio-4.2": struct(
         ide = "android-studio",

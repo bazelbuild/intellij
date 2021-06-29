@@ -38,6 +38,8 @@ java_library(
         "intellij-ue-2020.3": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-2021.1": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-ue-2021.1": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
+        "intellij-2021.2": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
+        "intellij-ue-2021.2": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
         "default": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
     }),
     deps = [
