@@ -24,7 +24,7 @@ public class BlazeInfoData {
    * default consistent with existing blaze integration tests.
    */
   private static final String DEFAULT_EXEC_ROOT_REL_BIN_PATH =
-      "blaze-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
+      "bazel-out/gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild/bin";
 
   public static final BlazeInfoData DEFAULT = new BlazeInfoData(DEFAULT_EXEC_ROOT_REL_BIN_PATH);
   private String blazeExecutablesRootPath;

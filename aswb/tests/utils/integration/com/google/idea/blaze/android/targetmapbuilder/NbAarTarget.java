@@ -77,6 +77,11 @@ public class NbAarTarget extends NbBaseTargetBuilder {
     return generated_jar(jarLabel, null);
   }
 
+  public NbAarTarget dep(String... targetLabels) {
+    javaTarget.dep(targetLabels);
+    return this;
+  }
+
   /**
    * Sets the jar that is generated from within the aar, and the source jar for the aar.
    *

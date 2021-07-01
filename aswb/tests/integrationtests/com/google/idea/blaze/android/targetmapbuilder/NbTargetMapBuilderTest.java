@@ -95,7 +95,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                             .addTransitiveQuoteIncludeDirectories(
                                 ImmutableList.of(
                                     new ExecutionRootPath("."),
-                                    new ExecutionRootPath("blaze-out/android-aarch64/genfiles")))
+                                    new ExecutionRootPath("bazel-out/android-aarch64/genfiles")))
                             .addTransitiveSystemIncludeDirectories(
                                 ImmutableList.of(
                                     new ExecutionRootPath("third_party/java/jdk/include")))
@@ -112,7 +112,7 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                             .addTransitiveQuoteIncludeDirectories(
                                 ImmutableList.of(
                                     new ExecutionRootPath("."),
-                                    new ExecutionRootPath("blaze-out/android-armv7a/genfiles")))
+                                    new ExecutionRootPath("bazel-out/android-armv7a/genfiles")))
                             .addTransitiveSystemIncludeDirectories(
                                 ImmutableList.of(
                                     new ExecutionRootPath("third_party/java/jdk/include")))
@@ -133,12 +133,12 @@ public class NbTargetMapBuilderTest extends BlazeIntegrationTestCase {
                 .cpp_executable("bin/aarch64-linux-android-gcc")
                 .built_in_include_dirs("lib/gcc/aarch64-linux-android/4.9/include"),
             cc_library("//java/com/google:native_lib2")
-                .transitive_quote_include_dirs(".", "blaze-out/android-aarch64/genfiles")
+                .transitive_quote_include_dirs(".", "bazel-out/android-aarch64/genfiles")
                 .transitive_system_include_dirs("third_party/java/jdk/include")
                 .src("jni/native2.cc")
                 .dep("//android_ndk_linux/toolchains:aarch64"),
             cc_library("//java/com/google:native_lib")
-                .transitive_quote_include_dirs(".", "blaze-out/android-armv7a/genfiles")
+                .transitive_quote_include_dirs(".", "bazel-out/android-armv7a/genfiles")
                 .transitive_system_include_dirs("third_party/java/jdk/include")
                 .src("jni/native.cc")
                 .dep("//java/com/google:native_lib2", "//android_ndk_linux/toolchains:armv7a"));

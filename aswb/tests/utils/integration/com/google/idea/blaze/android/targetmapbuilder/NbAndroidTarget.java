@@ -21,6 +21,7 @@ import com.google.idea.blaze.android.fixtures.ManifestFixture;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -28,6 +29,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import java.util.ArrayList;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Builder for a blaze android target's IDE info. Defines common attributes across all android
@@ -112,6 +114,38 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
     return this;
   }
 
+  /**
+   * Adds a list of generated android resources. Generated resources are different from regular
+   * resources; they are not created by the user.
+   *
+   * <p>Note: Also toggles generate resource class to true.
+   */
+  public NbAndroidTarget generated_res(String... resourcePaths) {
+    // An android target that directly declares resources should also generate resource classes.
+    setGenerateResourceClass();
+    for (String resourceLabel : resourcePaths) {
+      String resourcePath = NbTargetMapUtils.workspacePathForLabel(blazePackage, resourceLabel);
+      androidIdeInfoBuilder.addResource(
+          ArtifactLocation.builder()
+              .setRootExecutionPathFragment(blazeInfoData.getRootExecutionPathFragment())
+              .setRelativePath(resourcePath)
+              .setIsSource(false)
+              .build());
+    }
+    return this;
+  }
+
+  /**
+   * Adds a AndroidResourceFolder directly to the list of android resources. Note: Also toggles
+   * generate resource class to true.
+   */
+  public NbAndroidTarget res_folder(AndroidResFolder resFolder) {
+    // An android target that directly declares resources should also generate resource classes.
+    setGenerateResourceClass();
+    androidIdeInfoBuilder.addResource(resFolder);
+    return this;
+  }
+
   public List<ArtifactLocation> getAarList() {
     return aarList;
   }
@@ -173,6 +207,58 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
   private void setManifest(String manifestLabel) {
     String manifestPath = NbTargetMapUtils.workspacePathForLabel(blazePackage, manifestLabel);
     androidIdeInfoBuilder.setManifestFile(makeSourceArtifact(manifestPath));
+  }
+
+  /**
+   * Explicitly set the resource jar attached to this IDE info to a jar at the provided path. Also
+   * sets generate resources to true.
+   */
+  public NbAndroidTarget resource_jar(String relativeJarPath) {
+    // An android target with a resource jar also generates resource classes.
+    setGenerateResourceClass();
+    androidIdeInfoBuilder.setResourceJar(
+        generateJarArtifact(relativeJarPath, relativeJarPath, null));
+    return this;
+  }
+
+  /** Explicitly set the AIDL jar attached to this IDE info to a jar at the provided path. */
+  public NbAndroidTarget idl_jar(String relativeClassJarPath, String relativeIJarPath) {
+    androidIdeInfoBuilder
+        .setIdlJar(generateJarArtifact(relativeClassJarPath, relativeIJarPath, null).build())
+        .setHasIdlSources(true);
+    return this;
+  }
+
+  private LibraryArtifact.Builder generateJarArtifact(
+      @Nullable String relClassJarPath,
+      @Nullable String relIJarPath,
+      @Nullable String relSourceJarPath) {
+    LibraryArtifact.Builder builder = LibraryArtifact.builder();
+    if (relIJarPath != null) {
+      builder.setInterfaceJar(
+          ArtifactLocation.builder()
+              .setRootExecutionPathFragment(blazeInfoData.getRootExecutionPathFragment())
+              .setRelativePath(relIJarPath)
+              .setIsSource(false)
+              .build());
+    }
+    if (relClassJarPath != null) {
+      builder.setClassJar(
+          ArtifactLocation.builder()
+              .setRootExecutionPathFragment(blazeInfoData.getRootExecutionPathFragment())
+              .setRelativePath(relClassJarPath)
+              .setIsSource(false)
+              .build());
+    }
+    if (relSourceJarPath != null) {
+      builder.addSourceJar(
+          ArtifactLocation.builder()
+              .setRootExecutionPathFragment(blazeInfoData.getRootExecutionPathFragment())
+              .setRelativePath(relSourceJarPath)
+              .setIsSource(false)
+              .build());
+    }
+    return builder;
   }
 
   public NbAndroidTarget generated_jar(String relativeJarPath) {
