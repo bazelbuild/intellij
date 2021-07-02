@@ -25,9 +25,9 @@ no_mockito_extensions(
     jars = ["lib/testFramework.jar"],
 )
 
-java_import(
+java_library(
     name = "guava",
-    jars = ["lib/guava.jar"],
+    exports = ["@guava//jar"],
 )
 
 java_library(name = "jsr305")  # not bundled
