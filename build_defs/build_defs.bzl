@@ -65,6 +65,7 @@ def stamped_plugin_xml(
     api_version_txt_name = name + "_api_version"
     api_version_txt(
         name = api_version_txt_name,
+        check_eap = True,
     )
 
     args = [
@@ -164,30 +165,35 @@ def product_build_txt(name, **kwargs):
         **kwargs
     )
 
-def api_version_txt(name, **kwargs):
+def api_version_txt(name, check_eap, **kwargs):
     """Produces an api_version.txt file with the api version, including the product code.
 
     Args:
       name: name of this target
+      check_eap: whether the produced api_version should mark the build number with `EAP` if it is or this is not needed.
       **kwargs: Any additional arguments to pass to the final target.
     """
-    application_info_jar = "//intellij_platform_sdk:application_info_jar"
+    application_info_container = "//intellij_platform_sdk:application_info_container"
     application_info_name = "//intellij_platform_sdk:application_info_name"
     api_version_txt_tool = "//build_defs:api_version_txt"
 
     args = [
         "./$(location {api_version_txt_tool})",
-        "--application_info_jar=$(location {application_info_jar})",
+        "--application_info_container=$(location {application_info_container})",
         "--application_info_name=$(location {application_info_name})",
     ]
+
+    if check_eap:
+        args.append("--check_eap")
+
     cmd = " ".join(args).format(
-        application_info_jar = application_info_jar,
+        application_info_container = application_info_container,
         application_info_name = application_info_name,
         api_version_txt_tool = api_version_txt_tool,
     ) + "> $@"
     native.genrule(
         name = name,
-        srcs = [application_info_jar, application_info_name],
+        srcs = [application_info_container, application_info_name],
         outs = [name + ".txt"],
         cmd = cmd,
         tools = [api_version_txt_tool],

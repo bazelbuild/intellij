@@ -13,11 +13,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""Produces a api_version.txt file with the plugin API version.
-"""
+"""Produces a api_version.txt file with the plugin API version."""
 
 import argparse
+import json
 import re
 from xml.dom.minidom import parseString  # pylint: disable=g-importing-member
 import zipfile
@@ -25,22 +24,27 @@ import zipfile
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
-    "--application_info_jar",
-    help="The jar file containing the application info xml",
+    "--application_info_container",
+    help="A file containing the product information details, can be a json file or a jar file containing `application_info_name` file.",
     required=True,)
 parser.add_argument(
     "--application_info_name",
     help="A .txt file containing the application info xml name",
     required=True,)
+parser.add_argument(
+    "--check_eap",
+    help="If true, the build number will be checked and marked with `EAP` if it is an EAP version.",
+    default=False,
+    action="store_true")
 
 
-def _parse_build_number(build_number):
-  """Parses the build number.
+def _is_valid_build_number(build_number):
+  """Validates the build number.
 
   Args:
     build_number: The build number as text.
   Returns:
-    build_number, build_number_without_product_code.
+    true if the build number is valid and throws ValueError otherwise.
   Raises:
     ValueError: if the build number is invalid.
   """
@@ -48,22 +52,53 @@ def _parse_build_number(build_number):
   if match is None:
     raise ValueError("Invalid build number: " + build_number)
 
-  return match.group(1) + match.group(2) + match.group(3)
+  return True
 
 
-def main():
+def _parse_app_info_json(application_info_json, check_eap):
+  """Extracts the build number from application_info_json.
 
-  args = parser.parse_args()
+  Args:
+    application_info_json: The name of the json file to extract the build number
+                           from.
+    check_eap: If the returned build number should be checked and marked as EAP
+               if it is or not.
+  Raises:
+    ValueError: if the build number is invalid or it cannot be extracted.
+  """
 
-  with open(args.application_info_name) as f:
-    application_info_name = f.read().strip()
+  with open(application_info_json) as jf:
+    data = json.loads(jf.read())
 
-  with zipfile.ZipFile(args.application_info_jar, "r") as zf:
+  build_number = data["productCode"] + "-" + data["buildNumber"]
+  if _is_valid_build_number(build_number):
+    if check_eap:
+      if "versionSuffix" in data and data["versionSuffix"] == "EAP":
+        print(build_number + " EAP")
+        return
+    print(build_number)
+
+
+def _parse_app_info_jar(application_info_jar, application_info_file):
+  """Extracts the build number from application_info_file which is inside application_info_jar.
+
+  Args:
+    application_info_jar: The name of the jar file.
+    application_info_file: The name of the application info file.
+
+  Raises:
+    ValueError: if the build number is invalid or it cannot be extracted.
+  """
+
+  with open(application_info_file) as f:
+    application_info_file = f.read().strip()
+
+  with zipfile.ZipFile(application_info_jar, "r") as zf:
     try:
-      data = zf.read(application_info_name)
+      data = zf.read(application_info_file)
     except:
       raise ValueError("Could not read application info file: " +
-                       application_info_name)
+                       application_info_file)
     component = parseString(data)
 
     build_elements = component.getElementsByTagName("build")
@@ -82,9 +117,23 @@ def main():
   if not api_version_attr:
     raise ValueError("Could not find api version in application info")
 
-  api_version = _parse_build_number(api_version_attr.value)
-  print(api_version)  # pylint: disable=superfluous-parens
+  if _is_valid_build_number(api_version_attr.value):
+    print(api_version_attr.value)  # pylint: disable=superfluous-parens
 
+
+def main():
+
+  args = parser.parse_args()
+
+  application_info_container = args.application_info_container
+  if application_info_container.endswith(".json"):
+    _parse_app_info_json(application_info_container, args.check_eap)
+  elif application_info_container.endswith(".jar"):
+    _parse_app_info_jar(application_info_container, args.application_info_name)
+  else:
+    raise ValueError(
+        "Invalid application_info_container: {}, only accepts .jar or .json files"
+        .format(application_info_container))
 
 if __name__ == "__main__":
   main()

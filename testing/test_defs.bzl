@@ -85,7 +85,7 @@ def intellij_unit_test_suite(
     suite_class = test_package_root + "." + suite_class_name
 
     api_version_txt_name = name + "_api_version"
-    api_version_txt(name = api_version_txt_name)
+    api_version_txt(name = api_version_txt_name, check_eap = False)
     data = kwargs.pop("data", [])
     data.append(api_version_txt_name)
 
@@ -152,7 +152,7 @@ def intellij_integration_test_suite(
     )
 
     api_version_txt_name = name + "_api_version"
-    api_version_txt(name = api_version_txt_name)
+    api_version_txt(name = api_version_txt_name, check_eap = False)
     data = kwargs.pop("data", [])
     data.append(api_version_txt_name)
 

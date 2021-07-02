@@ -266,6 +266,32 @@ def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_u
 
     return select_for_plugin_api(params)
 
+def select_from_plugin_api_version_directory(params):
+    """Selects for a plugin_api direct version based on its directory.
+
+    Args:
+        params: A dict with ij_product -> value.
+                You may only include direct ij_products here,
+                not indirects (eg. intellij-latest).
+    Returns:
+        A select statement on all plugin_apis. Unless you include a "default",
+        a non-matched plugin_api will result in an error.
+    """
+    for indirect_ij_product in INDIRECT_IJ_PRODUCTS:
+        if indirect_ij_product in params:
+            error_message = "".join([
+                "Do not select on indirect ij_product %s. " % indirect_ij_product,
+                "Instead, select on an exact ij_product.",
+            ])
+            fail(error_message)
+
+    # Map (direct ij_product) -> corresponding value relative to product directory
+    for ij_product, value in params.items():
+        if ij_product != "default":
+            params[ij_product] = [_plugin_api_directory(DIRECT_IJ_PRODUCTS[ij_product]) + item for item in value]
+
+    return _do_select_for_plugin_api(params)
+
 def no_mockito_extensions(name, jars, **kwargs):
     """Removes mockito extensions from jars.
 
