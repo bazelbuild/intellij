@@ -32,7 +32,7 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.repackaged.bazel.protobuf.TextFormat;
+import com.google.protobuf.TextFormat;
 import com.intellij.concurrency.AsyncUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.util.Key;

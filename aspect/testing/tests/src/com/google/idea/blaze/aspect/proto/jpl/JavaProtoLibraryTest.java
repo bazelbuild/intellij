@@ -82,7 +82,7 @@ public class JavaProtoLibraryTest extends BazelIntellijAspectTest {
 
     // intellij-info groups
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("lib.java-manifest"),
             testRelative(intellijInfoFileName("lib")),
             testRelative(intellijInfoFileName("bar_java_proto")),
@@ -94,7 +94,7 @@ public class JavaProtoLibraryTest extends BazelIntellijAspectTest {
             testRelative("lib.java-manifest"), testRelative(intellijInfoFileName("lib")));
 
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-java-direct-deps"))
-        .containsAllOf(
+        .containsAtLeast(
             testRelative("lib.java-manifest"),
             testRelative(intellijInfoFileName("lib")),
             testRelative(intellijInfoFileName("bar_java_proto")),
@@ -125,7 +125,7 @@ public class JavaProtoLibraryTest extends BazelIntellijAspectTest {
             testRelative("liblib-src.jar"),
             testRelative("liblib.jdeps"));
     assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java-direct-deps"))
-        .containsAllOf(
+        .containsAtLeast(
             // lib
             testRelative("liblib.jar"),
             testRelative("liblib-hjar.jar"),

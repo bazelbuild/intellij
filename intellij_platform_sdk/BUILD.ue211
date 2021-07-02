@@ -2,67 +2,48 @@
 #
 # Plugin source jars for IntelliJ UE, accessed remotely.
 
-load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
+load("//build_defs:repackage.bzl", "repackaged_jetbrains_jars")
 
 package(default_visibility = ["//visibility:public"])
 
-java_import(
+repackaged_jetbrains_jars(
     name = "sdk",
-    jars = glob(
-        ["lib/*.jar"],
-        exclude = [
-            # mockito-extensions needs to be removed from this jar.
-            "lib/testFramework.jar",
-        ],
-    ),
+    jars = glob(["lib/*.jar"]),
     tags = ["intellij-provided-by-sdk"],
-    exports = [":jars_without_mockito_extensions"],
     deps = ["@error_prone_annotations//jar"],
 )
 
-no_mockito_extensions(
-    name = "jars_without_mockito_extensions",
-    jars = ["lib/testFramework.jar"],
-)
-
-java_import(
-    name = "guava",
-    jars = ["lib/guava.jar"],
-)
-
-java_library(name = "jsr305")  # not bundled
-
-java_import(
+repackaged_jetbrains_jars(
     name = "java",
     jars = glob(["plugins/java/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "platform_images",
     jars = glob(["plugins/platform-images/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "coverage",
     jars = glob(["plugins/coverage/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "devkit",
     jars = glob(["plugins/devkit/lib/devkit.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "hg4idea",
     jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "javascript",
     jars = glob(["plugins/JavaScriptLanguage/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "css",
     jars = glob([
         "plugins/CSS/lib/*.jar",
@@ -70,27 +51,27 @@ java_import(
     ]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "tslint",
     jars = glob(["plugins/tslint/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "angular",
     jars = glob(["plugins/AngularJS/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "kotlin",
     jars = glob(["plugins/Kotlin/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "junit",
     jars = glob(["plugins/junit/lib/*.jar"]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "tasks",
     jars = glob([
         "plugins/tasks/lib/tasks-api.jar",
@@ -98,14 +79,14 @@ java_import(
     ]),
 )
 
-java_import(
+repackaged_jetbrains_jars(
     name = "terminal",
     jars = glob(["plugins/terminal/lib/terminal.jar"]),
 )
 
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
-java_import(
+repackaged_jetbrains_jars(
     name = "bundled_plugins",
     jars = glob([
         "plugins/devkit/lib/*.jar",

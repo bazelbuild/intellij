@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.util.PlatformUtils;
 import java.io.File;
@@ -87,6 +88,7 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
 
     // Tests fail if they access files outside of the project roots and other system directories.
     // Ensure runfiles and platform api are allowed.
+    String os = SystemInfoRt.OS_NAME;
     VfsRootAccess.allowRootAccess(disposable, RUNFILES_PATH);
     String platformApi = getPlatformApiPath();
     if (platformApi != null) {

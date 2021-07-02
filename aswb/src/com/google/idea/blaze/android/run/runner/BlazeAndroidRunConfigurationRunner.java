@@ -142,12 +142,13 @@ public final class BlazeAndroidRunConfigurationRunner
   private static String canDebug(
       DeviceFutures deviceFutures, AndroidFacet facet, String moduleName) {
     // If we are debugging on a device, then the app needs to be debuggable
-    for (ListenableFuture<IDevice> future : deviceFutures.get()) {
+    for (_jetbrains_.com.google.common.util.concurrent.ListenableFuture<IDevice> future :
+        deviceFutures.get()) {
       if (!future.isDone()) {
         // this is an emulator, and we assume that all emulators are debuggable
         continue;
       }
-      IDevice device = Futures.getUnchecked(future);
+      IDevice device = _jetbrains_.com.google.common.util.concurrent.Futures.getUnchecked(future);
       if (!LaunchUtils.canDebugAppOnDevice(facet, device)) {
         return AndroidBundle.message(
             "android.cannot.debug.noDebugPermissions", moduleName, device.getName());
