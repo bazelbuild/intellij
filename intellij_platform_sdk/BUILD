@@ -513,7 +513,7 @@ java_library(
         "intellij-2020.2": [":bundled_jsr305"],
         "intellij-2020.3": [":bundled_jsr305"],
         "intellij-2021.1": [":bundled_jsr305"],
-        "intellij-2021.2": [":bundled_jsr305"],
+        "intellij-2021.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2020.3": [":bundled_jsr305"],
         "intellij-ue-2021.1": ["@jsr305_annotations//jar"],

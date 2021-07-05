@@ -30,10 +30,7 @@ java_library(
     exports = ["@guava//jar"],
 )
 
-java_import(
-    name = "jsr305",
-    jars = ["lib/jsr305-3.0.2.jar"],
-)
+java_library(name = "jsr305")  # not bundled
 
 java_import(
     name = "java",
