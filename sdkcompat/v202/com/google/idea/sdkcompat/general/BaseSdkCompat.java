@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
+import com.intellij.ui.IconManager;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.TextChunk;
@@ -92,5 +93,10 @@ public final class BaseSdkCompat {
   public static Iterable<FilePath> getFilePaths(AnActionEvent e) {
     Stream<FilePath> filePathStream = e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
     return (filePathStream == null) ? null : filePathStream::iterator;
+  }
+
+  /** #api211 Activating IconManager requires an IconManager parameter in 2021.2 */
+  public static void activateIconManager() {
+    IconManager.activate();
   }
 }

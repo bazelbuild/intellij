@@ -12,6 +12,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.CoreIconManager;
+import com.intellij.ui.IconManager;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usages.TextChunk;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -82,5 +84,10 @@ public final class BaseSdkCompat {
   @Nullable
   public static Iterable<FilePath> getFilePaths(AnActionEvent e) {
     return e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
+  }
+
+  /** #api211 Activating IconManager requires an IconManager parameter in 2021.2 */
+  public static void activateIconManager() throws Throwable {
+    IconManager.activate(new CoreIconManager());
   }
 }
