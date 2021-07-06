@@ -43,8 +43,18 @@ public class JavaProtoLibraryTest extends BazelIntellijAspectTest {
     TargetIdeInfo jpl = findTarget(testFixture, ":bar_java_proto");
     assertThat(jpl).isNotNull();
 
-    // We don't want java_proto_library to be rolling up any jars
+    // java_proto_library jars should only include compileJdeps
     assertThat(jpl.getJavaIdeInfo().getJarsList()).isEmpty();
+    /*List<String> jplJarStrings =
+        jpl.getJavaIdeInfo().getJarsList().stream()
+            .map(IntellijAspectTest::libraryArtifactToString)
+            .collect(toList());
+    assertThat(jplJarStrings)
+        .containsExactly(
+            jarString(
+                testRelative("libbar_proto-speed.jar"),
+                testRelative("libbar_proto-speed-hjar.jar"),
+                testRelative("bar_proto-speed-src.jar")));*/
 
     // We shouldn't have reached the underlying base proto_library's
     assertThat(findTarget(testFixture, ":bar_proto")).isNull();
