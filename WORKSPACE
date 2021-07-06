@@ -323,13 +323,6 @@ jvm_maven_import_external(
     server_urls = ["https://repo1.maven.org/maven2"],
 )
 
-jvm_maven_import_external(
-    name = "guava",
-    artifact = "com.google.guava:guava:29.0-jre",
-    artifact_sha256 = "b22c5fb66d61e7b9522531d04b2f915b5158e80aa0b40ee7282c8bfb07b0da25",
-    server_urls = ["https://repo1.maven.org/maven2"],
-)
-
 _JARJAR_BUILD_FILE = """
 java_binary(
     name = "jarjar_bin",
