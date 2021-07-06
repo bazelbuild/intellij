@@ -42,7 +42,11 @@ public final class BaseSdkCompat {
    */
   @Nullable
   public static Path getSettingsBaseDirWrapper(ConversionContext context) {
-    return context.getSettingsBaseDir() == null ? null : context.getSettingsBaseDir().toPath();
+    try {
+      return context.getSettingsBaseDir() == null ? null : context.getSettingsBaseDir().toPath();
+    } catch (NoSuchMethodError e) {
+      return null;
+    }
   }
 
   // #api202 doWrapLongLinesIfNecessary not available anymore in CodeFormatterFacade

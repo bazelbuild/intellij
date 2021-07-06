@@ -40,7 +40,11 @@ public final class BaseSdkCompat {
    */
   @Nullable
   public static Path getSettingsBaseDirWrapper(ConversionContext context) {
-    return context.getSettingsBaseDir();
+    try {
+      return context.getSettingsBaseDir();
+    } catch (NoSuchMethodError e) {
+      return null;
+    }
   }
 
   // #api202 TODO(b/181105847) Replace EditorFacade.getInstance() in the future

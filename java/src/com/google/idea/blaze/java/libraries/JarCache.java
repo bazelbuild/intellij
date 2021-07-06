@@ -44,14 +44,11 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -102,10 +99,7 @@ public class JarCache {
 
   private boolean updateEnabled() {
     // force-enable the jar cache if syncing remotely
-    this.enabled =
-        !ApplicationManager.getApplication().isUnitTestMode()
-            && (BlazeJavaUserSettings.getInstance().getUseJarCache()
-                || Blaze.getBuildSystemProvider(project).syncingRemotely());
+    this.enabled = JarCacheStateProvider.getInstance(project).isEnabled();
     return enabled;
   }
 
