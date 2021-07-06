@@ -109,8 +109,8 @@ public class TestFileSystem {
   }
 
   /** Finds PsiFile, and asserts that it's not null. */
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   public PsiFile getPsiFile(VirtualFile file) {
     return new ReadAction<PsiFile>() {
       @Override
@@ -125,8 +125,8 @@ public class TestFileSystem {
   }
 
   /** Finds PsiDirectory, and asserts that it's not null. */
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
+  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
+  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   public PsiDirectory getPsiDirectory(VirtualFile file) {
     return new ReadAction<PsiDirectory>() {
       @Override
