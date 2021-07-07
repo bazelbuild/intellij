@@ -200,7 +200,7 @@ public class Jdks {
     if (version == null) {
       return JavaSdkVersion.JDK_1_0;
     }
-    JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(version);
+    JavaSdkVersion sdkVersion = JavaSdkVersion.fromVersionString(version);
     return sdkVersion == null ? JavaSdkVersion.JDK_1_0 : sdkVersion;
   }
 
