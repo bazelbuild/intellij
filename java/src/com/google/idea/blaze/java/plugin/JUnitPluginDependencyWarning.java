@@ -113,7 +113,9 @@ public class JUnitPluginDependencyWarning implements ApplicationComponent {
             Transactions.submitTransactionAndWait(() -> Notifications.Bus.notify(notification));
           }
 
-          @Override
+          // #api211 @Override is removed because this function is removed from
+          // AppLifecycleListener in 2021.2. We will need to remove it when 2021.1 is no longer
+          // supported.
           public void appFrameCreated(
               List<String> commandLineArgs, Ref<? super Boolean> willOpenProject) {}
 
