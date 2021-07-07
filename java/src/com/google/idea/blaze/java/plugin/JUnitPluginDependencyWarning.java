@@ -113,7 +113,6 @@ public class JUnitPluginDependencyWarning implements ApplicationComponent {
             Transactions.submitTransactionAndWait(() -> Notifications.Bus.notify(notification));
           }
 
-          @Override
           public void appFrameCreated(
               List<String> commandLineArgs, Ref<? super Boolean> willOpenProject) {}
 
