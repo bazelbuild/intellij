@@ -62,7 +62,7 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
       targets.append(" - " + TargetExpression.allFromPackageRecursive(excluded).toString());
     }
     // exclude 'manual' targets, which shouldn't be built when expanding wildcard target patterns
-    return String.format("attr(\"tags\", \"^((?!manual).)*$\", %s)", targets);
+    return String.format("attr(\"tags\", '^((?!manual).)*$', %s)", targets);
   }
 
   /**
