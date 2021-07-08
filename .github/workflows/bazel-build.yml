@@ -1,0 +1,43 @@
+name: bazel CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  bazel-intellij-canary:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Mount bazel cache
+        uses: actions/cache@v1
+        with:
+          path: "/home/runner/.cache/bazel"
+          key: bazel
+
+      - name: Install bazelisk
+        run: |
+          curl -LO "https://github.com/bazelbuild/bazelisk/releases/download/v1.1.0/bazelisk-linux-amd64"
+          mkdir -p "${GITHUB_WORKSPACE}/bin/"
+          mv bazelisk-linux-amd64 "${GITHUB_WORKSPACE}/bin/bazel"
+          chmod +x "${GITHUB_WORKSPACE}/bin/bazel"
+
+      - name: Build
+        run: |
+          "${GITHUB_WORKSPACE}/bin/bazel" build //clwb:clwb_bazel_zip --define=ij_product=clion-beta
+          "${GITHUB_WORKSPACE}/bin/bazel" build //ijwb:ijwb_bazel_zip --define=ij_product=intellij-canary
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: clion-latest.zip
+          path: |
+            bazel-bin/clwb/clwb_bazel.zip
+      - uses: actions/upload-artifact@v2
+        with:
+          name: intellij-canary.zip
+          path: |
+            bazel-bin/ijwb/ijwb_bazel.zip
