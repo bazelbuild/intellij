@@ -65,8 +65,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2021_1",
     build_file = "@//intellij_platform_sdk:BUILD.ue211",
-    sha256 = "858b37cc64f52be55c6dac8fed147803310e7f243ffdaa81e538f10df59b0cf5",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2021.1.2/ideaIU-2021.1.2.zip",
+    sha256 = "da25231d007afea92879e3fdd10b85b2ec69772ade47601d05c67e0b3e5f5d7d",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2021.1.3/ideaIU-2021.1.3.zip",
 )
 
 # The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
@@ -172,8 +172,8 @@ http_archive(
 http_archive(
     name = "go_2021_1",
     build_file_content = _GO_BUILD_FILE,
-    sha256 = "e74de51374b107045f3712e370605d6705cca537dfe42ac74be66aa5a482ac99",
-    url = "https://plugins.jetbrains.com/files/9568/120583/go-211.7442.27.zip",
+    sha256 = "da95dd911e98e1ca04107794ea0e8732105e227b0ae3ea593240aca72a1785ca",
+    url = "https://plugins.jetbrains.com/files/9568/122859/go-211.7628.1.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
