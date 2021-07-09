@@ -72,11 +72,26 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
           com.intellij.execution.junit.AllInPackageConfigurationProducer.class,
           com.intellij.execution.junit.TestInClassConfigurationProducer.class,
           com.intellij.execution.junit.TestClassConfigurationProducer.class,
-          com.intellij.execution.junit.TestMethodConfigurationProducer.class,
           com.intellij.execution.junit.PatternConfigurationProducer.class,
           com.intellij.execution.junit.UniqueIdConfigurationProducer.class,
           com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer.class,
           com.intellij.execution.application.ApplicationConfigurationProducer.class);
+
+  // #api211 TestMethodConfigurationProducer is removed in 2021.2 so after 2021.1 is no longer
+  // supported we can remove this function and directly add the list of JAVA_PRODUCERS to the
+  // suppressed producers.
+  private static ImmutableList<Class<? extends RunConfigurationProducer<?>>> getJavaProducers() {
+    ClassLoader classLoader = JAVA_PRODUCERS.get(0).getClassLoader();
+    Class<? extends RunConfigurationProducer<?>> clazz =
+        loadClass(classLoader, "com.intellij.execution.junit.TestMethodConfigurationProducer");
+    if (clazz != null) {
+      return ImmutableList.<Class<? extends RunConfigurationProducer<?>>>builder()
+          .addAll(JAVA_PRODUCERS)
+          .add(clazz)
+          .build();
+    }
+    return JAVA_PRODUCERS;
+  }
 
   private static Collection<Class<? extends RunConfigurationProducer<?>>> getProducers(
       String pluginId, Collection<String> qualifiedClassNames) {
@@ -125,7 +140,7 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
     RunConfigurationProducerService producerService =
         RunConfigurationProducerService.getInstance(project);
     ImmutableList.<Class<? extends RunConfigurationProducer<?>>>builder()
-        .addAll(JAVA_PRODUCERS)
+        .addAll(getJavaProducers())
         .addAll(getProducers(KOTLIN_PLUGIN_ID, KOTLIN_PRODUCERS))
         .addAll(getProducers(ANDROID_PLUGIN_ID, ANDROID_PRODUCERS))
         .addAll(getProducers(GRADLE_PLUGIN_ID, GRADLE_PRODUCERS))
