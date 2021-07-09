@@ -29,8 +29,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2021_1",
     build_file = "@//intellij_platform_sdk:BUILD.idea211",
-    sha256 = "12b7b251a71e720d76c849ba7df932097a3bdc79f31527eb15695701c31c4d99",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2021.1.2/ideaIC-2021.1.2.zip",
+    sha256 = "ec6aee9fde6e8d9fd5eb730309d63399878d8760107fbd1ddbe402f56eed9d86",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2021.1.3/ideaIC-2021.1.3.zip",
 )
 
 # The plugin api for IntelliJ 2021.2. This is required to build IJwB,
@@ -132,8 +132,8 @@ http_archive(
 http_archive(
     name = "python_2021_1",
     build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "76960b404e11011cc227edfd2a7e7fb59ebff52f2c2955d80c933f69e887a7c5",
-    url = "https://plugins.jetbrains.com/files/7322/122104/python-ce-211.7442.53.zip",
+    sha256 = "7d16cc9bf80c9e2c26d55d55564c1c174583a5e6900e6b7f13d5663275b07644",
+    url = "https://plugins.jetbrains.com/files/7322/125352/python-ce-211.7628.24.zip",
 )
 
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
