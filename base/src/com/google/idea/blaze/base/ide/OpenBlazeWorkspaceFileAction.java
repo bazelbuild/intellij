@@ -65,8 +65,8 @@ final class OpenBlazeWorkspaceFileAction extends BlazeProjectAction {
       component = new JPanel(new GridBagLayout());
       FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor();
       fileTextField =
-          WorkspaceFileTextField.create(
-              workspacePathResolver, descriptor, PATH_FIELD_WIDTH, myDisposable);
+          WorkspaceFileTextField.createWithDefaultPath(
+              workspacePathResolver, descriptor, PATH_FIELD_WIDTH, "WORKSPACE", myDisposable);
 
       component.add(new JBLabel("Path:"));
       component.add(fileTextField.getField(), UiUtil.getFillLineConstraints(0));

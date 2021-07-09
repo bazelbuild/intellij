@@ -55,6 +55,17 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
         pathResolver, textField, new FileChooserFilter(descriptor, /* showHidden= */ true), parent);
   }
 
+  public static FileTextField createWithDefaultPath(
+      WorkspacePathResolver pathResolver,
+      FileChooserDescriptor descriptor,
+      int columns,
+      String defaultPath,
+      Disposable parent) {
+    JTextField textField = new WorkspacePathTextField(pathResolver, columns, defaultPath);
+    return new WorkspaceFileTextField(
+        pathResolver, textField, new FileChooserFilter(descriptor, /* showHidden= */ true), parent);
+  }
+
   @Nullable
   @Override
   public VirtualFile getSelectedFile() {
@@ -111,8 +122,18 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
       this.pathResolver = pathResolver;
     }
 
+    WorkspacePathTextField(WorkspacePathResolver pathResolver, int columns, String defaultPath) {
+      super(defaultPath, columns);
+      this.pathResolver = pathResolver;
+    }
+
     @Override
     public void setText(String path) {
+      if (pathResolver == null) {
+        super.setText(path);
+        return;
+      }
+
       WorkspacePath workspacePath = pathResolver.getWorkspacePath(new File(path));
       if (workspacePath == null) {
         super.setText(path);
