@@ -50,7 +50,7 @@ public class RunConfigurationSerializer {
   }
 
   private static void clearWorkspacePathVariable() {
-    PathMacros.getInstance().removeMacro(WORKSPACE_ROOT_VARIABLE_NAME);
+    PathMacros.getInstance().setMacro(WORKSPACE_ROOT_VARIABLE_NAME, null);
   }
 
   private static synchronized void runWithPathVariableSet(Project project, Runnable runnable) {
