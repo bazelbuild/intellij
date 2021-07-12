@@ -18,3 +18,10 @@ java_library(
         "@truth8//jar",
     ],
 )
+
+java_library(
+    name = "diffutils",
+    exports = [
+        "@diffutils//jar",
+    ],
+)

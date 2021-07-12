@@ -475,6 +475,7 @@ java_library(
     visibility = [":test_libs_visibility"],
     exports = [
         "//third_party:truth",
+        "//third_party:diffutils",
         "@bytebuddy-agent//jar",
         "@bytebuddy//jar",
         "@mockito//jar",
