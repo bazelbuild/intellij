@@ -238,8 +238,8 @@ http_archive(
 http_archive(
     name = "android_studio_2020_3",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio203",
-    sha256 = "e4fe551b8cd671dc732651d8b94da660662e216e0de0674f8cd263297b100f9a",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2020.3.1.18/android-studio-2020.3.1.18-linux.tar.gz",
+    sha256 = "05bd13ee3e22a5c4b2151015f548da5ad886a1b67e418f185824ab24bad48c6b",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2020.3.1.20/android-studio-2020.3.1.20-linux.tar.gz",
 )
 
 # LICENSE: Common Public License 1.0
