@@ -44,8 +44,7 @@
 
   <project-components>
     <component>
-      <implementation-class>com.google.idea.blaze.scala.run.producers.NonBlazeProducerSuppressor
-      </implementation-class>
+      <implementation-class>com.google.idea.blaze.scala.run.producers.NonBlazeProducerSuppressor</implementation-class>
     </component>
   </project-components>
 </idea-plugin>

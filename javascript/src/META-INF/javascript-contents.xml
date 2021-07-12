@@ -55,9 +55,7 @@
 
   <project-components>
     <component>
-      <implementation-class>
-        com.google.idea.blaze.javascript.run.producers.NonBlazeProducerSuppressor
-      </implementation-class>
+      <implementation-class>com.google.idea.blaze.javascript.run.producers.NonBlazeProducerSuppressor</implementation-class>
     </component>
   </project-components>
 </idea-plugin>

@@ -16,9 +16,7 @@
 <idea-plugin>
   <application-components>
     <component>
-      <implementation-class>
-        com.google.idea.blaze.javascript.DisableJsLibrariesError
-      </implementation-class>
+      <implementation-class>com.google.idea.blaze.javascript.DisableJsLibrariesError</implementation-class>
     </component>
   </application-components>
 </idea-plugin>
