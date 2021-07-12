@@ -131,8 +131,7 @@ public class ServiceHelper {
       Class<T> key,
       T implementation,
       Disposable parentDisposable) {
-    boolean exists = componentManager.getService(key) != null;
-    if (exists) {
+    if (componentManager.hasComponent(key)) {
       // upstream code can do it all for us
       ServiceContainerUtil.replaceService(componentManager, key, implementation, parentDisposable);
       return;
