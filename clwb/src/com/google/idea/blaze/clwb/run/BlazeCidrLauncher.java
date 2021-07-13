@@ -215,7 +215,8 @@ public final class BlazeCidrLauncher extends CidrLauncher {
         workingDir = workspaceRootDirectory;
       }
 
-      GeneralCommandLine commandLine = new GeneralCommandLine(runner.executableToDebug.getPath());
+      GeneralCommandLine commandLine =
+          new GeneralCommandLine(runner.executableToDebug.getPath()).withWorkDirectory(workingDir);
 
       commandLine.addParameters(handlerState.getExeFlagsState().getFlagsForExternalProcesses());
       commandLine.addParameters(handlerState.getTestArgs());
