@@ -233,7 +233,95 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testAarLibraryAndManifestMatched() {
+  public void androidResourceImport_manifestOnlyAarEnabled_manifestOnlyAarImported() {
+    experimentService.setExperiment(BlazeAndroidWorkspaceImporter.INCLUDE_MANIFEST_ONLY_AARS, true);
+    /**
+     * The aspect generates AARs for targets as long as there's an android manifest. These AARs are
+     * named with the "-manifest-only.aar" suffix. The experiment {@link
+     * BlazeAndroidWorkspaceImporter.INCLUDE_MANIFEST_ONLY_AARS} controls whether or not to use
+     * these manifest-only AARs as resource dependencies. Using them will generate a more complete
+     * resource dep graph, but it also means more resource modules generated.
+     */
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("example")))
+                    .add(DirectoryEntry.include(new WorkspacePath("example1"))))
+            .build();
+
+    TargetMap targetMap =
+        targetMap(
+            android_binary("//example1:lib")
+                .src("MainActivity.java")
+                .manifest("AndroidManifest.xml")
+                .res("res")
+                .dep("//aarLibrary:lib"),
+            android_library("//aarLibrary:lib")
+                .src("MainActivity.java")
+                .manifest("AndroidManifest.xml")
+                .res_folder("res", "resources-manifest-only.aar"));
+
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
+    AndroidResourceModule expectedAndroidResourceModule =
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//example1:lib")))
+            .addResourceAndTransitiveResource(source("example1/res"))
+            .addResourceLibraryKey(
+                LibraryKey.libraryNameFromArtifactLocation(
+                    source("aarLibrary/resources-manifest-only.aar")))
+            .addTransitiveResourceDependency("//aarLibrary:lib")
+            .build();
+
+    assertThat(result.aarLibraries.values())
+        .containsExactly(
+            new AarLibrary(source("aarLibrary/resources-manifest-only.aar"), "aarLibrary"));
+    assertThat(result.androidResourceModules).containsExactly(expectedAndroidResourceModule);
+  }
+
+  @Test
+  public void androidResourceImport_manifestOnlyAarDisabled_manifestOnlyAarNotImported() {
+    experimentService.setExperiment(
+        BlazeAndroidWorkspaceImporter.INCLUDE_MANIFEST_ONLY_AARS, false);
+    /**
+     * The aspect generates AARs for targets as long as there's an android manifest. These AARs are
+     * named with the "-manifest-only.aar" suffix. The experiment {@link
+     * BlazeAndroidWorkspaceImporter.INCLUDE_MANIFEST_ONLY_AARS} controls whether or not to use
+     * these manifest-only AARs as resource dependencies. Using them will generate a more complete
+     * resource dep graph, but it also means more resource modules generated.
+     */
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("example")))
+                    .add(DirectoryEntry.include(new WorkspacePath("example1"))))
+            .build();
+
+    TargetMap targetMap =
+        targetMap(
+            android_binary("//example1:lib")
+                .src("MainActivity.java")
+                .manifest("AndroidManifest.xml")
+                .res("res")
+                .dep("//aarLibrary:lib"),
+            android_library("//aarLibrary:lib")
+                .src("MainActivity.java")
+                .manifest("AndroidManifest.xml")
+                .res_folder("res", "resources-manifest-only.aar"));
+
+    BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
+    AndroidResourceModule expectedAndroidResourceModule =
+        AndroidResourceModule.builder(TargetKey.forPlainTarget(Label.create("//example1:lib")))
+            .addResourceAndTransitiveResource(source("example1/res"))
+            .addTransitiveResourceDependency("//aarLibrary:lib")
+            .build();
+
+    assertThat(result.aarLibraries.values()).isEmpty();
+    assertThat(result.androidResourceModules).containsExactly(expectedAndroidResourceModule);
+  }
+
+  @Test
+  public void androidResourceImport_multipleTargetsUsesSameAarLibrary_aarLibraryNotDuplicated() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -284,7 +372,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
   /** Test that a two packages use the same un-imported android_library */
   @Test
-  public void testResourceInheritance_createAarLibrary() {
+  public void androidResourceImport_resInheritanceFromCommonDep_createAarLibrary() {
     // if experiment variable is set to create AarLibrary
     ProjectView projectView =
         ProjectView.builder()
@@ -365,7 +453,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
   /** Test adding empty resource modules as jars. */
   @Test
-  public void testEmptyResourceModuleIsAddedAsJar() {
+  public void androidResourceImport_emptyResourceModule_addedAsJar() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -430,7 +518,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testIdlClassJarIsAddedAsLibrary() {
+  public void androidResourceImport_idlClassJar_isAddedAsLibrary() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -467,7 +555,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testAndroidResourceImport_containsMultipleExternalResources() {
+  public void androidResourceImport_containsMultipleExternalResources_importsAllCorrectly() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -504,7 +592,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testResourceImportOutsideSourceFilterIsAddedToResourceLibrary_createAarLibrary() {
+  public void resourceImport_resourceOutsideOfProjectView_createAarLibrary() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -527,7 +615,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testConflictingResourceRClasses_picksBestResourceClass() {
+  public void conflictingResourceRClasses_resourceMergingDisabled_picksBestResourceClass() {
     experimentService.setExperiment(MockBlazeAndroidWorkspaceImporter.mergeResourcesEnabled, false);
     ProjectView projectView =
         ProjectView.builder()
@@ -560,7 +648,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testConflictingResourceRClasses_mergesClassesIntoOne() {
+  public void conflictingResourceRClasses_resourceMergingEnabled_mergesClassesIntoOne() {
     experimentService.setExperiment(MockBlazeAndroidWorkspaceImporter.mergeResourcesEnabled, true);
     ProjectView projectView =
         ProjectView.builder()
@@ -594,7 +682,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testGeneratedResourceRetentionFilter_retainsPassingResourceDependency() {
+  public void generatedResourceRetentionFilter_retainsPassingResourceDependency() {
     retentionFilterEp.registerExtension(
         artifactLocation -> artifactLocation.getRelativePath().startsWith("common_deps"));
 
@@ -622,7 +710,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testMixingGeneratedAndNonGeneratedSourcesGeneratesIssue() {
+  public void generatedResources_mixingGeneratedAndNonGeneratedSources_raisesError() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -642,7 +730,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testMixingGeneratedAndNonGeneratedSourcesAllowed() {
+  public void generatedResources_mixingGeneratedAndNonGeneratedSourcesForAllowedDirs_noIssues() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -672,7 +760,9 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testMixingGeneratedAndNonGeneratedSourcesPartlyAllowed_createAarLibrary() {
+  public void
+      generatedResources_mixingGeneratedAndNonGeneratedSourcesForAllowedDirs_createAarLibrary() {
+    // Note that "java/uninterestingdir" is one of the ignored res dirs in test setup.
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -718,7 +808,9 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testMixingGeneratedAndNonGeneratedSourcesNoInterestingDirectories() {
+  public void
+      generatedResources_mixingGeneratedAndNonGeneratedSourcesForUninterestingDir_noIssues() {
+    // Note that "java/uninterestingdir" is one of the ignored res dirs in test setup.
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -745,7 +837,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testAarImport_outsideSources_createsAarLibrary() {
+  public void aarImport_outsideSources_createsAarLibrary() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -792,7 +884,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testAarImport_outsideSourcesAndNoJdeps_keepsAarLibrary() {
+  public void aarImport_outsideSourcesAndNoJdeps_keepsAarLibrary() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -825,7 +917,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testAarImport_inSources_createsAarLibrary() {
+  public void aarImport_inSources_createsAarLibrary() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -886,7 +978,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testAarImport_inSourcesAndNoJdeps_keepsAarLibrary() {
+  public void aarImport_inSourcesAndNoJdeps_keepsAarLibrary() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -927,7 +1019,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testAarImport_multipleJarLibraries_aarLibraryOnlyOverridesAarJar() {
+  public void aarImport_multipleJarLibraries_aarLibraryOnlyOverridesAarJar() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -990,7 +1082,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testResJarFilter_resJarFromDependency() {
+  public void resJarFilter_resJarFromDeps_filtersOutJar() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -1038,7 +1130,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testResJarFilter_resJarFromSource() {
+  public void resJarFilter_resJarFromSource_filtersOutJar() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -1090,7 +1182,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
    * b/70781962
    */
   @Test
-  public void testCyclicDependencyTerminates() {
+  public void androidResourceModuleGeneration_cyclicDeps_constructedCorrectly() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -1135,7 +1227,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
    * dependency b/72431530
    */
   @Test
-  public void testMissingDependencyTerminates() {
+  public void androidResourceModuleGeneration_missingDeps_constructedCorrectly() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -1166,7 +1258,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
    * unnecessary create and reduce operations during creation.
    */
   @Test
-  public void testAndroidResourceModuleGeneration() {
+  public void androidResourceModuleGeneration_longResourceDepChains_constructedCorrectly() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -1258,7 +1350,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testAndroidResourceImport_aarUsesExportedPackageName() {
+  public void androidResourceImport_customPackageNameForAarFromDep_usesExportedPackageName() {
     ProjectView projectView =
         ProjectView.builder()
             .add(
@@ -1303,7 +1395,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   @Test
-  public void testAndroidResourceImport_aarInfersPackageName() {
+  public void androidResourceImport_noExplicitPackageNameFromDep_packageNameInferredFromTarget() {
     ProjectView projectView =
         ProjectView.builder()
             .add(

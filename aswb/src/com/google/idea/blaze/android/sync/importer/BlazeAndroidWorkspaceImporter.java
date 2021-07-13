@@ -78,6 +78,12 @@ public class BlazeAndroidWorkspaceImporter {
   static final BoolExperiment workspaceOnlyResourcesEnabled =
       new BoolExperiment("aswb.attach.workspace.only.resources", true);
 
+  // b/193068824
+  @VisibleForTesting
+  public static final BoolExperiment INCLUDE_MANIFEST_ONLY_AARS =
+      new BoolExperiment("aswb.include.manifest.only.aars", true);
+
+  private static final String MANIFEST_ONLY_AAR_FILE_SUFFIX = "-manifest-only.aar";
   private final Project project;
   private final Consumer<Output> context;
   private final BlazeImportInput input;
@@ -242,6 +248,12 @@ public class BlazeAndroidWorkspaceImporter {
     }
 
     for (AndroidResFolder androidResFolder : androidIdeInfo.getResFolders()) {
+      if (!INCLUDE_MANIFEST_ONLY_AARS.getValue()
+          && androidResFolder.getAar() != null
+          && androidResFolder.getAar().getRelativePath().endsWith(MANIFEST_ONLY_AAR_FILE_SUFFIX)) {
+        continue;
+      }
+
       ArtifactLocation artifactLocation = androidResFolder.getRoot();
       if (isSourceOrAllowedGenPath(artifactLocation, allowlistFilter)) {
         if (shouldCreateFakeAar.test(artifactLocation)) {
