@@ -73,7 +73,8 @@ def _parse_app_info_json(application_info_json, check_eap):
   build_number = data["productCode"] + "-" + data["buildNumber"]
   if _is_valid_build_number(build_number):
     if check_eap:
-      if "versionSuffix" in data and data["versionSuffix"] == "EAP":
+      if "versionSuffix" in data and (data["versionSuffix"] == "EAP" or
+                                      data["versionSuffix"] == "Beta"):
         print(build_number + " EAP")
         return
     print(build_number)
