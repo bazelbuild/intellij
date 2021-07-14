@@ -182,24 +182,22 @@ def main():
     if idea_plugin.getElementsByTagName("idea-version"):
       raise ValueError("idea-version element already present")
 
-    # We strip the product code and build number to enable making a single
-    # plugin build that would work on multiple IDEs. That is, the 'intellij'
-    # plugin zip can be loaded in any JetBrains IDE.
-    idea_version_build_element = _strip_build_number(
-        _strip_product_code(api_version))
-
     idea_version_element = dom.createElement("idea-version")
     new_elements.append(idea_version_element)
 
+    if is_eap:
+      # IU211.6693.111 >> since_build=211.6693 and until_build=211.6693.*
+      build_version = _strip_build_number(
+          _strip_product_code(api_version))
+    else:
+      # IU211.6693.111 >> since_build=211 and until_build=211.*
+      build_version = _parse_major_version(api_version)
+
     if args.stamp_since_build:
-      idea_version_element.setAttribute("since-build",
-                                        idea_version_build_element)
+      idea_version_element.setAttribute("since-build", build_version)
+
     if args.stamp_until_build:
-      if is_eap:
-        until_version = idea_version_build_element + ".*"
-      else:
-        until_version = _parse_major_version(api_version) + ".*"
-      idea_version_element.setAttribute("until-build", until_version)
+      idea_version_element.setAttribute("until-build", build_version + ".*")
 
   if args.changelog_file:
     if idea_plugin.getElementsByTagName("change-notes"):
