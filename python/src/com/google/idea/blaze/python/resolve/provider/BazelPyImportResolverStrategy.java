@@ -22,6 +22,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.annotation.Nullable;
 
 /**
@@ -31,6 +33,10 @@ import javax.annotation.Nullable;
  * <p>Who knew such a straightforward system was even possible?
  */
 public class BazelPyImportResolverStrategy extends AbstractPyImportResolverStrategy {
+
+  // Packages installed with pip_install in python_rules are installed in a subdir that starts
+  // with this prefix.
+  private static final String PIP_INSTALL_DIR_PREFIX = "pypi__";
 
   @Override
   public boolean appliesToBuildSystem(BuildSystem buildSystem) {
@@ -51,6 +57,11 @@ public class BazelPyImportResolverStrategy extends AbstractPyImportResolverStrat
     if (source.isGenerated() || !source.getRelativePath().endsWith(".py")) {
       return null;
     }
-    return fromRelativePath(source.getRelativePath());
+    String relativePath = source.getRelativePath();
+    if (relativePath.startsWith(PIP_INSTALL_DIR_PREFIX)) {
+      Path path = Paths.get(relativePath);
+      relativePath = path.subpath(1, path.getNameCount()).toString();
+    }
+    return fromRelativePath(relativePath);
   }
 }
