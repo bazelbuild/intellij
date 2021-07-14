@@ -760,33 +760,6 @@ def collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output
         update_sync_output_groups(output_groups, "intellij-info-android", depset([ide_info_file]))
     return handled
 
-def _generate_fake_aar(ctx, file_name, manifest, res_files, resource_root):
-    """Generate an AAR with the given input files. This AAR is called a "fake" AAR because it doesn't actually exist in sources; rather it's generated for IDE usage purposes. """
-    aar = ctx.actions.declare_file(file_name + ".aar")
-    args = ctx.actions.args()
-
-    # using param file to get around argument length limitation
-    # the name of param file (%s) is automatically filled in by blaze
-    args.use_param_file("@%s")
-    args.set_param_file_format("multiline")
-
-    args.add("--aar", aar)
-    args.add("--manifest_file", manifest)
-    if res_files:
-        args.add_joined("--resources", res_files, join_with = ",")
-    if resource_root:
-        args.add("--resource_root", resource_root)
-
-    ctx.actions.run(
-        outputs = [aar],
-        inputs = [manifest] + res_files,
-        arguments = [args],
-        executable = ctx.executable._create_aar,
-        mnemonic = "CreateAar",
-        progress_message = "Generating " + file_name + ".aar",
-    )
-    return aar
-
 def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates ide_info proto with android_ide_info, and intellij_resolve_android with android resolve files. Returns false if target doesn't contain android attribute."""
     if not hasattr(target, "android"):
@@ -800,19 +773,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
     res_folders = []
     resolve_files = jars_from_output(android.idl.output)
     if hasattr(ctx.rule.attr, "resource_files"):
-        res_artifacts = get_res_artifacts(ctx.rule.attr.resource_files)
-
-        # Even if there are no resources to package into an AAR, generate an AAR
-        # containing just the manifest. ASwB needs these AARs to model resource
-        # dependencies, it needs to generate an R class for this package.
-        if not (res_artifacts) and android.manifest:
-            aar_file_name = target.label.name.replace("/", "-") + str(hash(str(target.label))) + "-manifest-only"
-            aar = _generate_fake_aar(ctx, aar_file_name, android.manifest, [], "")
-            resolve_files.append(aar)
-            root = to_artifact_location(target.label.package, None, True, False)
-            res_folders.append(struct_omit_none(aar = artifact_location(aar), root = root))
-
-        for artifact_path_fragments, res_files in res_artifacts.items():
+        for artifact_path_fragments, res_files in get_res_artifacts(ctx.rule.attr.resource_files).items():
             # Generate unique ArtifactLocation for resource directories.
             root = to_artifact_location(*artifact_path_fragments)
             resources.append(root)
@@ -820,8 +781,28 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
             # Generate aar
             aar_file_name = target.label.name.replace("/", "-")
             aar_file_name += "-" + str(hash(root.root_execution_path_fragment + root.relative_path + aar_file_name))
-            aar_resource_root = root.relative_path if root.is_source else root.root_execution_path_fragment + "/" + root.relative_path
-            aar = _generate_fake_aar(ctx, aar_file_name, android.manifest, res_files, aar_resource_root)
+
+            aar = ctx.actions.declare_file(aar_file_name + ".aar")
+            args = ctx.actions.args()
+
+            # using param file to get around argument length limitation
+            # the name of param file (%s) is automatically filled in by blaze
+            args.use_param_file("@%s")
+            args.set_param_file_format("multiline")
+
+            args.add("--aar", aar)
+            args.add("--manifest_file", android.manifest)
+            args.add_joined("--resources", res_files, join_with = ",")
+            args.add("--resource_root", root.relative_path if root.is_source else root.root_execution_path_fragment + "/" + root.relative_path)
+
+            ctx.actions.run(
+                outputs = [aar],
+                inputs = [android.manifest] + res_files,
+                arguments = [args],
+                executable = ctx.executable._create_aar,
+                mnemonic = "CreateAar",
+                progress_message = "Generating " + aar_file_name + ".aar for target " + str(target.label),
+            )
             resolve_files.append(aar)
 
             # Generate unique ResFolderLocation for resource files.

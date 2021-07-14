@@ -80,32 +80,6 @@ public class CreateAarTest {
     assertThat(aar.size()).isEqualTo(2);
   }
 
-  @Test
-  public void fullIntegrationTest_noResourceFiles_outputsManifestOnlyAAR() throws IOException {
-    File outputAar = new File(folder.getRoot(), "generated.aar");
-    File manifest = folder.newFile("AndroidManifest.xml");
-    String manifestContent =
-        "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-            + "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\""
-            + "          package=\"com.google.android.assets.quantum\">"
-            + "    <uses-sdk android:minSdkVersion=\"4\"/>"
-            + "    <application/>"
-            + "</manifest>";
-    Files.asCharSink(manifest, UTF_8).write(manifestContent);
-
-    String[] args =
-        new String[] {
-          "--aar", outputAar.getPath(), "--manifest_file", manifest.getPath(),
-        };
-    AarOptions options = CreateAar.parseArgs(args);
-    CreateAar.main(options);
-    assertThat(outputAar.exists()).isTrue();
-    ZipFile aar = new ZipFile(outputAar);
-    assertThat(getContent(aar.getInputStream(aar.getEntry("AndroidManifest.xml"))))
-        .isEqualTo(manifestContent);
-    assertThat(aar.size()).isEqualTo(1);
-  }
-
   /** Tests the setup where resource are present in a directory that is not called `res` */
   @Test
   public void fullIntegrationTest_nonResDirectory_outputsValidAAR() throws IOException {
