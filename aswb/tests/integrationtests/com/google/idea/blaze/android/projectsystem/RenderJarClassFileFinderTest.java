@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.projectsystem;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer.moduleNameForAndroidModule;
 import static com.google.idea.blaze.base.sync.data.BlazeDataStorage.WORKSPACE_MODULE_NAME;
+import static com.intellij.testFramework.UsefulTestCase.assertThrows;
 
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.libraries.RenderJarCache;
@@ -101,6 +102,8 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     experimentService.setExperimentString(
         BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME,
         RenderJarClassFileFinder.CLASS_FINDER_KEY);
+    // Disable resource resolution from Render Jars
+    experimentService.setExperiment(RenderJarClassFileFinder.resolveResourceClasses, false);
 
     ApplicationManager.getApplication().runWriteAction(this::createAndRegisterModules);
 
@@ -309,6 +312,30 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
                 binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC$Inner.class"));
   }
 
+  @Test
+  public void failsWhenResolvingResourcesPresentInRenderJars() {
+    Module workspaceModule =
+        ModuleManager.getInstance(getProject()).findModuleByName(WORKSPACE_MODULE_NAME);
+    assertThat(workspaceModule).isNotNull();
+
+    RenderJarClassFileFinder classFileFinder = new RenderJarClassFileFinder(workspaceModule);
+    assertThrows(
+        Throwable.class,
+        "Attempting to load resource 'com.google.example.simple.bin_a.R$color' from RenderJAR.",
+        () -> classFileFinder.findClassFile("com.google.example.simple.bin_a.R$color"));
+
+    assertThrows(
+        Throwable.class,
+        "Attempting to load resource 'com.google.example.simple.src_b.R$attr' from RenderJAR.",
+        () -> classFileFinder.findClassFile("com.google.example.simple.src_b.R$attr"));
+
+    assertThrows(
+        Throwable.class,
+        "Attempting to load resource 'com.google.example.simple.trans_dep_c.R$dimen' from"
+            + " RenderJAR.",
+        () -> classFileFinder.findClassFile("com.google.example.simple.trans_dep_c.R$dimen"));
+  }
+
   /**
    * Creates the .workspace module and resource modules, and registers the resource modules in
    * {@link AndroidResourceModuleRegistry}.
@@ -412,11 +439,14 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
                     getArtifactLocation("com/google/example/simple/bin_a.jar")));
     fileSystem.createFile(binAJar);
     fileSystem.createFile(binAJar + "!/com/google/example/simple/bin_a/MainActivity.class");
+    fileSystem.createFile(binAJar + "!/com/google/example/simple/bin_a/R$color.class");
     fileSystem.createFile(binAJar + "!/com/google/example/simple/src_a/SrcA.class");
     fileSystem.createFile(binAJar + "!/com/google/example/simple/src_a/SrcA$Inner.class");
+    fileSystem.createFile(binAJar + "!/com/google/example/simple/src_a/R$attr.class");
     fileSystem.createFile(binAJar + "!/com/google/example/simple/trans_dep_a/TransDepA.class");
     fileSystem.createFile(
         binAJar + "!/com/google/example/simple/trans_dep_a/TransDepA$Inner.class");
+    fileSystem.createFile(binAJar + "!/com/google/example/simple/trans_dep_a/R$dimen.class");
 
     String binBJar =
         cacheDir
@@ -426,11 +456,14 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
                     getArtifactLocation("com/google/example/simple/bin_b.jar")));
     fileSystem.createFile(binBJar);
     fileSystem.createFile(binBJar + "!/com/google/example/simple/bin_b/MainActivity.class");
+    fileSystem.createFile(binBJar + "!/com/google/example/simple/bin_b/R$color.class");
     fileSystem.createFile(binBJar + "!/com/google/example/simple/src_b/SrcB.class");
     fileSystem.createFile(binBJar + "!/com/google/example/simple/src_b/SrcB$Inner.class");
+    fileSystem.createFile(binBJar + "!/com/google/example/simple/src_b/R$attr.class");
     fileSystem.createFile(binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB.class");
     fileSystem.createFile(
         binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB$Inner.class");
+    fileSystem.createFile(binBJar + "!/com/google/example/simple/trans_dep_b/R$dimen.class");
 
     String binCJar =
         cacheDir
@@ -440,11 +473,14 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
                     getArtifactLocation("com/google/example/simple/bin_c.jar")));
     fileSystem.createFile(binCJar);
     fileSystem.createFile(binCJar + "!/com/google/example/simple/bin_c/MainActivity.class");
+    fileSystem.createFile(binCJar + "!/com/google/example/simple/bin_c/R$color.class");
     fileSystem.createFile(binCJar + "!/com/google/example/simple/src_c/SrcC.class");
     fileSystem.createFile(binCJar + "!/com/google/example/simple/src_c/SrcC$Inner.class");
+    fileSystem.createFile(binCJar + "!/com/google/example/simple/src_c/R$attr.class");
     fileSystem.createFile(binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC.class");
     fileSystem.createFile(
         binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC$Inner.class");
+    fileSystem.createFile(binCJar + "!/com/google/example/simple/trans_dep_c/R$dimen.class");
   }
 
   /**

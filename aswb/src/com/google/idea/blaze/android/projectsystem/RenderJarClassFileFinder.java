@@ -29,7 +29,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.common.experiments.InternalDevFlag;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -61,6 +61,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RenderJarClassFileFinder implements BlazeClassFileFinder {
   @VisibleForTesting public static final String CLASS_FINDER_KEY = "RenderJarClassFileFinder";
+
+  /**
+   * Experiment to toggle whether resource resolution is allowed from Render JARs. Render JARs
+   * should not resolve resources by default.
+   */
+  @VisibleForTesting
+  static final BoolExperiment resolveResourceClasses =
+      new BoolExperiment("aswb.resolve.resources.render.jar", false);
 
   private static final Logger log = Logger.getInstance(RenderJarClassFileFinder.class);
 
@@ -104,7 +112,13 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
   @Nullable
   @Override
   public VirtualFile findClassFile(String fqcn) {
-    logOrFailIfRClass(fqcn);
+    // Render JAR should not resolve any resources. All resources should be available to the IDE
+    // through ResourceRepository. Attempting to resolve resources from Render JAR indicates that
+    // ASwB hasn't properly set up resources for the project.
+    if (isResourceClass(fqcn) && !resolveResourceClasses.getValue()) {
+      log.error(String.format("Attempting to load resource '%s' from RenderJAR.", fqcn));
+      return null;
+    }
 
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
@@ -148,30 +162,6 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
                 .collect(Collectors.joining("\n  "))));
 
     return null;
-  }
-
-  /**
-   * Checks if given {@code fqcn} is an R class. If {@code fqcn} is an R class: logs a warning for
-   * prod users, or throws an exception for internal devs. No-op if {@code fqcn} is not an R class.
-   */
-  private void logOrFailIfRClass(String fqcn) {
-    if (!isResourceClass(fqcn)) {
-      return;
-    }
-
-    if (InternalDevFlag.isInternalDev() || ApplicationManager.getApplication().isInternal()) {
-      throw new IllegalArgumentException(
-          String.format(
-              "Attempting to load '%s' from Render JAR: R classes are expected to be supplied by"
-                  + " the IDE, not the Render JAR",
-              fqcn));
-    }
-
-    log.warn(
-        String.format(
-            "Attempting to load '%s 'from Render JAR. Loading R classes from Render JAR may lead"
-                + " to errors during layout rendering.",
-            fqcn));
   }
 
   @VisibleForTesting
