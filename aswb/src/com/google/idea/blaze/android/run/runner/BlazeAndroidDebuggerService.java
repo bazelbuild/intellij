@@ -22,7 +22,9 @@ import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 
 /** Provides android debuggers and debugger states for blaze projects. */
@@ -60,7 +62,8 @@ public interface BlazeAndroidDebuggerService {
     @Override
     public AndroidDebuggerState getDebuggerState(AndroidDebugger debugger) {
       AndroidDebuggerState debuggerState = debugger.createState();
-      if (debuggerState instanceof NativeAndroidDebuggerState) {
+      if (!PluginManagerCore.isDisabled(PluginId.getId("com.android.tools.ndk"))
+          && debuggerState instanceof NativeAndroidDebuggerState) {
         NativeAndroidDebuggerState nativeState = (NativeAndroidDebuggerState) debuggerState;
 
         // Source code is always relative to the workspace root in a blaze project.
