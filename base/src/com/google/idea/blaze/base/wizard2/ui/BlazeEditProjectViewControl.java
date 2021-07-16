@@ -114,6 +114,7 @@ public final class BlazeEditProjectViewControl {
   private JRadioButton workspaceDefaultNameOption;
   private JRadioButton branchDefaultNameOption;
   private JRadioButton importDirectoryDefaultNameOption;
+  private JRadioButton importDirectoryAndWorkspaceDefaultNameOption;
   private HashCode paramsHash;
   private WorkspacePathResolver workspacePathResolver;
   private WorkspaceTypeData workspaceData;
@@ -125,6 +126,7 @@ public final class BlazeEditProjectViewControl {
     FromWorkspace,
     FromBranch,
     FromImportDirectory,
+    FromImportDirectoryAndWorkspace,
   }
 
   public BlazeEditProjectViewControl(BlazeNewProjectBuilder builder, Disposable parentDisposable) {
@@ -179,24 +181,31 @@ public final class BlazeEditProjectViewControl {
     workspaceDefaultNameOption = new JRadioButton("Workspace");
     branchDefaultNameOption = new JRadioButton("Branch");
     importDirectoryDefaultNameOption = new JRadioButton("Import Directory");
+    importDirectoryAndWorkspaceDefaultNameOption = new JRadioButton("Import Directory + Workspace");
 
     workspaceDefaultNameOption.setToolTipText("Infer default name from the workspace name");
     branchDefaultNameOption.setToolTipText(
         "Infer default name from the current branch of your workspace");
     importDirectoryDefaultNameOption.setToolTipText(
         "Infer default name from the directory used to import your project view");
+    importDirectoryAndWorkspaceDefaultNameOption.setToolTipText(
+        "Infer default name from the import directory and workspace");
 
     workspaceDefaultNameOption.addItemListener(e -> inferDefaultNameModeSelectionChanged());
     branchDefaultNameOption.addItemListener(e -> inferDefaultNameModeSelectionChanged());
     importDirectoryDefaultNameOption.addItemListener(e -> inferDefaultNameModeSelectionChanged());
+    importDirectoryAndWorkspaceDefaultNameOption.addItemListener(
+        e -> inferDefaultNameModeSelectionChanged());
     ButtonGroup buttonGroup = new ButtonGroup();
     buttonGroup.add(workspaceDefaultNameOption);
     buttonGroup.add(branchDefaultNameOption);
     buttonGroup.add(importDirectoryDefaultNameOption);
+    buttonGroup.add(importDirectoryAndWorkspaceDefaultNameOption);
     canvas.add(defaultNameLabel, UiUtil.getLabelConstraints(0));
     canvas.add(workspaceDefaultNameOption, UiUtil.getLabelConstraints(0));
     canvas.add(branchDefaultNameOption, UiUtil.getLabelConstraints(0));
     canvas.add(importDirectoryDefaultNameOption, UiUtil.getLabelConstraints(0));
+    canvas.add(importDirectoryAndWorkspaceDefaultNameOption, UiUtil.getLabelConstraints(0));
     canvas.add(new JPanel(), UiUtil.getFillLineConstraints(0));
 
     projectViewUi.fillUi(canvas);
@@ -342,6 +351,13 @@ public final class BlazeEditProjectViewControl {
           workspaceDefaultNameOption.setSelected(true);
         }
         break;
+      case FromImportDirectoryAndWorkspace:
+        if (projectViewOption.getImportDirectory() != null && workspaceData.branchName() != null) {
+          importDirectoryAndWorkspaceDefaultNameOption.setSelected(true);
+        } else {
+          workspaceDefaultNameOption.setSelected(true);
+        }
+        break;
       default:
         throw new AssertionError("Illegal workspace name mode");
     }
@@ -354,6 +370,8 @@ public final class BlazeEditProjectViewControl {
       return InferDefaultNameMode.FromBranch;
     } else if (importDirectoryDefaultNameOption.isSelected()) {
       return InferDefaultNameMode.FromImportDirectory;
+    } else if (importDirectoryAndWorkspaceDefaultNameOption.isSelected()) {
+      return InferDefaultNameMode.FromImportDirectoryAndWorkspace;
     }
     return InferDefaultNameMode.FromWorkspace;
   }
@@ -380,6 +398,8 @@ public final class BlazeEditProjectViewControl {
         return workspaceData.branchName();
       case FromImportDirectory:
         return projectViewOption.getImportDirectory();
+      case FromImportDirectoryAndWorkspace:
+        return projectViewOption.getImportDirectory() + "_" + workspaceData.workspaceName();
       default:
         throw new AssertionError("Invalid workspace name mode.");
     }
