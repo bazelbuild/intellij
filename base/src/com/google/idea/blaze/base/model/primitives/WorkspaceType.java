@@ -28,6 +28,7 @@ public enum WorkspaceType implements ProtoWrapper<String> {
   ANDROID("android", LanguageClass.ANDROID, LanguageClass.JAVA),
   C("c", LanguageClass.C),
   JAVA("java", LanguageClass.JAVA),
+  DART("dart", LanguageClass.DART),
   PYTHON("python", LanguageClass.PYTHON),
   JAVASCRIPT("javascript", LanguageClass.JAVASCRIPT),
   GO("go", LanguageClass.GO),

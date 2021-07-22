@@ -28,15 +28,16 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.SystemInfo;
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-/** Supports dart. */
+/** Supports Dart. */
 public class BlazeDartSyncPlugin implements BlazeSyncPlugin {
 
   private static final String DART_PLUGIN_ID = "Dart";
@@ -54,6 +55,23 @@ public class BlazeDartSyncPlugin implements BlazeSyncPlugin {
   }
 
   @Override
+  public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
+    return ImmutableList.of(WorkspaceType.DART);
+  }
+
+  @Nullable
+  @Override
+  public ModuleType<?> getWorkspaceModuleType(WorkspaceType workspaceType) {
+    return workspaceType == WorkspaceType.DART
+        ? ModuleTypeManager.getInstance().getDefaultModuleType()
+        : null;
+  }
+
+  /**
+   * After the Blaze Sync process, all libraries are cleared out, this method adds the Library back
+   * to the workspace model.
+   */
+  @Override
   public void updateProjectStructure(
       Project project,
       BlazeContext context,
@@ -69,19 +87,13 @@ public class BlazeDartSyncPlugin implements BlazeSyncPlugin {
     }
 
     Library dartSdkLibrary = DartSdkUtils.findDartLibrary(project);
-    if (dartSdkLibrary != null) {
-      if (workspaceModifiableModel.findLibraryOrderEntry(dartSdkLibrary) == null) {
-        workspaceModifiableModel.addLibraryEntry(dartSdkLibrary);
-      }
-    } else {
-      IssueOutput.error(
-              "Dart language support is requested, but the Dart SDK was not found. "
-                  + "You must manually enable Dart support from "
-                  + (SystemInfo.isMac
-                      ? "Preferences... > Languages & Frameworks > Dart."
-                      : "File > Settings > Languages & Frameworks > Dart."))
-          .submit(context);
+    if (dartSdkLibrary != null
+        && workspaceModifiableModel.findLibraryOrderEntry(dartSdkLibrary) == null) {
+      workspaceModifiableModel.addLibraryEntry(dartSdkLibrary);
     }
+    // At this point, this extension used to create an error, "Dart language support is requested,
+    // but the Dart SDK was not found." when no Dart SDK was found, i.e. dartSdkLibrary == null,
+    // however the Dart Plugin provide these notifications already.
   }
 
   @Override

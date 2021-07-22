@@ -56,7 +56,8 @@ public class BlazeDartSyncPluginTest extends BlazeTestCase {
     ExtensionPointImpl<BlazeSyncPlugin> ep =
         registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     ep.registerExtension(new BlazeDartSyncPlugin());
-    // add java, because we need at least one WorkspaceType available.
+    // add java, because we need at least one other BlazeSyncPlugin to verify the additional
+    // language support
     ep.registerExtension(
         new BlazeSyncPlugin() {
           @Override
@@ -80,7 +81,7 @@ public class BlazeDartSyncPluginTest extends BlazeTestCase {
   }
 
   @Test
-  public void testDartLanguageAvailable() {
+  public void testDartAdditionalLanguageSupported() {
     ProjectViewSet projectViewSet =
         ProjectViewSet.builder()
             .add(
@@ -98,5 +99,23 @@ public class BlazeDartSyncPluginTest extends BlazeTestCase {
             new WorkspaceLanguageSettings(
                 WorkspaceType.JAVA,
                 ImmutableSet.of(LanguageClass.DART, LanguageClass.GENERIC, LanguageClass.JAVA)));
+  }
+
+  @Test
+  public void testDartWorkspaceType() {
+    ProjectViewSet projectViewSet =
+        ProjectViewSet.builder()
+            .add(
+                ProjectView.builder()
+                    .add(ScalarSection.builder(WorkspaceTypeSection.KEY).set(WorkspaceType.DART))
+                    .build())
+            .build();
+    WorkspaceLanguageSettings workspaceLanguageSettings =
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
+    errorCollector.assertNoIssues();
+    assertThat(workspaceLanguageSettings)
+        .isEqualTo(
+            new WorkspaceLanguageSettings(
+                WorkspaceType.DART, ImmutableSet.of(LanguageClass.DART, LanguageClass.GENERIC)));
   }
 }
