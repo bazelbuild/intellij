@@ -28,11 +28,11 @@ tasks:
     name: IntelliJ CE Internal Under Development
     platform: ubuntu1804
     build_flags:
-      - --define=ij_product=intellij-canary
+      - --define=ij_product=intellij-under-dev
     build_targets:
       - //ijwb/...
     test_flags:
-      - --define=ij_product=intellij-canary
+      - --define=ij_product=intellij-under-dev
       - --test_output=errors
     test_targets:
       - //:ijwb_ce_tests
