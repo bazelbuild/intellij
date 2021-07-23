@@ -86,12 +86,8 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase implements BlazeCla
     }
 
     if (isWorkspaceModule) {
-      if (cacheLibraryComputation.getValue()) {
         return SyncCache.getInstance(project)
             .get(BlazeModuleSystem.class, BlazeModuleSystem::getLibrariesForWorkspaceModule);
-      } else {
-        return getLibrariesForWorkspaceModule(project, blazeProjectData);
-      }
     }
 
     AndroidResourceModuleRegistry registry = AndroidResourceModuleRegistry.getInstance(project);

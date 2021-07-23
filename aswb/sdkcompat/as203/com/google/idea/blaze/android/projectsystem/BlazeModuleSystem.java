@@ -57,12 +57,8 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
     }
 
     if (isWorkspaceModule) {
-      if (cacheLibraryComputation.getValue()) {
-        return SyncCache.getInstance(project)
-            .get(BlazeModuleSystem.class, BlazeModuleSystem::getLibrariesForWorkspaceModule);
-      } else {
-        return getLibrariesForWorkspaceModule(project, blazeProjectData);
-      }
+      return SyncCache.getInstance(project)
+          .get(BlazeModuleSystem.class, BlazeModuleSystem::getLibrariesForWorkspaceModule);
     }
 
     AndroidResourceModuleRegistry registry = AndroidResourceModuleRegistry.getInstance(project);

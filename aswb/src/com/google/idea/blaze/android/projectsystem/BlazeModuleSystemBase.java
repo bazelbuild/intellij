@@ -51,7 +51,6 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -87,16 +86,6 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   SampleDataDirectoryProvider sampleDataDirectoryProvider;
   BlazeClassFileFinder classFileFinder;
   final boolean isWorkspaceModule;
-
-  /**
-   * Experiment used to control whether the calculation of library dependencies for the workspace
-   * module ought to be cached.
-   *
-   * <p>b/171082532: Collecting the Library dependencies for the workspace module using *
-   * BlazeLibraryCollector is quite slow and negatively impacts editing performance in 4.1+.
-   */
-  protected final BoolExperiment cacheLibraryComputation =
-      new BoolExperiment("aswb.cache.workspace.libraries", true);
 
   BlazeModuleSystemBase(Module module) {
     this.module = module;
