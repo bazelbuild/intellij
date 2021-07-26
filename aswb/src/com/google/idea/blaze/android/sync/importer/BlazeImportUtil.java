@@ -15,9 +15,6 @@
  */
 package com.google.idea.blaze.android.sync.importer;
 
-import com.android.ide.common.util.PathHashMapKt;
-import com.android.ide.common.util.PathMap;
-import com.android.ide.common.util.PathString;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -41,15 +38,12 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
-import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -227,15 +221,5 @@ public class BlazeImportUtil {
             .build();
     return artifactLocation ->
         !importRoots.containsWorkspacePath(new WorkspacePath(artifactLocation.getRelativePath()));
-  }
-
-  /** Returns a map of PathString onto the most specific BlazeContentEntry for that path. */
-  public static PathMap<BlazeContentEntry> getContentEntryForPath(
-      Collection<BlazeContentEntry> directories) {
-    Map<PathString, BlazeContentEntry> originalMap = new HashMap<>();
-    for (BlazeContentEntry next : directories) {
-      originalMap.put(new PathString(next.contentRoot), next);
-    }
-    return PathHashMapKt.toPathMap(originalMap);
   }
 }
