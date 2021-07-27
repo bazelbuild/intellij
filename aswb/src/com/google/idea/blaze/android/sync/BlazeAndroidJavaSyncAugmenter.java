@@ -50,8 +50,8 @@ public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
     if (idlJar != null) {
       genJars.add(new BlazeJarLibrary(idlJar, target.getKey()));
     }
-    if (BlazeAndroidWorkspaceImporter.shouldGenerateResources(androidIdeInfo)
-        && !BlazeAndroidWorkspaceImporter.shouldGenerateResourceModule(
+    if (androidIdeInfo.generateResourceClass()
+        && !BlazeAndroidWorkspaceImporter.containsSourcesOrAllowedGeneratedResources(
             androidIdeInfo,
             new AllowlistFilter(
                 BlazeImportUtil.getAllowedGenResourcePaths(projectViewSet),

@@ -82,7 +82,7 @@ public class BlazeAndroidWorkspaceImporter {
   private final Consumer<Output> context;
   private final BlazeImportInput input;
   // filter used to get all ArtifactLocation that under project view resource directories
-  private final Predicate<ArtifactLocation> shouldCreateFakeAar;
+  private final Predicate<ArtifactLocation> isOutsideProjectViewFilter;
   ImmutableSet<String> allowedGenResourcePaths;
   private final AllowlistFilter allowlistFilter;
 
@@ -97,7 +97,7 @@ public class BlazeAndroidWorkspaceImporter {
     this.context = context;
     this.input = input;
     this.project = project;
-    this.shouldCreateFakeAar = BlazeImportUtil.getShouldCreateFakeAarFilter(input);
+    this.isOutsideProjectViewFilter = BlazeImportUtil.isOutsideProjectViewFilter(input);
     allowedGenResourcePaths = BlazeImportUtil.getAllowedGenResourcePaths(input.projectViewSet);
     allowlistFilter =
         new AllowlistFilter(allowedGenResourcePaths, GeneratedResourceRetentionFilter.getFilter());
@@ -115,7 +115,7 @@ public class BlazeAndroidWorkspaceImporter {
     ImmutableSet<String> allowedGenResourcePaths =
         BlazeImportUtil.getAllowedGenResourcePaths(input.projectViewSet);
     for (TargetIdeInfo target : sourceTargets) {
-      if (shouldCreateModule(target.getAndroidIdeInfo())) {
+      if (containsProjectRelevantResources(target.getAndroidIdeInfo())) {
         AndroidResourceModule.Builder androidResourceModuleBuilder =
             getOrCreateResourceModuleBuilder(
                 target, libraries, targetKeyToAndroidResourceModuleBuilder);
@@ -195,18 +195,19 @@ public class BlazeAndroidWorkspaceImporter {
           depTargetResourceModule.getTransitiveResourceDependencies().stream()
               .filter(key -> !targetKey.equals(key))
               .collect(Collectors.toList()));
-      if (shouldCreateModule(depIdeInfo.getAndroidIdeInfo()) && !depKey.equals(targetKey)) {
+      if (containsProjectRelevantResources(depIdeInfo.getAndroidIdeInfo())
+          && !depKey.equals(targetKey)) {
         targetResourceModule.addTransitiveResourceDependency(depKey);
       }
     }
   }
 
-  private boolean shouldCreateModule(@Nullable AndroidIdeInfo androidIdeInfo) {
+  private boolean containsProjectRelevantResources(@Nullable AndroidIdeInfo androidIdeInfo) {
     if (androidIdeInfo == null) {
       return false;
     }
-    return shouldGenerateResources(androidIdeInfo)
-        && shouldGenerateResourceModule(androidIdeInfo, allowlistFilter);
+    return androidIdeInfo.generateResourceClass()
+        && containsSourcesOrAllowedGeneratedResources(androidIdeInfo, allowlistFilter);
   }
 
   /** Returns true if any direct dependency of `androidIdeInfo` declares resources. */
@@ -215,7 +216,7 @@ public class BlazeAndroidWorkspaceImporter {
     return dependencies.stream()
         .map(input.targetMap::get)
         .filter(Objects::nonNull)
-        .anyMatch(d -> shouldCreateModule(d.getAndroidIdeInfo()));
+        .anyMatch(d -> containsProjectRelevantResources(d.getAndroidIdeInfo()));
   }
 
   /**
@@ -244,7 +245,7 @@ public class BlazeAndroidWorkspaceImporter {
     for (AndroidResFolder androidResFolder : androidIdeInfo.getResFolders()) {
       ArtifactLocation artifactLocation = androidResFolder.getRoot();
       if (isSourceOrAllowedGenPath(artifactLocation, allowlistFilter)) {
-        if (shouldCreateFakeAar.test(artifactLocation)) {
+        if (isOutsideProjectViewFilter.test(artifactLocation)) {
           // we are creating aar libraries, and this resource isn't inside the project view
           // so we can skip adding it to the module
           String libraryKey =
@@ -255,7 +256,7 @@ public class BlazeAndroidWorkspaceImporter {
             androidResourceModule.addResourceLibraryKey(libraryKey);
           }
         } else {
-          if (shouldCreateModule(androidIdeInfo)) {
+          if (containsProjectRelevantResources(androidIdeInfo)) {
             androidResourceModule.addResource(artifactLocation);
           }
           androidResourceModule.addTransitiveResource(artifactLocation);
@@ -265,16 +266,7 @@ public class BlazeAndroidWorkspaceImporter {
     return androidResourceModule;
   }
 
-  public static boolean shouldGenerateResources(AndroidIdeInfo androidIdeInfo) {
-    // Generate an android resource module if this rule defines resources
-    // We don't want to generate one if this depends on a legacy resource rule through :resources
-    // In this case, the resource information is redundantly forwarded to this class for
-    // backwards compatibility, but the android_resource rule itself is already generating
-    // the android resource module
-    return androidIdeInfo.generateResourceClass() && androidIdeInfo.getLegacyResources() == null;
-  }
-
-  public static boolean shouldGenerateResourceModule(
+  public static boolean containsSourcesOrAllowedGeneratedResources(
       AndroidIdeInfo androidIdeInfo, Predicate<ArtifactLocation> allowlistTester) {
     return androidIdeInfo.getResFolders().stream()
         .map(resource -> resource.getRoot())
@@ -282,8 +274,8 @@ public class BlazeAndroidWorkspaceImporter {
   }
 
   public static boolean isSourceOrAllowedGenPath(
-      ArtifactLocation artifactLocation, Predicate<ArtifactLocation> tester) {
-    return artifactLocation.isSource() || tester.test(artifactLocation);
+      ArtifactLocation artifactLocation, Predicate<ArtifactLocation> allowlistTest) {
+    return artifactLocation.isSource() || allowlistTest.test(artifactLocation);
   }
 
   private ImmutableList<AndroidResourceModule> buildAndroidResourceModules(

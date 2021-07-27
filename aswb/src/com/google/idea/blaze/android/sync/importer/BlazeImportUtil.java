@@ -202,7 +202,13 @@ public class BlazeImportUtil {
         .collect(ImmutableList.toImmutableList());
   }
 
-  /** Returns the set of relative generated resource paths for the given {@link ProjectViewSet}. */
+  /**
+   * Returns the set of paths for "allowed generated resource".
+   *
+   * <p>Normally generated resources are not picked up during sync. However, there maybe cases where
+   * some resources are intentionally generated to be used as source. These resources can be
+   * "allowed" by including it under the {@link GeneratedAndroidResourcesSection} tag.
+   */
   public static ImmutableSet<String> getAllowedGenResourcePaths(ProjectViewSet projectViewSet) {
     return ImmutableSet.copyOf(
         projectViewSet.listItems(GeneratedAndroidResourcesSection.KEY).stream()
@@ -210,11 +216,8 @@ public class BlazeImportUtil {
             .collect(Collectors.toSet()));
   }
 
-  /**
-   * Returns a predicate that returns true if a fake AAR should be created for the given resource
-   * folder. That is, it returns true if the folder is outside the project view.
-   */
-  public static Predicate<ArtifactLocation> getShouldCreateFakeAarFilter(BlazeImportInput input) {
+  /** Returns true if the folder is outside the project view. */
+  public static Predicate<ArtifactLocation> isOutsideProjectViewFilter(BlazeImportInput input) {
     ImportRoots importRoots =
         ImportRoots.builder(input.workspaceRoot, input.buildSystem)
             .add(input.projectViewSet)
