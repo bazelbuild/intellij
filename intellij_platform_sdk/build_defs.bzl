@@ -292,6 +292,44 @@ def select_from_plugin_api_version_directory(params):
 
     return _do_select_for_plugin_api(params)
 
+def get_versions_to_build(product):
+    """"Returns a set of unique product version aliases to test and build during regular release process.
+
+    For each product, we care about four versions aliases to build and release to JetBrains
+    repository; -latest, -beta, -oss-stable and oss-beta. However, some of these aliases can
+    point to the same IDE version and this can lead to conflicts if we attempt to blindly
+    build and upload the four versions. This function is used to return only the aliases
+    that point to different IDE versions of the given product.
+
+    Args:
+        product: name of the product; android-studio, clion, intellij-ue
+
+    Returns:
+        A space separated list of product version aliases to build, the values can be
+        oss-stable, oss-beta, internal-stable and internal-beta.
+    """
+    aliases_to_build = []
+    plugin_api_versions = []
+    for alias in ["oss-stable", "latest", "oss-beta", "beta"]:
+        indirect_ij_product = product + "-" + alias
+        if indirect_ij_product not in INDIRECT_IJ_PRODUCTS:
+            fail(
+                "Product-version alias %s not found." % indirect_ij_product,
+                "Invalid product: %s only android-studio, clion and intellij-ue are accepted." % product,
+            )
+
+        version = INDIRECT_IJ_PRODUCTS[indirect_ij_product]
+        if version not in plugin_api_versions:
+            plugin_api_versions.append(version)
+            if alias == "latest":
+                aliases_to_build.append("internal-stable")
+            elif alias == "beta":
+                aliases_to_build.append("internal-beta")
+            else:
+                aliases_to_build.append(alias)
+
+    return " ".join(aliases_to_build)
+
 def no_mockito_extensions(name, jars, **kwargs):
     """Removes mockito extensions from jars.
 
