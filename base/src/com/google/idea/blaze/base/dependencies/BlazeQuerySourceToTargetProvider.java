@@ -103,7 +103,8 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
     if (sources.isEmpty()) {
       return ImmutableList.of();
     }
-    String expr = Joiner.on('+').join(sources);
+    // quote labels to handle punctuation in file names
+    String expr = "\"" + Joiner.on("\"+\"").join(sources) + "\"";
     String query = String.format("same_pkg_direct_rdeps(%s)", expr);
 
     // never use a custom output base for queries during sync
