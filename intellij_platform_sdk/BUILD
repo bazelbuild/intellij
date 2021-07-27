@@ -104,16 +104,16 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-canary",
+    name = "intellij-under-dev",
     values = {
-        "define": "ij_product=intellij-canary",
+        "define": "ij_product=intellij-under-dev",
     },
 )
 
 config_setting(
-    name = "intellij-ue-canary",
+    name = "intellij-ue-under-dev",
     values = {
-        "define": "ij_product=intellij-ue-canary",
+        "define": "ij_product=intellij-ue-under-dev",
     },
 )
 
