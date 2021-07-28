@@ -76,7 +76,14 @@ message AndroidIdeInfo {
   LibraryArtifact resource_jar = 10;
   string idl_import_root = 11;
   map<string, string> manifest_values = 12;
+
+  // Details about Android res folders: An android_library's resource_files attr
+  // takes in a list of labels. The resource merger expects that all the
+  // resources share the same basename (which is typically `res`), but these
+  // folders can reside outside the current package. We generate one
+  // `ResFolderLocation` message for each such folder.
   repeated ResFolderLocation res_folders = 13;
+
   // Label for the target android_binary to instrument.
   string instruments = 14;
   // Jar used for resolving render time dependencies. Contains all runtime
@@ -89,11 +96,13 @@ message AndroidIdeInfo {
 message ResFolderLocation {
   // The res folder itself
   ArtifactLocation root = 1;
-  // Relative paths to the specific res files underneath the root. If empty, all
-  // res files
+
+  // Relative paths to the specific res files underneath the root.
   // Deprecated: we no longer return path to resources. Instead, resource files
   // will be packed as an aar and stored in aar field
   repeated string resources = 2 [deprecated = true];
+
+  // An aar containing all the resources included from within this folder.
   ArtifactLocation aar = 3;
 }
 
