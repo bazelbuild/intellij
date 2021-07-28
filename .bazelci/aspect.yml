@@ -30,11 +30,11 @@ tasks:
     name: Aspect Tests for IJ Internal Under Development
     platform: ubuntu1804
     build_flags:
-      - --define=ij_product=intellij-canary
+      - --define=ij_product=intellij-under-dev
     build_targets:
       - //aspect:aspect_files
     test_flags:
-      - --define=ij_product=intellij-canary
+      - --define=ij_product=intellij-under-dev
       - --test_output=errors
       - --notrim_test_configuration
     test_targets:
