@@ -28,10 +28,17 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.openapi.diagnostic.Logger;
 import java.util.Collection;
 
 /** Augments the java sync process with Android support. */
 public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
+  // b/194967269: Attaching resource jars is not required anymore. This experiment disables
+  // the addition, and if we don't see any issues in a month or so, it can be deleted.
+  private static final BoolExperiment attachResourceJars =
+      new BoolExperiment("aswb.attach.resource.jars.for.nores.libs", false);
+
   @Override
   public void addJarsForSourceTarget(
       WorkspaceLanguageSettings workspaceLanguageSettings,
@@ -50,6 +57,11 @@ public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
     if (idlJar != null) {
       genJars.add(new BlazeJarLibrary(idlJar, target.getKey()));
     }
+
+    if (!attachResourceJars.getValue()) {
+      return;
+    }
+
     if (androidIdeInfo.generateResourceClass()
         && !BlazeAndroidWorkspaceImporter.containsSourcesOrAllowedGeneratedResources(
             androidIdeInfo,
@@ -67,6 +79,8 @@ public class BlazeAndroidJavaSyncAugmenter implements BlazeJavaSyncAugmenter {
         if (resourceJar != null) {
           jars.add(new BlazeJarLibrary(resourceJar, target.getKey()));
         }
+        Logger.getInstance(BlazeAndroidJavaSyncAugmenter.class)
+            .warn("Adding resource jar for target " + target.getKey().getLabel());
       }
     }
   }
