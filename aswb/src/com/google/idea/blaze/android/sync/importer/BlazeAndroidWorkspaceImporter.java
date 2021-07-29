@@ -74,10 +74,6 @@ public class BlazeAndroidWorkspaceImporter {
   static final BoolExperiment mergeResourcesEnabled =
       new BoolExperiment("blaze.merge.conflicting.resources", true);
 
-  @VisibleForTesting
-  static final BoolExperiment workspaceOnlyResourcesEnabled =
-      new BoolExperiment("aswb.attach.workspace.only.resources", true);
-
   private final Project project;
   private final Consumer<Output> context;
   private final BlazeImportInput input;
@@ -120,8 +116,7 @@ public class BlazeAndroidWorkspaceImporter {
             getOrCreateResourceModuleBuilder(
                 target, libraries, targetKeyToAndroidResourceModuleBuilder);
         resourceModules.add(androidResourceModuleBuilder.build());
-      } else if (workspaceOnlyResourcesEnabled.getValue()
-          && dependsOnResourceDeclaringDependencies(target)) {
+      } else if (dependsOnResourceDeclaringDependencies(target)) {
         // Add the target to list of potential resource modules if any of target's dependencies
         // declare resources. A target is allowed to consume resources even if it does not declare
         // any of its own
@@ -334,9 +329,9 @@ public class BlazeAndroidWorkspaceImporter {
         }
       }
     }
-    if (!workspaceResourceModules.isEmpty() && workspaceOnlyResourcesEnabled.getValue()) {
+    if (!workspaceResourceModules.isEmpty()) {
       // Create and add one module for all resources that are visible to .workspace module, but do
-      // not have an attached resource module of their own
+      // not have an attached resource module of their own.
 
       // We lump all such targets into one module because chances are none of these targets have an
       // associated manifest. {@link BlazeAndroidProjectStructureSyncer} expects all resource
