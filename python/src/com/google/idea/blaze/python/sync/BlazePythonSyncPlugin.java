@@ -239,14 +239,17 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
       return false;
     }
 
-    // If an SDK exists with a home path that doesn't exist anymore, it's not valid
-    String sdkHome = sdk.getHomePath();
-    if (sdkHome == null) {
-      return false;
-    }
-    File sdkHomeFile = new File(sdkHome);
-    if (!sdkHomeFile.exists()) {
-      return false;
+    // Only check home path if SDK is local (i.e., not remote).
+    if (!PythonSdkUtil.isRemote(sdk)) {
+      // If an SDK exists with a home path that doesn't exist anymore, it's not valid
+      String sdkHome = sdk.getHomePath();
+      if (sdkHome == null) {
+        return false;
+      }
+      File sdkHomeFile = new File(sdkHome);
+      if (!sdkHomeFile.exists()) {
+        return false;
+      }
     }
 
     // Allow PySdkSuggester extensions the ability to veto an SDK as deprecated
