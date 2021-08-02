@@ -1,6 +1,7 @@
 v2021.07.26
 ===========
 * Avoid an issue with a hybrid JDK 8/11 setup when using fast run/debug.
+* New workspace_type of dart
 * [Beta channel] IntelliJ: Compatible with IntelliJ CE/UE 2021.2 EAP.
 
 v2021.07.12
