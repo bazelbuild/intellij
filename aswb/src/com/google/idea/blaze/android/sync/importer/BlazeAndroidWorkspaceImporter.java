@@ -74,6 +74,11 @@ public class BlazeAndroidWorkspaceImporter {
   static final BoolExperiment mergeResourcesEnabled =
       new BoolExperiment("blaze.merge.conflicting.resources", true);
 
+  // b/193068824
+  @VisibleForTesting
+  public static final BoolExperiment includeManifestOnlyAars =
+      new BoolExperiment("aswb.include.manifest.only.aars", true);
+
   private final Project project;
   private final Consumer<Output> context;
   private final BlazeImportInput input;
@@ -238,6 +243,11 @@ public class BlazeAndroidWorkspaceImporter {
     }
 
     for (AndroidResFolder androidResFolder : androidIdeInfo.getResFolders()) {
+      if (!includeManifestOnlyAars.getValue()
+          && androidResFolder.getRoot().getRelativePath().isEmpty()) {
+        continue;
+      }
+
       ArtifactLocation artifactLocation = androidResFolder.getRoot();
       if (isSourceOrAllowedGenPath(artifactLocation, allowlistFilter)) {
         if (isOutsideProjectViewFilter.test(artifactLocation)) {
@@ -250,7 +260,7 @@ public class BlazeAndroidWorkspaceImporter {
           if (libraryKey != null) {
             androidResourceModule.addResourceLibraryKey(libraryKey);
           }
-        } else {
+        } else if (!artifactLocation.getRelativePath().isEmpty()) {
           if (containsProjectRelevantResources(androidIdeInfo)) {
             androidResourceModule.addResource(artifactLocation);
           }

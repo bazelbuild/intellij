@@ -31,7 +31,7 @@ abstract class NbBaseTargetBuilder implements NbTargetBuilder {
   abstract TargetIdeInfo.Builder getIdeInfoBuilder();
 
   @Override
-  public final TargetIdeInfo build() {
+  public TargetIdeInfo build() {
     return getIdeInfoBuilder().build();
   }
 }

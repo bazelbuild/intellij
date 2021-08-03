@@ -152,23 +152,25 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
             .res_folder("//third_party/shared/res", "app-third_party-shared-res.aar")
             .src("app/MainActivity.java")
             .dep(guava, quantum, aarFile, intermediateDependency);
-    AarLibraryFileBuilder.aar(workspaceRoot, binaryTarget.getAarList().get(0).getRelativePath())
-        .build();
+    binaryTarget
+        .getAarList()
+        .forEach(aar -> AarLibraryFileBuilder.aar(workspaceRoot, aar.getRelativePath()).build());
 
     NbAndroidTarget quantumTarget =
         android_library(quantum)
             .res_folder("//third_party/quantum/res", "values-third_party-quantum-res.aar");
-    AarLibraryFileBuilder.aar(workspaceRoot, quantumTarget.getAarList().get(0).getRelativePath())
-        .build();
+    quantumTarget
+        .getAarList()
+        .forEach(aar -> AarLibraryFileBuilder.aar(workspaceRoot, aar.getRelativePath()).build());
 
     NbAndroidTarget constraintLayoutTarget =
         android_library(constraintLayout)
             .res_folder(
                 "//third_party/constraint_layout/res",
                 "constraint_layout-third_party-constraint_layout-res.aar");
-    AarLibraryFileBuilder.aar(
-            workspaceRoot, constraintLayoutTarget.getAarList().get(0).getRelativePath())
-        .build();
+    constraintLayoutTarget
+        .getAarList()
+        .forEach(aar -> AarLibraryFileBuilder.aar(workspaceRoot, aar.getRelativePath()).build());
 
     setTargetMap(
         binaryTarget,

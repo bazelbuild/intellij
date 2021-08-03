@@ -86,9 +86,12 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     setTargetMap(
         android_binary("//java/com/foo/app:app").src("MainActivity.java"),
         android_binary("//java/com/foo/app:test_app")
+            .setResourceJavaPackage("com.foo.app.androidtest")
             .src("Test.java")
             .instruments("//java/com/foo/app:app"),
-        android_binary("//java/com/foo/app:test_app_self_instrumenting").src("Test.java"),
+        android_binary("//java/com/foo/app:test_app_self_instrumenting")
+            .setResourceJavaPackage("com.foo.app.androidtest.selfinstrumenting")
+            .src("Test.java"),
         android_instrumentation_test("//java/com/foo/app:instrumentation_test")
             .test_app("//java/com/foo/app:test_app"),
         android_instrumentation_test("//java/com/foo/app:self_instrumenting_test")
@@ -404,6 +407,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     setTargetMap(
         android_binary("//java/com/foo/app:app").src("MainActivity.java"),
         android_binary("//java/com/foo/app:test_app")
+            .setResourceJavaPackage("com.foo.app.androidtest")
             .src("Test.java")
             .instruments("//java/com/foo/app:app"),
         android_instrumentation_test("//java/com/foo/app:instrumentation_test"));

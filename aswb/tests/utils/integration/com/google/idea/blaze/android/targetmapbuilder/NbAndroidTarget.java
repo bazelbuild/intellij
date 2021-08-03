@@ -46,6 +46,7 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
   private final WorkspacePath blazePackage;
   private final List<ArtifactLocation> aarList;
   private boolean hasCustomManifest;
+  private boolean includesResourceFiles = false;
 
   public static NbAndroidTarget android_library(String label) {
     return android_library(label, BlazeInfoData.DEFAULT);
@@ -92,6 +93,28 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
     return javaTarget.getIdeInfoBuilder().setAndroidInfo(androidIdeInfoBuilder);
   }
 
+  /**
+   * NbAndroidTarget needs to perform some finalization steps before returning the final built
+   * ide-info object. E.g. If this target generates resources, then create a res_folder with a dummy
+   * res root with a manifest-only AAR if no other resources has been added.
+   */
+  @Override
+  public TargetIdeInfo build() {
+    if (androidIdeInfoBuilder.build().generateResourceClass() && aarList.isEmpty()) {
+      ArtifactLocation aar =
+          ArtifactLocation.builder()
+              .setRelativePath(
+                  NbTargetMapUtils.workspacePathForLabel(
+                      blazePackage, "resources-manifest-only.aar"))
+              .setIsSource(true)
+              .build();
+      aarList.add(aar);
+      androidIdeInfoBuilder.addResource(
+          AndroidResFolder.builder().setRoot(makeSourceArtifact("")).setAar(aar).build());
+    }
+    return getIdeInfoBuilder().build();
+  }
+
   private void setGenerateResourceClass() {
     androidIdeInfoBuilder.setGenerateResourceClass(true);
     if (!hasCustomManifest) {
@@ -110,6 +133,19 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
     for (String resourceLabel : resourceLabels) {
       String resourcePath = NbTargetMapUtils.workspacePathForLabel(blazePackage, resourceLabel);
       androidIdeInfoBuilder.addResource(makeSourceArtifact(resourcePath));
+
+      // If we didn't generate an AAR for this target it, generate it and add it to the aar list.
+      // Resources added here will all go under the same root, which will get packaged into the
+      // same AAR.
+      if (!includesResourceFiles) {
+        includesResourceFiles = true;
+        ArtifactLocation aar =
+            ArtifactLocation.builder()
+                .setRelativePath(NbTargetMapUtils.workspacePathForLabel(blazePackage, "res.aar"))
+                .setIsSource(true)
+                .build();
+        aarList.add(aar);
+      }
     }
     return this;
   }
@@ -132,17 +168,6 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
               .setIsSource(false)
               .build());
     }
-    return this;
-  }
-
-  /**
-   * Adds a AndroidResourceFolder directly to the list of android resources. Note: Also toggles
-   * generate resource class to true.
-   */
-  public NbAndroidTarget res_folder(AndroidResFolder resFolder) {
-    // An android target that directly declares resources should also generate resource classes.
-    setGenerateResourceClass();
-    androidIdeInfoBuilder.addResource(resFolder);
     return this;
   }
 
