@@ -85,27 +85,27 @@ public class CreateAar {
   }
 
   public static void main(AarOptions options) {
-    if (!options.resourceFiles.isEmpty()) {
-      Preconditions.checkNotNull(options.outputAar);
-      Preconditions.checkNotNull(options.manifestFile);
-      Preconditions.checkNotNull(options.resourceRoot);
-      if (options.outputAar.exists()) {
-        options.outputAar.delete();
-      }
+    Preconditions.checkNotNull(options.outputAar);
+    Preconditions.checkNotNull(options.manifestFile);
+    if (options.outputAar.exists()) {
+      options.outputAar.delete();
+    }
 
-      try (FileOutputStream fos = new FileOutputStream(options.outputAar.getPath());
-          ZipOutputStream zos = new ZipOutputStream(fos)) {
+    try (FileOutputStream fos = new FileOutputStream(options.outputAar.getPath());
+        ZipOutputStream zos = new ZipOutputStream(fos)) {
+      if (options.resourceFiles != null && !options.resourceFiles.isEmpty()) {
+        Preconditions.checkNotNull(options.resourceRoot);
         for (File resourceFile : options.resourceFiles) {
           int startIndex = options.resourceRoot.length();
           addFileToAar(
               resourceFile, AAR_RESOURCE_DIR + resourceFile.getPath().substring(startIndex), zos);
         }
-        addFileToAar(options.manifestFile, AAR_MANIFEST_NAME, zos);
-      } catch (FileNotFoundException e) {
-        logger.log(Level.SEVERE, "Fail to generate aar file", e);
-      } catch (IOException e) {
-        logger.log(Level.SEVERE, "Fail to zip aar file", e);
       }
+      addFileToAar(options.manifestFile, AAR_MANIFEST_NAME, zos);
+    } catch (FileNotFoundException e) {
+      logger.log(Level.SEVERE, "Fail to generate aar file", e);
+    } catch (IOException e) {
+      logger.log(Level.SEVERE, "Fail to zip aar file", e);
     }
   }
 
