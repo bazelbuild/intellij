@@ -174,6 +174,11 @@ class AddTsConfigNotificationProvider
     WorkspacePath parent = path.getParent();
     WorkspacePath tsconfig;
     while (parent != null) {
+      // If we are at the root, let's break out
+      if (parent.isWorkspaceRoot()) {
+        break;
+      }
+
       tsconfig = new WorkspacePath(parent, "tsconfig.json");
       if (fOps.exists(root.fileForPath(tsconfig))) {
         return parent;
