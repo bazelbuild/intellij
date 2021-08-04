@@ -16,7 +16,6 @@ FILES = [
     "extra_actions_base",
     "invocation_policy",
     "java_compilation",
-    "spawn",
     "test_status",
     "worker_protocol",
 ]
@@ -194,6 +193,19 @@ java_proto_library(
 )
 
 proto_library(
+    name = "spawn_proto",
+    srcs = ["spawn.proto"],
+    deps = [
+        "@com_google_protobuf//:duration_proto",
+    ],
+)
+
+java_proto_library(
+    name = "spawn_java_proto",
+    deps = [":spawn_proto"],
+)
+
+proto_library(
     name = "xcode_proto",
     srcs = ["xcode_config.proto"],
     visibility = ["//visibility:public"],
@@ -226,6 +238,7 @@ filegroup(
         ":option_filters_java_proto_srcs",
         ":profile_java_proto_srcs",
         ":remote_execution_log_java_proto_srcs",
+        ":spawn_java_proto_srcs",
         ":xcode_java_proto_srcs",
     ],
 )
