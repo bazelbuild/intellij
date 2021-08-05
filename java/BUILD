@@ -158,7 +158,7 @@ java_binary(
 java_binary(
     name = "auto_value_plugin_lib",
     main_class = "None",
-    runtime_deps = ["//third_party/auto_value:auto_value_plugin"],
+    runtime_deps = ["//third_party/auto_value:auto_value_processor"],
 )
 
 java_binary(

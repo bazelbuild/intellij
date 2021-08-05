@@ -30,3 +30,12 @@ java_library(
     visibility = ["//visibility:public"],
     exports = ["@auto_value_annotations//jar"],
 )
+
+# You should only need to use this library in rare situations, such as testing
+# other annotations processors that generate @AutoValue types. If you just want
+# to use @AutoValue, you should depend on the auto_value library.
+java_library(
+    name = "auto_value_processor",
+    visibility = ["//visibility:public"],
+    exports = ["@auto_value//jar"],
+)
