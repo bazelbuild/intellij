@@ -30,6 +30,7 @@ import com.android.tools.idea.projectsystem.ManifestOverrides;
 import com.android.tools.idea.projectsystem.NamedModuleTemplate;
 import com.android.tools.idea.projectsystem.SampleDataDirectoryProvider;
 import com.android.tools.idea.projectsystem.ScopeType;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -51,6 +52,7 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -80,6 +82,15 @@ import org.jetbrains.annotations.TestOnly;
 /** Blaze implementation of {@link AndroidModuleSystem}. */
 @SuppressWarnings("NullableProblems")
 abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
+
+  /**
+   * Experiment to toggle returning a simplified view of resource module dependents to work around
+   * b/193680790. See {@link #getDirectResourceModuleDependents} for details.
+   */
+  @VisibleForTesting
+  public static final BoolExperiment returnSimpleDirectResourceDependents =
+      new BoolExperiment("aswb.return.simple.direct.resource.dependents", true);
+
   protected static final Logger logger = Logger.getInstance(BlazeModuleSystem.class);
   protected Module module;
   protected final Project project;
@@ -327,6 +338,22 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
 
   @Override
   public List<Module> getDirectResourceModuleDependents() {
+    if (returnSimpleDirectResourceDependents.getValue()) {
+      // Returns a simplified view of resource dependencies to work around b/193680790. AS2020.3
+      // assumes an acyclic graph when iterating over dependents of a module, but ASwB has cyclic
+      // module dependents. This implementation returns the workspace module as the only dependent
+      // of resource modules and no module is exposed as a dependent of the workspace module,
+      // effectively creating a star graph with workspace module in the center.
+      // #as203: This can be removed when as203 is paved.
+      if (isWorkspaceModule) {
+        return ImmutableList.of();
+      }
+      Module workspaceModule =
+          ModuleManager.getInstance(project)
+              .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
+      return workspaceModule == null ? ImmutableList.of() : ImmutableList.of(workspaceModule);
+    }
+
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(module.getProject()).getBlazeProjectData();
     if (projectData == null) {

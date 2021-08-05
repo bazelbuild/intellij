@@ -30,6 +30,8 @@ import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.common.experiments.ExperimentService;
+import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.module.Module;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,6 +46,11 @@ public class BlazeModuleSystemResourceModuleDependenciesTest
   public void setup() {
     MockSdkUtil.registerSdk(workspace, "27");
     workspace.createDirectory(new WorkspacePath("java/com/project"));
+
+    MockExperimentService experimentService = new MockExperimentService();
+    experimentService.setExperiment(
+        BlazeModuleSystemBase.returnSimpleDirectResourceDependents, false);
+    registerApplicationComponent(ExperimentService.class, experimentService);
   }
 
   @Test
