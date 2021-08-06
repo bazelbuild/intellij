@@ -16,6 +16,9 @@
 package com.google.idea.blaze.base.issueparser;
 
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.idea.blaze.base.scope.output.IssueOutput.Category.ERROR;
+import static com.google.idea.blaze.base.scope.output.IssueOutput.Category.NOTE;
+import static com.google.idea.blaze.base.scope.output.IssueOutput.Category.WARNING;
 
 import com.google.common.base.Ascii;
 import com.google.common.collect.ImmutableList;
@@ -88,8 +91,8 @@ public class BlazeIssueParser {
 
     public static final ParseResult NO_RESULT = new ParseResult(false, null);
 
-    private boolean needsMoreInput;
-    @Nullable private IssueOutput output;
+    private final boolean needsMoreInput;
+    @Nullable private final IssueOutput output;
 
     private ParseResult(boolean needsMoreInput, @Nullable IssueOutput output) {
       this.needsMoreInput = needsMoreInput;
@@ -191,7 +194,7 @@ public class BlazeIssueParser {
     @Override
     protected IssueOutput createIssue(Matcher matcher) {
       final File file = FileResolver.resolveToFile(project, matcher.group(1));
-      return IssueOutput.issue(IssueOutput.Category.ERROR, matcher.group(3))
+      return IssueOutput.issue(ERROR, matcher.group(3))
           .inFile(file)
           .onLine(Integer.parseInt(matcher.group(2)))
           .consoleHyperlinkRange(
@@ -211,7 +214,7 @@ public class BlazeIssueParser {
               + "(?::([0-9]+))?" // optional column number
               + "(?::| -) " // colon or hyphen separator
               + "(?i:" // optional case insensitive message type
-              + "(fatal error|error|warning|note|internal problem|context)"
+              + "(fatal error|error|warning|note|internal problem|context|info)"
               + "(?::| -)? " // optional colon or hyphen separator
               + ")?"
               + "(.*)$"); // message
@@ -233,22 +236,23 @@ public class BlazeIssueParser {
 
     private static IssueOutput.Category messageCategory(@Nullable String messageType) {
       if (messageType == null) {
-        return IssueOutput.Category.ERROR;
+        return ERROR;
       }
       switch (Ascii.toLowerCase(messageType)) {
         case "warning":
-          return IssueOutput.Category.WARNING;
+          return WARNING;
         case "note":
         case "message":
         case "context":
-          return IssueOutput.Category.NOTE;
+        case "info":
+          return NOTE;
         case "error":
         case "fatal error":
         case "internal problem":
-          return IssueOutput.Category.ERROR;
+          return ERROR;
         default: // fall out
       }
-      return IssueOutput.Category.ERROR;
+      return ERROR;
     }
   }
 
@@ -472,7 +476,7 @@ public class BlazeIssueParser {
     return null;
   }
 
-  private ImmutableList<Parser> parsers;
+  private final ImmutableList<Parser> parsers;
   /**
    * The parser that requested more lines of input during the last call to {@link
    * #parseIssue(String)}.

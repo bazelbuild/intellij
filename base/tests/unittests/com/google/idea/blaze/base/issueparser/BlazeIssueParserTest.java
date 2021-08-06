@@ -16,6 +16,9 @@
 package com.google.idea.blaze.base.issueparser;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.base.scope.output.IssueOutput.Category.ERROR;
+import static com.google.idea.blaze.base.scope.output.IssueOutput.Category.NOTE;
+import static com.google.idea.blaze.base.scope.output.IssueOutput.Category.WARNING;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,7 +37,6 @@ import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.run.filter.FileResolver;
 import com.google.idea.blaze.base.run.filter.StandardFileResolver;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -110,7 +112,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
                 + "'javatests/com/google/devtools/aswb/testapps/aswbtestlib/...': "
                 + "package name component contains only '.' characters.");
     assertThat(issue).isNotNull();
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
   }
 
   @Test
@@ -127,7 +129,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getColumn()).isEqualTo(-1);
     assertThat(issue.getMessage())
         .isEqualTo("non-static variable this cannot be referenced from a static context");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(
             TextRange.create(
@@ -148,7 +150,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getColumn()).isEqualTo(-1);
     assertThat(issue.getMessage())
         .isEqualTo("non-static variable this cannot be referenced from a static context");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(
             TextRange.create(
@@ -166,7 +168,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getLine()).isEqualTo(33);
     assertThat(issue.getColumn()).isEqualTo(26);
     assertThat(issue.getMessage()).isEqualTo("'|' is not preceded with whitespace.");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(
             TextRange.create(
@@ -186,7 +188,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getLine()).isEqualTo(29);
     assertThat(issue.getColumn()).isEqualTo(10);
     assertThat(issue.getMessage()).isEqualTo("'util/ptr_util2.h' file not found");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(TextRange.create(0, "net/something/foo_bar.cc:29:10".length()));
   }
@@ -204,7 +206,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getColumn()).isEqualTo(11);
     assertThat(issue.getMessage())
         .isEqualTo("in instantiation of member function foo<bar>::baz() requested here ...");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.NOTE);
+    assertThat(issue.getCategory()).isEqualTo(NOTE);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(TextRange.create(0, "net/something/foo_bar.cc:30:11".length()));
   }
@@ -222,7 +224,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getColumn()).isEqualTo(12);
     assertThat(issue.getMessage())
         .isEqualTo("Target '//java/package_path:helloroot_visibility' failed");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(
             TextRange.create(
@@ -242,7 +244,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getLine()).isEqualTo(42);
     assertThat(issue.getColumn()).isEqualTo(12);
     assertThat(issue.getMessage()).isEqualTo("Variable artifact_location is read only");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(
             TextRange.create(
@@ -260,7 +262,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue).isNotNull();
     assertThat(issue.getFile().getPath()).isEqualTo("/path/to/root/java/package_path/BUILD");
     assertThat(issue.getMessage()).isEqualTo("name 'grubber' is not defined");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(
             TextRange.create(
@@ -278,7 +280,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getFile().getPath())
         .isEqualTo("/root/third_party/bazel/tools/ide/intellij_info.bzl");
     assertThat(issue.getMessage()).isEqualTo("file doesn't exist or isn't a file");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
   }
 
   @Test
@@ -293,7 +295,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getFile().getPath())
         .isEqualTo("/root/third_party/bazel/tools/ide/intellij_info.bzl");
     assertThat(issue.getMessage()).isEqualTo("file doesn't exist or isn't a file");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
   }
 
   @Test
@@ -306,7 +308,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
                 + "defined by /path/to/root/package/path/BUILD");
     assertThat(issue).isNotNull();
     assertThat(issue.getFile().getPath()).isEqualTo(".blazeproject");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
   }
 
   @Test
@@ -317,7 +319,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
             "no such package 'package/path': BUILD file not found on package path");
     assertThat(issue).isNotNull();
     assertThat(issue.getFile().getPath()).isEqualTo(".blazeproject");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
   }
 
   @Test
@@ -330,7 +332,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue).isNotNull();
     assertThat(issue.getFile()).isNotNull();
     assertThat(issue.getFile().getPath()).isEqualTo(".blazeproject");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getMessage())
         .isEqualTo("no targets found beneath 'tests/com/google/a/b/c/d/baz'");
   }
@@ -358,7 +360,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue).isNotNull();
     assertThat(issue.getFile().getPath()).isEqualTo("/home/plumpy/whatever");
     assertThat(issue.getMessage().split("\n")).hasLength(lines.length);
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
   }
 
   @Test
@@ -385,7 +387,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue).isNotNull();
     assertThat(issue.getFile().getPath()).isEqualTo("/home/plumpy/whatever");
     assertThat(issue.getMessage()).isEqualTo("name 'grubber' is not defined");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
   }
 
   @Test
@@ -414,7 +416,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getMessage()).isEqualTo("This is a test message for our test parser.");
     assertThat(issue.getLine()).isEqualTo(-1);
     assertThat(issue.getColumn()).isEqualTo(-1);
-    assertThat(issue.getCategory()).isEqualTo(Category.WARNING);
+    assertThat(issue.getCategory()).isEqualTo(WARNING);
     assertThat(issue.getFile()).isNull();
   }
 
@@ -427,7 +429,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     IssueOutput issue = blazeIssueParser.parseIssue("ERROR: " + msg);
     assertThat(issue).isNotNull();
     assertThat(issue.getMessage()).isEqualTo(msg);
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
   }
 
   @Test
@@ -479,7 +481,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getLine()).isEqualTo(123);
     assertThat(issue.getColumn()).isEqualTo(45);
     assertThat(issue.getMessage()).isEqualTo("TS2304: Cannot find name 'asdf'.");
-    assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(TextRange.create(0, "foo/bar/baz.ts:123:45".length()));
   }
@@ -496,9 +498,28 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getLine()).isEqualTo(10);
     assertThat(issue.getColumn()).isEqualTo(-1);
     assertThat(issue.getMessage()).isEqualTo("[JSC_UNDEFINED_VARIABLE] variable foo is undeclared");
-    assertThat(issue.getCategory()).isEqualTo(IssueOutput.Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(TextRange.create(0, "foo/bar.js:10".length()));
+  }
+
+  @Test
+  public void testParseInfo() {
+    BlazeIssueParser blazeIssueParser = new BlazeIssueParser(parsers);
+    IssueOutput issue =
+        blazeIssueParser.parseIssue(
+            "abc/SomeClass.kt:117:11: info: 'when' expression on sealed"
+                + " classes is recommended to be exhaustive");
+    assertThat(issue).isNotNull();
+    assertThat(issue.getLine()).isEqualTo(117);
+    assertThat(issue.getColumn()).isEqualTo(11);
+    assertThat(issue.getFile()).isNotNull();
+    assertThat(issue.getFile().getPath()).isEqualTo("/root/abc/SomeClass.kt");
+    assertThat(issue.getMessage())
+        .isEqualTo("'when' expression on sealed classes is recommended to be exhaustive");
+    assertThat(issue.getCategory()).isEqualTo(NOTE);
+    assertThat(issue.getConsoleHyperlinkRange())
+        .isEqualTo(TextRange.create(0, "abc/SomeClass.kt:117:11".length()));
   }
 
   @Test
@@ -511,7 +532,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getLine()).isEqualTo(123);
     assertThat(issue.getColumn()).isEqualTo(45);
     assertThat(issue.getMessage()).isEqualTo("undefined: asdf");
-    assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(TextRange.create(0, "foo/bar.go:123:45".length()));
   }
@@ -527,7 +548,7 @@ public class BlazeIssueParserTest extends BlazeTestCase {
     assertThat(issue.getFile().getPath()).isEqualTo("/root/foo/bar.py");
     assertThat(issue.getLine()).isEqualTo(123);
     assertThat(issue.getMessage()).isEqualTo("in foo: bad option in return type [bad-return-type]");
-    assertThat(issue.getCategory()).isEqualTo(Category.ERROR);
+    assertThat(issue.getCategory()).isEqualTo(ERROR);
     assertThat(issue.getConsoleHyperlinkRange())
         .isEqualTo(TextRange.create(0, "File \"foo/bar.py\", line 123".length()));
   }
