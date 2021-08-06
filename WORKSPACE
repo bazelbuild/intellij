@@ -233,6 +233,14 @@ http_archive(
     url = "https://dl.google.com/dl/android/studio/ide-zips/4.2.0.24/android-studio-ide-202.7322048-linux.tar.gz",
 )
 
+# The plugin api for android_studio_2021_1. This is required to build CLwB\, and run integration tests.
+http_archive(
+    name = "android_studio_2021_1",
+    build_file = "@//intellij_platform_sdk:BUILD.clion211",
+    sha256 = "e23fe2f3e916d8357bd500d1f488e701aa89b42a42dabb759d7a42954262b87c",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2021.1.1.6/android-studio-2021.1.1.6-linux.tar.gz",
+)
+
 # The plugin api for Android Studio 2020.3. This is required to build ASwB,
 # and run integration tests.
 http_archive(
