@@ -295,16 +295,16 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-4.2-mac",
+    name = "android-studio-2020.3",
     values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-4.2",
+        "define": "ij_product=android-studio-2020.3",
     },
 )
 
 config_setting(
-    name = "android-studio-2020.3",
+    name = "android-studio-2020.3-mac",
     values = {
+        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-2020.3",
     },
 )
