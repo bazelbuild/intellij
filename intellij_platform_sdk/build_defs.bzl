@@ -3,20 +3,20 @@
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for internal Blaze Plugin
-    "intellij-latest": "intellij-2020.3",
-    "intellij-latest-mac": "intellij-2020.3-mac",
+    "intellij-latest": "intellij-2021.1",
+    "intellij-latest-mac": "intellij-2021.1-mac",
     "intellij-beta": "intellij-2021.1",
     "intellij-under-dev": "intellij-2021.2",
-    "intellij-ue-latest": "intellij-ue-2020.3",
-    "intellij-ue-latest-mac": "intellij-ue-2020.3-mac",
+    "intellij-ue-latest": "intellij-ue-2021.1",
+    "intellij-ue-latest-mac": "intellij-ue-2021.1-mac",
     "intellij-ue-beta": "intellij-ue-2021.1",
     "intellij-ue-under-dev": "intellij-ue-2021.2",
     "android-studio-latest": "android-studio-4.2",
     "android-studio-beta": "android-studio-2020.3",
     "android-studio-beta-mac": "android-studio-2020.3-mac",
     "android-studio-canary": "android-studio-2020.3",
-    "clion-latest": "clion-2020.3",
-    "clion-latest-mac": "clion-2020.3-mac",
+    "clion-latest": "clion-2021.1",
+    "clion-latest-mac": "clion-2021.1-mac",
     "clion-beta": "clion-2021.1",
     "clion-under-dev": "clion-2021.1",
     # Indirect ij_product mapping for Bazel Plugin OSS
@@ -35,22 +35,6 @@ INDIRECT_IJ_PRODUCTS = {
 }
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2020.2": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2020_2",
-    ),
-    "intellij-2020.2-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2020_2",
-    ),
-    "intellij-2020.3": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2020_3",
-    ),
-    "intellij-2020.3-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2020_3",
-    ),
     "intellij-2021.1": struct(
         ide = "intellij",
         directory = "intellij_ce_2021_1",
@@ -66,22 +50,6 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-2021.2-mac": struct(
         ide = "intellij",
         directory = "intellij_ce_2021_2",
-    ),
-    "intellij-ue-2020.2": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2020_2",
-    ),
-    "intellij-ue-2020.2-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2020_2",
-    ),
-    "intellij-ue-2020.3": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2020_3",
-    ),
-    "intellij-ue-2020.3-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2020_3",
     ),
     "intellij-ue-2021.1": struct(
         ide = "intellij-ue",
@@ -110,22 +78,6 @@ DIRECT_IJ_PRODUCTS = {
     "android-studio-2020.3-mac": struct(
         ide = "android-studio",
         directory = "android_studio_2020_3",
-    ),
-    "clion-2020.2": struct(
-        ide = "clion",
-        directory = "clion_2020_2",
-    ),
-    "clion-2020.2-mac": struct(
-        ide = "clion",
-        directory = "clion_2020_2",
-    ),
-    "clion-2020.3": struct(
-        ide = "clion",
-        directory = "clion_2020_3",
-    ),
-    "clion-2020.3-mac": struct(
-        ide = "clion",
-        directory = "clion_2020_3",
     ),
     "clion-2021.1": struct(
         ide = "clion",
