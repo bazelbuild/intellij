@@ -356,8 +356,9 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
 
     if (isIgnored(test)) {
       ErrorOrFailureOrSkipped err = test.skipped != null ? test.skipped : NO_ERROR;
+      String message = err.message == null ? "" : err.message;
       processor.onTestIgnored(
-          new TestIgnoredEvent(displayName, err.message, BlazeXmlSchema.getErrorContent(err)));
+          new TestIgnoredEvent(displayName, message, BlazeXmlSchema.getErrorContent(err)));
     } else if (isFailed(test)) {
       List<ErrorOrFailureOrSkipped> errors =
           !test.failures.isEmpty()
@@ -416,7 +417,10 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       return new BlazeComparisonFailureData(
           parseComparisonString(error.actual), parseComparisonString(error.expected));
     }
-    return TestComparisonFailureParser.parse(error.message);
+    if (error.message != null) {
+      return TestComparisonFailureParser.parse(error.message);
+    }
+    return BlazeComparisonFailureData.NONE;
   }
 
   @Nullable
