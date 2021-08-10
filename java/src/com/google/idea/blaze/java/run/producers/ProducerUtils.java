@@ -95,7 +95,8 @@ public class ProducerUtils {
 
   @Nullable
   public static PsiClass getTestClass(final PsiElement element) {
-    return getTestClass(PsiLocation.fromPsiElement(element));
+    Location<PsiElement> location = PsiLocation.fromPsiElement(element);
+    return location != null ? getTestClass(location) : null;
   }
 
   /** Same as {@link JUnitUtil#getTestClass}, but handles classes outside the project. */
