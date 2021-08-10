@@ -1,3 +1,7 @@
+v2021.08.09
+===========
+* Bug fixes and internal cleanup.
+
 v2021.07.26
 ===========
 * Avoid an issue with a hybrid JDK 8/11 setup when using fast run/debug.
