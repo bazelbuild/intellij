@@ -402,6 +402,7 @@ intellij_plugin(
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
+    tags = ["exclusive"],
     test_package_root = "com.google.idea.blaze.base",
     deps = [
         ":base",
@@ -420,6 +421,7 @@ intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
     required_plugins = "com.google.idea.blaze.base",
+    tags = ["exclusive"],
     test_package_root = "com.google.idea.blaze.base",
     runtime_deps = [
         ":base_integration_test_plugin",

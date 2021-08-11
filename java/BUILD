@@ -132,6 +132,7 @@ intellij_unit_test_suite(
         "-Djdk_tools.jar=$(location :jdk_tools_lib_deploy.jar)",
         "-Dtruth.jar=$(location :truth_lib_deploy.jar)",
     ],
+    tags = ["exclusive"],
     test_package_root = "com.google.idea.blaze.java",
     deps = [
         ":java",
@@ -185,6 +186,7 @@ intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
     required_plugins = "com.google.idea.blaze.java",
+    tags = ["exclusive"],
     test_package_root = "com.google.idea.blaze.java",
     runtime_deps = [
         ":java_integration_test_plugin",

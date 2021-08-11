@@ -25,6 +25,7 @@ intellij_plugin_library(
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
+    tags = ["exclusive"],
     test_package_root = "com.google.idea.blaze.dart",
     deps = [
         ":dart",

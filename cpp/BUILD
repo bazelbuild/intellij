@@ -80,6 +80,7 @@ intellij_unit_test_suite(
         clion = ["com.google.idea.blaze.cpp.ClionUnitTestSystemPropertiesRule"],
         default = [],
     ),
+    tags = ["exclusive"],
     test_package_root = "com.google.idea.blaze.cpp",
     # Needed to work around one-version issue
     runtime_deps = ["//intellij_platform_sdk:test_libs"],
@@ -145,6 +146,7 @@ intellij_integration_test_suite(
         ],
     ),
     required_plugins = "com.google.idea.bazel.cpp",
+    tags = ["exclusive"],
     test_package_root = "com.google.idea.blaze.cpp",
     runtime_deps = [
         ":cpp_integration_test_plugin",

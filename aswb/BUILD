@@ -107,6 +107,7 @@ intellij_unit_test_suite(
         ["tests/unittests/**/*.java"],
         exclude = ["tests/unittests/com/google/idea/blaze/android/sync/model/idea/BlazeAndroidModelTest.java"],  # b/145809318
     ),
+    tags = ["no-cache"],
     test_package_root = "com.google.idea.blaze.android",
     deps = [
         ":aswb_lib",
@@ -127,6 +128,7 @@ intellij_unit_test_suite(
 
 test_suite(
     name = "integration_tests",
+    tags = ["exclusive"],
     tests = [
         #b/139825934 ":NdkDependenciesTest",
         ":normal_integration_tests",
@@ -163,6 +165,7 @@ intellij_integration_test_suite(
         "testdata/ic_banner.png",
     ],
     required_plugins = "com.google.idea.bazel.aswb",
+    tags = ["exclusive"],
     test_package_root = "com.google.idea.blaze.android",
     runtime_deps = [
         ":aswb_bazel",
