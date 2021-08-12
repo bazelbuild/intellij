@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.sync.model;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -24,7 +23,6 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.libraries.JarCache;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
@@ -48,10 +46,6 @@ import org.jetbrains.annotations.Nullable;
 public final class AarLibrary extends BlazeLibrary {
   private static final Logger logger = Logger.getInstance(AarLibrary.class);
 
-  @VisibleForTesting
-  public static final BoolExperiment exportResourcePackage =
-      new BoolExperiment("aswb.aarlibrary.export.res.package", true);
-
   // libraryArtifact would be null if this aar is created by aspect file. Such aar is generated for
   // generated resources which should not have any bundled jar file.
   @Nullable public final LibraryArtifact libraryArtifact;
@@ -66,30 +60,32 @@ public final class AarLibrary extends BlazeLibrary {
   // package of the Aar.
   @Nullable public final String resourcePackage;
 
-  public AarLibrary(ArtifactLocation artifactLocation, @Nullable String resourcePackage) {
-    this(null, artifactLocation, resourcePackage);
-  }
-
   public AarLibrary(
+      LibraryKey libraryKey,
       @Nullable LibraryArtifact libraryArtifact,
       ArtifactLocation aarArtifact,
       @Nullable String resourcePackage) {
     // Use the aar's name for the library key. The jar name is the same for all AARs, so could more
     // easily get a hash collision.
-    super(LibraryKey.fromArtifactLocation(aarArtifact));
+    super(libraryKey);
     this.libraryArtifact = libraryArtifact;
     this.aarArtifact = aarArtifact;
-    this.resourcePackage = exportResourcePackage.getValue() ? resourcePackage : null;
+    this.resourcePackage = resourcePackage;
   }
 
   static AarLibrary fromProto(ProjectData.BlazeLibrary proto) {
     ProjectData.AarLibrary aarLibrary = proto.getAarLibrary();
     return new AarLibrary(
+        LibraryKey.fromProto(proto.getLibraryKey()),
         aarLibrary.hasLibraryArtifact()
             ? LibraryArtifact.fromProto(aarLibrary.getLibraryArtifact())
             : null,
         ArtifactLocation.fromProto(aarLibrary.getAarArtifact()),
         aarLibrary.getResourcePackage());
+  }
+
+  public String getKeyFromArtifact() {
+    return LibraryKey.libraryNameFromArtifactLocation(aarArtifact);
   }
 
   @Override
@@ -117,7 +113,7 @@ public final class AarLibrary extends BlazeLibrary {
       ModifiableModel libraryModel) {
     UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
 
-    File resourceDirectory = unpackedAars.getResourceDirectory(artifactLocationDecoder, this);
+    File resourceDirectory = unpackedAars.getResourceDirectory(this);
     if (resourceDirectory == null) {
       logger.warn("No resource directory found for aar: " + aarArtifact);
       return;

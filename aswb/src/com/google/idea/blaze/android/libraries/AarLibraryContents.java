@@ -23,8 +23,9 @@ import javax.annotation.Nullable;
 /*  Provides BlazeArtifacts to unpack an Aar. */
 @AutoValue
 abstract class AarLibraryContents {
-  static AarLibraryContents create(BlazeArtifact aar, @Nullable BlazeArtifact jar) {
-    return new AutoValue_AarLibraryContents(aar, jar);
+  static AarLibraryContents create(
+      BlazeArtifact aar, @Nullable BlazeArtifact jar, String libraryKey) {
+    return new AutoValue_AarLibraryContents(aar, jar, libraryKey);
   }
 
   /* Provides BlazeArtifact of the .aar file that we need to fetch and copy locally */
@@ -40,4 +41,7 @@ abstract class AarLibraryContents {
    */
   @Nullable
   abstract BlazeArtifact jar();
+
+  /* Provides library key of the .aar file that used to decide the aar directory name. */
+  abstract String libraryKey();
 }
