@@ -856,6 +856,7 @@ def _collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_
 
     android_instrumentation_info = struct_omit_none(
         test_app = str(ctx.rule.attr.test_app.label),
+        target_device = str(ctx.rule.attr.target_device.label),
     )
     ide_info["android_instrumentation_info"] = android_instrumentation_info
     return True

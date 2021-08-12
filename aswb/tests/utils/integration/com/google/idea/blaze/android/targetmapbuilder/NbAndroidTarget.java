@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import java.util.ArrayList;
@@ -312,11 +311,8 @@ public class NbAndroidTarget extends NbBaseTargetBuilder {
   }
 
   public NbAndroidTarget instruments(String relativeLabel) {
-    if (relativeLabel.startsWith("//")) {
-      androidIdeInfoBuilder.setInstruments(Label.create(relativeLabel));
-    } else {
-      androidIdeInfoBuilder.setInstruments(Label.create("//" + blazePackage + relativeLabel));
-    }
+    androidIdeInfoBuilder.setInstruments(
+        NbTargetMapUtils.normalizeRelativePathOrLabel(relativeLabel, blazePackage));
     return this;
   }
 

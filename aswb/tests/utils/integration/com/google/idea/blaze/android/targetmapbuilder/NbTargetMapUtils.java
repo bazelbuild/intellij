@@ -44,4 +44,13 @@ public class NbTargetMapUtils {
   public static ArtifactLocation makeSourceArtifact(String workspacePath) {
     return ArtifactLocation.builder().setRelativePath(workspacePath).setIsSource(true).build();
   }
+
+  /** Create a label out of a relative path to the target or a string representing a label. */
+  public static Label normalizeRelativePathOrLabel(
+      String pathOrLabelString, WorkspacePath blazePackage) {
+    if (pathOrLabelString.startsWith("//")) {
+      return Label.create(pathOrLabelString);
+    }
+    return Label.create("//" + blazePackage + pathOrLabelString);
+  }
 }

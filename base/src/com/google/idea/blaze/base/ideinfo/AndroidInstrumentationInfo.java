@@ -30,15 +30,25 @@ public class AndroidInstrumentationInfo
     return testApp;
   }
 
-  @Nullable private final Label testApp;
+  @Nullable
+  public Label getTargetDevice() {
+    return targetDevice;
+  }
 
-  private AndroidInstrumentationInfo(@Nullable Label testApp) {
+  @Nullable private final Label testApp;
+  @Nullable private final Label targetDevice;
+
+  private AndroidInstrumentationInfo(@Nullable Label testApp, @Nullable Label targetDevice) {
     this.testApp = testApp;
+    this.targetDevice = targetDevice;
   }
 
   static AndroidInstrumentationInfo fromProto(IntellijIdeInfo.AndroidInstrumentationInfo proto) {
     return new AndroidInstrumentationInfo(
-        !Strings.isNullOrEmpty(proto.getTestApp()) ? Label.create(proto.getTestApp()) : null);
+        !Strings.isNullOrEmpty(proto.getTestApp()) ? Label.create(proto.getTestApp()) : null,
+        !Strings.isNullOrEmpty(proto.getTargetDevice())
+            ? Label.create(proto.getTargetDevice())
+            : null);
   }
 
   @Override
@@ -46,20 +56,27 @@ public class AndroidInstrumentationInfo
     IntellijIdeInfo.AndroidInstrumentationInfo.Builder builder =
         IntellijIdeInfo.AndroidInstrumentationInfo.newBuilder();
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setTestApp, testApp);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setTargetDevice, targetDevice);
     return builder.build();
   }
 
   /** Builder for android instrumentation test rule */
   public static class Builder {
     private Label testApp;
+    private Label targetDevice;
 
     public Builder setTestApp(Label testApp) {
       this.testApp = testApp;
       return this;
     }
 
+    public Builder setTargetDevice(Label targetDevice) {
+      this.targetDevice = targetDevice;
+      return this;
+    }
+
     public AndroidInstrumentationInfo build() {
-      return new AndroidInstrumentationInfo(testApp);
+      return new AndroidInstrumentationInfo(testApp, targetDevice);
     }
 
     @Override
@@ -74,12 +91,13 @@ public class AndroidInstrumentationInfo
         return false;
       }
       AndroidInstrumentationInfo that = (AndroidInstrumentationInfo) o;
-      return testApp.equals(that.getTestApp());
+      return Objects.equals(testApp, that.getTestApp())
+          && Objects.equals(targetDevice, that.getTargetDevice());
     }
 
     @Override
     public int hashCode() {
-      return Objects.hashCode(testApp);
+      return Objects.hash(testApp, targetDevice);
     }
   }
 }

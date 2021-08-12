@@ -30,6 +30,10 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.filecache.FileCaches;
+import com.google.idea.blaze.base.ideinfo.AndroidInstrumentationInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -39,7 +43,9 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -130,6 +136,33 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
                           return false;
                         }
 
+                        BlazeProjectData projectData =
+                            BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+                        TargetIdeInfo targetInfo =
+                            projectData.getTargetMap().get(TargetKey.forPlainTarget(target));
+                        if (targetInfo == null
+                            || targetInfo.getKind()
+                                != RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
+                          IssueOutput.error(
+                                  "Unable to identify target \""
+                                      + target
+                                      + "\". If this is a newly added target, please sync the"
+                                      + " project and try again.")
+                              .submit(context);
+                          return null;
+                        }
+                        AndroidInstrumentationInfo testInstrumentationInfo =
+                            targetInfo.getAndroidInstrumentationInfo();
+                        if (testInstrumentationInfo == null) {
+                          IssueOutput.error(
+                                  "Required target data missing for \""
+                                      + target
+                                      + "\".  Has the target definition changed recently? Please"
+                                      + " sync the project and try again.")
+                              .submit(context);
+                        }
+                        Label targetDevice = testInstrumentationInfo.getTargetDevice();
+
                         BlazeCommand.Builder commandBuilder =
                             BlazeCommand.builder(
                                     Blaze.getBuildSystemProvider(project).getBinaryPath(project),
@@ -137,12 +170,16 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
                                 .addTargets(target);
                         // Build flags must match BlazeBeforeRunTask.
                         commandBuilder.addBlazeFlags(buildFlags);
-                        // Run the test on the selected local device/emulator.
-                        commandBuilder
-                            .addBlazeFlags(TEST_LOCAL_DEVICE, BlazeFlags.TEST_OUTPUT_STREAMED)
-                            .addBlazeFlags(
-                                testDeviceSerialFlags(launchContext.getDevice().getSerialNumber()))
-                            .addBlazeFlags(testFilter.getBlazeFlags());
+                        // Run the test on the selected local device/emulator if no target device is
+                        // specified.
+                        if (targetDevice == null) {
+                          commandBuilder
+                              .addBlazeFlags(TEST_LOCAL_DEVICE, BlazeFlags.TEST_OUTPUT_STREAMED)
+                              .addBlazeFlags(
+                                  testDeviceSerialFlags(
+                                      launchContext.getDevice().getSerialNumber()))
+                              .addBlazeFlags(testFilter.getBlazeFlags());
+                        }
                         if (debug) {
                           commandBuilder.addBlazeFlags(
                               TEST_DEBUG, BlazeFlags.NO_CACHE_TEST_RESULTS);

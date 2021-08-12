@@ -73,7 +73,8 @@ public class InstrumentationTestTargetIntegrationTest extends BlazeAndroidIntegr
             .src("Test.java")
             .instruments("//java/com/foo/app:app"),
         android_instrumentation_test("//java/com/foo/app:instrumentation_test")
-            .test_app("//java/com/foo/app:test_app"));
+            .test_app("//java/com/foo/app:test_app")
+            .target_device("//tools/android/emulated_devices/generic_phone:android_17_x86"));
     runFullBlazeSyncWithNoIssues();
   }
 
@@ -91,6 +92,8 @@ public class InstrumentationTestTargetIntegrationTest extends BlazeAndroidIntegr
     Label testLabel = Label.create("//java/com/foo/app:instrumentation_test");
     Label instrumentorLabel = Label.create("//java/com/foo/app:test_app");
     Label appLabel = Label.create("//java/com/foo/app:app");
+    Label targetDeviceLabel =
+        Label.create("//tools/android/emulated_devices/generic_phone:android_17_x86");
 
     TargetMap targetMap = projectData.getTargetMap();
     TargetIdeInfo testTarget = targetMap.get(TargetKey.forPlainTarget(testLabel));
@@ -98,6 +101,8 @@ public class InstrumentationTestTargetIntegrationTest extends BlazeAndroidIntegr
     assertThat(testTarget.getKind()).isEqualTo(RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind());
     assertThat(testTarget.getAndroidInstrumentationInfo().getTestApp())
         .isEqualTo(instrumentorLabel);
+    assertThat(testTarget.getAndroidInstrumentationInfo().getTargetDevice())
+        .isEqualTo(targetDeviceLabel);
 
     TargetIdeInfo instrumentorTarget = targetMap.get(TargetKey.forPlainTarget(instrumentorLabel));
     assertThat(instrumentorTarget).isNotNull();

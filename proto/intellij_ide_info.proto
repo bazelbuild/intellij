@@ -119,6 +119,8 @@ message AndroidAarIdeInfo {
 message AndroidInstrumentationInfo {
   // Label for the android_binary to use as instrumentor.
   string test_app = 1;
+  // Label for device target image to use during this test.
+  string target_device = 2;
 }
 
 message PyIdeInfo {

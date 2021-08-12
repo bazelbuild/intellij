@@ -20,7 +20,6 @@ import static com.google.idea.blaze.android.targetmapbuilder.NbTargetMapUtils.ma
 import com.google.idea.blaze.base.ideinfo.AndroidInstrumentationInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 
@@ -35,12 +34,14 @@ public class NbAndroidInstrumentationTestTarget extends NbBaseTargetBuilder {
   }
 
   public NbAndroidInstrumentationTestTarget test_app(String relativeLabel) {
-    if (relativeLabel.startsWith("//")) {
-      androidInstrumentationInfoBuilder.setTestApp(Label.create(relativeLabel));
-    } else {
-      androidInstrumentationInfoBuilder.setTestApp(
-          Label.create("//" + blazePackage + relativeLabel));
-    }
+    androidInstrumentationInfoBuilder.setTestApp(
+        NbTargetMapUtils.normalizeRelativePathOrLabel(relativeLabel, blazePackage));
+    return this;
+  }
+
+  public NbAndroidInstrumentationTestTarget target_device(String relativeLabel) {
+    androidInstrumentationInfoBuilder.setTargetDevice(
+        NbTargetMapUtils.normalizeRelativePathOrLabel(relativeLabel, blazePackage));
     return this;
   }
 
