@@ -34,5 +34,6 @@ java_library(
         "clion-2020.2": ["//sdkcompat/v202"],
         "clion-2020.3": ["//sdkcompat/v203"],
         "clion-2021.1": ["//sdkcompat/v211"],
+        "clion-2021.2": ["//sdkcompat/v212"],
     }),
 )
