@@ -3,7 +3,7 @@
 # Description:
 #   Defines a package group that restricts access to the JetBrains
 #   plugin apis to known packages that build plugins. Only packages
-#   listed here may depend on these libraries.
+#   listed here may depend .
 
 load(
     ":build_defs.bzl",
@@ -15,7 +15,10 @@ load(
 
 licenses(["notice"])  # Apache2
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = [
+    #intellijplugins_visibility
+    "//visibility:public",
+])
 
 config_setting(
     name = "intellij-latest",
