@@ -187,10 +187,10 @@ abstract class AndroidTestContext implements RunConfigurationContext {
   /** AndroidTestContext for extracting fqcn and method name from Kotlin PSI */
   private static class KotlinAndroidTestContext extends AndroidTestContext {
     private final KtClass ktClass;
-    private final KtNamedFunction ktFunction;
+    @Nullable private final KtNamedFunction ktFunction;
 
     private KotlinAndroidTestContext(
-        KtClass ktClass, KtNamedFunction ktFunction, TargetInfo targetInfo) {
+        KtClass ktClass, @Nullable KtNamedFunction ktFunction, TargetInfo targetInfo) {
       super(targetInfo);
       this.ktClass = ktClass;
       this.ktFunction = ktFunction;
@@ -209,7 +209,7 @@ abstract class AndroidTestContext implements RunConfigurationContext {
     @Nullable
     @Override
     protected String getMethodName() {
-      return ReadAction.compute(ktFunction::getName);
+      return ktFunction == null ? null : ReadAction.compute(ktFunction::getName);
     }
 
     @Override
