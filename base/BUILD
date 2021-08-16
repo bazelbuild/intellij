@@ -30,7 +30,6 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
-        "//sdkcompat",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],
@@ -432,7 +431,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
-        "//sdkcompat",
         "@junit//jar",
     ],
 )
