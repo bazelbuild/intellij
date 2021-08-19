@@ -24,7 +24,7 @@ import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.LaunchInfo;
 import com.android.tools.idea.run.ProcessHandlerConsolePrinter;
 import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
+import com.android.tools.idea.run.tasks.ConnectDebuggerTaskBase;
 import com.android.tools.idea.run.tasks.ConnectJavaDebuggerTask;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
 import com.intellij.execution.process.ProcessHandler;
@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** Connects the blaze debugger during execution. */
-class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTask {
+class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTaskBase {
   private static final Logger LOG = Logger.getInstance(ConnectBlazeTestDebuggerTask.class);
 
   private final Project project;

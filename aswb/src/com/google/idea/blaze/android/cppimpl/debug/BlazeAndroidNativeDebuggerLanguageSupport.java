@@ -17,7 +17,6 @@ package com.google.idea.blaze.android.cppimpl.debug;
 
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -65,18 +64,15 @@ class BlazeAndroidNativeDebuggerLanguageSupport extends OCDebuggerLanguageSuppor
         final EvaluationMode mode) {
       final PsiElement context = OCDebuggerTypesHelper.getContextElement(sourcePosition, project);
       if (context != null && context.getLanguage() == OCLanguage.getInstance()) {
-        return new WriteAction<Document>() {
-          @Override
-          protected void run(Result<Document> result) {
-            PsiFile fragment =
-                mode == EvaluationMode.EXPRESSION
-                    ? OCElementFactory.expressionCodeFragment(text, project, context, true, false)
-                    : OCElementFactory.expressionOrStatementsCodeFragment(
-                        text, project, context, true, false);
-            //noinspection ConstantConditions
-            result.setResult(PsiDocumentManager.getInstance(project).getDocument(fragment));
-          }
-        }.execute().getResultObject();
+        return WriteAction.compute(
+            () -> {
+              PsiFile fragment =
+                  mode == EvaluationMode.EXPRESSION
+                      ? OCElementFactory.expressionCodeFragment(text, project, context, true, false)
+                      : OCElementFactory.expressionOrStatementsCodeFragment(
+                          text, project, context, true, false);
+              return PsiDocumentManager.getInstance(project).getDocument(fragment);
+            });
       } else {
         final LightVirtualFile plainTextFile =
             new LightVirtualFile("oc-debug-editor-when-no-source-position-available.txt", text);

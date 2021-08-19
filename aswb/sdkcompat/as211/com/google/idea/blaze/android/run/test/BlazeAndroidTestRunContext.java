@@ -21,7 +21,7 @@ import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
-import com.android.tools.idea.run.tasks.DebugConnectorTask;
+import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
@@ -69,7 +69,7 @@ public class BlazeAndroidTestRunContext extends BlazeAndroidTestRunContextBase {
 
   @Override
   @SuppressWarnings({"unchecked", "rawtypes"}) // Raw type from upstream.
-  public DebugConnectorTask getDebuggerTask(
+  public ConnectDebuggerTask getDebuggerTask(
       AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {

@@ -21,7 +21,9 @@ import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
+import java.util.Collection;
 import org.jetbrains.annotations.NotNull;
 
 /** Blaze implementation of {@link ProjectSystemBuildManager} */
@@ -38,6 +40,13 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
   @Override
   public void compileProject() {
     BlazeBuildService.getInstance(project).buildProject();
+  }
+
+  // @Override #api203
+  public void compileFilesAndDependencies(Collection<? extends VirtualFile> files) {
+    // TODO(b/191937319): Implement incremental builds for individual files
+    // Just compile the entire project for now.
+    compileProject();
   }
 
   @Override
