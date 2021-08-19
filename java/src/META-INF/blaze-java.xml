@@ -23,5 +23,6 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <TargetKindProvider implementation="com.google.idea.blaze.java.JavaBlazeRules"/>
     <TargetKindProvider implementation="com.google.idea.blaze.java.AndroidBlazeRules"/>
+    <LoggedDirectoryProvider implementation="com.google.idea.blaze.java.libraries.JarCacheFolderProvider$LoggedJarCacheDirectory"/>
   </extensions>
 </idea-plugin>

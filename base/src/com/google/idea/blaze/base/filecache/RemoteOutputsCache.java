@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.logging.LoggedDirectoryProvider;
 import com.google.idea.blaze.base.model.OutputsProvider;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
@@ -39,6 +40,7 @@ import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
@@ -62,6 +64,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -274,5 +277,28 @@ public final class RemoteOutputsCache {
       }
     }
     cachedFiles = ImmutableMap.of();
+  }
+
+  /** Configuration which includes the remote output cache directory in the logged metrics. */
+  static class LoggedRemoteOutputsCacheDirectory implements LoggedDirectoryProvider {
+
+    @Override
+    public Optional<LoggedDirectory> getLoggedDirectory(Project project) {
+      // RemoteOutputsCache#getCacheDir unfortunately doesn't check for null but wouldn't be easy to
+      // change without touching existing callers. To be on the safe side for this specific calling
+      // path, perform the null check here.
+      BlazeImportSettings importSettings =
+          BlazeImportSettingsManager.getInstance(project).getImportSettings();
+      if (importSettings == null) {
+        return Optional.empty();
+      }
+
+      return Optional.of(
+          LoggedDirectory.builder()
+              .setPath(RemoteOutputsCache.getCacheDir(project).toPath())
+              .setOriginatingIdePart(String.format("%s plugin", Blaze.buildSystemName(project)))
+              .setPurpose("Remote outputs cache")
+              .build());
+    }
   }
 }

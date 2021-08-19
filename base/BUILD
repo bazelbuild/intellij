@@ -207,6 +207,7 @@ java_library(
     name = "logging_api",
     srcs = [
         "src/com/google/idea/blaze/base/logging/EventLogger.java",
+        "src/com/google/idea/blaze/base/logging/LoggedDirectoryProvider.java",
         "src/com/google/idea/blaze/base/logging/LoggedSettingsProvider.java",
     ],
     neverlink = 1,
@@ -214,6 +215,7 @@ java_library(
         "//common/experiments",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
+        "//third_party/auto_value",
     ],
 )
 

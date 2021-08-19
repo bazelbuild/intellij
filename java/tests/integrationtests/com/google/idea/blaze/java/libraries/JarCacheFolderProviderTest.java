@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -90,5 +91,12 @@ public class JarCacheFolderProviderTest extends BlazeIntegrationTestCase {
   public void testGetCacheFileByKeyReturnsFileWithExpectedPath() {
     assertThat(subject.getCacheFileByKey("file-key").getPath())
         .isEqualTo(Paths.get(expectedJarFolderPath.toString(), "file-key").toString());
+  }
+
+  @Test
+  public void isJarCacheFolderReady_whenSettingsAreNotPresent_isFalse() {
+    BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(null);
+
+    assertThat(subject.isJarCacheFolderReady()).isFalse();
   }
 }

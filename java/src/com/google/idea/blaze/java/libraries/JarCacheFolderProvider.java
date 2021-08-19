@@ -16,12 +16,15 @@
 package com.google.idea.blaze.java.libraries;
 
 import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.base.logging.LoggedDirectoryProvider;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.Optional;
 
 /** Provides {@link File} instance to store local JAR cache. */
 public class JarCacheFolderProvider {
@@ -51,6 +54,15 @@ public class JarCacheFolderProvider {
 
   /** Checks if the JAR cache exists and is a folder. */
   public boolean isJarCacheFolderReady() {
+    // There's currently no null check in getJarCacheFolder(). Adding it would require that we
+    // change all callers. As a more minimal improvement, we can at least make sure that code paths
+    // which check isJarCacheFolderReady() are guaranteed to not run into the NPE.
+    BlazeImportSettings importSettings =
+        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    if (importSettings == null) {
+      return false;
+    }
+
     FileOperationProvider fileOperationProvider = FileOperationProvider.getInstance();
     if (fileOperationProvider.exists(getJarCacheFolder())
         && fileOperationProvider.isDirectory(getJarCacheFolder())) {
@@ -61,5 +73,23 @@ public class JarCacheFolderProvider {
 
   protected Project getProject() {
     return project;
+  }
+
+  /** Configuration which includes the jar cache directory in the logged metrics. */
+  static class LoggedJarCacheDirectory implements LoggedDirectoryProvider {
+
+    @Override
+    public Optional<LoggedDirectory> getLoggedDirectory(Project project) {
+      JarCacheFolderProvider cacheFolderProvider = JarCacheFolderProvider.getInstance(project);
+      if (!cacheFolderProvider.isJarCacheFolderReady()) {
+        return Optional.empty();
+      }
+      return Optional.of(
+          LoggedDirectory.builder()
+              .setPath(cacheFolderProvider.getJarCacheFolder().toPath())
+              .setOriginatingIdePart(String.format("%s plugin", Blaze.buildSystemName(project)))
+              .setPurpose("Jar cache")
+              .build());
+    }
   }
 }

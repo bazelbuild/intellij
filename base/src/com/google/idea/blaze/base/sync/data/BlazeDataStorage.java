@@ -16,12 +16,16 @@
 package com.google.idea.blaze.base.sync.data;
 
 import com.google.common.base.Strings;
+import com.google.idea.blaze.base.logging.LoggedDirectoryProvider;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.util.Optional;
 
 /** Defines where we store our blaze project data. */
 public class BlazeDataStorage {
@@ -60,5 +64,50 @@ public class BlazeDataStorage {
 
   private static File getProjectConfigurationDir() {
     return new File(PathManager.getSystemPath(), "blaze/projects").getAbsoluteFile();
+  }
+
+  /**
+   * Configuration which includes the plugin's own project-specific data directory (used for
+   * artifacts related to IntelliJ's project setup - module configurations, locally cached jars,
+   * locally cached remote outputs) in the logged metrics.
+   */
+  static class LoggedProjectDataDirectory implements LoggedDirectoryProvider {
+
+    @Override
+    public Optional<LoggedDirectory> getLoggedDirectory(Project project) {
+      return Optional.ofNullable(
+              BlazeImportSettingsManager.getInstance(project).getImportSettings())
+          .map(BlazeDataStorage::getProjectDataDir)
+          .map(
+              file ->
+                  LoggedDirectory.builder()
+                      .setPath(file.toPath())
+                      .setOriginatingIdePart(
+                          String.format("%s plugin", Blaze.buildSystemName(project)))
+                      .setPurpose("Build-related project data")
+                      .build());
+    }
+  }
+
+  /**
+   * Configuration which includes the plugin's own project-specific cache directory (used for
+   * artifacts derived from syncs) in the logged metrics.
+   */
+  static class LoggedProjectCacheDirectory implements LoggedDirectoryProvider {
+
+    @Override
+    public Optional<LoggedDirectory> getLoggedDirectory(Project project) {
+      return Optional.ofNullable(
+              BlazeImportSettingsManager.getInstance(project).getImportSettings())
+          .map(settings -> getProjectCacheDir(project, settings))
+          .map(
+              file ->
+                  LoggedDirectory.builder()
+                      .setPath(file.toPath())
+                      .setOriginatingIdePart(
+                          String.format("%s plugin", Blaze.buildSystemName(project)))
+                      .setPurpose("Build-related project cache")
+                      .build());
+    }
   }
 }
