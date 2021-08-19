@@ -17,7 +17,7 @@ package com.google.idea.blaze.android.run.binary.mobileinstall;
 
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
-import com.android.tools.idea.run.tasks.DebugConnectorTask;
+import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.intellij.execution.ExecutionException;
@@ -43,7 +43,7 @@ public class BlazeAndroidBinaryMobileInstallRunContext
   @Nullable
   @Override
   @SuppressWarnings("unchecked")
-  public DebugConnectorTask getDebuggerTask(
+  public ConnectDebuggerTask getDebuggerTask(
       AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
       throws ExecutionException {
     return androidDebugger.getConnectDebuggerTask(

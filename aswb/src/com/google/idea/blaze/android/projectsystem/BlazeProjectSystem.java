@@ -146,7 +146,13 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     };
   }
 
-  @Override
+  // @Override #api203
+  public Collection<AndroidFacet> getAndroidFacetsWithPackageName(
+      Project project, String packageName) {
+    return getAndroidFacetsWithPackageName(
+        project, packageName, GlobalSearchScope.projectScope(project));
+  }
+  // @Override #api203
   public Collection<AndroidFacet> getAndroidFacetsWithPackageName(
       Project project, String packageName, GlobalSearchScope scope) {
     List<AndroidFacet> facets = ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID);

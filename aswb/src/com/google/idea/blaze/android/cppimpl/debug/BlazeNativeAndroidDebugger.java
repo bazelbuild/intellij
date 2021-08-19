@@ -131,8 +131,8 @@ public class BlazeNativeAndroidDebugger extends BlazeNativeAndroidDebuggerBase {
       super(project, factory);
     }
 
+    // Only required for #api203
     @Nullable
-    @Override
     public String getPackageNameOverride() {
       // "package name override" is not required in blaze projects.
       return null;
