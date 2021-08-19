@@ -23,9 +23,6 @@ java_library(
                ]),
                default = [],
            ) + select_for_plugin_api({
-        "android-studio-4.2": glob(["testcompat/v202/com/google/idea/sdkcompat/**/*.java"]) + glob([
-            "testcompat/v202/com/google/idea/testing/cidr/*.java",
-        ]),
         "android-studio-2020.3": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]) + glob([
             "testcompat/v203/com/google/idea/testing/cidr/*.java",
         ]),

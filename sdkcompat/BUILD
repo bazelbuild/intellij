@@ -21,7 +21,6 @@ java_library(
     name = "sdkcompat",
     visibility = ["//visibility:public"],
     exports = select_for_plugin_api({
-        "android-studio-4.2": ["//sdkcompat/v202"],
         "android-studio-2020.3": ["//sdkcompat/v203"],
         "intellij-2020.2": ["//sdkcompat/v202"],
         "intellij-ue-2020.2": ["//sdkcompat/v202"],

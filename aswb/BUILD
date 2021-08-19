@@ -65,7 +65,6 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
-        "android-studio-4.2": glob(["tests/utils/sdkcompat/as42/com/android/sdklib/repository/*.java"]),
         "android-studio-2020.3": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
     }),
     deps = [
@@ -85,19 +84,16 @@ java_library(
 java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "android-studio-4.2": glob(["sdkcompat/as42/**/*.java"]),
         "android-studio-2020.3": glob(["sdkcompat/as203/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     deps = [
         "//base",
         "//common/experiments",
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
-        "//sdkcompat",
     ],
 )
 
@@ -136,16 +132,6 @@ test_suite(
 intellij_integration_test_suite(
     name = "normal_integration_tests",
     srcs = select_for_plugin_api({
-        "android-studio-4.2": glob(
-            [
-                "tests/integrationtests/**/*.java",
-                "tests/integrationtests/as42/**/*.java",
-            ],
-            exclude = [
-                "tests/integrationtests/as203/**/*.java",
-                "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
-            ],
-        ),
         "android-studio-2020.3": glob(
             [
                 "tests/integrationtests/**/*.java",

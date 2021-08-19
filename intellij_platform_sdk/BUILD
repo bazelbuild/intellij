@@ -288,13 +288,6 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-4.2",
-    values = {
-        "define": "ij_product=android-studio-4.2",
-    },
-)
-
-config_setting(
     name = "android-studio-2020.3",
     values = {
         "define": "ij_product=android-studio-2020.3",
@@ -534,7 +527,6 @@ java_library(
         "intellij-ue-2020.3": [":bundled_jsr305"],
         "intellij-ue-2021.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.2": ["@jsr305_annotations//jar"],
-        "android-studio-4.2": ["@jsr305_annotations//jar"],
         "android-studio-2020.3": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.
         "default": [":bundled_jsr305"],
