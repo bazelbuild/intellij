@@ -22,7 +22,6 @@ import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.time.Instant;
 import org.jetbrains.annotations.Nullable;
 import org.junit.rules.TemporaryFolder;
 
@@ -57,24 +56,15 @@ public final class BaseSdkTestCompat {
       Duration expectedIndexingDuration,
       Duration expectedUpdatingDuration,
       Duration expectedScanFilesDuration) {
-
-    Instant indexingStart = Instant.ofEpochMilli(1627913529);
-    projectIndexingHistory.setIndexingEnd(indexingStart.plus(expectedIndexingDuration));
-    projectIndexingHistory.setIndexingStart(indexingStart);
-
-    Instant totalStart = Instant.ofEpochMilli(1627913533);
-    projectIndexingHistory.setTotalEnd(totalStart.plus(expectedUpdatingDuration));
-    projectIndexingHistory.setTotalStart(totalStart);
-
-    Instant scanFilesEnd = Instant.ofEpochMilli(1327913533);
-    projectIndexingHistory.setScanFilesEnd(scanFilesEnd.plus(expectedScanFilesDuration));
-    projectIndexingHistory.setScanFilesStart(scanFilesEnd);
+    projectIndexingHistory.setIndexingDuration(expectedIndexingDuration);
+    projectIndexingHistory.setTotalUpdatingTime(expectedUpdatingDuration.toNanos());
+    projectIndexingHistory.setScanFilesDuration(expectedScanFilesDuration);
   }
 
   /** #api203: inline into IndexingLoggerTest */
   @SuppressWarnings("UnstableApiUsage")
   public static void setIndexingVisibleTime(
       IndexingJobStatistics indexingStatistic, Duration expectedIndexingVisibleTime) {
-    indexingStatistic.setTotalIndexingTime(expectedIndexingVisibleTime.toNanos());
+    indexingStatistic.setIndexingVisibleTime(expectedIndexingVisibleTime.toNanos());
   }
 }
