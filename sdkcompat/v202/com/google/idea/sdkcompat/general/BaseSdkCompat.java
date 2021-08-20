@@ -4,6 +4,7 @@ import com.intellij.conversion.ConversionContext;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -93,6 +94,15 @@ public final class BaseSdkCompat {
   public static Iterable<FilePath> getFilePaths(AnActionEvent e) {
     Stream<FilePath> filePathStream = e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
     return (filePathStream == null) ? null : filePathStream::iterator;
+  }
+
+  /**
+   * See {@link PathManager#getIndexRoot()}.
+   *
+   * <p>#api203: Method return type changed in 2021.1 from File to Path.
+   */
+  public static Path getIndexRoot() {
+    return PathManager.getIndexRoot().toPath();
   }
 
   /** #api211 Activating IconManager requires an IconManager parameter in 2021.2 */
