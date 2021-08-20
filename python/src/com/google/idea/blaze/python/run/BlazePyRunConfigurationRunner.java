@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -28,6 +27,9 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
+import com.google.idea.blaze.base.ideinfo.PyIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -89,7 +91,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
   /** This inserts flags provided by any BlazePyDebugHelpers to the pydevd.py invocation */
 
   /** Used to store a runner to an {@link ExecutionEnvironment}. */
-  private static final Key<AtomicReference<File>> EXECUTABLE_KEY =
+  private static final Key<AtomicReference<PyExecutionInfo>> EXECUTABLE_KEY =
       Key.create("blaze.debug.py.executable");
 
   /** Converts to the native python plugin debug configuration state */
@@ -101,8 +103,9 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     }
 
     PythonScriptCommandLineState toNativeState(ExecutionEnvironment env) throws ExecutionException {
-      File executable = env.getCopyableUserData(EXECUTABLE_KEY).get();
-      if (executable == null || StringUtil.isEmptyOrSpaces(executable.getPath())) {
+      PyExecutionInfo executionInfo = env.getCopyableUserData(EXECUTABLE_KEY).get();
+      if (executionInfo.executable == null
+          || StringUtil.isEmptyOrSpaces(executionInfo.executable.getPath())) {
         throw new ExecutionException("No blaze output script found");
       }
       PythonRunConfiguration nativeConfig =
@@ -110,12 +113,15 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
               PythonConfigurationType.getInstance()
                   .getFactory()
                   .createTemplateConfiguration(env.getProject());
-      nativeConfig.setScriptName(executable.getPath());
+      nativeConfig.setScriptName(executionInfo.executable.getPath());
       nativeConfig.setAddContentRoots(false);
       nativeConfig.setAddSourceRoots(false);
       nativeConfig.setWorkingDirectory(
           Strings.nullToEmpty(
-              getRunfilesPath(executable, WorkspaceRoot.fromProjectSafe(env.getProject()))));
+              getRunfilesPath(
+                  executionInfo.executable, WorkspaceRoot.fromProjectSafe(env.getProject()))));
+      // BUILD file defined args
+      List<String> args = new ArrayList<>(executionInfo.args);
 
       Sdk sdk = PySdkUtils.getPythonSdk(env.getProject());
       if (sdk == null) {
@@ -127,12 +133,14 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       BlazePyRunConfigState handlerState =
           configuration.getHandlerStateIfType(BlazePyRunConfigState.class);
       if (handlerState != null) {
-        nativeConfig.setScriptParameters(Strings.emptyToNull(getScriptParams(handlerState)));
+        // Run configuration defined args
+        args.addAll(getScriptParams(handlerState));
 
         EnvironmentVariablesData envState = handlerState.getEnvVarsState().getData();
         nativeConfig.setPassParentEnvs(envState.isPassParentEnvs());
         nativeConfig.setEnvs(envState.getEnvs());
       }
+      nativeConfig.setScriptParameters(Strings.emptyToNull(ParametersListUtil.join(args)));
       Label target = getSingleTarget(configuration);
       return new PythonScriptCommandLineState(nativeConfig, env) {
 
@@ -202,17 +210,18 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       };
     }
 
-    private static String getScriptParams(BlazeCommandRunConfigurationCommonState state) {
-      List<String> params =
-          Lists.newArrayList(state.getExeFlagsState().getFlagsForExternalProcesses());
-      params.addAll(state.getTestArgs());
+    private static ImmutableList<String> getScriptParams(
+        BlazeCommandRunConfigurationCommonState state) {
+      ImmutableList.Builder<String> paramsBuilder = ImmutableList.builder();
+      paramsBuilder.addAll(state.getExeFlagsState().getFlagsForExternalProcesses());
+      paramsBuilder.addAll(state.getTestArgs());
       String filterFlag = state.getTestFilterFlag();
       if (filterFlag != null) {
         String testFilterArg = filterFlag.substring((BlazeFlags.TEST_FILTER + "=").length());
         // testFilterArg is a space-delimited list of filters
-        params.addAll(Splitter.on(" ").splitToList(testFilterArg));
+        paramsBuilder.addAll(Splitter.on(" ").splitToList(testFilterArg));
       }
-      return ParametersListUtil.join(params);
+      return paramsBuilder.build();
     }
   }
 
@@ -243,9 +252,9 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     }
     env.getCopyableUserData(EXECUTABLE_KEY).set(null);
     try {
-      File executable = getExecutableToDebug(env);
-      env.getCopyableUserData(EXECUTABLE_KEY).set(executable);
-      if (executable != null) {
+      PyExecutionInfo executionInfo = getExecutableToDebug(env);
+      env.getCopyableUserData(EXECUTABLE_KEY).set(executionInfo);
+      if (executionInfo.executable != null) {
         return true;
       }
     } catch (ExecutionException e) {
@@ -283,7 +292,8 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
    *
    * @throws ExecutionException if the target cannot be debugged.
    */
-  private static File getExecutableToDebug(ExecutionEnvironment env) throws ExecutionException {
+  private static PyExecutionInfo getExecutableToDebug(ExecutionEnvironment env)
+      throws ExecutionException {
     BlazeCommandRunConfiguration configuration =
         BlazeCommandRunConfigurationRunner.getConfiguration(env);
     Project project = configuration.getProject();
@@ -294,6 +304,7 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     }
 
     Label target = getSingleTarget(configuration);
+    ImmutableList<String> args = getPythonArgsFor(blazeProjectData, target);
     String validationError = BlazePyDebugHelper.validateDebugTarget(env.getProject(), target);
     if (validationError != null) {
       throw new WithBrowserHyperlinkExecutionException(validationError);
@@ -350,8 +361,21 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
                 target));
       }
       LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
-      return file;
+      return new PyExecutionInfo(file, args);
     }
+  }
+
+  private static ImmutableList<String> getPythonArgsFor(
+      BlazeProjectData projectData, Label target) {
+    TargetIdeInfo ideInfo = projectData.getTargetMap().get(TargetKey.forPlainTarget(target));
+    if (ideInfo == null) {
+      return ImmutableList.of();
+    }
+    PyIdeInfo pyIdeInfo = ideInfo.getPyIdeInfo();
+    if (pyIdeInfo == null) {
+      return ImmutableList.of();
+    }
+    return pyIdeInfo.getArgs();
   }
 
   /**
@@ -371,5 +395,15 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
       }
     }
     return null;
+  }
+
+  private static class PyExecutionInfo {
+    public final File executable;
+    public final ImmutableList<String> args;
+
+    PyExecutionInfo(File executable, ImmutableList<String> args) {
+      this.executable = executable;
+      this.args = args;
+    }
   }
 }

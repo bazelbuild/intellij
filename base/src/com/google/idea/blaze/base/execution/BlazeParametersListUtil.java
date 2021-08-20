@@ -34,9 +34,7 @@ public class BlazeParametersListUtil {
     // ParametersListUtil.parse() is called with supportSingleQuotes=true. By forcing a space into
     // the parameter, it will force it to be quoted.
     param = param.replace("'", " '");
-    // This will effectively return ParametersListUtil.encodeParam(param), which we can't access
-    // directly because it is private
-    String output = ParametersListUtil.join(param);
+    String output = ParametersListUtil.escape(param);
     output = output.replace(" '", "'");
     return output;
   }

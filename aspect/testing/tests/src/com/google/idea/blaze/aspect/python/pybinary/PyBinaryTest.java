@@ -41,4 +41,17 @@ public class PyBinaryTest extends BazelIntellijAspectTest {
         .containsExactly(testRelative(intellijInfoFileName("simple3")));
     assertThat(getOutputGroupFiles(testFixture, "intellij-info-generic")).isEmpty();
   }
+
+  @Test
+  public void testPyBinaryBuildfileArgs() throws Exception {
+    IntellijAspectTestFixture testFixture = loadTestFixture(":buildfile_args_fixture");
+    TargetIdeInfo target = findTarget(testFixture, ":buildfile_args");
+    String compilationMode = System.getenv("COMPILATION_MODE_FOR_TEST");
+
+    assertThat(compilationMode).isNotNull();
+
+    assertThat(target.getKindString()).isEqualTo("py_binary");
+    assertThat(target.getPyIdeInfo().getArgsList())
+        .containsExactly("--ARG1", "--ARG2=" + compilationMode, "--ARG3='with spaces'");
+  }
 }
