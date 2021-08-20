@@ -15,7 +15,10 @@ load(
 
 licenses(["notice"])  # Apache2
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = [
+    # intellijplugins_visibility
+    "//visibility:public",
+])
 
 config_setting(
     name = "intellij-latest",

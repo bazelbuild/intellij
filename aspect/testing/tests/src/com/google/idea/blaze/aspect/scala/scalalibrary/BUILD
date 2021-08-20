@@ -1,5 +1,5 @@
 load(
-    "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
+    "//third_party/intellij/bazel/plugin/aspect/testing/rules:intellij_aspect_test_fixture.bzl",
     "intellij_aspect_test_fixture",
 )
 load(
@@ -24,11 +24,11 @@ java_test(
     srcs = ["ScalaLibraryTest.java"],
     data = [":simple_fixture"],
     deps = [
-        "//aspect/testing:BazelIntellijAspectTest",
-        "//aspect/testing/rules:IntellijAspectTest",
-        "//aspect/testing/rules:intellij_aspect_test_fixture_java_proto",
         "//intellij_platform_sdk:test_libs",
-        "//proto:intellij_ide_info_java_proto",
-        "@junit//jar",
+        "//third_party/intellij/bazel/plugin/aspect/testing:BazelIntellijAspectTest",
+        "//third_party/intellij/bazel/plugin/aspect/testing/rules:IntellijAspectTest",
+        "//third_party/intellij/bazel/plugin/aspect/testing/rules:intellij_aspect_test_fixture_java_proto",
+        "//third_party/intellij/bazel/plugin/proto:intellij_ide_info_java_proto",
+        "//third_party/java/junit",
     ],
 )

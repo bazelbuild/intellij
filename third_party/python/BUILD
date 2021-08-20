@@ -31,7 +31,7 @@ java_library(
 )
 
 java_library(
-    name = "python",
+    name = "//third_party/intellij/plugin/python",
     neverlink = 1,
     exports = [":python_internal"],
 )
