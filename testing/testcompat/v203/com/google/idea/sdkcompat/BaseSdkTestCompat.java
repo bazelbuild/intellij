@@ -15,6 +15,7 @@
  */
 package com.google.idea.sdkcompat;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
@@ -76,5 +77,11 @@ public final class BaseSdkTestCompat {
   public static void setIndexingVisibleTime(
       IndexingJobStatistics indexingStatistic, Duration expectedIndexingVisibleTime) {
     indexingStatistic.setTotalIndexingTime(expectedIndexingVisibleTime.toNanos());
+  }
+
+  /** #api211 inline into IndexingLoggerTest */
+  @SuppressWarnings("UnstableApiUsage")
+  public static ProjectIndexingHistory initializeProjectIndexingHistory(Project project) {
+    return new ProjectIndexingHistory(project);
   }
 }

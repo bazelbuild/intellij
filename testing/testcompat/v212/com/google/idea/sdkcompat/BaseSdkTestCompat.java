@@ -72,6 +72,6 @@ public final class BaseSdkTestCompat {
   /** #api211 inline into IndexingLoggerTest */
   @SuppressWarnings("UnstableApiUsage")
   public static ProjectIndexingHistory initializeProjectIndexingHistory(Project project) {
-    return new ProjectIndexingHistory(project);
+    return new ProjectIndexingHistory(project, /* indexingReason= */ "");
   }
 }
