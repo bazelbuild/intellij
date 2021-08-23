@@ -106,7 +106,10 @@ java_library(
         "src/com/google/idea/blaze/base/sync/SyncResult.java",
     ],
     neverlink = 1,
-    visibility = ["//visibility:public"],
+    visibility = [
+        # intellijplugins_visibility
+        "//visibility:public",
+    ],
     deps = [
         "//intellij_platform_sdk:plugin_api",
     ],
@@ -119,7 +122,10 @@ java_library(
         "src/com/google/idea/blaze/base/vcs/VcsSyncListener.java",
     ],
     neverlink = 1,
-    visibility = ["//visibility:public"],
+    visibility = [
+        # intellijplugins_visibility
+        "//visibility:public",
+    ],
     deps = [
         "//intellij_platform_sdk:plugin_api",
     ],

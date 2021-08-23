@@ -1,6 +1,9 @@
 licenses(["notice"])
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = [
+    # commonplugins_visibility
+    "//visibility:public",
+])
 
 java_library(
     name = "binaryhelper",
