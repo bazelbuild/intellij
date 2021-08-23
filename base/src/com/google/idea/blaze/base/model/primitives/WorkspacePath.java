@@ -57,7 +57,10 @@ public class WorkspacePath implements ProtoWrapper<String>, Serializable {
   }
 
   public WorkspacePath(WorkspacePath parentPath, String childPath) {
-    this(parentPath.relativePath() + BLAZE_COMPONENT_SEPARATOR + childPath);
+    this(
+        parentPath.isWorkspaceRoot()
+            ? childPath
+            : parentPath.relativePath() + BLAZE_COMPONENT_SEPARATOR + childPath);
   }
 
   public static boolean isValid(String relativePath) {

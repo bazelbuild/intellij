@@ -56,4 +56,17 @@ public class WorkspacePathTest extends BlazeTestCase {
     assertThat(WorkspacePath.validate("foo:bar"))
         .isEqualTo("Workspace path may not contain ':': foo:bar");
   }
+
+  @Test
+  public void testStringConcatenationConstructor() {
+    WorkspacePath empty = new WorkspacePath("");
+    WorkspacePath dot = new WorkspacePath(".");
+    WorkspacePath foo = new WorkspacePath("foo");
+    WorkspacePath dotBar = new WorkspacePath("./bar");
+
+    assertThat(new WorkspacePath(empty, "baz").relativePath()).isEqualTo("baz");
+    assertThat(new WorkspacePath(dot, "baz").relativePath()).isEqualTo("baz");
+    assertThat(new WorkspacePath(foo, "baz").relativePath()).isEqualTo("foo/baz");
+    assertThat(new WorkspacePath(dotBar, "baz").relativePath()).isEqualTo("./bar/baz");
+  }
 }
