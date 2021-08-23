@@ -548,6 +548,7 @@
     <MacroTargetProvider implementation="com.google.idea.blaze.base.query.BlazeQueryMacroTargetProvider" order="last"/>
     <BinaryPathRemapper implementation="com.google.idea.blaze.base.async.process.MacBinaryPathRemapper" order="last"/>
     <CustomFormatter implementation="com.google.idea.blaze.base.buildmodifier.BuildifierCustomFormatter"/>
+    <ArtifactStateHelper implementation="com.google.idea.blaze.base.filecache.LocalArtifactStateProtoConverter"/>
   </extensions>
 
   <projectListeners>
