@@ -281,7 +281,10 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     Label label = getSingleTarget(configuration);
 
     SaveUtil.saveAllFiles();
-    try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
+    // Explicitly create local build helper, because the debuggable script is expected to be present
+    // locally
+    try (BuildResultHelper buildResultHelper =
+        BuildResultHelperProvider.createForLocalBuild(project)) {
       ImmutableList.Builder<String> flags = ImmutableList.builder();
       if (Blaze.getBuildSystem(project) == BuildSystem.Blaze) {
         // $ go tool compile

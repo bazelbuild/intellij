@@ -311,7 +311,10 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
     }
 
     SaveUtil.saveAllFiles();
-    try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
+    // Explicitly depend on local build helper because the debuggable binary is expected to be
+    // present locally
+    try (BuildResultHelper buildResultHelper =
+        BuildResultHelperProvider.createForLocalBuild(project)) {
 
       ListenableFuture<BuildResult> buildOperation =
           BlazeBeforeRunCommandHelper.runBlazeCommand(

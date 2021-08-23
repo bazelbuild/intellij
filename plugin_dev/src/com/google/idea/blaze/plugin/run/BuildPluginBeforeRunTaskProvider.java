@@ -221,8 +221,10 @@ public final class BuildPluginBeforeRunTaskProvider
                     return null;
                   }
 
+                  // Explicitly create a local build helper because deployer.reportBuildComplete
+                  // expects the outputs to be available locally
                   try (BuildResultHelper buildResultHelper =
-                      BuildResultHelperProvider.create(project)) {
+                      BuildResultHelperProvider.createForLocalBuild(project)) {
                     BlazeCommand command =
                         BlazeCommand.builder(binaryPath, BlazeCommandName.BUILD)
                             .addTargets(config.getTargets())

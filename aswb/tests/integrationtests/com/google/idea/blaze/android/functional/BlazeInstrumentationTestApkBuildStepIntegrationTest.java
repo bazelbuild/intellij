@@ -114,6 +114,11 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
           }
 
           @Override
+          public Optional<BuildResultHelper> doCreateForLocalBuild(Project project) {
+            return Optional.of(mockBuildResultHelper);
+          }
+
+          @Override
           public Optional<BuildResultHelper> doCreateForSync(Project project, BlazeInfo blazeInfo) {
             return Optional.empty();
           }

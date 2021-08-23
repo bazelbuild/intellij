@@ -98,7 +98,10 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
             Blaze.getBuildSystemProvider(project).getBinaryPath(project), BlazeCommandName.BUILD);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
-    try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
+    // Explicitly use a local build helper because deployInfoHelper.readDeployInfoProtoForTarget
+    // only supports local artifacts
+    try (BuildResultHelper buildResultHelper =
+        BuildResultHelperProvider.createForLocalBuild(project)) {
       command
           .addTargets(label)
           .addBlazeFlags("--output_groups=+android_deploy_info")

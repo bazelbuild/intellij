@@ -62,7 +62,6 @@ import com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService.Changed
 import com.google.idea.blaze.java.fastbuild.FastBuildException.BlazeBuildError;
 import com.google.idea.blaze.java.fastbuild.FastBuildLogDataScope.FastBuildLogOutput;
 import com.google.idea.blaze.java.fastbuild.FastBuildState.BuildOutput;
-import com.google.idea.common.util.ConcurrencyUtil;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -243,20 +242,21 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
   private ListenableFuture<FastBuildState.BuildOutput> buildDeployJarAsync(
       BlazeContext context, Label label, FastBuildParameters buildParameters) {
-    @SuppressWarnings("MustBeClosedChecker") // close buildResultHelper manually via a listener
-    BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project);
 
-    ListenableFuture<FastBuildState.BuildOutput> resultFuture =
-        ProgressiveTaskWithProgressIndicator.builder(project, "Building deploy jar for fast builds")
-            .submitTaskWithResult(
-                new ScopedTask<FastBuildState.BuildOutput>(context) {
-                  @Override
-                  protected FastBuildState.BuildOutput execute(BlazeContext context) {
-                    return buildDeployJar(context, label, buildParameters, buildResultHelper);
-                  }
-                });
-    resultFuture.addListener(buildResultHelper::close, ConcurrencyUtil.getAppExecutorService());
-    return resultFuture;
+    return ProgressiveTaskWithProgressIndicator.builder(
+            project, "Building deploy jar for fast builds")
+        .submitTaskWithResult(
+            new ScopedTask<BuildOutput>(context) {
+              @Override
+              protected BuildOutput execute(BlazeContext context1) {
+                // Explicitly depend on local build helper because the deploy jar is expected to
+                // be available locally
+                try (BuildResultHelper buildResultHelper =
+                    BuildResultHelperProvider.createForLocalBuild(project)) {
+                  return buildDeployJar(context1, label, buildParameters, buildResultHelper);
+                }
+              }
+            });
   }
 
   private FastBuildState.BuildOutput buildDeployJar(

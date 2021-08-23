@@ -141,7 +141,8 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     final String deployInfoSuffix = getDeployInfoSuffix(Blaze.getBuildSystem(project));
 
-    try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project);
+    try (BuildResultHelper buildResultHelper =
+            BuildResultHelperProvider.createForLocalBuild(project);
         AdbTunnelConfigurator tunnelConfig = getTunnelConfigurator(context)) {
       tunnelConfig.setupConnection(context);
       String deviceFlag = device.getSerialNumber();

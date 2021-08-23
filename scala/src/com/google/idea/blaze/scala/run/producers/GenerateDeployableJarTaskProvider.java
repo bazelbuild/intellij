@@ -159,7 +159,8 @@ class GenerateDeployableJarTaskProvider
       RunConfiguration configuration, ExecutionEnvironment env, Label target)
       throws ExecutionException {
     Project project = env.getProject();
-    try (BuildResultHelper buildResultHelper = BuildResultHelperProvider.create(project)) {
+    try (BuildResultHelper buildResultHelper =
+        BuildResultHelperProvider.createForLocalBuild(project)) {
 
       SaveUtil.saveAllFiles();
 
