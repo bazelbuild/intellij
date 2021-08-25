@@ -8,12 +8,6 @@ plugins in the JetBrains' plugin repository. See the
 [releases](https://github.com/bazelbuild/intellij/releases) tab for more
 information.
 
-## Support
-
-See the [support matrix](https://ij.bazel.build/docs/bazel-support.html)
-on the various plugin support levels across JetBrains products, languages,
-and operating systems.
-
 ## Installation
 
 You can find our plugin in the Jetbrains plugin repository by going to
