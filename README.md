@@ -10,9 +10,9 @@ information.
 
 ## Support
 
-See the [support matrix](https://ij.bazel.build/docs/bazel-support.html)
-on the various plugin support levels across JetBrains products, languages,
-and operating systems.
+See the [documentation entry](https://ij.bazel.build/docs/bazel-support.html)
+on the plugin support across JetBrains products, languages, and operating
+systems.
 
 ## Installation
 
