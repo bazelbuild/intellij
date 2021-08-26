@@ -41,6 +41,16 @@ no_mockito_extensions(
 )
 
 java_import(
+    name = "cidr_plugins",
+    jars = glob([
+        "plugins/c-plugin/lib/*.jar",  # com.intellij.cidr.lang: C/C++ Language Support
+        "plugins/c-clangd/lib/*.jar",  # required for NDK debugging
+        "plugins/cidr-base-plugin/lib/*.jar",  # com.intellij.cidr.base: CIDR Base
+        "plugins/cidr-debugger-plugin/lib/*.jar",  # com.jetbrains.cidr.execution.debugger: CIDR Debugger
+    ]),
+)
+
+java_import(
     name = "guava",
     jars = glob([
         "android-studio/lib/failureaccess-*.jar",

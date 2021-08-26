@@ -66,6 +66,7 @@ java_library(
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
         "android-studio-2020.3": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
+        "android-studio-2021.1": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
     }),
     deps = [
         "//base",
@@ -85,6 +86,7 @@ java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-2020.3": glob(["sdkcompat/as203/**/*.java"]),
+        "android-studio-2021.1": glob(["sdkcompat/as211/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     deps = [
@@ -129,16 +131,24 @@ test_suite(
     ],
 )
 
+# TODO - simplify if everything passes
 intellij_integration_test_suite(
     name = "normal_integration_tests",
     srcs = select_for_plugin_api({
         "android-studio-2020.3": glob(
             [
                 "tests/integrationtests/**/*.java",
-                "tests/integrationtests/as203/**/*.java",
             ],
             exclude = [
-                "tests/integrationtests/as42/**/*.java",
+                "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
+                "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",  # b/177371104
+            ],
+        ),
+        "android-studio-2021.1": glob(
+            [
+                "tests/integrationtests/**/*.java",
+            ],
+            exclude = [
                 "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
                 "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",  # b/177371104
             ],
