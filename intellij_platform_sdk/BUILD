@@ -303,6 +303,13 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-2021.1",
+    values = {
+        "define": "ij_product=android-studio-2021.1",
+    },
+)
+
+config_setting(
     name = "clion-latest",
     values = {
         "define": "ij_product=clion-latest",
@@ -421,6 +428,7 @@ java_library(
     exports = select_from_plugin_api_directory(
         android_studio = [
             ":sdk",
+            ":cidr_plugins",
             ":java",
             ":android",
             ":test_recorder",
@@ -528,6 +536,7 @@ java_library(
         "intellij-ue-2021.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.2": ["@jsr305_annotations//jar"],
         "android-studio-2020.3": ["@jsr305_annotations//jar"],
+        "android-studio-2021.1": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.
         "default": [":bundled_jsr305"],
     }),
@@ -670,6 +679,7 @@ java_library(
 filegroup(
     name = "application_info_container",
     srcs = select_from_plugin_api_version_directory({
+        "android-studio-2021.1": [":application_info_json"],
         "intellij-2021.2": [":application_info_json"],
         "intellij-ue-2021.2": [":application_info_json"],
         "clion-2021.2": [":application_info_json"],
