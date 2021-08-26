@@ -14,7 +14,7 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-latest": "android-studio-2020.3",
     "android-studio-beta": "android-studio-2020.3",
     "android-studio-beta-mac": "android-studio-2020.3-mac",
-    "android-studio-canary": "android-studio-2020.3",
+    "android-studio-canary": "android-studio-2021.1",
     "clion-latest": "clion-2021.1",
     "clion-latest-mac": "clion-2021.1-mac",
     "clion-beta": "clion-2021.1",
@@ -28,7 +28,7 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-ue-oss-under-dev": "intellij-ue-2021.2",
     "android-studio-oss-stable": "android-studio-2020.3",
     "android-studio-oss-beta": "android-studio-2020.3",
-    "android-studio-oss-under-dev": "android-studio-2020.3",
+    "android-studio-oss-under-dev": "android-studio-2021.1",
     "clion-oss-stable": "clion-2021.1",
     "clion-oss-beta": "clion-2021.2",
     "clion-oss-under-dev": "clion-2021.2",
@@ -106,6 +106,10 @@ DIRECT_IJ_PRODUCTS = {
     "android-studio-2020.3-mac": struct(
         ide = "android-studio",
         directory = "android_studio_2020_3",
+    ),
+    "android-studio-2021.1": struct(
+        ide = "android-studio",
+        directory = "android_studio_2021_1",
     ),
     "clion-2020.2": struct(
         ide = "clion",

@@ -40,6 +40,8 @@ no_mockito_extensions(
     ],
 )
 
+java_library(name = "cidr_plugins")  # Only from 2021.1
+
 java_import(
     name = "guava",
     jars = glob([
