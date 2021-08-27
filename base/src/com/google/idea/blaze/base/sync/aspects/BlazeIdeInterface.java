@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectState;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.intellij.openapi.components.ServiceManager;
@@ -55,7 +56,7 @@ public interface BlazeIdeInterface {
   /**
    * The blaze build phase of sync.
    *
-   * <p>Builds the 'ide-info-*' and 'ide-resolve-*' output groups.
+   * <p>Builds the {@link OutputGroup#INFO} and {@link OutputGroup#RESOLVE} output groups.
    */
   BlazeBuildOutputs buildIdeArtifacts(
       Project project,
@@ -71,15 +72,16 @@ public interface BlazeIdeInterface {
   /**
    * Attempts to compile the requested ide artifacts.
    *
-   * <p>Amounts to a build of the ide-compile output group.
+   * <p>Amounts to a build of the {@link OutputGroup#COMPILE} output group.
    */
-  BuildResult compileIdeArtifacts(
+  BlazeBuildOutputs compileIdeArtifacts(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeVersionData blazeVersion,
       BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
-      BlazeVersionData blazeVersionData,
-      WorkspaceLanguageSettings workspaceLanguageSettings,
-      ShardedTargetList shardedTargets);
+      BlazeInfo blazeInfo,
+      ShardedTargetList shardedTargets,
+      WorkspaceLanguageSettings workspaceLanguageSettings);
 }

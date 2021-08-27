@@ -109,7 +109,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
         BuildResultHelperProvider.EP_NAME,
         new BuildResultHelperProvider() {
           @Override
-          public Optional<BuildResultHelper> doCreate(Project project) {
+          public Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo) {
             return Optional.of(mockBuildResultHelper);
           }
 

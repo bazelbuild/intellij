@@ -28,7 +28,7 @@ public interface BuildResultHelperProvider {
       ExtensionPointName.create("com.google.idea.blaze.BuildResultHelperProvider");
 
   /** Constructs a BuildResultHelper if enabled under the current project for non-sync cases. */
-  Optional<BuildResultHelper> doCreate(Project project);
+  Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo);
 
   /**
    * Constructs a BuildResultHelper that supports a local BEP and artifacts. This is required
@@ -43,9 +43,9 @@ public interface BuildResultHelperProvider {
 
   /** Constructs a new build result helper. */
   @MustBeClosed
-  static BuildResultHelper create(Project project) {
+  static BuildResultHelper create(Project project, BlazeInfo blazeInfo) {
     for (BuildResultHelperProvider extension : EP_NAME.getExtensions()) {
-      Optional<BuildResultHelper> helper = extension.doCreate(project);
+      Optional<BuildResultHelper> helper = extension.doCreate(project, blazeInfo);
       if (helper.isPresent()) {
         return helper.get();
       }

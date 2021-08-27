@@ -9,7 +9,10 @@ licenses(["notice"])  # Apache 2.0
 java_library(
     name = "experiments",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//visibility:public"],
+    visibility = [
+        # commonplugins_visibility
+        "//visibility:public",
+    ],
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -30,7 +33,10 @@ java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/**/*.java"]),
-    visibility = ["//visibility:public"],
+    visibility = [
+        # commonplugins_visibility
+        "//visibility:public",
+    ],
     deps = [
         ":experiments",
         "//intellij_platform_sdk:jsr305",

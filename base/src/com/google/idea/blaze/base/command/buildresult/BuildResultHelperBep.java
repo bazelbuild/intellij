@@ -33,7 +33,7 @@ import java.util.Optional;
  * <p>The build even protocol (BEP for short) is a proto-based protocol used by bazel to communicate
  * build events.
  */
-class BuildResultHelperBep implements BuildResultHelper {
+public class BuildResultHelperBep implements BuildResultHelper {
 
   private static final Logger logger = Logger.getInstance(BuildResultHelperBep.class);
   private final File outputFile;
@@ -77,7 +77,7 @@ class BuildResultHelperBep implements BuildResultHelper {
   static class Provider implements BuildResultHelperProvider {
 
     @Override
-    public Optional<BuildResultHelper> doCreate(Project project) {
+    public Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo) {
       return Optional.of(new BuildResultHelperBep());
     }
 

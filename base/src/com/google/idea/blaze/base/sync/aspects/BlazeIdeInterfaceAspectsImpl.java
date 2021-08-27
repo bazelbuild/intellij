@@ -32,8 +32,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
@@ -48,7 +46,6 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
-import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -136,7 +133,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
     AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersion);
-    return runBlazeBuild(
+    return runBlazeBuildForSync(
         project,
         context,
         workspaceRoot,
@@ -310,7 +307,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     return state;
   }
 
-  private static BlazeBuildOutputs runBlazeBuild(
+  private static BlazeBuildOutputs runBlazeBuildForSync(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -334,35 +331,17 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             Scope.push(
                 context,
                 (childContext) -> {
-                  ToolWindowScope parentToolWindowScope = context.getScope(ToolWindowScope.class);
-                  childContext.push(
-                      new ToolWindowScope.Builder(
-                              project,
-                              new Task(
-                                  "Build shard " + shard,
-                                  Task.Type.BLAZE_SYNC,
-                                  parentToolWindowScope != null
-                                      ? parentToolWindowScope.getTask()
-                                      : null))
-                          .setIssueParsers(
-                              BlazeIssueParser.defaultIssueParsers(
-                                  project, workspaceRoot, ContextType.Sync))
-                          .build());
-                  if (BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()) {
-                    childContext.push(
-                        new BlazeConsoleScope.Builder(project)
-                            .addConsoleFilters(
-                                new IssueOutputFilter(
-                                    project,
-                                    WorkspaceRoot.fromProject(project),
-                                    ContextType.Sync,
-                                    true))
-                            .setClearPreviousState(false)
-                            .build());
-                  }
+                  setupToolWindow(
+                      project,
+                      context,
+                      childContext,
+                      workspaceRoot,
+                      "Build shard " + shard,
+                      ContextType.Sync,
+                      Task.Type.BLAZE_SYNC);
 
                   BlazeBuildOutputs result =
-                      runBuildForTargets(
+                      runSyncBuildForTargets(
                           project,
                           childContext,
                           workspaceRoot,
@@ -372,6 +351,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                           activeLanguages,
                           targets,
                           aspectStrategy);
+
                   if (!result.buildResult.outOfMemory()) {
                     combinedResult.set(
                         combinedResult.isNull()
@@ -380,20 +360,20 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   }
                   return result.buildResult;
                 });
-    BuildResult result =
+    BuildResult buildResult =
         shardedTargets.runShardedCommand(
             project, context, progressMessage, invocation, parallelize);
-    if (combinedResult.isNull() || result.status == Status.FATAL_ERROR) {
-      return BlazeBuildOutputs.noOutputs(result);
+    if (combinedResult.isNull() || buildResult.status == Status.FATAL_ERROR) {
+      return BlazeBuildOutputs.noOutputs(buildResult);
     }
     return combinedResult.get();
   }
 
   /**
-   * Runs blaze build with the aspect's ide-info and ide-resolve output groups for a given set of
-   * targets
+   * Runs blaze build with the aspect's {@link OutputGroup#INFO} and {@link OutputGroup#RESOLVE}
+   * output groups for a given set of targets
    */
-  private static BlazeBuildOutputs runBuildForTargets(
+  private static BlazeBuildOutputs runSyncBuildForTargets(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -408,35 +388,57 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.createForSync(project, blazeInfo)) {
-
-      BlazeCommand.Builder builder =
-          BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.BUILD);
-      builder
-          .addTargets(targets)
-          .addBlazeFlags(BlazeFlags.KEEP_GOING)
-          .addBlazeFlags(buildResultHelper.getBuildFlags())
-          .addBlazeFlags(
-              BlazeFlags.blazeFlags(
-                  project, viewSet, BlazeCommandName.BUILD, BlazeInvocationContext.SYNC_CONTEXT));
-      if (disableValidationActionExperiment.getValue()) {
-        builder.addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS);
-      }
-
-      aspectStrategy.addAspectAndOutputGroups(
-          builder,
-          ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE),
+      return runBuildForTargets(
+          project,
+          context,
+          workspaceRoot,
+          buildParams,
+          viewSet,
           activeLanguages,
-          onlyDirectDeps);
-
-      for (BlazeCommandRunner runner : BlazeCommandRunner.EP_NAME.getExtensions()) {
-        if (runner.isAvailable(project)) {
-          return runner.run(
-              project, builder, buildParams, buildResultHelper, workspaceRoot, context);
-        }
-      }
-      IssueOutput.error("Failed to create build: no blaze command runner found");
-      return BlazeBuildOutputs.noOutputs(BuildResult.FATAL_ERROR);
+          targets,
+          aspectStrategy,
+          onlyDirectDeps,
+          buildResultHelper,
+          ImmutableList.of(OutputGroup.INFO, OutputGroup.RESOLVE));
     }
+  }
+
+  /** Runs a blaze build for the given output groups. */
+  private static BlazeBuildOutputs runBuildForTargets(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      BlazeBuildParams buildParams,
+      ProjectViewSet viewSet,
+      ImmutableSet<LanguageClass> activeLanguages,
+      List<? extends TargetExpression> targets,
+      AspectStrategy aspectStrategy,
+      boolean onlyDirectDeps,
+      BuildResultHelper buildResultHelper,
+      ImmutableList<OutputGroup> outputGroups) {
+
+    BlazeCommand.Builder builder =
+        BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.BUILD);
+    builder
+        .addTargets(targets)
+        .addBlazeFlags(BlazeFlags.KEEP_GOING)
+        .addBlazeFlags(buildResultHelper.getBuildFlags())
+        .addBlazeFlags(
+            BlazeFlags.blazeFlags(
+                project, viewSet, BlazeCommandName.BUILD, BlazeInvocationContext.SYNC_CONTEXT));
+    if (disableValidationActionExperiment.getValue()) {
+      builder.addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS);
+    }
+
+    aspectStrategy.addAspectAndOutputGroups(builder, outputGroups, activeLanguages, onlyDirectDeps);
+
+    for (BlazeCommandRunner runner : BlazeCommandRunner.EP_NAME.getExtensions()) {
+      if (runner.isAvailable(project)) {
+        return runner.run(project, builder, buildParams, buildResultHelper, workspaceRoot, context);
+      }
+    }
+    IssueOutput.error("Failed to create build: no blaze command runner found").submit(context);
+    return BlazeBuildOutputs.noOutputs(BuildResult.FATAL_ERROR);
   }
 
   private static class TargetMapAndInterfaceState {
@@ -681,75 +683,130 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   }
 
   @Override
-  public BuildResult compileIdeArtifacts(
+  public BlazeBuildOutputs compileIdeArtifacts(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeVersionData blazeVersion,
       BlazeBuildParams buildParams,
       ProjectViewSet projectViewSet,
-      BlazeVersionData blazeVersionData,
-      WorkspaceLanguageSettings workspaceLanguageSettings,
-      ShardedTargetList shardedTargets) {
+      BlazeInfo blazeInfo,
+      ShardedTargetList shardedTargets,
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
+
+    final Ref<BlazeBuildOutputs> combinedResult = new Ref<>();
+
+    boolean parallelize = buildParams.parallelizeBuilds();
+
     Function<Integer, String> progressMessage =
         count ->
             String.format(
                 "Compiling targets for shard %s of %s...", count, shardedTargets.shardCount());
+
     BiFunction<List<? extends TargetExpression>, Integer, BuildResult> invocation =
         (targets, shard) ->
-            doCompileIdeArtifacts(
-                project,
+            Scope.push(
                 context,
-                workspaceRoot,
-                buildParams,
-                projectViewSet,
-                blazeVersionData,
-                workspaceLanguageSettings,
-                targets);
-    return shardedTargets.runShardedCommand(
-        project, context, progressMessage, invocation, /* parallelize= */ false);
+                (childContext) -> {
+                  setupToolWindow(
+                      project,
+                      context,
+                      childContext,
+                      workspaceRoot,
+                      "Compile shard " + shard,
+                      ContextType.Other,
+                      Task.Type.BLAZE_MAKE);
+
+                  BlazeBuildOutputs result =
+                      runCompileForTargets(
+                          project,
+                          childContext,
+                          workspaceRoot,
+                          blazeVersion,
+                          buildParams,
+                          blazeInfo,
+                          projectViewSet,
+                          workspaceLanguageSettings.getActiveLanguages(),
+                          targets);
+
+                  if (!result.buildResult.outOfMemory()) {
+                    combinedResult.set(
+                        combinedResult.isNull()
+                            ? result
+                            : combinedResult.get().updateOutputs(result));
+                  }
+                  return result.buildResult;
+                });
+
+    BuildResult buildResult =
+        shardedTargets.runShardedCommand(
+            project, context, progressMessage, invocation, parallelize);
+    if (combinedResult.isNull() || buildResult.status == Status.FATAL_ERROR) {
+      return BlazeBuildOutputs.noOutputs(buildResult);
+    }
+    return combinedResult.get();
   }
 
-  /** Blaze build invocation requesting the 'intellij-compile' aspect output group. */
-  private static BuildResult doCompileIdeArtifacts(
+  /**
+   * Runs blaze build with the aspect's {@link OutputGroup#COMPILE} output groups for a given set of
+   * targets
+   */
+  private static BlazeBuildOutputs runCompileForTargets(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
+      BlazeVersionData blazeVersion,
       BlazeBuildParams buildParams,
+      BlazeInfo blazeInfo,
       ProjectViewSet projectViewSet,
-      BlazeVersionData blazeVersionData,
-      WorkspaceLanguageSettings workspaceLanguageSettings,
+      ImmutableSet<LanguageClass> activeLanguages,
       List<? extends TargetExpression> targets) {
-    BlazeCommand.Builder blazeCommandBuilder =
-        BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.BUILD)
-            .addTargets(targets)
-            .addBlazeFlags()
-            .addBlazeFlags(BlazeFlags.KEEP_GOING)
-            .addBlazeFlags(
-                BlazeFlags.blazeFlags(
-                    project,
-                    projectViewSet,
-                    BlazeCommandName.BUILD,
-                    BlazeInvocationContext.SYNC_CONTEXT));
 
-    AspectStrategy.getInstance(blazeVersionData)
-        .addAspectAndOutputGroups(
-            blazeCommandBuilder,
-            ImmutableList.of(OutputGroup.COMPILE),
-            workspaceLanguageSettings.getActiveLanguages(),
-            /* directDepsOnly= */ false);
+    boolean onlyDirectDeps =
+        projectViewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
 
-    // Run the blaze build command.
-    int retVal =
-        ExternalTask.builder(workspaceRoot)
-            .addBlazeCommand(blazeCommandBuilder.build())
-            .context(context)
-            .stderr(
-                LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
-            .build()
-            .run();
+    AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersion);
 
-    return BuildResult.fromExitCode(retVal);
+    try (BuildResultHelper buildResultHelper =
+        BuildResultHelperProvider.create(project, blazeInfo)) {
+      return runBuildForTargets(
+          project,
+          context,
+          workspaceRoot,
+          buildParams,
+          projectViewSet,
+          activeLanguages,
+          targets,
+          aspectStrategy,
+          onlyDirectDeps,
+          buildResultHelper,
+          ImmutableList.of(OutputGroup.COMPILE));
+    }
+  }
+
+  private static void setupToolWindow(
+      Project project,
+      BlazeContext parentContext,
+      BlazeContext childContext,
+      WorkspaceRoot workspaceRoot,
+      String taskName,
+      ContextType contextType,
+      Task.Type taskType) {
+    ToolWindowScope parentToolWindowScope = parentContext.getScope(ToolWindowScope.class);
+    Task parentTask = parentToolWindowScope != null ? parentToolWindowScope.getTask() : null;
+    childContext.push(
+        new ToolWindowScope.Builder(project, new Task(taskName, taskType, parentTask))
+            .setIssueParsers(
+                BlazeIssueParser.defaultIssueParsers(project, workspaceRoot, contextType))
+            .build());
+
+    if (BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()) {
+      childContext.push(
+          new BlazeConsoleScope.Builder(project)
+              .addConsoleFilters(new IssueOutputFilter(project, workspaceRoot, contextType, true))
+              .setClearPreviousState(false)
+              .build());
+    }
   }
 
   /** A filename filter for blaze output artifacts to prefetch. */

@@ -282,16 +282,17 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     }
 
     @Override
-    public BuildResult compileIdeArtifacts(
+    public BlazeBuildOutputs compileIdeArtifacts(
         Project project,
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
+        BlazeVersionData blazeVersion,
         BlazeBuildParams buildParams,
         ProjectViewSet projectViewSet,
-        BlazeVersionData blazeVersionData,
-        WorkspaceLanguageSettings workspaceLanguageSettings,
-        ShardedTargetList shardedTargets) {
-      return BuildResult.SUCCESS;
+        BlazeInfo blazeInfo,
+        ShardedTargetList shardedTargets,
+        WorkspaceLanguageSettings workspaceLanguageSettings) {
+      return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
     }
   }
 }

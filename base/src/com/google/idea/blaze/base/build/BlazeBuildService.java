@@ -50,6 +50,7 @@ import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -223,21 +224,22 @@ public class BlazeBuildService {
                     if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
                       return null;
                     }
-                    BuildResult buildResult =
+                    BlazeBuildOutputs buildOutputs =
                         BlazeIdeInterface.getInstance()
                             .compileIdeArtifacts(
                                 project,
                                 context,
                                 workspaceRoot,
+                                projectData.getBlazeVersionData(),
                                 buildParams,
                                 projectView,
-                                projectData.getBlazeVersionData(),
-                                projectData.getWorkspaceLanguageSettings(),
-                                shardedTargets.shardedTargets);
+                                projectData.getBlazeInfo(),
+                                shardedTargets.shardedTargets,
+                                projectData.getWorkspaceLanguageSettings());
 
-                    refreshFileCachesAndNotifyListeners(context, buildResult, project);
+                    refreshFileCachesAndNotifyListeners(context, buildOutputs, project);
 
-                    if (buildResult.status != BuildResult.Status.SUCCESS) {
+                    if (buildOutputs.buildResult.status != BuildResult.Status.SUCCESS) {
                       context.setHasError();
                     }
                     return null;
@@ -250,7 +252,7 @@ public class BlazeBuildService {
    * BlazeBuildListener#buildCompleted} after all file caches are done refreshing.
    */
   private static void refreshFileCachesAndNotifyListeners(
-      BlazeContext context, BuildResult buildResult, Project project) {
+      BlazeContext context, BlazeBuildOutputs buildOutputs, Project project) {
     ListenableFuture<Void> refreshFuture = FileCaches.refresh(project, context);
     // Notify the build listeners after file caches are done refreshing.
     Futures.addCallback(
@@ -260,7 +262,7 @@ public class BlazeBuildService {
           public void onSuccess(@Nullable Void unused) {
             BlazeBuildListener.EP_NAME
                 .extensions()
-                .forEach(ep -> ep.buildCompleted(project, buildResult));
+                .forEach(ep -> ep.buildCompleted(project, buildOutputs));
           }
 
           @Override
@@ -269,7 +271,7 @@ public class BlazeBuildService {
             // print logs as required.
             BlazeBuildListener.EP_NAME
                 .extensions()
-                .forEach(ep -> ep.buildCompleted(project, buildResult));
+                .forEach(ep -> ep.buildCompleted(project, buildOutputs));
           }
         },
         MoreExecutors.directExecutor());

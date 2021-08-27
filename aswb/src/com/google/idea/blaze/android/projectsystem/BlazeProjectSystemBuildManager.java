@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.projectsystem;
 import com.android.tools.idea.projectsystem.ProjectSystemBuildManager;
 import com.google.idea.blaze.base.build.BlazeBuildListener;
 import com.google.idea.blaze.base.build.BlazeBuildService;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -78,10 +79,10 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
     }
 
     @Override
-    public void buildCompleted(
-        Project project, com.google.idea.blaze.base.sync.aspects.BuildResult buildResult) {
+    public void buildCompleted(Project project, BlazeBuildOutputs buildOutputs) {
       LastBuildResultCache lastBuildResultCache = LastBuildResultCache.getInstance(project);
-      BuildResult projectSystemBuildResult = lastBuildResultCache.updateBuildResult(buildResult);
+      BuildResult projectSystemBuildResult =
+          lastBuildResultCache.updateBuildResult(buildOutputs.buildResult);
 
       // BlazeBuildListener does not have a concept of `beforeBuildCompleted` so we call both
       // `beforeBuildCompleted` and `buildCompleted` in required order here.

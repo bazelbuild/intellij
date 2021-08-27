@@ -11,6 +11,7 @@ proto_library(
 java_proto_library(
     name = "intellij_aspect_test_fixture_java_proto",
     visibility = [
+        # aspectpackages_visibility
         "//aspect/testing/tests:__subpackages__",
     ],
     deps = [":intellij_aspect_test_fixture_proto"],
@@ -21,6 +22,7 @@ java_binary(
     testonly = True,
     srcs = ["src/com/google/idea/blaze/aspect/IntellijAspectTestFixtureBuilder.java"],
     visibility = [
+        # aspectpackages_visibility
         "//aspect/testing/tests:__subpackages__",
     ],
     deps = [
@@ -36,6 +38,7 @@ java_library(
     testonly = 1,
     srcs = ["src/com/google/idea/blaze/aspect/IntellijAspectTest.java"],
     visibility = [
+        # aspectpackages_visibility
         "//aspect/testing:__subpackages__",
     ],
     deps = [
@@ -59,6 +62,7 @@ java_proto_library(
     name = "fast_build_aspect_test_fixture_java_proto",
     testonly = True,
     visibility = [
+        # aspectpackages_visibility
         "//aspect/testing:__subpackages__",
     ],
     deps = [":fast_build_aspect_test_fixture_proto"],
@@ -69,6 +73,7 @@ java_binary(
     testonly = True,
     srcs = ["src/com/google/idea/blaze/aspect/FastBuildAspectTestFixtureBuilder.java"],
     visibility = [
+        # aspectpackages_visibility
         "//aspect/testing:__subpackages__",
     ],
     deps = [
@@ -84,6 +89,7 @@ java_library(
     testonly = True,
     srcs = ["src/com/google/idea/blaze/aspect/FastBuildAspectRule.java"],
     visibility = [
+        # aspectpackages_visibility
         "//aspect/testing:__subpackages__",
     ],
     deps = [
