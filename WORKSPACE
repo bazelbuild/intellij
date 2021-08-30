@@ -38,8 +38,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2021_2",
     build_file = "@//intellij_platform_sdk:BUILD.idea212",
-    sha256 = "3ff2b826370d74b389619ade2d7280ff917ca3cf864f1e8f5f75d0407f4ee722",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2021.2/ideaIC-2021.2.zip",
+    sha256 = "562cc3a7600f266f5a7029a8fef4ca499667ad3f4cda4adaa90b8b7d10e9f618",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2021.2.1/ideaIC-2021.2.1.zip",
 )
 
 # The plugin api for IntelliJ UE 2020.2. This is required to run UE-specific
@@ -148,8 +148,8 @@ http_archive(
 http_archive(
     name = "python_2021_2",
     build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "93e6a1ba60d57ea09f5239ad8e78398809ccd4262061da7adc31316675a1efd6",
-    url = "https://plugins.jetbrains.com/files/7322/129780/python-ce-212.4746.96.zip",
+    sha256 = "4025477d62a6eda6602fefea2abcfc0078ee387d5cc95dc303ee3583bc3604ce",
+    url = "https://plugins.jetbrains.com/files/7322/134206/python-ce-212.5080.64.zip",
 )
 
 _GO_BUILD_FILE = """
