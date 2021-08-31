@@ -3,7 +3,7 @@
 # Description:
 #   Defines a package group that restricts access to the JetBrains
 #   plugin apis to known packages that build plugins. Only packages
-#   listed here may depend on these libraries.
+#   listed here may depend on these .
 
 load(
     ":build_defs.bzl",
