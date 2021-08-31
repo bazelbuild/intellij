@@ -3,7 +3,7 @@
 # Plugin source jars for Android Studio (version encoded in directory name)
 load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
 
-package(default_visibility = ["//visibility:public"])
+package(default_visibility = ["//visibility:public"]) # test import pr
 
 licenses(["restricted"])
 
