@@ -17,7 +17,7 @@ package com.google.idea.blaze;
 
 import com.google.idea.blaze.aspect.IntellijAspectTest;
 
-/** Abstract test class for Bazel aspect tests */
+/** Abstract test class for Bazel aspect tests testing import pr */
 public abstract class BazelIntellijAspectTest extends IntellijAspectTest {
 
   protected BazelIntellijAspectTest() {
