@@ -30,6 +30,23 @@ py_binary(
     python_version = "PY3",
 )
 
+py_binary(
+    name = "expand_datadeps",
+    srcs = ["simple.py"],
+    args = [
+        "--ARG1=$(location :datadepfile)",
+    ],
+    data = [":datadepfile"],
+    main = "simple.py",
+    python_version = "PY3",
+)
+
+genrule(
+    name = "datadepfile",
+    outs = ["datadepfile.txt"],
+    cmd = "touch $@",
+)
+
 intellij_aspect_test_fixture(
     name = "simple_fixture",
     deps = [
@@ -51,11 +68,19 @@ intellij_aspect_test_fixture(
     ],
 )
 
+intellij_aspect_test_fixture(
+    name = "expand_datadeps_fixture",
+    deps = [
+        ":expand_datadeps",
+    ],
+)
+
 java_test(
     name = "PyBinaryTest",
     srcs = ["PyBinaryTest.java"],
     data = [
         ":buildfile_args_fixture",
+        ":expand_datadeps_fixture",
         ":simple3_fixture",
         ":simple_fixture",
     ],

@@ -21,6 +21,7 @@ import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.Intellij
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonVersion;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.BazelIntellijAspectTest;
+import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -53,5 +54,18 @@ public class PyBinaryTest extends BazelIntellijAspectTest {
     assertThat(target.getKindString()).isEqualTo("py_binary");
     assertThat(target.getPyIdeInfo().getArgsList())
         .containsExactly("--ARG1", "--ARG2=" + compilationMode, "--ARG3='with spaces'");
+  }
+
+  @Test
+  public void testExpandDataDeps() throws Exception {
+    IntellijAspectTestFixture testFixture = loadTestFixture(":expand_datadeps_fixture");
+    TargetIdeInfo target = findTarget(testFixture, ":expand_datadeps");
+
+    assertThat(target.getKindString()).isEqualTo("py_binary");
+    List<String> args = target.getPyIdeInfo().getArgsList();
+    assertThat(args).hasSize(1);
+    assertThat(args.get(0))
+        .endsWith(
+            "/aspect/testing/tests/src/com/google/idea/blaze/aspect/python/pybinary/datadepfile.txt");
   }
 }

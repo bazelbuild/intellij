@@ -303,10 +303,10 @@ def _get_python_srcs_version(ctx):
     srcs_version = getattr(ctx.rule.attr, "srcs_version", "PY2AND3")
     return _SRCS_VERSION_MAPPING.get(srcs_version, default = SRC_PY2AND3)
 
-def _do_starlark_string_expansion(ctx, name, strings):
+def _do_starlark_string_expansion(ctx, name, strings, extra_targets = []):
     # first, expand all starlark predefined paths:
     #   location, locations, rootpath, rootpaths, execpath, execpaths
-    strings = [ctx.expand_location(value) for value in strings]
+    strings = [ctx.expand_location(value, targets = extra_targets) for value in strings]
 
     # then expand any regular GNU make style variables
     strings = [expand_make_variables(name, value, ctx) for value in strings]
@@ -328,7 +328,8 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     sources = sources_from_target(ctx)
     to_build = target[PyInfo].transitive_sources
     args = getattr(ctx.rule.attr, "args", [])
-    args = _do_starlark_string_expansion(ctx, "args", args)
+    data_deps = getattr(ctx.rule.attr, "data", [])
+    args = _do_starlark_string_expansion(ctx, "args", args, data_deps)
 
     ide_info["py_ide_info"] = struct_omit_none(
         launcher = py_launcher,
