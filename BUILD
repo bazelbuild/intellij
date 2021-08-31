@@ -1,5 +1,5 @@
 #
-# Description: Blaze plugin for various IntelliJ products.
+# Description: Blaze plugin for various IntelliJ.
 #
 
 licenses(["notice"])
