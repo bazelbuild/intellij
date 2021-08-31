@@ -33,6 +33,9 @@ intellij_plugin_library(
     name = "mock_experiment_service",
     testonly = 1,
     plugin_xmls = ["tests/utils/mock_experiment_service.xml"],
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [":unit_test_utils"],
 )
 
