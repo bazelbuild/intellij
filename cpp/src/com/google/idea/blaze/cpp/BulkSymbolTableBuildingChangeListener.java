@@ -45,7 +45,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.jetbrains.cidr.lang.symbols.symtable.OCSymbolTablesBuildingActivity;
+import com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache;
 import com.jetbrains.cidr.lang.symbols.symtable.SymbolTableProvider;
 import java.io.File;
 import java.util.ArrayList;
@@ -186,7 +186,9 @@ public class BulkSymbolTableBuildingChangeListener implements BulkFileListener {
     // tables for roots, but we just do the same action for both for simplicity.
     logger.info(String.format("Rebuilding symbols for %d changed files", files.size()));
     Stopwatch stopwatch = Stopwatch.createStarted();
-    OCSymbolTablesBuildingActivity.getInstance(project).buildSymbolsForFiles(files);
+    FileSymbolTablesCache fileSymbolsTablesCache = FileSymbolTablesCache.getInstance(project);
+    fileSymbolsTablesCache.addFilesToCache(files);
+    fileSymbolsTablesCache.ensurePendingFilesProcessed();
     DumbService.getInstance(project)
         .runWhenSmart(
             () ->
