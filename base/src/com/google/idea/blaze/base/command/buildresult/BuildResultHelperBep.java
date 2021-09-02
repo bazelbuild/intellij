@@ -85,10 +85,5 @@ public class BuildResultHelperBep implements BuildResultHelper {
     public Optional<BuildResultHelper> doCreateForLocalBuild(Project project) {
       return Optional.of(new BuildResultHelperBep());
     }
-
-    @Override
-    public Optional<BuildResultHelper> doCreateForSync(Project project, BlazeInfo blazeInfo) {
-      return Optional.of(new BuildResultHelperBep());
-    }
   }
 }

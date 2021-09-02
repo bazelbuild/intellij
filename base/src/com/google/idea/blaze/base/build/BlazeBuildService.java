@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.build;
 
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -53,6 +54,7 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedTargetsResult;
@@ -226,7 +228,7 @@ public class BlazeBuildService {
                     }
                     BlazeBuildOutputs buildOutputs =
                         BlazeIdeInterface.getInstance()
-                            .compileIdeArtifacts(
+                            .build(
                                 project,
                                 context,
                                 workspaceRoot,
@@ -235,7 +237,8 @@ public class BlazeBuildService {
                                 projectView,
                                 projectData.getBlazeInfo(),
                                 shardedTargets.shardedTargets,
-                                projectData.getWorkspaceLanguageSettings());
+                                projectData.getWorkspaceLanguageSettings(),
+                                ImmutableSet.of(OutputGroup.COMPILE));
 
                     refreshFileCachesAndNotifyListeners(context, buildOutputs, project);
 

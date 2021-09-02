@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -46,6 +47,7 @@ import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
@@ -256,20 +258,6 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     private TargetMap targetMap = new TargetMap(ImmutableMap.of());
 
     @Override
-    public BlazeBuildOutputs buildIdeArtifacts(
-        Project project,
-        BlazeContext context,
-        WorkspaceRoot workspaceRoot,
-        BlazeVersionData blazeVersion,
-        BlazeBuildParams buildParams,
-        ProjectViewSet projectViewSet,
-        BlazeInfo blazeInfo,
-        ShardedTargetList shardedTargets,
-        WorkspaceLanguageSettings workspaceLanguageSettings) {
-      return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
-    }
-
-    @Override
     public ProjectTargetData updateTargetData(
         Project project,
         BlazeContext context,
@@ -282,7 +270,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     }
 
     @Override
-    public BlazeBuildOutputs compileIdeArtifacts(
+    public BlazeBuildOutputs build(
         Project project,
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
@@ -291,7 +279,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         ProjectViewSet projectViewSet,
         BlazeInfo blazeInfo,
         ShardedTargetList shardedTargets,
-        WorkspaceLanguageSettings workspaceLanguageSettings) {
+        WorkspaceLanguageSettings workspaceLanguageSettings,
+        ImmutableSet<OutputGroup> outputGroups) {
       return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
     }
   }

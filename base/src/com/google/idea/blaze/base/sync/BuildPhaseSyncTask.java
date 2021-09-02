@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.sync;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
@@ -46,6 +47,7 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedTargetsResult;
@@ -315,7 +317,7 @@ final class BuildPhaseSyncTask {
           context.setPropagatesErrors(false);
 
           BlazeIdeInterface blazeIdeInterface = BlazeIdeInterface.getInstance();
-          return blazeIdeInterface.buildIdeArtifacts(
+          return blazeIdeInterface.build(
               project,
               context,
               workspaceRoot,
@@ -324,7 +326,8 @@ final class BuildPhaseSyncTask {
               projectViewSet,
               projectState.getBlazeInfo(),
               shardedTargets,
-              projectState.getLanguageSettings());
+              projectState.getLanguageSettings(),
+              ImmutableSet.of(OutputGroup.RESOLVE, OutputGroup.INFO));
         });
   }
 }

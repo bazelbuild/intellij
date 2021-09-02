@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.aspects;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -54,11 +55,11 @@ public interface BlazeIdeInterface {
       @Nullable BlazeProjectData oldProjectData);
 
   /**
-   * The blaze build phase of sync.
+   * Invokes a blaze build for the given output groups.
    *
-   * <p>Builds the {@link OutputGroup#INFO} and {@link OutputGroup#RESOLVE} output groups.
+   * @param outputGroups Set of {@link OutputGroup} to be generated in the build.
    */
-  BlazeBuildOutputs buildIdeArtifacts(
+  BlazeBuildOutputs build(
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
@@ -67,21 +68,6 @@ public interface BlazeIdeInterface {
       ProjectViewSet projectViewSet,
       BlazeInfo blazeInfo,
       ShardedTargetList shardedTargets,
-      WorkspaceLanguageSettings workspaceLanguageSettings);
-
-  /**
-   * Attempts to compile the requested ide artifacts.
-   *
-   * <p>Amounts to a build of the {@link OutputGroup#COMPILE} output group.
-   */
-  BlazeBuildOutputs compileIdeArtifacts(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      BlazeVersionData blazeVersion,
-      BlazeBuildParams buildParams,
-      ProjectViewSet projectViewSet,
-      BlazeInfo blazeInfo,
-      ShardedTargetList shardedTargets,
-      WorkspaceLanguageSettings workspaceLanguageSettings);
+      WorkspaceLanguageSettings workspaceLanguageSettings,
+      ImmutableSet<OutputGroup> outputGroups);
 }

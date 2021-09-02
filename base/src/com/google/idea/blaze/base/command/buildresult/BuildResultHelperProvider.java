@@ -38,10 +38,12 @@ public interface BuildResultHelperProvider {
    */
   Optional<BuildResultHelper> doCreateForLocalBuild(Project project);
 
-  /** Constructs a BuildResultHelper, for the purposes of sync. */
-  Optional<BuildResultHelper> doCreateForSync(Project project, BlazeInfo blazeInfo);
-
-  /** Constructs a new build result helper. */
+  /**
+   * Constructs a new build result helper.
+   *
+   * @param project The current {@link Project}.
+   * @param blazeInfo The latest {@link BlazeInfo} data.
+   */
   @MustBeClosed
   static BuildResultHelper create(Project project, BlazeInfo blazeInfo) {
     for (BuildResultHelperProvider extension : EP_NAME.getExtensions()) {
@@ -64,23 +66,6 @@ public interface BuildResultHelperProvider {
   static BuildResultHelper createForLocalBuild(Project project) {
     for (BuildResultHelperProvider extension : EP_NAME.getExtensions()) {
       Optional<BuildResultHelper> helper = extension.doCreateForLocalBuild(project);
-      if (helper.isPresent()) {
-        return helper.get();
-      }
-    }
-    return new BuildResultHelperBep();
-  }
-
-  /**
-   * Constructs a new build result helper for sync.
-   *
-   * @param project The current project.
-   * @param blazeInfo The latest BlazeInfo data relevant to sync
-   */
-  @MustBeClosed
-  static BuildResultHelper createForSync(Project project, BlazeInfo blazeInfo) {
-    for (BuildResultHelperProvider extension : EP_NAME.getExtensions()) {
-      Optional<BuildResultHelper> helper = extension.doCreateForSync(project, blazeInfo);
       if (helper.isPresent()) {
         return helper.get();
       }
