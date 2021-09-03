@@ -23,8 +23,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Alarm;
 import com.intellij.util.Alarm.ThreadToUse;
-import com.intellij.util.SystemProperties;
-import java.io.File;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -43,9 +41,6 @@ import javax.annotation.Nullable;
 public class ExperimentServiceImpl implements ApplicationComponent, ExperimentService {
   private static final Logger logger = Logger.getInstance(ExperimentServiceImpl.class);
 
-  private static final String USER_EXPERIMENT_OVERRIDES_FILE =
-      SystemProperties.getUserHome() + File.separator + ".intellij-experiments";
-
   private static final Duration REFRESH_FREQUENCY = Duration.ofMinutes(5);
 
   private final Alarm alarm =
@@ -56,11 +51,8 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
   private volatile Map<String, String> experiments = ImmutableMap.of();
   private final Map<String, Experiment> queriedExperiments = new ConcurrentHashMap<>();
 
-  public ExperimentServiceImpl(String pluginName) {
-    this(
-        new SystemPropertyExperimentLoader(),
-        new FileExperimentLoader(USER_EXPERIMENT_OVERRIDES_FILE),
-        new WebExperimentLoader(pluginName));
+  ExperimentServiceImpl() {
+    this(ExperimentLoader.EP_NAME.getExtensions());
   }
 
   @VisibleForTesting

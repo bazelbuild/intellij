@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Properties;
 
 /** Reads experiments from a property file. */
-final class FileExperimentLoader extends HashingExperimentLoader {
+class FileExperimentLoader extends HashingExperimentLoader {
 
   private static final Logger logger = Logger.getInstance(FileExperimentLoader.class);
 

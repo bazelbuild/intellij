@@ -53,6 +53,12 @@ public class ExperimentServiceImplTest {
   }
 
   @Test
+  public void testEmptyLoadersList() {
+    ExperimentService experimentService = new ExperimentServiceImpl(new ExperimentLoader[] {});
+    assertThat(experimentService.getExperiment(BOOL_EXPERIMENT, false)).isFalse();
+  }
+
+  @Test
   public void testBooleanPropertyTrue() {
     ExperimentService experimentService =
         new ExperimentServiceImpl(new MapExperimentLoader(BOOL_EXPERIMENT.getKey(), "1"));

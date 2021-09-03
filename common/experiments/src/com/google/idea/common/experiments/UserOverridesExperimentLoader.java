@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2021 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.experiments;
+package com.google.idea.common.experiments;
 
-import com.google.idea.common.experiments.ExperimentServiceImpl;
+import com.intellij.util.SystemProperties;
+import java.io.File;
 
-final class BlazeExperimentService extends ExperimentServiceImpl {
+/** Reads experiments override values from the user home directory. */
+final class UserOverridesExperimentLoader extends FileExperimentLoader {
+  private static final String USER_EXPERIMENT_OVERRIDES_FILE =
+      SystemProperties.getUserHome() + File.separator + ".intellij-experiments";
 
-  public BlazeExperimentService() {
-    super("ijwb");
+  UserOverridesExperimentLoader() {
+    super(USER_EXPERIMENT_OVERRIDES_FILE);
   }
 }

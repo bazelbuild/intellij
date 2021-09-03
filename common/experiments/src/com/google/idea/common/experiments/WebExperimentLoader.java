@@ -17,9 +17,16 @@ package com.google.idea.common.experiments;
 
 import java.util.Map;
 
+@Deprecated
 final class WebExperimentLoader implements ExperimentLoader {
 
+  private static final String DEFAULT_PLUGIN_NAME = "ijwb";
+
   private final WebExperimentSyncer syncer;
+
+  WebExperimentLoader() {
+    this(DEFAULT_PLUGIN_NAME);
+  }
 
   WebExperimentLoader(String pluginName) {
     syncer = new WebExperimentSyncer(pluginName);

@@ -394,7 +394,7 @@
     </component>
     <component>
       <interface-class>com.google.idea.common.experiments.ExperimentService</interface-class>
-      <implementation-class>com.google.idea.blaze.base.experiments.BlazeExperimentService</implementation-class>
+      <implementation-class>com.google.idea.common.experiments.ExperimentServiceImpl</implementation-class>
     </component>
     <component>
       <implementation-class>com.google.idea.blaze.base.prefetch.PrefetchProjectInitializer</implementation-class>
@@ -466,6 +466,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BinaryPathRemapper" interface="com.google.idea.blaze.base.async.process.BinaryPathRemapper"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.CustomFormatter" interface="com.google.idea.blaze.base.formatter.CustomFormatter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputGroupsProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.OutputGroupsProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.ExperimentLoader" interface="com.google.idea.common.experiments.ExperimentLoader"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -549,6 +550,10 @@
     <BinaryPathRemapper implementation="com.google.idea.blaze.base.async.process.MacBinaryPathRemapper" order="last"/>
     <CustomFormatter implementation="com.google.idea.blaze.base.buildmodifier.BuildifierCustomFormatter"/>
     <ArtifactStateHelper implementation="com.google.idea.blaze.base.filecache.LocalArtifactStateProtoConverter"/>
+    <!-- Order of loaders is important. If a value for the same experiment defined in a few sources, then the first has higher priority. -->
+    <ExperimentLoader implementation="com.google.idea.common.experiments.SystemPropertyExperimentLoader" order="first" id="SystemPropertyExperimentLoader"/>
+    <ExperimentLoader implementation="com.google.idea.common.experiments.UserOverridesExperimentLoader" order="after SystemPropertyExperimentLoader" id="UserOverridesExperimentLoader"/>
+    <ExperimentLoader implementation="com.google.idea.common.experiments.WebExperimentLoader" order="last" id="WebExperimentLoader"/>
   </extensions>
 
   <projectListeners>
