@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.cpp;
+package com.google.idea.blaze.cpp.workaround;
 
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableSet;

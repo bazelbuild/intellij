@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2016 The Bazel Authors. All rights reserved.
+  ~ Copyright 2021 The Bazel Authors. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@
   <extensions defaultExtensionNs="com.google.idea.blaze">
     <SyncPlugin implementation="com.google.idea.blaze.cpp.BlazeCSyncPlugin"/>
     <PrefetchFileSource implementation="com.google.idea.blaze.cpp.CPrefetchFileSource"/>
-    <SyncListener implementation="com.google.idea.blaze.cpp.BulkSymbolTableBuildingChangeListener$WorkspaceTypeSyncListener"/>
     <SyncStatusContributor implementation="com.google.idea.blaze.cpp.syncstatus.CppSyncStatusContributor"/>
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.IncludeRootFlagsProcessor$Provider"/>
     <cpp.BlazeCompilerFlagsProcessorProvider implementation="com.google.idea.blaze.cpp.SysrootFlagsProcessor$Provider"/>
@@ -49,6 +48,5 @@
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerWrapperProvider"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerWrapperProviderImpl"/>
-    <projectService serviceImplementation="com.google.idea.blaze.cpp.BulkSymbolTableBuildingChangeListener"/>
   </extensions>
 </idea-plugin>
