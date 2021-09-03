@@ -26,14 +26,14 @@ import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.util.Transactions;
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -156,9 +156,8 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
     ApplicationManager.getApplication()
         .runWriteAction(
             () -> {
-              LibraryTable libraryTable =
-                  LibraryTablesRegistrar.getInstance().getLibraryTable(project);
-              LibraryTable.ModifiableModel libraryTableModel = libraryTable.getModifiableModel();
+              IdeModifiableModelsProvider modelsProvider =
+                  BaseSdkCompat.createModifiableModelsProvider(project);
               for (BlazeLibrary blazeLibrary : librariesToAttachSourceTo) {
                 // Make sure we don't do it twice
                 if (AttachedSourceJarManager.getInstance(project)
@@ -170,11 +169,10 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
                 LibraryEditor.updateLibrary(
                     project,
                     blazeProjectData.getArtifactLocationDecoder(),
-                    libraryTable,
-                    libraryTableModel,
+                    modelsProvider,
                     blazeLibrary);
               }
-              libraryTableModel.commit();
+              modelsProvider.commit();
             });
   }
 }

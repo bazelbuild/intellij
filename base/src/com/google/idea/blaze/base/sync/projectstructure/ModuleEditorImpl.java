@@ -24,9 +24,11 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -34,7 +36,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,13 +52,15 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
   private static final String EXTERNAL_SYSTEM_ID_VALUE = "Blaze";
 
   private final Project project;
+  private final IdeModifiableModelsProvider modelsProvider;
   private final ModifiableModuleModel moduleModel;
   private final File imlDirectory;
   @VisibleForTesting public Map<String, ModifiableRootModel> modules = Maps.newHashMap();
 
   public ModuleEditorImpl(Project project, BlazeImportSettings importSettings) {
     this.project = project;
-    this.moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+    modelsProvider = BaseSdkCompat.createModifiableModelsProvider(project);
+    this.moduleModel = modelsProvider.getModifiableModuleModel();
 
     this.imlDirectory = getImlDirectory(importSettings);
     if (!FileOperationProvider.getInstance().exists(imlDirectory)) {
@@ -88,8 +91,7 @@ public class ModuleEditorImpl implements BlazeSyncPlugin.ModuleEditor {
       module.setOption(Module.ELEMENT_TYPE, moduleType.getId());
     }
 
-    ModifiableRootModel modifiableModel =
-        ModuleRootManager.getInstance(module).getModifiableModel();
+    ModifiableRootModel modifiableModel = modelsProvider.getModifiableRootModel(module);
     modules.put(module.getName(), modifiableModel);
     modifiableModel.clear();
     modifiableModel.inheritSdk();

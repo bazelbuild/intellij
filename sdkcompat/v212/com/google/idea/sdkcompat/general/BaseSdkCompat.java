@@ -8,7 +8,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorFacade;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -116,5 +121,31 @@ public final class BaseSdkCompat {
   /** #api203: inline this method into IndexingLogger */
   public static Duration getTotalIndexingTime(IndexingTimes times) {
     return times.getIndexingDuration();
+  }
+
+  /**
+   * See {@link ModifiableRootModel#addLibraryEntries(List, DependencyScope, boolean)}.
+   *
+   * <p>#api211: New method addLibraryEntries() is only available from 2021.2.1 on (or from 2021.1.4
+   * if that bugfix release will ever be published).
+   */
+  public static void addLibraryEntriesToModel(
+      ModifiableRootModel modifiableRootModel, List<Library> libraries) {
+    for (Library library : libraries) {
+      modifiableRootModel.addLibraryEntry(library);
+    }
+  }
+
+  /**
+   * Creates an {@link IdeModifiableModelsProvider} for performant updates of the project model even
+   * when many modifications are involved. {@link IdeModifiableModelsProvider#commit()} must be
+   * called for any changes to take effect but call that method only after completing all changes.
+   *
+   * <p>#api212: New method createModifiableModelsProvider() is only available from 2021.3 on.
+   */
+  public static IdeModifiableModelsProvider createModifiableModelsProvider(Project project) {
+    // Switch to ProjectDataManager#createModifiableModelsProvider in 2021.3 for a public, stable
+    // API to create an IdeModifiableModelsProvider.
+    return new IdeModifiableModelsProviderImpl(project);
   }
 }

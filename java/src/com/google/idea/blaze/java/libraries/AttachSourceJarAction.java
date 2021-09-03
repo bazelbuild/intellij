@@ -20,12 +20,12 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 
 class AttachSourceJarAction extends BlazeProjectAction {
 
@@ -71,16 +71,11 @@ class AttachSourceJarAction extends BlazeProjectAction {
     ApplicationManager.getApplication()
         .runWriteAction(
             () -> {
-              LibraryTable libraryTable =
-                  LibraryTablesRegistrar.getInstance().getLibraryTable(project);
-              LibraryTable.ModifiableModel libraryTableModel = libraryTable.getModifiableModel();
+              IdeModifiableModelsProvider modelsProvider =
+                  BaseSdkCompat.createModifiableModelsProvider(project);
               LibraryEditor.updateLibrary(
-                  project,
-                  projectData.getArtifactLocationDecoder(),
-                  libraryTable,
-                  libraryTableModel,
-                  library);
-              libraryTableModel.commit();
+                  project, projectData.getArtifactLocationDecoder(), modelsProvider, library);
+              modelsProvider.commit();
             });
   }
 }
