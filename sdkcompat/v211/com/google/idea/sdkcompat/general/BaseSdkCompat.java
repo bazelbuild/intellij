@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Provides SDK compatibility shims for base plugin API classes, available to all IDEs. */
@@ -119,6 +120,15 @@ public final class BaseSdkCompat {
   /** #api203: inline this method into IndexingLogger */
   public static Duration getTotalIndexingTime(IndexingTimes times) {
     return times.getIndexingDuration();
+  }
+
+  /**
+   * Returns the option which influences the behavior of the project model in this IDE version.
+   *
+   * <p>#api211: From 2021.2 on, there isn't any option anymore to influence the project model.
+   */
+  public static Optional<String> getActiveProjectModelVmOption() {
+    return Optional.of("ide.old.project.model");
   }
 
   /**
