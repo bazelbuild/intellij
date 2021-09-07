@@ -1,6 +1,11 @@
+v2021.09.07
+===========
+* [Stable channel] CLion: Compatible with CLion 2021.2.
+
 v2021.08.24
 ===========
 * [Beta channel] CLion: Compatible with CLion 2021.2.
+* [Stable channel] IntelliJ: Compatible with IntelliJ CE/UE 2021.2
 
 v2021.07.26
 ===========
