@@ -360,7 +360,10 @@ java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]),
-    visibility = ["//visibility:public"],
+    visibility = [
+        # intellijplugins_visibility
+        "//visibility:public",
+    ],
     deps = [
         "//base",
         "//intellij_platform_sdk:jsr305",
