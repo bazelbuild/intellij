@@ -9,6 +9,7 @@ licenses(["notice"])  # Apache 2.0
 java_library(
     name = "experiments",
     srcs = glob(["src/**/*.java"]),
+    resources = [":experiment_properties"],
     visibility = [
         # commonplugins_visibility
         "//visibility:public",
@@ -17,6 +18,12 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
     ],
+)
+
+filegroup(
+    name = "experiment_properties",
+    srcs = ["src/com/google/idea/common/experiments/experiment.properties"],
+    visibility = ["//java/com/google/devtools/intellij/boq/services/experiments:__subpackages__"],
 )
 
 # includes an test ExperimentService registered in plugin XML. This is required
