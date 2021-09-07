@@ -129,7 +129,8 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   @Nullable
   @Override
   public TypeScriptConfig getPreferableConfig(@Nullable VirtualFile scopeFile) {
-    if (scopeFile == null || !scopeFile.isValid()) {
+
+    if (configs.isEmpty() || scopeFile == null || !scopeFile.isValid()) {
       return null;
     }
     for (VirtualFile configFile :
@@ -145,7 +146,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   /** #api203: Added in 2021.1, therefore @Override is omitted. */
   @Nullable
   public TypeScriptConfig getPreferableOrParentConfig(@Nullable VirtualFile scopeFile) {
-    if (scopeFile == null) {
+    if (configs.isEmpty() || scopeFile == null) {
       return null;
     }
     TypeScriptConfig configForFile = getPreferableConfig(scopeFile);
@@ -161,7 +162,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   /** #api203: Added in 2021.1, therefore @Override is omitted. */
   @Nullable
   public TypeScriptConfig getDirectIncludePreferableConfig(@Nullable VirtualFile scopeFile) {
-    if (scopeFile == null) {
+    if (configs.isEmpty() || scopeFile == null) {
       return null;
     }
     for (VirtualFile configFile :
