@@ -9,6 +9,7 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+load(":visibility.bzl", "BASE_VISIBILITY")
 
 licenses(["notice"])  # Apache 2.0
 
@@ -17,7 +18,7 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
     resources = glob(["resources/**/*"]),
-    visibility = ["//visibility:public"],
+    visibility = BASE_VISIBILITY,
     deps = [
         "//common/actions",
         "//common/experiments",
@@ -65,6 +66,9 @@ java_library(
     name = "formatter_api",
     srcs = glob(["src/com/google/idea/blaze/base/formatter/*.java"]),
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -89,6 +93,9 @@ java_library(
         "src/com/google/idea/blaze/base/model/primitives/WorkspacePath.java",
     ],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         ":proto_wrapper",
         "//intellij_platform_sdk:jsr305",
@@ -140,6 +147,9 @@ java_library(
         "src/com/google/idea/blaze/base/io/VirtualFileSystemProvider.java",
     ],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -153,6 +163,9 @@ java_library(
         "src/com/google/idea/blaze/base/io/AbsolutePathPatcher.java",
     ],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         ":vfs_api",
         "//intellij_platform_sdk:jsr305",
@@ -173,6 +186,9 @@ java_library(
         "src/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolverProvider.java",
     ],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         ":proto_wrapper",
         "//intellij_platform_sdk:jsr305",
@@ -188,6 +204,9 @@ java_library(
         "src/com/google/idea/blaze/base/sync/projectview/WorkspaceFileFinder.java",
     ],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -202,6 +221,9 @@ java_library(
         "src/com/google/idea/blaze/base/sync/projectview/WorkspaceLanguageChecker.java",
     ],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         ":proto_wrapper",
         "//intellij_platform_sdk:jsr305",
@@ -218,6 +240,9 @@ java_library(
         "src/com/google/idea/blaze/base/logging/LoggedSettingsProvider.java",
     ],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         "//common/experiments",
         "//intellij_platform_sdk:jsr305",
@@ -253,6 +278,9 @@ java_library(
         "src/com/google/idea/blaze/base/run/targetfinder/TargetFinder.java",
     ],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         ":label_api",
         ":proto_wrapper",
@@ -272,6 +300,9 @@ java_library(
         "src/com/google/idea/blaze/base/sync/sharding/BuildBatchingService.java",
     ],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     exports = [
         ":label_api",
     ],
@@ -288,6 +319,9 @@ java_library(
     name = "blaze_sync_modification_tracker_api",
     srcs = ["src/com/google/idea/blaze/base/sync/BlazeSyncModificationTracker.java"],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         ":base",
         "//intellij_platform_sdk:plugin_api",
@@ -322,6 +356,9 @@ java_library(
         "src/com/google/idea/blaze/base/prefetch/FetchExecutor.java",
         "src/com/google/idea/blaze/base/prefetch/RemoteArtifactPrefetcher.java",
     ],
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         ":base",
         "//intellij_platform_sdk:jsr305",
@@ -336,6 +373,9 @@ java_library(
         "src/com/google/idea/blaze/base/io/FileSizeScanner.java",
     ],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         ":base",
         "//intellij_platform_sdk:plugin_api",
@@ -352,6 +392,9 @@ java_library(
         "src/com/google/idea/blaze/base/prefetch/RemoteArtifactPrefetcher.java",
     ],
     neverlink = 1,
+    visibility = [
+        # g3p_visibility
+    ],
     deps = [
         ":base",
         "//intellij_platform_sdk:jsr305",

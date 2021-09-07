@@ -18,17 +18,18 @@ package com.google.idea.blaze.base.buildmodifier;
 import com.google.idea.common.util.HelperBinaryUtil;
 import java.io.File;
 import javax.annotation.Nullable;
+import java.net.URL;
 
 /** Provides the bazel buildifier binary. */
 public class BazelBuildifierBinaryProvider implements BuildifierBinaryProvider {
 
-  private static final String BASE = "/";
-  private static final String BUILDIFIER_BINARY_PATH =
-      BASE + "base/resources/binaries/bazel-buildifier";
+  // private static final String BASE = "/";
+  private static final String BUILDIFIER_BINARY_PATH = "resources/binaries/bazel-buildifier";
 
   @Nullable
   @Override
   public File getBuildifierBinary() {
-    return HelperBinaryUtil.getHelperBinary(BUILDIFIER_BINARY_PATH);
+    URL url = BazelBuildifierBinaryProvider.class.getResource(BUILDIFIER_BINARY_PATH);
+    return HelperBinaryUtil.getHelperBinary(url.toString());
   }
 }
