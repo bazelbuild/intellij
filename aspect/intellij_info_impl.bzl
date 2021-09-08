@@ -554,6 +554,8 @@ def get_java_provider(target):
         return target.kt
     if JavaInfo in target:
         return target[JavaInfo]
+    if hasattr(java_common, "JavaPluginInfo") and java_common.JavaPluginInfo in target:
+        return target[java_common.JavaPluginInfo]
     return None
 
 def _collect_generated_files(java):
@@ -573,7 +575,13 @@ def _collect_generated_files(java):
 def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Java-specific output groups, returns false if not a Java target."""
     java = get_java_provider(target)
-    if not java or not hasattr(java, "outputs") or not java.outputs:
+    if not java:
+        return False
+    if hasattr(java, "java_outputs") and java.java_outputs:
+        java_outputs = java.java_outputs
+    elif hasattr(java, "outputs") and java.outputs:
+        java_outputs = java.outputs.jars
+    else:
         return False
 
     java_semantics = semantics.java if hasattr(semantics, "java") else None
@@ -582,9 +590,9 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 
     ide_info_files = []
     sources = sources_from_target(ctx)
-    jars = [library_artifact(output) for output in java.outputs.jars]
-    class_jars = [output.class_jar for output in java.outputs.jars if output and output.class_jar]
-    output_jars = [jar for output in java.outputs.jars for jar in jars_from_output(output)]
+    jars = [library_artifact(output) for output in java_outputs]
+    class_jars = [output.class_jar for output in java_outputs if output and output.class_jar]
+    output_jars = [jar for output in java_outputs for jar in jars_from_output(output)]
     resolve_files = output_jars
     compile_files = class_jars
 
@@ -609,7 +617,7 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     jdeps_file = None
     if java_semantics and hasattr(java_semantics, "get_filtered_jdeps"):
         jdeps_file = java_semantics.get_filtered_jdeps(target)
-    if jdeps_file == None and hasattr(java.outputs, "jdeps") and java.outputs.jdeps:
+    if jdeps_file == None and hasattr(java, "outputs") and hasattr(java.outputs, "jdeps") and java.outputs.jdeps:
         jdeps_file = java.outputs.jdeps
     if jdeps_file:
         jdeps = artifact_location(jdeps_file)
@@ -627,10 +635,10 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 
     filtered_gen_jar = None
     if java_sources and (gen_java_sources or srcjars):
-        filtered_gen_jar, filtered_gen_resolve_files = build_filtered_gen_jar(
+        filtered_gen_jar, filtered_gen_resolve_files = _build_filtered_gen_jar(
             ctx,
             target,
-            java,
+            java_outputs,
             gen_java_sources,
             srcjars,
         )
@@ -690,11 +698,11 @@ def build_java_package_manifest(ctx, target, source_files, suffix):
     )
     return output
 
-def build_filtered_gen_jar(ctx, target, java, gen_java_sources, srcjars):
+def _build_filtered_gen_jar(ctx, target, java_outputs, gen_java_sources, srcjars):
     """Filters the passed jar to contain only classes from the given manifest."""
     jar_artifacts = []
     source_jar_artifacts = []
-    for jar in java.outputs.jars:
+    for jar in java_outputs:
         if jar.ijar:
             jar_artifacts.append(jar.ijar)
         elif jar.class_jar:
