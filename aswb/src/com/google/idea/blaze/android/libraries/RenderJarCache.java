@@ -50,6 +50,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -417,7 +418,8 @@ public class RenderJarCache {
     }
 
     @Override
-    public void refreshFiles(Project project, BlazeContext context) {
+    public void refreshFiles(
+        Project project, BlazeContext context, BlazeBuildOutputs buildOutputs) {
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       BlazeProjectData blazeProjectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();

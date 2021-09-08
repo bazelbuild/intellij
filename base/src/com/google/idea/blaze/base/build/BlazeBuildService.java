@@ -256,7 +256,7 @@ public class BlazeBuildService {
    */
   private static void refreshFileCachesAndNotifyListeners(
       BlazeContext context, BlazeBuildOutputs buildOutputs, Project project) {
-    ListenableFuture<Void> refreshFuture = FileCaches.refresh(project, context);
+    ListenableFuture<Void> refreshFuture = FileCaches.refresh(project, context, buildOutputs);
     // Notify the build listeners after file caches are done refreshing.
     Futures.addCallback(
         refreshFuture,

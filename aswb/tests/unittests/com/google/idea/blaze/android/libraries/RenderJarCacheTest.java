@@ -56,6 +56,8 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
@@ -308,7 +310,12 @@ public class RenderJarCacheTest {
 
     FileCache.EP_NAME
         .extensions()
-        .forEach(ep -> ep.refreshFiles(intellijRule.getProject(), context));
+        .forEach(
+            ep ->
+                ep.refreshFiles(
+                    intellijRule.getProject(),
+                    context,
+                    BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS)));
 
     assertThat(cacheDir.list()).hasLength(2);
     assertThat(stream(cacheDir.listFiles()).map(File::lastModified))

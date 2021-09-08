@@ -43,6 +43,8 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
@@ -209,7 +211,11 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
                                 .stderr(LineProcessingOutputStream.of(stderrLineProcessor))
                                 .build()
                                 .run();
-                        ListenableFuture<Void> unusedFuture = FileCaches.refresh(project, context);
+                        ListenableFuture<Void> unusedFuture =
+                            FileCaches.refresh(
+                                project,
+                                context,
+                                BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(retVal)));
 
                         if (retVal != 0) {
                           context.setHasError();

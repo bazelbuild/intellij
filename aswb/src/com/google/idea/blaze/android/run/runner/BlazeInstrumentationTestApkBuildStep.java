@@ -44,6 +44,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
@@ -126,7 +128,9 @@ public class BlazeInstrumentationTestApkBuildStep implements BlazeApkBuildStep {
                       BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
               .build()
               .run();
-      ListenableFuture<Void> unusedFuture = FileCaches.refresh(project, context);
+      ListenableFuture<Void> unusedFuture =
+          FileCaches.refresh(
+              project, context, BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(retVal)));
 
       if (retVal != 0) {
         IssueOutput.error("Blaze build failed. See Blaze Console for details.").submit(context);

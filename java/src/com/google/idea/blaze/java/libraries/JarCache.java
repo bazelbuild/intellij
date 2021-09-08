@@ -46,6 +46,7 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -433,7 +434,8 @@ public class JarCache {
     }
 
     @Override
-    public void refreshFiles(Project project, BlazeContext context) {
+    public void refreshFiles(
+        Project project, BlazeContext context, BlazeBuildOutputs buildOutputs) {
       ProjectViewSet viewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       BlazeProjectData projectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();

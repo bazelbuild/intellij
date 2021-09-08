@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import java.util.Arrays;
@@ -56,14 +57,15 @@ public class FileCaches {
    * Call at the end of a blaze build when you want the IDE to pick up any changes. Returns the
    * future corresponding to file cache refresh task.
    */
-  public static ListenableFuture<Void> refresh(Project project, BlazeContext context) {
+  public static ListenableFuture<Void> refresh(
+      Project project, BlazeContext context, BlazeBuildOutputs buildOutputs) {
     return ProgressiveTaskWithProgressIndicator.builder(project, "Updating file caches")
         .submitTask(
             indicator -> {
               indicator.setIndeterminate(true);
               for (FileCache fileCache : FileCache.EP_NAME.getExtensions()) {
                 indicator.setText("Updating " + fileCache.getName() + "...");
-                fileCache.refreshFiles(project, context);
+                fileCache.refreshFiles(project, context, buildOutputs);
               }
               LocalFileSystem.getInstance().refresh(true);
             });

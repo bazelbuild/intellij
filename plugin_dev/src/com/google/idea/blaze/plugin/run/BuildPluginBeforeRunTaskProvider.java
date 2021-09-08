@@ -48,6 +48,8 @@ import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
+import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.intellij.execution.BeforeRunTask;
@@ -259,7 +261,11 @@ public final class BuildPluginBeforeRunTaskProvider
                     if (retVal != 0) {
                       context.setHasError();
                     }
-                    ListenableFuture<Void> unusedFuture = FileCaches.refresh(project, context);
+                    ListenableFuture<Void> unusedFuture =
+                        FileCaches.refresh(
+                            project,
+                            context,
+                            BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(retVal)));
                     try {
                       deployer.reportBuildComplete(new File(executionRoot), buildResultHelper);
                     } catch (GetArtifactsException e) {

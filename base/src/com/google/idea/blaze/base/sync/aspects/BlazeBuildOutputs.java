@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
-/** The result of the blaze build sync step. */
+/** The result of a blaze build. */
 public class BlazeBuildOutputs {
 
   public static BlazeBuildOutputs noOutputs(BuildResult buildResult) {
