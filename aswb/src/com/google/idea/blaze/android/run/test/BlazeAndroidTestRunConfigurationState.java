@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 
@@ -95,40 +96,40 @@ public final class BlazeAndroidTestRunConfigurationState implements RunConfigura
     return instrumentationRunnerClass;
   }
 
-  public void setInstrumentationRunnerClass(String instrumentationRunnerClass) {
-    this.instrumentationRunnerClass = instrumentationRunnerClass;
+  public void setInstrumentationRunnerClass(@Nullable String instrumentationRunnerClass) {
+    this.instrumentationRunnerClass = Strings.nullToEmpty(instrumentationRunnerClass);
   }
 
   public String getMethodName() {
     return methodName;
   }
 
-  public void setMethodName(String methodName) {
-    this.methodName = methodName;
+  public void setMethodName(@Nullable String methodName) {
+    this.methodName = Strings.nullToEmpty(methodName);
   }
 
   public String getClassName() {
     return className;
   }
 
-  public void setClassName(String className) {
-    this.className = className;
+  public void setClassName(@Nullable String className) {
+    this.className = Strings.nullToEmpty(className);
   }
 
   public String getPackageName() {
     return packageName;
   }
 
-  public void setPackageName(String packageName) {
-    this.packageName = packageName;
+  public void setPackageName(@Nullable String packageName) {
+    this.packageName = Strings.nullToEmpty(packageName);
   }
 
   public String getExtraOptions() {
     return extraOptions;
   }
 
-  public void setExtraOptions(String extraOptions) {
-    this.extraOptions = extraOptions;
+  public void setExtraOptions(@Nullable String extraOptions) {
+    this.extraOptions = Strings.nullToEmpty(extraOptions);
   }
 
   /**
