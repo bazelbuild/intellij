@@ -22,6 +22,7 @@ import static com.intellij.testFramework.UsefulTestCase.assertThrows;
 
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.libraries.RenderJarCache;
+import com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.filecache.FileCache;
@@ -102,6 +103,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     experimentService.setExperimentString(
         BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME,
         RenderJarClassFileFinder.CLASS_FINDER_KEY);
+    experimentService.setExperiment(RenderResolveOutputGroupProvider.buildOnSync, true);
     // Disable resource resolution from Render Jars
     experimentService.setExperiment(RenderJarClassFileFinder.resolveResourceClasses, false);
 

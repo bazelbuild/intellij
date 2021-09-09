@@ -45,6 +45,7 @@ import org.junit.runners.JUnit4;
 public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
 
   private final FakeAspectStrategy aspectStrategy = new FakeAspectStrategy();
+  private MockExperimentService experimentService;
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -52,12 +53,12 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
         registerExtensionPoint(OutputGroupsProvider.EP_NAME, OutputGroupsProvider.class);
     ep.registerExtension(new RenderResolveOutputGroupProvider());
 
-    MockExperimentService experiments = new MockExperimentService();
-    applicationServices.register(ExperimentService.class, experiments);
+    experimentService = new MockExperimentService();
+    applicationServices.register(ExperimentService.class, experimentService);
 
     // Enable RenderJarClassFileFinder, otherwise RenderResolveOutputGroupProvider never returns the
     // "intellij-render-resolve-android" output group
-    experiments.setExperimentString(
+    experimentService.setExperimentString(
         BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME,
         RenderJarClassFileFinder.CLASS_FINDER_KEY);
   }
@@ -68,6 +69,7 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
    */
   @Test
   public void resolveOutputGroup_androidLanguageEnabled_renderResolveIsIncluded() {
+    experimentService.setExperiment(RenderResolveOutputGroupProvider.buildOnSync, true);
     Set<LanguageClass> activeLanguages = ImmutableSet.of(LanguageClass.ANDROID);
     ImmutableSet<OutputGroup> outputGroups = ImmutableSet.of(OutputGroup.RESOLVE);
     BlazeCommand.Builder builder = emptyBuilder();

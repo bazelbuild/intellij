@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.projectsystem.RenderJarClassFileFinder;
+import com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider;
 import com.google.idea.blaze.android.sync.importer.BlazeImportUtil;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
@@ -158,6 +159,11 @@ public class RenderJarCache {
     boolean fullRefresh = syncMode == SyncMode.FULL;
     if (fullRefresh) {
       clearCache(context, true);
+    }
+
+    if (!RenderResolveOutputGroupProvider.buildOnSync.getValue()) {
+      // Do no refresh cache if render jars are not build during syncs
+      return;
     }
 
     boolean removeMissingFiles = syncMode == SyncMode.INCREMENTAL;

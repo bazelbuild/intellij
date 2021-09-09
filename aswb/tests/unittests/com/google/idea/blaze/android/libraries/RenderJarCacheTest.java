@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.libraries.RenderJarCache.FileCacheAdapter;
 import com.google.idea.blaze.android.projectsystem.BlazeClassFileFinderFactory;
 import com.google.idea.blaze.android.projectsystem.RenderJarClassFileFinder;
+import com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider;
 import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
@@ -127,6 +128,7 @@ public class RenderJarCacheTest {
     experimentService.setExperimentString(
         BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME,
         RenderJarClassFileFinder.CLASS_FINDER_KEY);
+    experimentService.setExperiment(RenderResolveOutputGroupProvider.buildOnSync, true);
     intellijRule.registerApplicationService(ExperimentService.class, experimentService);
 
     // Setup needed for setting a projectview
