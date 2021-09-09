@@ -72,6 +72,30 @@ parser.add_argument(
     "--vendor_file",
     help="File with vendor element data to add to plugin.xml",
 )
+parser.add_argument(
+    "--since_build_numbers",
+    metavar="KEY=VALUE",
+    nargs="+",
+    help=("List of key-value pairs to map plugin api versions to the since "
+          "build number to be used for it in plugin.xml"),
+)
+parser.add_argument(
+    "--until_build_numbers",
+    metavar="KEY=VALUE",
+    nargs="+",
+    help=("List of key-value pairs to map plugin api versions to the until "
+          "build number to be used for it in plugin.xml"),
+)
+
+
+def parse_key_value_items(items):
+  """Parse key-value parameters and returns them in a dict."""
+  res = {}
+  for item in items:
+    item_pair = item.split("=", 1)
+    key = item_pair[0].strip()
+    res[key] = item_pair[1]
+  return res
 
 
 def _read_changelog(changelog_file):
@@ -149,6 +173,14 @@ def main():
   else:
     dom = minidom.parseString("<idea-plugin/>")
 
+  since_build_numbers = {}
+  until_build_numbers = {}
+  if args.since_build_numbers:
+    since_build_numbers = parse_key_value_items(args.since_build_numbers)
+
+  if args.until_build_numbers:
+    until_build_numbers = parse_key_value_items(args.until_build_numbers)
+
   is_eap = False
   with open(args.api_version_txt) as f:
     api_version = f.readline().strip()
@@ -198,10 +230,18 @@ def main():
       build_version = _parse_major_version(api_version)
 
     if args.stamp_since_build:
-      idea_version_element.setAttribute("since-build", build_version)
+      if build_version in since_build_numbers.keys():
+        idea_version_element.setAttribute("since-build",
+                                          since_build_numbers[build_version])
+      else:
+        idea_version_element.setAttribute("since-build", build_version)
 
     if args.stamp_until_build:
-      idea_version_element.setAttribute("until-build", build_version + ".*")
+      if build_version in until_build_numbers.keys():
+        idea_version_element.setAttribute("until-build",
+                                          until_build_numbers[build_version])
+      else:
+        idea_version_element.setAttribute("until-build", build_version + ".*")
 
   if args.changelog_file:
     if idea_plugin.getElementsByTagName("change-notes"):
