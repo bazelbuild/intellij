@@ -125,16 +125,6 @@ public class UnpackedAars {
     return new File(BlazeDataStorage.getProjectDataDir(importSettings), "aar_libraries");
   }
 
-  private static class AarAndJar {
-    private final BlazeArtifact aar;
-    @Nullable private final BlazeArtifact jar;
-
-    AarAndJar(BlazeArtifact aar, @Nullable BlazeArtifact jar) {
-      this.aar = aar;
-      this.jar = jar;
-    }
-  }
-
   void onSync(
       BlazeContext context,
       ProjectViewSet projectViewSet,
@@ -173,10 +163,11 @@ public class UnpackedAars {
     }
 
     ImmutableMap<String, File> cacheFiles = readFileState();
-    ImmutableMap<String, AarAndJar> projectState = getArtifactsToCache(viewSet, projectData);
+    ImmutableMap<String, AarLibraryContents> projectState =
+        getArtifactsToCache(viewSet, projectData);
     ImmutableMap<String, BlazeArtifact> aarOutputs =
         projectState.entrySet().stream()
-            .collect(toImmutableMap(Map.Entry::getKey, e -> e.getValue().aar));
+            .collect(toImmutableMap(Map.Entry::getKey, e -> e.getValue().aar()));
     try {
 
       Set<String> updatedKeys =
@@ -184,8 +175,8 @@ public class UnpackedAars {
       Set<BlazeArtifact> artifactsToDownload = new HashSet<>();
 
       for (String key : updatedKeys) {
-        artifactsToDownload.add(projectState.get(key).aar);
-        BlazeArtifact jar = projectState.get(key).jar;
+        artifactsToDownload.add(projectState.get(key).aar());
+        BlazeArtifact jar = projectState.get(key).jar();
         // jar file is introduced as a separate artifact (not jar in aar) which asks to download
         // separately. Only update jar when we decide that aar need to be updated.
         if (jar != null) {
@@ -402,10 +393,10 @@ public class UnpackedAars {
   }
 
   /**
-   * Returns a map from cache key to {@link AarAndJar}, for all the artifacts which should be
-   * cached.
+   * Returns a map from cache key to {@link AarLibraryContents}, for all the artifacts which should
+   * be cached.
    */
-  private static ImmutableMap<String, AarAndJar> getArtifactsToCache(
+  private static ImmutableMap<String, AarLibraryContents> getArtifactsToCache(
       ProjectViewSet projectViewSet, BlazeProjectData projectData) {
     Collection<BlazeLibrary> libraries =
         BlazeLibraryCollector.getLibraries(projectViewSet, projectData);
@@ -416,14 +407,14 @@ public class UnpackedAars {
             .collect(Collectors.toList());
 
     ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
-    Map<String, AarAndJar> outputs = new HashMap<>();
+    Map<String, AarLibraryContents> outputs = new HashMap<>();
     for (AarLibrary library : aarLibraries) {
       BlazeArtifact aar = decoder.resolveOutput(library.aarArtifact);
       BlazeArtifact jar =
           library.libraryArtifact != null
               ? decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary())
               : null;
-      outputs.put(cacheKeyForAar(aar), new AarAndJar(aar, jar));
+      outputs.put(cacheKeyForAar(aar), AarLibraryContents.create(aar, jar));
     }
     return ImmutableMap.copyOf(outputs);
   }
@@ -455,7 +446,7 @@ public class UnpackedAars {
   }
 
   private Collection<ListenableFuture<?>> copyLocally(
-      ImmutableMap<String, AarAndJar> toCache, Set<String> updatedKeys) {
+      ImmutableMap<String, AarLibraryContents> toCache, Set<String> updatedKeys) {
     FileOperationProvider ops = FileOperationProvider.getInstance();
     List<ListenableFuture<?>> futures = new ArrayList<>();
     updatedKeys.forEach(
@@ -464,8 +455,8 @@ public class UnpackedAars {
     return futures;
   }
 
-  private void copyLocally(FileOperationProvider ops, AarAndJar aarAndJar) {
-    String cacheKey = cacheKeyForAar(aarAndJar.aar);
+  private void copyLocally(FileOperationProvider ops, AarLibraryContents aarAndJar) {
+    String cacheKey = cacheKeyForAar(aarAndJar.aar());
     File aarDir = aarDirForKey(cacheKey);
     try {
       if (ops.exists(aarDir)) {
@@ -473,18 +464,18 @@ public class UnpackedAars {
       }
       ops.mkdirs(aarDir);
       // TODO(brendandouglas): decompress via ZipInputStream so we don't require a local file
-      File toCopy = getOrCreateLocalFile(aarAndJar.aar);
+      File toCopy = getOrCreateLocalFile(aarAndJar.aar());
       ZipUtil.extract(
           toCopy,
           aarDir,
           // Skip jars. The merged jar will be synchronized by JarTraits.
           (dir, name) -> !name.endsWith(".jar"));
 
-      createStampFile(ops, aarDir, aarAndJar.aar);
+      createStampFile(ops, aarDir, aarAndJar.aar());
 
       // copy merged jar
-      if (aarAndJar.jar != null) {
-        try (InputStream stream = aarAndJar.jar.getInputStream()) {
+      if (aarAndJar.jar() != null) {
+        try (InputStream stream = aarAndJar.jar().getInputStream()) {
           Path destination = Paths.get(jarFileForKey(cacheKey).getPath());
           ops.mkdirs(destination.getParent().toFile());
           Files.copy(stream, destination, StandardCopyOption.REPLACE_EXISTING);
@@ -492,7 +483,7 @@ public class UnpackedAars {
       }
 
     } catch (IOException e) {
-      logger.warn(String.format("Failed to extract AAR %s to %s", aarAndJar.aar, aarDir), e);
+      logger.warn(String.format("Failed to extract AAR %s to %s", aarAndJar.aar(), aarDir), e);
     }
   }
 
