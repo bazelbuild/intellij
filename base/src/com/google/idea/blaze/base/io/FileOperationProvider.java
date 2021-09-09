@@ -15,6 +15,9 @@
  */
 package com.google.idea.blaze.base.io;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import com.intellij.openapi.components.ServiceManager;
@@ -23,8 +26,11 @@ import java.io.IOException;
 import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.util.List;
+import java.util.function.BiPredicate;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** File system operations. Mocked out in tests involving file manipulations. */
@@ -93,6 +99,14 @@ public class FileOperationProvider {
     return file.mkdirs();
   }
 
+  /** Walk through the directory and return all meet requirement files in it. */
+  public ImmutableList<Path> listFilesRecursively(
+      File dir, int maxDepth, BiPredicate<Path, BasicFileAttributes> matcher) throws IOException {
+    try (Stream<Path> stream = Files.find(dir.toPath(), maxDepth, matcher)) {
+      return stream.collect(toImmutableList());
+    }
+  }
+
   public void deleteRecursively(File file) throws IOException {
     deleteRecursively(file, false);
   }
@@ -108,6 +122,20 @@ public class FileOperationProvider {
       MoreFiles.deleteRecursively(file.toPath(), RecursiveDeleteOption.ALLOW_INSECURE);
     } else {
       MoreFiles.deleteRecursively(file.toPath());
+    }
+  }
+
+  /**
+   * Deletes all files within the directory at the given path recursively, allowing insecure delete
+   * according to {@code allowInsecureDelete}. Does not delete the directory itself.
+   *
+   * @see RecursiveDeleteOption#ALLOW_INSECURE
+   */
+  public void deleteDirectoryContents(File file, boolean allowInsecureDelete) throws IOException {
+    if (allowInsecureDelete) {
+      MoreFiles.deleteDirectoryContents(file.toPath(), RecursiveDeleteOption.ALLOW_INSECURE);
+    } else {
+      MoreFiles.deleteDirectoryContents(file.toPath());
     }
   }
 
