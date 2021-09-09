@@ -21,6 +21,7 @@ import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.and
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_library;
 import static com.google.idea.blaze.android.targetmapbuilder.NbJavaTarget.java_library;
 
+import com.android.SdkConstants;
 import com.android.ide.common.repository.GradleCoordinate;
 import com.android.ide.common.util.PathString;
 import com.android.projectmodel.ExternalAndroidLibrary;
@@ -31,6 +32,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
+import com.google.idea.blaze.android.libraries.UnpackedAarUtils;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
 import com.google.idea.blaze.android.projectsystem.MavenArtifactLocator;
@@ -47,6 +49,8 @@ import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.PathUtil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -202,10 +206,14 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
 
   private ExternalAndroidLibrary getAarLibrary(
       PathString rootPath, String aarPath, @Nullable String resourcePackage) {
-    String cacheKey = UnpackedAars.cacheKeyForAar(rootPath.resolve(aarPath).getNativePath());
+    String path = rootPath.resolve(aarPath).getNativePath();
+    String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(path));
+    String aarDirName =
+        UnpackedAarUtils.generateAarDirectoryName(name, path.hashCode()) + SdkConstants.DOT_AAR;
     UnpackedAars unpackedAars = UnpackedAars.getInstance(getProject());
-    PathString aarFile = new PathString(unpackedAars.getAarDir(cacheKey));
-    PathString resFolder = new PathString(unpackedAars.getResourceDirectory(cacheKey));
+    File aarDir = new File(unpackedAars.getCacheDir(), aarDirName);
+    PathString aarFile = new PathString(aarDir);
+    PathString resFolder = new PathString(UnpackedAarUtils.getResDir(aarDir));
     return new ExternalLibraryImpl(LibraryKey.libraryNameFromArtifactLocation(source(aarPath)))
         .withLocation(aarFile)
         .withManifestFile(

@@ -19,16 +19,20 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAarTarget.aar_import;
 import static com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget.android_library;
 
+import com.android.SdkConstants;
 import com.android.tools.idea.res.AarResourceRepositoryCache;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
+import com.google.idea.blaze.android.libraries.UnpackedAarUtils;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.targetmapbuilder.NbAarTarget;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.PathUtil;
 import com.intellij.util.io.URLUtil;
 import java.io.File;
 import org.junit.After;
@@ -287,8 +291,13 @@ public class AswbGotoDeclarationTest extends BlazeAndroidIntegrationTestCase {
   }
 
   private VirtualFile getResourceFile(File aarLibraryFile, String relativePathToResourceFile) {
-    String cacheKey = UnpackedAars.cacheKeyForAar(aarLibraryFile.getAbsolutePath());
-    File resourceDir = UnpackedAars.getInstance(getProject()).getResourceDirectory(cacheKey);
+    String path = aarLibraryFile.getAbsolutePath();
+    String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(path));
+    String aarDirName =
+        UnpackedAarUtils.generateAarDirectoryName(name, path.hashCode()) + SdkConstants.DOT_AAR;
+    UnpackedAars unpackedAars = UnpackedAars.getInstance(getProject());
+    File aarDir = new File(unpackedAars.getCacheDir(), aarDirName);
+    File resourceDir = UnpackedAarUtils.getResDir(aarDir);
     return VirtualFileManager.getInstance()
         .findFileByUrl(
             URLUtil.FILE_PROTOCOL
