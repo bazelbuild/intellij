@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.data;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider;
@@ -113,7 +114,7 @@ public class LoggedProjectDataDirectoryTest {
 
   private void setBuildSystemTo(BuildSystem buildSystem) {
     BlazeImportSettings settings = createSettings(buildSystem);
-    when(importSettingsManager.getImportSettings()).thenReturn(settings);
+    lenient().when(importSettingsManager.getImportSettings()).thenReturn(settings);
   }
 
   private BlazeImportSettings createSettings(BuildSystem buildSystem) {

@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.libraries;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider;
@@ -55,8 +56,10 @@ public class LoggedJarCacheDirectoryTest {
     intellij.registerProjectService(JarCacheFolderProvider.class, jarCacheFolderProvider);
     intellij.registerProjectService(BlazeImportSettingsManager.class, importSettingsManager);
 
-    when(jarCacheFolderProvider.isJarCacheFolderReady()).thenReturn(true);
-    when(jarCacheFolderProvider.getJarCacheFolder()).thenReturn(temporaryFolder.getRoot());
+    lenient().when(jarCacheFolderProvider.isJarCacheFolderReady()).thenReturn(true);
+    lenient()
+        .when(jarCacheFolderProvider.getJarCacheFolder())
+        .thenReturn(temporaryFolder.getRoot());
     setBuildSystemTo(BuildSystem.Bazel);
   }
 
@@ -120,7 +123,7 @@ public class LoggedJarCacheDirectoryTest {
 
   private void setBuildSystemTo(BuildSystem buildSystem) {
     BlazeImportSettings settings = createSettings(buildSystem);
-    when(importSettingsManager.getImportSettings()).thenReturn(settings);
+    lenient().when(importSettingsManager.getImportSettings()).thenReturn(settings);
   }
 
   private static BlazeImportSettings createSettings(BuildSystem buildSystem) {
