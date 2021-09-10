@@ -37,8 +37,13 @@ import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
+import com.google.idea.blaze.base.projectview.section.ScalarSection;
+import com.google.idea.blaze.base.projectview.section.SectionKey;
+import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -49,18 +54,26 @@ import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.sdkcompat.testframework.EdtTestUtilWrapper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.lang.JavaVersion;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -74,6 +87,12 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
   private static final String DEFAULT_CONFIGURATION =
       "gcc-4.X.Y-crosstool-v17-hybrid-grtev3-k8-fastbuild";
+  // Tests involving Java workspaces should operate on this fixed Java version.
+  private static final JavaVersion JAVA_VERSION = LanguageLevel.JDK_1_9.toJavaVersion();
+  // Mimic JavaLanguageLevelSection.KEY as we don't want to add a dependency on the whole :java
+  // package for this language-independent class.
+  private static final SectionKey<Integer, ScalarSection<Integer>> JAVA_LANGUAGE_LEVEL_SECTION_KEY =
+      new SectionKey<>("java_language_level");
 
   private Disposable thisClassDisposable; // disposed prior to calling parent class's @After methods
   private MockProjectViewManager projectViewManager;
@@ -86,7 +105,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   private String execRoot;
 
   @Before
-  public void doSetup() {
+  public void doSetup() throws Throwable {
     thisClassDisposable = Disposer.newDisposable();
     projectViewManager = new MockProjectViewManager(getProject());
     new MockBlazeVcsHandler(thisClassDisposable);
@@ -121,6 +140,15 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
             .put(BlazeInfo.OUTPUT_PATH_KEY, outputPath)
             .put(BlazeInfo.PACKAGE_PATH_KEY, workspaceRoot.toString())
             .build());
+
+    // The tests run a full sync and hence also include the JDK setup part (if the workspace is
+    // Java). To ensure that the plugin can find a suitable JDK, we need to set it up here and
+    // ensure that the same Java language level is set in the project view file (see
+    // setProjectViewSet() below).
+    Sdk jdk = IdeaTestUtil.getMockJdk(JAVA_VERSION);
+    EdtTestUtilWrapper.runInEdtAndWait(
+        () ->
+            WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(jdk, thisClassDisposable)));
   }
 
   @After
@@ -176,7 +204,31 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   }
 
   protected void setProjectViewSet(ProjectViewSet projectViewSet) {
-    projectViewManager.setProjectView(projectViewSet);
+    ProjectViewSet adjustedProjectViewSet = addJavaLanguageLevelIfNecessary(projectViewSet);
+    projectViewManager.setProjectView(adjustedProjectViewSet);
+  }
+
+  private static ProjectViewSet addJavaLanguageLevelIfNecessary(ProjectViewSet projectViewSet) {
+    if (isJavaWorkspace(projectViewSet)
+        && projectViewSet.getScalarValue(JAVA_LANGUAGE_LEVEL_SECTION_KEY).isEmpty()) {
+      ProjectView additionalProjectView =
+          ProjectView.builder()
+              .add(ScalarSection.builder(JAVA_LANGUAGE_LEVEL_SECTION_KEY).set(JAVA_VERSION.feature))
+              .build();
+      return ProjectViewSet.builder()
+          .add(additionalProjectView)
+          .addAll(projectViewSet.getProjectViewFiles())
+          .build();
+    }
+    return projectViewSet;
+  }
+
+  private static boolean isJavaWorkspace(ProjectViewSet projectViewSet) {
+    WorkspaceType workspaceType =
+        projectViewSet
+            .getScalarValue(WorkspaceTypeSection.KEY)
+            .orElseGet(LanguageSupport::getDefaultWorkspaceType);
+    return workspaceType == WorkspaceType.JAVA;
   }
 
   protected ProjectViewSet getProjectViewSet() {
