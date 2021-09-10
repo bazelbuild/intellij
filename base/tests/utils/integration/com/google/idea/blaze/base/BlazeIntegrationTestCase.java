@@ -44,7 +44,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -105,7 +104,6 @@ public abstract class BlazeIntegrationTestCase {
 
     runWriteAction(
         () -> {
-          ProjectJdkTable.getInstance().addJdk(IdeaTestUtil.getMockJdk18());
           VirtualFile workspaceRootVirtualFile = fileSystem.createDirectory("workspace");
           workspaceRoot = new WorkspaceRoot(new File(workspaceRootVirtualFile.getPath()));
           projectDataDirectory = fileSystem.createDirectory("project-data-dir");
