@@ -314,6 +314,30 @@ def get_versions_to_build(product):
 
     return " ".join(aliases_to_build)
 
+def combine_visibilities(*args):
+    """
+    Concatenates the given lists of visibilities and returns the combined list.
+
+    If one of the given elements is //visibility:public then return //visibility:public
+    If one of the lists is None, skip it.
+    If the result list is empty, then return None.
+
+    Args:
+      *args: the list of visibilities lists to combine
+    Returns:
+      the concatenated visibility targets list
+    """
+    res = []
+    for arg in args:
+        if arg:
+            for visibility in arg:
+                if visibility == "//visibility:public":
+                    return ["//visibility:public"]
+                res.append(visibility)
+    if res == []:
+        return None
+    return res
+
 def no_mockito_extensions(name, jars, **kwargs):
     """Removes mockito extensions from jars.
 

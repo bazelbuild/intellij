@@ -22,6 +22,11 @@ load(
     "intellij_unit_test_suite",
 )
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
+load(
+    "//:build-visibility.bzl",
+    "IJWB_PACKAGES_VISIBILIY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
 
 licenses(["notice"])  # Apache 2.0
 
@@ -35,6 +40,7 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_java"],
     plugin_xmls = ["src/META-INF/ijwb.xml"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":ijwb_lib"],
 )
 
@@ -52,6 +58,7 @@ stamped_plugin_xml(
 java_library(
     name = "ijwb_lib",
     srcs = glob(["src/**/*.java"]),
+    visibility = IJWB_PACKAGES_VISIBILIY,
     deps = [
         "//base",
         "//intellij_platform_sdk:jsr305",
@@ -96,12 +103,14 @@ repackaged_files(
     srcs = ["//aspect:aspect_files"],
     prefix = "ijwb/aspect",
     strip_prefix = "/aspect",
+    visibility = IJWB_PACKAGES_VISIBILIY,
 )
 
 repackaged_files(
     name = "fast_build_javac",
     srcs = ["//java:fast_build_javac"],
     prefix = "ijwb/lib",
+    visibility = IJWB_PACKAGES_VISIBILIY,
 )
 
 intellij_plugin_debug_target(

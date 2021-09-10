@@ -11,6 +11,10 @@ load(
     "intellij_unit_test_suite",
 )
 load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide", "select_for_plugin_api")
+load(
+    "//:build-visibility.bzl",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
 
 licenses(["notice"])  # Apache 2.0
 
@@ -31,7 +35,7 @@ java_library(
         "clion-2021.1": ["src/com/google/idea/blaze/cpp/workaround/BulkSymbolTableBuildingChangeListener.java"],
         "default": [],
     }),
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//common/experiments",
@@ -65,7 +69,7 @@ intellij_plugin_library(
                                "clion-2021.1": [":workaround_cidr"],
                                "default": [],
                            }),
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":cpp"],
 )
 
@@ -73,7 +77,7 @@ java_library(
     name = "clion_sysprop_rule",
     testonly = 1,
     srcs = ["tests/utils/com/google/idea/blaze/cpp/ClionUnitTestSystemPropertiesRule.java"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -149,7 +153,7 @@ java_library(
         "tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppIntegrationTestCase.java",
         "tests/integrationtests/com/google/idea/blaze/cpp/BlazeCppResolvingTestCase.java",
     ],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//base:integration_test_utils",

@@ -1,7 +1,11 @@
-licenses(["notice"])  # Apache 2.0
-
 load("//build_defs:build_defs.bzl", "intellij_plugin_library")
 load("//testing:test_defs.bzl", "intellij_unit_test_suite")
+load(
+    "//:build-visibility.bzl",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
+
+licenses(["notice"])
 
 java_library(
     name = "dart",
@@ -18,7 +22,7 @@ java_library(
 intellij_plugin_library(
     name = "plugin_library",
     plugin_xmls = ["src/META-INF/blaze-dart.xml"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":dart"],
 )
 

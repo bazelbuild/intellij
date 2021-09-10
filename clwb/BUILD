@@ -19,12 +19,18 @@ load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
+load(
+    "//:build-visibility.bzl",
+    "CLWB_PACKAGES_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
 
 licenses(["notice"])  # Apache 2.0
 
 intellij_plugin_library(
     name = "plugin_library",
     plugin_xmls = ["src/META-INF/clwb.xml"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":clwb_lib"],
 )
 
@@ -79,6 +85,7 @@ repackaged_files(
     srcs = ["//aspect:aspect_files"],
     prefix = "clwb/aspect",
     strip_prefix = "/aspect",
+    visibility = CLWB_PACKAGES_VISIBILITY,
 )
 
 repackaged_files(
@@ -124,4 +131,5 @@ intellij_unit_test_suite(
 filegroup(
     name = "gdbserver_wrapper",
     srcs = ["gdbserver"],
+    visibility = ["//visibility:public"],
 )

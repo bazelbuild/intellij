@@ -16,11 +16,22 @@ load(
     "intellij_plugin_debug_target",
 )
 load("//:version.bzl", "VERSION")
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_plugin_api")
+load(
+    "//intellij_platform_sdk:build_defs.bzl",
+    "combine_visibilities",
+    "select_for_plugin_api",
+)
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
+)
+load(
+    "//:build-visibility.bzl",
+    "ASWB_PACKAGES_VISIBILITY",
+    "ASWB_PLUGIN_PACKAGES_VISIBILITY",
+    "ASWB_SUBPACKAGES_VISIBILITY",
+    "TEST_ASWB_SUBPACKAGES_VISIBILITY",
 )
 
 licenses(["notice"])  # Apache 2.0
@@ -35,6 +46,7 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_ndk_xml"],
     plugin_xmls = ["src/META-INF/aswb.xml"],
+    visibility = ASWB_PLUGIN_PACKAGES_VISIBILITY,
     deps = [":aswb_lib"],
 )
 
@@ -53,6 +65,7 @@ java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]),
+    visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
         ":aswb_lib",
         "//base",
@@ -68,6 +81,7 @@ java_library(
         "android-studio-2020.3": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
         "android-studio-2021.1": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
     }),
+    visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//base:integration_test_utils",
@@ -89,6 +103,10 @@ java_library(
         "android-studio-2021.1": glob(["sdkcompat/as211/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
+    visibility = combine_visibilities(
+        ASWB_SUBPACKAGES_VISIBILITY,
+        TEST_ASWB_SUBPACKAGES_VISIBILITY,
+    ),
     deps = [
         "//base",
         "//common/experiments",
@@ -221,12 +239,14 @@ repackaged_files(
     srcs = ["//aspect:aspect_files"],
     prefix = "aswb/aspect",
     strip_prefix = "/aspect",
+    visibility = ASWB_PACKAGES_VISIBILITY,
 )
 
 repackaged_files(
     name = "fast_build_javac",
     srcs = ["//java:fast_build_javac"],
     prefix = "aswb/lib",
+    visibility = ASWB_PACKAGES_VISIBILITY,
 )
 
 intellij_plugin_debug_target(
@@ -245,5 +265,6 @@ plugin_deploy_zip(
         ":fast_build_javac",
         ":plugin_jar",
     ],
+    visibility = ["//visibility:public"],
     zip_filename = "aswb_bazel.zip",
 )

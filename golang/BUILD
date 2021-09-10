@@ -10,16 +10,18 @@ load(
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
+load(
+    "//:build-visibility.bzl",
+    "GOLANG_PACKAGES_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
 
 licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "golang",
     srcs = glob(["src/**/*.java"]),
-    visibility = [
-        "//java/com/google/devtools/intellij/blaze/plugin/golang:__pkg__",
-        "//javatests/com/google/devtools/intellij/blaze/plugin/golang:__pkg__",
-    ],
+    visibility = GOLANG_PACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//common/experiments",
@@ -42,7 +44,7 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-go.xml"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":golang"],
 )
 
