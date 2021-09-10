@@ -30,7 +30,7 @@ public class JavaLanguageLevelHelper {
   // We need to flexibly switch to Java 11 as default language level at some point in the future.
   // Afterwards, we can remove this flag again.
   private static final BoolExperiment useJava11ForDefaultLanguageLevel =
-      new BoolExperiment("java.defaultLanguageLevel.java11.enabled", false);
+      new BoolExperiment("java.defaultLanguageLevel.java11.enabled", true);
 
   public static LanguageLevel getJavaLanguageLevel(
       ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
