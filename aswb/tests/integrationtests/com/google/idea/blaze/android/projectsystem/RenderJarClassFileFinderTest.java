@@ -100,9 +100,6 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
 
     MockExperimentService experimentService = new MockExperimentService();
     registerApplicationComponent(ExperimentService.class, experimentService);
-    experimentService.setExperimentString(
-        BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME,
-        RenderJarClassFileFinder.CLASS_FINDER_KEY);
     experimentService.setExperiment(RenderResolveOutputGroupProvider.buildOnSync, true);
     // Disable resource resolution from Render Jars
     experimentService.setExperiment(RenderJarClassFileFinder.resolveResourceClasses, false);

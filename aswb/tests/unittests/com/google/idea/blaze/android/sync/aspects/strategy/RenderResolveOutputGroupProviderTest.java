@@ -19,8 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.android.projectsystem.BlazeClassFileFinderFactory;
-import com.google.idea.blaze.android.projectsystem.RenderJarClassFileFinder;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -55,12 +53,6 @@ public class RenderResolveOutputGroupProviderTest extends BlazeTestCase {
 
     experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
-
-    // Enable RenderJarClassFileFinder, otherwise RenderResolveOutputGroupProvider never returns the
-    // "intellij-render-resolve-android" output group
-    experimentService.setExperimentString(
-        BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME,
-        RenderJarClassFileFinder.CLASS_FINDER_KEY);
   }
 
   /**

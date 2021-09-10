@@ -191,9 +191,9 @@ public class RenderJarCache {
       return;
     }
 
-    if (!cacheDir.exists()) {
-      if (!cacheDir.mkdirs()) {
-        logger.error("Could not create renderjar cache directory");
+    if (!FileOperationProvider.getInstance().exists(cacheDir)) {
+      if (!FileOperationProvider.getInstance().mkdirs(cacheDir)) {
+        logger.warn("Could not create renderjar cache directory");
         return;
       }
     }

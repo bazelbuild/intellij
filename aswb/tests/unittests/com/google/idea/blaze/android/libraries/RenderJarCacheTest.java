@@ -22,8 +22,6 @@ import static java.util.Arrays.stream;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.libraries.RenderJarCache.FileCacheAdapter;
-import com.google.idea.blaze.android.projectsystem.BlazeClassFileFinderFactory;
-import com.google.idea.blaze.android.projectsystem.RenderJarClassFileFinder;
 import com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider;
 import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
@@ -125,9 +123,6 @@ public class RenderJarCacheTest {
 
     // Required to enable RenderJarClassFileFinder
     MockExperimentService experimentService = new MockExperimentService();
-    experimentService.setExperimentString(
-        BlazeClassFileFinderFactory.CLASS_FILE_FINDER_NAME,
-        RenderJarClassFileFinder.CLASS_FINDER_KEY);
     experimentService.setExperiment(RenderResolveOutputGroupProvider.buildOnSync, true);
     intellijRule.registerApplicationService(ExperimentService.class, experimentService);
 
