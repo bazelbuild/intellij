@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.ui.problems.BlazeProblemsView;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -43,8 +42,6 @@ import javax.annotation.Nullable;
 
 /** Parses issues from blaze output, forwarding to {@link BlazeProblemsView}. */
 public class IssueOutputFilter implements Filter {
-
-  private static final Logger logger = Logger.getInstance(IssueOutputFilter.class);
 
   private final Project project;
   private final BlazeIssueParser issueParser;
@@ -75,7 +72,6 @@ public class IssueOutputFilter implements Filter {
     if (issue == null) {
       return null;
     }
-    logger.warn(issue.toString());
     List<ResultItem> links = new ArrayList<>();
     int offset = entireLength - line.length();
     if (linkToBlazeConsole) {

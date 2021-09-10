@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.toolwindow.TasksToolWindowService;
 import com.google.idea.blaze.base.ui.problems.BuildTasksProblemsView;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -45,9 +44,6 @@ import javax.annotation.Nullable;
  * <p>Copy and replacement of {@link IssueOutputFilter}.
  */
 public class ToolWindowTaskIssueOutputFilter implements Filter {
-
-  private static final Logger logger =
-      Logger.getInstance(com.google.idea.blaze.base.issueparser.IssueOutputFilter.class);
 
   private final Project project;
   private final BlazeIssueParser issueParser;
@@ -81,7 +77,6 @@ public class ToolWindowTaskIssueOutputFilter implements Filter {
     if (issue == null) {
       return null;
     }
-    logger.warn(issue.toString());
     List<ResultItem> links = new ArrayList<>();
     int offset = entireLength - line.length();
     if (linkToBlazeConsole) {
