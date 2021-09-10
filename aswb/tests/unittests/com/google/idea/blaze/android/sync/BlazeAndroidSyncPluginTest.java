@@ -40,6 +40,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyJarTracker;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
@@ -157,7 +158,8 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
     // Should return android-26 even though project view says android-28 because data returned from
     // sync takes higher priority.
     assertThat(rootManager.getProjectSdk().getName()).isEqualTo("android-sdk-26");
-    // Defaults to JDK 1.8, but sync result specifies 1.9, which takes higher priority.
+    // Defaults to a JDK different from JDK 9, but sync result specifies 9, which takes higher
+    // priority.
     assertThat(languageLevel).isEqualTo(LanguageLevel.JDK_1_9);
   }
 
@@ -180,7 +182,9 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
 
     // Even when sync data is null, the project sdk should still be available.
     assertThat(rootManager.getProjectSdk().getName()).isEqualTo("android-sdk-28");
-    assertThat(languageLevel).isEqualTo(LanguageLevel.JDK_1_8);
+    LanguageLevel expectedLanguageLevel =
+        JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData);
+    assertThat(languageLevel).isEqualTo(expectedLanguageLevel);
   }
 
   @Test
