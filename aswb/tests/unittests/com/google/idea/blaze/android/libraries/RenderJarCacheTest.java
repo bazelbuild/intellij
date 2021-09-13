@@ -17,10 +17,10 @@ package com.google.idea.blaze.android.libraries;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
-import static java.util.Arrays.stream;
+import static org.mockito.Mockito.verify;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.android.filecache.ArtifactCache;
 import com.google.idea.blaze.android.libraries.RenderJarCache.FileCacheAdapter;
 import com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider;
 import com.google.idea.blaze.base.MockProjectViewManager;
@@ -55,8 +55,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncMode;
-import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
@@ -73,12 +71,15 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.Paths;
+import java.util.Collection;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 /** Unit tests for {@link RenderJarCache} */
 @RunWith(JUnit4.class)
@@ -92,6 +93,7 @@ public class RenderJarCacheTest {
   private WorkspaceRoot workspaceRoot;
   private ArtifactLocationDecoder artifactLocationDecoder;
   private MockProjectViewManager projectViewManager;
+  private ArtifactCache mockedArtifactCache;
 
   @Before
   public void initTest() throws IOException {
@@ -110,8 +112,13 @@ public class RenderJarCacheTest {
 
     registerMockBlazeImportSettings();
 
+    mockedArtifactCache = Mockito.mock(ArtifactCache.class);
     intellijRule.registerProjectService(
-        RenderJarCache.class, new RenderJarCache(intellijRule.getProject()));
+        RenderJarCache.class,
+        new RenderJarCache(
+            intellijRule.getProject(),
+            RenderJarCache.getCacheDirForProject(intellijRule.getProject()),
+            mockedArtifactCache));
 
     intellijRule.registerApplicationService(
         FileOperationProvider.class, new FileOperationProvider());
@@ -152,13 +159,9 @@ public class RenderJarCacheTest {
         "  //com/foo/bar/qux:quz");
   }
 
-  /** Test that new JARs are copied to the cache */
+  /** Test that RenderJAR passes the correct JARs to ArtifactCache after a sync */
   @Test
-  public void incrementalSync_emptyCache_successfullyAddsJars() {
-    File cacheDir = RenderJarCache.getInstance(intellijRule.getProject()).getCacheDir();
-    assertThat(cacheDir.mkdirs()).isTrue();
-    assertThat(cacheDir.list()).hasLength(0); // ensure cache directory is empty to begin with
-
+  public void onSync_passesCorrectJarsToArtifactCache() {
     FileCache.EP_NAME
         .extensions()
         .forEach(
@@ -172,155 +175,20 @@ public class RenderJarCacheTest {
                     null,
                     SyncMode.INCREMENTAL));
 
-    assertThat(cacheDir.list()).hasLength(2);
-    assertThat(stream(cacheDir.listFiles()).map(File::lastModified))
-        .containsExactly(100000L, 100000L);
+    @SuppressWarnings("unchecked") // irrelevant unchecked conversion warning for artifactsCaptor
+    ArgumentCaptor<Collection<BlazeArtifact>> artifactsCaptor =
+        ArgumentCaptor.forClass(Collection.class);
 
-    String messages = outputSink.getMessages();
-    assertThat(messages).contains("Copied 2 Render JARs");
-  }
+    ArgumentCaptor<BlazeContext> contextCaptor = ArgumentCaptor.forClass(BlazeContext.class);
+    ArgumentCaptor<Boolean> removeCaptor = ArgumentCaptor.forClass(Boolean.class);
 
-  /** Test that a JAR no longer in build is removed after an incremental sync */
-  @Test
-  public void incrementalSync_obsoleteJarInCache_successfullyRemoved() throws IOException {
-    File cacheDir = RenderJarCache.getInstance(intellijRule.getProject()).getCacheDir();
-    assertThat(cacheDir.mkdirs()).isTrue();
+    verify(mockedArtifactCache, Mockito.times(1))
+        .putAll(artifactsCaptor.capture(), contextCaptor.capture(), removeCaptor.capture());
 
-    File obsoleteJar = new File(cacheDir, "obsoleteRender.jar");
-    assertThat(obsoleteJar.createNewFile()).isTrue();
-    assertThat(obsoleteJar.setLastModified(100L)).isTrue();
-
-    FileCache.EP_NAME
-        .extensions()
-        .forEach(
-            ep ->
-                ep.onSync(
-                    intellijRule.getProject(),
-                    context,
-                    projectViewManager.getProjectViewSet(),
-                    BlazeProjectDataManager.getInstance(intellijRule.getProject())
-                        .getBlazeProjectData(),
-                    null,
-                    SyncMode.INCREMENTAL));
-
-    assertThat(cacheDir.list()).hasLength(2);
-    assertThat(stream(cacheDir.listFiles()).map(File::lastModified))
-        .containsExactly(100000L, 100000L);
-
-    String messages = outputSink.getMessages();
-    assertThat(messages).contains("Copied 2 Render JARs");
-    assertThat(messages).contains("Removed 1 Render JARs");
-  }
-
-  /** Test that an outdated JAR in cache is replaced by the newer version from build */
-  @Test
-  public void incrementalSync_outdatedJarInCache_successfullyReplaced() throws IOException {
-    File cacheDir = RenderJarCache.getInstance(intellijRule.getProject()).getCacheDir();
-    assertThat(cacheDir.mkdirs()).isTrue();
-
-    String outdatedJarName =
-        RenderJarCache.cacheKeyForJar(
-            artifactLocationDecoder.resolveOutput(
-                getArtifactLocation("com/foo/bar/baz/baz_render_jar.jar")));
-    File outdatedJarFile = new File(cacheDir, outdatedJarName);
-    assertThat(outdatedJarFile.createNewFile()).isTrue();
-    assertThat(outdatedJarFile.setLastModified(100L)).isTrue();
-
-    FileCache.EP_NAME
-        .extensions()
-        .forEach(
-            ep ->
-                ep.onSync(
-                    intellijRule.getProject(),
-                    context,
-                    projectViewManager.getProjectViewSet(),
-                    BlazeProjectDataManager.getInstance(intellijRule.getProject())
-                        .getBlazeProjectData(),
-                    null,
-                    SyncMode.INCREMENTAL));
-
-    assertThat(cacheDir.list()).hasLength(2);
-    assertThat(stream(cacheDir.listFiles()).map(File::lastModified))
-        .containsExactly(100000L, 100000L);
-
-    String messages = outputSink.getMessages();
-    assertThat(messages).contains("Copied 2 Render JARs");
-    assertThat(messages).doesNotContainMatch("Removed \\d+ Render JARs");
-  }
-
-  /**
-   * Test that a partial sync does not remove JARs not in build information. Partial sync might be
-   * missing information about JARs that are built by an incremental/full sync, so the cache should
-   * not delete JARs after Partial Syncs
-   */
-  @Test
-  public void partialSync_refreshDoesNotRemoveObsoleteJar() throws IOException {
-    File cacheDir = RenderJarCache.getInstance(intellijRule.getProject()).getCacheDir();
-    assertThat(cacheDir.mkdirs()).isTrue();
-
-    File obsoleteJar = new File(cacheDir, "obsoleteRender.jar");
-    assertThat(obsoleteJar.createNewFile()).isTrue();
-    assertThat(obsoleteJar.setLastModified(100L)).isTrue();
-
-    FileCache.EP_NAME
-        .extensions()
-        .forEach(
-            ep ->
-                ep.onSync(
-                    intellijRule.getProject(),
-                    context,
-                    projectViewManager.getProjectViewSet(),
-                    BlazeProjectDataManager.getInstance(intellijRule.getProject())
-                        .getBlazeProjectData(),
-                    null,
-                    SyncMode.PARTIAL));
-
-    assertThat(cacheDir.list()).hasLength(3);
-    assertThat(stream(cacheDir.listFiles()).map(File::lastModified))
-        .containsExactly(100L, 100000L, 100000L);
-
-    String messages = outputSink.getMessages();
-    assertThat(messages).contains("Copied 2 Render JARs");
-    assertThat(messages).doesNotContainMatch("Removed \\d+ Render JARs");
-  }
-
-  /** Test that a cache refresh pull in the latest version of the JARs from the build */
-  @Test
-  public void cacheRefresh_updatesOutdatedJars() throws IOException {
-    File cacheDir = RenderJarCache.getInstance(intellijRule.getProject()).getCacheDir();
-    assertThat(cacheDir.mkdirs()).isTrue();
-
-    ImmutableList<String> outdatedJarNames =
-        ImmutableList.of(
-            RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/foo/bar/baz/baz_render_jar.jar"))),
-            RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/foo/bar/qux/qux_render_jar.jar"))));
-
-    for (String jarName : outdatedJarNames) {
-      File jarFile = new File(cacheDir, jarName);
-      assertThat(jarFile.createNewFile()).isTrue();
-      assertThat(jarFile.setLastModified(100L)).isTrue();
-    }
-
-    FileCache.EP_NAME
-        .extensions()
-        .forEach(
-            ep ->
-                ep.refreshFiles(
-                    intellijRule.getProject(),
-                    context,
-                    BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS)));
-
-    assertThat(cacheDir.list()).hasLength(2);
-    assertThat(stream(cacheDir.listFiles()).map(File::lastModified))
-        .containsExactly(100000L, 100000L);
-
-    String messages = outputSink.getMessages();
-    assertThat(messages).contains("Copied 2 Render JARs");
-    assertThat(messages).doesNotContainMatch("Removed \\d+ Render JARs");
+    Collection<BlazeArtifact> passedArtifact = artifactsCaptor.getValue();
+    assertThat(passedArtifact.stream().map(Object::toString))
+        .containsExactly(
+            "com/foo/bar/baz/baz_render_jar.jar", "com/foo/bar/qux/qux_render_jar.jar");
   }
 
   /**

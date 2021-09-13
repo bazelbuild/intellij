@@ -21,10 +21,13 @@ import static com.google.idea.blaze.base.sync.data.BlazeDataStorage.WORKSPACE_MO
 import static com.intellij.testFramework.UsefulTestCase.assertThrows;
 
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.filecache.CacheEntry;
+import com.google.idea.blaze.android.filecache.MockArtifactCache;
 import com.google.idea.blaze.android.libraries.RenderJarCache;
 import com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -32,6 +35,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -67,6 +71,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
   private final HashMap<String, Label> targetNameToLabel = new HashMap<>();
 
   private ArtifactLocationDecoder artifactLocationDecoder;
+  private MockArtifactCache artifactCache;
 
   @Before
   public void initTest() {
@@ -79,8 +84,16 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
         new MockArtifactLocationDecoder() {
           @Override
           public File decode(ArtifactLocation artifactLocation) {
-            return new File(
-                fileSystem.getRootDir(), artifactLocation.getExecutionRootRelativePath());
+            File f =
+                new File(fileSystem.getRootDir(), artifactLocation.getExecutionRootRelativePath());
+
+            // Create the artifact if it does not exist
+            // This allows us to set fileModifiedTime for the file which is used by RenderJarCache
+            FileOperationProvider.getInstance().mkdirs(f);
+
+            // Set last modified time for RenderJarCache to use
+            FileOperationProvider.getInstance().setFileModifiedTime(f, 1000L);
+            return f;
           }
         };
 
@@ -106,8 +119,12 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
 
     ApplicationManager.getApplication().runWriteAction(this::createAndRegisterModules);
 
+    artifactCache = new MockArtifactCache();
     registerExtension(FileCache.EP_NAME, new RenderJarCache.FileCacheAdapter());
-    registerProjectService(RenderJarCache.class, new RenderJarCache(getProject()));
+    registerProjectService(
+        RenderJarCache.class,
+        new RenderJarCache(
+            getProject(), RenderJarCache.getCacheDirForProject(getProject()), artifactCache));
 
     createBinaryJars();
     FileCache.EP_NAME.extensions().forEach(ep -> ep.initialize(getProject()));
@@ -123,24 +140,24 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     RenderJarClassFileFinder classFileFinder = new RenderJarClassFileFinder(workspaceModule);
 
     File cacheDir = RenderJarCache.getInstance(getProject()).getCacheDir();
-    String binAJar =
-        cacheDir.getAbsoluteFile()
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_a.jar")));
-    String binBJar =
-        cacheDir.getAbsoluteFile()
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_b.jar")));
-    String binCJar =
-        cacheDir.getAbsoluteFile()
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_c.jar")));
+
+    CacheEntry binACacheEntry =
+        CacheEntry.forArtifact(
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_a.jar")));
+    String binAJar = cacheDir.getAbsoluteFile() + "/" + binACacheEntry.getFileName();
+
+    CacheEntry binBCacheEntry =
+        CacheEntry.forArtifact(
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_b.jar")));
+    String binBJar = cacheDir.getAbsoluteFile() + "/" + binBCacheEntry.getFileName();
+
+    CacheEntry binCCacheEntry =
+        CacheEntry.forArtifact(
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_c.jar")));
+    String binCJar = cacheDir.getAbsoluteFile() + "/" + binCCacheEntry.getFileName();
 
     assertThat(classFileFinder.findClassFile("com.google.example.simple.src_a.SrcA"))
         .isEqualTo(fileSystem.findFile(binAJar + "!/com/google/example/simple/src_a/SrcA.class"));
@@ -204,24 +221,24 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     RenderJarClassFileFinder aClassFileFinder = new RenderJarClassFileFinder(aResourceModule);
 
     File cacheDir = RenderJarCache.getInstance(getProject()).getCacheDir();
-    String binAJar =
-        cacheDir.getAbsoluteFile()
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_a.jar")));
-    String binBJar =
-        cacheDir.getAbsoluteFile()
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_b.jar")));
-    String binCJar =
-        cacheDir.getAbsoluteFile()
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_c.jar")));
+
+    CacheEntry binACacheEntry =
+        CacheEntry.forArtifact(
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_a.jar")));
+    String binAJar = cacheDir.getAbsoluteFile() + "/" + binACacheEntry.getFileName();
+
+    CacheEntry binBCacheEntry =
+        CacheEntry.forArtifact(
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_b.jar")));
+    String binBJar = cacheDir.getAbsoluteFile() + "/" + binBCacheEntry.getFileName();
+
+    CacheEntry binCCacheEntry =
+        CacheEntry.forArtifact(
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_c.jar")));
+    String binCJar = cacheDir.getAbsoluteFile() + "/" + binCCacheEntry.getFileName();
 
     assertThat(aClassFileFinder.findClassFile("com.google.example.simple.src_a.SrcA"))
         .isEqualTo(fileSystem.findFile(binAJar + "!/com/google/example/simple/src_a/SrcA.class"));
@@ -258,24 +275,24 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     RenderJarClassFileFinder aClassFileFinder = new RenderJarClassFileFinder(aResourceModule);
 
     File cacheDir = RenderJarCache.getInstance(getProject()).getCacheDir();
-    String binAJar =
-        cacheDir.getAbsoluteFile()
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_a.jar")));
-    String binBJar =
-        cacheDir.getAbsoluteFile()
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_b.jar")));
-    String binCJar =
-        cacheDir.getAbsoluteFile()
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_c.jar")));
+
+    CacheEntry binACacheEntry =
+        CacheEntry.forArtifact(
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_a.jar")));
+    String binAJar = cacheDir.getAbsoluteFile() + "/" + binACacheEntry.getFileName();
+
+    CacheEntry binBCacheEntry =
+        CacheEntry.forArtifact(
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_b.jar")));
+    String binBJar = cacheDir.getAbsoluteFile() + "/" + binBCacheEntry.getFileName();
+
+    CacheEntry binCCacheEntry =
+        CacheEntry.forArtifact(
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_c.jar")));
+    String binCJar = cacheDir.getAbsoluteFile() + "/" + binCCacheEntry.getFileName();
 
     assertThat(aClassFileFinder.findClassFile("com.google.example.simple.trans_dep_a.TransDepA"))
         .isEqualTo(
@@ -318,6 +335,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     assertThat(workspaceModule).isNotNull();
 
     RenderJarClassFileFinder classFileFinder = new RenderJarClassFileFinder(workspaceModule);
+
     assertThrows(
         Throwable.class,
         "Attempting to load resource 'com.google.example.simple.bin_a.R$color' from RenderJAR.",
@@ -430,12 +448,11 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     fileSystem.createDirectory(cacheDirFile.getAbsolutePath());
     String cacheDir = cacheDirFile.getPath();
 
-    String binAJar =
-        cacheDir
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_a.jar")));
+    BlazeArtifact binAArtifact =
+        artifactLocationDecoder.resolveOutput(
+            getArtifactLocation("com/google/example/simple/bin_a.jar"));
+    CacheEntry binACacheEntry = CacheEntry.forArtifact(binAArtifact);
+    String binAJar = cacheDir + "/" + binACacheEntry.getFileName();
     fileSystem.createFile(binAJar);
     fileSystem.createFile(binAJar + "!/com/google/example/simple/bin_a/MainActivity.class");
     fileSystem.createFile(binAJar + "!/com/google/example/simple/bin_a/R$color.class");
@@ -446,13 +463,13 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     fileSystem.createFile(
         binAJar + "!/com/google/example/simple/trans_dep_a/TransDepA$Inner.class");
     fileSystem.createFile(binAJar + "!/com/google/example/simple/trans_dep_a/R$dimen.class");
+    artifactCache.addTrackedFile(binAArtifact, binAJar);
 
-    String binBJar =
-        cacheDir
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_b.jar")));
+    BlazeArtifact binBArtifact =
+        artifactLocationDecoder.resolveOutput(
+            getArtifactLocation("com/google/example/simple/bin_b.jar"));
+    CacheEntry binBCacheEntry = CacheEntry.forArtifact(binBArtifact);
+    String binBJar = cacheDir + "/" + binBCacheEntry.getFileName();
     fileSystem.createFile(binBJar);
     fileSystem.createFile(binBJar + "!/com/google/example/simple/bin_b/MainActivity.class");
     fileSystem.createFile(binBJar + "!/com/google/example/simple/bin_b/R$color.class");
@@ -463,13 +480,13 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     fileSystem.createFile(
         binBJar + "!/com/google/example/simple/trans_dep_b/TransDepB$Inner.class");
     fileSystem.createFile(binBJar + "!/com/google/example/simple/trans_dep_b/R$dimen.class");
+    artifactCache.addTrackedFile(binBArtifact, binBJar);
 
-    String binCJar =
-        cacheDir
-            + "/"
-            + RenderJarCache.cacheKeyForJar(
-                artifactLocationDecoder.resolveOutput(
-                    getArtifactLocation("com/google/example/simple/bin_c.jar")));
+    BlazeArtifact binCArtifact =
+        artifactLocationDecoder.resolveOutput(
+            getArtifactLocation("com/google/example/simple/bin_c.jar"));
+    CacheEntry binCCacheEntry = CacheEntry.forArtifact(binCArtifact);
+    String binCJar = cacheDir + "/" + binCCacheEntry.getFileName();
     fileSystem.createFile(binCJar);
     fileSystem.createFile(binCJar + "!/com/google/example/simple/bin_c/MainActivity.class");
     fileSystem.createFile(binCJar + "!/com/google/example/simple/bin_c/R$color.class");
@@ -480,6 +497,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     fileSystem.createFile(
         binCJar + "!/com/google/example/simple/trans_dep_c/TransDepC$Inner.class");
     fileSystem.createFile(binCJar + "!/com/google/example/simple/trans_dep_c/R$dimen.class");
+    artifactCache.addTrackedFile(binCArtifact, binCJar);
   }
 
   /**

@@ -83,6 +83,7 @@ java_library(
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
+        ":aswb_lib",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",

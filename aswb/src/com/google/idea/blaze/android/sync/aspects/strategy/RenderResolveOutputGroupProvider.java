@@ -25,7 +25,7 @@ import com.intellij.openapi.util.SystemInfo;
 
 /** Adds output group required by {@link RenderJarClassFileFinder} when it is enabled. */
 public class RenderResolveOutputGroupProvider implements OutputGroupsProvider {
-  private static final ImmutableSet<String> RESOLVE_OUTPUT_GROUP =
+  public static final ImmutableSet<String> RESOLVE_OUTPUT_GROUP =
       ImmutableSet.of("intellij-render-resolve-android");
 
   /**
