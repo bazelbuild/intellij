@@ -10,13 +10,18 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+load(
+    "//:build-visibility.bzl",
+    "PLUGIN_PACKAGES_VISIBILITY",
+    "PYTHON_PACKAGES_VISIBILITY",
+)
 
 licenses(["notice"])
 
 java_library(
     name = "python",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//java/com/google/devtools/intellij/blaze/plugin/python:__pkg__"],
+    visibility = PYTHON_PACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//common/experiments",
@@ -39,7 +44,7 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-python.xml"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":python"],
 )
 
@@ -102,7 +107,7 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]),
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//base:integration_test_utils",

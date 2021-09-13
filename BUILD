@@ -1,14 +1,21 @@
 #
 # Description: Blaze plugin for various IntelliJ products.
 #
+load(
+    "//:build-visibility.bzl",
+    "BAZEL_PLUGIN_SUBPACKAGES",
+    "create_plugin_packages_group",
+)
 
 licenses(["notice"])
+
+create_plugin_packages_group()
 
 # Changelog file
 filegroup(
     name = "changelog",
     srcs = ["CHANGELOG"],
-    visibility = ["//:__subpackages__"],
+    visibility = BAZEL_PLUGIN_SUBPACKAGES,
 )
 
 # IJwB tests, run with an IntelliJ plugin SDK

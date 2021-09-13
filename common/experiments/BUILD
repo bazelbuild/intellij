@@ -3,6 +3,10 @@ load(
     "//testing:test_defs.bzl",
     "intellij_unit_test_suite",
 )
+load(
+    "//:build-visibility.bzl",
+    "G3PLUGINS_VISIBILITY",
+)
 
 licenses(["notice"])  # Apache 2.0
 
@@ -33,6 +37,7 @@ intellij_plugin_library(
     name = "mock_experiment_service",
     testonly = 1,
     plugin_xmls = ["tests/utils/mock_experiment_service.xml"],
+    visibility = G3PLUGINS_VISIBILITY,
     deps = [":unit_test_utils"],
 )
 

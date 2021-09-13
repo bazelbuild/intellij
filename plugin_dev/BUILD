@@ -9,6 +9,10 @@ load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
 )
+load(
+    "//:build-visibility.bzl",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
 
 licenses(["notice"])
 
@@ -36,7 +40,7 @@ optional_plugin_xml(
 intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_xml"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":plugin_dev"],
 )
 

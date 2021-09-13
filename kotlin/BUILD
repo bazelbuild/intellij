@@ -10,13 +10,18 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+load(
+    "//:build-visibility.bzl",
+    "ASWB_SUBPACKAGES_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
 
 licenses(["notice"])
 
 java_library(
     name = "kotlin",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//java/com/google/devtools/intellij/blaze/plugin/aswb:__subpackages__"],
+    visibility = ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//common/experiments",
@@ -38,7 +43,7 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-kotlin.xml"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":kotlin"],
 )
 

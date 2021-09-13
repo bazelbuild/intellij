@@ -3,13 +3,18 @@
 #
 
 load("//build_defs:build_defs.bzl", "intellij_plugin_library")
+load(
+    "//:build-visibility.bzl",
+    "PLUGIN_PACKAGES_VISIBILITY",
+    "SKYLARK_PACKAGES_VISIBILITY",
+)
 
 licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "skylark",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//java/com/google/devtools/intellij/blaze/plugin/skylark:__pkg__"],
+    visibility = SKYLARK_PACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//common/experiments",
@@ -22,6 +27,6 @@ java_library(
 intellij_plugin_library(
     name = "plugin_library",
     plugin_xmls = ["src/META-INF/blaze-skylark.xml"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":skylark"],
 )

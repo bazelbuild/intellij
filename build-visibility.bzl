@@ -15,3 +15,26 @@ CLWB_PACKAGES_VISIBILITY = None
 IJWB_PACKAGES_VISIBILIY = None
 
 GOLANG_PACKAGES_VISIBILITY = None
+
+ASPECT_PROTO_VISIBILITY = None
+
+BAZEL_PLUGIN_SUBPACKAGES = ["//:__subpackages__"]
+
+JAVASCRIPT_PACKAGES_VISIBILITY = None
+
+PYTHON_PACKAGES_VISIBILITY = None
+
+SKYLARK_PACKAGES_VISIBILITY = None
+
+FAST_BUILD_JAVAC_VISIBILITY = [
+    "//aswb:__pkg__",
+    "//ijwb:__pkg__",
+]
+
+def create_plugin_packages_group(name = None):
+    # This group is not needed externally
+    pass
+
+def create_proto_visibility_group(name = None):
+    # This group is not needed externally
+    pass

@@ -2,13 +2,25 @@
 # Description:
 # Proto dependencies from bazel.
 #
+load(
+    "//intellij_platform_sdk:build_defs.bzl",
+    "combine_visibilities",
+)
+load(
+    "//:build-visibility.bzl",
+    "ASPECT_PROTO_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+    "create_proto_visibility_group",
+)
 
 licenses(["notice"])  # Apache 2.0
+
+create_proto_visibility_group()
 
 java_import(
     name = "proto_deps",
     jars = [":repackaged_proto_deps"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
 )
 
 proto_library(
@@ -19,27 +31,33 @@ proto_library(
 
 java_proto_library(
     name = "common_java_proto",
-    visibility = ["//visibility:public"],
+    visibility = combine_visibilities(
+        ASPECT_PROTO_VISIBILITY,
+        PLUGIN_PACKAGES_VISIBILITY,
+    ),
     deps = [":common_proto"],
 )
 
 proto_library(
     name = "fast_build_info_proto",
     srcs = ["fast_build_info.proto"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":common_proto"],
 )
 
 java_proto_library(
     name = "fast_build_info_java_proto",
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":fast_build_info_proto"],
 )
 
 proto_library(
     name = "intellij_ide_info_proto",
     srcs = ["intellij_ide_info.proto"],
-    visibility = ["//visibility:public"],
+    visibility = combine_visibilities(
+        ASPECT_PROTO_VISIBILITY,
+        PLUGIN_PACKAGES_VISIBILITY,
+    ),
     deps = [
         ":common_proto",
     ],
@@ -47,7 +65,10 @@ proto_library(
 
 java_proto_library(
     name = "intellij_ide_info_java_proto",
-    visibility = ["//visibility:public"],
+    visibility = combine_visibilities(
+        ASPECT_PROTO_VISIBILITY,
+        PLUGIN_PACKAGES_VISIBILITY,
+    ),
     deps = [":intellij_ide_info_proto"],
 )
 

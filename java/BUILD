@@ -10,6 +10,11 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+load(
+    "//:build-visibility.bzl",
+    "FAST_BUILD_JAVAC_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
 
 licenses(["notice"])  # Apache 2.0
 
@@ -34,7 +39,7 @@ java_library(
         exclude = _FAST_BUILD_JAVAC_SRCS + _FAST_BUILD_JAVAC_IMPL_SRCS,
     ),
     javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":fast_build_javac_interface",
         ":neverlinked_jpda-jdi",
@@ -58,11 +63,7 @@ java_library(
 java_library(
     name = "fast_build_javac",
     srcs = _FAST_BUILD_JAVAC_SRCS + _FAST_BUILD_JAVAC_IMPL_SRCS,
-    visibility = [
-        "//aswb:__pkg__",
-        "//ijwb:__pkg__",
-        "//java/com/google/devtools/intellij/blaze/plugin:__subpackages__",
-    ],
+    visibility = FAST_BUILD_JAVAC_VISIBILITY,
     deps = ["//third_party/java/jdk:langtools"],
 )
 
@@ -98,7 +99,7 @@ intellij_plugin_library(
         ":optional_coverage",
     ],
     plugin_xmls = ["src/META-INF/blaze-java.xml"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":java"],
 )
 

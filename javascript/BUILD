@@ -10,13 +10,18 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
+load(
+    "//:build-visibility.bzl",
+    "JAVASCRIPT_PACKAGES_VISIBILITY",
+    "PLUGIN_PACKAGES_VISIBILITY",
+)
 
 licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "javascript",
     srcs = glob(["src/**/*.java"]),
-    visibility = ["//java/com/google/devtools/intellij/blaze/plugin/javascript:__pkg__"],
+    visibility = JAVASCRIPT_PACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//common/experiments",
@@ -37,7 +42,7 @@ intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [":optional_xml"],
     plugin_xmls = ["src/META-INF/blaze-javascript.xml"],
-    visibility = ["//visibility:public"],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":javascript"],
 )
 
