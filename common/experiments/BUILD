@@ -5,7 +5,9 @@ load(
 )
 load(
     "//:build-visibility.bzl",
+    "COMMON_PLUGINS_VISIBILITY",
     "G3PLUGINS_VISIBILITY",
+    "SERVICES_EXPERIMENT_SUBPACKAGES",
 )
 
 licenses(["notice"])  # Apache 2.0
@@ -14,10 +16,7 @@ java_library(
     name = "experiments",
     srcs = glob(["src/**/*.java"]),
     resources = [":experiment_properties"],
-    visibility = [
-        # commonplugins_visibility
-        "//visibility:public",
-    ],
+    visibility = COMMON_PLUGINS_VISIBILITY,
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
@@ -27,7 +26,7 @@ java_library(
 filegroup(
     name = "experiment_properties",
     srcs = ["src/com/google/idea/common/experiments/experiment.properties"],
-    visibility = ["//java/com/google/devtools/intellij/boq/services/experiments:__subpackages__"],
+    visibility = SERVICES_EXPERIMENT_SUBPACKAGES,
 )
 
 # includes an test ExperimentService registered in plugin XML. This is required
@@ -45,10 +44,7 @@ java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/**/*.java"]),
-    visibility = [
-        # commonplugins_visibility
-        "//visibility:public",
-    ],
+    visibility = COMMON_PLUGINS_VISIBILITY,
     deps = [
         ":experiments",
         "//intellij_platform_sdk:jsr305",

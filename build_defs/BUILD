@@ -1,11 +1,12 @@
 # Description:
 #
 # Scripts for building IntelliJ plugins
+load(
+    "//:build-visibility.bzl",
+    "INTELLIJ_PLUGINS_VISIBILITY",
+)
 
-package(default_visibility = [
-    # intellijplugins_visibility
-    "//visibility:public",
-])
+package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
 
 licenses(["notice"])  # Apache 2.0
 

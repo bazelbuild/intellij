@@ -1,5 +1,11 @@
 # Testing infrastructure for the plugin's Skylark aspect
 
+load(
+    "//:build-visibility.bzl",
+    "ASPECT_TEST_RULES_VISIBILITY_TO_ALL",
+    "ASPECT_TEST_RULES_VISIBILITY_TO_TESTS",
+)
+
 licenses(["notice"])  # Apache 2.0
 
 proto_library(
@@ -10,10 +16,7 @@ proto_library(
 
 java_proto_library(
     name = "intellij_aspect_test_fixture_java_proto",
-    visibility = [
-        # aspectpackages_visibility
-        "//aspect/testing/tests:__subpackages__",
-    ],
+    visibility = ASPECT_TEST_RULES_VISIBILITY_TO_TESTS,
     deps = [":intellij_aspect_test_fixture_proto"],
 )
 
@@ -21,10 +24,7 @@ java_binary(
     name = "IntellijAspectTestFixtureBuilder",
     testonly = True,
     srcs = ["src/com/google/idea/blaze/aspect/IntellijAspectTestFixtureBuilder.java"],
-    visibility = [
-        # aspectpackages_visibility
-        "//aspect/testing/tests:__subpackages__",
-    ],
+    visibility = ASPECT_TEST_RULES_VISIBILITY_TO_TESTS,
     deps = [
         ":intellij_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
@@ -37,10 +37,7 @@ java_library(
     name = "IntellijAspectTest",
     testonly = 1,
     srcs = ["src/com/google/idea/blaze/aspect/IntellijAspectTest.java"],
-    visibility = [
-        # aspectpackages_visibility
-        "//aspect/testing:__subpackages__",
-    ],
+    visibility = ASPECT_TEST_RULES_VISIBILITY_TO_ALL,
     deps = [
         ":intellij_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
@@ -61,10 +58,7 @@ proto_library(
 java_proto_library(
     name = "fast_build_aspect_test_fixture_java_proto",
     testonly = True,
-    visibility = [
-        # aspectpackages_visibility
-        "//aspect/testing:__subpackages__",
-    ],
+    visibility = ASPECT_TEST_RULES_VISIBILITY_TO_ALL,
     deps = [":fast_build_aspect_test_fixture_proto"],
 )
 
@@ -72,10 +66,7 @@ java_binary(
     name = "FastBuildAspectTestFixtureBuilder",
     testonly = True,
     srcs = ["src/com/google/idea/blaze/aspect/FastBuildAspectTestFixtureBuilder.java"],
-    visibility = [
-        # aspectpackages_visibility
-        "//aspect/testing:__subpackages__",
-    ],
+    visibility = ASPECT_TEST_RULES_VISIBILITY_TO_ALL,
     deps = [
         ":fast_build_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",
@@ -88,10 +79,7 @@ java_library(
     name = "FastBuildAspectLoader",
     testonly = True,
     srcs = ["src/com/google/idea/blaze/aspect/FastBuildAspectRule.java"],
-    visibility = [
-        # aspectpackages_visibility
-        "//aspect/testing:__subpackages__",
-    ],
+    visibility = ASPECT_TEST_RULES_VISIBILITY_TO_ALL,
     deps = [
         ":fast_build_aspect_test_fixture_java_proto",
         "//aspect/testing:guava",

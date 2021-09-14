@@ -12,13 +12,18 @@ load(
     "select_from_plugin_api_directory",
     "select_from_plugin_api_version_directory",
 )
+load(
+    "//:build-visibility.bzl",
+    "ASPECT_TOOLS_PACKAGE",
+    "INTELLIJ_PLUGINS_VISIBILITY",
+    "create_test_libs_visibility_package",
+)
 
 licenses(["notice"])  # Apache2
 
-package(default_visibility = [
-    # intellijplugins_visibility
-    "//visibility:public",
-])
+package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
+
+create_test_libs_visibility_package()
 
 config_setting(
     name = "intellij-latest",
@@ -425,21 +430,6 @@ java_library(
     exports = [":plugin_api_internal"],
 )
 
-package_group(
-    name = "test_libs_visibility",
-    packages = [
-        "//...",
-        "//java/com/google/devtools/intellij/blaze/plugin/...",
-        "//javatests/com/google/assistant/galup/devtools/intellij/...",
-        "//javatests/com/google/dart/intellij/...",
-        "//javatests/com/google/devtools/intellij/blaze/plugin/...",
-        "//javatests/com/google/firebase/rules/plugins/intellij/...",
-        "//third_party/java/jetbrains/dart/...",
-        "//third_party/java_src/intellijprotobufplugin/...",
-        "//third_party/java_src/pytype_pycharm/...",
-    ],
-)
-
 # These libraries should only be used by open-source plugins.
 # Otherwise, prefer using the google3 versions of these libraries. Note that
 # //third_party/java/truth must be repackaged, because it pulls in Guava.
@@ -468,7 +458,7 @@ java_library(
 
 java_library(
     name = "guava_for_external_binaries",
-    visibility = ["//aspect/tools:__pkg__"],
+    visibility = ASPECT_TOOLS_PACKAGE,
     exports = select_from_plugin_api_directory(
         android_studio = [":guava"],
         clion = [":guava"],

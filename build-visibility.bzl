@@ -31,6 +31,21 @@ FAST_BUILD_JAVAC_VISIBILITY = [
     "//ijwb:__pkg__",
 ]
 
+COMMON_PLUGINS_VISIBILITY = ["//visibility:public"]
+
+SDK_COMPAT_VISIBILITY = ["//visibility:public"]
+
+ASPECT_TEST_RULES_VISIBILITY_TO_TESTS = [
+    "//aspect/testing/tests:__subpackages__",
+]
+ASPECT_TEST_RULES_VISIBILITY_TO_ALL = [
+    "//aspect/testing:__subpackages__",
+]
+
+SERVICES_EXPERIMENT_SUBPACKAGES = None
+
+ASPECT_TOOLS_PACKAGE = ["//aspect/tools:__pkg__"]
+
 def create_plugin_packages_group(name = None):
     # This group is not needed externally
     pass
@@ -38,3 +53,19 @@ def create_plugin_packages_group(name = None):
 def create_proto_visibility_group(name = None):
     # This group is not needed externally
     pass
+
+def create_common_plugins_package(name = None):
+    # This group is not needed externally
+    pass
+
+def create_sdkcompat_visibility_package(name = None):
+    # This group is not needed externally
+    pass
+
+def create_test_libs_visibility_package(name = None):
+    native.package_group(
+        name = "test_libs_visibility",
+        packages = [
+            "//...",
+        ],
+    )

@@ -1,12 +1,14 @@
+load(
+    "//:build-visibility.bzl",
+    "COMMON_PLUGINS_VISIBILITY",
+)
+
 licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "settings",
     srcs = glob(["src/**/*.java"]),
-    visibility = [
-        # commonplugins_visibility
-        "//visibility:public",
-    ],
+    visibility = COMMON_PLUGINS_VISIBILITY,
     deps = [
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",

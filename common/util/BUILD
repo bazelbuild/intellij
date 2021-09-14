@@ -1,9 +1,11 @@
+load(
+    "//:build-visibility.bzl",
+    "COMMON_PLUGINS_VISIBILITY",
+)
+
 licenses(["notice"])
 
-package(default_visibility = [
-    # commonplugins_visibility
-    "//visibility:public",
-])
+package(default_visibility = COMMON_PLUGINS_VISIBILITY)
 
 java_library(
     name = "binaryhelper",
