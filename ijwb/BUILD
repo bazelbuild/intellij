@@ -102,7 +102,7 @@ repackaged_files(
     name = "aspect_directory",
     srcs = ["//aspect:aspect_files"],
     prefix = "ijwb/aspect",
-    strip_prefix = "/aspect",
+    strip_prefix = "/third_party/intellij/bazel",
     visibility = IJWB_PACKAGES_VISIBILIY,
 )
 
