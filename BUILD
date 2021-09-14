@@ -1,6 +1,7 @@
 #
 # Description: Blaze plugin for various IntelliJ products.
 #
+# Test import pull-request
 load(
     "//:build-visibility.bzl",
     "BAZEL_PLUGIN_SUBPACKAGES",
