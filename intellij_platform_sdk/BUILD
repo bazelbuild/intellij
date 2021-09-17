@@ -19,9 +19,9 @@ load(
     "create_test_libs_visibility_package",
 )
 
-licenses(["notice"])  # Apache2
-
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
+
+licenses(["notice"])  # Apache2
 
 create_test_libs_visibility_package()
 
