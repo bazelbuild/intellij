@@ -22,6 +22,7 @@ import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usages.TextChunk;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory.IndexingTimes;
 import com.jetbrains.python.psi.LanguageLevel;
 import java.nio.file.Path;
@@ -147,5 +148,10 @@ public final class BaseSdkCompat {
     // Switch to ProjectDataManager#createModifiableModelsProvider in 2021.3 for a public, stable
     // API to create an IdeModifiableModelsProvider.
     return new IdeModifiableModelsProviderImpl(project);
+  }
+
+  /** #api203: inline into {@code BlazeKotlinSyncPlugin} */
+  public static void wrapWithAllowSlowOperations(Runnable runnable) {
+    SlowOperations.allowSlowOperations(runnable::run);
   }
 }

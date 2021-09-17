@@ -157,4 +157,9 @@ public final class BaseSdkCompat {
   public static IdeModifiableModelsProvider createModifiableModelsProvider(Project project) {
     return new IdeModifiableModelsProviderImpl(project);
   }
+
+  /** #api203: inline into {@code BlazeKotlinSyncPlugin} */
+  public static void wrapWithAllowSlowOperations(Runnable runnable) {
+    runnable.run();
+  }
 }
