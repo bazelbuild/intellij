@@ -24,7 +24,9 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -33,9 +35,11 @@ import com.intellij.psi.PsiFile;
 import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Variant of the built-in position manager which handles files outside the project. */
@@ -78,6 +82,13 @@ class ExternalFilePositionManager extends PositionManagerImpl {
       throws NoDataException {
     indexQualifiedClassNames(position.getFile());
     return super.locationsOfLine(type, position);
+  }
+
+  @Override
+  @Nullable
+  public Set<? extends FileType> getAcceptedFileTypes() {
+    // This position manager should be used on Java Files only.
+    return Collections.singleton(JavaFileType.INSTANCE);
   }
 
   private void indexQualifiedClassNames(PsiFile psiFile) {
