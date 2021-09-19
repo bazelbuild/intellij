@@ -78,7 +78,7 @@ We welcome contributions to support new IDE versions. However, to make
 the review process faster and easier, we recommend the following:
 
   * We can only accept small pull requests. Smaller pull requests tend to have 
-    less review comments and hence can get submitted much faster. They also tend
+    fewer review comments and hence can get submitted much faster. They also tend
     to conflict less with our internal code base, simplifying the integration for us. 
     For example, you should have separate pull requests each focusing on a certain incompatible change
     rather than having a large pull request fixing multiple ones.
@@ -140,7 +140,7 @@ We may also be able to accept contributions to fix general issues or adding new 
   * Improvements for old not supported IDE versions will not be accepted.
     Your changes should target the currently supported IDE versions. 
     You can find a list of these versions [here](./intellij_platform_sdk/build_defs.bzl#L31).
-  * We can't accept sylistic, refactoring, or "cleanup" changes.
+  * We can't accept stylistic, refactoring, or "cleanup" changes.
   * We have very limited bandwidth, and applying patches upstream is a
     time-consuming process. Large patches generally can't be accepted unless
     there's clear value for all our users.
