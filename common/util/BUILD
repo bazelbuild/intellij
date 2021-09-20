@@ -3,9 +3,9 @@ load(
     "COMMON_PLUGINS_VISIBILITY",
 )
 
-licenses(["notice"])
-
 package(default_visibility = COMMON_PLUGINS_VISIBILITY)
+
+licenses(["notice"])
 
 java_library(
     name = "binaryhelper",
