@@ -17,7 +17,7 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-canary": "android-studio-2021.1",
     "clion-latest": "clion-2021.1",
     "clion-latest-mac": "clion-2021.1-mac",
-    "clion-beta": "clion-2021.1",
+    "clion-beta": "clion-2021.2",
     "clion-under-dev": "clion-2021.2",
     # Indirect ij_product mapping for Bazel Plugin OSS
     "intellij-oss-stable": "intellij-2021.2",
