@@ -15,12 +15,15 @@
  */
 package com.google.idea.blaze;
 
+import com.google.common.base.Splitter;
 import com.google.idea.blaze.aspect.IntellijAspectTest;
 
 /** Abstract test class for Bazel aspect tests */
 public abstract class BazelIntellijAspectTest extends IntellijAspectTest {
 
   protected BazelIntellijAspectTest() {
-    super("aspect/testing/tests/src");
+    // Get the TEST_BINARY path from the environment variable and use only the directories
+    // before the package
+    super(Splitter.on("/com/").splitToList(System.getenv("TEST_BINARY")).get(0));
   }
 }

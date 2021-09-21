@@ -17,6 +17,7 @@ java_library(
     srcs = ["tests/src/com/google/idea/blaze/BazelIntellijAspectTest.java"],
     visibility = ["//aspect/testing:__subpackages__"],
     deps = [
+        ":guava",
         "//aspect/testing/rules:IntellijAspectTest",
     ],
 )

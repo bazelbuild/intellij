@@ -17,6 +17,7 @@ package com.google.idea.blaze.aspect.java.javatest;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.base.Splitter;
 import com.google.devtools.intellij.aspect.FastBuildAspectTestFixtureOuterClass.FastBuildAspectTestFixture;
 import com.google.devtools.intellij.aspect.FastBuildInfo.FastBuildBlazeData;
 import com.google.idea.blaze.aspect.FastBuildAspectRule;
@@ -33,7 +34,10 @@ public final class JavaTestFastBuildAspectTest {
 
   @Rule
   public FastBuildAspectRule aspectLoader =
-      new FastBuildAspectRule("aspect/testing/tests/src");
+      new FastBuildAspectRule(
+          // Get the TEST_BINARY path from the environment variable and use only the directories
+          // before the package
+          Splitter.on("/com/").splitToList(System.getenv("TEST_BINARY")).get(0));
 
   @Test
   public void testNoJavaLauncherSpecified() throws Exception {
