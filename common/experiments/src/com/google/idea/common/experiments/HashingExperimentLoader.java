@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  * An experiment loader that handles hashing the experiment names, for sources that store the data
  * unhashed.
  */
-abstract class HashingExperimentLoader implements ExperimentLoader {
+public abstract class HashingExperimentLoader implements ExperimentLoader {
 
   private static final class ExperimentCache {
     private final ImmutableMap<String, String> previousUnhashedExperiments;
@@ -61,5 +61,5 @@ abstract class HashingExperimentLoader implements ExperimentLoader {
         .collect(toImmutableMap(e -> hashExperimentName(e.getKey()), Map.Entry::getValue));
   }
 
-  abstract ImmutableMap<String, String> getUnhashedExperiments();
+  protected abstract ImmutableMap<String, String> getUnhashedExperiments();
 }

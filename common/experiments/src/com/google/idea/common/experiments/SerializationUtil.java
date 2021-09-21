@@ -26,11 +26,11 @@ import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /** Utils for serialization. */
-final class SerializationUtil {
+public final class SerializationUtil {
 
   private SerializationUtil() {}
 
-  static void saveToDisk(File file, Serializable serializable) throws IOException {
+  public static void saveToDisk(File file, Serializable serializable) throws IOException {
     ensureExists(file.getParentFile());
     try (FileOutputStream fos = new FileOutputStream(file);
         ObjectOutputStream oos = new ObjectOutputStream(fos)) {
@@ -39,7 +39,7 @@ final class SerializationUtil {
   }
 
   @Nullable
-  static Object loadFromDisk(File file) throws IOException {
+  public static Object loadFromDisk(File file) throws IOException {
     if (!file.exists()) {
       return null;
     }
