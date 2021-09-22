@@ -16,8 +16,6 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-# Test import pull-request
-
 licenses(["notice"])  # Apache 2.0
 
 _FAST_BUILD_JAVAC_SRCS = ["src/com/google/idea/blaze/java/fastbuild/FastBuildJavac.java"]
