@@ -103,7 +103,7 @@ java_library(
         "android-studio-2020.3": glob(["sdkcompat/as203/**/*.java"]),
         "android-studio-2021.1": glob(["sdkcompat/as211/**/*.java"]),
     }),
-    resources = glob(["resources/**/*"]),
+    resources = glob(["src/icons/resources/**/*"]),
     visibility = combine_visibilities(
         ASWB_SUBPACKAGES_VISIBILITY,
         TEST_ASWB_SUBPACKAGES_VISIBILITY,

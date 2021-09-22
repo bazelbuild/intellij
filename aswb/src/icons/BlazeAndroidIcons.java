@@ -21,15 +21,12 @@ import javax.swing.Icon;
 /** Class to manage icons used by the Blaze plugin. */
 public class BlazeAndroidIcons {
 
-  private static final String BASE = "/";
+  private static final String BASE = "resources/icons/";
 
-  public static final Icon MobileInstallRun =
-      load("aswb/resources/icons/mobileInstallRun.png"); // 16x16
-  public static final Icon MobileInstallDebug =
-      load("aswb/resources/icons/mobileInstallDebug.png"); // 16x16
-  public static final Icon Crow = load("aswb/resources/icons/crow.png"); // 16x16
-  public static final Icon CrowToolWindow =
-      load("aswb/resources/icons/crowToolWindow.png"); // 13x13
+  public static final Icon MobileInstallRun = load("mobileInstallRun.png"); // 16x16
+  public static final Icon MobileInstallDebug = load("mobileInstallDebug.png"); // 16x16
+  public static final Icon Crow = load("crow.png"); // 16x16
+  public static final Icon CrowToolWindow = load("crowToolWindow.png"); // 13x13
 
   private static Icon load(String path) {
     return IconLoader.getIcon(BASE + path, BlazeAndroidIcons.class);

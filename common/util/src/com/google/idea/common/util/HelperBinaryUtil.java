@@ -36,7 +36,7 @@ public final class HelperBinaryUtil {
   private static final Map<String, File> cachedFiles = new HashMap<>();
 
   @Nullable
-  public static synchronized File getHelperBinary(String binaryFilePath) {
+  public static synchronized File getHelperBinary(Class<?> aClass, String binaryFilePath) {
     // Assume the binaries have unique names. This saves having
     // to recursively clean up directories
     String binaryName = new File(binaryFilePath).getName();
@@ -51,7 +51,13 @@ public final class HelperBinaryUtil {
     }
     file = new File(tempDirectory, binaryName);
 
-    URL url = HelperBinaryUtil.class.getResource(binaryFilePath);
+    URL url;
+    if (aClass == null) {
+      url = HelperBinaryUtil.class.getResource(binaryFilePath);
+    } else {
+      url = aClass.getResource(binaryFilePath);
+    }
+
     if (url == null) {
       logger.error(String.format("Helper binary '%s' was not found", binaryFilePath));
       return null;

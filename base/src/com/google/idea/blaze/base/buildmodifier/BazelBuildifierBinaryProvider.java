@@ -22,13 +22,12 @@ import javax.annotation.Nullable;
 /** Provides the bazel buildifier binary. */
 public class BazelBuildifierBinaryProvider implements BuildifierBinaryProvider {
 
-  private static final String BASE = "/";
-  private static final String BUILDIFIER_BINARY_PATH =
-      BASE + "base/resources/binaries/bazel-buildifier";
+  private static final String BUILDIFIER_BINARY_PATH = "resources/binaries/bazel-buildifier";
 
   @Nullable
   @Override
   public File getBuildifierBinary() {
-    return HelperBinaryUtil.getHelperBinary(BUILDIFIER_BINARY_PATH);
+    return HelperBinaryUtil.getHelperBinary(
+        BazelBuildifierBinaryProvider.class, BUILDIFIER_BINARY_PATH);
   }
 }
