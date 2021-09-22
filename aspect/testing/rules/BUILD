@@ -1,6 +1,6 @@
 # Testing infrastructure for the plugin's Skylark aspect
 
-# Test import pull-request
+# Test import pull-request 2
 
 load(
     "//:build-visibility.bzl",
