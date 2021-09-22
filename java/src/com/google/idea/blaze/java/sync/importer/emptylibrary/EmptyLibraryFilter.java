@@ -16,9 +16,7 @@
 
 package com.google.idea.blaze.java.sync.importer.emptylibrary;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.IOException;
@@ -39,9 +37,6 @@ import java.util.jar.JarInputStream;
 public class EmptyLibraryFilter implements Predicate<BlazeArtifact> {
   private static final String FN_MANIFEST = "MANIFEST.MF";
 
-  @VisibleForTesting
-  public static final FeatureRolloutExperiment filterExperiment =
-      new FeatureRolloutExperiment("blaze.empty.jar.filter");
   /**
    * Any JAR that is this size (in bytes) or smaller is assumed to be empty.
    *
@@ -67,16 +62,8 @@ public class EmptyLibraryFilter implements Predicate<BlazeArtifact> {
 
   EmptyLibraryFilter() {}
 
-  static boolean isEnabled() {
-    return filterExperiment.isEnabled();
-  }
-
   @Override
   public boolean test(BlazeArtifact blazeLibrary) {
-    if (!isEnabled()) {
-      return false;
-    }
-
     try {
       return isEmpty(blazeLibrary);
     } catch (IOException e) {
@@ -84,7 +71,7 @@ public class EmptyLibraryFilter implements Predicate<BlazeArtifact> {
       return false; // If something went wrong reading the file, consider it non-empty
     }
   }
-  
+
   /**
    * Returns true if the given JAR is effectively empty (i.e. it has nothing other than a manifest
    * and directories).

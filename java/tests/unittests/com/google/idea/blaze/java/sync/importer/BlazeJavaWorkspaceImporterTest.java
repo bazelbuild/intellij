@@ -74,7 +74,6 @@ import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
-import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilter;
 import com.google.idea.blaze.java.sync.jdeps.MockJdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -1098,7 +1097,6 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
   @Test
   public void testEmptyLibraryExcluded() {
-    experimentService.setFeatureRolloutExperiment(EmptyLibraryFilter.filterExperiment, 100);
     ProjectView projectView =
         ProjectView.builder()
             .add(

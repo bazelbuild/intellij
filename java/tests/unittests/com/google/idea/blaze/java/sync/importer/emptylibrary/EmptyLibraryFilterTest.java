@@ -42,7 +42,6 @@ public class EmptyLibraryFilterTest extends BlazeTestCase {
 
     MockExperimentService experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
-    experimentService.setFeatureRolloutExperiment(EmptyLibraryFilter.filterExperiment, 100);
   }
 
   @Test

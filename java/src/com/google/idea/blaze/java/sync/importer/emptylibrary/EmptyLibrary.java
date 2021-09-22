@@ -81,11 +81,6 @@ public class EmptyLibrary {
       Map<LibraryKey, BlazeJarLibrary> allLibraries,
       @Nullable SyncState oldSyncState,
       BlazeJavaImportResult.Builder importResultBuilder) {
-    if (!EmptyLibraryFilter.isEnabled()) {
-      // Set emptyJarTracker to what it was before
-      importResultBuilder.setEmptyJarTracker(EmptyJarTracker.getEmptyJarTracker(oldSyncState));
-      return ImmutableMap.copyOf(allLibraries);
-    }
 
     return Scope.push(
         parentContext,
