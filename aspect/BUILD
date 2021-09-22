@@ -7,8 +7,6 @@ load(
     "define_flag_hack",
 )
 
-# Test import pull-request
-
 licenses(["notice"])  # Apache 2.0
 
 # Files needed at runtime for blaze-invoking integration tests
