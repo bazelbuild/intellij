@@ -45,6 +45,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import java.util.Arrays;
 import java.util.Collection;
@@ -77,6 +78,8 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
   private static final LanguageVersion DEFAULT_VERSION = LanguageVersion.KOTLIN_1_2;
   private static final BoolExperiment setCompilerFlagsExperiment =
       new BoolExperiment("blaze.kotlin.sync.set.compiler.flags", true);
+  private static final BoolExperiment earlyKotlinLibraryAdditionEnabled =
+      new BoolExperiment("blaze.kotlin.sync.add.library.early.enable", true);
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
@@ -235,6 +238,19 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     setJavaLanguageLevel(
         kotlinFacet,
         JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData));
+
+    // #api211
+    // b/198439707: When the old project model is in use, get ModifiableModel for a module may lead
+    // to thousands of root change events if it has thousands of jars attached. In order to
+    // avoid this, we attach kotlin library to ModifiableModel before it's committed. So
+    // KotlinLibraryConfigurator.configureModule does not need to attach kotlin library to module
+    // and it avoids potential conversion.
+    if (earlyKotlinLibraryAdditionEnabled.getValue()
+        && (Registry.is("ide.old.project.model", false)
+            || !Registry.is("ide.new.project.model", true))) {
+      KotlinLibraryConfiguratorForOldProjectModel.INSTANCE.configureModel(
+          project, workspaceModifiableModel, workspaceModule);
+    }
   }
 
   /**
