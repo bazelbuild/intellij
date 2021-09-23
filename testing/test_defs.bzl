@@ -69,9 +69,12 @@ def intellij_unit_test_suite(
         class_rules = [],
         size = "medium",
         **kwargs):
-    """Creates a java_test rule comprising all valid test classes in the specified srcs.
+    """Creates a java_test rule composed of all valid test classes in the specified srcs.
 
-    Only classes ending in "Test.java" will be recognized.
+    The resulting environment is minimal and any interactions with IntelliJ need additional dependencies.
+
+    Notes:
+      Only classes ending in "Test.java" will be recognized.
 
     Args:
       name: name of this rule.
@@ -123,11 +126,21 @@ def intellij_integration_test_suite(
         runtime_deps = [],
         required_plugins = None,
         **kwargs):
-    """Creates a java_test rule comprising all valid test classes in the specified srcs.
+    """Creates a java_test rule composed of all valid test classes in the specified srcs and specifically tailored for intellij-ide integration tests.
 
-    Only classes ending in "Test.java" will be recognized.
+    The resulting testing environment runs IntelliJ in headless mode.
+    The IntelliJ instance has system properties set,
+    folders set up, and will contain bundled plugins and testing libraries.
+    The tests can depend on other plugins via the required_plugins parameter
+    and have runtime dependencies on (e.g., Protobuf libraries) via runtime_deps.
 
-    All test classes must be located in the blaze package calling this function.
+    The additional scaffolding makes tests slower to execute
+    and more prone to breakage by upstream changes,
+    hence, intellij_unit_test_suite should be preferred.
+
+    Notes:
+      Only classes ending in "Test.java" will be recognized.
+      All test classes must be located in the blaze package calling this function.
 
     Args:
       name: name of this rule.
@@ -137,7 +150,7 @@ def intellij_integration_test_suite(
       additional_class_rules: extra JUnit class rules to apply to these tests.
       size: the test size.
       jvm_flags: extra flags to be passed to the test vm.
-      runtime_deps: the required runtime_deps.
+      runtime_deps: the required runtime dependencies, (e.g., intellij_plugin targets).
       required_plugins: optional comma-separated list of plugin IDs. Integration tests will fail if
           these plugins aren't loaded at runtime.
       **kwargs: Any other args to be passed to the java_test.
