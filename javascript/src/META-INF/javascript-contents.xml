@@ -35,6 +35,7 @@
         language="JavaScript"/>
     <editorNotificationProvider
         implementation="com.google.idea.blaze.typescript.AddTsConfigNotificationProvider"/>
+    <postStartupActivity implementation="com.google.idea.blaze.javascript.run.producers.NonBlazeProducerSuppressor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -52,10 +53,4 @@
         implementation="com.google.idea.blaze.javascript.BlazeJavascriptResolveScopeProvider"
         order="first"/>
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.javascript.run.producers.NonBlazeProducerSuppressor</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>

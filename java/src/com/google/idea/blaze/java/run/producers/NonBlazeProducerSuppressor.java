@@ -22,16 +22,16 @@ import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
-public class NonBlazeProducerSuppressor implements ProjectComponent {
+public class NonBlazeProducerSuppressor implements StartupActivity {
 
   private static final String KOTLIN_PLUGIN_ID = "org.jetbrains.kotlin";
   private static final String ANDROID_PLUGIN_ID = "org.jetbrains.android";
@@ -123,14 +123,8 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
     }
   }
 
-  private final Project project;
-
-  public NonBlazeProducerSuppressor(Project project) {
-    this.project = project;
-  }
-
   @Override
-  public void projectOpened() {
+  public void runActivity(Project project) {
     if (Blaze.isBlazeProject(project)) {
       suppressProducers(project);
     }

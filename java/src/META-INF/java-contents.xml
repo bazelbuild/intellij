@@ -132,6 +132,7 @@
     <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
         serviceImplementation="com.google.idea.blaze.java.run.BlazeCompilerManager"
         overrides="true"/>
+    <postStartupActivity implementation="com.google.idea.blaze.java.run.producers.NonBlazeProducerSuppressor"/>
   </extensions>
 
   <application-components>
@@ -141,9 +142,6 @@
   </application-components>
 
   <project-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.java.run.producers.NonBlazeProducerSuppressor</implementation-class>
-    </component>
     <component>
       <interface-class>com.google.idea.blaze.java.fastbuild.FastBuildService</interface-class>
       <implementation-class>com.google.idea.blaze.java.fastbuild.FastBuildServiceImpl</implementation-class>

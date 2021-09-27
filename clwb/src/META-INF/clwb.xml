@@ -28,6 +28,7 @@
 
     <editorNotificationProvider implementation="com.google.idea.blaze.plugin.CMakeNotificationFilter" />
     <moduleType id="BLAZE_CPP_MODULE" implementationClass="com.google.idea.blaze.clwb.BlazeCppModuleType"/>
+    <postStartupActivity implementation="com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.debugger">
@@ -50,9 +51,6 @@
   <project-components>
     <component>
       <implementation-class>com.google.idea.blaze.plugin.ClwbProjectSpecificInitializer</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor</implementation-class>
     </component>
   </project-components>
 

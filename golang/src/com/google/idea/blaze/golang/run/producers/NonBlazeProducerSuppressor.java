@@ -20,11 +20,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
-public class NonBlazeProducerSuppressor implements ProjectComponent {
+public class NonBlazeProducerSuppressor implements StartupActivity {
 
   /**
    * Returns a list of run configuration producers to suppress for Blaze projects.
@@ -40,14 +40,8 @@ public class NonBlazeProducerSuppressor implements ProjectComponent {
               com.goide.execution.testing.frameworks.gobench.GobenchRunConfigurationProducer.class,
               com.goide.execution.testing.frameworks.gocheck.GocheckRunConfigurationProducer.class);
 
-  private final Project project;
-
-  public NonBlazeProducerSuppressor(Project project) {
-    this.project = project;
-  }
-
   @Override
-  public void projectOpened() {
+  public void runActivity(Project project) {
     if (Blaze.isBlazeProject(project)) {
       suppressProducers(project);
     }

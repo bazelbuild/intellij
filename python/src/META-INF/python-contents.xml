@@ -39,6 +39,7 @@
     <programRunner implementation="com.google.idea.blaze.python.run.BlazePyDebugRunner"/>
     <consoleFilterProvider implementation="com.google.idea.blaze.python.run.filter.BlazePyTracebackFilter$BlazePyTracebackFilterProvider"/>
     <postStartupActivity implementation="com.google.idea.blaze.python.sdk.FallbackPythonSdkSuggester$SdkInitializer"/>
+    <postStartupActivity implementation="com.google.idea.blaze.python.run.producers.NonBlazeProducerSuppressor"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -66,11 +67,4 @@
       <implementation-class>com.google.idea.blaze.python.run.BlazePyTracebackParser$OverrideUpstreamParser</implementation-class>
     </component>
   </application-components>
-
-  <project-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.python.run.producers.NonBlazeProducerSuppressor</implementation-class>
-    </component>
-  </project-components>
-
 </idea-plugin>

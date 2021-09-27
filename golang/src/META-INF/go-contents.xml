@@ -43,11 +43,6 @@
     <programRunner implementation="com.google.idea.blaze.golang.run.BlazeGoDebugRunner"/>
     <documentationProvider implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver$GoPackageDocumentationProvider"/>
     <additionalLibraryRootsProvider implementation="com.google.idea.blaze.golang.sync.BlazeGoAdditionalLibraryRootsProvider"/>
+    <postStartupActivity implementation="com.google.idea.blaze.golang.run.producers.NonBlazeProducerSuppressor"/>
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.golang.run.producers.NonBlazeProducerSuppressor</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>

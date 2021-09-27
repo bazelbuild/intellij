@@ -40,11 +40,6 @@
         order="first"/>
     <stepsBeforeRunProvider
         implementation="com.google.idea.blaze.scala.run.producers.GenerateDeployableJarTaskProvider"/>
+    <postStartupActivity implementation="com.google.idea.blaze.scala.run.producers.NonBlazeProducerSuppressor"/>
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.scala.run.producers.NonBlazeProducerSuppressor</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>
