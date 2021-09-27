@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -43,9 +44,9 @@ final class ToolWindowTabs {
     this.project = project;
   }
 
-  void addTask(Task task, ImmutableList<Filter> consoleFilters) {
+  void addTask(Task task, ImmutableList<Filter> consoleFilters, Disposable parentDisposable) {
     Tab tab = tabs.computeIfAbsent(task.getType(), this::newTab);
-    tab.behaviour.addTask(task, project, consoleFilters);
+    tab.behaviour.addTask(task, project, consoleFilters, parentDisposable);
     getContentManager().setSelectedContent(tab.content);
   }
 

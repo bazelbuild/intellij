@@ -90,13 +90,14 @@ final class ConsoleView implements Disposable {
 
   private JComponent content;
 
-  static ConsoleView create(Project project, ImmutableList<Filter> consoleFilters) {
-    ConsoleView view = new ConsoleView(project);
+  static ConsoleView create(
+      Project project, ImmutableList<Filter> consoleFilters, Disposable parentDisposable) {
+    ConsoleView view = new ConsoleView(project, parentDisposable);
     view.setCustomFilters(consoleFilters);
     return view;
   }
 
-  private ConsoleView(Project project) {
+  private ConsoleView(Project project, Disposable parentDisposable) {
     this.project = project;
     consoleView =
         new ConsoleViewImpl(
@@ -109,6 +110,7 @@ final class ConsoleView implements Disposable {
     addWrappedPredefinedFilters();
     // add target filter last, so it doesn't override other links containing a target string
     consoleView.addMessageFilter(new BlazeTargetFilter(false));
+    Disposer.register(parentDisposable, this);
     Disposer.register(this, consoleView);
   }
 

@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -30,7 +31,7 @@ import com.intellij.serviceContainer.NonInjectable;
 import java.time.Instant;
 
 /** Service that controls the Blaze Outputs Tool Window. */
-public final class TasksToolWindowService {
+public final class TasksToolWindowService implements Disposable {
 
   /** Provider for the current value of "now" for users of {@code java.time}. */
   @FunctionalInterface
@@ -62,7 +63,7 @@ public final class TasksToolWindowService {
   /** Mark the given task as started and notify the view to reflect the started task. */
   public void startTask(Task task, ImmutableList<Filter> consoleFilters) {
     task.setStartTime(timeSource.now());
-    ApplicationManager.getApplication().invokeLater(() -> tabs.addTask(task, consoleFilters));
+    ApplicationManager.getApplication().invokeLater(() -> tabs.addTask(task, consoleFilters, this));
   }
 
   /** Update the state and view with new task output */
@@ -115,6 +116,9 @@ public final class TasksToolWindowService {
   public void removeStopHandler(Task task) {
     ApplicationManager.getApplication().invokeLater(() -> tabs.setStopHandler(task, null));
   }
+
+  @Override
+  public void dispose() {}
 
   public static TasksToolWindowService getInstance(Project project) {
     return ServiceManager.getService(project, TasksToolWindowService.class);

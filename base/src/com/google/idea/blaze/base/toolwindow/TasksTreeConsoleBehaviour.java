@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.common.ui.templates.Behavior;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import javax.annotation.Nullable;
@@ -34,10 +35,13 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
     this.model = model;
   }
 
-  void addTask(Task task, Project project, ImmutableList<Filter> filters) {
+  void addTask(
+      Task task, Project project, ImmutableList<Filter> filters, Disposable parentDisposable) {
     TasksTreeModel treeModel = model.getTreeModel();
     treeModel.tasksTreeProperty().addTask(task);
-    model.getConsolesOfTasks().computeIfAbsent(task, t -> ConsoleView.create(project, filters));
+    model
+        .getConsolesOfTasks()
+        .computeIfAbsent(task, t -> ConsoleView.create(project, filters, parentDisposable));
     treeModel.selectedTaskProperty().setValue(task); // select the new task
   }
 

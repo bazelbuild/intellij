@@ -200,6 +200,7 @@ public class BlazeConsoleView implements Disposable {
     Content content =
         ContentFactory.SERVICE.getInstance().createContent(layoutComponent, null, true);
     content.setCloseable(false);
+    content.setDisposer(this);
     toolWindow.getContentManager().addContent(content);
   }
 
