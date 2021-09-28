@@ -62,6 +62,10 @@ import org.jetbrains.annotations.Nullable;
 public class RenderJarClassFileFinder implements BlazeClassFileFinder {
   @VisibleForTesting public static final String CLASS_FINDER_KEY = "RenderJarClassFileFinder";
 
+  /** Experiment to control whether class file finding from render jars should be enabled. */
+  private static final BoolExperiment enabled =
+      new BoolExperiment("aswb.renderjar.cff.enabled", true);
+
   /**
    * Experiment to toggle whether resource resolution is allowed from Render JARs. Render JARs
    * should not resolve resources by default.
@@ -112,6 +116,10 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
   @Nullable
   @Override
   public VirtualFile findClassFile(String fqcn) {
+    if (!isEnabled()) {
+      return null;
+    }
+
     // Render JAR should not resolve any resources. All resources should be available to the IDE
     // through ResourceRepository. Attempting to resolve resources from Render JAR indicates that
     // ASwB hasn't properly set up resources for the project.
@@ -245,6 +253,6 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
   }
 
   public static boolean isEnabled() {
-    return BlazeClassFileFinderFactory.getClassFileFinderName().equals(CLASS_FINDER_KEY);
+    return enabled.getValue();
   }
 }
