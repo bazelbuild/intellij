@@ -19,17 +19,9 @@ import com.android.tools.idea.projectsystem.ClassFileFinder;
 import com.intellij.openapi.module.Module;
 
 /**
- * A BlazeClassFileFinder is an implementation of {@link ClassFileFinder} for Blaze projects that
- * sits behind the "blaze.class.file.finder.name" experimental flag. Calling {@link
- * BlazeClassFileFinderFactory#createBlazeClassFileFinder(Module)} selects the appropriate
- * implementation of this interface to use based on the flag's value.
- *
- * <p>This layer of abstraction lets us explore several strategies for finding class files in ASWB
- * simultaneously, while also allowing us to preserve the original implementation just in case
- * something breaks.
- *
- * <p>TODO: Once we've settled on a particular method for finding class files, we can remove this
- * interface, BlazeClassFileFinderFactory, and the other experimental implementations.
+ * A BlazeClassFileFinder is an implementation of {@link ClassFileFinder} for Blaze projects. Use
+ * the factory method {@link BlazeClassFileFinderFactory#createBlazeClassFileFinder(Module)} to
+ * create an instance.
  */
 public interface BlazeClassFileFinder extends ClassFileFinder {
   /**
