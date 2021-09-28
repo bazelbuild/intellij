@@ -57,7 +57,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.mock.MockPsiManager;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.progress.ProgressManager;
@@ -65,6 +64,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.psi.PsiManager;
 import java.io.File;
 import java.util.Arrays;
@@ -613,7 +613,13 @@ public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
   }
 
   private void createVirtualFile(String path) {
-    VirtualFile stub = BaseSdkTestCompat.newValidStubVirtualFile(mockFileSystem);
+    VirtualFile stub =
+        new StubVirtualFile(mockFileSystem) {
+          @Override
+          public boolean isValid() {
+            return true;
+          }
+        };
     when(mockFileSystem.findFileByIoFile(new File(path))).thenReturn(stub);
   }
 

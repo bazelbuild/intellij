@@ -16,8 +16,6 @@
 package com.google.idea.sdkcompat;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import java.time.Duration;
@@ -29,16 +27,6 @@ import java.time.Instant;
  */
 public final class BaseSdkTestCompat {
   private BaseSdkTestCompat() {}
-
-  /** #api202 Creating a StubVirtualFile requires a filesystem parameter in 2020.3 */
-  public static StubVirtualFile newValidStubVirtualFile(VirtualFileSystem fileSystem) {
-    return new StubVirtualFile(fileSystem) {
-      @Override
-      public boolean isValid() {
-        return true;
-      }
-    };
-  }
 
   /**
    * #api203: Doing duration calculations is not necessary anymore. Inline into IndexingLoggerTest.
