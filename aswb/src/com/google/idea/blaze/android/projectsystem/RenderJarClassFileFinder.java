@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
+import static java.util.stream.Collectors.joining;
+
 import com.android.tools.idea.projectsystem.ClassFileFinderUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
@@ -39,7 +41,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -131,14 +132,13 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (projectData == null) {
-      log.error("Could not find BlazeProjectData for project " + project.getName());
+      log.warn("Could not find BlazeProjectData for project " + project.getName());
       return null;
     }
 
     ImmutableSet<TargetKey> binaryTargets = getBinaryTargets();
-
     if (binaryTargets.isEmpty()) {
-      log.error(
+      log.warn(
           String.format(
               "No binaries for module %s. Adding a binary target to the projectview and resyncing"
                   + " might fix the issue.",
@@ -160,15 +160,7 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
       }
     }
 
-    log.error(
-        String.format(
-            "Could not find %s\nModule: %s\nBinary Targets:\n  %s",
-            fqcn,
-            module.getName(),
-            binaryTargets.stream()
-                .map(t -> t.getLabel().toString())
-                .collect(Collectors.joining("\n  "))));
-
+    log.warn(String.format("Could not find class `%1$s` (module: `%2$s`)", fqcn, module.getName()));
     return null;
   }
 
@@ -202,6 +194,14 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
       binaryTargets = ImmutableSet.of();
       log.warn("Could not find AndroidResourceModule for " + module.getName());
     }
+    log.info(
+        String.format(
+            "Binary targets for module `%1$s`: %2$s",
+            module.getName(),
+            binaryTargets.stream()
+                .limit(5)
+                .map(t -> t.getLabel().toString())
+                .collect(joining(", "))));
     return binaryTargets;
   }
 
