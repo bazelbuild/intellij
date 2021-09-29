@@ -21,7 +21,7 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 
 // SkylarkLineBreakpointType extends from XLineBreakpointTypeBase which uses raw
 // XBreakpointProperties. The raw use of XBreakpointProperties needs to propagate to all affected
-// classes. Check XLineBreakpointTypeBase again after #api202.
+// classes. Check XLineBreakpointTypeBase again after #api212.
 @SuppressWarnings("rawtypes")
 class SkylarkLineBreakpointHandler
     extends XBreakpointHandler<XLineBreakpoint<XBreakpointProperties>> {

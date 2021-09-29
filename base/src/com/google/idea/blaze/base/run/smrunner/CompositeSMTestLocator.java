@@ -31,7 +31,7 @@ public class CompositeSMTestLocator implements SMTestLocator {
     this.locators = locators;
   }
 
-  // Super method uses raw Location. Check super method again after #api202.
+  // Super method uses raw Location. Check super method again after #api212.
   @SuppressWarnings("rawtypes")
   @Override
   public List<Location> getLocation(

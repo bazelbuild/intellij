@@ -68,8 +68,8 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.execution.ParametersListUtil;
@@ -412,12 +412,14 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
               new DefaultComboBoxModel<>(
                   Ordering.usingToString().sortedCopy(javaLabels).toArray(new Label[0])));
       targetCombo.setRenderer(
-          new ListCellRendererWrapper<Label>() {
+          new SimpleListCellRenderer<Label>() {
             @Override
-            // Super method uses raw JList. Check super method again after #api202.
-            @SuppressWarnings("rawtypes")
             public void customize(
-                JList list, @Nullable Label value, int index, boolean selected, boolean hasFocus) {
+                JList<? extends Label> list,
+                @Nullable Label value,
+                int index,
+                boolean selected,
+                boolean hasFocus) {
               setText(value == null ? null : value.toString());
             }
           });

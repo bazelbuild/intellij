@@ -54,8 +54,7 @@ public class BlazeCommandRunConfigurationType implements ConfigurationType {
     }
 
     @Override
-    // Super method uses raw BeforeRunTask. Check super method again after #api202.
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({"rawtypes", "RedundantSuppression"}) // Super method uses raw BeforeRunTask.
     public void configureBeforeRunTaskDefaults(
         Key<? extends BeforeRunTask> providerID, BeforeRunTask task) {
       task.setEnabled(providerID.equals(BlazeBeforeRunTaskProvider.ID));
