@@ -18,7 +18,6 @@ package com.google.idea.blaze.android.projectsystem;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer.moduleNameForAndroidModule;
 import static com.google.idea.blaze.base.sync.data.BlazeDataStorage.WORKSPACE_MODULE_NAME;
-import static com.intellij.testFramework.UsefulTestCase.assertThrows;
 
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.filecache.CacheEntry;
@@ -336,21 +335,10 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
 
     RenderJarClassFileFinder classFileFinder = new RenderJarClassFileFinder(workspaceModule);
 
-    assertThrows(
-        Throwable.class,
-        "Attempting to load resource 'com.google.example.simple.bin_a.R$color' from RenderJAR.",
-        () -> classFileFinder.findClassFile("com.google.example.simple.bin_a.R$color"));
-
-    assertThrows(
-        Throwable.class,
-        "Attempting to load resource 'com.google.example.simple.src_b.R$attr' from RenderJAR.",
-        () -> classFileFinder.findClassFile("com.google.example.simple.src_b.R$attr"));
-
-    assertThrows(
-        Throwable.class,
-        "Attempting to load resource 'com.google.example.simple.trans_dep_c.R$dimen' from"
-            + " RenderJAR.",
-        () -> classFileFinder.findClassFile("com.google.example.simple.trans_dep_c.R$dimen"));
+    assertThat(classFileFinder.findClassFile("com.google.example.simple.bin_a.R$color")).isNull();
+    assertThat(classFileFinder.findClassFile("com.google.example.simple.src_b.R$attr")).isNull();
+    assertThat(classFileFinder.findClassFile("com.google.example.simple.trans_dep_c.R$dimen"))
+        .isNull();
   }
 
   /**

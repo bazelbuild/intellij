@@ -20,6 +20,7 @@ import static java.util.stream.Collectors.joining;
 import com.android.tools.idea.projectsystem.ClassFileFinder;
 import com.android.tools.idea.projectsystem.ClassFileFinderUtil;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.libraries.RenderJarCache;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
@@ -64,7 +65,7 @@ import org.jetbrains.annotations.Nullable;
 public class RenderJarClassFileFinder implements ClassFileFinder {
   /** Experiment to control whether class file finding from render jars should be enabled. */
   private static final BoolExperiment enabled =
-      new BoolExperiment("aswb.renderjar.cff.enabled", true);
+      new BoolExperiment("aswb.renderjar.cff.enabled.1", true);
 
   /**
    * Experiment to toggle whether resource resolution is allowed from Render JARs. Render JARs
@@ -109,11 +110,29 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
       return null;
     }
 
+    // Ever since Compose support was introduced in AS, finding class files is invoked during the
+    // normal course of opening an editor. The contract for this method requires that it shouldn't
+    // throw any exceptions, but we've had a few bugs where this method threw an exception, which
+    // resulted in users not being able to open Kotlin files at all. In order to avoid this
+    // scenario, we wrap the underlying call and ensure that no exceptions are thrown.
+    try {
+      return findClass(fqcn);
+    } catch (Error e) {
+      log.warn(
+          String.format(
+              "Unexpected error while finding the class file for `%1$s`: %2$s",
+              fqcn, Throwables.getRootCause(e).getMessage()));
+      return null;
+    }
+  }
+
+  @Nullable
+  public VirtualFile findClass(String fqcn) {
     // Render JAR should not resolve any resources. All resources should be available to the IDE
     // through ResourceRepository. Attempting to resolve resources from Render JAR indicates that
     // ASwB hasn't properly set up resources for the project.
     if (isResourceClass(fqcn) && !resolveResourceClasses.getValue()) {
-      log.error(String.format("Attempting to load resource '%s' from RenderJAR.", fqcn));
+      log.warn(String.format("Attempting to load resource '%s' from RenderJAR.", fqcn));
       return null;
     }
 

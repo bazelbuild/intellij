@@ -90,17 +90,13 @@ public class RenderJarCache {
     this.artifactCache = artifactCache;
   }
 
-  private boolean isEnabled() {
-    return RenderJarClassFileFinder.isEnabled();
-  }
-
   @VisibleForTesting
   public File getCacheDir() {
     return cacheDir;
   }
 
   private void initialize() {
-    if (!isEnabled()) {
+    if (!RenderJarClassFileFinder.isEnabled()) {
       return;
     }
     artifactCache.initialize();
@@ -111,7 +107,7 @@ public class RenderJarCache {
       ProjectViewSet projectViewSet,
       BlazeProjectData projectData,
       SyncMode syncMode) {
-    if (!isEnabled()) {
+    if (!RenderJarClassFileFinder.isEnabled()) {
       return;
     }
     boolean fullRefresh = syncMode == SyncMode.FULL;
@@ -137,7 +133,7 @@ public class RenderJarCache {
    * RenderResolveOutputGroupProvider#RESOLVE_OUTPUT_GROUP} output group.
    */
   private void refresh(BlazeContext context, BlazeBuildOutputs buildOutput) {
-    if (!isEnabled()) {
+    if (!RenderJarClassFileFinder.isEnabled()) {
       return;
     }
 
@@ -172,7 +168,7 @@ public class RenderJarCache {
   @Nullable
   public File getCachedJarForBinaryTarget(
       ArtifactLocationDecoder artifactLocationDecoder, TargetIdeInfo target) {
-    if (!isEnabled()) {
+    if (!RenderJarClassFileFinder.isEnabled()) {
       return null;
     }
     AndroidIdeInfo androidIdeInfo = target.getAndroidIdeInfo();
