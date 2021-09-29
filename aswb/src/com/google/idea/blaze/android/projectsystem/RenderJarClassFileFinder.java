@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.projectsystem;
 
 import static java.util.stream.Collectors.joining;
 
+import com.android.tools.idea.projectsystem.ClassFileFinder;
 import com.android.tools.idea.projectsystem.ClassFileFinderUtil;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
@@ -44,8 +45,8 @@ import java.util.regex.Pattern;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A {@link BlazeClassFileFinder} that uses deploy JAR like artifacts (called render jar henceforth)
- * for class files.
+ * A {@link ClassFileFinder} that uses deploy JAR like artifacts (called render jar henceforth) for
+ * class files.
  *
  * <p>The render JAR contains all runtime dependencies of a binary target.
  *
@@ -60,9 +61,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>NOTE: Blaze targets that constitutes the resource module will be called "resource target(s)"
  * in comments below.
  */
-public class RenderJarClassFileFinder implements BlazeClassFileFinder {
-  @VisibleForTesting public static final String CLASS_FINDER_KEY = "RenderJarClassFileFinder";
-
+public class RenderJarClassFileFinder implements ClassFileFinder {
   /** Experiment to control whether class file finding from render jars should be enabled. */
   private static final BoolExperiment enabled =
       new BoolExperiment("aswb.renderjar.cff.enabled", true);
@@ -101,17 +100,6 @@ public class RenderJarClassFileFinder implements BlazeClassFileFinder {
     this.module = module;
     this.project = module.getProject();
     this.isWorkspaceModule = BlazeDataStorage.WORKSPACE_MODULE_NAME.equals(module.getName());
-  }
-
-  /**
-   * Prevents resource class registration from {@link
-   * com.google.idea.blaze.android.sync.model.idea.BlazeClassJarProvider}. {@link
-   * org.jetbrains.android.uipreview.ModuleClassLoader} should register R classes during
-   * construction
-   */
-  @Override
-  public boolean shouldSkipResourceRegistration() {
-    return true;
   }
 
   @Nullable

@@ -16,19 +16,11 @@
 package com.google.idea.blaze.android.sync.model.idea;
 
 
-import com.android.ide.common.rendering.api.ResourceNamespace;
 import com.android.tools.idea.model.ClassJarProvider;
-import com.android.tools.idea.res.ResourceClassRegistry;
-import com.android.tools.idea.res.ResourceIdManager;
-import com.android.tools.idea.res.ResourceRepositoryManager;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.ResourceRepositoryManagerCompat;
-import com.google.idea.blaze.android.projectsystem.BlazeClassFileFinderCompat;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
-import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -39,7 +31,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -72,9 +63,6 @@ public class BlazeClassJarProvider implements ClassJarProvider {
       return ImmutableList.of();
     }
 
-    boolean skipResourceRegistration =
-        BlazeClassFileFinderCompat.shouldSkipResourceRegistration(module);
-
     ImmutableList.Builder<File> results = ImmutableList.builder();
     for (TargetKey dependencyTargetKey :
         TransitiveDependencyMap.getInstance(project).getTransitiveDependencies(target.getKey())) {
@@ -96,41 +84,6 @@ public class BlazeClassJarProvider implements ClassJarProvider {
                     classJar.getRelativePath()));
           }
         }
-      }
-
-      if (skipResourceRegistration) {
-        continue;
-      }
-
-      // Tell ResourceClassRegistry which repository contains our resources and the java packages of
-      // the resources that we're interested in.
-      // When the class loader tries to load a custom view, and the view references resource
-      // classes, layoutlib will ask the class loader for these resource classes.
-      // If these resource classes are in a separate jar from the target (i.e., in a dependency),
-      // then offering their jars will lead to a conflict in the resource IDs.
-      // So instead, the resource class generator will produce dummy resource classes with
-      // non-conflicting IDs to satisfy the class loader.
-      // The resource repository remembers the dynamic IDs that it handed out and when the layoutlib
-      // calls to ask about the name and content of a given resource ID, the repository can just
-      // answer what it has already stored.
-      AndroidIdeInfo androidIdeInfo = dependencyTarget.getAndroidIdeInfo();
-
-      ResourceRepositoryManager repositoryManager =
-          ResourceRepositoryManagerCompat.getResourceRepositoryManager(module);
-
-      ResourceIdManager idManager = ResourceIdManager.get(module);
-      if (androidIdeInfo != null
-          && !Strings.isNullOrEmpty(androidIdeInfo.getResourceJavaPackage())
-          && repositoryManager != null) {
-        // TODO(namespaces)
-        ResourceNamespace namespace = ReadAction.compute(repositoryManager::getNamespace);
-
-        ResourceClassRegistry.get(module.getProject())
-            .addLibrary(
-                ResourceRepositoryManagerCompat.getAppResources(repositoryManager),
-                idManager,
-                androidIdeInfo.getResourceJavaPackage(),
-                namespace);
       }
     }
 
