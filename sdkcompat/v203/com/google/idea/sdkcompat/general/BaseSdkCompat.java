@@ -20,10 +20,8 @@ import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.TextChunk;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory.IndexingTimes;
-import com.jetbrains.python.psi.LanguageLevel;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -46,16 +44,6 @@ public final class BaseSdkCompat {
     EditorFacade.getInstance()
         .doWrapLongLinesIfNecessary(
             editor, project, document, startOffset, endOffset, enabledRanges, rightMargin);
-  }
-
-  /**
-   * #api202: getVersion was deprecated in 2020.3 and it was removed and replaced by getMajorVersion
-   * and getMinorVersion in 2021.1. We create a different language level comparator for different
-   * IDE versions.
-   */
-  public static Comparator<LanguageLevel> getLanguageLevelComparator() {
-    return Comparator.comparingInt(LanguageLevel::getMajorVersion)
-        .thenComparingInt(LanguageLevel::getMinorVersion);
   }
 
   /** #api203: refactor this function back into CodesearchResultData and make it private. */

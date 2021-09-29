@@ -145,8 +145,7 @@ public abstract class StubOCResolveConfigurationBase extends UserDataHolderBase
     return CidrFileSeparators.UNIX;
   }
 
-  // #api202: add @Override annotation
-  @SuppressWarnings("override")
+  @Override
   public boolean hasSourceFile(@NotNull VirtualFile virtualFile) {
     return false;
   }
