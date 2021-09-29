@@ -1,7 +1,5 @@
 package com.google.idea.sdkcompat.general;
 
-import com.intellij.diagnostic.VMOptions;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Document;
@@ -31,12 +29,6 @@ import javax.annotation.Nullable;
 public final class BaseSdkCompat {
   private BaseSdkCompat() {}
 
-  // #api202: Method return type changed in 2020.3 from File to Path
-  @Nullable
-  public static Path getVMOptionsWriteFile() {
-    return VMOptions.getWriteFile();
-  }
-
   // #api202 TODO(b/181105847) Replace EditorFacade.getInstance() in the future
   @SuppressWarnings({"deprecation", "UnstableApiUsage"})
   public static void doWrapLongLinesIfNecessary(
@@ -51,11 +43,6 @@ public final class BaseSdkCompat {
     EditorFacade.getInstance()
         .doWrapLongLinesIfNecessary(
             editor, project, document, startOffset, endOffset, enabledRanges, rightMargin);
-  }
-
-  /** #api202: use "SearchEverywhereManager.setSelectedTabID directly" */
-  public static void setSelectedTabID(SearchEverywhereManager manager, String id) {
-    manager.setSelectedTabID(id);
   }
 
   /**
