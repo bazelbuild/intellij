@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.SyncCache;
-import com.google.idea.sdkcompat.testframework.EdtTestUtilWrapper;
 import com.google.idea.testing.EdtRule;
 import com.google.idea.testing.IntellijTestSetupRule;
 import com.google.idea.testing.ServiceHelper;
@@ -44,6 +43,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -185,7 +185,7 @@ public abstract class BlazeIntegrationTestCase {
   }
 
   private static void runWriteAction(Runnable writeAction) throws Throwable {
-    EdtTestUtilWrapper.runInEdtAndWait(
+    EdtTestUtil.runInEdtAndWait(
         () -> ApplicationManager.getApplication().runWriteAction(writeAction));
   }
 

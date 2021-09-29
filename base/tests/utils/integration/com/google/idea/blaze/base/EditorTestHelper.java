@@ -18,7 +18,6 @@ package com.google.idea.blaze.base;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
-import com.google.idea.sdkcompat.testframework.EdtTestUtilWrapper;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -35,6 +34,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EditorTestUtil.CaretAndSelectionState;
 import com.intellij.testFramework.EditorTestUtil.CaretInfo;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import java.util.Arrays;
 import javax.annotation.Nullable;
@@ -54,7 +54,7 @@ public class EditorTestHelper {
   }
 
   public Editor openFileInEditor(VirtualFile file) throws Throwable {
-    EdtTestUtilWrapper.runInEdtAndWait(() -> testFixture.openFileInEditor(file));
+    EdtTestUtil.runInEdtAndWait(() -> testFixture.openFileInEditor(file));
     return testFixture.getEditor();
   }
 
@@ -124,7 +124,7 @@ public class EditorTestHelper {
 
   public void setCaretPosition(Editor editor, int lineNumber, int columnNumber) throws Throwable {
     final CaretInfo info = new CaretInfo(new LogicalPosition(lineNumber, columnNumber), null);
-    EdtTestUtilWrapper.runInEdtAndWait(
+    EdtTestUtil.runInEdtAndWait(
         () ->
             EditorTestUtil.setCaretsAndSelection(
                 editor, new CaretAndSelectionState(ImmutableList.of(info), null)));

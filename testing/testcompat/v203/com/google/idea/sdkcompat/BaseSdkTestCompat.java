@@ -20,12 +20,8 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
-import java.io.File;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import org.jetbrains.annotations.Nullable;
-import org.junit.rules.TemporaryFolder;
 
 /**
  * Provides SDK compatibility shims for base plugin API classes, available to all IDEs during
@@ -33,11 +29,6 @@ import org.junit.rules.TemporaryFolder;
  */
 public final class BaseSdkTestCompat {
   private BaseSdkTestCompat() {}
-  /** #api202 {@link TemporaryFolder#getRoot} mock call needs to return Path since 2020.3 */
-  @Nullable
-  public static Path getRootWrapper(@Nullable File file) {
-    return file == null ? null : file.toPath();
-  }
 
   /** #api202 Creating a StubVirtualFile requires a filesystem parameter in 2020.3 */
   public static StubVirtualFile newValidStubVirtualFile(VirtualFileSystem fileSystem) {

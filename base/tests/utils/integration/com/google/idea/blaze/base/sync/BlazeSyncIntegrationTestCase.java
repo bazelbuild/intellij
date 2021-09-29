@@ -58,7 +58,6 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import com.google.idea.sdkcompat.testframework.EdtTestUtilWrapper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
@@ -72,6 +71,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.lang.JavaVersion;
 import java.util.List;
@@ -146,7 +146,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     // ensure that the same Java language level is set in the project view file (see
     // setProjectViewSet() below).
     Sdk jdk = IdeaTestUtil.getMockJdk(JAVA_VERSION);
-    EdtTestUtilWrapper.runInEdtAndWait(
+    EdtTestUtil.runInEdtAndWait(
         () ->
             WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(jdk, thisClassDisposable)));
   }

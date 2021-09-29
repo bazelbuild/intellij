@@ -21,11 +21,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.sdkcompat.testframework.fixtures.CompletionAutoPopupTesterAdapter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Before;
@@ -37,11 +36,11 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BuildFileAutoCompletionTest extends BuildFileIntegrationTestCase {
 
-  private CompletionAutoPopupTesterAdapter completionTester;
+  private CompletionAutoPopupTester completionTester;
 
   @Before
   public final void before() {
-    completionTester = new CompletionAutoPopupTesterAdapter(testFixture);
+    completionTester = new CompletionAutoPopupTester(testFixture);
   }
 
   /** Completion UI testing can't be run on the EDT. */
@@ -52,9 +51,7 @@ public class BuildFileAutoCompletionTest extends BuildFileIntegrationTestCase {
 
   @Test
   public void testNoPopupAfterNumber() throws Throwable {
-    // #api202: remove redundant cast "(ThrowableRunnable<Throwable>)"
     completionTester.runWithAutoPopupEnabled(
-        (ThrowableRunnable<Throwable>)
             () -> {
               createBuildFile(new WorkspacePath("java/com/foo/BUILD"));
               BuildFile file =

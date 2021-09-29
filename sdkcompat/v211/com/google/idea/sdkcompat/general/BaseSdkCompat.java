@@ -1,6 +1,5 @@
 package com.google.idea.sdkcompat.general;
 
-import com.intellij.conversion.ConversionContext;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -36,15 +35,6 @@ public final class BaseSdkCompat {
   @Nullable
   public static Path getVMOptionsWriteFile() {
     return VMOptions.getWriteFile();
-  }
-
-  /**
-   * #api202: {@link ConversionContext#getSettingsBaseDir()} returns Path instead of File since
-   * 2020.3.
-   */
-  @Nullable
-  public static Path getSettingsBaseDirWrapper(ConversionContext context) {
-    return context.getSettingsBaseDir();
   }
 
   // #api202 TODO(b/181105847) Replace EditorFacade.getInstance() in the future

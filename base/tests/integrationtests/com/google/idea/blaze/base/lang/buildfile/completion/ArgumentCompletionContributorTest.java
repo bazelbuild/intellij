@@ -20,10 +20,9 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.idea.blaze.base.lang.buildfile.BuildFileIntegrationTestCase;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.sdkcompat.testframework.fixtures.CompletionAutoPopupTesterAdapter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTester;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,11 +32,11 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestCase {
 
-  private CompletionAutoPopupTesterAdapter completionTester;
+  private CompletionAutoPopupTester completionTester;
 
   @Before
   public final void before() {
-    completionTester = new CompletionAutoPopupTesterAdapter(testFixture);
+    completionTester = new CompletionAutoPopupTester(testFixture);
   }
 
   /** Completion UI testing can't be run on the EDT. */
@@ -48,9 +47,7 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
 
   @Test
   public void testIncompleteFuncall() throws Throwable {
-    // #api202: remove redundant cast "(ThrowableRunnable<Throwable>)"
     completionTester.runWithAutoPopupEnabled(
-        (ThrowableRunnable<Throwable>)
             () -> {
               BuildFile file =
                   createBuildFile(
@@ -73,9 +70,7 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
 
   @Test
   public void testExistingKeywordArg() throws Throwable {
-    // #api202: remove redundant cast "(ThrowableRunnable<Throwable>)"
     completionTester.runWithAutoPopupEnabled(
-        (ThrowableRunnable<Throwable>)
             () -> {
               BuildFile file =
                   createBuildFile(
@@ -98,9 +93,7 @@ public class ArgumentCompletionContributorTest extends BuildFileIntegrationTestC
 
   @Test
   public void testNoArgumentCompletionInComment() throws Throwable {
-    // #api202: remove redundant cast "(ThrowableRunnable<Throwable>)"
     completionTester.runWithAutoPopupEnabled(
-        (ThrowableRunnable<Throwable>)
             () -> {
               BuildFile file =
                   createBuildFile(
