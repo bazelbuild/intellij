@@ -36,7 +36,7 @@ import java.io.File;
 /**
  * CLion-specific class representing a remote target process and the debugger process.
  *
- * <p>This should be extending CidrRemoteGDBDebugProcess, but that was 'final' in 2017.3 #api173
+ * <p>This should be extending CidrRemoteGDBDebugProcess, but that is 'final'
  */
 public class BlazeCidrRemoteDebugProcess extends CidrDebugProcess {
   private final ProcessHandler targetProcess;
