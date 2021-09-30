@@ -24,7 +24,6 @@ import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 
 /** Provides android debuggers and debugger states for blaze projects. */
@@ -62,8 +61,7 @@ public interface BlazeAndroidDebuggerService {
     @Override
     public AndroidDebuggerState getDebuggerState(AndroidDebugger debugger) {
       AndroidDebuggerState debuggerState = debugger.createState();
-      if (!PluginManagerCore.isDisabled(PluginId.getId("com.android.tools.ndk"))
-          && debuggerState instanceof NativeAndroidDebuggerState) {
+      if (isNdkPluginLoaded() && debuggerState instanceof NativeAndroidDebuggerState) {
         NativeAndroidDebuggerState nativeState = (NativeAndroidDebuggerState) debuggerState;
 
         // Source code is always relative to the workspace root in a blaze project.
@@ -85,6 +83,12 @@ public interface BlazeAndroidDebuggerService {
         nativeState.setUserStartupCommands(startupCommands);
       }
       return debuggerState;
+    }
+
+    private static boolean isNdkPluginLoaded() {
+      return PluginManagerCore.getLoadedPlugins().stream()
+          .anyMatch(
+              d -> d.isEnabled() && d.getPluginId().getIdString().equals("com.android.tools.ndk"));
     }
   }
 }
