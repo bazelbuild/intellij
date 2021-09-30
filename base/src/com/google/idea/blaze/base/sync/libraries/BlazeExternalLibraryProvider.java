@@ -34,7 +34,7 @@ public abstract class BlazeExternalLibraryProvider extends AdditionalLibraryRoot
       Project project, BlazeProjectData projectData);
 
   @Override
-  public final Collection<SyntheticLibrary> getAdditionalProjectLibraries(Project project) {
+  public Collection<SyntheticLibrary> getAdditionalProjectLibraries(Project project) {
     SyntheticLibrary library = ExternalLibraryManager.getInstance(project).getLibrary(getClass());
     return library != null ? ImmutableList.of(library) : ImmutableList.of();
   }

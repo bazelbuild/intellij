@@ -44,5 +44,6 @@
     <documentationProvider implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver$GoPackageDocumentationProvider"/>
     <additionalLibraryRootsProvider implementation="com.google.idea.blaze.golang.sync.BlazeGoAdditionalLibraryRootsProvider"/>
     <postStartupActivity implementation="com.google.idea.blaze.golang.run.producers.NonBlazeProducerSuppressor"/>
+    <treeStructureProvider implementation="com.google.idea.blaze.golang.treeview.BlazeGoTreeStructureProvider" order="last"/>
   </extensions>
 </idea-plugin>

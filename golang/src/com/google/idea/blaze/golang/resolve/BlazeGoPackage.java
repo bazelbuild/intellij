@@ -41,6 +41,9 @@ import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.targetmaps.ReverseDependencyMap;
@@ -160,6 +163,29 @@ public class BlazeGoPackage extends GoPackage {
       builder.putAll(
           target.getKey().getLabel(),
           getSourceFiles(target, project, projectData, libraryToTestMap));
+    }
+    return builder.build();
+  }
+
+  public static ImmutableMultimap<String, File> getUncachedExternalImportpathToFilesMap(
+          Project project, BlazeProjectData projectData, ImportRoots importRoots, WorkspaceRoot workspaceRoot) {
+    ImmutableMultimap<Label, GoIdeInfo> libraryToTestMap = buildLibraryToTestMap(projectData);
+    ImmutableMultimap.Builder<String, File> builder = ImmutableMultimap.builder();
+    Predicate<File> isExternal =
+            f -> {
+              WorkspacePath path = workspaceRoot.workspacePathForSafe(f);
+              return path == null || !importRoots.containsWorkspacePath(path);
+            };
+    for (TargetIdeInfo target : projectData.getTargetMap().targets()) {
+      if (target.getGoIdeInfo() == null || target.getGoIdeInfo().getImportPath() == null) {
+        continue;
+      }
+      builder.putAll(
+              target.getGoIdeInfo().getImportPath(),
+              getSourceFiles(target, project, projectData, libraryToTestMap).stream().
+                      filter(f -> f.getName().endsWith(".go")).
+                      filter(isExternal).
+                      collect(toImmutableSet()));
     }
     return builder.build();
   }

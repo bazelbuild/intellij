@@ -18,22 +18,25 @@ package com.google.idea.blaze.golang.sync;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.libraries.BlazeExternalLibraryProvider;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.golang.resolve.BlazeGoPackage;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.SyntheticLibrary;
 import java.io.File;
-import java.util.function.Predicate;
+import java.util.Collection;
 
 /** Provides out-of-project go sources for indexing. */
 public final class BlazeGoAdditionalLibraryRootsProvider extends BlazeExternalLibraryProvider {
   private static final BoolExperiment useGoAdditionalLibraryRootsProvider =
       new BoolExperiment("use.go.additional.library.roots.provider4", true);
+  private static ImmutableMultimap<String, File> importpathToFilesMap;
+
 
   @Override
   protected String getLibraryName() {
@@ -60,18 +63,17 @@ public final class BlazeGoAdditionalLibraryRootsProvider extends BlazeExternalLi
     if (workspaceRoot == null) {
       return ImmutableList.of();
     }
-    Predicate<File> isExternal =
-        f -> {
-          WorkspacePath path = workspaceRoot.workspacePathForSafe(f);
-          return path == null || !importRoots.containsWorkspacePath(path);
-        };
     // don't use sync cache, because
     // 1. this is used during sync before project data is saved
     // 2. the roots provider is its own cache
-    return BlazeGoPackage.getUncachedTargetToFileMap(project, projectData).values().stream()
-        .filter(isExternal)
-        .filter(f -> f.getName().endsWith(".go"))
-        .distinct()
-        .collect(toImmutableList());
+    importpathToFilesMap = BlazeGoPackage.getUncachedExternalImportpathToFilesMap(project, projectData, importRoots, workspaceRoot);
+    return importpathToFilesMap.values().asList();
+  }
+
+  @Override
+  public Collection<SyntheticLibrary> getAdditionalProjectLibraries(Project project) {
+    return importpathToFilesMap != null
+            ? ImmutableList.of(new BlazeGoExternalSyntheticLibrary(getLibraryName(), importpathToFilesMap))
+            : ImmutableList.of();
   }
 }

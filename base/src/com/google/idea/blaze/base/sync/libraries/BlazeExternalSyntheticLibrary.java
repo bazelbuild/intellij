@@ -36,7 +36,7 @@ import javax.swing.Icon;
  * A {@link SyntheticLibrary} pointing to a list of external files for a language. Only supports one
  * instance per value of presentableText.
  */
-public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
+public class BlazeExternalSyntheticLibrary extends SyntheticLibrary
     implements ItemPresentation {
   private final String presentableText;
   private final ImmutableSet<File> files;
@@ -49,7 +49,7 @@ public final class BlazeExternalSyntheticLibrary extends SyntheticLibrary
    *     equals, hashcode -- there must only be one instance per value of this text
    * @param files collection of files that this synthetic library is responsible for.
    */
-  BlazeExternalSyntheticLibrary(String presentableText, Collection<File> files) {
+  public BlazeExternalSyntheticLibrary(String presentableText, Collection<File> files) {
     this.presentableText = presentableText;
     this.files = ImmutableSet.copyOf(files);
     this.validFiles =
