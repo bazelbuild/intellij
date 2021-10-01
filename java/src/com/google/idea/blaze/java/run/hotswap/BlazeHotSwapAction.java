@@ -16,33 +16,28 @@
 package com.google.idea.blaze.java.run.hotswap;
 
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.common.actions.ActionCustomizer;
 import com.google.idea.common.actions.ReplaceActionHelper;
 import com.intellij.debugger.actions.HotSwapAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 
 /** Overrides the built-in hotswap action for Blaze projects */
 public class BlazeHotSwapAction extends AnAction {
 
   private static final String ACTION_ID = "Hotswap";
 
-  static class Initializer implements ApplicationComponent {
+  static class Customizer implements ActionConfigurationCustomizer {
     @Override
-    public void initComponent() {
-      ActionCustomizer.newCustomizerFor(Initializer::replaceAction);
-    }
-
-    private static void replaceAction() {
-      AnAction delegate = ActionManager.getInstance().getAction(ACTION_ID);
+    public void customize(ActionManager actionManager) {
+      AnAction delegate = actionManager.getAction(ACTION_ID);
       if (delegate == null) {
         // HotSwapAction not registered by default for Android Studio, though still in the classpath
         delegate = new HotSwapAction();
       }
       ReplaceActionHelper.conditionallyReplaceAction(
-          ACTION_ID, new BlazeHotSwapAction(delegate), Blaze::isBlazeProject);
+          actionManager, ACTION_ID, new BlazeHotSwapAction(delegate), Blaze::isBlazeProject);
     }
   }
 

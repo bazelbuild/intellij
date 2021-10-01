@@ -296,6 +296,7 @@
     <runLineMarkerContributor
         language="BUILD"
         implementationClass="com.google.idea.blaze.base.run.producers.BuildFileRunLineMarkerContributor"/>
+    <actionConfigurationCustomizer implementation="com.google.idea.blaze.base.plugin.BlazeHideMakeActions"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -389,9 +390,6 @@
   </extensionPoints>
 
   <application-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.base.plugin.BlazeSpecificInitializer</implementation-class>
-    </component>
     <component>
       <interface-class>com.google.idea.common.experiments.ExperimentService</interface-class>
       <implementation-class>com.google.idea.common.experiments.ExperimentServiceImpl</implementation-class>

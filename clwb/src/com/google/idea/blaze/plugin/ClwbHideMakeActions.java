@@ -17,27 +17,22 @@ package com.google.idea.blaze.plugin;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.clwb.CMakeActionsToManipulate;
-import com.google.idea.common.actions.ActionCustomizer;
 import com.google.idea.common.actions.ReplaceActionHelper;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 
 /** Runs on startup. */
-public class ClwbSpecificInitializer implements ApplicationComponent {
-
+public class ClwbHideMakeActions implements ActionConfigurationCustomizer {
   @Override
-  public void initComponent() {
-    ActionCustomizer.newCustomizerFor(ClwbSpecificInitializer::hideCMakeActions);
-  }
-
-  // The original actions will be visible only on plain IDEA projects.
-  private static void hideCMakeActions() {
+  public void customize(ActionManager actionManager) {
+    // The original actions will be visible only on plain IDEA projects.
     for (String actionId : CMakeActionsToManipulate.CMAKE_ACTION_IDS_TO_REMOVE) {
-      ReplaceActionHelper.conditionallyHideAction(actionId, Blaze::isBlazeProject);
+      ReplaceActionHelper.conditionallyHideAction(actionManager, actionId, Blaze::isBlazeProject);
     }
     for (CMakeActionsToManipulate.ActionPair actionPair :
         CMakeActionsToManipulate.CMAKE_ACTION_IDS_TO_REPLACE) {
       ReplaceActionHelper.conditionallyReplaceAction(
-          actionPair.id, actionPair.replacement.get(), Blaze::isBlazeProject);
+          actionManager, actionPair.id, actionPair.replacement.get(), Blaze::isBlazeProject);
     }
   }
 }

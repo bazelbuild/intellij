@@ -16,34 +16,32 @@
 package com.google.idea.blaze.base.plugin;
 
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.common.actions.ActionCustomizer;
 import com.google.idea.common.actions.ReplaceActionHelper;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 
 /** Runs on startup. */
-public class BlazeSpecificInitializer implements ApplicationComponent {
+public class BlazeHideMakeActions implements ActionConfigurationCustomizer {
 
   @Override
-  public void initComponent() {
-    // from 2020.1+, can't access actions until after application components have been initialized
-    ActionCustomizer.newCustomizerFor(BlazeSpecificInitializer::hideMakeActions);
-  }
+  public void customize(ActionManager actionManager) {
+    // The original actions will be visible only on plain IDEA projects.
 
-  // The original actions will be visible only on plain IDEA projects.
-  private static void hideMakeActions() {
     // 'Build' > 'Make Project' action
-    ReplaceActionHelper.conditionallyHideAction("CompileDirty", Blaze::isBlazeProject);
+    ReplaceActionHelper.conditionallyHideAction(
+        actionManager, "CompileDirty", Blaze::isBlazeProject);
 
     // 'Build' > 'Make Modules' action
     ReplaceActionHelper.conditionallyHideAction(
-        IdeActions.ACTION_MAKE_MODULE, Blaze::isBlazeProject);
+        actionManager, IdeActions.ACTION_MAKE_MODULE, Blaze::isBlazeProject);
 
     // 'Build' > 'Rebuild' action
     ReplaceActionHelper.conditionallyHideAction(
-        IdeActions.ACTION_COMPILE_PROJECT, Blaze::isBlazeProject);
+        actionManager, IdeActions.ACTION_COMPILE_PROJECT, Blaze::isBlazeProject);
 
     // 'Build' > 'Compile Modules' action
-    ReplaceActionHelper.conditionallyHideAction(IdeActions.ACTION_COMPILE, Blaze::isBlazeProject);
+    ReplaceActionHelper.conditionallyHideAction(
+        actionManager, IdeActions.ACTION_COMPILE, Blaze::isBlazeProject);
   }
 }

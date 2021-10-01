@@ -133,13 +133,8 @@
         serviceImplementation="com.google.idea.blaze.java.run.BlazeCompilerManager"
         overrides="true"/>
     <postStartupActivity implementation="com.google.idea.blaze.java.run.producers.NonBlazeProducerSuppressor"/>
+    <actionConfigurationCustomizer implementation="com.google.idea.blaze.java.run.hotswap.BlazeHotSwapAction$Customizer"/>
   </extensions>
-
-  <application-components>
-  <component>
-    <implementation-class>com.google.idea.blaze.java.run.hotswap.BlazeHotSwapAction$Initializer</implementation-class>
-  </component>
-  </application-components>
 
   <project-components>
     <component>

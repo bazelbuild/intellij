@@ -29,6 +29,7 @@
     <editorNotificationProvider implementation="com.google.idea.blaze.plugin.CMakeNotificationFilter" />
     <moduleType id="BLAZE_CPP_MODULE" implementationClass="com.google.idea.blaze.clwb.BlazeCppModuleType"/>
     <postStartupActivity implementation="com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor"/>
+    <actionConfigurationCustomizer implementation="com.google.idea.blaze.plugin.ClwbHideMakeActions"/>
   </extensions>
 
   <extensions defaultExtensionNs="cidr.debugger">
@@ -41,12 +42,6 @@
     <BlazeTestEventsHandler implementation="com.google.idea.blaze.clwb.run.test.BlazeCidrTestEventsHandler"/>
     <TestContextProvider implementation="com.google.idea.blaze.clwb.run.producers.CppTestContextProvider"/>
   </extensions>
-
-  <application-components>
-    <component>
-      <implementation-class>com.google.idea.blaze.plugin.ClwbSpecificInitializer</implementation-class>
-    </component>
-  </application-components>
 
   <project-components>
     <component>
