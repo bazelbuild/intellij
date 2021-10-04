@@ -87,19 +87,21 @@ import javax.annotation.Nullable;
 public class LocalArtifactCache implements ArtifactCache {
   private static final Logger logger = Logger.getInstance(LocalArtifactCache.class);
 
-  // File name where the json will be serialized.
-  // Information in this file is considered the canonical cache state.
-  @VisibleForTesting public static final String CACHE_DATA_FILENAME = "cache_data.json";
+  /** Name of file that contains the cache state. */
+  @VisibleForTesting static final String CACHE_DATA_FILENAME = "cache_data.json";
 
   private final Project project;
 
-  // Name of the cache. This is used for logging purposes only
+  /** Name of the cache. This is used for logging purposes only. */
   private final String cacheName;
-  // Absolute path to the directory where artifacts will be stored.
+
+  /** Absolute path to the directory where artifacts will be stored. */
   private final Path cacheDir;
 
-  // Maps cache key to CacheEntry. A cache key is a String to uniquely identify a CacheEntry for a
-  // specific set of Artifacts. The cache key is the same as what is stored in CacheEntry.
+  /**
+   * Maps cache key to CacheEntry. A cache key is a String to uniquely identify a CacheEntry for a
+   * specific set of Artifacts. The cache key is the same as what is stored in CacheEntry.
+   */
   private final Map<String, CacheEntry> cacheState = new HashMap<>();
 
   public LocalArtifactCache(Project project, String cacheName, Path cacheDir) {

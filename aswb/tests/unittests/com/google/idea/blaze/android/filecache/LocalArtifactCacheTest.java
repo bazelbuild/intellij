@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.android.javacache;
+package com.google.idea.blaze.android.filecache;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.filecache.LocalArtifactCache.CACHE_DATA_FILENAME;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.filecache.ArtifactCacheData;
-import com.google.idea.blaze.android.filecache.CacheEntry;
-import com.google.idea.blaze.android.filecache.LocalArtifactCache;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
