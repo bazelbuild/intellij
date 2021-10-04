@@ -41,6 +41,7 @@ public interface BuildSystemProvider {
 
   ExtensionPointName<BuildSystemProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.BuildSystemProvider");
+  ImmutableList<String> SUPPORTED_EXTENSIONS = ImmutableList.of("bzl", "sky", "star");
 
   static BuildSystemProvider defaultBuildSystem() {
     return EP_NAME.getExtensions()[0];
@@ -125,6 +126,11 @@ public interface BuildSystemProvider {
   /** The WORKSPACE file in the repository root. */
   ImmutableList<String> possibleWorkspaceFileNames();
 
+  /** The file extensions supported, see {@link ExtensionFileNameMatcher}. */
+  default ImmutableList<String> possibleFileExtensions() {
+    return SUPPORTED_EXTENSIONS;
+  }
+
   /** Check if the given filename is a valid BUILD file name. */
   default boolean isBuildFile(String fileName) {
     return possibleBuildFileNames().contains(fileName);
@@ -166,7 +172,7 @@ public interface BuildSystemProvider {
     ImmutableList.Builder<FileNameMatcher> list = ImmutableList.builder();
     possibleBuildFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
     possibleWorkspaceFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
-    list.add(new ExtensionFileNameMatcher("bzl"));
+    possibleFileExtensions().forEach(s -> list.add(new ExtensionFileNameMatcher(s)));
     return list.build();
   }
 
