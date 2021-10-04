@@ -143,6 +143,9 @@ public class RenderJarCache {
                 RenderResolveOutputGroupProvider.RESOLVE_OUTPUT_GROUP::contains)
             .stream()
             .collect(ImmutableList.toImmutableList());
+    if (renderJars.isEmpty()) {
+      return;
+    }
 
     artifactCache.putAll(renderJars, context, false);
   }
