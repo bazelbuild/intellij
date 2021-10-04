@@ -75,7 +75,8 @@
     </action>
     <action id="Blaze.OpenCorrespondingBuildFile"
       class="com.google.idea.blaze.base.actions.OpenCorrespondingBuildFile"
-      text="Open Corresponding BUILD File">
+      text="Open Corresponding BUILD File"
+      icon="BlazeIcons.BuildFile">
     </action>
     <action id="Blaze.CopyBlazeTargetPathAction"
       class="com.google.idea.blaze.base.actions.CopyBlazeTargetPathAction"
