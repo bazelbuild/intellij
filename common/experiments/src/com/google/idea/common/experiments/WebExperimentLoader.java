@@ -15,10 +15,14 @@
  */
 package com.google.idea.common.experiments;
 
+import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 @Deprecated
 final class WebExperimentLoader implements ExperimentLoader {
+
+  private static final FeatureRolloutExperiment stopWebExperimentLoader =
+      new FeatureRolloutExperiment("experiments.webloader.stop");
 
   private static final String DEFAULT_PLUGIN_NAME = "ijwb";
 
@@ -34,12 +38,16 @@ final class WebExperimentLoader implements ExperimentLoader {
 
   @Override
   public Map<String, String> getExperiments() {
+    if (stopWebExperimentLoader.isEnabled()) {
+      return ImmutableMap.of();
+    }
     return syncer.getExperimentValues();
   }
 
   @Override
   public void initialize() {
-
-    syncer.initialize();
+    if (!stopWebExperimentLoader.isEnabled()) {
+      syncer.initialize();
+    }
   }
 }
