@@ -25,7 +25,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
@@ -58,17 +58,16 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * LocalArtifactCache is an on disk cache for BlazeArtifacts (which may be sources, files accessible
- * via objfsd, or files that are present on a remote objfs).
+ * LocalArtifactCache is an on disk cache for {@link OutputArtifact}s.
+ *
+ * <p>The {@link #get} returns the path to a local copy of the cached artifact (if present).
  *
  * <p>The {@link #putAll} method can be used to populate the cache with a set of artifacts. Putting
  * a collection is more efficient since it allows us to batch download the missing artifacts.
  *
- * <p>The {@link #get} returns the path to a local copy of a BlazeArtifact (if present).
- *
  * <pre>
  * All cache maintenance operations happen as part of {@link #putAll}:
- *   - It recognizes when a `BlazeArtifact` has been updated (via timestamp or objfs blobId)
+ *   - It recognizes when an Artifact has been updated (via timestamp or objfs blobId)
  *   - It deletes stale entries if they are not referenced in the collection passed to
  *     {@link #putAll} call and {@code removeMissingArtifacts} parameter is set to true. This is
  *     unlike a traditional cache, and hence care should be taken to always call {@link #putAll}
@@ -76,7 +75,7 @@ import javax.annotation.Nullable;
  *     is set to true.
  * </pre>
  *
- * Internally, every {@link BlazeArtifact} is mapped to a {@link CacheEntry} object, which captures
+ * Internally, every {@link OutputArtifact} is mapped to a {@link CacheEntry} object, which captures
  * metadata about the artifact including data like timestamp or objfs blobId that allows it to
  * determine when an artifact has been updated.
  *
@@ -157,9 +156,9 @@ public class LocalArtifactCache implements ArtifactCache {
    */
   @Override
   public synchronized void putAll(
-      Collection<BlazeArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts) {
+      Collection<OutputArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts) {
     // Utility maps for the passed artifacts
-    Map<String, BlazeArtifact> keyToArtifact = new HashMap<>();
+    Map<String, OutputArtifact> keyToArtifact = new HashMap<>();
     Map<String, CacheEntry> keyToCacheEntry = new HashMap<>();
     artifacts.forEach(
         a -> {
@@ -179,7 +178,7 @@ public class LocalArtifactCache implements ArtifactCache {
                         || !cacheState.get(kv.getKey()).equals(kv.getValue()))
             .map(Entry::getKey)
             .collect(ImmutableList.toImmutableList());
-    ImmutableMap<String, BlazeArtifact> updatedKeyToArtifact =
+    ImmutableMap<String, OutputArtifact> updatedKeyToArtifact =
         updatedKeys.stream().collect(ImmutableMap.toImmutableMap(k -> k, keyToArtifact::get));
     ImmutableMap<String, CacheEntry> updatedKeyToCacheEntry =
         updatedKeys.stream().collect(ImmutableMap.toImmutableMap(k -> k, keyToCacheEntry::get));
@@ -246,7 +245,7 @@ public class LocalArtifactCache implements ArtifactCache {
 
   @Override
   @Nullable
-  public synchronized Path get(BlazeArtifact artifact) {
+  public synchronized Path get(OutputArtifact artifact) {
     CacheEntry queriedEntry = CacheEntry.forArtifact(artifact);
     String cacheKey = queriedEntry.getCacheKey();
 
@@ -309,11 +308,11 @@ public class LocalArtifactCache implements ArtifactCache {
   }
 
   /**
-   * Returns a list of futures copying the given {@link BlazeArtifact}s to disk. The returned
+   * Returns a list of futures copying the given {@link OutputArtifact}s to disk. The returned
    * futures return the cache key on successful copy, or an empty string on copy failure.
    */
   private ImmutableList<ListenableFuture<String>> copyLocally(
-      Map<String, BlazeArtifact> updatedKeyToArtifact,
+      Map<String, OutputArtifact> updatedKeyToArtifact,
       Map<String, CacheEntry> updatedKeyToCacheEntry) {
     return updatedKeyToArtifact.entrySet().stream()
         .map(
@@ -339,18 +338,8 @@ public class LocalArtifactCache implements ArtifactCache {
         .collect(ImmutableList.toImmutableList());
   }
 
-  private static void copyLocally(BlazeArtifact blazeArtifact, Path destinationPath)
+  private static void copyLocally(OutputArtifact blazeArtifact, Path destinationPath)
       throws IOException {
-    if (blazeArtifact instanceof LocalFileArtifact) {
-      File source = ((LocalFileArtifact) blazeArtifact).getFile();
-      Files.copy(
-          source.toPath(),
-          destinationPath,
-          StandardCopyOption.REPLACE_EXISTING,
-          StandardCopyOption.COPY_ATTRIBUTES);
-      return;
-    }
-
     try (InputStream stream = blazeArtifact.getInputStream()) {
       Files.copy(stream, destinationPath, StandardCopyOption.REPLACE_EXISTING);
     }

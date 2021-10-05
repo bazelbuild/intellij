@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.filecache;
 
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,7 +26,6 @@ import javax.annotation.Nullable;
 
 /** Mock of {@link ArtifactCache}. Does not require actual files to present in the file system */
 public class MockArtifactCache implements ArtifactCache {
-
   // Maps an artifact's relative path to it's path in cache
   private final Map<String, String> relativePathToFile;
 
@@ -36,7 +35,6 @@ public class MockArtifactCache implements ArtifactCache {
 
   @Override
   public void initialize() {
-    // do nothing
   }
 
   @Override
@@ -46,7 +44,7 @@ public class MockArtifactCache implements ArtifactCache {
 
   @Override
   public void putAll(
-      Collection<BlazeArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts) {
+      Collection<OutputArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts) {
     throw new UnsupportedOperationException(
         "MockArtifactCache does not support putting files in file system. Use `addTrackedFile`"
             + " instead");
@@ -54,14 +52,14 @@ public class MockArtifactCache implements ArtifactCache {
 
   @Nullable
   @Override
-  public Path get(BlazeArtifact artifact) {
+  public Path get(OutputArtifact artifact) {
     CacheEntry cacheEntry = CacheEntry.forArtifact(artifact);
     return Paths.get(
         relativePathToFile.get(
             cacheEntry.getArtifacts().stream().findFirst().get().getRelativePath()));
   }
 
-  public void addTrackedFile(BlazeArtifact artifact, String trackedFilePath) {
+  public void addTrackedFile(OutputArtifact artifact, String trackedFilePath) {
     CacheEntry cacheEntry = CacheEntry.forArtifact(artifact);
     relativePathToFile.put(
         cacheEntry.getArtifacts().stream().findFirst().get().getRelativePath(), trackedFilePath);

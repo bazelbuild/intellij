@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -176,7 +177,7 @@ public class RenderJarCacheTest {
                     SyncMode.INCREMENTAL));
 
     @SuppressWarnings("unchecked") // irrelevant unchecked conversion warning for artifactsCaptor
-    ArgumentCaptor<Collection<BlazeArtifact>> artifactsCaptor =
+    ArgumentCaptor<Collection<OutputArtifact>> artifactsCaptor =
         ArgumentCaptor.forClass(Collection.class);
 
     ArgumentCaptor<BlazeContext> contextCaptor = ArgumentCaptor.forClass(BlazeContext.class);
@@ -185,7 +186,7 @@ public class RenderJarCacheTest {
     verify(mockedArtifactCache, Mockito.times(1))
         .putAll(artifactsCaptor.capture(), contextCaptor.capture(), removeCaptor.capture());
 
-    Collection<BlazeArtifact> passedArtifact = artifactsCaptor.getValue();
+    Collection<OutputArtifact> passedArtifact = artifactsCaptor.getValue();
     assertThat(passedArtifact.stream().map(Object::toString))
         .containsExactly(
             "com/foo/bar/baz/baz_render_jar.jar", "com/foo/bar/qux/qux_render_jar.jar");

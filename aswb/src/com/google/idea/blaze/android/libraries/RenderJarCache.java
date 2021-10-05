@@ -23,6 +23,7 @@ import com.google.idea.blaze.android.projectsystem.RenderJarClassFileFinder;
 import com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider;
 import com.google.idea.blaze.android.sync.importer.BlazeImportUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -38,6 +39,7 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.nio.file.Path;
@@ -122,7 +124,7 @@ public class RenderJarCache {
 
     boolean removeMissingFiles = syncMode == SyncMode.INCREMENTAL;
 
-    ImmutableList<BlazeArtifact> artifactsToCache =
+    ImmutableList<OutputArtifact> artifactsToCache =
         getArtifactsToCache(projectViewSet, projectData);
 
     artifactCache.putAll(artifactsToCache, context, removeMissingFiles);
@@ -137,7 +139,7 @@ public class RenderJarCache {
       return;
     }
 
-    ImmutableList<BlazeArtifact> renderJars =
+    ImmutableList<OutputArtifact> renderJars =
         buildOutput
             .getOutputGroupArtifacts(
                 RenderResolveOutputGroupProvider.RESOLVE_OUTPUT_GROUP::contains)
@@ -150,9 +152,9 @@ public class RenderJarCache {
     artifactCache.putAll(renderJars, context, false);
   }
 
-  private ImmutableList<BlazeArtifact> getArtifactsToCache(
+  private ImmutableList<OutputArtifact> getArtifactsToCache(
       ProjectViewSet projectViewSet, BlazeProjectData projectData) {
-    List<ArtifactLocation> artifactsList =
+    List<ArtifactLocation> renderJars =
         BlazeImportUtil.getSourceTargetsStream(project, projectData, projectViewSet)
             .map(TargetIdeInfo::getAndroidIdeInfo)
             .filter(Objects::nonNull)
@@ -161,7 +163,12 @@ public class RenderJarCache {
             .collect(Collectors.toList());
 
     ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();
-    return ImmutableList.copyOf(decoder.resolveOutputs(artifactsList));
+    List<OutputArtifact> blazeArtifacts =
+        decoder.resolveOutputs(renderJars).stream()
+            .filter(artifact -> artifact instanceof OutputArtifact)
+            .map(artifact -> (OutputArtifact) artifact)
+            .collect(Collectors.toList());
+    return ImmutableList.copyOf(blazeArtifacts);
   }
 
   /**
@@ -184,7 +191,12 @@ public class RenderJarCache {
     }
 
     BlazeArtifact jarArtifact = artifactLocationDecoder.resolveOutput(jarArtifactLocation);
-    Path jarPath = artifactCache.get(jarArtifact);
+    if (!(jarArtifact instanceof OutputArtifact)) {
+      Logger.getInstance(RenderJarCache.class)
+          .warn("Unexpected render jar that is not an OutputArtifact: " + jarArtifactLocation);
+      return null;
+    }
+    Path jarPath = artifactCache.get((OutputArtifact) jarArtifact);
     return jarPath == null ? null : jarPath.toFile();
   }
 

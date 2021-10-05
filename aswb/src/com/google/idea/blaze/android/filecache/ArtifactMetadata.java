@@ -18,12 +18,8 @@ package com.google.idea.blaze.android.filecache;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.devtools.intellij.model.ProjectData.LocalFile;
 import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
-import com.google.idea.blaze.base.io.FileOperationProvider;
-import java.io.File;
 import java.util.Objects;
 
 /** Data class to (de)serialize metadata of an artifact in cache */
@@ -65,25 +61,11 @@ public final class ArtifactMetadata {
     return Objects.hash(relativePath, identifier);
   }
 
-  /** Converts the given {@code artifact} to serializable {@link LocalFileOrOutputArtifact} */
-  public static ArtifactMetadata forArtifact(BlazeArtifact artifact) {
-    if (artifact instanceof OutputArtifact) {
-      return getArtifactMetadataForOutputArtifact((OutputArtifact) artifact);
-    } else if (artifact instanceof SourceArtifact) {
-      File artifactFile = ((SourceArtifact) artifact).getFile();
-      return new ArtifactMetadata(
-          artifactFile.getPath(),
-          Long.toString(FileOperationProvider.getInstance().getFileModifiedTime(artifactFile)));
-    }
-
-    throw new IllegalArgumentException("Unsupported BlazeArtifact " + artifact.getClass());
-  }
-
-  private static ArtifactMetadata getArtifactMetadataForOutputArtifact(
-      OutputArtifact outputArtifact) {
-    ArtifactState artifactState = outputArtifact.toArtifactState();
+  /** Returns the relevant metadata for an {@code artifact} that needs to be persisted. */
+  public static ArtifactMetadata forArtifact(OutputArtifact artifact) {
+    ArtifactState artifactState = artifact.toArtifactState();
     if (artifactState == null) {
-      throw new IllegalArgumentException("Could not get ArtifactState of " + outputArtifact);
+      throw new IllegalArgumentException("Could not get ArtifactState of " + artifact);
     }
     // Serialize to proto to make grabbing the fields easier
     LocalFileOrOutputArtifact serializedArtifact = artifactState.serializeToProto();

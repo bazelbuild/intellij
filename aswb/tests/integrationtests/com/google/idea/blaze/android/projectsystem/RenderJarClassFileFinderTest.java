@@ -26,7 +26,8 @@ import com.google.idea.blaze.android.libraries.RenderJarCache;
 import com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
-import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -142,20 +143,23 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
 
     CacheEntry binACacheEntry =
         CacheEntry.forArtifact(
-            artifactLocationDecoder.resolveOutput(
-                getArtifactLocation("com/google/example/simple/bin_a.jar")));
+            (LocalFileOutputArtifact)
+                artifactLocationDecoder.resolveOutput(
+                    getArtifactLocation("com/google/example/simple/bin_a.jar")));
     String binAJar = cacheDir.getAbsoluteFile() + "/" + binACacheEntry.getFileName();
 
     CacheEntry binBCacheEntry =
         CacheEntry.forArtifact(
-            artifactLocationDecoder.resolveOutput(
-                getArtifactLocation("com/google/example/simple/bin_b.jar")));
+            (LocalFileOutputArtifact)
+                artifactLocationDecoder.resolveOutput(
+                    getArtifactLocation("com/google/example/simple/bin_b.jar")));
     String binBJar = cacheDir.getAbsoluteFile() + "/" + binBCacheEntry.getFileName();
 
     CacheEntry binCCacheEntry =
         CacheEntry.forArtifact(
-            artifactLocationDecoder.resolveOutput(
-                getArtifactLocation("com/google/example/simple/bin_c.jar")));
+            (LocalFileOutputArtifact)
+                artifactLocationDecoder.resolveOutput(
+                    getArtifactLocation("com/google/example/simple/bin_c.jar")));
     String binCJar = cacheDir.getAbsoluteFile() + "/" + binCCacheEntry.getFileName();
 
     assertThat(classFileFinder.findClassFile("com.google.example.simple.src_a.SrcA"))
@@ -223,20 +227,23 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
 
     CacheEntry binACacheEntry =
         CacheEntry.forArtifact(
-            artifactLocationDecoder.resolveOutput(
-                getArtifactLocation("com/google/example/simple/bin_a.jar")));
+            (LocalFileOutputArtifact)
+                artifactLocationDecoder.resolveOutput(
+                    getArtifactLocation("com/google/example/simple/bin_a.jar")));
     String binAJar = cacheDir.getAbsoluteFile() + "/" + binACacheEntry.getFileName();
 
     CacheEntry binBCacheEntry =
         CacheEntry.forArtifact(
-            artifactLocationDecoder.resolveOutput(
-                getArtifactLocation("com/google/example/simple/bin_b.jar")));
+            (LocalFileOutputArtifact)
+                artifactLocationDecoder.resolveOutput(
+                    getArtifactLocation("com/google/example/simple/bin_b.jar")));
     String binBJar = cacheDir.getAbsoluteFile() + "/" + binBCacheEntry.getFileName();
 
     CacheEntry binCCacheEntry =
         CacheEntry.forArtifact(
-            artifactLocationDecoder.resolveOutput(
-                getArtifactLocation("com/google/example/simple/bin_c.jar")));
+            (LocalFileOutputArtifact)
+                artifactLocationDecoder.resolveOutput(
+                    getArtifactLocation("com/google/example/simple/bin_c.jar")));
     String binCJar = cacheDir.getAbsoluteFile() + "/" + binCCacheEntry.getFileName();
 
     assertThat(aClassFileFinder.findClassFile("com.google.example.simple.src_a.SrcA"))
@@ -277,20 +284,23 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
 
     CacheEntry binACacheEntry =
         CacheEntry.forArtifact(
-            artifactLocationDecoder.resolveOutput(
-                getArtifactLocation("com/google/example/simple/bin_a.jar")));
+            (LocalFileOutputArtifact)
+                artifactLocationDecoder.resolveOutput(
+                    getArtifactLocation("com/google/example/simple/bin_a.jar")));
     String binAJar = cacheDir.getAbsoluteFile() + "/" + binACacheEntry.getFileName();
 
     CacheEntry binBCacheEntry =
         CacheEntry.forArtifact(
-            artifactLocationDecoder.resolveOutput(
-                getArtifactLocation("com/google/example/simple/bin_b.jar")));
+            (LocalFileOutputArtifact)
+                artifactLocationDecoder.resolveOutput(
+                    getArtifactLocation("com/google/example/simple/bin_b.jar")));
     String binBJar = cacheDir.getAbsoluteFile() + "/" + binBCacheEntry.getFileName();
 
     CacheEntry binCCacheEntry =
         CacheEntry.forArtifact(
-            artifactLocationDecoder.resolveOutput(
-                getArtifactLocation("com/google/example/simple/bin_c.jar")));
+            (LocalFileOutputArtifact)
+                artifactLocationDecoder.resolveOutput(
+                    getArtifactLocation("com/google/example/simple/bin_c.jar")));
     String binCJar = cacheDir.getAbsoluteFile() + "/" + binCCacheEntry.getFileName();
 
     assertThat(aClassFileFinder.findClassFile("com.google.example.simple.trans_dep_a.TransDepA"))
@@ -436,9 +446,10 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     fileSystem.createDirectory(cacheDirFile.getAbsolutePath());
     String cacheDir = cacheDirFile.getPath();
 
-    BlazeArtifact binAArtifact =
-        artifactLocationDecoder.resolveOutput(
-            getArtifactLocation("com/google/example/simple/bin_a.jar"));
+    OutputArtifact binAArtifact =
+        (OutputArtifact)
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_a.jar"));
     CacheEntry binACacheEntry = CacheEntry.forArtifact(binAArtifact);
     String binAJar = cacheDir + "/" + binACacheEntry.getFileName();
     fileSystem.createFile(binAJar);
@@ -453,9 +464,10 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     fileSystem.createFile(binAJar + "!/com/google/example/simple/trans_dep_a/R$dimen.class");
     artifactCache.addTrackedFile(binAArtifact, binAJar);
 
-    BlazeArtifact binBArtifact =
-        artifactLocationDecoder.resolveOutput(
-            getArtifactLocation("com/google/example/simple/bin_b.jar"));
+    OutputArtifact binBArtifact =
+        (OutputArtifact)
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_b.jar"));
     CacheEntry binBCacheEntry = CacheEntry.forArtifact(binBArtifact);
     String binBJar = cacheDir + "/" + binBCacheEntry.getFileName();
     fileSystem.createFile(binBJar);
@@ -470,9 +482,10 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
     fileSystem.createFile(binBJar + "!/com/google/example/simple/trans_dep_b/R$dimen.class");
     artifactCache.addTrackedFile(binBArtifact, binBJar);
 
-    BlazeArtifact binCArtifact =
-        artifactLocationDecoder.resolveOutput(
-            getArtifactLocation("com/google/example/simple/bin_c.jar"));
+    OutputArtifact binCArtifact =
+        (OutputArtifact)
+            artifactLocationDecoder.resolveOutput(
+                getArtifactLocation("com/google/example/simple/bin_c.jar"));
     CacheEntry binCCacheEntry = CacheEntry.forArtifact(binCArtifact);
     String binCJar = cacheDir + "/" + binCCacheEntry.getFileName();
     fileSystem.createFile(binCJar);
