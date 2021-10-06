@@ -5,6 +5,7 @@
 #   plugin apis to known packages that build plugins. Only packages
 #   listed here may depend on these libraries.
 
+# Test import pull-request
 load(
     ":build_defs.bzl",
     "select_for_ide",
