@@ -31,6 +31,7 @@ public final class LineProcessingProcessAdapter extends ProcessAdapter {
     myOutputStream = outputStream;
   }
 
+  @SuppressWarnings({"rawtypes"})
   @Override
   public void onTextAvailable(ProcessEvent event, Key outputType) {
     String text = event.getText();
