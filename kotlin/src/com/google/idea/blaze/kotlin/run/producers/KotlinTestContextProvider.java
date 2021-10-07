@@ -52,6 +52,7 @@ class KotlinTestContextProvider implements TestContextProvider {
         .map(target -> createTestContext(testClass, testMethod, target));
   }
 
+  @SuppressWarnings({"rawtypes"})
   private static Optional<PsiElement> getPsiElement(ConfigurationContext context) {
     return Optional.ofNullable(context.getLocation()).map(Location::getPsiElement);
   }
