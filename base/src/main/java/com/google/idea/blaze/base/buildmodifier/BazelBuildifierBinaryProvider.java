@@ -22,9 +22,7 @@ import javax.annotation.Nullable;
 /** Provides the bazel buildifier binary. */
 public class BazelBuildifierBinaryProvider implements BuildifierBinaryProvider {
 
-  private static final String BASE = "/";
-  private static final String BUILDIFIER_BINARY_PATH =
-      BASE + "base/resources/binaries/bazel-buildifier";
+  private static final String BUILDIFIER_BINARY_PATH = "/binaries/bazel-buildifier";
 
   @Nullable
   @Override

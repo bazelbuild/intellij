@@ -20,9 +20,9 @@ licenses(["notice"])  # Apache 2.0
 
 java_library(
     name = "base",
-    srcs = glob(["src/**/*.java"]),
+    srcs = glob(["src/main/java/**/*.java"]),
     javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
-    resources = glob(["resources/**/*"]),
+    resources = glob(["src/main/resources/**/*"]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//common/actions",
@@ -44,7 +44,7 @@ java_library(
 
 intellij_plugin_library(
     name = "plugin_library",
-    plugin_xmls = ["src/META-INF/blaze-base.xml"],
+    plugin_xmls = ["src/main/META-INF/blaze-base.xml"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":base"],
 )
@@ -52,8 +52,8 @@ intellij_plugin_library(
 java_library(
     name = "proto_wrapper",
     srcs = [
-        "src/com/google/idea/blaze/base/ideinfo/ProjectDataInterner.java",
-        "src/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java",
+        "src/main/java/com/google/idea/blaze/base/ideinfo/ProjectDataInterner.java",
+        "src/main/java/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java",
     ],
     neverlink = 1,
     visibility = ["//visibility:private"],
@@ -69,7 +69,7 @@ java_library(
 # self-contained custom formatter API, exposed so other plugins can optionally depend on it
 java_library(
     name = "formatter_api",
-    srcs = glob(["src/com/google/idea/blaze/base/formatter/*.java"]),
+    srcs = glob(["src/main/java/com/google/idea/blaze/base/formatter/*.java"]),
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
@@ -83,17 +83,17 @@ java_library(
 java_library(
     name = "label_api",
     srcs = [
-        "src/com/google/idea/blaze/base/ideinfo/ArtifactLocation.java",
-        "src/com/google/idea/blaze/base/model/primitives/InvalidTargetException.java",
-        "src/com/google/idea/blaze/base/model/primitives/Kind.java",
-        "src/com/google/idea/blaze/base/model/primitives/Label.java",
-        "src/com/google/idea/blaze/base/model/primitives/LanguageClass.java",
-        "src/com/google/idea/blaze/base/model/primitives/PackagePathValidator.java",
-        "src/com/google/idea/blaze/base/model/primitives/RuleType.java",
-        "src/com/google/idea/blaze/base/model/primitives/TargetExpression.java",
-        "src/com/google/idea/blaze/base/model/primitives/TargetName.java",
-        "src/com/google/idea/blaze/base/model/primitives/WildcardTargetPattern.java",
-        "src/com/google/idea/blaze/base/model/primitives/WorkspacePath.java",
+        "src/main/java/com/google/idea/blaze/base/ideinfo/ArtifactLocation.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/InvalidTargetException.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/Kind.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/Label.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/LanguageClass.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/PackagePathValidator.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/RuleType.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/TargetExpression.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/TargetName.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/WildcardTargetPattern.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/WorkspacePath.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
@@ -110,9 +110,9 @@ java_library(
 java_library(
     name = "sync_listener_api",
     srcs = [
-        "src/com/google/idea/blaze/base/sync/SimpleSyncListener.java",
-        "src/com/google/idea/blaze/base/sync/SyncMode.java",
-        "src/com/google/idea/blaze/base/sync/SyncResult.java",
+        "src/main/java/com/google/idea/blaze/base/sync/SimpleSyncListener.java",
+        "src/main/java/com/google/idea/blaze/base/sync/SyncMode.java",
+        "src/main/java/com/google/idea/blaze/base/sync/SyncResult.java",
     ],
     neverlink = 1,
     visibility = INTELLIJ_PLUGINS_VISIBILITY,
@@ -125,7 +125,7 @@ java_library(
 java_library(
     name = "vcs_sync_listener_api",
     srcs = [
-        "src/com/google/idea/blaze/base/vcs/VcsSyncListener.java",
+        "src/main/java/com/google/idea/blaze/base/vcs/VcsSyncListener.java",
     ],
     neverlink = 1,
     visibility = INTELLIJ_PLUGINS_VISIBILITY,
@@ -138,8 +138,8 @@ java_library(
 java_library(
     name = "vfs_api",
     srcs = [
-        "src/com/google/idea/blaze/base/io/VfsUtils.java",
-        "src/com/google/idea/blaze/base/io/VirtualFileSystemProvider.java",
+        "src/main/java/com/google/idea/blaze/base/io/VfsUtils.java",
+        "src/main/java/com/google/idea/blaze/base/io/VirtualFileSystemProvider.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
@@ -153,7 +153,7 @@ java_library(
 java_library(
     name = "absolute_path_patcher_api",
     srcs = [
-        "src/com/google/idea/blaze/base/io/AbsolutePathPatcher.java",
+        "src/main/java/com/google/idea/blaze/base/io/AbsolutePathPatcher.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
@@ -168,13 +168,13 @@ java_library(
 java_library(
     name = "workspace_path_resolver_api",
     srcs = [
-        "src/com/google/idea/blaze/base/model/primitives/WorkspacePath.java",
-        "src/com/google/idea/blaze/base/model/primitives/WorkspaceRoot.java",
-        "src/com/google/idea/blaze/base/settings/BlazeImportSettings.java",
-        "src/com/google/idea/blaze/base/settings/BlazeImportSettingsManager.java",
-        "src/com/google/idea/blaze/base/settings/BuildSystem.java",
-        "src/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolver.java",
-        "src/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolverProvider.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/WorkspacePath.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/WorkspaceRoot.java",
+        "src/main/java/com/google/idea/blaze/base/settings/BlazeImportSettings.java",
+        "src/main/java/com/google/idea/blaze/base/settings/BlazeImportSettingsManager.java",
+        "src/main/java/com/google/idea/blaze/base/settings/BuildSystem.java",
+        "src/main/java/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolver.java",
+        "src/main/java/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolverProvider.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
@@ -190,7 +190,7 @@ java_library(
 java_library(
     name = "workspace_file_finder_api",
     srcs = [
-        "src/com/google/idea/blaze/base/sync/projectview/WorkspaceFileFinder.java",
+        "src/main/java/com/google/idea/blaze/base/sync/projectview/WorkspaceFileFinder.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
@@ -204,8 +204,8 @@ java_library(
 java_library(
     name = "workspace_language_checker_api",
     srcs = [
-        "src/com/google/idea/blaze/base/model/primitives/LanguageClass.java",
-        "src/com/google/idea/blaze/base/sync/projectview/WorkspaceLanguageChecker.java",
+        "src/main/java/com/google/idea/blaze/base/model/primitives/LanguageClass.java",
+        "src/main/java/com/google/idea/blaze/base/sync/projectview/WorkspaceLanguageChecker.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
@@ -220,9 +220,9 @@ java_library(
 java_library(
     name = "logging_api",
     srcs = [
-        "src/com/google/idea/blaze/base/logging/EventLogger.java",
-        "src/com/google/idea/blaze/base/logging/LoggedDirectoryProvider.java",
-        "src/com/google/idea/blaze/base/logging/LoggedSettingsProvider.java",
+        "src/main/java/com/google/idea/blaze/base/logging/EventLogger.java",
+        "src/main/java/com/google/idea/blaze/base/logging/LoggedDirectoryProvider.java",
+        "src/main/java/com/google/idea/blaze/base/logging/LoggedSettingsProvider.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
@@ -238,7 +238,7 @@ java_library(
 java_library(
     name = "blaze_user_settings_api",
     srcs = [
-        "src/com/google/idea/blaze/base/settings/BlazeUserSettings.java",
+        "src/main/java/com/google/idea/blaze/base/settings/BlazeUserSettings.java",
     ],
     neverlink = 1,
     deps = [
@@ -252,13 +252,13 @@ java_library(
 java_library(
     name = "dep_finder_api",
     srcs = [
-        "src/com/google/idea/blaze/base/dependencies/DependencyFinder.java",
-        "src/com/google/idea/blaze/base/dependencies/SourceToTargetProvider.java",
-        "src/com/google/idea/blaze/base/dependencies/TargetInfo.java",
-        "src/com/google/idea/blaze/base/dependencies/TestSize.java",
-        "src/com/google/idea/blaze/base/run/SourceToTargetFinder.java",
-        "src/com/google/idea/blaze/base/run/targetfinder/FuturesUtil.java",
-        "src/com/google/idea/blaze/base/run/targetfinder/TargetFinder.java",
+        "src/main/java/com/google/idea/blaze/base/dependencies/DependencyFinder.java",
+        "src/main/java/com/google/idea/blaze/base/dependencies/SourceToTargetProvider.java",
+        "src/main/java/com/google/idea/blaze/base/dependencies/TargetInfo.java",
+        "src/main/java/com/google/idea/blaze/base/dependencies/TestSize.java",
+        "src/main/java/com/google/idea/blaze/base/run/SourceToTargetFinder.java",
+        "src/main/java/com/google/idea/blaze/base/run/targetfinder/FuturesUtil.java",
+        "src/main/java/com/google/idea/blaze/base/run/targetfinder/TargetFinder.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
@@ -276,9 +276,9 @@ java_library(
 java_library(
     name = "build_batching_service_api",
     srcs = [
-        "src/com/google/idea/blaze/base/logging/utils/ShardStats.java",
-        "src/com/google/idea/blaze/base/settings/BuildBinaryType.java",
-        "src/com/google/idea/blaze/base/sync/sharding/BuildBatchingService.java",
+        "src/main/java/com/google/idea/blaze/base/logging/utils/ShardStats.java",
+        "src/main/java/com/google/idea/blaze/base/settings/BuildBinaryType.java",
+        "src/main/java/com/google/idea/blaze/base/sync/sharding/BuildBatchingService.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
@@ -296,7 +296,7 @@ java_library(
 # neverlink library exposed so other plugins can optionally depend on it
 java_library(
     name = "blaze_sync_modification_tracker_api",
-    srcs = ["src/com/google/idea/blaze/base/sync/BlazeSyncModificationTracker.java"],
+    srcs = ["src/main/java/com/google/idea/blaze/base/sync/BlazeSyncModificationTracker.java"],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
@@ -309,7 +309,7 @@ java_library(
 java_library(
     name = "buildifier_binary_provider_api",
     srcs = [
-        "src/com/google/idea/blaze/base/buildmodifier/BuildifierBinaryProvider.java",
+        "src/main/java/com/google/idea/blaze/base/buildmodifier/BuildifierBinaryProvider.java",
     ],
     neverlink = 1,
     deps = [
@@ -323,15 +323,15 @@ java_library(
     name = "remote_file_prefetcher_for_tests",
     testonly = 1,
     srcs = [
-        "src/com/google/idea/blaze/base/async/FutureUtil.java",
-        "src/com/google/idea/blaze/base/command/buildresult/BlazeArtifact.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
-        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifactParser.java",
-        "src/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
-        "src/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java",
-        "src/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
-        "src/com/google/idea/blaze/base/prefetch/FetchExecutor.java",
-        "src/com/google/idea/blaze/base/prefetch/RemoteArtifactPrefetcher.java",
+        "src/main/java/com/google/idea/blaze/base/async/FutureUtil.java",
+        "src/main/java/com/google/idea/blaze/base/command/buildresult/BlazeArtifact.java",
+        "src/main/java/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
+        "src/main/java/com/google/idea/blaze/base/command/buildresult/OutputArtifactParser.java",
+        "src/main/java/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
+        "src/main/java/com/google/idea/blaze/base/ideinfo/ProtoWrapper.java",
+        "src/main/java/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
+        "src/main/java/com/google/idea/blaze/base/prefetch/FetchExecutor.java",
+        "src/main/java/com/google/idea/blaze/base/prefetch/RemoteArtifactPrefetcher.java",
     ],
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
@@ -345,7 +345,7 @@ java_library(
 java_library(
     name = "file_size_scanner",
     srcs = [
-        "src/com/google/idea/blaze/base/io/FileSizeScanner.java",
+        "src/main/java/com/google/idea/blaze/base/io/FileSizeScanner.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
@@ -358,11 +358,11 @@ java_library(
 java_library(
     name = "remote_file_prefetcher",
     srcs = [
-        "src/com/google/idea/blaze/base/async/FutureUtil.java",
-        "src/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
-        "src/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
-        "src/com/google/idea/blaze/base/prefetch/FetchExecutor.java",
-        "src/com/google/idea/blaze/base/prefetch/RemoteArtifactPrefetcher.java",
+        "src/main/java/com/google/idea/blaze/base/async/FutureUtil.java",
+        "src/main/java/com/google/idea/blaze/base/command/buildresult/RemoteOutputArtifact.java",
+        "src/main/java/com/google/idea/blaze/base/prefetch/DefaultPrefetcher.java",
+        "src/main/java/com/google/idea/blaze/base/prefetch/FetchExecutor.java",
+        "src/main/java/com/google/idea/blaze/base/prefetch/RemoteArtifactPrefetcher.java",
     ],
     neverlink = 1,
     visibility = G3PLUGINS_VISIBILITY,
@@ -377,7 +377,7 @@ java_library(
 java_library(
     name = "unit_test_utils",
     testonly = 1,
-    srcs = glob(["tests/utils/unit/**/*.java"]),
+    srcs = glob(["src/tests/utils/unit/**/*.java"]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//base",
@@ -393,7 +393,7 @@ java_library(
 java_library(
     name = "integration_test_utils",
     testonly = 1,
-    srcs = glob(["tests/utils/integration/**/*.java"]),
+    srcs = glob(["src/tests/utils/integration/**/*.java"]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":unit_test_utils",
@@ -423,7 +423,7 @@ intellij_plugin(
 
 intellij_unit_test_suite(
     name = "unit_tests",
-    srcs = glob(["tests/unittests/**/*.java"]),
+    srcs = glob(["src/tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.base",
     deps = [
         ":base",
@@ -440,7 +440,7 @@ intellij_unit_test_suite(
 
 intellij_integration_test_suite(
     name = "integration_tests",
-    srcs = glob(["tests/integrationtests/**/*.java"]),
+    srcs = glob(["src/tests/integrationtests/**/*.java"]),
     required_plugins = "com.google.idea.blaze.base",
     test_package_root = "com.google.idea.blaze.base",
     runtime_deps = [
