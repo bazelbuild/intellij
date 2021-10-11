@@ -23,6 +23,8 @@ java_library(
         "intellij-ue-2021.1": ["//sdkcompat/v211"],
         "intellij-2021.2": ["//sdkcompat/v212"],
         "intellij-ue-2021.2": ["//sdkcompat/v212"],
+        "intellij-2021.3": ["//sdkcompat/v212"],
+        "intellij-ue-2021.3": ["//sdkcompat/v212"],
         "clion-2020.3": ["//sdkcompat/v203"],
         "clion-2021.1": ["//sdkcompat/v211"],
         "clion-2021.2": ["//sdkcompat/v212"],

@@ -14,6 +14,8 @@ java_library(
         "intellij-ue-2021.1": ["@python_2021_1//:python"],
         "intellij-2021.2": ["@python_2021_2//:python"],
         "intellij-ue-2021.2": ["@python_2021_2//:python"],
+        "intellij-2021.3": ["@python_2021_3//:python"],
+        "intellij-ue-2021.3": ["@python_2021_3//:python"],
         "clion-2020.3": ["@clion_2020_3//:python"],
         "clion-2021.1": ["@clion_2021_1//:python"],
         "clion-2021.2": ["@clion_2021_2//:python"],

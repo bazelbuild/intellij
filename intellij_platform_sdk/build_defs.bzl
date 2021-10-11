@@ -22,10 +22,10 @@ INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for Bazel Plugin OSS
     "intellij-oss-stable": "intellij-2021.2",
     "intellij-oss-beta": "intellij-2021.2",
-    "intellij-oss-under-dev": "intellij-2021.2",
+    "intellij-oss-under-dev": "intellij-2021.3",
     "intellij-ue-oss-stable": "intellij-ue-2021.2",
     "intellij-ue-oss-beta": "intellij-ue-2021.2",
-    "intellij-ue-oss-under-dev": "intellij-ue-2021.2",
+    "intellij-ue-oss-under-dev": "intellij-ue-2021.3",
     "android-studio-oss-stable": "android-studio-2020.3",
     "android-studio-oss-beta": "android-studio-2020.3",
     "android-studio-oss-under-dev": "android-studio-2021.1",
@@ -59,6 +59,14 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2021_2",
     ),
+    "intellij-2021.3": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2021_3",
+    ),
+    "intellij-2021.3-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2021_3",
+    ),
     "intellij-ue-2020.3": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2020_3",
@@ -82,6 +90,14 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-ue-2021.2-mac": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2021_2",
+    ),
+    "intellij-ue-2021.3": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2021_3",
+    ),
+    "intellij-ue-2021.3-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2021_3",
     ),
     "android-studio-2020.3": struct(
         ide = "android-studio",
