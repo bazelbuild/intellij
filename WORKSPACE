@@ -177,8 +177,8 @@ http_archive(
 http_archive(
     name = "go_2021_3",
     build_file_content = _GO_BUILD_FILE,
-    sha256 = "12b7795de21b5c6987172e743b563c02cd57b25e9d25252d958025e78be427d8",
-    url = "https://plugins.jetbrains.com/files/9568/139297/go-213.4293.20.zip",
+    sha256 = "827b73a8e3e7acb9211969bae62190e884f33bdf6d02c7299e0f18d1307d9fcd",
+    url = "https://plugins.jetbrains.com/files/9568/140077/go-213.4631.20.zip",
 )
 
 _SCALA_BUILD_FILE = """
