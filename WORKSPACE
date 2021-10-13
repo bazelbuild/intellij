@@ -217,8 +217,8 @@ http_archive(
 http_archive(
     name = "scala_2021_3",
     build_file_content = _SCALA_BUILD_FILE,
-    sha256 = "619a947d1f7c1d90a4736dc63980c109f86fb6ee5432029198fa5cb827017263",
-    url = "https://plugins.jetbrains.com/files/1347/138059/scala-intellij-bin-2021.3.4.zip",
+    sha256 = "9a5278a03617c1768d85226a3e4f89659443fa01942eab84f0f618e11c25e2c2",
+    url = "https://plugins.jetbrains.com/files/1347/139787/scala-intellij-bin-2021.3.5.zip",
 )
 
 # The plugin api for Android Studio 2020.3. This is required to build ASwB,
