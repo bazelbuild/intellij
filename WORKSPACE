@@ -72,8 +72,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2021_3",
     build_file = "@//intellij_platform_sdk:BUILD.ue213",
-    sha256 = "12dba2733b2ffdd44a037d63837f2121be13ff8148079bcd7ffb3b9019174cd9",
-    url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/213.4293.20-EAP-SNAPSHOT/ideaIU-213.4293.20-EAP-SNAPSHOT.zip",
+    sha256 = "f36fd4f655ab8500be0ca8d6e031307dba379b0f97dfff8fcdd9b84ac806d936",
+    url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/213.4631.20-EAP-SNAPSHOT/ideaIU-213.4631.20-EAP-SNAPSHOT.zip",
 )
 
 # The plugin api for CLion 2020.3. This is required to build CLwB,
