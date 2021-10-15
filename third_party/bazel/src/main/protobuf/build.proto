@@ -53,44 +53,6 @@ message StringListDictEntry {
   repeated string value = 2;
 }
 
-// Represents an entry attribute of a Fileset rule in a build file.
-message FilesetEntry {
-  // Indicates what to do when a source file is actually a symlink.
-  enum SymlinkBehavior {
-    COPY = 1;
-    DEREFERENCE = 2;
-  }
-
-  // The label pointing to the source target where files are copied from.
-  required string source = 1;
-
-  // The relative path within the fileset rule where files will be mapped.
-  required string destination_directory = 2;
-
-  // Whether the files= attribute was specified. This is necessary because
-  // no files= attribute and files=[] mean different things.
-  optional bool files_present = 7;
-
-  // A list of file labels to include from the source directory.
-  repeated string file = 3;
-
-  // If this is a fileset entry representing files within the rule
-  // package, this lists relative paths to files that should be excluded from
-  // the set.  This cannot contain values if 'file' also has values.
-  repeated string exclude = 4;
-
-  // This field is optional because there will be some time when the new
-  // PB is used by tools depending on blaze query, but the new blaze version
-  // is not yet released.
-  // TODO(bazel-team): Make this field required once a version of Blaze is
-  // released that outputs this field.
-  optional SymlinkBehavior symlink_behavior = 5 [default = COPY];
-
-  // The prefix to strip from the path of the files in this FilesetEntry. Note
-  // that no value and the empty string as the value mean different things here.
-  optional string strip_prefix = 6;
-}
-
 // A rule attribute. Each attribute must have a type and one of the various
 // value fields populated - for the most part.
 //
@@ -111,7 +73,7 @@ message FilesetEntry {
 // from the blaze parsing. If an attribute is of a list type, the associated
 // list should never be empty.
 message Attribute {
-  reserved 12, 16;
+  reserved 9, 12, 16;
 
   // Indicates the type of attribute.
   enum Discriminator {
@@ -125,7 +87,6 @@ message Attribute {
     DISTRIBUTION_SET = 8;     // string_list_value - order is unimportant
     LICENSE = 9;              // license
     STRING_DICT = 10;         // string_dict_value
-    FILESET_ENTRY_LIST = 11;  // fileset_list_value
     LABEL_LIST_DICT = 12;     // label_list_dict_value
     STRING_LIST_DICT = 13;    // string_list_dict_value
     BOOLEAN = 14;             // int, bool and string value
@@ -136,6 +97,7 @@ message Attribute {
     SELECTOR_LIST = 20;       // selector_list
     LABEL_KEYED_STRING_DICT = 21;  // label_keyed_string_dict
 
+    DEPRECATED_FILESET_ENTRY_LIST = 11;  // fileset_list_value
     DEPRECATED_STRING_DICT_UNARY = 17;
   }
 
@@ -147,7 +109,7 @@ message Attribute {
   }
 
   message SelectorEntry {
-    reserved 12;
+    reserved 9, 12;
 
     // The key of the selector entry. At this time, this is the label of a
     // config_setting rule, or the pseudo-label "//conditions:default".
@@ -172,7 +134,6 @@ message Attribute {
     repeated string string_list_value = 6;
     optional License license = 7;
     repeated StringDictEntry string_dict_value = 8;
-    repeated FilesetEntry fileset_list_value = 9;
     repeated LabelListDictEntry label_list_dict_value = 10;
     repeated StringListDictEntry string_list_dict_value = 11;
     repeated int32 int_list_value = 13;
@@ -247,10 +208,6 @@ message Attribute {
 
   // If this is a string dict, each entry will be stored here.
   repeated StringDictEntry string_dict_value = 8;
-
-  // If the attribute is part of a Fileset, the fileset entries are stored in
-  // this field.
-  repeated FilesetEntry fileset_list_value = 9;
 
   // If this is a label list dict, each entry will be stored here.
   repeated LabelListDictEntry label_list_dict_value = 10;

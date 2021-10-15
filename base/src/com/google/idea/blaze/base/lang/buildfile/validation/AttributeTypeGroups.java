@@ -34,7 +34,6 @@ public final class AttributeTypeGroups {
           Discriminator.DISTRIBUTION_SET,
           Discriminator.LABEL_LIST,
           Discriminator.OUTPUT_LIST,
-          Discriminator.FILESET_ENTRY_LIST,
           Discriminator.INTEGER_LIST,
           Discriminator.LICENSE,
           Discriminator.SELECTOR_LIST);
