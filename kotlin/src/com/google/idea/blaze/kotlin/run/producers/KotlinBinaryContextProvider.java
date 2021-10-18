@@ -65,6 +65,8 @@ class KotlinBinaryContextProvider implements BinaryContextProvider {
     if (virtualFile == null) {
       return null;
     }
+    // Switch to EntryPointContainerFinder.INSTANCE#find when safely on Kotlin plugin 1.6. Check
+    // the version of the Kotlin plugin when moving off #api211.
     KtDeclarationContainer entryPointContainer =
         KotlinRunConfigurationProducer.Companion.getEntryPointContainer(location.getPsiElement());
     if (entryPointContainer == null) {
