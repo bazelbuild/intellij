@@ -64,7 +64,6 @@ java_library(
     name = "fast_build_javac",
     srcs = _FAST_BUILD_JAVAC_SRCS + _FAST_BUILD_JAVAC_IMPL_SRCS,
     visibility = FAST_BUILD_JAVAC_VISIBILITY,
-    deps = ["//third_party/java/jdk:langtools"],
 )
 
 # This is provided by the IDE at runtime
