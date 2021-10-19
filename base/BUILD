@@ -22,7 +22,7 @@ java_library(
     name = "base",
     srcs = glob(["src/**/*.java"]),
     javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
-    resources = glob(["resources/**/*"]),
+    resources = glob(["src/resources/**/*"]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//common/actions",
