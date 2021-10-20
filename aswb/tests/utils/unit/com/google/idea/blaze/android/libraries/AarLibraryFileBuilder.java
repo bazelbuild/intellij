@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.libraries;
 
+import static com.android.SdkConstants.FN_LINT_JAR;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.android.annotations.NonNull;
@@ -35,6 +36,7 @@ public class AarLibraryFileBuilder {
   private static final Logger LOG = Logger.getInstance(AarLibraryFileBuilder.class);
   private final File aarFile;
   private final Map<String, byte[]> resourceNameToContent;
+  private byte[] lintJar = new byte[0];
 
   public static AarLibraryFileBuilder aar(
       @NonNull WorkspaceRoot workspaceRoot, @NonNull String aarFilePath) {
@@ -56,6 +58,11 @@ public class AarLibraryFileBuilder {
     return this;
   }
 
+  public AarLibraryFileBuilder setLintJar(byte[] lintJar) {
+    this.lintJar = lintJar;
+    return this;
+  }
+
   public File build() {
     try {
       // create aarFilePath if it does not exist
@@ -65,6 +72,11 @@ public class AarLibraryFileBuilder {
         for (Map.Entry<String, byte[]> entry : resourceNameToContent.entrySet()) {
           out.putNextEntry(new ZipEntry(entry.getKey()));
           out.write(entry.getValue(), 0, entry.getValue().length);
+          out.closeEntry();
+        }
+        if (lintJar.length > 0) {
+          out.putNextEntry(new ZipEntry(FN_LINT_JAR));
+          out.write(lintJar, 0, lintJar.length);
           out.closeEntry();
         }
       }

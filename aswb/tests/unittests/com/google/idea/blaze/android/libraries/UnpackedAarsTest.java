@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.libraries;
 
+import static com.android.SdkConstants.FN_LINT_JAR;
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -186,6 +187,60 @@ public class UnpackedAarsTest extends BlazeTestCase {
     String messages = writingOutputSink.getMessages();
     assertThat(messages).doesNotContain("Copied 1 AARs");
     assertThat(messages).contains("Removed 1 AARs");
+  }
+
+  @Test
+  public void testRefresh_includeLintJar() throws IOException {
+    UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
+    File aarCacheDir = unpackedAars.getCacheDir();
+    String lintAar = "lint.aar";
+    File lintJar = workspaceRoot.fileForPath(new WorkspacePath(FN_LINT_JAR));
+    try (ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(lintJar))) {
+      zo.putNextEntry(new ZipEntry("com/google/foo/sampleDetector.java"));
+      zo.write("package com.google.foo; class sampleDetector {}".getBytes(UTF_8));
+      zo.closeEntry();
+    }
+    byte[] expectedJarContent = Files.readAllBytes(lintJar.toPath());
+    AarLibraryFileBuilder.aar(workspaceRoot, lintAar).setLintJar(expectedJarContent).build();
+    ArtifactLocation lintAarArtifactLocation = generateArtifactLocation(lintAar);
+    AarLibrary lintAarLibrary = new AarLibrary(lintAarArtifactLocation, null);
+
+    BlazeAndroidImportResult importResult =
+        new BlazeAndroidImportResult(
+            ImmutableList.of(),
+            ImmutableMap.of(
+                LibraryKey.libraryNameFromArtifactLocation(lintAarArtifactLocation),
+                lintAarLibrary),
+            ImmutableList.of(),
+            ImmutableList.of());
+    BlazeAndroidSyncData syncData =
+        new BlazeAndroidSyncData(importResult, new AndroidSdkPlatform("stable", 15));
+    BlazeProjectData blazeProjectData =
+        MockBlazeProjectDataBuilder.builder(workspaceRoot)
+            .setWorkspaceLanguageSettings(
+                new WorkspaceLanguageSettings(WorkspaceType.ANDROID, ImmutableSet.of()))
+            .setSyncState(new SyncState.Builder().put(syncData).build())
+            .setArtifactLocationDecoder(artifactLocationDecoder)
+            .build();
+    FileCache.EP_NAME
+        .extensions()
+        .forEach(
+            ep ->
+                ep.onSync(
+                    getProject(),
+                    context,
+                    ProjectViewSet.builder().add(ProjectView.builder().build()).build(),
+                    blazeProjectData,
+                    null,
+                    SyncMode.INCREMENTAL));
+
+    assertThat(aarCacheDir.list()).hasLength(1);
+    File lintJarAarDir = unpackedAars.getAarDir(artifactLocationDecoder, lintAarLibrary);
+
+    assertThat(aarCacheDir.listFiles()).asList().containsExactly(lintJarAarDir);
+    assertThat(lintJarAarDir.list()).asList().contains(FN_LINT_JAR);
+    byte[] actualJarContent = Files.readAllBytes(new File(lintJarAarDir, FN_LINT_JAR).toPath());
+    assertThat(actualJarContent).isEqualTo(expectedJarContent);
   }
 
   @Test

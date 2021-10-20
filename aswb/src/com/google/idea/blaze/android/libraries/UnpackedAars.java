@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.libraries;
 
+import static com.android.SdkConstants.FN_LINT_JAR;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
@@ -423,8 +424,10 @@ public class UnpackedAars {
       ZipUtil.extract(
           toCopy,
           aarDir,
-          // Skip jars. The merged jar will be synchronized by JarTraits.
-          (dir, name) -> !name.endsWith(".jar"));
+          // Skip jars except lint.jar. We will copy jar in AarLibraryContents instead.
+          // That could give us freedom in the future to use an ijar or header jar instead,
+          // which is more lightweight. But it's not applied to lint.jar
+          (dir, name) -> name.equals(FN_LINT_JAR) || !name.endsWith(".jar"));
 
       createStampFile(ops, aarDir, aarAndJar.aar());
 
