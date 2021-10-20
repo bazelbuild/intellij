@@ -553,7 +553,6 @@
     <ExperimentLoader implementation="com.google.idea.common.experiments.SystemPropertyExperimentLoader" order="first" id="SystemPropertyExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.UserOverridesExperimentLoader" order="after SystemPropertyExperimentLoader" id="UserOverridesExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.DefaultValuesExperimentLoader" order="before WebExperimentLoader" id="DefaultValuesExperimentLoader"/>
-    <ExperimentLoader implementation="com.google.idea.common.experiments.WebExperimentLoader" order="last" id="WebExperimentLoader"/>
   </extensions>
 
   <projectListeners>
