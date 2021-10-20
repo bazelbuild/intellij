@@ -278,7 +278,7 @@
     <applicationService serviceInterface="com.google.idea.blaze.base.async.process.ExternalTaskProvider"
                         serviceImplementation="com.google.idea.blaze.base.async.process.ExternalTaskProvider$Impl"/>
 
-    <additionalTextAttributes scheme="Default" file="base/resources/colorSchemes/BuildDefault.xml"/>
+    <additionalTextAttributes scheme="Default" file="resources/colorSchemes/BuildDefault.xml"/>
     <typedHandler implementation="com.google.idea.blaze.base.lang.buildfile.completion.BuildCompletionAutoPopupHandler"/>
     <projectOpenProcessor implementation="com.google.idea.blaze.base.project.BlazeProjectOpenProcessor"/>
     <projectViewNodeDecorator implementation="com.google.idea.blaze.base.syncstatus.SyncStatusNodeDecorator"/>

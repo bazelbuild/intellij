@@ -25,7 +25,7 @@ import javax.swing.Icon;
 /** Class to manage icons used by the Blaze plugin. */
 public class BlazeIcons {
 
-  private static final String BASE = "/base/resources/icons/";
+  private static final String BASE = "resources/icons/";
 
   public static final Icon Logo = loadForBuildSystem("logo.png"); // 16x16
   public static final Icon BazelLogo = load("bazel/logo.png"); // 16x16
