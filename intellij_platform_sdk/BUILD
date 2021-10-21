@@ -423,6 +423,7 @@ java_library(
             ":sdk",
             ":cidr_plugins",
             ":java",
+            ":kotlin",
             ":android",
             ":test_recorder",
             ":platform_images",
@@ -434,6 +435,7 @@ java_library(
         intellij = [
             ":sdk",
             ":java",
+            ":kotlin",
             ":platform_images",
         ],
     ),
