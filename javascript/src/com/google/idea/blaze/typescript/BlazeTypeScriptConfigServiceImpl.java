@@ -16,7 +16,6 @@
 package com.google.idea.blaze.typescript;
 
 import com.google.common.base.Functions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -197,18 +196,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
 
   @Override
   public List<VirtualFile> getConfigFiles() {
-    List<VirtualFile> configs = this.configs.keySet().asList();
-    StackTraceElement caller = Thread.currentThread().getStackTrace()[3];
-    if (configs.size() == 1 && Objects.equals(caller.getMethodName(), "getDefaultConfigPath")) {
-      // If we have a single tsconfig file, IntelliJ will send a defaultConfig to the language
-      // service, which will override the isUseSingleInferredProject that we set and cause crashes
-      // in the language service when it tries to watch certain directories.
-      // We'll return an empty list here to fool IntelliJ into not sending the defaultConfig.
-      // This is extremely hacky. The proper fix should likely be somewhere in the tsconfig.json
-      // or in the typescript service.
-      return ImmutableList.of();
-    }
-    return configs;
+    return this.configs.keySet().asList();
   }
 
   @Override
