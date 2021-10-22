@@ -51,13 +51,13 @@ class GoTestContextProvider implements TestContextProvider {
     GoFunctionOrMethodDeclaration function = GoTestFinder.findTestFunctionInContext(element);
     if (function == null) {
       return TestContext.builder(/* sourceElement= */ file, ExecutorType.DEBUG_SUPPORTED_TYPES)
-          .setTestEnv(GO_TEST_WRAP_TESTV)
+          .addTestEnv(GO_TEST_WRAP_TESTV)
           .setTarget(target)
           .setDescription(file.getName())
           .build();
     }
     return TestContext.builder(/* sourceElement= */ function, ExecutorType.DEBUG_SUPPORTED_TYPES)
-        .setTestEnv(GO_TEST_WRAP_TESTV)
+        .addTestEnv(GO_TEST_WRAP_TESTV)
         .setTarget(target)
         .setTestFilter("^" + function.getName() + "$")
         .setDescription(String.format("%s#%s", file.getName(), function.getName()))

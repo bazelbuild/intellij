@@ -246,7 +246,7 @@ public abstract class TestContext implements RunConfigurationContext {
       return this;
     }
 
-    public Builder setTestEnv(String env) {
+    public Builder addTestEnv(String env) {
       this.blazeFlags.add(BlazeFlagsModification.testEnv(env));
       return this;
     }
