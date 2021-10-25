@@ -121,7 +121,6 @@ intellij_unit_test_suite(
         ":auto_value_plugin_lib_deploy.jar",
         ":fast_build_javac",
         ":guava_lib_deploy.jar",
-        ":jdk_tools_lib_deploy.jar",
         ":truth_lib_deploy.jar",
     ],
     jvm_flags = [
@@ -129,7 +128,6 @@ intellij_unit_test_suite(
         "-Dauto_value_plugin.jar=$(location :auto_value_plugin_lib_deploy.jar)",
         "-Dfast_build_javac.jar=$(location :fast_build_javac)",
         "-Dguava.jar=$(location :guava_lib_deploy.jar)",
-        "-Djdk_tools.jar=$(location :jdk_tools_lib_deploy.jar)",
         "-Dtruth.jar=$(location :truth_lib_deploy.jar)",
     ],
     test_package_root = "com.google.idea.blaze.java",
@@ -166,12 +164,6 @@ java_binary(
     testonly = True,
     main_class = "None",
     runtime_deps = ["//intellij_platform_sdk:guava"],
-)
-
-java_binary(
-    name = "jdk_tools_lib",
-    main_class = "None",
-    runtime_deps = ["//third_party/java/jdk:langtools"],
 )
 
 java_binary(
