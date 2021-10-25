@@ -200,17 +200,8 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
     for (int i = 0; i < jars.size(); ++i) {
       urls[i] = jars.get(i).toURI().toURL();
     }
-    URLClassLoader urlClassLoader = new URLClassLoader(urls, platformClassLoader());
+    URLClassLoader urlClassLoader = new URLClassLoader(urls, ClassLoader.getPlatformClassLoader());
     return urlClassLoader.loadClass(javaCompilerClass);
-  }
-
-  private static ClassLoader platformClassLoader() {
-    try {
-      return (ClassLoader) ClassLoader.class.getMethod("getPlatformClassLoader").invoke(null);
-    } catch (ReflectiveOperationException e) {
-      // Java 8
-      return null;
-    }
   }
 
   private static class JavacRunner implements FastBuildCompiler {
