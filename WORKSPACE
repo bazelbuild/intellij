@@ -129,8 +129,8 @@ http_archive(
 http_archive(
     name = "python_2021_2",
     build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "4025477d62a6eda6602fefea2abcfc0078ee387d5cc95dc303ee3583bc3604ce",
-    url = "https://plugins.jetbrains.com/files/7322/134206/python-ce-212.5080.64.zip",
+    sha256 = "e094cce16a4ca6062f0aa9974217299aa3d4fcec8130581e2d83c76bea10841a",
+    url = "https://plugins.jetbrains.com/files/7322/142192/python-ce-212.5457.59.zip",
 )
 
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
