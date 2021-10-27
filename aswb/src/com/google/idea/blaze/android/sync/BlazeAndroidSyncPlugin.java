@@ -213,7 +213,8 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
         moduleEditor,
         workspaceModule,
         workspaceModifiableModel,
-        isAndroidWorkspace(blazeProjectData.getWorkspaceLanguageSettings()));
+        isAndroidWorkspace(blazeProjectData.getWorkspaceLanguageSettings())
+            || isDartWorkspace(blazeProjectData.getWorkspaceLanguageSettings()));
   }
 
   @Override
@@ -318,5 +319,9 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
 
   private static boolean isAndroidWorkspace(WorkspaceLanguageSettings workspaceLanguageSettings) {
     return workspaceLanguageSettings.isWorkspaceType(WorkspaceType.ANDROID);
+  }
+
+  private static boolean isDartWorkspace(WorkspaceLanguageSettings workspaceLanguageSettings) {
+    return workspaceLanguageSettings.isWorkspaceType(WorkspaceType.DART);
   }
 }

@@ -108,8 +108,8 @@ public class BlazeAndroidProjectStructureSyncer {
       BlazeSyncPlugin.ModuleEditor moduleEditor,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel,
-      boolean isAndroidWorkspace) {
-    if (!isAndroidWorkspace) {
+      boolean isAndroidOrDartWorkspace) {
+    if (!isAndroidOrDartWorkspace) {
       AndroidFacetModuleCustomizer.removeAndroidFacet(workspaceModule);
       // Workspace type should always be ANDROID as long as the blaze android plugin is present.
       log.error(
