@@ -31,7 +31,7 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-oss-under-dev": "android-studio-2021.1",
     "clion-oss-stable": "clion-2021.2",
     "clion-oss-beta": "clion-2021.2",
-    "clion-oss-under-dev": "clion-2021.2",
+    "clion-oss-under-dev": "clion-2021.3",
 }
 
 DIRECT_IJ_PRODUCTS = {
@@ -134,6 +134,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2021.2-mac": struct(
         ide = "clion",
         directory = "clion_2021_2",
+    ),
+    "clion-2021.3": struct(
+        ide = "clion",
+        directory = "clion_2021_3",
+    ),
+    "clion-2021.3-mac": struct(
+        ide = "clion",
+        directory = "clion_2021_3",
     ),
 }
 
