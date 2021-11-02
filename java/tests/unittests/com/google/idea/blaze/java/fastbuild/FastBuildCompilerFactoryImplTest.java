@@ -118,7 +118,7 @@ public final class FastBuildCompilerFactoryImplTest {
       compilerFactory.getCompilerFor(targetLabel, blazeData);
       fail("Should have thrown FastBuildException");
     } catch (FastBuildException e) {
-      assertThat(e.getMessage()).contains("Couldn't find a Java toolchain");
+      assertThat(e.getMessage()).contains("Could find a Java toolchain");
     }
   }
 
