@@ -448,14 +448,29 @@ load("@io_bazel_rules_scala//scala:toolchains.bzl", "scala_register_toolchains")
 scala_register_toolchains()
 
 # LICENSE: The Apache Software License, Version 2.0
+rules_kotlin_version = "legacy-1.3.0"
+rules_kotlin_sha = "4fd769fb0db5d3c6240df8a9500515775101964eebdf85a3f9f0511130885fde"
 http_archive(
     name = "io_bazel_rules_kotlin",
-    sha256 = "f1293902a15397a10957e866f133dcd027a0a6d21eae8c4fb7557f010add8a09",
-    strip_prefix = "rules_kotlin-cab5eaffc2012dfe46260c03d6419c0d2fa10be0",
+    urls = ["https://github.com/bazelbuild/rules_kotlin/archive/%s.zip" % rules_kotlin_version],
     type = "zip",
-    url = "https://github.com/bazelbuild/rules_kotlin/archive/cab5eaffc2012dfe46260c03d6419c0d2fa10be0.zip",
+    strip_prefix = "rules_kotlin-%s" % rules_kotlin_version,
+    sha256 = rules_kotlin_sha,
 )
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl", "kotlin_repositories")
+load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl",
+     "kotlin_repositories",
+     "kt_register_toolchains")
 
 kotlin_repositories()
+kt_register_toolchains()
+
+# Without this dependency, when a test that uses Google truth fails, instead of
+# the textual difference we get java.lang.NoClassDefFoundError: difflib/DiffUtils
+jvm_maven_import_external(
+    name = "diffutils",
+    artifact = "com.googlecode.java-diff-utils:diffutils:1.2.1",
+    artifact_sha256 = "c98697c3b8dd745353cd0a83b109c1c999fec43b4a5cedb2f579452d8da2c171",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)

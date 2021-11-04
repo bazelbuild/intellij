@@ -3,6 +3,7 @@ directories:
   -ijwb
   -plugin_dev
   -clwb
+  -examples
 
 targets:
   //aswb:aswb_bazel_dev
