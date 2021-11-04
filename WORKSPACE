@@ -448,20 +448,16 @@ load("@io_bazel_rules_scala//scala:toolchains.bzl", "scala_register_toolchains")
 scala_register_toolchains()
 
 # LICENSE: The Apache Software License, Version 2.0
-rules_kotlin_version = "legacy-1.3.0"
-rules_kotlin_sha = "4fd769fb0db5d3c6240df8a9500515775101964eebdf85a3f9f0511130885fde"
+rules_kotlin_version = "v1.5.0-beta-3"
+rules_kotlin_sha = "58edd86f0f3c5b959c54e656b8e7eb0b0becabd412465c37a2078693c2571f7f"
 http_archive(
     name = "io_bazel_rules_kotlin",
-    urls = ["https://github.com/bazelbuild/rules_kotlin/archive/%s.zip" % rules_kotlin_version],
-    type = "zip",
-    strip_prefix = "rules_kotlin-%s" % rules_kotlin_version,
+    urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/%s/rules_kotlin_release.tgz" % rules_kotlin_version],
     sha256 = rules_kotlin_sha,
 )
 
-load("@io_bazel_rules_kotlin//kotlin:kotlin.bzl",
-     "kotlin_repositories",
-     "kt_register_toolchains")
-
+load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", )
+load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
 kotlin_repositories()
 kt_register_toolchains()
 
@@ -471,6 +467,15 @@ jvm_maven_import_external(
     name = "diffutils",
     artifact = "com.googlecode.java-diff-utils:diffutils:1.2.1",
     artifact_sha256 = "c98697c3b8dd745353cd0a83b109c1c999fec43b4a5cedb2f579452d8da2c171",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+# Dependency needed for kotlin coroutines library
+jvm_maven_import_external(
+    name = "kotlinx_coroutines",
+    artifact = "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2",
+    artifact_sha256 = "4cd24a06b2a253110d8afd250e9eec6c6faafea6463d740824743d637e761f12",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
