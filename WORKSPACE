@@ -243,8 +243,8 @@ http_archive(
 http_archive(
     name = "android_studio_2021_1",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio211",
-    sha256 = "2103396489fd6b39bc5d99a8f5dcbba8f86c7e640c2c2424efab035d0649d6b7",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2021.1.1.12/android-studio-2021.1.1.12-linux.tar.gz",
+    sha256 = "27e270f45f29104d1231691afff8c00ce890f8648e7917f91817e9d110edc2a0",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2021.1.1.15/android-studio-2021.1.1.15-linux.tar.gz",
 )
 
 # LICENSE: Common Public License 1.0
@@ -449,16 +449,20 @@ scala_register_toolchains()
 
 # LICENSE: The Apache Software License, Version 2.0
 rules_kotlin_version = "v1.5.0-beta-3"
+
 rules_kotlin_sha = "58edd86f0f3c5b959c54e656b8e7eb0b0becabd412465c37a2078693c2571f7f"
+
 http_archive(
     name = "io_bazel_rules_kotlin",
-    urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/%s/rules_kotlin_release.tgz" % rules_kotlin_version],
     sha256 = rules_kotlin_sha,
+    urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/%s/rules_kotlin_release.tgz" % rules_kotlin_version],
 )
 
-load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories", )
+load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
 load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
+
 kotlin_repositories()
+
 kt_register_toolchains()
 
 # Without this dependency, when a test that uses Google truth fails, instead of
