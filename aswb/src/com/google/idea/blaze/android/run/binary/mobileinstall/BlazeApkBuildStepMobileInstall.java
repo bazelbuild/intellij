@@ -56,6 +56,7 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -67,6 +68,9 @@ import javax.annotation.Nullable;
 
 /** Builds and installs the APK using mobile-install. */
 public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
+  private static final BoolExperiment passAdbArgWithSerialToMi =
+      new BoolExperiment("aswb.mi.adb.arg.device.serial", false);
+
   private static final Logger log = Logger.getInstance(BlazeApkBuildStepMobileInstall.class);
   private final Project project;
   private final Label label;
@@ -133,12 +137,17 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
             Blaze.getBuildSystemProvider(project).getBinaryPath(project),
             BlazeCommandName.MOBILE_INSTALL);
 
-    // Redundant, but we need this to get around bug in bazel.
-    // https://github.com/bazelbuild/bazel/issues/4922
-    command.addBlazeFlags(
-        BlazeFlags.ADB_ARG + "-s ", BlazeFlags.ADB_ARG + device.getSerialNumber());
-    MobileInstallAdbLocationProvider.getAdbLocationForMobileInstall(project)
-        .ifPresent((location) -> command.addBlazeFlags(BlazeFlags.ADB, location));
+    if (passAdbArgWithSerialToMi.getValue()) {
+      // Redundant, but we need this to get around bug in bazel.
+      // https://github.com/bazelbuild/bazel/issues/4922
+      command.addBlazeFlags(
+          BlazeFlags.ADB_ARG + "-s ", BlazeFlags.ADB_ARG + device.getSerialNumber());
+    }
+
+    if (!StudioDeployerExperiment.isEnabled()) {
+      MobileInstallAdbLocationProvider.getAdbLocationForMobileInstall(project)
+          .ifPresent((location) -> command.addBlazeFlags(BlazeFlags.ADB, location));
+    }
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     final String deployInfoSuffix = getDeployInfoSuffix(Blaze.getBuildSystem(project));
@@ -147,21 +156,24 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
             BuildResultHelperProvider.createForLocalBuild(project);
         AdbTunnelConfigurator tunnelConfig = getTunnelConfigurator(context)) {
       tunnelConfig.setupConnection(context);
-      String deviceFlag = device.getSerialNumber();
-      if (tunnelConfig.isActive()) {
-        deviceFlag += ":tcp:" + tunnelConfig.getAdbServerPort();
-      } else {
-        InetSocketAddress adbAddr = AndroidDebugBridge.getSocketAddress();
-        if (adbAddr == null) {
-          IssueOutput.warn(
-                  "Can't get ADB server port, please ensure ADB server is running. Will fallback to"
-                      + " the default adb server.")
-              .submit(context);
+
+      if (!StudioDeployerExperiment.isEnabled()) {
+        String deviceFlag = device.getSerialNumber();
+        if (tunnelConfig.isActive()) {
+          deviceFlag += ":tcp:" + tunnelConfig.getAdbServerPort();
         } else {
-          deviceFlag += ":tcp:" + adbAddr.getPort();
+          InetSocketAddress adbAddr = AndroidDebugBridge.getSocketAddress();
+          if (adbAddr == null) {
+            IssueOutput.warn(
+                    "Can't get ADB server port, please ensure ADB server is running. Will fallback"
+                        + " to the default adb server.")
+                .submit(context);
+          } else {
+            deviceFlag += ":tcp:" + adbAddr.getPort();
+          }
         }
+        command.addBlazeFlags(BlazeFlags.DEVICE, deviceFlag);
       }
-      command.addBlazeFlags(BlazeFlags.DEVICE, deviceFlag);
 
       command
           .addTargets(label)
@@ -170,6 +182,10 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
           .addExeFlags(exeFlags)
           // MI launches apps by default. Defer app launch to BlazeAndroidLaunchTasksProvider.
           .addExeFlags("--nolaunch_app");
+
+      if (StudioDeployerExperiment.isEnabled()) {
+        command.addExeFlags("--nodeploy");
+      }
 
       SaveUtil.saveAllFiles();
       context.output(new StatusOutput("Invoking mobile-install..."));
@@ -206,6 +222,14 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
       deployInfo =
           deployInfoHelper.extractDeployInfoAndInvalidateManifests(
               project, new File(executionRoot), deployInfoProto);
+
+      String msg;
+      if (StudioDeployerExperiment.isEnabled()) {
+        msg = "mobile-install build completed, deploying split apks...";
+      } else {
+        msg = "Done.";
+      }
+      context.output(new StatusOutput(msg));
     } catch (GetArtifactsException e) {
       IssueOutput.error("Could not read BEP output: " + e.getMessage()).submit(context);
     } catch (GetDeployInfoException e) {

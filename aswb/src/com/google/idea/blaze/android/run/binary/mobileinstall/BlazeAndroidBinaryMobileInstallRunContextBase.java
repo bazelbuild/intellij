@@ -16,6 +16,8 @@
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.run.ApkFileUnit;
+import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
@@ -31,6 +33,7 @@ import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationIdProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryConsoleProvider;
@@ -41,16 +44,18 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
+import java.util.Collections;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Run context for android_binary. */
 abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAndroidRunContext {
-
   protected final Project project;
   protected final AndroidFacet facet;
   protected final RunConfiguration runConfiguration;
@@ -84,7 +89,9 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
 
   @Override
   public void augmentLaunchOptions(LaunchOptions.Builder options) {
-    options.setDeploy(false).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
+    options
+        .setDeploy(StudioDeployerExperiment.isEnabled())
+        .setOpenLogcatAutomatically(configState.showLogcatAutomatically());
     options.addExtraOptions(
         ImmutableMap.of(ProfilerState.ANDROID_PROFILER_STATE_ID, configState.getProfilerState()));
   }
@@ -107,7 +114,33 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
   @Override
   public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
-    return ImmutableList.of();
+    if (!StudioDeployerExperiment.isEnabled()) {
+      return ImmutableList.of();
+    }
+
+    BlazeAndroidDeployInfo deployInfo;
+    try {
+      deployInfo = buildStep.getDeployInfo();
+    } catch (ApkProvisionException e) {
+      throw new ExecutionException(e);
+    }
+
+    String packageName = deployInfo.getMergedManifest().packageName;
+    if (packageName == null) {
+      throw new ExecutionException("Could not determine package name from deploy info");
+    }
+
+    ApkInfo info =
+        new ApkInfo(
+            deployInfo.getApksToDeploy().stream()
+                .map(file -> new ApkFileUnit(BlazeDataStorage.WORKSPACE_MODULE_NAME, file))
+                .collect(Collectors.toList()),
+            packageName);
+
+    LaunchTask deployTask =
+        BlazeAndroidDeploymentService.getInstance(project)
+            .getDeployTask(Collections.singletonList(info), launchOptions);
+    return ImmutableList.of(deployTask);
   }
 
   @Nullable
