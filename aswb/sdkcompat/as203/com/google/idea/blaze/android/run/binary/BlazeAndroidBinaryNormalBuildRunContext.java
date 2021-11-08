@@ -35,8 +35,9 @@ public class BlazeAndroidBinaryNormalBuildRunContext
       RunConfiguration runConfiguration,
       ExecutionEnvironment env,
       BlazeAndroidBinaryRunConfigurationState configState,
-      BlazeApkBuildStep buildStep) {
-    super(project, facet, runConfiguration, env, configState, buildStep);
+      BlazeApkBuildStep buildStep,
+      String launchId) {
+    super(project, facet, runConfiguration, env, configState, buildStep, launchId);
   }
 
   @Nullable

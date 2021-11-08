@@ -34,7 +34,8 @@ public interface BlazeApkBuildService {
       boolean useMobileInstall,
       Label label,
       ImmutableList<String> blazeFlags,
-      ImmutableList<String> exeFlags);
+      ImmutableList<String> exeFlags,
+      String launchId);
 
   /**
    * A default implementation that uses {@link BlazeApkBuildStepNormalBuild} and {@link
@@ -52,9 +53,10 @@ public interface BlazeApkBuildService {
         boolean useMobileInstall,
         Label label,
         ImmutableList<String> blazeFlags,
-        ImmutableList<String> exeFlags) {
+        ImmutableList<String> exeFlags,
+        String launchId) {
       if (useMobileInstall) {
-        return new BlazeApkBuildStepMobileInstall(project, label, blazeFlags, exeFlags);
+        return new BlazeApkBuildStepMobileInstall(project, label, blazeFlags, exeFlags, launchId);
       } else {
         return new BlazeApkBuildStepNormalBuild(project, label, blazeFlags);
       }

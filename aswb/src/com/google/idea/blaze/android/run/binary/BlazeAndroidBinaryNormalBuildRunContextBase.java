@@ -67,6 +67,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   protected final BlazeApkBuildStep buildStep;
   protected final ApkProvider apkProvider;
   protected final ApplicationIdProvider applicationIdProvider;
+  private final String launchId;
 
   BlazeAndroidBinaryNormalBuildRunContextBase(
       Project project,
@@ -74,7 +75,8 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
       RunConfiguration runConfiguration,
       ExecutionEnvironment env,
       BlazeAndroidBinaryRunConfigurationState configState,
-      BlazeApkBuildStep buildStep) {
+      BlazeApkBuildStep buildStep,
+      String launchId) {
     this.project = project;
     this.facet = facet;
     this.runConfiguration = runConfiguration;
@@ -84,6 +86,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
     this.buildStep = buildStep;
     this.apkProvider = BlazeApkProviderService.getInstance().getApkProvider(project, buildStep);
     this.applicationIdProvider = new BlazeAndroidBinaryApplicationIdProvider(buildStep);
+    this.launchId = launchId;
   }
 
   @Override
@@ -173,9 +176,10 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   @Override
   public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
-    return ImmutableList.of(
+    LaunchTask deployTask =
         DeployTasksCompat.getDeployTask(
-            project, env, launchOptions, getApkInfoToInstall(device, launchOptions, apkProvider)));
+            project, env, launchOptions, getApkInfoToInstall(device, launchOptions, apkProvider));
+    return ImmutableList.of(new DeploymentTimingReporterTask(launchId, deployTask));
   }
 
   /** Returns a list of APKs excluding any APKs for features that are disabled. */

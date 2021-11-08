@@ -38,6 +38,7 @@ import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationIdP
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryConsoleProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
+import com.google.idea.blaze.android.run.binary.DeploymentTimingReporterTask;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
@@ -64,6 +65,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
   protected final ConsoleProvider consoleProvider;
   protected final ApplicationIdProvider applicationIdProvider;
   protected final BlazeApkBuildStep buildStep;
+  private final String launchId;
 
   public BlazeAndroidBinaryMobileInstallRunContextBase(
       Project project,
@@ -71,7 +73,8 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
       RunConfiguration runConfiguration,
       ExecutionEnvironment env,
       BlazeAndroidBinaryRunConfigurationState configState,
-      BlazeApkBuildStep buildStep) {
+      BlazeApkBuildStep buildStep,
+      String launchId) {
     this.project = project;
     this.facet = facet;
     this.runConfiguration = runConfiguration;
@@ -80,6 +83,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
     this.consoleProvider = new BlazeAndroidBinaryConsoleProvider(project);
     this.buildStep = buildStep;
     this.applicationIdProvider = new BlazeAndroidBinaryApplicationIdProvider(buildStep);
+    this.launchId = launchId;
   }
 
   @Override
@@ -140,7 +144,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
     LaunchTask deployTask =
         BlazeAndroidDeploymentService.getInstance(project)
             .getDeployTask(Collections.singletonList(info), launchOptions);
-    return ImmutableList.of(deployTask);
+    return ImmutableList.of(new DeploymentTimingReporterTask(launchId, deployTask));
   }
 
   @Nullable

@@ -15,11 +15,13 @@
  */
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
+import static com.google.idea.blaze.android.run.LaunchMetrics.logBuildTime;
+
 import com.android.ddmlib.AndroidDebugBridge;
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.DeviceFutures;
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
@@ -65,6 +67,7 @@ import java.net.InetSocketAddress;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CancellationException;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /** Builds and installs the APK using mobile-install. */
 public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
@@ -77,6 +80,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
   private final ImmutableList<String> blazeFlags;
   private final ImmutableList<String> exeFlags;
   private final BlazeApkDeployInfoProtoHelper deployInfoHelper;
+  private final String launchId;
   private BlazeAndroidDeployInfo deployInfo = null;
 
   /**
@@ -88,26 +92,38 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
     return buildSystem == BuildSystem.Bazel ? "_incremental.deployinfo.pb" : "_mi.deployinfo.pb";
   }
 
-  @VisibleForTesting
-  public BlazeApkBuildStepMobileInstall(
+  private BlazeApkBuildStepMobileInstall(
       Project project,
       Label label,
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags,
-      BlazeApkDeployInfoProtoHelper deployInfoHelper) {
+      BlazeApkDeployInfoProtoHelper deployInfoHelper,
+      String launchId) {
     this.project = project;
     this.label = label;
     this.blazeFlags = blazeFlags;
     this.exeFlags = exeFlags;
     this.deployInfoHelper = deployInfoHelper;
+    this.launchId = launchId;
   }
 
   public BlazeApkBuildStepMobileInstall(
       Project project,
       Label label,
       ImmutableList<String> blazeFlags,
-      ImmutableList<String> exeFlags) {
-    this(project, label, blazeFlags, exeFlags, new BlazeApkDeployInfoProtoHelper());
+      ImmutableList<String> exeFlags,
+      String launchId) {
+    this(project, label, blazeFlags, exeFlags, new BlazeApkDeployInfoProtoHelper(), launchId);
+  }
+
+  @TestOnly
+  public BlazeApkBuildStepMobileInstall(
+      Project project,
+      Label label,
+      ImmutableList<String> blazeFlags,
+      ImmutableList<String> exeFlags,
+      BlazeApkDeployInfoProtoHelper deployInfoHelper) {
+    this(project, label, blazeFlags, exeFlags, deployInfoHelper, "");
   }
 
   @Override
@@ -189,7 +205,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
 
       SaveUtil.saveAllFiles();
       context.output(new StatusOutput("Invoking mobile-install..."));
-      int retVal =
+      ExternalTask task =
           ExternalTask.builder(workspaceRoot)
               .addBlazeCommand(command.build())
               .context(context)
@@ -197,16 +213,20 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
               .stderr(
                   LineProcessingOutputStream.of(
                       BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
-              .build()
-              .run();
-      ListenableFuture<Void> unusedFuture =
-          FileCaches.refresh(
-              project, context, BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(retVal)));
+              .build();
 
-      if (retVal != 0) {
+      Stopwatch s = Stopwatch.createStarted();
+      int exitCode = task.run();
+      logBuildTime(launchId, StudioDeployerExperiment.isEnabled(), s.elapsed(), exitCode);
+
+      if (exitCode != 0) {
         IssueOutput.error("Blaze build failed. See Blaze Console for details.").submit(context);
         return;
       }
+
+      ListenableFuture<Void> unusedFuture =
+          FileCaches.refresh(
+              project, context, BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(exitCode)));
 
       context.output(new StatusOutput("Reading deployment information..."));
       String executionRoot =

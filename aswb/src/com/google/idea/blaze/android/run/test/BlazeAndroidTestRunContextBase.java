@@ -76,7 +76,8 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
       BlazeAndroidTestRunConfigurationState configState,
       Label label,
       ImmutableList<String> blazeFlags,
-      ImmutableList<String> exeFlags) {
+      ImmutableList<String> exeFlags,
+      String launchId) {
     this.project = project;
     this.facet = facet;
     this.runConfiguration = runConfiguration;
@@ -85,7 +86,8 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
     this.configState = configState;
 
     if (configState.getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)) {
-      this.buildStep = new BlazeApkBuildStepMobileInstall(project, label, blazeFlags, exeFlags);
+      this.buildStep =
+          new BlazeApkBuildStepMobileInstall(project, label, blazeFlags, exeFlags, launchId);
     } else if (runConfiguration.getTargetKind()
         == AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
       // android_instrumentation_test builds both test and app target APKs.

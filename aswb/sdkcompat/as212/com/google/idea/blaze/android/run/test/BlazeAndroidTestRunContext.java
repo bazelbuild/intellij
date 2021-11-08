@@ -35,7 +35,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 /**
  * Run context for android_test.
  *
- * <p>#api42
+ * <p>#api203
  */
 public class BlazeAndroidTestRunContext extends BlazeAndroidTestRunContextBase {
   BlazeAndroidTestRunContext(
@@ -46,8 +46,10 @@ public class BlazeAndroidTestRunContext extends BlazeAndroidTestRunContextBase {
       BlazeAndroidTestRunConfigurationState configState,
       Label label,
       ImmutableList<String> blazeFlags,
-      ImmutableList<String> exeFlags) {
-    super(project, facet, runConfiguration, env, configState, label, blazeFlags, exeFlags);
+      ImmutableList<String> exeFlags,
+      String launchId) {
+    super(
+        project, facet, runConfiguration, env, configState, label, blazeFlags, exeFlags, launchId);
   }
 
   @Override

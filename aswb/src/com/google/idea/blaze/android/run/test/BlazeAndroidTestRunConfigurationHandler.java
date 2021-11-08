@@ -19,17 +19,16 @@ import static com.android.tools.idea.run.deployment.DeviceAndSnapshotComboBoxAct
 
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationUtil;
+import com.google.idea.blaze.android.run.LaunchMetrics;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -105,6 +104,11 @@ public class BlazeAndroidTestRunConfigurationHandler
     ImmutableList<String> exeFlags =
         ImmutableList.copyOf(
             configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
+
+    // We collect metrics from a few different locations. In order to tie them all
+    // together, we create a unique launch id.
+    String launchId = LaunchMetrics.newLaunchId();
+
     BlazeAndroidRunContext runContext =
         new BlazeAndroidTestRunContext(
             project,
@@ -114,22 +118,13 @@ public class BlazeAndroidTestRunConfigurationHandler
             configState,
             Label.create(configuration.getSingleTarget().toString()),
             blazeFlags,
-            exeFlags);
+            exeFlags,
+            launchId);
 
-    EventLoggingService.getInstance()
-        .logEvent(
-            BlazeAndroidTestRunConfigurationHandler.class,
-            "BlazeAndroidTestRun",
-            ImmutableMap.of(
-                "launchMethod",
-                configState.getLaunchMethod().name(),
-                "executorId",
-                env.getExecutor().getId()));
+    LaunchMetrics.logTestLaunch(
+        launchId, configState.getLaunchMethod().name(), env.getExecutor().getId());
 
-    return new BlazeAndroidRunConfigurationRunner(
-        module,
-        runContext,
-        configuration);
+    return new BlazeAndroidRunConfigurationRunner(module, runContext, configuration);
   }
 
   @Override
