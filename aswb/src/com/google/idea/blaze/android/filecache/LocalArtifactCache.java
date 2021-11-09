@@ -246,9 +246,24 @@ public class LocalArtifactCache implements ArtifactCache {
   @Override
   @Nullable
   public synchronized Path get(OutputArtifact artifact) {
+    try {
+      return unsafeGet(artifact);
+    } catch (RuntimeException e) {
+      // b/201702401: Under certain conditions, LocalFileOutputArtifact.toArtifactState throws
+      // an IllegalArgumentException when it can't locate the artifact on objfsd. It is unclear what
+      // leads to this as we haven't been able to reproduce it. However, the #get method is not
+      // supposed to ever crash, so we just log a warning if we ever run into an exception.
+      String msg =
+          "Unexpected exception retrieving cached path for artifact: " + artifact.getRelativePath();
+      Logger.getInstance(LocalArtifactCache.class).warn(msg, e);
+      return null;
+    }
+  }
+
+  @Nullable
+  private Path unsafeGet(OutputArtifact artifact) {
     CacheEntry queriedEntry = CacheEntry.forArtifact(artifact);
     String cacheKey = queriedEntry.getCacheKey();
-
     CacheEntry cacheEntry = cacheState.get(cacheKey);
     if (cacheEntry == null) {
       return null;
