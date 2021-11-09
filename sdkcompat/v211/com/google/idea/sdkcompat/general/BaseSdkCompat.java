@@ -1,5 +1,7 @@
 package com.google.idea.sdkcompat.general;
 
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -78,5 +80,10 @@ public final class BaseSdkCompat {
    */
   public static IdeModifiableModelsProvider createModifiableModelsProvider(Project project) {
     return new IdeModifiableModelsProviderImpl(project);
+  }
+
+  /** #api212: inline into BlazeNewProjectWizard */
+  public static void setContextWizard(WizardContext context, AbstractWizard<?> wizard) {
+    context.setWizard(wizard);
   }
 }
