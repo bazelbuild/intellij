@@ -8,9 +8,11 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.TextChunk;
@@ -22,6 +24,11 @@ import javax.annotation.Nullable;
 /** Provides SDK compatibility shims for base plugin API classes, available to all IDEs. */
 public final class BaseSdkCompat {
   private BaseSdkCompat() {}
+
+  /** #api212: inline into FileSelectorWithStoredHistory */
+  public static final TextComponentAccessor<TextFieldWithStoredHistory>
+      TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT =
+          TextComponentAccessor.TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT;
 
   /** #api203: refactor this function back into CodesearchResultData and make it private. */
   public static void addLineNumber(int lineNumber, List<TextChunk> chunks) {
