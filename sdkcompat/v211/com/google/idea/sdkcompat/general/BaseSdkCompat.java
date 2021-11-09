@@ -12,9 +12,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.ui.IconManager;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usages.TextChunk;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory.IndexingTimes;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -48,21 +46,6 @@ public final class BaseSdkCompat {
   /** #api211 Activating IconManager requires an IconManager parameter in 2021.2 */
   public static void activateIconManager() {
     IconManager.activate();
-  }
-
-  /** #api203: inline this method into IndexingLogger */
-  public static Duration getTotalUpdatingTime(IndexingTimes times) {
-    return Duration.ofNanos(times.getTotalUpdatingTime());
-  }
-
-  /** #api203: inline this method into IndexingLogger */
-  public static Duration getScanFilesDuration(IndexingTimes times) {
-    return times.getScanFilesDuration();
-  }
-
-  /** #api203: inline this method into IndexingLogger */
-  public static Duration getTotalIndexingTime(IndexingTimes times) {
-    return times.getIndexingDuration();
   }
 
   /**
