@@ -50,6 +50,8 @@ stamped_plugin_xml(
     description_file = "src/META-INF/description.html",
     plugin_id = "com.google.idea.bazel.ijwb",
     plugin_name = "Bazel",
+    # #api212: We depend on an API which is only contained in 2021.2.1+.
+    since_build_numbers = {"212": "212.5080.55"},
     stamp_since_build = True,
     stamp_until_build = True,
     version = VERSION,

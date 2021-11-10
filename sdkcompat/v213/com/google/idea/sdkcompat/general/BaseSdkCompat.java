@@ -68,9 +68,11 @@ public final class BaseSdkCompat {
    */
   public static void addLibraryEntriesToModel(
       ModifiableRootModel modifiableRootModel, List<Library> libraries) {
-    for (Library library : libraries) {
-      modifiableRootModel.addLibraryEntry(library);
-    }
+    // Use the batch addition of libraries as adding them one after the other is not performant.
+    // The other parameters (scope + exported flag) are derived from their default values in
+    // ModifiableRootModel#addLibraryEntry.
+    modifiableRootModel.addLibraryEntries(
+        libraries, DependencyScope.COMPILE, /* exported= */ false);
   }
 
   /**
