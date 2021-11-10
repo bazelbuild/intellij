@@ -17,12 +17,12 @@ package com.google.idea.blaze.java.fastbuild;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.errorprone.annotations.CheckReturnValue;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.io.File;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.CheckReturnValue;
 
 /** Internal state about an existing build. */
 @AutoValue
