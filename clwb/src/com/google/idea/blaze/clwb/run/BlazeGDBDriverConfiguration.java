@@ -63,20 +63,20 @@ final class BlazeGDBDriverConfiguration extends CLionGDBDriverConfiguration {
     }
     commandLine.setWorkDirectory(workspaceRoot.directory());
   }
-  
+
   @Override
   public String convertToLocalPath(@Nullable String absolutePath) {
     if (absolutePath != null) {
       final File file = new File(absolutePath);
       final File workspaceDirectory = workspaceRoot.directory();
       final String relativePath = gdbPathToWorkspaceRelativePath(workspaceDirectory, file);
-      File git5SafeFile = null;
+      File gdbFile = null;
       BlazeProjectData blazeProjectData =
           BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       if (blazeProjectData != null) {
-        git5SafeFile = blazeProjectData.getWorkspacePathResolver().resolveToFile(relativePath);
+        gdbFile = blazeProjectData.getWorkspacePathResolver().resolveToFile(relativePath);
       }
-      absolutePath = git5SafeFile == null ? null : git5SafeFile.getPath();
+      absolutePath = gdbFile == null ? null : gdbFile.getPath();
     }
     return super.convertToLocalPath(absolutePath);
   }
@@ -84,14 +84,14 @@ final class BlazeGDBDriverConfiguration extends CLionGDBDriverConfiguration {
   /**
    * Heuristic to try to handle the case where the file returned by gdb uses the canonical path but
    * the user imported their project using a non-canonical path. For example, this handles the case
-   * where the user keeps their git5 repos on a different mount and accesses them via a symlink from
+   * where the user keeps their repos on a different mount and accesses them via a symlink from
    * their home directory.
    *
    * @param workspaceDirectory workspace root, as it was imported into CLion
    * @param file file returned by GDB
    * @return The relative path for {@param file} as it was imported into CLion
    */
-  private String gdbPathToWorkspaceRelativePath(File workspaceDirectory, File file) {
+  private static String gdbPathToWorkspaceRelativePath(File workspaceDirectory, File file) {
     try {
       File canonicalWorkspaceDirectory = workspaceDirectory.getCanonicalFile();
       File canonicalFile = file.getCanonicalFile();
