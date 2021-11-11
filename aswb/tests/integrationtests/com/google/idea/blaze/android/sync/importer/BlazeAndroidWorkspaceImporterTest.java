@@ -33,6 +33,7 @@ import com.google.idea.blaze.android.sync.BlazeAndroidJavaSyncAugmenter;
 import com.google.idea.blaze.android.sync.BlazeAndroidLibrarySource;
 import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceRetentionFilter;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
+import com.google.idea.blaze.android.sync.model.AarLibraryFactory;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.base.BlazeTestCase;
@@ -272,7 +273,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     assertThat(result.aarLibraries.values())
         .containsExactly(
-            new AarLibrary(source("aarLibrary/resources-manifest-only.aar"), "aarLibrary"));
+            AarLibraryFactory.create(
+                source("aarLibrary/resources-manifest-only.aar"), "aarLibrary"));
     assertThat(result.androidResourceModules).containsExactly(expectedAndroidResourceModule);
   }
 
@@ -365,7 +367,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
 
     // There should only be one AAR, referenced by multiple targets.
     assertThat(result.aarLibraries.values())
-        .containsExactly(new AarLibrary(source("aarLibrary/resources.aar"), "aarLibrary"));
+        .containsExactly(
+            AarLibraryFactory.create(source("aarLibrary/resources.aar"), "aarLibrary"));
     assertThat(result.androidResourceModules)
         .containsExactly(expectedAndroidResourceModule1, expectedAndroidResourceModule2);
   }
@@ -529,7 +532,8 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     BlazeAndroidImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
     errorCollector.assertNoIssues();
     ImmutableCollection<AarLibrary> library = result.aarLibraries.values();
-    assertSameElements(library, new AarLibrary(source("java/example2/resources.aar"), "example2"));
+    assertSameElements(
+        library, AarLibraryFactory.create(source("java/example2/resources.aar"), "example2"));
   }
 
   /**
@@ -1351,7 +1355,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .build());
     assertThat(result.aarLibraries.values())
         .containsExactly(
-            new AarLibrary(
+            AarLibraryFactory.create(
                 source("java/com/google/android/assets/quantum/resources.aar"),
                 "dino.google.android.assets.quantum"));
 
@@ -1400,7 +1404,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
                 .build());
     assertThat(result.aarLibraries.values())
         .containsExactly(
-            new AarLibrary(
+            AarLibraryFactory.create(
                 source("java/com/google/android/assets/quantum/resources.aar"),
                 "com.google.android.assets.quantum"));
 

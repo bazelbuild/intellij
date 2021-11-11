@@ -23,7 +23,6 @@ import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
-import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import javax.annotation.concurrent.Immutable;
 
@@ -32,7 +31,7 @@ import javax.annotation.concurrent.Immutable;
 public final class BlazeAndroidImportResult
     implements ProtoWrapper<ProjectData.BlazeAndroidImportResult> {
   public final ImmutableList<AndroidResourceModule> androidResourceModules;
-  // map from library key to AarLibrary.
+  // map from key to AarLibrary.
   // Key is generated according to ArtifactLocation of aar file location
   public final ImmutableMap<String, AarLibrary> aarLibraries;
   public final ImmutableList<BlazeJarLibrary> javacJarLibraries;
@@ -70,9 +69,7 @@ public final class BlazeAndroidImportResult
         proto.getAarLibrariesList().stream()
             .map(AarLibrary::fromProto)
             .collect(
-                ImmutableMap.toImmutableMap(
-                    library -> LibraryKey.libraryNameFromArtifactLocation(library.aarArtifact),
-                    Functions.identity())),
+                ImmutableMap.toImmutableMap(AarLibrary::getKeyFromArtifact, Functions.identity())),
         javacJarLibraries,
         ProtoWrapper.map(proto.getResourceJarsList(), BlazeJarLibrary::fromProto));
   }

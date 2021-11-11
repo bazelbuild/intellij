@@ -29,6 +29,7 @@ import com.google.idea.blaze.android.sync.importer.aggregators.DependencyUtil;
 import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceRetentionFilter;
 import com.google.idea.blaze.android.sync.importer.problems.GeneratedResourceWarnings;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
+import com.google.idea.blaze.android.sync.model.AarLibraryFactory;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
@@ -37,7 +38,6 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
-import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Output;
@@ -467,16 +467,12 @@ public class BlazeAndroidWorkspaceImporter {
       String resourcePackage =
           BlazeImportUtil.javaResourcePackageFor(target, /* inferPackage = */ true);
 
-      String libraryKey =
-          LibraryKey.libraryNameFromArtifactLocation(target.getAndroidAarIdeInfo().getAar());
-      if (!aarLibraries.containsKey(libraryKey)) {
-        // aar_import should only have one jar (a merged jar from the AAR's jars).
-        LibraryArtifact firstJar = target.getJavaIdeInfo().getJars().iterator().next();
-        aarLibraries.put(
-            libraryKey,
-            new AarLibrary(firstJar, target.getAndroidAarIdeInfo().getAar(), resourcePackage));
-      }
-      return libraryKey;
+      LibraryArtifact firstJar = target.getJavaIdeInfo().getJars().iterator().next();
+      AarLibrary aarLibrary =
+          AarLibraryFactory.create(
+              firstJar, target.getAndroidAarIdeInfo().getAar(), resourcePackage);
+      aarLibraries.putIfAbsent(aarLibrary.getKeyFromArtifact(), aarLibrary);
+      return aarLibrary.getKeyFromArtifact();
     }
 
     /**
@@ -491,12 +487,9 @@ public class BlazeAndroidWorkspaceImporter {
       if (aar == null) {
         return null;
       }
-      String libraryKey = LibraryKey.libraryNameFromArtifactLocation(aar);
-      if (!aarLibraries.containsKey(libraryKey)) {
-        // aar_import should only have one jar (a merged jar from the AAR's jars).
-        aarLibraries.put(libraryKey, new AarLibrary(aar, resourcePackage));
-      }
-      return libraryKey;
+      AarLibrary aarLibrary = AarLibraryFactory.create(aar, resourcePackage);
+      aarLibraries.putIfAbsent(aarLibrary.getKeyFromArtifact(), aarLibrary);
+      return aarLibrary.getKeyFromArtifact();
     }
   }
 }
