@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException.IssueKind;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
 
 /** Runs a compiler to check its version. */
 public class CompilerVersionCheckerImpl implements CompilerVersionChecker {
@@ -29,7 +30,11 @@ public class CompilerVersionCheckerImpl implements CompilerVersionChecker {
     if (!executionRoot.exists()) {
       throw new VersionCheckException(IssueKind.MISSING_EXEC_ROOT, "");
     }
-    if (!cppExecutable.exists()) {
+    if (!cppExecutable.exists()
+        // The default MinGW and MSYS2 toolchain configurations in Bazel lack the ".exe" suffix
+        // in the tool paths. This works fine for building, but it means we have to append ".exe"
+        // manually to know if the compiler actually exists.
+        && !(IS_OS_WINDOWS && new File(cppExecutable.getPath() + ".exe").exists())) {
       throw new VersionCheckException(IssueKind.MISSING_COMPILER, "");
     }
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
