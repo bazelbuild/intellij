@@ -29,6 +29,9 @@ import com.google.idea.blaze.android.sync.model.AndroidSdkPlatform;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidImportResult;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
+import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -58,7 +61,10 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
+import com.intellij.openapi.util.io.FileUtil;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -66,6 +72,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -79,7 +86,8 @@ public class UnpackedAarsTest extends BlazeTestCase {
   private WorkspaceRoot workspaceRoot;
   private WritingOutputSink writingOutputSink;
   private BlazeContext context;
-  private ArtifactLocationDecoder artifactLocationDecoder;
+  private ArtifactLocationDecoder localArtifactLocationDecoder;
+  private ArtifactLocationDecoder remoteArtifactLocationDecoder;
   private static final String STRINGS_XML_CONTENT =
       "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
           + "<resources>"
@@ -98,11 +106,32 @@ public class UnpackedAarsTest extends BlazeTestCase {
     context = new BlazeContext();
     context.addOutputSink(PrintOutput.class, writingOutputSink);
     workspaceRoot = new WorkspaceRoot(folder.getRoot());
-    artifactLocationDecoder =
+    localArtifactLocationDecoder =
         new MockArtifactLocationDecoder() {
           @Override
           public File decode(ArtifactLocation artifactLocation) {
             return new File(workspaceRoot.directory(), artifactLocation.getRelativePath());
+          }
+        };
+
+    remoteArtifactLocationDecoder =
+        new MockArtifactLocationDecoder() {
+          @Override
+          public File decode(ArtifactLocation artifactLocation) {
+            return new File(workspaceRoot.directory(), artifactLocation.getRelativePath());
+          }
+
+          @Override
+          public BlazeArtifact resolveOutput(ArtifactLocation artifact) {
+            if (!artifact.isSource()) {
+              File file = new File(workspaceRoot.directory(), artifact.getRelativePath());
+              // when the remote artifact cannot be resolved, it will guess it as local artifact.
+              return file.exists()
+                  ? new FakeRemoteOutputArtifact(file)
+                  : super.resolveOutput(artifact);
+            }
+
+            return super.resolveOutput(artifact);
           }
         };
     projectServices.register(
@@ -127,6 +156,53 @@ public class UnpackedAarsTest extends BlazeTestCase {
     applicationServices.register(ExperimentService.class, new MockExperimentService());
   }
 
+  private static class FakeRemoteOutputArtifact implements RemoteOutputArtifact {
+    private final File file;
+
+    FakeRemoteOutputArtifact(File file) {
+      this.file = file;
+    }
+
+    @Override
+    public long getLength() {
+      return this.file.length();
+    }
+
+    @Override
+    public BufferedInputStream getInputStream() throws IOException {
+      return new BufferedInputStream(new FileInputStream(file));
+    }
+
+    @Override
+    public String getConfigurationMnemonic() {
+      return "";
+    }
+
+    @Override
+    public String getRelativePath() {
+      return file.getPath();
+    }
+
+    @Nullable
+    @Override
+    public ArtifactState toArtifactState() {
+      return null;
+    }
+
+    @Override
+    public void prefetch() {}
+
+    @Override
+    public String getHashId() {
+      return String.valueOf(FileUtil.fileHashCode(file));
+    }
+
+    @Override
+    public long getSyncTimeMillis() {
+      return 0;
+    }
+  }
+
   private ArtifactLocation generateArtifactLocation(String relativePath) {
     return ArtifactLocation.builder()
         .setRootExecutionPathFragment(workspaceRoot.directory().getAbsolutePath())
@@ -135,21 +211,27 @@ public class UnpackedAarsTest extends BlazeTestCase {
         .build();
   }
 
-  /**
-   * When new aar files are not accessible, unpacked aar should still get completed. It will remove
-   * cached aars but not included in current build (out of date aars) from cache and print out how
-   * many aars has been removed in context.
-   */
   @Test
-  public void testRefresh_fileNotExist_success() throws IOException {
-    // aars cached last time but not included in current build output. It should be removed after
-    // current sync get finished.
+  public void refresh_localArtifact_fileNotExist_success() {
+    testRefreshFileNotExist(localArtifactLocationDecoder);
+  }
+
+  @Test
+  public void refresh_remoteArtifact_fileNotExist_success() {
+    testRefreshFileNotExist(remoteArtifactLocationDecoder);
+  }
+
+  /**
+   * When aar files are not accessible e.g. a remote artifacts get expired, UnpackedAars should
+   * still complete unpack process with a summary about count of copied & removed file. The only
+   * difference is that it will not copy the inaccessible file to local.
+   */
+  private void testRefreshFileNotExist(ArtifactLocationDecoder decoder) {
     UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
     File aarCacheDir = unpackedAars.getCacheDir();
-    new File(aarCacheDir, "outOfDate.aar").mkdirs();
 
     // non-existent aar. It's not expected but for some corner cases, aars may not be accessible
-    // e.g. objfs has been expired which cannot be read any more.
+    // e.g. objfs has been expired which cannot be read anymore.
     String resourceAar = "resource.aar";
     ArtifactLocation resourceAarArtifactLocation = generateArtifactLocation(resourceAar);
     AarLibrary resourceAarLibrary = new AarLibrary(resourceAarArtifactLocation, null);
@@ -169,7 +251,7 @@ public class UnpackedAarsTest extends BlazeTestCase {
             .setWorkspaceLanguageSettings(
                 new WorkspaceLanguageSettings(WorkspaceType.ANDROID, ImmutableSet.of()))
             .setSyncState(new SyncState.Builder().put(syncData).build())
-            .setArtifactLocationDecoder(artifactLocationDecoder)
+            .setArtifactLocationDecoder(decoder)
             .build();
     FileCache.EP_NAME
         .extensions()
@@ -186,11 +268,19 @@ public class UnpackedAarsTest extends BlazeTestCase {
     assertThat(aarCacheDir.list()).hasLength(0);
     String messages = writingOutputSink.getMessages();
     assertThat(messages).doesNotContain("Copied 1 AARs");
-    assertThat(messages).contains("Removed 1 AARs");
   }
 
   @Test
-  public void testRefresh_includeLintJar() throws IOException {
+  public void refresh_localArtifact_includeLintJar() throws IOException {
+    testRefreshIncludeLintJar(localArtifactLocationDecoder);
+  }
+
+  @Test
+  public void refresh_remoteArtifact_includeLintJar() throws IOException {
+    testRefreshIncludeLintJar(remoteArtifactLocationDecoder);
+  }
+
+  private void testRefreshIncludeLintJar(ArtifactLocationDecoder decoder) throws IOException {
     UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
     File aarCacheDir = unpackedAars.getCacheDir();
     String lintAar = "lint.aar";
@@ -220,7 +310,7 @@ public class UnpackedAarsTest extends BlazeTestCase {
             .setWorkspaceLanguageSettings(
                 new WorkspaceLanguageSettings(WorkspaceType.ANDROID, ImmutableSet.of()))
             .setSyncState(new SyncState.Builder().put(syncData).build())
-            .setArtifactLocationDecoder(artifactLocationDecoder)
+            .setArtifactLocationDecoder(decoder)
             .build();
     FileCache.EP_NAME
         .extensions()
@@ -235,7 +325,7 @@ public class UnpackedAarsTest extends BlazeTestCase {
                     SyncMode.INCREMENTAL));
 
     assertThat(aarCacheDir.list()).hasLength(1);
-    File lintJarAarDir = unpackedAars.getAarDir(artifactLocationDecoder, lintAarLibrary);
+    File lintJarAarDir = unpackedAars.getAarDir(decoder, lintAarLibrary);
 
     assertThat(aarCacheDir.listFiles()).asList().containsExactly(lintJarAarDir);
     assertThat(lintJarAarDir.list()).asList().contains(FN_LINT_JAR);
@@ -244,7 +334,16 @@ public class UnpackedAarsTest extends BlazeTestCase {
   }
 
   @Test
-  public void testRefresh_success() throws IOException {
+  public void refresh_localArtifact_success() throws IOException {
+    testRefresh(localArtifactLocationDecoder);
+  }
+
+  @Test
+  public void refresh_remoteArtifact_success() throws IOException {
+    testRefresh(remoteArtifactLocationDecoder);
+  }
+
+  private void testRefresh(ArtifactLocationDecoder decoder) throws IOException {
     // aars cached last time but not included in current build output. It should be removed after
     // current sync get finished.
     UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
@@ -297,7 +396,7 @@ public class UnpackedAarsTest extends BlazeTestCase {
             .setWorkspaceLanguageSettings(
                 new WorkspaceLanguageSettings(WorkspaceType.ANDROID, ImmutableSet.of()))
             .setSyncState(new SyncState.Builder().put(syncData).build())
-            .setArtifactLocationDecoder(artifactLocationDecoder)
+            .setArtifactLocationDecoder(decoder)
             .build();
     FileCache.EP_NAME
         .extensions()
@@ -312,8 +411,8 @@ public class UnpackedAarsTest extends BlazeTestCase {
                     SyncMode.INCREMENTAL));
 
     assertThat(aarCacheDir.list()).hasLength(2);
-    File resourceAarDir = unpackedAars.getAarDir(artifactLocationDecoder, resourceAarLibrary);
-    File importedAarDir = unpackedAars.getAarDir(artifactLocationDecoder, importedAarLibrary);
+    File resourceAarDir = unpackedAars.getAarDir(decoder, resourceAarLibrary);
+    File importedAarDir = unpackedAars.getAarDir(decoder, importedAarLibrary);
     assertThat(aarCacheDir.listFiles()).asList().containsExactly(resourceAarDir, importedAarDir);
     assertThat(resourceAarDir.list()).asList().containsExactly("aar.timestamp", "res");
     assertThat(importedAarDir.list()).asList().containsExactly("aar.timestamp", "res", "jars");

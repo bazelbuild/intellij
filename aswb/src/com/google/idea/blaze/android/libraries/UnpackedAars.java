@@ -16,7 +16,6 @@
 package com.google.idea.blaze.android.libraries;
 
 import static com.android.SdkConstants.FN_LINT_JAR;
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
@@ -63,7 +62,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -97,10 +95,7 @@ public class UnpackedAars {
   private static final Logger logger = Logger.getInstance(UnpackedAars.class);
 
   private final Project project;
-  private final File cacheDir;
-
-  /** The state of the cache as of the last call to {@link #readFileState}. */
-  private volatile ImmutableMap<String, File> cacheState = ImmutableMap.of();
+  private final AarCache aarCache;
 
   public static UnpackedAars getInstance(Project project) {
     return ServiceManager.getService(project, UnpackedAars.class);
@@ -110,12 +105,19 @@ public class UnpackedAars {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.project = project;
-    this.cacheDir = getCacheDir(importSettings);
+    aarCache = new AarCache(getCacheDir(importSettings));
   }
 
+  /* Provide path to aar cache directory. This is for test only. */
   @VisibleForTesting
+  @Nullable
   public File getCacheDir() {
-    return this.cacheDir;
+    try {
+      return aarCache.getOrCreateCacheDir();
+    } catch (IOException e) {
+      logger.warn("Fail to get cache directory. ", e);
+      return null;
+    }
   }
 
   private static File getCacheDir(BlazeImportSettings importSettings) {
@@ -130,7 +132,7 @@ public class UnpackedAars {
       SyncMode syncMode) {
     boolean fullRefresh = syncMode == SyncMode.FULL;
     if (fullRefresh) {
-      clearCache();
+      aarCache.clearCache();
     }
 
     // TODO(brendandouglas): add a mechanism for removing missing files for partial syncs
@@ -149,17 +151,14 @@ public class UnpackedAars {
       BlazeProjectData projectData,
       RemoteOutputArtifacts previousOutputs,
       boolean removeMissingFiles) {
-    FileOperationProvider fileOpProvider = FileOperationProvider.getInstance();
-
-    // Ensure the cache dir exists
-    if (!fileOpProvider.exists(cacheDir)) {
-      if (!fileOpProvider.mkdirs(cacheDir)) {
-        logger.warn("Could not create unpacked AAR directory: " + cacheDir);
-        return;
-      }
+    try {
+      aarCache.getOrCreateCacheDir();
+    } catch (IOException e) {
+      logger.warn("Could not create unpacked AAR directory", e);
+      return;
     }
 
-    ImmutableMap<String, File> cacheFiles = readFileState();
+    ImmutableMap<String, File> cacheFiles = aarCache.readFileState();
     ImmutableMap<String, AarLibraryContents> projectState =
         getArtifactsToCache(viewSet, projectData);
     ImmutableMap<String, BlazeArtifact> aarOutputs =
@@ -204,7 +203,7 @@ public class UnpackedAars {
       // update cache files, and remove files if required
       List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(projectState, updatedKeys));
       if (removeMissingFiles) {
-        futures.addAll(deleteCacheEntries(removedKeys));
+        futures.addAll(aarCache.retainOnly(/* retainedFiles= */ projectState.keySet()));
       }
 
       Futures.allAsList(futures).get();
@@ -222,7 +221,7 @@ public class UnpackedAars {
       logger.warn("Unpacked AAR synchronization didn't complete", e);
     } finally {
       // update the in-memory record of which files are cached
-      readFileState();
+      aarCache.readFileState();
     }
   }
 
@@ -232,9 +231,8 @@ public class UnpackedAars {
     if (library.libraryArtifact == null) {
       return null;
     }
-    ImmutableMap<String, File> cacheState = this.cacheState;
     BlazeArtifact jar = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
-    if (cacheState.isEmpty()) {
+    if (aarCache.isEmpty()) {
       logger.warn("Cache state is empty");
       return getFallbackFile(jar);
     }
@@ -251,7 +249,7 @@ public class UnpackedAars {
             String.format(
                 "Fail to look up %s from cache state for library [aarArtifact = %s, jar = %s]",
                 aarDir, aar, jar));
-        logger.debug("Cache state contains the following keys: " + cacheState.keySet());
+        logger.debug("Cache state contains the following keys: " + aarCache.getCachedKeys());
       }
       return getFallbackFile(jar);
     }
@@ -266,23 +264,10 @@ public class UnpackedAars {
   }
 
   @Nullable
-  public File getAarDir(String cacheKey) {
-    ImmutableMap<String, File> cacheState = this.cacheState;
-    if (!cacheState.containsKey(cacheKey)) {
-      return null;
-    }
-    return aarDirForKey(cacheKey);
-  }
-
-  @Nullable
   public File getAarDir(ArtifactLocationDecoder decoder, AarLibrary library) {
     BlazeArtifact artifact = decoder.resolveOutput(library.aarArtifact);
     String aarDirName = UnpackedAarUtils.getAarDirName(artifact);
-    return getAarDir(aarDirName);
-  }
-
-  private File aarDirForKey(String key) {
-    return new File(cacheDir, key);
+    return aarCache.getCachedAarDir(aarDirName);
   }
 
   /** The file to return if there's no locally cached version. */
@@ -292,18 +277,6 @@ public class UnpackedAars {
       throw new RuntimeException("The AAR cache must be enabled when syncing remotely");
     }
     return ((LocalFileArtifact) output).getFile();
-  }
-
-  private void clearCache() {
-    FileOperationProvider fileOperationProvider = FileOperationProvider.getInstance();
-    if (fileOperationProvider.exists(cacheDir)) {
-      try {
-        fileOperationProvider.deleteRecursively(cacheDir, true);
-      } catch (IOException e) {
-        logger.warn("Failed to clear unpacked AAR directory: " + cacheDir, e);
-      }
-    }
-    cacheState = ImmutableMap.of();
   }
 
   static class FileCacheAdapter implements FileCache {
@@ -344,7 +317,7 @@ public class UnpackedAars {
 
     @Override
     public void initialize(Project project) {
-      getInstance(project).readFileState();
+      getInstance(project).aarCache.readFileState();
     }
   }
 
@@ -375,32 +348,6 @@ public class UnpackedAars {
     return ImmutableMap.copyOf(outputs);
   }
 
-  private static final String STAMP_FILE_NAME = "aar.timestamp";
-
-  /**
-   * Returns a map of cache keys for the currently-cached files, along with a representative file
-   * used for timestamp-based diffing.
-   *
-   * <p>We use a stamp file instead of the directory itself to stash the timestamp. Directory
-   * timestamps are bit more brittle and can change whenever an operation is done to a child of the
-   * directory.
-   *
-   * <p>Also sets the in-memory @link #cacheState}.
-   */
-  private ImmutableMap<String, File> readFileState() {
-    FileOperationProvider ops = FileOperationProvider.getInstance();
-    // Go through all of the aar directories, and get the stamp file.
-    File[] unpackedAarDirectories = ops.listFiles(cacheDir);
-    if (unpackedAarDirectories == null) {
-      return ImmutableMap.of();
-    }
-    ImmutableMap<String, File> cachedFiles =
-        Arrays.stream(unpackedAarDirectories)
-            .collect(toImmutableMap(File::getName, dir -> new File(dir, STAMP_FILE_NAME)));
-    cacheState = cachedFiles;
-    return cachedFiles;
-  }
-
   private Collection<ListenableFuture<?>> copyLocally(
       ImmutableMap<String, AarLibraryContents> toCache, Set<String> updatedKeys) {
     FileOperationProvider ops = FileOperationProvider.getInstance();
@@ -413,12 +360,8 @@ public class UnpackedAars {
 
   private void copyLocally(FileOperationProvider ops, AarLibraryContents aarAndJar) {
     String cacheKey = UnpackedAarUtils.getAarDirName(aarAndJar.aar());
-    File aarDir = aarDirForKey(cacheKey);
     try {
-      if (ops.exists(aarDir)) {
-        ops.deleteRecursively(aarDir, true);
-      }
-      ops.mkdirs(aarDir);
+      File aarDir = aarCache.recreateAarDir(ops, cacheKey);
       // TODO(brendandouglas): decompress via ZipInputStream so we don't require a local file
       File toCopy = getOrCreateLocalFile(aarAndJar.aar());
       ZipUtil.extract(
@@ -429,7 +372,15 @@ public class UnpackedAars {
           // which is more lightweight. But it's not applied to lint.jar
           (dir, name) -> name.equals(FN_LINT_JAR) || !name.endsWith(".jar"));
 
-      createStampFile(ops, aarDir, aarAndJar.aar());
+      BlazeArtifact aar = aarAndJar.aar();
+
+      try {
+        aarCache.createTimeStampFile(
+            cacheKey,
+            (aar instanceof LocalFileArtifact) ? ((LocalFileArtifact) aar).getFile() : null);
+      } catch (IOException e) {
+        logger.warn("Failed to set AAR cache timestamp for " + aar, e);
+      }
 
       // copy merged jar
       if (aarAndJar.jar() != null) {
@@ -441,42 +392,11 @@ public class UnpackedAars {
       }
 
     } catch (IOException e) {
-      logger.warn(String.format("Failed to extract AAR %s to %s", aarAndJar.aar(), aarDir), e);
+      logger.warn(
+          String.format(
+              "Failed to extract AAR %s to %s", aarAndJar.aar(), aarCache.aarDirForKey(cacheKey)),
+          e);
     }
-  }
-
-  private static void createStampFile(
-      FileOperationProvider fileOps, File aarDir, BlazeArtifact aar) {
-    File stampFile = new File(aarDir, STAMP_FILE_NAME);
-    try {
-      stampFile.createNewFile();
-      if (!(aar instanceof LocalFileArtifact)) {
-        // no need to set the timestamp for remote artifacts
-        return;
-      }
-      long sourceTime = fileOps.getFileModifiedTime(((LocalFileArtifact) aar).getFile());
-      if (!fileOps.setFileModifiedTime(stampFile, sourceTime)) {
-        logger.warn("Failed to set AAR cache timestamp for " + aar);
-      }
-    } catch (IOException e) {
-      logger.warn("Failed to set AAR cache timestamp for " + aar, e);
-    }
-  }
-
-  private Collection<ListenableFuture<?>> deleteCacheEntries(Collection<String> cacheKeys) {
-    FileOperationProvider ops = FileOperationProvider.getInstance();
-    return cacheKeys.stream()
-        .map(
-            key ->
-                FetchExecutor.EXECUTOR.submit(
-                    () -> {
-                      try {
-                        ops.deleteRecursively(aarDirForKey(key), true);
-                      } catch (IOException e) {
-                        logger.warn(e);
-                      }
-                    }))
-        .collect(toImmutableList());
   }
 
   /** Returns a locally-accessible file mirroring the contents of this {@link BlazeArtifact}. */
