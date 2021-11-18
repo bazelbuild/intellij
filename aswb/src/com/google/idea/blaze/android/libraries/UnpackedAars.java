@@ -15,9 +15,7 @@
  */
 package com.google.idea.blaze.android.libraries;
 
-import static com.android.SdkConstants.FN_LINT_JAR;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -30,11 +28,9 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArt
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.filecache.FileCacheDiffer;
-import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
-import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -52,16 +48,8 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.io.ZipUtil;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -180,14 +168,6 @@ public class UnpackedAars {
         }
       }
 
-      Set<String> removedKeys = new HashSet<>();
-      if (removeMissingFiles) {
-        removedKeys =
-            cacheFiles.keySet().stream()
-                .filter(file -> !projectState.containsKey(file))
-                .collect(toImmutableSet());
-      }
-
       // Prefetch all libraries to local before reading and copying content
       ListenableFuture<?> downloadArtifactsFuture =
           RemoteArtifactPrefetcher.getInstance()
@@ -200,18 +180,22 @@ public class UnpackedAars {
           .withProgressMessage("Fetching aar files...")
           .run();
 
-      // update cache files, and remove files if required
-      List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(projectState, updatedKeys));
+      // remove files if required. Remove file before updating cache files to avoid removing any
+      // manually created directory.
       if (removeMissingFiles) {
-        futures.addAll(aarCache.retainOnly(/* retainedFiles= */ projectState.keySet()));
+        Collection<ListenableFuture<?>> removedFiles =
+            aarCache.retainOnly(/* retainedFiles= */ projectState.keySet());
+        Futures.allAsList(removedFiles).get();
+        if (!removedFiles.isEmpty()) {
+          context.output(PrintOutput.log(String.format("Removed %d AARs", removedFiles.size())));
+        }
       }
 
-      Futures.allAsList(futures).get();
+      // update cache files
+      Unpacker.unpack(projectState, updatedKeys, aarCache);
+
       if (!updatedKeys.isEmpty()) {
         context.output(PrintOutput.log(String.format("Copied %d AARs", updatedKeys.size())));
-      }
-      if (!removedKeys.isEmpty()) {
-        context.output(PrintOutput.log(String.format("Removed %d AARs", removedKeys.size())));
       }
 
     } catch (InterruptedException e) {
@@ -346,72 +330,5 @@ public class UnpackedAars {
       outputs.put(UnpackedAarUtils.getAarDirName(aar), AarLibraryContents.create(aar, jar));
     }
     return ImmutableMap.copyOf(outputs);
-  }
-
-  private Collection<ListenableFuture<?>> copyLocally(
-      ImmutableMap<String, AarLibraryContents> toCache, Set<String> updatedKeys) {
-    FileOperationProvider ops = FileOperationProvider.getInstance();
-    List<ListenableFuture<?>> futures = new ArrayList<>();
-    updatedKeys.forEach(
-        key ->
-            futures.add(FetchExecutor.EXECUTOR.submit(() -> copyLocally(ops, toCache.get(key)))));
-    return futures;
-  }
-
-  private void copyLocally(FileOperationProvider ops, AarLibraryContents aarAndJar) {
-    String cacheKey = UnpackedAarUtils.getAarDirName(aarAndJar.aar());
-    try {
-      File aarDir = aarCache.recreateAarDir(ops, cacheKey);
-      // TODO(brendandouglas): decompress via ZipInputStream so we don't require a local file
-      File toCopy = getOrCreateLocalFile(aarAndJar.aar());
-      ZipUtil.extract(
-          toCopy,
-          aarDir,
-          // Skip jars except lint.jar. We will copy jar in AarLibraryContents instead.
-          // That could give us freedom in the future to use an ijar or header jar instead,
-          // which is more lightweight. But it's not applied to lint.jar
-          (dir, name) -> name.equals(FN_LINT_JAR) || !name.endsWith(".jar"));
-
-      BlazeArtifact aar = aarAndJar.aar();
-
-      try {
-        aarCache.createTimeStampFile(
-            cacheKey,
-            (aar instanceof LocalFileArtifact) ? ((LocalFileArtifact) aar).getFile() : null);
-      } catch (IOException e) {
-        logger.warn("Failed to set AAR cache timestamp for " + aar, e);
-      }
-
-      // copy merged jar
-      if (aarAndJar.jar() != null) {
-        try (InputStream stream = aarAndJar.jar().getInputStream()) {
-          Path destination = Paths.get(UnpackedAarUtils.getJarFile(aarDir).getPath());
-          ops.mkdirs(destination.getParent().toFile());
-          Files.copy(stream, destination, StandardCopyOption.REPLACE_EXISTING);
-        }
-      }
-
-    } catch (IOException e) {
-      logger.warn(
-          String.format(
-              "Failed to extract AAR %s to %s", aarAndJar.aar(), aarCache.aarDirForKey(cacheKey)),
-          e);
-    }
-  }
-
-  /** Returns a locally-accessible file mirroring the contents of this {@link BlazeArtifact}. */
-  private static File getOrCreateLocalFile(BlazeArtifact artifact) throws IOException {
-    if (artifact instanceof LocalFileArtifact) {
-      return ((LocalFileArtifact) artifact).getFile();
-    }
-    File tmpFile =
-        FileUtil.createTempFile(
-            "local-aar-file",
-            Integer.toHexString(UnpackedAarUtils.getArtifactKey(artifact).hashCode()),
-            /* deleteOnExit= */ true);
-    try (InputStream stream = artifact.getInputStream()) {
-      Files.copy(stream, Paths.get(tmpFile.getPath()), StandardCopyOption.REPLACE_EXISTING);
-      return tmpFile;
-    }
   }
 }
