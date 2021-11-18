@@ -16,6 +16,7 @@
 package com.google.idea.blaze.cpp;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.apache.commons.lang.SystemUtils.IS_OS_WINDOWS;
 
 import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.diagnostic.Logger;
@@ -69,18 +70,41 @@ public class CompilerWrapperProviderImpl implements CompilerWrapperProvider {
               "done",
               "",
               "# The actual compiler wrapper script we get from blaze",
-              String.format("EXE=%s", blazeCompilerExecutableFile.getPath()),
+              String.format("EXE=%s", escapeShArg(blazeCompilerExecutableFile.getPath())),
               "# Read in the arguments file so we can pass the arguments on the command line.",
-              String.format("(cd %s && $EXE \"${parsedargs[@]}\")", executionRoot));
+              String.format("(cd %s && $EXE \"${parsedargs[@]}\")", escapeShArg(executionRoot.toString())));
 
       try (PrintWriter pw = new PrintWriter(blazeCompilerWrapper, UTF_8.name())) {
         compilerWrapperScriptLines.forEach(pw::println);
       }
-      return blazeCompilerWrapper;
+
+      if (IS_OS_WINDOWS) {
+        return createCompilerExecutableWrapperBat(blazeCompilerWrapper);
+      } else {
+        return blazeCompilerWrapper;
+      }
     } catch (IOException e) {
       logger.warn(
           "Unable to write compiler wrapper script executable: " + blazeCompilerExecutableFile, e);
       return null;
     }
+  }
+
+  private File createCompilerExecutableWrapperBat(File compilerWrapperSh) throws IOException {
+    File compilerWrapperBat = FileUtil.createTempFile("blaze_compiler", ".bat", true /* deleteOnExit */);
+    try (PrintWriter pw = new PrintWriter(compilerWrapperBat, UTF_8.name())) {
+      pw.println("@echo off");
+      pw.println("setlocal enabledelayedexpansion");
+      pw.println("%BAZEL_SH% " + escapeBatArg(compilerWrapperSh.toString()) + " %*");
+    }
+    return compilerWrapperBat;
+  }
+
+  private static String escapeShArg(String value) {
+    return "'" + value.replace("'", "'\\''") + "'";
+  }
+
+  private static String escapeBatArg(String value) {
+    return '"' + value.replace("\"", "\"\"") + '"';
   }
 }
