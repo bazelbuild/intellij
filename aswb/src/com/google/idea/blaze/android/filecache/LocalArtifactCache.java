@@ -157,6 +157,14 @@ public class LocalArtifactCache implements ArtifactCache {
   @Override
   public synchronized void putAll(
       Collection<OutputArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts) {
+    // b/201702401: Under certain conditions, LocalFileOutputArtifact.toArtifactState throws
+    // an IllegalArgumentException when it can't locate the artifact on objfsd. It is unclear what
+    // leads to this as we haven't been able to reproduce it. However, the #get method is not
+    // supposed to ever crash, so we just log a warning if we ever run into an exception.
+    // Note: also see similar logic in #get
+    artifacts =
+        artifacts.stream().filter(LocalArtifactCache::artifactExists).collect(Collectors.toList());
+
     // Utility maps for the passed artifacts
     Map<String, OutputArtifact> keyToArtifact = new HashMap<>();
     Map<String, CacheEntry> keyToCacheEntry = new HashMap<>();
@@ -243,9 +251,25 @@ public class LocalArtifactCache implements ArtifactCache {
     }
   }
 
+  private static boolean artifactExists(OutputArtifact a) {
+    try {
+      // b/201702401: Ensure that a cache entry can be created for the given entry. Currently,
+      // in the case of LocalOutputArtifact's, cache entries can only be created if the artifact
+      // exists in the local objfsd.
+      CacheEntry.forArtifact(a);
+      return true;
+    } catch (RuntimeException e) {
+      return false;
+    }
+  }
+
   @Override
   @Nullable
   public synchronized Path get(OutputArtifact artifact) {
+    if (!artifactExists(artifact)) {
+      return null;
+    }
+
     try {
       return unsafeGet(artifact);
     } catch (RuntimeException e) {
@@ -253,6 +277,7 @@ public class LocalArtifactCache implements ArtifactCache {
       // an IllegalArgumentException when it can't locate the artifact on objfsd. It is unclear what
       // leads to this as we haven't been able to reproduce it. However, the #get method is not
       // supposed to ever crash, so we just log a warning if we ever run into an exception.
+      // Note: also see similar logic in #putAll
       String msg =
           "Unexpected exception retrieving cached path for artifact: " + artifact.getRelativePath();
       Logger.getInstance(LocalArtifactCache.class).warn(msg, e);
