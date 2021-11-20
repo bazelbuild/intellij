@@ -76,7 +76,8 @@ public final class CacheEntry {
 
   /** Returns a {@link CacheEntry} corresponding to the given {@code OutputArtifact}. */
   @VisibleForTesting
-  public static CacheEntry forArtifact(OutputArtifact blazeArtifact) {
+  public static CacheEntry forArtifact(OutputArtifact blazeArtifact)
+      throws ArtifactNotFoundException {
     ArtifactMetadata artifactMetadata = ArtifactMetadata.forArtifact(blazeArtifact);
 
     String artifactPath = artifactMetadata.getRelativePath();

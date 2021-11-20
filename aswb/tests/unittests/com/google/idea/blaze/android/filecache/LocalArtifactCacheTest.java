@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.Rule;
@@ -138,7 +139,17 @@ public class LocalArtifactCacheTest {
     // Check that the artifacts were added to the cache.
     ImmutableList<File> expectedFiles =
         Stream.concat(
-                outputArtifacts.stream().map(CacheEntry::forArtifact).map(CacheEntry::getFileName),
+                outputArtifacts.stream()
+                    .map(
+                        a -> {
+                          try {
+                            return CacheEntry.forArtifact(a);
+                          } catch (ArtifactNotFoundException e) {
+                            return null;
+                          }
+                        })
+                    .filter(Objects::nonNull)
+                    .map(CacheEntry::getFileName),
                 Stream.of(CACHE_DATA_FILENAME))
             .map(f -> new File(cacheDirectory.getRoot(), f))
             .collect(ImmutableList.toImmutableList());

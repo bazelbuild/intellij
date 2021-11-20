@@ -34,8 +34,7 @@ public class MockArtifactCache implements ArtifactCache {
   }
 
   @Override
-  public void initialize() {
-  }
+  public void initialize() {}
 
   @Override
   public void clearCache() {
@@ -53,14 +52,24 @@ public class MockArtifactCache implements ArtifactCache {
   @Nullable
   @Override
   public Path get(OutputArtifact artifact) {
-    CacheEntry cacheEntry = CacheEntry.forArtifact(artifact);
+    CacheEntry cacheEntry;
+    try {
+      cacheEntry = CacheEntry.forArtifact(artifact);
+    } catch (ArtifactNotFoundException e) {
+      return null;
+    }
     return Paths.get(
         relativePathToFile.get(
             cacheEntry.getArtifacts().stream().findFirst().get().getRelativePath()));
   }
 
   public void addTrackedFile(OutputArtifact artifact, String trackedFilePath) {
-    CacheEntry cacheEntry = CacheEntry.forArtifact(artifact);
+    CacheEntry cacheEntry = null;
+    try {
+      cacheEntry = CacheEntry.forArtifact(artifact);
+    } catch (ArtifactNotFoundException e) {
+      return;
+    }
     relativePathToFile.put(
         cacheEntry.getArtifacts().stream().findFirst().get().getRelativePath(), trackedFilePath);
   }

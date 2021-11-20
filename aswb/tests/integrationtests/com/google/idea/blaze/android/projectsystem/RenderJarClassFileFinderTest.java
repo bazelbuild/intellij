@@ -20,6 +20,7 @@ import static com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidPr
 import static com.google.idea.blaze.base.sync.data.BlazeDataStorage.WORKSPACE_MODULE_NAME;
 
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
+import com.google.idea.blaze.android.filecache.ArtifactNotFoundException;
 import com.google.idea.blaze.android.filecache.CacheEntry;
 import com.google.idea.blaze.android.filecache.MockArtifactCache;
 import com.google.idea.blaze.android.libraries.RenderJarCache;
@@ -74,7 +75,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
   private MockArtifactCache artifactCache;
 
   @Before
-  public void initTest() {
+  public void initTest() throws ArtifactNotFoundException {
     TargetMap targetMap = buildTargetMap();
     setTargetMap(targetMap);
 
@@ -132,7 +133,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
 
   /** Tests that .workspace module can find classes from all binaries in the projectview. */
   @Test
-  public void workspaceModule_canFindAllClassesInAllBinaries() {
+  public void workspaceModule_canFindAllClassesInAllBinaries() throws ArtifactNotFoundException {
     Module workspaceModule =
         ModuleManager.getInstance(getProject()).findModuleByName(WORKSPACE_MODULE_NAME);
     assertThat(workspaceModule).isNotNull();
@@ -216,7 +217,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
    * that comprise the resource module.
    */
   @Test
-  public void resourceModule_canFindSourceClasses() {
+  public void resourceModule_canFindSourceClasses() throws ArtifactNotFoundException {
     AndroidResourceModuleRegistry moduleRegistry =
         AndroidResourceModuleRegistry.getInstance(getProject());
     Module aResourceModule =
@@ -273,7 +274,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
    * the resource module.
    */
   @Test
-  public void resourceModule_canFindDependencyClasses() {
+  public void resourceModule_canFindDependencyClasses() throws ArtifactNotFoundException {
     AndroidResourceModuleRegistry moduleRegistry =
         AndroidResourceModuleRegistry.getInstance(getProject());
     Module aResourceModule =
@@ -441,7 +442,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
    * Creates empty files corresponding to content entries in a JAR. Doesn't create an actual
    * archive, only mimics the archive roots in file system.
    */
-  private void createBinaryJars() {
+  private void createBinaryJars() throws ArtifactNotFoundException {
     File cacheDirFile = RenderJarCache.getInstance(getProject()).getCacheDir();
     fileSystem.createDirectory(cacheDirFile.getAbsolutePath());
     String cacheDir = cacheDirFile.getPath();

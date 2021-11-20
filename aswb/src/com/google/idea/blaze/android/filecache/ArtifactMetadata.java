@@ -61,11 +61,16 @@ public final class ArtifactMetadata {
     return Objects.hash(relativePath, identifier);
   }
 
-  /** Returns the relevant metadata for an {@code artifact} that needs to be persisted. */
-  public static ArtifactMetadata forArtifact(OutputArtifact artifact) {
+  /**
+   * Returns the relevant metadata for an {@code artifact} that needs to be persisted.
+   *
+   * @throws ArtifactNotFoundException if the artifact is not present.
+   */
+  public static ArtifactMetadata forArtifact(OutputArtifact artifact)
+      throws ArtifactNotFoundException {
     ArtifactState artifactState = artifact.toArtifactState();
     if (artifactState == null) {
-      throw new IllegalArgumentException("Could not get ArtifactState of " + artifact);
+      throw new ArtifactNotFoundException(artifact);
     }
     // Serialize to proto to make grabbing the fields easier
     LocalFileOrOutputArtifact serializedArtifact = artifactState.serializeToProto();
