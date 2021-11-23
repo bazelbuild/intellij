@@ -68,7 +68,7 @@ public class LoadStatementAnnotatorTest extends BuildFileIntegrationTestCase {
             "load('/tools/ide/build_test.bzl', 'build_test')");
     assertHasAnnotation(
         file,
-        "Deprecated load syntax; loaded Starlark module should by in label format.",
+        "Deprecated load syntax; loaded Starlark module should be in label format.",
         HighlightSeverity.WARNING);
   }
 
