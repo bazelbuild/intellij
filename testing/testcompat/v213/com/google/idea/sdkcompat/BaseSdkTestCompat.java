@@ -15,10 +15,22 @@
  */
 package com.google.idea.sdkcompat;
 
+import java.util.List;
+
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+
 /**
  * Provides SDK compatibility shims for base plugin API classes, available to all IDEs during
  * test-time.
  */
 public final class BaseSdkTestCompat {
   private BaseSdkTestCompat() {}
+
+  /** #api212: inline into test cases */
+  public static List<Annotation> testAnnotator(Annotator annotator, PsiElement... elements) {
+    return CodeInsightTestUtil.testAnnotator(annotator, elements);
+  }
 }

@@ -28,9 +28,10 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.openapi.project.Project;
-import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -340,7 +341,7 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
   }
 
   private List<Annotation> validateFile(BuildFile file) {
-    return CodeInsightTestUtil.testAnnotator(
+    return BaseSdkTestCompat.testAnnotator(
         new BuiltInRuleAnnotator(),
         PsiUtils.findAllChildrenOfClassRecursive(file, FuncallExpression.class).toArray(FuncallExpression[]::new));
   }

@@ -15,10 +15,29 @@
  */
 package com.google.idea.sdkcompat;
 
+import java.util.List;
+
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.Annotator;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+
 /**
  * Provides SDK compatibility shims for base plugin API classes, available to all IDEs during
  * test-time.
  */
 public final class BaseSdkTestCompat {
   private BaseSdkTestCompat() {}
+
+  /** #api212: inline into test cases */
+  public static List<Annotation> testAnnotator(Annotator annotator, PsiElement... elements) {
+    PsiFile file = elements[0].getContainingFile();
+    AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(file));
+    for (PsiElement element : elements) {
+      holder.runAnnotatorWithContext(element, annotator);
+    }
+    return holder;
+  }
 }
