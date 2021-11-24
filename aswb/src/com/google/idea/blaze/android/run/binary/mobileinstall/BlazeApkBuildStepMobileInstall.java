@@ -63,6 +63,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CancellationException;
@@ -236,10 +237,11 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
         return;
       }
 
-      AndroidDeployInfo deployInfoProto =
-          deployInfoHelper.readDeployInfoProtoForTarget(
+      File deployInfo =
+          deployInfoHelper.getDeployInfo(
               label, buildResultHelper, fileName -> fileName.endsWith(deployInfoSuffix));
-      deployInfo =
+      AndroidDeployInfo deployInfoProto = deployInfoHelper.readDeployInfoProtoForTarget(deployInfo);
+      this.deployInfo =
           deployInfoHelper.extractDeployInfoAndInvalidateManifests(
               project, new File(executionRoot), deployInfoProto);
 
@@ -250,7 +252,7 @@ public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
         msg = "Done.";
       }
       context.output(new StatusOutput(msg));
-    } catch (GetArtifactsException e) {
+    } catch (GetArtifactsException | IOException e) {
       IssueOutput.error("Could not read BEP output: " + e.getMessage()).submit(context);
     } catch (GetDeployInfoException e) {
       IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())

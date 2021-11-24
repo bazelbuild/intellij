@@ -50,6 +50,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
@@ -166,7 +167,8 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   }
 
   @Test
-  public void deployInfoBuiltCorrectly() throws GetDeployInfoException, ApkProvisionException {
+  public void deployInfoBuiltCorrectly()
+      throws GetDeployInfoException, ApkProvisionException, IOException {
     setupProject();
     Label testTarget = Label.create("//java/com/foo/app:instrumentation_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app");
@@ -180,15 +182,20 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     // Return fake deploy info proto and mocked deploy info data object.
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-
+    File instrumentorDeployInfoFile = new File("instrumentor.deployinfo.pb");
+    when(helper.getDeployInfo(eq(instrumentorTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(instrumentorDeployInfoFile);
     AndroidDeployInfo fakeInstrumentorProto = AndroidDeployInfo.newBuilder().build();
-    AndroidDeployInfo fakeAppProto = AndroidDeployInfo.newBuilder().build();
-    BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
-    when(helper.readDeployInfoProtoForTarget(
-            eq(instrumentorTarget), any(BuildResultHelper.class), any()))
+    when(helper.readDeployInfoProtoForTarget(instrumentorDeployInfoFile))
         .thenReturn(fakeInstrumentorProto);
-    when(helper.readDeployInfoProtoForTarget(eq(appTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeAppProto);
+
+    File appDeployInfo = new File("deployinfo.pb");
+    when(helper.getDeployInfo(eq(appTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(appDeployInfo);
+    AndroidDeployInfo fakeAppProto = AndroidDeployInfo.newBuilder().build();
+    when(helper.readDeployInfoProtoForTarget(appDeployInfo)).thenReturn(fakeAppProto);
+
+    BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     when(helper.extractInstrumentationTestDeployInfoAndInvalidateManifests(
             eq(getProject()),
             eq(new File(getExecRoot())),
@@ -213,7 +220,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
   @Test
   public void deployInfoBuiltCorrectly_selfInstrumentingTest()
-      throws GetDeployInfoException, ApkProvisionException {
+      throws GetDeployInfoException, ApkProvisionException, IOException {
     setupProject();
     Label testTarget = Label.create("//java/com/foo/app:self_instrumenting_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app_self_instrumenting");
@@ -227,11 +234,12 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     // Return fake deploy info proto and mocked deploy info data object.
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
 
+    File deployInfoFile = new File("deployinfo.pb");
+    when(helper.getDeployInfo(eq(instrumentorTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(deployInfoFile);
     AndroidDeployInfo fakeInstrumentorProto = AndroidDeployInfo.newBuilder().build();
+    when(helper.readDeployInfoProtoForTarget(deployInfoFile)).thenReturn(fakeInstrumentorProto);
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
-    when(helper.readDeployInfoProtoForTarget(
-            eq(instrumentorTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeInstrumentorProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             eq(getProject()), eq(new File(getExecRoot())), eq(fakeInstrumentorProto)))
         .thenReturn(mockDeployInfo);
@@ -251,7 +259,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   }
 
   @Test
-  public void exceptionDuringDeployInfoExtraction() throws GetDeployInfoException {
+  public void exceptionDuringDeployInfoExtraction() throws GetDeployInfoException, IOException {
     setupProject();
     Label testTarget = Label.create("//java/com/foo/app:instrumentation_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app");
@@ -269,11 +277,15 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     AndroidDeployInfo fakeInstrumentorProto = AndroidDeployInfo.newBuilder().build();
     AndroidDeployInfo fakeAppProto = AndroidDeployInfo.newBuilder().build();
-    when(helper.readDeployInfoProtoForTarget(
-            eq(instrumentorTarget), any(BuildResultHelper.class), any()))
+    File instrumentorDeployInfoFile = new File("instrumentor.deployinfo.pb");
+    when(helper.getDeployInfo(eq(instrumentorTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(instrumentorDeployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(instrumentorDeployInfoFile))
         .thenReturn(fakeInstrumentorProto);
-    when(helper.readDeployInfoProtoForTarget(eq(appTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeAppProto);
+    File appDeployInfo = new File("deployinfo.pb");
+    when(helper.getDeployInfo(eq(appTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(appDeployInfo);
+    when(helper.readDeployInfoProtoForTarget(appDeployInfo)).thenReturn(fakeAppProto);
     when(helper.extractInstrumentationTestDeployInfoAndInvalidateManifests(
             any(), any(), any(), any()))
         .thenThrow(new GetDeployInfoException("Fake Exception"));
@@ -291,7 +303,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   }
 
   @Test
-  public void blazeCommandFailed() throws GetDeployInfoException {
+  public void blazeCommandFailed() throws GetDeployInfoException, IOException {
     setupProject();
     Label testTarget = Label.create("//java/com/foo/app:instrumentation_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app");
@@ -310,11 +322,15 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     AndroidDeployInfo fakeInstrumentorProto = AndroidDeployInfo.newBuilder().build();
     AndroidDeployInfo fakeAppProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
-    when(helper.readDeployInfoProtoForTarget(
-            eq(instrumentorTarget), any(BuildResultHelper.class), any()))
+    File instrumentorDeployInfoFile = new File("instrumentor.deployinfo.pb");
+    when(helper.getDeployInfo(eq(instrumentorTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(instrumentorDeployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(instrumentorDeployInfoFile))
         .thenReturn(fakeInstrumentorProto);
-    when(helper.readDeployInfoProtoForTarget(eq(appTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeAppProto);
+    File appDeployInfoFile = new File("app.deployinfo.pb");
+    when(helper.getDeployInfo(eq(appTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(appDeployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(appDeployInfoFile)).thenReturn(fakeAppProto);
     when(helper.extractInstrumentationTestDeployInfoAndInvalidateManifests(
             eq(getProject()),
             eq(new File(getExecRoot())),
@@ -336,7 +352,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
   @Test
   public void nullExecRoot()
-      throws GetDeployInfoException, ApkProvisionException, GetArtifactsException {
+      throws GetDeployInfoException, ApkProvisionException, GetArtifactsException, IOException {
     setupProject();
     Label testTarget = Label.create("//java/com/foo/app:instrumentation_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app");
@@ -361,11 +377,15 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     AndroidDeployInfo fakeInstrumentorProto = AndroidDeployInfo.newBuilder().build();
     AndroidDeployInfo fakeAppProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
-    when(helper.readDeployInfoProtoForTarget(
-            eq(instrumentorTarget), any(BuildResultHelper.class), any()))
+    File instrumentorDeployInfoFile = new File("instrumentor.deployinfo.pb");
+    when(helper.getDeployInfo(eq(instrumentorTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(instrumentorDeployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(instrumentorDeployInfoFile))
         .thenReturn(fakeInstrumentorProto);
-    when(helper.readDeployInfoProtoForTarget(eq(appTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeAppProto);
+    File appDeployInfoFile = new File("app.deployinfo.pb");
+    when(helper.getDeployInfo(eq(appTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(appDeployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(appDeployInfoFile)).thenReturn(fakeAppProto);
     when(helper.extractInstrumentationTestDeployInfoAndInvalidateManifests(
             eq(getProject()),
             eq(new File(getExecRoot())),

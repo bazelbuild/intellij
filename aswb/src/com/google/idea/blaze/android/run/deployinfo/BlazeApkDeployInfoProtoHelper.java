@@ -24,10 +24,7 @@ import com.google.idea.blaze.android.manifest.ParsedManifestService;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.FileInputStream;
@@ -37,47 +34,33 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Utilities for reading and constructing {@link AndroidDeployInfo} and {@link
  * BlazeAndroidDeployInfo}.
  */
 public class BlazeApkDeployInfoProtoHelper {
-  public AndroidDeployInfo readDeployInfoProtoForTarget(
-      Label target, BuildResultHelper buildResultHelper, Predicate<String> pathFilter)
+  public AndroidDeployInfo readDeployInfoProtoForTarget(File deployInfo) throws IOException {
+    try (InputStream inputStream = new FileInputStream(deployInfo)) {
+      return AndroidDeployInfo.parseFrom(inputStream);
+    }
+  }
+
+  @NotNull
+  public File getDeployInfo(
+      Label target, BuildResultHelper buildResultHelper, Predicate<String> fileNameFilter)
       throws GetDeployInfoException {
     ImmutableList<File> deployInfoFiles;
     try {
       deployInfoFiles =
           BlazeArtifact.getLocalFiles(
-              buildResultHelper.getBuildArtifactsForTarget(target, pathFilter));
+              buildResultHelper.getBuildArtifactsForTarget(target, fileNameFilter));
     } catch (GetArtifactsException e) {
       throw new GetDeployInfoException(e.getMessage());
     }
 
     if (deployInfoFiles.isEmpty()) {
-      Logger log = Logger.getInstance(BlazeApkDeployInfoProtoHelper.class.getName());
-      try {
-        ParsedBepOutput bepOutput = buildResultHelper.getBuildOutput();
-        log.warn("Local execroot: " + bepOutput.getLocalExecRoot());
-        log.warn("All output artifacts:");
-        for (OutputArtifact outputArtifact : bepOutput.getAllOutputArtifacts(path -> true)) {
-          log.warn(outputArtifact.getKey() + " -> " + outputArtifact.getRelativePath());
-        }
-        log.warn("All local artifacts for " + target + ":");
-        List<OutputArtifact> allBuildArtifacts =
-            buildResultHelper.getBuildArtifactsForTarget(target, path -> true);
-        List<File> allLocalFiles = BlazeArtifact.getLocalFiles(allBuildArtifacts);
-        for (File file : allLocalFiles) {
-          String path = file.getPath();
-          log.warn(path);
-          if (pathFilter.test(path)) {
-            log.warn("Note: " + path + " passes pathFilter but was not recognized!");
-          }
-        }
-      } catch (GetArtifactsException e) {
-        log.warn("Error occured when gathering logs:", e);
-      }
       throw new GetDeployInfoException(
           "No deploy info proto artifact found.  Was android_deploy_info in the output groups?");
     }
@@ -89,12 +72,7 @@ public class BlazeApkDeployInfoProtoHelper {
                   .map(File::getPath)
                   .collect(Collectors.joining(", ", "[", "]")));
     }
-
-    try (InputStream inputStream = new FileInputStream(deployInfoFiles.get(0))) {
-      return AndroidDeployInfo.parseFrom(inputStream);
-    } catch (IOException e) {
-      throw new GetDeployInfoException(e.getMessage());
-    }
+    return deployInfoFiles.get(0);
   }
 
   public BlazeAndroidDeployInfo extractDeployInfoAndInvalidateManifests(

@@ -151,8 +151,10 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeProto);
+    File deployInfoFile = new File("deployinfo.pb");
+    when(helper.getDeployInfo(eq(buildTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(deployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(deployInfoFile)).thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
         .thenReturn(mockDeployInfo);
@@ -185,8 +187,10 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeProto);
+    File deployInfoFile = new File("deployinfo.pb");
+    when(helper.getDeployInfo(eq(buildTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(deployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(deployInfoFile)).thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
         .thenReturn(mockDeployInfo);
@@ -227,8 +231,10 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeProto);
+    File deployInfoFile = new File("deployinfo.pb");
+    when(helper.getDeployInfo(eq(buildTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(deployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(deployInfoFile)).thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
         .thenReturn(mockDeployInfo);
@@ -267,8 +273,10 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeProto);
+    File deployInfoFile = new File("deployinfo.pb");
+    when(helper.getDeployInfo(eq(buildTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(deployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(deployInfoFile)).thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
         .thenReturn(mockDeployInfo);
@@ -313,8 +321,10 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeProto);
+    File deployInfoFile = new File("deployinfo.pb");
+    when(helper.getDeployInfo(eq(buildTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(deployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(deployInfoFile)).thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
         .thenReturn(mockDeployInfo);
@@ -343,8 +353,10 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     // Return fake deploy info proto and mocked deploy info data object.
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeProto);
+    File deployInfoFile = new File("deployinfo.pb");
+    when(helper.getDeployInfo(eq(buildTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(deployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(deployInfoFile)).thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(any(), any(), any()))
         .thenThrow(new GetDeployInfoException("Fake Exception"));
 
@@ -373,8 +385,10 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeProto);
+    File deployInfoFile = new File("deployinfo.pb");
+    when(helper.getDeployInfo(eq(buildTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(deployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(deployInfoFile)).thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
         .thenReturn(mockDeployInfo);
@@ -405,8 +419,10 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
     BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
     BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
-    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
-        .thenReturn(fakeProto);
+    File deployInfoFile = new File("deployinfo.pb");
+    when(helper.getDeployInfo(eq(buildTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(deployInfoFile);
+    when(helper.readDeployInfoProtoForTarget(deployInfoFile)).thenReturn(fakeProto);
     when(helper.extractDeployInfoAndInvalidateManifests(
             getProject(), new File(getExecRoot()), fakeProto))
         .thenReturn(mockDeployInfo);

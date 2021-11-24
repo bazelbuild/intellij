@@ -137,13 +137,15 @@ public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
         return;
       }
 
-      AndroidDeployInfo deployInfoProto =
-          deployInfoHelper.readDeployInfoProtoForTarget(
+      File deployInfoFile =
+          deployInfoHelper.getDeployInfo(
               label, buildResultHelper, fileName -> fileName.endsWith(DEPLOY_INFO_SUFFIX));
+      AndroidDeployInfo deployInfoProto =
+          deployInfoHelper.readDeployInfoProtoForTarget(deployInfoFile);
       deployInfo =
           deployInfoHelper.extractDeployInfoAndInvalidateManifests(
               project, new File(executionRoot), deployInfoProto);
-    } catch (GetArtifactsException e) {
+    } catch (GetArtifactsException | IOException e) {
       IssueOutput.error("Could not read BEP output: " + e.getMessage()).submit(context);
     } catch (GetDeployInfoException e) {
       IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())

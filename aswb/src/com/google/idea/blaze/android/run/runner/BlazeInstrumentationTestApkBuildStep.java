@@ -51,6 +51,7 @@ import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.io.IOException;
 import javax.annotation.Nullable;
 
 /** Builds the APKs required for an android instrumentation test. */
@@ -145,21 +146,25 @@ public class BlazeInstrumentationTestApkBuildStep implements BlazeApkBuildStep {
           return;
         }
 
-        AndroidDeployInfo instrumentorDeployInfoProto =
-            deployInfoHelper.readDeployInfoProtoForTarget(
+        File instrumentorDeployInfoFile =
+            deployInfoHelper.getDeployInfo(
                 testComponents.instrumentor,
                 buildResultHelper,
                 fileName -> fileName.endsWith(DEPLOY_INFO_FILE_SUFFIX));
+        AndroidDeployInfo instrumentorDeployInfoProto =
+            deployInfoHelper.readDeployInfoProtoForTarget(instrumentorDeployInfoFile);
         if (testComponents.isSelfInstrumentingTest()) {
           deployInfo =
               deployInfoHelper.extractDeployInfoAndInvalidateManifests(
                   project, new File(executionRoot), instrumentorDeployInfoProto);
         } else {
-          AndroidDeployInfo targetDeployInfoProto =
-              deployInfoHelper.readDeployInfoProtoForTarget(
+          File targetDeployInfo =
+              deployInfoHelper.getDeployInfo(
                   testComponents.target,
                   buildResultHelper,
                   fileName -> fileName.endsWith(DEPLOY_INFO_FILE_SUFFIX));
+          AndroidDeployInfo targetDeployInfoProto =
+              deployInfoHelper.readDeployInfoProtoForTarget(targetDeployInfo);
           deployInfo =
               deployInfoHelper.extractInstrumentationTestDeployInfoAndInvalidateManifests(
                   project,
@@ -167,7 +172,7 @@ public class BlazeInstrumentationTestApkBuildStep implements BlazeApkBuildStep {
                   instrumentorDeployInfoProto,
                   targetDeployInfoProto);
         }
-      } catch (GetArtifactsException e) {
+      } catch (GetArtifactsException | IOException e) {
         IssueOutput.error("Could not read BEP output: " + e.getMessage()).submit(context);
       } catch (GetDeployInfoException e) {
         IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
