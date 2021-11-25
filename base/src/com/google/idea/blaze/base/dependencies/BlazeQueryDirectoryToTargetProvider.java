@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -61,7 +62,13 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
     for (WorkspacePath excluded : directories.excludeDirectories()) {
       targets.append(" - " + TargetExpression.allFromPackageRecursive(excluded).toString());
     }
+
     // exclude 'manual' targets, which shouldn't be built when expanding wildcard target patterns
+    if (SystemInfo.isWindows) {
+      // TODO(b/201974254): Windows support for Bazel sync (see
+      // https://github.com/bazelbuild/intellij/issues/113).
+      return String.format("attr('tags', '^((?!manual).)*$', %s)", targets);
+    }
     return String.format("attr(\"tags\", \"^((?!manual).)*$\", %s)", targets);
   }
 
