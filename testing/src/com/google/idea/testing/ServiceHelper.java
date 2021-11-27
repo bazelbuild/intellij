@@ -30,6 +30,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.defaults.UnsatisfiableDependenciesException;
+import com.google.idea.sdkcompat.ComponentManagerWrapper;
 
 /** Utility class for registering project services, application services and extensions. */
 public class ServiceHelper {
@@ -141,8 +142,6 @@ public class ServiceHelper {
     ServiceContainerUtil.registerServiceInstance(componentManager, key, implementation);
     Disposer.register(
         parentDisposable,
-        () ->
-            ((MutablePicoContainer) componentManager.getPicoContainer())
-                .unregisterComponent(key.getName()));
+        () -> new ComponentManagerWrapper(componentManager).unregisterComponent(key.getName()));
   }
 }
