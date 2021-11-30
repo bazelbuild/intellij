@@ -247,6 +247,13 @@ public class UnpackedAars {
     return aarDir == null ? aarDir : UnpackedAarUtils.getResDir(aarDir);
   }
 
+  /** Returns the lint.jar file corresponding to an unpacked AAR file. */
+  @Nullable
+  public File getLintRuleJar(ArtifactLocationDecoder decoder, AarLibrary library) {
+    File aarDir = getAarDir(decoder, library);
+    return aarDir == null ? null : UnpackedAarUtils.getLintRuleJar(aarDir);
+  }
+
   @Nullable
   public File getAarDir(ArtifactLocationDecoder decoder, AarLibrary library) {
     BlazeArtifact artifact = decoder.resolveOutput(library.aarArtifact);

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.sync.model.idea;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.android.sdklib.AndroidVersion;
@@ -23,7 +24,13 @@ import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.lint.detector.api.Desugaring;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.base.build.BlazeBuildService;
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -39,6 +46,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -187,5 +195,20 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
   @Override
   public Set<Desugaring> getDesugaring() {
     return desugarJava8Libs ? Desugaring.FULL : Desugaring.DEFAULT;
+  }
+
+  // #api211 @Override
+  @Nullable
+  Iterable<File> getLintRuleJarsOverride() {
+    BlazeProjectData blazeProjectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
+    return BlazeLibraryCollector.getLibraries(
+            ProjectViewManager.getInstance(project).getProjectViewSet(), blazeProjectData)
+        .stream()
+        .filter(library -> library instanceof AarLibrary)
+        .map(library -> ((AarLibrary) library).getLintRuleJar(project, artifactLocationDecoder))
+        .filter(Objects::nonNull)
+        .collect(toImmutableList());
   }
 }

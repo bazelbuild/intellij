@@ -16,6 +16,8 @@
 
 package com.google.idea.blaze.android.libraries;
 
+import static com.android.SdkConstants.FN_LINT_JAR;
+
 import com.android.SdkConstants;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
@@ -79,6 +81,14 @@ public final class UnpackedAarUtils {
    */
   public static File getResDir(File aarDir) {
     return new File(aarDir, SdkConstants.FD_RES);
+  }
+
+  /**
+   * Returns path to the lint.jar in aarDir. It's not guaranteed the jar exists, so callers need to
+   * check that the existence of the jar.
+   */
+  public static File getLintRuleJar(File aarDir) {
+    return new File(aarDir, FN_LINT_JAR);
   }
 
   private UnpackedAarUtils() {}
