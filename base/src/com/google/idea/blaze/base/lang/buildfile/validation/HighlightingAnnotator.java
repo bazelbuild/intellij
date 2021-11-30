@@ -26,9 +26,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 
-/**
- * Additional syntax highlighting, based on parsed PSI elements.
- */
+/** Additional syntax highlighting, based on parsed PSI elements. */
 public class HighlightingAnnotator extends BuildAnnotator {
 
   @Override
