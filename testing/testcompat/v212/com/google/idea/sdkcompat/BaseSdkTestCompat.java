@@ -23,6 +23,7 @@ import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 
 /**
  * Provides SDK compatibility shims for base plugin API classes, available to all IDEs during
@@ -38,6 +39,7 @@ public final class BaseSdkTestCompat {
     for (PsiElement element : elements) {
       holder.runAnnotatorWithContext(element, annotator);
     }
-    return holder;
+    holder.assertAllAnnotationsCreated();
+    return ContainerUtil.immutableList(holder);
   }
 }
