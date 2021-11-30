@@ -151,6 +151,11 @@ public final class AarLibrary extends BlazeLibrary {
   }
 
   @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), libraryArtifact, aarArtifact, resourcePackage);
+  }
+
+  @Override
   public boolean equals(Object other) {
     if (this == other) {
       return true;
