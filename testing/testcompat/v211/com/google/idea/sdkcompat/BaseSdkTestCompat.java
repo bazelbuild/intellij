@@ -16,11 +16,12 @@
 package com.google.idea.sdkcompat;
 
 import java.util.List;
-
+import org.picocontainer.MutablePicoContainer;
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,5 +42,10 @@ public final class BaseSdkTestCompat {
     }
     holder.assertAllAnnotationsCreated();
     return ContainerUtil.immutableList(holder);
+  }
+
+  /** #api212: inline into ServiceHelper */
+  public static void unregisterComponent(ComponentManager componentManager, String name) {
+    ((MutablePicoContainer) componentManager.getPicoContainer()).unregisterComponent(name);
   }
 }
