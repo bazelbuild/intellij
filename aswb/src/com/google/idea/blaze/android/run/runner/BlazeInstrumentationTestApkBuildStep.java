@@ -54,7 +54,7 @@ import java.io.File;
 import javax.annotation.Nullable;
 
 /** Builds the APKs required for an android instrumentation test. */
-public class BlazeInstrumentationTestApkBuildStep implements BlazeApkBuildStep {
+public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
 
   /** Subject to change with changes to android build rules. */
   private static final String DEPLOY_INFO_FILE_SUFFIX = ".deployinfo.pb";

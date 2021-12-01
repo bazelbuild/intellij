@@ -22,7 +22,7 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.run.runner.AaptUtil;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
+import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
@@ -31,9 +31,9 @@ import java.util.List;
 /** Apk provider from deploy info proto */
 public class BlazeApkProvider implements ApkProvider {
   private final Project project;
-  private final BlazeApkBuildStep buildStep;
+  private final ApkBuildStep buildStep;
 
-  public BlazeApkProvider(Project project, BlazeApkBuildStep buildStep) {
+  public BlazeApkProvider(Project project, ApkBuildStep buildStep) {
     this.project = project;
     this.buildStep = buildStep;
   }

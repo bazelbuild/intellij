@@ -24,7 +24,7 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.manifest.ManifestParser.ParsedManifest;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
+import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -40,7 +40,7 @@ public class BlazeAndroidTestApplicationIdProviderTest {
     BlazeAndroidDeployInfo deployInfo =
         new BlazeAndroidDeployInfo(
             stubManifest("test.package.name"), stubManifest("package.name"), ImmutableList.of());
-    BlazeApkBuildStep mockBuildStep = mock(BlazeApkBuildStep.class);
+    ApkBuildStep mockBuildStep = mock(ApkBuildStep.class);
     when(mockBuildStep.getDeployInfo()).thenReturn(deployInfo);
 
     BlazeAndroidTestApplicationIdProvider provider =
@@ -53,7 +53,7 @@ public class BlazeAndroidTestApplicationIdProviderTest {
     BlazeAndroidDeployInfo deployInfo =
         new BlazeAndroidDeployInfo(
             stubManifest(null), stubManifest("package.name"), ImmutableList.of());
-    BlazeApkBuildStep mockBuildStep = mock(BlazeApkBuildStep.class);
+    ApkBuildStep mockBuildStep = mock(ApkBuildStep.class);
     when(mockBuildStep.getDeployInfo()).thenReturn(deployInfo);
 
     BlazeAndroidTestApplicationIdProvider provider =
@@ -75,7 +75,7 @@ public class BlazeAndroidTestApplicationIdProviderTest {
     BlazeAndroidDeployInfo deployInfo =
         new BlazeAndroidDeployInfo(
             stubManifest("test.package.name"), stubManifest("package.name"), ImmutableList.of());
-    BlazeApkBuildStep mockBuildStep = mock(BlazeApkBuildStep.class);
+    ApkBuildStep mockBuildStep = mock(ApkBuildStep.class);
     when(mockBuildStep.getDeployInfo()).thenReturn(deployInfo);
 
     BlazeAndroidTestApplicationIdProvider provider =
@@ -88,7 +88,7 @@ public class BlazeAndroidTestApplicationIdProviderTest {
     BlazeAndroidDeployInfo deployInfo =
         new BlazeAndroidDeployInfo(
             stubManifest("test.package.name"), stubManifest(null), ImmutableList.of());
-    BlazeApkBuildStep mockBuildStep = mock(BlazeApkBuildStep.class);
+    ApkBuildStep mockBuildStep = mock(ApkBuildStep.class);
     when(mockBuildStep.getDeployInfo()).thenReturn(deployInfo);
 
     BlazeAndroidTestApplicationIdProvider provider =
@@ -109,7 +109,7 @@ public class BlazeAndroidTestApplicationIdProviderTest {
   public void getPackageName_noMergedManifest() throws Exception {
     BlazeAndroidDeployInfo deployInfo =
         new BlazeAndroidDeployInfo(stubManifest("test.package.name"), null, ImmutableList.of());
-    BlazeApkBuildStep mockBuildStep = mock(BlazeApkBuildStep.class);
+    ApkBuildStep mockBuildStep = mock(ApkBuildStep.class);
     when(mockBuildStep.getDeployInfo()).thenReturn(deployInfo);
 
     BlazeAndroidTestApplicationIdProvider provider =

@@ -52,7 +52,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 /** Builds the APK using normal blaze build. */
-public class BlazeApkBuildStepNormalBuild implements BlazeApkBuildStep {
+public class BlazeApkBuildStepNormalBuild implements ApkBuildStep {
   @VisibleForTesting public static final String DEPLOY_INFO_SUFFIX = ".deployinfo.pb";
 
   /** Controls the post-build remote APK fetching step. */

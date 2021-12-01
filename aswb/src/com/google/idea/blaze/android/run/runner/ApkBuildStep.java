@@ -20,7 +20,7 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 
 /** Builds the APK and optionally installs the APK. */
-public interface BlazeApkBuildStep {
+public interface ApkBuildStep {
   /**
    * Builds and optionally installs the APK. Errors and messages are bubbled up to the caller via
    * the given {@link BlazeContext}.

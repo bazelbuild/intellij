@@ -32,8 +32,8 @@ import com.google.idea.blaze.android.run.binary.mobileinstall.AdbTunnelConfigura
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
+import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.android.run.runner.ExecRootUtil;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
@@ -70,7 +70,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 /** Builds and installs the APK using mobile-install. */
-public class BlazeApkBuildStepMobileInstall implements BlazeApkBuildStep {
+public class BlazeApkBuildStepMobileInstall implements ApkBuildStep {
   private static final BoolExperiment passAdbArgWithSerialToMi =
       new BoolExperiment("aswb.mi.adb.arg.device.serial", false);
 

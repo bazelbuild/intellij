@@ -40,7 +40,7 @@ public interface BlazeAndroidRunContext {
 
   ConsoleProvider getConsoleProvider();
 
-  BlazeApkBuildStep getBuildStep();
+  ApkBuildStep getBuildStep();
 
   ApplicationIdProvider getApplicationIdProvider() throws ExecutionException;
 

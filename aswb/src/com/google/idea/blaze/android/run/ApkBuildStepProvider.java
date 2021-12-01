@@ -16,7 +16,7 @@
 package com.google.idea.blaze.android.run;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
+import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
@@ -33,7 +33,7 @@ public interface ApkBuildStepProvider extends BuildSystemExtensionPoint {
   }
 
   /** Returns a build step for the given build configurations. */
-  BlazeApkBuildStep getBuildStep(
+  ApkBuildStep getBuildStep(
       Project project,
       boolean useMobileInstall,
       Label label,

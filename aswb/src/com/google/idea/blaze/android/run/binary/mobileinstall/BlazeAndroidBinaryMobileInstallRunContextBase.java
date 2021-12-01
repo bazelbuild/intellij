@@ -41,10 +41,10 @@ import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurati
 import com.google.idea.blaze.android.run.binary.DeploymentTimingReporterTask;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
+import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -64,7 +64,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
   protected final BlazeAndroidBinaryRunConfigurationState configState;
   protected final ConsoleProvider consoleProvider;
   protected final ApplicationIdProvider applicationIdProvider;
-  protected final BlazeApkBuildStep buildStep;
+  protected final ApkBuildStep buildStep;
   private final String launchId;
 
   public BlazeAndroidBinaryMobileInstallRunContextBase(
@@ -73,7 +73,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
       RunConfiguration runConfiguration,
       ExecutionEnvironment env,
       BlazeAndroidBinaryRunConfigurationState configState,
-      BlazeApkBuildStep buildStep,
+      ApkBuildStep buildStep,
       String launchId) {
     this.project = project;
     this.facet = facet;
@@ -111,7 +111,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
   }
 
   @Override
-  public BlazeApkBuildStep getBuildStep() {
+  public ApkBuildStep getBuildStep() {
     return buildStep;
   }
 

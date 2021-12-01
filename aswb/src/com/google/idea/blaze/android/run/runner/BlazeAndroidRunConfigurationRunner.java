@@ -192,7 +192,7 @@ public final class BlazeAndroidRunConfigurationRunner
           BlazeAndroidDeviceSelector.DeviceSession deviceSession =
               env.getCopyableUserData(DEVICE_SESSION_KEY);
 
-          BlazeApkBuildStep buildStep = runContext.getBuildStep();
+          ApkBuildStep buildStep = runContext.getBuildStep();
           ScopedTask<Void> buildTask =
               new ScopedTask<Void>(context) {
                 @Override
