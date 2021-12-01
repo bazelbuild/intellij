@@ -28,10 +28,7 @@ import com.intellij.openapi.wm.ToolWindowFactory;
  */
 public class TasksToolWindowFactory implements DumbAware, ToolWindowFactory {
 
-  /**
-   * Tool window ID that matches the one in
-   * base/src/META-INF/blaze-base.xml
-   */
+  /** Tool window ID that matches the one in blaze-base.xml. */
   public static final String ID = "Build Tasks";
 
   @Override
