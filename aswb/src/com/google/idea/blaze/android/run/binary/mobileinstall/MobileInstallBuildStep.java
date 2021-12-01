@@ -70,11 +70,11 @@ import javax.annotation.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 /** Builds and installs the APK using mobile-install. */
-public class BlazeApkBuildStepMobileInstall implements ApkBuildStep {
+public class MobileInstallBuildStep implements ApkBuildStep {
   private static final BoolExperiment passAdbArgWithSerialToMi =
       new BoolExperiment("aswb.mi.adb.arg.device.serial", false);
 
-  private static final Logger log = Logger.getInstance(BlazeApkBuildStepMobileInstall.class);
+  private static final Logger log = Logger.getInstance(MobileInstallBuildStep.class);
   private final Project project;
   private final Label label;
   private final ImmutableList<String> blazeFlags;
@@ -92,7 +92,7 @@ public class BlazeApkBuildStepMobileInstall implements ApkBuildStep {
     return buildSystem == BuildSystem.Bazel ? "_incremental.deployinfo.pb" : "_mi.deployinfo.pb";
   }
 
-  private BlazeApkBuildStepMobileInstall(
+  private MobileInstallBuildStep(
       Project project,
       Label label,
       ImmutableList<String> blazeFlags,
@@ -107,7 +107,7 @@ public class BlazeApkBuildStepMobileInstall implements ApkBuildStep {
     this.launchId = launchId;
   }
 
-  public BlazeApkBuildStepMobileInstall(
+  public MobileInstallBuildStep(
       Project project,
       Label label,
       ImmutableList<String> blazeFlags,
@@ -117,7 +117,7 @@ public class BlazeApkBuildStepMobileInstall implements ApkBuildStep {
   }
 
   @TestOnly
-  public BlazeApkBuildStepMobileInstall(
+  public MobileInstallBuildStep(
       Project project,
       Label label,
       ImmutableList<String> blazeFlags,

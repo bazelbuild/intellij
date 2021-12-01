@@ -38,7 +38,7 @@ import com.google.idea.blaze.android.MessageCollector;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.run.binary.mobileinstall.AdbTunnelConfigurator;
 import com.google.idea.blaze.android.run.binary.mobileinstall.AdbTunnelConfigurator.AdbTunnelConfiguratorProvider;
-import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeApkBuildStepMobileInstall;
+import com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallBuildStep;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
@@ -70,9 +70,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link BlazeApkBuildStepMobileInstall} */
+/** Integration tests for {@link MobileInstallBuildStep} */
 @RunWith(JUnit4.class)
-public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidIntegrationTestCase {
+public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrationTestCase {
   /** Exposed to test methods to toggle presence of execroot */
   private BuildResultHelper mockBuildResultHelper;
 
@@ -158,9 +158,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
         .thenReturn(mockDeployInfo);
 
     // Perform
-    BlazeApkBuildStepMobileInstall buildStep =
-        new BlazeApkBuildStepMobileInstall(
-            getProject(), buildTarget, blazeFlags, execFlags, helper);
+    MobileInstallBuildStep buildStep =
+        new MobileInstallBuildStep(getProject(), buildTarget, blazeFlags, execFlags, helper);
     buildStep.build(context, new DeviceSession(null, deviceFutures, null));
 
     // Verify
@@ -198,9 +197,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     registerExtension(AdbTunnelConfiguratorProvider.EP_NAME, providerCxt -> tunnelConfigurator);
 
     // Perform
-    BlazeApkBuildStepMobileInstall buildStep =
-        new BlazeApkBuildStepMobileInstall(
-            getProject(), buildTarget, blazeFlags, execFlags, helper);
+    MobileInstallBuildStep buildStep =
+        new MobileInstallBuildStep(getProject(), buildTarget, blazeFlags, execFlags, helper);
     buildStep.build(context, new DeviceSession(null, deviceFutures, null));
 
     // Verify
@@ -240,9 +238,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     registerExtension(AdbTunnelConfiguratorProvider.EP_NAME, providerCxt -> tunnelConfigurator);
 
     // Perform
-    BlazeApkBuildStepMobileInstall buildStep =
-        new BlazeApkBuildStepMobileInstall(
-            getProject(), buildTarget, blazeFlags, execFlags, helper);
+    MobileInstallBuildStep buildStep =
+        new MobileInstallBuildStep(getProject(), buildTarget, blazeFlags, execFlags, helper);
     buildStep.build(context, new DeviceSession(null, deviceFutures, null));
 
     // Verify
@@ -280,9 +277,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
     registerExtension(AdbTunnelConfiguratorProvider.EP_NAME, providerCxt -> null);
 
     // Perform
-    BlazeApkBuildStepMobileInstall buildStep =
-        new BlazeApkBuildStepMobileInstall(
-            getProject(), buildTarget, blazeFlags, execFlags, helper);
+    MobileInstallBuildStep buildStep =
+        new MobileInstallBuildStep(getProject(), buildTarget, blazeFlags, execFlags, helper);
     buildStep.build(context, new DeviceSession(null, deviceFutures, null));
 
     // Verify
@@ -320,8 +316,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
         .thenReturn(mockDeployInfo);
 
     // Perform
-    BlazeApkBuildStepMobileInstall buildStep =
-        new BlazeApkBuildStepMobileInstall(
+    MobileInstallBuildStep buildStep =
+        new MobileInstallBuildStep(
             getProject(), buildTarget, ImmutableList.of(), ImmutableList.of(), helper);
     buildStep.build(context, new DeviceSession(null, deviceFutures, null));
 
@@ -349,8 +345,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
         .thenThrow(new GetDeployInfoException("Fake Exception"));
 
     // Perform
-    BlazeApkBuildStepMobileInstall buildStep =
-        new BlazeApkBuildStepMobileInstall(
+    MobileInstallBuildStep buildStep =
+        new MobileInstallBuildStep(
             getProject(), buildTarget, ImmutableList.of(), ImmutableList.of(), helper);
     buildStep.build(context, new DeviceSession(null, deviceFutures, null));
 
@@ -380,8 +376,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
         .thenReturn(mockDeployInfo);
 
     // Perform
-    BlazeApkBuildStepMobileInstall buildStep =
-        new BlazeApkBuildStepMobileInstall(
+    MobileInstallBuildStep buildStep =
+        new MobileInstallBuildStep(
             getProject(), buildTarget, ImmutableList.of(), ImmutableList.of(), helper);
     buildStep.build(context, new DeviceSession(null, deviceFutures, null));
 
@@ -412,9 +408,8 @@ public class BlazeApkBuildStepMobileInstallIntegrationTest extends BlazeAndroidI
         .thenReturn(mockDeployInfo);
 
     // Perform
-    BlazeApkBuildStepMobileInstall buildStep =
-        new BlazeApkBuildStepMobileInstall(
-            getProject(), buildTarget, blazeFlags, execFlags, helper);
+    MobileInstallBuildStep buildStep =
+        new MobileInstallBuildStep(getProject(), buildTarget, blazeFlags, execFlags, helper);
     buildStep.build(context, new DeviceSession(null, deviceFutures, null));
 
     // Verify
