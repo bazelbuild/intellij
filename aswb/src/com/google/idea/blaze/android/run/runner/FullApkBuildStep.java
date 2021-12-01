@@ -52,7 +52,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 /** Builds the APK using normal blaze build. */
-public class BlazeApkBuildStepNormalBuild implements ApkBuildStep {
+public class FullApkBuildStep implements ApkBuildStep {
   @VisibleForTesting public static final String DEPLOY_INFO_SUFFIX = ".deployinfo.pb";
 
   /** Controls the post-build remote APK fetching step. */
@@ -60,7 +60,7 @@ public class BlazeApkBuildStepNormalBuild implements ApkBuildStep {
   public static final BoolExperiment FETCH_REMOTE_APKS =
       new BoolExperiment("blaze.apk.buildstep.fetch.remote.apks", true);
 
-  private static final Logger log = Logger.getInstance(BlazeApkBuildStepNormalBuild.class);
+  private static final Logger log = Logger.getInstance(FullApkBuildStep.class);
 
   private final Project project;
   private final Label label;
@@ -69,7 +69,7 @@ public class BlazeApkBuildStepNormalBuild implements ApkBuildStep {
   private BlazeAndroidDeployInfo deployInfo = null;
 
   @VisibleForTesting
-  public BlazeApkBuildStepNormalBuild(
+  public FullApkBuildStep(
       Project project,
       Label label,
       ImmutableList<String> buildFlags,
@@ -80,8 +80,7 @@ public class BlazeApkBuildStepNormalBuild implements ApkBuildStep {
     this.deployInfoHelper = deployInfoHelper;
   }
 
-  public BlazeApkBuildStepNormalBuild(
-      Project project, Label label, ImmutableList<String> buildFlags) {
+  public FullApkBuildStep(Project project, Label label, ImmutableList<String> buildFlags) {
     this(project, label, buildFlags, new BlazeApkDeployInfoProtoHelper());
   }
 
@@ -154,7 +153,7 @@ public class BlazeApkBuildStepNormalBuild implements ApkBuildStep {
       context.output(new StatusOutput("Fetching remotely built APKs... "));
       ImmutableList<File> localApks =
           deployInfo.getApksToDeploy().stream()
-              .map(apk -> BlazeApkBuildStepNormalBuild.downloadApkIfRemote(apk, context))
+              .map(apk -> FullApkBuildStep.downloadApkIfRemote(apk, context))
               .collect(ImmutableList.toImmutableList());
       deployInfo =
           new BlazeAndroidDeployInfo(

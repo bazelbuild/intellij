@@ -35,7 +35,7 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStepNormalBuild;
+import com.google.idea.blaze.android.run.runner.FullApkBuildStep;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -59,9 +59,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Integration tests for {@link BlazeApkBuildStepNormalBuild} */
+/** Integration tests for {@link FullApkBuildStep} */
 @RunWith(JUnit4.class)
-public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidIntegrationTestCase {
+public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTestCase {
   /** Exposed to test methods to toggle presence of execroot */
   private BuildResultHelper mockBuildResultHelper;
 
@@ -143,8 +143,8 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
         .thenReturn(mockDeployInfo);
 
     // Perform
-    BlazeApkBuildStepNormalBuild buildStep =
-        new BlazeApkBuildStepNormalBuild(getProject(), buildTarget, blazeFlags, helper);
+    FullApkBuildStep buildStep =
+        new FullApkBuildStep(getProject(), buildTarget, blazeFlags, helper);
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -176,8 +176,8 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
         .thenReturn(mockDeployInfo);
 
     // Perform
-    BlazeApkBuildStepNormalBuild buildStep =
-        new BlazeApkBuildStepNormalBuild(getProject(), buildTarget, blazeFlags, helper);
+    FullApkBuildStep buildStep =
+        new FullApkBuildStep(getProject(), buildTarget, blazeFlags, helper);
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -200,7 +200,7 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
 
     // Disable remote APK fetching
     MockExperimentService mockExperimentService = new MockExperimentService();
-    mockExperimentService.setExperiment(BlazeApkBuildStepNormalBuild.FETCH_REMOTE_APKS, false);
+    mockExperimentService.setExperiment(FullApkBuildStep.FETCH_REMOTE_APKS, false);
     ServiceHelper.registerApplicationComponent(
         ExperimentService.class, mockExperimentService, getTestRootDisposable());
 
@@ -218,8 +218,8 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
         .thenReturn(mockDeployInfo);
 
     // Perform
-    BlazeApkBuildStepNormalBuild buildStep =
-        new BlazeApkBuildStepNormalBuild(getProject(), buildTarget, blazeFlags, helper);
+    FullApkBuildStep buildStep =
+        new FullApkBuildStep(getProject(), buildTarget, blazeFlags, helper);
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -242,8 +242,8 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
         .thenThrow(new GetDeployInfoException("Fake Exception"));
 
     // Perform
-    BlazeApkBuildStepNormalBuild buildStep =
-        new BlazeApkBuildStepNormalBuild(getProject(), buildTarget, ImmutableList.of(), helper);
+    FullApkBuildStep buildStep =
+        new FullApkBuildStep(getProject(), buildTarget, ImmutableList.of(), helper);
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -269,8 +269,8 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
         .thenReturn(mockDeployInfo);
 
     // Perform
-    BlazeApkBuildStepNormalBuild buildStep =
-        new BlazeApkBuildStepNormalBuild(getProject(), buildTarget, ImmutableList.of(), helper);
+    FullApkBuildStep buildStep =
+        new FullApkBuildStep(getProject(), buildTarget, ImmutableList.of(), helper);
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -297,8 +297,8 @@ public class BlazeApkBuildStepNormalBuildIntegrationTest extends BlazeAndroidInt
         .thenReturn(mockDeployInfo);
 
     // Perform
-    BlazeApkBuildStepNormalBuild buildStep =
-        new BlazeApkBuildStepNormalBuild(getProject(), buildTarget, blazeFlags, helper);
+    FullApkBuildStep buildStep =
+        new FullApkBuildStep(getProject(), buildTarget, blazeFlags, helper);
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify

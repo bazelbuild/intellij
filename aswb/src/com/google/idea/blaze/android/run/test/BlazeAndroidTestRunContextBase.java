@@ -36,8 +36,8 @@ import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStepNormalBuild;
 import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep;
+import com.google.idea.blaze.android.run.runner.FullApkBuildStep;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -92,7 +92,7 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
       // android_instrumentation_test builds both test and app target APKs.
       this.buildStep = new BlazeInstrumentationTestApkBuildStep(project, label, blazeFlags);
     } else {
-      this.buildStep = new BlazeApkBuildStepNormalBuild(project, label, blazeFlags);
+      this.buildStep = new FullApkBuildStep(project, label, blazeFlags);
     }
 
     this.applicationIdProvider = new BlazeAndroidTestApplicationIdProvider(buildStep);
