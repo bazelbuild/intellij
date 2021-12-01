@@ -33,8 +33,6 @@
     <projectService serviceImplementation="com.google.idea.blaze.android.editor.ProjectUnresolvedResourceStatsCollector"/>
     <projectService serviceInterface="com.google.idea.blaze.android.run.BlazeAndroidDeploymentService"
         serviceImplementation="com.google.idea.blaze.android.run.BlazeAndroidDeploymentService$DefaultDeploymentService"/>
-    <projectService serviceInterface="com.google.idea.blaze.android.run.BlazeApkBuildService"
-        serviceImplementation="com.google.idea.blaze.android.run.BlazeApkBuildService$DefaultBuildService"/>
     <projectService serviceInterface="com.google.idea.blaze.android.run.runner.BlazeDeployTargetService"
         serviceImplementation="com.google.idea.blaze.android.run.runner.BlazeDeployTargetService$DefaultService"/>
     <projectService serviceInterface="com.google.idea.blaze.android.run.runner.BlazeAndroidDebuggerService"
@@ -67,6 +65,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.AdbTunnelConfiguratorProvider" interface="com.google.idea.blaze.android.run.binary.mobileinstall.AdbTunnelConfigurator$AdbTunnelConfiguratorProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.RemoteApkDownloader" interface="com.google.idea.blaze.android.run.RemoteApkDownloader"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ComposeStatusProvider" interface="com.google.idea.blaze.android.compose.ComposeStatusProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.android.ApkBuildStepProvider" interface="com.google.idea.blaze.android.run.ApkBuildStepProvider" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -93,6 +92,7 @@
     <OutputGroupsProvider implementation="com.google.idea.blaze.android.sync.aspects.strategy.RenderResolveOutputGroupProvider"/>
     <ComposeStatusProvider implementation="com.google.idea.blaze.android.compose.ExperimentComposeStatusProvider"/>
     <BlazeBuildListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemBuildManager$BuildCallbackPublisher"/>
+    <android.ApkBuildStepProvider implementation="com.google.idea.blaze.android.run.BazelApkBuildStepProvider" />
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">

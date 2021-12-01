@@ -22,10 +22,10 @@ import com.android.tools.idea.run.ValidationError;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.idea.blaze.android.run.ApkBuildStepProvider;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationUtil;
-import com.google.idea.blaze.android.run.BlazeApkBuildService;
 import com.google.idea.blaze.android.run.LaunchMetrics;
 import com.google.idea.blaze.android.run.binary.AndroidBinaryLaunchMethodsUtils.AndroidBinaryLaunchMethod;
 import com.google.idea.blaze.android.run.binary.mobileinstall.BlazeAndroidBinaryMobileInstallRunContext;
@@ -137,8 +137,9 @@ public class BlazeAndroidBinaryRunConfigurationHandler
         ImmutableList.copyOf(
             configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
     BlazeApkBuildStep buildStep =
-        BlazeApkBuildService.getInstance(project)
+        ApkBuildStepProvider.getInstance(Blaze.getBuildSystem(project))
             .getBuildStep(
+                project,
                 AndroidBinaryLaunchMethodsUtils.useMobileInstall(configState.getLaunchMethod()),
                 Label.create(configuration.getSingleTarget().toString()),
                 blazeFlags,
