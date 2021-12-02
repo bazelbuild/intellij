@@ -72,6 +72,10 @@ public class ShardedTargetList {
         .build();
   }
 
+  public int totalTargetCount() {
+    return shardedTargets.stream().mapToInt(shard -> shard.size()).sum();
+  }
+
   public boolean isEmpty() {
     return shardedTargets.stream().flatMap(List::stream).findFirst().orElse(null) == null;
   }

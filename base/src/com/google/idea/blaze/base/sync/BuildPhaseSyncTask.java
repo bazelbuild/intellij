@@ -177,6 +177,12 @@ final class BuildPhaseSyncTask {
     }
     ShardedTargetList shardedTargets = shardedTargetsResult.shardedTargets;
 
+    context.output(
+        new PrintOutput(
+            String.format(
+                "Building %d targets with %d shards",
+                shardedTargets.totalTargetCount(), shardedTargets.shardCount())));
+
     buildStats
         .setSyncSharded(shardedTargets.shardCount() > 1)
         .setShardCount(shardedTargets.shardCount())
