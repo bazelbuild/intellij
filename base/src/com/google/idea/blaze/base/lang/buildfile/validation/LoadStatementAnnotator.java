@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.lang.buildfile.quickfix.DeprecatedLoadQuickFix
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.HighlightSeverity;
 import javax.annotation.Nullable;
 
 /** Adds warning/error annotations to load statements. */
@@ -58,18 +58,21 @@ public class LoadStatementAnnotator extends BuildAnnotator {
       return;
     }
     if (targetString.startsWith("/")) {
-      Annotation annotation =
-          markWarning(
-              target, "Deprecated load syntax; loaded Starlark module should by in label format.");
+      String message = "Deprecated load syntax; loaded Starlark module should be in label format.";
       InspectionManager inspectionManager = InspectionManager.getInstance(target.getProject());
       ProblemDescriptor descriptor =
           inspectionManager.createProblemDescriptor(
               target,
-              annotation.getMessage(),
+              message,
               DeprecatedLoadQuickFix.INSTANCE,
               ProblemHighlightType.LIKE_DEPRECATED,
               true);
-      annotation.registerFix(DeprecatedLoadQuickFix.INSTANCE, null, null, descriptor);
+      getHolder()
+          .newAnnotation(HighlightSeverity.WARNING, message)
+          .range(target)
+          .newLocalQuickFix(DeprecatedLoadQuickFix.INSTANCE, descriptor)
+          .registerFix()
+          .create();
       return;
     }
     markError(target, "Invalid load syntax: missing Starlark module.");

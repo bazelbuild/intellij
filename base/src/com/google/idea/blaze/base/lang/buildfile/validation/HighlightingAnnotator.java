@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FunctionStatement;
 import com.google.idea.blaze.base.lang.buildfile.psi.Parameter;
 import com.google.idea.blaze.base.lang.buildfile.psi.ReferenceExpression;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 
@@ -34,8 +34,11 @@ public class HighlightingAnnotator extends BuildAnnotator {
     FunctionStatement function = PsiTreeUtil.getParentOfType(node, FunctionStatement.class);
     if (function != null) {
       PsiElement anchor = node.hasDefaultValue() ? node.getFirstChild() : node;
-      final Annotation annotation = getHolder().createInfoAnnotation(anchor, null);
-      annotation.setTextAttributes(BuildSyntaxHighlighter.BUILD_PARAMETER);
+      getHolder()
+          .newSilentAnnotation(HighlightSeverity.INFO)
+          .range(anchor)
+          .textAttributes(BuildSyntaxHighlighter.BUILD_PARAMETER)
+          .create();
     }
   }
 
@@ -43,8 +46,11 @@ public class HighlightingAnnotator extends BuildAnnotator {
   public void visitKeywordArgument(Argument.Keyword node) {
     ASTNode keywordNode = node.getNameNode();
     if (keywordNode != null) {
-      Annotation annotation = getHolder().createInfoAnnotation(keywordNode, null);
-      annotation.setTextAttributes(BuildSyntaxHighlighter.BUILD_KEYWORD_ARG);
+      getHolder()
+          .newSilentAnnotation(HighlightSeverity.INFO)
+          .range(keywordNode)
+          .textAttributes(BuildSyntaxHighlighter.BUILD_KEYWORD_ARG)
+          .create();
     }
   }
 
@@ -52,8 +58,11 @@ public class HighlightingAnnotator extends BuildAnnotator {
   public void visitFunctionStatement(FunctionStatement node) {
     ASTNode nameNode = node.getNameNode();
     if (nameNode != null) {
-      Annotation annotation = getHolder().createInfoAnnotation(nameNode, null);
-      annotation.setTextAttributes(BuildSyntaxHighlighter.BUILD_FN_DEFINITION);
+      getHolder()
+          .newSilentAnnotation(HighlightSeverity.INFO)
+          .range(nameNode)
+          .textAttributes(BuildSyntaxHighlighter.BUILD_FN_DEFINITION)
+          .create();
     }
   }
 
@@ -62,8 +71,11 @@ public class HighlightingAnnotator extends BuildAnnotator {
     ASTNode nameNode = node.getNameElement();
     if (nameNode != null
         && BuiltInNamesProvider.getBuiltInNames(node.getProject()).contains(nameNode.getText())) {
-      Annotation annotation = getHolder().createInfoAnnotation(nameNode, null);
-      annotation.setTextAttributes(BuildSyntaxHighlighter.BUILD_BUILTIN_NAME);
+      getHolder()
+          .newSilentAnnotation(HighlightSeverity.INFO)
+          .range(nameNode)
+          .textAttributes(BuildSyntaxHighlighter.BUILD_BUILTIN_NAME)
+          .create();
     }
     super.visitReferenceExpression(node);
   }

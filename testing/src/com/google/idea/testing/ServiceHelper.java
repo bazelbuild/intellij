@@ -15,6 +15,7 @@
  */
 package com.google.idea.testing;
 
+import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -141,8 +142,6 @@ public class ServiceHelper {
     ServiceContainerUtil.registerServiceInstance(componentManager, key, implementation);
     Disposer.register(
         parentDisposable,
-        () ->
-            ((MutablePicoContainer) componentManager.getPicoContainer())
-                .unregisterComponent(key.getName()));
+        () -> BaseSdkTestCompat.unregisterComponent(componentManager, key.getName()));
   }
 }
