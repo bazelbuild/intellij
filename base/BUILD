@@ -236,6 +236,23 @@ java_library(
 
 # neverlink library exposed so other plugins can optionally depend on it
 java_library(
+    name = "library_to_target_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/model/LibraryKey.java",
+        "src/com/google/idea/blaze/base/model/LibraryToTargetResolver.java",
+    ],
+    neverlink = 1,
+    visibility = G3PLUGINS_VISIBILITY,
+    deps = [
+        ":label_api",
+        "//base:proto_wrapper",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
     name = "blaze_user_settings_api",
     srcs = [
         "src/com/google/idea/blaze/base/settings/BlazeUserSettings.java",
