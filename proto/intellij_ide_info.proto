@@ -46,6 +46,7 @@ message JavaIdeInfo {
   LibraryArtifact filtered_gen_jar = 6;
   string main_class = 7;
   string test_class = 8;
+  repeated LibraryArtifact plugin_processor_jars = 9;
 }
 
 message CIdeInfo {
