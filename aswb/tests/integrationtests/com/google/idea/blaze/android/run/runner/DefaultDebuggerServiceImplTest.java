@@ -40,6 +40,6 @@ public class DefaultDebuggerServiceImplTest extends BlazeIntegrationTestCase {
 
     assertThat(state.getWorkingDir()).isEqualTo(workspaceRoot);
     assertThat(state.getUserStartupCommands())
-        .contains("settings set target.source-map /proc/self/cwd/ " + workspaceRoot);
+        .contains("settings append target.source-map /proc/self/cwd/ " + workspaceRoot);
   }
 }

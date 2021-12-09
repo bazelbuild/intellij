@@ -74,7 +74,7 @@ public interface BlazeAndroidDebuggerService {
         // to automatically resolve this but it's no longer supported in newer versions of
         // LLDB.
         String sourceMapToWorkspaceRootCommand =
-            "settings set target.source-map /proc/self/cwd/ " + workingDirPath;
+            "settings append target.source-map /proc/self/cwd/ " + workingDirPath;
         ImmutableList<String> startupCommands =
             ImmutableList.<String>builder()
                 .addAll(nativeState.getUserStartupCommands())
