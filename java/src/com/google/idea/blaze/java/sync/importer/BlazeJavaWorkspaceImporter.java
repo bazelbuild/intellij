@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.sync.importer;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -146,6 +147,7 @@ public final class BlazeJavaWorkspaceImporter {
         .setBuildOutputJars(ImmutableList.sortedCopyOf(workspaceBuilder.buildOutputJars))
         .setJavaSourceFiles(ImmutableSet.copyOf(workspaceBuilder.addedSourceFiles))
         .setSourceVersion(sourceVersion)
+        .setPluginProcessorJars(workspaceBuilder.pluginProcessorJars)
         .build();
   }
 
@@ -181,6 +183,10 @@ public final class BlazeJavaWorkspaceImporter {
       for (BlazeJarLibrary library : libraries) {
         addLibraryToJdeps(jdepsPathToLibrary, library);
       }
+      workspaceBuilder.pluginProcessorJars.addAll(
+          javaIdeInfo.getPluginProcessorJars().stream()
+              .map(jar -> new BlazeJarLibrary(jar, target.getKey()))
+              .collect(toImmutableList()));
     }
 
     // Preserve classpath order. Add leaf level dependencies first and work the way up. This
@@ -321,6 +327,11 @@ public final class BlazeJavaWorkspaceImporter {
           workspaceBuilder.outputJarsFromSourceTargets.get(targetKey),
           workspaceBuilder.generatedJarsFromSourceTargets);
     }
+
+    workspaceBuilder.pluginProcessorJars.addAll(
+        javaIdeInfo.getPluginProcessorJars().stream()
+            .map(jar -> new BlazeJarLibrary(jar, target.getKey()))
+            .collect(toImmutableList()));
   }
 
   @Nullable
@@ -341,6 +352,7 @@ public final class BlazeJavaWorkspaceImporter {
     List<ArtifactLocation> buildOutputJars = Lists.newArrayList();
     List<SourceArtifact> sourceArtifacts = Lists.newArrayList();
     Map<TargetKey, ArtifactLocation> javaPackageManifests = Maps.newHashMap();
+    Set<BlazeJarLibrary> pluginProcessorJars = Sets.newHashSet();
   }
 
   /**

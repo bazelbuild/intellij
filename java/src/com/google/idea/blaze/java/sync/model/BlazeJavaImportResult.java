@@ -39,6 +39,7 @@ public final class BlazeJavaImportResult
   public final ImmutableMap<LibraryKey, BlazeJarLibrary> libraries;
   public final ImmutableList<ArtifactLocation> buildOutputJars;
   public final ImmutableSet<ArtifactLocation> javaSourceFiles;
+  public final ImmutableSet<BlazeJarLibrary> pluginProcessorJars;
   @Nullable public final String sourceVersion;
   public final EmptyJarTracker emptyJarTracker;
 
@@ -48,13 +49,15 @@ public final class BlazeJavaImportResult
       ImmutableList<ArtifactLocation> buildOutputJars,
       ImmutableSet<ArtifactLocation> javaSourceFiles,
       @Nullable String sourceVersion,
-      EmptyJarTracker emptyJarTracker) {
+      EmptyJarTracker emptyJarTracker,
+      ImmutableSet<BlazeJarLibrary> pluginProcessorJars) {
     this.contentEntries = contentEntries;
     this.libraries = libraries;
     this.buildOutputJars = buildOutputJars;
     this.javaSourceFiles = javaSourceFiles;
     this.sourceVersion = sourceVersion;
     this.emptyJarTracker = emptyJarTracker;
+    this.pluginProcessorJars = pluginProcessorJars;
   }
 
   public static BlazeJavaImportResult fromProto(ProjectData.BlazeJavaImportResult proto) {
@@ -73,6 +76,11 @@ public final class BlazeJavaImportResult
                 ImmutableSet.toImmutableSet()))
         .setSourceVersion(Strings.emptyToNull(proto.getSourceVersion()))
         .setEmptyJarTracker(EmptyJarTracker.fromProto(proto.getEmptyJarTracker()))
+        .setPluginProcessorJars(
+            ProtoWrapper.map(
+                proto.getPluginProcessorJarsList(),
+                BlazeJarLibrary::fromProto,
+                ImmutableSet.toImmutableSet()))
         .build();
   }
 
@@ -84,7 +92,8 @@ public final class BlazeJavaImportResult
             .putAllLibraries(ProtoWrapper.mapToProtos(libraries))
             .addAllBuildOutputJars(ProtoWrapper.mapToProtos(buildOutputJars))
             .addAllJavaSourceFiles(ProtoWrapper.mapToProtos(javaSourceFiles))
-            .setEmptyJarTracker(emptyJarTracker.toProto());
+            .setEmptyJarTracker(emptyJarTracker.toProto())
+            .addAllPluginProcessorJars(ProtoWrapper.mapToProtos(pluginProcessorJars));
     ProtoWrapper.setIfNotNull(builder::setSourceVersion, sourceVersion);
     return builder.build();
   }
@@ -129,6 +138,7 @@ public final class BlazeJavaImportResult
     private ImmutableSet<ArtifactLocation> javaSourceFiles;
     @Nullable private String sourceVersion = null;
     private EmptyJarTracker emptyJarTracker;
+    private ImmutableSet<BlazeJarLibrary> pluginProcessorJars;
 
     public Builder setContentEntries(List<BlazeContentEntry> contentEntries) {
       this.contentEntries = ImmutableList.copyOf(contentEntries);
@@ -160,6 +170,11 @@ public final class BlazeJavaImportResult
       return this;
     }
 
+    public Builder setPluginProcessorJars(Set<BlazeJarLibrary> pluginProcessorJars) {
+      this.pluginProcessorJars = ImmutableSet.copyOf(pluginProcessorJars);
+      return this;
+    }
+
     public BlazeJavaImportResult build() {
       return new BlazeJavaImportResult(
           checkNotNull(contentEntries, "contentEntries not set"),
@@ -167,7 +182,8 @@ public final class BlazeJavaImportResult
           checkNotNull(buildOutputJars, "buildOutputJars not set"),
           checkNotNull(javaSourceFiles, "javaSourceFiles not set"),
           sourceVersion,
-          checkNotNull(emptyJarTracker, "emptyJarTracker not set"));
+          checkNotNull(emptyJarTracker, "emptyJarTracker not set"),
+          checkNotNull(pluginProcessorJars, "lintJars not set"));
     }
   }
 }

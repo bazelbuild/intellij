@@ -85,6 +85,7 @@ message BlazeJavaImportResult {
   repeated ArtifactLocation java_source_files = 4;
   string source_version = 5;
   EmptyJarTracker empty_jar_tracker = 6;
+  repeated BlazeLibrary plugin_processor_jars = 7;
 }
 
 message BlazeJavaSyncData {

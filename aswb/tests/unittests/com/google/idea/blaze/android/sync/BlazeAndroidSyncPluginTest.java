@@ -136,6 +136,7 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
                         .setJavaSourceFiles(ImmutableSet.of())
                         .setSourceVersion("9")
                         .setEmptyJarTracker(EmptyJarTracker.builder().build())
+                        .setPluginProcessorJars(ImmutableSet.of())
                         .build(),
                     null))
             .build();
