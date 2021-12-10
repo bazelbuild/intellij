@@ -633,17 +633,6 @@ java_library(
     ),
 )
 
-# IntelliJ tasks plugin
-java_library(
-    name = "tasks",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        android_studio = [":tasks"],
-        clion = [":tasks"],
-        intellij = [":tasks"],
-    ),
-)
-
 # terminal plugin
 java_library(
     name = "terminal",

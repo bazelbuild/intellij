@@ -112,14 +112,6 @@ java_import(
 )
 
 java_import(
-    name = "tasks",
-    jars = [
-        "android-studio/plugins/tasks/lib/tasks-api.jar",
-        "android-studio/plugins/tasks/lib/tasks-core.jar",
-    ],
-)
-
-java_import(
     name = "terminal",
     jars = ["android-studio/plugins/terminal/lib/terminal.jar"],
 )

@@ -91,14 +91,6 @@ java_import(
 )
 
 java_import(
-    name = "tasks",
-    jars = glob([
-        "plugins/tasks/lib/tasks-api.jar",
-        "plugins/tasks/lib/tasks-core.jar",
-    ]),
-)
-
-java_import(
     name = "terminal",
     jars = glob(["plugins/terminal/lib/terminal.jar"]),
 )
