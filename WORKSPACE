@@ -377,7 +377,7 @@ http_archive(
 # unexpressive errors when new features are used
 load("@bazel_skylib//lib:versions.bzl", "versions")
 
-versions.check(minimum_bazel_version = "4.0.0")
+versions.check(minimum_bazel_version = "3.0.0")
 
 http_archive(
     name = "build_bazel_integration_testing",
