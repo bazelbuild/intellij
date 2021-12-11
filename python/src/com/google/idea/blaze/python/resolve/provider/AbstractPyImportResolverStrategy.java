@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
@@ -81,7 +82,7 @@ public abstract class AbstractPyImportResolverStrategy implements PyImportResolv
       }
       PsiFile file = psi.getContainingFile();
       if (file != null) {
-        quickFix.addImport(psi, file, candidate.removeLastComponent());
+        quickFix.addImport((PsiNamedElement) psi, file, candidate.removeLastComponent());
       }
     }
   }
