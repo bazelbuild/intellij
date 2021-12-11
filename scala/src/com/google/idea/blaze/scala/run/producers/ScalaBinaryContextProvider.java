@@ -32,13 +32,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiMethodUtil;
 import java.io.File;
 import java.util.Collection;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.jetbrains.plugins.scala.lang.psi.api.ScalaFile;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject;
-import org.jetbrains.plugins.scala.util.ScalaMainMethodUtil;
-import scala.Option;
+import org.jetbrains.plugins.scala.lang.psi.light.PsiClassWrapper;
 
 /** Creates run configurations for Scala main classes sourced by scala_binary targets. */
 class ScalaBinaryContextProvider implements BinaryContextProvider {
@@ -56,8 +57,8 @@ class ScalaBinaryContextProvider implements BinaryContextProvider {
     if (target == null) {
       return null;
     }
-    Option<PsiMethod> mainMethod = ScalaMainMethodUtil.findMainMethod(mainObject);
-    PsiElement sourceElement = mainMethod.getOrElse(() -> mainObject);
+    Optional<PsiMethod> mainMethod = findMainMethod(mainObject);
+    PsiElement sourceElement = mainMethod.isPresent() ? mainMethod.get() : (PsiElement) mainObject;
     return BinaryRunContext.create(sourceElement, target.toTargetInfo());
   }
 
@@ -86,7 +87,7 @@ class ScalaBinaryContextProvider implements BinaryContextProvider {
     for (; element != null; element = element.getParent()) {
       if (element instanceof ScObject) {
         ScObject obj = (ScObject) element;
-        if (ScalaMainMethodUtil.hasMainMethod(obj)) {
+        if (findMainMethod(obj).isPresent()) {
           return obj;
         }
       } else if (element instanceof ScalaFile) {
@@ -103,7 +104,7 @@ class ScalaBinaryContextProvider implements BinaryContextProvider {
         continue;
       }
       ScObject obj = (ScObject) aClass;
-      if (ScalaMainMethodUtil.hasMainMethod(obj)) {
+      if (findMainMethod(obj).isPresent()) {
         // Potentially multiple matches, we'll pick the first one.
         // TODO: prefer class with same name as file?
         // TODO: skip if not main_class of a rule.
@@ -176,5 +177,13 @@ class ScalaBinaryContextProvider implements BinaryContextProvider {
             target.isPlainTarget()
                 && target.getKind().hasLanguage(LanguageClass.SCALA)
                 && target.getKind().getRuleType().equals(RuleType.BINARY));
+  }
+
+  private static Optional<PsiMethod> findMainMethod(ScObject obj) {
+    if (!obj.isTopLevel()) {
+      return Optional.empty();
+    }
+    return Optional.ofNullable(
+        PsiMethodUtil.findMainMethod(new PsiClassWrapper(obj, obj.qualifiedName(), obj.name())));
   }
 }
