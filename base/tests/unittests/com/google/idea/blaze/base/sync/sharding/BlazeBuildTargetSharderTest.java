@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.sync.sharding;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.shardAutomatically;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static junit.framework.TestCase.fail;
 
@@ -249,20 +248,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   }
 
   @Test
-  public void expandAndShardTargets_shardingApproachNone() {
-    mockExperimentService.setExperiment(shardAutomatically, false);
-    List<TargetExpression> targets = ImmutableList.of(target("//java/com/google:foo"));
-    ShardedTargetsResult result =
-        expandAndShardTargets(BuildBinaryType.BLAZE, ProjectView.builder().build(), targets);
-
-    assertThat(result.buildResult.exitCode).isEqualTo(0);
-    assertThat(result.shardedTargets.shardStats.shardingApproach())
-        .isEqualTo(ShardingApproach.NONE);
-  }
-
-  @Test
   public void expandAndShardTargets_shardingApproachPartitionWithoutExpanding() {
-    mockExperimentService.setExperiment(shardAutomatically, true);
     List<TargetExpression> targets = ImmutableList.of(target("//java/com/google:foo"));
     ShardedTargetsResult result =
         expandAndShardTargets(BuildBinaryType.BLAZE, ProjectView.builder().build(), targets);
@@ -274,11 +260,9 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
   @Test
   public void expandAndShardTargets_remoteBuild_buildBatchingServiceIsUsed() {
-    mockExperimentService.setExperiment(shardAutomatically, true);
     fakeBuildBatchingService
         .setShardingApproach(ShardingApproach.BUILD_TARGET_BATCHING_SERVICE)
         .setFailToBatchTarget(false);
-    mockExperimentService.setExperiment(shardAutomatically, true);
     List<TargetExpression> targets = ImmutableList.of(target("//java/com/google:foo"));
     ShardedTargetsResult result =
         expandAndShardTargets(BuildBinaryType.RABBIT, ProjectView.builder().build(), targets);
@@ -290,7 +274,6 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
   @Test
   public void expandAndShardTargets_localBuild_buildBatchingServiceIsUsed() {
-    mockExperimentService.setExperiment(shardAutomatically, true);
     fakeBuildBatchingService
         .setShardingApproach(ShardingApproach.LEXICOGRAPHIC_TARGET_SHARDER)
         .setFailToBatchTarget(false);
@@ -312,7 +295,6 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
   @Test
   public void expandAndShardTargets_failToExpand_shardingApproachError() {
-    mockExperimentService.setExperiment(shardAutomatically, true);
     fakeWildCardTargetExpanderExternalTaskProvider.setReturnVal(2);
     fakeBuildBatchingService
         .setShardingApproach(ShardingApproach.LEXICOGRAPHIC_TARGET_SHARDER)
@@ -334,7 +316,6 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
   @Test
   public void expandAndShardTargets_failToBatchingTargets_shardingApproachError() {
-    mockExperimentService.setExperiment(shardAutomatically, true);
     fakeWildCardTargetExpanderExternalTaskProvider.setReturnVal(0);
     fakeBuildBatchingService
         .setShardingApproach(ShardingApproach.LEXICOGRAPHIC_TARGET_SHARDER)
@@ -358,7 +339,6 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   public void expandAndShardTargets_expandWildcardTargets() {
     String expectedLabel1 = "//java/com/google:one";
     String expectedLabel2 = "//java/com/google:two";
-    mockExperimentService.setExperiment(shardAutomatically, true);
     fakeWildCardTargetExpanderExternalTaskProvider
         .setReturnVal(0)
         .setOutputMessage("sh_library rule " + expectedLabel1, "sh_library rule " + expectedLabel2);

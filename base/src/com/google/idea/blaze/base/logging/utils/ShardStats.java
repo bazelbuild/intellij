@@ -38,7 +38,6 @@ public abstract class ShardStats {
 
   /** Types of sharding method */
   public enum ShardingApproach {
-    NONE,
     PARTITION_WITHOUT_EXPANDING,
     BUILD_TARGET_BATCHING_SERVICE,
     LEXICOGRAPHIC_TARGET_SHARDER,

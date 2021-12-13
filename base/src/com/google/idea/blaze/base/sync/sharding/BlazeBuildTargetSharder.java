@@ -42,7 +42,6 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.projectview.TargetExpressionList;
 import com.google.idea.blaze.base.sync.sharding.WildcardTargetExpander.ExpandedTargetsResult;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
@@ -67,11 +66,6 @@ public class BlazeBuildTargetSharder {
    */
   private static final IntExperiment defaultTargetShardSize =
       new IntExperiment("blaze.default.target.shard.size", 1000);
-
-  /** If enabled, we'll automatically shard when we think it's appropriate. */
-  @VisibleForTesting
-  public static final BoolExperiment shardAutomatically =
-      new BoolExperiment("blaze.shard.automatically.2", true);
 
   // number of packages per blaze query shard
   static final int PACKAGE_SHARD_SIZE = 500;
@@ -118,9 +112,6 @@ public class BlazeBuildTargetSharder {
     if (shardingRequested(viewSet)) {
       return ShardingApproach.EXPAND_AND_SHARD;
     }
-    if (!shardAutomatically.getValue()) {
-      return ShardingApproach.NONE;
-    }
     // otherwise, only expand targets before sharding (a 'complete' batching of the build) if we're
     // syncing remotely
     return isRemote ? ShardingApproach.EXPAND_AND_SHARD : ShardingApproach.SHARD_WITHOUT_EXPANDING;
@@ -138,13 +129,6 @@ public class BlazeBuildTargetSharder {
     BuildBinaryType buildType = buildParams.blazeBinaryType();
     ShardingApproach approach = getShardingApproach(viewSet, buildType.isRemote);
     switch (approach) {
-      case NONE:
-        return new ShardedTargetsResult(
-            new ShardedTargetList(
-                ImmutableList.of(ImmutableList.copyOf(targets)),
-                ShardStats.ShardingApproach.NONE,
-                0),
-            BuildResult.SUCCESS);
       case SHARD_WITHOUT_EXPANDING:
         int suggestedSize = getTargetShardSize(viewSet);
         return new ShardedTargetsResult(
@@ -167,8 +151,9 @@ public class BlazeBuildTargetSharder {
             shardSingleTargets(
                 expandedTargets.singleTargets, buildType, getTargetShardSize(viewSet)),
             expandedTargets.buildResult);
+      default:
+        throw new IllegalStateException("Unhandled sharding approach: " + approach);
     }
-    throw new IllegalStateException("Unhandled sharding approach: " + approach);
   }
 
   /** Expand wildcard target patterns into individual blaze targets. */
