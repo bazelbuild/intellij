@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /** Sync stats from a single build phase. */
 @AutoValue
@@ -48,6 +49,7 @@ public abstract class BuildPhaseSyncStats {
 
   public abstract Duration totalTime();
 
+  @Nullable
   public abstract ShardStats shardStats();
 
   public static Builder builder() {
@@ -61,8 +63,7 @@ public abstract class BuildPhaseSyncStats {
         .setBuildResult(BuildResult.FATAL_ERROR)
         .setTimedEvents(ImmutableList.of())
         .setBuildIds(ImmutableList.of())
-        .setTotalTime(Duration.ZERO)
-        .setShardStats(ShardStats.builder().build());
+        .setTotalTime(Duration.ZERO);
   }
   /** Auto value builder for SyncStats. */
   @AutoValue.Builder

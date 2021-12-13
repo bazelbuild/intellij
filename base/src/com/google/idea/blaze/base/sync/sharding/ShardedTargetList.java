@@ -57,19 +57,11 @@ public class ShardedTargetList {
       ShardingApproach shardingApproach,
       int suggestedSize) {
     this.shardedTargets = shardedTargets;
-    this.shardStats = calculateShardStats(shardingApproach, suggestedSize, shardedTargets);
-  }
-
-  private static ShardStats calculateShardStats(
-      ShardingApproach shardingApproach,
-      int suggestedSize,
-      ImmutableList<? extends ImmutableList<? extends TargetExpression>> shardedTargets) {
-    return ShardStats.builder()
-        .setShardingApproach(shardingApproach)
-        .setSuggestedTargetSizePerShard(suggestedSize)
-        .setActualTargetSizePerShard(
-            shardedTargets.stream().map(List::size).collect(toImmutableList()))
-        .build();
+    this.shardStats =
+        ShardStats.create(
+            suggestedSize,
+            shardedTargets.stream().map(List::size).collect(toImmutableList()),
+            shardingApproach);
   }
 
   public boolean isEmpty() {
