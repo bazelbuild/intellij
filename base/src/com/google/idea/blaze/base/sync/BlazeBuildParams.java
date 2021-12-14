@@ -19,15 +19,11 @@ import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 
 /** Parameters specific to blaze builds during sync. */
 @AutoValue
 public abstract class BlazeBuildParams {
-
-  private static final BoolExperiment parallelizeRemoteSyncs =
-      new BoolExperiment("parallelize.remote.syncs", true);
 
   public static BlazeBuildParams fromProject(Project project) {
     BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
@@ -35,7 +31,7 @@ public abstract class BlazeBuildParams {
     return builder()
         .setBlazeBinaryPath(provider.getSyncBinaryPath(project))
         .setBlazeBinaryType(binaryType)
-        .setParallelizeBuilds(parallelizeRemoteSyncs.getValue() && binaryType.isRemote)
+        .setParallelizeBuilds(binaryType.isRemote)
         .build();
   }
 
@@ -69,7 +65,7 @@ public abstract class BlazeBuildParams {
     abstract BlazeBuildParams autoBuild();
 
     public BlazeBuildParams build() {
-      setParallelizeBuilds(parallelizeRemoteSyncs.getValue() && blazeBinaryType().isRemote);
+      setParallelizeBuilds(blazeBinaryType().isRemote);
       return autoBuild();
     }
   }
