@@ -103,7 +103,6 @@ public class BlazeBuildTargetSharder {
   }
 
   private enum ShardingApproach {
-    NONE,
     EXPAND_AND_SHARD, // first expand wildcard targets, then split into batches
     SHARD_WITHOUT_EXPANDING, // split unexpanded wildcard targets into batches
   }
