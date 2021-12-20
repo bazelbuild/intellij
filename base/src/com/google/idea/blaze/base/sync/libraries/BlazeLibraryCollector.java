@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -31,6 +32,19 @@ import java.util.stream.Collectors;
 public class BlazeLibraryCollector {
   public static List<BlazeLibrary> getLibraries(
       ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+    return collectLibraries(projectViewSet, blazeProjectData, LibrarySource::getLibraries);
+  }
+
+  public static List<BlazeLibrary> getLintLibraries(
+      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
+    return collectLibraries(projectViewSet, blazeProjectData, LibrarySource::getLintLibraries);
+  }
+
+  /* Collect all libraries of specific types from all library sources. */
+  private static List<BlazeLibrary> collectLibraries(
+      ProjectViewSet projectViewSet,
+      BlazeProjectData blazeProjectData,
+      Function<LibrarySource, List<? extends BlazeLibrary>> librarySelector) {
     // Use set to filter out duplicates.
     Set<BlazeLibrary> result = Sets.newLinkedHashSet();
     List<LibrarySource> librarySources = Lists.newArrayList();
@@ -41,11 +55,10 @@ public class BlazeLibraryCollector {
       }
     }
     for (LibrarySource librarySource : librarySources) {
-      result.addAll(librarySource.getLibraries());
+      result.addAll(librarySelector.apply(librarySource));
     }
     Predicate<BlazeLibrary> libraryFilter =
-        librarySources
-            .stream()
+        librarySources.stream()
             .map(LibrarySource::getLibraryFilter)
             .filter(Objects::nonNull)
             .reduce(Predicate::and)
