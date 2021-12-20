@@ -401,6 +401,8 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
 
   // Matches TEST_SRCDIR=<dir>
   private static final Pattern TEST_SRCDIR = Pattern.compile("TEST_SRCDIR=([^ ]+)");
+  // Matches RUNFILES_<NAME>=<value>
+  private static final Pattern RUNFILES_VAR = Pattern.compile("RUNFILES_([A-Z_]+)=([^ ]+)");
   // Matches a space-delimited arg list. Supports wrapping arg in single quotes.
   private static final Pattern ARGS = Pattern.compile("([^\']\\S*|\'.+?\')\\s*");
 
@@ -431,6 +433,10 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         throw new ExecutionException("Failed to parse args in script_path: " + scriptPath);
       }
       envVars.put("TEST_SRCDIR", testScrDir.group(1));
+      Matcher runfilesVars = RUNFILES_VAR.matcher(text);
+      while (runfilesVars.find()) {
+        envVars.put(String.format("RUNFILES_%s", runfilesVars.group(1)), runfilesVars.group(2));
+      }
       workingDir = workspaceRoot.directory();
       String workspaceName = execRoot.getName();
       binary =
