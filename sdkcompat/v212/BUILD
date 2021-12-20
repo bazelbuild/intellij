@@ -22,10 +22,12 @@ java_library(
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/java/**",
+            "com/google/idea/sdkcompat/scala/**",
         ]),
         intellij_ue = glob([
             "com/google/idea/sdkcompat/golang/**",
             "com/google/idea/sdkcompat/java/**",
+            "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/typescript/**",
         ]),
     ),
@@ -36,5 +38,6 @@ java_library(
         "//third_party/go",
         "//third_party/javascript",
         "//third_party/python",
+        "//third_party/scala",
     ],
 )
