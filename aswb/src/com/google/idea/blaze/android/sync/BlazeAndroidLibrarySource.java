@@ -60,6 +60,17 @@ public class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
     return libraries.build();
   }
 
+  @Override
+  public List<? extends BlazeLibrary> getLintLibraries() {
+    // An aar library can contain a lint.jar file, but it's guaranteed that it must have. So caller
+    // need to identify the existence among all the aars.
+    BlazeAndroidSyncData syncData = blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class);
+    if (syncData == null) {
+      return ImmutableList.of();
+    }
+    return ImmutableList.copyOf(syncData.importResult.aarLibraries.values());
+  }
+
   @Nullable
   @Override
   public Predicate<BlazeLibrary> getLibraryFilter() {
