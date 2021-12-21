@@ -39,7 +39,7 @@ public final class BlazeJavaImportResult
   public final ImmutableMap<LibraryKey, BlazeJarLibrary> libraries;
   public final ImmutableList<ArtifactLocation> buildOutputJars;
   public final ImmutableSet<ArtifactLocation> javaSourceFiles;
-  public final ImmutableSet<BlazeJarLibrary> pluginProcessorJars;
+  public final ImmutableSet<BlazePluginProcessorJarLibrary> pluginProcessorJars;
   @Nullable public final String sourceVersion;
   public final EmptyJarTracker emptyJarTracker;
 
@@ -50,7 +50,7 @@ public final class BlazeJavaImportResult
       ImmutableSet<ArtifactLocation> javaSourceFiles,
       @Nullable String sourceVersion,
       EmptyJarTracker emptyJarTracker,
-      ImmutableSet<BlazeJarLibrary> pluginProcessorJars) {
+      ImmutableSet<BlazePluginProcessorJarLibrary> pluginProcessorJars) {
     this.contentEntries = contentEntries;
     this.libraries = libraries;
     this.buildOutputJars = buildOutputJars;
@@ -79,7 +79,7 @@ public final class BlazeJavaImportResult
         .setPluginProcessorJars(
             ProtoWrapper.map(
                 proto.getPluginProcessorJarsList(),
-                BlazeJarLibrary::fromProto,
+                BlazePluginProcessorJarLibrary::fromProto,
                 ImmutableSet.toImmutableSet()))
         .build();
   }
@@ -138,7 +138,7 @@ public final class BlazeJavaImportResult
     private ImmutableSet<ArtifactLocation> javaSourceFiles;
     @Nullable private String sourceVersion = null;
     private EmptyJarTracker emptyJarTracker;
-    private ImmutableSet<BlazeJarLibrary> pluginProcessorJars;
+    private ImmutableSet<BlazePluginProcessorJarLibrary> pluginProcessorJars;
 
     public Builder setContentEntries(List<BlazeContentEntry> contentEntries) {
       this.contentEntries = ImmutableList.copyOf(contentEntries);
@@ -170,7 +170,7 @@ public final class BlazeJavaImportResult
       return this;
     }
 
-    public Builder setPluginProcessorJars(Set<BlazeJarLibrary> pluginProcessorJars) {
+    public Builder setPluginProcessorJars(Set<BlazePluginProcessorJarLibrary> pluginProcessorJars) {
       this.pluginProcessorJars = ImmutableSet.copyOf(pluginProcessorJars);
       return this;
     }

@@ -36,7 +36,7 @@ import javax.annotation.concurrent.Immutable;
 
 /** An immutable reference to a .jar required by a rule. */
 @Immutable
-public final class BlazeJarLibrary extends BlazeLibrary {
+public class BlazeJarLibrary extends BlazeLibrary {
   private static final Logger logger = Logger.getInstance(BlazeJarLibrary.class);
 
   public final LibraryArtifact libraryArtifact;

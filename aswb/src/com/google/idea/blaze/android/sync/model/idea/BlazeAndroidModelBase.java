@@ -24,7 +24,6 @@ import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.lint.detector.api.Desugaring;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -203,11 +202,10 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
-    return BlazeLibraryCollector.getLibraries(
+    return BlazeLibraryCollector.getLintLibraries(
             ProjectViewManager.getInstance(project).getProjectViewSet(), blazeProjectData)
         .stream()
-        .filter(library -> library instanceof AarLibrary)
-        .map(library -> ((AarLibrary) library).getLintRuleJar(project, artifactLocationDecoder))
+        .map(library -> library.getLintRuleJar(project, artifactLocationDecoder))
         .filter(Objects::nonNull)
         .collect(toImmutableList());
   }
