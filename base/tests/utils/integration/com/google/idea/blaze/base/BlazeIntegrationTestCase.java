@@ -48,7 +48,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import java.io.BufferedInputStream;
@@ -194,7 +194,7 @@ public abstract class BlazeIntegrationTestCase {
 
     if (isLightTestCase()) {
       TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
-          factory.createLightFixtureBuilder(LightCodeInsightFixtureTestCase.JAVA_8);
+          factory.createLightFixtureBuilder(LightJavaCodeInsightFixtureTestCase.JAVA_8);
       IdeaProjectTestFixture lightFixture = fixtureBuilder.getFixture();
       return factory.createCodeInsightFixture(lightFixture, new LightTempDirTestFixtureImpl(true));
     }
