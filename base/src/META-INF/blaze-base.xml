@@ -298,6 +298,7 @@
         language="BUILD"
         implementationClass="com.google.idea.blaze.base.run.producers.BuildFileRunLineMarkerContributor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.base.plugin.BlazeHideMakeActions"/>
+    <notificationGroup displayType="BALLOON" id="BuildifierBinaryMissing"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -487,7 +488,7 @@
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandler"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.FallbackBlazeVcsHandler" order="last" id="fallback"/>
     <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" order="last"/>
-    <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.BazelBuildifierBinaryProvider"/>
+    <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.DefaultBuildifierBinaryProvider"/>
     <BuildResultHelperProvider order="last" implementation="com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep$Provider"/>
     <BlazeCommandRunner order="last" implementation="com.google.idea.blaze.base.command.CommandLineBlazeCommandRunner"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandlerProvider"/>

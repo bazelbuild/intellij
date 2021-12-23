@@ -29,11 +29,10 @@ java_library(
         "//common/experiments",
         "//common/settings",
         "//common/ui/properties",
-        "//common/util:binaryhelper",
         "//common/util:concurrency",
         "//common/util:platform",
         "//common/util:transactions",
-        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
@@ -260,7 +259,7 @@ java_library(
     neverlink = 1,
     deps = [
         ":logging_api",
-        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
     ],
 )
@@ -330,7 +329,7 @@ java_library(
     ],
     neverlink = 1,
     deps = [
-        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
     ],
 )

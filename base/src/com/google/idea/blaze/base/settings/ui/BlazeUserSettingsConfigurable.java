@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.settings.ui;
 
-
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -131,6 +130,14 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           .hideIf(() -> !BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Bazel))
           .componentFactory(fileSelector(BAZEL_BINARY_PATH_KEY, "Specify the bazel binary path"));
 
+  public static final String BUILDIFIER_BINARY_PATH_KEY = "buildifier.binary.path";
+  private static final ConfigurableSetting<?, ?> BUILDIFIER_BINARY_PATH =
+      setting("Buildifier binary location")
+          .getter(BlazeUserSettings::getBuildifierBinaryPath)
+          .setter(BlazeUserSettings::setBuildifierBinaryPath)
+          .componentFactory(
+              fileSelector(BUILDIFIER_BINARY_PATH_KEY, "Specify the buildifier binary path"));
+
   private static final ImmutableList<ConfigurableSetting<?, ?>> SETTINGS =
       ImmutableList.of(
           SHOW_CONSOLE_ON_SYNC,
@@ -141,7 +148,8 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           FORMAT_BUILD_FILES_ON_SAVE,
           SHOW_ADD_FILE_TO_PROJECT,
           BLAZE_BINARY_PATH,
-          BAZEL_BINARY_PATH);
+          BAZEL_BINARY_PATH,
+          BUILDIFIER_BINARY_PATH);
 
   private static ConfigurableSetting.Builder<BlazeUserSettings> setting(String label) {
     return ConfigurableSetting.builder(BlazeUserSettings::getInstance).label(label);
@@ -168,7 +176,8 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
             FORMAT_BUILD_FILES_ON_SAVE,
             SHOW_ADD_FILE_TO_PROJECT,
             BLAZE_BINARY_PATH,
-            BAZEL_BINARY_PATH));
+            BAZEL_BINARY_PATH,
+            BUILDIFIER_BINARY_PATH));
   }
 
   private JComponent getFocusBehaviorSettingsUi() {
