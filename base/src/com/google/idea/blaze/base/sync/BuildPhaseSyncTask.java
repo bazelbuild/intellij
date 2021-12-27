@@ -190,7 +190,7 @@ final class BuildPhaseSyncTask {
       throw new SyncCanceledException();
     }
     context.output(
-        PrintOutput.log("build invocation result: " + blazeBuildResult.buildResult.status));
+        PrintOutput.log("Build invocation result: " + blazeBuildResult.buildResult.status));
     if (blazeBuildResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       context.setHasError();
       if (blazeBuildResult.buildResult.outOfMemory()) {

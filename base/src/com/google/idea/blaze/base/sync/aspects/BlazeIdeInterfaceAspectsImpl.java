@@ -301,7 +301,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             parentContext,
             context -> {
               context.push(new TimingScope("UpdateTargetMap", EventType.Other));
-              context.output(new StatusOutput("Updating target map"));
+              context.output(new StatusOutput("Updating target map..."));
 
               // ideally, we'd flush through a per-build sync time parsed from BEP. For now, though
               // just set an approximate, batched sync time.
@@ -509,6 +509,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     ImmutableSet<String> extensions = PrefetchFileSource.getAllPrefetchFileExtensions();
     return fileName -> extensions.contains(FileUtil.getExtension(fileName));
   }
+
   /** Prefetch a list of blaze output artifacts, blocking until complete. */
   private static void prefetchGenfiles(
       BlazeContext context, ImmutableList<OutputArtifact> artifacts) {

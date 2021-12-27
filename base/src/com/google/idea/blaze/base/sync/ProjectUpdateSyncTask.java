@@ -261,7 +261,7 @@ final class ProjectUpdateSyncTask {
         context,
         (childContext) -> {
           childContext.push(new TimingScope("RefreshVirtualFileSystem", EventType.Other));
-          childContext.output(new StatusOutput("Refreshing files"));
+          childContext.output(new StatusOutput("Refreshing files..."));
           if (ApplicationManager.getApplication().isReadAccessAllowed()) {
             IssueOutput.warn("Attempted to refresh file system while holding read lock")
                 .submit(childContext);
