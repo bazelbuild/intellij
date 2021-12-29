@@ -76,6 +76,8 @@ java_import(
     jars = glob(["clion-*/plugins/terminal/lib/terminal.jar"]),
 )
 
+java_library(name = "protoeditor")  # not bundled
+
 java_import(
     name = "python",
     jars = glob(["clion-*/plugins/python-ce/lib/*.jar"]),

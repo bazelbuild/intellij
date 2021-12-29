@@ -95,6 +95,11 @@ java_import(
     jars = glob(["plugins/terminal/lib/terminal.jar"]),
 )
 
+java_import(
+    name = "protoeditor",
+    jars = glob(["plugins/protoeditor/lib/*.jar"]),
+)
+
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
 java_import(

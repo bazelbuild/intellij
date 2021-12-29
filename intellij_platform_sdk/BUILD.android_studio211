@@ -124,6 +124,8 @@ java_import(
     jars = ["android-studio/plugins/terminal/lib/terminal.jar"],
 )
 
+java_library(name = "protoeditor")  # not bundled
+
 # The plugins required by ASwB. We need to include them
 # when running integration tests.
 java_import(

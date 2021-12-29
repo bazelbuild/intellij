@@ -76,6 +76,11 @@ java_import(
 )
 
 java_import(
+    name = "protoeditor",
+    jars = glob(["plugins/protoeditor/lib/*.jar"]),
+)
+
+java_import(
     name = "python",
     jars = glob(["clion-*/plugins/python-ce/lib/*.jar"]),
 )
