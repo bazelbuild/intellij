@@ -28,7 +28,7 @@ no_mockito_extensions(
 java_import(
     name = "guava",
     jars = glob([
-        "clion-*/lib/3rd-party.jar",
+        "clion-*/lib/3rd-party-rt.jar",
     ]),
 )
 
