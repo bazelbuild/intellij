@@ -666,6 +666,30 @@ java_library(
     ),
 )
 
+# IntelliJ Shared Indexes plugin
+java_library(
+    name = "shared_indexes",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":shared_indexes"],
+        intellij_ue = [":shared_indexes"],
+    ),
+)
+
+# IntelliJ Shared Indexes plugin
+java_library(
+    name = "shared_indexes_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":shared_indexes"],
+        intellij_ue = [":shared_indexes"],
+    ),
+)
+
 # Not all plugin api versions have lib/resources.jar from which we used to get
 # the application information to set the idea-version compatibility range of the plugin.
 # However, product-info.json contains this information but it was not imported to google3

@@ -74,6 +74,13 @@ java_import(
 
 java_library(name = "protoeditor")  # not bundled
 
+java_import(
+    name = "shared_indexes",
+    jars = [
+        "plugins/indexing-shared/lib/indexing-shared.jar",
+    ],
+)
+
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
 java_import(

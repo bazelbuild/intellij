@@ -100,6 +100,14 @@ java_import(
     jars = glob(["plugins/protoeditor/lib/*.jar"]),
 )
 
+java_import(
+    name = "shared_indexes",
+    jars = [
+        "plugins/indexing-shared/lib/indexing-shared.jar",
+        "plugins/indexing-shared-ultimate/lib/indexing-shared-ultimate.jar",
+    ],
+)
+
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
 java_import(
