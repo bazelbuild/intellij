@@ -19,14 +19,27 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.SourceArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.sync.FakeRemoteOutputArtifact;
 import java.io.File;
+import org.jetbrains.annotations.Nullable;
 
 /** Resolves all artifacts to local source files. */
 public class MockArtifactLocationDecoder implements ArtifactLocationDecoder {
+  @Nullable private final File workspaceRoot;
+  private final boolean isRemote;
+
+  public MockArtifactLocationDecoder(@Nullable File workspaceRoot, boolean isRemote) {
+    this.workspaceRoot = workspaceRoot;
+    this.isRemote = isRemote;
+  }
+
+  public MockArtifactLocationDecoder() {
+    this(null, false);
+  }
 
   @Override
   public File decode(ArtifactLocation artifactLocation) {
-    return new File(artifactLocation.getRelativePath());
+    return new File(workspaceRoot, artifactLocation.getRelativePath());
   }
 
   @Override
@@ -38,9 +51,13 @@ public class MockArtifactLocationDecoder implements ArtifactLocationDecoder {
   public BlazeArtifact resolveOutput(ArtifactLocation artifact) {
     if (artifact.isSource()) {
       return new SourceArtifact(decode(artifact));
-    } else {
-      return new LocalFileOutputArtifact(
-          decode(artifact), artifact.getRelativePath(), artifact.getExecutionRootRelativePath());
     }
+
+    File file = decode(artifact);
+    if (isRemote && file.exists()) {
+      return new FakeRemoteOutputArtifact(file);
+    }
+    return new LocalFileOutputArtifact(
+        decode(artifact), artifact.getRelativePath(), artifact.getExecutionRootRelativePath());
   }
 }

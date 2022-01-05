@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.libraries;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -84,6 +85,8 @@ public class JarCache {
 
   private static final Logger logger = Logger.getInstance(JarCache.class);
 
+  private boolean isAvailable = !ApplicationManager.getApplication().isUnitTestMode();
+
   private final Project project;
   private final JarCacheFolderProvider jarCacheFolderProvider;
 
@@ -101,10 +104,19 @@ public class JarCache {
     return enabled;
   }
 
+  /**
+   * Enable jar cache for testing. Only enable it when necessary since it may use more time and ask
+   * extra configuration.
+   */
+  @VisibleForTesting
+  public void enableForTest() {
+    isAvailable = true;
+  }
+
   private boolean updateEnabled() {
     // force-enable the jar cache if syncing remotely
     this.enabled =
-        !ApplicationManager.getApplication().isUnitTestMode()
+        isAvailable
             && (BlazeJavaUserSettings.getInstance().getUseJarCache()
                 || Blaze.getBuildSystemProvider(project).syncingRemotely());
     return enabled;
@@ -260,6 +272,15 @@ public class JarCache {
         newOutputs.put(cacheKeyForSourceJar(srcJar), srcJar);
       }
     }
+
+    BlazeLibraryCollector.getLintLibraries(projectViewSet, projectData).stream()
+        .filter(library -> library instanceof BlazeJarLibrary)
+        .map(
+            library ->
+                decoder.resolveOutput(
+                    ((BlazeJarLibrary) library).libraryArtifact.jarForIntellijLibrary()))
+        .forEach(jar -> newOutputs.put(cacheKeyForJar(jar), jar));
+
     return ImmutableMap.copyOf(newOutputs);
   }
 
