@@ -644,17 +644,6 @@ java_library(
     ),
 )
 
-# IntelliJ protoeditor plugin
-java_library(
-    name = "protoeditor",
-    neverlink = 1,
-    exports = select_from_plugin_api_directory(
-        android_studio = [":protoeditor"],
-        clion = [":protoeditor"],
-        intellij = [":protoeditor"],
-    ),
-)
-
 # Bundled plugins required by integration tests
 java_library(
     name = "bundled_plugins",
