@@ -229,6 +229,46 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/1347/147751/scala-intellij-bin-2021.3.14.zip",
 )
 
+_PROTOBUF_BUILD_FILE = """
+java_import(
+    name = "protobuf",
+    jars = ["protoeditor/lib/protoeditor.jar"],
+    visibility = ["//visibility:public"],
+)
+"""
+
+# Protocol Buffers plugin. Required at compile-time.
+http_archive(
+    name = "protobuf_2020_3",
+    build_file_content = _PROTOBUF_BUILD_FILE,
+    sha256 = "0af0c2556621c0f5c13c86dc3c43c78e79fa59d33741623c87041f4838ee2d09",
+    url = "https://plugins.jetbrains.com/files/14004/111813/protobuf-editor.jar",
+)
+
+# Protocol Buffers plugin. Required at compile-time.
+http_archive(
+    name = "protobuf_2021_1",
+    build_file_content = _PROTOBUF_BUILD_FILE,
+    sha256 = "f82f68c388baf099c1b1c69721b6d7d4fac702c93988f763b2dcbe90d6826584",
+    url = "https://plugins.jetbrains.com/files/14004/111812/protobuf-editor.jar",
+)
+
+# Protocol Buffers plugin. Required at compile-time.
+http_archive(
+    name = "protobuf_2021_2",
+    build_file_content = _PROTOBUF_BUILD_FILE,
+    sha256 = "845f2d49766a7532f4821e6a992204da37d0d508c1038e71f69c01a7cb7c75ef",
+    url = "https://plugins.jetbrains.com/files/14004/132172/protoeditor-212.5080.8.zip",
+)
+
+# Protocol Buffers plugin. Required at compile-time.
+http_archive(
+    name = "protobuf_2021_3",
+    build_file_content = _PROTOBUF_BUILD_FILE,
+    sha256 = "924e788dc4f86b724e1aaac7b1beb5ae38d4a2f7d3363eaf8be65e54b8e4d735",
+    url = "https://plugins.jetbrains.com/files/14004/147696/protoeditor-213.5744.224.zip",
+)
+
 # The plugin api for Android Studio 2020.3. This is required to build ASwB,
 # and run integration tests.
 http_archive(
