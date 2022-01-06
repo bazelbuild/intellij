@@ -492,3 +492,12 @@ jvm_maven_import_external(
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
+
+# Dependency needed for kotlin coroutines test library
+jvm_maven_import_external(
+    name = "kotlinx_coroutines_test",
+    artifact = "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.4.2",
+    artifact_sha256 = "2e3091a94b8b822c9b68c4dc92ad6a6b0e39e2245b0fc75862de20f5a7a71e9a",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)

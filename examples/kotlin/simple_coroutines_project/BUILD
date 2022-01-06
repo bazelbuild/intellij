@@ -1,12 +1,37 @@
-load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary")
+load("@io_bazel_rules_kotlin//kotlin:jvm.bzl", "kt_jvm_binary", "kt_jvm_library", "kt_jvm_test")
 
 package(default_visibility = ["//visibility:private"])
 
 licenses(["notice"])
 
+kt_jvm_library(
+    name = "greeting_lib",
+    srcs = ["main/lib/Greeting.kt"],
+    deps = ["@kotlinx_coroutines//jar"],
+)
+
 kt_jvm_binary(
     name = "run_project",
     srcs = ["main/Main.kt"],
+    # Add kotlinx_coroutines javaagent to enable coroutines debugging
+    jvm_flags = ["-javaagent:$(location @kotlinx_coroutines//jar)"],
     main_class = "main.Main",
-    deps = ["@kotlinx_coroutines//jar"],
+    deps = [
+        ":greeting_lib",
+        "@kotlinx_coroutines//jar",
+    ],
+)
+
+kt_jvm_test(
+    name = "test_greeting",
+    srcs = ["test/GreetingTest.kt"],
+    jvm_flags = ["-javaagent:$(location @kotlinx_coroutines//jar)"],
+    test_class = "test.GreetingTest",
+    deps = [
+        ":greeting_lib",
+        "@junit//jar",
+        "@kotlinx_coroutines//jar",
+        "@kotlinx_coroutines_test//jar",
+        "@truth//jar",
+    ],
 )
