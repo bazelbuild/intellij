@@ -142,6 +142,11 @@ public class ServiceHelper {
     ServiceContainerUtil.registerServiceInstance(componentManager, key, implementation);
     Disposer.register(
         parentDisposable,
-        () -> BaseSdkTestCompat.unregisterComponent(componentManager, key.getName()));
+        () -> {
+          if (implementation instanceof Disposable) {
+            Disposer.dispose((Disposable) implementation);
+          }
+          BaseSdkTestCompat.unregisterComponent(componentManager, key.getName());
+        });
   }
 }
