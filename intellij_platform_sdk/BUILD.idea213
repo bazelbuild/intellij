@@ -73,11 +73,6 @@ java_import(
 )
 
 java_import(
-    name = "protoeditor",
-    jars = glob(["plugins/protoeditor/lib/*.jar"]),
-)
-
-java_import(
     name = "shared_indexes",
     jars = [
         "plugins/indexing-shared/lib/indexing-shared.jar",
