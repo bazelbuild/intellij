@@ -19,15 +19,28 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import com.jetbrains.cidr.lang.OCLanguageKind;
 import com.jetbrains.cidr.lang.workspace.OCLanguageKindCalculatorHelper;
 import javax.annotation.Nullable;
 
 final class BlazeLanguageKindCalculatorHelper implements OCLanguageKindCalculatorHelper {
+  /** #api212: add @Override */
+  @Nullable
+  public OCLanguageKind getLanguageByPsiFile(PsiFile psiFile) {
+    if (Blaze.isBlazeProject(psiFile.getProject())) {
+      return getLanguageFromExtension(psiFile.getFileType().getDefaultExtension());
+    }
+    return null;
+  }
+
   @Nullable
   @Override
   public OCLanguageKind getSpecifiedLanguage(Project project, VirtualFile file) {
+    if (Blaze.isBlazeProject(project)) {
+      return getLanguageFromExtension(file.getExtension());
+    }
     return null;
   }
 
@@ -35,16 +48,21 @@ final class BlazeLanguageKindCalculatorHelper implements OCLanguageKindCalculato
   @Override
   public OCLanguageKind getLanguageByExtension(Project project, String name) {
     if (Blaze.isBlazeProject(project)) {
-      String extension = FileUtilRt.getExtension(name);
-      if (CFileExtensions.C_FILE_EXTENSIONS.contains(extension)) {
-        return CLanguageKind.C;
-      }
-      if (CFileExtensions.CXX_FILE_EXTENSIONS.contains(extension)) {
-        return CLanguageKind.CPP;
-      }
-      if (CFileExtensions.CXX_ONLY_HEADER_EXTENSIONS.contains(extension)) {
-        return CLanguageKind.CPP;
-      }
+      return getLanguageFromExtension(FileUtilRt.getExtension(name));
+    }
+    return null;
+  }
+
+  @Nullable
+  private OCLanguageKind getLanguageFromExtension(String extension) {
+    if (CFileExtensions.C_FILE_EXTENSIONS.contains(extension)) {
+      return CLanguageKind.C;
+    }
+    if (CFileExtensions.CXX_FILE_EXTENSIONS.contains(extension)) {
+      return CLanguageKind.CPP;
+    }
+    if (CFileExtensions.CXX_ONLY_HEADER_EXTENSIONS.contains(extension)) {
+      return CLanguageKind.CPP;
     }
     return null;
   }

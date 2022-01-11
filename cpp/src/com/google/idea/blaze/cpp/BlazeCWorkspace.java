@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
+import com.google.idea.sdkcompat.cpp.CppCompat;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -141,7 +142,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
                       calculateConfigurations(
                           blazeProjectData, workspaceRoot, newResult, indicator);
                   ImmutableList<String> issues =
-                      commit(model, SERIALIZATION_VERSION, toolEnvironment);
+                      commit(model, SERIALIZATION_VERSION, toolEnvironment, workspaceRoot);
                   logger.info(
                       String.format(
                           "Update configurations took %dms", s.elapsed(TimeUnit.MILLISECONDS)));
@@ -423,11 +424,13 @@ public final class BlazeCWorkspace implements ProjectComponent {
         .submit(context);
   }
 
-  public static ImmutableList<String> commit(
+  private ImmutableList<String> commit(
       OCWorkspaceImpl.ModifiableModel model,
       int serialVersion,
-      CidrToolEnvironment toolEnvironment) {
-    ImmutableList<String> issues = collectCompilerSettingsInParallel(model, toolEnvironment);
+      CidrToolEnvironment toolEnvironment,
+      WorkspaceRoot workspaceRoot) {
+    ImmutableList<String> issues =
+        collectCompilerSettingsInParallel(model, toolEnvironment, workspaceRoot);
     model.setClientVersion(serialVersion);
     model.preCommit();
     TransactionGuard.getInstance()
@@ -438,8 +441,10 @@ public final class BlazeCWorkspace implements ProjectComponent {
     return issues;
   }
 
-  private static ImmutableList<String> collectCompilerSettingsInParallel(
-      OCWorkspaceImpl.ModifiableModel model, CidrToolEnvironment toolEnvironment) {
+  private ImmutableList<String> collectCompilerSettingsInParallel(
+      OCWorkspaceImpl.ModifiableModel model,
+      CidrToolEnvironment toolEnvironment,
+      WorkspaceRoot workspaceRoot) {
     CompilerInfoCache compilerInfoCache = new CompilerInfoCache();
     TempFilesPool tempFilesPool = new CachedTempFilesPool();
     Session<Integer> session = compilerInfoCache.createSession(new EmptyProgressIndicator());
@@ -447,7 +452,8 @@ public final class BlazeCWorkspace implements ProjectComponent {
     try {
       int i = 0;
       for (OCResolveConfiguration.ModifiableModel config : model.getConfigurations()) {
-        session.schedule(i++, config, toolEnvironment);
+        CppCompat.scheduleInSession(
+            session, i++, config, toolEnvironment, workspaceRoot.directory().getAbsolutePath());
       }
       MultiMap<Integer, Message> messages = new MultiMap<>();
       session.waitForAll(messages);

@@ -41,6 +41,7 @@ java_library(
         "//common/experiments",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//sdkcompat",
         "//third_party/auto_value",
     ],
 )
