@@ -138,6 +138,12 @@ class GeneratedResourceClassifier {
       FileOperationProvider fileOperationProvider) {
     File resDirectory =
         OutputArtifactResolver.resolve(project, artifactLocationDecoder, artifactLocation);
+    if (resDirectory == null) {
+      logger.warn(
+          "Output artifact resolved to null. Artifact location: "
+              + artifactLocation.getRelativePath());
+      return GenResourceClassification.uninteresting(artifactLocation, 0);
+    }
     File[] children = fileOperationProvider.listFiles(resDirectory);
     if (children == null) {
       return GenResourceClassification.uninteresting(artifactLocation, 0);
