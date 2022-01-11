@@ -102,4 +102,9 @@ intellij_integration_test_suite(
         "//third_party/go:go_for_tests",
         "@junit//jar",
     ],
+    env = {
+        # Disable runtime checks because GoGenericsLibraryRootsProvider causes them to trigger
+        # genericsStub folder containing builtin.go should be added to source roots, but it's not
+        "NO_FS_ROOTS_ACCESS_CHECK": "true"
+    },
 )
