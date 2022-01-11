@@ -1,6 +1,10 @@
-v2021.12.13
+v2022.01.11
 ===========
-* Bug fixes and internal cleanup.
+* Don’t ship a buildifier (formatter for BUILD files) binary.
+  * Users will now be shown a notification in case the buildifier binary is not
+    available with a link to a guide on how to install it.
+  * Allow specifying a custom buildifier binary.
+
 
 v2021.10.05
 ===========
