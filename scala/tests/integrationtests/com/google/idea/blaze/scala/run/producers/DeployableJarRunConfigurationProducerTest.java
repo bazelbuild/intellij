@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.psi.PsiFile;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -42,6 +43,11 @@ public class DeployableJarRunConfigurationProducerTest
   @Override
   protected BuildSystem buildSystem() {
     return BuildSystem.Bazel;
+  }
+
+  @Before
+  public final void suppressNativeProducers() {
+    NonBlazeProducerSuppressor.suppressProducers(getProject());
   }
 
   @Test
