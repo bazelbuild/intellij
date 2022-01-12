@@ -74,6 +74,7 @@ public class MultipleJavaClassesTestContextProviderTest
         WorkspaceFileFinder.Provider.class, () -> file -> file.getPath().contains("test"));
 
     // required for IntelliJ to recognize annotations, JUnit version, etc.
+    // Adding into java source root so resolve scopes of all files in tests is the same.
     workspace.createPsiFile(
         new WorkspacePath("java/org/junit/runner/RunWith.java"),
         "package org.junit.runner;"
