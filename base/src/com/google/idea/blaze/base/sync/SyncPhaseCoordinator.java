@@ -558,6 +558,7 @@ final class SyncPhaseCoordinator {
       SyncResult syncResult,
       SyncStats.Builder stats) {
     try {
+      String syncStatus = "finished";
       if (syncResult.successful()) {
         Preconditions.checkNotNull(projectViewSet);
         BlazeProjectData projectData =
@@ -574,6 +575,8 @@ final class SyncPhaseCoordinator {
             .setLibraryCount(librariesCount);
         onSyncComplete(
             project, context, projectViewSet, buildIds, projectData, syncParams, syncResult);
+      } else {
+        syncStatus = SyncResult.CANCELLED.equals(syncResult) ? "canceled" : "failed";
       }
       stats
           .setSyncMode(syncParams.syncMode())
@@ -585,9 +588,7 @@ final class SyncPhaseCoordinator {
           .setBlazeExecTime(totalBlazeTime(stats.getCurrentTimedEvents()))
           .setTotalClockTime(Duration.between(startTime, Instant.now()));
       EventLoggingService.getInstance().log(stats.build());
-
-      String msg = syncResult == SyncResult.CANCELLED ? "Sync cancelled" : "Sync finished";
-      context.output(new StatusOutput(msg));
+      context.output(new StatusOutput("Sync " + syncStatus));
       outputTimingSummary(context, stats.getCurrentTimedEvents());
 
     } catch (Throwable e) {
