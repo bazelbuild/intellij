@@ -217,8 +217,8 @@ http_archive(
 http_archive(
     name = "scala_2021_2",
     build_file_content = _SCALA_BUILD_FILE,
-    sha256 = "ed070fd47e5f349e6948b39ae521b14710b175fcd9668e58c0e762e3937b0e08",
-    url = "https://plugins.jetbrains.com/files/1347/139883/scala-intellij-bin-2021.2.23.zip",
+    sha256 = "b67c9221a66a3851c10096149ffcb8ea22a04472c62b131cfbf7facfd0a64d4a",
+    url = "https://plugins.jetbrains.com/files/1347/150857/scala-intellij-bin-2021.2.29.zip",
 )
 
 # Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.

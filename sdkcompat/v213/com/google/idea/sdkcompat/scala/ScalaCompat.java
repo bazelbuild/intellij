@@ -10,12 +10,12 @@ import scala.Option;
 public class ScalaCompat {
   private ScalaCompat() {}
 
-  /** #api212: Inline the call. Method location and signature changed in 2021.3 */
+  /** #api211: Inline the call. Method location and signature changed in 2021.2 */
   public static Option<PsiMethod> findMainMethod(@NotNull ScObject obj) {
     return MyScalaMainMethodUtil.findScala2MainMethod(obj);
   }
 
-  /** #api212: Inline the call. Method location and signature changed in 2021.3 */
+  /** #api211: Inline the call. Method location and signature changed in 2021.2 */
   public static boolean hasMainMethod(@NotNull ScObject obj) {
     return MyScalaMainMethodUtil.hasScala2MainMethod(obj);
   }
