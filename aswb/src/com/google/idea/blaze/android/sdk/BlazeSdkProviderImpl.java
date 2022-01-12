@@ -16,9 +16,9 @@
 package com.google.idea.blaze.android.sdk;
 
 import com.android.repository.api.ProgressIndicator;
+import com.android.tools.idea.progress.StudioLoggerProgressIndicatorCompat;
 import com.android.tools.idea.sdk.AndroidSdks;
 import com.android.tools.idea.sdk.IdeSdks;
-import com.android.tools.idea.sdk.progress.StudioLoggerProgressIndicator;
 import com.google.idea.blaze.android.sync.sdk.SdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.ui.UIUtil;
@@ -43,7 +43,8 @@ public class BlazeSdkProviderImpl implements BlazeSdkProvider {
     }
     // We may have an android platform downloaded, but not created an IntelliJ SDK out of it.
     // If so, trigger the construction of an SDK
-    ProgressIndicator progress = new StudioLoggerProgressIndicator(BlazeSdkProviderImpl.class);
+    ProgressIndicator progress =
+        new StudioLoggerProgressIndicatorCompat(BlazeSdkProviderImpl.class);
     androidSdks.tryToChooseSdkHandler().getSdkManager(progress).reloadLocalIfNeeded(progress);
 
     return UIUtil.invokeAndWaitIfNeeded(
