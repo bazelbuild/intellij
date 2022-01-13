@@ -199,7 +199,7 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
 
   // #api211 @Override
   @Nullable
-  Iterable<File> getLintRuleJarsOverride() {
+  public Iterable<File> getLintRuleJarsOverride() {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
