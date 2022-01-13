@@ -35,7 +35,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -53,19 +52,17 @@ import org.junit.runners.JUnit4;
 public class MultipleJavaClassesTestContextProviderTest
     extends BlazeRunConfigurationProducerTestCase {
 
-  private SourceFolder javaSourceRoot;
-
   @Before
   public final void addSourceFolder() {
-    // create a source root so that the package prefixes are correct.
-    VirtualFile pkgRoot = workspace.createDirectory(new WorkspacePath("java"));
     ApplicationManager.getApplication()
         .runWriteAction(
             () -> {
               final ModifiableRootModel model =
                   ModuleRootManager.getInstance(testFixture.getModule()).getModifiableModel();
               ContentEntry contentEntry = model.getContentEntries()[0];
-              javaSourceRoot = contentEntry.addSourceFolder(pkgRoot, true, "");
+              // create a source root so that the package prefixes are correct.
+              VirtualFile pkgRoot = workspace.createDirectory(new WorkspacePath("java"));
+              contentEntry.addSourceFolder(pkgRoot, true, "");
               model.commit();
             });
 
@@ -76,18 +73,19 @@ public class MultipleJavaClassesTestContextProviderTest
         WorkspaceFileFinder.Provider.class, () -> file -> file.getPath().contains("test"));
 
     // required for IntelliJ to recognize annotations, JUnit version, etc.
+    // Adding into java source root so resolve scopes of all files in tests is the same.
     workspace.createPsiFile(
-        new WorkspacePath("org/junit/runner/RunWith.java"),
+        new WorkspacePath("java/org/junit/runner/RunWith.java"),
         "package org.junit.runner;"
             + "public @interface RunWith {"
             + "    Class<? extends Runner> value();"
             + "}");
     workspace.createPsiFile(
-        new WorkspacePath("org/junit/Test.java"),
+        new WorkspacePath("java/org/junit/Test.java"),
         "package org.junit;",
         "public @interface Test {}");
     workspace.createPsiFile(
-        new WorkspacePath("org/junit/runners/JUnit4.java"),
+        new WorkspacePath("java/org/junit/runners/JUnit4.java"),
         "package org.junit.runners;",
         "public class JUnit4 {}");
   }
@@ -100,7 +98,7 @@ public class MultipleJavaClassesTestContextProviderTest
               final ModifiableRootModel model =
                   ModuleRootManager.getInstance(testFixture.getModule()).getModifiableModel();
               ContentEntry contentEntry = model.getContentEntries()[0];
-              contentEntry.removeSourceFolder(javaSourceRoot);
+              contentEntry.clearSourceFolders();
               model.commit();
             });
   }

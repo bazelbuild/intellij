@@ -67,6 +67,10 @@ class DeployableJarRunConfigurationProducer
       return false;
     }
 
+    // Update to a more specific element so the resulting run configuration will have higher
+    // priority
+    sourceElement.set(mainObject);
+
     configuration.putUserData(TARGET_LABEL, target.label);
     configuration.setModule(context.getModule());
     configuration.setMainClassName(mainObject.qualifiedName());

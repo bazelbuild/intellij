@@ -84,6 +84,13 @@ intellij_unit_test_suite(
 intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
+    env = {
+        # Disable runtime checks because GoGenericsLibraryRootsProvider causes them to trigger
+        # genericsStub folder containing builtin.go should be added to source roots, but it's not.
+        # #api212: This affects only 2021.3 version of the platform. Should be fixed in 2022.1 and potentially
+        # in a Go plugin release after 213.6461.48 version.
+        "NO_FS_ROOTS_ACCESS_CHECK": "true",
+    },
     required_plugins = "com.google.idea.blaze.golang,org.jetbrains.plugins.go",
     test_package_root = "com.google.idea.blaze.golang",
     runtime_deps = [
