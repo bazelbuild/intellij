@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.projectsystem;
 
 import com.android.manifmerger.ManifestSystemProperty;
 import com.android.tools.idea.model.AndroidManifestIndex;
+import com.android.tools.idea.model.AndroidManifestIndexCompat;
 import com.android.tools.idea.model.AndroidManifestRawText;
 import com.android.tools.idea.model.MergedManifestModificationTracker;
 import com.android.tools.idea.projectsystem.ManifestOverrides;
@@ -58,7 +59,8 @@ public class PackageNameUtils {
             facet,
             () -> {
               boolean useIndex =
-                  AndroidManifestIndex.indexEnabled() && USE_ANDROID_MANIFEST_INDEX.getValue();
+                  AndroidManifestIndexCompat.indexEnabled()
+                      && USE_ANDROID_MANIFEST_INDEX.getValue();
               String packageName = doGetPackageName(facet, useIndex);
               return CachedValueProvider.Result.create(
                   StringUtil.nullize(packageName, true),
