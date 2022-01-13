@@ -82,6 +82,7 @@ java_library(
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
         "android-studio-2020.3": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
         "android-studio-2021.1": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
+        "android-studio-2021.2": glob(["tests/utils/sdkcompat/as203/com/android/sdklib/repository/*.java"]),
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
@@ -104,6 +105,7 @@ java_library(
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-2020.3": glob(["sdkcompat/as203/**/*.java"]),
         "android-studio-2021.1": glob(["sdkcompat/as211/**/*.java"]),
+        "android-studio-2021.2": glob(["sdkcompat/as212/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     visibility = combine_visibilities(

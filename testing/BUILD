@@ -33,6 +33,9 @@ java_library(
         "android-studio-2021.1": glob(["testcompat/v211/com/google/idea/sdkcompat/**/*.java"]) + glob([
             "testcompat/v211/com/google/idea/testing/cidr/*.java",
         ]),
+        "android-studio-2021.2": glob(["testcompat/v212/com/google/idea/sdkcompat/**/*.java"]) + glob([
+            "testcompat/v212/com/google/idea/testing/cidr/*.java",
+        ]),
         "clion-2020.3": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2021.1": glob(["testcompat/v211/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2021.2": glob(["testcompat/v212/com/google/idea/sdkcompat/**/*.java"]),
