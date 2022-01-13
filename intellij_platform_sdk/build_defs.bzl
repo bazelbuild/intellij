@@ -21,10 +21,10 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-under-dev": "clion-2021.2",
     # Indirect ij_product mapping for Bazel Plugin OSS
     "intellij-oss-stable": "intellij-2021.2",
-    "intellij-oss-beta": "intellij-2021.2",
+    "intellij-oss-beta": "intellij-2021.3",
     "intellij-oss-under-dev": "intellij-2021.3",
     "intellij-ue-oss-stable": "intellij-ue-2021.2",
-    "intellij-ue-oss-beta": "intellij-ue-2021.2",
+    "intellij-ue-oss-beta": "intellij-ue-2021.3",
     "intellij-ue-oss-under-dev": "intellij-ue-2021.3",
     "android-studio-oss-stable": "android-studio-2020.3",
     "android-studio-oss-beta": "android-studio-2020.3",
