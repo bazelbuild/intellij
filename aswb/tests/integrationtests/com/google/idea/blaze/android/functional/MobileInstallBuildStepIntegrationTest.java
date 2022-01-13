@@ -57,13 +57,11 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.util.Function;
 import java.io.File;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
 import org.junit.Test;
@@ -435,7 +433,7 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
    * {@link DeviceFutures} and all other implementations of {@link AndroidDevice} are final,
    * therefore we need this to stub out a fake {@link DeviceSession}.
    */
-  private static class FakeDevice implements AndroidDevice {
+  private static class FakeDevice extends AndroidDeviceCompat {
     @Override
     public ListenableFuture<IDevice> getLaunchedDevice() {
       IDevice device = mock(IDevice.class);
@@ -500,16 +498,6 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
         com.android.sdklib.AndroidVersion androidVersion,
         IAndroidTarget iAndroidTarget,
         EnumSet<HardwareFeature> enumSet,
-        @Nullable Set<String> set) {
-      return null;
-    }
-
-    // @Override #api40
-    public LaunchCompatibility canRun(
-        com.android.sdklib.AndroidVersion androidVersion,
-        IAndroidTarget iAndroidTarget,
-        AndroidFacet facet,
-        Function<AndroidFacet, EnumSet<HardwareFeature>> getRequiredHardwareFeatures,
         @Nullable Set<String> set) {
       return null;
     }
