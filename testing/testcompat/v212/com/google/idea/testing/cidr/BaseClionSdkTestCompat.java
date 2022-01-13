@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.sdkcompat;
+package com.google.idea.testing.cidr;
 
 import com.intellij.openapi.project.Project;
 import com.jetbrains.cidr.lang.symbols.symtable.building.OCSymbolTablesBuildingActivity;
