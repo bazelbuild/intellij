@@ -128,10 +128,14 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       if (isProfilerLaunch(runContext.getExecutor())) {
         amStartOptions.add(
             AndroidProfilerLaunchTaskContributor.getAmStartOptions(
-                project, packageName, launchOptions, device));
+                project,
+                packageName,
+                runContext.getProfileState(),
+                device,
+                runContext.getExecutor()));
         launchTasks.add(
             new AndroidProfilerLaunchTaskContributor.AndroidProfilerToolWindowLaunchTask(
-                project, launchOptions, packageName));
+                project, packageName));
       }
 
       // Do not get debugger state directly from the debugger itself.

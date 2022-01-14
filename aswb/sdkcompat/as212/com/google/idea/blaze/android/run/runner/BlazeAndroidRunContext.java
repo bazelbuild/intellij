@@ -22,6 +22,7 @@ import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
+import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
@@ -75,4 +76,6 @@ public interface BlazeAndroidRunContext {
   String getAmStartOptions();
 
   Executor getExecutor();
+
+  ProfilerState getProfileState();
 }
