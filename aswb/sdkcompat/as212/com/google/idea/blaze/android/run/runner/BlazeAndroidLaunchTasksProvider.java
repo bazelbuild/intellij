@@ -100,7 +100,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     // NOTE: Task for opening the profiler tool-window should come before deployment
     // to ensure the tool-window opens correctly. This is required because starting
     // the profiler session requires the tool-window to be open.
-    if (isProfilerLaunch(launchOptions)) {
+    if (isProfilerLaunch(runContext.getExecutor())) {
       launchTasks.add(new BlazeAndroidOpenProfilerWindowTask(project));
     }
 
@@ -125,7 +125,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
 
       ImmutableList.Builder<String> amStartOptions = ImmutableList.builder();
       amStartOptions.add(runContext.getAmStartOptions());
-      if (isProfilerLaunch(launchOptions)) {
+      if (isProfilerLaunch(runContext.getExecutor())) {
         amStartOptions.add(
             AndroidProfilerLaunchTaskContributor.getAmStartOptions(
                 project, packageName, launchOptions, device));

@@ -28,6 +28,7 @@ import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -89,5 +90,10 @@ public class BlazeAndroidTestRunContext extends BlazeAndroidTestRunContextBase {
             runConfiguration.getType().getId());
     }
     throw new AssertionError();
+  }
+
+  @Override
+  public Executor getExecutor() {
+    return env.getExecutor();
   }
 }

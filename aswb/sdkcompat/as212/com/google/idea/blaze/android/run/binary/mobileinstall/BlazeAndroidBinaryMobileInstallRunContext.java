@@ -21,6 +21,7 @@ import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
@@ -54,5 +55,10 @@ public class BlazeAndroidBinaryMobileInstallRunContext
         facet,
         androidDebuggerState,
         runConfiguration.getType().getId());
+  }
+
+  @Override
+  public Executor getExecutor() {
+    return env.getExecutor();
   }
 }
