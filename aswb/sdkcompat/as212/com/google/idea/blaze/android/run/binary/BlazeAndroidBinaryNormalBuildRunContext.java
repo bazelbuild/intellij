@@ -15,9 +15,14 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
+import static com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider.NATIVE_DEBUGGING_ENABLED;
+
+import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
+import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -27,7 +32,7 @@ import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
-/** Compat for #api203 */
+/** Compat for #api212 */
 public class BlazeAndroidBinaryNormalBuildRunContext
     extends BlazeAndroidBinaryNormalBuildRunContextBase {
   BlazeAndroidBinaryNormalBuildRunContext(
@@ -39,6 +44,14 @@ public class BlazeAndroidBinaryNormalBuildRunContext
       ApkBuildStep buildStep,
       String launchId) {
     super(project, facet, runConfiguration, env, configState, buildStep, launchId);
+  }
+
+  @Override
+  public void augmentLaunchOptions(LaunchOptions.Builder options) {
+    options.setDeploy(true).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
+    options.addExtraOptions(
+        ImmutableMap.of(
+            NATIVE_DEBUGGING_ENABLED, configState.getCommonState().isNativeDebuggingEnabled()));
   }
 
   @Nullable
@@ -59,5 +72,10 @@ public class BlazeAndroidBinaryNormalBuildRunContext
   @Override
   public Executor getExecutor() {
     return env.getExecutor();
+  }
+
+  @Override
+  public ProfilerState getProfileState() {
+    return configState.getProfilerState();
   }
 }

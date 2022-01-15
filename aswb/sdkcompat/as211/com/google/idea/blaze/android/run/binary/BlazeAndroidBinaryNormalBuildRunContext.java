@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
-/** Compat for #api203 */
+/** Compat for #api211 */
 public class BlazeAndroidBinaryNormalBuildRunContext
     extends BlazeAndroidBinaryNormalBuildRunContextBase {
   BlazeAndroidBinaryNormalBuildRunContext(
@@ -38,6 +38,17 @@ public class BlazeAndroidBinaryNormalBuildRunContext
       ApkBuildStep buildStep,
       String launchId) {
     super(project, facet, runConfiguration, env, configState, buildStep, launchId);
+  }
+
+  @Override
+  public void augmentLaunchOptions(LaunchOptions.Builder options) {
+    options.setDeploy(true).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
+    options.addExtraOptions(
+        ImmutableMap.of(
+            ProfilerState.ANDROID_PROFILER_STATE_ID,
+            configState.getProfilerState(),
+            NATIVE_DEBUGGING_ENABLED,
+            configState.getCommonState().isNativeDebuggingEnabled()));
   }
 
   @Nullable

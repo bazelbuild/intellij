@@ -40,6 +40,17 @@ public class BlazeAndroidBinaryNormalBuildRunContext
     super(project, facet, runConfiguration, env, configState, buildStep, launchId);
   }
 
+  @Override
+  public void augmentLaunchOptions(LaunchOptions.Builder options) {
+    options.setDeploy(true).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
+    options.addExtraOptions(
+        ImmutableMap.of(
+            ProfilerState.ANDROID_PROFILER_STATE_ID,
+            configState.getProfilerState(),
+            NATIVE_DEBUGGING_ENABLED,
+            configState.getCommonState().isNativeDebuggingEnabled()));
+  }
+
   @Nullable
   @Override
   @SuppressWarnings("unchecked")

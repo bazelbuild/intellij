@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
-import static com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider.NATIVE_DEBUGGING_ENABLED;
 
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.gradle.util.DynamicAppUtils;
@@ -31,13 +30,11 @@ import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
-import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
@@ -92,17 +89,6 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   @Override
   public BlazeAndroidDeviceSelector getDeviceSelector() {
     return new BlazeAndroidDeviceSelector.NormalDeviceSelector();
-  }
-
-  @Override
-  public void augmentLaunchOptions(LaunchOptions.Builder options) {
-    options.setDeploy(true).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
-    options.addExtraOptions(
-        ImmutableMap.of(
-            ProfilerState.ANDROID_PROFILER_STATE_ID,
-            configState.getProfilerState(),
-            NATIVE_DEBUGGING_ENABLED,
-            configState.getCommonState().isNativeDebuggingEnabled()));
   }
 
   @Override
