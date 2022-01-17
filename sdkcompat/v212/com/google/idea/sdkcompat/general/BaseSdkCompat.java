@@ -18,6 +18,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usages.TextChunk;
+import com.intellij.util.ui.VcsExecutablePathSelector;
 import java.nio.file.Path;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -90,5 +91,16 @@ public final class BaseSdkCompat {
   /** #api212: inline into BlazeNewProjectWizard */
   public static void setContextWizard(WizardContext context, AbstractWizard<?> wizard) {
     context.setWizard(wizard);
+  }
+
+  /** #api212: inline into HgConfigurationProjectPanel. Method params changed in 2021.3 */
+  public static void reset(
+      VcsExecutablePathSelector executablePathSelector,
+      @Nullable String globalPath,
+      boolean pathOverriddenForProject,
+      @Nullable String projectPath,
+      String autoDetectedPath) {
+    executablePathSelector.reset(
+        globalPath, pathOverriddenForProject, projectPath, autoDetectedPath);
   }
 }
