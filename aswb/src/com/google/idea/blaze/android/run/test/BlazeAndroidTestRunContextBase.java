@@ -24,6 +24,7 @@ import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
+import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.util.LaunchStatus;
@@ -148,6 +149,11 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
   @Override
   public ApkBuildStep getBuildStep() {
     return buildStep;
+  }
+
+  // @Override #api211
+  public ProfilerState getProfileState() {
+    return null;
   }
 
   @Override

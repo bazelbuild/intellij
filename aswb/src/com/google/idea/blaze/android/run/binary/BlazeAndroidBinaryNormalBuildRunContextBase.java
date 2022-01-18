@@ -99,7 +99,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
     options.setDeploy(true).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
     options.addExtraOptions(
         ImmutableMap.of(
-            ProfilerState.ANDROID_PROFILER_STATE_ID,
+            "android.profilers.state", // Not used after #api211
             configState.getProfilerState(),
             NATIVE_DEBUGGING_ENABLED,
             configState.getCommonState().isNativeDebuggingEnabled()));
@@ -170,6 +170,11 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   @Override
   public String getAmStartOptions() {
     return configState.getAmStartOptions();
+  }
+
+  // @Override  #api211
+  public ProfilerState getProfileState() {
+    return configState.getProfilerState();
   }
 
   @Nullable
