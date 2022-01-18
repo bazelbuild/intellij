@@ -157,10 +157,7 @@ public final class BlazeAndroidRunConfigurationRunner
   }
 
   private static LaunchOptions.Builder getDefaultLaunchOptions() {
-    return LaunchOptions.builder()
-        .setClearLogcatBeforeStart(false)
-        .setSkipNoopApkInstallations(true)
-        .setForceStopRunningApp(true);
+    return LaunchOptionsCompat.getDefaultLaunchOptions();
   }
 
   @Override
