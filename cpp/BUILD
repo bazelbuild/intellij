@@ -66,7 +66,6 @@ intellij_plugin_library(
                            select_for_plugin_api({
                                "android-studio-2020.3": [":workaround_cidr"],
                                "android-studio-2021.1": [":workaround_cidr"],
-                               "android-studio-2021.2": [":workaround_cidr"],
                                "clion-2020.3": [":workaround_cidr"],
                                "clion-2021.1": [":workaround_cidr"],
                                "default": [],
