@@ -94,7 +94,7 @@ public final class BaseSdkCompat {
     context.putUserData(AbstractWizard.KEY, wizard);
   }
 
-  /** #api212: inline into HgConfigurationProjectPanel. Method params changed in 2021.3 */
+  /** #api211: inline into HgConfigurationProjectPanel. Method params changed in 2021.2.4 */
   public static void reset(
       VcsExecutablePathSelector executablePathSelector,
       @Nullable String globalPath,
