@@ -252,8 +252,8 @@ http_archive(
 http_archive(
     name = "android_studio_2021_2",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio212",
-    sha256 = "08a4b75158b5c100578afebf20090cc68c4d0bdcf0223c85cc524d0c4f46debb",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2021.2.1.6/android-studio-2021.2.1.6-linux.tar.gz",
+    sha256 = "a34d9b0daf4a3fb815cf79530a74c1f44497de494f642af3d63f4287418b4a7b",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2021.2.1.7/android-studio-2021.2.1.7-linux.tar.gz",
 )
 
 # LICENSE: Common Public License 1.0
