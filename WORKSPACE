@@ -137,8 +137,8 @@ http_archive(
 http_archive(
     name = "python_2021_2",
     build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "e094cce16a4ca6062f0aa9974217299aa3d4fcec8130581e2d83c76bea10841a",
-    url = "https://plugins.jetbrains.com/files/7322/142192/python-ce-212.5457.59.zip",
+    sha256 = "ce110ae1a5d3787bc85ae88d67fa2faa2be959a3e8acfc3567f8ed7b64c9151a",
+    url = "https://plugins.jetbrains.com/files/7322/151370/python-ce-212.5712.43.zip",
 )
 
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
@@ -177,8 +177,8 @@ http_archive(
 http_archive(
     name = "go_2021_2",
     build_file_content = _GO_BUILD_FILE,
-    sha256 = "c60cdbce31a4aa66648db6e69de4c6eeb590a030a80ad54b1e3ab6225a59c957",
-    url = "https://plugins.jetbrains.com/files/9568/139071/go-212.5457.20.zip",
+    sha256 = "5c868f2be8feb552aa4f9edb2a3c48db68193eb49ba50ca0a0976f4b9de82c67",
+    url = "https://plugins.jetbrains.com/files/9568/149614/go-212.5712.14.zip",
 )
 
 # Go plugin for IntelliJ UE. Required at compile-time for Bazel integration.
@@ -217,8 +217,8 @@ http_archive(
 http_archive(
     name = "scala_2021_2",
     build_file_content = _SCALA_BUILD_FILE,
-    sha256 = "b67c9221a66a3851c10096149ffcb8ea22a04472c62b131cfbf7facfd0a64d4a",
-    url = "https://plugins.jetbrains.com/files/1347/150857/scala-intellij-bin-2021.2.29.zip",
+    sha256 = "8d9c2831920fb69a52898598dc7f78c455001b3ebd1956b972757ffae7c0f056",
+    url = "https://plugins.jetbrains.com/files/1347/153522/scala-intellij-bin-2021.2.30.zip",
 )
 
 # Scala plugin for IntelliJ CE. Required at compile-time for scala-specific features.
