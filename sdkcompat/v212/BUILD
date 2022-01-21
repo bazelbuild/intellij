@@ -7,7 +7,6 @@ licenses(["notice"])
 java_library(
     name = "v212",
     srcs = glob([
-        "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/indexing/**",
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/python/**",
@@ -31,6 +30,16 @@ java_library(
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/typescript/**",
+        ]),
+    ) + select_for_ide(
+        # TODO(b/215594482): Studio is on 2021.2.3, but IJ is on 2021.2.4
+        # We need separate compat APIs for these two versions until Studio
+        # is updated to 2021.2.4.
+        android_studio = glob([
+            "com/google/idea/sdkcompat/studio/**",
+        ]),
+        default = glob([
+            "com/google/idea/sdkcompat/general/**",
         ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],
