@@ -14,6 +14,10 @@ public abstract class ExecutableValidatorAdapter extends ExecutableValidator {
       String notificationErrorTitle,
       String notificationErrorDescription,
       String notificationSafeModeDescription) {
-    super(project, notificationErrorTitle, notificationErrorDescription);
+    super(
+        project,
+        notificationErrorTitle,
+        notificationErrorDescription,
+        notificationSafeModeDescription);
   }
 }
