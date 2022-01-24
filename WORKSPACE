@@ -476,13 +476,6 @@ http_archive(
     urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/%s/rules_kotlin_release.tgz" % rules_kotlin_version],
 )
 
-http_archive(
-    name = "protobuf_2021_3",
-    build_file_content = _PROTOBUF_BUILD_FILE,
-    sha256 = "36fe477b827a09fd916ddfc714e2be705ff5a3444d94ff4b73cac96551357996",
-    url = "https://plugins.jetbrains.com/files/14004/150890/protoeditor-213.6461.28.zip",
-)
-
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
 load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
 
