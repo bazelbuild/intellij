@@ -47,6 +47,7 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
   }
 
   void finishTask(Task task) {
+    updateTask(task);
     if (task.getParent().isPresent()) {
       return;
     }
