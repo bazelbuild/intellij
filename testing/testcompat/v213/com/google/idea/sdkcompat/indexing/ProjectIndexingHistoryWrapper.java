@@ -30,7 +30,8 @@ public class ProjectIndexingHistoryWrapper {
 
   public static ProjectIndexingHistoryWrapper create(Project project) {
     return new ProjectIndexingHistoryWrapper(
-        new ProjectIndexingHistoryImpl(project, /* indexingReason= */ ""));
+        new ProjectIndexingHistoryImpl(
+            project, /* indexingReason= */ "", /* wasFullIndexing= */ true));
   }
 
   /** #api203: inline into IndexingLoggerTest */
