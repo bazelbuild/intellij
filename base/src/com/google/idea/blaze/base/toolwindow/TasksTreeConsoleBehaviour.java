@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.common.ui.templates.Behavior;
 import com.intellij.execution.filters.Filter;
@@ -59,6 +60,16 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
 
   void taskStatus(Task task, StatusOutput output) {
     getConsole(task).println(output);
+  }
+
+  void taskState(Task task, StateUpdate output) {
+    task.setState(output.getState());
+    updateTask(task);
+  }
+
+  // Notifies the View that a task has been updated, to keep it in sync with the state.
+  private void updateTask(Task task) {
+    model.getTreeModel().tasksTreeProperty().updateTask(task);
   }
 
   public void navigate(Task task, HyperlinkInfo link, int offset) {

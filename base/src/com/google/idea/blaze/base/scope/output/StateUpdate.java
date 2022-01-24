@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2022 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,24 @@
 package com.google.idea.blaze.base.scope.output;
 
 import com.google.idea.blaze.base.scope.Output;
-import org.jetbrains.annotations.NotNull;
 
 /**
- * Status message output.
+ * State update.
  *
- * <p>Status output are shown sequentially, with previous status strings still visible.
+ * <p>Any state update given replaces any previous state; only the most recent one is visible at a
+ * time.
  *
- * <p>See also {@link StateUpdate}.
+ * <p>See also {@link StatusOutput}.
  */
-public class StatusOutput implements Output {
-  @NotNull String status;
+public final class StateUpdate implements Output {
 
-  public StatusOutput(@NotNull String status) {
-    this.status = status;
+  final String state;
+
+  public StateUpdate(String state) {
+    this.state = state;
   }
 
-  @NotNull
-  public String getStatus() {
-    return status;
+  public String getState() {
+    return state;
   }
 }

@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.toolwindow;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -66,14 +67,19 @@ public final class TasksToolWindowService implements Disposable {
     ApplicationManager.getApplication().invokeLater(() -> tabs.addTask(task, consoleFilters, this));
   }
 
-  /** Update the state and view with new task output */
+  /** Append new output to a task view. */
   public void output(Task task, PrintOutput output) {
     ApplicationManager.getApplication().invokeLater(() -> tabs.taskOutput(task, output));
   }
 
-  /** Update the state and the view with new task status */
+  /** Append new status to a task view. */
   public void status(Task task, StatusOutput output) {
     ApplicationManager.getApplication().invokeLater(() -> tabs.statusOutput(task, output));
+  }
+
+  /** Update the state in a task view. */
+  public void state(Task task, StateUpdate output) {
+    ApplicationManager.getApplication().invokeLater(() -> tabs.updateState(task, output));
   }
 
   /** Update the state and the view when task finishes */

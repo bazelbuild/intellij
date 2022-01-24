@@ -57,6 +57,7 @@ final class TasksTreeView extends AbstractView<Tree> {
     // when the tree is not displayed
     model.tasksTreeProperty().addAdditionListener(jTreeModel::newTaskAdded);
     model.tasksTreeProperty().addRemovalListener(jTreeModel::taskRemoved);
+    model.tasksTreeProperty().addUpdateListener(jTreeModel::taskUpdated);
   }
 
   @Override
@@ -144,6 +145,13 @@ final class TasksTreeView extends AbstractView<Tree> {
           /* indices= */ new int[] {taskIndex},
           /* children= */ new Task[] {task});
     }
+
+    void taskUpdated(Task task, int taskIndex) {
+      treeNodesChanged(
+          /* path= */ taskToTreePath(model.tasksTreeProperty().getParent(task)),
+          /* indices= */ new int[] {taskIndex},
+          /* children= */ new Task[] {task});
+    }
   }
 
   /** Swing's TreeCellRenderer that defines the representation of the tree node. */
@@ -181,12 +189,20 @@ final class TasksTreeView extends AbstractView<Tree> {
 
     private static String makeLabelText(Task task, boolean selected) {
       return String.format(
-          "<html>%s%s</html>", nameLabel(task.getName()), timesLabel(task, selected));
+          "<html>%s%s%s</html>",
+          nameLabel(task.getName()), stateLabel(task.getState()), timesLabel(task, selected));
     }
 
     private static CharSequence nameLabel(String name) {
       // truncate the name to avoid very long horizontal scroll in the tree
       return name.length() < 81 ? name : name.substring(0, 80) + "...";
+    }
+
+    private static CharSequence stateLabel(String state) {
+      if (state.isEmpty()) {
+        return "";
+      }
+      return String.format(" (%s)", state);
     }
 
     private static CharSequence timesLabel(Task task, boolean selected) {

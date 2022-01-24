@@ -25,7 +25,7 @@ public final class Task {
   private final String name;
   private final Type type;
   @Nullable private Task parent;
-  private String status = "";
+  private String state = "";
   @Nullable private Instant startTime;
   @Nullable private Instant endTime;
   private boolean hasErrors;
@@ -82,12 +82,12 @@ public final class Task {
     return endTime != null;
   }
 
-  String getStatus() {
-    return status;
+  String getState() {
+    return state;
   }
 
-  void setStatus(String status) {
-    this.status = status;
+  void setState(String state) {
+    this.state = state;
   }
 
   Optional<Task> getParent() {

@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
+import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.toolwindow.Task;
@@ -122,6 +123,7 @@ public final class ToolWindowScope implements BlazeScope {
   private final TasksToolWindowService tasksToolWindowController;
   private final OutputSink<PrintOutput> printSink;
   private final OutputSink<StatusOutput> statusSink;
+  private final OutputSink<StateUpdate> stateSink;
 
   private boolean finishTaskOnScopeEnd;
   private boolean activated;
@@ -153,12 +155,18 @@ public final class ToolWindowScope implements BlazeScope {
           activateIfNeeded(OutputType.NORMAL);
           return Propagation.Stop;
         };
+    stateSink =
+        (output) -> {
+          tasksToolWindowController.state(task, output);
+          return Propagation.Stop;
+        };
   }
 
   @Override
   public void onScopeBegin(BlazeContext context) {
     context.addOutputSink(PrintOutput.class, printSink);
     context.addOutputSink(StatusOutput.class, statusSink);
+    context.addOutputSink(StateUpdate.class, stateSink);
     if (startTaskOnScopeBegin) {
       tasksToolWindowController.startTask(task, consoleFilters);
     }

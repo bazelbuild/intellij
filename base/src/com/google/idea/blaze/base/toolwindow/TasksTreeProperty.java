@@ -37,6 +37,7 @@ final class TasksTreeProperty {
 
   private final Set<AddListener> addListeners = new HashSet<>();
   private final Set<RemoveListener> removeListeners = new HashSet<>();
+  private final Set<UpdateListener> updateListeners = new HashSet<>();
 
   Task getRoot() {
     return root;
@@ -80,6 +81,15 @@ final class TasksTreeProperty {
     }
   }
 
+  /** Update the UI following a change in state of a task. */
+  void updateTask(Task task) {
+    List<Task> siblings = adjacencyList.get(getParent(task));
+    int index = siblings.indexOf(task);
+    for (UpdateListener listener : updateListeners) {
+      listener.taskUpdated(task, index);
+    }
+  }
+
   private void cleanUpDetachedSubtree(Task task) {
     List<Task> children = adjacencyList.remove(task);
     if (children != null) {
@@ -97,6 +107,10 @@ final class TasksTreeProperty {
     removeListeners.add(listener);
   }
 
+  void addUpdateListener(UpdateListener listener) {
+    updateListeners.add(listener);
+  }
+
   void removeAdditionListener(AddListener listener) {
     addListeners.remove(listener);
   }
@@ -111,5 +125,9 @@ final class TasksTreeProperty {
 
   interface RemoveListener {
     void taskRemoved(Task task, int index);
+  }
+
+  interface UpdateListener {
+    void taskUpdated(Task task, int index);
   }
 }

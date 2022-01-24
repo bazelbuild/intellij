@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -61,6 +62,10 @@ final class ToolWindowTabs {
 
   void statusOutput(Task task, StatusOutput output) {
     getTab(task).behaviour.taskStatus(task, output);
+  }
+
+  void updateState(Task task, StateUpdate output) {
+    getTab(task).behaviour.taskState(task, output);
   }
 
   void navigate(Task task, HyperlinkInfo link, int offset) {
