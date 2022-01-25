@@ -30,7 +30,9 @@ public class ProjectIndexingHistoryWrapper {
 
   public static ProjectIndexingHistoryWrapper create(Project project) {
     return new ProjectIndexingHistoryWrapper(
-        new ProjectIndexingHistoryImpl(project, /* indexingReason= */ ""));
+        // The value for 'wasFullIndexing' is chosen arbitrarily as it doesn't matter for our tests.
+        new ProjectIndexingHistoryImpl(
+            project, /* indexingReason= */ "", /* wasFullIndexing= */ true));
   }
 
   /** #api203: inline into IndexingLoggerTest */
