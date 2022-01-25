@@ -1,3 +1,8 @@
+v2022.01.25
+===========
+* [Beta+Stable channel] CLion: Compatible with CLion 2021.3.
+* [Beta+Stable channel] IntelliJ: Compatible with IntelliJ 2021.3.
+
 v2022.01.11
 ===========
 * Don’t ship a buildifier (formatter for BUILD files) binary.
