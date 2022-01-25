@@ -25,6 +25,7 @@ import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.render.LabelBasedRenderer;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import java.awt.Component;
 import java.time.Duration;
@@ -65,6 +66,8 @@ final class TasksTreeView extends AbstractView<Tree> {
     Tree tree = new Tree(jTreeModel);
     tree.setRootVisible(false);
     tree.setCellRenderer(new TreeCellRenderer());
+    // This is required since we use animated icons in tree cell renderers:
+    UIUtil.putClientProperty(tree, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, Boolean.TRUE);
     return tree;
   }
 
