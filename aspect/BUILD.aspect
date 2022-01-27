@@ -33,6 +33,18 @@ java_import(
 )
 
 java_binary(
+    name = "CargoTomlBuilder_bin",
+    main_class = "com.google.idea.blaze.aspect.CargoTomlBuilder",
+    runtime_deps = [":cargo_toml_builder_lib"],
+    visibility = ["//visibility:public"],
+)
+
+java_import(
+    name = "cargo_toml_builder_lib",
+    jars = ["tools/CargoTomlBuilder_deploy.jar"],
+)
+
+java_binary(
     name = "CreateAar_bin",
     main_class = "com.google.idea.blaze.aspect.CreateAar",
     runtime_deps = [":jar_filter_lib"],

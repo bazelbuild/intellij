@@ -22,7 +22,16 @@ java_library(
         ":guava",
         "//intellij_platform_sdk:jsr305",
         "//proto:proto_deps",
+        "@night_config_core//jar",
+        "@night_config_toml//jar",
     ],
+)
+
+java_binary(
+    name = "CargoTomlBuilder",
+    main_class = "com.google.idea.blaze.aspect.CargoTomlBuilder",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":lib"],
 )
 
 java_binary(

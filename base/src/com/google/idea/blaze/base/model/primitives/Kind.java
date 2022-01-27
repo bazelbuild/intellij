@@ -83,12 +83,12 @@ public abstract class Kind {
    */
   @VisibleForTesting
   public static final class ApplicationState {
-    private static ApplicationState getService() {
+    public static ApplicationState getService() {
       return ServiceManager.getService(ApplicationState.class);
     }
 
     /** An internal map of all known rule types. */
-    private final Map<String, Kind> stringToKind = Collections.synchronizedMap(new HashMap<>());
+    public final Map<String, Kind> stringToKind = Collections.synchronizedMap(new HashMap<>());
 
     /** An internal map of all known rule types. */
     private final Multimap<LanguageClass, Kind> perLanguageKinds =

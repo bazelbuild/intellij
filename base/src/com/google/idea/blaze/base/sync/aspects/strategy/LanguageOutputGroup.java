@@ -26,6 +26,7 @@ public enum LanguageOutputGroup {
   KOTLIN(LanguageClass.KOTLIN, "kt"),
   PYTHON(LanguageClass.PYTHON, "py"),
   GO(LanguageClass.GO, "go"),
+  RUST(LanguageClass.RUST, "rs"),
   JAVASCRIPT(LanguageClass.JAVASCRIPT, "js"),
   TYPESCRIPT(LanguageClass.TYPESCRIPT, "ts"),
   DART(LanguageClass.DART, "dart");

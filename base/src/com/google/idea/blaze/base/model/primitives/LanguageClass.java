@@ -33,6 +33,7 @@ public enum LanguageClass implements ProtoWrapper<String> {
   PYTHON("python", ImmutableSet.of("py", "pyw")),
   SCALA("scala", ImmutableSet.of("scala")),
   KOTLIN("kotlin", ImmutableSet.of("kt")),
+  RUST("rust", ImmutableSet.of("rs")),
   ;
 
   private static final ImmutableMap<String, LanguageClass> RECOGNIZED_EXTENSIONS =

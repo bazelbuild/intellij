@@ -82,6 +82,7 @@ intellij_plugin(
         "//kotlin:plugin_library",
         "//plugin_dev:plugin_library",
         "//python:plugin_library",
+        "//rust:plugin_library",
         "//scala:plugin_library",
         "//skylark:plugin_library",
         "//terminal:plugin_library",

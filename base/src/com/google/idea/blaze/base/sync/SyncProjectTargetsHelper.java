@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.dependencies.DirectoryToTargetProvider;
 import com.google.idea.blaze.base.dependencies.SourceToTargetFilteringStrategy;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
@@ -41,6 +42,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /** Derives sync targets from the project directories. */
 public final class SyncProjectTargetsHelper {
@@ -134,9 +136,9 @@ public final class SyncProjectTargetsHelper {
         SourceToTargetFilteringStrategy.filterTargets(targets).stream()
             .filter(
                 t ->
-                    t.getKind() != null
-                        && t.getKind().getLanguageClasses().stream()
-                            .anyMatch(languageSettings::isLanguageActive))
+                    t.getKind() != null)
+//                        && t.getKind().getLanguageClasses().stream()
+//                            .anyMatch(languageSettings::isLanguageActive))
             .map(t -> t.label)
             .collect(toImmutableList());
     context.output(
@@ -144,6 +146,15 @@ public final class SyncProjectTargetsHelper {
             String.format(
                 "%d targets found under project directories; syncing %d of them.",
                 targets.size(), retained.size())));
+//    context.output(PrintOutput.log(targets.stream()
+//            .map(t -> t.kindString + ":kind=" + t.getKind())
+//            .collect(Collectors.joining(","))));
+//    context.output(PrintOutput.log("stringToKind=" + Kind.ApplicationState.getService().stringToKind.entrySet()));
+//    context.output(PrintOutput.log(targets.stream()
+//            .filter(t -> t.getKind() != null)
+//            .map(t -> t.getKind().getKindString() + t.getKind().getLanguageClasses().toString())
+//            .collect(Collectors.joining(","))));
+//    context.output(PrintOutput.log("activeLanguages: " + languageSettings.getActiveLanguages().toString()));
     return retained;
   }
 }

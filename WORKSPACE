@@ -337,6 +337,22 @@ jvm_maven_import_external(
     server_urls = ["https://repo1.maven.org/maven2"],
 )
 
+jvm_maven_import_external(
+    name = "night_config_core",
+    artifact = "com.electronwill.night-config:core:3.6.5",
+    artifact_sha256 = "d47fd261e4c20c6f800a0f354644b5e83840347dde17d46537a9cb1c5a4207ba",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+jvm_maven_import_external(
+    name = "night_config_toml",
+    artifact = "com.electronwill.night-config:toml:3.6.5",
+    artifact_sha256 = "12774bf07aeb893044fba8c38d80419f6f3adc0a28cc3b88325018dcf12e8bdf",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
 _JARJAR_BUILD_FILE = """
 java_binary(
     name = "jarjar_bin",
@@ -509,4 +525,13 @@ jvm_maven_import_external(
     artifact_sha256 = "2e3091a94b8b822c9b68c4dc92ad6a6b0e39e2245b0fc75862de20f5a7a71e9a",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+http_archive(
+    name = "rules_rust",
+    sha256 = "0e75661570c9859c15c6a10fbc3a3cfa8855bf4bb7db375612beca6ea4a61261",
+    strip_prefix = "rules_rust-abdb288efe98bebb23001adbfbad5468a9c08fe3",
+    urls = [
+        "https://github.com/vaticle/rules_rust/archive/abdb288efe98bebb23001adbfbad5468a9c08fe3.tar.gz",
+    ],
 )

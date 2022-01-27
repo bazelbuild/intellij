@@ -38,6 +38,7 @@ filegroup(
         "make_variables.bzl",
         ":BUILD.bazel",
         "//aspect/tools:CreateAar",
+        "//aspect/tools:CargoTomlBuilder_deploy.jar",
         "//aspect/tools:JarFilter_deploy.jar",
         "//aspect/tools:PackageParser_deploy.jar",
     ],

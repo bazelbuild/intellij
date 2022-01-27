@@ -13,6 +13,7 @@ load(
     ":make_variables.bzl",
     "expand_make_variables",
 )
+load("@rules_rust//rust:rust_common.bzl", "CrateInfo")
 
 # Defensive list of features that can appear in the C++ toolchain, but which we
 # definitely don't want to enable (when enabled, they'd contribute command line
@@ -414,6 +415,68 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     update_sync_output_groups(output_groups, "intellij-info-go", depset([ide_info_file]))
     update_sync_output_groups(output_groups, "intellij-compile-go", compile_files)
     update_sync_output_groups(output_groups, "intellij-resolve-go", depset(generated))
+    return True
+
+def _build_cargo_toml(ctx, target, source_files):
+    """Builds the Rust package manifest for the given source files."""
+    output_manifest = ctx.actions.declare_file("Cargo.toml")
+
+    args = ctx.actions.args()
+    args.add("--output-manifest")
+    args.add(output_manifest.path)
+
+    deps = {}
+    for dependency in [dep for dep in getattr(ctx.rule.attr, "deps", []) if CrateInfo in dep]:
+        deps[dependency[CrateInfo].name] = dependency[CrateInfo].version
+
+    args.add("--name")
+    args.add(_crate_name(target, ctx))
+
+    args.add_joined("--path-deps", [k for k, v in deps.items() if v == "0.0.0"], join_with = ":")
+    args.add_joined("--external-deps", ["{}={}".format(k, v) for k, v in deps.items() if v != "0.0.0"], join_with = ":")
+
+    valid_entry_points = ["%s.rs" % ctx.rule.attr.name]
+    if ctx.rule.kind == "rust_binary":
+        args.add("--bin-path")
+        valid_entry_points = valid_entry_points + ["main.rs"]
+    elif ctx.rule.kind == "rust_library":
+        args.add("--lib-path")
+        valid_entry_points = valid_entry_points + ["lib.rs"]
+
+    entry_points = [f for f in source_files if f.basename in valid_entry_points]
+    if len(entry_points) != 1:
+        fail("cannot determine entry point for %s target %s: srcs must contain exactly one of %s" % (ctx.rule.kind, ctx.rule.attr.name, str(valid_entry_points)))
+    args.add(entry_points[0].short_path)
+
+    ctx.actions.run(
+        inputs = source_files,
+        outputs = [output_manifest],
+        executable = ctx.executable._cargo_toml_builder,
+        arguments = [args],
+        mnemonic = "CargoPackageManifest",
+        progress_message = "Generating Cargo.toml for " + str(target.label),
+    )
+    return output_manifest
+
+def _crate_name(target, ctx):
+    name = ctx.rule.attr.name
+    for tag in ctx.rule.attr.tags:
+        if tag.startswith("crate-name"):
+            name = tag.split("=")[1]
+    return name
+
+def collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+    """Updates Rust-specific output groups, returns false if not a recognized Rust target."""
+    if not ctx.rule.kind in ["rust_binary", "rust_library"]:
+        return False
+
+    sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files.to_list()]
+    cargo_toml = _build_cargo_toml(ctx, target, sources)
+
+    ide_info["rust_ide_info"] = struct_omit_none(sources = [artifact_location(f) for f in sources])
+
+    update_sync_output_groups(output_groups, "intellij-info-rs", depset([ide_info_file]))
+    update_sync_output_groups(output_groups, "intellij-resolve-rs", depset([cargo_toml]))
     return True
 
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
@@ -1112,6 +1175,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
@@ -1178,6 +1242,12 @@ def make_intellij_info_aspect(aspect_impl, semantics):
             executable = True,
             allow_files = True,
         ),
+        "_cargo_toml_builder": attr.label(
+            default = tool_label("CargoTomlBuilder"),
+            cfg = "host",
+            executable = True,
+            allow_files = True,
+        )
     }
 
     # add attrs required by semantics
