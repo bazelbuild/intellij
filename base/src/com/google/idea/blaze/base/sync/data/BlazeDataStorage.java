@@ -62,7 +62,7 @@ public class BlazeDataStorage {
     return new File(getProjectConfigurationDir(), locationHash);
   }
 
-  private static File getProjectConfigurationDir() {
+  protected static File getProjectConfigurationDir() {
     return new File(PathManager.getSystemPath(), "blaze/projects").getAbsoluteFile();
   }
 
