@@ -425,15 +425,19 @@ def _build_cargo_toml(ctx, target, source_files):
     args.add("--output-manifest")
     args.add(output_manifest.path)
 
-    deps = {}
+    path_deps = []
+    external_deps = {}
     for dependency in [dep for dep in getattr(ctx.rule.attr, "deps", []) if CrateInfo in dep]:
-        deps[dependency[CrateInfo].name] = dependency[CrateInfo].version
+        if _is_cargo_raze_crate(dependency):
+            external_deps[dependency[CrateInfo].name] = _cargo_raze_crate_version(dependency)
+        else:
+            path_deps.append(dependency[CrateInfo].name)
 
     args.add("--name")
     args.add(_crate_name(target, ctx))
 
-    args.add_joined("--path-deps", [k for k, v in deps.items() if v == "0.0.0"], join_with = ":")
-    args.add_joined("--external-deps", ["{}={}".format(k, v) for k, v in deps.items() if v != "0.0.0"], join_with = ":")
+    args.add_joined("--path-deps", path_deps, join_with = ":")
+    args.add_joined("--external-deps", ["{}={}".format(k, v) for k, v in external_deps.items()], join_with = ":")
 
     valid_entry_points = ["%s.rs" % ctx.rule.attr.name]
     if ctx.rule.kind == "rust_binary":
@@ -457,6 +461,13 @@ def _build_cargo_toml(ctx, target, source_files):
         progress_message = "Generating Cargo.toml for " + str(target.label),
     )
     return output_manifest
+
+def _is_cargo_raze_crate(target):
+    return str(target.label).startswith("@raze__")
+
+def _cargo_raze_crate_version(target):
+    # example: @raze__rand__0_8_4//:rand --> 0.8.4
+    return str(target.label).split("//:")[0].split("__")[-1].replace("_", ".")
 
 def _crate_name(target, ctx):
     name = ctx.rule.attr.name

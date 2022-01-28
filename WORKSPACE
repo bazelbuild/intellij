@@ -529,9 +529,9 @@ jvm_maven_import_external(
 
 http_archive(
     name = "rules_rust",
-    sha256 = "0e75661570c9859c15c6a10fbc3a3cfa8855bf4bb7db375612beca6ea4a61261",
-    strip_prefix = "rules_rust-abdb288efe98bebb23001adbfbad5468a9c08fe3",
+    sha256 = "1a919f80faf6a5e3ee1d0fccf84775c5f6f6ee062eb413dd9f7560b6b02008bb",
+    strip_prefix = "rules_rust-1cb3c446b263c16b373e259e988f00c5f1e3f175",
     urls = [
-        "https://github.com/vaticle/rules_rust/archive/abdb288efe98bebb23001adbfbad5468a9c08fe3.tar.gz",
+        "https://github.com/bazelbuild/rules_rust/archive/1cb3c446b263c16b373e259e988f00c5f1e3f175.tar.gz",
     ],
 )
