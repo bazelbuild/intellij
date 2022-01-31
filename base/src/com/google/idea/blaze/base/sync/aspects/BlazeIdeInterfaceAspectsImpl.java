@@ -87,6 +87,7 @@ import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGro
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.google.idea.blaze.base.sync.sharding.ShardedBuildProgressTracker;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -579,6 +580,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             String.format(
                 "Building targets for shard %s of %s...", count, shardedTargets.shardCount());
 
+    final ShardedBuildProgressTracker progressTracker =
+        new ShardedBuildProgressTracker(shardedTargets.shardCount());
+
     BiFunction<List<? extends TargetExpression>, Integer, BuildResult> invocation =
         (targets, shard) ->
             Scope.push(
@@ -591,6 +595,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                       workspaceRoot,
                       "Build shard " + shard,
                       isSync);
+                  // we use context (rather than childContext) here since the shard state relates
+                  // to the parent task (which encapsulates all the build shards).
+                  progressTracker.onBuildStarted(context);
 
                   BlazeBuildOutputs result =
                       runBuildForTargets(
@@ -605,6 +612,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                           aspectStrategy,
                           outputGroups);
 
+                  progressTracker.onBuildCompleted(context); // TODO(b/216104482) track failures
                   if (!result.buildResult.outOfMemory()) {
                     combinedResult.set(
                         combinedResult.isNull()
