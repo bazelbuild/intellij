@@ -48,7 +48,7 @@ java_library(
         "intellij-ue-2021.2": glob(["testcompat/v212/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-2021.3": glob(["testcompat/v213/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-ue-2021.3": glob(["testcompat/v213/com/google/idea/sdkcompat/**/*.java"]),
-        "default": glob(["testcompat/v203/com/google/idea/sdkcompat/**/*.java"]),
+        "default": [],
     }),
     deps = [
         "//common/experiments",
