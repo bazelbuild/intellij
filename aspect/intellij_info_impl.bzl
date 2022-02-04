@@ -50,6 +50,9 @@ RUNTIME_DEPS = [
 
 PREREQUISITE_DEPS = []
 
+# Concatenated here for performance
+ALL_DEPS = DEPS + RUNTIME_DEPS + PREREQUISITE_DEPS
+
 # Dependency type enum
 COMPILE_TIME = 0
 
@@ -572,7 +575,64 @@ def _collect_generated_files(java):
         return [(java.annotation_processing.class_jar, java.annotation_processing.source_jar)]
     return []
 
-def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
+def print_debug(line):
+    #    print(line)
+    pass
+
+def target_compiles_java_or_scala(attrs):
+    """Determines whether a target unnecessarily compiles Java or Scala code (i.e., code which IntelliJ itself can and will parse without our help).
+
+    Assumptions:
+    - There's no need to compile any target which has a `srcs` attribute with `.java` or `.scala`
+
+    Note: this matches the logic used in divide_java_sources() below
+
+    Args:
+        attrs: the target's attribute values (i.e., ctx.rule.attr)
+    Returns:
+        boolean
+    """
+
+    if not hasattr(attrs, "srcs"):
+        return False
+    for src in attrs.srcs:
+        for f in src.files.to_list():
+            if f.is_source and (f.basename.endswith(".java") or f.basename.endswith(".scala")):
+                return True
+    return False
+
+def any_dep_compiles_java_or_scala_in_main_workspace(target, attrs):
+    """Determines whether any transitive dependencies of the given target unnecessarily compile Java or Scala code.
+
+    It does this by checking the IntelliJ Info provider, and relies on the fact that our aspect propagates
+    `compiles_java_or_scala` (the result of calling target_compiles_java_or_scala()) up through the dependency graph.
+
+    Another way to think about what this function does: it determines whether, for any transitive dependency of the
+    given target, it is in the main workspace and target_compiles_java_or_scala(that dep) returns True.
+
+    Args:
+        target: the Target whose dependencies we're analyzing (just used for debug logging)
+        attrs: the target's attribute values (i.e., ctx.rule.attr)
+    Returns:
+        boolean
+    """
+
+    # ALL_DEPS uses the same attr names that we pass to aspect(attr_aspects) in make_intellij_info_aspect, so this
+    # should traverse all dependencies on which Bazel has run this aspect
+    for dep_attr in ALL_DEPS:
+        if not hasattr(attrs, dep_attr):
+            continue
+        deps = getattr(attrs, dep_attr)
+
+        if type(deps) != "list":
+            deps = [deps]
+        for dep in deps:
+            if hasattr(dep, "intellij_info") and getattr(dep.intellij_info, "compiles_java_or_scala", False):
+                print_debug("%% Skipping {} because dep {} compiles java or scala".format(target.label, dep.label))
+                return True
+    return False
+
+def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups, extra_intellij_info):
     """Updates Java-specific output groups, returns false if not a Java target."""
     java = get_java_provider(target)
     if not java:
@@ -592,21 +652,32 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     sources = sources_from_target(ctx)
     jars = [library_artifact(output) for output in java_outputs]
     class_jars = [output.class_jar for output in java_outputs if output and output.class_jar]
-    output_jars = [jar for output in java_outputs for jar in jars_from_output(output)]
-    resolve_files = output_jars
+
+    is_in_main_workspace = not target.label.workspace_name
+    will_cause_java_or_scala_to_be_unnecessarily_compiled = \
+        (is_in_main_workspace and target_compiles_java_or_scala(ctx.rule.attr)) or \
+        any_dep_compiles_java_or_scala_in_main_workspace(target, ctx.rule.attr)
+
+    if will_cause_java_or_scala_to_be_unnecessarily_compiled:
+        print_debug("-- SKIPPING {} {}".format(ctx.rule.kind, ctx.label))
+        resolve_files = []
+    else:
+        print_debug("compiling {} {}".format(ctx.rule.kind, ctx.label))
+        resolve_files = [jar for output in java_outputs for jar in jars_from_output(output)]
     compile_files = class_jars
 
     gen_jars = []
     for generated_class_jar, generated_source_jar in _collect_generated_files(java):
         gen_jars.append(annotation_processing_jars(generated_class_jar, generated_source_jar))
-        resolve_files += [
-            jar
-            for jar in [
-                generated_class_jar,
-                generated_source_jar,
+        if not will_cause_java_or_scala_to_be_unnecessarily_compiled:
+            resolve_files += [
+                jar
+                for jar in [
+                    generated_class_jar,
+                    generated_source_jar,
+                ]
+                if jar != None and not jar.is_source
             ]
-            if jar != None and not jar.is_source
-        ]
         compile_files += [
             jar
             for jar in [generated_class_jar]
@@ -621,7 +692,8 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         jdeps_file = java.outputs.jdeps
     if jdeps_file:
         jdeps = artifact_location(jdeps_file)
-        resolve_files.append(jdeps_file)
+        if not will_cause_java_or_scala_to_be_unnecessarily_compiled:
+            resolve_files.append(jdeps_file)
 
     java_sources, gen_java_sources, srcjars = divide_java_sources(ctx)
 
@@ -662,6 +734,8 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         test_class = getattr(ctx.rule.attr, "test_class", None),
         plugin_processor_jars = plugin_processor_jars,
     )
+
+    extra_intellij_info["compiles_java_or_scala"] = will_cause_java_or_scala_to_be_unnecessarily_compiled
 
     ide_info["java_ide_info"] = java_info
     ide_info_files += [ide_info_file]
@@ -1106,12 +1180,13 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     # Collect test info
     ide_info["test_info"] = build_test_info(ctx)
 
+    extra_intellij_info = {}
     handled = False
     handled = collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+    handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups, extra_intellij_info) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
@@ -1135,6 +1210,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
             kind = ctx.rule.kind,
             output_groups = output_groups,
             target_key = target_key,
+            **extra_intellij_info
         ),
         output_groups = output_groups,
     )
