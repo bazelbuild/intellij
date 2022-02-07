@@ -243,8 +243,8 @@ http_archive(
 http_archive(
     name = "android_studio_2021_1",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio211",
-    sha256 = "2f01b9203241169765b290e84cda5b8b5b6882b8b67ef10e1036e492262fac91",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2021.1.1.20/android-studio-2021.1.1.20-linux.tar.gz",
+    sha256 = "3de3092082df6ae9d3969478115efaa909539590dc5a829eb3ad6a7bd5bda2a4",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2021.1.1.21/android-studio-2021.1.1.21-linux.tar.gz",
 )
 
 # The plugin api for android_studio_2021_2. This is required to build ASwB,
