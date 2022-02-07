@@ -253,6 +253,14 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-latest-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=android-studio-latest",
+    },
+)
+
+config_setting(
     name = "android-studio-beta",
     values = {
         "define": "ij_product=android-studio-beta",
@@ -313,6 +321,14 @@ config_setting(
 config_setting(
     name = "android-studio-2021.1",
     values = {
+        "define": "ij_product=android-studio-2021.1",
+    },
+)
+
+config_setting(
+    name = "android-studio-2021.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-2021.1",
     },
 )
