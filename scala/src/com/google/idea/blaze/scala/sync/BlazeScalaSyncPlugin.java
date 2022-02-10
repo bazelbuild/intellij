@@ -80,6 +80,8 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
     if (!blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.SCALA)) {
       return;
     }
+    String highest = "0";
+    Library highestLibrary = null;
     for (Library library :
         LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
       // Convert the type of the SDK library to prevent the scala plugin from
@@ -89,13 +91,19 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
       // (they're on an implicit AnyVal class inside of a package object)
       String libraryName = library.getName();
       if (libraryName != null && libraryName.matches("^scala3?-library.+")) {
-        ExistingLibraryEditor editor = new ExistingLibraryEditor(library, null);
-        editor.setType(ScalaLibraryType.apply());
         Matcher matcher = versionPattern.matcher(libraryName);
-        Option<String> version = matcher.find() ? Some.apply(matcher.group()) : Option$.MODULE$.empty();
-        editor.setProperties(ScalaLibraryProperties.apply(version, Seq$.MODULE$.empty()));
-        editor.commit();
+        String version = matcher.find() ? matcher.group() : null;
+        if (version != null && version.compareTo(highest) > 0) {
+          highest = version;
+          highestLibrary = library;
+        }
       }
+    }
+    if (highestLibrary != null) {
+      ExistingLibraryEditor editor = new ExistingLibraryEditor(highestLibrary, null);
+      editor.setType(ScalaLibraryType.apply());
+      editor.setProperties(ScalaLibraryProperties.apply(Some.apply(highest), Seq$.MODULE$.empty()));
+      editor.commit();
     }
   }
 
