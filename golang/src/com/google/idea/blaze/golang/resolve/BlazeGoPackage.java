@@ -58,6 +58,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Processor;
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -157,11 +158,33 @@ public class BlazeGoPackage extends GoPackage {
       if (target.getGoIdeInfo() == null) {
         continue;
       }
-      builder.putAll(
-          target.getKey().getLabel(),
-          getSourceFiles(target, project, projectData, libraryToTestMap));
+      ImmutableSet<File> sourceFiles =
+          getSourceFiles(target, project, projectData, libraryToTestMap).stream()
+              .map(BlazeGoPackage::toRealFile)
+              .filter(Objects::nonNull)
+              .collect(toImmutableSet());
+      builder.putAll(target.getKey().getLabel(), sourceFiles);
     }
     return builder.build();
+  }
+
+  /**
+   * Workaround for https://github.com/bazelbuild/intellij/issues/2057. External workspace symlinks
+   * can be changed externally by practically any bazel command. Such changes to symlinks will make
+   * IntelliJ red. This helper resolves such symlink to an actual location.
+   *
+   * @see com.google.idea.blaze.java.libraries.JarCache.patchExternalFilePath()
+   */
+  @Nullable
+  private static File toRealFile(@Nullable File maybeExternal) {
+    if (maybeExternal == null) {
+      return null;
+    }
+    try {
+      return maybeExternal.toPath().toRealPath().toFile();
+    } catch (IOException e) {
+      return maybeExternal;
+    }
   }
 
   private static ImmutableSet<File> getSourceFiles(
