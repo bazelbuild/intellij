@@ -41,6 +41,7 @@ DEPS = [
     "test_app",  # android_instrumentation_test
     "instruments",  # android_instrumentation_test
     "tests",  # From test_suite
+    "compilers",  # From go_proto_library
 ]
 
 # Run-time dependency attributes, grouped by type.
