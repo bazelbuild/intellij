@@ -12,7 +12,7 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-ue-beta": "intellij-ue-2021.2",
     "intellij-ue-under-dev": "intellij-ue-2021.3",
     "android-studio-latest": "android-studio-2020.3",
-    "android-studio-latest-mac": "android-studio-2021.1-mac",
+    "android-studio-latest-mac": "android-studio-2021.2-mac",
     "android-studio-beta": "android-studio-2020.3",
     "android-studio-beta-mac": "android-studio-2020.3-mac",
     "android-studio-canary": "android-studio-2021.2",
