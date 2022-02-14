@@ -63,6 +63,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import java.util.Collection;
@@ -193,11 +194,12 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData) {
+    Sdk currentSdk = ProjectRootManager.getInstance(project).getProjectSdk();
 
     LanguageLevel javaLanguageLevel =
         JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData);
 
-    final Sdk sdk = Jdks.chooseOrCreateJavaSdk(javaLanguageLevel);
+    Sdk sdk = Jdks.chooseOrCreateJavaSdk(currentSdk, javaLanguageLevel);
     if (sdk == null) {
       String msg =
           String.format(
@@ -208,7 +210,12 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
       IssueOutput.error(msg).submit(context);
       return;
     }
-    setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
+
+    LanguageLevel currentLanguageLevel =
+        LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+    if (sdk != currentSdk || javaLanguageLevel != currentLanguageLevel) {
+      setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
+    }
   }
 
   private static void setProjectSdkAndLanguageLevel(
