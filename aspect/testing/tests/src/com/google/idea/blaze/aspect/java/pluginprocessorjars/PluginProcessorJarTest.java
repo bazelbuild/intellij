@@ -22,7 +22,6 @@ import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.Intellij
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.BazelIntellijAspectTest;
 import com.google.idea.blaze.aspect.IntellijAspectTest;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -46,7 +45,6 @@ public class PluginProcessorJarTest extends BazelIntellijAspectTest {
           ? "../auto_value/auto-value-1.6.2.jar"
           : "third_party/java_src/auto/value/libvalue_processor.jar";
 
-  @Ignore("b/211509545")
   @Test
   public void ruleWithNoPlugins() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":no_plugin_fixture");
@@ -54,7 +52,6 @@ public class PluginProcessorJarTest extends BazelIntellijAspectTest {
     assertThat(targetIdeInfo.getJavaIdeInfo().getPluginProcessorJarsList()).isEmpty();
   }
 
-  @Ignore("b/211509545")
   @Test
   public void ruleWithPlugins_createsPluginProcessorJars() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":has_plugin_fixture");
@@ -70,7 +67,6 @@ public class PluginProcessorJarTest extends BazelIntellijAspectTest {
         .contains(OUTPUT_GROUP_FILES);
   }
 
-  @Ignore("b/211509545")
   @Test
   public void ruleWithDeps_createsPluginProcessorJars() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":has_plugin_deps_fixture");
