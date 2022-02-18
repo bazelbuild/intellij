@@ -37,8 +37,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2021_3",
     build_file = "@//intellij_platform_sdk:BUILD.idea213",
-    sha256 = "27cebd703daa14f4a87e19877adfa7d3b093b7f1f0478f2f5fd23b58e3582668",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2021.3.1/ideaIC-2021.3.1.zip",
+    sha256 = "fe8ca97ab6be25610dcf14872db9c7f34fcae17499a6d81a428a9ee48c59a8a9",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2021.3.2/ideaIC-2021.3.2.zip",
 )
 
 # The plugin api for IntelliJ UE 2020.3. This is required to run UE-specific
@@ -72,8 +72,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2021_3",
     build_file = "@//intellij_platform_sdk:BUILD.ue213",
-    sha256 = "da33bd1b485a847d805c75125ab43bae46f5452f02e7027e6950f4788f0a8b9d",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2021.3.1/ideaIU-2021.3.1.zip",
+    sha256 = "cd0471674b450495575e6471dbab4b1d88c3f1aff39c1c7f1c6120cf46f226aa",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2021.3.2/ideaIU-2021.3.2.zip",
 )
 
 # The plugin api for CLion 2020.3. This is required to build CLwB,
@@ -105,8 +105,8 @@ http_archive(
 http_archive(
     name = "clion_2021_3",
     build_file = "@//intellij_platform_sdk:BUILD.clion213",
-    sha256 = "6b4415cb2f2ca27ba30387612c7c06ab78d67c42c1aaceff6a5846a3468d3d09",
-    url = "https://download.jetbrains.com/cpp/CLion-2021.3.2.tar.gz",
+    sha256 = "35986be8adfe0a291a0d2d550c1bf4861ae6c33ecbc71198a472e0ac01a0f10d",
+    url = "https://download.jetbrains.com/cpp/CLion-2021.3.3.tar.gz",
 )
 
 _PYTHON_CE_BUILD_FILE = """
@@ -145,8 +145,8 @@ http_archive(
 http_archive(
     name = "python_2021_3",
     build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "605d5d078c6049bd70d868bcb7bd8e1e65dc9fc124d7befcda99920e1fc38ad1",
-    url = "https://plugins.jetbrains.com/files/7322/152502/python-ce-213.6461.82.zip",
+    sha256 = "8789a2b834fc0589b956ffae910dd59a56773462a39d159b094969e33aeba8e1",
+    url = "https://plugins.jetbrains.com/files/7322/155289/python-ce-213.6777.52.zip",
 )
 
 _GO_BUILD_FILE = """
@@ -185,8 +185,8 @@ http_archive(
 http_archive(
     name = "go_2021_3",
     build_file_content = _GO_BUILD_FILE,
-    sha256 = "4edc64b1bd012338bd766f6948738f60e47e157831c0dd38b0af0f0ad229cf57",
-    url = "https://plugins.jetbrains.com/files/9568/151587/go-213.6461.48.zip",
+    sha256 = "89c02f0973df8647cecc0b2f799e43d0d896bfad0fdfd3539c162c02fc5bbb0c",
+    url = "https://plugins.jetbrains.com/files/9568/155285/go-213.6777.52.zip",
 )
 
 _SCALA_BUILD_FILE = """
