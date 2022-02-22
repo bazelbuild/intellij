@@ -568,8 +568,16 @@ final class SyncPhaseCoordinator {
         stats
             .setTargetMapSize(projectData.getTargetMap().targets().size())
             .setLibraryCount(librariesCount);
-        onSyncComplete(
-            project, context, projectViewSet, buildIds, projectData, syncParams, syncResult);
+        validate(project, context, projectData);
+        SyncListener.sendOnSyncComplete(
+            project,
+            context,
+            BlazeImportSettingsManager.getInstance(project).getImportSettings(),
+            projectViewSet,
+            buildIds,
+            projectData,
+            syncParams.syncMode(),
+            syncResult);
       } else {
         syncStatus = SyncResult.CANCELLED.equals(syncResult) ? "canceled" : "failed";
       }
@@ -589,7 +597,7 @@ final class SyncPhaseCoordinator {
     } catch (Throwable e) {
       logSyncError(context, e);
     } finally {
-      afterSync(project, syncParams, context, syncResult, buildIds);
+      SyncListener.sendAfterSync(project, context, syncParams.syncMode(), syncResult, buildIds);
     }
   }
 
@@ -710,45 +718,8 @@ final class SyncPhaseCoordinator {
     SyncScope.push(
         parentContext,
         context -> {
-          for (SyncListener listener : SyncListener.EP_NAME.getExtensions()) {
-            listener.onSyncStart(project, context, syncMode);
-          }
+          SyncListener.sendOnSyncStart(project, context, syncMode);
         });
-  }
-
-  private static void afterSync(
-      Project project,
-      BlazeSyncParams syncParams,
-      BlazeContext context,
-      SyncResult syncResult,
-      ImmutableSet<Integer> buildIds) {
-    final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
-    for (SyncListener syncListener : syncListeners) {
-      syncListener.afterSync(project, context, syncParams.syncMode(), syncResult, buildIds);
-    }
-  }
-
-  private static void onSyncComplete(
-      Project project,
-      BlazeContext context,
-      ProjectViewSet projectViewSet,
-      ImmutableSet<Integer> buildIds,
-      BlazeProjectData blazeProjectData,
-      BlazeSyncParams syncParams,
-      SyncResult syncResult) {
-    validate(project, context, blazeProjectData);
-    final SyncListener[] syncListeners = SyncListener.EP_NAME.getExtensions();
-    for (SyncListener syncListener : syncListeners) {
-      syncListener.onSyncComplete(
-          project,
-          context,
-          BlazeImportSettingsManager.getInstance(project).getImportSettings(),
-          projectViewSet,
-          buildIds,
-          blazeProjectData,
-          syncParams.syncMode(),
-          syncResult);
-    }
   }
 
   private static void validate(

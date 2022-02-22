@@ -68,4 +68,64 @@ public interface SyncListener {
       SyncMode syncMode,
       SyncResult syncResult,
       ImmutableSet<Integer> buildIds) {}
+
+  /**
+   * Call onSyncStart on all registered listeners.
+   *
+   * If any throws an exception, that exception is propagated directly to the caller and subsequent
+   * listeners are not notified.
+   */
+  static void sendOnSyncStart(Project project, BlazeContext context, SyncMode syncMode)
+      throws SyncFailedException, SyncCanceledException {
+    for (SyncListener syncListener : EP_NAME.getExtensions()) {
+      syncListener.onSyncStart(project, context, syncMode);
+    }
+  }
+
+  /** Call buildStarted on all registered listeners. */
+  static void sendBuildStarted(
+      Project project,
+      BlazeContext context,
+      boolean fullProjectSync,
+      int buildId,
+      ImmutableList<TargetExpression> targets) {
+    for (SyncListener syncListener : EP_NAME.getExtensions()) {
+      syncListener.buildStarted(project, context, fullProjectSync, buildId, targets);
+    }
+  }
+
+  /** Call onSyncComplete on all registered listeners. */
+  static void sendOnSyncComplete(
+      Project project,
+      BlazeContext context,
+      BlazeImportSettings importSettings,
+      ProjectViewSet projectViewSet,
+      ImmutableSet<Integer> buildIds,
+      BlazeProjectData blazeProjectData,
+      SyncMode syncMode,
+      SyncResult syncResult) {
+    for (SyncListener syncListener : EP_NAME.getExtensions()) {
+      syncListener.onSyncComplete(
+          project,
+          context,
+          importSettings,
+          projectViewSet,
+          buildIds,
+          blazeProjectData,
+          syncMode,
+          syncResult);
+    }
+  }
+
+  /** Call afterSync on all registered listeners. */
+  static void sendAfterSync(
+      Project project,
+      BlazeContext context,
+      SyncMode syncMode,
+      SyncResult syncResult,
+      ImmutableSet<Integer> buildIds) {
+    for (SyncListener syncListener : EP_NAME.getExtensions()) {
+      syncListener.afterSync(project, context, syncMode, syncResult, buildIds);
+    }
+  }
 }

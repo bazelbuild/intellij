@@ -113,13 +113,6 @@ final class BuildPhaseSyncTask {
     return resultBuilder.setBuildPhaseStats(ImmutableList.of(buildStats.build())).build();
   }
 
-  private void notifyBuildStarted(
-      BlazeContext context, boolean fullProjectSync, ImmutableList<TargetExpression> targets) {
-    SyncListener.EP_NAME
-        .extensions()
-        .forEach(l -> l.buildStarted(project, context, fullProjectSync, buildId, targets));
-  }
-
   private void doRun(BlazeContext context) throws SyncFailedException, SyncCanceledException {
     List<TargetExpression> targets = Lists.newArrayList();
     ProjectViewSet viewSet = projectState.getProjectViewSet();
@@ -161,7 +154,12 @@ final class BuildPhaseSyncTask {
       printTargets(context, syncParams.title(), syncParams.targetExpressions());
     }
     buildStats.setTargets(targets);
-    notifyBuildStarted(context, syncParams.addProjectViewTargets(), ImmutableList.copyOf(targets));
+    SyncListener.sendBuildStarted(
+        project,
+        context,
+        syncParams.addProjectViewTargets(),
+        buildId,
+        ImmutableList.copyOf(targets));
 
     ShardedTargetsResult shardedTargetsResult =
         BlazeBuildTargetSharder.expandAndShardTargets(
