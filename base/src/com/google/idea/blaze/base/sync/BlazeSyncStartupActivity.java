@@ -49,7 +49,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
         .setTitle("Sync Project")
         .setSyncMode(SyncMode.STARTUP)
         .setSyncOrigin("BlazeSyncStartupActivity")
-        .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
+        .setProject(project)
         .setAddProjectViewTargets(true)
         .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
         .build();

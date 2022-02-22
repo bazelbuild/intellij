@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.intellij.openapi.project.Project;
 import java.util.Collection;
 
 /** Parameters that control the sync. */
@@ -67,7 +68,20 @@ public abstract class BlazeSyncParams {
 
     public abstract Builder setSyncOrigin(String syncOrigin);
 
-    public abstract Builder setBlazeBuildParams(BlazeBuildParams value);
+    /**
+     * @deprecated Please use {@link #setBlazeBuildParamsFrom(BlazeSyncParams)} or {@link
+     *     #setProject(Project)}) instead.
+     */
+    @Deprecated
+    abstract Builder setBlazeBuildParams(BlazeBuildParams value);
+
+    public Builder setBlazeBuildParamsFrom(BlazeSyncParams other) {
+      return setBlazeBuildParams(other.blazeBuildParams());
+    }
+
+    public Builder setProject(Project project) {
+      return setBlazeBuildParams(BlazeBuildParams.fromProject(project));
+    }
 
     public abstract Builder setBackgroundSync(boolean value);
 

@@ -41,7 +41,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
@@ -152,7 +151,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setProject(getProject())
             .setAddProjectViewTargets(true)
             .build());
     List<Sdk> allSdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
@@ -191,7 +190,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setProject(getProject())
             .setAddProjectViewTargets(true)
             .build());
     assertSyncSuccess(testEnvArgument.targetMap, testEnvArgument.javaRoot);
@@ -217,7 +216,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.NO_BUILD)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setProject(getProject())
             .setAddProjectViewTargets(true)
             .build());
 
@@ -248,7 +247,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setProject(getProject())
             .setAddProjectViewTargets(true)
             .build());
     assertSyncSuccess(testEnvArgument.targetMap, testEnvArgument.javaRoot);
@@ -259,7 +258,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.NO_BUILD)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setProject(getProject())
             .setAddProjectViewTargets(true)
             .build());
     assertSyncSuccess(testEnvArgument.targetMap, testEnvArgument.javaRoot);
@@ -281,7 +280,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setProject(getProject())
             .setAddProjectViewTargets(true)
             .build());
     assertSyncSuccess(testEnvArgument.targetMap, testEnvArgument.javaRoot);
@@ -321,7 +320,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setProject(getProject())
             .setAddProjectViewTargets(true)
             .build());
 
@@ -401,7 +400,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
+            .setProject(getProject())
             .setAddProjectViewTargets(true)
             .build());
 
