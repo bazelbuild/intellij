@@ -256,7 +256,7 @@ config_setting(
     name = "android-studio-latest-mac",
     values = {
         "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-latest",
+        "define": "ij_product=android-studio-canary",
     },
 )
 
