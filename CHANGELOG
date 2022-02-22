@@ -1,6 +1,6 @@
-v2022.02.08
+v2022.02.22
 ===========
-* Bug fixes and internal cleanup.
+* Adapt Bazel plugin to the upcoming Starlark cc_library change.
 
 v2022.01.25
 ===========
