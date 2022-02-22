@@ -13,7 +13,6 @@ load(
     ":make_variables.bzl",
     "expand_make_variables",
 )
-load("@rules_rust//rust:rust_common.bzl", "CrateInfo")
 
 # Defensive list of features that can appear in the C++ toolchain, but which we
 # definitely don't want to enable (when enabled, they'd contribute command line
@@ -427,11 +426,12 @@ def _build_cargo_toml(ctx, target, source_files):
 
     path_deps = []
     external_deps = {}
-    for dependency in [dep for dep in getattr(ctx.rule.attr, "deps", []) if CrateInfo in dep]:
+    # TODO: try parsing label instead (of dependency)
+    for dependency in getattr(ctx.rule.attr, "deps", []):
         if _is_cargo_raze_crate(dependency):
-            external_deps[dependency[CrateInfo].name] = _cargo_raze_crate_version(dependency)
+            external_deps[_cargo_raze_crate_name(dependency)] = _cargo_raze_crate_version(dependency)
         else:
-            path_deps.append(dependency[CrateInfo].name)
+            path_deps.append(_path_dep_crate_name(dependency))
 
     args.add("--name")
     args.add(_crate_name(target, ctx))
@@ -465,9 +465,17 @@ def _build_cargo_toml(ctx, target, source_files):
 def _is_cargo_raze_crate(target):
     return str(target.label).startswith("@raze__")
 
+def _cargo_raze_crate_name(target):
+    # example: @raze__cfg_if__1_0_0//:cfg_if --> cfg-if
+    return str(target.label).split("//:")[1].replace("_", "-")
+
 def _cargo_raze_crate_version(target):
     # example: @raze__rand__0_8_4//:rand --> 0.8.4
     return str(target.label).split("//:")[0].split("__")[-1].replace("_", ".")
+
+def _path_dep_crate_name(target):
+    # example: //lib1:lib1
+    return str(target.label).split(":")[1]
 
 def _crate_name(target, ctx):
     name = ctx.rule.attr.name
