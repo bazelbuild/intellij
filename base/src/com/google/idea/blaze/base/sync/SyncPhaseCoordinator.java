@@ -190,7 +190,7 @@ final class SyncPhaseCoordinator {
   @GuardedBy("this")
   private UpdatePhaseTask pendingUpdateTask;
 
-  SyncPhaseCoordinator(Project project) {
+  private SyncPhaseCoordinator(Project project) {
     this.project = project;
     singleThreadedExecutor =
         MoreExecutors.listeningDecorator(
