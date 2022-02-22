@@ -68,7 +68,6 @@ import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.util.ConcurrencyUtil;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -169,9 +168,6 @@ final class SyncPhaseCoordinator {
     }
   }
 
-  private static final BoolExperiment allowConcurrentRemoteSyncs =
-      new BoolExperiment("allow.concurrent.remote.syncs", true);
-
   // an application-wide cap on the number of concurrent remote builds
   private static final int MAX_BUILD_TASKS = 8;
 
@@ -206,8 +202,7 @@ final class SyncPhaseCoordinator {
     if (syncParams.syncMode() == SyncMode.NO_BUILD) {
       return false;
     }
-    boolean remoteSync = syncParams.blazeBuildParams().blazeBinaryType().isRemote;
-    return remoteSync && allowConcurrentRemoteSyncs.getValue();
+    return syncParams.blazeBuildParams().blazeBinaryType().isRemote;
   }
 
   ListenableFuture<Void> syncProject(BlazeSyncParams syncParams) {
