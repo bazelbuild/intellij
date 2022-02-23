@@ -180,11 +180,15 @@ public class BlazeGoPackage extends GoPackage {
     if (maybeExternal == null) {
       return null;
     }
-    try {
-      return maybeExternal.toPath().toRealPath().toFile();
-    } catch (IOException e) {
-      return maybeExternal;
+    // do string manipulation instead of .toPath().toRealPath().toFile()
+    // because there might be a race condition and symlink won't be resolved at the time
+    String externalString = maybeExternal.toString();
+    if (externalString.contains("/external/")
+        && !externalString.contains("/bazel-out/")
+        && !externalString.contains("/blaze-out/")) {
+      return new File(externalString.replaceAll("/execroot.*/external/", "/external/"));
     }
+    return maybeExternal;
   }
 
   private static ImmutableSet<File> getSourceFiles(
