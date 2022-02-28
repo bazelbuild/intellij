@@ -205,21 +205,27 @@ final class SyncPhaseCoordinator {
     return syncParams.blazeBuildParams().blazeBinaryType().isRemote;
   }
 
-  ListenableFuture<Void> syncProject(BlazeSyncParams syncParams) {
+  ListenableFuture<Void> syncProject(BlazeSyncParams syncParams, BlazeContext parentContext) {
     boolean singleThreaded = !useRemoteExecutor(syncParams);
     return ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
         .setExecutor(singleThreaded ? singleThreadedExecutor : remoteBuildExecutor)
         .submitTask(
             indicator ->
-                Scope.root(
+                Scope.push(
+                    parentContext,
                     context -> {
+                      ToolWindowScope parentToolWindowScope =
+                          parentContext.getScope(ToolWindowScope.class);
+                      Task parentToolWindowTask =
+                          parentToolWindowScope != null ? parentToolWindowScope.getTask() : null;
+
                       BlazeSyncParams params = finalizeSyncParams(syncParams, context);
                       setupScopes(
                           params,
                           context,
                           indicator,
                           singleThreaded ? SyncPhase.ALL_PHASES : SyncPhase.BUILD,
-                          new Task(params.title(), Task.Type.BLAZE_SYNC),
+                          new Task(params.title(), Task.Type.BLAZE_SYNC, parentToolWindowTask),
                           /* startTaskOnScopeBegin= */ true);
                       runSync(params, singleThreaded, context);
                     }));

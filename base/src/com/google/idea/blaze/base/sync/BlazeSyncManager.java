@@ -16,25 +16,36 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.BlazeScope;
+import com.google.idea.blaze.base.scope.Scope;
+import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
+import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
+import com.google.idea.blaze.base.toolwindow.Task;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import java.util.Collection;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 /** Manages syncing and its listeners. */
 public class BlazeSyncManager {
@@ -56,57 +67,89 @@ public class BlazeSyncManager {
         && !SyncDirectoriesWarning.warn(project)) {
       return;
     }
+
+    if (BlazeImportSettingsManager.getInstance(project).getImportSettings() == null) {
+      throw new IllegalStateException(
+          String.format("Attempt to sync non-%s project.", Blaze.buildSystemName(project)));
+    }
+
     // an additional call to 'sync started'. This disables the sync actions while we wait for
     // 'runWhenSmart'
     BlazeSyncStatus.getInstance(project).syncStarted();
     DumbService.getInstance(project)
         .runWhenSmart(
             () -> {
-              if (BlazeImportSettingsManager.getInstance(project).getImportSettings() == null) {
-                throw new IllegalStateException(
-                    String.format(
-                        "Attempt to sync non-%s project.", Blaze.buildSystemName(project)));
-              }
-              if (!runInitialDirectoryOnlySync(syncParams)) {
-                @SuppressWarnings("FutureReturnValueIgnored")
-                Future<Void> future = submitTask(project, syncParams);
-                return;
-              }
-              BlazeSyncParams params =
-                  BlazeSyncParams.builder()
-                      .setTitle("Initial directory update")
-                      .setSyncMode(SyncMode.NO_BUILD)
-                      .setSyncOrigin(syncParams.syncOrigin())
-                      .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
-                      .setBackgroundSync(true)
-                      .build();
-              ListenableFuture<Void> initialSync = submitTask(project, params);
-              Futures.addCallback(
-                  initialSync,
-                  runOnSuccess(
-                      () -> {
-                        @SuppressWarnings("FutureReturnValueIgnored")
-                        Future<Void> future = submitTask(project, syncParams);
-                      }),
-                  PooledThreadExecutor.INSTANCE);
+              Future<Void> unusedFuture =
+                  ProgressiveTaskWithProgressIndicator.builder(project, "Initiating project sync")
+                      .submitTask(
+                          indicator ->
+                              Scope.root(
+                                  context -> {
+                                    context
+                                        .push(new ProgressIndicatorScope(indicator))
+                                        .push(buildToolWindowScope(syncParams, indicator));
+
+                                    if (!runInitialDirectoryOnlySync(syncParams)) {
+                                      executeTask(project, syncParams, context);
+                                      return;
+                                    }
+
+                                    BlazeSyncParams initialUpdateSyncParams =
+                                        BlazeSyncParams.builder()
+                                            .setTitle("Initial directory update")
+                                            .setSyncMode(SyncMode.NO_BUILD)
+                                            .setSyncOrigin(syncParams.syncOrigin())
+                                            .setBlazeBuildParams(
+                                                BlazeBuildParams.fromProject(project))
+                                            .setBackgroundSync(true)
+                                            .build();
+                                    executeTask(project, initialUpdateSyncParams, context);
+
+                                    if (!context.isCancelled()) {
+                                      executeTask(project, syncParams, context);
+                                    }
+                                  }));
             });
   }
 
-  @SuppressWarnings("FutureReturnValueIgnored")
-  private static ListenableFuture<Void> submitTask(Project project, BlazeSyncParams params) {
-    return SyncPhaseCoordinator.getInstance(project).syncProject(params);
+  private static void executeTask(Project project, BlazeSyncParams params, BlazeContext context) {
+    try {
+      SyncPhaseCoordinator.getInstance(project).syncProject(params, context).get();
+    } catch (InterruptedException e) {
+      context.output(new PrintOutput("Sync interrupted: " + e.getMessage()));
+      context.setCancelled();
+    } catch (ExecutionException e) {
+      context.output(new PrintOutput(e.getMessage(), OutputType.ERROR));
+      context.setHasError();
+    }
   }
 
-  private static FutureCallback<Void> runOnSuccess(Runnable runnable) {
-    return new FutureCallback<Void>() {
-      @Override
-      public void onSuccess(Void aVoid) {
-        runnable.run();
-      }
+  private Task getRootInvocationTask(BlazeSyncParams params) {
+    String taskTitle;
+    if (params.syncMode() == SyncMode.STARTUP) {
+      taskTitle = "Startup Sync";
+    } else if (params.syncOrigin().equals(BlazeSyncStartupActivity.SYNC_REASON)) {
+      taskTitle = "Importing " + project.getName();
+    } else if (params.syncMode() == SyncMode.PARTIAL) {
+      taskTitle = "Partial Sync";
+    } else {
+      taskTitle = "Incremental Sync";
+    }
+    return new Task(taskTitle, Task.Type.BLAZE_SYNC);
+  }
 
-      @Override
-      public void onFailure(Throwable throwable) {}
-    };
+  private BlazeScope buildToolWindowScope(BlazeSyncParams syncParams, ProgressIndicator indicator) {
+    BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
+    return new ToolWindowScope.Builder(project, getRootInvocationTask(syncParams))
+        .setProgressIndicator(indicator)
+        .setPopupBehavior(
+            syncParams.backgroundSync()
+                ? FocusBehavior.NEVER
+                : userSettings.getShowBlazeConsoleOnSync())
+        .setIssueParsers(
+            BlazeIssueParser.defaultIssueParsers(
+                project, WorkspaceRoot.fromProject(project), ContextType.Sync))
+        .build();
   }
 
   private static boolean runInitialDirectoryOnlySync(BlazeSyncParams syncParams) {
