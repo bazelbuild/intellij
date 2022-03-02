@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.run.producers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -37,13 +38,7 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
   private static final String ANDROID_PLUGIN_ID = "org.jetbrains.android";
   private static final String GRADLE_PLUGIN_ID = "org.jetbrains.plugins.gradle";
 
-  private static final ImmutableList<String> KOTLIN_PRODUCERS =
-      ImmutableList.of(
-          "org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinTestClassGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinTestMethodGradleConfigurationProducer");
+  private static final ImmutableList<String> KOTLIN_PRODUCERS = BaseSdkCompat.getKotlinProducers();
 
   private static final ImmutableList<String> ANDROID_PRODUCERS =
       ImmutableList.of(
