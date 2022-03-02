@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -46,6 +47,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
@@ -164,7 +166,20 @@ public final class BuildPluginBeforeRunTaskProvider
                       .setPopupBehavior(userSettings.getShowBlazeConsoleOnRun())
                       .addConsoleFilters(
                           new IssueOutputFilter(
-                              project, workspaceRoot, ContextType.RunConfiguration, true))
+                              project, workspaceRoot, ContextType.BeforeRunTask, true))
+                      .build())
+              .push(
+                  new ToolWindowScope.Builder(
+                          project,
+                          new com.google.idea.blaze.base.toolwindow.Task(
+                              "Build Plugin Jar",
+                              com.google.idea.blaze.base.toolwindow.Task.Type.BLAZE_BEFORE_RUN))
+                      .setPopupBehavior(userSettings.getShowBlazeConsoleOnRun())
+                      .setIssueParsers(
+                          BlazeIssueParser.defaultIssueParsers(
+                              project,
+                              WorkspaceRoot.fromProject(project),
+                              ContextType.BeforeRunTask))
                       .build())
               .push(new IdeaLogScope());
 
