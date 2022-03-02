@@ -31,7 +31,6 @@ java_library(
     select_for_plugin_api({
         "android-studio-2020.3": ["src/com/google/idea/blaze/cpp/workaround/BulkSymbolTableBuildingChangeListener.java"],
         "android-studio-2021.1": ["src/com/google/idea/blaze/cpp/workaround/BulkSymbolTableBuildingChangeListener.java"],
-        "clion-2020.3": ["src/com/google/idea/blaze/cpp/workaround/BulkSymbolTableBuildingChangeListener.java"],
         "clion-2021.1": ["src/com/google/idea/blaze/cpp/workaround/BulkSymbolTableBuildingChangeListener.java"],
         "default": [],
     }),
@@ -66,7 +65,6 @@ intellij_plugin_library(
                            select_for_plugin_api({
                                "android-studio-2020.3": [":workaround_cidr"],
                                "android-studio-2021.1": [":workaround_cidr"],
-                               "clion-2020.3": [":workaround_cidr"],
                                "clion-2021.1": [":workaround_cidr"],
                                "default": [],
                            }),
@@ -121,7 +119,6 @@ intellij_unit_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
-        "//testing:lib",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "@junit//jar",
