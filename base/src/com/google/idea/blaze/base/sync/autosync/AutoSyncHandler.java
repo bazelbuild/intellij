@@ -214,7 +214,6 @@ public class AutoSyncHandler implements ProjectComponent {
         .setTitle(AutoSyncProvider.AUTO_SYNC_TITLE)
         .setSyncMode(mode)
         .setSyncOrigin(origin)
-        .setBlazeBuildParams(params2.blazeBuildParams())
         .setBackgroundSync(params1.backgroundSync() && params2.backgroundSync())
         .addTargetExpressions(params1.targetExpressions())
         .addTargetExpressions(params2.targetExpressions())

@@ -32,8 +32,6 @@ public abstract class BlazeSyncParams {
   /** A string describing what triggered the sync (e.g. on startup, auto-sync, etc.). */
   public abstract String syncOrigin();
 
-  public abstract BlazeBuildParams blazeBuildParams();
-
   public abstract boolean backgroundSync();
 
   public abstract boolean addProjectViewTargets();
@@ -67,7 +65,14 @@ public abstract class BlazeSyncParams {
 
     public abstract Builder setSyncOrigin(String syncOrigin);
 
-    public abstract Builder setBlazeBuildParams(BlazeBuildParams value);
+    /**
+     * @deprecated This method no longer has any effect; the Blaze build params are derived directly
+     *     from the project so are no longer needed here.
+     */
+    @Deprecated
+    public Builder setBlazeBuildParams(BlazeBuildParams value) {
+      return this;
+    }
 
     public abstract Builder setBackgroundSync(boolean value);
 
@@ -107,7 +112,6 @@ public abstract class BlazeSyncParams {
         .setTitle(base.title())
         .setSyncMode(base.syncMode())
         .setSyncOrigin(base.syncOrigin())
-        .setBlazeBuildParams(base.blazeBuildParams())
         .setBackgroundSync(first.backgroundSync() && second.backgroundSync())
         .addTargetExpressions(first.targetExpressions())
         .addTargetExpressions(second.targetExpressions())

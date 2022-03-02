@@ -162,13 +162,14 @@ final class BuildPhaseSyncTask {
     }
     buildStats.setTargets(targets);
     notifyBuildStarted(context, syncParams.addProjectViewTargets(), ImmutableList.copyOf(targets));
+    BlazeBuildParams buildParams = BlazeBuildParams.fromProject(project);
 
     ShardedTargetsResult shardedTargetsResult =
         BlazeBuildTargetSharder.expandAndShardTargets(
             project,
             context,
             workspaceRoot,
-            syncParams.blazeBuildParams(),
+            buildParams,
             viewSet,
             projectState.getWorkspacePathResolver(),
             targets);
@@ -181,7 +182,7 @@ final class BuildPhaseSyncTask {
         .setSyncSharded(shardedTargets.shardCount() > 1)
         .setShardCount(shardedTargets.shardCount())
         .setShardStats(shardedTargets.shardStats())
-        .setParallelBuilds(syncParams.blazeBuildParams().parallelizeBuilds());
+        .setParallelBuilds(buildParams.parallelizeBuilds());
 
     BlazeBuildOutputs blazeBuildResult = getBlazeBuildResult(context, viewSet, shardedTargets);
     resultBuilder.setBuildResult(blazeBuildResult);
@@ -323,7 +324,7 @@ final class BuildPhaseSyncTask {
               context,
               workspaceRoot,
               projectState.getBlazeVersionData(),
-              syncParams.blazeBuildParams(),
+              BlazeBuildParams.fromProject(project),
               projectViewSet,
               projectState.getBlazeInfo(),
               shardedTargets,
