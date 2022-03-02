@@ -65,15 +65,6 @@ public abstract class BlazeSyncParams {
 
     public abstract Builder setSyncOrigin(String syncOrigin);
 
-    /**
-     * @deprecated This method no longer has any effect; the Blaze build params are derived directly
-     *     from the project so are no longer needed here.
-     */
-    @Deprecated
-    public Builder setBlazeBuildParams(BlazeBuildParams value) {
-      return this;
-    }
-
     public abstract Builder setBackgroundSync(boolean value);
 
     public abstract Builder setAddProjectViewTargets(boolean value);
