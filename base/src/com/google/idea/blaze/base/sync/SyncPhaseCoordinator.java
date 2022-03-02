@@ -251,7 +251,6 @@ final class SyncPhaseCoordinator {
                                   .setTitle("Filtering targets")
                                   .setSyncMode(SyncMode.PARTIAL)
                                   .setSyncOrigin(reason)
-                                  .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
                                   .setBackgroundSync(true)
                                   .build();
                           BlazeSyncParams params = finalizeSyncParams(syncParams, context);

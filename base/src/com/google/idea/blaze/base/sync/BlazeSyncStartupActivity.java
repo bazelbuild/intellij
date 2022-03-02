@@ -35,7 +35,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
       return;
     }
     if (hasProjectData(project, importSettings)) {
-      BlazeSyncManager.getInstance(project).requestProjectSync(startupSyncParams(project));
+      BlazeSyncManager.getInstance(project).requestProjectSync(startupSyncParams());
     } else {
       BlazeSyncManager.getInstance(project).incrementalProjectSync(SYNC_REASON);
     }
@@ -45,12 +45,11 @@ public class BlazeSyncStartupActivity implements StartupActivity {
     return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings) != null;
   }
 
-  private static BlazeSyncParams startupSyncParams(Project project) {
+  private static BlazeSyncParams startupSyncParams() {
     return BlazeSyncParams.builder()
         .setTitle("Sync Project")
         .setSyncMode(SyncMode.STARTUP)
         .setSyncOrigin(SYNC_REASON)
-        .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
         .setAddProjectViewTargets(true)
         .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
         .build();

@@ -99,8 +99,6 @@ public class BlazeSyncManager {
                                             .setTitle("Initial directory update")
                                             .setSyncMode(SyncMode.NO_BUILD)
                                             .setSyncOrigin(syncParams.syncOrigin())
-                                            .setBlazeBuildParams(
-                                                BlazeBuildParams.fromProject(project))
                                             .setBackgroundSync(true)
                                             .build();
                                     executeTask(project, initialUpdateSyncParams, context);
@@ -177,7 +175,6 @@ public class BlazeSyncManager {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin(reason)
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddProjectViewTargets(true)
             .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .build();
@@ -195,7 +192,6 @@ public class BlazeSyncManager {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin(reason)
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddProjectViewTargets(true)
             .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .build();
@@ -226,7 +222,6 @@ public class BlazeSyncManager {
             .setTitle("Partial Sync")
             .setSyncMode(SyncMode.PARTIAL)
             .setSyncOrigin(reason)
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .addTargetExpressions(targetExpressions)
             .addSourceFilesToSync(sources)
             .build();
@@ -258,7 +253,6 @@ public class BlazeSyncManager {
             .setTitle("Update Directories")
             .setSyncMode(SyncMode.NO_BUILD)
             .setSyncOrigin(reason)
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setBackgroundSync(inBackground)
             .build();
     requestProjectSync(syncParams);
@@ -275,7 +269,6 @@ public class BlazeSyncManager {
             .setTitle("Sync Working Set")
             .setSyncMode(SyncMode.PARTIAL)
             .setSyncOrigin(reason)
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddWorkingSet(true)
             .build();
     requestProjectSync(syncParams);

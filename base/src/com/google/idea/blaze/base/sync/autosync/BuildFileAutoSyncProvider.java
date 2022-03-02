@@ -19,7 +19,6 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -64,7 +63,6 @@ class BuildFileAutoSyncProvider implements AutoSyncProvider {
         .setTitle(AUTO_SYNC_TITLE)
         .setSyncMode(SyncMode.PARTIAL)
         .setSyncOrigin(AUTO_SYNC_REASON + ".BuildFileAutoSyncProvider")
-        .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
         .addTargetExpression(TargetExpression.allFromPackageNonRecursive(path.getParent()))
         .setBackgroundSync(true)
         .build();

@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -81,7 +80,6 @@ class ProtoAutoSyncProvider implements AutoSyncProvider {
             .setTitle(AUTO_SYNC_TITLE)
             .setSyncMode(SyncMode.PARTIAL)
             .setSyncOrigin(AUTO_SYNC_REASON + ".ProtoAutoSyncProvider")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .addTargetExpressions(plainTargets)
             .setBackgroundSync(true)
             .build();

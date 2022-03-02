@@ -33,7 +33,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -105,7 +104,6 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);
@@ -182,7 +180,6 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
 
@@ -258,7 +255,6 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
 
