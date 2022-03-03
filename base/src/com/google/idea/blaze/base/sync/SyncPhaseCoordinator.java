@@ -184,7 +184,7 @@ final class SyncPhaseCoordinator {
    * An integer uniquely identifying each build task. Used to track in-progress syncs on a
    * per-target basis.
    */
-  private static final AtomicInteger nextBuildId = new AtomicInteger();
+  private static final AtomicInteger nextBuildId = new AtomicInteger(); // TODO move to SyncTask
 
   @Nullable
   @GuardedBy("this")
@@ -356,6 +356,12 @@ final class SyncPhaseCoordinator {
    */
   @VisibleForTesting
   void runSync(BlazeSyncParams params, boolean singleThreaded, BlazeContext context) {
+    if (params.syncMode() == SyncMode.STARTUP) {
+      // STARTUP sync has been migrated to the new SyncTask class; use that.
+      SyncTask sync = new SyncTask(project, nextBuildId.getAndIncrement(), params, context);
+      sync.run();
+      return;
+    }
     Instant startTime = Instant.now();
     int buildId = nextBuildId.getAndIncrement();
     try {
