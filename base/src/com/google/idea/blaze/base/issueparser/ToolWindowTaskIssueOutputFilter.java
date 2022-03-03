@@ -39,11 +39,14 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Parses issues from blaze output, forwarding to {@link TasksToolWindowService}.
+ * Parses issues from blaze output, forwarding to {@link BuildTasksProblemsView}.
  *
  * <p>Copy and replacement of {@link IssueOutputFilter}.
  */
 public class ToolWindowTaskIssueOutputFilter implements Filter {
+
+  /* Placeholder task for filters not attached to the Build Tasks window (run configurations) */
+  private static final Task DUMMY_TASK = new Task("", Task.Type.OTHER);
 
   private final Project project;
   private final BlazeIssueParser issueParser;
@@ -60,6 +63,17 @@ public class ToolWindowTaskIssueOutputFilter implements Filter {
         BlazeIssueParser.defaultIssueParsers(project, workspaceRoot, invocationContext),
         task,
         true);
+  }
+
+  public ToolWindowTaskIssueOutputFilter(
+      Project project,
+      WorkspaceRoot workspaceRoot,
+      BlazeInvocationContext.ContextType invocationContext) {
+    this(
+        project,
+        BlazeIssueParser.defaultIssueParsers(project, workspaceRoot, invocationContext),
+        DUMMY_TASK,
+        false);
   }
 
   public ToolWindowTaskIssueOutputFilter(

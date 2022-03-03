@@ -22,8 +22,11 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
+import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
+import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -91,17 +94,23 @@ public final class BlazeCommandGenericRunConfigurationRunner
       this.handlerState =
           (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
       Project project = environment.getProject();
-      this.consoleFilters =
-          ImmutableList.<Filter>builder()
-              .add(
-                  new BlazeTargetFilter(true),
-                  new UrlFilter(),
-                  new IssueOutputFilter(
-                      project,
-                      WorkspaceRoot.fromProject(project),
-                      BlazeInvocationContext.ContextType.RunConfiguration,
-                      false))
-              .build();
+
+      ImmutableList.Builder<Filter> filtersBuilder = ImmutableList.builder();
+      filtersBuilder.add(new BlazeTargetFilter(true), new UrlFilter());
+      if (BlazeConsoleExperimentManager.isBlazeConsoleV1Enabled()) {
+        filtersBuilder.add(
+            new IssueOutputFilter(
+                project,
+                WorkspaceRoot.fromProject(project),
+                BlazeInvocationContext.ContextType.RunConfiguration,
+                false));
+      }
+      if (BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()) {
+        filtersBuilder.add(
+            new ToolWindowTaskIssueOutputFilter(
+                project, WorkspaceRoot.fromProject(project), ContextType.RunConfiguration));
+      }
+      this.consoleFilters = filtersBuilder.build();
     }
 
     private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {
