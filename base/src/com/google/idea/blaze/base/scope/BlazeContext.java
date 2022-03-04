@@ -24,12 +24,15 @@ import javax.annotation.Nullable;
 
 /** Scoped operation context. */
 public class BlazeContext {
+
   @Nullable private BlazeContext parentContext;
 
   private final List<BlazeScope> scopes = Lists.newArrayList();
 
   private final ListMultimap<Class<? extends Output>, OutputSink<?>> outputSinks =
       ArrayListMultimap.create();
+
+  private final List<Runnable> cancellationHandlers = Lists.newArrayList();
 
   private boolean isEnding;
   private boolean isCancelled;
@@ -77,6 +80,9 @@ public class BlazeContext {
     }
 
     isCancelled = true;
+    for (Runnable handler : cancellationHandlers) {
+      handler.run();
+    }
 
     if (parentContext != null) {
       parentContext.setCancelled();
@@ -236,5 +242,10 @@ public class BlazeContext {
   /** Sets whether errors are propagated to the parent context. */
   public void setPropagatesErrors(boolean propagatesErrors) {
     this.propagatesErrors = propagatesErrors;
+  }
+
+  /** Registers a function to be called if the context is cancelled */
+  public synchronized void addCancellationHandler(Runnable handler) {
+    this.cancellationHandlers.add(handler);
   }
 }

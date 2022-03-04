@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.common.collect.ImmutableList;
@@ -28,6 +29,7 @@ import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
 
 /** Tests for {@link BlazeContext}. */
 @RunWith(JUnit4.class)
@@ -358,5 +360,31 @@ public class BlazeContextTest extends BlazeTestCase {
     assertThat(sink1.gotOutput).isFalse();
     assertThat(sink2.gotOutput).isFalse();
     assertThat(sink3.gotOutput).isTrue();
+  }
+
+  @Test
+  public void testCancellationHandlersInvoked() {
+    BlazeContext context = new BlazeContext();
+
+    Runnable handler1 = Mockito.mock(Runnable.class);
+    Runnable handler2 = Mockito.mock(Runnable.class);
+    context.addCancellationHandler(handler1);
+    context.addCancellationHandler(handler2);
+
+    context.setCancelled();
+    verify(handler1, times(1)).run();
+    verify(handler2, times(1)).run();
+  }
+
+  @Test
+  public void testParentContextCancellationHandlersInvoked() {
+    BlazeContext parentContext = new BlazeContext();
+    BlazeContext childContext = new BlazeContext(parentContext);
+
+    Runnable handler = Mockito.mock(Runnable.class);
+    parentContext.addCancellationHandler(handler);
+
+    childContext.setCancelled();
+    verify(handler, times(1)).run();
   }
 }

@@ -134,6 +134,8 @@ public class ShardedTargetList {
                     (s, i) -> executor.submit(() -> invocation.apply(s, (int) i + 1)))
                 .collect(toImmutableList()));
 
+    context.addCancellationHandler(() -> future.cancel(true));
+
     String buildSystem = Blaze.buildSystemName(project);
     List<BuildResult> results =
         FutureUtil.waitForFuture(context, future)
