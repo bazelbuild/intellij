@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -51,6 +52,9 @@ public abstract class BuildPhaseSyncStats {
 
   @Nullable
   public abstract ShardStats shardStats();
+
+  @Nullable
+  public abstract BuildBinaryType buildBinaryType();
 
   public static Builder builder() {
     return new AutoValue_BuildPhaseSyncStats.Builder()
@@ -89,6 +93,8 @@ public abstract class BuildPhaseSyncStats {
     public abstract Builder setTotalTime(Duration totalTime);
 
     public abstract Builder setShardStats(ShardStats shardStats);
+
+    public abstract Builder setBuildBinaryType(BuildBinaryType type);
 
     public abstract BuildPhaseSyncStats build();
   }

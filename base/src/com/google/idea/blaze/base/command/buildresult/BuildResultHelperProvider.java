@@ -16,10 +16,8 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.errorprone.annotations.MustBeClosed;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import java.util.Optional;
 
 /** Determines which @{link BuildResultHelper} to use for the current project. */
 public interface BuildResultHelperProvider {
@@ -28,48 +26,20 @@ public interface BuildResultHelperProvider {
       ExtensionPointName.create("com.google.idea.blaze.BuildResultHelperProvider");
 
   /** Constructs a BuildResultHelper if enabled under the current project for non-sync cases. */
-  Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo);
-
-  /**
-   * Constructs a BuildResultHelper that supports a local BEP and artifacts. This is required
-   * because parts of Blaze Plugin implicitly depended on {@link BuildResultHelperProvider#create}
-   * returning {@link BuildResultHelper} corresponding to local builds. Eventually, all consumers
-   * should be migrated to use {@link #doCreate} and handle local or remote builds seamlessly.
-   */
-  Optional<BuildResultHelper> doCreateForLocalBuild(Project project);
-
-  /**
-   * Constructs a new build result helper.
-   *
-   * @param project The current {@link Project}.
-   * @param blazeInfo The latest {@link BlazeInfo} data.
-   */
   @MustBeClosed
-  static BuildResultHelper create(Project project, BlazeInfo blazeInfo) {
-    for (BuildResultHelperProvider extension : EP_NAME.getExtensions()) {
-      Optional<BuildResultHelper> helper = extension.doCreate(project, blazeInfo);
-      if (helper.isPresent()) {
-        return helper.get();
-      }
-    }
-    return new BuildResultHelperBep();
-  }
+  BuildResultHelper doCreate();
 
   /**
    * Constructs a new build result helper for local builds.
    *
-   * @deprecated All new consumers should use {@link #create} to support local and remote builds
-   *     seamlessly. The existing consumers should be migrated to do the same.
+   * @deprecated All new consumers should use {@link
+   *     com.google.idea.blaze.base.bazel.BazelBuildSystem.BazelBinary#buildResultProvider} to
+   *     support local and remote builds seamlessly. The existing consumers should be migrated to do
+   *     the same.
    */
   @Deprecated
   @MustBeClosed
   static BuildResultHelper createForLocalBuild(Project project) {
-    for (BuildResultHelperProvider extension : EP_NAME.getExtensions()) {
-      Optional<BuildResultHelper> helper = extension.doCreateForLocalBuild(project);
-      if (helper.isPresent()) {
-        return helper.get();
-      }
-    }
-    return new BuildResultHelperBep();
+    return new BuildResultHelperBep.Provider().doCreateForLocalBuild(project).get();
   }
 }

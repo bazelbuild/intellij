@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static junit.framework.TestCase.fail;
+import static org.mockito.Mockito.mock;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -28,8 +29,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
+import com.google.idea.blaze.base.bazel.BazelBuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider.GeneralProvider;
@@ -45,6 +48,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectView;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsSection;
@@ -52,8 +56,8 @@ import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSe
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedTargetsResult;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
@@ -81,6 +85,9 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
       fakeWildCardTargetExpanderExternalTaskProvider =
           new FakeWildCardTargetExpanderExternalTaskProvider();
 
+  private final BuildSystemProviderWrapper buildSystemProvider =
+      new BuildSystemProviderWrapper(new BazelBuildSystemProvider());
+
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     registerExtensionPoint(BuildFlagsProvider.EP_NAME, BuildFlagsProvider.class);
@@ -89,7 +96,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     registerExtensionPoint(TargetShardSizeLimit.EP_NAME, TargetShardSizeLimit.class)
         .registerExtension(OptionalInt::empty, testDisposable);
     registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(new BazelBuildSystemProvider(), testDisposable);
+        .registerExtension(buildSystemProvider, testDisposable);
     registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class)
         .registerExtension(new FakeBlazeSyncPlugin(), testDisposable);
     registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class)
@@ -104,9 +111,11 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     applicationServices.register(PrefetchService.class, new FakePrefetchService());
     applicationServices.register(FileOperationProvider.class, new FakeFileOperationProvider());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+    applicationServices.register(BlazeUserSettings.class, new BlazeUserSettings());
 
     projectServices.register(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(getProject()));
+    projectServices.register(ProjectViewManager.class, mock(ProjectViewManager.class));
   }
 
   @Test
@@ -251,7 +260,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   public void expandAndShardTargets_shardingApproachPartitionWithoutExpanding() {
     List<TargetExpression> targets = ImmutableList.of(target("//java/com/google:foo"));
     ShardedTargetsResult result =
-        expandAndShardTargets(BuildBinaryType.BLAZE, ProjectView.builder().build(), targets);
+        expandAndShardTargets(SyncStrategy.SERIAL, ProjectView.builder().build(), targets);
 
     assertThat(result.buildResult.exitCode).isEqualTo(0);
     assertThat(result.shardedTargets.shardStats.shardingApproach())
@@ -265,7 +274,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
         .setFailToBatchTarget(false);
     List<TargetExpression> targets = ImmutableList.of(target("//java/com/google:foo"));
     ShardedTargetsResult result =
-        expandAndShardTargets(BuildBinaryType.RABBIT, ProjectView.builder().build(), targets);
+        expandAndShardTargets(SyncStrategy.PARALLEL, ProjectView.builder().build(), targets);
 
     assertThat(result.buildResult.exitCode).isEqualTo(0);
     assertThat(result.shardedTargets.shardStats.shardingApproach())
@@ -280,7 +289,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     List<TargetExpression> targets = ImmutableList.of(target("//java/com/google:foo"));
     ShardedTargetsResult result =
         expandAndShardTargets(
-            BuildBinaryType.BLAZE,
+            SyncStrategy.PARALLEL,
             ProjectView.builder()
                 .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(true))
                 .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
@@ -302,7 +311,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     List<TargetExpression> targets = ImmutableList.of(target("//java/com/google/..."));
     ShardedTargetsResult result =
         expandAndShardTargets(
-            BuildBinaryType.RABBIT,
+            SyncStrategy.PARALLEL,
             ProjectView.builder()
                 .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(true))
                 .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
@@ -323,7 +332,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     List<TargetExpression> targets = ImmutableList.of(target("//java/com/google:foo"));
     ShardedTargetsResult result =
         expandAndShardTargets(
-            BuildBinaryType.RABBIT,
+            SyncStrategy.PARALLEL,
             ProjectView.builder()
                 .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(true))
                 .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
@@ -349,7 +358,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     List<TargetExpression> targets = ImmutableList.of(target("//java/com/google/..."));
     ShardedTargetsResult result =
         expandAndShardTargets(
-            BuildBinaryType.RABBIT,
+            SyncStrategy.PARALLEL,
             ProjectView.builder()
                 .add(ScalarSection.builder(ShardBlazeBuildsSection.KEY).set(true))
                 .add(ScalarSection.builder(TargetShardSizeSection.KEY).set(500))
@@ -364,19 +373,17 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   }
 
   private ShardedTargetsResult expandAndShardTargets(
-      BuildBinaryType buildBinaryType, ProjectView projectView, List<TargetExpression> targets) {
+      SyncStrategy syncStrategy, ProjectView projectView, List<TargetExpression> targets) {
+    buildSystemProvider.setSyncStrategy(syncStrategy);
     WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("workspaceRoot"));
     return BlazeBuildTargetSharder.expandAndShardTargets(
         getProject(),
         new BlazeContext(),
         workspaceRoot,
-        BlazeBuildParams.builder()
-            .setBlazeBinaryPath("foo")
-            .setBlazeBinaryType(buildBinaryType)
-            .build(),
         ProjectViewSet.builder().add(projectView).build(),
         new WorkspacePathResolverImpl(workspaceRoot),
-        targets);
+        targets,
+        buildSystemProvider.getBuildSystem());
   }
 
   private static TargetExpression target(String expression) {

@@ -70,29 +70,51 @@ public interface BuildSystemProvider {
     return provider.getWorkspaceRootProvider();
   }
 
+  BazelBuildSystem getBuildSystem();
+
   /**
    * Returns the default build system for this application. This should only be called in situations
    * where it doesn't make sense to use the current project.<br>
    * Otherwise, use {@link com.google.idea.blaze.base.settings.Blaze#getBuildSystem}
+   *
+   * @deprecated Use {@link #getBuildSystem()} instead.
    */
+  @Deprecated
   BuildSystem buildSystem();
 
-  /** @return The location of the blaze/bazel binary. */
+  /**
+   * @return The location of the blaze/bazel binary.
+   * @deprecated Use {@link #getBuildSystem()} instead.
+   */
+  @Deprecated
   String getBinaryPath(Project project);
 
-  /** @return The location of the blaze/bazel binary to use for syncing. */
+  /**
+   * @return The location of the blaze/bazel binary to use for syncing.
+   * @deprecated Use {@link #getBuildSystem()} instead.
+   */
+  @Deprecated
   default String getSyncBinaryPath(Project project) {
     return getBinaryPath(project);
   }
 
-  /** @return The type of the blaze/bazel binary to use for syncing */
-  BuildBinaryType getSyncBinaryType();
+  /**
+   * @return The type of the blaze/bazel binary to use for syncing
+   * @deprecated Use {@link #getBuildSystem()} instead.
+   */
+  @Deprecated
+  BuildBinaryType getSyncBinaryType(boolean forceParallel);
 
-  /** Returns true if syncing is done off the user's local machine. */
+  /**
+   * Returns true if syncing is done off the user's local machine.
+   *
+   * @deprecated Whether syncs happen remotely is not determined statically anymore. Logic depending
+   *     on this should be reconsidered, or updated to use the state of the most recent sync as
+   *     appropriate.
+   */
+  @Deprecated
   default boolean syncingRemotely() {
-    // TODO(brendandouglas): make this configurable based on context, move somewhere more
-    // appropriate
-    return getSyncBinaryType().isRemote;
+    return false;
   }
 
   WorkspaceRootProvider getWorkspaceRootProvider();

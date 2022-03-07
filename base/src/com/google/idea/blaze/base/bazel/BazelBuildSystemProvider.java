@@ -16,6 +16,13 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.MustBeClosed;
+import com.google.idea.blaze.base.bazel.BazelBuildSystem.BazelBinary;
+import com.google.idea.blaze.base.command.BlazeCommandRunner;
+import com.google.idea.blaze.base.command.CommandLineBlazeCommandRunner;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -38,6 +45,82 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   private static final ImmutableList<String> BUILD_FILE_NAMES =
       ImmutableList.of("BUILD.bazel", "BUILD");
 
+  /** LocalBlazeBin TODO */
+  public static class LocalBazelBin implements BazelBinary {
+    private final String path;
+    private final BuildResultHelperProvider buildResultHelperProvider;
+    private final BlazeCommandRunner runner = new CommandLineBlazeCommandRunner();
+
+    public LocalBazelBin(String path) {
+      this.path = path;
+      this.buildResultHelperProvider = new BuildResultHelperBep.Provider();
+    }
+
+    @Override
+    public BuildBinaryType getType() {
+      return BuildBinaryType.BAZEL;
+    }
+
+    @Override
+    public String getPath() {
+      return path;
+    }
+
+    @Override
+    public boolean supportsParallelism() {
+      return false;
+    }
+
+    @Override
+    public BazelBinary setBlazeInfo(BlazeInfo blazeInfo) {
+      return this;
+    }
+
+    @Override
+    @MustBeClosed
+    public BuildResultHelper createBuildResultProvider() {
+      return buildResultHelperProvider.doCreate();
+    }
+
+    @Override
+    public BlazeCommandRunner getCommandRunner() {
+      return runner;
+    }
+  }
+
+  /** BazelBinaryBuildSystem TODO */
+  public static class BazelBinaryBuildSystem implements BazelBuildSystem {
+    @Override
+    public BuildSystem type() {
+      return BuildSystem.Bazel;
+    }
+
+    @Override
+    public BazelBinary getBinary(Project project, boolean requestParallelismSupport) {
+      String binaryPath;
+      File projectSpecificBinary = getProjectSpecificBazelBinary(project);
+      if (projectSpecificBinary != null) {
+        binaryPath = projectSpecificBinary.getPath();
+      } else {
+        BlazeUserSettings settings = BlazeUserSettings.getInstance();
+        binaryPath = settings.getBazelBinaryPath();
+      }
+      return new LocalBazelBin(binaryPath);
+    }
+
+    @Override
+    public SyncStrategy getSyncStrategy() {
+      return SyncStrategy.SERIAL;
+    }
+  }
+
+  private final BazelBuildSystem buildSystem = new BazelBinaryBuildSystem();
+
+  @Override
+  public BazelBuildSystem getBuildSystem() {
+    return buildSystem;
+  }
+
   @Override
   public BuildSystem buildSystem() {
     return BuildSystem.Bazel;
@@ -45,12 +128,7 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
 
   @Override
   public String getBinaryPath(Project project) {
-    File projectSpecificBinary = getProjectSpecificBazelBinary(project);
-    if (projectSpecificBinary != null) {
-      return projectSpecificBinary.getPath();
-    }
-    BlazeUserSettings settings = BlazeUserSettings.getInstance();
-    return settings.getBazelBinaryPath();
+    return getBuildSystem().getBinary(project, false).getPath();
   }
 
   @Nullable
@@ -63,7 +141,7 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   }
 
   @Override
-  public BuildBinaryType getSyncBinaryType() {
+  public BuildBinaryType getSyncBinaryType(boolean forceParallel) {
     return BuildBinaryType.BAZEL;
   }
 
