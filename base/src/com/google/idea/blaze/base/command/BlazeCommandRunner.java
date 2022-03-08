@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.command;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -31,7 +30,6 @@ public interface BlazeCommandRunner {
   BlazeBuildOutputs run(
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
-      BlazeBuildParams buildParams,
       BuildResultHelper buildResultHelper,
       WorkspaceRoot workspaceRoot,
       BlazeContext context);
