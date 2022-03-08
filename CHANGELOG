@@ -1,3 +1,7 @@
+v2022.03.08
+===========
+* [2021.3] Kotlin tests: Fixed suggestion of run configurations.
+
 v2022.02.22
 ===========
 * Adapt Bazel plugin to the upcoming Starlark cc_library change.
