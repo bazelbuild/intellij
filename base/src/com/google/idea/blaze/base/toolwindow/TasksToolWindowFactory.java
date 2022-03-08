@@ -33,7 +33,7 @@ public class TasksToolWindowFactory implements DumbAware, ToolWindowFactory {
 
   @Override
   public void createToolWindowContent(Project project, ToolWindow toolWindow) {
-    String title = "Build Tasks (NEW)"; // TODO(olegsa) remove "(NEW)", and find some better name
+    String title = "Build Tasks";
     toolWindow.setTitle(title);
     toolWindow.setStripeTitle(title);
   }
