@@ -85,7 +85,7 @@ final class BlazeConfigurationResolver {
             project,
             toolchainLookupMap,
             executionRootPathResolver,
-            oldResult.compilerSettings);
+            oldResult.getCompilerSettings());
     ProjectViewTargetImportFilter projectViewFilter =
         new ProjectViewTargetImportFilter(
             Blaze.getBuildSystem(project), workspaceRoot, projectViewSet);

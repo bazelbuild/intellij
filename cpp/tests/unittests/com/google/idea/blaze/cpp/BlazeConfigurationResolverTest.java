@@ -15,12 +15,12 @@
  */
 package com.google.idea.blaze.cpp;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -66,6 +65,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -272,10 +273,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .addTarget(createCcToolchainSuite(cToolchainIdeInfoBuilder))
             .addTarget(ccTarget)
             .build();
-    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
-    ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainMap =
-        BlazeConfigurationToolchainResolver.buildToolchainLookupMap(context, targetMap);
-    assertThat(toolchainMap.get(ccTarget.getKey())).isEqualTo(cToolchainIdeInfoBuilder.build());
+    assertThatResolving(projectView, targetMap)
+        .producesCToolchainIdeInfoForTarget("//foo/bar:binary", cToolchainIdeInfoBuilder.build());
   }
 
   // Java cc_library depends directly on a cc_toolchain_suite target. Should use the
@@ -298,10 +297,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .addTarget(createCcToolchainSuite(cToolchainIdeInfoBuilder))
             .addTarget(ccTarget)
             .build();
-    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:library");
-    ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainMap =
-        BlazeConfigurationToolchainResolver.buildToolchainLookupMap(context, targetMap);
-    assertThat(toolchainMap.get(ccTarget.getKey())).isEqualTo(cToolchainIdeInfoBuilder.build());
+    assertThatResolving(projectView, targetMap)
+        .producesCToolchainIdeInfoForTarget("//foo/bar:library", cToolchainIdeInfoBuilder.build());
   }
 
   // Starlark cc_library depends on an intermediate cc_toolchain_alias target which has a direct
@@ -335,11 +332,9 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     .addDependency("//:toolchain_suite"))
             .addTarget(ccTarget)
             .build();
-    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:library");
-    ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainMap =
-        BlazeConfigurationToolchainResolver.buildToolchainLookupMap(context, targetMap);
-    assertThat(toolchainMap.get(ccTarget.getKey()))
-        .isEqualTo(cToolchainIdeInfoBuilderAlias.build());
+    assertThatResolving(projectView, targetMap)
+        .producesCToolchainIdeInfoForTarget(
+            "//foo/bar:library", cToolchainIdeInfoBuilderAlias.build());
   }
 
   // This is for an intermediate state where the cc_library starlarkification is rolled out, and
@@ -367,13 +362,12 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             .addTarget(ccTarget)
             .build();
     String errMessage =
-        "cc target //foo/bar:library does not depend on exactly 1 cc toolchain. Found 0"
-            + " toolchains.";
+        String.format(
+            "cc target is expected to depend on exactly 1 cc toolchain."
+                + " Found 0 toolchains for these targets: %s",
+            ccTarget.getKey());
     assertThatResolving(projectView, targetMap, errMessage)
-        .producesConfigurationsFor("//foo/bar:library");
-    ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainMap =
-        BlazeConfigurationToolchainResolver.buildToolchainLookupMap(context, targetMap);
-    assertThat(toolchainMap.get(ccTarget.getKey())).isEqualTo(cToolchainIdeInfoBuilder.build());
+        .producesCToolchainIdeInfoForTarget("//foo/bar:library", cToolchainIdeInfoBuilder.build());
   }
 
   @Test
@@ -765,12 +759,10 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     computeResolverResult(projectView, targetMap);
     errorCollector.assertNoIssues();
 
-    ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainMap =
-        BlazeConfigurationToolchainResolver.buildToolchainLookupMap(context, targetMap);
-    assertThat(toolchainMap.get(targetWith32Dep.build().getKey()))
-        .isEqualTo(aarch32Toolchain.build());
-    assertThat(toolchainMap.get(targetWith64Dep.build().getKey()))
-        .isEqualTo(aarch64Toolchain.build());
+    assertCToolchainIdeInfoForTarget(
+        targetWith32Dep.build().getKey().toString(), aarch32Toolchain.build());
+    assertCToolchainIdeInfoForTarget(
+        targetWith64Dep.build().getKey().toString(), aarch64Toolchain.build());
   }
 
   private static ArtifactLocation src(String path) {
@@ -892,6 +884,12 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
       }
 
       @Override
+      public void producesCToolchainIdeInfoForTarget(
+          String target, CToolchainIdeInfo expectedCToolchainIdeInfo) {
+        assertCToolchainIdeInfoForTarget(target, expectedCToolchainIdeInfo);
+      }
+
+      @Override
       public void producesNoConfigurations() {
         assertThat(resolverResult.getAllConfigurations()).isEmpty();
       }
@@ -920,8 +918,19 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     };
   }
 
+  private void assertCToolchainIdeInfoForTarget(String target, CToolchainIdeInfo expected) {
+    ImmutableList<Map.Entry<BlazeResolveConfigurationData, BlazeResolveConfiguration>> entry =
+        resolverResult.getConfigurationMap().entrySet().stream()
+            .filter(e -> Objects.equals(e.getValue().getDisplayName(), target))
+            .collect(toImmutableList());
+    assertThat(entry).hasSize(1);
+    assertThat(entry.get(0).getKey().getCToolchainIdeInfo()).isEqualTo(expected);
+  }
+
   private interface Subject {
     void producesConfigurationsFor(String... expected);
+
+    void producesCToolchainIdeInfoForTarget(String target, CToolchainIdeInfo expected);
 
     void producesNoConfigurations();
 
