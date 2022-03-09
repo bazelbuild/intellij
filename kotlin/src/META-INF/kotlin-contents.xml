@@ -23,4 +23,14 @@
     <TestContextProvider implementation="com.google.idea.blaze.kotlin.run.producers.KotlinTestContextProvider"/>
     <BinaryContextProvider implementation="com.google.idea.blaze.kotlin.run.producers.KotlinBinaryContextProvider"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <programRunner implementation="com.google.idea.blaze.kotlin.run.debug.KotlinDebuggerRunner" id="BazelKotlinDebug" order="before BlazeJavaDebug"/>
+    <notificationGroup id="KotlinDebuggerNotification" displayType="BALLOON"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.google.idea.blaze">
+    <kotlinxCoroutinesLibFinder implementation="com.google.idea.blaze.kotlin.run.debug.BazelKotlinxCoroutinesLibFinder"/>
+  </extensions>
+
 </idea-plugin>

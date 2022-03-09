@@ -139,7 +139,11 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommandBuilder(
-                    project, configuration, ImmutableList.of(), ExecutorType.RUN)
+                    project,
+                    configuration,
+                    ImmutableList.of(),
+                    ExecutorType.RUN,
+                    /*kotlinxCoroutinesJavaAgent=*/ null)
                 .build()
                 .toList())
         .isEqualTo(
@@ -162,7 +166,11 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommandBuilder(
-                    project, configuration, ImmutableList.of(), ExecutorType.DEBUG)
+                    project,
+                    configuration,
+                    ImmutableList.of(),
+                    ExecutorType.DEBUG,
+                    /*kotlinxCoroutinesJavaAgent=*/ null)
                 .build()
                 .toList())
         .isEqualTo(
@@ -185,7 +193,11 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommandBuilder(
-                    project, configuration, ImmutableList.of(), ExecutorType.DEBUG)
+                    project,
+                    configuration,
+                    ImmutableList.of(),
+                    ExecutorType.DEBUG,
+                    /*kotlinxCoroutinesJavaAgent=*/ null)
                 .build()
                 .toList())
         .isEqualTo(
@@ -196,6 +208,26 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 "--",
                 "//label:java_binary_rule",
                 "--wrapper_script_flag=--debug=5005"));
+  }
+
+  @Test
+  public void kotlinxCoroutinesJavaAgentShouldBeAddedAsJavaAgent() {
+    configuration.setTargetInfo(
+        TargetInfo.builder(Label.create("//label:main"), "java_binary").build());
+    BlazeCommandRunConfigurationCommonState handlerState =
+        (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+    handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
+
+    assertThat(
+            BlazeJavaRunProfileState.getBlazeCommandBuilder(
+                    project,
+                    configuration,
+                    ImmutableList.of(),
+                    ExecutorType.DEBUG,
+                    "/path/to/kotlinx-coroutines-lib.jar")
+                .build()
+                .toList())
+        .contains("--jvmopt=-javaagent:/path/to/kotlinx-coroutines-lib.jar");
   }
 
   @Test
