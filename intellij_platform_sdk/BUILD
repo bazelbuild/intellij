@@ -171,6 +171,21 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2022.1",
+    values = {
+        "define": "ij_product=intellij-2022.1",
+    },
+)
+
+config_setting(
+    name = "intellij-2022.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-2022.1",
+    },
+)
+
+config_setting(
     name = "intellij-ue-2021.1",
     values = {
         "define": "ij_product=intellij-ue-2021.1",
@@ -212,6 +227,21 @@ config_setting(
     values = {
         "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-ue-2021.3",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2022.1",
+    values = {
+        "define": "ij_product=intellij-ue-2022.1",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2022.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-2022.1",
     },
 )
 
@@ -413,6 +443,21 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "clion-2022.1",
+    values = {
+        "define": "ij_product=clion-2022.1",
+    },
+)
+
+config_setting(
+    name = "clion-2022.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=clion-2022.1",
+    },
+)
+
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
 # There will be additional versions added in the future
@@ -507,12 +552,15 @@ java_library(
         "clion-2021.1": [":bundled_jsr305"],
         "clion-2021.2": [":bundled_jsr305"],
         "clion-2021.3": [":bundled_jsr305"],
+        "clion-2022.1": [":bundled_jsr305"],
         "intellij-2021.1": [":bundled_jsr305"],
         "intellij-2021.2": ["@jsr305_annotations//jar"],
         "intellij-2021.3": ["@jsr305_annotations//jar"],
+        "intellij-2022.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.3": ["@jsr305_annotations//jar"],
+        "intellij-ue-2022.1": ["@jsr305_annotations//jar"],
         "android-studio-2020.3": ["@jsr305_annotations//jar"],
         "android-studio-2021.1": ["@jsr305_annotations//jar"],
         "android-studio-2021.2": ["@jsr305_annotations//jar"],
@@ -677,8 +725,11 @@ filegroup(
         "intellij-ue-2021.2": [":application_info_json"],
         "intellij-2021.3": [":application_info_json"],
         "intellij-ue-2021.3": [":application_info_json"],
+        "intellij-2022.1": [":application_info_json"],
+        "intellij-ue-2022.1": [":application_info_json"],
         "clion-2021.2": [":application_info_json"],
         "clion-2021.3": [":application_info_json"],
+        "clion-2022.1": [":application_info_json"],
         "default": [":application_info_jar"],
     }),
 )
