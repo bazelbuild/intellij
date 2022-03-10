@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
+import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -100,7 +101,11 @@ public final class BlazeCommandGenericRunConfigurationRunner
                       project,
                       WorkspaceRoot.fromProject(project),
                       BlazeInvocationContext.ContextType.RunConfiguration,
-                      false))
+                      false),
+                  ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
+                      project,
+                      WorkspaceRoot.fromProject(project),
+                      BlazeInvocationContext.ContextType.RunConfiguration))
               .build();
     }
 

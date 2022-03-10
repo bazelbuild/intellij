@@ -111,7 +111,7 @@ public final class ToolWindowScope implements BlazeScope {
           parsers.isEmpty() || !startTaskOnScopeBegin
               ? ImmutableList.of()
               : ImmutableList.of(
-                  new ToolWindowTaskIssueOutputFilter(project, parsers, task, true)));
+                  ToolWindowTaskIssueOutputFilter.createWithLinkToTask(project, parsers, task)));
     }
   }
 
