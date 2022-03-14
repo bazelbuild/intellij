@@ -122,6 +122,7 @@
         <reference id="Blaze.SyncWorkingSet"/>
         <reference id="Blaze.PartialSync"/>
         <reference id="Blaze.UpdateDirectories"/>
+        <reference id="Blaze.CleanProjectTargets"/>
         <reference id="Blaze.ExpandSyncToWorkingSet"/>
         <reference id="Blaze.ShowPerformanceWarnings"/>
       </group>
