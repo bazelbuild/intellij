@@ -48,7 +48,7 @@ public class LexicographicTargetSharder implements BuildBatchingService {
 
   @Override
   public ImmutableList<ImmutableList<Label>> calculateTargetBatches(
-      Set<Label> targets, BuildBinaryType buildType, int suggestedShardSize) {
+      Set<Label> targets, BuildBinaryType buildBinaryType, int suggestedShardSize) {
     List<Label> sorted = ImmutableList.sortedCopyOf(Comparator.comparing(Label::toString), targets);
     // When LexicographicTargetSharder is used for remote build, we may decide optimized shard size
     // for users even they have provided shard_size in project view. The size is decided according
@@ -60,7 +60,8 @@ public class LexicographicTargetSharder implements BuildBatchingService {
     // If user enable shard sync manually without remote build, LexicographicTargetSharder
     // will still be used. But use suggestedShardSize without further calculation since there's
     // only one worker in that case.
-    if (buildType.isRemote && targets.size() >= parallelThreshold.getValue()) {
+    // TODO(mathewi) Need to think about what to do here.
+    if (buildBinaryType.isRemote && targets.size() >= parallelThreshold.getValue()) {
       // try to use all idle workers
       suggestedShardSize =
           min(

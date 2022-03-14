@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static junit.framework.TestCase.fail;
+import static org.mockito.Mockito.mock;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -45,6 +46,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectView;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsSection;
@@ -52,8 +54,8 @@ import com.google.idea.blaze.base.projectview.section.sections.TargetShardSizeSe
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedTargetsResult;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
@@ -75,11 +77,14 @@ import org.junit.runners.JUnit4;
 /** Unit tests for {@link BlazeBuildTargetSharder}. */
 @RunWith(JUnit4.class)
 public class BlazeBuildTargetSharderTest extends BlazeTestCase {
+  // TODO(mathewi) revisit and updates tests in this file for updated sharder logic.
   private final FakeBuildBatchingService fakeBuildBatchingService = new FakeBuildBatchingService();
   private final MockExperimentService mockExperimentService = new MockExperimentService();
   private final FakeWildCardTargetExpanderExternalTaskProvider
       fakeWildCardTargetExpanderExternalTaskProvider =
           new FakeWildCardTargetExpanderExternalTaskProvider();
+
+  private final BazelBuildSystemProvider buildSystemProvider = new BazelBuildSystemProvider();
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
@@ -89,7 +94,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     registerExtensionPoint(TargetShardSizeLimit.EP_NAME, TargetShardSizeLimit.class)
         .registerExtension(OptionalInt::empty, testDisposable);
     registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(new BazelBuildSystemProvider(), testDisposable);
+        .registerExtension(buildSystemProvider, testDisposable);
     registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class)
         .registerExtension(new FakeBlazeSyncPlugin(), testDisposable);
     registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class)
@@ -104,9 +109,11 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     applicationServices.register(PrefetchService.class, new FakePrefetchService());
     applicationServices.register(FileOperationProvider.class, new FakeFileOperationProvider());
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
+    applicationServices.register(BlazeUserSettings.class, new BlazeUserSettings());
 
     projectServices.register(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(getProject()));
+    projectServices.register(ProjectViewManager.class, mock(ProjectViewManager.class));
   }
 
   @Test
@@ -250,6 +257,8 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   @Test
   public void expandAndShardTargets_shardingApproachPartitionWithoutExpanding() {
     List<TargetExpression> targets = ImmutableList.of(target("//java/com/google:foo"));
+    // TODO(mathewi) is this the right fix for this test?
+    fakeBuildBatchingService.setShardingApproach(ShardingApproach.PARTITION_WITHOUT_EXPANDING);
     ShardedTargetsResult result =
         expandAndShardTargets(BuildBinaryType.BLAZE, ProjectView.builder().build(), targets);
 
@@ -365,18 +374,17 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
   private ShardedTargetsResult expandAndShardTargets(
       BuildBinaryType buildBinaryType, ProjectView projectView, List<TargetExpression> targets) {
+    // TODO(mathewi) we're ignoring buildBinaryType here - maybe a cause of test failure worked
+    //     around elsewhere?
     WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("workspaceRoot"));
     return BlazeBuildTargetSharder.expandAndShardTargets(
         getProject(),
         new BlazeContext(),
         workspaceRoot,
-        BlazeBuildParams.builder()
-            .setBlazeBinaryPath("foo")
-            .setBlazeBinaryType(buildBinaryType)
-            .build(),
         ProjectViewSet.builder().add(projectView).build(),
         new WorkspacePathResolverImpl(workspaceRoot),
-        targets);
+        targets,
+        buildSystemProvider.getBuildSystem());
   }
 
   private static TargetExpression target(String expression) {

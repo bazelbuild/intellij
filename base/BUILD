@@ -412,8 +412,8 @@ java_library(
     srcs = glob(["tests/utils/integration/**/*.java"]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
+        ":base",
         ":unit_test_utils",
-        "//base",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",

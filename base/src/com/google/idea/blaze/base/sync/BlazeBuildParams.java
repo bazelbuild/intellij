@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.auto.value.AutoValue;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BazelBuildSystem.BazelBinary;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.intellij.openapi.project.Project;
@@ -25,13 +25,13 @@ import com.intellij.openapi.project.Project;
 @AutoValue
 public abstract class BlazeBuildParams {
 
-  public static BlazeBuildParams fromProject(Project project) {
-    BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
-    BuildBinaryType binaryType = provider.getSyncBinaryType();
+  public static BlazeBuildParams fromProject(Project project, boolean parallel) {
+    BazelBinary binary =
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getBinary(project, parallel);
     return builder()
-        .setBlazeBinaryPath(provider.getSyncBinaryPath(project))
-        .setBlazeBinaryType(binaryType)
-        .setParallelizeBuilds(binaryType.isRemote)
+        .setBlazeBinaryPath(binary.getPath())
+        .setBlazeBinaryType(binary.getType())
+        .setParallelizeBuilds(binary.supportsParallelism())
         .build();
   }
 

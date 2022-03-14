@@ -26,6 +26,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.bazel.BazelBuildSystem;
+import com.google.idea.blaze.base.bazel.BazelBuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -59,6 +61,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
@@ -119,6 +122,8 @@ final class SyncPhaseCoordinator {
 
     abstract SyncResult syncResult();
 
+    abstract BuildBinaryType buildBinaryType();
+
     abstract Builder toBuilder();
 
     static Builder builder() {
@@ -139,6 +144,8 @@ final class SyncPhaseCoordinator {
       abstract Builder setBuildResult(BlazeSyncBuildResult value);
 
       abstract Builder setSyncResult(SyncResult value);
+
+      abstract Builder setBuildBinaryType(BuildBinaryType value);
 
       abstract UpdatePhaseTask build();
     }
@@ -179,6 +186,7 @@ final class SyncPhaseCoordinator {
   // a per-project executor to run single-threaded sync phases
   private final ListeningExecutorService singleThreadedExecutor;
   private final Project project;
+  private final BazelBuildSystem buildSystem;
 
   /**
    * An integer uniquely identifying each build task. Used to track in-progress syncs on a
@@ -196,13 +204,22 @@ final class SyncPhaseCoordinator {
         MoreExecutors.listeningDecorator(
             Executors.newSingleThreadExecutor(
                 ConcurrencyUtil.namedDaemonThreadPoolFactory(BlazeSyncManager.class)));
+    buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
   }
 
   private boolean useRemoteExecutor(BlazeSyncParams syncParams) {
     if (syncParams.syncMode() == SyncMode.NO_BUILD) {
       return false;
     }
-    return Blaze.getBuildSystemProvider(project).getSyncBinaryType().isRemote;
+    SyncStrategy strategy = buildSystem.getSyncStrategy();
+    switch (strategy) {
+      case DECIDE_AUTOMATICALLY:
+      case PARALLEL:
+        return true;
+      case SERIAL:
+        return false;
+    }
+    throw new IllegalStateException("Invalid sync strategy: " + strategy);
   }
 
   ListenableFuture<Void> syncProject(BlazeSyncParams syncParams, BlazeContext parentContext) {
@@ -387,7 +404,8 @@ final class SyncPhaseCoordinator {
       SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context);
       BlazeSyncBuildResult buildResult =
           projectState != null
-              ? BuildPhaseSyncTask.runBuildPhase(project, params, projectState, buildId, context)
+              ? BuildPhaseSyncTask.runBuildPhase(
+                  project, params, projectState, buildId, context, buildSystem)
               : BlazeSyncBuildResult.builder().build();
       UpdatePhaseTask task =
           UpdatePhaseTask.builder()
@@ -396,6 +414,11 @@ final class SyncPhaseCoordinator {
               .setProjectState(projectState)
               .setBuildIds(ImmutableSet.of(buildId))
               .setBuildResult(buildResult)
+              .setBuildBinaryType(
+                  buildResult.getBuildPhaseStats().stream()
+                      .map(r -> r.buildBinaryType())
+                      .findFirst()
+                      .orElse(null))
               .setSyncResult(syncResultFromBuildPhase(buildResult, context))
               .build();
       if (singleThreaded) {
@@ -488,6 +511,7 @@ final class SyncPhaseCoordinator {
 
   private void updateProjectAndFinishSync(UpdatePhaseTask updateTask, BlazeContext context) {
     SyncStats.Builder stats = SyncStats.builder();
+    stats.setSyncBinaryType(updateTask.buildBinaryType());
     SyncResult syncResult = updateTask.syncResult();
     try {
       fillInBuildStats(stats, updateTask.projectState(), updateTask.buildResult());
@@ -580,7 +604,6 @@ final class SyncPhaseCoordinator {
           .setSyncMode(syncParams.syncMode())
           .setSyncTitle(syncParams.title())
           .setSyncOrigin(syncParams.syncOrigin())
-          .setSyncBinaryType(Blaze.getBuildSystemProvider(project).getSyncBinaryType())
           .setSyncResult(syncResult)
           .setStartTime(startTime)
           .setBlazeExecTime(totalBlazeTime(stats.getCurrentTimedEvents()))

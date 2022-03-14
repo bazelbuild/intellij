@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedInputStream;
@@ -74,14 +73,14 @@ public class BuildResultHelperBep implements BuildResultHelper {
     }
   }
 
-  static class Provider implements BuildResultHelperProvider {
+  /** Provider for intances of {@link BuildResultHelperBep}. */
+  public static class Provider implements BuildResultHelperProvider {
 
     @Override
-    public Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo) {
-      return Optional.of(new BuildResultHelperBep());
+    public BuildResultHelper doCreate() {
+      return new BuildResultHelperBep();
     }
 
-    @Override
     public Optional<BuildResultHelper> doCreateForLocalBuild(Project project) {
       return Optional.of(new BuildResultHelperBep());
     }

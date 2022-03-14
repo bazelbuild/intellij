@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.bazel.BazelBuildSystem;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
@@ -47,7 +48,6 @@ import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
@@ -82,9 +82,11 @@ public class BlazeBuildService {
   }
 
   private final Project project;
+  private final BazelBuildSystem buildSystem;
 
   public BlazeBuildService(Project project) {
     this.project = project;
+    this.buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
   }
 
   public void buildFile(String fileName, ImmutableCollection<Label> targets) {
@@ -106,7 +108,8 @@ public class BlazeBuildService {
         context -> Lists.newArrayList(targets),
         new NotificationScope(
             project, "Make", title, title + " completed successfully", title + " failed"),
-        title);
+        title,
+        buildSystem);
   }
 
   public void buildProject() {
@@ -150,7 +153,8 @@ public class BlazeBuildService {
             "Make project",
             "Make project completed successfully",
             "Make project failed"),
-        "Make project");
+        "Make project",
+        buildSystem);
 
     // In case the user touched a file, but didn't change its content. The user will get a false
     // positive for class file out of date. We need a way for the user to suppress the false
@@ -164,7 +168,8 @@ public class BlazeBuildService {
       BlazeProjectData projectData,
       ScopedFunction<List<TargetExpression>> targetsFunction,
       NotificationScope notificationScope,
-      String taskName) {
+      String taskName,
+      BazelBuildSystem buildSystem) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // a gross hack to avoid breaking change detector tests. We had a few tests which relied on
       // this never being called *and* relied on PROJECT_LAST_BUILD_TIMESTAMP_KEY being set
@@ -208,7 +213,6 @@ public class BlazeBuildService {
                       return null;
                     }
 
-                    BlazeBuildParams buildParams = BlazeBuildParams.fromProject(project);
                     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
                     SaveUtil.saveAllFiles();
@@ -219,10 +223,10 @@ public class BlazeBuildService {
                             project,
                             context,
                             workspaceRoot,
-                            buildParams,
                             projectView,
                             projectData.getWorkspacePathResolver(),
-                            targets);
+                            targets,
+                            buildSystem);
                     if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
                       return null;
                     }
@@ -233,9 +237,10 @@ public class BlazeBuildService {
                                 context,
                                 workspaceRoot,
                                 projectData.getBlazeVersionData(),
-                                buildParams,
+                                buildSystem
+                                    .getBinary(project, false)
+                                    .setBlazeInfo(projectData.getBlazeInfo()),
                                 projectView,
-                                projectData.getBlazeInfo(),
                                 shardedTargets.shardedTargets,
                                 projectData.getWorkspaceLanguageSettings(),
                                 ImmutableSet.of(OutputGroup.COMPILE));
