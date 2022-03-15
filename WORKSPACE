@@ -70,7 +70,7 @@ http_archive(
 http_archive(
     name = "intellij_ue_2022_1",
     build_file = "@//intellij_platform_sdk:BUILD.ue221",
-    sha256 = "",
+    sha256 = "3121a6aa2fcb7cb726bcb96f9e107acfad4de5f659b60f65580d1aaeb57b3dba",
     url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/221.4906.8-EAP-SNAPSHOT/ideaIU-221.4906.8-EAP-SNAPSHOT.zip",
 )
 
