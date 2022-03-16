@@ -426,7 +426,6 @@ def _build_cargo_toml(ctx, target, source_files):
 
     path_deps = []
     external_deps = {}
-    # TODO: try parsing label instead (of dependency)
     for dependency in getattr(ctx.rule.attr, "deps", []):
         if _is_cargo_raze_crate(dependency):
             external_deps[_cargo_raze_crate_name(dependency)] = _cargo_raze_crate_version(dependency)
@@ -439,18 +438,22 @@ def _build_cargo_toml(ctx, target, source_files):
     args.add_joined("--path-deps", path_deps, join_with = ":")
     args.add_joined("--external-deps", ["{}={}".format(k, v) for k, v in external_deps.items()], join_with = ":")
 
-    valid_entry_points = ["%s.rs" % ctx.rule.attr.name]
-    if ctx.rule.kind == "rust_binary":
-        args.add("--bin-path")
-        valid_entry_points = valid_entry_points + ["main.rs"]
-    elif ctx.rule.kind == "rust_library":
-        args.add("--lib-path")
-        valid_entry_points = valid_entry_points + ["lib.rs"]
-
-    entry_points = [f for f in source_files if f.basename in valid_entry_points]
-    if len(entry_points) != 1:
-        fail("cannot determine entry point for %s target %s: srcs must contain exactly one of %s" % (ctx.rule.kind, ctx.rule.attr.name, str(valid_entry_points)))
-    args.add(entry_points[0].short_path)
+    args.add("--lib-path" if ctx.rule.kind == "rust_library" else "--bin-path")
+    canonical_entry_point_name = "lib.rs" if ctx.rule.kind == "rust_library" else "main.rs"
+    canonical_entry_points = [f for f in source_files if f.basename == canonical_entry_point_name]
+    if len(canonical_entry_points) == 1:
+        args.add(canonical_entry_points[0].short_path)
+    elif len(canonical_entry_points) == 0:
+        alternative_entry_point_name = "%s.rs" % ctx.rule.attr.name
+        alternative_entry_points = [f for f in source_files if f.basename == alternative_entry_point_name]
+        if len(alternative_entry_points) == 1:
+            args.add(alternative_entry_points[0].short_path)
+        elif len(alternative_entry_points) == 0:
+            fail("cannot determine entry point for %s target '%s': no files named '%s' or '%s' found in srcs" % (ctx.rule.kind, ctx.rule.attr.name, canonical_entry_point_name, alternative_entry_point_name))
+        else:
+            fail("cannot determine entry point for %s target '%s': multiple files named '%s' found in srcs" % (ctx.rule.kind, ctx.rule.attr.name, alternative_entry_point_name))
+    else:
+        fail("cannot determine entry point for %s target '%s': multiple files named '%s' found in srcs" % (ctx.rule.kind, ctx.rule.attr.name, canonical_entry_point_name))
 
     ctx.actions.run(
         inputs = source_files,
