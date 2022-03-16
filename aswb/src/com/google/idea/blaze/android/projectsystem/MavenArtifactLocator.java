@@ -43,14 +43,12 @@ public interface MavenArtifactLocator {
    */
   Label labelFor(GradleCoordinate coordinate);
 
-  /**
-   * @return The {@link BuildSystemName} this {@link MavenArtifactLocator} supports.
-   */
+  /** Returns the {@link BuildSystemName} this {@link MavenArtifactLocator} supports. */
   BuildSystemName buildSystem();
 
   /**
-   * @return An {@link ImmutableList} of {@link MavenArtifactLocator} that supports the given build
-   *     system.
+   * Returns an {@link ImmutableList} of {@link MavenArtifactLocator} that supports the given build
+   * system.
    */
   static List<MavenArtifactLocator> forBuildSystem(BuildSystemName buildSystemName) {
     return Arrays.stream(EP_NAME.getExtensions())
