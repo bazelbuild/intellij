@@ -31,11 +31,11 @@ import org.jetbrains.annotations.NotNull;
 /** Inputs used for importing an Android project. */
 public final class BlazeImportInput {
 
-  public final @NonNull WorkspaceRoot workspaceRoot;
-  public final @NonNull ProjectViewSet projectViewSet;
-  public final @NonNull TargetMap targetMap;
-  public final @NonNull ArtifactLocationDecoder artifactLocationDecoder;
-  public final @NonNull BuildSystemName buildSystemName;
+  @NonNull public final WorkspaceRoot workspaceRoot;
+  @NonNull public final ProjectViewSet projectViewSet;
+  @NonNull public final TargetMap targetMap;
+  @NonNull public final ArtifactLocationDecoder artifactLocationDecoder;
+  @NonNull public final BuildSystemName buildSystemName;
 
   public BlazeImportInput(
       @NonNull WorkspaceRoot workspaceRoot,
