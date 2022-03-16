@@ -69,7 +69,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.MockRemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -121,7 +121,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
       };
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", BuildSystem.Bazel);
+      new BlazeImportSettings("", "", "", "", BuildSystemName.Bazel);
 
   private BlazeContext context;
   private ErrorCollector errorCollector = new ErrorCollector();
@@ -211,10 +211,10 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   private BlazeJavaImportResult importJavaWorkspace(
       WorkspaceRoot workspaceRoot, TargetMap targetMap, ProjectView projectView) {
 
-    BuildSystem buildSystem = Blaze.getBuildSystem(project);
+    BuildSystemName buildSystemName = Blaze.getBuildSystem(project);
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     JavaSourceFilter sourceFilter =
-        new JavaSourceFilter(buildSystem, workspaceRoot, projectViewSet, targetMap);
+        new JavaSourceFilter(buildSystemName, workspaceRoot, projectViewSet, targetMap);
     BlazeJavaWorkspaceImporter blazeWorkspaceImporter =
         new BlazeJavaWorkspaceImporter(
             project,
@@ -485,7 +485,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     List<BlazeJarLibrary> jars = Lists.newArrayList();
     List<BlazeJarLibrary> genJars = Lists.newArrayList();
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystem.Blaze)
+        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
             .add(ProjectViewSet.builder().add(projectView).build())
             .build();
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();

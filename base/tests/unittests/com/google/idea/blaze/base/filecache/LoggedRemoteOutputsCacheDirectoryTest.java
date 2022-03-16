@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.logging.LoggedDirectoryProvider;
 import com.google.idea.blaze.base.logging.LoggedDirectoryProvider.LoggedDirectory;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.testing.IntellijRule;
 import java.util.Optional;
 import org.junit.Before;
@@ -54,7 +54,7 @@ public class LoggedRemoteOutputsCacheDirectoryTest {
   public void setUp() throws Exception {
     intellij.registerProjectService(BlazeImportSettingsManager.class, importSettingsManager);
 
-    setBuildSystemTo(BuildSystem.Bazel);
+    setBuildSystemTo(BuildSystemName.Bazel);
   }
 
   @Test
@@ -87,7 +87,7 @@ public class LoggedRemoteOutputsCacheDirectoryTest {
 
   @Test
   public void getLoggedDirectory_hasThePluginAsOriginatingIdePart() {
-    setBuildSystemTo(BuildSystem.Blaze);
+    setBuildSystemTo(BuildSystemName.Blaze);
 
     Optional<LoggedDirectory> loggedDirectory =
         directoryProvider.getLoggedDirectory(intellij.getProject());
@@ -98,11 +98,11 @@ public class LoggedRemoteOutputsCacheDirectoryTest {
 
   @Test
   public void getLoggedDirectory_originatingIdePartIsSensitiveToBuildSystem() {
-    setBuildSystemTo(BuildSystem.Bazel);
+    setBuildSystemTo(BuildSystemName.Bazel);
     Optional<LoggedDirectory> bazelDirectory =
         directoryProvider.getLoggedDirectory(intellij.getProject());
 
-    setBuildSystemTo(BuildSystem.Blaze);
+    setBuildSystemTo(BuildSystemName.Blaze);
     Optional<LoggedDirectory> blazeDirectory =
         directoryProvider.getLoggedDirectory(intellij.getProject());
 
@@ -112,17 +112,17 @@ public class LoggedRemoteOutputsCacheDirectoryTest {
     assertThat(blazeDirectory.get().originatingIdePart()).contains("Blaze");
   }
 
-  private void setBuildSystemTo(BuildSystem buildSystem) {
-    BlazeImportSettings settings = createSettings(buildSystem);
+  private void setBuildSystemTo(BuildSystemName buildSystemName) {
+    BlazeImportSettings settings = createSettings(buildSystemName);
     lenient().when(importSettingsManager.getImportSettings()).thenReturn(settings);
   }
 
-  private BlazeImportSettings createSettings(BuildSystem buildSystem) {
+  private BlazeImportSettings createSettings(BuildSystemName buildSystemName) {
     return new BlazeImportSettings(
         /* workspaceRoot= */ "",
         /* projectName= */ "",
         /* projectDataDirectory= */ temporaryFolder.getRoot().toString(),
         /* projectViewFile= */ "",
-        buildSystem);
+        buildSystemName);
   }
 }

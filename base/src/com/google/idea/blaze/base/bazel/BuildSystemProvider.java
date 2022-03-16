@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefiniti
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
@@ -48,24 +48,24 @@ public interface BuildSystemProvider {
   }
 
   @Nullable
-  static BuildSystemProvider getBuildSystemProvider(BuildSystem buildSystem) {
+  static BuildSystemProvider getBuildSystemProvider(BuildSystemName buildSystemName) {
     for (BuildSystemProvider provider : EP_NAME.getExtensions()) {
-      if (provider.buildSystem() == buildSystem) {
+      if (provider.buildSystem() == buildSystemName) {
         return provider;
       }
     }
     return null;
   }
 
-  static boolean isBuildSystemAvailable(BuildSystem buildSystem) {
-    return getBuildSystemProvider(buildSystem) != null;
+  static boolean isBuildSystemAvailable(BuildSystemName buildSystemName) {
+    return getBuildSystemProvider(buildSystemName) != null;
   }
 
-  static WorkspaceRootProvider getWorkspaceRootProvider(BuildSystem buildSystem) {
-    BuildSystemProvider provider = getBuildSystemProvider(buildSystem);
+  static WorkspaceRootProvider getWorkspaceRootProvider(BuildSystemName buildSystemName) {
+    BuildSystemProvider provider = getBuildSystemProvider(buildSystemName);
     if (provider == null) {
       throw new RuntimeException(
-          String.format("Build system '%s' not supported by this plugin", buildSystem));
+          String.format("Build system '%s' not supported by this plugin", buildSystemName));
     }
     return provider.getWorkspaceRootProvider();
   }
@@ -75,7 +75,7 @@ public interface BuildSystemProvider {
    * where it doesn't make sense to use the current project.<br>
    * Otherwise, use {@link com.google.idea.blaze.base.settings.Blaze#getBuildSystem}
    */
-  BuildSystem buildSystem();
+  BuildSystemName buildSystem();
 
   /** @return The location of the blaze/bazel binary. */
   String getBinaryPath(Project project);
@@ -178,7 +178,7 @@ public interface BuildSystemProvider {
 
   /** Populates the passed builder with version data. */
   void populateBlazeVersionData(
-      BuildSystem buildSystem,
+      BuildSystemName buildSystemName,
       WorkspaceRoot workspaceRoot,
       BlazeInfo blazeInfo,
       BlazeVersionData.Builder builder);

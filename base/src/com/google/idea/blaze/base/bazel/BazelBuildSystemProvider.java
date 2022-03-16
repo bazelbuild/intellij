@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -39,8 +39,8 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
       ImmutableList.of("BUILD.bazel", "BUILD");
 
   @Override
-  public BuildSystem buildSystem() {
-    return BuildSystem.Bazel;
+  public BuildSystemName buildSystem() {
+    return BuildSystemName.Bazel;
   }
 
   @Override
@@ -107,11 +107,11 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
 
   @Override
   public void populateBlazeVersionData(
-      BuildSystem buildSystem,
+      BuildSystemName buildSystemName,
       WorkspaceRoot workspaceRoot,
       BlazeInfo blazeInfo,
       BlazeVersionData.Builder builder) {
-    if (buildSystem != BuildSystem.Bazel) {
+    if (buildSystemName != BuildSystemName.Bazel) {
       return;
     }
     builder.setBazelVersion(BazelVersion.parseVersion(blazeInfo));

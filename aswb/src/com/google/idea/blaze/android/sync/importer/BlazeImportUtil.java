@@ -219,7 +219,7 @@ public class BlazeImportUtil {
   /** Returns true if the folder is outside the project view. */
   public static Predicate<ArtifactLocation> isOutsideProjectViewFilter(BlazeImportInput input) {
     ImportRoots importRoots =
-        ImportRoots.builder(input.workspaceRoot, input.buildSystem)
+        ImportRoots.builder(input.workspaceRoot, input.buildSystemName)
             .add(input.projectViewSet)
             .build();
     return artifactLocation ->

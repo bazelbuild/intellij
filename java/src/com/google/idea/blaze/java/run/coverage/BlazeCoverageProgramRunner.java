@@ -35,7 +35,7 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.coverage.CoverageHelper;
 import com.intellij.coverage.CoverageRunnerData;
 import com.intellij.execution.ExecutionException;
@@ -98,7 +98,7 @@ public class BlazeCoverageProgramRunner extends DefaultProgramRunner {
             /* beforeRunTask= */ false);
     List<String> infoFlags =
         BlazeFlags.blazeFlags(project, viewSet, BlazeCommandName.INFO, invocationContext);
-    BuildSystem buildSystem = Blaze.getBuildSystem(project);
+    BuildSystemName buildSystemName = Blaze.getBuildSystem(project);
     return Scope.push(
         null,
         (ScopedFunction<ListenableFuture<BlazeInfo>>)
@@ -106,7 +106,7 @@ public class BlazeCoverageProgramRunner extends DefaultProgramRunner {
                 BlazeInfoRunner.getInstance()
                     .runBlazeInfo(
                         context,
-                        buildSystem,
+                        buildSystemName,
                         getBlazeBinary(config),
                         WorkspaceRoot.fromProject(project),
                         infoFlags));

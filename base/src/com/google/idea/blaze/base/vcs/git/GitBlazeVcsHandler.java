@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.intellij.openapi.diagnostic.Logger;
@@ -43,8 +43,8 @@ public class GitBlazeVcsHandler implements BlazeVcsHandler {
   }
 
   @Override
-  public boolean handlesProject(BuildSystem buildSystem, WorkspaceRoot workspaceRoot) {
-    return buildSystem == BuildSystem.Bazel
+  public boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot) {
+    return buildSystemName == BuildSystemName.Bazel
         && isGitRepository(workspaceRoot)
         && tracksRemote(workspaceRoot);
   }

@@ -33,7 +33,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.mock.MockFileDocumentManagerImpl;
@@ -86,7 +86,7 @@ public class BlazeAndroidModelTest extends BlazeTestCase {
     projectServices.register(BlazeProjectDataManager.class, mockProjectDataManager);
 
     BlazeImportSettingsManager manager = new BlazeImportSettingsManager(project);
-    manager.setImportSettings(new BlazeImportSettings("", "", "", "", BuildSystem.Blaze));
+    manager.setImportSettings(new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, manager);
     projectServices.register(JvmPsiConversionHelper.class, new JvmPsiConversionHelperImpl());
 

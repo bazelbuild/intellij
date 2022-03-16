@@ -47,7 +47,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfig
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
@@ -286,7 +286,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.createForLocalBuild(project)) {
       ImmutableList.Builder<String> flags = ImmutableList.builder();
-      if (Blaze.getBuildSystem(project) == BuildSystem.Blaze) {
+      if (Blaze.getBuildSystem(project) == BuildSystemName.Blaze) {
         // $ go tool compile
         //   -N    disable optimizations
         //   -l    disable inlining

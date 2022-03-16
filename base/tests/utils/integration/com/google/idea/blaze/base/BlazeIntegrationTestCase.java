@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.testing.EdtRule;
 import com.google.idea.testing.IntellijTestSetupRule;
@@ -214,8 +214,8 @@ public abstract class BlazeIntegrationTestCase {
   }
 
   /** Override to run tests with bazel specified as the project's build system. */
-  protected BuildSystem buildSystem() {
-    return BuildSystem.Blaze;
+  protected BuildSystemName buildSystem() {
+    return BuildSystemName.Blaze;
   }
 
   /** Override to run tests off the EDT. */

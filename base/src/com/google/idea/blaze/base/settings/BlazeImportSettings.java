@@ -32,7 +32,7 @@ public final class BlazeImportSettings {
   private String projectViewFile;
 
   // default for backwards compatibility with existing projects
-  private BuildSystem buildSystem = BuildSystem.Blaze;
+  private BuildSystemName buildSystem = BuildSystemName.Blaze;
 
   // Used by bean serialization
   @SuppressWarnings("unused")
@@ -43,13 +43,13 @@ public final class BlazeImportSettings {
       String projectName,
       String projectDataDirectory,
       String projectViewFile,
-      BuildSystem buildSystem) {
+      BuildSystemName buildSystemName) {
     this.workspaceRoot = workspaceRoot;
     this.projectName = projectName;
     this.projectDataDirectory = projectDataDirectory;
     this.locationHash = createLocationHash(projectName);
     this.projectViewFile = projectViewFile;
-    this.buildSystem = buildSystem;
+    this.buildSystem = buildSystemName;
   }
 
   private static String createLocationHash(String projectName) {
@@ -87,7 +87,7 @@ public final class BlazeImportSettings {
 
   /** The build system used for the project. */
   @SuppressWarnings("unused")
-  public BuildSystem getBuildSystem() {
+  public BuildSystemName getBuildSystem() {
     return buildSystem;
   }
 
@@ -129,7 +129,7 @@ public final class BlazeImportSettings {
 
   // Used by bean serialization
   @SuppressWarnings("unused")
-  public void setBuildSystem(BuildSystem buildSystem) {
+  public void setBuildSystem(BuildSystemName buildSystem) {
     this.buildSystem = buildSystem;
   }
 }

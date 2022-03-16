@@ -35,7 +35,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.MockRemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -253,7 +253,7 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   private ImportRoots buildImportRoots(WorkspacePath... rootDirectories) {
-    ImportRoots.Builder builder = ImportRoots.builder(workspaceRoot, BuildSystem.Blaze);
+    ImportRoots.Builder builder = ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze);
     for (WorkspacePath path : rootDirectories) {
       builder.add(DirectoryEntry.include(path));
     }

@@ -41,7 +41,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -70,7 +70,7 @@ import javax.annotation.Nullable;
 public final class BlazeJavaWorkspaceImporter {
   private final Project project;
   private final WorkspaceRoot workspaceRoot;
-  private final BuildSystem buildSystem;
+  private final BuildSystemName buildSystemName;
   private final ImportRoots importRoots;
   private final TargetMap targetMap;
   private final JdepsMap jdepsMap;
@@ -96,8 +96,9 @@ public final class BlazeJavaWorkspaceImporter {
       @Nullable SyncState oldSyncState) {
     this.project = project;
     this.workspaceRoot = workspaceRoot;
-    this.buildSystem = Blaze.getBuildSystem(project);
-    this.importRoots = ImportRoots.builder(workspaceRoot, buildSystem).add(projectViewSet).build();
+    this.buildSystemName = Blaze.getBuildSystem(project);
+    this.importRoots =
+        ImportRoots.builder(workspaceRoot, buildSystemName).add(projectViewSet).build();
     this.targetMap = targetMap;
     this.sourceFilter = sourceFilter;
     this.jdepsMap = jdepsMap;
@@ -200,7 +201,8 @@ public final class BlazeJavaWorkspaceImporter {
 
     // Collect jars from jdep references
     for (String jdepsPath : workspaceBuilder.jdeps) {
-      ArtifactLocation artifact = ExecutionPathHelper.parse(workspaceRoot, buildSystem, jdepsPath);
+      ArtifactLocation artifact =
+          ExecutionPathHelper.parse(workspaceRoot, buildSystemName, jdepsPath);
       if (sourceFilter.jdepsPathsForExcludedJars.contains(artifact.getRelativePath())) {
         continue;
       }

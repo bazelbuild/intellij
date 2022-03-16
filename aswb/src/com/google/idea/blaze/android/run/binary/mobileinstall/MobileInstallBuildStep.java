@@ -53,7 +53,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -88,8 +88,10 @@ public class MobileInstallBuildStep implements ApkBuildStep {
    * removed once mobile-install v2 is open sourced, at which point the internal and external
    * versions will both use _mi.deployinfo.pb
    */
-  public static String getDeployInfoSuffix(BuildSystem buildSystem) {
-    return buildSystem == BuildSystem.Bazel ? "_incremental.deployinfo.pb" : "_mi.deployinfo.pb";
+  public static String getDeployInfoSuffix(BuildSystemName buildSystemName) {
+    return buildSystemName == BuildSystemName.Bazel
+        ? "_incremental.deployinfo.pb"
+        : "_mi.deployinfo.pb";
   }
 
   private MobileInstallBuildStep(

@@ -46,7 +46,7 @@ public class Blaze {
    * Returns the build system associated with this project, or falls back to the default blaze build
    * system if the project is null or not a blaze project.
    */
-  public static BuildSystem getBuildSystem(@Nullable Project project) {
+  public static BuildSystemName getBuildSystem(@Nullable Project project) {
     BlazeImportSettings importSettings =
         project == null
             ? null
@@ -76,7 +76,7 @@ public class Blaze {
   }
 
   /** The default build system */
-  public static BuildSystem defaultBuildSystem() {
+  public static BuildSystemName defaultBuildSystem() {
     return BuildSystemProvider.defaultBuildSystem().buildSystem();
   }
 

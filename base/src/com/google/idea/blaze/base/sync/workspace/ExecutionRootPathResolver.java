@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -42,11 +42,11 @@ public class ExecutionRootPathResolver {
   private final WorkspacePathResolver workspacePathResolver;
 
   public ExecutionRootPathResolver(
-      BuildSystem buildSystem,
+      BuildSystemName buildSystemName,
       WorkspaceRoot workspaceRoot,
       File executionRoot,
       WorkspacePathResolver workspacePathResolver) {
-    this.buildArtifactDirectories = buildArtifactDirectories(buildSystem, workspaceRoot);
+    this.buildArtifactDirectories = buildArtifactDirectories(buildSystemName, workspaceRoot);
     this.executionRoot = executionRoot;
     this.workspacePathResolver = workspacePathResolver;
   }
@@ -66,8 +66,8 @@ public class ExecutionRootPathResolver {
   }
 
   private static ImmutableList<String> buildArtifactDirectories(
-      BuildSystem buildSystem, WorkspaceRoot workspaceRoot) {
-    BuildSystemProvider provider = BuildSystemProvider.getBuildSystemProvider(buildSystem);
+      BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot) {
+    BuildSystemProvider provider = BuildSystemProvider.getBuildSystemProvider(buildSystemName);
     if (provider == null) {
       provider = BuildSystemProvider.defaultBuildSystem();
     }

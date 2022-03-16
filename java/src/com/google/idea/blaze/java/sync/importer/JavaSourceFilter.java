@@ -26,7 +26,7 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.source.JavaLikeLanguage;
@@ -49,12 +49,12 @@ public class JavaSourceFilter {
   final Set<String> jdepsPathsForExcludedJars = new HashSet<>();
 
   public JavaSourceFilter(
-      BuildSystem buildSystem,
+      BuildSystemName buildSystemName,
       WorkspaceRoot workspaceRoot,
       ProjectViewSet projectViewSet,
       TargetMap targetMap) {
     ProjectViewTargetImportFilter importFilter =
-        new ProjectViewTargetImportFilter(buildSystem, workspaceRoot, projectViewSet);
+        new ProjectViewTargetImportFilter(buildSystemName, workspaceRoot, projectViewSet);
 
     List<TargetIdeInfo> excludedTargets =
         targetMap

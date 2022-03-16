@@ -33,7 +33,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -200,7 +200,8 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
         return new ValidationInfo("File is not in workspace", fileTextField.getField());
       }
 
-      if (Blaze.getBuildSystem(project) == BuildSystem.Blaze && workspacePath.isWorkspaceRoot()) {
+      if (Blaze.getBuildSystem(project) == BuildSystemName.Blaze
+          && workspacePath.isWorkspaceRoot()) {
         return new ValidationInfo(
             String.format(
                 "Cannot add the workspace root '%s' to the project.\n"

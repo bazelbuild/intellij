@@ -30,7 +30,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -261,7 +261,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
 
     MockFileOperationProvider addProjectView(ProjectViewSet projectViewSet) {
       ImportRoots importRoots =
-          ImportRoots.builder(workspaceRoot, BuildSystem.Blaze).add(projectViewSet).build();
+          ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze).add(projectViewSet).build();
       return addImportRoots(importRoots);
     }
 

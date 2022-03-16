@@ -41,7 +41,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.clwb.CidrGoogleTestUtilAdapter;
 import com.google.idea.blaze.clwb.ToolchainUtils;
 import com.google.idea.blaze.cpp.CppBlazeRules;
@@ -270,14 +270,14 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
   /** Get the correct test prefix for blaze/bazel */
   private String getTestFilterArgument() {
-    if (Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
+    if (Blaze.getBuildSystem(project).equals(BuildSystemName.Blaze)) {
       return "--gunit_filter";
     }
     return "--gtest_filter";
   }
 
   private boolean shouldDisplayBazelTestFilterWarning() {
-    return Blaze.getBuildSystem(getProject()).equals(BuildSystem.Bazel)
+    return Blaze.getBuildSystem(getProject()).equals(BuildSystemName.Bazel)
         && CppBlazeRules.RuleTypes.CC_TEST.getKind().equals(configuration.getTargetKind())
         && handlerState.getTestFilterFlag() != null
         && !PropertiesComponent.getInstance()

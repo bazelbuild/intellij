@@ -27,7 +27,7 @@ import com.google.idea.blaze.base.projectview.section.ListSectionParser;
 import com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValueProvider;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -74,7 +74,9 @@ public class AdditionalLanguagesSection {
   static class AdditionalLanguagesDefaultValueProvider implements ProjectViewDefaultValueProvider {
     @Override
     public ProjectView addProjectViewDefaultValue(
-        BuildSystem buildSystem, ProjectViewSet projectViewSet, ProjectView topLevelProjectView) {
+        BuildSystemName buildSystemName,
+        ProjectViewSet projectViewSet,
+        ProjectView topLevelProjectView) {
       if (!topLevelProjectView.getSectionsOfType(KEY).isEmpty()) {
         return topLevelProjectView;
       }

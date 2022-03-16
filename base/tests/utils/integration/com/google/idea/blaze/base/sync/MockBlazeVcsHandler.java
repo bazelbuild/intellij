@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.google.idea.testing.ServiceHelper;
@@ -43,7 +43,7 @@ public class MockBlazeVcsHandler implements BlazeVcsHandler {
   }
 
   @Override
-  public boolean handlesProject(BuildSystem buildSystem, WorkspaceRoot workspaceRoot) {
+  public boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot) {
     return true;
   }
 

@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import java.io.File;
 import org.junit.Test;
@@ -48,7 +48,7 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
 
     pathResolver =
         new ExecutionRootPathResolver(
-            BuildSystem.Bazel,
+            BuildSystemName.Bazel,
             WORKSPACE_ROOT,
             new File(EXECUTION_ROOT),
             new WorkspacePathResolverImpl(WORKSPACE_ROOT));

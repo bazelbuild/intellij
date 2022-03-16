@@ -53,7 +53,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -255,7 +255,7 @@ public class RenderJarCacheTest {
             intellijRule.getProject().getName(),
             projectDataDir.getAbsolutePath(),
             /*projectViewFile=*/ "",
-            BuildSystem.Blaze));
+            BuildSystemName.Blaze));
     intellijRule.registerProjectService(BlazeImportSettingsManager.class, importSettingsManager);
   }
 

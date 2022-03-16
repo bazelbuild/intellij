@@ -47,7 +47,7 @@ import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibrarySorter;
@@ -94,7 +94,7 @@ public class JarCacheTest extends BlazeTestCase {
       File projectDataDirectory = folder.newFolder("projectdata");
       BlazeImportSettings dummyImportSettings =
           new BlazeImportSettings(
-              "", "", projectDataDirectory.getAbsolutePath(), "", BuildSystem.Blaze);
+              "", "", projectDataDirectory.getAbsolutePath(), "", BuildSystemName.Blaze);
       blazeImportSettingsManager.setImportSettings(dummyImportSettings);
     } catch (IOException e) {
       throw new AssertionError("Failed to create a directory for test", e);
@@ -110,8 +110,8 @@ public class JarCacheTest extends BlazeTestCase {
         .registerExtension(
             new BazelBuildSystemProvider() {
               @Override
-              public BuildSystem buildSystem() {
-                return BuildSystem.Blaze;
+              public BuildSystemName buildSystem() {
+                return BuildSystemName.Blaze;
               }
             });
     registerExtensionPoint(FileCache.EP_NAME, FileCache.class)

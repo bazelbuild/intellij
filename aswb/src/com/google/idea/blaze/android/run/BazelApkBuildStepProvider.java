@@ -21,7 +21,7 @@ import com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallBuild
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.android.run.runner.FullApkBuildStep;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
 
 /** Provides APK build step for Bazel projects. */
@@ -42,7 +42,7 @@ public class BazelApkBuildStepProvider implements ApkBuildStepProvider {
   }
 
   @Override
-  public ImmutableSet<BuildSystem> getSupportedBuildSystems() {
-    return ImmutableSet.of(BuildSystem.Bazel);
+  public ImmutableSet<BuildSystemName> getSupportedBuildSystems() {
+    return ImmutableSet.of(BuildSystemName.Bazel);
   }
 }

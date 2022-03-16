@@ -48,7 +48,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
@@ -73,7 +73,7 @@ import org.junit.runners.JUnit4;
 public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", BuildSystem.Blaze);
+      new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze);
 
   private BlazeCommandRunConfiguration configuration;
 
@@ -287,7 +287,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   private static class DisabledFastBuildService implements FastBuildService {
 
     @Override
-    public boolean supportsFastBuilds(BuildSystem buildSystem, Kind kind) {
+    public boolean supportsFastBuilds(BuildSystemName buildSystemName, Kind kind) {
       return false;
     }
 

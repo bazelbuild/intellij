@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.projectview;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.components.ServiceManager;
 import java.io.File;
 import java.io.IOException;
@@ -51,20 +51,20 @@ public abstract class ProjectViewStorageManager {
     return false;
   }
 
-  public static String getProjectViewFileName(BuildSystem buildSystem) {
-    switch (buildSystem) {
+  public static String getProjectViewFileName(BuildSystemName buildSystemName) {
+    switch (buildSystemName) {
       case Blaze:
         return "." + BLAZE_EXTENSION;
       case Bazel:
         return "." + BAZEL_EXTENSION;
       default:
-        throw new IllegalArgumentException("Unrecognized build system type: " + buildSystem);
+        throw new IllegalArgumentException("Unrecognized build system type: " + buildSystemName);
     }
   }
 
   public static File getLocalProjectViewFileName(
-      BuildSystem buildSystem, File projectDataDirectory) {
-    return new File(projectDataDirectory, getProjectViewFileName(buildSystem));
+      BuildSystemName buildSystemName, File projectDataDirectory) {
+    return new File(projectDataDirectory, getProjectViewFileName(buildSystemName));
   }
 
   public static ProjectViewStorageManager getInstance() {

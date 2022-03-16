@@ -49,7 +49,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.MockRemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -108,7 +108,7 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     importSettingsManager.setImportSettings(
-        new BlazeImportSettings("", "", "", "", BuildSystem.Blaze));
+        new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
 
     applicationServices.register(PrefetchService.class, new MockPrefetchService());

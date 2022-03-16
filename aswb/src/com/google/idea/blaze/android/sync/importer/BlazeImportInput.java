@@ -21,7 +21,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectview.ProjectViewTargetImportFilter;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
@@ -35,19 +35,19 @@ public final class BlazeImportInput {
   public final @NonNull ProjectViewSet projectViewSet;
   public final @NonNull TargetMap targetMap;
   public final @NonNull ArtifactLocationDecoder artifactLocationDecoder;
-  public final @NonNull BuildSystem buildSystem;
+  public final @NonNull BuildSystemName buildSystemName;
 
   public BlazeImportInput(
       @NonNull WorkspaceRoot workspaceRoot,
       @NonNull ProjectViewSet projectViewSet,
       @NonNull TargetMap targetMap,
       @NonNull ArtifactLocationDecoder artifactLocationDecoder,
-      @NonNull BuildSystem buildSystem) {
+      @NonNull BuildSystemName buildSystemName) {
     this.workspaceRoot = workspaceRoot;
     this.projectViewSet = projectViewSet;
     this.targetMap = targetMap;
     this.artifactLocationDecoder = artifactLocationDecoder;
-    this.buildSystem = buildSystem;
+    this.buildSystemName = buildSystemName;
   }
 
   public static BlazeImportInput forProject(
@@ -79,11 +79,11 @@ public final class BlazeImportInput {
 
   @NotNull
   public JavaSourceFilter createSourceFilter() {
-    return new JavaSourceFilter(buildSystem, workspaceRoot, projectViewSet, targetMap);
+    return new JavaSourceFilter(buildSystemName, workspaceRoot, projectViewSet, targetMap);
   }
 
   @NotNull
   public ProjectViewTargetImportFilter createImportFilter() {
-    return new ProjectViewTargetImportFilter(buildSystem, workspaceRoot, projectViewSet);
+    return new ProjectViewTargetImportFilter(buildSystemName, workspaceRoot, projectViewSet);
   }
 }

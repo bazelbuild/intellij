@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.actions;
 
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
@@ -37,14 +37,14 @@ public class BlazeMenuGroup extends DefaultActionGroup {
     e.getPresentation().setText(menuName(Blaze.getBuildSystem(e.getProject())));
   }
 
-  private static String menuName(BuildSystem buildSystem) {
-    switch (buildSystem) {
+  private static String menuName(BuildSystemName buildSystemName) {
+    switch (buildSystemName) {
       case Bazel:
         return "&Bazel";
       case Blaze:
         return "&Blaze";
     }
-    throw new RuntimeException("Unhandled build system: " + buildSystem);
+    throw new RuntimeException("Unhandled build system: " + buildSystemName);
   }
 
   @Override

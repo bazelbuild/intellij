@@ -48,7 +48,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -116,7 +116,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
       return;
     }
 
-    if (Blaze.getBuildSystem(project) == BuildSystem.Bazel) {
+    if (Blaze.getBuildSystem(project) == BuildSystemName.Bazel) {
       // bazel doesn't need any tsconfig handling
       return;
     }
@@ -238,7 +238,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
 
     if (typescriptActive && !isLanguageSupportedInIde()) {
       String message = "TypeScript is not supported in this IDE.";
-      if (Blaze.getBuildSystem(project) == BuildSystem.Blaze) {
+      if (Blaze.getBuildSystem(project) == BuildSystemName.Blaze) {
         message +=
             " Please use IntelliJ Ultimate Edition or CLion, or else remove 'typescript' "
                 + "from the list of requested languages in your project view file";
@@ -248,7 +248,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
     }
 
     // Blaze projects must have either both typescript and ts_config_rules or neither
-    if (Blaze.getBuildSystem(project) == BuildSystem.Blaze
+    if (Blaze.getBuildSystem(project) == BuildSystemName.Blaze
         && (typescriptActive ^ !getTsConfigTargets(projectViewSet).isEmpty())) {
       invalidProjectViewError(context, Blaze.getBuildSystemProvider(project));
       return false;

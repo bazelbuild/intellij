@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.settings;
 
 /** Build system enum */
-public enum BuildSystem {
+public enum BuildSystemName {
   Blaze,
   Bazel;
 

@@ -23,7 +23,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfig
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.java.run.fastbuild.FastBuildConfigurationRunner;
 import com.google.idea.blaze.java.run.fastbuild.FastBuildSuggestion;
 import com.google.idea.blaze.java.run.hotswap.ClassFileManifestBuilder;
@@ -41,12 +41,12 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
 
   private static final Logger logger = Logger.getInstance(BlazeJavaRunConfigurationHandler.class);
 
-  private final BuildSystem buildSystem;
+  private final BuildSystemName buildSystemName;
   private final BlazeJavaRunConfigState state;
 
   public BlazeJavaRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    this.buildSystem = Blaze.getBuildSystem(configuration.getProject());
-    this.state = new BlazeJavaRunConfigState(buildSystem);
+    this.buildSystemName = Blaze.getBuildSystem(configuration.getProject());
+    this.state = new BlazeJavaRunConfigState(buildSystemName);
   }
 
   @Override
@@ -65,7 +65,7 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    state.validate(buildSystem);
+    state.validate(buildSystemName);
   }
 
   @Override

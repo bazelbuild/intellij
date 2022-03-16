@@ -48,7 +48,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -293,11 +293,12 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     @Override
     public ListenableFuture<BlazeInfo> runBlazeInfo(
         @Nullable BlazeContext context,
-        BuildSystem buildSystem,
+        BuildSystemName buildSystemName,
         String binaryPath,
         WorkspaceRoot workspaceRoot,
         List<String> blazeFlags) {
-      return Futures.immediateFuture(BlazeInfo.create(buildSystem, ImmutableMap.copyOf(results)));
+      return Futures.immediateFuture(
+          BlazeInfo.create(buildSystemName, ImmutableMap.copyOf(results)));
     }
 
     public void setResults(Map<String, String> results) {

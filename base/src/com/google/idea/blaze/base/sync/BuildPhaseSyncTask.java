@@ -40,7 +40,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper.ProjectTargets;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
@@ -293,7 +293,7 @@ final class BuildPhaseSyncTask {
     }
     if (result == null) {
       String fileBugSuggestion =
-          Blaze.getBuildSystem(project) == BuildSystem.Bazel
+          Blaze.getBuildSystem(project) == BuildSystemName.Bazel
               ? ""
               : " Please run 'Blaze > File a Bug'";
       IssueOutput.error(

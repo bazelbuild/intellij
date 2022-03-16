@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
 /** Go-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public final class BlazeGoRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
 
-  private final BuildSystem buildSystem;
+  private final BuildSystemName buildSystem;
   private final BlazeCommandRunConfigurationCommonState state;
 
   public BlazeGoRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {

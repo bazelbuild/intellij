@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.run;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -28,8 +28,8 @@ public interface ApkBuildStepProvider extends BuildSystemExtensionPoint {
   ExtensionPointName<ApkBuildStepProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.android.ApkBuildStepProvider");
 
-  static ApkBuildStepProvider getInstance(BuildSystem buildSystem) {
-    return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystem);
+  static ApkBuildStepProvider getInstance(BuildSystemName buildSystemName) {
+    return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystemName);
   }
 
   /** Returns a build step for the given build configurations. */

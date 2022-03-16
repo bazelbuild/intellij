@@ -21,7 +21,7 @@ import static com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder.tar
 import com.android.sdklib.repository.AndroidSdkHandler;
 import com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.JdepsFileWriter;
@@ -47,8 +47,8 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
   }
 
   @Override
-  protected final BuildSystem buildSystem() {
-    return BuildSystem.Bazel;
+  protected final BuildSystemName buildSystem() {
+    return BuildSystemName.Bazel;
   }
 
   @After

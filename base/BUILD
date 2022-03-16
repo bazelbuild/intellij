@@ -171,7 +171,7 @@ java_library(
         "src/com/google/idea/blaze/base/model/primitives/WorkspaceRoot.java",
         "src/com/google/idea/blaze/base/settings/BlazeImportSettings.java",
         "src/com/google/idea/blaze/base/settings/BlazeImportSettingsManager.java",
-        "src/com/google/idea/blaze/base/settings/BuildSystem.java",
+        "src/com/google/idea/blaze/base/settings/BuildSystemName.java",
         "src/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolver.java",
         "src/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolverProvider.java",
     ],

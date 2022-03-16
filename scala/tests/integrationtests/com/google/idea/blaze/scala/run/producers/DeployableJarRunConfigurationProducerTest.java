@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducerTestCase;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -41,8 +41,8 @@ public class DeployableJarRunConfigurationProducerTest
     extends BlazeRunConfigurationProducerTestCase {
 
   @Override
-  protected BuildSystem buildSystem() {
-    return BuildSystem.Bazel;
+  protected BuildSystemName buildSystem() {
+    return BuildSystemName.Bazel;
   }
 
   @Before
