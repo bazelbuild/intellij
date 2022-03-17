@@ -20,15 +20,8 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.intellij.openapi.project.Project;
-import java.io.File;
-import javax.annotation.Nullable;
 
 /** Provides the bazel build system name string. */
 public class BazelBuildSystemProvider implements BuildSystemProvider {
@@ -38,28 +31,11 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   private static final ImmutableList<String> BUILD_FILE_NAMES =
       ImmutableList.of("BUILD.bazel", "BUILD");
 
-  @Override
-  public BuildSystemName buildSystem() {
-    return BuildSystemName.Bazel;
-  }
+  private final BuildSystem buildSystem = new BazelBuildSystem();
 
   @Override
-  public String getBinaryPath(Project project) {
-    File projectSpecificBinary = getProjectSpecificBazelBinary(project);
-    if (projectSpecificBinary != null) {
-      return projectSpecificBinary.getPath();
-    }
-    BlazeUserSettings settings = BlazeUserSettings.getInstance();
-    return settings.getBazelBinaryPath();
-  }
-
-  @Nullable
-  private static File getProjectSpecificBazelBinary(Project project) {
-    ProjectViewSet projectView = ProjectViewManager.getInstance(project).getProjectViewSet();
-    if (projectView == null) {
-      return null;
-    }
-    return projectView.getScalarValue(BazelBinarySection.KEY).orElse(null);
+  public BuildSystem getBuildSystem() {
+    return buildSystem;
   }
 
   @Override

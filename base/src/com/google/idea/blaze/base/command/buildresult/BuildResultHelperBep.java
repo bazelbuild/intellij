@@ -38,7 +38,7 @@ public class BuildResultHelperBep implements BuildResultHelper {
   private static final Logger logger = Logger.getInstance(BuildResultHelperBep.class);
   private final File outputFile;
 
-  BuildResultHelperBep() {
+  public BuildResultHelperBep() {
     outputFile = BuildEventProtocolUtils.createTempOutputFile();
   }
 

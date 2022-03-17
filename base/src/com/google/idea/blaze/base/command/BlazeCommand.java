@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.command;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import java.util.Arrays;
 import java.util.List;
@@ -68,6 +69,14 @@ public final class BlazeCommand {
     return Joiner.on(' ').join(toList());
   }
 
+  public static Builder builder(BuildInvoker invoker, BlazeCommandName name) {
+    return new Builder(invoker.getBinaryPath(), name);
+  }
+
+  /**
+   * @deprecated Use {@link #builder(BuildInvoker, BlazeCommandName)} instead.
+   */
+  @Deprecated
   public static Builder builder(String binaryPath, BlazeCommandName name) {
     return new Builder(binaryPath, name);
   }

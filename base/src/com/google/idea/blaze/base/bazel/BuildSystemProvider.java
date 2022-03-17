@@ -70,25 +70,55 @@ public interface BuildSystemProvider {
     return provider.getWorkspaceRootProvider();
   }
 
+  BuildSystem getBuildSystem();
+
   /**
    * Returns the default build system for this application. This should only be called in situations
    * where it doesn't make sense to use the current project.<br>
    * Otherwise, use {@link com.google.idea.blaze.base.settings.Blaze#getBuildSystemName}
+   *
+   * @deprecated Use {@link #getBuildSystem()} instead.
    */
-  BuildSystemName buildSystem();
-
-  /** @return The location of the blaze/bazel binary. */
-  String getBinaryPath(Project project);
-
-  /** @return The location of the blaze/bazel binary to use for syncing. */
-  default String getSyncBinaryPath(Project project) {
-    return getBinaryPath(project);
+  @Deprecated
+  default BuildSystemName buildSystem() {
+    return getBuildSystem().getName();
   }
 
-  /** @return The type of the blaze/bazel binary to use for syncing */
+  /**
+   * @return The location of the blaze/bazel binary.
+   * @deprecated Use {@link #getBuildSystem()} instead.
+   */
+  @Deprecated
+  default String getBinaryPath(Project project) {
+    return getBuildSystem().getBuildInvoker(project).getBinaryPath();
+  }
+
+  /**
+   * @return The location of the blaze/bazel binary to use for syncing.
+   * @deprecated Use {@link #getBuildSystem()} instead.
+   */
+  @Deprecated
+  default String getSyncBinaryPath(Project project) {
+    return getBuildSystem().getBuildInvoker(project).getBinaryPath();
+  }
+
+  /**
+   * Returns the type of the blaze/bazel binary to use for syncing.
+   *
+   * @deprecated The sync binary type can no longer be determined statically. Code using this should
+   *     be refactored accordingly.
+   */
+  @Deprecated
   BuildBinaryType getSyncBinaryType();
 
-  /** Returns true if syncing is done off the user's local machine. */
+  /**
+   * Returns true if syncing is done off the user's local machine.
+   *
+   * @deprecated Whether syncs happen remotely is not determined statically anymore. Logic depending
+   *     on this should be reconsidered, or updated to use the state of the most recent sync as
+   *     appropriate.
+   */
+  @Deprecated
   default boolean syncingRemotely() {
     // TODO(brendandouglas): make this configurable based on context, move somewhere more
     // appropriate
