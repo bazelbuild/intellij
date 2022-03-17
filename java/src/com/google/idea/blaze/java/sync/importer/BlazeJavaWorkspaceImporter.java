@@ -96,7 +96,7 @@ public final class BlazeJavaWorkspaceImporter {
       @Nullable SyncState oldSyncState) {
     this.project = project;
     this.workspaceRoot = workspaceRoot;
-    this.buildSystemName = Blaze.getBuildSystem(project);
+    this.buildSystemName = Blaze.getBuildSystemName(project);
     this.importRoots =
         ImportRoots.builder(workspaceRoot, buildSystemName).add(projectViewSet).build();
     this.targetMap = targetMap;

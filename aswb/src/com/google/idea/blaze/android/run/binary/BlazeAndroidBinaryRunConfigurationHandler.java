@@ -137,7 +137,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
         ImmutableList.copyOf(
             configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
     ApkBuildStep buildStep =
-        ApkBuildStepProvider.getInstance(Blaze.getBuildSystem(project))
+        ApkBuildStepProvider.getInstance(Blaze.getBuildSystemName(project))
             .getBuildStep(
                 project,
                 AndroidBinaryLaunchMethodsUtils.useMobileInstall(configState.getLaunchMethod()),

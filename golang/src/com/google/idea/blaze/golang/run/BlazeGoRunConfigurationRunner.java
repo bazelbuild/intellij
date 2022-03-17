@@ -286,7 +286,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.createForLocalBuild(project)) {
       ImmutableList.Builder<String> flags = ImmutableList.builder();
-      if (Blaze.getBuildSystem(project) == BuildSystemName.Blaze) {
+      if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
         // $ go tool compile
         //   -N    disable optimizations
         //   -l    disable inlining

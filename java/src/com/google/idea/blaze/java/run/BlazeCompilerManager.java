@@ -100,7 +100,7 @@ public class BlazeCompilerManager extends CompilerManagerImpl {
   private static Collection<File> updateClasspath(Project project, BlazeProjectData projectData) {
     ProjectViewTargetImportFilter importFilter =
         new ProjectViewTargetImportFilter(
-            Blaze.getBuildSystem(project),
+            Blaze.getBuildSystemName(project),
             WorkspaceRoot.fromProject(project),
             ProjectViewManager.getInstance(project).getProjectViewSet());
     ArtifactLocationDecoder decoder = projectData.getArtifactLocationDecoder();

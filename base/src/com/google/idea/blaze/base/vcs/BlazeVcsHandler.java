@@ -36,7 +36,7 @@ public interface BlazeVcsHandler {
 
   @Nullable
   static BlazeVcsHandler vcsHandlerForProject(Project project) {
-    BuildSystemName buildSystemName = Blaze.getBuildSystem(project);
+    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     for (BlazeVcsHandler candidate : BlazeVcsHandler.EP_NAME.getExtensions()) {
       if (candidate.handlesProject(buildSystemName, workspaceRoot)) {

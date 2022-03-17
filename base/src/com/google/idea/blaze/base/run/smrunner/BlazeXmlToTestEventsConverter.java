@@ -449,7 +449,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
    */
   private static boolean bazelIsAtLeastVersion(int major, int minor, int bugfix) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (Blaze.getBuildSystem(project) == BuildSystemName.Bazel) {
+      if (Blaze.getBuildSystemName(project) == BuildSystemName.Bazel) {
         BlazeProjectData projectData =
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
         if (projectData != null) {

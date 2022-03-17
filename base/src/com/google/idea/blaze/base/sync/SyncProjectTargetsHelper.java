@@ -96,7 +96,7 @@ public final class SyncProjectTargetsHelper {
       WorkspaceLanguageSettings languageSettings)
       throws SyncFailedException, SyncCanceledException {
     String fileBugSuggestion =
-        Blaze.getBuildSystem(project) == BuildSystemName.Bazel
+        Blaze.getBuildSystemName(project) == BuildSystemName.Bazel
             ? ""
             : " Please run 'Blaze > File a Bug'";
     if (!DirectoryToTargetProvider.hasProvider()) {

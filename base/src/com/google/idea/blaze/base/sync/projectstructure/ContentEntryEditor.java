@@ -47,7 +47,7 @@ public class ContentEntryEditor {
       DirectoryStructure rootDirectoryStructure,
       ModifiableRootModel modifiableRootModel) {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
+        ImportRoots.builder(workspaceRoot, Blaze.getBuildSystemName(project))
             .add(projectViewSet)
             .build();
     Collection<WorkspacePath> rootDirectories = importRoots.rootDirectories();

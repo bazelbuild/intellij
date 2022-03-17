@@ -49,6 +49,6 @@ final class RerunFastBuildConfigurationWithBlazeAction extends AnAction {
   }
 
   private static String getBuildSystem(Project project) {
-    return Blaze.getBuildSystem(project).getName();
+    return Blaze.getBuildSystemName(project).getName();
   }
 }

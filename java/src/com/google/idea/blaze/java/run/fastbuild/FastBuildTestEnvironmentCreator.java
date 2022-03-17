@@ -126,7 +126,7 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
     }
 
     for (FastBuildTestEnvironmentModifier modifier :
-        FastBuildTestEnvironmentModifier.getModifiers(Blaze.getBuildSystem(project))) {
+        FastBuildTestEnvironmentModifier.getModifiers(Blaze.getBuildSystemName(project))) {
       modifier.modify(
           commandBuilder, config.getTargetKind(), fastBuildInfo, fastBuildInfo.blazeInfo());
     }
@@ -239,7 +239,7 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
         .addEnvironmentVariable(
             "TEST_WARNINGS_OUTPUT_FILE", getTestOutputFile(testOutputDir, "test.warnings"));
 
-    if (Blaze.getBuildSystem(project).equals(BuildSystemName.Blaze)) {
+    if (Blaze.getBuildSystemName(project).equals(BuildSystemName.Blaze)) {
       File testDiagnosticsDir = new File(testOutputDir, "test.test_diagnostics");
 
       try {

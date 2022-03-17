@@ -109,7 +109,7 @@ class DeployableJarRunConfigurationProducer
 
   @Nullable
   private static TargetInfo findTarget(Project project, ScObject mainObject) {
-    if (Blaze.getBuildSystem(project) != BuildSystemName.Bazel) {
+    if (Blaze.getBuildSystemName(project) != BuildSystemName.Bazel) {
       // disabled for blaze projects for performance reasons. If we want this for blaze projects,
       // first look at limiting search to direct deps of
       return null;

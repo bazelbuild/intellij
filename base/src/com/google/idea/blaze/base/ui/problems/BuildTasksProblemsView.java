@@ -92,7 +92,7 @@ public class BuildTasksProblemsView {
 
   public BuildTasksProblemsView(Project project) {
     this.project = project;
-    this.toolWindowId = Blaze.getBuildSystem(project).getName() + " Tasks Problems";
+    this.toolWindowId = Blaze.getBuildSystemName(project).getName() + " Tasks Problems";
     uiFuture =
         new FutureTask<>(
             () -> {

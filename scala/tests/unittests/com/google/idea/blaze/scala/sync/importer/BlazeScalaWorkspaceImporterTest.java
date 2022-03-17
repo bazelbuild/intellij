@@ -666,7 +666,7 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
             ImmutableSet.of(LanguageClass.GENERIC, LanguageClass.SCALA, LanguageClass.JAVA));
     JavaSourceFilter sourceFilter =
         new JavaSourceFilter(
-            Blaze.getBuildSystem(project), workspaceRoot, projectViewSet, targetMap);
+            Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet, targetMap);
     JdepsMap jdepsMap = key -> ImmutableList.of();
     ArtifactLocationDecoder decoder = new MockArtifactLocationDecoder();
     return new BlazeJavaWorkspaceImporter(

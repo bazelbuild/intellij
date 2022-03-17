@@ -211,7 +211,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   private BlazeJavaImportResult importJavaWorkspace(
       WorkspaceRoot workspaceRoot, TargetMap targetMap, ProjectView projectView) {
 
-    BuildSystemName buildSystemName = Blaze.getBuildSystem(project);
+    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();
     JavaSourceFilter sourceFilter =
         new JavaSourceFilter(buildSystemName, workspaceRoot, projectViewSet, targetMap);

@@ -82,7 +82,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     return Objects.equals(blazeCfg.getHandler().getCommandName(), BlazeCommandName.TEST)
         && FastBuildService.getInstance(blazeCfg.getProject())
             .supportsFastBuilds(
-                Blaze.getBuildSystem(blazeCfg.getProject()), blazeCfg.getTargetKind());
+                Blaze.getBuildSystemName(blazeCfg.getProject()), blazeCfg.getTargetKind());
   }
 
   @Override
@@ -198,7 +198,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     console.print(e.getMessage() + "\n", ConsoleViewContentType.ERROR_OUTPUT);
     console.printHyperlink(
         "Click here to run the tests again with a fresh "
-            + Blaze.getBuildSystem(project)
+            + Blaze.getBuildSystemName(project)
             + " build.\n",
         new RerunTestsWithBlazeHyperlink(buildService, label, env));
     ExecutionUtil.handleExecutionError(

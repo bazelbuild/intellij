@@ -37,7 +37,7 @@ public final class BlazeCidrRunConfigurationHandler implements BlazeCommandRunCo
   private final BlazeCidrRunConfigState state;
 
   public BlazeCidrRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    this.buildSystemName = Blaze.getBuildSystem(configuration.getProject());
+    this.buildSystemName = Blaze.getBuildSystemName(configuration.getProject());
     this.state = new BlazeCidrRunConfigState(buildSystemName);
   }
 

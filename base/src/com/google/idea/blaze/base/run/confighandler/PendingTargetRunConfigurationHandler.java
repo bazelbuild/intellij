@@ -44,7 +44,7 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
   private final BlazeCommandRunConfigurationCommonState state;
 
   PendingTargetRunConfigurationHandler(BlazeCommandRunConfiguration config) {
-    this.buildSystemName = Blaze.getBuildSystem(config.getProject());
+    this.buildSystemName = Blaze.getBuildSystemName(config.getProject());
     this.state = new BlazeCommandRunConfigurationCommonState(buildSystemName);
   }
 

@@ -270,14 +270,14 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
   /** Get the correct test prefix for blaze/bazel */
   private String getTestFilterArgument() {
-    if (Blaze.getBuildSystem(project).equals(BuildSystemName.Blaze)) {
+    if (Blaze.getBuildSystemName(project).equals(BuildSystemName.Blaze)) {
       return "--gunit_filter";
     }
     return "--gtest_filter";
   }
 
   private boolean shouldDisplayBazelTestFilterWarning() {
-    return Blaze.getBuildSystem(getProject()).equals(BuildSystemName.Bazel)
+    return Blaze.getBuildSystemName(getProject()).equals(BuildSystemName.Bazel)
         && CppBlazeRules.RuleTypes.CC_TEST.getKind().equals(configuration.getTargetKind())
         && handlerState.getTestFilterFlag() != null
         && !PropertiesComponent.getInstance()

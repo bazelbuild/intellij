@@ -53,7 +53,7 @@ public class SuggestBuildShardingNotification {
   }
 
   private static void suggestIncreasingServerMemory(Project project, BlazeContext context) {
-    BuildSystemName buildSystemName = Blaze.getBuildSystem(project);
+    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
     String message =
         String.format(
             "The %s server ran out of memory during sync. You can work around this by "

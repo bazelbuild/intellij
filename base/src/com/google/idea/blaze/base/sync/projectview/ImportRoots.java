@@ -56,7 +56,7 @@ public final class ImportRoots {
     if (root == null || projectViewSet == null) {
       return null;
     }
-    return ImportRoots.builder(root, Blaze.getBuildSystem(project)).add(projectViewSet).build();
+    return ImportRoots.builder(root, Blaze.getBuildSystemName(project)).add(projectViewSet).build();
   }
 
   /** Builder for import roots */
@@ -150,7 +150,7 @@ public final class ImportRoots {
   private final TargetExpressionList projectTargets;
 
   public static Builder builder(Project project) {
-    return new Builder(WorkspaceRoot.fromProject(project), Blaze.getBuildSystem(project));
+    return new Builder(WorkspaceRoot.fromProject(project), Blaze.getBuildSystemName(project));
   }
 
   public static Builder builder(WorkspaceRoot workspaceRoot, BuildSystemName buildSystemName) {

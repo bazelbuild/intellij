@@ -74,7 +74,7 @@ public final class BlazeImportInput {
         projectViewSet,
         targetMap,
         artifactLocationDecoder,
-        Blaze.getBuildSystem(project));
+        Blaze.getBuildSystemName(project));
   }
 
   @NotNull

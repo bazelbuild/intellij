@@ -302,7 +302,8 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     // local_repository, custom repo paths, etc). Within the project these dependencies are all
     // referenced by their TargetKey. Here we use a locator to convert coordinates to TargetKey
     // labels in order to find them.
-    return MavenArtifactLocator.forBuildSystem(Blaze.getBuildSystem(module.getProject())).stream()
+    return MavenArtifactLocator.forBuildSystem(Blaze.getBuildSystemName(module.getProject()))
+        .stream()
         .map(locator -> locator.labelFor(coordinate))
         .filter(Objects::nonNull)
         .map(TargetKey::forPlainTarget);

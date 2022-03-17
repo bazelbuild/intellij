@@ -35,7 +35,7 @@ public final class BlazeGoRunConfigurationHandler implements BlazeCommandRunConf
   private final BlazeCommandRunConfigurationCommonState state;
 
   public BlazeGoRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    this.buildSystem = Blaze.getBuildSystem(configuration.getProject());
+    this.buildSystem = Blaze.getBuildSystemName(configuration.getProject());
     this.state = new BlazeCommandRunConfigurationCommonState(buildSystem);
   }
 

@@ -55,7 +55,7 @@ public class BazelKotlinxCoroutinesLibFinder implements KotlinxCoroutinesLibFind
 
   @Override
   public boolean isApplicable(Project project) {
-    return Blaze.getBuildSystem(project).equals(BuildSystemName.Bazel);
+    return Blaze.getBuildSystemName(project).equals(BuildSystemName.Bazel);
   }
 
   private static boolean isKotlinxCoroutinesLib(@Nullable ArtifactLocation jarPath) {

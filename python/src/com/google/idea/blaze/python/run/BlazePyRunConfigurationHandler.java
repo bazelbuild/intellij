@@ -34,7 +34,7 @@ public final class BlazePyRunConfigurationHandler implements BlazeCommandRunConf
   private final BlazePyRunConfigState state;
 
   public BlazePyRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    this.buildSystemName = Blaze.getBuildSystem(configuration.getProject());
+    this.buildSystemName = Blaze.getBuildSystemName(configuration.getProject());
     this.state = new BlazePyRunConfigState(buildSystemName);
   }
 

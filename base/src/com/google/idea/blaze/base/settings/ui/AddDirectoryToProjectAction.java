@@ -200,7 +200,7 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
         return new ValidationInfo("File is not in workspace", fileTextField.getField());
       }
 
-      if (Blaze.getBuildSystem(project) == BuildSystemName.Blaze
+      if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze
           && workspacePath.isWorkspaceRoot()) {
         return new ValidationInfo(
             String.format(

@@ -271,7 +271,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
     BlazeInfo blazeInfo = getBlazeInfo(context, buildParameters);
     FastBuildAspectStrategy aspectStrategy =
-        FastBuildAspectStrategy.getInstance(Blaze.getBuildSystem(project));
+        FastBuildAspectStrategy.getInstance(Blaze.getBuildSystemName(project));
 
     Stopwatch timer = Stopwatch.createStarted();
 
@@ -329,7 +329,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
   }
 
   private BlazeInfo getBlazeInfo(BlazeContext context, FastBuildParameters buildParameters) {
-    BuildSystemName buildSystemName = Blaze.getBuildSystem(project);
+    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
     ListenableFuture<BlazeInfo> blazeInfoFuture =
         BlazeInfoRunner.getInstance()
             .runBlazeInfo(

@@ -76,7 +76,7 @@ public abstract class BlazeProjectAction extends AnAction {
     if (requiredBuildSystemName == null) {
       return true;
     }
-    return Blaze.getBuildSystem(project) == requiredBuildSystemName;
+    return Blaze.getBuildSystemName(project) == requiredBuildSystemName;
   }
 
   @Nullable

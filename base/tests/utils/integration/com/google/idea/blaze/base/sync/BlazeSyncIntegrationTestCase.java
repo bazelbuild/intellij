@@ -132,9 +132,9 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
     blazeInfoData.setResults(
         ImmutableMap.<String, String>builder()
-            .put(BlazeInfo.blazeBinKey(Blaze.getBuildSystem(getProject())), blazeBin)
-            .put(BlazeInfo.blazeGenfilesKey(Blaze.getBuildSystem(getProject())), blazeGenfiles)
-            .put(BlazeInfo.blazeTestlogsKey(Blaze.getBuildSystem(getProject())), blazeTestlogs)
+            .put(BlazeInfo.blazeBinKey(Blaze.getBuildSystemName(getProject())), blazeBin)
+            .put(BlazeInfo.blazeGenfilesKey(Blaze.getBuildSystemName(getProject())), blazeGenfiles)
+            .put(BlazeInfo.blazeTestlogsKey(Blaze.getBuildSystemName(getProject())), blazeTestlogs)
             .put(BlazeInfo.EXECUTION_ROOT_KEY, execRoot)
             .put(BlazeInfo.OUTPUT_BASE_KEY, outputBase)
             .put(BlazeInfo.OUTPUT_PATH_KEY, outputPath)

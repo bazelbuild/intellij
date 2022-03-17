@@ -34,7 +34,7 @@ public class BlazeMenuGroup extends DefaultActionGroup {
     }
 
     e.getPresentation().setEnabledAndVisible(true);
-    e.getPresentation().setText(menuName(Blaze.getBuildSystem(e.getProject())));
+    e.getPresentation().setText(menuName(Blaze.getBuildSystemName(e.getProject())));
   }
 
   private static String menuName(BuildSystemName buildSystemName) {

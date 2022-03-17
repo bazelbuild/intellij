@@ -293,7 +293,7 @@ final class BuildPhaseSyncTask {
     }
     if (result == null) {
       String fileBugSuggestion =
-          Blaze.getBuildSystem(project) == BuildSystemName.Bazel
+          Blaze.getBuildSystemName(project) == BuildSystemName.Bazel
               ? ""
               : " Please run 'Blaze > File a Bug'";
       IssueOutput.error(
@@ -314,7 +314,7 @@ final class BuildPhaseSyncTask {
           context.push(new TimingScope("BlazeBuild", EventType.BlazeInvocation));
           context.output(
               new StatusOutput(
-                  "Building " + Blaze.getBuildSystem(project).getName() + " targets..."));
+                  "Building " + Blaze.getBuildSystemName(project).getName() + " targets..."));
           // We don't want blaze build errors to fail the whole sync
           context.setPropagatesErrors(false);
 

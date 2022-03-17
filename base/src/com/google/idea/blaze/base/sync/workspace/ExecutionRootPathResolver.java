@@ -59,7 +59,7 @@ public class ExecutionRootPathResolver {
       return null;
     }
     return new ExecutionRootPathResolver(
-        Blaze.getBuildSystem(project),
+        Blaze.getBuildSystemName(project),
         WorkspaceRoot.fromProject(project),
         projectData.getBlazeInfo().getExecutionRoot(),
         projectData.getWorkspacePathResolver());

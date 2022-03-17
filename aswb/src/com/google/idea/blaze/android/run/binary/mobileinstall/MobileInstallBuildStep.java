@@ -168,7 +168,7 @@ public class MobileInstallBuildStep implements ApkBuildStep {
     }
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    final String deployInfoSuffix = getDeployInfoSuffix(Blaze.getBuildSystem(project));
+    final String deployInfoSuffix = getDeployInfoSuffix(Blaze.getBuildSystemName(project));
 
     try (BuildResultHelper buildResultHelper =
             BuildResultHelperProvider.createForLocalBuild(project);

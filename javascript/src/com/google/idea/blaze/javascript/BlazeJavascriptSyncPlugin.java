@@ -190,7 +190,7 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
     }
     if (!isLanguageSupportedInIde()) {
       String message = "JavaScript is not supported in this IDE.";
-      if (Blaze.getBuildSystem(project) == BuildSystemName.Blaze) {
+      if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
         message +=
             " Please use IntelliJ Ultimate Edition or CLion, or else remove 'javascript' "
                 + "from the list of requested languages in your project view file";

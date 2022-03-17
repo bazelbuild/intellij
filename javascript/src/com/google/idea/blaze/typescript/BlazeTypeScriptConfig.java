@@ -396,7 +396,7 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
     VirtualFile base = baseUrlFile.getValue();
     if (base != null) {
       Path baseUrlPath = VfsUtil.virtualToIoFile(base).toPath();
-      BuildSystemName buildSystem = Blaze.getBuildSystem(project);
+      BuildSystemName buildSystem = Blaze.getBuildSystemName(project);
       File workspaceRoot = WorkspaceRoot.fromProject(project).directory();
       File blazeBin = new File(workspaceRoot, BlazeInfo.blazeBinKey(buildSystem));
       File blazeGenfiles = new File(workspaceRoot, BlazeInfo.blazeGenfilesKey(buildSystem));

@@ -249,7 +249,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     }
 
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
+        ImportRoots.builder(workspaceRoot, Blaze.getBuildSystemName(project))
             .add(projectState.getProjectViewSet())
             .build();
 

@@ -158,7 +158,7 @@ public class WorkspaceHelper {
   @Nullable
   private static synchronized Map<String, WorkspaceRoot> getExternalWorkspaceRoots(
       Project project) {
-    if (Blaze.getBuildSystem(project) == BuildSystemName.Blaze) {
+    if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
       return ImmutableMap.of();
     }
     return SyncCache.getInstance(project)

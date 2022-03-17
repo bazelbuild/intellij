@@ -170,7 +170,7 @@ public class BlazeImportUtil {
       Project project, BlazeProjectData projectData, ProjectViewSet projectViewSet) {
     ProjectViewTargetImportFilter importFilter =
         new ProjectViewTargetImportFilter(
-            Blaze.getBuildSystem(project), WorkspaceRoot.fromProject(project), projectViewSet);
+            Blaze.getBuildSystemName(project), WorkspaceRoot.fromProject(project), projectViewSet);
     return getSourceTargetsStream(projectData.getTargetMap(), importFilter);
   }
 

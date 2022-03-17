@@ -124,7 +124,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
     }
     JavaSourceFilter sourceFilter =
         new JavaSourceFilter(
-            Blaze.getBuildSystem(project), workspaceRoot, projectViewSet, targetMap);
+            Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet, targetMap);
 
     JdepsMap jdepsMap =
         jdepsFileReader.loadJdepsFiles(

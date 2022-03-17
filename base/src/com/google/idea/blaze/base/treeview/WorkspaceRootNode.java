@@ -69,7 +69,7 @@ public class WorkspaceRootNode extends PsiDirectoryNode {
     }
 
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, Blaze.getBuildSystem(project))
+        ImportRoots.builder(workspaceRoot, Blaze.getBuildSystemName(project))
             .add(projectViewSet)
             .build();
     if (importRoots.rootDirectories().stream().anyMatch(WorkspacePath::isWorkspaceRoot)) {

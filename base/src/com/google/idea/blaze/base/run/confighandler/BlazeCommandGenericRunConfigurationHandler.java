@@ -37,7 +37,7 @@ public final class BlazeCommandGenericRunConfigurationHandler
   private final BlazeCommandRunConfigurationCommonState state;
 
   public BlazeCommandGenericRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    this.buildSystemName = Blaze.getBuildSystem(configuration.getProject());
+    this.buildSystemName = Blaze.getBuildSystemName(configuration.getProject());
     this.state = new BlazeCommandRunConfigurationCommonState(buildSystemName);
   }
 

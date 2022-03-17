@@ -73,7 +73,7 @@ public interface BuildSystemProvider {
   /**
    * Returns the default build system for this application. This should only be called in situations
    * where it doesn't make sense to use the current project.<br>
-   * Otherwise, use {@link com.google.idea.blaze.base.settings.Blaze#getBuildSystem}
+   * Otherwise, use {@link com.google.idea.blaze.base.settings.Blaze#getBuildSystemName}
    */
   BuildSystemName buildSystem();
 

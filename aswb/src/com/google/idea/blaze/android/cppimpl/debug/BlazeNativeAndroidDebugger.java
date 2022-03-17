@@ -84,7 +84,7 @@ public class BlazeNativeAndroidDebugger extends BlazeNativeAndroidDebuggerBase {
     String runConfigurationName =
         String.format(
             "%s %s Debugger (%d)",
-            Blaze.getBuildSystem(project).getName(),
+            Blaze.getBuildSystemName(project).getName(),
             getDisplayName(),
             client.getClientData().getPid());
     RunnerAndConfigurationSettings runSettings =

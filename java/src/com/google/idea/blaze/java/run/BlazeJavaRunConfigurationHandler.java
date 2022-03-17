@@ -45,7 +45,7 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
   private final BlazeJavaRunConfigState state;
 
   public BlazeJavaRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    this.buildSystemName = Blaze.getBuildSystem(configuration.getProject());
+    this.buildSystemName = Blaze.getBuildSystemName(configuration.getProject());
     this.state = new BlazeJavaRunConfigState(buildSystemName);
   }
 
