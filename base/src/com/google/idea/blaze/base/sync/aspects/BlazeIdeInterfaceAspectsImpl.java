@@ -694,7 +694,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
       for (BlazeCommandRunner runner : BlazeCommandRunner.EP_NAME.getExtensions()) {
         if (runner.isAvailable(project)) {
-          return runner.run(project, builder, buildResultHelper, workspaceRoot, context);
+          runner.run(project, builder, workspaceRoot, context);
+          return runner.parseOutputs(buildResultHelper, context);
         }
       }
       IssueOutput.error("Failed to create build: no blaze command runner found").submit(context);

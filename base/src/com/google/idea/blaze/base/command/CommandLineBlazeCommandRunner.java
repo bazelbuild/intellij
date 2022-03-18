@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command;
 
+import com.google.common.base.Preconditions;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -30,12 +31,12 @@ import com.intellij.openapi.project.Project;
 
 /** {@inheritDoc} Start a build via local binary */
 public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
+  private BuildResult buildResult;
 
   @Override
-  public BlazeBuildOutputs run(
+  public BuildResult run(
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
-      BuildResultHelper buildResultHelper,
       WorkspaceRoot workspaceRoot,
       BlazeContext context) {
     int retVal =
@@ -48,7 +49,15 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
             .build()
             .run();
 
-    BuildResult buildResult = BuildResult.fromExitCode(retVal);
+    buildResult = BuildResult.fromExitCode(retVal);
+    return buildResult;
+  }
+
+  @Override
+  public BlazeBuildOutputs parseOutputs(BuildResultHelper buildResultHelper, BlazeContext context) {
+    Preconditions.checkState(
+        buildResult != null, "Cannot parse build outputs before a build is complete.");
+
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
