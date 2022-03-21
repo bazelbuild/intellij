@@ -28,6 +28,8 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -39,7 +41,10 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.swing.Icon;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
@@ -74,6 +79,7 @@ final class TasksTreeView extends AbstractView<Tree> {
   @Override
   protected void bind() {
     getComponent().addTreeSelectionListener(treeSelectionListener);
+    getComponent().addMouseListener(new PopupMenuMouseListener());
     Property<Task> selectedTaskProperty = model.selectedTaskProperty();
     selectedTaskProperty.addListener(modelSelectedTaskListener);
     selectTask(selectedTaskProperty, null, selectedTaskProperty.getValue());
@@ -118,6 +124,25 @@ final class TasksTreeView extends AbstractView<Tree> {
     }
     path.push(root);
     return new TreePath(path.toArray());
+  }
+
+  private class PopupMenuMouseListener extends MouseAdapter {
+    @Override
+    public void mouseReleased(MouseEvent e) {
+      if (SwingUtilities.isRightMouseButton(e)) {
+        Task selectedTask = model.selectedTaskProperty().getValue();
+        if (selectedTask != null
+            && selectedTask.getParent().isEmpty()
+            && selectedTask.isFinished()) {
+          JPopupMenu menu = new JPopupMenu("Popup Menu");
+          JMenuItem removeTaskMenuItem = new JMenuItem("Remove Task");
+          removeTaskMenuItem.addActionListener(
+              it -> model.tasksTreeProperty().removeTask(selectedTask));
+          menu.add(removeTaskMenuItem);
+          menu.show(e.getComponent(), e.getX(), e.getY());
+        }
+      }
+    }
   }
 
   /** Swing's TreeModel implementation that reflects the hierarchy of the tasks. */
