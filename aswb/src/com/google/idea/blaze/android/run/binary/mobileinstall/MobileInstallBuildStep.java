@@ -38,12 +38,12 @@ import com.google.idea.blaze.android.run.runner.ExecRootUtil;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -150,10 +150,9 @@ public class MobileInstallBuildStep implements ApkBuildStep {
       return;
     }
 
-    BlazeCommand.Builder command =
-        BlazeCommand.builder(
-            Blaze.getBuildSystemProvider(project).getBinaryPath(project),
-            BlazeCommandName.MOBILE_INSTALL);
+    BuildInvoker invoker =
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project);
+    BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.MOBILE_INSTALL);
 
     if (passAdbArgWithSerialToMi.getValue()) {
       // Redundant, but we need this to get around bug in bazel.
@@ -170,8 +169,7 @@ public class MobileInstallBuildStep implements ApkBuildStep {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     final String deployInfoSuffix = getDeployInfoSuffix(Blaze.getBuildSystemName(project));
 
-    try (BuildResultHelper buildResultHelper =
-            BuildResultHelperProvider.createForLocalBuild(project);
+    try (BuildResultHelper buildResultHelper = invoker.createBuildResultProvider();
         AdbTunnelConfigurator tunnelConfig = getTunnelConfigurator(context)) {
       tunnelConfig.setupConnection(context);
 

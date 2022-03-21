@@ -45,11 +45,11 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelpe
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -60,7 +60,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import java.io.File;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
@@ -112,19 +111,9 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
         .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS));
-    registerExtension(
-        BuildResultHelperProvider.EP_NAME,
-        new BuildResultHelperProvider() {
-          @Override
-          public Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo) {
-            return Optional.of(mockBuildResultHelper);
-          }
-
-          @Override
-          public Optional<BuildResultHelper> doCreateForLocalBuild(Project project) {
-            return Optional.of(mockBuildResultHelper);
-          }
-        });
+    BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
+    buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
+    registerExtension(BuildSystemProvider.EP_NAME, buildSystem);
   }
 
   @Before
