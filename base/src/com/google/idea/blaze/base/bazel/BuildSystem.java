@@ -32,6 +32,16 @@ import java.util.Optional;
  */
 public interface BuildSystem {
 
+  /** Strategy to use for builds that are part of a project sync. */
+  enum SyncStrategy {
+    /** Never parallelize sync builds. */
+    SERIAL,
+    /** Parallelize sync builds if it's deemed likely that doing so will be faster. */
+    DECIDE_AUTOMATICALLY,
+    /** Always parallelize sync builds. */
+    PARALLEL,
+  }
+
   /** Encapsulates a means of executing build commands, often as a Bazel compatible binary. */
   interface BuildInvoker {
 
@@ -75,4 +85,7 @@ public interface BuildSystem {
    * @return An invoker, or {@code Optional.EMPTY} if parallelism is not supported.
    */
   Optional<BuildInvoker> getParallelBuildInvoker(Project project, BlazeInfo blazeInfo);
+
+  /** Return the strategy for remote syncs to be used with this build system. */
+  SyncStrategy getSyncStrategy();
 }

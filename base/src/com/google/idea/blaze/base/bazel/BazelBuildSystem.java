@@ -92,6 +92,11 @@ class BazelBuildSystem implements BuildSystem {
     return Optional.empty();
   }
 
+  @Override
+  public SyncStrategy getSyncStrategy() {
+    return SyncStrategy.SERIAL;
+  }
+
   @Nullable
   static File getProjectSpecificBazelBinary(Project project) {
     ProjectViewSet projectView = ProjectViewManager.getInstance(project).getProjectViewSet();

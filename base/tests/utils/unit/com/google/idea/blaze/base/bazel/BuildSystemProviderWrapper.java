@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.bazel;
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
@@ -42,6 +43,7 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
   private BuildSystemWrapper buildSystem;
   private Supplier<BuildResultHelper> buildResultHelperSupplier;
   private BuildBinaryType buildBinaryType;
+  private SyncStrategy syncStrategy;
 
   /**
    * Create a wrapper for the given {@link BuildSystemProvider}.
@@ -188,6 +190,16 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     buildBinaryType = type;
   }
 
+  /**
+   * Sets the build binary type to be returned by {@code getBuildSystem().getSyncStrategy()}.
+   *
+   * <p>If not set, or set to {@code null}, the {@link SyncStrategy} returned will come form the
+   * wrapped instance.
+   */
+  public void setSyncStrategy(SyncStrategy strategy) {
+    syncStrategy = strategy;
+  }
+
   class BuildInvokerWrapper implements BuildInvoker {
     private final BuildInvoker inner;
 
@@ -253,6 +265,14 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
         invoker = Optional.of(new BuildInvokerWrapper(invoker.get()));
       }
       return invoker;
+    }
+
+    @Override
+    public SyncStrategy getSyncStrategy() {
+      if (syncStrategy != null) {
+        return syncStrategy;
+      }
+      return inner.getSyncStrategy();
     }
   }
 }
