@@ -38,11 +38,11 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.Devic
 import com.google.idea.blaze.android.run.runner.FullApkBuildStep;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -51,9 +51,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.google.idea.testing.ServiceHelper;
-import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -112,19 +110,9 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
         .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS));
-    registerExtension(
-        BuildResultHelperProvider.EP_NAME,
-        new BuildResultHelperProvider() {
-          @Override
-          public Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo) {
-            return Optional.of(mockBuildResultHelper);
-          }
-
-          @Override
-          public Optional<BuildResultHelper> doCreateForLocalBuild(Project project) {
-            return Optional.of(mockBuildResultHelper);
-          }
-        });
+    BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
+    buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
+    registerExtension(BuildSystemProvider.EP_NAME, buildSystem);
   }
 
   @Test
