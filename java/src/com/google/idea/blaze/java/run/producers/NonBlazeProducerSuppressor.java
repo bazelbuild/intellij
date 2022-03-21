@@ -75,5 +75,6 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
     producerService.getState().ignoredProducers.addAll(KOTLIN_PRODUCERS);
     producerService.getState().ignoredProducers.addAll(ANDROID_PRODUCERS);
     producerService.getState().ignoredProducers.addAll(GRADLE_PRODUCERS);
+    producerService.getState().ignoredProducers.addAll(KOTLIN_PRODUCERS);
   }
 }
