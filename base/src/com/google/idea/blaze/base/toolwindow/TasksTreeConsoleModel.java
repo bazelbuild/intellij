@@ -22,12 +22,10 @@ import java.util.Queue;
 
 /** Model for the combination of the tree and output consoles. */
 final class TasksTreeConsoleModel {
-  static final int MAX_FINISHED_TASKS = 10;
-
   private final TasksTreeModel treeModel = new TasksTreeModel();
   private final Map<Task, ConsoleView> consolesOfTasks = new HashMap<>();
 
-  private final Queue<Task> topLevelFinishedTasks = new ArrayDeque<>(MAX_FINISHED_TASKS + 1);
+  private final Queue<Task> topLevelFinishedTasks = new ArrayDeque<>();
 
   private TasksTreeConsoleModel() {}
 

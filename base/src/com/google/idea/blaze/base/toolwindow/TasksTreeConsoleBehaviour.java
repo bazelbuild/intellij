@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -91,7 +92,8 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
   }
 
   private void cleanUpTasksExceedingLimit() {
-    while (model.getTopLevelFinishedTasks().size() > TasksTreeConsoleModel.MAX_FINISHED_TASKS) {
+    while (model.getTopLevelFinishedTasks().size()
+        > BlazeConsoleExperimentManager.getTasksHistorySize()) {
       Task task = model.getTopLevelFinishedTasks().poll();
       model.getTreeModel().tasksTreeProperty().removeTask(task);
       ConsoleView consoleView = model.getConsolesOfTasks().remove(task);
