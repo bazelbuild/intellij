@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
@@ -53,6 +54,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
     try {
+      context.output(PrintOutput.log("Build command finished. Retrieving BEP outputs..."));
       return BlazeBuildOutputs.fromParsedBepOutput(buildResult, buildResultHelper.getBuildOutput());
     } catch (GetArtifactsException e) {
       IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
