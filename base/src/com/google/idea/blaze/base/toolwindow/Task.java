@@ -118,17 +118,16 @@ public final class Task {
 
   /** Type of the task. */
   public enum Type {
-    // TODO(olegsa) consider merging some categories
-    G4_FIX("G4 Fix"),
-    G4_LINT("G4 Lint"),
+    FORMAT("Format"),
+    LINT("Lint"),
     BUILD_CLEANER("Build Cleaner"),
     FIX_DEPS("Fix Deps"),
     SUGGESTED_FIXES("Suggested Fixes"),
     FAST_BUILD("Fast Build"),
     DEPLOYABLE_JAR("DeployableJar"),
-    BLAZE_MAKE("Blaze Make"),
-    BLAZE_BEFORE_RUN("Blaze Before Run"),
-    BLAZE_SYNC("Blaze Sync"),
+    MAKE("Make"),
+    BEFORE_LAUNCH("Before Launch"),
+    SYNC("Sync"),
     OTHER("Other");
 
     private final String displayName;

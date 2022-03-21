@@ -173,7 +173,7 @@
                       conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"
                       icon="BlazeIcons.ToolWindow"
                       factoryClass="com.google.idea.blaze.base.console.BlazeConsoleToolWindowFactory"/>
-    <toolWindow id="Build Tasks"
+    <toolWindow id="Blaze"
         anchor="bottom"
         secondary="false"
         conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"

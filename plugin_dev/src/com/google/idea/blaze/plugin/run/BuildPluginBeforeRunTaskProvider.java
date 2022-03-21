@@ -173,7 +173,7 @@ public final class BuildPluginBeforeRunTaskProvider
                           project,
                           new com.google.idea.blaze.base.toolwindow.Task(
                               "Build Plugin Jar",
-                              com.google.idea.blaze.base.toolwindow.Task.Type.BLAZE_BEFORE_RUN))
+                              com.google.idea.blaze.base.toolwindow.Task.Type.BEFORE_LAUNCH))
                       .setPopupBehavior(userSettings.getShowBlazeConsoleOnRun())
                       .setIssueParsers(
                           BlazeIssueParser.defaultIssueParsers(

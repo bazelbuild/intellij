@@ -39,7 +39,7 @@ public class TasksToolWindowServiceTest {
 
   @Before
   public void before() {
-    task = new Task("Test task", Task.Type.BLAZE_SYNC);
+    task = new Task("Test task", Task.Type.SYNC);
   }
 
   @Test

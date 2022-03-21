@@ -178,7 +178,7 @@ public class BlazeBuildService {
                 new ScopedTask<Void>() {
                   @Override
                   public Void execute(BlazeContext context) {
-                    Task task = new Task(taskName, Task.Type.BLAZE_MAKE);
+                    Task task = new Task(taskName, Task.Type.MAKE);
                     context
                         .push(
                             new ToolWindowScope.Builder(project, task)

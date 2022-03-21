@@ -638,7 +638,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       String taskName,
       boolean isSync) {
     ContextType contextType = isSync ? ContextType.Sync : ContextType.Other;
-    Task.Type taskType = isSync ? Task.Type.BLAZE_SYNC : Task.Type.BLAZE_MAKE;
+    Task.Type taskType = isSync ? Task.Type.SYNC : Task.Type.MAKE;
 
     ToolWindowScope parentToolWindowScope = parentContext.getScope(ToolWindowScope.class);
     Task parentTask = parentToolWindowScope != null ? parentToolWindowScope.getTask() : null;
