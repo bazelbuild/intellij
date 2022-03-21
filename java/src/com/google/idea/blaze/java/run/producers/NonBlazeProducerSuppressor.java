@@ -29,11 +29,11 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
           "org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer",
           "org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinJvmTestClassGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer",
-          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestMethodGradleConfigurationProducer",
+          // "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer",
+          // "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer",
+          // "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer",
+          // "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer",
+          // "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestMethodGradleConfigurationProducer",
           /** #api212: remove these duplicate producers. */
           "org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer",
@@ -43,23 +43,24 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
 
   private static final ImmutableList<String> ANDROID_PRODUCERS =
       ImmutableList.of(
-          "com.android.tools.idea.run.AndroidConfigurationProducer",
-          "com.android.tools.idea.testartifacts.instrumented.AndroidTestConfigurationProducer",
-          "com.android.tools.idea.testartifacts.junit.TestClassAndroidConfigurationProducer",
-          "com.android.tools.idea.testartifacts.junit.TestDirectoryAndroidConfigurationProducer",
-          "com.android.tools.idea.testartifacts.junit.TestMethodAndroidConfigurationProducer",
+          // "com.android.tools.idea.run.AndroidConfigurationProducer",
+          // "com.android.tools.idea.testartifacts.instrumented.AndroidTestConfigurationProducer",
+          // "com.android.tools.idea.testartifacts.junit.TestClassAndroidConfigurationProducer",
+          // "com.android.tools.idea.testartifacts.junit.TestDirectoryAndroidConfigurationProducer",
+          // "com.android.tools.idea.testartifacts.junit.TestMethodAndroidConfigurationProducer",
           "com.android.tools.idea.testartifacts.junit.TestPackageAndroidConfigurationProducer",
           "com.android.tools.idea.testartifacts.junit.TestPatternConfigurationProducer");
 
   private static final ImmutableList<String> GRADLE_PRODUCERS =
       ImmutableList.of(
-          "org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer",
-          "org.jetbrains.plugins.gradle.execution.test.runner.AllInDirectoryGradleConfigurationProducer",
-          "org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer",
-          "org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer",
-          "org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer",
-          "org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer",
-          "org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer");
+          // "org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer",
+          // "org.jetbrains.plugins.gradle.execution.test.runner.AllInDirectoryGradleConfigurationProducer",
+          // "org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer",
+          // "org.jetbrains.plugins.gradle.execution.test.runner.PatternGradleConfigurationProducer",
+          // "org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer",
+          // "org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer",
+          // "org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"
+          );
 
   private static final ImmutableList<String> JAVA_PRODUCERS =
       ImmutableList.of(
