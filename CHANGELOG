@@ -1,3 +1,7 @@
+v2022.03.22
+===========
+* Bug fixes and internal cleanup.
+
 v2022.03.08
 ===========
 * [2021.3] Kotlin tests: Fixed suggestion of run configurations.
