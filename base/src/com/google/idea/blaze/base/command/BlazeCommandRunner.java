@@ -20,13 +20,10 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
 /** Runs a blaze build command */
 public interface BlazeCommandRunner {
-  ExtensionPointName<BlazeCommandRunner> EP_NAME =
-      ExtensionPointName.create("com.google.idea.blaze.BlazeCommandRunner");
 
   BlazeBuildOutputs run(
       Project project,
@@ -35,6 +32,4 @@ public interface BlazeCommandRunner {
       WorkspaceRoot workspaceRoot,
       BlazeContext context,
       BuildInvoker binary);
-
-  boolean isAvailable(Project project);
 }

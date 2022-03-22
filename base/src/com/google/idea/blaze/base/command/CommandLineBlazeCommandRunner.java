@@ -63,9 +63,4 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
   }
-
-  @Override
-  public boolean isAvailable(Project project) {
-    return true;
-  }
 }
