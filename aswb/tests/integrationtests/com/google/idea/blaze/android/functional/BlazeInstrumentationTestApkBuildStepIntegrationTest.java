@@ -41,7 +41,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -108,11 +107,6 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     registerExtension(
         BuildResultHelperProvider.EP_NAME,
         new BuildResultHelperProvider() {
-          @Override
-          public Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo) {
-            return Optional.of(mockBuildResultHelper);
-          }
-
           @Override
           public Optional<BuildResultHelper> doCreateForLocalBuild(Project project) {
             return Optional.of(mockBuildResultHelper);
