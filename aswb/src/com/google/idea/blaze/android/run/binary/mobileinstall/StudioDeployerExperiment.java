@@ -16,7 +16,6 @@
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
-import com.intellij.openapi.util.SystemInfo;
 
 /**
  * A utility class that manages the experiment to use studio's built in deployer for deploying apks
@@ -29,10 +28,6 @@ public class StudioDeployerExperiment {
 
   /** Returns whether mobile install deployments should happen via the studio deployer. */
   public static boolean isEnabled() {
-    if (!SystemInfo.isLinux) {
-      // TODO(b/197761450): Enable this for Macs after mdproxy related issues are sorted out.
-      return false;
-    }
     return useStudioDeployer.isEnabled();
   }
 
