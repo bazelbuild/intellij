@@ -41,15 +41,6 @@ class BlazeJavaLibrarySource extends LibrarySource.Adapter {
     return syncData.getImportResult().libraries.values().asList();
   }
 
-  @Override
-  public List<? extends BlazeLibrary> getLintLibraries() {
-    BlazeJavaSyncData syncData = blazeProjectData.getSyncState().get(BlazeJavaSyncData.class);
-    if (syncData == null) {
-      return ImmutableList.of();
-    }
-    return syncData.getImportResult().pluginProcessorJars.asList();
-  }
-
   @Nullable
   @Override
   public Predicate<BlazeLibrary> getLibraryFilter() {

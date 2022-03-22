@@ -24,5 +24,6 @@
     <TargetKindProvider implementation="com.google.idea.blaze.java.JavaBlazeRules"/>
     <TargetKindProvider implementation="com.google.idea.blaze.java.AndroidBlazeRules"/>
     <LoggedDirectoryProvider implementation="com.google.idea.blaze.java.libraries.JarCacheFolderProvider$LoggedJarCacheDirectory"/>
+    <LintCollector implementation="com.google.idea.blaze.java.libraries.JavaLintCollector"/>
   </extensions>
 </idea-plugin>

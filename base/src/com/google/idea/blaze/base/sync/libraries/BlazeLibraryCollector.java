@@ -35,11 +35,6 @@ public class BlazeLibraryCollector {
     return collectLibraries(projectViewSet, blazeProjectData, LibrarySource::getLibraries);
   }
 
-  public static List<BlazeLibrary> getLintLibraries(
-      ProjectViewSet projectViewSet, BlazeProjectData blazeProjectData) {
-    return collectLibraries(projectViewSet, blazeProjectData, LibrarySource::getLintLibraries);
-  }
-
   /* Collect all libraries of specific types from all library sources. */
   private static List<BlazeLibrary> collectLibraries(
       ProjectViewSet projectViewSet,

@@ -57,7 +57,6 @@ import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
 import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncPlugin;
 import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyJarTracker;
-import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.common.experiments.ExperimentService;
@@ -178,7 +177,7 @@ public class JarCacheTest extends BlazeTestCase {
             .setJavaSourceFiles(ImmutableSet.of())
             .setSourceVersion(null)
             .setEmptyJarTracker(EmptyJarTracker.builder().build())
-            .setPluginProcessorJars(ImmutableSet.of(new BlazeJarLibrary(libraryArtifact, null)))
+            .setPluginProcessorJars(ImmutableSet.of(libraryArtifact.jarForIntellijLibrary()))
             .build();
     BlazeJavaSyncData syncData =
         new BlazeJavaSyncData(importResult, new GlobSet(ImmutableList.of()));
@@ -236,8 +235,5 @@ public class JarCacheTest extends BlazeTestCase {
       }
     }
 
-    public String getMessages() {
-      return writer.toString();
-    }
   }
 }

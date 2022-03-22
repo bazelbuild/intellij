@@ -439,6 +439,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.EventLogger" interface="com.google.idea.blaze.base.logging.EventLogger"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.LoggedSettingsProvider" interface="com.google.idea.blaze.base.logging.LoggedSettingsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.LoggedDirectoryProvider" interface="com.google.idea.blaze.base.logging.LoggedDirectoryProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.LintCollector" interface="com.google.idea.blaze.base.sync.libraries.LintCollector"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ProjectViewDefaultValueProvider" interface="com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValueProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeLibrarySorter" interface="com.google.idea.blaze.base.sync.libraries.BlazeLibrarySorter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildSystemVersionChecker" interface="com.google.idea.blaze.base.plugin.BuildSystemVersionChecker"/>

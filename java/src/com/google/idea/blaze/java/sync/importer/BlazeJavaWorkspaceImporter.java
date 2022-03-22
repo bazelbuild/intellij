@@ -186,7 +186,7 @@ public final class BlazeJavaWorkspaceImporter {
       }
       workspaceBuilder.pluginProcessorJars.addAll(
           javaIdeInfo.getPluginProcessorJars().stream()
-              .map(jar -> new BlazeJarLibrary(jar, target.getKey()))
+              .map(jar -> jar.jarForIntellijLibrary())
               .collect(toImmutableList()));
     }
 
@@ -332,7 +332,7 @@ public final class BlazeJavaWorkspaceImporter {
 
     workspaceBuilder.pluginProcessorJars.addAll(
         javaIdeInfo.getPluginProcessorJars().stream()
-            .map(jar -> new BlazeJarLibrary(jar, target.getKey()))
+            .map(jar -> jar.jarForIntellijLibrary())
             .collect(toImmutableList()));
   }
 
@@ -354,7 +354,7 @@ public final class BlazeJavaWorkspaceImporter {
     List<ArtifactLocation> buildOutputJars = Lists.newArrayList();
     List<SourceArtifact> sourceArtifacts = Lists.newArrayList();
     Map<TargetKey, ArtifactLocation> javaPackageManifests = Maps.newHashMap();
-    Set<BlazeJarLibrary> pluginProcessorJars = Sets.newHashSet();
+    final Set<ArtifactLocation> pluginProcessorJars = Sets.newHashSet();
   }
 
   /**

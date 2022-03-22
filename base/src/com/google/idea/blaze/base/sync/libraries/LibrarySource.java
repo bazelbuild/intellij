@@ -28,11 +28,6 @@ public interface LibrarySource {
   /** Called during the project structure phase to get libraries. */
   List<? extends BlazeLibrary> getLibraries();
 
-  /** Called after the project sync to get lint jar libraries. */
-  default List<? extends BlazeLibrary> getLintLibraries() {
-    return ImmutableList.of();
-  }
-
   /**
    * Returns a filter on libraries.
    *

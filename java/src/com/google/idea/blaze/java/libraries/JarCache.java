@@ -272,13 +272,7 @@ public class JarCache {
         newOutputs.put(cacheKeyForSourceJar(srcJar), srcJar);
       }
     }
-
-    BlazeLibraryCollector.getLintLibraries(projectViewSet, projectData).stream()
-        .filter(library -> library instanceof BlazeJarLibrary)
-        .map(
-            library ->
-                decoder.resolveOutput(
-                    ((BlazeJarLibrary) library).libraryArtifact.jarForIntellijLibrary()))
+    JavaLintCollector.collectLintJarsArtifacts(projectData)
         .forEach(jar -> newOutputs.put(cacheKeyForJar(jar), jar));
 
     return ImmutableMap.copyOf(newOutputs);
@@ -361,8 +355,17 @@ public class JarCache {
    */
   @Nullable
   public File getCachedJar(ArtifactLocationDecoder decoder, BlazeJarLibrary library) {
-    boolean enabled = isEnabled();
     BlazeArtifact artifact = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
+    return getCachedJar(artifact);
+  }
+
+  /**
+   * Gets the cached file for a jar. If it doesn't exist, we return the file from the library, or
+   * null if that also can't be accessed locally.
+   */
+  @Nullable
+  public File getCachedJar(BlazeArtifact artifact) {
+    boolean enabled = isEnabled();
     if (!enabled) {
       return getFallbackFile(artifact);
     }

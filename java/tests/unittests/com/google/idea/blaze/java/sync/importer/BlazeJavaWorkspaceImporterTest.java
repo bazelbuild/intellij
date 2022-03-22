@@ -1633,7 +1633,9 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     assertThat(
             result.pluginProcessorJars.stream()
-                .map(BlazeJavaWorkspaceImporterTest::libraryFileName))
+                .map(
+                    artifactLocation ->
+                        new File(artifactLocation.getExecutionRootRelativePath()).getName()))
         .containsExactly("lint.jar");
   }
 

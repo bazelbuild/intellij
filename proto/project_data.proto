@@ -85,7 +85,10 @@ message BlazeJavaImportResult {
   repeated ArtifactLocation java_source_files = 4;
   string source_version = 5;
   EmptyJarTracker empty_jar_tracker = 6;
-  repeated BlazeLibrary plugin_processor_jars = 7;
+  // this field has been deprecated due to field type change, use
+  // plugin_processor_jar_artifacts instead
+  repeated BlazeLibrary plugin_processor_jars = 7 [deprecated = true];
+  repeated ArtifactLocation plugin_processor_jar_artifacts = 8;
 }
 
 message BlazeJavaSyncData {
