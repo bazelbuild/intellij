@@ -45,7 +45,9 @@ public class BlazeBuildOutputs {
 
   public final BuildResult buildResult;
   public final ImmutableList<String> buildIds;
-  private final ImmutableMap<String, BepArtifactData> artifacts;
+
+  /** {@link BepArtifactData} by {@link OutputArtifact#getKey()} for all artifacts from a build. */
+  public final ImmutableMap<String, BepArtifactData> artifacts;
 
   /** The artifacts transitively associated with each top-level target. */
   private final ImmutableSetMultimap<String, OutputArtifact> perTargetArtifacts;
