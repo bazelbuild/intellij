@@ -21,10 +21,11 @@ import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.common.actions.ActionPresentationHelper;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+
 import java.io.File;
 
 class BlazeCompileFileAction extends BlazeProjectAction {
@@ -40,7 +41,7 @@ class BlazeCompileFileAction extends BlazeProjectAction {
 
   @Override
   protected void actionPerformedInBlazeProject(Project project, AnActionEvent e) {
-    BlazeBuildService.getInstance(project).buildFile(getFileName(e), getTargets(e));
+        BlazeBuildService.getInstance(project).buildFile(getFileName(e), getTargets(e));
   }
 
   private ImmutableCollection<Label> getTargets(AnActionEvent e) {
