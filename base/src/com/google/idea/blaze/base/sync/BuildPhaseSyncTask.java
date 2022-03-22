@@ -21,6 +21,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.dependencies.BlazeQuerySourceToTargetProvider;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -73,8 +75,10 @@ final class BuildPhaseSyncTask {
       BlazeSyncParams syncParams,
       SyncProjectState projectState,
       int buildId,
-      BlazeContext context) {
-    BuildPhaseSyncTask task = new BuildPhaseSyncTask(project, syncParams, projectState, buildId);
+      BlazeContext context,
+      BuildSystem buildSystem) {
+    BuildPhaseSyncTask task =
+        new BuildPhaseSyncTask(project, syncParams, projectState, buildId, buildSystem);
     return task.run(context);
   }
 
@@ -86,9 +90,14 @@ final class BuildPhaseSyncTask {
   private final int buildId;
   private final BlazeSyncBuildResult.Builder resultBuilder;
   private final BuildPhaseSyncStats.Builder buildStats;
+  private final BuildSystem buildSystem;
 
   private BuildPhaseSyncTask(
-      Project project, BlazeSyncParams syncParams, SyncProjectState projectState, int buildId) {
+      Project project,
+      BlazeSyncParams syncParams,
+      SyncProjectState projectState,
+      int buildId,
+      BuildSystem buildSystem) {
     this.project = project;
     this.importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
@@ -97,6 +106,7 @@ final class BuildPhaseSyncTask {
     this.buildId = buildId;
     this.resultBuilder = BlazeSyncBuildResult.builder();
     this.buildStats = BuildPhaseSyncStats.builder();
+    this.buildSystem = buildSystem;
   }
 
   private BlazeSyncBuildResult run(BlazeContext parentContext) {
@@ -178,15 +188,31 @@ final class BuildPhaseSyncTask {
     }
     ShardedTargetList shardedTargets = shardedTargetsResult.shardedTargets;
 
+    boolean parallel = buildParams.parallelizeBuilds();
+
     buildStats
         .setSyncSharded(shardedTargets.shardCount() > 1)
         .setShardCount(shardedTargets.shardCount())
         .setShardStats(shardedTargets.shardStats())
-        .setParallelBuilds(buildParams.parallelizeBuilds());
+        .setParallelBuilds(parallel);
 
-    BlazeBuildOutputs blazeBuildResult = getBlazeBuildResult(context, viewSet, shardedTargets);
+    BuildInvoker invoker = null;
+    if (parallel) {
+      invoker =
+          buildSystem.getParallelBuildInvoker(project, projectState.getBlazeInfo()).orElse(null);
+    }
+    if (invoker == null) {
+      invoker = buildSystem.getBuildInvoker(project);
+    }
+
+    BlazeBuildOutputs blazeBuildResult =
+        getBlazeBuildResult(context, viewSet, shardedTargets, invoker);
     resultBuilder.setBuildResult(blazeBuildResult);
-    buildStats.setBuildResult(blazeBuildResult.buildResult).setBuildIds(blazeBuildResult.buildIds);
+    buildStats
+        .setBuildResult(blazeBuildResult.buildResult)
+        .setBuildIds(blazeBuildResult.buildIds)
+        .setBuildBinaryType(invoker.getType());
+
     if (context.isCancelled()) {
       throw new SyncCanceledException();
     }
@@ -306,7 +332,10 @@ final class BuildPhaseSyncTask {
   }
 
   private BlazeBuildOutputs getBlazeBuildResult(
-      BlazeContext parentContext, ProjectViewSet projectViewSet, ShardedTargetList shardedTargets) {
+      BlazeContext parentContext,
+      ProjectViewSet projectViewSet,
+      ShardedTargetList shardedTargets,
+      BuildInvoker invoker) {
 
     return Scope.push(
         parentContext,
@@ -324,9 +353,8 @@ final class BuildPhaseSyncTask {
               context,
               workspaceRoot,
               projectState.getBlazeVersionData(),
-              BlazeBuildParams.fromProject(project),
+              invoker,
               projectViewSet,
-              projectState.getBlazeInfo(),
               shardedTargets,
               projectState.getLanguageSettings(),
               ImmutableSet.of(OutputGroup.RESOLVE, OutputGroup.INFO));

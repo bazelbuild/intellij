@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command;
 
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -32,7 +33,8 @@ public interface BlazeCommandRunner {
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
       WorkspaceRoot workspaceRoot,
-      BlazeContext context);
+      BlazeContext context,
+      BuildInvoker binary);
 
   boolean isAvailable(Project project);
 }

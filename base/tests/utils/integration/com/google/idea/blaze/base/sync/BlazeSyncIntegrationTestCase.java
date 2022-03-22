@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.MockEventLoggingService;
 import com.google.idea.blaze.base.MockProjectViewManager;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -328,9 +329,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
         BlazeVersionData blazeVersion,
-        BlazeBuildParams buildParams,
+        BuildInvoker invoker,
         ProjectViewSet projectViewSet,
-        BlazeInfo blazeInfo,
         ShardedTargetList shardedTargets,
         WorkspaceLanguageSettings workspaceLanguageSettings,
         ImmutableSet<OutputGroup> outputGroups) {

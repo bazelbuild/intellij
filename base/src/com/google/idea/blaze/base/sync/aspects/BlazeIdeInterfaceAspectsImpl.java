@@ -32,19 +32,17 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
@@ -79,7 +77,6 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectState;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
@@ -560,17 +557,14 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       BlazeVersionData blazeVersion,
-      BlazeBuildParams buildParams,
+      BuildInvoker invoker,
       ProjectViewSet projectViewSet,
-      BlazeInfo blazeInfo,
       ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       ImmutableSet<OutputGroup> outputGroups) {
     AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersion);
 
     final Ref<BlazeBuildOutputs> combinedResult = new Ref<>();
-
-    boolean parallelize = buildParams.parallelizeBuilds();
 
     // The build is a sync iff INFO output group is present
     boolean isSync = outputGroups.contains(OutputGroup.INFO);
@@ -604,9 +598,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                           project,
                           childContext,
                           workspaceRoot,
-                          buildParams,
+                          invoker,
                           projectViewSet,
-                          blazeInfo,
                           workspaceLanguageSettings.getActiveLanguages(),
                           targets,
                           aspectStrategy,
@@ -623,7 +616,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 });
     BuildResult buildResult =
         shardedTargets.runShardedCommand(
-            project, context, progressMessage, invocation, parallelize);
+            project, context, progressMessage, invocation, invoker.supportsParallelism());
     if (combinedResult.isNull() || buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
@@ -662,9 +655,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       Project project,
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
-      BlazeBuildParams buildParams,
+      BuildInvoker invoker,
       ProjectViewSet viewSet,
-      BlazeInfo blazeInfo,
       ImmutableSet<LanguageClass> activeLanguages,
       List<? extends TargetExpression> targets,
       AspectStrategy aspectStrategy,
@@ -673,11 +665,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     boolean onlyDirectDeps =
         viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
 
-    try (BuildResultHelper buildResultHelper =
-        BuildResultHelperProvider.create(project, blazeInfo)) {
+    try (BuildResultHelper buildResultHelper = invoker.createBuildResultProvider()) {
 
-      BlazeCommand.Builder builder =
-          BlazeCommand.builder(buildParams.blazeBinaryPath(), BlazeCommandName.BUILD);
+      BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
       builder
           .addTargets(targets)
           .addBlazeFlags(BlazeFlags.KEEP_GOING)
@@ -692,13 +682,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       aspectStrategy.addAspectAndOutputGroups(
           builder, outputGroups, activeLanguages, onlyDirectDeps);
 
-      for (BlazeCommandRunner runner : BlazeCommandRunner.EP_NAME.getExtensions()) {
-        if (runner.isAvailable(project)) {
-          return runner.run(project, builder, buildResultHelper, workspaceRoot, context);
-        }
-      }
-      IssueOutput.error("Failed to create build: no blaze command runner found").submit(context);
-      return BlazeBuildOutputs.noOutputs(BuildResult.FATAL_ERROR);
+      return invoker
+          .getCommandRunner()
+          .run(project, builder, buildResultHelper, workspaceRoot, context, invoker);
     }
   }
 }
