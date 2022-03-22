@@ -1,6 +1,5 @@
 package com.google.idea.sdkcompat.general;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -110,15 +109,5 @@ public final class BaseSdkCompat {
   @SuppressWarnings("rawtypes")
   public static boolean isIncrementalRefreshProperty(VcsLogProperty property) {
     return false;
-  }
-
-  /** #api212: inline this method. */
-  public static ImmutableList<String> getKotlinProducers() {
-    return ImmutableList.of(
-        "org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer",
-        "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer",
-        "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer",
-        "org.jetbrains.kotlin.idea.run.KotlinTestClassGradleConfigurationProducer",
-        "org.jetbrains.kotlin.idea.run.KotlinTestMethodGradleConfigurationProducer");
   }
 }

@@ -17,7 +17,6 @@ package com.google.idea.blaze.java.run.producers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -25,7 +24,20 @@ import com.intellij.openapi.startup.StartupActivity;
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
 public class NonBlazeProducerSuppressor implements StartupActivity {
 
-  private static final ImmutableList<String> KOTLIN_PRODUCERS = BaseSdkCompat.getKotlinProducers();
+  private static final ImmutableList<String> KOTLIN_PRODUCERS =
+      ImmutableList.of(
+          "org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer",
+          "org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinJvmTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer",
+          /** #api212: remove these duplicate producers. */
+          "org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinTestMethodGradleConfigurationProducer");
 
   private static final ImmutableList<String> ANDROID_PRODUCERS =
       ImmutableList.of(
