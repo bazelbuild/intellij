@@ -615,8 +615,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   return result.buildResult;
                 });
     BuildResult buildResult =
-        shardedTargets.runShardedCommand(
-            project, context, progressMessage, invocation, invoker.supportsParallelism());
+        shardedTargets.runShardedCommand(project, context, progressMessage, invocation, invoker);
     if (combinedResult.isNull() || buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }

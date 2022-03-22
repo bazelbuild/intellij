@@ -172,23 +172,23 @@ final class BuildPhaseSyncTask {
     }
     buildStats.setTargets(targets);
     notifyBuildStarted(context, syncParams.addProjectViewTargets(), ImmutableList.copyOf(targets));
-    BlazeBuildParams buildParams = BlazeBuildParams.fromProject(project);
 
     ShardedTargetsResult shardedTargetsResult =
         BlazeBuildTargetSharder.expandAndShardTargets(
             project,
             context,
             workspaceRoot,
-            buildParams,
             viewSet,
             projectState.getWorkspacePathResolver(),
-            targets);
+            targets,
+            buildSystem.getBuildInvoker(project));
     if (shardedTargetsResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       throw new SyncFailedException();
     }
     ShardedTargetList shardedTargets = shardedTargetsResult.shardedTargets;
 
-    boolean parallel = buildParams.parallelizeBuilds();
+    // TODO(b/218800878) remove this getSyncBinaryType() call.
+    boolean parallel = Blaze.getBuildSystemProvider(project).getSyncBinaryType().isRemote;
 
     buildStats
         .setSyncSharded(shardedTargets.shardCount() > 1)

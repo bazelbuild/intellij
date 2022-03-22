@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.FutureUtil;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.logging.utils.ShardStats;
 import com.google.idea.blaze.base.logging.utils.ShardStats.ShardingApproach;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -86,14 +87,14 @@ public class ShardedTargetList {
       BlazeContext context,
       Function<Integer, String> progressMessage,
       BiFunction<List<? extends TargetExpression>, Integer, BuildResult> invocation,
-      boolean parallelize) {
+      BuildInvoker binary) {
     if (isEmpty()) {
       return BuildResult.SUCCESS;
     }
     if (shardedTargets.size() == 1) {
       return invocation.apply(shardedTargets.get(0), 1);
     }
-    if (parallelize) {
+    if (binary.supportsParallelism()) {
       return runInParallel(project, context, invocation);
     }
     int progress = 0;

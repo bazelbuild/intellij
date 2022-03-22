@@ -48,7 +48,6 @@ import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
@@ -214,7 +213,6 @@ public class BlazeBuildService {
                       return null;
                     }
 
-                    BlazeBuildParams buildParams = BlazeBuildParams.fromProject(project);
                     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
                     SaveUtil.saveAllFiles();
@@ -225,10 +223,10 @@ public class BlazeBuildService {
                             project,
                             context,
                             workspaceRoot,
-                            buildParams,
                             projectView,
                             projectData.getWorkspacePathResolver(),
-                            targets);
+                            targets,
+                            buildSystem.getBuildInvoker(project));
                     if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
                       return null;
                     }

@@ -30,6 +30,8 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
+import com.google.idea.blaze.base.bazel.FakeBuildInvoker;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider.GeneralProvider;
@@ -53,7 +55,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.sharding.BlazeBuildTargetSharder.ShardedTargetsResult;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
@@ -81,6 +82,9 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
       fakeWildCardTargetExpanderExternalTaskProvider =
           new FakeWildCardTargetExpanderExternalTaskProvider();
 
+  private final BuildSystemProviderWrapper buildSystemProvider =
+      new BuildSystemProviderWrapper(new BazelBuildSystemProvider());
+
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     registerExtensionPoint(BuildFlagsProvider.EP_NAME, BuildFlagsProvider.class);
@@ -89,7 +93,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     registerExtensionPoint(TargetShardSizeLimit.EP_NAME, TargetShardSizeLimit.class)
         .registerExtension(OptionalInt::empty, testDisposable);
     registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(new BazelBuildSystemProvider(), testDisposable);
+        .registerExtension(buildSystemProvider, testDisposable);
     registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class)
         .registerExtension(new FakeBlazeSyncPlugin(), testDisposable);
     registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class)
@@ -364,19 +368,17 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
   }
 
   private ShardedTargetsResult expandAndShardTargets(
-      BuildBinaryType buildBinaryType, ProjectView projectView, List<TargetExpression> targets) {
+      BuildBinaryType binaryType, ProjectView projectView, List<TargetExpression> targets) {
+    buildSystemProvider.setBuildBinaryType(binaryType);
     WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("workspaceRoot"));
     return BlazeBuildTargetSharder.expandAndShardTargets(
         getProject(),
         new BlazeContext(),
         workspaceRoot,
-        BlazeBuildParams.builder()
-            .setBlazeBinaryPath("foo")
-            .setBlazeBinaryType(buildBinaryType)
-            .build(),
         ProjectViewSet.builder().add(projectView).build(),
         new WorkspacePathResolverImpl(workspaceRoot),
-        targets);
+        targets,
+        new FakeBuildInvoker(BuildBinaryType.BAZEL, "", false, () -> null, null));
   }
 
   private static TargetExpression target(String expression) {

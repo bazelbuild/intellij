@@ -115,6 +115,9 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
 
   @Override
   public BuildBinaryType getSyncBinaryType() {
+    if (buildBinaryType != null) {
+      return buildBinaryType;
+    }
     return inner.getSyncBinaryType();
   }
 
