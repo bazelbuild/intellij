@@ -403,25 +403,21 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
     @Override
     public ExternalTask build(ExternalTask.Builder builder) {
-      return new FakeWildCardTargetExpanderExternalTask(
-          builder.stdout, builder.stderr, returnVal, outputMessage);
+      return new FakeWildCardTargetExpanderExternalTask(builder.stdout, returnVal, outputMessage);
     }
   }
 
   private static class FakeWildCardTargetExpanderExternalTask implements ExternalTask {
     private static final OutputStream NULL_STREAM = ByteStreams.nullOutputStream();
     final OutputStream stdout;
-    final OutputStream stderr;
     final String[] outputMessages;
     final int returnVal;
 
     FakeWildCardTargetExpanderExternalTask(
         @Nullable OutputStream stdout,
-        @Nullable OutputStream stderr,
         int returnVal,
         String... outputMessages) {
       this.stdout = stdout != null ? stdout : NULL_STREAM;
-      this.stderr = stderr != null ? stderr : NULL_STREAM;
       this.outputMessages = outputMessages;
       this.returnVal = returnVal;
     }
