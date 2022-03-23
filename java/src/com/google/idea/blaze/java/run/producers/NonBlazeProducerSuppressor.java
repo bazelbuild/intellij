@@ -33,11 +33,13 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
           "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer",
           "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestMethodGradleConfigurationProducer",
           /** #api212: remove these duplicate producers. */
           "org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinTestClassGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinTestMethodGradleConfigurationProducer");
+          "org.jetbrains.kotlin.idea.run.KotlinTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinJvmTestMethodGradleConfigurationProducer");
 
   private static final ImmutableList<String> ANDROID_PRODUCERS =
       ImmutableList.of(
@@ -80,7 +82,7 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
     }
   }
 
-  private static void suppressProducers(Project project) {
+  static void suppressProducers(Project project) {
     RunConfigurationProducerService producerService =
         RunConfigurationProducerService.getInstance(project);
     producerService.getState().ignoredProducers.addAll(JAVA_PRODUCERS);
