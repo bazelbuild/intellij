@@ -69,7 +69,8 @@ public abstract class SyncStats {
         .setTargetMapSize(0)
         .setLanguagesActive(ImmutableList.of())
         .setBlazeProjectFiles(ImmutableList.of())
-        .setLibraryCount(0);
+        .setLibraryCount(0)
+        .setSyncBinaryType(BuildBinaryType.NONE);
   }
 
   /** Auto value builder for SyncStats. */
