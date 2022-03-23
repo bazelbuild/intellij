@@ -99,7 +99,7 @@ public class FullApkBuildStep implements ApkBuildStep {
     BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
-    try (BuildResultHelper buildResultHelper = invoker.createBuildResultProvider()) {
+    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
       command
           .addTargets(label)
           .addBlazeFlags("--output_groups=+android_deploy_info")

@@ -61,7 +61,7 @@ public class FakeBuildInvoker implements BuildInvoker {
 
   @Override
   @MustBeClosed
-  public BuildResultHelper createBuildResultProvider() {
+  public BuildResultHelper createBuildResultHelper() {
     return buildResultHelperProvider.get();
   }
 

@@ -107,7 +107,7 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
     // TODO(mathewi) we implicitly rely here on the fact that the getBuildInvoker() call above
     //   will always return a local invoker (deployInfoHelper below required that the artifacts
     //   are on the local filesystem).
-    try (BuildResultHelper buildResultHelper = invoker.createBuildResultProvider()) {
+    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
       if (testComponents.isSelfInstrumentingTest()) {
         command.addTargets(testComponents.instrumentor);
       } else {

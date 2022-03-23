@@ -169,7 +169,7 @@ public class MobileInstallBuildStep implements ApkBuildStep {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     final String deployInfoSuffix = getDeployInfoSuffix(Blaze.getBuildSystemName(project));
 
-    try (BuildResultHelper buildResultHelper = invoker.createBuildResultProvider();
+    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
         AdbTunnelConfigurator tunnelConfig = getTunnelConfigurator(context)) {
       tunnelConfig.setupConnection(context);
 

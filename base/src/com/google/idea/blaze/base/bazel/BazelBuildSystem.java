@@ -59,7 +59,7 @@ class BazelBuildSystem implements BuildSystem {
 
     @Override
     @MustBeClosed
-    public BuildResultHelper createBuildResultProvider() {
+    public BuildResultHelper createBuildResultHelper() {
       return new BuildResultHelperBep();
     }
 

@@ -64,7 +64,7 @@ public interface BuildSystem {
      * with.
      */
     @MustBeClosed
-    BuildResultHelper createBuildResultProvider();
+    BuildResultHelper createBuildResultHelper();
 
     /** Returns a {@link BlazeCommandRunner} to be used to invoke the build. */
     BlazeCommandRunner getCommandRunner();

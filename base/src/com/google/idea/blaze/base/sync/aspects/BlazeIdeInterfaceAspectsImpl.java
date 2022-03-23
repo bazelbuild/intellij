@@ -664,7 +664,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     boolean onlyDirectDeps =
         viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
 
-    try (BuildResultHelper buildResultHelper = invoker.createBuildResultProvider()) {
+    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
 
       BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
       builder
