@@ -27,8 +27,8 @@ java_library(
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//common/actions",
-        "//common/experiments",
-        "//common/settings",
+        "//common/experiment",
+        "//common/setting",
         "//common/ui/properties",
         "//common/util:concurrency",
         "//common/util:platform",
