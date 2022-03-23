@@ -449,11 +449,11 @@ def _build_cargo_toml(ctx, target, source_files):
         if len(alternative_entry_points) == 1:
             args.add(alternative_entry_points[0].short_path)
         elif len(alternative_entry_points) == 0:
-            fail("cannot determine entry point for %s target '%s': no files named '%s' or '%s' found in srcs" % (ctx.rule.kind, ctx.rule.attr.name, canonical_entry_point_name, alternative_entry_point_name))
+            fail("cannot determine entry point for %s target '%s': no files named '%s' or '%s' found in srcs" % (ctx.rule.kind, target.label.name, canonical_entry_point_name, alternative_entry_point_name))
         else:
-            fail("cannot determine entry point for %s target '%s': multiple files named '%s' found in srcs" % (ctx.rule.kind, ctx.rule.attr.name, alternative_entry_point_name))
+            fail("cannot determine entry point for %s target '%s': multiple files named '%s' found in srcs" % (ctx.rule.kind, target.label.name, alternative_entry_point_name))
     else:
-        fail("cannot determine entry point for %s target '%s': multiple files named '%s' found in srcs" % (ctx.rule.kind, ctx.rule.attr.name, canonical_entry_point_name))
+        fail("cannot determine entry point for %s target '%s': multiple files named '%s' found in srcs" % (ctx.rule.kind, target.label.name, canonical_entry_point_name))
 
     ctx.actions.run(
         inputs = source_files,
@@ -489,16 +489,23 @@ def _crate_name(target, ctx):
 
 def collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Rust-specific output groups, returns false if not a recognized Rust target."""
-    if not ctx.rule.kind in ["rust_binary", "rust_library"]:
+    if ctx.rule.kind not in ["rust_binary", "rust_library", "rust_test"]:
         return False
 
     sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files.to_list()]
-    cargo_toml = _build_cargo_toml(ctx, target, sources)
+
+    if ctx.rule.kind in ["rust_binary", "rust_library"]:
+        cargo_toml = _build_cargo_toml(ctx, target, sources)
+        update_sync_output_groups(output_groups, "intellij-resolve-rs", depset([cargo_toml]))
+    else:
+        if len(sources) != 1:
+            fail("expected rust_test target '%s' to have exactly [1] file in srcs, but found [%d]" % (target.label.name, len(sources)))
+        source_path_copy = ctx.actions.declare_file(sources[0].path)
+        ctx.actions.write(source_path_copy, "// This file is intentionally blank. The Rust plugin uses it to identify test targets.")
+        update_sync_output_groups(output_groups, "intellij-resolve-rs", depset([source_path_copy]))
 
     ide_info["rust_ide_info"] = struct_omit_none(sources = [artifact_location(f) for f in sources])
-
     update_sync_output_groups(output_groups, "intellij-info-rs", depset([ide_info_file]))
-    update_sync_output_groups(output_groups, "intellij-resolve-rs", depset([cargo_toml]))
     return True
 
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):

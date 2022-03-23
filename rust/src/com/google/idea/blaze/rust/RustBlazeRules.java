@@ -30,7 +30,8 @@ public final class RustBlazeRules implements Kind.Provider {
     /** Rust-specific blaze rules. */
     public enum RuleTypes {
         RUST_BINARY("rust_binary", LanguageClass.RUST, RuleType.BINARY),
-        RUST_LIBRARY("rust_library", LanguageClass.RUST, RuleType.LIBRARY);
+        RUST_LIBRARY("rust_library", LanguageClass.RUST, RuleType.LIBRARY),
+        RUST_TEST("rust_test", LanguageClass.RUST, RuleType.TEST);
 
         private final String name;
         private final LanguageClass languageClass;
