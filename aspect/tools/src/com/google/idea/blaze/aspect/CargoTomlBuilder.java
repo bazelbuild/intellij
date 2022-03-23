@@ -3,7 +3,6 @@ package com.google.idea.blaze.aspect;
 import com.electronwill.nightconfig.core.Config;
 import com.electronwill.nightconfig.toml.TomlWriter;
 import com.google.common.base.Preconditions;
-import com.google.devtools.intellij.aspect.Common;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -66,6 +65,9 @@ public class CargoTomlBuilder {
         cargoToml.set("package", pkg);
         pkg.set("name", options.name);
         pkg.set("version", "0.0.0");
+        // TODO(alexjpwalker): remove 'edition' field once https://github.com/intellij-rust/intellij-rust/issues/4907
+        //  is actually fixed (at the time of writing, the issue is closed, but still reproducible)
+        pkg.set("edition", "2018");
 
         Config deps = cargoToml.createSubConfig();
         cargoToml.set("dependencies", deps);
