@@ -438,6 +438,9 @@ def _build_cargo_toml(ctx, target, source_files):
     args.add_joined("--path-deps", path_deps, join_with = ":")
     args.add_joined("--external-deps", ["{}={}".format(k, v) for k, v in external_deps.items()], join_with = ":")
 
+    args.add("--root-path")
+    args.add(str(target.label).split("//")[1].split(":")[0] if "//" in str(target.label) else "")
+
     args.add("--lib-path" if ctx.rule.kind == "rust_library" else "--bin-path")
     canonical_entry_point_name = "lib.rs" if ctx.rule.kind == "rust_library" else "main.rs"
     canonical_entry_points = [f for f in source_files if f.basename == canonical_entry_point_name]

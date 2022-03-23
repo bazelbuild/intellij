@@ -28,6 +28,7 @@ public class CargoTomlBuilder {
 
     static final class Options {
         String name;
+        Path rootPath;
         Path binPath;
         Path libPath;
         List<String> pathDeps;
@@ -38,6 +39,7 @@ public class CargoTomlBuilder {
     static Options parseArgs(String[] args) {
         Options options = new Options();
         options.name = OptionParser.parseSingleOption(args, "name", x -> x);
+        options.rootPath = OptionParser.parseSingleOption(args, "root-path", Paths::get);
         options.binPath = OptionParser.parseSingleOption(args, "bin-path", Paths::get);
         options.libPath = OptionParser.parseSingleOption(args, "lib-path", Paths::get);
         options.pathDeps = OptionParser.parseSingleOption(args, "path-deps", CargoTomlBuilder::parseStringList);
@@ -90,13 +92,13 @@ public class CargoTomlBuilder {
         if (options.libPath != null) {
             Config lib = cargoToml.createSubConfig();
             cargoToml.set("lib", lib);
-            lib.set("path", options.libPath.getFileName().toString());
+            lib.set("path", options.rootPath.relativize(options.libPath).toString());
         } else if (options.binPath != null) {
             Config bin = cargoToml.createSubConfig();
             cargoToml.set("bin", newArrayList(bin));
             String binPathString = options.binPath.toString();
             bin.set("name", binPathString.substring(0, binPathString.length() - ".rs".length()));
-            bin.set("path", options.binPath.getFileName().toString());
+            bin.set("path", options.rootPath.relativize(options.binPath).toString());
         }
         return new TomlWriter().writeToString(cargoToml.unmodifiable());
     }
