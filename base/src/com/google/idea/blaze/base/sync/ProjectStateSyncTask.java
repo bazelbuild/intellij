@@ -107,7 +107,7 @@ final class ProjectStateSyncTask {
             .runBlazeInfo(
                 context,
                 importSettings.getBuildSystem(),
-                Blaze.getBuildSystemProvider(project).getSyncBinaryPath(project),
+                Blaze.getBuildSystemProvider(project).getBinaryPath(project),
                 workspaceRoot,
                 syncFlags);
 

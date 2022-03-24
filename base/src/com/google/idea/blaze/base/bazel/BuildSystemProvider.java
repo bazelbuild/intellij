@@ -120,9 +120,7 @@ public interface BuildSystemProvider {
    */
   @Deprecated
   default boolean syncingRemotely() {
-    // TODO(brendandouglas): make this configurable based on context, move somewhere more
-    // appropriate
-    return getSyncBinaryType().isRemote;
+    return false;
   }
 
   WorkspaceRootProvider getWorkspaceRootProvider();

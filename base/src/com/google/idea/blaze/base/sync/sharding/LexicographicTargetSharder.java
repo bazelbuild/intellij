@@ -22,9 +22,9 @@ import static java.lang.Math.min;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.logging.utils.ShardStats.ShardingApproach;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.common.experiments.IntExperiment;
 import java.util.Comparator;
 import java.util.List;
@@ -48,7 +48,7 @@ public class LexicographicTargetSharder implements BuildBatchingService {
 
   @Override
   public ImmutableList<ImmutableList<Label>> calculateTargetBatches(
-      Set<Label> targets, BuildBinaryType buildType, int suggestedShardSize) {
+      Set<Label> targets, SyncStrategy syncStrategy, int suggestedShardSize) {
     List<Label> sorted = ImmutableList.sortedCopyOf(Comparator.comparing(Label::toString), targets);
     // When LexicographicTargetSharder is used for remote build, we may decide optimized shard size
     // for users even they have provided shard_size in project view. The size is decided according
@@ -60,7 +60,9 @@ public class LexicographicTargetSharder implements BuildBatchingService {
     // If user enable shard sync manually without remote build, LexicographicTargetSharder
     // will still be used. But use suggestedShardSize without further calculation since there's
     // only one worker in that case.
-    if (buildType.isRemote && targets.size() >= parallelThreshold.getValue()) {
+
+    // TODO(b/218800878) Perhaps we should treat PARALLEL and DECIDE_AUTOMATICALLY differently here?
+    if (syncStrategy != SyncStrategy.SERIAL && targets.size() >= parallelThreshold.getValue()) {
       // try to use all idle workers
       suggestedShardSize =
           min(

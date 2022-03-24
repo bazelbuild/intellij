@@ -73,6 +73,7 @@ public class AutoSyncHandler implements ProjectComponent {
       new PendingChangesHandler<VirtualFile>(AUTO_SYNC_DELAY) {
         @Override
         boolean runTask(ImmutableSet<VirtualFile> changes) {
+          // TODO(b/226553780) update for go/rabbit-decide-automatically
           if (!Blaze.getBuildSystemProvider(project).syncingRemotely()
               && BlazeSyncStatus.getInstance(project).syncInProgress()) {
             return false;

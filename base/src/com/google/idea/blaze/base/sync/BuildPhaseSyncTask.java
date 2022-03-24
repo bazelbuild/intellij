@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.dependencies.BlazeQuerySourceToTargetProvider;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -181,20 +182,28 @@ final class BuildPhaseSyncTask {
             viewSet,
             projectState.getWorkspacePathResolver(),
             targets,
-            buildSystem.getBuildInvoker(project));
+            buildSystem.getBuildInvoker(project),
+            buildSystem.getSyncStrategy());
     if (shardedTargetsResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       throw new SyncFailedException();
     }
     ShardedTargetList shardedTargets = shardedTargetsResult.shardedTargets;
 
-    // TODO(b/218800878) remove this getSyncBinaryType() call.
-    boolean parallel = Blaze.getBuildSystemProvider(project).getSyncBinaryType().isRemote;
-
-    buildStats
-        .setSyncSharded(shardedTargets.shardCount() > 1)
-        .setShardCount(shardedTargets.shardCount())
-        .setShardStats(shardedTargets.shardStats())
-        .setParallelBuilds(parallel);
+    boolean parallel;
+    SyncStrategy strategy = buildSystem.getSyncStrategy();
+    switch (strategy) {
+      case PARALLEL:
+        parallel = true;
+        break;
+      case DECIDE_AUTOMATICALLY:
+        parallel = shardedTargets.shardCount() > 1;
+        break;
+      case SERIAL:
+        parallel = false;
+        break;
+      default:
+        throw new IllegalStateException("Invalid sync strategy: " + strategy);
+    }
 
     BuildInvoker invoker = null;
     if (parallel) {
@@ -204,6 +213,12 @@ final class BuildPhaseSyncTask {
     if (invoker == null) {
       invoker = buildSystem.getBuildInvoker(project);
     }
+
+    buildStats
+        .setSyncSharded(shardedTargets.shardCount() > 1)
+        .setShardCount(shardedTargets.shardCount())
+        .setShardStats(shardedTargets.shardStats())
+        .setParallelBuilds(invoker.supportsParallelism());
 
     BlazeBuildOutputs blazeBuildResult =
         getBlazeBuildResult(context, viewSet, shardedTargets, invoker);
