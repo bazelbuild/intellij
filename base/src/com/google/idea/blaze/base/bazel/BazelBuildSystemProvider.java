@@ -20,7 +20,6 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 
 /** Provides the bazel build system name string. */
@@ -36,11 +35,6 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   @Override
   public BuildSystem getBuildSystem() {
     return buildSystem;
-  }
-
-  @Override
-  public BuildBinaryType getSyncBinaryType() {
-    return BuildBinaryType.BAZEL;
   }
 
   @Override

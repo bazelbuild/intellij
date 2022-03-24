@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -101,15 +100,6 @@ public interface BuildSystemProvider {
   default String getSyncBinaryPath(Project project) {
     return getBuildSystem().getBuildInvoker(project).getBinaryPath();
   }
-
-  /**
-   * Returns the type of the blaze/bazel binary to use for syncing.
-   *
-   * @deprecated The sync binary type can no longer be determined statically. Code using this should
-   *     be refactored accordingly.
-   */
-  @Deprecated
-  BuildBinaryType getSyncBinaryType();
 
   /**
    * Returns true if syncing is done off the user's local machine.
