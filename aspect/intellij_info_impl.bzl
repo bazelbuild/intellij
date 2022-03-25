@@ -651,6 +651,8 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 
     if hasattr(java, "annotation_processing") and java.annotation_processing:
         plugin_processor_jar_files += java.annotation_processing.processor_classpath.to_list()
+        plugin_processor_jar_files += java.annotation_processing.transitive_class_jars.to_list()
+
     resolve_files += plugin_processor_jar_files
     plugin_processor_jars = [annotation_processing_jars(jar, None) for jar in depset(plugin_processor_jar_files).to_list()]
 
