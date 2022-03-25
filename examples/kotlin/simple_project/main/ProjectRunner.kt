@@ -6,7 +6,7 @@ class ProjectRunner {
   companion object {
     @JvmStatic
     fun main(args: Array<String>) {
-      var names: Array<String> = arrayOf("World")
+      var names: Array<String> = arrayOf("Earth")
 
       if (args.size > 0) {
         names = args
