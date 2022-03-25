@@ -6,15 +6,6 @@ load("@bazel_tools//tools/build_defs/repo:jvm.bzl", "jvm_maven_import_external")
 
 # Long-lived download links available at: https://www.jetbrains.com/intellij-repository/releases
 
-# The plugin api for IntelliJ 2021.1. This is required to build IJwB,
-# and run integration tests.
-http_archive(
-    name = "intellij_ce_2021_1",
-    build_file = "@//intellij_platform_sdk:BUILD.idea211",
-    sha256 = "ec6aee9fde6e8d9fd5eb730309d63399878d8760107fbd1ddbe402f56eed9d86",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2021.1.3/ideaIC-2021.1.3.zip",
-)
-
 # The plugin api for IntelliJ 2021.2. This is required to build IJwB,
 # and run integration tests.
 http_archive(
@@ -40,15 +31,6 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/221.4906.8-EAP-SNAPSHOT/ideaIC-221.4906.8-EAP-SNAPSHOT.zip",
 )
 
-# The plugin api for IntelliJ UE 2021.1. This is required to run UE-specific
-# integration tests.
-http_archive(
-    name = "intellij_ue_2021_1",
-    build_file = "@//intellij_platform_sdk:BUILD.ue211",
-    sha256 = "da25231d007afea92879e3fdd10b85b2ec69772ade47601d05c67e0b3e5f5d7d",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2021.1.3/ideaIU-2021.1.3.zip",
-)
-
 # The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
 # integration tests.
 http_archive(
@@ -72,14 +54,6 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.ue221",
     sha256 = "3121a6aa2fcb7cb726bcb96f9e107acfad4de5f659b60f65580d1aaeb57b3dba",
     url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/221.4906.8-EAP-SNAPSHOT/ideaIU-221.4906.8-EAP-SNAPSHOT.zip",
-)
-
-# The plugin api for clion_2021_1. This is required to build CLwB, and run integration tests.
-http_archive(
-    name = "clion_2021_1",
-    build_file = "@//intellij_platform_sdk:BUILD.clion211",
-    sha256 = "bf2f627bab06fa94b32f205f15a67659a7bb38e078847cb6e3f811098dc13897",
-    url = "https://download.jetbrains.com/cpp/CLion-2021.1.3.tar.gz",
 )
 
 # The plugin api for clion_2021_2. This is required to build CLwB, and run integration tests.
