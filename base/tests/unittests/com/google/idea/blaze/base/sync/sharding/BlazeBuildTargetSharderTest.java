@@ -378,7 +378,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
         ProjectViewSet.builder().add(projectView).build(),
         new WorkspacePathResolverImpl(workspaceRoot),
         targets,
-        new FakeBuildInvoker(BuildBinaryType.BAZEL, "", false, () -> null, null),
+        FakeBuildInvoker.builder().type(BuildBinaryType.BAZEL).build(),
         syncStrategy);
   }
 

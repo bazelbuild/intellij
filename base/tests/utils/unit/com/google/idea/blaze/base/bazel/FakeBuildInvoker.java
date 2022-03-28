@@ -15,58 +15,72 @@
  */
 package com.google.idea.blaze.base.bazel;
 
+import com.google.auto.value.AutoValue;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 /** Simple implementation of {@link BuildInvoker} for injecting dependencies in test code. */
-public class FakeBuildInvoker implements BuildInvoker {
+@AutoValue
+public abstract class FakeBuildInvoker implements BuildInvoker {
 
-  private final BuildBinaryType type;
-  private final String path;
-  private final boolean supportsParallelism;
-  private final Supplier<BuildResultHelper> buildResultHelperProvider;
-  private final BlazeCommandRunner commandRunner;
-
-  public FakeBuildInvoker(
-      BuildBinaryType type,
-      String path,
-      boolean supportsParallelism,
-      Supplier<BuildResultHelper> buildResultHelperSupplier,
-      BlazeCommandRunner commandRunner) {
-    this.type = type;
-    this.path = path;
-    this.supportsParallelism = supportsParallelism;
-    this.buildResultHelperProvider = buildResultHelperSupplier;
-    this.commandRunner = commandRunner;
+  public static Builder builder() {
+    return new AutoValue_FakeBuildInvoker.Builder()
+        .type(BuildBinaryType.NONE)
+        .binaryPath("")
+        .supportsParallelism(false)
+        .buildResultHelperSupplier(() -> null);
   }
 
   @Override
-  public BuildBinaryType getType() {
-    return type;
-  }
+  public abstract BuildBinaryType getType();
 
   @Override
-  public String getBinaryPath() {
-    return path;
-  }
+  public abstract String getBinaryPath();
+
+  public abstract boolean getSupportsParallelism();
 
   @Override
   public boolean supportsParallelism() {
-    return supportsParallelism;
+    return getSupportsParallelism();
   }
 
   @Override
   @MustBeClosed
+  @Nullable
   public BuildResultHelper createBuildResultHelper() {
-    return buildResultHelperProvider.get();
+    return getBuildResultHelperSupplier().get();
   }
 
+  abstract Supplier<BuildResultHelper> getBuildResultHelperSupplier();
+
   @Override
-  public BlazeCommandRunner getCommandRunner() {
-    return commandRunner;
+  @Nullable
+  public abstract BlazeCommandRunner getCommandRunner();
+
+  /**
+   * Builder class for instances of {@link com.google.idea.blaze.base.bazel.FakeBuildInvoker}.
+   *
+   * <p>Use {@link FakeBuildInvoker#builder()} to get an instance.
+   */
+  @AutoValue.Builder
+  public abstract static class Builder {
+
+    public abstract FakeBuildInvoker build();
+
+    public abstract Builder type(BuildBinaryType type);
+
+    public abstract Builder binaryPath(String binaryPath);
+
+    public abstract Builder supportsParallelism(boolean parallel);
+
+    public abstract Builder buildResultHelperSupplier(Supplier<BuildResultHelper> supplier);
+
+    public abstract Builder commandRunner(BlazeCommandRunner runner);
   }
+
 }

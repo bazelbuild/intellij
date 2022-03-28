@@ -402,6 +402,7 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//sdkcompat",
         "//testing:lib",
+        "//third_party/auto_value",
         "@junit//jar",
     ],
 )
