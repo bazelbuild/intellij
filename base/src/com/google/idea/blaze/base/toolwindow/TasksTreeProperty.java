@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.base.Preconditions;
+import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.WeakHashMap;
  * ability to add the listeners for addition and removal of the tasks into the tree.
  */
 final class TasksTreeProperty {
-  private final Task root = new Task("root", Task.Type.OTHER);
+  private final Task root;
   // The weak hash map implementation is to indicate that orphaned nodes can be cleaned up
   // implicitly or explicitly. The explicit clean up is performed by the method
   // `cleanUpDetachedSubtree` below.
@@ -38,6 +39,10 @@ final class TasksTreeProperty {
   private final Set<AddListener> addListeners = new HashSet<>();
   private final Set<RemoveListener> removeListeners = new HashSet<>();
   private final Set<UpdateListener> updateListeners = new HashSet<>();
+
+  public TasksTreeProperty(Project project) {
+    root = new Task(project, "root", Task.Type.OTHER);
+  }
 
   Task getRoot() {
     return root;

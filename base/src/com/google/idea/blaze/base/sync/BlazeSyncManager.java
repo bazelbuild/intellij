@@ -133,7 +133,7 @@ public class BlazeSyncManager {
     } else {
       taskTitle = "Incremental Sync";
     }
-    return new Task(taskTitle, Task.Type.SYNC);
+    return new Task(project, taskTitle, Task.Type.SYNC);
   }
 
   private BlazeScope buildToolWindowScope(BlazeSyncParams syncParams, ProgressIndicator indicator) {

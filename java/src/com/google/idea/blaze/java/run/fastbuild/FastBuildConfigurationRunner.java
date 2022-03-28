@@ -125,7 +125,8 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
         new BlazeContext()
             .push(
                 new ToolWindowScope.Builder(
-                        project, new Task("Fast Build " + label.targetName(), Task.Type.FAST_BUILD))
+                        project,
+                        new Task(project, "Fast Build " + label.targetName(), Task.Type.FAST_BUILD))
                     .setPopupBehavior(consolePopupBehavior)
                     .setIssueParsers(
                         BlazeIssueParser.defaultIssueParsers(

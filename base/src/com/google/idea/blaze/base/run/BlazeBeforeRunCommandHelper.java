@@ -88,7 +88,7 @@ public final class BlazeBeforeRunCommandHelper {
                 context
                     .push(
                         new ToolWindowScope.Builder(
-                                project, new Task(TASK_TITLE, Task.Type.BEFORE_LAUNCH))
+                                project, new Task(project, TASK_TITLE, Task.Type.BEFORE_LAUNCH))
                             .setPopupBehavior(
                                 BlazeUserSettings.getInstance().getShowBlazeConsoleOnRun())
                             .setIssueParsers(

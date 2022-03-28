@@ -243,7 +243,7 @@ final class SyncPhaseCoordinator {
                           context,
                           indicator,
                           singleThreaded ? SyncPhase.ALL_PHASES : SyncPhase.BUILD,
-                          new Task(params.title(), Task.Type.SYNC, parentToolWindowTask),
+                          new Task(project, params.title(), Task.Type.SYNC, parentToolWindowTask),
                           /* startTaskOnScopeBegin= */ true);
                       runSync(params, singleThreaded, context);
                     }));
@@ -277,7 +277,7 @@ final class SyncPhaseCoordinator {
                               context,
                               indicator,
                               SyncPhase.ALL_PHASES,
-                              new Task(params.title(), Task.Type.SYNC),
+                              new Task(project, params.title(), Task.Type.SYNC),
                               /* startTaskOnScopeBegin= */ true);
                           doFilterProjectTargets(params, filter, context);
                         }));
@@ -454,7 +454,7 @@ final class SyncPhaseCoordinator {
     Task toolWindowTask;
     boolean startTaskOnScopeBegin;
     if (syncToolWindowScope == null) {
-      toolWindowTask = new Task(params.title(), Task.Type.SYNC);
+      toolWindowTask = new Task(project, params.title(), Task.Type.SYNC);
       startTaskOnScopeBegin = true;
     } else {
       toolWindowTask = syncToolWindowScope.getTask();

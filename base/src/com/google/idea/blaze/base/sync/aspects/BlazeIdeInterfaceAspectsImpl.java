@@ -635,7 +635,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     ToolWindowScope parentToolWindowScope = parentContext.getScope(ToolWindowScope.class);
     Task parentTask = parentToolWindowScope != null ? parentToolWindowScope.getTask() : null;
     childContext.push(
-        new ToolWindowScope.Builder(project, new Task(taskName, taskType, parentTask))
+        new ToolWindowScope.Builder(project, new Task(project, taskName, taskType, parentTask))
             .setIssueParsers(
                 BlazeIssueParser.defaultIssueParsers(project, workspaceRoot, contextType))
             .build());

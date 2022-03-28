@@ -222,6 +222,7 @@ class GenerateDeployableJarTaskProvider
                         new ToolWindowScope.Builder(
                                 project,
                                 new com.google.idea.blaze.base.toolwindow.Task(
+                                    project,
                                     title,
                                     com.google.idea.blaze.base.toolwindow.Task.Type.DEPLOYABLE_JAR))
                             .setPopupBehavior(

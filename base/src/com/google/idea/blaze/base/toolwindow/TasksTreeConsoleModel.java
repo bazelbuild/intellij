@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.toolwindow;
 
+import com.intellij.openapi.project.Project;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,15 +23,17 @@ import java.util.Queue;
 
 /** Model for the combination of the tree and output consoles. */
 final class TasksTreeConsoleModel {
-  private final TasksTreeModel treeModel = new TasksTreeModel();
+  private final TasksTreeModel treeModel;
   private final Map<Task, ConsoleView> consolesOfTasks = new HashMap<>();
 
   private final Queue<Task> topLevelFinishedTasks = new ArrayDeque<>();
 
-  private TasksTreeConsoleModel() {}
+  private TasksTreeConsoleModel(Project project) {
+    treeModel = new TasksTreeModel(project);
+  }
 
-  static TasksTreeConsoleModel create(TasksTreeConsoleBehaviour behaviour) {
-    TasksTreeConsoleModel model = new TasksTreeConsoleModel();
+  static TasksTreeConsoleModel create(Project project, TasksTreeConsoleBehaviour behaviour) {
+    TasksTreeConsoleModel model = new TasksTreeConsoleModel(project);
     behaviour.defineBehavior(model);
     return model;
   }

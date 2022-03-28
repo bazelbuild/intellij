@@ -16,12 +16,16 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.base.MoreObjects;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.openapi.project.Project;
 import java.time.Instant;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Represents a Blaze Outputs Tool Window Task, which can be hierarchical. */
-public final class Task {
+public final class Task extends PresentableNodeDescriptor<Task> {
+
   private final String name;
   private final Type type;
   @Nullable private Task parent;
@@ -36,8 +40,8 @@ public final class Task {
    * @param name name of new task
    * @param type type of new task
    */
-  public Task(String name, Type type) {
-    this(name, type, null);
+  public Task(Project project, String name, Type type) {
+    this(project, name, type, null);
   }
 
   /**
@@ -48,13 +52,20 @@ public final class Task {
    * @param type type of new task
    * @param parent parent of the new task, null if the new task is a top level task.
    */
-  public Task(String name, Type type, @Nullable Task parent) {
+  public Task(Project project, String name, Type type, @Nullable Task parent) {
+    super(project, parent);
     this.name = name;
     this.type = type;
     this.parent = parent;
   }
 
-  String getName() {
+  @Override
+  protected void update(PresentationData presentationData) {
+    presentationData.setPresentableText(getName());
+  }
+
+  @Override
+  public String getName() {
     return name;
   }
 
@@ -104,6 +115,11 @@ public final class Task {
 
   Optional<Instant> getEndTime() {
     return Optional.ofNullable(endTime);
+  }
+
+  @Override
+  public Task getElement() {
+    return this;
   }
 
   @Override

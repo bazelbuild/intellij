@@ -89,7 +89,7 @@ final class ToolWindowTabs {
 
   private Tab newTab(Task.Type type) {
     TasksTreeConsoleBehaviour behaviour = new TasksTreeConsoleBehaviour();
-    TasksTreeConsoleModel model = TasksTreeConsoleModel.create(behaviour);
+    TasksTreeConsoleModel model = TasksTreeConsoleModel.create(project, behaviour);
     Content content = createToolWindowContent(model, type);
     getContentManager().addContent(content);
     return new Tab(behaviour, content);
