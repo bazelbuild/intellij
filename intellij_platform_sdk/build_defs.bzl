@@ -36,14 +36,6 @@ INDIRECT_IJ_PRODUCTS = {
 }
 
 DIRECT_IJ_PRODUCTS = {
-    "intellij-2021.1": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2021_1",
-    ),
-    "intellij-2021.1-mac": struct(
-        ide = "intellij",
-        directory = "intellij_ce_2021_1",
-    ),
     "intellij-2021.2": struct(
         ide = "intellij",
         directory = "intellij_ce_2021_2",
@@ -67,14 +59,6 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-2022.1-mac": struct(
         ide = "intellij",
         directory = "intellij_ce_2022_1",
-    ),
-    "intellij-ue-2021.1": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2021_1",
-    ),
-    "intellij-ue-2021.1-mac": struct(
-        ide = "intellij-ue",
-        directory = "intellij_ue_2021_1",
     ),
     "intellij-ue-2021.2": struct(
         ide = "intellij-ue",
@@ -115,14 +99,6 @@ DIRECT_IJ_PRODUCTS = {
     "android-studio-2021.2": struct(
         ide = "android-studio",
         directory = "android_studio_2021_2",
-    ),
-    "clion-2021.1": struct(
-        ide = "clion",
-        directory = "clion_2021_1",
-    ),
-    "clion-2021.1-mac": struct(
-        ide = "clion",
-        directory = "clion_2021_1",
     ),
     "clion-2021.2": struct(
         ide = "clion",
