@@ -297,9 +297,5 @@ public class RenderJarCacheTest {
       writer.println(output.getText());
       return Propagation.Continue;
     }
-
-    public String getMessages() {
-      return stringWriter.toString();
-    }
   }
 }
