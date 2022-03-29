@@ -20,11 +20,9 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,15 +41,10 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
   protected void initTest(Container applicationServices, Container projectServices) {
     pathResolver =
         new ExecutionRootPathResolver(
-            BuildSystemName.Bazel,
+            new BazelBuildSystemProvider(),
             WORKSPACE_ROOT,
             new File(EXECUTION_ROOT),
             new WorkspacePathResolverImpl(WORKSPACE_ROOT));
-  }
-
-  @Override
-  protected BuildSystemProvider createBuildSystemProvider() {
-    return new BazelBuildSystemProvider();
   }
 
   @Test

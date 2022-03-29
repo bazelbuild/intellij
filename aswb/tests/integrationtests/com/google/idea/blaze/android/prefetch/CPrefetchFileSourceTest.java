@@ -27,12 +27,10 @@ import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
@@ -196,10 +194,7 @@ public class CPrefetchFileSourceTest extends BlazeIntegrationTestCase {
   }
 
   private ImportRoots getImportRoots(ProjectViewSet projectViewSet) {
-    BlazeImportSettings importSettings =
-        BlazeImportSettingsManager.getInstance(getProject()).getImportSettings();
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
-    return ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
+    return ImportRoots.builder(workspaceRoot, Blaze.getBuildSystemProvider(getProject()))
         .add(projectViewSet)
         .build();
   }

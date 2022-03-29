@@ -22,7 +22,6 @@ import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -42,11 +41,11 @@ public class ExecutionRootPathResolver {
   private final WorkspacePathResolver workspacePathResolver;
 
   public ExecutionRootPathResolver(
-      BuildSystemName buildSystemName,
+      BuildSystemProvider buildSystemProvider,
       WorkspaceRoot workspaceRoot,
       File executionRoot,
       WorkspacePathResolver workspacePathResolver) {
-    this.buildArtifactDirectories = buildArtifactDirectories(buildSystemName, workspaceRoot);
+    this.buildArtifactDirectories = buildArtifactDirectories(buildSystemProvider, workspaceRoot);
     this.executionRoot = executionRoot;
     this.workspacePathResolver = workspacePathResolver;
   }
@@ -59,19 +58,15 @@ public class ExecutionRootPathResolver {
       return null;
     }
     return new ExecutionRootPathResolver(
-        Blaze.getBuildSystemName(project),
+        Blaze.getBuildSystemProvider(project),
         WorkspaceRoot.fromProject(project),
         projectData.getBlazeInfo().getExecutionRoot(),
         projectData.getWorkspacePathResolver());
   }
 
   private static ImmutableList<String> buildArtifactDirectories(
-      BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot) {
-    BuildSystemProvider provider = BuildSystemProvider.getBuildSystemProvider(buildSystemName);
-    if (provider == null) {
-      provider = BuildSystemProvider.defaultBuildSystem();
-    }
-    return provider.buildArtifactDirectories(workspaceRoot);
+      BuildSystemProvider buildSystemProvider, WorkspaceRoot workspaceRoot) {
+    return buildSystemProvider.buildArtifactDirectories(workspaceRoot);
   }
 
   public File resolveExecutionRootPath(ExecutionRootPath path) {

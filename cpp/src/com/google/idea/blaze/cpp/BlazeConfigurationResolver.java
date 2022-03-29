@@ -72,7 +72,7 @@ final class BlazeConfigurationResolver {
       BlazeConfigurationResolverResult oldResult) {
     ExecutionRootPathResolver executionRootPathResolver =
         new ExecutionRootPathResolver(
-            Blaze.getBuildSystemName(project),
+            Blaze.getBuildSystemProvider(project),
             WorkspaceRoot.fromProject(project),
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
             blazeProjectData.getWorkspacePathResolver());

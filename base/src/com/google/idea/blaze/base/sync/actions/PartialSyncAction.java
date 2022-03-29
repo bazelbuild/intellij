@@ -189,8 +189,7 @@ public class PartialSyncAction extends BlazeProjectSyncAction {
   }
 
   private static boolean isBuildFile(Project project, VirtualFile vf) {
-    BuildSystemProvider provider =
-        BuildSystemProvider.getBuildSystemProvider(Blaze.getBuildSystemName(project));
+    BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
     return provider != null && provider.isBuildFile(vf.getName());
   }
 }
