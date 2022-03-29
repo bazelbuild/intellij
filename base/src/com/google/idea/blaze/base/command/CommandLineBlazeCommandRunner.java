@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.command;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
@@ -39,8 +38,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
       WorkspaceRoot workspaceRoot,
-      BlazeContext context,
-      BuildInvoker binary) {
+      BlazeContext context) {
     int retVal =
         ExternalTask.builder(workspaceRoot)
             .addBlazeCommand(blazeCommandBuilder.build())

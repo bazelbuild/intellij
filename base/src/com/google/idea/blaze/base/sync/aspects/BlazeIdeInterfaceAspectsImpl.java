@@ -683,7 +683,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
       return invoker
           .getCommandRunner()
-          .run(project, builder, buildResultHelper, workspaceRoot, context, invoker);
+          .run(project, builder, buildResultHelper, workspaceRoot, context);
     }
   }
 }
