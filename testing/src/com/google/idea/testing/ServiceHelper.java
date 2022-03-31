@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -37,7 +36,7 @@ public class ServiceHelper {
 
   public static <T> void registerExtensionPoint(
       ExtensionPointName<T> name, Class<T> clazz, Disposable parentDisposable) {
-    ExtensionsArea area = Extensions.getRootArea();
+    ExtensionsArea area = ApplicationManager.getApplication().getExtensionArea();
     String epName = name.getName();
     area.registerExtensionPoint(epName, clazz.getName(), ExtensionPoint.Kind.INTERFACE);
     Disposer.register(parentDisposable, () -> area.unregisterExtensionPoint(epName));
@@ -45,16 +44,16 @@ public class ServiceHelper {
 
   public static <T> void registerExtension(
       ExtensionPointName<T> name, T instance, Disposable parentDisposable) {
-    ExtensionPoint<T> ep = Extensions.getRootArea().getExtensionPoint(name);
-    ep.registerExtension(instance);
-    Disposer.register(parentDisposable, () -> ep.unregisterExtension(instance));
+    ExtensionPoint<T> ep =
+        ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(name);
+    ep.registerExtension(instance, parentDisposable);
   }
 
   /** Unregister all extensions of the given class, for the given extension point. */
   public static <T> void unregisterLanguageExtensionPoint(
       String extensionPointKey, Class<T> clazz, Disposable parentDisposable) {
-    ExtensionPoint<LanguageExtensionPoint<T>> ep =
-        Extensions.getRootArea().getExtensionPoint(extensionPointKey);
+    ExtensionsArea area = ApplicationManager.getApplication().getExtensionArea();
+    ExtensionPoint<LanguageExtensionPoint<T>> ep = area.getExtensionPoint(extensionPointKey);
     LanguageExtensionPoint<T>[] existingExtensions = ep.getExtensions();
     for (LanguageExtensionPoint<T> ext : existingExtensions) {
       if (clazz.getName().equals(ext.implementationClass)) {
