@@ -85,7 +85,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -408,20 +407,20 @@ final class SyncPhaseCoordinator {
               ? BuildPhaseSyncTask.runBuildPhase(
                   project, params, projectState, buildId, context, buildSystem)
               : BlazeSyncBuildResult.builder().build();
-      UpdatePhaseTask.Builder taskBuilder =
+      UpdatePhaseTask task =
           UpdatePhaseTask.builder()
               .setStartTime(startTime)
               .setSyncParams(params)
               .setProjectState(projectState)
               .setBuildIds(ImmutableSet.of(buildId))
               .setBuildResult(buildResult)
-              .setSyncResult(syncResultFromBuildPhase(buildResult, context));
-      Optional<BuildBinaryType> binaryTypeUsed =
-          buildResult.getBuildPhaseStats().stream().map(r -> r.buildBinaryType()).findFirst();
-      if (binaryTypeUsed.isPresent()) {
-        taskBuilder.setBuildBinaryType(binaryTypeUsed.get());
-      }
-      UpdatePhaseTask task = taskBuilder.build();
+              .setSyncResult(syncResultFromBuildPhase(buildResult, context))
+              .setBuildBinaryType(
+                  buildResult.getBuildPhaseStats().stream()
+                      .map(r -> r.buildBinaryType())
+                      .findFirst()
+                      .orElse(BuildBinaryType.NONE))
+              .build();
       if (singleThreaded) {
         updateProjectAndFinishSync(task, context);
       } else {
