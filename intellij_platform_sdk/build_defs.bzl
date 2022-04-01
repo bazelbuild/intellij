@@ -3,12 +3,12 @@
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for internal Blaze Plugin
-    "intellij-latest": "intellij-2021.2",
-    "intellij-latest-mac": "intellij-2021.2-mac",
+    "intellij-latest": "intellij-2021.3",
+    "intellij-latest-mac": "intellij-2021.3-mac",
     "intellij-beta": "intellij-2021.3",
     "intellij-under-dev": "intellij-2021.3",
-    "intellij-ue-latest": "intellij-ue-2021.2",
-    "intellij-ue-latest-mac": "intellij-ue-2021.2-mac",
+    "intellij-ue-latest": "intellij-ue-2021.3",
+    "intellij-ue-latest-mac": "intellij-ue-2021.3-mac",
     "intellij-ue-beta": "intellij-ue-2021.3",
     "intellij-ue-under-dev": "intellij-ue-2021.3",
     "android-studio-latest": "android-studio-2020.3",
