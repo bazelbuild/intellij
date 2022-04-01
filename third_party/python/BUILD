@@ -18,7 +18,6 @@ java_library(
         "clion-2021.3": ["@clion_2021_3//:python"],
         "clion-2022.1": ["@clion_2022_1//:python"],
         "android-studio-2020.3": ["@python_2020_3//:python"],
-        "android-studio-2021.1": ["@python_2021_1//:python"],
         "android-studio-2021.2": ["@python_2021_2//:python"],
     }),
 )

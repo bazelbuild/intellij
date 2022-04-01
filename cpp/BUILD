@@ -30,7 +30,6 @@ java_library(
     # Details can be found in the bug.
     select_for_plugin_api({
         "android-studio-2020.3": ["src/com/google/idea/blaze/cpp/workaround/BulkSymbolTableBuildingChangeListener.java"],
-        "android-studio-2021.1": ["src/com/google/idea/blaze/cpp/workaround/BulkSymbolTableBuildingChangeListener.java"],
         "default": [],
     }),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
@@ -63,7 +62,6 @@ intellij_plugin_library(
                            # Details can be found in the bug.
                            select_for_plugin_api({
                                "android-studio-2020.3": [":workaround_cidr"],
-                               "android-studio-2021.1": [":workaround_cidr"],
                                "default": [],
                            }),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
