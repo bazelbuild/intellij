@@ -254,11 +254,11 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     }
 
     @Override
-    public SyncStrategy getSyncStrategy() {
+    public SyncStrategy getSyncStrategy(Project project) {
       if (syncStrategy != null) {
         return syncStrategy;
       }
-      return inner.getSyncStrategy();
+      return inner.getSyncStrategy(project);
     }
 
     @Override

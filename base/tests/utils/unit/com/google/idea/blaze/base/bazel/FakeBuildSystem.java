@@ -61,7 +61,11 @@ public abstract class FakeBuildSystem implements BuildSystem {
   }
 
   @Override
-  public abstract SyncStrategy getSyncStrategy();
+  public SyncStrategy getSyncStrategy(Project project) {
+    return getSyncStrategy();
+  }
+
+  protected abstract SyncStrategy getSyncStrategy();
 
   @Override
   public void populateBlazeVersionData(

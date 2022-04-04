@@ -89,7 +89,7 @@ public interface BuildSystem {
   Optional<BuildInvoker> getParallelBuildInvoker(Project project, BlazeInfo blazeInfo);
 
   /** Return the strategy for remote syncs to be used with this build system. */
-  SyncStrategy getSyncStrategy();
+  SyncStrategy getSyncStrategy(Project project);
 
   /** Populates the passed builder with version data. */
   void populateBlazeVersionData(

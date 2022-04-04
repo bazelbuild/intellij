@@ -183,14 +183,14 @@ final class BuildPhaseSyncTask {
             projectState.getWorkspacePathResolver(),
             targets,
             buildSystem.getBuildInvoker(project),
-            buildSystem.getSyncStrategy());
+            buildSystem.getSyncStrategy(project));
     if (shardedTargetsResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       throw new SyncFailedException();
     }
     ShardedTargetList shardedTargets = shardedTargetsResult.shardedTargets;
 
     boolean parallel;
-    SyncStrategy strategy = buildSystem.getSyncStrategy();
+    SyncStrategy strategy = buildSystem.getSyncStrategy(project);
     switch (strategy) {
       case PARALLEL:
         parallel = true;

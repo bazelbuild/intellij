@@ -211,7 +211,7 @@ final class SyncPhaseCoordinator {
     if (syncParams.syncMode() == SyncMode.NO_BUILD) {
       return false;
     }
-    SyncStrategy strategy = buildSystem.getSyncStrategy();
+    SyncStrategy strategy = buildSystem.getSyncStrategy(project);
     switch (strategy) {
       case DECIDE_AUTOMATICALLY:
       case PARALLEL:

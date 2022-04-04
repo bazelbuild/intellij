@@ -95,7 +95,7 @@ class BazelBuildSystem implements BuildSystem {
   }
 
   @Override
-  public SyncStrategy getSyncStrategy() {
+  public SyncStrategy getSyncStrategy(Project project) {
     return SyncStrategy.SERIAL;
   }
 
