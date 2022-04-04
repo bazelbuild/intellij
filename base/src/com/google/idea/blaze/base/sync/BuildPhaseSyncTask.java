@@ -62,6 +62,7 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /** Runs the 'blaze build' phase of sync. */
@@ -205,14 +206,20 @@ final class BuildPhaseSyncTask {
         throw new IllegalStateException("Invalid sync strategy: " + strategy);
     }
 
-    BuildInvoker invoker = null;
-    if (parallel) {
-      invoker =
-          buildSystem.getParallelBuildInvoker(project, projectState.getBlazeInfo()).orElse(null);
-    }
-    if (invoker == null) {
-      invoker = buildSystem.getBuildInvoker(project);
-    }
+    // Note: it's possible (though unlikely) for the value returned by buildSystem.getSyncStrategy()
+    // to have changed since `blaze info` was run in ProjectStateSyncTask. If that case, we may end
+    // sharding as if we were doing a parellel sync, but then running it serially. It will make sync
+    // slow, but it should at least work.
+    // TODO(mathewi) If we had a better place to keep per-sync state, we would query
+    //  buildSystem.getSyncStrategy() just once to avoid this (that wouldn't resolve the
+    //  underlying issue that the value can change, but it would make a sync self-consistent)
+    Optional<BuildInvoker> parallelInvoker =
+        parallel
+            ? projectState
+                .getRemoteBlazeInfo()
+                .flatMap(blazeInfo -> buildSystem.getParallelBuildInvoker(project, blazeInfo))
+            : Optional.empty();
+    BuildInvoker invoker = parallelInvoker.orElse(buildSystem.getBuildInvoker(project));
 
     buildStats
         .setSyncSharded(shardedTargets.shardCount() > 1)

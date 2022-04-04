@@ -155,7 +155,9 @@ final class ProjectUpdateSyncTask {
 
     ArtifactLocationDecoder artifactLocationDecoder =
         new ArtifactLocationDecoderImpl(
-            projectState.getBlazeInfo(), projectState.getWorkspacePathResolver(), newRemoteState);
+            projectState.getLocalBlazeInfo(),
+            projectState.getWorkspacePathResolver(),
+            newRemoteState);
 
     Scope.push(
         context,
@@ -202,7 +204,7 @@ final class ProjectUpdateSyncTask {
     BlazeProjectData newProjectData =
         new BlazeProjectData(
             targetData,
-            projectState.getBlazeInfo(),
+            projectState.getLocalBlazeInfo(),
             projectState.getBlazeVersionData(),
             projectState.getWorkspacePathResolver(),
             artifactLocationDecoder,

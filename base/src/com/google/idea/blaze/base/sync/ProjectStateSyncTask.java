@@ -17,10 +17,15 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -54,6 +59,7 @@ import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.intellij.openapi.project.Project;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -102,32 +108,57 @@ final class ProjectStateSyncTask {
     List<String> syncFlags =
         BlazeFlags.blazeFlags(
             project, projectViewSet, BlazeCommandName.INFO, BlazeInvocationContext.SYNC_CONTEXT);
-    ListenableFuture<BlazeInfo> blazeInfoFuture =
-        BlazeInfoRunner.getInstance()
-            .runBlazeInfo(
+    BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
+    BlazeInfoRunner infoRunner = BlazeInfoRunner.getInstance();
+    ListenableFuture<Optional<BlazeInfo>> localInfoFuture =
+        Futures.transform(
+            infoRunner.runBlazeInfo(
                 context,
                 importSettings.getBuildSystem(),
-                Blaze.getBuildSystemProvider(project).getBinaryPath(project),
+                buildSystem.getBuildInvoker(project).getBinaryPath(),
                 workspaceRoot,
-                syncFlags);
+                syncFlags),
+            Optional::of,
+            MoreExecutors.directExecutor());
+
+    Optional<BuildInvoker> remoteInvoker =
+        buildSystem.getSyncStrategy() == SyncStrategy.SERIAL
+            ? Optional.empty()
+            : buildSystem.getParallelBuildInvoker(project, null);
+    ListenableFuture<Optional<BlazeInfo>> remoteInfoFuture =
+        remoteInvoker
+            .map(
+                invoker ->
+                    infoRunner.runBlazeInfo(
+                        context,
+                        importSettings.getBuildSystem(),
+                        invoker.getBinaryPath(),
+                        workspaceRoot,
+                        syncFlags))
+            // convert Optional<ListenableFuture> to ListenableFuture<Optional>:
+            .map(f -> Futures.transform(f, Optional::of, MoreExecutors.directExecutor()))
+            .orElse(Futures.immediateFuture(Optional.empty()));
 
     ListenableFuture<WorkingSet> workingSetFuture =
         vcsHandler.getWorkingSet(project, context, workspaceRoot, executor);
 
-    BlazeInfo blazeInfo =
-        FutureUtil.waitForFuture(context, blazeInfoFuture)
+    List<Optional<BlazeInfo>> blazeInfoList =
+        FutureUtil.waitForFuture(context, Futures.allAsList(localInfoFuture, remoteInfoFuture))
             .timed(Blaze.buildSystemName(project) + "Info", EventType.BlazeInvocation)
             .withProgressMessage(
                 String.format("Running %s info...", Blaze.buildSystemName(project)))
             .onError(String.format("Could not run %s info", Blaze.buildSystemName(project)))
             .run()
             .result();
-    if (blazeInfo == null) {
+    if (blazeInfoList == null) {
       throw new SyncFailedException();
     }
+    BlazeInfo localBlazeInfo = blazeInfoList.get(0).orElseThrow();
+    Optional<BlazeInfo> remoteBlazeInfo = blazeInfoList.get(1);
+
     BlazeVersionData blazeVersionData =
         BlazeVersionData.build(
-            Blaze.getBuildSystemProvider(project).getBuildSystem(), workspaceRoot, blazeInfo);
+            Blaze.getBuildSystemProvider(project).getBuildSystem(), workspaceRoot, localBlazeInfo);
 
     if (!BuildSystemVersionChecker.verifyVersionSupported(context, blazeVersionData)) {
       throw new SyncFailedException();
@@ -163,7 +194,8 @@ final class ProjectStateSyncTask {
     return SyncProjectState.builder()
         .setProjectViewSet(projectViewSet)
         .setLanguageSettings(workspaceLanguageSettings)
-        .setBlazeInfo(blazeInfo)
+        .setLocalBlazeInfo(localBlazeInfo)
+        .setRemoteBlazeInfo(remoteBlazeInfo)
         .setBlazeVersionData(blazeVersionData)
         .setWorkingSet(workingSet)
         .setWorkspacePathResolver(workspacePathResolver)

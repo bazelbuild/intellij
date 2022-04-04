@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Project and sync state shared between multiple phases of sync. */
@@ -32,7 +33,9 @@ public abstract class SyncProjectState {
 
   public abstract WorkspaceLanguageSettings getLanguageSettings();
 
-  public abstract BlazeInfo getBlazeInfo();
+  public abstract BlazeInfo getLocalBlazeInfo();
+
+  public abstract Optional<BlazeInfo> getRemoteBlazeInfo();
 
   public abstract BlazeVersionData getBlazeVersionData();
 
@@ -52,7 +55,9 @@ public abstract class SyncProjectState {
 
     public abstract Builder setLanguageSettings(WorkspaceLanguageSettings languageSettings);
 
-    public abstract Builder setBlazeInfo(BlazeInfo blazeInfo);
+    public abstract Builder setLocalBlazeInfo(BlazeInfo blazeInfo);
+
+    public abstract Builder setRemoteBlazeInfo(Optional<BlazeInfo> blazeInfo);
 
     public abstract Builder setBlazeVersionData(BlazeVersionData blazeVersionData);
 
