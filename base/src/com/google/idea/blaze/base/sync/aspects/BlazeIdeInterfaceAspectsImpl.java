@@ -65,6 +65,7 @@ import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
+import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Result;
 import com.google.idea.blaze.base.scope.Scope;
@@ -674,6 +675,16 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           .addBlazeFlags(
               BlazeFlags.blazeFlags(
                   project, viewSet, BlazeCommandName.BUILD, BlazeInvocationContext.SYNC_CONTEXT));
+      List<String> syncOnlyFlags =
+          BlazeFlags.expandBuildFlags(viewSet.listItems(SyncFlagsSection.KEY));
+      if (!syncOnlyFlags.isEmpty()) {
+        context.output(
+            PrintOutput.log(
+                String.format(
+                    "Sync flags (`%s`) will override the build flags set from"
+                        + " blazerc/blazeproject/command line parameters.",
+                    String.join(" ", syncOnlyFlags))));
+      }
       if (disableValidationActionExperiment.getValue()) {
         builder.addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS);
       }
