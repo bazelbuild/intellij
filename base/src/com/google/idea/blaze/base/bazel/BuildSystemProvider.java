@@ -16,10 +16,8 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
-import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -194,10 +192,4 @@ public interface BuildSystemProvider {
     return list.build();
   }
 
-  /** Populates the passed builder with version data. */
-  void populateBlazeVersionData(
-      BuildSystemName buildSystemName,
-      WorkspaceRoot workspaceRoot,
-      BlazeInfo blazeInfo,
-      BlazeVersionData.Builder builder);
 }

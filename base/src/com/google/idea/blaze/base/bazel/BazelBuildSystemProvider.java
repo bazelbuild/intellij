@@ -16,11 +16,8 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
-import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 
 /** Provides the bazel build system name string. */
 public class BazelBuildSystemProvider implements BuildSystemProvider {
@@ -73,17 +70,5 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   @Override
   public ImmutableList<String> possibleWorkspaceFileNames() {
     return ImmutableList.of("WORKSPACE", "WORKSPACE.bazel");
-  }
-
-  @Override
-  public void populateBlazeVersionData(
-      BuildSystemName buildSystemName,
-      WorkspaceRoot workspaceRoot,
-      BlazeInfo blazeInfo,
-      BlazeVersionData.Builder builder) {
-    if (buildSystemName != BuildSystemName.Bazel) {
-      return;
-    }
-    builder.setBazelVersion(BazelVersion.parseVersion(blazeInfo));
   }
 }

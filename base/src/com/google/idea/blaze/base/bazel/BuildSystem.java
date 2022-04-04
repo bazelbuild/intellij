@@ -19,6 +19,8 @@ import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
@@ -88,4 +90,8 @@ public interface BuildSystem {
 
   /** Return the strategy for remote syncs to be used with this build system. */
   SyncStrategy getSyncStrategy();
+
+  /** Populates the passed builder with version data. */
+  void populateBlazeVersionData(
+      WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder);
 }

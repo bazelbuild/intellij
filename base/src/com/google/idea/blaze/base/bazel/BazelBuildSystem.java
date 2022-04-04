@@ -21,6 +21,8 @@ import com.google.idea.blaze.base.command.CommandLineBlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
@@ -104,5 +106,11 @@ class BazelBuildSystem implements BuildSystem {
       return null;
     }
     return projectView.getScalarValue(BazelBinarySection.KEY).orElse(null);
+  }
+
+  @Override
+  public void populateBlazeVersionData(
+      WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder) {
+    builder.setBazelVersion(BazelVersion.parseVersion(blazeInfo));
   }
 }

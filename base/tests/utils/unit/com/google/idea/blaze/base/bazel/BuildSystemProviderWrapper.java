@@ -151,15 +151,6 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     return inner().possibleWorkspaceFileNames();
   }
 
-  @Override
-  public void populateBlazeVersionData(
-      BuildSystemName buildSystemName,
-      WorkspaceRoot workspaceRoot,
-      BlazeInfo blazeInfo,
-      BlazeVersionData.Builder builder) {
-    inner().populateBlazeVersionData(buildSystemName, workspaceRoot, blazeInfo, builder);
-  }
-
   /**
    * Sets a supplier for {@link BuildResultHelper} instances to be return by {@code
    * getBuildSystem().getBuildInvoker().createBuildResultProvider()}.
@@ -268,6 +259,12 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
         return syncStrategy;
       }
       return inner.getSyncStrategy();
+    }
+
+    @Override
+    public void populateBlazeVersionData(
+        WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder) {
+      inner.populateBlazeVersionData(workspaceRoot, blazeInfo, builder);
     }
   }
 }

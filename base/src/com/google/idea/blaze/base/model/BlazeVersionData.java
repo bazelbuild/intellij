@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.model;
 
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.bazel.BazelVersion;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -113,11 +113,12 @@ public final class BlazeVersionData implements ProtoWrapper<ProjectData.BlazeVer
   }
 
   public static BlazeVersionData build(
-      BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo) {
+      BuildSystem buildSystem, WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo) {
+    // TODO(mathewi) This should probably be refatored into a createBlazeVersionData method in
+    //    BuildSystem, or perhaps better, remove the need for it by improving encapsulation of
+    //    BuildSystem.
     Builder builder = builder();
-    for (BuildSystemProvider provider : BuildSystemProvider.EP_NAME.getExtensions()) {
-      provider.populateBlazeVersionData(buildSystemName, workspaceRoot, blazeInfo, builder);
-    }
+    buildSystem.populateBlazeVersionData(workspaceRoot, blazeInfo, builder);
     return builder.build();
   }
 
