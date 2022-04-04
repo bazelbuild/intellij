@@ -251,7 +251,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .build();
 
     BlazeConfigurationHandler configHandler =
-        new BlazeConfigurationHandler(projectState.getBlazeInfo());
+        new BlazeConfigurationHandler(projectState.getLocalBlazeInfo());
     TargetMapAndInterfaceState state =
         updateState(
             project,
