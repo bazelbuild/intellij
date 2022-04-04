@@ -59,6 +59,8 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.google.idea.testing.ServiceHelper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
@@ -109,7 +111,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   public void doSetup() throws Throwable {
     thisClassDisposable = Disposer.newDisposable();
     projectViewManager = new MockProjectViewManager(getProject());
-    new MockBlazeVcsHandler(thisClassDisposable);
+    ServiceHelper.registerExtension(
+        BlazeVcsHandler.EP_NAME, new MockBlazeVcsHandler(), thisClassDisposable);
     blazeInfoData = new MockBlazeInfoRunner();
     blazeIdeInterface = new MockBlazeIdeInterface();
     eventLogger = new MockEventLoggingService(thisClassDisposable);

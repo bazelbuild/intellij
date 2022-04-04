@@ -25,17 +25,11 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
-import com.google.idea.testing.ServiceHelper;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
 /** Provides a {@link BlazeVcsHandler} for integration tests. */
 public class MockBlazeVcsHandler implements BlazeVcsHandler {
-
-  public MockBlazeVcsHandler(Disposable parentDisposable) {
-    ServiceHelper.registerExtension(BlazeVcsHandler.EP_NAME, this, parentDisposable);
-  }
 
   @Override
   public String getVcsName() {
