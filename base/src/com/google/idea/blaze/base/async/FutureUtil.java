@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.async;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -24,6 +23,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.intellij.openapi.diagnostic.Logger;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /** Utilities operating on futures. */
@@ -57,13 +57,13 @@ public class FutureUtil {
   public static class Builder<T> {
     private static final Logger logger = Logger.getInstance(FutureUtil.class);
     private final BlazeContext context;
-    private final ListenableFuture<T> future;
+    private final Future<T> future;
     private String timingCategory;
     private EventType eventType;
     private String errorMessage;
     private String progressMessage;
 
-    Builder(BlazeContext context, ListenableFuture<T> future) {
+    Builder(BlazeContext context, Future<T> future) {
       this.context = context;
       this.future = future;
     }
@@ -111,7 +111,7 @@ public class FutureUtil {
     }
   }
 
-  public static <T> Builder<T> waitForFuture(BlazeContext context, ListenableFuture<T> future) {
+  public static <T> Builder<T> waitForFuture(BlazeContext context, Future<T> future) {
     return new Builder<>(context, future);
   }
 }
