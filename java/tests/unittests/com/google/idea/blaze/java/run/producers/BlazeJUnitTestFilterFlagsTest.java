@@ -102,9 +102,9 @@ public class BlazeJUnitTestFilterFlagsTest extends BlazeTestCase {
             BlazeJUnitTestFilterFlags.testFilterForClassAndMethods(
                 "com.google.idea.ClassName",
                 JUnitVersion.JUNIT_4,
-                ImmutableList.of("testMethod1(\\[.+\\])?", "testMethod2(\\[.+\\])?"),
+                ImmutableList.of("testMethod1(\\[.*\\])?", "testMethod2(\\[.*\\])?"),
                 null))
-        .isEqualTo("com.google.idea.ClassName#(testMethod1(\\[.+\\])?|testMethod2(\\[.+\\])?)$");
+        .isEqualTo("com.google.idea.ClassName#(testMethod1(\\[.*\\])?|testMethod2(\\[.*\\])?)$");
   }
 
   @Test
