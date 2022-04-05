@@ -1,3 +1,7 @@
+v2022.04.05
+===========
+* Go: Fix debugging for go_test targets.
+
 v2022.03.22
 ===========
 * Bug fixes and internal cleanup.
