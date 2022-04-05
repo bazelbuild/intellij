@@ -23,6 +23,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
@@ -48,7 +49,10 @@ final class ToolWindowTabs {
   void addTask(Task task, ImmutableList<Filter> consoleFilters, Disposable parentDisposable) {
     Tab tab = tabs.computeIfAbsent(task.getType(), this::newTab);
     tab.behaviour.addTask(task, project, consoleFilters, parentDisposable);
-    getContentManager().setSelectedContent(tab.content);
+    // Only auto-select top level tasks
+    if (task.getParent().isEmpty()) {
+      getContentManager().setSelectedContent(tab.content);
+    }
   }
 
   void finishTask(Task task) {
@@ -96,12 +100,16 @@ final class ToolWindowTabs {
   }
 
   private Content createToolWindowContent(TasksTreeConsoleModel model, Task.Type type) {
+    Disposable viewParentDisposable = Disposer.newDisposable();
     Content content =
         ContentFactory.SERVICE
             .getInstance()
             .createContent(
-                new TasksTreeConsoleView(model).getComponent(), type.getDisplayName(), false);
+                new TasksTreeConsoleView(model, viewParentDisposable).getComponent(),
+                type.getDisplayName(),
+                false);
     content.setCloseable(false);
+    content.setDisposer(viewParentDisposable);
     return content;
   }
 

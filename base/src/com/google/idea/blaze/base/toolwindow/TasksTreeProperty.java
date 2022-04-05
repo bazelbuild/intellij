@@ -36,9 +36,7 @@ final class TasksTreeProperty {
   // `cleanUpDetachedSubtree` below.
   private final Map<Task, List<Task>> adjacencyList = new WeakHashMap<>();
 
-  private final Set<AddListener> addListeners = new HashSet<>();
-  private final Set<RemoveListener> removeListeners = new HashSet<>();
-  private final Set<UpdateListener> updateListeners = new HashSet<>();
+  private final Set<InvalidationListener> invalidationListeners = new HashSet<>();
 
   public TasksTreeProperty(Project project) {
     root = new Task(project, "root", Task.Type.OTHER);
@@ -56,13 +54,15 @@ final class TasksTreeProperty {
     return task.getParent().orElse(root);
   }
 
+  boolean isTopLevelTask(Task task) {
+    return !root.equals(task) && task.getParent().isEmpty();
+  }
+
   void addTask(Task task) {
     Preconditions.checkNotNull(task);
     List<Task> siblings = adjacencyList.computeIfAbsent(getParent(task), t -> new ArrayList<>());
     siblings.add(task);
-    for (AddListener listener : addListeners) {
-      listener.taskAdded(task, siblings.size() - 1);
-    }
+    notifyTreeInvalidated(getParent(task));
   }
 
   void removeTask(Task task) {
@@ -81,18 +81,12 @@ final class TasksTreeProperty {
     }
     children.remove(task);
     cleanUpDetachedSubtree(task);
-    for (RemoveListener listener : removeListeners) {
-      listener.taskRemoved(task, taskIndex);
-    }
+    notifyTreeInvalidated(parent);
   }
 
   /** Update the UI following a change in state of a task. */
   void updateTask(Task task) {
-    List<Task> siblings = adjacencyList.get(getParent(task));
-    int index = siblings.indexOf(task);
-    for (UpdateListener listener : updateListeners) {
-      listener.taskUpdated(task, index);
-    }
+    notifyTreeInvalidated(task);
   }
 
   private void cleanUpDetachedSubtree(Task task) {
@@ -104,35 +98,21 @@ final class TasksTreeProperty {
     }
   }
 
-  void addAdditionListener(AddListener listener) {
-    addListeners.add(listener);
+  private void notifyTreeInvalidated(Task task) {
+    for (InvalidationListener listener : invalidationListeners) {
+      listener.taskInvalidated(task);
+    }
   }
 
-  void addRemovalListener(RemoveListener listener) {
-    removeListeners.add(listener);
+  void addInvalidationListener(InvalidationListener listener) {
+    invalidationListeners.add(listener);
   }
 
-  void addUpdateListener(UpdateListener listener) {
-    updateListeners.add(listener);
+  void removeInvalidationListener(InvalidationListener listener) {
+    invalidationListeners.remove(listener);
   }
 
-  void removeAdditionListener(AddListener listener) {
-    addListeners.remove(listener);
-  }
-
-  void removeRemovalListener(RemoveListener listener) {
-    removeListeners.remove(listener);
-  }
-
-  interface AddListener {
-    void taskAdded(Task task, int index);
-  }
-
-  interface RemoveListener {
-    void taskRemoved(Task task, int index);
-  }
-
-  interface UpdateListener {
-    void taskUpdated(Task task, int index);
+  interface InvalidationListener {
+    void taskInvalidated(Task task);
   }
 }
