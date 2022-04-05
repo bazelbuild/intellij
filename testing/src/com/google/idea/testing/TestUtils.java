@@ -136,12 +136,14 @@ public final class TestUtils {
     if (oldApplication == null) {
       Disposer.register(
           parentDisposable,
-          () ->
-              new ApplicationManager() {
-                {
-                  ourApplication = null;
-                }
-              });
+          () -> {
+            var unused =
+                new ApplicationManager() {
+                  {
+                    ourApplication = null;
+                  }
+                };
+          });
     }
 
     ApplicationManager.setApplication(instance, FileTypeManager::getInstance, parentDisposable);

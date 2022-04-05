@@ -74,11 +74,12 @@ public class TestUtils {
       Disposer.register(
           parentDisposable,
           () -> {
-            new ApplicationManager() {
-              {
-                ourApplication = null;
-              }
-            };
+            var unused =
+                new ApplicationManager() {
+                  {
+                    ourApplication = null;
+                  }
+                };
           });
     }
 
