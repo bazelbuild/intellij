@@ -207,8 +207,7 @@ final class BuildPhaseSyncTask {
 
     BuildInvoker invoker = null;
     if (parallel) {
-      invoker =
-          buildSystem.getParallelBuildInvoker(project, projectState.getBlazeInfo()).orElse(null);
+      invoker = buildSystem.getParallelBuildInvoker(project, context).orElse(null);
     }
     if (invoker == null) {
       invoker = buildSystem.getBuildInvoker(project);

@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
@@ -245,8 +246,8 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     }
 
     @Override
-    public Optional<BuildInvoker> getParallelBuildInvoker(Project project, BlazeInfo blazeInfo) {
-      Optional<BuildInvoker> invoker = inner.getParallelBuildInvoker(project, blazeInfo);
+    public Optional<BuildInvoker> getParallelBuildInvoker(Project project, BlazeContext context) {
+      Optional<BuildInvoker> invoker = inner.getParallelBuildInvoker(project, context);
       if (invoker.isPresent()) {
         invoker = Optional.of(new BuildInvokerWrapper(invoker.get()));
       }

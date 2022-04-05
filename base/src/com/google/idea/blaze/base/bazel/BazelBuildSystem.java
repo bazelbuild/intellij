@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
@@ -90,7 +91,7 @@ class BazelBuildSystem implements BuildSystem {
   }
 
   @Override
-  public Optional<BuildInvoker> getParallelBuildInvoker(Project project, BlazeInfo blazeInfo) {
+  public Optional<BuildInvoker> getParallelBuildInvoker(Project project, BlazeContext context) {
     return Optional.empty();
   }
 

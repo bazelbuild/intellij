@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
@@ -56,7 +57,7 @@ public abstract class FakeBuildSystem implements BuildSystem {
   abstract Optional<BuildInvoker> getParallelBuildInvoker();
 
   @Override
-  public Optional<BuildInvoker> getParallelBuildInvoker(Project project, BlazeInfo blazeInfo) {
+  public Optional<BuildInvoker> getParallelBuildInvoker(Project project, BlazeContext context) {
     return getParallelBuildInvoker();
   }
 
