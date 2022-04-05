@@ -173,7 +173,7 @@ final class TasksTreeView extends AbstractView<Tree> {
       Optional<DefaultMutableTreeNode> matchingNode =
           treeStructureModel.getChildren(treeNode).stream()
               .map(TasksTreeView::objectToTreeNode)
-              .filter(node -> taskToMatch.equals(node.getUserObject()))
+              .filter(node -> taskToMatch.equals(treeNodeToTask(node)))
               .findFirst();
       if (matchingNode.isEmpty()) {
         return Optional.empty();
@@ -227,11 +227,17 @@ final class TasksTreeView extends AbstractView<Tree> {
 
     @Override
     @SuppressWarnings("rawtypes") // Interface is defined by IntelliJ
-    public Task createDescriptor(Object element, @Nullable NodeDescriptor parentDescriptor) {
+    public TaskNodeDescriptor createDescriptor(
+        Object element, @Nullable NodeDescriptor parentDescriptor) {
       if (!(element instanceof Task)) {
         throw new IllegalStateException("Tree structure should only contain Task instances");
       }
-      return (Task) element;
+      if (parentDescriptor != null && !(parentDescriptor instanceof TaskNodeDescriptor)) {
+        throw new IllegalStateException(
+            "Expected parentDescriptor to be instance of TaskNodeDescriptor");
+      }
+      Task task = (Task) element;
+      return new TaskNodeDescriptor(task, (TaskNodeDescriptor) parentDescriptor);
     }
 
     @Override
@@ -351,11 +357,11 @@ final class TasksTreeView extends AbstractView<Tree> {
    */
   private static Task treeNodeToTask(Object node) {
     Object userObj = objectToTreeNode(node).getUserObject();
-    if (userObj instanceof Task) {
-      return (Task) userObj;
+    if (userObj instanceof TaskNodeDescriptor) {
+      return ((TaskNodeDescriptor) userObj).getElement();
     }
     throw new IllegalStateException(
-        "Expected Task userObject, found " + userObj.getClass().getName());
+        "Expected TaskNodeDescriptor userObject, found " + userObj.getClass().getName());
   }
 
   /**
