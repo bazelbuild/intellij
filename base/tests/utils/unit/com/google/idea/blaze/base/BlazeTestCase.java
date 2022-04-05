@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base;
 
+import com.google.idea.testing.TestUtils;
 import com.intellij.mock.MockComponentManager;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
