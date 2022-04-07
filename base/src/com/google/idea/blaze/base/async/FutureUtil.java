@@ -32,15 +32,18 @@ public class FutureUtil {
   public static class FutureResult<T> {
     @Nullable private final T result;
     private final boolean success;
+    private final Exception exception;
 
     FutureResult(T result) {
       this.result = result;
       this.success = true;
+      this.exception = null;
     }
 
-    FutureResult() {
+    FutureResult(Exception e) {
       this.result = null;
       this.success = false;
+      this.exception = e;
     }
 
     @Nullable
@@ -50,6 +53,10 @@ public class FutureUtil {
 
     public boolean success() {
       return success;
+    }
+
+    public Exception exception() {
+      return exception;
     }
   }
 
@@ -99,14 +106,15 @@ public class FutureUtil {
             } catch (InterruptedException e) {
               Thread.currentThread().interrupt();
               context.setCancelled();
+              return new FutureResult<>(e);
             } catch (ExecutionException e) {
               logger.error(e);
               if (errorMessage != null) {
                 IssueOutput.error(errorMessage).submit(childContext);
               }
               context.setHasError();
+              return new FutureResult<>(e);
             }
-            return new FutureResult<>();
           });
     }
   }
