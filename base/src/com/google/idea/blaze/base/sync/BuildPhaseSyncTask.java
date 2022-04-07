@@ -174,6 +174,8 @@ final class BuildPhaseSyncTask {
     buildStats.setTargets(targets);
     notifyBuildStarted(context, syncParams.addProjectViewTargets(), ImmutableList.copyOf(targets));
 
+    BuildInvoker localInvoker = buildSystem.getBuildInvoker(project);
+
     ShardedTargetsResult shardedTargetsResult =
         BlazeBuildTargetSharder.expandAndShardTargets(
             project,
@@ -182,7 +184,7 @@ final class BuildPhaseSyncTask {
             viewSet,
             projectState.getWorkspacePathResolver(),
             targets,
-            buildSystem.getBuildInvoker(project),
+            localInvoker,
             buildSystem.getSyncStrategy(project));
     if (shardedTargetsResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       throw new SyncFailedException();
@@ -205,27 +207,27 @@ final class BuildPhaseSyncTask {
         throw new IllegalStateException("Invalid sync strategy: " + strategy);
     }
 
-    BuildInvoker invoker = null;
+    BuildInvoker syncBuildInvoker = null;
     if (parallel) {
-      invoker = buildSystem.getParallelBuildInvoker(project, context).orElse(null);
+      syncBuildInvoker = buildSystem.getParallelBuildInvoker(project, context).orElse(null);
     }
-    if (invoker == null) {
-      invoker = buildSystem.getBuildInvoker(project);
+    if (syncBuildInvoker == null) {
+      syncBuildInvoker = localInvoker;
     }
 
     buildStats
         .setSyncSharded(shardedTargets.shardCount() > 1)
         .setShardCount(shardedTargets.shardCount())
         .setShardStats(shardedTargets.shardStats())
-        .setParallelBuilds(invoker.supportsParallelism());
+        .setParallelBuilds(syncBuildInvoker.supportsParallelism());
 
     BlazeBuildOutputs blazeBuildResult =
-        getBlazeBuildResult(context, viewSet, shardedTargets, invoker);
+        getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker);
     resultBuilder.setBuildResult(blazeBuildResult);
     buildStats
         .setBuildResult(blazeBuildResult.buildResult)
         .setBuildIds(blazeBuildResult.buildIds)
-        .setBuildBinaryType(invoker.getType());
+        .setBuildBinaryType(syncBuildInvoker.getType());
 
     if (context.isCancelled()) {
       throw new SyncCanceledException();

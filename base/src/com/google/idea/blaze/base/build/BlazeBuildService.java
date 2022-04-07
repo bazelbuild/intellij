@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
@@ -219,6 +220,8 @@ public class BlazeBuildService {
                     SaveUtil.saveAllFiles();
                     BlazeBuildListener.EP_NAME.extensions().forEach(e -> e.buildStarting(project));
 
+                    BuildInvoker buildInvoker = buildSystem.getBuildInvoker(project);
+
                     ShardedTargetsResult shardedTargets =
                         BlazeBuildTargetSharder.expandAndShardTargets(
                             project,
@@ -227,7 +230,7 @@ public class BlazeBuildService {
                             projectView,
                             projectData.getWorkspacePathResolver(),
                             targets,
-                            buildSystem.getBuildInvoker(project),
+                            buildInvoker,
                             SyncStrategy.SERIAL);
                     if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
                       return null;
@@ -239,7 +242,7 @@ public class BlazeBuildService {
                                 context,
                                 workspaceRoot,
                                 projectData.getBlazeVersionData(),
-                                buildSystem.getBuildInvoker(project),
+                                buildInvoker,
                                 projectView,
                                 shardedTargets.shardedTargets,
                                 projectData.getWorkspaceLanguageSettings(),
