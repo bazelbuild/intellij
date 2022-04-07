@@ -65,6 +65,7 @@ import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.AutomaticallyDeriveTargetsSection;
+import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Result;
 import com.google.idea.blaze.base.scope.Scope;
@@ -576,7 +577,18 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     final ShardedBuildProgressTracker progressTracker =
         new ShardedBuildProgressTracker(shardedTargets.shardCount());
-
+    // Sync only flags (sync_only) override build_flags, so log them to warn the users
+    List<String> syncOnlyFlags =
+        BlazeFlags.expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY));
+    if (!syncOnlyFlags.isEmpty()) {
+      context.output(
+          PrintOutput.log(
+              String.format(
+                  "Sync flags (`%s`) specified in the project view file will override the build"
+                      + " flags set in blazerc configurations or general build flags in the"
+                      + " project view file.",
+                  String.join(" ", syncOnlyFlags))));
+    }
     BiFunction<List<? extends TargetExpression>, Integer, BuildResult> invocation =
         (targets, shard) ->
             Scope.push(
