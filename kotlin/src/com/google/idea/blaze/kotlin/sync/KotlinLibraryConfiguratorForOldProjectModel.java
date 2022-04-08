@@ -17,6 +17,7 @@ package com.google.idea.blaze.kotlin.sync;
 
 import static java.util.Arrays.stream;
 
+import com.google.idea.sdkcompat.kotlin.KotlinCompat;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -69,10 +70,7 @@ public class KotlinLibraryConfiguratorForOldProjectModel extends KotlinJavaModul
     if (library != null) {
       return library;
     }
-    library = getKotlinLibrary(project);
-    if (library != null) {
-      return library;
-    }
-    return createNewLibrary(project, collector);
+
+    return KotlinCompat.getOrCreateKotlinLibrary(this, project, collector);
   }
 }

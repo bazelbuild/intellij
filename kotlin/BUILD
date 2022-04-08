@@ -35,6 +35,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
+        "//sdkcompat",
     ],
 )
 
