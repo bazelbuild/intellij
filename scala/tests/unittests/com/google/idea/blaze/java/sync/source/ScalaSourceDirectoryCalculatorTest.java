@@ -123,6 +123,39 @@ public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
   }
 
   @Test
+  public void testScalaSourceWithNestedPackageDeclarations() {
+    mockInputStreamProvider.addFile(
+        "/root/src/main/scala/com/google/foo/Bar.scala", "package com.google\n package foo\n public class Bar {}");
+    List<SourceArtifact> sourceArtifacts =
+        ImmutableList.of(
+            SourceArtifact.builder(
+                    TargetKey.forPlainTarget(Label.create("//src/main/scala/com/google/foo:bar")))
+                .setArtifactLocation(
+                    ArtifactLocation.builder()
+                        .setRelativePath("src/main/scala/com/google/foo/Bar.scala")
+                        .setIsSource(true))
+                .build());
+    ImmutableList<BlazeContentEntry> result =
+        sourceDirectoryCalculator.calculateContentEntries(
+            project,
+            context,
+            workspaceRoot,
+            decoder,
+            buildImportRoots(new WorkspacePath("src/main/scala/com/google/foo")),
+            sourceArtifacts,
+            ImmutableMap.of());
+    assertThat(result)
+        .containsExactly(
+            BlazeContentEntry.builder("/root/src/main/scala/com/google/foo")
+                .addSource(
+                    BlazeSourceDirectory.builder("/root/src/main/scala/com/google/foo")
+                        .setPackagePrefix("com.google.foo")
+                        .build())
+                .build());
+    issues.assertNoIssues();
+  }
+
+  @Test
   public void testMultipleScalaSources() {
     mockInputStreamProvider
         .addFile(
