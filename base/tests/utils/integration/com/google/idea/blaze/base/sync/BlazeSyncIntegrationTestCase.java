@@ -254,7 +254,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         Executors.newSingleThreadExecutor()
             .submit(
                 () -> {
-                  SyncPhaseCoordinator.getInstance(getProject()).runSync(syncParams, true, context);
+                  SyncPhaseCoordinator.getInstance(getProject()).runSync(syncParams, context);
                   context.endScope();
                 });
     while (!future.isDone()) {

@@ -90,7 +90,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
-import javax.annotation.concurrent.GuardedBy;
 
 /** Manages sync execution, coordinating the possibly-separate build/update phases. */
 final class SyncPhaseCoordinator {
@@ -194,10 +193,6 @@ final class SyncPhaseCoordinator {
    */
   private static final AtomicInteger nextBuildId = new AtomicInteger();
 
-  @Nullable
-  @GuardedBy("this")
-  private UpdatePhaseTask pendingUpdateTask;
-
   SyncPhaseCoordinator(Project project) {
     this.project = project;
     singleThreadedExecutor =
@@ -244,7 +239,7 @@ final class SyncPhaseCoordinator {
                           singleThreaded ? SyncPhase.ALL_PHASES : SyncPhase.BUILD,
                           new Task(project, params.title(), Task.Type.SYNC, parentToolWindowTask),
                           /* startTaskOnScopeBegin= */ true);
-                      runSync(params, singleThreaded, context);
+                      runSync(params, context);
                     }));
   }
 
@@ -365,14 +360,9 @@ final class SyncPhaseCoordinator {
     }
   }
 
-  /**
-   * Kicks off a sync with the given parameters.
-   *
-   * @param singleThreaded if true, runs all sync phases synchronously, on the current thread.
-   *     Otherwise runs the build phase then passes the result to the project update queue.
-   */
+  /** Kicks off a sync with the given parameters. */
   @VisibleForTesting
-  void runSync(BlazeSyncParams params, boolean singleThreaded, BlazeContext context) {
+  void runSync(BlazeSyncParams params, BlazeContext context) {
     Instant startTime = Instant.now();
     int buildId = nextBuildId.getAndIncrement();
     try {
@@ -421,11 +411,7 @@ final class SyncPhaseCoordinator {
                       .findFirst()
                       .orElse(BuildBinaryType.NONE))
               .build();
-      if (singleThreaded) {
-        updateProjectAndFinishSync(task, context);
-      } else {
-        queueUpdateTask(task, context.getScope(ToolWindowScope.class), params);
-      }
+      updateProjectAndFinishSync(task, context);
     } catch (Throwable e) {
       logSyncError(context, e);
       finishSync(
@@ -437,52 +423,6 @@ final class SyncPhaseCoordinator {
           SyncResult.FAILURE,
           SyncStats.builder());
     }
-  }
-
-  private void queueUpdateTask(
-      UpdatePhaseTask task, @Nullable ToolWindowScope syncToolWindowScope, BlazeSyncParams params) {
-    synchronized (this) {
-      if (pendingUpdateTask != null) {
-        // there's already a pending job, no need to kick off another one
-        pendingUpdateTask = UpdatePhaseTask.combineTasks(pendingUpdateTask, task);
-        return;
-      }
-      pendingUpdateTask = task;
-    }
-
-    Task toolWindowTask;
-    boolean startTaskOnScopeBegin;
-    if (syncToolWindowScope == null) {
-      toolWindowTask = new Task(project, params.title(), Task.Type.SYNC);
-      startTaskOnScopeBegin = true;
-    } else {
-      toolWindowTask = syncToolWindowScope.getTask();
-      syncToolWindowScope.setFinishTaskOnScopeEnd(false);
-      startTaskOnScopeBegin = false;
-    }
-
-    ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
-        .setExecutor(singleThreadedExecutor)
-        .submitTaskLater(
-            indicator ->
-                Scope.root(
-                    context -> {
-                      UpdatePhaseTask updateTask = getAndClearPendingTask();
-                      setupScopes(
-                          updateTask.syncParams(),
-                          context,
-                          indicator,
-                          SyncPhase.PROJECT_UPDATE,
-                          toolWindowTask,
-                          startTaskOnScopeBegin);
-                      updateProjectAndFinishSync(updateTask, context);
-                    }));
-  }
-
-  private synchronized UpdatePhaseTask getAndClearPendingTask() {
-    UpdatePhaseTask task = Preconditions.checkNotNull(pendingUpdateTask);
-    pendingUpdateTask = null;
-    return task;
   }
 
   private SyncResult syncResultFromBuildPhase(
