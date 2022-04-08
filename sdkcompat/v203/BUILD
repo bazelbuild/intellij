@@ -21,5 +21,6 @@ java_library(
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
         "//intellij_platform_sdk:plugin_api",
+        "//third_party/python",
     ],
 )
