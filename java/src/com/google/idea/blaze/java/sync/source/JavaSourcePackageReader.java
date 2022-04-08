@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.sync.source;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -30,8 +31,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Parse package string directly from java source */
@@ -62,11 +65,19 @@ public class JavaSourcePackageReader extends JavaPackageReader {
     try (InputStream javaInputStream = inputStreamProvider.forFile(sourceFile)) {
       BufferedReader javaReader = new BufferedReader(new InputStreamReader(javaInputStream, UTF_8));
       String javaLine;
-
+      boolean isScala = sourceFile.getName().endsWith(".scala");
+      List<String> packageDeclarations = Lists.newArrayList();
       while ((javaLine = javaReader.readLine()) != null) {
         Matcher packageMatch = PACKAGE_PATTERN.matcher(javaLine);
         if (packageMatch.find()) {
-          return packageMatch.group(1);
+          packageDeclarations.add(packageMatch.group(1));
+        }
+      }
+      if(!packageDeclarations.isEmpty()) {
+        if(isScala) {
+          return packageDeclarations.stream().collect(Collectors.joining("."));
+        } else {
+          return packageDeclarations.get(0);
         }
       }
       IssueOutput.warn("No package name string found in java source file: " + sourceFile)
