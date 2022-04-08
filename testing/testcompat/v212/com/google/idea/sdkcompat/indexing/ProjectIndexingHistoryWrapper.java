@@ -16,7 +16,6 @@
 package com.google.idea.sdkcompat.indexing;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import java.time.Duration;
 
