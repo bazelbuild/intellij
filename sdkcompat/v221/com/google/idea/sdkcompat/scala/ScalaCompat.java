@@ -3,6 +3,7 @@ package com.google.idea.sdkcompat.scala;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject;
+import org.jetbrains.plugins.scala.runner.MainMethodInfo;
 import org.jetbrains.plugins.scala.runner.MyScalaMainMethodUtil;
 import scala.Option;
 
@@ -12,11 +13,12 @@ public class ScalaCompat {
 
   /** #api211: Inline the call. Method location and signature changed in 2021.2 */
   public static Option<PsiMethod> findMainMethod(@NotNull ScObject obj) {
-    return MyScalaMainMethodUtil.findScala2MainMethod(obj);
+    return MyScalaMainMethodUtil.findScala2MainMethodInContainingTopLevelObject(obj)
+        .map(MainMethodInfo.Scala2Style::method);
   }
 
   /** #api211: Inline the call. Method location and signature changed in 2021.2 */
   public static boolean hasMainMethod(@NotNull ScObject obj) {
-    return MyScalaMainMethodUtil.hasScala2MainMethod(obj);
+    return MyScalaMainMethodUtil.hasMainMethodFromProviders(obj);
   }
 }
