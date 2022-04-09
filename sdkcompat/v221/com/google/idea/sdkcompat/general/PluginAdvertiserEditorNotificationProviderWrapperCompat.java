@@ -1,21 +1,23 @@
 package com.google.idea.sdkcompat.general;
 
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider;
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.EditorNotificationProvider;
+import java.util.function.Function;
+import javax.swing.JComponent;
 
 /**
- * #api212: remove this class and make EditorNotifications.PanelProvider a direct parent of
+ * #api213: remove this class and make EditorNotificationProvider a direct parent of
  * PluginAdvertiserEditorNotificationProviderWrapper. Inline the functionality of this class in
  * PluginAdvertiserEditorNotificationProviderWrapper
  */
 public abstract class PluginAdvertiserEditorNotificationProviderWrapperCompat
-    extends EditorNotifications.PanelProvider {
+    implements EditorNotificationProvider {
 
-  // #api212: change to private when inline to PluginAdvertiserEditorNotificationProviderWrapper
+  // #api213: change to private when inline to PluginAdvertiserEditorNotificationProviderWrapper
   protected final PluginAdvertiserEditorNotificationProvider
       pluginAdvertiserEditorNotificationProvider;
 
@@ -26,11 +28,12 @@ public abstract class PluginAdvertiserEditorNotificationProviderWrapperCompat
   }
 
   @Override
-  public AdvertiserSuggestion collectNotificationData(VirtualFile file, Project project) {
+  public Function<? super FileEditor, ? extends JComponent> collectNotificationData(
+      Project project, VirtualFile file) {
     boolean alreadySupported = !(file.getFileType() instanceof PlainTextLikeFileType);
     if (alreadySupported) {
       return null;
     }
-    return pluginAdvertiserEditorNotificationProvider.collectNotificationData(file, project);
+    return pluginAdvertiserEditorNotificationProvider.collectNotificationData(project, file);
   }
 }
