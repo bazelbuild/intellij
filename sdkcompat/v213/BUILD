@@ -16,6 +16,7 @@ java_library(
         android_studio = glob([
             "com/google/idea/sdkcompat/cpp/**",
             "com/google/idea/sdkcompat/java/**",
+            "com/google/idea/sdkcompat/kotlin/**",
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/cpp/**",
@@ -25,12 +26,14 @@ java_library(
         intellij = glob([
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/scala/**",
+            "com/google/idea/sdkcompat/kotlin/**",
         ]),
         intellij_ue = glob([
             "com/google/idea/sdkcompat/golang/**",
             "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/typescript/**",
+            "com/google/idea/sdkcompat/kotlin/**",
         ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],

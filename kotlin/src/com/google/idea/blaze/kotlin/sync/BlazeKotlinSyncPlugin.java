@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.kotlin.KotlinCompat;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ApplicationManager;
@@ -126,9 +127,8 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     String versionString = languageLevel.getVersionString();
     CommonCompilerArguments settings =
         (CommonCompilerArguments)
-            KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project)
-                .getSettings()
-                .unfrozen();
+            KotlinCompat.unfreezeSettings(
+                KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).getSettings());
     boolean updated = false;
     String apiVersion = settings.getApiVersion();
     String languageVersion = settings.getLanguageVersion();
@@ -147,7 +147,8 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     if (setCompilerFlagsExperiment.getValue()) {
       CompilerSettings compilerSettings =
           (CompilerSettings)
-              KotlinCompilerSettings.Companion.getInstance(project).getSettings().unfrozen();
+              KotlinCompat.unfreezeSettings(
+                  KotlinCompilerSettings.Companion.getInstance(project).getSettings());
       // Order matters since we have parameter like -jvm-target 1.8 where two parameters must be
       // aligned in order.
       // Currently, we list all common compiler flags in settings even though it may be duplicated
@@ -285,9 +286,8 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     Project project = kotlinFacet.getModule().getProject();
     K2JVMCompilerArguments k2JVMCompilerArguments =
         (K2JVMCompilerArguments)
-            Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project)
-                .getSettings()
-                .unfrozen();
+            KotlinCompat.unfreezeSettings(
+                Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project).getSettings());
     String javaVersion = languageLevel.toJavaVersion().toString();
     k2JVMCompilerArguments.setJvmTarget(javaVersion);
     Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project)

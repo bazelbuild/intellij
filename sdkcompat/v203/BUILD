@@ -16,6 +16,7 @@ java_library(
         android_studio = glob([
             "com/google/idea/sdkcompat/cpp/**",
             "com/google/idea/sdkcompat/java/**",
+            "com/google/idea/sdkcompat/kotlin/**",
         ]),
     ),
     visibility = ["//sdkcompat:__pkg__"],
