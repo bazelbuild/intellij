@@ -167,15 +167,18 @@ public final class ToolWindowScope implements BlazeScope {
     context.addOutputSink(PrintOutput.class, printSink);
     context.addOutputSink(StatusOutput.class, statusSink);
     context.addOutputSink(StateUpdate.class, stateSink);
+    context.addCancellationHandler(
+        () -> {
+          if (progressIndicator != null) {
+            progressIndicator.cancel();
+          }
+        });
     if (startTaskOnScopeBegin) {
       tasksToolWindowController.startTask(task, consoleFilters);
     }
     tasksToolWindowController.setStopHandler(
         task,
         () -> {
-          if (progressIndicator != null) {
-            progressIndicator.cancel();
-          }
           context.setCancelled();
         });
   }
