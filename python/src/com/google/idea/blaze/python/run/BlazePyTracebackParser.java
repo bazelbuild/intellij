@@ -63,7 +63,7 @@ public class BlazePyTracebackParser extends PyTracebackParser {
           AppLifecycleListener.TOPIC,
           /* disposable= */ null,
           new AppLifecycleListener() {
-            @Override
+            // @Override
             public void appStarting(@Nullable Project projectFromCommandLine) {
               if (enabled.getValue()) {
                 PARSERS[1] = new BlazePyTracebackParser();
