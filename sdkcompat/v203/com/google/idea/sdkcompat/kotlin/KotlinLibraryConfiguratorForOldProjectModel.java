@@ -1,19 +1,4 @@
-/*
- * Copyright 2021 The Bazel Authors. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package com.google.idea.blaze.kotlin.sync;
+package com.google.idea.sdkcompat.kotlin;
 
 import static java.util.Arrays.stream;
 
@@ -26,12 +11,12 @@ import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector;
 
 /**
- * The configurator specific for adding kotlin Library to old project model (2020.3 and 2021.1).
- * This is a temporary workaround for b/198439707. TODO(b/198439707): Delete when old project model
- * is not in use anymore.
+ * #api203 The configurator specific for adding kotlin Library to old project model (2020.3 and
+ * 2021.1). This is a temporary workaround for b/198439707. TODO(b/198439707): Delete when old
+ * project model is not in use anymore.
  */
 public class KotlinLibraryConfiguratorForOldProjectModel extends KotlinJavaModuleConfigurator {
-  static final KotlinLibraryConfiguratorForOldProjectModel INSTANCE =
+  public static final KotlinLibraryConfiguratorForOldProjectModel INSTANCE =
       new KotlinLibraryConfiguratorForOldProjectModel();
 
   /**
@@ -39,7 +24,8 @@ public class KotlinLibraryConfiguratorForOldProjectModel extends KotlinJavaModul
    * with {@link KotlinWithLibraryConfigurator#addLibraryToModuleIfNeeded}. But {@link
    * KotlinWithLibraryConfigurator} does not provide a method to update {@link ModifiableRootModel}.
    */
-  void configureModel(Project project, ModifiableRootModel modifiableRootModel, Module module) {
+  public void configureModel(
+      Project project, ModifiableRootModel modifiableRootModel, Module module) {
     if (stream(modifiableRootModel.getModuleLibraryTable().getLibraries())
         .anyMatch(
             // mimics KotlinWithLibraryConfigurator#isKotlinLibrary

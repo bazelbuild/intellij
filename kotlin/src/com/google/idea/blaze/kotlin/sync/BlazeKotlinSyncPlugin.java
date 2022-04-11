@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.sdkcompat.kotlin.KotlinCompat;
+import com.google.idea.sdkcompat.kotlin.KotlinLibraryConfiguratorForOldProjectModel;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ApplicationManager;
@@ -240,7 +241,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
         kotlinFacet,
         JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData));
 
-    // #api211
+    // #api203
     // b/198439707: When the old project model is in use, get ModifiableModel for a module may lead
     // to thousands of root change events if it has thousands of jars attached. In order to
     // avoid this, we attach kotlin library to ModifiableModel before it's committed. So
