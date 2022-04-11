@@ -36,6 +36,9 @@
       class="com.google.idea.blaze.base.sync.actions.IncrementalSyncProjectAction"
       text="Sync Project with BUILD Files"
       icon="BlazeIcons.Logo">
+      <keyboard-shortcut
+          keymap="$default"
+          first-keystroke="alt Y"/>
     </action>
     <action id="Blaze.FullSyncProject"
       class="com.google.idea.blaze.base.sync.actions.FullSyncProjectAction"
