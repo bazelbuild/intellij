@@ -26,6 +26,7 @@ import javax.annotation.Nullable;
 public class BlazeContext {
 
   @Nullable private BlazeContext parentContext;
+  private final BlazeContext rootContext;
 
   private final List<BlazeScope> scopes = Lists.newArrayList();
 
@@ -46,6 +47,11 @@ public class BlazeContext {
 
   public BlazeContext(@Nullable BlazeContext parentContext) {
     this.parentContext = parentContext;
+    this.rootContext = parentContext == null ? this : parentContext.rootContext;
+  }
+
+  public BlazeContext getRootContext() {
+    return rootContext;
   }
 
   public BlazeContext push(BlazeScope scope) {

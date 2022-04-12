@@ -44,10 +44,12 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
     model
         .getConsolesOfTasks()
         .computeIfAbsent(task, t -> ConsoleView.create(project, filters, parentDisposable));
+    printSummary(task, SummaryGenerator.getTaskStartedSummary(task));
   }
 
   void finishTask(Task task) {
     updateTask(task);
+    printSummary(task, SummaryGenerator.getTaskFinishedSummary(task));
     if (task.getParent().isPresent()) {
       return;
     }
@@ -57,6 +59,9 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
 
   void taskOutput(Task task, PrintOutput output) {
     getConsole(task).println(output);
+    if (SummaryGenerator.extractInvocationID(task, output)) {
+      updateTask(task);
+    }
   }
 
   void taskStatus(Task task, StatusOutput output) {
@@ -101,6 +106,12 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
             "Finished task `" + task.getName() + "` doesn't have a corresponding console view");
       }
       Disposer.dispose(consoleView);
+    }
+  }
+
+  private void printSummary(Task task, PrintOutput output) {
+    if (output != null) {
+      getConsole(task.getRoot()).println(output);
     }
   }
 }

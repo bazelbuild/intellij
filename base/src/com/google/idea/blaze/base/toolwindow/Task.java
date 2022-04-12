@@ -24,11 +24,12 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Represents a Blaze Outputs Tool Window Task, which can be hierarchical. */
-public final class Task {
+public class Task {
   private final Project project;
   private final String name;
   private final Type type;
   @Nullable private Task parent;
+  private final Task root;
   private String state = "";
   @Nullable private Instant startTime;
   @Nullable private Instant endTime;
@@ -57,6 +58,7 @@ public final class Task {
     this.name = name;
     this.type = type;
     this.parent = parent;
+    this.root = parent == null ? this : parent.root;
   }
 
   public String getName() {
@@ -89,6 +91,10 @@ public final class Task {
 
   String getState() {
     return state;
+  }
+
+  public Task getRoot() {
+    return root;
   }
 
   void setState(String state) {

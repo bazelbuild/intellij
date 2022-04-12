@@ -36,6 +36,8 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
+import com.google.idea.blaze.base.toolwindow.SyncTask;
+import com.google.idea.blaze.base.toolwindow.SyncTask.SubType;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -123,17 +125,16 @@ public class BlazeSyncManager {
   }
 
   private Task getRootInvocationTask(BlazeSyncParams params) {
-    String taskTitle;
     if (params.syncMode() == SyncMode.STARTUP) {
-      taskTitle = "Startup Sync";
+      return new SyncTask(project, SubType.STARTUP_SYNC);
     } else if (params.syncOrigin().equals(BlazeSyncStartupActivity.SYNC_REASON)) {
-      taskTitle = "Importing " + project.getName();
+      return new SyncTask(
+          project, SubType.IMPORTING.getDisplayName() + project.getName(), SubType.IMPORTING);
     } else if (params.syncMode() == SyncMode.PARTIAL) {
-      taskTitle = "Partial Sync";
+      return new SyncTask(project, SubType.PARTIAL_SYNC);
     } else {
-      taskTitle = "Incremental Sync";
+      return new SyncTask(project, SubType.INCREMENTAL_SYNC);
     }
-    return new Task(project, taskTitle, Task.Type.SYNC);
   }
 
   private BlazeScope buildToolWindowScope(BlazeSyncParams syncParams, ProgressIndicator indicator) {

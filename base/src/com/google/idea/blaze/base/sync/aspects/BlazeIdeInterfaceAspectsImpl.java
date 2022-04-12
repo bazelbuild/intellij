@@ -87,6 +87,9 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedBuildProgressTracker;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
+import com.google.idea.blaze.base.toolwindow.SummaryGenerator;
+import com.google.idea.blaze.base.toolwindow.SyncTask;
+import com.google.idea.blaze.base.toolwindow.SyncTask.SubType;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -577,6 +580,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     final ShardedBuildProgressTracker progressTracker =
         new ShardedBuildProgressTracker(shardedTargets.shardCount());
+    if (shardedTargets.shardCount() > 0) {
+      int targetCount =
+          shardedTargets.shardStats().actualTargetSizePerShard().stream().reduce(0, Integer::sum);
+      SummaryGenerator.printShardCountSummary(context, targetCount, shardedTargets.shardCount());
+    }
     // Sync only flags (sync_only) override build_flags, so log them to warn the users
     List<String> syncOnlyFlags =
         BlazeFlags.expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY));
@@ -595,12 +603,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                 context,
                 (childContext) -> {
                   setupToolWindow(
-                      project,
-                      context,
-                      childContext,
-                      workspaceRoot,
-                      "Build shard " + shard,
-                      isSync);
+                      project, context, childContext, workspaceRoot, "Build shard", isSync);
                   // we use context (rather than childContext) here since the shard state relates
                   // to the parent task (which encapsulates all the build shards).
                   progressTracker.onBuildStarted(context);
@@ -642,12 +645,16 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       String taskName,
       boolean isSync) {
     ContextType contextType = isSync ? ContextType.Sync : ContextType.Other;
-    Task.Type taskType = isSync ? Task.Type.SYNC : Task.Type.MAKE;
 
     ToolWindowScope parentToolWindowScope = parentContext.getScope(ToolWindowScope.class);
     Task parentTask = parentToolWindowScope != null ? parentToolWindowScope.getTask() : null;
+    Task task =
+        isSync
+            ? new SyncTask(project, taskName, parentTask, SubType.BUILD_SHARD)
+            : new Task(project, taskName, Task.Type.MAKE, parentTask);
+
     childContext.push(
-        new ToolWindowScope.Builder(project, new Task(project, taskName, taskType, parentTask))
+        new ToolWindowScope.Builder(project, task)
             .setIssueParsers(
                 BlazeIssueParser.defaultIssueParsers(project, workspaceRoot, contextType))
             .build());

@@ -69,6 +69,8 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
+import com.google.idea.blaze.base.toolwindow.SyncTask;
+import com.google.idea.blaze.base.toolwindow.SyncTask.SubType;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.util.ConcurrencyUtil;
@@ -242,7 +244,7 @@ final class SyncPhaseCoordinator {
                           context,
                           indicator,
                           singleThreaded ? SyncPhase.ALL_PHASES : SyncPhase.BUILD,
-                          new Task(project, params.title(), Task.Type.SYNC, parentToolWindowTask),
+                          new SyncTask(project, params.title(), parentToolWindowTask, SubType.SYNC),
                           /* startTaskOnScopeBegin= */ true);
                       runSync(params, singleThreaded, context);
                     }));
@@ -276,7 +278,7 @@ final class SyncPhaseCoordinator {
                               context,
                               indicator,
                               SyncPhase.ALL_PHASES,
-                              new Task(project, params.title(), Task.Type.SYNC),
+                              new SyncTask(project, params.title(), SubType.PARTIAL_SYNC),
                               /* startTaskOnScopeBegin= */ true);
                           doFilterProjectTargets(params, filter, context);
                         }));
@@ -453,7 +455,7 @@ final class SyncPhaseCoordinator {
     Task toolWindowTask;
     boolean startTaskOnScopeBegin;
     if (syncToolWindowScope == null) {
-      toolWindowTask = new Task(project, params.title(), Task.Type.SYNC);
+      toolWindowTask = new SyncTask(project, params.title(), SubType.SYNC);
       startTaskOnScopeBegin = true;
     } else {
       toolWindowTask = syncToolWindowScope.getTask();
