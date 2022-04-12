@@ -8,14 +8,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 
 /**
- * #api212: remove this class and make EditorNotifications.PanelProvider a direct parent of
+ * #api213: remove this class and make EditorNotifications.PanelProvider a direct parent of
  * PluginAdvertiserEditorNotificationProviderWrapper. Inline the functionality of this class in
  * PluginAdvertiserEditorNotificationProviderWrapper
  */
 public abstract class PluginAdvertiserEditorNotificationProviderWrapperCompat
     extends EditorNotifications.PanelProvider {
 
-  // #api212: change to private when inline to PluginAdvertiserEditorNotificationProviderWrapper
+  // #api213: change to private when inline to PluginAdvertiserEditorNotificationProviderWrapper
   protected final PluginAdvertiserEditorNotificationProvider
       pluginAdvertiserEditorNotificationProvider;
 
