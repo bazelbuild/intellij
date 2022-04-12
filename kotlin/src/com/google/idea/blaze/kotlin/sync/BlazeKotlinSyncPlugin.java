@@ -41,7 +41,6 @@ import com.google.idea.sdkcompat.kotlin.KotlinCompat;
 import com.google.idea.sdkcompat.kotlin.KotlinLibraryConfiguratorForOldProjectModel;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -66,8 +65,6 @@ import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings;
-import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
-import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType;
 
@@ -321,31 +318,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
       if (workspaceModule == null) {
         return;
       }
-      ApplicationManager.getApplication()
-          .invokeLater(
-              () -> KotlinLibraryConfigurator.INSTANCE.configureModule(project, workspaceModule));
-    }
-  }
-
-  /**
-   * We want to configure only a single module, without a user-facing dialog (the configuration
-   * process takes O(seconds) per module, on the EDT, and there can be 100s of modules for Android
-   * Studio).
-   *
-   * <p>The single-module configuration method isn't exposed though, so we need to subclass the
-   * configurator.
-   *
-   * <p>TODO(brendandouglas): remove this hack as soon as there's an appropriate upstream method.
-   */
-  private static class KotlinLibraryConfigurator extends KotlinJavaModuleConfigurator {
-    static final KotlinLibraryConfigurator INSTANCE = new KotlinLibraryConfigurator();
-
-    void configureModule(Project project, Module module) {
-      configureModule(
-          module,
-          getDefaultPathToJarFile(project),
-          null,
-          new NotificationMessageCollector(project, "Configuring Kotlin", "Configuring Kotlin"));
+      KotlinCompat.configureModule(project, workspaceModule);
     }
   }
 }
