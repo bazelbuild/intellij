@@ -383,6 +383,25 @@ bazel_external_dependency_archive(
     },
 )
 
+# Use the latest version of java_tools which contains a fix for the ijar multi-disk issue
+http_archive(
+    name = "remote_java_tools",
+    sha256 = "d17136c12cf018b6ef731e6d25e5b39d40c7b9078da67a5ad9824ab56e35aee1",
+    urls = [
+            "https://mirror.bazel.build/bazel_java_tools/releases/java/v11.7/java_tools-v11.7.zip",
+            "https://github.com/bazelbuild/java_tools/releases/download/java_v11.7/java_tools-v11.7.zip",
+    ],
+)
+
+http_archive(
+    name = "remote_java_tools_linux",
+    sha256 = "f3a8b76de025aecca85f4289571976a61176d536259d6c02e6ecb45fa97b8e8a",
+    urls = [
+            "https://mirror.bazel.build/bazel_java_tools/releases/java/v11.7/java_tools_linux-v11.7.zip",
+            "https://github.com/bazelbuild/java_tools/releases/download/java_v11.7/java_tools_linux-v11.7.zip",
+    ],
+)
+
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(
     name = "rules_proto",
