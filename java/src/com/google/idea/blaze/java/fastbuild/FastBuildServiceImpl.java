@@ -254,6 +254,9 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
                 try (BuildResultHelper buildResultHelper =
                     BuildResultHelperProvider.createForLocalBuild(project)) {
                   return buildDeployJar(context1, label, buildParameters, buildResultHelper);
+                } catch (GetArtifactsException e) {
+                  throw new RuntimeException(
+                      "Blaze failure building deploy jar: " + e.getMessage());
                 }
               }
             });
@@ -263,69 +266,99 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       BlazeContext context,
       Label label,
       FastBuildParameters buildParameters,
-      BuildResultHelper resultHelper) {
-    Label deployJarLabel = createDeployJarLabel(label);
-    context.output(
-        new StatusOutput(
-            "Building base deploy jar for fast builds: " + deployJarLabel.targetName()));
+      BuildResultHelper resultHelper) throws GetArtifactsException {
+    final Label deployJarLabel = createDeployJarLabel(label);
+    context.output(new StatusOutput(
+        "Building base deploy jar for fast builds: " + deployJarLabel.targetName()));
 
-    BlazeInfo blazeInfo = getBlazeInfo(context, buildParameters);
-    FastBuildAspectStrategy aspectStrategy =
+    final BlazeInfo blazeInfo = getBlazeInfo(context, buildParameters);
+    final FastBuildAspectStrategy aspectStrategy =
         FastBuildAspectStrategy.getInstance(Blaze.getBuildSystemName(project));
 
-    Stopwatch timer = Stopwatch.createStarted();
+    final Stopwatch timer = Stopwatch.createStarted();
 
-    BlazeCommand.Builder command =
+    final ImmutableMap<Label, FastBuildBlazeData> blazeData = getFastBuildBlazeDataByRunningFakeTestCommand(
+        context, label, buildParameters, resultHelper, aspectStrategy);
+
+    final BlazeCommand.Builder buildCommand =
         BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.BUILD)
             .addTargets(label)
             .addTargets(deployJarLabel)
             .addBlazeFlags(buildParameters.buildFlags())
             .addBlazeFlags(resultHelper.getBuildFlags());
 
-    aspectStrategy.addAspectAndOutputGroups(command, /* additionalOutputGroups...= */ "default");
-
-    int exitCode =
+    int buildCommandExitCode =
         ExternalTask.builder(WorkspaceRoot.fromProject(project))
-            .addBlazeCommand(command.build())
+            .addBlazeCommand(buildCommand.build())
             .context(context)
-            .stderr(
-                LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
+            .stderr(LineProcessingOutputStream.of(
+                BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
             .build()
             .run();
-    BuildResult result = BuildResult.fromExitCode(exitCode);
+
+    final BuildResult result = BuildResult.fromExitCode(buildCommandExitCode);
     context.output(
         FastBuildLogOutput.keyValue("deploy_jar_build_result", result.status.toString()));
     context.output(FastBuildLogOutput.milliseconds("deploy_jar_build_time_ms", timer));
+
     if (result.status != Status.SUCCESS) {
       throw new FastBuildTunnelException(new BlazeBuildError("Blaze failure building deploy jar"));
     }
-    Predicate<String> filePredicate =
-        file ->
-            file.endsWith(deployJarLabel.targetName().toString())
-                || aspectStrategy.getAspectOutputFilePredicate().test(file);
-    try {
-      ImmutableList<File> deployJarArtifacts =
-          BlazeArtifact.getLocalFiles(
-              resultHelper.getBuildArtifactsForTarget(deployJarLabel, filePredicate));
-      checkState(deployJarArtifacts.size() == 1);
-      File deployJar = deployJarArtifacts.get(0);
 
-      ImmutableList<File> ideInfoFiles =
-          BlazeArtifact.getLocalFiles(
-              resultHelper.getArtifactsForOutputGroup(
-                  aspectStrategy.getAspectOutputGroup(), filePredicate));
+    final Predicate<String> jarFilePredicate =
+        file -> file.endsWith(deployJarLabel.targetName().toString());
 
-      // if targets are built with multiple configurations, just take the first one
-      // TODO(brendandouglas): choose a consistent configuration instead
-      ImmutableMap<Label, FastBuildBlazeData> blazeData =
-          ideInfoFiles.stream()
-              .map(aspectStrategy::readFastBuildBlazeData)
-              .collect(toImmutableMap(FastBuildBlazeData::label, i -> i, (i, j) -> i));
-      return BuildOutput.create(deployJar, blazeData, blazeInfo);
-    } catch (GetArtifactsException e) {
-      throw new RuntimeException("Blaze failure building deploy jar: " + e.getMessage());
-    }
+    final ImmutableList<File> deployJarArtifacts = BlazeArtifact.getLocalFiles(
+        resultHelper.getBuildArtifactsForTarget(deployJarLabel, jarFilePredicate));
+    checkState(deployJarArtifacts.size() == 1);
+
+    return BuildOutput.create(deployJarArtifacts.get(0), blazeData, blazeInfo);
+  }
+
+  private ImmutableMap<Label, FastBuildBlazeData> getFastBuildBlazeDataByRunningFakeTestCommand(
+      BlazeContext context, Label label, FastBuildParameters buildParameters,
+      BuildResultHelper resultHelper, FastBuildAspectStrategy aspectStrategy)
+      throws GetArtifactsException {
+    context.output(
+        new StatusOutput(
+            "Running Fake Test Command to run aspects on"));
+
+    final BlazeCommand.Builder fakeTestCommand =
+        BlazeCommand.builder(buildParameters.blazeBinary(), BlazeCommandName.TEST)
+            .addTargets(label)
+            .addBlazeFlags("--test_filter=com.org.DoesNotExist")
+            .addBlazeFlags(resultHelper.getBuildFlags());
+
+    aspectStrategy.addAspectAndOutputGroups(fakeTestCommand, /* additionalOutputGroups...= */
+        "default");
+
+    int fakeTestCommandExitCode =
+        ExternalTask.builder(WorkspaceRoot.fromProject(project))
+            .addBlazeCommand(fakeTestCommand.build())
+            .context(context)
+            .stdout(LineProcessingOutputStream.of(
+                BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
+            .stderr(LineProcessingOutputStream.of(
+                BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
+            .build()
+            .run();
+
+    final ImmutableList<File> ideInfoFiles =
+        BlazeArtifact.getLocalFiles(
+            resultHelper.getArtifactsForOutputGroup(
+                aspectStrategy.getAspectOutputGroup(), aspectStrategy.getAspectOutputFilePredicate()));
+
+    // if targets are built with multiple configurations, just take the first one
+    // TODO(brendandouglas): choose a consistent configuration instead
+    final ImmutableMap<Label, FastBuildBlazeData> blazeData =
+        ideInfoFiles.stream()
+            .map(aspectStrategy::readFastBuildBlazeData)
+            .collect(toImmutableMap(FastBuildBlazeData::label, i -> i, (i, j) -> i));
+
+    context.output(
+        new StatusOutput(
+            "Finished running fake test with aspects to retrieve build info, exitCode " + fakeTestCommandExitCode));
+    return blazeData;
   }
 
   private BlazeInfo getBlazeInfo(BlazeContext context, FastBuildParameters buildParameters) {

@@ -64,13 +64,20 @@ def _fast_build_info_impl(target, ctx):
             launcher = str(ctx.rule.attr._java_launcher.label)
         elif hasattr(ctx.rule.attr, "_javabase") and ctx.rule.attr._javabase:
             launcher = str(ctx.rule.attr._javabase.label)
+
+        expanded_jvm_flags = []
+        for flag in getattr(ctx.rule.attr, "jvm_flags", []):
+            expanded_jvm_flags.append(ctx.expand_make_variables("jvm_flag", flag, {}))
+
+        print(expanded_jvm_flags)
+
         java_info = {
             "sources": sources_from_target(ctx),
             "test_class": getattr(ctx.rule.attr, "test_class", None),
             "test_size": getattr(ctx.rule.attr, "size", None),
             "launcher": launcher,
             "swigdeps": getattr(ctx.rule.attr, "swigdeps", True),
-            "jvm_flags": getattr(ctx.rule.attr, "jvm_flags", []),
+            "jvm_flags": expanded_jvm_flags,
         }
         annotation_processing = target[JavaInfo].annotation_processing
         if annotation_processing:

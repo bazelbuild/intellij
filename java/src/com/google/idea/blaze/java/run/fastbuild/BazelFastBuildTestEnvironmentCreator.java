@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmentCreator {
 
   // Bazel adds the Java launcher to the runfiles path when building a Java test target.
-  private static final File STANDARD_JAVA_BINARY = new File("../local_jdk/bin/java");
+  private static final File STANDARD_JAVA_BINARY = new File("../jdk_mac/Contents/Home/bin/java");
 
   @Override
   String getTestClassProperty() {
