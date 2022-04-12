@@ -213,9 +213,9 @@ public abstract class BlazeIntegrationTestCase {
     return true;
   }
 
-  /** Override to run tests with bazel specified as the project's build system. */
+  /** Override to run tests with blaze specified as the project's build system. */
   protected BuildSystemName buildSystem() {
-    return BuildSystemName.Blaze;
+    return BuildSystemName.Bazel;
   }
 
   /** Override to run tests off the EDT. */
