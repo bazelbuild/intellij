@@ -52,8 +52,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2022_1",
     build_file = "@//intellij_platform_sdk:BUILD.ue221",
-    sha256 = "4c12f78c91a66f00a6f65cd71c67aa0f2b5c6097971a6f4a5da769a6bfff79b2",
-    url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/221.5080.56-EAP-SNAPSHOT/ideaIU-221.5080.56-EAP-SNAPSHOT.zip",
+    sha256 = "7a51c48dadd64cf7644210aa46163fb72cf48fc069e6047bdc1dd91a763e1a26",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2022.1/ideaIU-2022.1.zip",
 )
 
 # The plugin api for clion_2021_2. This is required to build CLwB, and run integration tests.
