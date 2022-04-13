@@ -287,6 +287,7 @@
 
     <additionalTextAttributes scheme="Default" file="resources/colorSchemes/BuildDefault.xml"/>
     <typedHandler implementation="com.google.idea.blaze.base.lang.buildfile.completion.BuildCompletionAutoPopupHandler"/>
+    <projectOpenProcessor implementation="com.google.idea.blaze.base.project.NewBazelProjectOpenProcessor"/>
     <projectOpenProcessor implementation="com.google.idea.blaze.base.project.BlazeProjectOpenProcessor"/>
     <projectViewNodeDecorator implementation="com.google.idea.blaze.base.syncstatus.SyncStatusNodeDecorator"/>
     <editorTabColorProvider implementation="com.google.idea.blaze.base.syncstatus.SyncStatusEditorTabColorProvider"/>
