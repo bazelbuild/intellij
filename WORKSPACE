@@ -27,8 +27,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2022_1",
     build_file = "@//intellij_platform_sdk:BUILD.idea221",
-    sha256 = "bab553d24c5ce82c6ec4ae5e2ec0e3c27a3b869021bd47bb6b6562db972e49c1",
-    url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/221.5080.56-EAP-SNAPSHOT/ideaIC-221.5080.56-EAP-SNAPSHOT.zip",
+    sha256 = "1adb1909493140ee5246b6c67cc70d7b8e72abbe924e8201c079b63fc80cc1f4",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2022.1/ideaIC-2022.1.zip",
 )
 
 # The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
