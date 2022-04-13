@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.scope;
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,7 +38,7 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testScopeBeginsWhenPushedToContext() {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     final BlazeScope scope = mock(BlazeScope.class);
     context.push(scope);
     verify(scope).onScopeBegin(context);
@@ -45,7 +46,7 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testScopeEndsWhenContextEnds() {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     final BlazeScope scope = mock(BlazeScope.class);
     context.push(scope);
     context.endScope();
@@ -54,7 +55,7 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testEndingTwiceHasNoEffect() {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     final BlazeScope scope = mock(BlazeScope.class);
     context.push(scope);
     context.endScope();
@@ -64,8 +65,8 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testEndingScopeNormallyDoesntEndParent() {
-    BlazeContext parentContext = new BlazeContext();
-    BlazeContext childContext = new BlazeContext(parentContext);
+    BlazeContext parentContext = BlazeContext.create();
+    BlazeContext childContext = BlazeContext.create(parentContext);
     childContext.endScope();
     assertTrue(childContext.isEnding());
     assertFalse(parentContext.isEnding());
@@ -73,8 +74,8 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testCancellingScopeCancelsParent() {
-    BlazeContext parentContext = new BlazeContext();
-    BlazeContext childContext = new BlazeContext(parentContext);
+    BlazeContext parentContext = BlazeContext.create();
+    BlazeContext childContext = BlazeContext.create(parentContext);
     childContext.setCancelled();
     assertTrue(childContext.isCancelled());
     assertTrue(parentContext.isCancelled());
@@ -104,7 +105,7 @@ public class BlazeContextTest extends BlazeTestCase {
   @Test
   public void testScopesBeginAndEndInStackOrder() {
     List<String> record = Lists.newArrayList();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context
         .push(new RecordScope(1, record))
         .push(new RecordScope(2, record))
@@ -116,7 +117,7 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testParentFoundInStackOrder() {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     BlazeScope scope1 = mock(BlazeScope.class);
     BlazeScope scope2 = mock(BlazeScope.class);
     BlazeScope scope3 = mock(BlazeScope.class);
@@ -128,8 +129,8 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testParentFoundInStackOrderAcrossContexts() {
-    BlazeContext parentContext = new BlazeContext();
-    BlazeContext childContext = new BlazeContext(parentContext);
+    BlazeContext parentContext = BlazeContext.create();
+    BlazeContext childContext = BlazeContext.create(parentContext);
     BlazeScope scope1 = mock(BlazeScope.class);
     BlazeScope scope2 = mock(BlazeScope.class);
     BlazeScope scope3 = mock(BlazeScope.class);
@@ -158,7 +159,7 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testOutputGoesToRegisteredSink() {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     TestOutputSink1 sink = new TestOutputSink1();
     context.addOutputSink(TestOutput1.class, sink);
 
@@ -169,7 +170,7 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testOutputDoesntGoToWrongSink() {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     TestOutputSink2 sink = new TestOutputSink2();
     context.addOutputSink(TestOutput2.class, sink);
 
@@ -180,8 +181,8 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testOutputGoesToParentContexts() {
-    BlazeContext parentContext = new BlazeContext();
-    BlazeContext childContext = new BlazeContext(parentContext);
+    BlazeContext parentContext = BlazeContext.create();
+    BlazeContext childContext = BlazeContext.create(parentContext);
     TestOutputSink1 sink = new TestOutputSink1();
     parentContext.addOutputSink(TestOutput1.class, sink);
 
@@ -192,7 +193,7 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testHoldingPreventsEndingContext() {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.hold();
     context.endScope();
     assertFalse(context.isEnding());
@@ -232,7 +233,7 @@ public class BlazeContextTest extends BlazeTestCase {
     List<String> output2 = Lists.newArrayList();
     List<String> output3 = Lists.newArrayList();
 
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.push(new StringScope("a"));
     context.push(new StringScope("b"));
     CollectorScope scope = new CollectorScope(output1);
@@ -255,19 +256,19 @@ public class BlazeContextTest extends BlazeTestCase {
     List<String> output2 = Lists.newArrayList();
     List<String> output3 = Lists.newArrayList();
 
-    BlazeContext context1 = new BlazeContext();
+    BlazeContext context1 = BlazeContext.create();
     context1.push(new StringScope("a"));
     context1.push(new StringScope("b"));
     CollectorScope scope = new CollectorScope(output1);
     context1.push(scope);
 
-    BlazeContext context2 = new BlazeContext(context1);
+    BlazeContext context2 = BlazeContext.create(context1);
     context2.push(new StringScope("c"));
     context2.push(new CollectorScope(output2));
     context2.push(new StringScope("d"));
     context2.push(new StringScope("e"));
 
-    BlazeContext context3 = new BlazeContext(context2);
+    BlazeContext context3 = BlazeContext.create(context2);
     context3.push(new CollectorScope(output3));
     context3.endScope();
     context2.endScope();
@@ -282,13 +283,13 @@ public class BlazeContextTest extends BlazeTestCase {
   public void testGetScopesOnlyReturnsScopesIfStartingScopeInContext() {
     List<String> output1 = Lists.newArrayList();
 
-    BlazeContext context1 = new BlazeContext();
+    BlazeContext context1 = BlazeContext.create();
     context1.push(new StringScope("a"));
     context1.push(new StringScope("b"));
     CollectorScope scope = new CollectorScope(output1);
     context1.push(scope);
 
-    BlazeContext context2 = new BlazeContext(context1);
+    BlazeContext context2 = BlazeContext.create(context1);
     context2.push(new StringScope("c"));
 
     List<StringScope> scopes = context2.getScopes(StringScope.class, scope);
@@ -297,7 +298,7 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testGetScopesIncludesStartingScope() {
-    BlazeContext context1 = new BlazeContext();
+    BlazeContext context1 = BlazeContext.create();
     StringScope a = new StringScope("a");
     context1.push(a);
     StringScope b = new StringScope("b");
@@ -309,7 +310,7 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testGetScopesIndexIsNoninclusive() {
-    BlazeContext context1 = new BlazeContext();
+    BlazeContext context1 = BlazeContext.create();
     StringScope scopeA = new StringScope("a");
     context1.push(scopeA);
     StringScope scopeB = new StringScope("b");
@@ -322,7 +323,7 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testGetScopesWithoutStartScopeGetsAll() {
-    BlazeContext context1 = new BlazeContext();
+    BlazeContext context1 = BlazeContext.create();
     StringScope a = new StringScope("a");
     context1.push(a);
     StringScope b = new StringScope("b");
@@ -348,10 +349,10 @@ public class BlazeContextTest extends BlazeTestCase {
     NonPropagatingOutputSink sink2 = new NonPropagatingOutputSink();
     NonPropagatingOutputSink sink3 = new NonPropagatingOutputSink();
 
-    BlazeContext context1 = new BlazeContext();
+    BlazeContext context1 = BlazeContext.create();
     context1.addOutputSink(TestOutput1.class, sink1);
 
-    BlazeContext context2 = new BlazeContext(context1);
+    BlazeContext context2 = BlazeContext.create(context1);
     context2.addOutputSink(TestOutput1.class, sink2);
     context2.addOutputSink(TestOutput1.class, sink3);
 
@@ -364,7 +365,7 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testCancellationHandlersInvoked() {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
 
     Runnable handler1 = Mockito.mock(Runnable.class);
     Runnable handler2 = Mockito.mock(Runnable.class);
@@ -378,13 +379,27 @@ public class BlazeContextTest extends BlazeTestCase {
 
   @Test
   public void testParentContextCancellationHandlersInvoked() {
-    BlazeContext parentContext = new BlazeContext();
-    BlazeContext childContext = new BlazeContext(parentContext);
+    BlazeContext parentContext = BlazeContext.create();
+    BlazeContext childContext = BlazeContext.create(parentContext);
 
     Runnable handler = Mockito.mock(Runnable.class);
     parentContext.addCancellationHandler(handler);
 
     childContext.setCancelled();
     verify(handler, times(1)).run();
+  }
+
+  @Test
+  public void testCircularCancellationHandlersRunOnce() {
+    BlazeContext context = BlazeContext.create();
+    Runnable handler = Mockito.mock(Runnable.class);
+    doNothing().doThrow(new RuntimeException("Handler called more than once")).when(handler).run();
+
+    context.addCancellationHandler(handler);
+    context.addCancellationHandler(context::setCancelled);
+    context.setCancelled();
+
+    verify(handler, times(1)).run();
+    assertThat(context.isCancelled()).isTrue();
   }
 }

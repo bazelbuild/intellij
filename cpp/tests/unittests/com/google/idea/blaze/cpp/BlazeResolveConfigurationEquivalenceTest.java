@@ -78,7 +78,7 @@ import org.junit.runners.JUnit4;
 /** Tests that we group equivalent {@link BlazeResolveConfiguration}s. */
 @RunWith(JUnit4.class)
 public class BlazeResolveConfigurationEquivalenceTest extends BlazeTestCase {
-  private final BlazeContext context = new BlazeContext();
+  private final BlazeContext context = BlazeContext.create();
   private final ErrorCollector errorCollector = new ErrorCollector();
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
 

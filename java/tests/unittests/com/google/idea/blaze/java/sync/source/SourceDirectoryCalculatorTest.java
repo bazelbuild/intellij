@@ -71,7 +71,7 @@ public class SourceDirectoryCalculatorTest extends BlazeTestCase {
   private MockInputStreamProvider mockInputStreamProvider;
   private SourceDirectoryCalculator sourceDirectoryCalculator;
 
-  private final BlazeContext context = new BlazeContext();
+  private final BlazeContext context = BlazeContext.create();
   private final ErrorCollector issues = new ErrorCollector();
   private MockExperimentService experimentService;
 

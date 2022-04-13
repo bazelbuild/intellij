@@ -84,7 +84,7 @@ public class JarCacheTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(PrintOutput.class, new WritingOutputSink());
     workspaceRoot = new WorkspaceRoot(folder.getRoot());
 

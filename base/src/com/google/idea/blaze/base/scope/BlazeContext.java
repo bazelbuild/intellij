@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.base.sync.SyncResult;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -40,12 +41,22 @@ public class BlazeContext {
   private boolean hasErrors;
   private boolean propagatesErrors = true;
 
-  public BlazeContext() {
-    this(null);
+  private final Runnable cancelThis = this::setCancelled;
+
+  private BlazeContext(@Nullable BlazeContext parentContext) {
+    this.parentContext = parentContext;
   }
 
-  public BlazeContext(@Nullable BlazeContext parentContext) {
-    this.parentContext = parentContext;
+  public static BlazeContext create() {
+    return new BlazeContext(null);
+  }
+
+  public static BlazeContext create(BlazeContext parentContext) {
+    BlazeContext context = new BlazeContext(parentContext);
+    if (parentContext != null) {
+      parentContext.addCancellationHandler(context.cancelThis);
+    }
+    return context;
   }
 
   public BlazeContext push(BlazeScope scope) {
@@ -64,8 +75,11 @@ public class BlazeContext {
       scopes.get(i).onScopeEnd(this);
     }
 
-    if (parentContext != null && hasErrors && propagatesErrors) {
-      parentContext.setHasError();
+    if (parentContext != null) {
+      parentContext.removeCancellationHandler(cancelThis);
+      if (hasErrors && propagatesErrors) {
+        parentContext.setHasError();
+      }
     }
   }
 
@@ -247,5 +261,23 @@ public class BlazeContext {
   /** Registers a function to be called if the context is cancelled */
   public synchronized void addCancellationHandler(Runnable handler) {
     this.cancellationHandlers.add(handler);
+  }
+
+  /** Unregisters a cancellation handler */
+  public synchronized void removeCancellationHandler(Runnable handler) {
+    this.cancellationHandlers.remove(handler);
+  }
+
+  public SyncResult getSyncResult() {
+    if (shouldContinue()) {
+      throw new IllegalStateException("Sync result requested for ongoing context");
+    }
+    if (isCancelled()) {
+      return SyncResult.CANCELLED;
+    }
+    if (hasErrors()) {
+      return SyncResult.FAILURE;
+    }
+    return SyncResult.SUCCESS;
   }
 }

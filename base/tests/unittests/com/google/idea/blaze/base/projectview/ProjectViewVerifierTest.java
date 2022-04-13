@@ -79,7 +79,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
 
     fileOperationProvider = new MockFileOperationProvider(workspaceRoot);
     applicationServices.register(FileOperationProvider.class, fileOperationProvider);
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
 

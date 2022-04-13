@@ -60,7 +60,7 @@ public class BlazeKotlinSyncPluginTest extends BlazeTestCase {
         registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     syncPlugins.registerExtension(new BlazeJavaSyncPlugin());
     syncPlugins.registerExtension(new BlazeKotlinSyncPlugin());
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
 

@@ -163,7 +163,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         registerExtensionPoint(
             GeneratedResourceRetentionFilter.EP_NAME, GeneratedResourceRetentionFilter.class);
 
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);

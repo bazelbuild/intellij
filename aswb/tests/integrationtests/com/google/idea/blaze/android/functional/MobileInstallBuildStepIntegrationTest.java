@@ -124,7 +124,7 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
 
     // Collect messages sent to IssueOutput.
     messageCollector = new MessageCollector();
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
   }
 

@@ -373,7 +373,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("workspaceRoot"));
     return BlazeBuildTargetSharder.expandAndShardTargets(
         getProject(),
-        new BlazeContext(),
+        BlazeContext.create(),
         workspaceRoot,
         ProjectViewSet.builder().add(projectView).build(),
         new WorkspacePathResolverImpl(workspaceRoot),

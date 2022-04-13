@@ -122,7 +122,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     FocusBehavior consolePopupBehavior = BlazeUserSettings.getInstance().getShowBlazeConsoleOnRun();
     FocusBehavior problemsViewFocus = BlazeUserSettings.getInstance().getShowProblemsViewOnRun();
     BlazeContext context =
-        new BlazeContext()
+        BlazeContext.create()
             .push(
                 new ToolWindowScope.Builder(
                         project,

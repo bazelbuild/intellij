@@ -240,7 +240,7 @@ public final class BlazeEditProjectViewControl {
       BuildSystemName buildSystemName,
       String initialProjectViewText,
       WorkspacePathResolver workspacePathResolver) {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     ProjectViewParser projectViewParser = new ProjectViewParser(context, workspacePathResolver);
     projectViewParser.parseProjectView(initialProjectViewText);
     ProjectViewSet projectViewSet = projectViewParser.getResult();

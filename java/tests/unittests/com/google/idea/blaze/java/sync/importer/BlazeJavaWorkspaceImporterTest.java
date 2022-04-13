@@ -208,7 +208,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
 
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     augmenters =

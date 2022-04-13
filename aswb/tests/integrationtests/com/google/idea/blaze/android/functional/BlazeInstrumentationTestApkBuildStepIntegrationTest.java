@@ -112,7 +112,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   public void getInstrumentorToTargetPair_separateInstrumentorAndTestTargets() {
     setupProject();
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     BlazeInstrumentationTestApkBuildStep buildStep =
@@ -134,7 +134,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   public void getInstrumentorToTargetPair_selfInstrumentingTest() {
     setupProject();
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     BlazeInstrumentationTestApkBuildStep buildStep =
@@ -159,7 +159,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     Label testTarget = Label.create("//java/com/foo/app:instrumentation_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app");
     Label appTarget = Label.create("//java/com/foo/app:app");
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     ImmutableList<String> blazeFlags = ImmutableList.of("some_blaze_flag", "some_other_flag");
 
     // Setup interceptor for fake running of blaze commands and capture details.
@@ -205,7 +205,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     setupProject();
     Label testTarget = Label.create("//java/com/foo/app:self_instrumenting_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app_self_instrumenting");
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     ImmutableList<String> blazeFlags = ImmutableList.of("some_blaze_flag", "some_other_flag");
 
     // Setup interceptor for fake running of blaze commands and capture details.
@@ -246,7 +246,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     Label appTarget = Label.create("//java/com/foo/app:app");
 
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     // Make blaze command invocation always pass.
@@ -286,7 +286,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     Label appTarget = Label.create("//java/com/foo/app:app");
 
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     // Return a non-zero value to indicate blaze command run failure.
@@ -332,7 +332,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     ImmutableList<String> blazeFlags = ImmutableList.of("some_blaze_flag", "some_other_flag");
 
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     // Return null execroot
@@ -402,7 +402,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     runFullBlazeSyncWithNoIssues();
 
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     BlazeInstrumentationTestApkBuildStep buildStep =
@@ -445,7 +445,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     InstrumentorToTarget pair =
         buildStep.getInstrumentorToTargetPair(
-            new BlazeContext(),
+            BlazeContext.create(),
             BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData());
     assertThat(pair.instrumentor).isEqualTo(Label.create("//java/com/foo/app:test_app"));
     assertThat(pair.target).isEqualTo(Label.create("//java/com/foo/app:app"));

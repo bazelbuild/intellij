@@ -50,7 +50,7 @@ public class TasksToolWindowServiceTest {
 
   @Test
   public void testFinishTask() {
-    service.finishTask(task, false);
+    service.finishTask(task, false, false);
     assertThat(task.getEndTime()).hasValue(NOW_INSTANT);
   }
 }

@@ -186,7 +186,7 @@ public final class ToolWindowScope implements BlazeScope {
   @Override
   public void onScopeEnd(BlazeContext context) {
     if (finishTaskOnScopeEnd) {
-      tasksToolWindowController.finishTask(task, context.hasErrors());
+      tasksToolWindowController.finishTask(task, context.hasErrors(), context.isCancelled());
     }
     tasksToolWindowController.removeStopHandler(task);
   }

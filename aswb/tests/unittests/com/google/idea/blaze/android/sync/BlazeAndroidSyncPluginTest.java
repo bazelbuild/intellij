@@ -109,7 +109,7 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
     projectServices.register(
         LanguageLevelProjectExtension.class, new MockLanguageLevelProjectExtension());
 
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, new ErrorCollector());
 
     projectViewSet =

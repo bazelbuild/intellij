@@ -100,7 +100,7 @@ public class RenderJarCacheTest {
   public void initTest() throws IOException {
     errorCollector = new ErrorCollector();
     outputSink = new WritingOutputSink();
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(PrintOutput.class, outputSink);
     workspaceRoot = new WorkspaceRoot(temporaryFolder.getRoot());
     artifactLocationDecoder =
@@ -273,7 +273,7 @@ public class RenderJarCacheTest {
    * {@code contents} is incorrectly formatted as a projectview file
    */
   private void setProjectView(String... contents) {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
     ProjectViewParser projectViewParser =
         new ProjectViewParser(context, new WorkspacePathResolverImpl(workspaceRoot));

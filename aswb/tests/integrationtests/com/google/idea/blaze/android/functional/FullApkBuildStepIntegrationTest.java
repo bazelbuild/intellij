@@ -96,7 +96,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   public void setupTestInfoGatherers() {
     // Message collector for collecting errors.
     messageCollector = new MessageCollector();
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     // Setup interceptor for fake running of blaze commands and capture details.

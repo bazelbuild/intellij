@@ -94,7 +94,7 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     super.initTest(applicationServices, projectServices);
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     ExtensionPointImpl<Provider> ep =

@@ -346,10 +346,7 @@ final class SyncPhaseCoordinator {
               },
               new TimingScope("Filtering project targets", EventType.Other));
       stats.addTimedEvents(timedEvents);
-      syncResult =
-          context.shouldContinue()
-              ? SyncResult.SUCCESS
-              : context.isCancelled() ? SyncResult.CANCELLED : SyncResult.FAILURE;
+      syncResult = context.getSyncResult();
 
     } catch (Throwable e) {
       logSyncError(context, e);
@@ -385,7 +382,7 @@ final class SyncPhaseCoordinator {
             context,
             ProjectViewManager.getInstance(project).getProjectViewSet(),
             ImmutableSet.of(buildId),
-            SyncResult.FAILURE,
+            context.getSyncResult(),
             SyncStats.builder());
         return;
       }
@@ -421,6 +418,19 @@ final class SyncPhaseCoordinator {
                       .findFirst()
                       .orElse(BuildBinaryType.NONE))
               .build();
+
+      if (!context.shouldContinue()) {
+        finishSync(
+            params,
+            startTime,
+            context,
+            ProjectViewManager.getInstance(project).getProjectViewSet(),
+            ImmutableSet.of(buildId),
+            context.getSyncResult(),
+            SyncStats.builder());
+        return;
+      }
+
       if (singleThreaded) {
         updateProjectAndFinishSync(task, context);
       } else {
@@ -488,7 +498,7 @@ final class SyncPhaseCoordinator {
   private SyncResult syncResultFromBuildPhase(
       BlazeSyncBuildResult buildResult, BlazeContext context) {
     if (!context.shouldContinue()) {
-      return context.isCancelled() ? SyncResult.CANCELLED : SyncResult.FAILURE;
+      return context.getSyncResult();
     }
     if (!buildResult.isValid()) {
       return SyncResult.FAILURE;
@@ -537,7 +547,7 @@ final class SyncPhaseCoordinator {
               new TimingScope("Project update phase", EventType.Other));
       stats.addTimedEvents(timedEvents);
       if (!context.shouldContinue()) {
-        syncResult = context.isCancelled() ? SyncResult.CANCELLED : SyncResult.FAILURE;
+        syncResult = context.getSyncResult();
       }
     } catch (Throwable e) {
       logSyncError(context, e);

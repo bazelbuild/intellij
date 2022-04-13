@@ -54,7 +54,7 @@ public class LanguageSupportTest extends BlazeTestCase {
 
     syncPlugins = registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
 
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
 

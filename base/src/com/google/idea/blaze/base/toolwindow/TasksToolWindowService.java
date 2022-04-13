@@ -83,8 +83,9 @@ public final class TasksToolWindowService implements Disposable {
   }
 
   /** Update the state and the view when task finishes */
-  public void finishTask(Task task, boolean hasErrors) {
+  public void finishTask(Task task, boolean hasErrors, boolean isCancelled) {
     task.setEndTime(timeSource.now());
+    task.setCancelled(isCancelled);
     task.setHasErrors(hasErrors);
     ApplicationManager.getApplication().invokeLater(() -> tabs.finishTask(task));
   }

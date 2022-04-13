@@ -77,7 +77,7 @@ public class BlazeTypescriptSyncPluginTest extends BlazeTestCase {
           }
         });
 
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
 
