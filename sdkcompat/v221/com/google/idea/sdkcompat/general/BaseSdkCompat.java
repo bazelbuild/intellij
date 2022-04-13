@@ -19,6 +19,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usages.TextChunk;
+import com.intellij.util.Restarter;
 import com.intellij.util.ui.VcsExecutablePathSelector;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProperties.VcsLogProperty;
@@ -111,5 +112,12 @@ public final class BaseSdkCompat {
   @SuppressWarnings("rawtypes")
   public static boolean isIncrementalRefreshProperty(VcsLogProperty property) {
     return property == VcsLogProperties.SUPPORTS_INCREMENTAL_REFRESH;
+  }
+
+  /** #api213: inline this method */
+  @Nullable
+  public static String getIdeRestarterPath() {
+    Path startFilePath = Restarter.getIdeStarter();
+    return startFilePath == null ? null : startFilePath.toString();
   }
 }
