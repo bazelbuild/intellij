@@ -62,7 +62,7 @@ public class BuildResultHelperBep implements BuildResultHelper {
     try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
       return BuildFlags.parseBep(inputStream);
     } catch (IOException | BuildEventStreamException e) {
-      throw new GetFlagsException(e.getMessage());
+      throw new GetFlagsException(e);
     }
   }
 

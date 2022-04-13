@@ -113,8 +113,16 @@ public interface BuildResultHelper extends AutoCloseable {
 
   /** Indicates a failure to get artifact information */
   class GetFlagsException extends Exception {
+    public GetFlagsException(String message, Throwable cause) {
+      super(message, cause);
+    }
+
     public GetFlagsException(String message) {
       super(message);
+    }
+
+    public GetFlagsException(Throwable cause) {
+      super(cause);
     }
   }
 
