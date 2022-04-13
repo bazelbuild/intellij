@@ -42,7 +42,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.List;
-import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.event.HyperlinkEvent;
 
@@ -61,7 +60,7 @@ public class JUnitPluginDependencyWarning implements ApplicationComponent {
         /* disposable= */ null,
         new AppLifecycleListener() {
           @Override
-          public void appStarting(@Nullable Project projectFromCommandLine) {
+          public void appStarted() {
             if (PlatformUtils.isIntelliJ() && !PluginUtils.isPluginEnabled(JUNIT_PLUGIN_ID)) {
               notifyJUnitNotEnabled();
             }
@@ -107,7 +106,7 @@ public class JUnitPluginDependencyWarning implements ApplicationComponent {
         AppLifecycleListener.TOPIC,
         new AppLifecycleListener() {
           @Override
-          public void appStarting(@Nullable Project projectFromCommandLine) {
+          public void appStarted() {
             // Adds an error item to the 'Event Log' tab.
             // Easy to ignore, but remains in event log until manually cleared.
             Transactions.submitTransactionAndWait(() -> Notifications.Bus.notify(notification));

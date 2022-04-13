@@ -19,13 +19,11 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.application.Topics;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.components.BaseComponent;
-import com.intellij.openapi.project.Project;
 import com.jetbrains.python.run.PyTracebackParser;
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
 import java.io.File;
 import java.io.IOException;
 import java.util.regex.Matcher;
-import javax.annotation.Nullable;
 
 /** Hacky override for upstream {@link PyTracebackParser}. */
 public class BlazePyTracebackParser extends PyTracebackParser {
@@ -64,7 +62,7 @@ public class BlazePyTracebackParser extends PyTracebackParser {
           /* disposable= */ null,
           new AppLifecycleListener() {
             @Override
-            public void appStarting(@Nullable Project projectFromCommandLine) {
+            public void appStarted() {
               if (enabled.getValue()) {
                 PARSERS[1] = new BlazePyTracebackParser();
               }
