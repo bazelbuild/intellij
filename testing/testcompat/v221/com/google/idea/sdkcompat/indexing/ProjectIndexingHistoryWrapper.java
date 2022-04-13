@@ -16,11 +16,13 @@
 package com.google.idea.sdkcompat.indexing;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
+import com.intellij.util.indexing.diagnostic.IndexingFileSetStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl.IndexingTimesImpl;
 import java.time.Duration;
+import javax.annotation.Nullable;
 
-/** #api212: inline into IndexingLoggerTest */
+/** #api213: inline into IndexingLoggerTest */
 public class ProjectIndexingHistoryWrapper {
   private final ProjectIndexingHistoryImpl projectIndexingHistoryImpl;
 
@@ -35,17 +37,18 @@ public class ProjectIndexingHistoryWrapper {
             project, /* indexingReason= */ "", /* wasFullIndexing= */ true));
   }
 
-  /** #api203: inline into IndexingLoggerTest */
-  public static void setIndexingVisibleTime(
-      IndexingJobStatistics indexingStatistic, Duration expectedIndexingVisibleTime) {
-    indexingStatistic.setIndexingVisibleTime(expectedIndexingVisibleTime.toNanos());
-  }
-
   public ProjectIndexingHistoryImpl getProjectIndexingHistory() {
     return projectIndexingHistoryImpl;
   }
 
-  public void addProviderStatistics(IndexingJobStatistics statistics) {
+  /** #api213: inline into IndexingLoggerTest */
+  public void addProviderStatisticsWithMaybeIndexingVisibleTime(
+      Project project, String fileSetName, @Nullable Duration expectedIndexingVisibleTime) {
+    IndexingFileSetStatistics statistics = new IndexingFileSetStatistics(project, fileSetName);
+    if (expectedIndexingVisibleTime != null) {
+      projectIndexingHistoryImpl.setVisibleTimeToAllThreadsTimeRatio(
+          expectedIndexingVisibleTime.toNanos());
+    }
     projectIndexingHistoryImpl.addProviderStatistics(statistics);
   }
 
@@ -53,8 +56,9 @@ public class ProjectIndexingHistoryWrapper {
       Duration expectedIndexingDuration,
       Duration expectedUpdatingDuration,
       Duration expectedScanFilesDuration) {
-    projectIndexingHistoryImpl.getTimes().setIndexingDuration(expectedIndexingDuration);
-    projectIndexingHistoryImpl.getTimes().setTotalUpdatingTime(expectedUpdatingDuration.toNanos());
-    projectIndexingHistoryImpl.getTimes().setScanFilesDuration(expectedScanFilesDuration);
+    IndexingTimesImpl times = (IndexingTimesImpl) projectIndexingHistoryImpl.getTimes();
+    times.setIndexingDuration(expectedIndexingDuration);
+    times.setTotalUpdatingTime(expectedUpdatingDuration.toNanos());
+    times.setScanFilesDuration(expectedScanFilesDuration);
   }
 }

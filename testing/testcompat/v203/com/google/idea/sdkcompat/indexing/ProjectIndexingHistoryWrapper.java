@@ -20,8 +20,9 @@ import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import java.time.Duration;
 import java.time.Instant;
+import javax.annotation.Nullable;
 
-/** #api212: inline into IndexingLoggerTest */
+/** #api213: inline into IndexingLoggerTest */
 public class ProjectIndexingHistoryWrapper {
   private final ProjectIndexingHistory projectIndexingHistory;
 
@@ -37,14 +38,14 @@ public class ProjectIndexingHistoryWrapper {
     return projectIndexingHistory;
   }
 
-  /** #api203: inline into IndexingLoggerTest */
+  /** #api213: inline into IndexingLoggerTest */
   @SuppressWarnings("UnstableApiUsage")
-  public static void setIndexingVisibleTime(
-      IndexingJobStatistics indexingStatistic, Duration expectedIndexingVisibleTime) {
-    indexingStatistic.setTotalIndexingTime(expectedIndexingVisibleTime.toNanos());
-  }
-
-  public void addProviderStatistics(IndexingJobStatistics statistics) {
+  public void addProviderStatisticsWithMaybeIndexingVisibleTime(
+      Project project, String fileSetName, @Nullable Duration expectedIndexingVisibleTime) {
+    IndexingJobStatistics statistics = new IndexingJobStatistics(project, fileSetName);
+    if (expectedIndexingVisibleTime != null) {
+      statistics.setTotalIndexingTime(expectedIndexingVisibleTime.toNanos());
+    }
     projectIndexingHistory.addProviderStatistics(statistics);
   }
 

@@ -19,8 +19,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import java.time.Duration;
+import javax.annotation.Nullable;
 
-/** #api212: inline into IndexingLoggerTest */
+/** #api213: inline into IndexingLoggerTest */
 public class ProjectIndexingHistoryWrapper {
   private final ProjectIndexingHistory projectIndexingHistory;
 
@@ -33,18 +34,18 @@ public class ProjectIndexingHistoryWrapper {
         new ProjectIndexingHistory(project, /* indexingReason= */ ""));
   }
 
-  /** #api203: inline into IndexingLoggerTest */
-  @SuppressWarnings("UnstableApiUsage")
-  public static void setIndexingVisibleTime(
-      IndexingJobStatistics indexingStatistic, Duration expectedIndexingVisibleTime) {
-    indexingStatistic.setIndexingVisibleTime(expectedIndexingVisibleTime.toNanos());
-  }
-
   public ProjectIndexingHistory getProjectIndexingHistory() {
     return projectIndexingHistory;
   }
 
-  public void addProviderStatistics(IndexingJobStatistics statistics) {
+  /** #api213: inline into IndexingLoggerTest */
+  @SuppressWarnings("UnstableApiUsage")
+  public void addProviderStatisticsWithMaybeIndexingVisibleTime(
+      Project project, String fileSetName, @Nullable Duration expectedIndexingVisibleTime) {
+    IndexingJobStatistics statistics = new IndexingJobStatistics(project, fileSetName);
+    if (expectedIndexingVisibleTime != null) {
+      statistics.setIndexingVisibleTime(expectedIndexingVisibleTime.toNanos());
+    }
     projectIndexingHistory.addProviderStatistics(statistics);
   }
 
