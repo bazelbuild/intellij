@@ -276,11 +276,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
         childContext -> {
           childContext.push(new TimingScope("GenfilesPrefetchBuildArtifacts", EventType.Other));
           ImmutableList<OutputArtifact> resolveOutputs =
-              ImmutableList.copyOf(
-                  buildResult
-                      .getBuildResult()
-                      .getOutputGroupArtifacts(
-                          group -> group.startsWith(OutputGroup.RESOLVE.prefix)));
+              buildResult
+                  .getBuildResult()
+                  .getOutputGroupArtifacts(group -> group.startsWith(OutputGroup.RESOLVE.prefix));
           prefetchGenfiles(context, resolveOutputs);
         });
     return state;
