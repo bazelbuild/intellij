@@ -386,6 +386,45 @@ bazel_external_dependency_archive(
     },
 )
 
+# Use the latest version of java_tools which contains a fix for the ijar multi-disk issue
+# Once this version is used by a Bazel release (it should be there in Bazel 5.2.0),
+# we should remove this import and set the minimum_bazel_version to 5.2.0
+http_archive(
+    name = "remote_java_tools",
+    sha256 = "d17136c12cf018b6ef731e6d25e5b39d40c7b9078da67a5ad9824ab56e35aee1",
+    urls = [
+            "https://mirror.bazel.build/bazel_java_tools/releases/java/v11.7/java_tools-v11.7.zip",
+            "https://github.com/bazelbuild/java_tools/releases/download/java_v11.7/java_tools-v11.7.zip",
+    ],
+)
+
+http_archive(
+    name = "remote_java_tools_linux",
+    sha256 = "f3a8b76de025aecca85f4289571976a61176d536259d6c02e6ecb45fa97b8e8a",
+    urls = [
+            "https://mirror.bazel.build/bazel_java_tools/releases/java/v11.7/java_tools_linux-v11.7.zip",
+            "https://github.com/bazelbuild/java_tools/releases/download/java_v11.7/java_tools_linux-v11.7.zip",
+    ],
+)
+
+http_archive(
+    name = "remote_java_tools_windows",
+    sha256 = "7545cc39346be374956effd7bfcc99047588c4f69b95f1767904985e9ede8c8d",
+    urls = [
+            "https://mirror.bazel.build/bazel_java_tools/releases/java/v11.7/java_tools_windows-v11.7.zip",
+            "https://github.com/bazelbuild/java_tools/releases/download/java_v11.7/java_tools_windows-v11.7.zip",
+    ],
+)
+
+http_archive(
+    name = "remote_java_tools_darwin",
+    sha256 = "d36812a843c6470bfc71fb1583f1ee6e4441b2b43507494661b83e97e87c37b7",
+    urls = [
+            "https://mirror.bazel.build/bazel_java_tools/releases/java/v11.7/java_tools_darwin-v11.7.zip",
+            "https://github.com/bazelbuild/java_tools/releases/download/java_v11.7/java_tools_darwin-v11.7.zip",
+    ],
+)
+
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(
     name = "rules_proto",
