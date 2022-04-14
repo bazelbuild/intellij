@@ -27,6 +27,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency.DependencyType;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
@@ -41,7 +42,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -70,7 +70,7 @@ import javax.annotation.Nullable;
 public final class BlazeJavaWorkspaceImporter {
   private final Project project;
   private final WorkspaceRoot workspaceRoot;
-  private final BuildSystemName buildSystemName;
+  private final BuildSystemProvider buildSystemProvider;
   private final ImportRoots importRoots;
   private final TargetMap targetMap;
   private final JdepsMap jdepsMap;
@@ -96,9 +96,11 @@ public final class BlazeJavaWorkspaceImporter {
       @Nullable SyncState oldSyncState) {
     this.project = project;
     this.workspaceRoot = workspaceRoot;
-    this.buildSystemName = Blaze.getBuildSystemName(project);
+    this.buildSystemProvider = Blaze.getBuildSystemProvider(project);
     this.importRoots =
-        ImportRoots.builder(workspaceRoot, buildSystemName).add(projectViewSet).build();
+        ImportRoots.builder(workspaceRoot, buildSystemProvider.getBuildSystem().getName())
+            .add(projectViewSet)
+            .build();
     this.targetMap = targetMap;
     this.sourceFilter = sourceFilter;
     this.jdepsMap = jdepsMap;
@@ -202,7 +204,7 @@ public final class BlazeJavaWorkspaceImporter {
     // Collect jars from jdep references
     for (String jdepsPath : workspaceBuilder.jdeps) {
       ArtifactLocation artifact =
-          ExecutionPathHelper.parse(workspaceRoot, buildSystemName, jdepsPath);
+          ExecutionPathHelper.parse(workspaceRoot, buildSystemProvider, jdepsPath);
       if (sourceFilter.jdepsPathsForExcludedJars.contains(artifact.getRelativePath())) {
         continue;
       }
