@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,16 +41,17 @@ public class ExecutionRootPathResolverTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
-    ExtensionPoint<BuildSystemProvider> extensionPoint =
-        registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
-    extensionPoint.registerExtension(new BazelBuildSystemProvider());
-
     pathResolver =
         new ExecutionRootPathResolver(
             BuildSystemName.Bazel,
             WORKSPACE_ROOT,
             new File(EXECUTION_ROOT),
             new WorkspacePathResolverImpl(WORKSPACE_ROOT));
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   @Test

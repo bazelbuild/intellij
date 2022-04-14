@@ -34,7 +34,6 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import java.io.File;
 import java.util.Collection;
 import java.util.Set;
@@ -75,9 +74,11 @@ public class BuildTargetFinderTest extends BlazeTestCase {
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     projectServices.register(
         BlazeImportSettingsManager.class, mock(BlazeImportSettingsManager.class));
-    ExtensionPoint<BuildSystemProvider> extensionPoint =
-        registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
-    extensionPoint.registerExtension(new BazelBuildSystemProvider());
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   private BuildTargetFinder buildTargetFinder(Collection<WorkspacePath> roots) {

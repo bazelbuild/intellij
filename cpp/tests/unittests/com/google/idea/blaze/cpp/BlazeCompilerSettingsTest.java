@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.jetbrains.cidr.lang.CLanguageKind;
 import java.io.File;
@@ -46,10 +45,6 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
-    ExtensionPoint<BuildSystemProvider> extensionPoint =
-        registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
-    extensionPoint.registerExtension(new BazelBuildSystemProvider());
-
     ExtensionPointImpl<BlazeCompilerFlagsProcessor.Provider> ep =
         registerExtensionPoint(
             BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
@@ -66,6 +61,11 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
     blazeProjectData = MockBlazeProjectDataBuilder.builder(workspaceRoot).build();
     projectServices.register(
         BlazeProjectDataManager.class, new MockBlazeProjectDataManager(blazeProjectData));
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   @Test

@@ -217,10 +217,12 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class)
         .registerExtension(new JavaLikeLanguage.Java());
 
-    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(new BazelBuildSystemProvider());
-
     projectServices.register(JarCache.class, new MockJarCache(project));
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   private BlazeJavaImportResult importWorkspace(

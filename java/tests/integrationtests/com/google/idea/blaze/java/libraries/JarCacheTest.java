@@ -24,8 +24,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
-import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
+import com.google.idea.blaze.base.bazel.FakeBuildSystem;
+import com.google.idea.blaze.base.bazel.FakeBuildSystemProvider;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -105,14 +107,6 @@ public class JarCacheTest extends BlazeTestCase {
     JarCache jarCache = new JarCache(project);
     jarCache.enableForTest();
     projectServices.register(JarCache.class, jarCache);
-    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(
-            new BazelBuildSystemProvider() {
-              @Override
-              public BuildSystemName buildSystem() {
-                return BuildSystemName.Blaze;
-              }
-            });
     registerExtensionPoint(FileCache.EP_NAME, FileCache.class)
         .registerExtension(new JarCache.FileCacheAdapter(), testDisposable);
     registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class)
@@ -121,6 +115,14 @@ public class JarCacheTest extends BlazeTestCase {
     applicationServices.register(BlazeJavaUserSettings.class, new BlazeJavaUserSettings());
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     applicationServices.register(BlazeExecutor.class, new MockBlazeExecutor());
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BuildSystemProviderWrapper(
+        FakeBuildSystemProvider.builder()
+            .setBuildSystem(FakeBuildSystem.builder(BuildSystemName.Blaze).build())
+            .build());
   }
 
   @Test
