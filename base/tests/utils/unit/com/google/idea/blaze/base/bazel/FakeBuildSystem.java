@@ -50,7 +50,7 @@ public abstract class FakeBuildSystem implements BuildSystem {
   abstract BuildInvoker getBuildInvoker();
 
   @Override
-  public BuildInvoker getBuildInvoker(Project project) {
+  public BuildInvoker getBuildInvoker(Project project, BlazeContext context) {
     return getBuildInvoker();
   }
 

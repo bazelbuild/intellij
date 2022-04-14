@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.errorprone.annotations.MustBeClosed;
-import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.CommandLineBlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
@@ -37,38 +36,23 @@ import javax.annotation.Nullable;
 
 class BazelBuildSystem implements BuildSystem {
 
-  static class BazelInvoker implements BuildInvoker {
-    private final String path;
-    private final BlazeCommandRunner runner = new CommandLineBlazeCommandRunner();
+  class BazelInvoker extends AbstractBuildInvoker {
 
-    public BazelInvoker(String path) {
-      this.path = path;
-    }
-
-    @Override
-    public BuildBinaryType getType() {
-      return BuildBinaryType.BAZEL;
-    }
-
-    @Override
-    public String getBinaryPath() {
-      return path;
-    }
-
-    @Override
-    public boolean supportsParallelism() {
-      return false;
+    public BazelInvoker(Project project, BlazeContext blazeContext, String path) {
+      super(
+          project,
+          blazeContext,
+          BuildBinaryType.BAZEL,
+          path,
+          false,
+          BazelBuildSystem.this,
+          new CommandLineBlazeCommandRunner());
     }
 
     @Override
     @MustBeClosed
     public BuildResultHelper createBuildResultHelper() {
       return new BuildResultHelperBep();
-    }
-
-    @Override
-    public BlazeCommandRunner getCommandRunner() {
-      return runner;
     }
   }
 
@@ -78,7 +62,7 @@ class BazelBuildSystem implements BuildSystem {
   }
 
   @Override
-  public BuildInvoker getBuildInvoker(Project project) {
+  public BuildInvoker getBuildInvoker(Project project, BlazeContext context) {
     String binaryPath;
     File projectSpecificBinary = getProjectSpecificBazelBinary(project);
     if (projectSpecificBinary != null) {
@@ -87,7 +71,7 @@ class BazelBuildSystem implements BuildSystem {
       BlazeUserSettings settings = BlazeUserSettings.getInstance();
       binaryPath = settings.getBazelBinaryPath();
     }
-    return new BazelInvoker(binaryPath);
+    return new BazelInvoker(project, context, binaryPath);
   }
 
   @Override

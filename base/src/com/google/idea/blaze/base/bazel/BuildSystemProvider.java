@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
@@ -87,7 +88,7 @@ public interface BuildSystemProvider {
    */
   @Deprecated
   default String getBinaryPath(Project project) {
-    return getBuildSystem().getBuildInvoker(project).getBinaryPath();
+    return getBuildSystem().getBuildInvoker(project, BlazeContext.create()).getBinaryPath();
   }
 
   /**
@@ -96,7 +97,7 @@ public interface BuildSystemProvider {
    */
   @Deprecated
   default String getSyncBinaryPath(Project project) {
-    return getBuildSystem().getBuildInvoker(project).getBinaryPath();
+    return getBuildSystem().getBuildInvoker(project, BlazeContext.create()).getBinaryPath();
   }
 
   /**

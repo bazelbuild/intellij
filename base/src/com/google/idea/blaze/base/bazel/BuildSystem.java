@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
 
@@ -62,6 +63,8 @@ public interface BuildSystem {
     /** Indicates if multiple invocations can be made at once. */
     boolean supportsParallelism();
 
+    BlazeInfo getBlazeInfo() throws SyncFailedException;
+
     /**
      * Create a {@link BuildResultHelper} instance. This instance must be closed when it is finished
      * with.
@@ -77,7 +80,7 @@ public interface BuildSystem {
   BuildSystemName getName();
 
   /** Get a Blaze invoker. */
-  BuildInvoker getBuildInvoker(Project project);
+  BuildInvoker getBuildInvoker(Project project, BlazeContext context);
 
   /**
    * Get a Blaze invoker that supports multiple calls in parallel, if this build system supports it.
