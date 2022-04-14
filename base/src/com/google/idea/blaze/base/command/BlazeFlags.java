@@ -70,6 +70,9 @@ public final class BlazeFlags {
     }
     flags.addAll(expandBuildFlags(projectViewSet.listItems(BuildFlagsSection.KEY)));
     if (context.type() == ContextType.Sync) {
+      for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
+        buildFlagsProvider.addSyncFlags(project, projectViewSet, command, context, flags);
+      }
       flags.addAll(expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY)));
     }
     if (BlazeCommandName.TEST.equals(command)) {

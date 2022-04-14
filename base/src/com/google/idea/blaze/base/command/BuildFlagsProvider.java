@@ -33,4 +33,12 @@ public interface BuildFlagsProvider {
       BlazeCommandName command,
       BlazeInvocationContext invocationContext,
       List<String> flags);
+
+  /** Flags to add to blaze/bazel sync invocations of the given type. */
+  default void addSyncFlags(
+      Project project,
+      ProjectViewSet projectViewSet,
+      BlazeCommandName command,
+      BlazeInvocationContext invocationContext,
+      List<String> flags) {}
 }
