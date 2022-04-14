@@ -36,19 +36,19 @@ public final class FormatterInstaller {
    * Replace the existing formatter with one produced from the given {@link CodeStyleManagerFactory}
    */
   public static void replaceFormatter(Project project, CodeStyleManagerFactory newFormatter) {
-    CodeStyleManager currentManager = CodeStyleManager.getInstance(project);
-    List<? extends IdeaPluginDescriptor> loadedPlugins = PluginManager.getLoadedPlugins();
-    Optional<? extends IdeaPluginDescriptor> platformPlugin =
-        loadedPlugins.stream()
-            .filter(descriptor -> descriptor.getName().startsWith("IDEA CORE"))
-            .findAny();
-
-    Verify.verify(platformPlugin.isPresent());
-
-    ((ComponentManagerImpl) project)
-        .registerServiceInstance(
-            CodeStyleManager.class,
-            newFormatter.createFormatter(currentManager),
-            platformPlugin.get());
+    // CodeStyleManager currentManager = CodeStyleManager.getInstance(project);
+    // List<? extends IdeaPluginDescriptor> loadedPlugins = PluginManager.getLoadedPlugins();
+    // Optional<? extends IdeaPluginDescriptor> platformPlugin =
+    //     loadedPlugins.stream()
+    //         .filter(descriptor -> descriptor.getName().startsWith("IDEA CORE"))
+    //         .findAny();
+    //
+    // Verify.verify(platformPlugin.isPresent());
+    //
+    // ((ComponentManagerImpl) project)
+    //     .registerServiceInstance(
+    //         CodeStyleManager.class,
+    //         newFormatter.createFormatter(currentManager),
+    //         platformPlugin.get());
   }
 }
