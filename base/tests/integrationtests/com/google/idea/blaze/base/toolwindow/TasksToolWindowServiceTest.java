@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The Bazel Authors. All rights reserved.
+ * Copyright 2022 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,39 +18,41 @@ package com.google.idea.blaze.base.toolwindow;
 import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.testing.IntellijRule;
+import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import java.time.Instant;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 /** Tests for {@link TasksToolWindowService} */
 @RunWith(JUnit4.class)
-public class TasksToolWindowServiceTest {
+public class TasksToolWindowServiceTest extends BlazeIntegrationTestCase {
   private static final Instant NOW_INSTANT = Instant.ofEpochSecond(333);
 
-  @Rule public final IntellijRule intellij = new IntellijRule();
-
   private Task task;
-  private final TasksToolWindowService service =
-      new TasksToolWindowService(intellij.getProject(), () -> NOW_INSTANT);
 
   @Before
-  public void before() {
-    task = new Task(intellij.getProject(), "Test task", Task.Type.SYNC);
+  public void setupService() {
+    TasksToolWindowService.getInstance(getProject()).setTimeSource(() -> NOW_INSTANT);
+    task = new Task(getProject(), "Test task", Task.Type.SYNC);
+  }
+
+  @After
+  public void restoreService() throws Exception {
+    TasksToolWindowService.getInstance(getProject()).setTimeSource(null);
   }
 
   @Test
   public void testStartTask() {
-    service.startTask(task, ImmutableList.of());
+    TasksToolWindowService.getInstance(getProject()).startTask(task, ImmutableList.of());
     assertThat(task.getStartTime()).hasValue(NOW_INSTANT);
   }
 
   @Test
   public void testFinishTask() {
-    service.finishTask(task, false, false);
+    TasksToolWindowService.getInstance(getProject()).finishTask(task, false, false);
     assertThat(task.getEndTime()).hasValue(NOW_INSTANT);
   }
 }

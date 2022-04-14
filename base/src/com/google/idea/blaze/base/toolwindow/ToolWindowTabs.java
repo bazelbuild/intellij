@@ -22,8 +22,8 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
@@ -34,52 +34,30 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Tabs of the tool-window. All the tasks that are added to the tool-window are grouped by their
- * types into tabs. Each tab contains a tree and consoles combination.
+ * Tabs controller for the Blaze tool window. Listens for related notifications and sends updates to
+ * the UI.
+ *
+ * <p>All the tasks that are added to the tool window are grouped into tabs by type. Each tab
+ * contains a tree/console combination.
  */
-final class ToolWindowTabs {
+final class ToolWindowTabs implements Disposable {
   private final Project project;
   private final Map<Task.Type, Tab> tabs = new EnumMap<>(Task.Type.class);
   private ContentManager contentManager;
 
-  ToolWindowTabs(Project project) {
+  public static ToolWindowTabs create(Project project) {
+    ToolWindowTabs toolWindowTabs = new ToolWindowTabs(project);
+    project
+        .getMessageBus()
+        .connect()
+        .subscribe(
+            TasksToolWindowChangeNotifier.TASKS_TOOL_WINDOW_CHANGE_TOPIC,
+            toolWindowTabs.createNotificationListener());
+    return toolWindowTabs;
+  }
+
+  private ToolWindowTabs(Project project) {
     this.project = project;
-  }
-
-  void addTask(Task task, ImmutableList<Filter> consoleFilters, Disposable parentDisposable) {
-    Tab tab = tabs.computeIfAbsent(task.getType(), this::newTab);
-    tab.behaviour.addTask(task, project, consoleFilters, parentDisposable);
-    // Only auto-select top level tasks
-    if (task.getParent().isEmpty()) {
-      getContentManager().setSelectedContent(tab.content);
-    }
-  }
-
-  void finishTask(Task task) {
-    Tab tab = getTab(task);
-    tab.behaviour.finishTask(task);
-  }
-
-  void taskOutput(Task task, PrintOutput output) {
-    getTab(task).behaviour.taskOutput(task, output);
-  }
-
-  void statusOutput(Task task, StatusOutput output) {
-    getTab(task).behaviour.taskStatus(task, output);
-  }
-
-  void updateState(Task task, StateUpdate output) {
-    getTab(task).behaviour.taskState(task, output);
-  }
-
-  void navigate(Task task, HyperlinkInfo link, int offset) {
-    Tab tab = getTab(task);
-    tab.behaviour.navigate(task, link, offset);
-    getContentManager().setSelectedContent(tab.content);
-  }
-
-  void setStopHandler(Task task, @Nullable Runnable runnable) {
-    getTab(task).behaviour.setStopHandler(task, runnable);
   }
 
   private Tab getTab(Task task) {
@@ -91,25 +69,22 @@ final class ToolWindowTabs {
     return tab;
   }
 
-  private Tab newTab(Task.Type type) {
+  private Tab createNewTab(Task.Type type) {
     TasksTreeConsoleBehaviour behaviour = new TasksTreeConsoleBehaviour();
     TasksTreeConsoleModel model = TasksTreeConsoleModel.create(project, behaviour);
     Content content = createToolWindowContent(model, type);
-    getContentManager().addContent(content);
+    ApplicationManager.getApplication().invokeLater(() -> getContentManager().addContent(content));
     return new Tab(behaviour, content);
   }
 
   private Content createToolWindowContent(TasksTreeConsoleModel model, Task.Type type) {
-    Disposable viewParentDisposable = Disposer.newDisposable();
     Content content =
         ContentFactory.SERVICE
             .getInstance()
             .createContent(
-                new TasksTreeConsoleView(model, viewParentDisposable).getComponent(),
-                type.getDisplayName(),
-                false);
+                new TasksTreeConsoleView(model, this).getComponent(), type.getDisplayName(), false);
     content.setCloseable(false);
-    content.setDisposer(viewParentDisposable);
+    content.setDisposer(this);
     return content;
   }
 
@@ -126,6 +101,9 @@ final class ToolWindowTabs {
     return contentManager;
   }
 
+  @Override
+  public void dispose() {}
+
   private static class Tab {
     final TasksTreeConsoleBehaviour behaviour;
     final Content content;
@@ -134,5 +112,56 @@ final class ToolWindowTabs {
       this.behaviour = behaviour;
       this.content = content;
     }
+  }
+
+  private class NotificationListener implements TasksToolWindowChangeNotifier {
+    @Override
+    public void addTask(Task task, ImmutableList<Filter> filters, Disposable parentDisposable) {
+      Tab tab = tabs.computeIfAbsent(task.getType(), ToolWindowTabs.this::createNewTab);
+      tab.behaviour.addTask(task, project, filters, parentDisposable);
+
+      // Only auto-select top level tasks
+      if (task.getParent().isEmpty()) {
+        ApplicationManager.getApplication()
+            .invokeLater(() -> getContentManager().setSelectedContent(tab.content));
+      }
+    }
+
+    @Override
+    public void output(Task task, PrintOutput output) {
+      getTab(task).behaviour.taskOutput(task, output);
+    }
+
+    @Override
+    public void status(Task task, StatusOutput statusOutput) {
+      getTab(task).behaviour.taskStatus(task, statusOutput);
+    }
+
+    @Override
+    public void state(Task task, StateUpdate output) {
+      getTab(task).behaviour.taskState(task, output);
+    }
+
+    @Override
+    public void finishTask(Task task) {
+      getTab(task).behaviour.finishTask(task);
+    }
+
+    @Override
+    public void navigate(Task task, HyperlinkInfo link, int offset) {
+      Tab tab = getTab(task);
+      tab.behaviour.navigate(task, link, offset);
+      ApplicationManager.getApplication()
+          .invokeLater(() -> getContentManager().setSelectedContent(tab.content));
+    }
+
+    @Override
+    public void setStopHandler(Task task, @Nullable Runnable runnable) {
+      getTab(task).behaviour.setStopHandler(task, runnable);
+    }
+  }
+
+  private NotificationListener createNotificationListener() {
+    return new NotificationListener();
   }
 }

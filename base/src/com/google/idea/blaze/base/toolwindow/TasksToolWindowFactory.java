@@ -19,6 +19,7 @@ import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 
@@ -37,6 +38,7 @@ public class TasksToolWindowFactory implements DumbAware, ToolWindowFactory {
     String title = Blaze.getBuildSystemName(project).getName();
     toolWindow.setTitle(title);
     toolWindow.setStripeTitle(title);
+    Disposer.register(toolWindow.getDisposable(), ToolWindowTabs.create(project));
   }
 
   @Override
