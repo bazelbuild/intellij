@@ -320,7 +320,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
         SyncProjectState projectState,
-        BlazeBuildOutputs buildResult,
+        BlazeSyncBuildResult buildResult,
         boolean mergeWithOldState,
         @Nullable BlazeProjectData oldProjectData) {
       return new ProjectTargetData(targetMap, null, RemoteOutputArtifacts.fromProjectData(null));

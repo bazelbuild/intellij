@@ -342,7 +342,12 @@ final class SyncPhaseCoordinator {
 
                 fillInBuildStats(stats, projectState, /* buildResult= */ null);
                 ProjectUpdateSyncTask.runProjectUpdatePhase(
-                    project, params.syncMode(), projectState, targetData, childContext);
+                    project,
+                    params.syncMode(),
+                    projectState,
+                    targetData,
+                    oldProjectData.getBlazeInfo(),
+                    childContext);
               },
               new TimingScope("Filtering project targets", EventType.Other));
       stats.addTimedEvents(timedEvents);
@@ -537,11 +542,13 @@ final class SyncPhaseCoordinator {
                   childContext.setHasError();
                   throw new SyncFailedException();
                 }
+
                 ProjectUpdateSyncTask.runProjectUpdatePhase(
                     project,
                     updateTask.syncParams().syncMode(),
                     updateTask.projectState(),
                     targetData,
+                    updateTask.buildResult().getBlazeInfo(),
                     childContext);
               },
               new TimingScope("Project update phase", EventType.Other));
@@ -568,11 +575,7 @@ final class SyncPhaseCoordinator {
   @Nullable
   private ProjectTargetData updateTargetData(UpdatePhaseTask task, BlazeContext context) {
     return ProjectUpdateSyncTask.updateTargetData(
-        project,
-        task.syncParams(),
-        task.projectState(),
-        task.buildResult().getBuildResult(),
-        context);
+        project, task.syncParams(), task.projectState(), task.buildResult(), context);
   }
 
   /**

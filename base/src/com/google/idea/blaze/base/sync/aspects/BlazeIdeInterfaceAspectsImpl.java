@@ -78,6 +78,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.sync.BlazeSyncBuildResult;
 import com.google.idea.blaze.base.sync.SyncProjectState;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
@@ -127,7 +128,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       SyncProjectState projectState,
-      BlazeBuildOutputs buildResult,
+      BlazeSyncBuildResult buildResult,
       boolean mergeWithOldState,
       @Nullable BlazeProjectData oldProjectData) {
     TargetMapAndInterfaceState state =
@@ -148,7 +149,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     // combine outputs map, then filter to remove out-of-date / unnecessary items
     RemoteOutputArtifacts newRemoteOutputs =
         oldRemoteOutputs
-            .appendNewOutputs(getTrackedOutputs(buildResult))
+            .appendNewOutputs(getTrackedOutputs(buildResult.getBuildResult()))
             .removeUntrackedOutputs(state.targetMap, projectState.getLanguageSettings());
 
     return new ProjectTargetData(state.targetMap, state.state, newRemoteOutputs);
@@ -170,12 +171,12 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       SyncProjectState projectState,
-      BlazeBuildOutputs buildResult,
+      BlazeSyncBuildResult buildResult,
       boolean mergeWithOldState,
       @Nullable BlazeProjectData oldProjectData) {
     // If there was a partial error, make a best-effort attempt to sync. Retain
     // any old state that we have in an attempt not to lose too much code.
-    if (buildResult.buildResult.status == BuildResult.Status.BUILD_ERROR) {
+    if (buildResult.getBuildResult().buildResult.status == BuildResult.Status.BUILD_ERROR) {
       mergeWithOldState = true;
     }
 
@@ -186,6 +187,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     Predicate<String> ideInfoPredicate = AspectStrategy.ASPECT_OUTPUT_FILE_PREDICATE;
     Collection<OutputArtifact> files =
         buildResult
+            .getBuildResult()
             .getOutputGroupArtifacts(group -> group.startsWith(OutputGroup.INFO.prefix))
             .stream()
             .filter(f -> ideInfoPredicate.test(f.getKey()))
@@ -252,7 +254,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .build();
 
     BlazeConfigurationHandler configHandler =
-        new BlazeConfigurationHandler(projectState.getBlazeInfo());
+        new BlazeConfigurationHandler(buildResult.getBlazeInfo());
     TargetMapAndInterfaceState state =
         updateState(
             project,
@@ -275,8 +277,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           childContext.push(new TimingScope("GenfilesPrefetchBuildArtifacts", EventType.Other));
           ImmutableList<OutputArtifact> resolveOutputs =
               ImmutableList.copyOf(
-                  buildResult.getOutputGroupArtifacts(
-                      group -> group.startsWith(OutputGroup.RESOLVE.prefix)));
+                  buildResult
+                      .getBuildResult()
+                      .getOutputGroupArtifacts(
+                          group -> group.startsWith(OutputGroup.RESOLVE.prefix)));
           prefetchGenfiles(context, resolveOutputs);
         });
     return state;

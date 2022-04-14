@@ -214,6 +214,7 @@ final class BuildPhaseSyncTask {
     if (syncBuildInvoker == null) {
       syncBuildInvoker = localInvoker;
     }
+    resultBuilder.setBlazeInfo(syncBuildInvoker.getBlazeInfo());
 
     buildStats
         .setSyncSharded(shardedTargets.shardCount() > 1)
