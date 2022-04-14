@@ -487,7 +487,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     List<BlazeJarLibrary> jars = Lists.newArrayList();
     List<BlazeJarLibrary> genJars = Lists.newArrayList();
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, getBuildSystemProvider())
             .add(ProjectViewSet.builder().add(projectView).build())
             .build();
     ProjectViewSet projectViewSet = ProjectViewSet.builder().add(projectView).build();

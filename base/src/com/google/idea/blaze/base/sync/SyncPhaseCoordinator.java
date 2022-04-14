@@ -127,7 +127,8 @@ final class SyncPhaseCoordinator {
     abstract Builder toBuilder();
 
     static Builder builder() {
-      return new AutoValue_SyncPhaseCoordinator_UpdatePhaseTask.Builder();
+      return new AutoValue_SyncPhaseCoordinator_UpdatePhaseTask.Builder()
+          .setBuildBinaryType(BuildBinaryType.NONE);
     }
 
     @AutoValue.Builder

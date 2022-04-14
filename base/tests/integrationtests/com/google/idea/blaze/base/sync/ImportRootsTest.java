@@ -19,7 +19,10 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
+import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.FakeBuildSystem;
+import com.google.idea.blaze.base.bazel.FakeBuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -41,18 +44,27 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class ImportRootsTest extends BlazeIntegrationTestCase {
 
+  private static final BuildSystemProvider BLAZE_PROVIDER =
+      FakeBuildSystemProvider.builder()
+          .setBuildSystem(FakeBuildSystem.builder(BuildSystemName.Blaze).build())
+          .build();
+
+  private static final BuildSystemProvider BAZEL_PROVIDER =
+      FakeBuildSystemProvider.builder()
+          .setBuildSystem(FakeBuildSystem.builder(BuildSystemName.Bazel).build())
+          .build();
+
   @Test
   public void testBazelArtifactDirectoriesAndProjectDataDirExcluded() {
+    BuildSystemProvider buildSystemProvider = new BazelBuildSystemProvider();
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Bazel)
+        ImportRoots.builder(workspaceRoot, buildSystemProvider)
             .add(DirectoryEntry.include(new WorkspacePath("")))
             .build();
 
     ImmutableList<String> artifactDirs =
         ImmutableList.<String>builder()
-            .addAll(
-                BuildSystemProvider.getBuildSystemProvider(BuildSystemName.Bazel)
-                    .buildArtifactDirectories(workspaceRoot))
+            .addAll(buildSystemProvider.buildArtifactDirectories(workspaceRoot))
             .add(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY)
             .build();
 
@@ -71,7 +83,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testNoAddedExclusionsWithoutWorkspaceRootInclusion() {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Bazel)
+        ImportRoots.builder(workspaceRoot, BAZEL_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("foo/bar")))
             .build();
 
@@ -82,7 +94,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testNoAddedExclusionsForBlaze() {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("")))
             .build();
 
@@ -94,7 +106,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testAllLabelsIncludedUnderWorkspaceRoot() {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("")))
             .build();
 
@@ -105,7 +117,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testExternalWorkspaceLabelsNotIncludedUnderWorkspaceRoot() {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("")))
             .build();
 
@@ -115,7 +127,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testNonOverlappingDirectoriesAreNotFilteredOut() {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("root0/subdir0")))
             .add(DirectoryEntry.include(new WorkspacePath("root0/subdir1")))
             .add(DirectoryEntry.include(new WorkspacePath("root1")))
@@ -130,7 +142,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testProjectTargetsAreTreatedAsSource() {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(
                 ProjectViewSet.builder()
                     .add(
@@ -153,7 +165,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testOverlappingDirectoriesAreFilteredOut() {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("root")))
             .add(DirectoryEntry.include(new WorkspacePath("root")))
             .add(DirectoryEntry.include(new WorkspacePath("root/subdir")))
@@ -164,7 +176,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testWorkspaceRootIsOnlyDirectoryLeft() {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath(".")))
             .add(DirectoryEntry.include(new WorkspacePath(".")))
             .add(DirectoryEntry.include(new WorkspacePath("root/subdir")))
@@ -175,7 +187,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testOverlappingExcludesAreFiltered() {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.exclude(new WorkspacePath("root")))
             .add(DirectoryEntry.exclude(new WorkspacePath("root")))
             .add(DirectoryEntry.exclude(new WorkspacePath("root/subdir")))
@@ -186,7 +198,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testContainsWorkspacePath_samePath() throws Exception {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("root")))
             .build();
 
@@ -196,7 +208,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testContainsWorkspacePath_subdirectory() throws Exception {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("root")))
             .build();
 
@@ -206,7 +218,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testContainsWorkspacePath_differentRoot() throws Exception {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("root")))
             .build();
 
@@ -216,7 +228,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testContainsWorkspacePath_similarRoot() throws Exception {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("root")))
             .build();
 
@@ -226,7 +238,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
   @Test
   public void testContainsWorkspacePath_excludedParentsAreHandled() throws Exception {
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("root")))
             .add(DirectoryEntry.exclude(new WorkspacePath("root/a")))
             .build();
@@ -295,7 +307,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
     workspace.createFile(new WorkspacePath(".bazelignore"), "root1/a/b");
 
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Blaze)
+        ImportRoots.builder(workspaceRoot, BLAZE_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("root0")))
             .add(DirectoryEntry.include(new WorkspacePath("root1/a/b/c")))
             .build();
@@ -308,7 +320,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
     workspace.createFile(new WorkspacePath(".bazelignore"), "root1/a/b");
 
     ImportRoots importRoots =
-        ImportRoots.builder(workspaceRoot, BuildSystemName.Bazel)
+        ImportRoots.builder(workspaceRoot, BAZEL_PROVIDER)
             .add(DirectoryEntry.include(new WorkspacePath("root0")))
             .add(DirectoryEntry.include(new WorkspacePath("root1/a/b/c")))
             .build();

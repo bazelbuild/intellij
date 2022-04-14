@@ -168,7 +168,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         configResolveData.getAllConfigurations();
     ExecutionRootPathResolver executionRootPathResolver =
         new ExecutionRootPathResolver(
-            Blaze.getBuildSystemName(project),
+            Blaze.getBuildSystemProvider(project),
             workspaceRoot,
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
             blazeProjectData.getWorkspacePathResolver());

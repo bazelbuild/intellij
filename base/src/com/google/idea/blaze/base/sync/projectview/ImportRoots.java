@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync.projectview;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -69,11 +70,11 @@ public final class ImportRoots {
     private boolean deriveTargetsFromDirectories = false;
 
     private final WorkspaceRoot workspaceRoot;
-    private final BuildSystemName buildSystemName;
+    private final BuildSystemProvider buildSystemProvider;
 
-    private Builder(WorkspaceRoot workspaceRoot, BuildSystemName buildSystemName) {
+    private Builder(WorkspaceRoot workspaceRoot, BuildSystemProvider buildSystemProvider) {
       this.workspaceRoot = workspaceRoot;
-      this.buildSystemName = buildSystemName;
+      this.buildSystemProvider = Preconditions.checkNotNull(buildSystemProvider);
     }
 
     public Builder add(ProjectViewSet projectViewSet) {
@@ -98,7 +99,7 @@ public final class ImportRoots {
 
     public ImportRoots build() {
       ImmutableCollection<WorkspacePath> rootDirectories = rootDirectoriesBuilder.build();
-      if (buildSystemName == BuildSystemName.Bazel) {
+      if (buildSystemProvider.getBuildSystem().getName() == BuildSystemName.Bazel) {
         if (hasWorkspaceRoot(rootDirectories)) {
           excludeBuildSystemArtifacts();
           excludeProjectDataSubDirectory();
@@ -126,9 +127,7 @@ public final class ImportRoots {
     }
 
     private void excludeBuildSystemArtifacts() {
-      for (String dir :
-          BuildSystemProvider.getBuildSystemProvider(buildSystemName)
-              .buildArtifactDirectories(workspaceRoot)) {
+      for (String dir : buildSystemProvider.buildArtifactDirectories(workspaceRoot)) {
         excludeDirectoriesBuilder.add(new WorkspacePath(dir));
       }
     }
@@ -150,11 +149,30 @@ public final class ImportRoots {
   private final TargetExpressionList projectTargets;
 
   public static Builder builder(Project project) {
-    return new Builder(WorkspaceRoot.fromProject(project), Blaze.getBuildSystemName(project));
+    return new Builder(WorkspaceRoot.fromProject(project), Blaze.getBuildSystemProvider(project));
   }
 
+  public static Builder builder(
+      WorkspaceRoot workspaceRoot, BuildSystemProvider buildSystemProvider) {
+    return new Builder(workspaceRoot, buildSystemProvider);
+  }
+
+  /**
+   * @deprecated Use {@link #builder(WorkspaceRoot, BuildSystemProvider)} instead.
+   */
+  @Deprecated
   public static Builder builder(WorkspaceRoot workspaceRoot, BuildSystemName buildSystemName) {
-    return new Builder(workspaceRoot, buildSystemName);
+    BuildSystemProvider buildSystemProvider =
+        Preconditions.checkNotNull(
+            BuildSystemProvider.getBuildSystemProvider(buildSystemName),
+            "No %s build system",
+            buildSystemName);
+    if (buildSystemProvider == null) {
+      // This is a workaround for test code that relies on the fallback to the default build system.
+      // It will be removed once all uses of this deprecated method are removed.
+      buildSystemProvider = BuildSystemProvider.defaultBuildSystem();
+    }
+    return new Builder(workspaceRoot, buildSystemProvider);
   }
 
   private ImportRoots(
