@@ -122,7 +122,7 @@ public class BuildTasksProblemsView {
       return;
     }
     ToolWindow toolWindow =
-        wm.registerToolWindow(toolWindowId, false, ToolWindowAnchor.LEFT, project, true, true);
+        wm.registerToolWindow(toolWindowId, false, ToolWindowAnchor.BOTTOM, project, true, true);
     String toolWindowTitle = Blaze.getBuildSystemName(project).getName() + " Problems";
     toolWindow.setTitle(toolWindowTitle);
     toolWindow.setStripeTitle(toolWindowTitle);
