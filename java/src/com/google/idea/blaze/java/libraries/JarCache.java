@@ -191,9 +191,18 @@ public class JarCache {
 
       List<File> removed = new ArrayList<>();
       if (removeMissingFiles) {
+        JarRepackager jarRepackager = JarRepackager.getInstance();
         removed =
             cachedFiles.entrySet().stream()
-                .filter(e -> !projectState.containsKey(e.getKey()))
+                .filter(
+                    e ->
+                        !projectState.containsKey(e.getKey())
+                            || (jarRepackager.isEnabled()
+                                && !projectState.containsKey(
+                                    e.getKey()
+                                        .substring(
+                                            e.getKey().indexOf(jarRepackager.getRepackagePrefix())
+                                                + 1))))
                 .map(Map.Entry::getValue)
                 .collect(toImmutableList());
       }
@@ -210,7 +219,9 @@ public class JarCache {
           .run();
 
       // update cache files, and remove files if required
-      List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(updated));
+      ImmutableList<BlazeArtifact> lintJars = LintJarHelper.collectLintJarsArtifacts(projectData);
+      List<ListenableFuture<?>> futures =
+          new ArrayList<>(copyAndRepackageLocally(updated, lintJars));
       if (removeMissingFiles) {
         futures.addAll(deleteCacheFiles(removed));
       }
@@ -272,27 +283,44 @@ public class JarCache {
         newOutputs.put(cacheKeyForSourceJar(srcJar), srcJar);
       }
     }
-    JavaLintCollector.collectLintJarsArtifacts(projectData)
+    LintJarHelper.collectLintJarsArtifacts(projectData)
         .forEach(jar -> newOutputs.put(cacheKeyForJar(jar), jar));
 
     return ImmutableMap.copyOf(newOutputs);
   }
 
-  private Collection<ListenableFuture<?>> copyLocally(Map<String, BlazeArtifact> updated) {
+  /** Copy artifacts that needed to be updated to local cache, repackage it if it's lint jar. */
+  private List<ListenableFuture<?>> copyAndRepackageLocally(
+      Map<String, BlazeArtifact> updated, List<BlazeArtifact> lintJars) {
     List<ListenableFuture<?>> futures = new ArrayList<>();
+    JarRepackager jarRepackager = JarRepackager.getInstance();
     updated.forEach(
         (key, artifact) ->
             futures.add(
                 FetchExecutor.EXECUTOR.submit(
                     () -> {
+                      File destination = jarCacheFolderProvider.getCacheFileByKey(key);
                       try {
-                        copyLocally(artifact, jarCacheFolderProvider.getCacheFileByKey(key));
+                        copyLocally(artifact, destination);
                       } catch (IOException e) {
                         logger.warn(
                             String.format(
-                                "Fail to copy artifact %s to %s",
+                                "Failed to copy artifact %s to %s",
                                 artifact, jarCacheFolderProvider.getJarCacheFolder().getPath()),
                             e);
+                      }
+                      // repackage the jar if JarRepackager service is enabled and it's a lint rule
+                      // jar
+                      if (jarRepackager.isEnabled() && lintJars.contains(artifact)) {
+                        try {
+                          jarRepackager.processJar(destination);
+                        } catch (IOException | InterruptedException e) {
+                          logger.warn(
+                              String.format(
+                                  "Failed to repackage artifact %s to %s",
+                                  artifact, jarCacheFolderProvider.getJarCacheFolder().getPath()),
+                              e);
+                        }
                       }
                     })));
     return futures;
