@@ -491,7 +491,7 @@ java_library(
     exports = select_for_plugin_api({
         "clion-2021.2": [":bundled_jsr305"],
         "clion-2021.3": [":bundled_jsr305"],
-        "clion-2022.1": [":bundled_jsr305"],
+        "clion-2022.1": ["@jsr305_annotations//jar"],
         "intellij-2021.2": ["@jsr305_annotations//jar"],
         "intellij-2021.3": ["@jsr305_annotations//jar"],
         "intellij-2022.1": ["@jsr305_annotations//jar"],
