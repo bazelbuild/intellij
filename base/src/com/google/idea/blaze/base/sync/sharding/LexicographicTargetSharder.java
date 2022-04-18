@@ -16,8 +16,6 @@
 package com.google.idea.blaze.base.sync.sharding;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.idea.blaze.base.sync.sharding.ShardedTargetList.remoteConcurrentSyncs;
-import static java.lang.Math.min;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -35,10 +33,17 @@ import java.util.Set;
  * package, so is better than random batching.
  */
 public class LexicographicTargetSharder implements BuildBatchingService {
-  // The maximum amount of target per shard for remote build to avoid potential OOM
+  // The maximum number of targets per shard for remote builds to avoid potential OOM
   @VisibleForTesting
   static final IntExperiment maximumRemoteShardSize =
       new IntExperiment("lexicographic.sharder.maximum.remote.shard.size", 1000);
+
+  // The minimum number of targets per shard for remote builds. Ignored if the user explicitly
+  // sets a smaller target_shard_size
+  @VisibleForTesting
+  static final IntExperiment minimumRemoteShardSize =
+      new IntExperiment("lexicographic.sharder.minimum.remote.shard.size", 20);
+
   // The minimum targets size requirement to use all idle workers. Splitting targets does not help
   // to reduce build time when their target size is too small. So set a threshold to avoid
   // over-split.
@@ -50,26 +55,6 @@ public class LexicographicTargetSharder implements BuildBatchingService {
   public ImmutableList<ImmutableList<Label>> calculateTargetBatches(
       Set<Label> targets, SyncStrategy syncStrategy, int suggestedShardSize) {
     List<Label> sorted = ImmutableList.sortedCopyOf(Comparator.comparing(Label::toString), targets);
-    // When LexicographicTargetSharder is used for remote build, we may decide optimized shard size
-    // for users even they have provided shard_size in project view. The size is decided according
-    // to three aspects:
-    // 1. take advantage of parallelization
-    // 2. size specified by users
-    // 3. avoid potential OOM (maximumRemoteShardSize)
-    // We collect suggested size from these aspects and use the minimum one finally.
-    // If user enable shard sync manually without remote build, LexicographicTargetSharder
-    // will still be used. But use suggestedShardSize without further calculation since there's
-    // only one worker in that case.
-
-    // TODO(b/218800878) Perhaps we should treat PARALLEL and DECIDE_AUTOMATICALLY differently here?
-    if (syncStrategy != SyncStrategy.SERIAL && targets.size() >= parallelThreshold.getValue()) {
-      // try to use all idle workers
-      suggestedShardSize =
-          min(
-              (int) Math.ceil((double) targets.size() / remoteConcurrentSyncs.getValue()),
-              suggestedShardSize);
-      suggestedShardSize = min(maximumRemoteShardSize.getValue(), suggestedShardSize);
-    }
     return Lists.partition(sorted, suggestedShardSize).stream()
         .map(ImmutableList::copyOf)
         .collect(toImmutableList());

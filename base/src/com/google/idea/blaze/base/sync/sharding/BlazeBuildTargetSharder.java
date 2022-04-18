@@ -22,6 +22,7 @@ import static java.lang.Math.min;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.primitives.Ints;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.logging.utils.ShardStats;
@@ -92,14 +93,43 @@ public class BlazeBuildTargetSharder {
   }
 
   /** Number of individual targets per blaze build shard. */
-  private static int getTargetShardSize(ProjectViewSet projectViewSet) {
+  private static int getTargetShardSize(
+      ProjectViewSet projectViewSet, List<TargetExpression> targets, SyncStrategy syncStrategy) {
     int defaultLimit =
         shardingRequested(projectViewSet)
             ? defaultTargetShardSize.getValue()
             : maxTargetShardSize.getValue();
-    int userSpecified =
+    int suggestedSize =
         projectViewSet.getScalarValue(TargetShardSizeSection.KEY).orElse(defaultLimit);
-    return min(userSpecified, TargetShardSizeLimit.getMaxTargetsPerShard().orElse(userSpecified));
+
+    // Try to maximize use of concurrent shards for remote builds.
+    // TODO(b/218800878) Perhaps we should treat PARALLEL and DECIDE_AUTOMATICALLY differently here?
+    if (syncStrategy != SyncStrategy.SERIAL) {
+      return computeParallelShardSize(
+          targets.size(),
+          LexicographicTargetSharder.parallelThreshold.getValue(),
+          ShardedTargetList.remoteConcurrentSyncs.getValue(),
+          LexicographicTargetSharder.minimumRemoteShardSize.getValue(),
+          LexicographicTargetSharder.maximumRemoteShardSize.getValue(),
+          suggestedSize);
+    } else {
+      return suggestedSize;
+    }
+  }
+
+  private static int computeParallelShardSize(
+      int numTargets,
+      int parallelThreshold,
+      int numConcurrentShards,
+      int min,
+      int max,
+      int suggested) {
+    if (numTargets < parallelThreshold) {
+      return suggested;
+    }
+    int targetsPerShard = (int) Math.ceil((double) numTargets / numConcurrentShards);
+    int clamped = Ints.constrainToRange(targetsPerShard, min, max);
+    return min(suggested, clamped);
   }
 
   private enum ShardingApproach {
@@ -131,7 +161,7 @@ public class BlazeBuildTargetSharder {
     ShardingApproach approach = getShardingApproach(parallelStrategy, viewSet);
     switch (approach) {
       case SHARD_WITHOUT_EXPANDING:
-        int suggestedSize = getTargetShardSize(viewSet);
+        int suggestedSize = getTargetShardSize(viewSet, targets, parallelStrategy);
         return new ShardedTargetsResult(
             new ShardedTargetList(
                 shardTargetsRetainingOrdering(targets, suggestedSize),
@@ -150,7 +180,9 @@ public class BlazeBuildTargetSharder {
 
         return new ShardedTargetsResult(
             shardSingleTargets(
-                expandedTargets.singleTargets, parallelStrategy, getTargetShardSize(viewSet)),
+                expandedTargets.singleTargets,
+                parallelStrategy,
+                getTargetShardSize(viewSet, expandedTargets.singleTargets, parallelStrategy)),
             expandedTargets.buildResult);
       default:
         throw new IllegalStateException("Unhandled sharding approach: " + approach);
