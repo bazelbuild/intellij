@@ -295,8 +295,8 @@ jvm_maven_import_external(
 
 jvm_maven_import_external(
     name = "error_prone_annotations",
-    artifact = "com.google.errorprone:error_prone_annotations:2.3.0",
-    artifact_sha256 = "524b43ea15ca97c68f10d5f417c4068dc88144b620d2203f0910441a769fd42f",
+    artifact = "com.google.errorprone:error_prone_annotations:2.13.1",
+    artifact_sha256 = "f5ee2aac2ee6443789e1dee0f96e3c35d9f3c78891f54ed83f3cf918a1cde6d1",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
