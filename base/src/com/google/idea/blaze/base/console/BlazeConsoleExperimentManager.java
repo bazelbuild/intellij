@@ -45,8 +45,8 @@ public final class BlazeConsoleExperimentManager {
   public static int getTasksHistorySize() {
     int historySize =
         new IntExperiment(
-                "blazeconsole.v2.history.size", MorePlatformUtils.isAndroidStudio() ? 1 : 10)
+                "blazeconsole.v2.history.size", MorePlatformUtils.isAndroidStudio() ? 2 : 10)
             .getValue();
-    return Ints.constrainToRange(historySize, 1, 10);
+    return Ints.constrainToRange(historySize, 2, 10);
   }
 }

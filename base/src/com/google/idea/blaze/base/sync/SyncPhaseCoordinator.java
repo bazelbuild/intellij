@@ -242,8 +242,7 @@ final class SyncPhaseCoordinator {
                           context,
                           indicator,
                           singleThreaded ? SyncPhase.ALL_PHASES : SyncPhase.BUILD,
-                          new Task(project, params.title(), Task.Type.SYNC, parentToolWindowTask),
-                          /* startTaskOnScopeBegin= */ true);
+                          new Task(project, params.title(), Task.Type.SYNC, parentToolWindowTask));
                       runSync(params, singleThreaded, context);
                     }));
   }
@@ -276,8 +275,7 @@ final class SyncPhaseCoordinator {
                               context,
                               indicator,
                               SyncPhase.ALL_PHASES,
-                              new Task(project, params.title(), Task.Type.SYNC),
-                              /* startTaskOnScopeBegin= */ true);
+                              new Task(project, params.title(), Task.Type.SYNC));
                           doFilterProjectTargets(params, filter, context);
                         }));
   }
@@ -439,7 +437,7 @@ final class SyncPhaseCoordinator {
       if (singleThreaded) {
         updateProjectAndFinishSync(task, context);
       } else {
-        queueUpdateTask(task, context.getScope(ToolWindowScope.class), params);
+        queueUpdateTask(task);
       }
     } catch (Throwable e) {
       logSyncError(context, e);
@@ -454,8 +452,7 @@ final class SyncPhaseCoordinator {
     }
   }
 
-  private void queueUpdateTask(
-      UpdatePhaseTask task, @Nullable ToolWindowScope syncToolWindowScope, BlazeSyncParams params) {
+  private void queueUpdateTask(UpdatePhaseTask task) {
     synchronized (this) {
       if (pendingUpdateTask != null) {
         // there's already a pending job, no need to kick off another one
@@ -463,17 +460,6 @@ final class SyncPhaseCoordinator {
         return;
       }
       pendingUpdateTask = task;
-    }
-
-    Task toolWindowTask;
-    boolean startTaskOnScopeBegin;
-    if (syncToolWindowScope == null) {
-      toolWindowTask = new Task(project, params.title(), Task.Type.SYNC);
-      startTaskOnScopeBegin = true;
-    } else {
-      toolWindowTask = syncToolWindowScope.getTask();
-      syncToolWindowScope.setFinishTaskOnScopeEnd(false);
-      startTaskOnScopeBegin = false;
     }
 
     ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
@@ -488,8 +474,7 @@ final class SyncPhaseCoordinator {
                           context,
                           indicator,
                           SyncPhase.PROJECT_UPDATE,
-                          toolWindowTask,
-                          startTaskOnScopeBegin);
+                          new Task(project, "Updating project", Task.Type.SYNC));
                       updateProjectAndFinishSync(updateTask, context);
                     }));
   }
@@ -638,8 +623,7 @@ final class SyncPhaseCoordinator {
       BlazeContext context,
       ProgressIndicator indicator,
       SyncPhase phase,
-      Task task,
-      boolean startTaskOnScopeBegin) {
+      Task task) {
     boolean clearProblems = phase != SyncPhase.PROJECT_UPDATE;
     boolean notifyFinished = phase != SyncPhase.BUILD;
 
@@ -653,7 +637,6 @@ final class SyncPhaseCoordinator {
     context
         .push(
             new ToolWindowScope.Builder(project, task)
-                .setStartTaskOnScopeBegin(startTaskOnScopeBegin)
                 .setProgressIndicator(indicator)
                 .setPopupBehavior(
                     syncParams.backgroundSync()
