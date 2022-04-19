@@ -22,6 +22,7 @@ import static java.lang.Math.min;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.primitives.Ints;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.logging.utils.ShardStats.ShardingApproach;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -35,10 +36,17 @@ import java.util.Set;
  * package, so is better than random batching.
  */
 public class LexicographicTargetSharder implements BuildBatchingService {
-  // The maximum amount of target per shard for remote build to avoid potential OOM
+  // The maximum number of targets per shard for remote builds to avoid potential OOM
   @VisibleForTesting
   static final IntExperiment maximumRemoteShardSize =
       new IntExperiment("lexicographic.sharder.maximum.remote.shard.size", 1000);
+
+  // The minimum number of targets per shard for remote builds. Ignored if the user explicitly
+  // sets a smaller target_shard_size
+  @VisibleForTesting
+  static final IntExperiment minimumRemoteShardSize =
+      new IntExperiment("lexicographic.sharder.minimum.remote.shard.size", 20);
+
   // The minimum targets size requirement to use all idle workers. Splitting targets does not help
   // to reduce build time when their target size is too small. So set a threshold to avoid
   // over-split.
@@ -62,17 +70,35 @@ public class LexicographicTargetSharder implements BuildBatchingService {
     // only one worker in that case.
 
     // TODO(b/218800878) Perhaps we should treat PARALLEL and DECIDE_AUTOMATICALLY differently here?
-    if (syncStrategy != SyncStrategy.SERIAL && targets.size() >= parallelThreshold.getValue()) {
+    if (syncStrategy != SyncStrategy.SERIAL) {
       // try to use all idle workers
       suggestedShardSize =
-          min(
-              (int) Math.ceil((double) targets.size() / remoteConcurrentSyncs.getValue()),
+          computeParallelShardSize(
+              targets.size(),
+              parallelThreshold.getValue(),
+              remoteConcurrentSyncs.getValue(),
+              minimumRemoteShardSize.getValue(),
+              maximumRemoteShardSize.getValue(),
               suggestedShardSize);
-      suggestedShardSize = min(maximumRemoteShardSize.getValue(), suggestedShardSize);
     }
     return Lists.partition(sorted, suggestedShardSize).stream()
         .map(ImmutableList::copyOf)
         .collect(toImmutableList());
+  }
+
+  private static int computeParallelShardSize(
+      int numTargets,
+      int parallelThreshold,
+      int numConcurrentShards,
+      int min,
+      int max,
+      int suggested) {
+    if (numTargets < parallelThreshold) {
+      return suggested;
+    }
+    int targetsPerShard = (int) Math.ceil((double) numTargets / numConcurrentShards);
+    int clamped = Ints.constrainToRange(targetsPerShard, min, max);
+    return min(suggested, clamped);
   }
 
   @Override

@@ -46,7 +46,7 @@ public class ShardedTargetList {
 
   /** Number of concurrent syncs which can be run in parallel remotely. */
   public static final IntExperiment remoteConcurrentSyncs =
-      new IntExperiment("number.concurrent.remote.syncs", 10);
+      new IntExperiment("number.concurrent.remote.syncs.2", 10);
 
   @VisibleForTesting
   final ImmutableList<? extends ImmutableList<? extends TargetExpression>> shardedTargets;
