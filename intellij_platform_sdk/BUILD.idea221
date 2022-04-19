@@ -34,7 +34,7 @@ java_library(name = "jsr305")  # not bundled
 
 java_import(
     name = "java",
-    jars = glob(["plugins/java/lib/*.jar"]),
+    jars = glob(["plugins/java/lib/*.jar"]) + ["plugins/java/lib/resources/jdkAnnotations.jar"],
 )
 
 java_import(
