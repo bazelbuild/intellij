@@ -1,3 +1,7 @@
+v2022.04.20
+===========
+* Add ALT+y hotkey for running a Bazel sync (⌥+y on Mac).
+
 v2022.04.05
 ===========
 * Go: Fix debugging for go_test targets.
