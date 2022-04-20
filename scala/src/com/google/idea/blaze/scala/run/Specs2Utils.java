@@ -117,8 +117,6 @@ public final class Specs2Utils {
     if (testName == null) {
       return null;
     }
-    // https://github.com/bazelbuild/intellij/issues/176
-    testName = testName.trim().replace('(', '[').replace(')', ']');
     // https://github.com/bazelbuild/intellij/issues/169
     testName = Pattern.quote(testName);
     return testClass.qualifiedName() + '#' + testName + end;
