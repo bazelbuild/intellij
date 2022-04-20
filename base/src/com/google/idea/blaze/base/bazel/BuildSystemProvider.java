@@ -92,15 +92,6 @@ public interface BuildSystemProvider {
   }
 
   /**
-   * @return The location of the blaze/bazel binary to use for syncing.
-   * @deprecated Use {@link #getBuildSystem()} instead.
-   */
-  @Deprecated
-  default String getSyncBinaryPath(Project project) {
-    return getBuildSystem().getBuildInvoker(project, BlazeContext.create()).getBinaryPath();
-  }
-
-  /**
    * Returns true if syncing is done off the user's local machine.
    *
    * @deprecated Whether syncs happen remotely is not determined statically anymore. Logic depending

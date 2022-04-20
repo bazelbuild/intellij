@@ -185,7 +185,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
     //   in blaze-bin to refer to those dependencies. "tsconfig.json" will be untouched, but
     //   continues to refer to the"tsconfig_editor.json" in blaze-bin that was already set up.
     if (FileOperationProvider.getInstance().exists(tsconfig)) {
-      binaryPath = Blaze.getBuildSystemProvider(project).getSyncBinaryPath(project);
+      binaryPath = Blaze.getBuildSystemProvider(project).getBuildSystem().getBinaryPath(project);
       commandName = BlazeCommandName.BUILD;
     } else {
       // Sync binary is not be compatible with "run" if sync'ing with BuildRabbit.

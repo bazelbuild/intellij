@@ -163,7 +163,7 @@ public class CleanProjectTargetsSyncAction extends BlazeProjectSyncAction {
 
   private static String getBlazeBinaryPath(Project project) {
     BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(project);
-    return buildSystemProvider.getSyncBinaryPath(project);
+    return buildSystemProvider.getBuildSystem().getBinaryPath(project);
   }
 
   private static void removeInvalidRunConfigurations(Project project, ImmutableSet<Label> deleted) {

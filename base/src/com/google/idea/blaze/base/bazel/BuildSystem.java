@@ -95,4 +95,8 @@ public interface BuildSystem {
   /** Populates the passed builder with version data. */
   void populateBlazeVersionData(
       WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo, BlazeVersionData.Builder builder);
+
+  default String getBinaryPath(Project project) {
+    return getBuildInvoker(project, BlazeContext.create()).getBinaryPath();
+  }
 }

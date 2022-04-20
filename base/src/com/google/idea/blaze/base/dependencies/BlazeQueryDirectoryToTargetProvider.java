@@ -112,6 +112,6 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
 
   private static String getBinaryPath(Project project) {
     BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(project);
-    return buildSystemProvider.getSyncBinaryPath(project);
+    return buildSystemProvider.getBuildSystem().getBinaryPath(project);
   }
 }

@@ -112,7 +112,7 @@ public class BuildLangSyncPlugin implements BlazeSyncPlugin {
           BlazeInfoRunner.getInstance()
               .runBlazeInfoGetBytes(
                   context,
-                  Blaze.getBuildSystemProvider(project).getSyncBinaryPath(project),
+                  Blaze.getBuildSystemProvider(project).getBuildSystem().getBinaryPath(project),
                   workspace,
                   BlazeFlags.blazeFlags(
                       project,
