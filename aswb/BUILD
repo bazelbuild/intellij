@@ -194,6 +194,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
+        "@error_prone_annotations//jar",
         "@junit//jar",
     ],
 )
