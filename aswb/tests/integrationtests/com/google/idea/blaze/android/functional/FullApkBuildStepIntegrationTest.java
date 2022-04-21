@@ -297,12 +297,10 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   /** Saves the latest blaze command and context for later verification. */
   private static class ExternalTaskInterceptor implements ExternalTaskProvider {
     ImmutableList<String> command;
-    BlazeContext context;
 
     @Override
     public ExternalTask build(ExternalTask.Builder builder) {
       command = builder.command.build();
-      context = builder.context;
       return scopes -> 0;
     }
   }
