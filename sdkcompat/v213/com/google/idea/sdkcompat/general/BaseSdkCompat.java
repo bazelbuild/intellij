@@ -20,6 +20,8 @@ import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usages.TextChunk;
 import com.intellij.util.Restarter;
+import com.intellij.util.indexing.diagnostic.dto.JsonDuration;
+import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics;
 import com.intellij.util.ui.VcsExecutablePathSelector;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProperties.VcsLogProperty;
@@ -120,5 +122,11 @@ public final class BaseSdkCompat {
   public static String getIdeRestarterPath() {
     File startFile = Restarter.getIdeStarter();
     return startFile == null ? null : startFile.getPath();
+  }
+
+  /** #api213: inline into IndexingLogger */
+  public static JsonDuration getTotalIndexingTime(
+      JsonFileProviderIndexStatistics providerStatisticInput) {
+    return providerStatisticInput.getTotalIndexingTime();
   }
 }
