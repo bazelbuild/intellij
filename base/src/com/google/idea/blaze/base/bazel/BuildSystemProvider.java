@@ -22,9 +22,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
-import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
-import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
@@ -39,7 +36,6 @@ public interface BuildSystemProvider {
 
   ExtensionPointName<BuildSystemProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.BuildSystemProvider");
-  ImmutableList<String> SUPPORTED_EXTENSIONS = ImmutableList.of("bzl", "sky", "star");
 
   static BuildSystemProvider defaultBuildSystem() {
     return EP_NAME.getExtensions()[0];
@@ -143,11 +139,6 @@ public interface BuildSystemProvider {
   /** The WORKSPACE file in the repository root. */
   ImmutableList<String> possibleWorkspaceFileNames();
 
-  /** The file extensions supported, see {@link ExtensionFileNameMatcher}. */
-  default ImmutableList<String> possibleFileExtensions() {
-    return SUPPORTED_EXTENSIONS;
-  }
-
   /** Check if the given filename is a valid BUILD file name. */
   default boolean isBuildFile(String fileName) {
     return possibleBuildFileNames().contains(fileName);
@@ -183,14 +174,4 @@ public interface BuildSystemProvider {
     }
     return null;
   }
-
-  /** Returns the list of file types recognized as build system files. */
-  default ImmutableList<FileNameMatcher> buildLanguageFileTypeMatchers() {
-    ImmutableList.Builder<FileNameMatcher> list = ImmutableList.builder();
-    possibleBuildFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
-    possibleWorkspaceFileNames().forEach(s -> list.add(new ExactFileNameMatcher(s)));
-    possibleFileExtensions().forEach(s -> list.add(new ExtensionFileNameMatcher(s)));
-    return list.build();
-  }
-
 }

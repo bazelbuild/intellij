@@ -321,7 +321,13 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileTypeFactory implementation="com.google.idea.blaze.base.lang.buildfile.language.BuildFileTypeFactory"/>
+    <fileType
+        implementationClass="com.google.idea.blaze.base.lang.buildfile.language.BuildFileType"
+        name="BUILD"
+        language="BUILD"
+        fileNames="BUILD;BUILD.bazel;WORKSPACE;WORKSPACE.bazel"
+        extensions="bzl;sky;star"
+    />
     <annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.HighlightingAnnotator"/>
     <!--<annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.LoadErrorAnnotator"/>-->
     <annotator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.GlobErrorAnnotator"/>
