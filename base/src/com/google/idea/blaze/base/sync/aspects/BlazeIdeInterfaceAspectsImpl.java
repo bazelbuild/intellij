@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
@@ -73,6 +74,8 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
@@ -579,6 +582,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
     final ShardedBuildProgressTracker progressTracker =
         new ShardedBuildProgressTracker(shardedTargets.shardCount());
+
     // Sync only flags (sync_only) override build_flags, so log them to warn the users
     List<String> syncOnlyFlags =
         BlazeFlags.expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY));
@@ -596,15 +600,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             Scope.push(
                 context,
                 (childContext) -> {
-                  setupToolWindow(
-                      project,
-                      context,
-                      childContext,
-                      workspaceRoot,
-                      "Build shard " + shard,
-                      isSync);
-                  // we use context (rather than childContext) here since the shard state relates
-                  // to the parent task (which encapsulates all the build shards).
+                  Task task = createTask(project, context, "Build shard " + shard, isSync);
+                  // we use context (rather than childContext) here since the shard state relates to
+                  // the parent task (which encapsulates all the build shards).
+
+                  setupToolWindow(project, childContext, workspaceRoot, task);
                   progressTracker.onBuildStarted(context);
 
                   BlazeBuildOutputs result =
@@ -620,6 +620,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                           outputGroups);
 
                   progressTracker.onBuildCompleted(context); // TODO(b/216104482) track failures
+                  printShardFinishedSummary(context, task.getName(), result);
                   if (!result.buildResult.outOfMemory()) {
                     combinedResult.set(
                         combinedResult.isNull()
@@ -636,20 +637,43 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     return combinedResult.get();
   }
 
-  private static void setupToolWindow(
-      Project project,
-      BlazeContext parentContext,
-      BlazeContext childContext,
-      WorkspaceRoot workspaceRoot,
-      String taskName,
-      boolean isSync) {
-    ContextType contextType = isSync ? ContextType.Sync : ContextType.Other;
-    Task.Type taskType = isSync ? Task.Type.SYNC : Task.Type.MAKE;
+  /* Prints summary only for failed shards */
+  private void printShardFinishedSummary(
+      BlazeContext context, String taskName, BlazeBuildOutputs result) {
+    if (result.buildResult.status == Status.SUCCESS) {
+      return;
+    }
+    StringBuilder outputText = new StringBuilder();
+    outputText.append(
+        String.format(
+            "%s finished with %s errors; ",
+            taskName, result.buildResult.status == Status.BUILD_ERROR ? "build" : "fatal"));
+    String invocationId =
+        Iterables.getOnlyElement(
+            result.buildIds,
+            null); // buildIds has exactly one invocationId because this is called only when a shard
+    // is built and not when buildResults are combined
+    outputText.append(
+        invocationId != null
+            ? String.format("see build results at http://sponge2/%s", invocationId)
+            : String.format("could not fetch the invocation ID of %s", taskName));
+    context.output(SummaryOutput.error(Prefix.TIMESTAMP, outputText.toString()));
+  }
 
+  private static Task createTask(
+      Project project, BlazeContext parentContext, String taskName, boolean isSync) {
+    Task.Type taskType = isSync ? Task.Type.SYNC : Task.Type.MAKE;
     ToolWindowScope parentToolWindowScope = parentContext.getScope(ToolWindowScope.class);
     Task parentTask = parentToolWindowScope != null ? parentToolWindowScope.getTask() : null;
+    return new Task(project, taskName, taskType, parentTask);
+  }
+
+  private static void setupToolWindow(
+      Project project, BlazeContext childContext, WorkspaceRoot workspaceRoot, Task task) {
+    ContextType contextType =
+        task.getType().equals(Task.Type.SYNC) ? ContextType.Sync : ContextType.Other;
     childContext.push(
-        new ToolWindowScope.Builder(project, new Task(project, taskName, taskType, parentTask))
+        new ToolWindowScope.Builder(project, task)
             .setIssueParsers(
                 BlazeIssueParser.defaultIssueParsers(project, workspaceRoot, contextType))
             .build());

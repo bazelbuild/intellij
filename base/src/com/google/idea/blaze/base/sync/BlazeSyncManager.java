@@ -88,7 +88,6 @@ public class BlazeSyncManager {
                                     context
                                         .push(new ProgressIndicatorScope(indicator))
                                         .push(buildToolWindowScope(syncParams, indicator));
-
                                     if (!runInitialDirectoryOnlySync(syncParams)) {
                                       executeTask(project, syncParams, context);
                                       return;
@@ -147,6 +146,7 @@ public class BlazeSyncManager {
         .setIssueParsers(
             BlazeIssueParser.defaultIssueParsers(
                 project, WorkspaceRoot.fromProject(project), ContextType.Sync))
+        .showSummaryOutput()
         .build();
   }
 

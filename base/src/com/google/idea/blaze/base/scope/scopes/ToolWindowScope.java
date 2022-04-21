@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.toolwindow.TasksToolWindowService;
@@ -56,6 +57,7 @@ public final class ToolWindowScope implements BlazeScope {
     private ProgressIndicator progressIndicator;
     private boolean startTaskOnScopeBegin = true;
     private boolean finishTaskOnScopeEnd = true;
+    private boolean showSummaryOutput = false;
     private FocusBehavior popupBehavior = FocusBehavior.ON_ERROR;
     private ImmutableList<BlazeIssueParser.Parser> parsers = ImmutableList.of();
 
@@ -97,6 +99,11 @@ public final class ToolWindowScope implements BlazeScope {
       return this;
     }
 
+    public Builder showSummaryOutput() {
+      this.showSummaryOutput = true;
+      return this;
+    }
+
     public BlazeScope build() {
       if (!BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()) {
         return NO_OP_SCOPE_INSTANCE;
@@ -107,6 +114,7 @@ public final class ToolWindowScope implements BlazeScope {
           progressIndicator,
           startTaskOnScopeBegin,
           finishTaskOnScopeEnd,
+          showSummaryOutput,
           popupBehavior,
           parsers.isEmpty() || !startTaskOnScopeBegin
               ? ImmutableList.of()
@@ -124,6 +132,7 @@ public final class ToolWindowScope implements BlazeScope {
   private final OutputSink<PrintOutput> printSink;
   private final OutputSink<StatusOutput> statusSink;
   private final OutputSink<StateUpdate> stateSink;
+  @Nullable private final OutputSink<SummaryOutput> summarySink;
 
   private boolean finishTaskOnScopeEnd;
   private boolean activated;
@@ -134,6 +143,7 @@ public final class ToolWindowScope implements BlazeScope {
       @Nullable ProgressIndicator progressIndicator,
       boolean startTaskOnScopeBegin,
       boolean finishTaskOnScopeEnd,
+      boolean showSummaryOutput,
       FocusBehavior popupBehavior,
       ImmutableList<Filter> consoleFilters) {
     this.task = task;
@@ -160,6 +170,17 @@ public final class ToolWindowScope implements BlazeScope {
           tasksToolWindowController.state(task, output);
           return Propagation.Stop;
         };
+    if (showSummaryOutput) {
+      summarySink =
+          (output) -> {
+            if (task.getParent().isPresent()) {
+              return Propagation.Continue;
+            }
+            return printSink.onOutput(output.toPrintOutput());
+          };
+    } else {
+      summarySink = null;
+    }
   }
 
   @Override
@@ -167,6 +188,9 @@ public final class ToolWindowScope implements BlazeScope {
     context.addOutputSink(PrintOutput.class, printSink);
     context.addOutputSink(StatusOutput.class, statusSink);
     context.addOutputSink(StateUpdate.class, stateSink);
+    if (summarySink != null) {
+      context.addOutputSink(SummaryOutput.class, summarySink);
+    }
     context.addCancellationHandler(
         () -> {
           if (progressIndicator != null) {

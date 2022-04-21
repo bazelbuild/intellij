@@ -64,7 +64,7 @@ public final class Task {
     return name;
   }
 
-  Type getType() {
+  public Type getType() {
     return type;
   }
 
@@ -104,7 +104,7 @@ public final class Task {
     this.state = state;
   }
 
-  Optional<Task> getParent() {
+  public Optional<Task> getParent() {
     return Optional.ofNullable(parent);
   }
 

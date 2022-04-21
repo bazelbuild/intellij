@@ -46,6 +46,8 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
@@ -237,13 +239,29 @@ final class SyncPhaseCoordinator {
                           parentToolWindowScope != null ? parentToolWindowScope.getTask() : null;
 
                       BlazeSyncParams params = finalizeSyncParams(syncParams, context);
+                      Task syncTask =
+                          new Task(project, params.title(), Task.Type.SYNC, parentToolWindowTask);
                       setupScopes(
                           params,
                           context,
                           indicator,
                           singleThreaded ? SyncPhase.ALL_PHASES : SyncPhase.BUILD,
-                          new Task(project, params.title(), Task.Type.SYNC, parentToolWindowTask));
+                          syncTask);
+                      parentContext.output(
+                          SummaryOutput.output(
+                              Prefix.TIMESTAMP, String.format("%s started", syncTask.getName())));
                       runSync(params, singleThreaded, context);
+                      if (context.hasErrors()) {
+                        parentContext.output(
+                            SummaryOutput.error(
+                                Prefix.TIMESTAMP,
+                                String.format("%s finished with errors", syncTask.getName())));
+                      } else {
+                        parentContext.output(
+                            SummaryOutput.output(
+                                Prefix.TIMESTAMP,
+                                String.format("%s finished", syncTask.getName())));
+                      }
                     }));
   }
 
@@ -276,6 +294,9 @@ final class SyncPhaseCoordinator {
                               indicator,
                               SyncPhase.ALL_PHASES,
                               new Task(project, params.title(), Task.Type.SYNC));
+                          context.output(
+                              SummaryOutput.output(
+                                  Prefix.TIMESTAMP, String.format("%s started", params.title())));
                           doFilterProjectTargets(params, filter, context);
                         }));
   }
