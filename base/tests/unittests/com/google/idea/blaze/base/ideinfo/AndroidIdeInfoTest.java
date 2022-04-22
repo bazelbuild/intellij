@@ -45,6 +45,7 @@ public class AndroidIdeInfoTest {
 
     assertThat(
             output.getResources().stream()
+                .map(AndroidResFolder::getRoot)
                 .map(ArtifactLocation::getRelativePath)
                 .collect(Collectors.toList()))
         .containsExactly("com/google/mylib/res", "com/google/anotherlib/res");
@@ -78,12 +79,13 @@ public class AndroidIdeInfoTest {
 
     assertThat(
             output.getResources().stream()
+                .map(AndroidResFolder::getRoot)
                 .map(ArtifactLocation::getRelativePath)
                 .collect(Collectors.toList()))
         .containsExactly("com/google/mylib/res", "com/google/anotherlib/res");
 
-    AndroidResFolder folder0 = output.getResFolders().get(0);
-    AndroidResFolder folder1 = output.getResFolders().get(1);
+    AndroidResFolder folder0 = output.getResources().get(0);
+    AndroidResFolder folder1 = output.getResources().get(1);
 
     assertThat(folder0.getRoot()).isEqualTo(ArtifactLocation.fromProto(myLibRoot));
     assertThat(folder1.getRoot()).isEqualTo(ArtifactLocation.fromProto(anotherLibRoot));
@@ -118,12 +120,13 @@ public class AndroidIdeInfoTest {
 
     assertThat(
             output.getResources().stream()
+                .map(AndroidResFolder::getRoot)
                 .map(ArtifactLocation::getRelativePath)
                 .collect(Collectors.toList()))
         .containsExactly("com/google/mylib/res", "com/google/anotherlib/res");
 
-    AndroidResFolder folder0 = output.getResFolders().get(0);
-    AndroidResFolder folder1 = output.getResFolders().get(1);
+    AndroidResFolder folder0 = output.getResources().get(0);
+    AndroidResFolder folder1 = output.getResources().get(1);
 
     assertThat(folder0.getRoot()).isEqualTo(ArtifactLocation.fromProto(myLibRoot));
     assertThat(folder1.getRoot()).isEqualTo(ArtifactLocation.fromProto(anotherLibRoot));
