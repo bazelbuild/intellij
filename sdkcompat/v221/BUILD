@@ -9,6 +9,7 @@ java_library(
     srcs = glob([
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/indexing/**",
+        "com/google/idea/sdkcompat/logging/**",
         "com/google/idea/sdkcompat/platform/**",
         "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/vcs/**",
