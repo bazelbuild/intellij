@@ -94,8 +94,10 @@ public class BlazeContext {
     }
 
     isCancelled = true;
-    for (Runnable handler : cancellationHandlers) {
-      handler.run();
+    synchronized (this) {
+      for (Runnable handler : cancellationHandlers) {
+        handler.run();
+      }
     }
 
     if (parentContext != null) {
