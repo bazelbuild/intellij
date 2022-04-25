@@ -109,7 +109,8 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   public void setupBuildResultHelperProvider() throws GetArtifactsException {
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS));
+        .thenReturn(
+            new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS, 0));
     BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
     buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
     registerExtension(BuildSystemProvider.EP_NAME, buildSystem);
@@ -271,7 +272,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   public void build_withNullExecRoot_shouldFail() throws Exception {
     // Return null execroot
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS));
+        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS, 0));
 
     // Return fake deploy info proto and mocked deploy info data object.
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();

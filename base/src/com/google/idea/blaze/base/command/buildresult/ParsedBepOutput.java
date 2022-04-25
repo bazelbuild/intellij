@@ -128,7 +128,13 @@ public final class ParsedBepOutput {
         fillInTransitiveFileSetData(
             fileSets, topLevelFileSets, configIdToMnemonic, startTimeMillis);
     return new ParsedBepOutput(
-        buildId, localExecRoot, filesMap, targetToFileSets.build(), startTimeMillis, buildResult);
+        buildId,
+        localExecRoot,
+        filesMap,
+        targetToFileSets.build(),
+        startTimeMillis,
+        buildResult,
+        stream.getBytesConsumed());
   }
 
   private static List<String> getFileSets(BuildEventStreamProtos.OutputGroup group) {
@@ -185,6 +191,7 @@ public final class ParsedBepOutput {
   final long syncStartTimeMillis;
 
   private final BuildResult buildResult;
+  private final long bepBytesConsumed;
 
   @VisibleForTesting
   public ParsedBepOutput(
@@ -193,13 +200,15 @@ public final class ParsedBepOutput {
       ImmutableMap<String, FileSet> fileSets,
       ImmutableSetMultimap<String, String> targetFileSets,
       long syncStartTimeMillis,
-      BuildResult buildResult) {
+      BuildResult buildResult,
+      long bepBytesConsumed) {
     this.buildId = buildId;
     this.localExecRoot = localExecRoot;
     this.fileSets = fileSets;
     this.targetFileSets = targetFileSets;
     this.syncStartTimeMillis = syncStartTimeMillis;
     this.buildResult = buildResult;
+    this.bepBytesConsumed = bepBytesConsumed;
   }
 
   /** Returns the local execroot. */
@@ -211,6 +220,10 @@ public final class ParsedBepOutput {
   /** Returns the build result. */
   public BuildResult getBuildResult() {
     return buildResult;
+  }
+
+  public long getBepBytesConsumed() {
+    return bepBytesConsumed;
   }
 
   /** Returns all output artifacts of the build. */

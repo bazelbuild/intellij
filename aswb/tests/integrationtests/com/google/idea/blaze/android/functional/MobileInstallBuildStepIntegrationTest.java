@@ -111,7 +111,8 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
   public void setupBuildResultHelperProvider() throws GetArtifactsException {
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS));
+        .thenReturn(
+            new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS, 0));
     BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
     buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
     registerExtension(BuildSystemProvider.EP_NAME, buildSystem);
@@ -379,7 +380,7 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
   public void nullExecRoot() throws Exception {
     // Return null execroot
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS));
+        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS, 0));
 
     // Mobile-install build step requires only one device be active.  DeviceFutures class is final,
     // so we have to make one with a stub AndroidDevice.

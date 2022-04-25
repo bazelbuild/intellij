@@ -50,6 +50,8 @@ public abstract class BuildPhaseSyncStats {
 
   public abstract Duration totalTime();
 
+  public abstract long bepBytesConsumed();
+
   @Nullable
   public abstract ShardStats shardStats();
 
@@ -66,6 +68,7 @@ public abstract class BuildPhaseSyncStats {
         .setTargetsDerivedFromDirectories(false)
         .setBuildResult(BuildResult.FATAL_ERROR)
         .setTimedEvents(ImmutableList.of())
+        .setBepBytesConsumed(0L)
         .setBuildIds(ImmutableList.of())
         .setTotalTime(Duration.ZERO);
   }
@@ -91,6 +94,8 @@ public abstract class BuildPhaseSyncStats {
     public abstract Builder setBuildIds(ImmutableList<String> buildIds);
 
     public abstract Builder setTotalTime(Duration totalTime);
+
+    public abstract Builder setBepBytesConsumed(long bytes);
 
     public abstract Builder setShardStats(ShardStats shardStats);
 

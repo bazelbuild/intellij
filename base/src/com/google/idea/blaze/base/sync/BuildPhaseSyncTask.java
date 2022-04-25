@@ -244,7 +244,8 @@ final class BuildPhaseSyncTask {
     buildStats
         .setBuildResult(blazeBuildResult.buildResult)
         .setBuildIds(blazeBuildResult.buildIds)
-        .setBuildBinaryType(syncBuildInvoker.getType());
+        .setBuildBinaryType(syncBuildInvoker.getType())
+        .setBepBytesConsumed(blazeBuildResult.bepBytesConsumed);
 
     if (context.isCancelled()) {
       throw new SyncCanceledException();
