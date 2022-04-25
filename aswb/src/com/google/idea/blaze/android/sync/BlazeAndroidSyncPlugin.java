@@ -121,7 +121,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
 
     // Non-build syncs don't produce changes to android IDE data (e.g. resources, aars, etc).
     // Pass on the previous android sync data instead since it will be the same.
-    if (!SyncMode.involvesBlazeBuild(syncMode)) {
+    if (!syncMode.involvesBlazeBuild()) {
       if (previousSyncState != null) {
         BlazeAndroidSyncData previousSyncData = previousSyncState.get(BlazeAndroidSyncData.class);
         if (previousSyncData != null) {

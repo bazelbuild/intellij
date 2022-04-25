@@ -32,7 +32,6 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.vcs.VcsSyncListener;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
@@ -60,7 +59,7 @@ public class ExternalLibraryManager implements Disposable {
       libraries;
 
   public static ExternalLibraryManager getInstance(Project project) {
-    return ServiceManager.getService(project, ExternalLibraryManager.class);
+    return project.getService(ExternalLibraryManager.class);
   }
 
   ExternalLibraryManager(Project project) {
@@ -131,7 +130,7 @@ public class ExternalLibraryManager implements Disposable {
         SyncResult syncResult,
         ImmutableSet<Integer> buildIds) {
       ExternalLibraryManager manager = ExternalLibraryManager.getInstance(project);
-      if (syncMode == SyncMode.STARTUP) {
+      if (syncMode.mayAttachExternalLibraries()) {
         BlazeProjectData blazeProjectData =
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
         if (blazeProjectData != null) {
