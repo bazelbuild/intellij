@@ -19,7 +19,7 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-latest": "clion-2021.3",
     "clion-latest-mac": "clion-2021.3-mac",
     "clion-beta": "clion-2021.3",
-    "clion-under-dev": "clion-2021.3",
+    "clion-under-dev": "clion-2022.1",
     # Indirect ij_product mapping for Bazel Plugin OSS
     "intellij-oss-stable": "intellij-2022.1",
     "intellij-oss-beta": "intellij-2022.1",
