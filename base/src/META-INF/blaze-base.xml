@@ -44,6 +44,9 @@
       class="com.google.idea.blaze.base.sync.actions.FullSyncProjectAction"
       text="Non-Incrementally Sync Project with BUILD Files"
       icon="BlazeIcons.BlazeSlow">
+      <keyboard-shortcut
+          keymap="$default"
+          first-keystroke="alt shift Y"/>
     </action>
     <action id="Blaze.SyncWorkingSet"
       class="com.google.idea.blaze.base.sync.actions.SyncWorkingSetAction"
