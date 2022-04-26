@@ -226,7 +226,7 @@ config_setting(
     name = "android-studio-latest-mac",
     values = {
         "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-canary",
+        "define": "ij_product=android-studio-latest",
     },
 )
 
@@ -498,7 +498,6 @@ java_library(
         "intellij-ue-2021.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.1": ["@jsr305_annotations//jar"],
-        "android-studio-2020.3": ["@jsr305_annotations//jar"],
         "android-studio-2021.2": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.
         "default": [":bundled_jsr305"],
