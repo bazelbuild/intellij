@@ -98,6 +98,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.NavigatableAdapter;
 import java.io.File;
 import java.time.Instant;
@@ -110,9 +111,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -595,12 +596,17 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                       + " project view file.",
                   String.join(" ", syncOnlyFlags))));
     }
-    BiFunction<List<? extends TargetExpression>, Integer, BuildResult> invocation =
-        (targets, shard) ->
+    Function<List<? extends TargetExpression>, BuildResult> invocation =
+        targets ->
             Scope.push(
                 context,
                 (childContext) -> {
-                  Task task = createTask(project, context, "Build shard " + shard, isSync);
+                  Task task =
+                      createTask(
+                          project,
+                          context,
+                          "Build shard " + StringUtil.first(UUID.randomUUID().toString(), 8, true),
+                          isSync);
                   // we use context (rather than childContext) here since the shard state relates to
                   // the parent task (which encapsulates all the build shards).
 
