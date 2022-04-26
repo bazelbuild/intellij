@@ -21,18 +21,22 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.base.VerifyException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.NamedSetOfFilesId;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.NamedSetOfFiles;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.common.util.ConcurrencyUtil;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,6 +46,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,11 +56,31 @@ import javax.annotation.Nullable;
 /** A data class representing blaze's build event protocol (BEP) output for a build. */
 public final class ParsedBepOutput {
 
+  private static final ListeningExecutorService executorService =
+      MoreExecutors.listeningDecorator(
+          Executors.newSingleThreadExecutor(
+              ConcurrencyUtil.namedDaemonThreadPoolFactory(ParsedBepOutput.class)));
+
+  public static ParsedBepOutput parseBepArtifacts(BuildEventStreamProvider stream)
+      throws BuildEventStreamException {
+    // For large projects with many parallel shards, parsing BEP output is memory intensive (as much
+    // as 500MB or more for larger shards), so parsing is serialized to conserve memory.
+    try {
+      return executorService.submit(() -> parseBepArtifactsInternal(stream)).get();
+    } catch (InterruptedException | ExecutionException e) {
+      Throwable throwable = e.getCause();
+      if (throwable instanceof BuildEventStreamException) {
+        throw (BuildEventStreamException) throwable;
+      }
+      throw new VerifyException("Error parsing BEP output", e);
+    }
+  }
+
   static ParsedBepOutput parseBepArtifacts(InputStream bepStream) throws BuildEventStreamException {
     return parseBepArtifacts(BuildEventStreamProvider.fromInputStream(bepStream));
   }
 
-  public static ParsedBepOutput parseBepArtifacts(BuildEventStreamProvider stream)
+  private static ParsedBepOutput parseBepArtifactsInternal(BuildEventStreamProvider stream)
       throws BuildEventStreamException {
     BuildEventStreamProtos.BuildEvent event;
     Map<String, String> configIdToMnemonic = new HashMap<>();
