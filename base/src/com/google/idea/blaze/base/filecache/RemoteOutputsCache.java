@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.errorprone.annotations.Keep;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
@@ -89,6 +90,7 @@ public final class RemoteOutputsCache {
   private final Project project;
   private volatile Map<String, File> cachedFiles = ImmutableMap.of();
 
+  @Keep // Instantiated as an IntelliJ project component.
   private RemoteOutputsCache(Project project) {
     this.project = project;
     this.cacheDir = getCacheDir(project);
