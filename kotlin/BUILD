@@ -91,7 +91,7 @@ intellij_unit_test_suite(
 
 intellij_integration_test_suite(
     name = "integration_tests",
-    srcs = glob(["tests/integrationtests/**/*.java"]),
+    srcs = ["tests/integrationtests/com/google/idea/blaze/kotlin/run/producers/KotlinBinaryContextProviderTest.java"],
     required_plugins = "org.jetbrains.kotlin,com.google.idea.blaze.kotlin",
     test_package_root = "com.google.idea.blaze.kotlin",
     runtime_deps = [":kotlin_integration_test_plugin"],
