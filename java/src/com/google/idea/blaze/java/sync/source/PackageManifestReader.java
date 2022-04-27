@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.sync.source;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.base.Joiner;
@@ -102,20 +103,13 @@ public class PackageManifestReader {
 
     // Find all not cached {@link RemoteOutputArtifact} and download them before parsing manifest
     // file
-    ImmutableList.Builder<RemoteOutputArtifact> toDownload = ImmutableList.builder();
-    for (OutputArtifact outputArtifact : diff.getUpdatedOutputs()) {
-      if (!(outputArtifact instanceof RemoteOutputArtifact)) {
-        continue;
-      }
-      if (findArtifactInCache(project, outputArtifact) != null) {
-        continue;
-      }
-      toDownload.add((RemoteOutputArtifact) outputArtifact);
-    }
+    ImmutableList<RemoteOutputArtifact> toDownload =
+        BlazeArtifact.getRemoteArtifacts(diff.getUpdatedOutputs()).stream()
+            .filter(a -> findArtifactInCache(project, a) == null)
+            .collect(toImmutableList());
 
     ListenableFuture<?> fetchRemoteArtifactFuture =
-        RemoteArtifactPrefetcher.getInstance()
-            .downloadArtifacts(project.getName(), toDownload.build());
+        RemoteArtifactPrefetcher.getInstance().downloadArtifacts(project.getName(), toDownload);
     ListenableFuture<?> fetchFuture =
         PrefetchService.getInstance()
             .prefetchFiles(BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()), true, false);
