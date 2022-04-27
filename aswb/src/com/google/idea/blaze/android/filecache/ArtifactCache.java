@@ -40,9 +40,13 @@ public interface ArtifactCache {
    * @param artifacts Collection of artifacts to add to cache
    * @param removeMissingArtifacts if true, will remove any cached artifact that is not present in
    *     {@code artifacts}.
+   * @param reason Reason for accounting network data used.
    */
   void putAll(
-      Collection<OutputArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts);
+      Collection<OutputArtifact> artifacts,
+      BlazeContext context,
+      boolean removeMissingArtifacts,
+      String reason);
 
   /**
    * Returns the {@link Path} corresponding to the given {@link OutputArtifact}, or {@code null} if

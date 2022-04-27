@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
@@ -33,6 +34,7 @@ import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope.NetworkTrafficUsedOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -156,7 +158,10 @@ public class LocalArtifactCache implements ArtifactCache {
    */
   @Override
   public synchronized void putAll(
-      Collection<OutputArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts) {
+      Collection<OutputArtifact> artifacts,
+      BlazeContext context,
+      boolean removeMissingArtifacts,
+      String reason) {
     // Utility maps for the passed artifacts
     Map<String, OutputArtifact> keyToArtifact = new HashMap<>();
     Map<String, CacheEntry> keyToCacheEntry = new HashMap<>();
@@ -200,15 +205,19 @@ public class LocalArtifactCache implements ArtifactCache {
 
     try {
       // Prefetch artifacts from ObjFS (if required)
+      ImmutableList<RemoteOutputArtifact> toPrefetch =
+          BlazeArtifact.getRemoteArtifacts(updatedKeyToArtifact.values());
       ListenableFuture<?> downloadArtifactsFuture =
-          RemoteArtifactPrefetcher.getInstance()
-              .downloadArtifacts(
-                  project.getName(),
-                  BlazeArtifact.getRemoteArtifacts(updatedKeyToArtifact.values()));
+          RemoteArtifactPrefetcher.getInstance().downloadArtifacts(project.getName(), toPrefetch);
       FutureUtil.waitForFuture(context, downloadArtifactsFuture)
           .timed("FetchCacheArtifacts", EventType.Prefetching)
           .withProgressMessage(String.format("Fetching Artifacts for %s...", cacheName))
           .run();
+      if (!toPrefetch.isEmpty()) {
+        context.output(
+            new NetworkTrafficUsedOutput(
+                toPrefetch.stream().mapToLong(RemoteOutputArtifact::getLength).sum(), reason));
+      }
 
       // Copy files to disk and notify
       List<ListenableFuture<String>> copyFutures =

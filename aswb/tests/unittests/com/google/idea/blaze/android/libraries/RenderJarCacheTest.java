@@ -184,7 +184,7 @@ public class RenderJarCacheTest {
     ArgumentCaptor<Boolean> removeCaptor = ArgumentCaptor.forClass(Boolean.class);
 
     verify(mockedArtifactCache, Mockito.times(1))
-        .putAll(artifactsCaptor.capture(), contextCaptor.capture(), removeCaptor.capture());
+        .putAll(artifactsCaptor.capture(), contextCaptor.capture(), removeCaptor.capture(), "test");
 
     Collection<OutputArtifact> passedArtifact = artifactsCaptor.getValue();
     assertThat(passedArtifact.stream().map(Object::toString))
