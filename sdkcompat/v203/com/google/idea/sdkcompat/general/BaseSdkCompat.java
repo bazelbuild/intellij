@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.usageView.UsageTreeColors;
@@ -126,5 +127,10 @@ public final class BaseSdkCompat {
   public static JsonDuration getTotalIndexingTime(
       JsonFileProviderIndexStatistics providerStatisticInput) {
     return providerStatisticInput.getTotalIndexingTime();
+  }
+
+  /** #api213: Inline into KytheRenameProcessor. */
+  public static RenamePsiElementProcessor[] renamePsiElementProcessorsList() {
+    return RenamePsiElementProcessor.EP_NAME.getExtensions();
   }
 }

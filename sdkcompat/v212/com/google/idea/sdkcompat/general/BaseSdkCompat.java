@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.TextFieldWithStoredHistory;
@@ -132,5 +133,10 @@ public final class BaseSdkCompat {
   /** #api213: inline this method. */
   public static String getLibraryNameFromLibraryOrigin(LibraryOrigin libraryOrigin) {
     return libraryOrigin.getLibrary().getName();
+  }
+
+  /** #api213: Inline into KytheRenameProcessor. */
+  public static RenamePsiElementProcessor[] renamePsiElementProcessorsList() {
+    return RenamePsiElementProcessor.EP_NAME.getExtensions();
   }
 }

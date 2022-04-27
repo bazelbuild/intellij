@@ -14,6 +14,8 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.refactoring.rename.RenamePsiElementProcessorBase;
 import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.TextFieldWithStoredHistory;
@@ -27,6 +29,7 @@ import com.intellij.util.ui.VcsExecutablePathSelector;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProperties.VcsLogProperty;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -134,5 +137,17 @@ public final class BaseSdkCompat {
   public static String getLibraryNameFromLibraryOrigin(LibraryOrigin libraryOrigin) {
     // TODO(b/230430213): adapt getLibraryNameFromLibraryOrigin to work in 221
     return "";
+  }
+
+  /** #api213: Inline into KytheRenameProcessor. */
+  public static RenamePsiElementProcessor[] renamePsiElementProcessorsList() {
+    ArrayList<RenamePsiElementProcessor> result = new ArrayList<>();
+    for (RenamePsiElementProcessorBase processor :
+        RenamePsiElementProcessor.EP_NAME.getExtensions()) {
+      if (processor instanceof RenamePsiElementProcessor) {
+        result.add((RenamePsiElementProcessor) processor);
+      }
+    }
+    return result.toArray(new RenamePsiElementProcessor[0]);
   }
 }
