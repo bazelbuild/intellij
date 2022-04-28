@@ -129,6 +129,8 @@ public class BlazeSyncManager {
       taskTitle = "Importing " + project.getName();
     } else if (params.syncMode() == SyncMode.PARTIAL) {
       taskTitle = "Partial Sync";
+    } else if (params.syncMode() == SyncMode.FULL) {
+      taskTitle = "Non-Incremental Sync";
     } else {
       taskTitle = "Incremental Sync";
     }
