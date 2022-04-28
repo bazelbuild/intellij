@@ -85,6 +85,11 @@ java_import(
     jars = glob(["plugins/Kotlin/lib/*.jar"]),
 )
 
+filegroup(
+    name = "kotlinc_version",
+    srcs = ["plugins/Kotlin/kotlinc/build.txt"],
+)
+
 java_import(
     name = "junit",
     jars = glob(["plugins/junit/lib/*.jar"]),

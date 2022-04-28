@@ -443,7 +443,10 @@ java_library(
             ":layoutlib_data",
         ],
         clion = [],
-        intellij = [],
+        # From 2022.1 forward, the version of kotlinc will be obtained
+        # by KotlinPluginLayout from plugins/kotlin/kotlinc/build.txt
+        # so we need to provide this to our tests
+        intellij = [":kotlinc_version"],
     ),
     exports = [":plugin_api_internal"],
 )
