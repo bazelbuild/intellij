@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
@@ -87,6 +88,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -438,7 +440,8 @@ final class SyncPhaseCoordinator {
               .setSyncResult(syncResultFromBuildPhase(buildResult, context))
               .setBuildBinaryType(
                   buildResult.getBuildPhaseStats().stream()
-                      .map(r -> r.buildBinaryType())
+                      .map(BuildPhaseSyncStats::buildBinaryType)
+                      .filter(Objects::nonNull)
                       .findFirst()
                       .orElse(BuildBinaryType.NONE))
               .build();
