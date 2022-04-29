@@ -33,7 +33,7 @@ public abstract class PluginAdvertiserEditorNotificationProviderWrapperCompat
       Project project, VirtualFile file) {
     boolean alreadySupported = !(file.getFileType() instanceof PlainTextLikeFileType);
     if (alreadySupported) {
-      return null;
+      return EditorNotificationProvider.CONST_NULL;
     }
     return pluginAdvertiserEditorNotificationProvider.collectNotificationData(project, file);
   }
