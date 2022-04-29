@@ -93,7 +93,7 @@ final class ConsoleView implements Disposable {
   static ConsoleView create(
       Project project, ImmutableList<Filter> consoleFilters, Disposable parentDisposable) {
     ConsoleView view = new ConsoleView(project, parentDisposable);
-    view.setCustomFilters(consoleFilters);
+    view.addDefaultAndCustomFilters(consoleFilters);
     return view;
   }
 
@@ -106,16 +106,16 @@ final class ConsoleView implements Disposable {
             /* viewer= */ false,
             /* usePredefinedFilters= */ false);
 
-    consoleView.addMessageFilter(customFilters);
-    addWrappedPredefinedFilters();
-    // add target filter last, so it doesn't override other links containing a target string
-    consoleView.addMessageFilter(new BlazeTargetFilter(false));
     Disposer.register(parentDisposable, this);
     Disposer.register(this, consoleView);
   }
 
-  void setCustomFilters(List<Filter> filters) {
-    customFilters.setCustomFilters(filters);
+  private void addDefaultAndCustomFilters(List<Filter> customFilters) {
+    this.customFilters.setCustomFilters(customFilters);
+    consoleView.addMessageFilter(this.customFilters);
+    addWrappedPredefinedFilters();
+    // add target filter last, so it doesn't override other links containing a target string
+    consoleView.addMessageFilter(new BlazeTargetFilter(false));
   }
 
   public void setStopHandler(@Nullable Runnable stopHandler) {
