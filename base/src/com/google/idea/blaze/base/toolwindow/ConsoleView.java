@@ -94,6 +94,10 @@ final class ConsoleView implements Disposable {
       Project project, ImmutableList<Filter> consoleFilters, Disposable parentDisposable) {
     ConsoleView view = new ConsoleView(project, parentDisposable);
     view.addDefaultAndCustomFilters(consoleFilters);
+
+    // The consoleView component must be created for issue filters such as errors to be detected
+    // even if the console is never viewed in the blaze tool window tree.
+    view.consoleView.getComponent();
     return view;
   }
 
