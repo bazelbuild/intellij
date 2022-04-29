@@ -16,9 +16,7 @@
 package com.google.idea.blaze.python.run;
 
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.application.Topics;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.openapi.components.BaseComponent;
 import com.jetbrains.python.run.PyTracebackParser;
 import com.jetbrains.python.traceBackParsers.LinkInTrace;
 import java.io.File;
@@ -53,21 +51,12 @@ public class BlazePyTracebackParser extends PyTracebackParser {
     }
   }
 
-  static class OverrideUpstreamParser implements BaseComponent {
-
+  static class OverrideUpstreamParser implements AppLifecycleListener {
     @Override
-    public void initComponent() {
-      Topics.subscribe(
-          AppLifecycleListener.TOPIC,
-          /* disposable= */ null,
-          new AppLifecycleListener() {
-            @Override
-            public void appStarted() {
-              if (enabled.getValue()) {
-                PARSERS[1] = new BlazePyTracebackParser();
-              }
-            }
-          });
+    public void appStarted() {
+      if (enabled.getValue()) {
+        PARSERS[1] = new BlazePyTracebackParser();
+      }
     }
   }
 }
