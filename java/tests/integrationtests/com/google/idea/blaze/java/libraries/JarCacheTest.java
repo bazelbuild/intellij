@@ -86,15 +86,15 @@ public class JarCacheTest extends BlazeTestCase {
   @Rule public TemporaryFolder folder = new TemporaryFolder();
   private WorkspaceRoot workspaceRoot;
   private BlazeContext context;
-  private Container applicationServices;
+  private FakeJarRepackager fakeJarRepackager;
   private static final String PLUGIN_PROCESSOR_JAR = "pluginProcessor.jar";
 
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
-    this.applicationServices = applicationServices;
     context = BlazeContext.create();
     context.addOutputSink(PrintOutput.class, new WritingOutputSink());
     workspaceRoot = new WorkspaceRoot(folder.getRoot());
+    fakeJarRepackager = new FakeJarRepackager();
 
     BlazeImportSettingsManager blazeImportSettingsManager = new BlazeImportSettingsManager(project);
     try {
@@ -110,6 +110,7 @@ public class JarCacheTest extends BlazeTestCase {
     applicationServices.register(FileOperationProvider.class, new FileOperationProvider());
     applicationServices.register(RemoteArtifactPrefetcher.class, new DefaultPrefetcher());
     projectServices.register(JarCacheFolderProvider.class, new JarCacheFolderProvider(project));
+    applicationServices.register(JarRepackager.class, fakeJarRepackager);
     JarCache jarCache = new JarCache(project);
     jarCache.enableForTest();
     projectServices.register(JarCache.class, jarCache);
@@ -208,7 +209,7 @@ public class JarCacheTest extends BlazeTestCase {
         new MockArtifactLocationDecoder(workspaceRoot.directory(), /* isRemote= */ true);
     // arrange: set up a project that have PluginProcessorJars and register a fake repackager that
     // will repackage jars
-    applicationServices.register(JarRepackager.class, new FakeJarRepackager());
+    fakeJarRepackager.setEnable(true);
     File jar = workspaceRoot.fileForPath(new WorkspacePath(PLUGIN_PROCESSOR_JAR));
     BlazeProjectData blazeProjectData = setupProjectWithLintRuleJar(jar, artifactLocationDecoder);
 
@@ -235,8 +236,10 @@ public class JarCacheTest extends BlazeTestCase {
             stream(cachedFiles)
                 .filter(
                     file ->
-                        file.getName().startsWith(FakeJarRepackager.PREFIX)
-                            && new File(cacheDir, JarRepackager.getInstance().getRepackagePrefix())
+                        !file.getName().startsWith(fakeJarRepackager.getRepackagePrefix())
+                            && new File(
+                                    cacheDir,
+                                    fakeJarRepackager.getRepackagePrefix() + file.getName())
                                 .exists())
                 .count())
         .isEqualTo(1);
@@ -297,11 +300,16 @@ public class JarCacheTest extends BlazeTestCase {
   }
 
   private static class FakeJarRepackager implements JarRepackager {
+    private boolean enabled = false;
     public static final String PREFIX = "repackaged_";
+
+    public void setEnable(boolean enabled) {
+      this.enabled = enabled;
+    }
 
     @Override
     public boolean isEnabled() {
-      return true;
+      return enabled;
     }
 
     @Override
@@ -312,7 +320,7 @@ public class JarCacheTest extends BlazeTestCase {
     @Override
     public void processJar(File jar) throws IOException {
       Path source = jar.toPath();
-      Path destination = source.resolveSibling(PREFIX);
+      Path destination = source.resolveSibling(PREFIX + jar.getName());
       Files.copy(
           source,
           destination,

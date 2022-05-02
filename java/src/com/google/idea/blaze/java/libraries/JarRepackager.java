@@ -25,17 +25,28 @@ public interface JarRepackager {
     return ApplicationManager.getApplication().getService(JarRepackager.class);
   }
 
-  default boolean isEnabled() {
-    return false;
-  }
+  boolean isEnabled();
 
   /* Get the prefix that added to jar when process it. */
-  default String getRepackagePrefix() throws UnsupportedOperationException {
-    throw new UnsupportedOperationException("The method is not supported");
-  }
+  String getRepackagePrefix();
 
-  default void processJar(File jar)
-      throws IOException, InterruptedException, UnsupportedOperationException {
-    throw new UnsupportedOperationException("The method is not supported");
+  void processJar(File jar) throws IOException, InterruptedException;
+
+  /** Implementation of {@link JarRepackager} which does not repackage anything. */
+  class NoopJarRepackager implements JarRepackager {
+    @Override
+    public boolean isEnabled() {
+      return false;
+    }
+
+    @Override
+    public String getRepackagePrefix() {
+      throw new UnsupportedOperationException("The method is not supported");
+    }
+
+    @Override
+    public void processJar(File jar) {
+      throw new UnsupportedOperationException("The method is not supported");
+    }
   }
 }
