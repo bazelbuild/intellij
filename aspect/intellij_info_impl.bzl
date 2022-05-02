@@ -321,7 +321,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
 
     py_semantics = getattr(semantics, "py", None)
     if py_semantics:
-        py_launcher = py_semantics.get_launcher(ctx)
+        py_launcher = py_semantics.get_launcher(target, ctx)
     else:
         py_launcher = None
 
