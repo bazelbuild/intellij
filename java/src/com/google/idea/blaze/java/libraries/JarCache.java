@@ -73,6 +73,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -219,9 +220,7 @@ public class JarCache {
           .run();
 
       // update cache files, and remove files if required
-      ImmutableList<BlazeArtifact> lintJars = LintJarHelper.collectLintJarsArtifacts(projectData);
-      List<ListenableFuture<?>> futures =
-          new ArrayList<>(copyAndRepackageLocally(updated, lintJars));
+      List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(updated));
       if (removeMissingFiles) {
         futures.addAll(deleteCacheFiles(removed));
       }
@@ -232,6 +231,12 @@ public class JarCache {
       }
       if (!removed.isEmpty()) {
         context.output(PrintOutput.log(String.format("Removed %d jars", removed.size())));
+      }
+      // repackage cached jars after cache has been updated
+      ImmutableList<ListenableFuture<?>> repackaged = repackageJars(projectData, updated.values());
+      if (!repackaged.isEmpty()) {
+        Futures.allAsList(repackaged).get();
+        context.output(PrintOutput.log(String.format("Repackaged %d jars", repackaged.size())));
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -290,10 +295,8 @@ public class JarCache {
   }
 
   /** Copy artifacts that needed to be updated to local cache, repackage it if it's lint jar. */
-  private List<ListenableFuture<?>> copyAndRepackageLocally(
-      Map<String, BlazeArtifact> updated, List<BlazeArtifact> lintJars) {
+  private List<ListenableFuture<?>> copyLocally(Map<String, BlazeArtifact> updated) {
     List<ListenableFuture<?>> futures = new ArrayList<>();
-    JarRepackager jarRepackager = JarRepackager.getInstance();
     updated.forEach(
         (key, artifact) ->
             futures.add(
@@ -308,19 +311,6 @@ public class JarCache {
                                 "Failed to copy artifact %s to %s",
                                 artifact, jarCacheFolderProvider.getJarCacheFolder().getPath()),
                             e);
-                      }
-                      // repackage the jar if JarRepackager service is enabled and it's a lint rule
-                      // jar
-                      if (jarRepackager.isEnabled() && lintJars.contains(artifact)) {
-                        try {
-                          jarRepackager.processJar(destination);
-                        } catch (IOException | InterruptedException e) {
-                          logger.warn(
-                              String.format(
-                                  "Failed to repackage artifact %s to %s",
-                                  artifact, jarCacheFolderProvider.getJarCacheFolder().getPath()),
-                              e);
-                        }
                       }
                     })));
     return futures;
@@ -338,6 +328,56 @@ public class JarCache {
     }
     try (InputStream stream = output.getInputStream()) {
       Files.copy(stream, Paths.get(destination.getPath()), StandardCopyOption.REPLACE_EXISTING);
+    }
+  }
+
+  /** Repackage jars when necessary to avoid package name conflict. */
+  private ImmutableList<ListenableFuture<?>> repackageJars(
+      BlazeProjectData projectData, Collection<BlazeArtifact> updatedJars) {
+    JarRepackager jarRepackager = JarRepackager.getInstance();
+    FileOperationProvider ops = FileOperationProvider.getInstance();
+    if (!jarRepackager.isEnabled()) {
+      return ImmutableList.of();
+    }
+
+    return LintJarHelper.collectLintJarsArtifacts(projectData).stream()
+        .map(
+            blazeArtifact ->
+                FetchExecutor.EXECUTOR.submit(
+                    () -> {
+                      try {
+                        repackageJar(
+                            jarRepackager,
+                            blazeArtifact,
+                            file -> {
+                              // repackage a jar when it's just updated or never repackaged.
+                              if (updatedJars.contains(blazeArtifact)) {
+                                return true;
+                              }
+                              File repackagedJar =
+                                  new File(
+                                      jarCacheFolderProvider.getJarCacheFolder(),
+                                      jarRepackager.getRepackagePrefix() + file.getName());
+                              return ops.exists(file) && !ops.exists(repackagedJar);
+                            });
+                      } catch (IOException | InterruptedException e) {
+                        logger.warn(
+                            String.format(
+                                "Failed to repackage artifact %s to %s",
+                                blazeArtifact,
+                                jarCacheFolderProvider.getJarCacheFolder().getPath()),
+                            e);
+                      }
+                    }))
+        .collect(toImmutableList());
+  }
+
+  private void repackageJar(
+      JarRepackager jarRepackager, BlazeArtifact blazeArtifact, Predicate<File> shouldRepackage)
+      throws IOException, InterruptedException {
+    File jar = jarCacheFolderProvider.getCacheFileByKey(cacheKeyForJar(blazeArtifact));
+    if (shouldRepackage.test(jar)) {
+      jarRepackager.processJar(jar);
     }
   }
 

@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.libraries.LintCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -32,7 +33,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -63,10 +63,12 @@ public class JavaLintCollector implements LintCollector {
 
   @Override
   public ImmutableList<File> collectLintJars(Project project, BlazeProjectData blazeProjectData) {
+    JarCache jarCache = JarCache.getInstance(project);
+    FileOperationProvider fileOperationProvider = FileOperationProvider.getInstance();
     ImmutableList<File> jars =
         collectLintJarsArtifacts(blazeProjectData).stream()
-            .map(JarCache.getInstance(project)::getCachedJar)
-            .filter(Objects::nonNull)
+            .map(jarCache::getCachedJar)
+            .filter(jar -> (jar != null) && fileOperationProvider.exists(jar))
             .collect(toImmutableList());
     try {
       File lintChecksJar =
