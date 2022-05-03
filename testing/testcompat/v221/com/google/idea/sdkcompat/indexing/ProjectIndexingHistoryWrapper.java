@@ -46,8 +46,8 @@ public class ProjectIndexingHistoryWrapper {
       Project project, String fileSetName, @Nullable Duration expectedIndexingVisibleTime) {
     IndexingFileSetStatistics statistics = new IndexingFileSetStatistics(project, fileSetName);
     if (expectedIndexingVisibleTime != null) {
-      projectIndexingHistoryImpl.setVisibleTimeToAllThreadsTimeRatio(
-          expectedIndexingVisibleTime.toNanos());
+      projectIndexingHistoryImpl.setVisibleTimeToAllThreadsTimeRatio(1);
+      statistics.setIndexingTimeInAllThreads(expectedIndexingVisibleTime.toNanos());
     }
     projectIndexingHistoryImpl.addProviderStatistics(statistics);
   }
