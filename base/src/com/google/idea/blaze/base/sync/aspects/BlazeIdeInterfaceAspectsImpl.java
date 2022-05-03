@@ -588,14 +588,24 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     List<String> syncOnlyFlags =
         BlazeFlags.expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY));
     if (!syncOnlyFlags.isEmpty()) {
-      context.output(
-          PrintOutput.log(
-              String.format(
-                  "Sync flags (`%s`) specified in the project view file will override the build"
-                      + " flags set in blazerc configurations or general build flags in the"
-                      + " project view file.",
-                  String.join(" ", syncOnlyFlags))));
+      String message =
+          String.format(
+              "Sync flags (`%s`) specified in the project view file will override the build"
+                  + " flags set in blazerc configurations or general build flags in the"
+                  + " project view file.",
+              String.join(" ", syncOnlyFlags));
+      // Print to both summary and print outputs (i.e. main and subtask window of blaze console)
+      context.output(SummaryOutput.output(Prefix.INFO, message));
+      context.output(PrintOutput.log(message));
     }
+    // Fetching blaze flags here using parent context, to avoid duplicate fetch for every shard.
+    List<String> additionalBlazeFlags =
+        BlazeFlags.blazeFlags(
+            project,
+            projectViewSet,
+            BlazeCommandName.BUILD,
+            context,
+            BlazeInvocationContext.SYNC_CONTEXT);
     Function<List<? extends TargetExpression>, BuildResult> invocation =
         targets ->
             Scope.push(
@@ -623,7 +633,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                           workspaceLanguageSettings.getActiveLanguages(),
                           targets,
                           aspectStrategy,
-                          outputGroups);
+                          outputGroups,
+                          additionalBlazeFlags);
 
                   progressTracker.onBuildCompleted(context); // TODO(b/216104482) track failures
                   printShardFinishedSummary(context, task.getName(), result);
@@ -703,7 +714,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ImmutableSet<LanguageClass> activeLanguages,
       List<? extends TargetExpression> targets,
       AspectStrategy aspectStrategy,
-      ImmutableSet<OutputGroup> outputGroups) {
+      ImmutableSet<OutputGroup> outputGroups,
+      List<String> additionalBlazeFlags) {
 
     boolean onlyDirectDeps =
         viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
@@ -715,9 +727,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           .addTargets(targets)
           .addBlazeFlags(BlazeFlags.KEEP_GOING)
           .addBlazeFlags(buildResultHelper.getBuildFlags())
-          .addBlazeFlags(
-              BlazeFlags.blazeFlags(
-                  project, viewSet, BlazeCommandName.BUILD, BlazeInvocationContext.SYNC_CONTEXT));
+          .addBlazeFlags(additionalBlazeFlags);
       if (disableValidationActionExperiment.getValue()) {
         builder.addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS);
       }

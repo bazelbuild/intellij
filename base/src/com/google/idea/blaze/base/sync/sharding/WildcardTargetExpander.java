@@ -155,7 +155,7 @@ public class WildcardTargetExpander {
         BlazeBuildTargetSharder.shardTargetsRetainingOrdering(
             allTargets, BlazeBuildTargetSharder.PACKAGE_SHARD_SIZE);
     Predicate<String> handledRulesPredicate = handledRuleTypes(projectViewSet);
-    boolean excludeManualTargets = excludeManualTargets(project, projectViewSet);
+    boolean excludeManualTargets = excludeManualTargets(project, projectViewSet, context);
     ExpandedTargetsResult output = null;
     for (int i = 0; i < shards.size(); i++) {
       List<TargetExpression> shard = shards.get(i);
@@ -189,9 +189,14 @@ public class WildcardTargetExpander {
    * <p>Ideally '--build_manual_tests', which itself is a hacky workaround (applies only to wildcard
    * target pattern expansion) would work with blaze query.
    */
-  private static boolean excludeManualTargets(Project project, ProjectViewSet projectView) {
+  private static boolean excludeManualTargets(
+      Project project, ProjectViewSet projectView, BlazeContext context) {
     return !BlazeFlags.blazeFlags(
-            project, projectView, BlazeCommandName.BUILD, BlazeInvocationContext.SYNC_CONTEXT)
+            project,
+            projectView,
+            BlazeCommandName.BUILD,
+            context,
+            BlazeInvocationContext.SYNC_CONTEXT)
         .contains("--build_manual_tests");
   }
 

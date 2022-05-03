@@ -155,6 +155,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
                     project,
                     projectViewSet,
                     handlerState.getCommandState().getCommand(),
+                    BlazeContext.create(),
                     BlazeInvocationContext.runConfigContext(
                         ExecutorType.fromExecutor(env.getExecutor()),
                         configuration.getType(),

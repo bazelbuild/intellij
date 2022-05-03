@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.util.List;
@@ -39,6 +40,7 @@ public interface BuildFlagsProvider {
       Project project,
       ProjectViewSet projectViewSet,
       BlazeCommandName command,
+      BlazeContext context,
       BlazeInvocationContext invocationContext,
       List<String> flags) {}
 }

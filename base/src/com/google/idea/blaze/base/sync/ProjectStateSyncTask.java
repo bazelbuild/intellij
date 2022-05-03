@@ -101,7 +101,11 @@ final class ProjectStateSyncTask {
 
     List<String> syncFlags =
         BlazeFlags.blazeFlags(
-            project, projectViewSet, BlazeCommandName.INFO, BlazeInvocationContext.SYNC_CONTEXT);
+            project,
+            projectViewSet,
+            BlazeCommandName.INFO,
+            context,
+            BlazeInvocationContext.SYNC_CONTEXT);
     ListenableFuture<BlazeInfo> blazeInfoFuture =
         BlazeInfoRunner.getInstance()
             .runBlazeInfo(

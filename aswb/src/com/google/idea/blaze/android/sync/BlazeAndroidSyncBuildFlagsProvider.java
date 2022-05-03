@@ -21,6 +21,10 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -47,13 +51,19 @@ public class BlazeAndroidSyncBuildFlagsProvider implements BuildFlagsProvider {
       Project project,
       ProjectViewSet projectViewSet,
       BlazeCommandName command,
+      BlazeContext context,
       BlazeInvocationContext invocationContext,
       List<String> flags) {
     List<String> syncOnlyFlags =
         BlazeFlags.expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY));
     if (forceFatApkCpuExperiment.getValue()
         && syncOnlyFlags.stream().noneMatch(flag -> flag.contains("fat_apk_cpu"))) {
-      // todo(arvindanekal): Update this to display in the new summary message in the blaze window
+      String message =
+          "Forcing fat_apk_cpu flag to a single cpu architecture (x86_64) for sync. Refer"
+              + " to go/auto-set-fat-apk-cpu-to-single-cpu for more details.";
+      // Print to both summary and print outputs (i.e. main and subtask window of blaze console)
+      context.output(SummaryOutput.output(Prefix.INFO, message));
+      context.output(PrintOutput.log(message));
       logger.info("Forcing fat_apk_cpu to x86_64 for sync");
       flags.add("--fat_apk_cpu=x86_64");
     }

@@ -131,7 +131,11 @@ public abstract class AbstractBuildInvoker implements BuildInvoker {
     }
     List<String> syncFlags =
         BlazeFlags.blazeFlags(
-            project, viewSet, BlazeCommandName.INFO, BlazeInvocationContext.SYNC_CONTEXT);
+            project,
+            viewSet,
+            BlazeCommandName.INFO,
+            blazeContext,
+            BlazeInvocationContext.SYNC_CONTEXT);
     return BlazeInfoRunner.getInstance()
         .runBlazeInfo(
             blazeContext,
