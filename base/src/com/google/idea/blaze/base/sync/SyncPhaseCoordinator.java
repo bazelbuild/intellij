@@ -89,7 +89,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -442,7 +442,7 @@ final class SyncPhaseCoordinator {
               .setBuildBinaryType(
                   buildResult.getBuildPhaseStats().stream()
                       .map(BuildPhaseSyncStats::buildBinaryType)
-                      .filter(Objects::nonNull)
+                      .flatMap(Optional::stream)
                       .findFirst()
                       .orElse(BuildBinaryType.NONE))
               .build();

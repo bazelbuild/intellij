@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /** Sync stats from a single build phase. */
 @AutoValue
@@ -52,11 +52,9 @@ public abstract class BuildPhaseSyncStats {
 
   public abstract long bepBytesConsumed();
 
-  @Nullable
-  public abstract ShardStats shardStats();
+  public abstract Optional<ShardStats> shardStats();
 
-  @Nullable
-  public abstract BuildBinaryType buildBinaryType();
+  public abstract Optional<BuildBinaryType> buildBinaryType();
 
   public static Builder builder() {
     return new AutoValue_BuildPhaseSyncStats.Builder()
