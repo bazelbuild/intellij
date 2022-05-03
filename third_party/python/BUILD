@@ -25,6 +25,7 @@ java_library(
 java_library(
     name = "python_for_tests",
     testonly = 1,
+    data = glob(["helpers/**"]),
     exports = [":python_internal"],
 )
 
