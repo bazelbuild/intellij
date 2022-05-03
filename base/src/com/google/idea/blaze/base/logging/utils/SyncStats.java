@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.logging.utils;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -27,6 +28,7 @@ import com.google.idea.blaze.base.sync.SyncResult;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /** Sync stats covering all phases of sync. */
 @AutoValue
@@ -43,6 +45,8 @@ public abstract class SyncStats {
   public abstract SyncResult syncResult();
 
   public abstract ImmutableList<TimedEvent> timedEvents();
+
+  public abstract ImmutableMap<String, Long> networkUsage();
 
   public abstract Instant startTime();
 
@@ -95,6 +99,13 @@ public abstract class SyncStats {
 
     public ImmutableList<TimedEvent> getCurrentTimedEvents() {
       return timedEventsBuilder().build();
+    }
+
+    abstract ImmutableMap.Builder<String, Long> networkUsageBuilder();
+
+    public Builder addNetworkUsage(Map<String, Long> stats) {
+      networkUsageBuilder().putAll(stats);
+      return this;
     }
 
     public abstract Builder setStartTime(Instant instant);

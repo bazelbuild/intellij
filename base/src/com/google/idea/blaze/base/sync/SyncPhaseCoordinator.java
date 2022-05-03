@@ -51,6 +51,7 @@ import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
+import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.PerformanceWarningScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
@@ -622,6 +623,11 @@ final class SyncPhaseCoordinator {
       } else {
         syncStatus = SyncResult.CANCELLED.equals(syncResult) ? "canceled" : "failed";
       }
+      NetworkTrafficTrackingScope networkTraffic =
+          context.getScope(NetworkTrafficTrackingScope.class);
+      if (networkTraffic != null) {
+        stats.addNetworkUsage(networkTraffic.getNetworkUsage());
+      }
       stats
           .setSyncMode(syncParams.syncMode())
           .setSyncTitle(syncParams.title())
@@ -656,6 +662,7 @@ final class SyncPhaseCoordinator {
       context.push(new PerformanceWarningScope());
     }
     context.push(new ProgressIndicatorScope(indicator));
+    context.push(new NetworkTrafficTrackingScope());
 
     BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
     context
