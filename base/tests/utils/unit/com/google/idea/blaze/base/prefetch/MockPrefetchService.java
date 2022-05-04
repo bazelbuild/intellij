@@ -28,15 +28,15 @@ import javax.annotation.Nullable;
 public class MockPrefetchService implements PrefetchService {
 
   @Override
-  public ListenableFuture<?> prefetchFiles(
+  public ListenableFuture<PrefetchStats> prefetchFiles(
       Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes) {
-    return Futures.immediateFuture(null);
+    return Futures.immediateFuture(PrefetchStats.NONE);
   }
 
   @Override
-  public ListenableFuture<?> prefetchProjectFiles(
+  public ListenableFuture<PrefetchStats> prefetchProjectFiles(
       Project project, ProjectViewSet projectViewSet, @Nullable BlazeProjectData blazeProjectData) {
-    return Futures.immediateFuture(null);
+    return Futures.immediateFuture(PrefetchStats.NONE);
   }
 
   @Override

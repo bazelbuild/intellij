@@ -46,6 +46,7 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
+import com.google.idea.blaze.base.prefetch.PrefetchStats;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
@@ -445,17 +446,17 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
   private static class FakePrefetchService implements PrefetchService {
     @Override
-    public ListenableFuture<?> prefetchFiles(
+    public ListenableFuture<PrefetchStats> prefetchFiles(
         Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes) {
-      return Futures.immediateFuture(null);
+      return Futures.immediateFuture(PrefetchStats.NONE);
     }
 
     @Override
-    public ListenableFuture<?> prefetchProjectFiles(
+    public ListenableFuture<PrefetchStats> prefetchProjectFiles(
         Project project,
         ProjectViewSet projectViewSet,
         @Nullable BlazeProjectData blazeProjectData) {
-      return Futures.immediateFuture(null);
+      return Futures.immediateFuture(PrefetchStats.NONE);
     }
 
     @Override
