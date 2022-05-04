@@ -83,6 +83,10 @@ public abstract class AbstractBuildInvoker implements BuildInvoker {
     return binaryPath;
   }
 
+  protected String getBinaryPathForBlazeInfo() {
+    return getBinaryPath();
+  }
+
   @Override
   public boolean supportsParallelism() {
     return supportsParallelism;
@@ -140,7 +144,7 @@ public abstract class AbstractBuildInvoker implements BuildInvoker {
         .runBlazeInfo(
             blazeContext,
             buildSystem.getName(),
-            getBinaryPath(),
+            getBinaryPathForBlazeInfo(),
             WorkspaceRoot.fromProject(project),
             syncFlags);
   }
