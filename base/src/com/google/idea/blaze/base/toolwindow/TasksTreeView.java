@@ -196,7 +196,10 @@ final class TasksTreeView extends AbstractView<Tree> {
           JPopupMenu menu = new JPopupMenu("Popup Menu");
           JMenuItem removeTaskMenuItem = new JMenuItem("Remove Task");
           removeTaskMenuItem.addActionListener(
-              it -> model.tasksTreeProperty().removeTask(selectedTask));
+              it -> {
+                model.tasksTreeProperty().removeTask(selectedTask);
+                model.selectedTaskProperty().setValue(null);
+              });
           menu.add(removeTaskMenuItem);
           menu.show(e.getComponent(), e.getX(), e.getY());
         }
