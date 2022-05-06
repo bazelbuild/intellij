@@ -88,14 +88,6 @@ java_import(
 )
 """
 
-# Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
-http_archive(
-    name = "python_2020_3",
-    build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "722fb54b503de61989d65bc544f25f03891614467e62f4faef677cefbcd51340",
-    url = "https://plugins.jetbrains.com/files/7322/114033/python-ce-203.7717.65.zip",
-)
-
 #TODO(ymoh): remove with the removal of 2021.1 Python plugin
 # Python plugin for IntelliJ CE. Required at compile-time for python-specific features.
 http_archive(
@@ -191,15 +183,6 @@ http_archive(
     build_file_content = _SCALA_BUILD_FILE,
     sha256 = "6a8cfc87c9485f48bd13856b5f4819a020f77c2a90f38d7128e026fc323330a7",
     url = "https://plugins.jetbrains.com/files/1347/167520/scala-intellij-bin-2022.1.13.zip",
-)
-
-# The plugin api for Android Studio 2020.3. This is required to build ASwB,
-# and run integration tests.
-http_archive(
-    name = "android_studio_2020_3",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio203",
-    sha256 = "344d858235ed5d3095ac25916a4a8f8730069f76e5a5fd0eba02522af88f541b",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2020.3.1.26/android-studio-2020.3.1.26-linux.tar.gz",
 )
 
 # The plugin api for android_studio_2021_2. This is required to build ASwB,

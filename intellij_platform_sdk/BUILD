@@ -274,21 +274,6 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-2020.3",
-    values = {
-        "define": "ij_product=android-studio-2020.3",
-    },
-)
-
-config_setting(
-    name = "android-studio-2020.3-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-2020.3",
-    },
-)
-
-config_setting(
     name = "android-studio-2021.2",
     values = {
         "define": "ij_product=android-studio-2021.2",
