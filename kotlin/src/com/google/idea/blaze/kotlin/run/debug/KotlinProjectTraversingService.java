@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.kotlin.run.debug;
 
+import static java.util.stream.Collectors.toCollection;
+
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.Dependency;
@@ -33,7 +35,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import java.util.ArrayDeque;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Traverse the dependency graph searching for kotlinx coroutines library in the transitive
@@ -94,8 +98,14 @@ public final class KotlinProjectTraversingService {
       KotlinxCoroutinesLibFinder coroutinesLibFinder, TargetKey targetKey, TargetMap targetsMap) {
     TargetIdeInfo targetIdeInfo = targetsMap.get(targetKey);
     if (targetIdeInfo != null) {
-      ArrayDeque<Dependency> deps = new ArrayDeque<>();
-      deps.addAll(targetIdeInfo.getDependencies());
+      ArrayDeque<Dependency> deps = new ArrayDeque<>(targetIdeInfo.getDependencies());
+      Set<Label> seenDeps =
+          new HashSet<>(
+              deps.stream()
+                  .map(Dependency::getTargetKey)
+                  .map(TargetKey::getLabel)
+                  .collect(toCollection(HashSet::new)));
+
       while (!deps.isEmpty()) {
         Dependency dep = deps.poll();
         TargetIdeInfo depInfo = targetsMap.get(dep.getTargetKey());
@@ -104,7 +114,11 @@ public final class KotlinProjectTraversingService {
           if (libPath.isPresent()) {
             return libPath;
           }
-          deps.addAll(depInfo.getDependencies());
+          for (Dependency d : depInfo.getDependencies()) {
+            if (seenDeps.add(d.getTargetKey().getLabel())) {
+              deps.add(d);
+            }
+          }
         }
       }
     }
