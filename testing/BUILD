@@ -29,7 +29,6 @@ java_library(
            ) + select_for_plugin_api({
         "android-studio-2021.2": glob([
             "testcompat/v212/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v212/com/google/idea/testing/cidr/*.java",
             "testcompat/v212/com/google/idea/testing/java/*.java",
         ]),
         "clion-2021.2": glob(["testcompat/v212/com/google/idea/sdkcompat/**/*.java"]),
