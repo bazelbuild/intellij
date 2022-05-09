@@ -100,11 +100,10 @@ public final class KotlinProjectTraversingService {
     if (targetIdeInfo != null) {
       ArrayDeque<Dependency> deps = new ArrayDeque<>(targetIdeInfo.getDependencies());
       Set<Label> seenDeps =
-          new HashSet<>(
-              deps.stream()
-                  .map(Dependency::getTargetKey)
-                  .map(TargetKey::getLabel)
-                  .collect(toCollection(HashSet::new)));
+          deps.stream()
+              .map(Dependency::getTargetKey)
+              .map(TargetKey::getLabel)
+              .collect(toCollection(HashSet::new));
 
       while (!deps.isEmpty()) {
         Dependency dep = deps.poll();
