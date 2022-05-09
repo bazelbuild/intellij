@@ -15,22 +15,20 @@
  */
 package com.google.idea.blaze.android.cppimpl.debug;
 
-import com.android.ddmlib.Client;
 import com.android.tools.ndk.run.editor.AutoAndroidDebugger;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 
 /** Attached either java or native debugger depending on if native debugging is enabled. */
-public class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
+public abstract class BlazeAutoAndroidDebuggerBase extends AutoAndroidDebugger {
   public static final String ID = Blaze.defaultBuildSystemName();
-  private static final Logger log = Logger.getInstance(BlazeAutoAndroidDebugger.class);
-  private final BlazeNativeAndroidDebugger nativeDebugger = new BlazeNativeAndroidDebugger();
+  protected static final Logger log = Logger.getInstance(BlazeAutoAndroidDebugger.class);
+  protected final BlazeNativeAndroidDebugger nativeDebugger = new BlazeNativeAndroidDebugger();
 
   @Override
   protected boolean isNativeProject(Project project) {
@@ -43,16 +41,6 @@ public class BlazeAutoAndroidDebugger extends AutoAndroidDebugger {
   @Override
   protected boolean isNativeDeployment(Project project, Module debuggeeModule) {
     return isNativeProject(project);
-  }
-
-  @Override
-  public void attachToClient(Project project, Client client, RunConfiguration config) {
-    if (isNativeProject(project)) {
-      log.info("Project has native development enabled. Attaching native debugger.");
-      nativeDebugger.attachToClient(project, client, config);
-    } else {
-      super.attachToClient(project, client, config);
-    }
   }
 
   @Override
