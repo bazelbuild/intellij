@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
-import static org.jetbrains.android.dom.manifest.AndroidManifestUtils.getPackageName;
 import static org.jetbrains.android.facet.SourceProviderUtil.createSourceProvidersForLegacyModule;
 
 import com.android.tools.apk.analyzer.AaptInvoker;
@@ -176,7 +175,7 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
   }
 
   private static boolean hasPackageName(AndroidFacet facet, String packageName) {
-    String nameFromFacet = getPackageName(facet);
+    String nameFromFacet = PackageNameUtils.getPackageName(facet.getModule());
     if (nameFromFacet == null) {
       return false;
     }
