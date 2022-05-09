@@ -40,9 +40,11 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
+import com.google.idea.blaze.base.prefetch.PrefetchStats;
 import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope.NetworkTrafficUsedOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.components.ServiceManager;
@@ -110,17 +112,29 @@ public class PackageManifestReader {
 
     ListenableFuture<?> fetchRemoteArtifactFuture =
         RemoteArtifactPrefetcher.getInstance().downloadArtifacts(project.getName(), toDownload);
-    ListenableFuture<?> fetchFuture =
+    ListenableFuture<PrefetchStats> fetchLocalFilesFuture =
         PrefetchService.getInstance()
             .prefetchFiles(BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()), true, false);
 
     if (!FutureUtil.waitForFuture(
-            context, Futures.allAsList(fetchRemoteArtifactFuture, fetchFuture))
+            context, Futures.allAsList(fetchRemoteArtifactFuture, fetchLocalFilesFuture))
         .timed("FetchPackageManifests", EventType.Prefetching)
         .withProgressMessage("Reading package manifests...")
         .run()
         .success()) {
       return null;
+    }
+    try {
+      long bytesConsumed =
+          toDownload.stream().mapToLong(RemoteOutputArtifact::getLength).sum()
+              + fetchLocalFilesFuture.get().bytesPrefetched();
+      if (bytesConsumed > 0) {
+        context.output(new NetworkTrafficUsedOutput(bytesConsumed, "packagemanifest"));
+      }
+    } catch (InterruptedException | ExecutionException e) {
+      // Should never happen - the future has already completed.
+      logger.error(e);
+      // carry on - failing to log the stats should not affect anything else.
     }
 
     List<ListenableFuture<Void>> futures = Lists.newArrayList();
