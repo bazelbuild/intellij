@@ -39,6 +39,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import org.jetbrains.annotations.Nullable;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
@@ -146,6 +147,10 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
   @Override
   public Collection<ExternalAndroidLibrary> getAndroidLibraryDependencies(
       DependencyScopeType dependencyScopeType) {
-    return getDependentLibraries();
+    if (dependencyScopeType == DependencyScopeType.MAIN) {
+      return getDependentLibraries();
+    } else {
+      return Collections.emptyList();
+    }
   }
 }
