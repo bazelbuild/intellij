@@ -402,8 +402,6 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
 
     ide_info["go_ide_info"] = struct_omit_none(
         import_path = import_path,
-        # TODO(chaorenl): deprecated, remove after plugin update
-        library_label = library_labels[0] if library_labels else None,
         library_labels = library_labels,
         sources = [artifact_location(f) for f in sources],
     )
