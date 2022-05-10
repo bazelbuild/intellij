@@ -125,7 +125,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(
         ["tests/unittests/**/*.java"],
-        exclude = ["tests/unittests/com/google/idea/blaze/android/sync/model/idea/BlazeAndroidModelTest.java"],  # b/145809318
+        exclude = ["tests/unittests/com/google/idea/blaze/android/sync/model/idea/BlazeClassJarProviderTest.java"],  # b/145809318
     ),
     test_package_root = "com.google.idea.blaze.android",
     deps = [

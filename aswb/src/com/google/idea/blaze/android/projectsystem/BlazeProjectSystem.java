@@ -20,6 +20,7 @@ import static org.jetbrains.android.facet.SourceProviderUtil.createSourceProvide
 import com.android.tools.apk.analyzer.AaptInvoker;
 import com.android.tools.idea.log.LogWrapper;
 import com.android.tools.idea.model.AndroidModel;
+import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.idea.projectsystem.AndroidModuleSystem;
 import com.android.tools.idea.projectsystem.AndroidProjectSystem;
 import com.android.tools.idea.projectsystem.NamedIdeaSourceProvider;
@@ -33,6 +34,7 @@ import com.android.tools.idea.sdk.AndroidSdks;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
+import com.google.idea.blaze.android.sync.model.idea.BlazeClassJarProvider;
 import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.module.Module;
@@ -145,12 +147,18 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     };
   }
 
-  // @Override #api203
+  // @Override #api212
+  public ClassJarProvider getClassJarProvider() {
+    return new BlazeClassJarProvider(project);
+  }
+
+  @Override
   public Collection<AndroidFacet> getAndroidFacetsWithPackageName(
       Project project, String packageName) {
     return getAndroidFacetsWithPackageName(
         project, packageName, GlobalSearchScope.projectScope(project));
   }
+
   // @Override #api203
   public Collection<AndroidFacet> getAndroidFacetsWithPackageName(
       Project project, String packageName, GlobalSearchScope scope) {

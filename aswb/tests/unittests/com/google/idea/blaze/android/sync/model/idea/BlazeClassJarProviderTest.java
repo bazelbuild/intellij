@@ -19,13 +19,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.android.builder.model.SourceProvider;
 import com.android.tools.idea.model.AndroidModel;
+import com.android.tools.idea.model.ClassJarProvider;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.actions.BlazeBuildService;
+import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -63,10 +63,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Test cases for {@link BlazeAndroidModel}. */
+/** Test cases for {@link BlazeClassJarProvider}. */
 @Ignore("b/145809318")
 @RunWith(JUnit4.class)
-public class BlazeAndroidModelTest extends BlazeTestCase {
+public class BlazeClassJarProviderTest extends BlazeTestCase {
   private Module module;
   private AndroidModel model;
   private MockJavaPsiFacade facade;
@@ -77,7 +77,7 @@ public class BlazeAndroidModelTest extends BlazeTestCase {
     applicationServices.register(
         FileDocumentManager.class, new MockFileDocumentManagerImpl(null, null));
     applicationServices.register(VirtualFileManager.class, mock(VirtualFileManager.class));
-    applicationServices.register(BlazeBuildService.class, new BlazeBuildService());
+    applicationServices.register(BlazeBuildService.class, new BlazeBuildService(project));
     projectServices.register(ProjectScopeBuilder.class, new ProjectScopeBuilderImpl(project));
     projectServices.register(ProjectViewManager.class, new MockProjectViewManager());
 
@@ -97,7 +97,6 @@ public class BlazeAndroidModelTest extends BlazeTestCase {
 
     projectServices.register(JavaPsiFacade.class, facade);
     module = new MockModule(() -> {});
-    model = new BlazeAndroidModel(project, null, mock(SourceProvider.class), null, 0, false);
   }
 
   @Test
@@ -118,18 +117,23 @@ public class BlazeAndroidModelTest extends BlazeTestCase {
         new MockClassVirtualFile(
             "/build/com/google/example/libnotmodified.jar!/com/google/example/NotModified.class",
             notModifiedJarFile);
-    assertThat(model.isClassFileOutOfDate(module, "com.google.example.Modified", modifiedClassFile))
+    ClassJarProvider classJarProvider = new BlazeClassJarProvider(project);
+    assertThat(
+            classJarProvider.isClassFileOutOfDate(
+                module, "com.google.example.Modified", modifiedClassFile))
         .isTrue();
     assertThat(
-            model.isClassFileOutOfDate(
+            classJarProvider.isClassFileOutOfDate(
                 module, "com.google.example.NotModified", notModifiedClassFile))
         .isFalse();
 
-    BlazeBuildService.getInstance().buildProject(project);
-    assertThat(model.isClassFileOutOfDate(module, "com.google.example.Modified", modifiedClassFile))
+    BlazeBuildService.getInstance(project).buildProject();
+    assertThat(
+            classJarProvider.isClassFileOutOfDate(
+                module, "com.google.example.Modified", modifiedClassFile))
         .isFalse();
     assertThat(
-            model.isClassFileOutOfDate(
+            classJarProvider.isClassFileOutOfDate(
                 module, "com.google.example.NotModified", notModifiedClassFile))
         .isFalse();
   }

@@ -20,6 +20,7 @@ import com.android.tools.idea.model.ClassJarProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
@@ -31,8 +32,19 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
 import java.util.List;
 
@@ -88,5 +100,66 @@ public class BlazeClassJarProvider implements ClassJarProvider {
     }
 
     return results.build();
+  }
+
+  // @Override #api212
+  public boolean isClassFileOutOfDate(Module module, String fqcn, VirtualFile classFile) {
+    return testIsClassFileOutOfDate(project, fqcn, classFile);
+  }
+
+  public static boolean testIsClassFileOutOfDate(
+      Project project, String fqcn, VirtualFile classFile) {
+    VirtualFile sourceFile =
+        ApplicationManager.getApplication()
+            .runReadAction(
+                (Computable<VirtualFile>)
+                    () -> {
+                      PsiClass psiClass =
+                          JavaPsiFacade.getInstance(project)
+                              .findClass(fqcn, GlobalSearchScope.projectScope(project));
+                      if (psiClass == null) {
+                        return null;
+                      }
+                      PsiFile psiFile = psiClass.getContainingFile();
+                      if (psiFile == null) {
+                        return null;
+                      }
+                      return psiFile.getVirtualFile();
+                    });
+    if (sourceFile == null) {
+      return false;
+    }
+
+    // Edited but not yet saved?
+    if (FileDocumentManager.getInstance().isFileModified(sourceFile)) {
+      return true;
+    }
+
+    long sourceTimeStamp = sourceFile.getTimeStamp();
+    long buildTimeStamp = classFile.getTimeStamp();
+
+    if (classFile.getFileSystem() instanceof JarFileSystem) {
+      JarFileSystem jarFileSystem = (JarFileSystem) classFile.getFileSystem();
+      VirtualFile jarFile = jarFileSystem.getVirtualFileForJar(classFile);
+      if (jarFile != null) {
+        if (jarFile.getFileSystem() instanceof LocalFileSystem) {
+          // The virtual file timestamp could be stale since we don't watch this file.
+          buildTimeStamp = VfsUtilCore.virtualToIoFile(jarFile).lastModified();
+        } else {
+          buildTimeStamp = jarFile.getTimeStamp();
+        }
+      }
+    }
+
+    if (sourceTimeStamp > buildTimeStamp) {
+      // It's possible that the source file's timestamp has been updated, but the content remains
+      // same. In this case, blaze will not try to rebuild the jar, we have to also check whether
+      // the user recently clicked the build button. So they can at least manually get rid of the
+      // error.
+      Long projectBuildTimeStamp = BlazeBuildService.getLastBuildTimeStamp(project);
+      return projectBuildTimeStamp == null || sourceTimeStamp > projectBuildTimeStamp;
+    }
+
+    return false;
   }
 }
