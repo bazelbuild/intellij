@@ -150,8 +150,6 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
               launchOptions,
               userId,
               String.join(" ", amStartOptions.build()),
-              debugger,
-              debuggerState,
               launchStatus);
       if (appLaunchTask != null) {
         launchTasks.add(appLaunchTask);

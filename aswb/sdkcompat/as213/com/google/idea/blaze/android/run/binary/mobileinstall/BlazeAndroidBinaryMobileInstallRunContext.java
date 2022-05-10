@@ -15,10 +15,19 @@
  */
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
+import com.android.tools.idea.run.ApkProvisionException;
+import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
+import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
+import com.android.tools.idea.run.tasks.LaunchTask;
+import com.android.tools.idea.run.util.LaunchStatus;
+import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
+import com.google.idea.blaze.android.run.binary.UserIdHelper;
+import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -40,6 +49,36 @@ public class BlazeAndroidBinaryMobileInstallRunContext
       ApkBuildStep buildStep,
       String launchId) {
     super(project, facet, runConfiguration, env, configState, buildStep, launchId);
+  }
+
+  @Override
+  public LaunchTask getApplicationLaunchTask(
+      LaunchOptions launchOptions,
+      @Nullable Integer userId,
+      String contributorsAmStartOptions,
+      LaunchStatus launchStatus)
+      throws ExecutionException {
+
+    String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
+    if (!contributorsAmStartOptions.isEmpty()) {
+      extraFlags += (extraFlags.isEmpty() ? "" : " ") + contributorsAmStartOptions;
+    }
+
+    final StartActivityFlagsProvider startActivityFlagsProvider =
+        new DefaultStartActivityFlagsProvider(launchOptions.isDebug(), extraFlags);
+    BlazeAndroidDeployInfo deployInfo;
+    try {
+      deployInfo = buildStep.getDeployInfo();
+    } catch (ApkProvisionException e) {
+      throw new ExecutionException(e);
+    }
+
+    return BlazeAndroidBinaryApplicationLaunchTaskProvider.getApplicationLaunchTask(
+        applicationIdProvider,
+        deployInfo.getMergedManifest(),
+        configState,
+        startActivityFlagsProvider,
+        launchStatus);
   }
 
   @Nullable
