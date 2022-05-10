@@ -85,12 +85,7 @@ public class BlazeAndroidBinaryNormalBuildRunContext
       AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
       throws ExecutionException {
     return androidDebugger.getConnectDebuggerTask(
-        env,
-        null,
-        applicationIdProvider,
-        facet,
-        androidDebuggerState,
-        runConfiguration.getType().getId());
+        env, applicationIdProvider, facet, androidDebuggerState);
   }
 
   @Override
