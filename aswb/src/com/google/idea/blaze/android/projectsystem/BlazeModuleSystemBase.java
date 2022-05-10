@@ -409,49 +409,9 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     ImmutableMap.Builder<ManifestSystemProperty, String> directOverrides = ImmutableMap.builder();
     ImmutableMap.Builder<String, String> placeholders = ImmutableMap.builder();
     manifestValues.forEach(
-        (key, value) -> processManifestValue(key, value, directOverrides, placeholders));
+        (key, value) ->
+            ManifestValueProcessor.processManifestValue(key, value, directOverrides, placeholders));
     return new ManifestOverrides(directOverrides.build(), placeholders.build());
-  }
-
-  /**
-   * Puts the key-value pair from a target's manifest_values map into either {@code directOverrides}
-   * if the key corresponds to a manifest attribute that Blaze allows you to override directly, or
-   * {@code placeholders} otherwise.
-   *
-   * @see <a
-   *     href="https://docs.bazel.build/versions/master/be/android.html#android_binary.manifest_values">manifest_values</a>
-   */
-  private static void processManifestValue(
-      String key,
-      String value,
-      ImmutableMap.Builder<ManifestSystemProperty, String> directOverrides,
-      ImmutableMap.Builder<String, String> placeholders) {
-    switch (key) {
-      case "applicationId":
-        directOverrides.put(ManifestSystemProperty.PACKAGE, value);
-        break;
-      case "versionCode":
-        directOverrides.put(ManifestSystemProperty.VERSION_CODE, value);
-        break;
-      case "versionName":
-        directOverrides.put(ManifestSystemProperty.VERSION_NAME, value);
-        break;
-      case "minSdkVersion":
-        directOverrides.put(ManifestSystemProperty.MIN_SDK_VERSION, value);
-        break;
-      case "targetSdkVersion":
-        directOverrides.put(ManifestSystemProperty.TARGET_SDK_VERSION, value);
-        break;
-      case "maxSdkVersion":
-        directOverrides.put(ManifestSystemProperty.MAX_SDK_VERSION, value);
-        break;
-      case "packageName":
-        // From the doc: "packageName will be ignored and will be set from either applicationId if
-        // specified or the package in manifest"
-        break;
-      default:
-        placeholders.put(key, value);
-    }
   }
 
   @Override
