@@ -23,7 +23,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
@@ -114,7 +116,7 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
             : BlazeQueryOutputBaseProvider.getInstance(project).getOutputBaseFlag();
 
     BlazeCommand command =
-        BlazeCommand.builder(getBinaryPath(project), BlazeCommandName.QUERY)
+        BlazeCommand.builder(getBuildInvoker(project, context), BlazeCommandName.QUERY)
             .addBlazeFlags("--output=label_kind")
             .addBlazeFlags("--keep_going")
             .addBlazeFlags(query)
@@ -162,8 +164,13 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
     return WorkspaceHelper.getBuildLabel(project, file);
   }
 
-  private static String getBinaryPath(Project project) {
-    BuildSystemProvider buildSystemProvider = Blaze.getBuildSystemProvider(project);
-    return buildSystemProvider.getSyncBinaryPath(project);
+  private static BuildInvoker getBuildInvoker(Project project, BlazeContext context) {
+    BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
+    if (buildSystem.getSyncStrategy(project) != SyncStrategy.SERIAL) {
+      return buildSystem
+          .getParallelBuildInvoker(project, context)
+          .orElse(buildSystem.getBuildInvoker(project, context));
+    }
+    return buildSystem.getBuildInvoker(project, context);
   }
 }
