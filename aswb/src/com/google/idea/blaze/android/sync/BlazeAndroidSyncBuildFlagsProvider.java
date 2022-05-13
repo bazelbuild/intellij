@@ -61,10 +61,15 @@ public class BlazeAndroidSyncBuildFlagsProvider implements BuildFlagsProvider {
       String message =
           "Forcing fat_apk_cpu flag to a single cpu architecture (x86_64) for sync. Refer"
               + " to go/auto-set-fat-apk-cpu-to-single-cpu for more details.";
-      // Print to both summary and print outputs (i.e. main and subtask window of blaze console)
-      context.output(SummaryOutput.output(Prefix.INFO, message));
-      context.output(PrintOutput.log(message));
-      logger.info("Forcing fat_apk_cpu to x86_64 for sync");
+      // Print to console only for "build" command. This method is invoked in a number of other
+      // contexts such as collecting the flags for "blaze info", and we don't want to spam the
+      // console on all of those invocations.
+      if (BlazeCommandName.BUILD.equals(command)) {
+        // Print to both summary and print outputs (i.e. main and subtask window of blaze console)
+        context.output(SummaryOutput.output(Prefix.INFO, message));
+        context.output(PrintOutput.log(message));
+        logger.info("Forcing fat_apk_cpu to x86_64 for sync");
+      }
       flags.add("--fat_apk_cpu=x86_64");
     }
   }
