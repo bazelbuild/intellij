@@ -20,7 +20,7 @@ create_proto_visibility_group()
 java_import(
     name = "proto_deps",
     jars = [":repackaged_proto_deps"],
-    visibility = PLUGIN_PACKAGES_VISIBILITY,
+    visibility = PLUGIN_PACKAGES_VISIBILITY + ["//third_party/bazel/src/test/java/com/google/devtools/build/lib/bazel/commands:__pkg__"],
 )
 
 proto_library(
