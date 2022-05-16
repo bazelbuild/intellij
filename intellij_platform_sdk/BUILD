@@ -289,6 +289,21 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-2021.3",
+    values = {
+        "define": "ij_product=android-studio-2021.3",
+    },
+)
+
+config_setting(
+    name = "android-studio-2021.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=android-studio-2021.3",
+    },
+)
+
+config_setting(
     name = "clion-latest",
     values = {
         "define": "ij_product=clion-latest",
@@ -487,6 +502,7 @@ java_library(
         "intellij-ue-2021.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.1": ["@jsr305_annotations//jar"],
         "android-studio-2021.2": ["@jsr305_annotations//jar"],
+        "android-studio-2021.3": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.
         "default": [":bundled_jsr305"],
     }),
@@ -643,6 +659,7 @@ filegroup(
     name = "application_info_container",
     srcs = select_from_plugin_api_version_directory({
         "android-studio-2021.2": [":application_info_json"],
+        "android-studio-2021.3": [":application_info_json"],
         "intellij-2021.2": [":application_info_json"],
         "intellij-ue-2021.2": [":application_info_json"],
         "intellij-2021.3": [":application_info_json"],

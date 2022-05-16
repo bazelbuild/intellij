@@ -16,6 +16,7 @@ java_library(
     visibility = SDK_COMPAT_VISIBILITY,
     exports = select_for_plugin_api({
         "android-studio-2021.2": ["//sdkcompat/v212"],
+        "android-studio-2021.3": ["//sdkcompat/v213"],
         "intellij-2021.2": ["//sdkcompat/v212"],
         "intellij-ue-2021.2": ["//sdkcompat/v212"],
         "intellij-2021.3": ["//sdkcompat/v213"],
