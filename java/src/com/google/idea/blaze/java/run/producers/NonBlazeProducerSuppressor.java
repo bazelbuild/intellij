@@ -26,14 +26,25 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
 
   private static final ImmutableList<String> KOTLIN_PRODUCERS =
       ImmutableList.of(
+          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.common.KotlinMultiplatformCommonTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.common.KotlinMultiplatformCommonTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradle.native.KotlinNativeRunConfigurationProducer",
           "org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer",
           "org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinJvmTestClassGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer",
-          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer",
           /** #api212: remove these duplicate producers. */
           "org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer",
@@ -44,6 +55,9 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
   private static final ImmutableList<String> ANDROID_PRODUCERS =
       ImmutableList.of(
           "com.android.tools.idea.run.AndroidConfigurationProducer",
+          "com.android.tools.idea.run.configuration.AndroidComplicationRunConfigurationProducer",
+          "com.android.tools.idea.run.configuration.AndroidTileRunConfigurationProducer",
+          "com.android.tools.idea.run.configuration.AndroidWatchFaceRunConfigurationProducer",
           "com.android.tools.idea.testartifacts.instrumented.AndroidTestConfigurationProducer",
           "com.android.tools.idea.testartifacts.junit.TestClassAndroidConfigurationProducer",
           "com.android.tools.idea.testartifacts.junit.TestDirectoryAndroidConfigurationProducer",
