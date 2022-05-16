@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import java.awt.GridBagLayout;
+import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -55,7 +56,7 @@ final class OpenBlazeWorkspaceFileAction extends BlazeProjectAction {
     final Project project;
 
     final JPanel component;
-    final FileTextField fileTextField;
+    final WorkspaceFileTextField fileTextField;
 
     OpenBlazeWorkspaceFileActionDialog(
         Project project, WorkspacePathResolver workspacePathResolver) {
@@ -90,7 +91,7 @@ final class OpenBlazeWorkspaceFileAction extends BlazeProjectAction {
     @Nullable
     @Override
     protected ValidationInfo doValidate() {
-      VirtualFile selectedFile = fileTextField.getSelectedFile();
+      VirtualFile selectedFile = fileTextField.getVirtualFile();
       if (selectedFile == null || !selectedFile.exists()) {
         return new ValidationInfo("File does not exist", fileTextField.getField());
       } else if (selectedFile.isDirectory()) {
@@ -102,7 +103,9 @@ final class OpenBlazeWorkspaceFileAction extends BlazeProjectAction {
 
     @Override
     protected void doOKAction() {
-      OpenFileAction.openFile(fileTextField.getSelectedFile(), project);
+      // It cannot be null because it is validated in `doValidate()`
+      VirtualFile selectedFile = Objects.requireNonNull(fileTextField.getVirtualFile());
+      OpenFileAction.openFile(selectedFile, project);
       super.doOKAction();
     }
   }

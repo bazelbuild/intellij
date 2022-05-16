@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ui;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTextField;
@@ -32,6 +33,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBTextField;
 import java.io.File;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 import javax.swing.JTextField;
 
@@ -48,7 +50,7 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
     super(textField, new WorkspaceFinder(pathResolver), filter, ImmutableMap.of(), parent);
   }
 
-  public static FileTextField create(
+  public static WorkspaceFileTextField create(
       WorkspacePathResolver pathResolver,
       FileChooserDescriptor descriptor,
       int columns,
@@ -59,10 +61,14 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
   }
 
   @Nullable
-  @Override
-  public VirtualFile getSelectedFile() {
+  public VirtualFile getVirtualFile() {
     LookupFile lookupFile = getFile();
     return lookupFile != null ? ((VfsFile) lookupFile).getFile() : null;
+  }
+
+  @Override
+  public VirtualFile getSelectedFile() {
+    return getVirtualFile();
   }
 
   private static class WorkspaceFinder implements Finder {
@@ -79,9 +85,9 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
       File file = new File(normalize(path));
       VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
       if (vFile != null) {
-        return new VfsFile(/* unused LocalFsFinder */ null, vFile);
+        return BaseSdkCompat.getVfsFile(vFile);
       } else if (file.isAbsolute()) {
-        return new IoFile(new File(path));
+        return BaseSdkCompat.getIoFile(file);
       }
       return null;
     }

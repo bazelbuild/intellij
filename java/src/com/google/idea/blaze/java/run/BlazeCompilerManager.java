@@ -52,8 +52,8 @@ public class BlazeCompilerManager extends CompilerManagerImpl {
 
   private final Project project;
 
-  public BlazeCompilerManager(Project project, MessageBus messageBus) {
-    super(project, messageBus);
+  public BlazeCompilerManager(Project project) {
+    super(project);
     this.project = project;
   }
 

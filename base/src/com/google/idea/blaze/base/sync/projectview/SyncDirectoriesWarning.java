@@ -52,6 +52,7 @@ public class SyncDirectoriesWarning {
                 + "%<s sync to fix it.",
             buildSystem);
     String title = String.format("Syncing without a %s build", buildSystem);
+    // FIXME: wait for https://github.com/JetBrains/intellij-community/pull/2019 to be merged
     DialogWrapper.DoNotAskOption dontAskAgain =
         new DialogWrapper.DoNotAskOption.Adapter() {
           @Override

@@ -147,11 +147,6 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
       }
     }
 
-    @Override
-    public boolean isConfigurationSingletonByDefault() {
-      return true;
-    }
-
     private static String defaultVmOptions() {
       String vmoptionsText = VMOptions.read();
       if (vmoptionsText == null) {

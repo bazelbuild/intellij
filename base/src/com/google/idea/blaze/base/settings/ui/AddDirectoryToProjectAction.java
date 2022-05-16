@@ -115,7 +115,7 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
     final ProjectViewSet projectView;
     final WorkspacePathResolver workspacePathResolver;
     final JPanel component;
-    final FileTextField fileTextField;
+    final WorkspaceFileTextField fileTextField;
     final JBCheckBox addTargetsCheckBox;
 
     OpenBlazeWorkspaceFileActionDialog(
@@ -187,7 +187,7 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
     @Nullable
     @Override
     protected ValidationInfo doValidate() {
-      VirtualFile selectedFile = fileTextField.getSelectedFile();
+      VirtualFile selectedFile = fileTextField.getVirtualFile();
       if (selectedFile == null || !selectedFile.exists()) {
         return new ValidationInfo("File does not exist", fileTextField.getField());
       } else if (!selectedFile.isDirectory()) {
@@ -219,7 +219,7 @@ public final class AddDirectoryToProjectAction extends BlazeProjectAction {
 
     @Override
     protected void doOKAction() {
-      VirtualFile selectedFile = fileTextField.getSelectedFile();
+      VirtualFile selectedFile = fileTextField.getVirtualFile();
       checkState(selectedFile != null);
       WorkspacePath workspacePath =
           workspacePathResolver.getWorkspacePath(new File(selectedFile.getPath()));

@@ -39,6 +39,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 import org.jetbrains.debugger.connection.RemoteVmConnection;
@@ -87,8 +88,9 @@ public class BlazeGoDebugRunner extends GoBuildingRunner {
         .startSession(
             environment,
             new XDebugProcessStarter() {
+              @NotNull
               @Override
-              public XDebugProcess start(XDebugSession session) {
+              public XDebugProcess start(@NotNull XDebugSession session) {
                 RemoteVmConnection<?> connection =
                     new DlvRemoteVmConnection(DlvDisconnectOption.KILL);
                 XDebugProcess process =
