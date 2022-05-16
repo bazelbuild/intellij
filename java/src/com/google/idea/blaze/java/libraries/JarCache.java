@@ -44,7 +44,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope.NetworkTrafficUsedOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -210,22 +209,15 @@ public class JarCache {
       }
 
       // Prefetch all libraries to local before reading and copying content
-      ImmutableList<RemoteOutputArtifact> remoteArtifacts =
-          BlazeArtifact.getRemoteArtifacts(updated.values());
       ListenableFuture<?> downloadArtifactsFuture =
           RemoteArtifactPrefetcher.getInstance()
               .downloadArtifacts(
-                  /* projectName= */ project.getName(), /* outputArtifacts= */ remoteArtifacts);
+                  /* projectName= */ project.getName(),
+                  /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(updated.values()));
       FutureUtil.waitForFuture(context, downloadArtifactsFuture)
           .timed("FetchJars", EventType.Prefetching)
           .withProgressMessage("Fetching jar files...")
           .run();
-      if (!remoteArtifacts.isEmpty()) {
-        context.output(
-            new NetworkTrafficUsedOutput(
-                remoteArtifacts.stream().mapToLong(RemoteOutputArtifact::getLength).sum(),
-                "jarcache"));
-      }
 
       // update cache files, and remove files if required
       List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(updated));

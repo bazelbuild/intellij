@@ -77,7 +77,6 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
-import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope.NetworkTrafficUsedOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
@@ -351,8 +350,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                     executor.submit(
                         () -> {
                           totalSizeLoaded.addAndGet(file.getLength());
-                          context.output(
-                              new NetworkTrafficUsedOutput(file.getLength(), "targetmap"));
                           IntellijIdeInfo.TargetIdeInfo message =
                               aspectStrategy.readAspectFile(file);
                           TargetIdeInfo target =

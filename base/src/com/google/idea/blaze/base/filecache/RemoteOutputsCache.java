@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.Keep;
 import com.google.idea.blaze.base.async.FutureUtil;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -39,7 +40,6 @@ import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope.NetworkTrafficUsedOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -173,20 +173,15 @@ public final class RemoteOutputsCache {
           return;
         }
       }
-      Collection<RemoteOutputArtifact> artifactsToDownload = updatedOutputs.values();
       ListenableFuture<?> downloadArtifactsFuture =
           RemoteArtifactPrefetcher.getInstance()
-              .downloadArtifacts(project.getName(), artifactsToDownload);
+              .downloadArtifacts(
+                  /* projectName= */ project.getName(),
+                  /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(updatedOutputs.values()));
       FutureUtil.waitForFuture(context, downloadArtifactsFuture)
           .timed("PrefetchRemoteOutput", EventType.Prefetching)
           .withProgressMessage("Prefetching output artifacts...")
           .run();
-      if (!artifactsToDownload.isEmpty()) {
-        context.output(
-            new NetworkTrafficUsedOutput(
-                artifactsToDownload.stream().mapToLong(RemoteOutputArtifact::getLength).sum(),
-                "remoteoutputs"));
-      }
 
       List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(updatedOutputs));
       futures.addAll(deleteCacheFiles(removed));

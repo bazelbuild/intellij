@@ -37,7 +37,6 @@ import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope.NetworkTrafficUsedOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -177,7 +176,6 @@ public class JdepsFileReader {
           FetchExecutor.EXECUTOR.submit(
               () -> {
                 totalSizeLoaded.addAndGet(updatedFile.getLength());
-                context.output(new NetworkTrafficUsedOutput(updatedFile.getLength(), "jdeps"));
                 try (InputStream inputStream = updatedFile.getInputStream()) {
                   Deps.Dependencies dependencies = Deps.Dependencies.parseFrom(inputStream);
                   if (dependencies == null) {

@@ -18,7 +18,6 @@ package com.google.idea.blaze.android.libraries;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -37,7 +36,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope.NetworkTrafficUsedOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -171,22 +169,16 @@ public class UnpackedAars {
       }
 
       // Prefetch all libraries to local before reading and copying content
-      ImmutableList<RemoteOutputArtifact> remoteArtifacts =
-          BlazeArtifact.getRemoteArtifacts(artifactsToDownload);
       ListenableFuture<?> downloadArtifactsFuture =
           RemoteArtifactPrefetcher.getInstance()
               .downloadArtifacts(
-                  /* projectName= */ project.getName(), /* outputArtifacts= */ remoteArtifacts);
+                  /* projectName= */ project.getName(),
+                  /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(artifactsToDownload));
 
       FutureUtil.waitForFuture(context, downloadArtifactsFuture)
           .timed("FetchAars", EventType.Prefetching)
           .withProgressMessage("Fetching aar files...")
           .run();
-      if (!remoteArtifacts.isEmpty()) {
-        context.output(
-            new NetworkTrafficUsedOutput(
-                remoteArtifacts.stream().mapToLong(RemoteOutputArtifact::getLength).sum(), "aar"));
-      }
 
       // remove files if required. Remove file before updating cache files to avoid removing any
       // manually created directory.
