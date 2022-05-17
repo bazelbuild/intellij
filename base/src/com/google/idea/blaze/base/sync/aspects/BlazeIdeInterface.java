@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync.aspects;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
@@ -68,5 +69,6 @@ public interface BlazeIdeInterface {
       ProjectViewSet projectViewSet,
       ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      ImmutableSet<OutputGroup> outputGroups);
+      ImmutableSet<OutputGroup> outputGroups,
+      BlazeInvocationContext blazeInvocationContext);
 }

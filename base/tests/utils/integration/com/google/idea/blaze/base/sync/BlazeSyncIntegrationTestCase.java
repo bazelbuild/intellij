@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.MockEventLoggingService;
 import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -336,7 +337,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         ProjectViewSet projectViewSet,
         ShardedTargetList shardedTargets,
         WorkspaceLanguageSettings workspaceLanguageSettings,
-        ImmutableSet<OutputGroup> outputGroups) {
+        ImmutableSet<OutputGroup> outputGroups,
+        BlazeInvocationContext blazeInvocationContext) {
       return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
     }
   }

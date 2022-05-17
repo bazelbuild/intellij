@@ -24,6 +24,7 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.dependencies.BlazeQuerySourceToTargetProvider;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -414,7 +415,8 @@ final class BuildPhaseSyncTask {
               projectViewSet,
               shardedTargets,
               projectState.getLanguageSettings(),
-              ImmutableSet.of(OutputGroup.RESOLVE, OutputGroup.INFO));
+              ImmutableSet.of(OutputGroup.RESOLVE, OutputGroup.INFO),
+              BlazeInvocationContext.SYNC_CONTEXT);
         });
   }
 }

@@ -246,7 +246,8 @@ public class BlazeBuildService {
                                 projectView,
                                 shardedTargets.shardedTargets,
                                 projectData.getWorkspaceLanguageSettings(),
-                                ImmutableSet.of(OutputGroup.COMPILE));
+                                ImmutableSet.of(OutputGroup.COMPILE),
+                                BlazeInvocationContext.OTHER_CONTEXT);
 
                     refreshFileCachesAndNotifyListeners(context, buildOutputs, project);
 

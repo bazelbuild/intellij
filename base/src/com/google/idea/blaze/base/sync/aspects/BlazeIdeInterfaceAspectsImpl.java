@@ -568,7 +568,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ProjectViewSet projectViewSet,
       ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      ImmutableSet<OutputGroup> outputGroups) {
+      ImmutableSet<OutputGroup> outputGroups,
+      BlazeInvocationContext blazeInvocationContext) {
     AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersion);
 
     final Ref<BlazeBuildOutputs> combinedResult = new Ref<>();
@@ -601,11 +602,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
     // Fetching blaze flags here using parent context, to avoid duplicate fetch for every shard.
     List<String> additionalBlazeFlags =
         BlazeFlags.blazeFlags(
-            project,
-            projectViewSet,
-            BlazeCommandName.BUILD,
-            context,
-            BlazeInvocationContext.SYNC_CONTEXT);
+            project, projectViewSet, BlazeCommandName.BUILD, context, blazeInvocationContext);
     Function<List<? extends TargetExpression>, BuildResult> invocation =
         targets ->
             Scope.push(
