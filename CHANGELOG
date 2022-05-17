@@ -1,3 +1,7 @@
+v2022.05.17
+===========
+* Bug fixes and internal cleanup.
+
 v2022.05.03
 ===========
 * Added ALT+SHIFT+Y hotkey for running full Bazel syncs.
