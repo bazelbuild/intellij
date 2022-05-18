@@ -45,7 +45,7 @@ public class LexicographicTargetSharder implements BuildBatchingService {
   // sets a smaller target_shard_size
   @VisibleForTesting
   static final IntExperiment minimumRemoteShardSize =
-      new IntExperiment("lexicographic.sharder.minimum.remote.shard.size", 20);
+      new IntExperiment("lexicographic.sharder.minimum.remote.shard.size", 500);
 
   // The minimum targets size requirement to use all idle workers. Splitting targets does not help
   // to reduce build time when their target size is too small. So set a threshold to avoid
