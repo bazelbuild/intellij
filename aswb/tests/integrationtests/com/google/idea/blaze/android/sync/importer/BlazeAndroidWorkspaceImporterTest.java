@@ -81,6 +81,7 @@ import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
+import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings;
 import com.google.idea.blaze.java.sync.jdeps.MockJdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
@@ -167,6 +168,7 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);
+    registerExtensionPoint(EmptyLibraryFilterSettings.EP_NAME, EmptyLibraryFilterSettings.class);
 
     // For importJavaWorkspace.
     applicationServices.register(

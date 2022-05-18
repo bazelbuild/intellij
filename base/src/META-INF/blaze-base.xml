@@ -474,6 +474,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.CustomFormatter" interface="com.google.idea.blaze.base.formatter.CustomFormatter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputGroupsProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.OutputGroupsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ExperimentLoader" interface="com.google.idea.common.experiments.ExperimentLoader"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.EmptyLibraryFilterSettings" interface="com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings" />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
