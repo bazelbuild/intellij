@@ -39,6 +39,7 @@ import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -81,6 +82,11 @@ public class BlazeClassJarProvider implements ClassJarProvider {
 
     TargetMap targetMap = blazeProjectData.getTargetMap();
     ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
+    boolean isWorkspaceModule = BlazeDataStorage.WORKSPACE_MODULE_NAME.equals(module.getName());
+
+    if (isWorkspaceModule) {
+      return getAllExternalLibraires(targetMap, decoder);
+    }
 
     if (useRenderJarForExternalLibraries.getValue()) {
       return TargetToBinaryMap.getInstance(project).getSourceBinaryTargets().stream()
@@ -112,7 +118,7 @@ public class BlazeClassJarProvider implements ClassJarProvider {
       if (javaIdeInfo != null) {
         for (LibraryArtifact jar : javaIdeInfo.getJars()) {
           ArtifactLocation classJar = jar.getClassJar();
-          if (classJar != null && classJar.isSource()) {
+          if (classJar != null) {
             results.add(
                 Preconditions.checkNotNull(
                     OutputArtifactResolver.resolve(project, decoder, classJar),
@@ -186,4 +192,33 @@ public class BlazeClassJarProvider implements ClassJarProvider {
 
     return false;
   }
+
+    List<File> getAllExternalLibraires(TargetMap targetMap, ArtifactLocationDecoder decoder) {
+        ImmutableList.Builder<File> results = ImmutableList.builder();
+        for (TargetIdeInfo target : targetMap.targets()) {
+            for (TargetKey dependencyTargetKey :
+                    TransitiveDependencyMap.getInstance(project).getTransitiveDependencies(target.getKey())) {
+                TargetIdeInfo dependencyTarget = targetMap.get(dependencyTargetKey);
+                if (dependencyTarget == null) {
+                    continue;
+                }
+
+                // Add all import jars as external libraries.
+                JavaIdeInfo javaIdeInfo = dependencyTarget.getJavaIdeInfo();
+                if (javaIdeInfo != null) {
+                    for (LibraryArtifact jar : javaIdeInfo.getJars()) {
+                        ArtifactLocation classJar = jar.getClassJar();
+                        if (classJar != null) {
+                            results.add(
+                                    Preconditions.checkNotNull(
+                                            OutputArtifactResolver.resolve(project, decoder, classJar),
+                                            "Fail to find file %s",
+                                            classJar.getRelativePath()));
+                        }
+                    }
+                }
+            }
+        }
+        return results.build();
+    }
 }
