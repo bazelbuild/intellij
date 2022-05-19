@@ -70,6 +70,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
+    <MavenArtifactLocator implementation="com.google.idea.blaze.android.projectsystem.DefaultMavenArtifactLocator"/>
     <LintCollector implementation="com.google.idea.blaze.android.libraries.AndroidLintCollector"/>
     <SyncPlugin implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncPlugin"/>
     <QuerySyncPlugin implementation="com.google.idea.blaze.android.qsync.BlazeAndroidQuerySyncPlugin"/>
