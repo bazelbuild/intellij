@@ -15,11 +15,14 @@
  */
 package com.google.idea.blaze.android.sync.model.idea;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.android.tools.idea.model.ClassJarProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.android.libraries.RenderJarCache;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.android.targetmaps.TargetToBinaryMap;
 import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -32,6 +35,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -47,9 +51,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 /** Collects class jars from the user's build. */
 public class BlazeClassJarProvider implements ClassJarProvider {
+  private static final BoolExperiment useRenderJarForExternalLibraries =
+      new BoolExperiment("aswb.classjars.renderjar.as.libraries", true);
   private final Project project;
 
   public BlazeClassJarProvider(final Project project) {
@@ -68,9 +75,19 @@ public class BlazeClassJarProvider implements ClassJarProvider {
     TargetMap targetMap = blazeProjectData.getTargetMap();
     ArtifactLocationDecoder decoder = blazeProjectData.getArtifactLocationDecoder();
 
+    if (useRenderJarForExternalLibraries.getValue()) {
+      return TargetToBinaryMap.getInstance(project).getSourceBinaryTargets().stream()
+          .filter(targetMap::contains)
+          .map(
+              (binaryTarget) ->
+                  RenderJarCache.getInstance(project)
+                      .getCachedJarForBinaryTarget(decoder, targetMap.get(binaryTarget)))
+          .filter(Objects::nonNull)
+          .collect(toImmutableList());
+    }
+
     AndroidResourceModuleRegistry registry = AndroidResourceModuleRegistry.getInstance(project);
     TargetIdeInfo target = targetMap.get(registry.getTargetKey(module));
-
     if (target == null) {
       return ImmutableList.of();
     }
