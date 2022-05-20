@@ -31,9 +31,12 @@ public interface LintCollector {
 
   ImmutableList<File> collectLintJars(Project project, BlazeProjectData blazeProjectData);
 
+  boolean isEnabled();
+
   static ImmutableList<File> getLintJars(Project project, BlazeProjectData blazeProjectData) {
     return EP_NAME
         .extensions()
+        .filter(ep -> ep.isEnabled())
         .map(ep -> ep.collectLintJars(project, blazeProjectData))
         .flatMap(List::stream)
         .collect(toImmutableList());
