@@ -366,6 +366,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         "go_binary",
         "go_library",
         "go_test",
+        "go_transition_test",
         "go_appengine_binary",
         "go_appengine_library",
         "go_appengine_test",
@@ -394,7 +395,7 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
         import_path = go_semantics.get_import_path(ctx)
 
     library_labels = []
-    if ctx.rule.kind == "go_test" or ctx.rule.kind == "go_appengine_test":
+    if ctx.rule.kind == "go_test" or ctx.rule.kind == "go_transition_test" or ctx.rule.kind == "go_appengine_test":
         if getattr(ctx.rule.attr, "library", None) != None:
             library_labels = [str(ctx.rule.attr.library.label)]
         elif getattr(ctx.rule.attr, "embed", None) != None:
