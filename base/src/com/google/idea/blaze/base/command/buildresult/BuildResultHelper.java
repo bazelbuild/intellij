@@ -16,10 +16,11 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
 /** Assists in getting build artifacts from a build operation. */
 public interface BuildResultHelper extends AutoCloseable {
@@ -36,19 +37,45 @@ public interface BuildResultHelper extends AutoCloseable {
    * called once, after the build is complete.
    */
   default ParsedBepOutput getBuildOutput() throws GetArtifactsException {
-    return getBuildOutput(Optional.empty());
+    return getBuildOutput(null, null);
+  }
+
+  /**
+   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
+   * called once, after the build is complete.
+   */
+  default ParsedBepOutput getBuildOutput(Interner<String> stringInterner)
+      throws GetArtifactsException {
+    return getBuildOutput(null, stringInterner);
+  }
+
+  /**
+   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
+   * called once, after the build is complete.
+   */
+  default ParsedBepOutput getBuildOutput(
+      @Nullable String completionBuildId, Interner<String> stringInterner)
+      throws GetArtifactsException {
+    return getBuildOutput(completionBuildId);
   }
 
   /**
    * Retrieves BEP build events according to given id, parses them and returns the corresponding
    * {@link ParsedBepOutput}. May only be called once, after the build is complete.
    */
-  ParsedBepOutput getBuildOutput(Optional<String> completedBuildId) throws GetArtifactsException;
+  ParsedBepOutput getBuildOutput(@Nullable String completedBuildId) throws GetArtifactsException;
 
   /**
    * Parses the BEP output data to collect all build flags used. Return all flags that pass filters
    */
-  BuildFlags getBlazeFlags(Optional<String> completedBuildId) throws GetFlagsException;
+  default BuildFlags getBlazeFlags() throws GetFlagsException {
+    return getBlazeFlags(null);
+  }
+
+  /**
+   * Parses the BEP output data to collect all build flags used. Return all flags that pass filters
+   */
+  BuildFlags getBlazeFlags(@Nullable String completedBuildId) throws GetFlagsException;
 
   /**
    * Parses the BEP output data to collect message on stderr
@@ -61,13 +88,6 @@ public interface BuildResultHelper extends AutoCloseable {
    */
   default ImmutableList<String> getStderr(String completedBuildId) throws GetStderrException {
     return ImmutableList.of();
-  }
-
-  /**
-   * Parses the BEP output data to collect all build flags used. Return all flags that pass filters
-   */
-  default BuildFlags getBlazeFlags() throws GetFlagsException {
-    return getBlazeFlags(Optional.empty());
   }
 
   /**

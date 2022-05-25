@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Build event protocol implementation to get build results.
@@ -47,7 +48,7 @@ public class BuildResultHelperBep implements BuildResultHelper {
   }
 
   @Override
-  public ParsedBepOutput getBuildOutput(Optional<String> completedBuildId)
+  public ParsedBepOutput getBuildOutput(@Nullable String completedBuildId)
       throws GetArtifactsException {
     try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
       return ParsedBepOutput.parseBepArtifacts(inputStream);
@@ -58,7 +59,7 @@ public class BuildResultHelperBep implements BuildResultHelper {
   }
 
   @Override
-  public BuildFlags getBlazeFlags(Optional<String> completedBuildId) throws GetFlagsException {
+  public BuildFlags getBlazeFlags(@Nullable String completedBuildId) throws GetFlagsException {
     try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
       return BuildFlags.parseBep(inputStream);
     } catch (IOException | BuildEventStreamException e) {
