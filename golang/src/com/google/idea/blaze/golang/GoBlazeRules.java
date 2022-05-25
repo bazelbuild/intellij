@@ -30,6 +30,7 @@ public final class GoBlazeRules implements Kind.Provider {
   /** Go-specific blaze rules. */
   public enum RuleTypes {
     GO_TEST("go_test", LanguageClass.GO, RuleType.TEST),
+    GO_TRANSITION_TEST("go_transition_test", LanguageClass.GO, RuleType.TEST),
     GO_APPENGINE_TEST("go_appengine_test", LanguageClass.GO, RuleType.TEST),
     GO_BINARY("go_binary", LanguageClass.GO, RuleType.BINARY),
     GO_APPENGINE_BINARY("go_appengine_binary", LanguageClass.GO, RuleType.BINARY),
