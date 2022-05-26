@@ -217,7 +217,6 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setAddProjectViewTargets(true)
             .build());
 
-    errorCollector.assertIssues("Android model missing for module: .workspace");
     // Even if there was no sync data it's still good to create the .workspace module and attach an
     // AndroidFacet to it.  Some IDE functionalities will work as long as that's available, such as
     // logcat window.

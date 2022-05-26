@@ -254,6 +254,10 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
       return true;
     }
 
+    if (blazeProjectData.getSyncState().get(BlazeAndroidSyncData.class) == null) {
+      return true;
+    }
+
     boolean valid = true;
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       AndroidFacet facet = AndroidFacet.getInstance(module);
