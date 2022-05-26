@@ -203,6 +203,14 @@ http_archive(
     url = "https://dl.google.com/dl/android/studio/ide-zips/2021.3.1.10/android-studio-2021.3.1.10-linux.tar.gz",
 )
 
+# The plugin api for android_studio_2022_1. This is required to build CLwB\, and run integration tests.
+http_archive(
+    name = "android_studio_2022_1",
+    build_file = "@//intellij_platform_sdk:BUILD.clion221",
+    sha256 = "b53e8d84e8c02a9536321c517c6b77054b34f68a08def32673df2d7d7d333a18",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2022.1.1.2/android-studio-2022.1.1.2-linux.tar.gz",
+)
+
 # LICENSE: Common Public License 1.0
 jvm_maven_import_external(
     name = "junit",
