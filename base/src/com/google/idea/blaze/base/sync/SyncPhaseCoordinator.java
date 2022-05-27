@@ -56,6 +56,7 @@ import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.PerformanceWarningScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
+import com.google.idea.blaze.base.scope.scopes.SharedStringPoolScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
@@ -663,6 +664,7 @@ final class SyncPhaseCoordinator {
     }
     context.push(new ProgressIndicatorScope(indicator));
     context.push(new NetworkTrafficTrackingScope());
+    context.push(new SharedStringPoolScope());
 
     BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
     context

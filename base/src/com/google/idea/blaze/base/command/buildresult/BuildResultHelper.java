@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +38,25 @@ public interface BuildResultHelper extends AutoCloseable {
    */
   default ParsedBepOutput getBuildOutput() throws GetArtifactsException {
     return getBuildOutput(Optional.empty());
+  }
+
+  /**
+   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
+   * called once, after the build is complete.
+   */
+  default ParsedBepOutput getBuildOutput(Interner<String> stringInterner)
+      throws GetArtifactsException {
+    return getBuildOutput(Optional.empty(), stringInterner);
+  }
+
+  /**
+   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
+   * called once, after the build is complete.
+   */
+  default ParsedBepOutput getBuildOutput(
+      Optional<String> completionBuildId, Interner<String> stringInterner)
+      throws GetArtifactsException {
+    return getBuildOutput(completionBuildId);
   }
 
   /**
