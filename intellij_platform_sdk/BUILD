@@ -7,10 +7,8 @@
 
 load(
     ":build_defs.bzl",
-    "select_for_ide",
     "select_for_plugin_api",
     "select_from_plugin_api_directory",
-    "select_from_plugin_api_version_directory",
 )
 load(
     "//:build-visibility.bzl",
@@ -650,48 +648,11 @@ java_library(
     ),
 )
 
-# Not all plugin api versions have lib/resources.jar from which we used to get
-# the application information to set the idea-version compatibility range of the plugin.
-# However, product-info.json contains this information but it was not imported to google3
-# with previous plugin api versions. So the application_info_container will contain
-# the application_info_jar for previous versions and application_info_json for new ones.
 filegroup(
-    name = "application_info_container",
-    srcs = select_from_plugin_api_version_directory({
-        "android-studio-2021.2": [":application_info_json"],
-        "android-studio-2021.3": [":application_info_json"],
-        "intellij-2021.2": [":application_info_json"],
-        "intellij-ue-2021.2": [":application_info_json"],
-        "intellij-2021.3": [":application_info_json"],
-        "intellij-ue-2021.3": [":application_info_json"],
-        "intellij-2022.1": [":application_info_json"],
-        "intellij-ue-2022.1": [":application_info_json"],
-        "clion-2021.2": [":application_info_json"],
-        "clion-2021.3": [":application_info_json"],
-        "clion-2022.1": [":application_info_json"],
-        "default": [":application_info_jar"],
-    }),
-)
-
-# #api211: product-info.json will be imported to google3 from 2021.2 on. Therefore after removing
-# 2021.1 support there will be no need for application_info_jar and application_info_container
-# and we can update api_version_txt script to depend only on application_info_json.
-filegroup(
-    name = "application_info_jar",
+    name = "application_info_json",
     srcs = select_from_plugin_api_directory(
-        android_studio = [":application_info_jar"],
-        clion = [":application_info_jar"],
-        intellij = [":application_info_jar"],
-    ),
-)
-
-filegroup(
-    name = "application_info_name",
-    srcs = select_for_ide(
-        android_studio = ["android_studio_application_info_name.txt"],
-        clion = ["clion_application_info_name.txt"],
-        default = ["intellij_application_info_name.txt"],
-        intellij = ["intellij_application_info_name.txt"],
-        intellij_ue = ["intellij_ue_application_info_name.txt"],
+        android_studio = [":application_info_json"],
+        clion = [":application_info_json"],
+        intellij = [":application_info_json"],
     ),
 )
