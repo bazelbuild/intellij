@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.java.sync.importer;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -164,12 +163,9 @@ public final class BlazeJavaWorkspaceImporter {
     Map<String, BlazeJarLibrary> jdepsPathToLibrary = Maps.newHashMap();
 
     // Add any output jars from source rules
-    for (TargetKey key : workspaceBuilder.outputJarsFromSourceTargets.keySet()) {
-      Collection<BlazeJarLibrary> jars = workspaceBuilder.outputJarsFromSourceTargets.get(key);
-      targetKeyToLibrary.putAll(key, jars);
-      for (BlazeJarLibrary library : jars) {
-        addLibraryToJdeps(jdepsPathToLibrary, library);
-      }
+    targetKeyToLibrary.putAll(workspaceBuilder.outputJarsFromSourceTargets);
+    for (BlazeJarLibrary library : workspaceBuilder.outputJarsFromSourceTargets.values()) {
+      addLibraryToJdeps(jdepsPathToLibrary, library);
     }
 
     for (TargetIdeInfo target : libraryTargets) {
@@ -177,19 +173,16 @@ public final class BlazeJavaWorkspaceImporter {
       if (javaIdeInfo == null) {
         continue;
       }
-      List<LibraryArtifact> allJars = Lists.newArrayList();
-      allJars.addAll(javaIdeInfo.getJars());
-      Collection<BlazeJarLibrary> libraries =
-          allJars.stream().map(jar -> new BlazeJarLibrary(jar, target.getKey())).collect(toList());
 
-      targetKeyToLibrary.putAll(target.getKey(), libraries);
-      for (BlazeJarLibrary library : libraries) {
+      for (LibraryArtifact jar : javaIdeInfo.getJars()) {
+        BlazeJarLibrary library = new BlazeJarLibrary(jar, target.getKey());
+        targetKeyToLibrary.put(target.getKey(), library);
         addLibraryToJdeps(jdepsPathToLibrary, library);
       }
-      workspaceBuilder.pluginProcessorJars.addAll(
-          javaIdeInfo.getPluginProcessorJars().stream()
-              .map(jar -> jar.jarForIntellijLibrary())
-              .collect(toImmutableList()));
+
+      javaIdeInfo.getPluginProcessorJars().stream()
+          .map(LibraryArtifact::jarForIntellijLibrary)
+          .forEach(workspaceBuilder.pluginProcessorJars::add);
     }
 
     // Preserve classpath order. Add leaf level dependencies first and work the way up. This
@@ -307,10 +300,9 @@ public final class BlazeJavaWorkspaceImporter {
       }
     }
     if (augmenters.stream().allMatch(argument -> argument.shouldAttachGenJar(target))) {
-      workspaceBuilder.generatedJarsFromSourceTargets.addAll(
-          javaIdeInfo.getGeneratedJars().stream()
-              .map(jar -> new BlazeJarLibrary(jar, targetKey))
-              .collect(toList()));
+      javaIdeInfo.getGeneratedJars().stream()
+          .map(jar -> new BlazeJarLibrary(jar, targetKey))
+          .forEach(workspaceBuilder.generatedJarsFromSourceTargets::add);
     }
     if (javaIdeInfo.getFilteredGenJar() != null) {
       workspaceBuilder.generatedJarsFromSourceTargets.add(
@@ -332,10 +324,9 @@ public final class BlazeJavaWorkspaceImporter {
           workspaceBuilder.generatedJarsFromSourceTargets);
     }
 
-    workspaceBuilder.pluginProcessorJars.addAll(
-        javaIdeInfo.getPluginProcessorJars().stream()
-            .map(jar -> jar.jarForIntellijLibrary())
-            .collect(toImmutableList()));
+    javaIdeInfo.getPluginProcessorJars().stream()
+        .map(LibraryArtifact::jarForIntellijLibrary)
+        .forEach(workspaceBuilder.pluginProcessorJars::add);
   }
 
   @Nullable
