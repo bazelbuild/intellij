@@ -636,10 +636,12 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   progressTracker.onBuildCompleted(context); // TODO(b/216104482) track failures
                   printShardFinishedSummary(context, task.getName(), result);
                   if (!result.buildResult.outOfMemory()) {
-                    combinedResult.set(
-                        combinedResult.isNull()
-                            ? result
-                            : combinedResult.get().updateOutputs(result));
+                    synchronized (combinedResult) {
+                      combinedResult.set(
+                          combinedResult.isNull()
+                              ? result
+                              : combinedResult.get().updateOutputs(result));
+                    }
                   }
                   return result.buildResult;
                 });
