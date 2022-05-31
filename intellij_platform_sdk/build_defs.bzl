@@ -28,7 +28,7 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-ue-oss-beta": "intellij-ue-2022.1",
     "intellij-ue-oss-under-dev": "intellij-ue-2022.1",
     "android-studio-oss-stable": "android-studio-2021.2",
-    "android-studio-oss-beta": "android-studio-2021.2",
+    "android-studio-oss-beta": "android-studio-2021.3",
     "android-studio-oss-under-dev": "android-studio-2021.3",
     "clion-oss-stable": "clion-2022.1",
     "clion-oss-beta": "clion-2022.1",
