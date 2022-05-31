@@ -82,7 +82,8 @@ final class BuildPhaseSyncTask {
       SyncProjectState projectState,
       int buildId,
       BlazeContext context,
-      BuildSystem buildSystem) {
+      BuildSystem buildSystem)
+      throws SyncCanceledException, SyncFailedException {
     BuildPhaseSyncTask task =
         new BuildPhaseSyncTask(project, syncParams, projectState, buildId, buildSystem);
     return task.run(context);
@@ -115,17 +116,19 @@ final class BuildPhaseSyncTask {
     this.buildSystem = buildSystem;
   }
 
-  private BlazeSyncBuildResult run(BlazeContext parentContext) {
+  private BlazeSyncBuildResult run(BlazeContext parentContext)
+      throws SyncCanceledException, SyncFailedException {
     // run under a child context to capture all timing information before finalizing the stats
-    SyncScope.push(
-        parentContext,
-        context -> {
-          TimingScope timingScope = new TimingScope("Build phase", EventType.Other);
-          timingScope.addScopeListener(
-              (events, totalTime) -> buildStats.setTimedEvents(events).setTotalTime(totalTime));
-          context.push(timingScope);
-          doRun(context);
-        });
+    BlazeContext context = BlazeContext.create(parentContext);
+    try {
+      TimingScope timingScope = new TimingScope("Build phase", EventType.Other);
+      timingScope.addScopeListener(
+          (events, totalTime) -> buildStats.setTimedEvents(events).setTotalTime(totalTime));
+      context.push(timingScope);
+      doRun(context);
+    } finally {
+      context.endScope();
+    }
     return resultBuilder.setBuildPhaseStats(ImmutableList.of(buildStats.build())).build();
   }
 

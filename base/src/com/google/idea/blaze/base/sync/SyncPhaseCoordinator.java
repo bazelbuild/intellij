@@ -67,6 +67,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
+import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
@@ -428,10 +429,9 @@ final class SyncPhaseCoordinator {
       }
       SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context);
       BlazeSyncBuildResult buildResult =
-          projectState != null
-              ? BuildPhaseSyncTask.runBuildPhase(
-                  project, params, projectState, buildId, context, buildSystem)
-              : BlazeSyncBuildResult.builder().build();
+          BuildPhaseSyncTask.runBuildPhase(
+              project, params, projectState, buildId, context, buildSystem);
+
       UpdatePhaseTask task =
           UpdatePhaseTask.builder()
               .setStartTime(startTime)
@@ -448,18 +448,6 @@ final class SyncPhaseCoordinator {
                       .orElse(BuildBinaryType.NONE))
               .build();
 
-      if (!context.shouldContinue()) {
-        finishSync(
-            params,
-            startTime,
-            context,
-            ProjectViewManager.getInstance(project).getProjectViewSet(),
-            ImmutableSet.of(buildId),
-            context.getSyncResult(),
-            SyncStats.builder());
-        return;
-      }
-
       if (singleThreaded) {
         updateProjectAndFinishSync(task, context);
       } else {
@@ -467,13 +455,14 @@ final class SyncPhaseCoordinator {
       }
     } catch (Throwable e) {
       logSyncError(context, e);
+      context.onException(e);
       finishSync(
           params,
           startTime,
           context,
           ProjectViewManager.getInstance(project).getProjectViewSet(),
           ImmutableSet.of(buildId),
-          SyncResult.FAILURE,
+          context.getSyncResult(),
           SyncStats.builder());
     }
   }
@@ -857,6 +846,16 @@ final class SyncPhaseCoordinator {
     Throwable cause = e;
     while (cause != null) {
       if (cause instanceof ProcessCanceledException) {
+        return;
+      }
+      if (cause instanceof SyncCanceledException) {
+        return;
+      }
+      if (cause instanceof SyncFailedException) {
+        if (cause.getMessage() != null) {
+          IssueOutput.error(cause.getMessage()).submit(context);
+        }
+        logger.warn("Sync failed", cause);
         return;
       }
       cause = cause.getCause();

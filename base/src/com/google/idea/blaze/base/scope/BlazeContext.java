@@ -20,6 +20,8 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.sync.SyncResult;
+import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -80,6 +82,14 @@ public class BlazeContext {
       if (hasErrors && propagatesErrors) {
         parentContext.setHasError();
       }
+    }
+  }
+
+  public void onException(Throwable t) {
+    if (t instanceof SyncCanceledException || t instanceof ProcessCanceledException) {
+      setCancelled();
+    } else {
+      setHasError();
     }
   }
 
