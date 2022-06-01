@@ -31,6 +31,14 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2022.1/ideaIC-2022.1.zip",
 )
 
+# The plugin api for intellij_ce_2022_2. This is required to build IJwB and run integration tests.
+http_archive(
+    name = "intellij_ce_2022_2",
+    build_file = "@//intellij_platform_sdk:BUILD.idea222",
+    sha256 = "0bc6132c3c788127d4f3885c792c6c59696db73979ed3e040d4a21dbc936f1a2",
+    url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/222.2270.31-EAP-SNAPSHOT/ideaIC-222.2270.31-EAP-SNAPSHOT.zip",
+)
+
 # The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
 # integration tests.
 http_archive(
@@ -56,6 +64,14 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2022.1/ideaIU-2022.1.zip",
 )
 
+# The plugin api for intellij_ue_2022_2. This is required to run UE-specific integration tests.
+http_archive(
+    name = "intellij_ue_2022_2",
+    build_file = "@//intellij_platform_sdk:BUILD.ue222",
+    sha256 = "c66780fa4d8fdca87311bc561584b8580529989b9b586913f24d62ffc94023ed",
+    url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/222.2270.31-EAP-SNAPSHOT/ideaIU-222.2270.31-EAP-SNAPSHOT.zip",
+)
+
 # The plugin api for clion_2021_2. This is required to build CLwB, and run integration tests.
 http_archive(
     name = "clion_2021_2",
@@ -78,6 +94,14 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.clion221",
     sha256 = "a8ad8db6362d60a5ce60a7552110887dbd12e8420c839c368b55808b68dea38b",
     url = "https://download.jetbrains.com/cpp/CLion-2022.1.tar.gz",
+)
+
+# The plugin api for clion_2022_2. This is required to build CLwB\, and run integration tests.
+http_archive(
+    name = "clion_2022_2",
+    build_file = "@//intellij_platform_sdk:BUILD.clion222",
+    sha256 = "d6e310b32d182e5ca86d1a8bd5d81b00f950750b832900a550dfcc7b8581d22b",
+    url = "https://download.jetbrains.com/cpp/CLion-222.2270.30.tar.gz",
 )
 
 _PYTHON_CE_BUILD_FILE = """
@@ -121,6 +145,13 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/7322/167535/python-ce-221.5080.210.zip",
 )
 
+http_archive(
+    name = "python_2022_2",
+    build_file_content = _PYTHON_CE_BUILD_FILE,
+    sha256 = "88742a0386e8e6e9ffda0187afb5531e598622cad8b4fe861ba9de00cc59d880",
+    url = "https://plugins.jetbrains.com/files/7322/177906/python-ce-222.2680.4.zip",
+)
+
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
@@ -153,6 +184,13 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/9568/167522/go-221.5080.210.zip",
 )
 
+http_archive(
+    name = "go_2022_2",
+    build_file_content = _GO_BUILD_FILE,
+    sha256 = "efd54af912f31f700a017a419dc8841c1d6b914d29769c8b6f8929372e2d852d",
+    url = "https://plugins.jetbrains.com/files/9568/177802/go-222.2680.4.zip",
+)
+
 _SCALA_BUILD_FILE = """
 java_import(
     name = "scala",
@@ -183,6 +221,13 @@ http_archive(
     build_file_content = _SCALA_BUILD_FILE,
     sha256 = "6a8cfc87c9485f48bd13856b5f4819a020f77c2a90f38d7128e026fc323330a7",
     url = "https://plugins.jetbrains.com/files/1347/167520/scala-intellij-bin-2022.1.13.zip",
+)
+
+http_archive(
+    name = "scala_2022_2",
+    build_file_content = _SCALA_BUILD_FILE,
+    sha256 = "9110f99b9e211ca8ce0bbe7b37ee0ae77b8574af676e674527ee5547f2131a35",
+    url = "https://plugins.jetbrains.com/files/1347/176292/scala-intellij-bin-2022.1.15.zip",
 )
 
 # The plugin api for android_studio_2021_2. This is required to build ASwB,
