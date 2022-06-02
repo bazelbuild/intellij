@@ -17,6 +17,7 @@ package com.google.idea.blaze.golang.run;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.goide.execution.GoBuildingRunConfiguration.Kind;
 import com.goide.execution.application.GoApplicationConfiguration;
 import com.goide.execution.application.GoApplicationRunConfigurationType;
 import com.goide.execution.application.GoApplicationRunningState;
@@ -54,7 +55,6 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.golang.GoLangCompat.KindWrapper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -166,7 +166,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
               GoApplicationRunConfigurationType.getInstance()
                   .getConfigurationFactories()[0]
                   .createTemplateConfiguration(project, RunManager.getInstance(project));
-      nativeConfig.setKind(KindWrapper.PACKAGE.getKind());
+      nativeConfig.setKind(Kind.PACKAGE);
       // prevents binary from being deleted by
       // GoBuildingRunningState$ProcessHandler#processTerminated
       nativeConfig.setOutputDirectory(executable.binary.getParent());
