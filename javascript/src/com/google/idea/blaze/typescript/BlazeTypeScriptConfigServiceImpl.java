@@ -142,8 +142,8 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
     return null;
   }
 
-  /** #api203: Added in 2021.1, therefore @Override is omitted. */
   @Nullable
+  @Override
   public TypeScriptConfig getPreferableOrParentConfig(@Nullable VirtualFile scopeFile) {
     if (configs.isEmpty() || scopeFile == null) {
       return null;
@@ -158,8 +158,8 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
         .orElse(null);
   }
 
-  /** #api203: Added in 2021.1, therefore @Override is omitted. */
   @Nullable
+  @Override
   public TypeScriptConfig getDirectIncludePreferableConfig(@Nullable VirtualFile scopeFile) {
     if (configs.isEmpty() || scopeFile == null) {
       return null;
@@ -174,7 +174,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
     return null;
   }
 
-  /** #api203: Added in 2021.1, therefore @Override is omitted. */
+  @Override
   public List<VirtualFile> getRootConfigFiles() {
     return configs.keySet().asList();
   }
@@ -183,11 +183,6 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   @Override
   public TypeScriptConfig parseConfigFile(VirtualFile file) {
     return configs.get(file);
-  }
-
-  /** #api203: Removed in 2021.1. #api203 https://github.com/bazelbuild/intellij/issues/2329 */
-  public List<TypeScriptConfig> getConfigs() {
-    return getTypeScriptConfigs();
   }
 
   public List<TypeScriptConfig> getTypeScriptConfigs() {
@@ -202,11 +197,6 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   @Override
   public void addChangeListener(TypeScriptConfigsChangedListener listener) {
     listeners.add(listener);
-  }
-
-  /** #api203: Removed in 2021.1, therefore @Override is omitted. */
-  public boolean hasConfigs() {
-    return !configs.isEmpty();
   }
 
   @Override

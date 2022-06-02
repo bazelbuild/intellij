@@ -46,16 +46,13 @@ public class JavaClassQualifiedNameReference
               psiElement(Keyword.class)
                   .with(nameCondition(StandardPatterns.string().oneOf(JAVA_CLASS_STRING_TYPES))));
 
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
   private static PatternCondition<PsiElementBase> nameCondition(final ElementPattern<?> pattern) {
     return new PatternConditionPlus<PsiElementBase, String>("_withPsiName", pattern) {
       @Override
       public boolean processValues(
           PsiElementBase t,
           ProcessingContext context,
-          // #api203 replace with "PairProcessor<? super String, ? super ProcessingContext>"
-          PairProcessor processor) {
+          PairProcessor<? super String, ? super ProcessingContext> processor) {
         return processor.process(t.getName(), context);
       }
     };
