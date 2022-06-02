@@ -21,7 +21,6 @@ java_library(
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/cpp/**",
-            "com/google/idea/sdkcompat/clion/**",
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/java/**",
@@ -36,9 +35,8 @@ java_library(
     ),
     visibility = ["//sdkcompat:__pkg__"],
     deps = [
-        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:plugin_api",
-        "//third_party/python",
         "//third_party/scala",
     ],
 )
