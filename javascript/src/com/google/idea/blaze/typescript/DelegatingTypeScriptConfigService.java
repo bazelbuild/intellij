@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.typescript.TypeScriptSDKCompat;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
@@ -87,18 +86,18 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
   @Nullable
   @Override
   public TypeScriptConfig getPreferableOrParentConfig(@Nullable VirtualFile virtualFile) {
-    return TypeScriptSDKCompat.getPreferableOrParentConfig(impl, virtualFile);
+    return impl.getPreferableOrParentConfig(virtualFile);
   }
 
   @Nullable
   @Override
   public TypeScriptConfig getDirectIncludePreferableConfig(@Nullable VirtualFile virtualFile) {
-    return TypeScriptSDKCompat.getDirectIncludePreferableConfig(impl, virtualFile);
+    return impl.getDirectIncludePreferableConfig(virtualFile);
   }
 
   @Override
   public List<VirtualFile> getRootConfigFiles() {
-    return TypeScriptSDKCompat.getRootConfigFiles(impl);
+    return impl.getRootConfigFiles();
   }
 
   @Nullable

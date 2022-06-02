@@ -15,16 +15,19 @@
  */
 package com.google.idea.blaze.typescript;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.base.Functions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.typescript.TypeScriptSDKCompat;
 import com.intellij.lang.typescript.compiler.TypeScriptCompilerService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
+import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigsChangedListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -132,8 +135,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
     if (configs.isEmpty() || scopeFile == null || !scopeFile.isValid()) {
       return null;
     }
-    for (VirtualFile configFile :
-        TypeScriptSDKCompat.getNearestParentTsConfigs(scopeFile, configs)) {
+    for (VirtualFile configFile : getNearestParentTsConfigs(scopeFile, configs)) {
       TypeScriptConfig config = configs.get(configFile);
       if (config != null && this.configGraphIncludesFile(scopeFile, config)) {
         return config;
@@ -152,7 +154,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
     if (configForFile != null) {
       return configForFile;
     }
-    return TypeScriptSDKCompat.getNearestParentTsConfigs(scopeFile, configs).stream()
+    return getNearestParentTsConfigs(scopeFile, configs).stream()
         .map(configs::get)
         .findFirst()
         .orElse(null);
@@ -164,8 +166,7 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
     if (configs.isEmpty() || scopeFile == null) {
       return null;
     }
-    for (VirtualFile configFile :
-        TypeScriptSDKCompat.getNearestParentTsConfigs(scopeFile, configs)) {
+    for (VirtualFile configFile : getNearestParentTsConfigs(scopeFile, configs)) {
       TypeScriptConfig config = configs.get(configFile);
       if (config != null && config.getInclude().accept(scopeFile)) {
         return config;
@@ -218,5 +219,12 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
   @Override
   public Set<VirtualFile> getIncludedFiles(VirtualFile file) {
     return ImmutableSet.of();
+  }
+
+  private static ImmutableList<? extends VirtualFile> getNearestParentTsConfigs(
+      @Nullable VirtualFile scopeFile, ImmutableMap<VirtualFile, TypeScriptConfig> configs) {
+    return TypeScriptConfigServiceImpl.getNearestParentTsConfigs(scopeFile, false).stream()
+        .filter(configs::containsKey)
+        .collect(toImmutableList());
   }
 }
