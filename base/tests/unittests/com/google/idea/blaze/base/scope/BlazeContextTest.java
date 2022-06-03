@@ -81,6 +81,15 @@ public class BlazeContextTest extends BlazeTestCase {
     assertTrue(parentContext.isCancelled());
   }
 
+  @Test
+  public void testCancellingScopeCancelsChild() {
+    BlazeContext parentContext = BlazeContext.create();
+    BlazeContext childContext = BlazeContext.create(parentContext);
+    parentContext.setCancelled();
+    assertTrue(childContext.isCancelled());
+    assertTrue(parentContext.isCancelled());
+  }
+
   /** A simple scope that records its start and end by ID. */
   static class RecordScope implements BlazeScope {
     private final int id;
