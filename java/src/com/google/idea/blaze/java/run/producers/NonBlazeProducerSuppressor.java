@@ -85,9 +85,7 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
           "com.intellij.execution.junit.PatternConfigurationProducer",
           "com.intellij.execution.junit.UniqueIdConfigurationProducer",
           "com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer",
-          "com.intellij.execution.application.ApplicationConfigurationProducer",
-          // #api211 TestMethodConfigurationProducer is removed in 2021.2
-          "com.intellij.execution.junit.TestMethodConfigurationProducer");
+          "com.intellij.execution.application.ApplicationConfigurationProducer");
 
   @Override
   public void runActivity(Project project) {
