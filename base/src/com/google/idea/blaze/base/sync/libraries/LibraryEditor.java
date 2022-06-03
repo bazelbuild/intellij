@@ -30,6 +30,7 @@ import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -158,7 +159,8 @@ public class LibraryEditor {
 
     ImmutableList<Library> foundLibraries = findLibraries(libraries, libraryTable);
     // Add the libraries in a batch operation as adding them one after the other is not performant.
-    BaseSdkCompat.addLibraryEntriesToModel(modifiableRootModel, foundLibraries);
+    modifiableRootModel.addLibraryEntries(
+        foundLibraries, DependencyScope.COMPILE, /* exported= */ false);
   }
 
   private static ImmutableList<Library> findLibraries(
