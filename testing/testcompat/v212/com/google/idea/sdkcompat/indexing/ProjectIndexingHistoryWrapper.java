@@ -29,31 +29,47 @@ public class ProjectIndexingHistoryWrapper {
   }
 
   public static ProjectIndexingHistoryWrapper create(Project project) {
-    return new ProjectIndexingHistoryWrapper(
-        new ProjectIndexingHistory(project, /* indexingReason= */ ""));
+    return create(project, /* providerName= */ "");
   }
 
-  /** #api203: inline into IndexingLoggerTest */
-  @SuppressWarnings("UnstableApiUsage")
-  public static void setIndexingVisibleTime(
-      IndexingJobStatistics indexingStatistic, Duration expectedIndexingVisibleTime) {
-    indexingStatistic.setIndexingVisibleTime(expectedIndexingVisibleTime.toNanos());
+  public static ProjectIndexingHistoryWrapper create(Project project, String providerName) {
+    return create(project, providerName, /* providerIndexingTime= */ Duration.ZERO);
+  }
+
+  public static ProjectIndexingHistoryWrapper create(
+      Project project, String providerName, Duration providerIndexingTime) {
+    return create(
+        project,
+        /* totalIndexingTime= */ Duration.ZERO,
+        /* scanFilesDuration= */ Duration.ZERO,
+        /* totalUpdatingTime= */ Duration.ZERO,
+        providerName,
+        /* providerIndexingTime= */ providerIndexingTime);
+  }
+
+  public static ProjectIndexingHistoryWrapper create(
+      Project project,
+      Duration totalIndexingTime,
+      Duration scanFilesDuration,
+      Duration totalUpdatingTime,
+      String providerName,
+      Duration providerIndexingTime) {
+    ProjectIndexingHistory projectIndexingHistory =
+        new ProjectIndexingHistory(project, /* indexingReason= */ "");
+    projectIndexingHistory.getTimes().setIndexingDuration(totalIndexingTime);
+    projectIndexingHistory.getTimes().setTotalUpdatingTime(totalUpdatingTime.toNanos());
+    projectIndexingHistory.getTimes().setScanFilesDuration(scanFilesDuration);
+
+    if (!providerName.isEmpty()) {
+      IndexingJobStatistics statistics = new IndexingJobStatistics(project, providerName);
+      statistics.setIndexingVisibleTime(providerIndexingTime.toNanos());
+      projectIndexingHistory.addProviderStatistics(statistics);
+    }
+
+    return new ProjectIndexingHistoryWrapper(projectIndexingHistory);
   }
 
   public ProjectIndexingHistory getProjectIndexingHistory() {
     return projectIndexingHistory;
-  }
-
-  public void addProviderStatistics(IndexingJobStatistics statistics) {
-    projectIndexingHistory.addProviderStatistics(statistics);
-  }
-
-  public void setIndexingTimes(
-      Duration expectedIndexingDuration,
-      Duration expectedUpdatingDuration,
-      Duration expectedScanFilesDuration) {
-    projectIndexingHistory.getTimes().setIndexingDuration(expectedIndexingDuration);
-    projectIndexingHistory.getTimes().setTotalUpdatingTime(expectedUpdatingDuration.toNanos());
-    projectIndexingHistory.getTimes().setScanFilesDuration(expectedScanFilesDuration);
   }
 }

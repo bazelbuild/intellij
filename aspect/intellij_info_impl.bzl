@@ -321,7 +321,7 @@ def collect_py_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
 
     py_semantics = getattr(semantics, "py", None)
     if py_semantics:
-        py_launcher = py_semantics.get_launcher(ctx)
+        py_launcher = py_semantics.get_launcher(target, ctx)
     else:
         py_launcher = None
 
@@ -402,8 +402,6 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
 
     ide_info["go_ide_info"] = struct_omit_none(
         import_path = import_path,
-        # TODO(chaorenl): deprecated, remove after plugin update
-        library_label = library_labels[0] if library_labels else None,
         library_labels = library_labels,
         sources = [artifact_location(f) for f in sources],
     )
@@ -649,7 +647,7 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     if hasattr(ctx.rule.attr, "_android_lint_plugins"):
         plugin_processor_jar_files += [jar for p in getattr(ctx.rule.attr, "_android_lint_plugins", []) for jar in p[JavaInfo].transitive_runtime_jars.to_list()]
 
-    if hasattr(java, "annotation_processing") and java.annotation_processing:
+    if hasattr(java, "annotation_processing") and java.annotation_processing and hasattr(java.annotation_processing, "processor_classpath"):
         plugin_processor_jar_files += java.annotation_processing.processor_classpath.to_list()
     resolve_files += plugin_processor_jar_files
     plugin_processor_jars = [annotation_processing_jars(jar, None) for jar in depset(plugin_processor_jar_files).to_list()]

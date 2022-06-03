@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.MockEventLoggingService;
 import com.google.idea.blaze.base.MockProjectViewManager;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -195,7 +196,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   }
 
   protected void setProjectView(String... contents) {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
     ProjectViewParser projectViewParser =
         new ProjectViewParser(context, new WorkspacePathResolverImpl(workspaceRoot));
@@ -244,7 +245,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   }
 
   protected void runBlazeSync(BlazeSyncParams syncParams) {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     // We need to run sync off EDT to keep IntelliJ's transaction system happy
@@ -320,7 +321,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
         SyncProjectState projectState,
-        BlazeBuildOutputs buildResult,
+        BlazeSyncBuildResult buildResult,
         boolean mergeWithOldState,
         @Nullable BlazeProjectData oldProjectData) {
       return new ProjectTargetData(targetMap, null, RemoteOutputArtifacts.fromProjectData(null));
@@ -336,7 +337,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         ProjectViewSet projectViewSet,
         ShardedTargetList shardedTargets,
         WorkspaceLanguageSettings workspaceLanguageSettings,
-        ImmutableSet<OutputGroup> outputGroups) {
+        ImmutableSet<OutputGroup> outputGroups,
+        BlazeInvocationContext blazeInvocationContext) {
       return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
     }
   }

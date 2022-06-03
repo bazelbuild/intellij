@@ -18,7 +18,7 @@
     <importResolver
         implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver"
         id="Blaze.GoImportResolver"
-        order="before default"/>
+        order="first"/>
     <packageFactory implementation="com.google.idea.blaze.golang.resolve.BlazeGoPackageFactory"/>
     <dlv.positionConverterFactory
         implementation="com.google.idea.blaze.golang.run.BlazeDlvPositionConverter$Factory"

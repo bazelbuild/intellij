@@ -43,6 +43,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import java.util.Collection;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
@@ -88,7 +89,6 @@ public class BlazeSyncManager {
                                     context
                                         .push(new ProgressIndicatorScope(indicator))
                                         .push(buildToolWindowScope(syncParams, indicator));
-
                                     if (!runInitialDirectoryOnlySync(syncParams)) {
                                       executeTask(project, syncParams, context);
                                       return;
@@ -119,6 +119,9 @@ public class BlazeSyncManager {
     } catch (ExecutionException e) {
       context.output(new PrintOutput(e.getMessage(), OutputType.ERROR));
       context.setHasError();
+    } catch (CancellationException e) {
+      context.output(new PrintOutput("Sync cancelled"));
+      context.setCancelled();
     }
   }
 
@@ -130,6 +133,8 @@ public class BlazeSyncManager {
       taskTitle = "Importing " + project.getName();
     } else if (params.syncMode() == SyncMode.PARTIAL) {
       taskTitle = "Partial Sync";
+    } else if (params.syncMode() == SyncMode.FULL) {
+      taskTitle = "Non-Incremental Sync";
     } else {
       taskTitle = "Incremental Sync";
     }
@@ -147,6 +152,7 @@ public class BlazeSyncManager {
         .setIssueParsers(
             BlazeIssueParser.defaultIssueParsers(
                 project, WorkspaceRoot.fromProject(project), ContextType.Sync))
+        .showSummaryOutput()
         .build();
   }
 

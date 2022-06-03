@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.io.AbsolutePathPatcher.AbsolutePathPatcherUtil;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -39,6 +40,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -63,18 +65,18 @@ public class PrefetchServiceImpl implements PrefetchService {
   }
 
   @Override
-  public ListenableFuture<?> prefetchFiles(
+  public ListenableFuture<PrefetchStats> prefetchFiles(
       Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes) {
     return prefetchFiles(ImmutableSet.of(), files, refetchCachedFiles, fetchFileTypes);
   }
 
-  private ListenableFuture<?> prefetchFiles(
+  private ListenableFuture<PrefetchStats> prefetchFiles(
       Set<File> excludeDirectories,
       Collection<File> files,
       boolean refetchCachedFiles,
       boolean fetchFileTypes) {
     if (files.isEmpty()) {
-      return Futures.immediateFuture(null);
+      return Futures.immediateFuture(PrefetchStats.NONE);
     }
     if (!refetchCachedFiles) {
       long startTime = System.currentTimeMillis();
@@ -91,13 +93,20 @@ public class PrefetchServiceImpl implements PrefetchService {
             .stream()
             .map(file -> FetchExecutor.EXECUTOR.submit(() -> toCanonicalFile(provider, file)))
             .collect(Collectors.toList());
-    List<ListenableFuture<?>> futures = Lists.newArrayList();
+    List<ListenableFuture<PrefetchStats>> futures = Lists.newArrayList();
     for (Prefetcher prefetcher : Prefetcher.EP_NAME.getExtensions()) {
       futures.add(
           prefetcher.prefetchFiles(
               excludeDirectories, canonicalFiles, FetchExecutor.EXECUTOR, fetchFileTypes));
     }
-    return Futures.allAsList(futures);
+    return Futures.transform(
+        Futures.allAsList(futures),
+        stats ->
+            stats.stream()
+                .filter(Objects::nonNull)
+                .reduce(PrefetchStats::combine)
+                .orElse(PrefetchStats.NONE),
+        FetchExecutor.EXECUTOR);
   }
 
   @Nullable
@@ -125,17 +134,17 @@ public class PrefetchServiceImpl implements PrefetchService {
   }
 
   @Override
-  public ListenableFuture<?> prefetchProjectFiles(
+  public ListenableFuture<PrefetchStats> prefetchProjectFiles(
       Project project, ProjectViewSet projectViewSet, @Nullable BlazeProjectData blazeProjectData) {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     if (importSettings == null) {
-      return Futures.immediateFuture(null);
+      return Futures.immediateFuture(PrefetchStats.NONE);
     }
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
       // quick sanity check before trying to prefetch each individual file
-      return Futures.immediateFuture(null);
+      return Futures.immediateFuture(PrefetchStats.NONE);
     }
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
@@ -149,7 +158,7 @@ public class PrefetchServiceImpl implements PrefetchService {
     for (WorkspacePath workspacePath : importRoots.excludeDirectories()) {
       excludeDirectories.add(workspaceRoot.fileForPath(workspacePath));
     }
-    ListenableFuture<?> sourceFilesFuture =
+    ListenableFuture<PrefetchStats> sourceFilesFuture =
         prefetchFiles(
             excludeDirectories,
             sourceDirectories,
@@ -163,7 +172,15 @@ public class PrefetchServiceImpl implements PrefetchService {
             project, projectViewSet, importRoots, blazeProjectData, externalFiles);
       }
     }
-    ListenableFuture<?> externalFilesFuture = prefetchFiles(externalFiles, false, false);
-    return Futures.allAsList(sourceFilesFuture, externalFilesFuture);
+    ListenableFuture<PrefetchStats> externalFilesFuture =
+        prefetchFiles(externalFiles, false, false);
+    return Futures.transform(
+        Futures.allAsList(sourceFilesFuture, externalFilesFuture),
+        list ->
+            list.stream()
+                .filter(Objects::nonNull)
+                .reduce(PrefetchStats::combine)
+                .orElse(PrefetchStats.NONE),
+        MoreExecutors.directExecutor());
   }
 }

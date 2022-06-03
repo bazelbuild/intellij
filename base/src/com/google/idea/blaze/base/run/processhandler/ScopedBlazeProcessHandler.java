@@ -91,7 +91,7 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
                 .withRedirectErrorStream(true)));
 
     this.scopedProcessHandlerDelegate = scopedProcessHandlerDelegate;
-    this.context = new BlazeContext();
+    this.context = BlazeContext.create();
     // The context is released in the ScopedProcessHandlerListener.
     this.context.hold();
 

@@ -32,10 +32,7 @@ java_import(
     ]),
 )
 
-java_import(
-    name = "jsr305",
-    jars = glob(["clion-*/lib/3rd-party.jar"]),
-)
+java_library(name = "jsr305")  # not bundled
 
 java_import(
     name = "clion_plugins",

@@ -33,6 +33,7 @@ import com.intellij.psi.impl.CheckUtil;
 import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -73,13 +74,8 @@ class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
     }
   }
 
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
-  public void reformatText(
-      PsiFile file,
-      // #api203 replace with "Collection<? extends TextRange>"
-      Collection ranges)
+  public void reformatText(PsiFile file, Collection<? extends TextRange> ranges)
       throws IncorrectOperationException {
     CustomFormatter formatter = getCustomFormatterForFile(file);
     if (formatter != null) {
@@ -89,13 +85,8 @@ class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
     }
   }
 
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
-  public void reformatTextWithContext(
-      PsiFile file,
-      // #api203 replace with "Collection<? extends TextRange>"
-      Collection ranges)
+  public void reformatTextWithContext(PsiFile file, Collection<? extends TextRange> ranges)
       throws IncorrectOperationException {
     CustomFormatter formatter = getCustomFormatterForFile(file);
     if (formatter != null) {
@@ -130,7 +121,7 @@ class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
   }
 
   private void formatInternal(
-      CustomFormatter formatter, PsiFile file, Collection<TextRange> ranges) {
+      CustomFormatter formatter, PsiFile file, Collection<? extends TextRange> ranges) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     documentManager.commitAllDocuments();
@@ -155,7 +146,8 @@ class ExternalFormatterCodeStyleManager extends DelegatingCodeStyleManager {
             file,
             f -> {
               Replacements replacements =
-                  formatter.getReplacements(getProject(), fileContents, ranges);
+                  formatter.getReplacements(
+                      getProject(), fileContents, Collections.unmodifiableCollection(ranges));
               return new Formatter.Result<>(null, replacements);
             });
     FormatUtils.formatWithProgressDialog(file.getProject(), formatter.progressMessage(), future);

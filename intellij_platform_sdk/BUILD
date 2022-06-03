@@ -7,10 +7,8 @@
 
 load(
     ":build_defs.bzl",
-    "select_for_ide",
     "select_for_plugin_api",
     "select_from_plugin_api_directory",
-    "select_from_plugin_api_version_directory",
 )
 load(
     "//:build-visibility.bzl",
@@ -171,6 +169,21 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2022.2",
+    values = {
+        "define": "ij_product=intellij-2022.2",
+    },
+)
+
+config_setting(
+    name = "intellij-2022.2-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-2022.2",
+    },
+)
+
+config_setting(
     name = "intellij-ue-2021.2",
     values = {
         "define": "ij_product=intellij-ue-2021.2",
@@ -216,6 +229,21 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-ue-2022.2",
+    values = {
+        "define": "ij_product=intellij-ue-2022.2",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2022.2-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-2022.2",
+    },
+)
+
+config_setting(
     name = "android-studio-latest",
     values = {
         "define": "ij_product=android-studio-latest",
@@ -226,7 +254,7 @@ config_setting(
     name = "android-studio-latest-mac",
     values = {
         "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-canary",
+        "define": "ij_product=android-studio-latest",
     },
 )
 
@@ -274,21 +302,6 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-2020.3",
-    values = {
-        "define": "ij_product=android-studio-2020.3",
-    },
-)
-
-config_setting(
-    name = "android-studio-2020.3-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-2020.3",
-    },
-)
-
-config_setting(
     name = "android-studio-2021.2",
     values = {
         "define": "ij_product=android-studio-2021.2",
@@ -300,6 +313,21 @@ config_setting(
     values = {
         "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-2021.2",
+    },
+)
+
+config_setting(
+    name = "android-studio-2021.3",
+    values = {
+        "define": "ij_product=android-studio-2021.3",
+    },
+)
+
+config_setting(
+    name = "android-studio-2021.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=android-studio-2021.3",
     },
 )
 
@@ -398,6 +426,21 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "clion-2022.2",
+    values = {
+        "define": "ij_product=clion-2022.2",
+    },
+)
+
+config_setting(
+    name = "clion-2022.2-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=clion-2022.2",
+    },
+)
+
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
 # There will be additional versions added in the future
@@ -443,7 +486,10 @@ java_library(
             ":layoutlib_data",
         ],
         clion = [],
-        intellij = [],
+        # From 2022.1 forward, the version of kotlinc will be obtained
+        # by KotlinPluginLayout from plugins/kotlin/kotlinc/build.txt
+        # so we need to provide this to our tests
+        intellij = [":kotlinc_version"],
     ),
     exports = [":plugin_api_internal"],
 )
@@ -491,15 +537,18 @@ java_library(
     exports = select_for_plugin_api({
         "clion-2021.2": [":bundled_jsr305"],
         "clion-2021.3": [":bundled_jsr305"],
-        "clion-2022.1": [":bundled_jsr305"],
+        "clion-2022.1": ["@jsr305_annotations//jar"],
+        "clion-2022.2": ["@jsr305_annotations//jar"],
         "intellij-2021.2": ["@jsr305_annotations//jar"],
         "intellij-2021.3": ["@jsr305_annotations//jar"],
         "intellij-2022.1": ["@jsr305_annotations//jar"],
+        "intellij-2022.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.1": ["@jsr305_annotations//jar"],
-        "android-studio-2020.3": ["@jsr305_annotations//jar"],
+        "intellij-ue-2022.2": ["@jsr305_annotations//jar"],
         "android-studio-2021.2": ["@jsr305_annotations//jar"],
+        "android-studio-2021.3": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.
         "default": [":bundled_jsr305"],
     }),
@@ -647,47 +696,11 @@ java_library(
     ),
 )
 
-# Not all plugin api versions have lib/resources.jar from which we used to get
-# the application information to set the idea-version compatibility range of the plugin.
-# However, product-info.json contains this information but it was not imported to google3
-# with previous plugin api versions. So the application_info_container will contain
-# the application_info_jar for previous versions and application_info_json for new ones.
 filegroup(
-    name = "application_info_container",
-    srcs = select_from_plugin_api_version_directory({
-        "android-studio-2021.2": [":application_info_json"],
-        "intellij-2021.2": [":application_info_json"],
-        "intellij-ue-2021.2": [":application_info_json"],
-        "intellij-2021.3": [":application_info_json"],
-        "intellij-ue-2021.3": [":application_info_json"],
-        "intellij-2022.1": [":application_info_json"],
-        "intellij-ue-2022.1": [":application_info_json"],
-        "clion-2021.2": [":application_info_json"],
-        "clion-2021.3": [":application_info_json"],
-        "clion-2022.1": [":application_info_json"],
-        "default": [":application_info_jar"],
-    }),
-)
-
-# #api211: product-info.json will be imported to google3 from 2021.2 on. Therefore after removing
-# 2021.1 support there will be no need for application_info_jar and application_info_container
-# and we can update api_version_txt script to depend only on application_info_json.
-filegroup(
-    name = "application_info_jar",
+    name = "application_info_json",
     srcs = select_from_plugin_api_directory(
-        android_studio = [":application_info_jar"],
-        clion = [":application_info_jar"],
-        intellij = [":application_info_jar"],
-    ),
-)
-
-filegroup(
-    name = "application_info_name",
-    srcs = select_for_ide(
-        android_studio = ["android_studio_application_info_name.txt"],
-        clion = ["clion_application_info_name.txt"],
-        default = ["intellij_application_info_name.txt"],
-        intellij = ["intellij_application_info_name.txt"],
-        intellij_ue = ["intellij_ue_application_info_name.txt"],
+        android_studio = [":application_info_json"],
+        clion = [":application_info_json"],
+        intellij = [":application_info_json"],
     ),
 )

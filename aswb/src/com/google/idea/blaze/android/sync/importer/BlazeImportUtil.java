@@ -42,7 +42,6 @@ import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -52,14 +51,6 @@ import org.jetbrains.annotations.Nullable;
 
 /** Static utility methods used for blaze import. */
 public class BlazeImportUtil {
-
-  public static Collection<ArtifactLocation> resourcesFor(TargetIdeInfo target) {
-    AndroidIdeInfo ideInfo = target.getAndroidIdeInfo();
-    if (ideInfo != null) {
-      return ideInfo.getResources();
-    }
-    return Collections.emptyList();
-  }
 
   @Nullable
   public static String javaResourcePackageFor(TargetIdeInfo target) {

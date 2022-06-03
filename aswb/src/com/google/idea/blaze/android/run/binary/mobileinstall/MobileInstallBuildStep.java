@@ -151,7 +151,7 @@ public class MobileInstallBuildStep implements ApkBuildStep {
     }
 
     BuildInvoker invoker =
-        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project);
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
     BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.MOBILE_INSTALL);
 
     if (passAdbArgWithSerialToMi.getValue()) {

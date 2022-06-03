@@ -23,19 +23,13 @@ import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
-import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
-import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
-import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationIdProvider;
-import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryConsoleProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.DeploymentTimingReporterTask;
@@ -165,39 +159,6 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
       throws ExecutionException {
     return new BlazeAndroidLaunchTasksProvider(
         project, this, applicationIdProvider, launchOptionsBuilder);
-  }
-
-  @Override
-  public LaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions,
-      @Nullable Integer userId,
-      String contributorsAmStartOptions,
-      AndroidDebugger androidDebugger,
-      AndroidDebuggerState androidDebuggerState,
-      LaunchStatus launchStatus)
-      throws ExecutionException {
-
-    String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
-    if (!contributorsAmStartOptions.isEmpty()) {
-      extraFlags += (extraFlags.isEmpty() ? "" : " ") + contributorsAmStartOptions;
-    }
-
-    final StartActivityFlagsProvider startActivityFlagsProvider =
-        new DefaultStartActivityFlagsProvider(
-            androidDebugger, androidDebuggerState, project, launchOptions.isDebug(), extraFlags);
-    BlazeAndroidDeployInfo deployInfo;
-    try {
-      deployInfo = buildStep.getDeployInfo();
-    } catch (ApkProvisionException e) {
-      throw new ExecutionException(e);
-    }
-
-    return BlazeAndroidBinaryApplicationLaunchTaskProvider.getApplicationLaunchTask(
-        applicationIdProvider,
-        deployInfo.getMergedManifest(),
-        configState,
-        startActivityFlagsProvider,
-        launchStatus);
   }
 
   @Override

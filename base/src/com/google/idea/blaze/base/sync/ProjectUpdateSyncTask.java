@@ -15,8 +15,11 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.FutureUtil;
+import com.google.idea.blaze.base.async.FutureUtil.FutureResult;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -29,11 +32,13 @@ import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
+import com.google.idea.blaze.base.prefetch.PrefetchStats;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope.NetworkTrafficUsedOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -41,7 +46,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin.ModuleEditor;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
-import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -86,7 +90,7 @@ final class ProjectUpdateSyncTask {
       Project project,
       BlazeSyncParams syncParams,
       SyncProjectState projectState,
-      BlazeBuildOutputs buildResult,
+      BlazeSyncBuildResult buildResult,
       BlazeContext parentContext) {
     boolean mergeWithOldState = !syncParams.addProjectViewTargets();
     return Scope.push(
@@ -112,11 +116,12 @@ final class ProjectUpdateSyncTask {
       SyncMode syncMode,
       SyncProjectState projectState,
       ProjectTargetData targetData,
+      BlazeInfo blazeInfo,
       BlazeContext context)
       throws SyncCanceledException, SyncFailedException {
     SaveUtil.saveAllFiles();
     ProjectUpdateSyncTask task =
-        new ProjectUpdateSyncTask(project, syncMode, projectState, targetData);
+        new ProjectUpdateSyncTask(project, syncMode, projectState, targetData, blazeInfo);
     task.run(context);
   }
 
@@ -126,19 +131,22 @@ final class ProjectUpdateSyncTask {
   private final SyncMode syncMode;
   private final SyncProjectState projectState;
   private final ProjectTargetData targetData;
+  private final BlazeInfo blazeInfo;
   @Nullable private final BlazeProjectData oldProjectData;
 
   private ProjectUpdateSyncTask(
       Project project,
       SyncMode syncMode,
       SyncProjectState projectState,
-      ProjectTargetData targetData) {
+      ProjectTargetData targetData,
+      BlazeInfo blazeInfo) {
     this.project = project;
     this.importSettings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
     this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     this.syncMode = syncMode;
     this.projectState = projectState;
     this.targetData = targetData;
+    this.blazeInfo = Preconditions.checkNotNull(blazeInfo, "Null BlazeInfo");
     this.oldProjectData = getOldProjectData(project, syncMode);
   }
 
@@ -155,7 +163,7 @@ final class ProjectUpdateSyncTask {
 
     ArtifactLocationDecoder artifactLocationDecoder =
         new ArtifactLocationDecoderImpl(
-            projectState.getBlazeInfo(), projectState.getWorkspacePathResolver(), newRemoteState);
+            blazeInfo, projectState.getWorkspacePathResolver(), newRemoteState);
 
     Scope.push(
         context,
@@ -202,7 +210,7 @@ final class ProjectUpdateSyncTask {
     BlazeProjectData newProjectData =
         new BlazeProjectData(
             targetData,
-            projectState.getBlazeInfo(),
+            blazeInfo,
             projectState.getBlazeVersionData(),
             projectState.getWorkspacePathResolver(),
             artifactLocationDecoder,
@@ -216,14 +224,21 @@ final class ProjectUpdateSyncTask {
         newProjectData,
         oldProjectData,
         syncMode);
-    ListenableFuture<?> prefetch =
+    ListenableFuture<PrefetchStats> prefetch =
         PrefetchService.getInstance()
             .prefetchProjectFiles(project, projectState.getProjectViewSet(), newProjectData);
-    FutureUtil.waitForFuture(context, prefetch)
-        .withProgressMessage("Prefetching files...")
-        .timed("PrefetchFiles", EventType.Prefetching)
-        .onError("Prefetch failed")
-        .run();
+    FutureResult<PrefetchStats> result =
+        FutureUtil.waitForFuture(context, prefetch)
+            .withProgressMessage("Prefetching files...")
+            .timed("PrefetchFiles", EventType.Prefetching)
+            .onError("Prefetch failed")
+            .run();
+    if (result.success()) {
+      long prefetched = result.result().bytesPrefetched();
+      if (prefetched > 0) {
+        context.output(new NetworkTrafficUsedOutput(prefetched, "prefetch"));
+      }
+    }
 
     ListenableFuture<DirectoryStructure> directoryStructureFuture =
         DirectoryStructure.getRootDirectoryStructure(

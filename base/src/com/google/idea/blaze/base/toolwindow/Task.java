@@ -33,6 +33,7 @@ public final class Task {
   @Nullable private Instant startTime;
   @Nullable private Instant endTime;
   private boolean hasErrors;
+  private boolean isCancelled;
 
   /**
    * Creates a new top level task without a parent.
@@ -63,7 +64,7 @@ public final class Task {
     return name;
   }
 
-  Type getType() {
+  public Type getType() {
     return type;
   }
 
@@ -83,6 +84,14 @@ public final class Task {
     this.hasErrors = hasErrors;
   }
 
+  boolean isCancelled() {
+    return isCancelled;
+  }
+
+  void setCancelled(boolean isCancelled) {
+    this.isCancelled = isCancelled;
+  }
+
   boolean isFinished() {
     return endTime != null;
   }
@@ -95,7 +104,7 @@ public final class Task {
     this.state = state;
   }
 
-  Optional<Task> getParent() {
+  public Optional<Task> getParent() {
     return Optional.ofNullable(parent);
   }
 

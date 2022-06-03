@@ -84,6 +84,17 @@ public class ScopeTest extends BlazeTestCase {
     verify(scope).onScopeEnd(any(BlazeContext.class));
   }
 
+  @Test
+  public void testCancelledParentContextCancelsChildContext() {
+    BlazeContext parentContext = BlazeContext.create();
+    Scope.push(
+        parentContext,
+        childContext -> {
+          parentContext.setCancelled();
+          assertThat(childContext.isCancelled()).isTrue();
+        });
+  }
+
   /*
   @Test
   public void testThrowingExceptionEndsScopedOperationWithFailure() {

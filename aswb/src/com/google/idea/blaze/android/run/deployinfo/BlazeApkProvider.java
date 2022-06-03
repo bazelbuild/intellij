@@ -61,7 +61,7 @@ public class BlazeApkProvider implements ApkProvider {
     }
   }
 
-  @Override
+  // can be deleted post #api212
   public List<ValidationError> validate() {
     return ImmutableList.of();
   }

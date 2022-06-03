@@ -47,23 +47,16 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
         ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto),
         ImportPathReplacer.fixImportPath(
             Strings.emptyToNull(proto.getImportPath()), targetLabel, targetKind),
-        extractLibraryLabels(
-            targetKind,
-            proto.getLibraryLabelsList(),
-            Strings.emptyToNull(proto.getLibraryLabel())));
+        extractLibraryLabels(targetKind, proto.getLibraryLabelsList()));
   }
 
-  private static ImmutableList<Label> extractLibraryLabels(
-      Kind kind, List<String> libraryLabels, @Nullable String libraryLabel) {
-    if (!kind.hasLanguage(LanguageClass.GO) || kind.getRuleType() != RuleType.TEST) {
+  private static ImmutableList<Label> extractLibraryLabels(Kind kind, List<String> libraryLabels) {
+    if (!kind.hasLanguage(LanguageClass.GO)
+        || kind.getRuleType() != RuleType.TEST
+        || libraryLabels.isEmpty()) {
       return ImmutableList.of();
     }
-    if (!libraryLabels.isEmpty()) {
-      return libraryLabels.stream().map(Label::create).collect(ImmutableList.toImmutableList());
-    } else if (libraryLabel != null) {
-      return ImmutableList.of(Label.create(libraryLabel));
-    }
-    return ImmutableList.of();
+    return libraryLabels.stream().map(Label::create).collect(ImmutableList.toImmutableList());
   }
 
   @Override

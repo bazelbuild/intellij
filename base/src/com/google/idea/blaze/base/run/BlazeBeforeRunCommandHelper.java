@@ -115,7 +115,11 @@ public final class BlazeBeforeRunCommandHelper {
                         .addBlazeFlags(overridableExtraBlazeFlags)
                         .addBlazeFlags(
                             BlazeFlags.blazeFlags(
-                                project, projectViewSet, BlazeCommandName.BUILD, invocationContext))
+                                project,
+                                projectViewSet,
+                                BlazeCommandName.BUILD,
+                                context,
+                                invocationContext))
                         .addBlazeFlags(
                             handlerState.getBlazeFlagsState().getFlagsForExternalProcesses())
                         .addBlazeFlags(requiredExtraBlazeFlags)

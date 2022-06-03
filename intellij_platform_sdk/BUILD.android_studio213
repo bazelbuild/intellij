@@ -21,7 +21,6 @@ java_import(
         exclude = [
             # mockito-extensions needs to be removed from these jars.
             "android-studio/lib/idea.jar",
-            "android-studio/lib/testFramework.jar",
         ],
     ) + ["android-studio/plugins/c-clangd/lib/c-clangd.jar"],
     tags = ["intellij-provided-by-sdk"],
@@ -36,7 +35,6 @@ no_mockito_extensions(
     name = "jars_without_mockito_extensions",
     jars = [
         "android-studio/lib/idea.jar",
-        "android-studio/lib/testFramework.jar",
     ],
 )
 
@@ -52,10 +50,7 @@ java_import(
 
 java_import(
     name = "guava",
-    jars = glob([
-        "android-studio/lib/failureaccess-*.jar",
-        "android-studio/lib/guava-*.jar",
-    ]),
+    jars = ["android-studio/lib/3rd-party-rt.jar"],
 )
 
 java_library(name = "jsr305")  # not bundled
@@ -124,8 +119,6 @@ java_import(
     jars = ["android-studio/plugins/terminal/lib/terminal.jar"],
 )
 
-java_library(name = "protoeditor")  # not bundled
-
 # The plugins required by ASwB. We need to include them
 # when running integration tests.
 java_import(
@@ -135,12 +128,12 @@ java_import(
             "android-studio/plugins/gradle/lib/*.jar",
             "android-studio/plugins/gradle-java/lib/*.jar",
             "android-studio/plugins/Groovy/lib/*.jar",
+            "android-studio/plugins/IntelliLang/lib/*.jar",
             "android-studio/plugins/java-i18n/lib/*.jar",
             "android-studio/plugins/junit/lib/*.jar",
-            "android-studio/plugins/ndk-workspace/lib/*.jar",
             "android-studio/plugins/properties/lib/*.jar",
             "android-studio/plugins/smali/lib/*.jar",
-            "android-studio/plugins/IntelliLang/lib/*.jar",
+            "android-studio/plugins/toml/lib/*.jar",
             "android-studio/plugins/webp/lib/*.jar",
         ],
         exclude = [

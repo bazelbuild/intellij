@@ -83,7 +83,7 @@ public class LocalArtifactCacheTest {
                 .setArtifactLocationDecoder(artifactLocationDecoder)
                 .build()));
 
-    blazeContext = new BlazeContext();
+    blazeContext = BlazeContext.create();
 
     artifactCache =
         new LocalArtifactCache(

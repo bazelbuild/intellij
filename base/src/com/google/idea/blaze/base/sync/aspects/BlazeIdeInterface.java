@@ -17,12 +17,14 @@ package com.google.idea.blaze.base.sync.aspects;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.sync.BlazeSyncBuildResult;
 import com.google.idea.blaze.base.sync.SyncProjectState;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy.OutputGroup;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -49,7 +51,7 @@ public interface BlazeIdeInterface {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       SyncProjectState projectState,
-      BlazeBuildOutputs buildResult,
+      BlazeSyncBuildResult buildResult,
       boolean mergeWithOldState,
       @Nullable BlazeProjectData oldProjectData);
 
@@ -67,5 +69,6 @@ public interface BlazeIdeInterface {
       ProjectViewSet projectViewSet,
       ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      ImmutableSet<OutputGroup> outputGroups);
+      ImmutableSet<OutputGroup> outputGroups,
+      BlazeInvocationContext blazeInvocationContext);
 }

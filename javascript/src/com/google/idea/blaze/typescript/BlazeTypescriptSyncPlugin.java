@@ -111,7 +111,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
       @Nullable SyncState previousSyncState,
       SyncMode syncMode) {
     if (!workspaceLanguageSettings.isLanguageActive(LanguageClass.TYPESCRIPT)
-        || !SyncMode.involvesBlazeBuild(syncMode)
+        || !syncMode.involvesBlazeBuild()
         || syncMode == SyncMode.PARTIAL) {
       return;
     }
@@ -197,7 +197,11 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
             .addTargets(target)
             .addBlazeFlags(
                 BlazeFlags.blazeFlags(
-                    project, projectViewSet, commandName, BlazeInvocationContext.SYNC_CONTEXT))
+                    project,
+                    projectViewSet,
+                    commandName,
+                    context,
+                    BlazeInvocationContext.SYNC_CONTEXT))
             .build();
     return ExternalTask.builder(workspaceRoot)
         .addBlazeCommand(command)

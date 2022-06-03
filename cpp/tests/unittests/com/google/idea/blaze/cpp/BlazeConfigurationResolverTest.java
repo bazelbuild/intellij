@@ -75,7 +75,7 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link BlazeConfigurationResolver}. */
 @RunWith(JUnit4.class)
 public class BlazeConfigurationResolverTest extends BlazeTestCase {
-  private final BlazeContext context = new BlazeContext();
+  private final BlazeContext context = BlazeContext.create();
   private final ErrorCollector errorCollector = new ErrorCollector();
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
 
@@ -107,12 +107,10 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
     projectServices.register(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
-    BuildSystemProvider buildSystemProvider = new BazelBuildSystemProvider();
-    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(buildSystemProvider);
     BlazeImportSettingsManager.getInstance(getProject())
         .setImportSettings(
-            new BlazeImportSettings("", "", "", "", buildSystemProvider.buildSystem()));
+            new BlazeImportSettings(
+                "", "", "", "", getBuildSystemProvider().getBuildSystem().getName()));
 
     registerExtensionPoint(
         BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
@@ -121,6 +119,11 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
     resolver = new BlazeConfigurationResolver(project);
     resolverResult = BlazeConfigurationResolverResult.empty();
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   @Test

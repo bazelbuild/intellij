@@ -103,7 +103,7 @@ public class UnpackedAarsTest extends BlazeTestCase {
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     writingOutputSink = new WritingOutputSink();
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(PrintOutput.class, writingOutputSink);
     workspaceRoot = new WorkspaceRoot(folder.getRoot());
     localArtifactLocationDecoder =

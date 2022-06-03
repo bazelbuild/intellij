@@ -77,17 +77,11 @@ public class BlazeAndroidTestRunContext extends BlazeAndroidTestRunContextBase {
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {
       case BLAZE_TEST:
-        return new ConnectBlazeTestDebuggerTask(
-            env.getProject(), androidDebugger, null, applicationIdProvider, this);
+        return new ConnectBlazeTestDebuggerTask(env.getProject(), applicationIdProvider, this);
       case NON_BLAZE:
       case MOBILE_INSTALL:
         return androidDebugger.getConnectDebuggerTask(
-            env,
-            null,
-            applicationIdProvider,
-            facet,
-            androidDebuggerState,
-            runConfiguration.getType().getId());
+            env, applicationIdProvider, facet, androidDebuggerState);
     }
     throw new AssertionError();
   }

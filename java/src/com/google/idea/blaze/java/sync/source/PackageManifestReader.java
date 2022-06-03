@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.sync.source;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.base.Joiner;
@@ -39,9 +40,11 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
+import com.google.idea.blaze.base.prefetch.PrefetchStats;
 import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope.NetworkTrafficUsedOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.components.ServiceManager;
@@ -102,31 +105,36 @@ public class PackageManifestReader {
 
     // Find all not cached {@link RemoteOutputArtifact} and download them before parsing manifest
     // file
-    ImmutableList.Builder<RemoteOutputArtifact> toDownload = ImmutableList.builder();
-    for (OutputArtifact outputArtifact : diff.getUpdatedOutputs()) {
-      if (!(outputArtifact instanceof RemoteOutputArtifact)) {
-        continue;
-      }
-      if (findArtifactInCache(project, outputArtifact) != null) {
-        continue;
-      }
-      toDownload.add((RemoteOutputArtifact) outputArtifact);
-    }
+    ImmutableList<RemoteOutputArtifact> toDownload =
+        BlazeArtifact.getRemoteArtifacts(diff.getUpdatedOutputs()).stream()
+            .filter(a -> findArtifactInCache(project, a) == null)
+            .collect(toImmutableList());
 
     ListenableFuture<?> fetchRemoteArtifactFuture =
-        RemoteArtifactPrefetcher.getInstance()
-            .downloadArtifacts(project.getName(), toDownload.build());
-    ListenableFuture<?> fetchFuture =
+        RemoteArtifactPrefetcher.getInstance().downloadArtifacts(project.getName(), toDownload);
+    ListenableFuture<PrefetchStats> fetchLocalFilesFuture =
         PrefetchService.getInstance()
             .prefetchFiles(BlazeArtifact.getLocalFiles(diff.getUpdatedOutputs()), true, false);
 
     if (!FutureUtil.waitForFuture(
-            context, Futures.allAsList(fetchRemoteArtifactFuture, fetchFuture))
+            context, Futures.allAsList(fetchRemoteArtifactFuture, fetchLocalFilesFuture))
         .timed("FetchPackageManifests", EventType.Prefetching)
         .withProgressMessage("Reading package manifests...")
         .run()
         .success()) {
       return null;
+    }
+    try {
+      long bytesConsumed =
+          toDownload.stream().mapToLong(RemoteOutputArtifact::getLength).sum()
+              + fetchLocalFilesFuture.get().bytesPrefetched();
+      if (bytesConsumed > 0) {
+        context.output(new NetworkTrafficUsedOutput(bytesConsumed, "packagemanifest"));
+      }
+    } catch (InterruptedException | ExecutionException e) {
+      // Should never happen - the future has already completed.
+      logger.error(e);
+      // carry on - failing to log the stats should not affect anything else.
     }
 
     List<ListenableFuture<Void>> futures = Lists.newArrayList();

@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -213,6 +214,11 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     }
 
     @Override
+    public BlazeInfo getBlazeInfo() throws SyncFailedException {
+      return inner.getBlazeInfo();
+    }
+
+    @Override
     @MustBeClosed
     public BuildResultHelper createBuildResultHelper() {
       if (buildResultHelperSupplier != null) {
@@ -241,8 +247,8 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     }
 
     @Override
-    public BuildInvokerWrapper getBuildInvoker(Project project) {
-      return new BuildInvokerWrapper(inner.getBuildInvoker(project));
+    public BuildInvokerWrapper getBuildInvoker(Project project, BlazeContext context) {
+      return new BuildInvokerWrapper(inner.getBuildInvoker(project, context));
     }
 
     @Override

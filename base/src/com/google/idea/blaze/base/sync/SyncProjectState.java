@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.auto.value.AutoValue;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -31,8 +30,6 @@ public abstract class SyncProjectState {
   public abstract ProjectViewSet getProjectViewSet();
 
   public abstract WorkspaceLanguageSettings getLanguageSettings();
-
-  public abstract BlazeInfo getBlazeInfo();
 
   public abstract BlazeVersionData getBlazeVersionData();
 
@@ -51,8 +48,6 @@ public abstract class SyncProjectState {
     public abstract Builder setProjectViewSet(ProjectViewSet projectViewSet);
 
     public abstract Builder setLanguageSettings(WorkspaceLanguageSettings languageSettings);
-
-    public abstract Builder setBlazeInfo(BlazeInfo blazeInfo);
 
     public abstract Builder setBlazeVersionData(BlazeVersionData blazeVersionData);
 

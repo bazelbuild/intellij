@@ -1,5 +1,6 @@
 package com.google.idea.sdkcompat.general;
 
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
@@ -32,8 +33,16 @@ public abstract class PluginAdvertiserEditorNotificationProviderWrapperCompat
       Project project, VirtualFile file) {
     boolean alreadySupported = !(file.getFileType() instanceof PlainTextLikeFileType);
     if (alreadySupported) {
-      return null;
+      return EditorNotificationProvider.CONST_NULL;
     }
     return pluginAdvertiserEditorNotificationProvider.collectNotificationData(project, file);
+  }
+
+  public static void reregisterExtension(
+      Project project, PluginAdvertiserEditorNotificationProviderWrapperCompat replacement) {
+    ExtensionPoint<EditorNotificationProvider> ep =
+        EditorNotificationProvider.EP_NAME.getPoint(project);
+    ep.unregisterExtension(PluginAdvertiserEditorNotificationProvider.class);
+    ep.registerExtension(replacement, project);
   }
 }

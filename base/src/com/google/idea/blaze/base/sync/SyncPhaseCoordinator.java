@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
@@ -46,12 +47,16 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
+import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.PerformanceWarningScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
+import com.google.idea.blaze.base.scope.scopes.SharedStringPoolScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
@@ -62,6 +67,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
+import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
@@ -85,6 +91,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -237,14 +244,29 @@ final class SyncPhaseCoordinator {
                           parentToolWindowScope != null ? parentToolWindowScope.getTask() : null;
 
                       BlazeSyncParams params = finalizeSyncParams(syncParams, context);
+                      Task syncTask =
+                          new Task(project, params.title(), Task.Type.SYNC, parentToolWindowTask);
                       setupScopes(
                           params,
                           context,
                           indicator,
                           singleThreaded ? SyncPhase.ALL_PHASES : SyncPhase.BUILD,
-                          new Task(project, params.title(), Task.Type.SYNC, parentToolWindowTask),
-                          /* startTaskOnScopeBegin= */ true);
+                          syncTask);
+                      parentContext.output(
+                          SummaryOutput.output(
+                              Prefix.TIMESTAMP, String.format("%s started", syncTask.getName())));
                       runSync(params, singleThreaded, context);
+                      if (context.hasErrors()) {
+                        parentContext.output(
+                            SummaryOutput.error(
+                                Prefix.TIMESTAMP,
+                                String.format("%s finished with errors", syncTask.getName())));
+                      } else {
+                        parentContext.output(
+                            SummaryOutput.output(
+                                Prefix.TIMESTAMP,
+                                String.format("%s finished", syncTask.getName())));
+                      }
                     }));
   }
 
@@ -276,8 +298,10 @@ final class SyncPhaseCoordinator {
                               context,
                               indicator,
                               SyncPhase.ALL_PHASES,
-                              new Task(project, params.title(), Task.Type.SYNC),
-                              /* startTaskOnScopeBegin= */ true);
+                              new Task(project, params.title(), Task.Type.SYNC));
+                          context.output(
+                              SummaryOutput.output(
+                                  Prefix.TIMESTAMP, String.format("%s started", params.title())));
                           doFilterProjectTargets(params, filter, context);
                         }));
   }
@@ -342,14 +366,16 @@ final class SyncPhaseCoordinator {
 
                 fillInBuildStats(stats, projectState, /* buildResult= */ null);
                 ProjectUpdateSyncTask.runProjectUpdatePhase(
-                    project, params.syncMode(), projectState, targetData, childContext);
+                    project,
+                    params.syncMode(),
+                    projectState,
+                    targetData,
+                    oldProjectData.getBlazeInfo(),
+                    childContext);
               },
               new TimingScope("Filtering project targets", EventType.Other));
       stats.addTimedEvents(timedEvents);
-      syncResult =
-          context.shouldContinue()
-              ? SyncResult.SUCCESS
-              : context.isCancelled() ? SyncResult.CANCELLED : SyncResult.FAILURE;
+      syncResult = context.getSyncResult();
 
     } catch (Throwable e) {
       logSyncError(context, e);
@@ -385,7 +411,7 @@ final class SyncPhaseCoordinator {
             context,
             ProjectViewManager.getInstance(project).getProjectViewSet(),
             ImmutableSet.of(buildId),
-            SyncResult.FAILURE,
+            context.getSyncResult(),
             SyncStats.builder());
         return;
       }
@@ -403,10 +429,9 @@ final class SyncPhaseCoordinator {
       }
       SyncProjectState projectState = ProjectStateSyncTask.collectProjectState(project, context);
       BlazeSyncBuildResult buildResult =
-          projectState != null
-              ? BuildPhaseSyncTask.runBuildPhase(
-                  project, params, projectState, buildId, context, buildSystem)
-              : BlazeSyncBuildResult.builder().build();
+          BuildPhaseSyncTask.runBuildPhase(
+              project, params, projectState, buildId, context, buildSystem);
+
       UpdatePhaseTask task =
           UpdatePhaseTask.builder()
               .setStartTime(startTime)
@@ -417,30 +442,32 @@ final class SyncPhaseCoordinator {
               .setSyncResult(syncResultFromBuildPhase(buildResult, context))
               .setBuildBinaryType(
                   buildResult.getBuildPhaseStats().stream()
-                      .map(r -> r.buildBinaryType())
+                      .map(BuildPhaseSyncStats::buildBinaryType)
+                      .flatMap(Optional::stream)
                       .findFirst()
                       .orElse(BuildBinaryType.NONE))
               .build();
+
       if (singleThreaded) {
         updateProjectAndFinishSync(task, context);
       } else {
-        queueUpdateTask(task, context.getScope(ToolWindowScope.class), params);
+        queueUpdateTask(task);
       }
     } catch (Throwable e) {
       logSyncError(context, e);
+      context.onException(e);
       finishSync(
           params,
           startTime,
           context,
           ProjectViewManager.getInstance(project).getProjectViewSet(),
           ImmutableSet.of(buildId),
-          SyncResult.FAILURE,
+          context.getSyncResult(),
           SyncStats.builder());
     }
   }
 
-  private void queueUpdateTask(
-      UpdatePhaseTask task, @Nullable ToolWindowScope syncToolWindowScope, BlazeSyncParams params) {
+  private void queueUpdateTask(UpdatePhaseTask task) {
     synchronized (this) {
       if (pendingUpdateTask != null) {
         // there's already a pending job, no need to kick off another one
@@ -448,17 +475,6 @@ final class SyncPhaseCoordinator {
         return;
       }
       pendingUpdateTask = task;
-    }
-
-    Task toolWindowTask;
-    boolean startTaskOnScopeBegin;
-    if (syncToolWindowScope == null) {
-      toolWindowTask = new Task(project, params.title(), Task.Type.SYNC);
-      startTaskOnScopeBegin = true;
-    } else {
-      toolWindowTask = syncToolWindowScope.getTask();
-      syncToolWindowScope.setFinishTaskOnScopeEnd(false);
-      startTaskOnScopeBegin = false;
     }
 
     ProgressiveTaskWithProgressIndicator.builder(project, "Syncing Project")
@@ -473,8 +489,7 @@ final class SyncPhaseCoordinator {
                           context,
                           indicator,
                           SyncPhase.PROJECT_UPDATE,
-                          toolWindowTask,
-                          startTaskOnScopeBegin);
+                          new Task(project, "Updating project", Task.Type.SYNC));
                       updateProjectAndFinishSync(updateTask, context);
                     }));
   }
@@ -488,7 +503,7 @@ final class SyncPhaseCoordinator {
   private SyncResult syncResultFromBuildPhase(
       BlazeSyncBuildResult buildResult, BlazeContext context) {
     if (!context.shouldContinue()) {
-      return context.isCancelled() ? SyncResult.CANCELLED : SyncResult.FAILURE;
+      return context.getSyncResult();
     }
     if (!buildResult.isValid()) {
       return SyncResult.FAILURE;
@@ -527,17 +542,19 @@ final class SyncPhaseCoordinator {
                   childContext.setHasError();
                   throw new SyncFailedException();
                 }
+
                 ProjectUpdateSyncTask.runProjectUpdatePhase(
                     project,
                     updateTask.syncParams().syncMode(),
                     updateTask.projectState(),
                     targetData,
+                    updateTask.buildResult().getBlazeInfo(),
                     childContext);
               },
               new TimingScope("Project update phase", EventType.Other));
       stats.addTimedEvents(timedEvents);
       if (!context.shouldContinue()) {
-        syncResult = context.isCancelled() ? SyncResult.CANCELLED : SyncResult.FAILURE;
+        syncResult = context.getSyncResult();
       }
     } catch (Throwable e) {
       logSyncError(context, e);
@@ -558,11 +575,7 @@ final class SyncPhaseCoordinator {
   @Nullable
   private ProjectTargetData updateTargetData(UpdatePhaseTask task, BlazeContext context) {
     return ProjectUpdateSyncTask.updateTargetData(
-        project,
-        task.syncParams(),
-        task.projectState(),
-        task.buildResult().getBuildResult(),
-        context);
+        project, task.syncParams(), task.projectState(), task.buildResult(), context);
   }
 
   /**
@@ -600,6 +613,11 @@ final class SyncPhaseCoordinator {
       } else {
         syncStatus = SyncResult.CANCELLED.equals(syncResult) ? "canceled" : "failed";
       }
+      NetworkTrafficTrackingScope networkTraffic =
+          context.getScope(NetworkTrafficTrackingScope.class);
+      if (networkTraffic != null) {
+        stats.addNetworkUsage(networkTraffic.getNetworkUsage());
+      }
       stats
           .setSyncMode(syncParams.syncMode())
           .setSyncTitle(syncParams.title())
@@ -625,8 +643,7 @@ final class SyncPhaseCoordinator {
       BlazeContext context,
       ProgressIndicator indicator,
       SyncPhase phase,
-      Task task,
-      boolean startTaskOnScopeBegin) {
+      Task task) {
     boolean clearProblems = phase != SyncPhase.PROJECT_UPDATE;
     boolean notifyFinished = phase != SyncPhase.BUILD;
 
@@ -635,12 +652,13 @@ final class SyncPhaseCoordinator {
       context.push(new PerformanceWarningScope());
     }
     context.push(new ProgressIndicatorScope(indicator));
+    context.push(new NetworkTrafficTrackingScope());
+    context.push(new SharedStringPoolScope());
 
     BlazeUserSettings userSettings = BlazeUserSettings.getInstance();
     context
         .push(
             new ToolWindowScope.Builder(project, task)
-                .setStartTaskOnScopeBegin(startTaskOnScopeBegin)
                 .setProgressIndicator(indicator)
                 .setPopupBehavior(
                     syncParams.backgroundSync()
@@ -828,6 +846,16 @@ final class SyncPhaseCoordinator {
     Throwable cause = e;
     while (cause != null) {
       if (cause instanceof ProcessCanceledException) {
+        return;
+      }
+      if (cause instanceof SyncCanceledException) {
+        return;
+      }
+      if (cause instanceof SyncFailedException) {
+        if (cause.getMessage() != null) {
+          IssueOutput.error(cause.getMessage()).submit(context);
+        }
+        logger.warn("Sync failed", cause);
         return;
       }
       cause = cause.getCause();

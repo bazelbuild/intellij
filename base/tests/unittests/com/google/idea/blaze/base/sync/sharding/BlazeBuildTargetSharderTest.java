@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
-import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
 import com.google.idea.blaze.base.bazel.FakeBuildInvoker;
 import com.google.idea.blaze.base.command.BuildFlagsProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
@@ -47,6 +46,7 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
+import com.google.idea.blaze.base.prefetch.PrefetchStats;
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
@@ -83,9 +83,6 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
       fakeWildCardTargetExpanderExternalTaskProvider =
           new FakeWildCardTargetExpanderExternalTaskProvider();
 
-  private final BuildSystemProviderWrapper buildSystemProvider =
-      new BuildSystemProviderWrapper(new BazelBuildSystemProvider());
-
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     registerExtensionPoint(BuildFlagsProvider.EP_NAME, BuildFlagsProvider.class);
@@ -93,8 +90,6 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
         .registerExtension(fakeBuildBatchingService, testDisposable);
     registerExtensionPoint(TargetShardSizeLimit.EP_NAME, TargetShardSizeLimit.class)
         .registerExtension(OptionalInt::empty, testDisposable);
-    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(buildSystemProvider, testDisposable);
     registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class)
         .registerExtension(new FakeBlazeSyncPlugin(), testDisposable);
     registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class)
@@ -112,6 +107,11 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
     projectServices.register(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(getProject()));
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   @Test
@@ -373,7 +373,7 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("workspaceRoot"));
     return BlazeBuildTargetSharder.expandAndShardTargets(
         getProject(),
-        new BlazeContext(),
+        BlazeContext.create(),
         workspaceRoot,
         ProjectViewSet.builder().add(projectView).build(),
         new WorkspacePathResolverImpl(workspaceRoot),
@@ -446,17 +446,17 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
 
   private static class FakePrefetchService implements PrefetchService {
     @Override
-    public ListenableFuture<?> prefetchFiles(
+    public ListenableFuture<PrefetchStats> prefetchFiles(
         Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes) {
-      return Futures.immediateFuture(null);
+      return Futures.immediateFuture(PrefetchStats.NONE);
     }
 
     @Override
-    public ListenableFuture<?> prefetchProjectFiles(
+    public ListenableFuture<PrefetchStats> prefetchProjectFiles(
         Project project,
         ProjectViewSet projectViewSet,
         @Nullable BlazeProjectData blazeProjectData) {
-      return Futures.immediateFuture(null);
+      return Futures.immediateFuture(PrefetchStats.NONE);
     }
 
     @Override

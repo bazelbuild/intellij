@@ -251,6 +251,7 @@ public final class BuildPluginBeforeRunTaskProvider
                                     project,
                                     projectViewSet,
                                     BlazeCommandName.BUILD,
+                                    context,
                                     BlazeInvocationContext.runConfigContext(
                                         ExecutorType.fromExecutor(env.getExecutor()),
                                         config.getType(),

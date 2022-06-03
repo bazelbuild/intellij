@@ -96,7 +96,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   public void setupTestInfoGatherers() {
     // Message collector for collecting errors.
     messageCollector = new MessageCollector();
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     // Setup interceptor for fake running of blaze commands and capture details.
@@ -109,7 +109,8 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   public void setupBuildResultHelperProvider() throws GetArtifactsException {
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS));
+        .thenReturn(
+            new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS, 0));
     BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
     buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
     registerExtension(BuildSystemProvider.EP_NAME, buildSystem);
@@ -271,7 +272,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   public void build_withNullExecRoot_shouldFail() throws Exception {
     // Return null execroot
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS));
+        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS, 0));
 
     // Return fake deploy info proto and mocked deploy info data object.
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
@@ -297,12 +298,10 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   /** Saves the latest blaze command and context for later verification. */
   private static class ExternalTaskInterceptor implements ExternalTaskProvider {
     ImmutableList<String> command;
-    BlazeContext context;
 
     @Override
     public ExternalTask build(ExternalTask.Builder builder) {
       command = builder.command.build();
-      context = builder.context;
       return scopes -> 0;
     }
   }

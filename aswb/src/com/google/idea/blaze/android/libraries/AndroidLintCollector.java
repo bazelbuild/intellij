@@ -24,12 +24,15 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.libraries.LintCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Objects;
 
 /** {@inheritDoc} Collecting lint rule jars from {@code AarLibrary} */
 public class AndroidLintCollector implements LintCollector {
+  public static final FeatureRolloutExperiment lintEnabled =
+      new FeatureRolloutExperiment("blaze.android.libraries.lint.enabled");
 
   @Override
   public ImmutableList<File> collectLintJars(Project project, BlazeProjectData blazeProjectData) {
@@ -41,5 +44,10 @@ public class AndroidLintCollector implements LintCollector {
         .map(library -> ((AarLibrary) library).getLintRuleJar(project, artifactLocationDecoder))
         .filter(Objects::nonNull)
         .collect(toImmutableList());
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return lintEnabled.isEnabled();
   }
 }

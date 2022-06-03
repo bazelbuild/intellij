@@ -21,6 +21,9 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import java.util.List;
 
 /**
@@ -38,5 +41,11 @@ public final class BaseSdkTestCompat {
   /** #api212: inline into ServiceHelper */
   public static void unregisterComponent(ComponentManager componentManager, String name) {
     ((ComponentManagerImpl) componentManager.getPicoContainer()).unregisterComponent(name);
+  }
+
+  /** #api213: inline into tests */
+  public static TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(
+      IdeaTestFixtureFactory factory, String projectName) {
+    return factory.createLightFixtureBuilder();
   }
 }

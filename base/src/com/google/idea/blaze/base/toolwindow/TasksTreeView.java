@@ -196,7 +196,10 @@ final class TasksTreeView extends AbstractView<Tree> {
           JPopupMenu menu = new JPopupMenu("Popup Menu");
           JMenuItem removeTaskMenuItem = new JMenuItem("Remove Task");
           removeTaskMenuItem.addActionListener(
-              it -> model.tasksTreeProperty().removeTask(selectedTask));
+              it -> {
+                model.tasksTreeProperty().removeTask(selectedTask);
+                model.selectedTaskProperty().setValue(null);
+              });
           menu.add(removeTaskMenuItem);
           menu.show(e.getComponent(), e.getX(), e.getY());
         }
@@ -323,19 +326,34 @@ final class TasksTreeView extends AbstractView<Tree> {
     @Override
     public void treeNodesInserted(TreeModelEvent e) {
 
-      // Expand tree at parent of added task if parent is top-level task.
       TreePath pathToParent = e.getTreePath();
+      DefaultMutableTreeNode addedNode = objectToTreeNode(e.getChildren()[0]);
+      Task addedTask = treeNodeToTask(addedNode);
+
+      // Auto-expand tree to show only one level below top-level tasks (grandchildren remain
+      // collapsed by default). The tree is expanded at the top-level task if it is not a leaf node
+      // at the time of insertion, or if it exists in the tree as a leaf and a child task is added
+      // to it.
       if (tree != null && pathToParent != null) {
-        Task parentTask = treeNodeToTask(pathToParent.getLastPathComponent());
-        if (model.tasksTreeProperty().isTopLevelTask(parentTask)) {
-          if (!tree.isExpanded(pathToParent)) {
-            tree.expandPath(pathToParent);
+
+        // Added task is top-level task with children
+        if (model.tasksTreeProperty().isTopLevelTask(addedTask) && !addedNode.isLeaf()) {
+          TreePath pathToExpand = pathToParent.pathByAddingChild(addedNode);
+          if (!tree.isExpanded(pathToExpand)) {
+            tree.expandPath(pathToExpand);
+          }
+        } else {
+          // Added task is child of top-level task
+          Task parentTask = treeNodeToTask(pathToParent.getLastPathComponent());
+          if (model.tasksTreeProperty().isTopLevelTask(parentTask)) {
+            if (!tree.isExpanded(pathToParent)) {
+              tree.expandPath(pathToParent);
+            }
           }
         }
       }
 
       // Select top-level task when added.
-      Task addedTask = treeNodeToTask(e.getChildren()[0]);
       if (model.tasksTreeProperty().isTopLevelTask(addedTask)) {
         model.selectedTaskProperty().setValue(addedTask);
       }

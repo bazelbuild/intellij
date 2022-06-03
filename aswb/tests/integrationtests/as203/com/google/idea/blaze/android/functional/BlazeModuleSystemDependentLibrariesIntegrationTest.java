@@ -63,10 +63,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/**
- * Integration test for {@link
- * com.google.idea.blaze.android.projectsystem.BlazeModuleSystem#getAndroidLibraryDependencies()}.
- */
+/** Integration test for {@link BlazeModuleSystem#getDependentLibraries()}. */
 @RunWith(JUnit4.class)
 public class BlazeModuleSystemDependentLibrariesIntegrationTest
     extends BlazeAndroidIntegrationTestCase {

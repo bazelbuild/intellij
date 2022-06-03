@@ -81,6 +81,7 @@ import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
+import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings;
 import com.google.idea.blaze.java.sync.jdeps.MockJdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
@@ -163,10 +164,11 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
         registerExtensionPoint(
             GeneratedResourceRetentionFilter.EP_NAME, GeneratedResourceRetentionFilter.class);
 
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);
+    registerExtensionPoint(EmptyLibraryFilterSettings.EP_NAME, EmptyLibraryFilterSettings.class);
 
     // For importJavaWorkspace.
     applicationServices.register(
@@ -188,11 +190,13 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
     registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class)
         .registerExtension(new JavaLikeLanguage.Java());
 
-    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(new BazelBuildSystemProvider());
-
     applicationServices.register(
         RemoteArtifactPrefetcher.class, new MockRemoteArtifactPrefetcher());
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   private BlazeAndroidImportResult importWorkspace(

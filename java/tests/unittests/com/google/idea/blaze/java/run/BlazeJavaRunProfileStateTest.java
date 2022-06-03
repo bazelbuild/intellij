@@ -16,13 +16,14 @@
 package com.google.idea.blaze.java.run;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.FakeBuildInvoker;
+import com.google.idea.blaze.base.bazel.FakeBuildSystem;
+import com.google.idea.blaze.base.bazel.FakeBuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -117,16 +118,20 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerProviderEp.registerExtension(
         new BlazeCommandGenericRunConfigurationHandlerProvider(), testDisposable);
 
-    ExtensionPointImpl<BuildSystemProvider> buildSystemProviderEp =
-        registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
-    BuildSystemProvider buildSystemProvider = mock(BuildSystemProvider.class);
-    when(buildSystemProvider.getBinaryPath(project)).thenReturn("/usr/bin/blaze");
-    buildSystemProviderEp.registerExtension(buildSystemProvider, testDisposable);
-
     registerExtensionPoint(HotSwapCommandBuilder.EP_NAME, HotSwapCommandBuilder.class);
 
     configuration =
         new BlazeCommandRunConfigurationType().getFactory().createTemplateConfiguration(project);
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return FakeBuildSystemProvider.builder()
+        .setBuildSystem(
+            FakeBuildSystem.builder(BuildSystemName.Bazel)
+                .setBuildInvoker(FakeBuildInvoker.builder().binaryPath("/usr/bin/blaze").build())
+                .build())
+        .build();
   }
 
   @Test

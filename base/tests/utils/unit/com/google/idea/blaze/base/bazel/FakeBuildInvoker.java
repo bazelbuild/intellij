@@ -20,6 +20,7 @@ import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
@@ -41,6 +42,10 @@ public abstract class FakeBuildInvoker implements BuildInvoker {
 
   @Override
   public abstract String getBinaryPath();
+
+  @Override
+  @Nullable
+  public abstract BlazeInfo getBlazeInfo();
 
   public abstract boolean getSupportsParallelism();
 
@@ -75,6 +80,8 @@ public abstract class FakeBuildInvoker implements BuildInvoker {
     public abstract Builder type(BuildBinaryType type);
 
     public abstract Builder binaryPath(String binaryPath);
+
+    public abstract Builder blazeInfo(BlazeInfo blazeInfo);
 
     public abstract Builder supportsParallelism(boolean parallel);
 

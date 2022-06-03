@@ -94,7 +94,7 @@ public class PackageNameUtils {
     ManifestOverrides manifestOverrides =
         BlazeModuleSystem.getInstance(facet.getModule()).getManifestOverrides();
     String packageOverride =
-        manifestOverrides.getDirectOverrides().get(ManifestSystemProperty.PACKAGE);
+        ManifestValueProcessor.getPackageOverride(manifestOverrides.getDirectOverrides());
     if (packageOverride != null) {
       return packageOverride;
     }

@@ -55,16 +55,14 @@ import com.intellij.openapi.project.Project;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 /** Collects information about the project state (VCS, blaze info, .blazeproject contents, etc.). */
 final class ProjectStateSyncTask {
 
-  @Nullable
-  static SyncProjectState collectProjectState(Project project, BlazeContext context) {
+  static SyncProjectState collectProjectState(Project project, BlazeContext context)
+      throws SyncCanceledException, SyncFailedException {
     ProjectStateSyncTask task = new ProjectStateSyncTask(project);
-    // TODO(brendandouglas): capture timing information
-    return SyncScope.push(context, task::getProjectState);
+    return task.getProjectState(context);
   }
 
   private final Project project;
@@ -101,7 +99,11 @@ final class ProjectStateSyncTask {
 
     List<String> syncFlags =
         BlazeFlags.blazeFlags(
-            project, projectViewSet, BlazeCommandName.INFO, BlazeInvocationContext.SYNC_CONTEXT);
+            project,
+            projectViewSet,
+            BlazeCommandName.INFO,
+            context,
+            BlazeInvocationContext.SYNC_CONTEXT);
     ListenableFuture<BlazeInfo> blazeInfoFuture =
         BlazeInfoRunner.getInstance()
             .runBlazeInfo(
@@ -163,7 +165,6 @@ final class ProjectStateSyncTask {
     return SyncProjectState.builder()
         .setProjectViewSet(projectViewSet)
         .setLanguageSettings(workspaceLanguageSettings)
-        .setBlazeInfo(blazeInfo)
         .setBlazeVersionData(blazeVersionData)
         .setWorkingSet(workingSet)
         .setWorkspacePathResolver(workspacePathResolver)

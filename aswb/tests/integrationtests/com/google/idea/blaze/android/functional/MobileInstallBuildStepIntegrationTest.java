@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
+import com.google.errorprone.annotations.Keep;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MessageCollector;
 import com.google.idea.blaze.android.MockSdkUtil;
@@ -110,7 +111,8 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
   public void setupBuildResultHelperProvider() throws GetArtifactsException {
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS));
+        .thenReturn(
+            new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS, 0));
     BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
     buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
     registerExtension(BuildSystemProvider.EP_NAME, buildSystem);
@@ -124,7 +126,7 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
 
     // Collect messages sent to IssueOutput.
     messageCollector = new MessageCollector();
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
   }
 
@@ -378,7 +380,7 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
   public void nullExecRoot() throws Exception {
     // Return null execroot
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS));
+        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS, 0));
 
     // Mobile-install build step requires only one device be active.  DeviceFutures class is final,
     // so we have to make one with a stub AndroidDevice.
@@ -474,15 +476,18 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
     }
 
     // @Override #api42
+    @Keep
     public boolean renderLabel(
         SimpleColoredComponent simpleColoredComponent, boolean b, @Nullable String s) {
       return false;
     }
 
     // @Override #api42
+    @Keep
     public void prepareToRenderLabel() {}
 
     // api40: see new API for canRun below
+    @Keep
     public LaunchCompatibility canRun(
         com.android.sdklib.AndroidVersion androidVersion,
         IAndroidTarget iAndroidTarget,
@@ -497,16 +502,19 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
     }
 
     // @Override #api 3.6
+    @Keep
     public ListenableFuture<IDevice> launch(Project project, String s) {
       return null;
     }
 
     // @Override #api 4.0
+    @Keep
     public ListenableFuture<IDevice> launch(Project project, List<String> list) {
       return null;
     }
 
     // @Override #api 3.6
+    @Keep
     public boolean isDebuggable() {
       return false;
     }

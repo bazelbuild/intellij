@@ -22,6 +22,9 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import java.util.List;
 import org.picocontainer.MutablePicoContainer;
@@ -47,5 +50,11 @@ public final class BaseSdkTestCompat {
   /** #api212: inline into ServiceHelper */
   public static void unregisterComponent(ComponentManager componentManager, String name) {
     ((MutablePicoContainer) componentManager.getPicoContainer()).unregisterComponent(name);
+  }
+
+  /** #api213: inline into tests */
+  public static TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(
+      IdeaTestFixtureFactory factory, String projectName) {
+    return factory.createLightFixtureBuilder();
   }
 }

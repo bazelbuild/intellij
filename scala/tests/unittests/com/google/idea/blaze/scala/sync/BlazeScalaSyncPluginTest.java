@@ -54,7 +54,7 @@ public class BlazeScalaSyncPluginTest extends BlazeTestCase {
         registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     syncPlugins.registerExtension(new BlazeJavaSyncPlugin());
     syncPlugins.registerExtension(new BlazeScalaSyncPlugin());
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
 

@@ -55,7 +55,7 @@ import org.junit.runners.JUnit4;
 public class ScalaSourceDirectoryCalculatorTest extends BlazeTestCase {
   private MockInputStreamProvider mockInputStreamProvider;
   private SourceDirectoryCalculator sourceDirectoryCalculator;
-  private final BlazeContext context = new BlazeContext();
+  private final BlazeContext context = BlazeContext.create();
   private final ErrorCollector issues = new ErrorCollector();
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
 

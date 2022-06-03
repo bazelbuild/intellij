@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.command;
 
+import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -24,10 +25,12 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.scopes.SharedStringPoolScope;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.intellij.openapi.project.Project;
+import java.util.Optional;
 
 /** {@inheritDoc} Start a build via local binary */
 public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
@@ -55,7 +58,13 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     }
     try {
       context.output(PrintOutput.log("Build command finished. Retrieving BEP outputs..."));
-      return BlazeBuildOutputs.fromParsedBepOutput(buildResult, buildResultHelper.getBuildOutput());
+
+      Interner<String> stringInterner =
+          Optional.ofNullable(context.getScope(SharedStringPoolScope.class))
+              .map(SharedStringPoolScope::getStringInterner)
+              .orElse(null);
+      return BlazeBuildOutputs.fromParsedBepOutput(
+          buildResult, buildResultHelper.getBuildOutput(stringInterner));
     } catch (GetArtifactsException e) {
       IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
       return BlazeBuildOutputs.noOutputs(buildResult);

@@ -220,7 +220,7 @@ public class BlazeBuildService {
                     SaveUtil.saveAllFiles();
                     BlazeBuildListener.EP_NAME.extensions().forEach(e -> e.buildStarting(project));
 
-                    BuildInvoker buildInvoker = buildSystem.getBuildInvoker(project);
+                    BuildInvoker buildInvoker = buildSystem.getBuildInvoker(project, context);
 
                     ShardedTargetsResult shardedTargets =
                         BlazeBuildTargetSharder.expandAndShardTargets(
@@ -246,7 +246,8 @@ public class BlazeBuildService {
                                 projectView,
                                 shardedTargets.shardedTargets,
                                 projectData.getWorkspaceLanguageSettings(),
-                                ImmutableSet.of(OutputGroup.COMPILE));
+                                ImmutableSet.of(OutputGroup.COMPILE),
+                                BlazeInvocationContext.OTHER_CONTEXT);
 
                     refreshFileCachesAndNotifyListeners(context, buildOutputs, project);
 

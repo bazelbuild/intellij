@@ -128,13 +128,25 @@ public abstract class ConfigurableSetting<ValueT, ComponentT extends SettingComp
      *
      * <p>The condition will only be checked when the UI is created, not on subsequent updates.
      *
-     * @throws IllegalStateException if {@code hideIf} has already been called. Only one condition
-     *     is supported.
+     * @throws IllegalStateException if {@link #hideIf} or {@link #showIf} has already been called.
+     *     Only one condition is supported.
      */
     public BuilderT hideIf(Supplier<Boolean> hideCondition) {
-      checkState(this.hideCondition == null, "hideIf can only be called once");
+      checkState(this.hideCondition == null, "hideIf/showIf can only be called once");
       this.hideCondition = hideCondition;
       return self();
+    }
+
+    /**
+     * Sets a condition for showing and enabling this setting in the UI.
+     *
+     * <p>The condition will only be checked when the UI is created, not on subsequent updates.
+     *
+     * @throws IllegalStateException if {@link #hideIf} or {@link #showIf} has already been called.
+     *     Only one condition is supported.
+     */
+    public BuilderT showIf(Supplier<Boolean> showCondition) {
+      return hideIf(() -> !showCondition.get());
     }
   }
 

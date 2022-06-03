@@ -126,7 +126,8 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       throws FastBuildException {
 
     try {
-      FastBuildParameters buildParameters = generateBuildParameters(blazeBinaryPath, blazeFlags);
+      FastBuildParameters buildParameters =
+          generateBuildParameters(blazeBinaryPath, blazeFlags, context);
       FastBuildState buildState =
           builds.compute(
               label,
@@ -147,16 +148,18 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
   }
 
   private FastBuildParameters generateBuildParameters(
-      String blazeBinaryPath, List<String> userBlazeFlags) {
+      String blazeBinaryPath, List<String> userBlazeFlags, BlazeContext context) {
 
     ProjectViewSet projectViewSet = projectViewManager.getProjectViewSet();
-    BlazeInvocationContext context =
+    BlazeInvocationContext invocationContext =
         BlazeInvocationContext.runConfigContext(
             ExecutorType.FAST_BUILD_RUN, BlazeCommandRunConfigurationType.getInstance(), true);
     List<String> buildFlags =
-        BlazeFlags.blazeFlags(project, projectViewSet, BlazeCommandName.BUILD, context);
+        BlazeFlags.blazeFlags(
+            project, projectViewSet, BlazeCommandName.BUILD, context, invocationContext);
     List<String> infoFlags =
-        BlazeFlags.blazeFlags(project, projectViewSet, BlazeCommandName.INFO, context);
+        BlazeFlags.blazeFlags(
+            project, projectViewSet, BlazeCommandName.INFO, context, invocationContext);
 
     return FastBuildParameters.builder()
         .setBlazeBinary(blazeBinaryPath)

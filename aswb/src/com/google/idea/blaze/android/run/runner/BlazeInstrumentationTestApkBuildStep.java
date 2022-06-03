@@ -100,7 +100,7 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
     }
 
     BuildInvoker invoker =
-        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project);
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
     BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 

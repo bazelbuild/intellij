@@ -80,11 +80,11 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2020.3": glob([
-            "tests/utils/sdkcompat/as203/com/google/idea/blaze/android/functional/*.java",
-        ]),
         "android-studio-2021.2": glob([
             "tests/utils/sdkcompat/as212/com/google/idea/blaze/android/functional/*.java",
+        ]),
+        "android-studio-2021.3": glob([
+            "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/functional/*.java",
         ]),
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
@@ -106,8 +106,8 @@ java_library(
 java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2020.3": glob(["sdkcompat/as203/**/*.java"]),
         "android-studio-2021.2": glob(["sdkcompat/as212/**/*.java"]),
+        "android-studio-2021.3": glob(["sdkcompat/as213/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     visibility = combine_visibilities(
@@ -117,6 +117,7 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",
         "//java",
@@ -129,7 +130,7 @@ intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(
         ["tests/unittests/**/*.java"],
-        exclude = ["tests/unittests/com/google/idea/blaze/android/sync/model/idea/BlazeAndroidModelTest.java"],  # b/145809318
+        exclude = ["tests/unittests/com/google/idea/blaze/android/sync/model/idea/BlazeClassJarProviderTest.java"],  # b/145809318
     ),
     test_package_root = "com.google.idea.blaze.android",
     deps = [
@@ -194,6 +195,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
+        "@error_prone_annotations//jar",
         "@junit//jar",
     ],
 )

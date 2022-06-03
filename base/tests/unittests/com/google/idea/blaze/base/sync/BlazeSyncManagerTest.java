@@ -33,7 +33,6 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import java.util.List;
 import javax.annotation.Nullable;
 import org.junit.Test;
@@ -61,13 +60,15 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
     projectServices.register(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     projectServices.register(ProjectViewManager.class, new MockProjectViewManager());
-    ExtensionPoint<BuildSystemProvider> ep =
-        registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
-    ep.registerExtension(new BazelBuildSystemProvider());
 
     doNothing().when(manager).requestProjectSync(any());
     projectServices.register(BlazeSyncManager.class, manager);
     assertThat(BlazeSyncManager.getInstance(project)).isSameAs(manager);
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   @Test

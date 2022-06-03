@@ -21,11 +21,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Ide info specific to android rules. */
@@ -114,13 +112,8 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
     return builder.build();
   }
 
-  public List<AndroidResFolder> getResFolders() {
+  public ImmutableList<AndroidResFolder> getResources() {
     return resources;
-  }
-
-  // #api181
-  public Collection<ArtifactLocation> getResources() {
-    return resources.stream().map(AndroidResFolder::getRoot).collect(Collectors.toList());
   }
 
   @Nullable

@@ -40,10 +40,10 @@ public interface PrefetchService {
    *     recently fetched.
    */
   @CanIgnoreReturnValue
-  ListenableFuture<?> prefetchFiles(
+  ListenableFuture<PrefetchStats> prefetchFiles(
       Collection<File> files, boolean refetchCachedFiles, boolean fetchFileTypes);
 
-  ListenableFuture<?> prefetchProjectFiles(
+  ListenableFuture<PrefetchStats> prefetchProjectFiles(
       Project project, ProjectViewSet projectViewSet, @Nullable BlazeProjectData blazeProjectData);
 
   /**

@@ -90,7 +90,7 @@ public final class SyncScope {
    */
   @Nullable
   static <T> T push(@Nullable BlazeContext parentContext, ScopedSyncFunction<T> scopedOperation) {
-    BlazeContext context = new BlazeContext(parentContext);
+    BlazeContext context = BlazeContext.create(parentContext);
     try {
       return scopedOperation.execute(context);
     } catch (SyncCanceledException e) {
