@@ -30,6 +30,7 @@ import javax.annotation.Nullable;
 /** Scoped operation context. */
 public class BlazeContext {
 
+  // The parent context
   @Nullable private BlazeContext parentContext;
 
   private final List<BlazeScope> scopes = Lists.newArrayList();
