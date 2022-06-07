@@ -104,7 +104,7 @@ public class ContentEntryEditor {
     if (currentOrParent != null && isTest != currentOrParent.isTestSource()) {
       currentOrParent =
           provider.setSourceFolderForLocation(contentEntry, currentOrParent, file, isTest);
-      if (current != null) {
+      if (current != null && !current.equals(currentOrParent)) {
         contentEntry.removeSourceFolder(current);
       }
     }
