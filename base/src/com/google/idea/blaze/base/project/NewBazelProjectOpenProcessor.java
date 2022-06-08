@@ -104,33 +104,6 @@ public class NewBazelProjectOpenProcessor extends ProjectOpenProcessor {
     Project newProject = createProject(virtualFile);
     Objects.requireNonNull(newProject);
 
-    StartupManager.getInstance(newProject)
-        .registerPostStartupActivity(
-            () -> {
-              // ensure the dialog is shown after all startup activities are done
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(
-                  () -> {
-                    if (newProject.isDisposed()) {
-                      return;
-                    }
-                    ApplicationManager.getApplication()
-                        .invokeLater(
-                            () -> {
-                              if (newProject.isDisposed()) {
-                                return;
-                              }
-                              final ToolWindow toolWindow =
-                                  ToolWindowManager.getInstance(newProject)
-                                      .getToolWindow(ToolWindowId.PROJECT_VIEW);
-                              if (toolWindow != null) {
-                                toolWindow.activate(null);
-                              }
-                            },
-                            ModalityState.NON_MODAL);
-                  });
-            });
-
     Path projectFilePath = Paths.get(Objects.requireNonNull(newProject.getProjectFilePath()));
     ProjectUtil.updateLastProjectLocation(projectFilePath);
 
