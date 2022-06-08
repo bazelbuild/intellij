@@ -35,8 +35,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2022_2",
     build_file = "@//intellij_platform_sdk:BUILD.idea222",
-    sha256 = "0bc6132c3c788127d4f3885c792c6c59696db73979ed3e040d4a21dbc936f1a2",
-    url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/222.2270.31-EAP-SNAPSHOT/ideaIC-222.2270.31-EAP-SNAPSHOT.zip",
+    sha256 = "ee89ca3b76e7b02166ead431e5dc8c3349d5aa15b7f3ceeef780d4687f06a272",
+    url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/222.2889.14-EAP-SNAPSHOT/ideaIC-222.2889.14-EAP-SNAPSHOT.zip",
 )
 
 # The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
@@ -68,8 +68,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2022_2",
     build_file = "@//intellij_platform_sdk:BUILD.ue222",
-    sha256 = "c66780fa4d8fdca87311bc561584b8580529989b9b586913f24d62ffc94023ed",
-    url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/222.2270.31-EAP-SNAPSHOT/ideaIU-222.2270.31-EAP-SNAPSHOT.zip",
+    sha256 = "2a76fe2a45d6d81b0ef5976deba841d7bf18b9a8768b98536d185ab384c31458",
+    url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/222.2889.14-EAP-SNAPSHOT/ideaIU-222.2889.14-EAP-SNAPSHOT.zip",
 )
 
 # The plugin api for clion_2021_2. This is required to build CLwB, and run integration tests.
@@ -100,8 +100,8 @@ http_archive(
 http_archive(
     name = "clion_2022_2",
     build_file = "@//intellij_platform_sdk:BUILD.clion222",
-    sha256 = "d6e310b32d182e5ca86d1a8bd5d81b00f950750b832900a550dfcc7b8581d22b",
-    url = "https://download.jetbrains.com/cpp/CLion-222.2270.30.tar.gz",
+    sha256 = "90537e695b78de693829f2f1a2bf9d66912df3ca88a29a671a80271cd36205ec",
+    url = "https://download.jetbrains.com/cpp/CLion-222.2889.11.tar.gz",
 )
 
 _PYTHON_CE_BUILD_FILE = """
