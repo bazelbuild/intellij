@@ -95,6 +95,16 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
         > BlazeConsoleExperimentManager.getTasksHistorySize()) {
       Task task = model.getTopLevelFinishedTasks().poll();
       model.getTreeModel().tasksTreeProperty().removeTask(task);
+
+      Task selectedTask = model.getTreeModel().selectedTaskProperty().getValue();
+      while (selectedTask != null) {
+        if (selectedTask.equals(task)) {
+          model.getTreeModel().selectedTaskProperty().setValue(null);
+          break;
+        }
+        selectedTask = selectedTask.getParent().orElse(null);
+      }
+
       ConsoleView consoleView = model.getConsolesOfTasks().remove(task);
       if (consoleView == null) {
         throw new IllegalStateException(
