@@ -46,14 +46,15 @@ public final class LibraryArtifact implements ProtoWrapper<IntellijIdeInfo.Libra
   }
 
   public static LibraryArtifact fromProto(IntellijIdeInfo.LibraryArtifact proto) {
-    return new LibraryArtifact(
-        proto.hasInterfaceJar() ? ArtifactLocation.fromProto(proto.getInterfaceJar()) : null,
-        proto.hasJar() ? ArtifactLocation.fromProto(proto.getJar()) : null,
-        !proto.getSourceJarsList().isEmpty()
-            ? ProtoWrapper.map(proto.getSourceJarsList(), ArtifactLocation::fromProto)
-            : proto.hasSourceJar()
-                ? ImmutableList.of(ArtifactLocation.fromProto(proto.getSourceJar()))
-                : ImmutableList.of());
+    return ProjectDataInterner.intern(
+        new LibraryArtifact(
+            proto.hasInterfaceJar() ? ArtifactLocation.fromProto(proto.getInterfaceJar()) : null,
+            proto.hasJar() ? ArtifactLocation.fromProto(proto.getJar()) : null,
+            !proto.getSourceJarsList().isEmpty()
+                ? ProtoWrapper.map(proto.getSourceJarsList(), ArtifactLocation::fromProto)
+                : proto.hasSourceJar()
+                    ? ImmutableList.of(ArtifactLocation.fromProto(proto.getSourceJar()))
+                    : ImmutableList.of()));
   }
 
   @Override
