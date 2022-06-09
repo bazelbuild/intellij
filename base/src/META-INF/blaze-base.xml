@@ -298,6 +298,8 @@
         order="first"/>
     <consoleFilterProvider implementation="com.google.idea.blaze.base.run.filter.GenericFileMessageFilter$Provider"/>
     <consoleFilterProvider implementation="com.google.idea.blaze.base.run.filter.TestLogFilter$Provider"/>
+    <!-- Add target filter last, so it doesn't override other links containing a target string.-->
+    <consoleFilterProvider implementation="com.google.idea.blaze.base.run.filter.BlazeTargetFilter$Provider" order="last"/>
     <codeInsight.lineMarkerProvider
         language="BUILD"
         implementationClass="com.google.idea.blaze.base.query.MacroLineMarkerProvider"/>

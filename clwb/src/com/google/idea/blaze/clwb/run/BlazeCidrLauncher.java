@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
-import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
@@ -309,7 +308,6 @@ public final class BlazeCidrLauncher extends CidrLauncher {
 
   private ImmutableList<Filter> getConsoleFilters() {
     return ImmutableList.of(
-        new BlazeTargetFilter(true),
         new UrlFilter(),
         new IssueOutputFilter(
             project,

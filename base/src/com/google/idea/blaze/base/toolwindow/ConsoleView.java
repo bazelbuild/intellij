@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.console.NonProblemFilterWrapper;
-import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -118,8 +117,6 @@ final class ConsoleView implements Disposable {
     this.customFilters.setCustomFilters(customFilters);
     consoleView.addMessageFilter(this.customFilters);
     addWrappedPredefinedFilters();
-    // add target filter last, so it doesn't override other links containing a target string
-    consoleView.addMessageFilter(new BlazeTargetFilter(false));
   }
 
   public void setStopHandler(@Nullable Runnable stopHandler) {

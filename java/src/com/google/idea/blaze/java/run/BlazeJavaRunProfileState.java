@@ -34,7 +34,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
@@ -66,7 +65,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * A Blaze run configuration set up with a an executor, program runner, and other settings, ready to
+ * A Blaze run configuration set up with an executor, program runner, and other settings, ready to
  * be executed. This class creates a command line for Blaze and exposes debug connection information
  * when using a debug executor.
  */
@@ -119,7 +118,6 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
               kotlinxCoroutinesJavaAgent);
     }
     addConsoleFilters(
-        new BlazeTargetFilter(true),
         new IssueOutputFilter(
             project,
             WorkspaceRoot.fromProject(project),

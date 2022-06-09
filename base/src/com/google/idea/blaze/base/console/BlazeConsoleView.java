@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.console;
 
-import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.intellij.codeEditor.printing.PrintAction;
 import com.intellij.execution.filters.ConsoleDependentFilterProvider;
 import com.intellij.execution.filters.ConsoleFilterProvider;
@@ -85,8 +84,6 @@ public class BlazeConsoleView implements Disposable {
 
     consoleView.addMessageFilter(customFilters);
     addWrappedPredefinedFilters();
-    // add target filter last, so it doesn't override other links containing a target string
-    consoleView.addMessageFilter(new BlazeTargetFilter(false));
     Disposer.register(this, consoleView);
   }
 

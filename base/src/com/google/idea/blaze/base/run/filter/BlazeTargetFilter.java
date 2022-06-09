@@ -20,9 +20,12 @@ import com.google.idea.blaze.base.issueparser.NonProblemHyperlinkInfo;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.UIUtil;
@@ -49,11 +52,6 @@ public class BlazeTargetFilter implements Filter {
 
   @VisibleForTesting static final Pattern TARGET_PATTERN = Pattern.compile(TARGET_REGEX);
 
-  private final boolean highlightMatches;
-
-  public BlazeTargetFilter(boolean highlightMatches) {
-    this.highlightMatches = highlightMatches;
-  }
 
   @Nullable
   @Override
@@ -86,18 +84,21 @@ public class BlazeTargetFilter implements Filter {
     return results.isEmpty() ? null : new Result(results);
   }
 
-  @Nullable
   private TextAttributes getHighlightAttributes() {
-    if (highlightMatches) {
-      // normal link highlighting, when we don't expect too many targets in the output
-      return null;
-    }
-    // avoid a sea of blue in sync output: just add a grey underline to navigable targets
+    // Avoid a sea of blue in the console: just add a grey underline to navigable targets.
     return new TextAttributes(
         UIUtil.getActiveTextColor(),
-        null,
+        /* backgroundColor= */ null,
         UIUtil.getInactiveTextColor(),
         EffectType.LINE_UNDERSCORE,
         Font.PLAIN);
+  }
+
+  /** Provider for {@link BlazeTargetFilter} */
+  static class Provider implements ConsoleFilterProvider {
+    @Override
+    public Filter[] getDefaultFilters(Project project) {
+      return Blaze.isBlazeProject(project) ? new Filter[] {new BlazeTargetFilter()} : new Filter[0];
+    }
   }
 }
