@@ -38,7 +38,7 @@ java_library(
         "clion-2021.2": glob(["testcompat/v212/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2021.3": glob(["testcompat/v213/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2022.1": glob(["testcompat/v221/com/google/idea/sdkcompat/**/*.java"]),
-        "clion-2022.2": glob(["testcompat/v221/com/google/idea/sdkcompat/**/*.java"]),
+        "clion-2022.2": glob(["testcompat/v222/com/google/idea/sdkcompat/**/*.java"]),
         "intellij-2021.2": glob([
             "testcompat/v212/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v212/com/google/idea/testing/java/*.java",
@@ -64,12 +64,12 @@ java_library(
             "testcompat/v221/com/google/idea/testing/java/*.java",
         ]),
         "intellij-2022.2": glob([
-            "testcompat/v221/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v221/com/google/idea/testing/java/*.java",
+            "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v222/com/google/idea/testing/java/*.java",
         ]),
         "intellij-ue-2022.2": glob([
-            "testcompat/v221/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v221/com/google/idea/testing/java/*.java",
+            "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/v222/com/google/idea/testing/java/*.java",
         ]),
         "default": [],
     }),
