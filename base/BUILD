@@ -244,8 +244,8 @@ java_library(
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
         ":label_api",
-        "//base:proto_wrapper",
-        "//intellij_platform_sdk:jsr305",
+        ":proto_wrapper",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Immutable
         "//intellij_platform_sdk:plugin_api",
     ],
 )
@@ -396,7 +396,7 @@ java_library(
     srcs = glob(["tests/utils/unit/**/*.java"]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
-        "//base",
+        ":base",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",

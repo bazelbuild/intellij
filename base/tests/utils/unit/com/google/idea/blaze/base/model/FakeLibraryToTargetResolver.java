@@ -15,29 +15,42 @@
  */
 package com.google.idea.blaze.base.model;
 
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static java.util.function.Function.identity;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
-import org.jetbrains.annotations.Nullable;
+import java.util.stream.Stream;
 
-/**
- * Allows to pass a target name during instance creation and then will always resolve to that target
- * name.
- */
+/** Fake implementation of {@link LibraryToTargetResolver} for use in tests. */
 public final class FakeLibraryToTargetResolver implements LibraryToTargetResolver {
 
-  @Nullable private final Label label;
+  private ImmutableMap<LibraryKey, Label> libraryKeyToLabelMap = ImmutableMap.of();
 
-  private FakeLibraryToTargetResolver(@Nullable Label label) {
-    this.label = label;
-  }
-
-  public static FakeLibraryToTargetResolver create(@Nullable Label label) {
-    return new FakeLibraryToTargetResolver(label);
+  @Override
+  public Stream<Label> collectTargets(Project project) {
+    return libraryKeyToLabelMap.values().stream();
   }
 
   @Override
   public Optional<Label> resolveLibraryToTarget(Project project, LibraryKey library) {
-    return Optional.ofNullable(label);
+    return Optional.ofNullable(libraryKeyToLabelMap.get(library));
+  }
+
+  public void setLibraryKeyToLabelMap(ImmutableMap<LibraryKey, Label> libraryKeyToLabelMap) {
+    this.libraryKeyToLabelMap = libraryKeyToLabelMap;
+  }
+
+  /** Fill {@link #libraryKeyToLabelMap}'s values with the given targets and arbitrary keys. */
+  public void setAvailableLabels(ImmutableList<Label> labels) {
+    libraryKeyToLabelMap =
+        labels.stream()
+            .collect(
+                toImmutableMap(
+                    label -> LibraryKey.fromIntelliJLibraryName(label.targetName() + ".jar"),
+                    identity()));
   }
 }
