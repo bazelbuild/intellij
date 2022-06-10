@@ -21,6 +21,7 @@ import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
@@ -112,6 +113,11 @@ public final class TestUtils {
 
     MyMockApplication(Disposable parentDisposable) {
       super(parentDisposable);
+    }
+
+    @Override
+    public void invokeLater(Runnable runnable, ModalityState state) {
+      runnable.run();
     }
 
     @Override
