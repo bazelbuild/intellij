@@ -66,7 +66,9 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
     return lookupFile != null ? ((VfsFile) lookupFile).getFile() : null;
   }
 
+  // Scheduled for removal in a future IJ version.
   @Override
+  @Nullable
   public VirtualFile getSelectedFile() {
     return getVirtualFile();
   }

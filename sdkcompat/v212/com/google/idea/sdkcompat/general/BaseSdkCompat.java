@@ -72,17 +72,17 @@ public final class BaseSdkCompat {
     return RenamePsiElementProcessor.EP_NAME.getExtensions();
   }
 
-  /** #api222: removed LocalFsFinder parameter. */
+  /** #api221: removed LocalFsFinder parameter. */
   public static LocalFsFinder.VfsFile getVfsFile(VirtualFile file) {
     return new LocalFsFinder.VfsFile(/* unused LocalFsFinder */ null, file);
   }
 
-  /** #api222: changed type from File to Path. */
+  /** #api221: changed type from File to Path. */
   public static FileLookup.LookupFile getIoFile(File file) {
     return new LocalFsFinder.IoFile(file);
   }
 
-  /** #api222: removed withCreatedProject(Project) method. */
+  /** #api221: removed withCreatedProject(Project) method. */
   public static OpenProjectTask createOpenProjectTask(Project project) {
     return OpenProjectTask.withCreatedProject(project);
   }
