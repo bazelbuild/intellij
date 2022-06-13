@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.ide;
 
+import com.google.common.base.Preconditions;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -25,14 +26,12 @@ import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import java.awt.GridBagLayout;
-import java.util.Objects;
 import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -103,8 +102,9 @@ final class OpenBlazeWorkspaceFileAction extends BlazeProjectAction {
 
     @Override
     protected void doOKAction() {
+      VirtualFile selectedFile = fileTextField.getVirtualFile();
       // It cannot be null because it is validated in `doValidate()`
-      VirtualFile selectedFile = Objects.requireNonNull(fileTextField.getVirtualFile());
+      Preconditions.checkArgument(selectedFile != null, "Virtual File cannot be null");
       OpenFileAction.openFile(selectedFile, project);
       super.doOKAction();
     }

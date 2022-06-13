@@ -89,7 +89,3 @@ filegroup(
     name = "application_info_json",
     srcs = glob(["clion-*/product-info.json"]),
 )
-
-filegroup(
-    name = "application_info_jar",
-)
