@@ -8,6 +8,7 @@ tasks:
     build_targets:
       - //ijwb/...
     test_flags:
+      - --cache_test_results=no
       - --define=ij_product=intellij-latest
       - --test_output=errors
     test_targets:
@@ -20,6 +21,7 @@ tasks:
     build_targets:
       - //ijwb/...
     test_flags:
+      - --cache_test_results=no
       - --define=ij_product=intellij-beta
       - --test_output=errors
     test_targets:
@@ -32,6 +34,7 @@ tasks:
     build_targets:
       - //ijwb/...
     test_flags:
+      - --cache_test_results=no
       - --define=ij_product=intellij-under-dev
       - --test_output=errors
     test_targets:
@@ -46,6 +49,7 @@ tasks:
     build_targets:
       - //ijwb/...
     test_flags:
+      - --cache_test_results=no
       - --define=ij_product=intellij-oss-stable
       - --test_output=errors
     test_targets:
@@ -58,6 +62,7 @@ tasks:
     build_targets:
       - //ijwb/...
     test_flags:
+      - --cache_test_results=no
       - --define=ij_product=intellij-oss-beta
       - --test_output=errors
     test_targets:
