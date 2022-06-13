@@ -75,6 +75,7 @@ tasks:
     build_targets:
       - //ijwb/...
     test_flags:
+      - --cache_test_results=no
       - --define=ij_product=intellij-oss-under-dev
       - --test_output=errors
     test_targets:
