@@ -80,6 +80,12 @@ java_import(
     jars = glob(["clion-*/plugins/python-ce/lib/*.jar"]),
 )
 
+filegroup(
+    name = "python_helpers",
+    testonly = 1,
+    srcs = [],
+)
+
 # The plugins required by CLwB. Presumably there will be some, when we write
 # some integration tests.
 java_import(
