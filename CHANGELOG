@@ -1,6 +1,7 @@
-v2022.05.31
+v2022.06.14
 ===========
-* Bug fixes and internal cleanup.
+* Kotlin: Fix the detection of which test target to run for a newly created
+  Kotlin test. This allows the test to be run without requiring a Blaze sync.
 
 v2022.05.03
 ===========
