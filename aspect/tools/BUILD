@@ -22,6 +22,7 @@ java_library(
         ":guava",
         "//intellij_platform_sdk:jsr305",
         "//proto:proto_deps",
+        "//third_party/bazel/src/main/protobuf:worker_protocol_java_proto",
     ],
 )
 
