@@ -67,7 +67,7 @@ public class BazelPyImportResolverStrategyTest extends PyImportResolverStrategyT
             WorkspacePath.createIfValid("lib/source.py"), "from pyglib import flags");
     List<PyFromImportStatement> imports = ((PyFile) source).getFromImports();
     assertThat(imports).hasSize(1);
-    PythonHelpersLocator.getHelpersRoot().getAbsolutePath().endsWith("wrong_prefix");
+    assertThat(PythonHelpersLocator.getHelpersRoot().getAbsolutePath()).endsWith("wrong_prefix");
     PsiFile res = (PsiFile) imports.get(0).getImportElements()[0].resolve();
     assertThat(res).isEqualTo(initPy);
   }
