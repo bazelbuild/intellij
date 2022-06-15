@@ -66,7 +66,7 @@ public class BazelPyImportResolverStrategyTest extends PyImportResolverStrategyT
             WorkspacePath.createIfValid("lib/source.py"), "from pyglib import flags");
     List<PyFromImportStatement> imports = ((PyFile) source).getFromImports();
     assertThat(imports).hasSize(1);
-    PsiFile res = imports.get(0).getImportElements()[0].resolve();
+    PsiFile res = (PsiFile) imports.get(0).getImportElements()[0].resolve();
     assertThat(res).isEqualTo(initPy);
   }
 
