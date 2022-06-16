@@ -84,7 +84,6 @@ intellij_integration_test_suite(
         "//third_party/python:python_for_tests",
         "@junit//jar",
     ],
-    tags = ["local"],
 )
 
 intellij_unit_test_suite(
