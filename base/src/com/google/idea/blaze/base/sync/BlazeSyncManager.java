@@ -21,6 +21,8 @@ import com.google.common.base.VerifyException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
+import com.google.idea.blaze.base.analytics.TraceSpan;
+import com.google.idea.blaze.base.analytics.OtlpTraceSpan;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -197,7 +199,7 @@ public class BlazeSyncManager {
   }
 
   private static void executeTask(Project project, BlazeSyncParams params, BlazeContext context) {
-    try {
+    try (TraceSpan traceSpan = OtlpTraceSpan.create(params.title())) {
       SyncPhaseCoordinator.getInstance(project).syncProject(params, context).get();
     } catch (InterruptedException e) {
       context.output(new PrintOutput("Sync interrupted: " + e.getMessage()));
@@ -208,6 +210,9 @@ public class BlazeSyncManager {
     } catch (CancellationException e) {
       context.output(new PrintOutput("Sync cancelled"));
       context.setCancelled();
+    } catch (Exception e) {
+      context.output(new PrintOutput("Unexpected exception: " + e.getMessage()));
+      context.setHasError();
     }
   }
 
