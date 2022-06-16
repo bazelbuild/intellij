@@ -75,7 +75,7 @@ public class BazelPyImportResolverStrategyTest extends PyImportResolverStrategyT
   
   private void assertHelpersLayout(File root) {
     assertThat(root.exists()).isTrue();
-    for (String child : List.of("generator3", "pycharm", "pycodestyle.py", "pydev", "syspath.py", "typeshed")) {
+    for (String child : List.of("generator3", "pycharm", "pycodestyle.py", "pydev", "syspath.py", "typeshed", "not_found")) {
       assertThat(new File(root, child).exists()).isTrue();
     }
   }
