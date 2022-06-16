@@ -37,6 +37,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import com.jetbrains.python.PythonHelpersLocator;
+import java.io.File;
 
 /** Test behavior of {@link BazelPyImportResolverStrategy}. */
 @RunWith(JUnit4.class)
@@ -67,11 +68,18 @@ public class BazelPyImportResolverStrategyTest extends PyImportResolverStrategyT
             WorkspacePath.createIfValid("lib/source.py"), "from pyglib import flags");
     List<PyFromImportStatement> imports = ((PyFile) source).getFromImports();
     assertThat(imports).hasSize(1);
-    assertThat(PythonHelpersLocator.getHelpersRoot().getAbsolutePath()).endsWith("wrong_prefix");
+    assertHelpersLayout(PythonHelpersLocator.getHelpersRoot());
     PsiFile res = (PsiFile) imports.get(0).getImportElements()[0].resolve();
     assertThat(res).isEqualTo(initPy);
   }
-
+  
+  private void assertHelpersLayout(File root) {
+    assertThat(root).exists();
+    for (String child : List.of("generator3", "pycharm", "pycodestyle.py", "pydev", "syspath.py", "typeshed")) {
+      assertThat(new File(root, child)).exists();
+    }
+  }
+  
   @Test
   public void testImportQuickFix() {
     MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
