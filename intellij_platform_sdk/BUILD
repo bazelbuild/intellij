@@ -489,7 +489,7 @@ java_library(
         # From 2022.1 forward, the version of kotlinc will be obtained
         # by KotlinPluginLayout from plugins/kotlin/kotlinc/build.txt
         # so we need to provide this to our tests
-        intellij = [":kotlinc_version"],
+        intellij = [],
     ),
     exports = [":plugin_api_internal"],
 )
