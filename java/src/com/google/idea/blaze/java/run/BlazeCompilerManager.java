@@ -34,7 +34,6 @@ import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.compiler.CompilationException;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.messages.MessageBus;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
@@ -52,8 +51,8 @@ public class BlazeCompilerManager extends CompilerManagerImpl {
 
   private final Project project;
 
-  public BlazeCompilerManager(Project project, MessageBus messageBus) {
-    super(project, messageBus);
+  public BlazeCompilerManager(Project project) {
+    super(project);
     this.project = project;
   }
 

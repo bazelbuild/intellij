@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.ide;
 
+import com.google.common.base.Preconditions;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -25,7 +26,6 @@ import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -55,7 +55,7 @@ final class OpenBlazeWorkspaceFileAction extends BlazeProjectAction {
     final Project project;
 
     final JPanel component;
-    final FileTextField fileTextField;
+    final WorkspaceFileTextField fileTextField;
 
     OpenBlazeWorkspaceFileActionDialog(
         Project project, WorkspacePathResolver workspacePathResolver) {
@@ -90,7 +90,7 @@ final class OpenBlazeWorkspaceFileAction extends BlazeProjectAction {
     @Nullable
     @Override
     protected ValidationInfo doValidate() {
-      VirtualFile selectedFile = fileTextField.getSelectedFile();
+      VirtualFile selectedFile = fileTextField.getVirtualFile();
       if (selectedFile == null || !selectedFile.exists()) {
         return new ValidationInfo("File does not exist", fileTextField.getField());
       } else if (selectedFile.isDirectory()) {
@@ -102,7 +102,10 @@ final class OpenBlazeWorkspaceFileAction extends BlazeProjectAction {
 
     @Override
     protected void doOKAction() {
-      OpenFileAction.openFile(fileTextField.getSelectedFile(), project);
+      VirtualFile selectedFile = fileTextField.getVirtualFile();
+      // It cannot be null because it is validated in `doValidate()`
+      Preconditions.checkArgument(selectedFile != null, "Virtual File cannot be null");
+      OpenFileAction.openFile(selectedFile, project);
       super.doOKAction();
     }
   }

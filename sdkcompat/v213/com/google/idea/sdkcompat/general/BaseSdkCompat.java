@@ -1,12 +1,16 @@
 package com.google.idea.sdkcompat.general;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.fileChooser.ex.FileLookup;
+import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextComponentAccessors;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.Restarter;
@@ -66,5 +70,20 @@ public final class BaseSdkCompat {
   /** #api213: Inline into KytheRenameProcessor. */
   public static RenamePsiElementProcessor[] renamePsiElementProcessorsList() {
     return RenamePsiElementProcessor.EP_NAME.getExtensions();
+  }
+
+  /** #api221: removed LocalFsFinder parameter. */
+  public static LocalFsFinder.VfsFile getVfsFile(VirtualFile file) {
+    return new LocalFsFinder.VfsFile(/* unused LocalFsFinder */ null, file);
+  }
+
+  /** #api221: changed type from File to Path. */
+  public static FileLookup.LookupFile getIoFile(File file) {
+    return new LocalFsFinder.IoFile(file);
+  }
+
+  /** #api221: removed withCreatedProject(Project) method. */
+  public static OpenProjectTask createOpenProjectTask(Project project) {
+    return OpenProjectTask.withCreatedProject(project);
   }
 }

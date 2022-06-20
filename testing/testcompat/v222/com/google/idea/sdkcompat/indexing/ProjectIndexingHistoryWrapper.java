@@ -250,7 +250,7 @@ public class ProjectIndexingHistoryWrapper {
     }
 
     @Override
-    public boolean getWasFullIndexing() {
+    public boolean getWasFullRescanning() {
       return false;
     }
 
