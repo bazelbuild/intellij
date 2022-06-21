@@ -1,11 +1,14 @@
 package com.google.idea.sdkcompat.general;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.fileChooser.ex.FileLookup;
+import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -14,6 +17,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessorBase;
 import com.intellij.ui.CoreIconManager;
@@ -28,6 +32,7 @@ import com.intellij.util.indexing.roots.kind.LibraryOrigin;
 import com.intellij.util.ui.VcsExecutablePathSelector;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProperties.VcsLogProperty;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -149,5 +154,20 @@ public final class BaseSdkCompat {
       }
     }
     return result.toArray(new RenamePsiElementProcessor[0]);
+  }
+
+  /** #api221: removed LocalFsFinder parameter. */
+  public static LocalFsFinder.VfsFile getVfsFile(VirtualFile file) {
+    return new LocalFsFinder.VfsFile(file);
+  }
+
+  /** #api221: changed type from File to Path. */
+  public static FileLookup.LookupFile getIoFile(File file) {
+    return new LocalFsFinder.IoFile(file.toPath());
+  }
+
+  /** #api221: removed withCreatedProject(Project) method. */
+  public static OpenProjectTask createOpenProjectTask(Project project) {
+    return OpenProjectTask.build().withProject(project);
   }
 }
