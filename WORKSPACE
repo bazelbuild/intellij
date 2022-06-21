@@ -463,21 +463,18 @@ scalatest_repositories()
 scalatest_toolchain()
 
 # LICENSE: The Apache Software License, Version 2.0
-rules_kotlin_version = "v1.5.0-beta-3"
-
-rules_kotlin_sha = "58edd86f0f3c5b959c54e656b8e7eb0b0becabd412465c37a2078693c2571f7f"
-
+rules_kotlin_version = "1.6.0"
+rules_kotlin_sha = "a57591404423a52bd6b18ebba7979e8cd2243534736c5c94d35c89718ea38f94"
 http_archive(
     name = "io_bazel_rules_kotlin",
+    urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/v%s/rules_kotlin_release.tgz" % rules_kotlin_version],
     sha256 = rules_kotlin_sha,
-    urls = ["https://github.com/bazelbuild/rules_kotlin/releases/download/%s/rules_kotlin_release.tgz" % rules_kotlin_version],
 )
 
 load("@io_bazel_rules_kotlin//kotlin:repositories.bzl", "kotlin_repositories")
-load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
-
 kotlin_repositories()
 
+load("@io_bazel_rules_kotlin//kotlin:core.bzl", "kt_register_toolchains")
 kt_register_toolchains()
 
 # Without this dependency, when a test that uses Google truth fails, instead of
@@ -493,8 +490,8 @@ jvm_maven_import_external(
 # Dependency needed for kotlin coroutines library
 jvm_maven_import_external(
     name = "kotlinx_coroutines",
-    artifact = "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2",
-    artifact_sha256 = "4cd24a06b2a253110d8afd250e9eec6c6faafea6463d740824743d637e761f12",
+    artifact = "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.2",
+    artifact_sha256 = "09aac136027678db2d3c2696696202719af9213ba17ae076f4c4421008885bcb",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
@@ -502,8 +499,8 @@ jvm_maven_import_external(
 # Dependency needed for kotlin coroutines test library
 jvm_maven_import_external(
     name = "kotlinx_coroutines_test",
-    artifact = "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.4.2",
-    artifact_sha256 = "2e3091a94b8b822c9b68c4dc92ad6a6b0e39e2245b0fc75862de20f5a7a71e9a",
+    artifact = "org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm:1.6.2",
+    artifact_sha256 = "6eb5c29f60fcacde882b1d393bf9a2fe9535bece1c707396fdbd755559dc043d",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )
