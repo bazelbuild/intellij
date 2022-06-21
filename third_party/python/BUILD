@@ -25,9 +25,31 @@ java_library(
     }),
 )
 
+filegroup(
+    name = "python_helpers",
+    srcs = select_for_plugin_api({
+        "intellij-2021.2": ["@python_2021_2//:python_helpers"],
+        "intellij-ue-2021.2": ["@python_2021_2//:python_helpers"],
+        "intellij-2021.3": ["@python_2021_3//:python_helpers"],
+        "intellij-ue-2021.3": ["@python_2021_3//:python_helpers"],
+        "intellij-2022.1": ["@python_2022_1//:python_helpers"],
+        "intellij-ue-2022.1": ["@python_2022_1//:python_helpers"],
+        "intellij-2022.2": ["@python_2022_2//:python_helpers"],
+        "intellij-ue-2022.2": ["@python_2022_2//:python_helpers"],
+        "clion-2021.2": ["@clion_2021_2//:python_helpers"],
+        "clion-2021.3": ["@clion_2021_3//:python_helpers"],
+        "clion-2022.1": ["@clion_2022_1//:python_helpers"],
+        "clion-2022.2": ["@clion_2022_2//:python_helpers"],
+        "android-studio-2021.2": ["@python_2021_2//:python_helpers"],
+        "android-studio-2021.3": ["@python_2021_3//:python_helpers"],
+    }),
+    visibility = ["//visibility:private"],
+)
+
 java_library(
     name = "python_for_tests",
     testonly = 1,
+    data = [":python_helpers"],
     exports = [":python_internal"],
 )
 

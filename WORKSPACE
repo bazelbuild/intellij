@@ -110,6 +110,11 @@ java_import(
     jars = ["python-ce/lib/python-ce.jar"],
     visibility = ["//visibility:public"],
 )
+filegroup(
+  name = "python_helpers",
+  srcs = glob(["python-ce/helpers/**/*"]),
+  visibility = ["//visibility:public"],
+)
 """
 
 #TODO(ymoh): remove with the removal of 2021.1 Python plugin
