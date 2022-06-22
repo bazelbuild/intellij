@@ -146,7 +146,9 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
         && type == ContextType.Sync
         // Verify that there are no targets other than Kotlin macros
         && targetInfos.stream()
-            .allMatch(t -> t.getKind().toString().startsWith(KOTLIN_MACRO_PREFIX));
+            .map(TargetInfo::getKind)
+            .map(kind -> Objects.toString(kind, /* nullDefault= */ ""))
+            .allMatch(kind -> kind.startsWith(KOTLIN_MACRO_PREFIX));
   }
 
   private static ImmutableList<TargetInfo> runDirectRdepsQuery(
@@ -271,5 +273,4 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
     File file = resolver.resolveToFile(workspaceRelativePath);
     return WorkspaceHelper.getBuildLabel(project, file);
   }
-
 }
