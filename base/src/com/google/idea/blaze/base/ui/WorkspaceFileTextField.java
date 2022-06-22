@@ -31,6 +31,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBTextField;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import javax.swing.JTextField;
 
@@ -60,7 +62,10 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
   @Nullable
   public VirtualFile getVirtualFile() {
     LookupFile lookupFile = getFile();
-    return lookupFile != null ? ((VfsFile) lookupFile).getFile() : null;
+    if (lookupFile instanceof VfsFile) {
+      return ((VfsFile) lookupFile).getFile();
+    }
+    return null;
   }
 
   // Scheduled for removal in a future IJ version.
@@ -80,13 +85,13 @@ public final class WorkspaceFileTextField extends FileTextFieldImpl {
 
     @Nullable
     @Override
-    public LookupFile find(String path) {
-      File file = new File(normalize(path));
-      VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);
+    public LookupFile find(String filePath) {
+      Path path = Paths.get(normalize(filePath));
+      VirtualFile vFile = LocalFileSystem.getInstance().findFileByNioFile(path);
       if (vFile != null) {
         return BaseSdkCompat.getVfsFile(vFile);
-      } else if (file.isAbsolute()) {
-        return BaseSdkCompat.getIoFile(file);
+      } else if (path.isAbsolute()) {
+        return BaseSdkCompat.getIoFile(path);
       }
       return null;
     }

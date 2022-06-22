@@ -19,7 +19,6 @@ import com.intellij.util.indexing.diagnostic.dto.JsonDuration;
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProperties.VcsLogProperty;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import javax.annotation.Nullable;
@@ -82,18 +81,18 @@ public final class BaseSdkCompat {
     return result.toArray(new RenamePsiElementProcessor[0]);
   }
 
-  /** #api221: removed LocalFsFinder parameter. */
+  /** #api213: Inline into WorkspaceFileTextField . */
   public static LocalFsFinder.VfsFile getVfsFile(VirtualFile file) {
-    return new LocalFsFinder.VfsFile(/* unused LocalFsFinder */ null, file);
+    return new LocalFsFinder.VfsFile(file);
   }
 
-  /** #api221: changed type from File to Path. */
-  public static FileLookup.LookupFile getIoFile(File file) {
-    return new LocalFsFinder.IoFile(file);
+  /** #api213: Inline into WorkspaceFileTextField . */
+  public static FileLookup.LookupFile getIoFile(Path path) {
+    return new LocalFsFinder.IoFile(path);
   }
 
-  /** #api221: removed withCreatedProject(Project) method. */
+  /** #api213: Inline into BlazeProjectCreator. */
   public static OpenProjectTask createOpenProjectTask(Project project) {
-    return OpenProjectTask.withCreatedProject(project);
+    return OpenProjectTask.build().withProject(project);
   }
 }
