@@ -35,6 +35,10 @@ public interface BuildResultHelper extends AutoCloseable {
   /**
    * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
    * called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
    */
   default ParsedBepOutput getBuildOutput() throws GetArtifactsException {
     return getBuildOutput(Optional.empty());
@@ -43,6 +47,10 @@ public interface BuildResultHelper extends AutoCloseable {
   /**
    * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
    * called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
    */
   default ParsedBepOutput getBuildOutput(Interner<String> stringInterner)
       throws GetArtifactsException {
@@ -52,6 +60,10 @@ public interface BuildResultHelper extends AutoCloseable {
   /**
    * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
    * called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
    */
   default ParsedBepOutput getBuildOutput(
       Optional<String> completionBuildId, Interner<String> stringInterner)
@@ -62,6 +74,10 @@ public interface BuildResultHelper extends AutoCloseable {
   /**
    * Retrieves BEP build events according to given id, parses them and returns the corresponding
    * {@link ParsedBepOutput}. May only be called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
    */
   ParsedBepOutput getBuildOutput(Optional<String> completedBuildId) throws GetArtifactsException;
 
