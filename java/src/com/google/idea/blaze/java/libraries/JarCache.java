@@ -23,6 +23,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
@@ -59,6 +61,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -85,6 +88,10 @@ public class JarCache {
   }
 
   private static final Logger logger = Logger.getInstance(JarCache.class);
+  private static final ListeningExecutorService REPACKAGE_EXECUTOR =
+      MoreExecutors.listeningDecorator(
+          AppExecutorUtil.createBoundedApplicationPoolExecutor(
+              "JarRepackagerExecutor", /*maxThreads*/ 4));
 
   private boolean isAvailable = !ApplicationManager.getApplication().isUnitTestMode();
 
@@ -343,7 +350,7 @@ public class JarCache {
     return LintJarHelper.collectLintJarsArtifacts(projectData).stream()
         .map(
             blazeArtifact ->
-                FetchExecutor.EXECUTOR.submit(
+                REPACKAGE_EXECUTOR.submit(
                     () -> {
                       try {
                         repackageJar(
