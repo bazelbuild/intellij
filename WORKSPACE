@@ -146,8 +146,8 @@ http_archive(
 http_archive(
     name = "python_2022_1",
     build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "6bed952ec17dd965d75152ea27b1dabd18c56b6f7c9986a316fccc61792238e9",
-    url = "https://plugins.jetbrains.com/files/7322/167535/python-ce-221.5080.210.zip",
+    sha256 = "1b0fb6824a7db252dfe3fd4eb638470bb96db4712bf1347560acee20eac1e8bc",
+    url = "https://plugins.jetbrains.com/files/7322/187811/python-ce-221.5921.27.zip",
 )
 
 http_archive(
