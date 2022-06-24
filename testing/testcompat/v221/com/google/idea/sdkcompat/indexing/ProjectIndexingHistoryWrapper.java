@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.diagnostic.IndexingTimes;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
+import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.diagnostic.StatsPerFileType;
 import com.intellij.util.indexing.diagnostic.StatsPerIndexer;
 import com.intellij.util.indexing.diagnostic.dto.JsonDuration;
@@ -98,9 +99,9 @@ public class ProjectIndexingHistoryWrapper {
   }
 
   /**
-   * #api212: review fields and consider inlining this class into IndexingLoggerTest since new
+   * #api213: review fields and consider inlining this class into IndexingLoggerTest since new
    * versions only add/remove fields, and we can just omit @Override (with an @SuppressWarnings and
-   * #api annotation
+   * #api annotation.
    */
   private static final class FakeProjectIndexingHistory implements ProjectIndexingHistory {
 
@@ -250,13 +251,13 @@ public class ProjectIndexingHistoryWrapper {
     }
 
     @Override
-    public boolean getWasFullIndexing() {
+    public boolean getWasInterrupted() {
       return false;
     }
 
     @Override
-    public boolean getWasInterrupted() {
-      return false;
+    public ScanningType getScanningType() {
+      return ScanningType.FULL;
     }
   }
 }
