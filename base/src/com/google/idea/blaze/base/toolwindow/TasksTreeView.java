@@ -26,6 +26,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.AnimatedIcon;
+import com.intellij.ui.LoadingNode;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.AsyncTreeModel;
@@ -112,6 +113,11 @@ final class TasksTreeView extends AbstractView<Tree> {
   private void onTaskSelected(TreeSelectionEvent event) {
     TreePath selectionPath = event.getNewLeadSelectionPath();
     Object selection = selectionPath == null ? null : selectionPath.getLastPathComponent();
+
+    if (selection instanceof LoadingNode) {
+      selection = null;
+    }
+
     if (selection != null) {
       Task task = treeNodeToTask(selection);
       model.selectedTaskProperty().setValue(task);
@@ -274,6 +280,10 @@ final class TasksTreeView extends AbstractView<Tree> {
         int row,
         boolean hasFocus) {
       super.customizeCellRenderer(tree, treeNode, selected, expanded, leaf, row, hasFocus);
+
+      if (treeNode instanceof LoadingNode) {
+        return;
+      }
 
       Task task = treeNodeToTask(treeNode);
       durationText = task.getDurationString().orElse(null);
