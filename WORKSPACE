@@ -185,8 +185,8 @@ http_archive(
 http_archive(
     name = "go_2022_1",
     build_file_content = _GO_BUILD_FILE,
-    sha256 = "50b96a18d3bf95b2742fb01d8d8ae9d7faef7113b882011afea4a912699ac0f9",
-    url = "https://plugins.jetbrains.com/files/9568/167522/go-221.5080.210.zip",
+    sha256 = "4219a3b76c985ad1066d4ff99f516422bcbbfda2feba6a950e8bb6c5e544e3ea",
+    url = "https://plugins.jetbrains.com/files/9568/185980/go-221.5921.16.zip",
 )
 
 http_archive(
