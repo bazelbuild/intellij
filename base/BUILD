@@ -1,6 +1,6 @@
 load(
     "//build_defs:build_defs.bzl",
-        "stamped_plugin_xml",
+    "stamped_plugin_xml",
 
     "intellij_plugin",
     "intellij_plugin_library",
