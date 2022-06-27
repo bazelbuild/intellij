@@ -72,6 +72,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.ExecutionException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.junit.Rule;
@@ -204,7 +205,8 @@ public class JarCacheTest extends BlazeTestCase {
   }
 
   @Test
-  public void refresh_lintJarCachedAndRepackaged() throws IOException {
+  public void refresh_lintJarCachedAndRepackaged()
+      throws IOException, ExecutionException, InterruptedException {
     ArtifactLocationDecoder artifactLocationDecoder =
         new MockArtifactLocationDecoder(workspaceRoot.directory(), /* isRemote= */ true);
     // arrange: set up a project that have PluginProcessorJars and register a fake repackager that
@@ -229,6 +231,7 @@ public class JarCacheTest extends BlazeTestCase {
 
     // assert
     File cacheDir = JarCacheFolderProvider.getInstance(project).getJarCacheFolder();
+    JarCache.getInstance(project).getRepackagingTasks().get();
     File[] cachedFiles = cacheDir.listFiles();
 
     assertThat(cachedFiles).hasLength(2);
