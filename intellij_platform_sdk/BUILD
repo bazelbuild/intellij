@@ -650,6 +650,17 @@ java_library(
     ),
 )
 
+# Protocol Buffers plugin
+java_library(
+    name = "protoeditor",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [":protoeditor"],
+        clion = [":protoeditor"],
+        intellij = [":protoeditor"],
+    ),
+)
+
 # terminal plugin
 java_library(
     name = "terminal",

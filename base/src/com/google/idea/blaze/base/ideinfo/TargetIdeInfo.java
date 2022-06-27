@@ -53,6 +53,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   @Nullable private final TestIdeInfo testIdeInfo;
   @Nullable private final JavaToolchainIdeInfo javaToolchainIdeInfo;
   @Nullable private final KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
+  @Nullable private final GenericIdeInfo genericIdeInfo;
   @Nullable private final Long syncTimeMillis;
 
   private TargetIdeInfo(
@@ -77,6 +78,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       @Nullable TestIdeInfo testIdeInfo,
       @Nullable JavaToolchainIdeInfo javaToolchainIdeInfo,
       @Nullable KotlinToolchainIdeInfo kotlinToolchainIdeInfo,
+      @Nullable GenericIdeInfo genericIdeInfo,
       @Nullable Long syncTimeMillis) {
     this.key = key;
     this.kind = kind;
@@ -99,6 +101,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     this.testIdeInfo = testIdeInfo;
     this.javaToolchainIdeInfo = javaToolchainIdeInfo;
     this.kotlinToolchainIdeInfo = kotlinToolchainIdeInfo;
+    this.genericIdeInfo = genericIdeInfo;
     this.syncTimeMillis = syncTimeMillis;
   }
 
@@ -154,6 +157,11 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       dartIdeInfo = DartIdeInfo.fromProto(proto.getDartIdeInfo());
       sourcesBuilder.addAll(dartIdeInfo.getSources());
     }
+    GenericIdeInfo genericIdeInfo = null;
+    if (proto.hasGenericIdeInfo()) {
+      genericIdeInfo = GenericIdeInfo.fromProto(proto.getGenericIdeInfo());
+      sourcesBuilder.addAll(genericIdeInfo.getSources());
+    }
     Long syncTime =
         syncTimeOverride != null
             ? Long.valueOf(syncTimeOverride.toEpochMilli())
@@ -194,6 +202,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         proto.hasKtToolchainIdeInfo()
             ? KotlinToolchainIdeInfo.fromProto(proto.getKtToolchainIdeInfo())
             : null,
+        genericIdeInfo,
         syncTime);
   }
 
@@ -222,6 +231,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setTestInfo, testIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJavaToolchainIdeInfo, javaToolchainIdeInfo);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setKtToolchainIdeInfo, kotlinToolchainIdeInfo);
+    ProtoWrapper.unwrapAndSetIfNotNull(builder::setGenericIdeInfo, genericIdeInfo);
     ProtoWrapper.setIfNotNull(builder::setSyncTimeMillis, syncTimeMillis);
     return builder.build();
   }
@@ -257,6 +267,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
         testIdeInfo,
         javaToolchainIdeInfo,
         kotlinToolchainIdeInfo,
+        genericIdeInfo,
         syncTimeMillis);
   }
 
@@ -361,6 +372,11 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
   }
 
   @Nullable
+  public GenericIdeInfo getGenericIdeInfo() {
+    return genericIdeInfo;
+  }
+
+  @Nullable
   public Instant getSyncTime() {
     return syncTimeMillis != null ? Instant.ofEpochMilli(syncTimeMillis) : null;
   }
@@ -418,6 +434,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     private TestIdeInfo testIdeInfo;
     private JavaToolchainIdeInfo javaToolchainIdeInfo;
     private KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
+    private GenericIdeInfo genericIdeInfo;
     private Long syncTime;
 
     public Builder setLabel(String label) {
@@ -527,6 +544,11 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       return this;
     }
 
+    public Builder setGenericIdeInfo(GenericIdeInfo.Builder genericIdeInfo) {
+      this.genericIdeInfo = genericIdeInfo.build();
+      return this;
+    }
+
     public Builder addTag(String s) {
       this.tags.add(s);
       return this;
@@ -580,6 +602,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
           testIdeInfo,
           javaToolchainIdeInfo,
           kotlinToolchainIdeInfo,
+          genericIdeInfo,
           syncTime);
     }
   }

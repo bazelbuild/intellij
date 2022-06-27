@@ -32,6 +32,7 @@ test_suite(
         "//kotlin:integration_tests",
         "//kotlin:unit_tests",
         "//plugin_dev:integration_tests",
+        "//protoeditor:unit_tests",
         "//scala:integration_tests",
         "//scala:unit_tests",
     ],

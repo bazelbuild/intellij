@@ -167,6 +167,10 @@ message DartIdeInfo {
   repeated ArtifactLocation sources = 1;
 }
 
+message GenericIdeInfo {
+  repeated ArtifactLocation sources = 1;
+}
+
 message CToolchainIdeInfo {
   string target_name = 1;
   repeated string cpp_option = 2;
@@ -237,4 +241,5 @@ message TargetIdeInfo {
   TsIdeInfo ts_ide_info = 160;
   DartIdeInfo dart_ide_info = 170;
   KotlinToolchainIdeInfo kt_toolchain_ide_info = 180;
+  GenericIdeInfo generic_ide_info = 190;
 }

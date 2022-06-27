@@ -962,6 +962,12 @@ def collect_kotlin_toolchain_info(target, ide_info, ide_info_file, output_groups
     update_sync_output_groups(output_groups, "intellij-info-kotlin", depset([ide_info_file]))
     return True
 
+def collect_generic_info(ctx, ide_info, ide_info_file, output_groups):
+    ide_info["generic_ide_info"] = struct(
+        sources = sources_from_target(ctx),
+    )
+    update_sync_output_groups(output_groups, "intellij-info-generic", depset([ide_info_file]))
+
 def _is_proto_library_wrapper(target, ctx):
     """Returns True if the target is an empty shim around a proto library."""
     if not ctx.rule.kind.endswith("proto_library") or ctx.rule.kind == "proto_library":
@@ -1123,7 +1129,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
 
     # Add to generic output group if it's not handled by a language-specific handler
     if not handled:
-        update_sync_output_groups(output_groups, "intellij-info-generic", depset([ide_info_file]))
+        collect_generic_info(ctx, ide_info, ide_info_file, output_groups)
 
     # Output the ide information file.
     info = struct_omit_none(**ide_info)

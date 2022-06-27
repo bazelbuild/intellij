@@ -90,6 +90,7 @@ intellij_plugin(
         intellij_ue = [
             "//golang:plugin_library",
             "//javascript:plugin_library",
+            "//protoeditor:plugin_library",
         ],
     ),
 )
