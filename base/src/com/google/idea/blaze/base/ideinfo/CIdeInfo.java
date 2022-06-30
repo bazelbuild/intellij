@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import java.util.Objects;
 
@@ -134,58 +135,69 @@ public final class CIdeInfo implements ProtoWrapper<IntellijIdeInfo.CIdeInfo> {
     private final ImmutableList.Builder<ExecutionRootPath> transitiveSystemIncludeDirectories =
         ImmutableList.builder();
 
+    @CanIgnoreReturnValue
     public Builder addSources(Iterable<ArtifactLocation> sources) {
       this.sources.addAll(sources);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addSource(ArtifactLocation source) {
       this.sources.add(source);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addHeaders(Iterable<ArtifactLocation> headers) {
       this.headers.addAll(headers);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addHeader(ArtifactLocation header) {
       this.headers.add(header);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTextualHeaders(Iterable<ArtifactLocation> textualHeaders) {
       this.textualHeaders.addAll(textualHeaders);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTextualHeader(ArtifactLocation textualHeader) {
       this.textualHeaders.add(textualHeader);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addLocalCopts(Iterable<String> copts) {
       this.localCopts.addAll(copts);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTransitiveIncludeDirectories(
         Iterable<ExecutionRootPath> transitiveIncludeDirectories) {
       this.transitiveIncludeDirectories.addAll(transitiveIncludeDirectories);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTransitiveQuoteIncludeDirectories(
         Iterable<ExecutionRootPath> transitiveQuoteIncludeDirectories) {
       this.transitiveQuoteIncludeDirectories.addAll(transitiveQuoteIncludeDirectories);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTransitiveDefines(Iterable<String> transitiveDefines) {
       this.transitiveDefines.addAll(transitiveDefines);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTransitiveSystemIncludeDirectories(
         Iterable<ExecutionRootPath> transitiveSystemIncludeDirectories) {
       this.transitiveSystemIncludeDirectories.addAll(transitiveSystemIncludeDirectories);

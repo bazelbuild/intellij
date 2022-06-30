@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.base.Strings;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -65,11 +66,13 @@ public class AndroidInstrumentationInfo
     private Label testApp;
     private Label targetDevice;
 
+    @CanIgnoreReturnValue
     public Builder setTestApp(Label testApp) {
       this.testApp = testApp;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTargetDevice(Label targetDevice) {
       this.targetDevice = targetDevice;
       return this;

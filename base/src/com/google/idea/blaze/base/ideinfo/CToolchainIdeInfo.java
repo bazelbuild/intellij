@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 
 /** Represents toolchain info from a cc_toolchain or cc_toolchain_suite */
@@ -98,27 +99,32 @@ public final class CToolchainIdeInfo implements ProtoWrapper<IntellijIdeInfo.CTo
 
     String targetName = "";
 
+    @CanIgnoreReturnValue
     public Builder addCCompilerOptions(Iterable<String> cCompilerOptions) {
       this.cCompilerOptions.addAll(cCompilerOptions);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addCppCompilerOptions(Iterable<String> cppCompilerOptions) {
       this.cppCompilerOptions.addAll(cppCompilerOptions);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addBuiltInIncludeDirectories(
         Iterable<ExecutionRootPath> builtInIncludeDirectories) {
       this.builtInIncludeDirectories.addAll(builtInIncludeDirectories);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setCppExecutable(ExecutionRootPath cppExecutable) {
       this.cppExecutable = cppExecutable;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTargetName(String targetName) {
       this.targetName = targetName;
       return this;
