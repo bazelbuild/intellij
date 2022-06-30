@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
@@ -391,12 +392,14 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     String[] outputMessage = new String[0];
     int returnVal = 0;
 
+    @CanIgnoreReturnValue
     public FakeWildCardTargetExpanderExternalTaskProvider setOutputMessage(
         String... outputMessage) {
       this.outputMessage = outputMessage;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public FakeWildCardTargetExpanderExternalTaskProvider setReturnVal(int returnVal) {
       this.returnVal = returnVal;
       return this;
@@ -491,11 +494,13 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
       return shardingApproach;
     }
 
+    @CanIgnoreReturnValue
     public FakeBuildBatchingService setShardingApproach(ShardingApproach shardingApproach) {
       this.shardingApproach = shardingApproach;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public FakeBuildBatchingService setFailToBatchTarget(boolean failToBatchTargets) {
       this.failToBatchTargets = failToBatchTargets;
       return this;

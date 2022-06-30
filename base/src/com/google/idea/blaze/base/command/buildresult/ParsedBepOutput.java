@@ -32,6 +32,7 @@ import com.google.common.collect.SetMultimap;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.NamedSetOfFilesId;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.NamedSetOfFiles;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -326,6 +327,7 @@ public final class ParsedBepOutput {
       final Set<String> outputGroups = new HashSet<>();
       final Set<String> targets = new HashSet<>();
 
+      @CanIgnoreReturnValue
       Builder updateFromParent(Builder parent) {
         configId = parent.configId;
         outputGroups.addAll(parent.outputGroups);
@@ -333,21 +335,25 @@ public final class ParsedBepOutput {
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder setNamedSet(NamedSetOfFiles namedSet) {
         this.namedSet = namedSet;
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder setConfigId(String configId) {
         this.configId = configId;
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder addOutputGroups(Set<String> outputGroups) {
         this.outputGroups.addAll(outputGroups);
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder addTargets(Set<String> targets) {
         this.targets.addAll(targets);
         return this;

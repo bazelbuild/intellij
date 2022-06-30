@@ -20,6 +20,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectView;
@@ -140,37 +141,44 @@ public final class BlazeNewProjectBuilder {
     return buildSystemName != null ? buildSystemName.getName() : Blaze.defaultBuildSystemName();
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setWorkspaceData(WorkspaceTypeData workspaceData) {
     this.workspaceData = workspaceData;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectViewOption(
       BlazeSelectProjectViewOption projectViewOption) {
     this.projectViewOption = projectViewOption;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectView(ProjectView projectView) {
     this.projectView = projectView;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectViewFile(File projectViewFile) {
     this.projectViewFile = projectViewFile;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectViewSet(ProjectViewSet projectViewSet) {
     this.projectViewSet = projectViewSet;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectName(String projectName) {
     this.projectName = projectName;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectDataDirectory(String projectDataDirectory) {
     this.projectDataDirectory = projectDataDirectory;
     return this;
