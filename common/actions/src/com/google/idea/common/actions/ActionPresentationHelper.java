@@ -16,6 +16,7 @@
 package com.google.idea.common.actions;
 
 import com.google.common.collect.Iterables;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -55,41 +56,48 @@ public class ActionPresentationHelper {
   }
 
   /** Disables the action if the condition is true. */
+  @CanIgnoreReturnValue
   public ActionPresentationHelper disableIf(boolean disableCondition) {
     this.enabled = this.enabled && !disableCondition;
     return this;
   }
 
   /** Hides the action if the condition is true. If the action is hidden, it is also disabled. */
+  @CanIgnoreReturnValue
   public ActionPresentationHelper hideIf(boolean hideCondition) {
     this.visible = this.visible && !hideCondition;
     return this;
   }
 
+  @CanIgnoreReturnValue
   public ActionPresentationHelper hideInContextMenuIfDisabled() {
     this.hideInContextMenuIfDisabled = true;
     return this;
   }
 
   /** Disables the action if no subject has been provided. */
+  @CanIgnoreReturnValue
   public ActionPresentationHelper disableWithoutSubject() {
     this.disableWithoutSubject = true;
     return this;
   }
 
   /** Sets the text of the presentation. */
+  @CanIgnoreReturnValue
   public ActionPresentationHelper setText(String text) {
     this.text = text;
     return this;
   }
 
   /** Use & or _ in the presentation text as a mnemonic shortcut. */
+  @CanIgnoreReturnValue
   public ActionPresentationHelper useTextMnemonic() {
     this.useTextMnemonic = true;
     return this;
   }
 
   /** Sets the description of the presentation. */
+  @CanIgnoreReturnValue
   public ActionPresentationHelper setDescription(String description) {
     this.description = description;
     return this;
@@ -118,6 +126,7 @@ public class ActionPresentationHelper {
    * @param subject The subject. May be null.
    * @param subjectToString Method used to convert the subject to a string.
    */
+  @CanIgnoreReturnValue
   public <T> ActionPresentationHelper setTextWithSubject(
       String noSubjectText,
       String subjectText,

@@ -22,6 +22,7 @@ import com.google.auto.value.AutoValue.CopyAnnotations;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.Immutable;
 import java.util.Collection;
 import java.util.stream.Stream;
@@ -69,6 +70,7 @@ public abstract class SearchableText {
      * Adds search terms, allowing this text to be a result for the given strings, even if they
      * don't appear in the user-visible {@link #label()}.
      */
+    @CanIgnoreReturnValue
     public final Builder addTags(String... tags) {
       for (String tag : tags) {
         tagsBuilder().add(tag);

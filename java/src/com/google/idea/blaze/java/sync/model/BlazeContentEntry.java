@@ -19,6 +19,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import java.io.File;
 import java.util.Collections;
@@ -96,6 +97,7 @@ public class BlazeContentEntry implements ProtoWrapper<ProjectData.BlazeContentE
       this.contentRoot = contentRoot;
     }
 
+    @CanIgnoreReturnValue
     public Builder addSource(BlazeSourceDirectory sourceDirectory) {
       this.sources.add(sourceDirectory);
       return this;

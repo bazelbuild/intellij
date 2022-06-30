@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.projectview.section;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.projectview.section.sections.ItemOrTextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import java.util.ArrayList;
@@ -94,11 +95,13 @@ public final class ListSection<T> extends Section<T> {
       }
     }
 
+    @CanIgnoreReturnValue
     public final Builder<T> add(T item) {
       items.add(new ItemOrTextBlock<>(item));
       return this;
     }
 
+    @CanIgnoreReturnValue
     public final Builder<T> addAll(List<? extends T> items) {
       for (T item : items) {
         add(item);
@@ -106,16 +109,19 @@ public final class ListSection<T> extends Section<T> {
       return this;
     }
 
+    @CanIgnoreReturnValue
     public final Builder<T> add(TextBlock textBlock) {
       items.add(new ItemOrTextBlock<T>(textBlock));
       return this;
     }
 
+    @CanIgnoreReturnValue
     public final Builder<T> removeMatches(Predicate<ItemOrTextBlock<T>> predicate) {
       items.removeIf(predicate);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public final Builder<T> remove(T item) {
       items.remove(new ItemOrTextBlock<>(item));
       return this;
