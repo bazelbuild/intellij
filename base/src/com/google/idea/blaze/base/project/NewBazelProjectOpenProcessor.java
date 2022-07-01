@@ -53,8 +53,6 @@ public class NewBazelProjectOpenProcessor extends ProjectOpenProcessor {
 
   private static final Logger LOG = Logger.getInstance(NewBazelProjectOpenProcessor.class);
 
-  private final BlazeProjectOpenProcessor existingProjectProcessor = new BlazeProjectOpenProcessor();
-
   @Override
   public @NotNull
   @Nls
@@ -80,7 +78,7 @@ public class NewBazelProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean canOpenProject(@NotNull VirtualFile virtualFile) {
-    return !existingProjectProcessor.canOpenProject(virtualFile) && isBazelWorkspace(virtualFile);
+    return isBazelWorkspace(virtualFile);
   }
 
   private boolean isBazelWorkspace(VirtualFile virtualFile) {
