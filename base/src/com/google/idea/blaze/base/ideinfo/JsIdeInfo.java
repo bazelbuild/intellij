@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Objects;
 
 /** Ide info specific to js rules. */
@@ -50,6 +51,7 @@ public final class JsIdeInfo implements ProtoWrapper<IntellijIdeInfo.JsIdeInfo> 
   public static class Builder {
     private final ImmutableList.Builder<ArtifactLocation> sources = ImmutableList.builder();
 
+    @CanIgnoreReturnValue
     public Builder addSource(ArtifactLocation source) {
       this.sources.add(source);
       return this;

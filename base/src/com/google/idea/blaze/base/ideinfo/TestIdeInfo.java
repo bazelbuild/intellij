@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TestInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.dependencies.TestSize;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -64,6 +65,7 @@ public final class TestIdeInfo implements ProtoWrapper<TestInfo> {
   public static class Builder {
     private TestSize testSize = TestSize.DEFAULT_RULE_TEST_SIZE;
 
+    @CanIgnoreReturnValue
     public Builder setTestSize(TestSize testSize) {
       this.testSize = testSize;
       return this;

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.scope.scopes;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.console.BlazeConsoleService;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -58,16 +59,19 @@ public class BlazeConsoleScope implements BlazeScope {
       this.progressIndicator = progressIndicator;
     }
 
+    @CanIgnoreReturnValue
     public Builder setPopupBehavior(FocusBehavior popupBehavior) {
       this.popupBehavior = popupBehavior;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setClearPreviousState(boolean clearPreviousState) {
       this.clearPreviousState = clearPreviousState;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addConsoleFilters(Filter... filters) {
       this.filters.add(filters);
       return this;

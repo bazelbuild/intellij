@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -66,6 +67,7 @@ public class BlazeContext {
     return context;
   }
 
+  @CanIgnoreReturnValue
   public BlazeContext push(BlazeScope scope) {
     scopes.add(scope);
     scope.onScopeBegin(this);
@@ -230,6 +232,7 @@ public class BlazeContext {
     }
   }
 
+  @CanIgnoreReturnValue
   public <T extends Output> BlazeContext addOutputSink(
       Class<T> outputClass, OutputSink<T> outputSink) {
     outputSinks.put(outputClass, outputSink);

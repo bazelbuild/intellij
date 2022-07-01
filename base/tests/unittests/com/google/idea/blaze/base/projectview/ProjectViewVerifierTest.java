@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.projectview;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -229,23 +230,27 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
       this.workspaceRoot = workspaceRoot;
     }
 
+    @CanIgnoreReturnValue
     MockFileOperationProvider addFile(WorkspacePath file) {
       files.add(workspaceRoot.fileForPath(file));
       return this;
     }
 
+    @CanIgnoreReturnValue
     MockFileOperationProvider addDirectory(WorkspacePath file) {
       addFile(file);
       directories.add(workspaceRoot.fileForPath(file));
       return this;
     }
 
+    @CanIgnoreReturnValue
     MockFileOperationProvider addPackage(WorkspacePath file) {
       addFile(new WorkspacePath(file + "/BUILD"));
       addDirectory(file);
       return this;
     }
 
+    @CanIgnoreReturnValue
     MockFileOperationProvider addPackages(Iterable<WorkspacePath> files) {
       for (WorkspacePath workspacePath : files) {
         addPackage(workspacePath);
@@ -253,6 +258,7 @@ public class ProjectViewVerifierTest extends BlazeTestCase {
       return this;
     }
 
+    @CanIgnoreReturnValue
     MockFileOperationProvider addImportRoots(ImportRoots importRoots) {
       addPackages(importRoots.rootDirectories());
       addPackages(importRoots.excludeDirectories());

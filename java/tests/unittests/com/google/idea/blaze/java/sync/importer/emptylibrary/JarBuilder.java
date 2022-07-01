@@ -18,6 +18,7 @@ package com.google.idea.blaze.java.sync.importer.emptylibrary;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.intellij.testFramework.rules.TempDirectory;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -46,16 +47,19 @@ public class JarBuilder {
   }
 
   /** Increases the size of the JAR by adding {@code numBytes} in junk metadata. */
+  @CanIgnoreReturnValue
   JarBuilder bloatBy(int numBytes) {
     bloatBytes = numBytes;
     return this;
   }
 
+  @CanIgnoreReturnValue
   JarBuilder addManifest() {
     addManifest = true;
     return this;
   }
 
+  @CanIgnoreReturnValue
   JarBuilder addDirectory(String path) {
     if (!path.endsWith("/")) {
       path = path + "/";
@@ -64,6 +68,7 @@ public class JarBuilder {
     return this;
   }
 
+  @CanIgnoreReturnValue
   JarBuilder addFile(String path, String content) {
     files.put(path, content);
     return this;

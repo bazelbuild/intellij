@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.model;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,6 +44,7 @@ public final class SyncState implements ProtoWrapper<ProjectData.SyncState> {
     ImmutableMap.Builder<Class<? extends SyncData>, SyncData<?>> syncStateMap =
         ImmutableMap.builder();
 
+    @CanIgnoreReturnValue
     public Builder put(SyncData<?> instance) {
       syncStateMap.put(instance.getClass(), instance);
       return this;

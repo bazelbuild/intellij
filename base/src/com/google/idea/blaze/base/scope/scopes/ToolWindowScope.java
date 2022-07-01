@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.scope.scopes;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
@@ -66,6 +67,7 @@ public final class ToolWindowScope implements BlazeScope {
       this.task = task;
     }
 
+    @CanIgnoreReturnValue
     public Builder setProgressIndicator(ProgressIndicator progressIndicator) {
       this.progressIndicator = progressIndicator;
       return this;
@@ -75,6 +77,7 @@ public final class ToolWindowScope implements BlazeScope {
      * Makes the scope to start or not start the task when scope begins. The default behaviour is to
      * start the task.
      */
+    @CanIgnoreReturnValue
     public Builder setStartTaskOnScopeBegin(boolean startTaskOnScopeBegin) {
       this.startTaskOnScopeBegin = startTaskOnScopeBegin;
       return this;
@@ -84,21 +87,25 @@ public final class ToolWindowScope implements BlazeScope {
      * Makes the scope to stop or not stop the task when the scope ends. The default behaviour is to
      * stop the task.
      */
+    @CanIgnoreReturnValue
     public Builder setFinishTaskOnScopeEnd(boolean finishTaskOnScopeEnd) {
       this.finishTaskOnScopeEnd = finishTaskOnScopeEnd;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setIssueParsers(ImmutableList<BlazeIssueParser.Parser> parsers) {
       this.parsers = parsers;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setPopupBehavior(FocusBehavior popupBehavior) {
       this.popupBehavior = popupBehavior;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder showSummaryOutput() {
       this.showSummaryOutput = true;
       return this;

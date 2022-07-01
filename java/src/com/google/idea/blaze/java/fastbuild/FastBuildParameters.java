@@ -17,6 +17,7 @@ package com.google.idea.blaze.java.fastbuild;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.List;
 
 /**
@@ -43,6 +44,7 @@ abstract class FastBuildParameters {
 
     abstract ImmutableList.Builder<String> buildFlagsBuilder();
 
+    @CanIgnoreReturnValue
     Builder addBuildFlags(List<String> buildFlags) {
       buildFlagsBuilder().addAll(buildFlags);
       return this;
@@ -50,6 +52,7 @@ abstract class FastBuildParameters {
 
     abstract ImmutableList.Builder<String> infoFlagsBuilder();
 
+    @CanIgnoreReturnValue
     Builder addInfoFlags(List<String> infoFlags) {
       infoFlagsBuilder().addAll(infoFlags);
       return this;
