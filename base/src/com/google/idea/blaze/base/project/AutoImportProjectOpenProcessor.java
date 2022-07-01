@@ -24,18 +24,12 @@ import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import icons.BlazeIcons;
 import java.io.File;
@@ -44,14 +38,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 import javax.swing.Icon;
-import javax.swing.SwingUtilities;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class NewBazelProjectOpenProcessor extends ProjectOpenProcessor {
+public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
-  private static final Logger LOG = Logger.getInstance(NewBazelProjectOpenProcessor.class);
+  private static final Logger LOG = Logger.getInstance(AutoImportProjectOpenProcessor.class);
 
   @Override
   public @NotNull
