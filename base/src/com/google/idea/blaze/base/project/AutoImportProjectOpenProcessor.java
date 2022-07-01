@@ -37,11 +37,22 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
-import javax.swing.Icon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Adds {@link ProjectOpenProcessor} to import project by opening it directly from a directory
+ * <p>
+ * Project view can be created from (in order of existence):
+ * <ul>
+ *  <li>ENV var: INTELLIJ_BAZEL_PROJECT_VIEW_TEMPLATE=/home/user/some.bazelproject</li>
+ *  <li>workspace - tools/intellij/.managed.bazelproject</li>
+ *  <li>if above do not exist, creates minimal project view file</li>
+ * </ul>
+ *
+ * Must be loaded after {@link BlazeProjectOpenProcessor} to only import new projects.
+ */
 public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   private static final Logger LOG = Logger.getInstance(AutoImportProjectOpenProcessor.class);
