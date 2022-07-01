@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import javax.swing.Icon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
  *  <li>workspace - tools/intellij/.managed.bazelproject</li>
  *  <li>if above do not exist, creates minimal project view file</li>
  * </ul>
- *
+ * <p>
  * Must be loaded after {@link BlazeProjectOpenProcessor} to only import new projects.
  */
 public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
