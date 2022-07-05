@@ -463,9 +463,9 @@ scalatest_repositories()
 scalatest_toolchain()
 
 # LICENSE: The Apache Software License, Version 2.0
-rules_kotlin_version = "1.6.0"
+rules_kotlin_version = "1.7.0-RC-1"
 
-rules_kotlin_sha = "a57591404423a52bd6b18ebba7979e8cd2243534736c5c94d35c89718ea38f94"
+rules_kotlin_sha = "68b910730026921814d3a504ccbe9adaac9938983d940e626523e6e4ecfb0355"
 
 http_archive(
     name = "io_bazel_rules_kotlin",
