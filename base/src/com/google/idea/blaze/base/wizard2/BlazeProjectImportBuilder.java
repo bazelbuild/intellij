@@ -25,7 +25,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /** Wrapper around a {@link BlazeNewProjectBuilder} to fit into IntelliJ's import framework. */
-class BlazeProjectImportBuilder extends ProjectBuilder {
+public class BlazeProjectImportBuilder extends ProjectBuilder {
   private BlazeNewProjectBuilder builder = new BlazeNewProjectBuilder();
 
   @Nullable

@@ -217,7 +217,7 @@ public final class BlazeNewProjectBuilder {
    * Commits the project data. This method mustn't fail, because the project has already been
    * created.
    */
-  void commitToProject(Project project) {
+  public void commitToProject(Project project) {
     BlazeWizardUserSettingsStorage.getInstance().commit(userSettings);
     EventLoggingService.getInstance()
         .logEvent(getClass(), "blaze-project-created", ImmutableMap.copyOf(userSettings.values));
