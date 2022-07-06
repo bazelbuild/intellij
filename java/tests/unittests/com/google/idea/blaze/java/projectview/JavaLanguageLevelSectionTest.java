@@ -31,9 +31,18 @@ public class JavaLanguageLevelSectionTest {
     int minLevelToTest = 5;
     int maxLevelToTest = LanguageLevel.HIGHEST.toJavaVersion().feature;
     for (int i = minLevelToTest; i <= maxLevelToTest; i++) {
-      LanguageLevel level = JavaLanguageLevelSection.getLanguageLevel(i, null);
+      LanguageLevel level = JavaLanguageLevelSection.getLanguageLevel(Integer.toString(i), null);
       assertThat(level).isNotNull();
       assertThat(level.toJavaVersion().feature).isEqualTo(i);
+    }
+  }
+
+  @Test
+  public void testParseLanguageLevelsByNameIncludingPreview() {
+    for (LanguageLevel languageLevel : LanguageLevel.values()) {
+      LanguageLevel level = JavaLanguageLevelSection.getLanguageLevel(languageLevel.name(), null);
+      assertThat(level).isNotNull();
+      assertThat(level.toJavaVersion().feature).isEqualTo(languageLevel.toJavaVersion().feature);
     }
   }
 }
