@@ -178,7 +178,7 @@ public class BlazeSyncManager {
             "%s %s added to project view; forcing a full sync",
             StringUtil.pluralize("Language", newLanguages.size()),
             newLanguages.stream().map(LanguageClass::getName).collect(joining(",")));
-    context.output(SummaryOutput.output(Prefix.INFO, message));
+    context.output(SummaryOutput.output(Prefix.INFO, message).log());
     logger.info(message);
     return true;
   }
