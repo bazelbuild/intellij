@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.diagnostic.IndexingTimes;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
+import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.diagnostic.StatsPerFileType;
 import com.intellij.util.indexing.diagnostic.StatsPerIndexer;
 import com.intellij.util.indexing.diagnostic.dto.JsonDuration;
@@ -250,8 +251,8 @@ public class ProjectIndexingHistoryWrapper {
     }
 
     @Override
-    public boolean getWasFullRescanning() {
-      return false;
+    public ScanningType getScanningType() {
+      return ScanningType.PARTIAL;
     }
 
     @Override
