@@ -17,12 +17,15 @@ package com.google.idea.blaze.base.scope.output;
 
 import com.google.idea.blaze.base.scope.Output;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
+import com.intellij.openapi.diagnostic.Logger;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 
 /** Output class used to print task summary on consoles of top-level nodes. */
 public class SummaryOutput implements Output {
+  private static final Logger logger = Logger.getInstance(SummaryOutput.class);
+
   private final String text;
 
   private final OutputType outputType;
@@ -48,6 +51,17 @@ public class SummaryOutput implements Output {
   private SummaryOutput(Prefix prefix, String text, OutputType outputType) {
     this.text = prefix.getDisplayText() + "\t" + text;
     this.outputType = outputType;
+  }
+
+  /**
+   * Print this summary output to the application log. This provides a convenient way of logging a
+   * message to the summary view as well as the log for debugging.
+   *
+   * @return This object, for chaining calls.
+   */
+  public SummaryOutput log() {
+    logger.info(text);
+    return this;
   }
 
   public String getText() {

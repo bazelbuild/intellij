@@ -273,19 +273,21 @@ final class BuildPhaseSyncTask {
     }
     context.output(
         SummaryOutput.output(
-            Prefix.INFO,
-            String.format(
-                "Found %d %s, split into %d %s",
-                targetCount,
-                StringUtil.pluralize("target", targetCount),
-                shardCount,
-                StringUtil.pluralize("shard", shardCount))));
+                Prefix.INFO,
+                String.format(
+                    "Found %d %s, split into %d %s",
+                    targetCount,
+                    StringUtil.pluralize("target", targetCount),
+                    shardCount,
+                    StringUtil.pluralize("shard", shardCount)))
+            .log());
     if (shardCount > 1) {
       context.output(
           SummaryOutput.output(
-              Prefix.INFO,
-              String.format(
-                  "Building multiple shards in %s...", parallel ? "parallel" : "serial")));
+                  Prefix.INFO,
+                  String.format(
+                      "Building multiple shards in %s...", parallel ? "parallel" : "serial"))
+              .log());
     }
   }
 
