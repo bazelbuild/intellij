@@ -8,6 +8,9 @@ plugins in the JetBrains' plugin repository. See the
 [releases](https://github.com/bazelbuild/intellij/releases) tab for more
 information.
 
+**Please see our latest community update for Bazel IntelliJ plugin:**
+[Announcing Bazel & JetBrains co-maintenance of IntelliJ IDEA Bazel Plugin](https://blog.bazel.build/2022/07/11/Bazel-IntelliJ-Update.html#announcing-bazel-jetbrains-co-maintenance-of-intellij-idea-bazel).
+
 ## Support
 
 See the [documentation entry](https://ij.bazel.build/docs/bazel-support.html)
