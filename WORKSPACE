@@ -100,8 +100,8 @@ http_archive(
 http_archive(
     name = "clion_2022_2",
     build_file = "@//intellij_platform_sdk:BUILD.clion222",
-    #sha256 = "12edae92d2fdb2a6234963f329fb65241a0aba12ec96a8302571affa0e3edd26",
-    url = "https://download.jetbrains.com/cpp/CLion-222.3244.6.tar.gz",
+    sha256 = "9b8ad8f569618ed2d180799fa1d275d2162241937d9620ba35359a699c87748b",
+    url = "https://download.jetbrains.com/cpp/CLion-222.3345.16.tar.gz",
 )
 
 _PYTHON_CE_BUILD_FILE = """
@@ -193,7 +193,7 @@ http_archive(
     name = "go_2022_2",
     build_file_content = _GO_BUILD_FILE,
     sha256 = "221a28fea44f6395588b85e53369967d31974221954f4eec386ccf30ea669ac7",
-    url = "https://plugins.jetbrains.com/files/9568/193278/go-222.3345.16.zip?updateId=193278&pluginId=9568&family=INTELLIJ",
+    url = "https://plugins.jetbrains.com/files/9568/193278/go-222.3345.16.zip",
 )
 
 _SCALA_BUILD_FILE = """
