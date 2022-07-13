@@ -92,7 +92,6 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedBuildProgressTracker;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.toolwindow.Task;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -122,8 +121,6 @@ import javax.annotation.Nullable;
 public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
   private static final Logger logger = Logger.getInstance(BlazeIdeInterfaceAspectsImpl.class);
-  private static final BoolExperiment disableValidationActionExperiment =
-      new BoolExperiment("blaze.sync.disable.valication.action", true);
 
   @Override
   @Nullable
@@ -725,11 +722,9 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       builder
           .addTargets(targets)
           .addBlazeFlags(BlazeFlags.KEEP_GOING)
+          .addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS) // b/145245918: don't run lint during sync
           .addBlazeFlags(buildResultHelper.getBuildFlags())
           .addBlazeFlags(additionalBlazeFlags);
-      if (disableValidationActionExperiment.getValue()) {
-        builder.addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS);
-      }
 
       aspectStrategy.addAspectAndOutputGroups(
           builder, outputGroups, activeLanguages, onlyDirectDeps);
