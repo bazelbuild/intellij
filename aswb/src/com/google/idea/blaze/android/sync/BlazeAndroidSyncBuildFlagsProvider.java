@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 
@@ -36,7 +35,6 @@ public class BlazeAndroidSyncBuildFlagsProvider implements BuildFlagsProvider {
   // Enables auto-setting fat_apk_cpu=x86_64 flag for sync
   private static final BoolExperiment forceFatApkCpuExperiment =
       new BoolExperiment("blaze.sync.flags.enableForceFatApkCpuExperiment", true);
-  private static final Logger logger = Logger.getInstance(BlazeAndroidSyncBuildFlagsProvider.class);
 
   @Override
   public void addBuildFlags(
@@ -68,7 +66,6 @@ public class BlazeAndroidSyncBuildFlagsProvider implements BuildFlagsProvider {
         // Print to both summary and print outputs (i.e. main and subtask window of blaze console)
         context.output(SummaryOutput.output(Prefix.INFO, message));
         context.output(PrintOutput.log(message));
-        logger.info("Forcing fat_apk_cpu to x86_64 for sync");
       }
       flags.add("--fat_apk_cpu=x86_64");
     }
