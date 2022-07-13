@@ -81,6 +81,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.BlazeSyncBuildResult;
 import com.google.idea.blaze.base.sync.SyncProjectState;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
@@ -92,6 +93,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedBuildProgressTracker;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.toolwindow.Task;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -119,8 +121,10 @@ import javax.annotation.Nullable;
 
 /** Implementation of BlazeIdeInterface based on aspects. */
 public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
-
   private static final Logger logger = Logger.getInstance(BlazeIdeInterfaceAspectsImpl.class);
+
+  private static final BoolExperiment noFakeStampExperiment =
+      new BoolExperiment("blaze.sync.nofake.stamp.data", true);
 
   @Override
   @Nullable
@@ -725,6 +729,12 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
           .addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS) // b/145245918: don't run lint during sync
           .addBlazeFlags(buildResultHelper.getBuildFlags())
           .addBlazeFlags(additionalBlazeFlags);
+
+      // b/236031309: Sync builds that use rabbit-cli rely on build-changelist.txt being populated
+      // with the correct build request id. We force Blaze to emit the correct build-changelist.
+      if (noFakeStampExperiment.getValue() && invoker.getType() == BuildBinaryType.RABBIT) {
+        builder.addBlazeFlags("--nofake_stamp_data");
+      }
 
       aspectStrategy.addAspectAndOutputGroups(
           builder, outputGroups, activeLanguages, onlyDirectDeps);
