@@ -41,7 +41,7 @@ public class KotlinDebuggerRunner extends BlazeJavaDebuggerRunner {
   public RunContentDescriptor createContentDescriptor(
       RunProfileState state, ExecutionEnvironment env) throws ExecutionException {
 
-    if (BlazeKotlinDebuggingSetupHandler.COROUTINES_DEBUGGING_ENABLED.getValue()
+    if (BlazeKotlinDebuggingSetupHandler.COROUTINES_DEBUGGING_ENABLED.isEnabled()
         && state instanceof BlazeJavaRunProfileState) {
       AtomicReference<String> kotlinxCoroutinesJavaAgentPath =
           env.getCopyableUserData(BlazeKotlinDebuggingSetupHandler.COROUTINES_LIB_PATH);
