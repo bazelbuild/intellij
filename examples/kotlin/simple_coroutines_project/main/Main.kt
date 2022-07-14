@@ -16,7 +16,7 @@ object Main {
       if (args.isNotEmpty()) {
         args[0].toInt()
       } else {
-        1
+        8
       }
 
     for (i in 0 until num) {
