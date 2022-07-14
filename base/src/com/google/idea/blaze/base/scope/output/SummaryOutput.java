@@ -26,9 +26,11 @@ import java.time.temporal.ChronoUnit;
 public class SummaryOutput implements Output {
   private static final Logger logger = Logger.getInstance(SummaryOutput.class);
 
+  private final String prefixText;
   private final String text;
 
   private final OutputType outputType;
+  private final boolean dedupe;
 
   /** A prefix that appears before the summary text message. */
   public enum Prefix {
@@ -49,8 +51,22 @@ public class SummaryOutput implements Output {
   }
 
   private SummaryOutput(Prefix prefix, String text, OutputType outputType) {
-    this.text = prefix.getDisplayText() + "\t" + text;
+    this(prefix.getDisplayText(), text, outputType, false);
+  }
+
+  private SummaryOutput(String prefixText, String text, OutputType outputType, boolean dedupe) {
+    this.prefixText = prefixText;
+    this.text = text;
     this.outputType = outputType;
+    this.dedupe = dedupe;
+  }
+
+  public boolean shouldDedupe() {
+    return dedupe;
+  }
+
+  public SummaryOutput dedupe() {
+    return new SummaryOutput(prefixText, text, outputType, true);
   }
 
   /**
@@ -64,8 +80,12 @@ public class SummaryOutput implements Output {
     return this;
   }
 
-  public String getText() {
+  public String getRawText() {
     return text;
+  }
+
+  public String getText() {
+    return prefixText + "\t" + text;
   }
 
   public OutputType getOutputType() {
@@ -73,7 +93,7 @@ public class SummaryOutput implements Output {
   }
 
   public PrintOutput toPrintOutput() {
-    return new PrintOutput(this.text, this.outputType);
+    return new PrintOutput(getText(), this.outputType);
   }
 
   public static SummaryOutput output(Prefix prefix, String text) {

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.scope.scopes;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
@@ -36,6 +37,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -143,6 +145,7 @@ public final class ToolWindowScope implements BlazeScope {
 
   private boolean finishTaskOnScopeEnd;
   private boolean activated;
+  private final Set<String> dedupedSummaryOutput = Sets.newHashSet();
 
   private ToolWindowScope(
       Project project,
@@ -183,7 +186,11 @@ public final class ToolWindowScope implements BlazeScope {
             if (task.getParent().isPresent()) {
               return Propagation.Continue;
             }
-            return printSink.onOutput(output.toPrintOutput());
+            if (!output.shouldDedupe() || dedupedSummaryOutput.add(output.getRawText())) {
+              return printSink.onOutput(output.toPrintOutput());
+            } else {
+              return Propagation.Stop;
+            }
           };
     } else {
       summarySink = null;

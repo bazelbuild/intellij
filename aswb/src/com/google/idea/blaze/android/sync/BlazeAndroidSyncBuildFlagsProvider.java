@@ -64,7 +64,7 @@ public class BlazeAndroidSyncBuildFlagsProvider implements BuildFlagsProvider {
       // console on all of those invocations.
       if (BlazeCommandName.BUILD.equals(command)) {
         // Print to both summary and print outputs (i.e. main and subtask window of blaze console)
-        context.output(SummaryOutput.output(Prefix.INFO, message));
+        context.output(SummaryOutput.output(Prefix.INFO, message).dedupe());
         context.output(PrintOutput.log(message));
       }
       flags.add("--fat_apk_cpu=x86_64");
