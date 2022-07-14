@@ -597,7 +597,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   + " project view file.",
               String.join(" ", syncOnlyFlags));
       // Print to both summary and print outputs (i.e. main and subtask window of blaze console)
-      context.output(SummaryOutput.output(Prefix.INFO, message));
+      context.output(SummaryOutput.output(Prefix.INFO, message).dedupe());
       context.output(PrintOutput.log(message));
     }
     // Fetching blaze flags here using parent context, to avoid duplicate fetch for every shard.
