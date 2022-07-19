@@ -182,7 +182,7 @@ final class BuildPhaseSyncTask {
     buildStats.setTargets(targets);
     notifyBuildStarted(context, syncParams.addProjectViewTargets(), ImmutableList.copyOf(targets));
 
-    BuildInvoker localInvoker = buildSystem.getBuildInvoker(project, context);
+    BuildInvoker defaultInvoker = buildSystem.getDefaultInvoker(project, context);
 
     ShardedTargetsResult shardedTargetsResult =
         BlazeBuildTargetSharder.expandAndShardTargets(
@@ -192,7 +192,7 @@ final class BuildPhaseSyncTask {
             viewSet,
             projectState.getWorkspacePathResolver(),
             targets,
-            localInvoker,
+            defaultInvoker,
             buildSystem.getSyncStrategy(project));
     if (shardedTargetsResult.buildResult.status == BuildResult.Status.FATAL_ERROR) {
       throw new SyncFailedException();
@@ -232,7 +232,7 @@ final class BuildPhaseSyncTask {
       syncBuildInvoker = buildSystem.getParallelBuildInvoker(project, context).orElse(null);
     }
     if (syncBuildInvoker == null) {
-      syncBuildInvoker = localInvoker;
+      syncBuildInvoker = defaultInvoker;
     }
     resultBuilder.setBlazeInfo(syncBuildInvoker.getBlazeInfo());
 

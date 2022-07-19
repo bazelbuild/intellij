@@ -104,12 +104,16 @@ final class ProjectStateSyncTask {
             BlazeCommandName.INFO,
             context,
             BlazeInvocationContext.SYNC_CONTEXT);
+
     ListenableFuture<BlazeInfo> blazeInfoFuture =
         BlazeInfoRunner.getInstance()
             .runBlazeInfo(
                 context,
                 importSettings.getBuildSystem(),
-                Blaze.getBuildSystemProvider(project).getBinaryPath(project),
+                Blaze.getBuildSystemProvider(project)
+                    .getBuildSystem()
+                    .getDefaultInvoker(project, context)
+                    .getBinaryPath(),
                 workspaceRoot,
                 syncFlags);
 
