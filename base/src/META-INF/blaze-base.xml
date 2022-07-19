@@ -18,7 +18,7 @@
       <action id="Blaze.ImportProject2"
           class="com.google.idea.blaze.base.wizard2.BlazeImportProjectAction"
           icon="BlazeIcons.Logo">
-        <add-to-group group-id="FileOpenGroup" anchor="first"/>
+        <add-to-group group-id="FileMenu" anchor="first"/>
         <add-to-group group-id="WelcomeScreen.QuickStart" anchor="before"
             relative-to-action="Vcs.VcsClone"/>
       </action>
