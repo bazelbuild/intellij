@@ -65,7 +65,7 @@ public abstract class IntellijAspectTest {
             ? maybeRelativeLabel
             : testRelative(maybeRelativeLabel);
     return testFixture.getTargetsList().stream()
-        .filter(t -> t.hasKey() && t.getKey().getLabel().equals(label))
+        .filter(t -> t.hasKey() && labelsEqual(t.getKey().getLabel(), label))
         .collect(toImmutableList());
   }
 
@@ -125,7 +125,7 @@ public abstract class IntellijAspectTest {
       return false;
     }
     TargetKey targetKey = target.getKey();
-    return targetKey.getLabel().equals(label) && targetKey.getAspectIdsList().isEmpty();
+    return labelsEqual(targetKey.getLabel(), label) && targetKey.getAspectIdsList().isEmpty();
   }
 
   private static boolean matchTarget(
@@ -135,7 +135,7 @@ public abstract class IntellijAspectTest {
     }
 
     TargetKey targetKey = target.getKey();
-    if (!targetKey.getLabel().equals(label)) {
+    if (!labelsEqual(targetKey.getLabel(), label)) {
       return false;
     }
     return targetHasMatchingAspects(target, fractionalAspectIds);
@@ -259,6 +259,14 @@ public abstract class IntellijAspectTest {
   private static String getTargetName(String label) {
     int colonIx = label.indexOf(':');
     return label.substring(colonIx + 1);
+  }
+
+  private static boolean labelsEqual(String a, String b) {
+    return unambiguousAbsoluteLabel(a).equals(unambiguousAbsoluteLabel(b));
+  }
+
+  private static String unambiguousAbsoluteLabel(String label) {
+    return label.startsWith("@") ? label : "@" + label;
   }
 
   /** Returns the runtime location of a data dependency. */
