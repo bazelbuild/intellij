@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
@@ -51,10 +52,12 @@ import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /** Collects information about the project state (VCS, blaze info, .blazeproject contents, etc.). */
 final class ProjectStateSyncTask {
@@ -68,6 +71,7 @@ final class ProjectStateSyncTask {
   private final Project project;
   private final BlazeImportSettings importSettings;
   private final WorkspaceRoot workspaceRoot;
+  private static final Logger logger = Logger.getInstance(ProjectStateSyncTask.class);
 
   private ProjectStateSyncTask(Project project) {
     this.project = project;
@@ -93,6 +97,9 @@ final class ProjectStateSyncTask {
     WorkspacePathResolverAndProjectView workspacePathResolverAndProjectView =
         computeWorkspacePathResolverAndProjectView(context, vcsHandler, executor);
     if (workspacePathResolverAndProjectView == null) {
+      printAndLogError(
+          "Sync failed: Could not resolve the workspace path and/or parse the project view",
+          context);
       throw new SyncFailedException();
     }
     ProjectViewSet projectViewSet = workspacePathResolverAndProjectView.projectViewSet;
@@ -146,6 +153,7 @@ final class ProjectStateSyncTask {
 
     if (!ProjectViewVerifier.verifyProjectView(
         project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings)) {
+      printAndLogError("Sync failed: Could not verify the project view", context);
       throw new SyncFailedException();
     }
 
@@ -160,6 +168,7 @@ final class ProjectStateSyncTask {
       throw new SyncCanceledException();
     }
     if (context.hasErrors()) {
+      printAndLogError("Sync failed: Could not compute working set", context);
       throw new SyncFailedException();
     }
 
@@ -186,6 +195,7 @@ final class ProjectStateSyncTask {
     }
   }
 
+  @Nullable
   private WorkspacePathResolverAndProjectView computeWorkspacePathResolverAndProjectView(
       BlazeContext context, BlazeVcsHandler vcsHandler, ListeningExecutorService executor) {
     context.output(new StatusOutput("Updating VCS..."));
@@ -265,5 +275,10 @@ final class ProjectStateSyncTask {
       context.output(PrintOutput.log(String.format("  (and %d more)", messages.size() - maxFiles)));
     }
     context.output(PrintOutput.output(""));
+  }
+
+  private void printAndLogError(String errorMessage, BlazeContext context) {
+    context.output(new PrintOutput(errorMessage, OutputType.ERROR));
+    logger.error(errorMessage);
   }
 }
