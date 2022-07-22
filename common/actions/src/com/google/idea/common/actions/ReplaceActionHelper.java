@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import java.util.function.Predicate;
 
@@ -67,7 +68,7 @@ public class ReplaceActionHelper {
   }
 
   /** Wraps an action and makes it conditionally invisible. */
-  private static class RemovedAction extends AnAction {
+  private static class RemovedAction extends AnAction implements PossiblyDumbAware {
 
     private final AnAction delegate;
     private final Predicate<Project> shouldHide;
@@ -97,6 +98,11 @@ public class ReplaceActionHelper {
         e.getPresentation().setEnabledAndVisible(true);
         delegate.update(e);
       }
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return delegate.isDumbAware();
     }
   }
 
