@@ -195,9 +195,7 @@ public class MobileInstallBuildStep implements ApkBuildStep {
           .addTargets(label)
           .addBlazeFlags(blazeFlags)
           .addBlazeFlags(buildResultHelper.getBuildFlags())
-          .addExeFlags(exeFlags)
-          // MI launches apps by default. Defer app launch to BlazeAndroidLaunchTasksProvider.
-          .addExeFlags("--nolaunch_app");
+          .addExeFlags(exeFlags);
 
       if (StudioDeployerExperiment.isEnabled()) {
         command.addExeFlags("--nodeploy");
