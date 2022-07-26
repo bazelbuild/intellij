@@ -48,6 +48,5 @@
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerWrapperProvider"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerWrapperProviderImpl"/>
-    <notificationGroup displayType="BALLOON" id="StarlarkifiedCcLibraryCacheRefresh"/>
   </extensions>
 </idea-plugin>
