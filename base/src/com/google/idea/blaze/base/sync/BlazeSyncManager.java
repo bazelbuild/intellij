@@ -50,6 +50,7 @@ import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -76,6 +77,11 @@ public class BlazeSyncManager {
 
   public static BlazeSyncManager getInstance(Project project) {
     return ServiceManager.getService(project, BlazeSyncManager.class);
+  }
+
+  public static void printAndLogError(String errorMessage, BlazeContext context) {
+    context.output(PrintOutput.error(errorMessage));
+    logger.error(errorMessage);
   }
 
   /** Requests a project sync with Blaze. */
@@ -123,6 +129,13 @@ public class BlazeSyncManager {
                                           ProjectStateSyncTask.collectProjectState(
                                               project, context);
                                     } catch (SyncCanceledException | SyncFailedException e) {
+                                      ApplicationManager.getApplication()
+                                          .invokeLater(
+                                              () ->
+                                                  BlazeSyncStatus.getInstance(project)
+                                                      .syncEnded(
+                                                          syncParams.syncMode(),
+                                                          context.getSyncResult()));
                                       throw new VerifyException(e);
                                     }
                                     boolean forceFullSync =

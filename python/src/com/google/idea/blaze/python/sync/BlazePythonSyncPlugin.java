@@ -268,6 +268,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
             sdk.getName() + LibraryContributingFacet.PYTHON_FACET_LIBRARY_NAME_SUFFIX);
   }
 
+  @Nullable
   private static LibraryContributingFacet<?> findPythonFacet(Module module) {
     final Facet<?>[] allFacets = FacetManager.getInstance(module).getAllFacets();
     for (Facet<?> facet : allFacets) {
@@ -451,6 +452,7 @@ public class BlazePythonSyncPlugin implements BlazeSyncPlugin {
           topLevelProjectViewFile != null
               && topLevelProjectViewFile.projectView.getScalarValue(WorkspaceTypeSection.KEY)
                   == WorkspaceType.PYTHON;
+      BlazeSyncManager.printAndLogError(msg, context);
       msg +=
           fixable
               ? "Click here to remove it, retaining python support"

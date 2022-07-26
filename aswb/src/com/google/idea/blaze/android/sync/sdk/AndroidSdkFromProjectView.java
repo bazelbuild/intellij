@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.Navigatable;
 import java.util.Collection;
@@ -49,7 +50,8 @@ public class AndroidSdkFromProjectView {
       BlazeContext context, ProjectViewSet projectViewSet) {
     List<Sdk> sdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
     if (sdks.isEmpty()) {
-      IssueOutput.error("No Android SDK configured. Please use the SDK manager to configure.")
+      String msg = "No Android SDK configured. Please use the SDK manager to configure.";
+      IssueOutput.error(msg)
           .navigatable(
               new Navigatable() {
                 @Override
@@ -68,6 +70,7 @@ public class AndroidSdkFromProjectView {
                 }
               })
           .submit(context);
+      BlazeSyncManager.printAndLogError(msg, context);
       return null;
     }
     if (projectViewSet == null) {
@@ -79,23 +82,26 @@ public class AndroidSdkFromProjectView {
 
     if (androidSdk == null) {
       ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
-      IssueOutput.error(
-              ("No android platform configured, please select one using the `android_sdk_platform`"
-                  + " flag in the project view file. Available android_sdk_platforms are: "
-                  + getAvailableTargetHashesAsList(sdks)
-                  + ". To install more android SDKs, use the SDK manager."))
+      String msg =
+          "No android platform configured, please select one using the `android_sdk_platform`"
+              + " flag in the project view file. Available android_sdk_platforms are: "
+              + getAvailableTargetHashesAsList(sdks)
+              + ". To install more android SDKs, use the SDK manager.";
+      IssueOutput.error(msg)
           .inFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
           .submit(context);
+      BlazeSyncManager.printAndLogError(msg, context);
       return null;
     }
 
     Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdk);
     if (sdk == null) {
       ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
-      IssueOutput.error(
-              String.format(NO_SDK_ERROR_TEMPLATE, androidSdk, getAllAvailableTargetHashes()))
+      String msg = String.format(NO_SDK_ERROR_TEMPLATE, androidSdk, getAllAvailableTargetHashes());
+      IssueOutput.error(msg)
           .inFile(projectViewFile != null ? projectViewFile.projectViewFile : null)
           .submit(context);
+      BlazeSyncManager.printAndLogError(msg, context);
       return null;
     }
 
