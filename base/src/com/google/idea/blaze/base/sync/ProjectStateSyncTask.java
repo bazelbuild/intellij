@@ -55,6 +55,7 @@ import com.intellij.openapi.project.Project;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /** Collects information about the project state (VCS, blaze info, .blazeproject contents, etc.). */
 final class ProjectStateSyncTask {
@@ -78,14 +79,17 @@ final class ProjectStateSyncTask {
   private SyncProjectState getProjectState(BlazeContext context)
       throws SyncFailedException, SyncCanceledException {
     if (!FileOperationProvider.getInstance().exists(workspaceRoot.directory())) {
-      IssueOutput.error(String.format("Workspace '%s' doesn't exist.", workspaceRoot.directory()))
-          .submit(context);
+      String message = String.format("Workspace '%s' doesn't exist.", workspaceRoot.directory());
+      IssueOutput.error(message).submit(context);
+      BlazeSyncManager.printAndLogError(message, context);
       throw new SyncFailedException();
     }
 
     BlazeVcsHandler vcsHandler = BlazeVcsHandler.vcsHandlerForProject(project);
     if (vcsHandler == null) {
-      IssueOutput.error("Could not find a VCS handler").submit(context);
+      String message = "Could not find a VCS handler";
+      IssueOutput.error(message).submit(context);
+      BlazeSyncManager.printAndLogError("Could not find a VCS handler", context);
       throw new SyncFailedException();
     }
 
@@ -93,6 +97,9 @@ final class ProjectStateSyncTask {
     WorkspacePathResolverAndProjectView workspacePathResolverAndProjectView =
         computeWorkspacePathResolverAndProjectView(context, vcsHandler, executor);
     if (workspacePathResolverAndProjectView == null) {
+      BlazeSyncManager.printAndLogError(
+          "Sync failed: Could not resolve the workspace path and/or parse the project view",
+          context);
       throw new SyncFailedException();
     }
     ProjectViewSet projectViewSet = workspacePathResolverAndProjectView.projectViewSet;
@@ -146,6 +153,7 @@ final class ProjectStateSyncTask {
 
     if (!ProjectViewVerifier.verifyProjectView(
         project, context, workspacePathResolver, projectViewSet, workspaceLanguageSettings)) {
+      BlazeSyncManager.printAndLogError("Sync failed: Could not verify the project view", context);
       throw new SyncFailedException();
     }
 
@@ -160,6 +168,7 @@ final class ProjectStateSyncTask {
       throw new SyncCanceledException();
     }
     if (context.hasErrors()) {
+      BlazeSyncManager.printAndLogError("Sync failed: Could not compute working set", context);
       throw new SyncFailedException();
     }
 
@@ -186,6 +195,7 @@ final class ProjectStateSyncTask {
     }
   }
 
+  @Nullable
   private WorkspacePathResolverAndProjectView computeWorkspacePathResolverAndProjectView(
       BlazeContext context, BlazeVcsHandler vcsHandler, ListeningExecutorService executor) {
     context.output(new StatusOutput("Updating VCS..."));

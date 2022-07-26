@@ -49,6 +49,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -248,6 +249,7 @@ public class BlazeTypescriptSyncPlugin implements BlazeSyncPlugin {
                 + "from the list of requested languages in your project view file";
       }
       IssueOutput.error(message).submit(context);
+      BlazeSyncManager.printAndLogError(message, context);
       return false;
     }
 
