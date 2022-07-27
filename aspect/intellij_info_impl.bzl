@@ -439,7 +439,7 @@ def _build_cargo_toml(ctx, target, source_files):
     args.add_joined("--external-deps", ["{}={}".format(k, v) for k, v in external_deps.items()], join_with = ":")
 
     args.add("--root-path")
-    args.add(str(target.label).split("//")[1].split(":")[0] if "//" in str(target.label) else "")
+    args.add(_target_root_path(target))
 
     args.add("--lib-path" if ctx.rule.kind == "rust_library" else "--bin-path")
     canonical_entry_point_name = "lib.rs" if ctx.rule.kind == "rust_library" else "main.rs"
@@ -467,6 +467,23 @@ def _build_cargo_toml(ctx, target, source_files):
         progress_message = "Generating Cargo.toml for " + str(target.label),
     )
     return output_manifest
+
+def _target_root_path(target):
+    return str(target.label).split("//")[1].split(":")[0] if "//" in str(target.label) else ""
+
+def _relativize(root_path, full_path):
+    # example: ("tests", "tests/my_test.rs") --> "my_test.rs"
+    root_path_fragments = _path_fragments(root_path)
+    full_path_fragments = _path_fragments(full_path)
+    for i in range(len(full_path_fragments)):
+        if (len(root_path_fragments) <= i):
+            return "/".join(full_path_fragments[i:])
+        if (full_path_fragments[i] != root_path_fragments[i]):
+            fail("cannot relativize path '%s' against root path '%s': the path is not a child of the root path" % (full_path, root_path))
+    return ""
+
+def _path_fragments(path):
+    return [fragment for fragment in path.split("/") if fragment and not fragment.isspace()]
 
 def _is_cargo_raze_crate(target):
     return str(target.label).startswith("@raze__")
@@ -503,8 +520,8 @@ def collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     else:
         if len(sources) != 1:
             fail("expected rust_test target '%s' to have exactly [1] file in srcs, but found [%d]" % (target.label.name, len(sources)))
-        source_path_copy = ctx.actions.declare_file(sources[0].path)
-        ctx.actions.write(source_path_copy, "// This file is intentionally blank. The Rust plugin uses it to identify test targets.")
+        source_path_copy = ctx.actions.declare_file(_relativize(_target_root_path(target), sources[0].path))
+        ctx.actions.write(source_path_copy, "// This file is intentionally blank. IntelliJ uses it to identify test targets.")
         update_sync_output_groups(output_groups, "intellij-resolve-rs", depset([source_path_copy]))
 
     ide_info["rust_ide_info"] = struct_omit_none(sources = [artifact_location(f) for f in sources])
