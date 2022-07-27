@@ -16,17 +16,18 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.intellij.openapi.project.Project;
-import java.util.ArrayDeque;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Queue;
+import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 /** Model for the combination of the tree and output consoles. */
 final class TasksTreeConsoleModel {
   private final TasksTreeModel treeModel;
   private final Map<Task, ConsoleView> consolesOfTasks = new HashMap<>();
 
-  private final Queue<Task> topLevelFinishedTasks = new ArrayDeque<>();
+  private final Set<Task> topLevelFinishedTasks = new LinkedHashSet<>();
 
   private TasksTreeConsoleModel(Project project) {
     treeModel = new TasksTreeModel(project);
@@ -46,7 +47,18 @@ final class TasksTreeConsoleModel {
     return consolesOfTasks;
   }
 
-  public Queue<Task> getTopLevelFinishedTasks() {
+  public Set<Task> getTopLevelFinishedTasks() {
     return topLevelFinishedTasks;
+  }
+
+  /** Removes and returns the oldest top level finished task. */
+  @Nullable
+  public Task pollOldestFinishedTask() {
+    if (topLevelFinishedTasks.isEmpty()) {
+      return null;
+    }
+    Task toRemove = topLevelFinishedTasks.iterator().next();
+    topLevelFinishedTasks.remove(toRemove);
+    return toRemove;
   }
 }
