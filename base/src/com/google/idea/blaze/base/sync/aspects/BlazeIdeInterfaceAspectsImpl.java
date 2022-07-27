@@ -122,6 +122,8 @@ import javax.annotation.Nullable;
 /** Implementation of BlazeIdeInterface based on aspects. */
 public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   private static final Logger logger = Logger.getInstance(BlazeIdeInterfaceAspectsImpl.class);
+  private static final BoolExperiment disableValidationActionExperiment =
+      new BoolExperiment("blaze.sync.disable.valication.action", true);
 
   private static final BoolExperiment noFakeStampExperiment =
       new BoolExperiment("blaze.sync.nofake.stamp.data", true);
@@ -726,9 +728,11 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       builder
           .addTargets(targets)
           .addBlazeFlags(BlazeFlags.KEEP_GOING)
-          .addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS) // b/145245918: don't run lint during sync
           .addBlazeFlags(buildResultHelper.getBuildFlags())
           .addBlazeFlags(additionalBlazeFlags);
+      if (disableValidationActionExperiment.getValue()) {
+        builder.addBlazeFlags(BlazeFlags.DISABLE_VALIDATIONS);
+      }
 
       // b/236031309: Sync builds that use rabbit-cli rely on build-changelist.txt being populated
       // with the correct build request id. We force Blaze to emit the correct build-changelist.
