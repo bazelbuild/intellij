@@ -416,7 +416,7 @@ final class SyncPhaseCoordinator {
         return;
       }
 
-      if (params.syncMode() == SyncMode.STARTUP) {
+      if (params.syncMode() == SyncMode.STARTUP || params.syncMode() == SyncMode.NO_BUILD) {
         finishSync(
             params,
             startTime,
