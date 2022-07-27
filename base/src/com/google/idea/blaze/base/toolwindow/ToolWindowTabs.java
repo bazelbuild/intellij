@@ -55,6 +55,11 @@ final class ToolWindowTabs {
     }
   }
 
+  void removeTask(Task task) {
+    Tab tab = getTab(task);
+    tab.behaviour.removeTask(task);
+  }
+
   void finishTask(Task task) {
     Tab tab = getTab(task);
     tab.behaviour.finishTask(task);
