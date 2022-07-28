@@ -104,7 +104,7 @@ class ScalaTestContextProvider implements TestContextProvider {
       // handled by a different producer
       return null;
     }
-    ScalaTestConfigurationProducer scalaTestConfigurationProducer = new ScalaTestConfigurationProducer();
+    ScalaTestConfigurationProducer scalaTestConfigurationProducer = ScalaTestConfigurationProducer.instance();
     return scalaTestConfigurationProducer.getTestClassWithTestName(location)
         .map(classWithTestName -> new ClassAndTestName(classWithTestName.testClass(), classWithTestName.testName().getOrElse(() -> null)))
         .getOrElse(() -> null);
