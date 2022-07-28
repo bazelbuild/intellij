@@ -67,13 +67,17 @@ class ScalaTestContextProvider implements TestContextProvider {
 
     if (classAndTestName.testName != null) {
       return builder
-          //This causes -t to be added to the Scalatest runner, selecting the relevant test case
-          //Setting -s as well would cause the entire test class to run, so leave the test filter unset.
-          .addBlazeFlagsModification(setScalatestSingleTestNameFlag(classAndTestName.testName))
+          // ScalaTest can run a single test in a class by using the flags "-s className -t testName".
+          // rules_scala supports selecting a test class by setting the "--test_filter=className" flag,
+          // which is then turned into -s alongside other "--test_arg" flags.
+          // Sadly, this -s gets appended to the flag list, rather than prepended, resulting in
+          // "-t testName -s className". ScalaTest cares about order for these, and this ordering
+          // is interpreted to mean "run all tests with the given name, and also all tests in the given class".
+          .addBlazeFlagsModification(setScalatestSingleTestNameFlag(classAndTestName))
           .build();
     } else {
       return builder
-          //This causes -s to be added to the Scalatest runner, selecting the relevant class
+          // rules_scala translates --test_filter=className to -s className for the ScalaTest runner.
           .setTestFilter(getTestFilter(testClass))
           .build();
     }
@@ -110,15 +114,22 @@ class ScalaTestContextProvider implements TestContextProvider {
         .getOrElse(() -> null);
   }
 
-  static TestContext.BlazeFlagsModification setScalatestSingleTestNameFlag(String testName) {
-    String testSelectorFlag = BlazeFlags.TEST_ARG + "-t";
-    //Scalatest names can contain spaces, so the name needs to be quoted
-    String testNameFlag = BlazeFlags.TEST_ARG + "\"" + testName + "\"";
+  static TestContext.BlazeFlagsModification setScalatestSingleTestNameFlag(ClassAndTestName classAndTestName) {
+    String testClassSelectorFlag = BlazeFlags.TEST_ARG + "-s";
+    String testClassFlag = BlazeFlags.TEST_ARG + "\"" + classAndTestName.testClass.getQualifiedName() + "\"";
+    String testNameSelectorFlag = BlazeFlags.TEST_ARG + "-t";
+    // Scalatest names can contain spaces, so the name needs to be quoted
+    String testNameFlag = BlazeFlags.TEST_ARG + "\"" + classAndTestName.testName + "\"";
     return new TestContext.BlazeFlagsModification() {
       @Override
       public void modifyFlags(List<String> flags) {
-        if (!flags.contains(testSelectorFlag) && !flags.contains(testNameFlag)) {
-          flags.add(testSelectorFlag);
+        if (!flags.contains(testClassSelectorFlag) &&
+            !flags.contains(testClassFlag) &&
+            !flags.contains(testNameSelectorFlag) &&
+            !flags.contains(testNameFlag)) {
+          flags.add(testClassSelectorFlag);
+          flags.add(testClassFlag);
+          flags.add(testNameSelectorFlag);
           flags.add(testNameFlag);
         }
       }
@@ -126,7 +137,10 @@ class ScalaTestContextProvider implements TestContextProvider {
       @Override
       public boolean matchesConfigState(RunConfigurationFlagsState state) {
         List<String> rawFlags = state.getRawFlags();
-        return rawFlags.contains(testSelectorFlag) && rawFlags.contains(testNameFlag);
+        return rawFlags.contains(testClassSelectorFlag) &&
+            rawFlags.contains(testClassFlag) &&
+            rawFlags.contains(testNameSelectorFlag) &&
+            rawFlags.contains(testNameFlag);
       }
     };
   }
