@@ -29,7 +29,6 @@ import com.google.idea.blaze.java.run.producers.TestSizeFinder;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.psi.PsiClass;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
 import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestConfigurationProducer;
 import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestTestFramework;
@@ -61,26 +60,11 @@ class ScalaTestContextProvider implements TestContextProvider {
       return null;
     }
 
-    TestContext.Builder builder = TestContext.builder(testClass, ExecutorType.DEBUG_SUPPORTED_TYPES)
+    return TestContext.builder(testClass, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
-        .setDescription(testClass.getName());
-
-    if (classAndTestName.testName != null) {
-      return builder
-          // ScalaTest can run a single test in a class by using the flags "-s className -t testName".
-          // rules_scala supports selecting a test class by setting the "--test_filter=className" flag,
-          // which is then turned into -s alongside other "--test_arg" flags.
-          // Sadly, this -s gets appended to the flag list, rather than prepended, resulting in
-          // "-t testName -s className". ScalaTest cares about order for these, and this ordering
-          // is interpreted to mean "run all tests with the given name, and also all tests in the given class".
-          .addBlazeFlagsModification(setScalatestSingleTestNameFlag(classAndTestName))
-          .build();
-    } else {
-      return builder
-          // rules_scala translates --test_filter=className to -s className for the ScalaTest runner.
-          .setTestFilter(getTestFilter(testClass))
-          .build();
-    }
+        .addBlazeFlagsModification(setScalatestTestSelectorArguments(classAndTestName))
+        .setDescription(testClass.getName())
+        .build();
   }
 
   private static class ClassAndTestName {
@@ -114,40 +98,43 @@ class ScalaTestContextProvider implements TestContextProvider {
         .getOrElse(() -> null);
   }
 
-  static TestContext.BlazeFlagsModification setScalatestSingleTestNameFlag(ClassAndTestName classAndTestName) {
+  static TestContext.BlazeFlagsModification setScalatestTestSelectorArguments(ClassAndTestName classAndTestName) {
     String testClassSelectorFlag = BlazeFlags.TEST_ARG + "-s";
-    String testClassFlag = BlazeFlags.TEST_ARG + "\"" + classAndTestName.testClass.getQualifiedName() + "\"";
+    String testClassFlag = BlazeFlags.TEST_ARG + classAndTestName.testClass.getQualifiedName();
     String testNameSelectorFlag = BlazeFlags.TEST_ARG + "-t";
     // Scalatest names can contain spaces, so the name needs to be quoted
     String testNameFlag = BlazeFlags.TEST_ARG + "\"" + classAndTestName.testName + "\"";
     return new TestContext.BlazeFlagsModification() {
+      private boolean hasTestName() {
+        return classAndTestName.testName != null;
+      }
+
       @Override
       public void modifyFlags(List<String> flags) {
+        // Ordering matters here. ScalaTest interprets "-s className -t testName" to mean "run the test in the selected class with the selected name".
+        // The reverse ordering "-t testName -s className" means "run all tests with the given name, and also all tests in the given class".
         if (!flags.contains(testClassSelectorFlag) &&
-            !flags.contains(testClassFlag) &&
-            !flags.contains(testNameSelectorFlag) &&
-            !flags.contains(testNameFlag)) {
+            !flags.contains(testClassFlag)) {
           flags.add(testClassSelectorFlag);
           flags.add(testClassFlag);
-          flags.add(testNameSelectorFlag);
-          flags.add(testNameFlag);
+        }
+
+        if (hasTestName()) {
+          if (!flags.contains(testNameSelectorFlag) &&
+              !flags.contains(testNameFlag)) {
+            flags.add(testNameSelectorFlag);
+            flags.add(testNameFlag);
+          }
         }
       }
 
       @Override
       public boolean matchesConfigState(RunConfigurationFlagsState state) {
         List<String> rawFlags = state.getRawFlags();
-        return rawFlags.contains(testClassSelectorFlag) &&
-            rawFlags.contains(testClassFlag) &&
-            rawFlags.contains(testNameSelectorFlag) &&
-            rawFlags.contains(testNameFlag);
+        boolean testClassFlagsSet = rawFlags.contains(testClassSelectorFlag) && rawFlags.contains(testClassFlag);
+        boolean relevantNameFlagsSet = !hasTestName() || (rawFlags.contains(testNameSelectorFlag) && rawFlags.contains(testNameFlag));
+        return testClassFlagsSet && relevantNameFlagsSet;
       }
     };
-  }
-
-  private static String getTestFilter(PsiClass testClass) {
-    // TODO: may need to append '#' if implementation changes.
-    // https://github.com/bazelbuild/rules_scala/pull/216
-    return testClass.getQualifiedName();
   }
 }
