@@ -62,7 +62,7 @@ class ScalaTestContextProvider implements TestContextProvider {
 
     return TestContext.builder(testClass, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
-        .addBlazeFlagsModification(setScalatestTestSelectorArguments(classAndTestName))
+        .addBlazeFlagsModification(new ScalatestTestSelectorFlagsModification(testClass.getQualifiedName(), classAndTestName.testName))
         .setDescription(testClass.getName())
         .build();
   }
@@ -98,43 +98,75 @@ class ScalaTestContextProvider implements TestContextProvider {
         .getOrElse(() -> null);
   }
 
-  static TestContext.BlazeFlagsModification setScalatestTestSelectorArguments(ClassAndTestName classAndTestName) {
-    String testClassSelectorFlag = BlazeFlags.TEST_ARG + "-s";
-    String testClassFlag = BlazeFlags.TEST_ARG + classAndTestName.testClass.getQualifiedName();
-    String testNameSelectorFlag = BlazeFlags.TEST_ARG + "-t";
-    // Scalatest names can contain spaces, so the name needs to be quoted
-    String testNameFlag = BlazeFlags.TEST_ARG + "\"" + classAndTestName.testName + "\"";
-    return new TestContext.BlazeFlagsModification() {
-      private boolean hasTestName() {
-        return classAndTestName.testName != null;
+  public static class ScalatestTestSelectorFlagsModification implements TestContext.BlazeFlagsModification {
+    @Nullable
+    private final String testName;
+
+    private final String testClassSelectorFlag;
+    private final String testClassFlag;
+    @Nullable
+    private final String testNameSelectorFlag;
+    @Nullable
+    private final String testNameFlag;
+
+    public ScalatestTestSelectorFlagsModification(String testClassFqn, @Nullable String testName) {
+      this.testName = testName;
+      testClassSelectorFlag = BlazeFlags.TEST_ARG + "-s";
+      testClassFlag = BlazeFlags.TEST_ARG + testClassFqn;
+      if (testName != null) {
+        testNameSelectorFlag = BlazeFlags.TEST_ARG + "-t";
+        // Scalatest names can contain spaces, so the name needs to be quoted
+        testNameFlag = BlazeFlags.TEST_ARG + "\"" + testName.replace("\"", "\\\"") + "\"";
+      } else {
+        testNameSelectorFlag = null;
+        testNameFlag = null;
       }
+    }
 
-      @Override
-      public void modifyFlags(List<String> flags) {
-        // Ordering matters here. ScalaTest interprets "-s className -t testName" to mean "run the test in the selected class with the selected name".
-        // The reverse ordering "-t testName -s className" means "run all tests with the given name, and also all tests in the given class".
-        if (!flags.contains(testClassSelectorFlag) &&
-            !flags.contains(testClassFlag)) {
-          flags.add(testClassSelectorFlag);
-          flags.add(testClassFlag);
-        }
+    private boolean hasTestName() {
+      return testName != null;
+    }
 
+    private boolean flagsMatchSettings(List<String> flags) {
+      int classSelectorIndex = flags.indexOf(testClassSelectorFlag);
+      if (classSelectorIndex == -1) {
+        return false;
+      }
+      int expectedSize = hasTestName() ? 4 : 2;
+      if (flags.size() < classSelectorIndex + expectedSize) {
+        return false;
+      }
+      String classSelector = flags.get(classSelectorIndex);
+      String clazz = flags.get(classSelectorIndex + 1);
+      boolean matchesClassFlags = classSelector.equals(testClassSelectorFlag) && clazz.equals(testClassFlag);
+      if (!hasTestName()) {
+        return matchesClassFlags;
+      } else {
+        String nameSelector = flags.get(classSelectorIndex + 2);
+        String name = flags.get(classSelectorIndex + 3);
+        boolean matchesNameFlags = nameSelector.equals(testNameSelectorFlag) &&
+            name.equals(testNameFlag);
+        return matchesClassFlags && matchesNameFlags;
+      }
+    }
+
+    @Override
+    public void modifyFlags(List<String> flags) {
+      // Ordering matters here. ScalaTest interprets "-s className -t testName" to mean "run the test in the selected class with the selected name".
+      // The reverse ordering "-t testName -s className" means "run all tests with the given name, and also all tests in the given class".
+      if(!flagsMatchSettings(flags)) {
+        flags.add(testClassSelectorFlag);
+        flags.add(testClassFlag);
         if (hasTestName()) {
-          if (!flags.contains(testNameSelectorFlag) &&
-              !flags.contains(testNameFlag)) {
-            flags.add(testNameSelectorFlag);
-            flags.add(testNameFlag);
-          }
+          flags.add(testNameSelectorFlag);
+          flags.add(testNameFlag);
         }
       }
+    }
 
-      @Override
-      public boolean matchesConfigState(RunConfigurationFlagsState state) {
-        List<String> rawFlags = state.getRawFlags();
-        boolean testClassFlagsSet = rawFlags.contains(testClassSelectorFlag) && rawFlags.contains(testClassFlag);
-        boolean relevantNameFlagsSet = !hasTestName() || (rawFlags.contains(testNameSelectorFlag) && rawFlags.contains(testNameFlag));
-        return testClassFlagsSet && relevantNameFlagsSet;
-      }
-    };
+    @Override
+    public boolean matchesConfigState(RunConfigurationFlagsState state) {
+      return flagsMatchSettings(state.getRawFlags());
+    }
   }
 }
