@@ -111,4 +111,32 @@ public class ScalatestTestSelectorFlagsModificationTest {
         assertThat(flags.subList(2, 6)).containsExactly("--test_arg=-s", "--test_arg=com.google.TestClass", "--test_arg=-t", "--test_arg=\"some test name\"").inOrder();
     }
 
+    @Test
+    public void flagsForRunningSingleTestShouldNotMatchFlagsForRunningClass() {
+        ScalaTestContextProvider.ScalatestTestSelectorFlagsModification modifierForSingleTest =
+            new ScalaTestContextProvider.ScalatestTestSelectorFlagsModification("com.google.TestClass", "some test name");
+        ScalaTestContextProvider.ScalatestTestSelectorFlagsModification modifierForClass =
+            new ScalaTestContextProvider.ScalatestTestSelectorFlagsModification("com.google.TestClass", null);
+        List<String> flags = new ArrayList<>();
+
+        modifierForSingleTest.modifyFlags(flags);
+
+        assertThat(modifierForSingleTest.matchesConfigState(createStateForFlags(flags))).isTrue();
+        assertThat(modifierForClass.matchesConfigState(createStateForFlags(flags))).isFalse();
+    }
+
+    @Test
+    public void flagsForRunningClassShouldNotMatchFlagsForRunningSingleTest() {
+        ScalaTestContextProvider.ScalatestTestSelectorFlagsModification modifierForSingleTest =
+            new ScalaTestContextProvider.ScalatestTestSelectorFlagsModification("com.google.TestClass", "some test name");
+        ScalaTestContextProvider.ScalatestTestSelectorFlagsModification modifierForClass =
+            new ScalaTestContextProvider.ScalatestTestSelectorFlagsModification("com.google.TestClass", null);
+        List<String> flags = new ArrayList<>();
+
+        modifierForClass.modifyFlags(flags);
+
+        assertThat(modifierForClass.matchesConfigState(createStateForFlags(flags))).isTrue();
+        assertThat(modifierForSingleTest.matchesConfigState(createStateForFlags(flags))).isFalse();
+    }
+
 }

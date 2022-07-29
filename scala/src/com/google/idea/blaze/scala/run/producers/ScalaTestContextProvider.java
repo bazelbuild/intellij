@@ -113,14 +113,13 @@ class ScalaTestContextProvider implements TestContextProvider {
       this.testName = testName;
       testClassSelectorFlag = BlazeFlags.TEST_ARG + "-s";
       testClassFlag = BlazeFlags.TEST_ARG + testClassFqn;
+      testNameSelectorFlag = BlazeFlags.TEST_ARG + "-t";
       if (testName != null) {
-        testNameSelectorFlag = BlazeFlags.TEST_ARG + "-t";
         // Scalatest names can contain spaces, so the name needs to be quoted
         // This means we need to escape " and \ in the test name
         String escapedTestName = testName.replace("\\", "\\\\").replace("\"", "\\\"");
         testNameFlag = BlazeFlags.TEST_ARG + "\"" + escapedTestName + "\"";
       } else {
-        testNameSelectorFlag = null;
         testNameFlag = null;
       }
     }
@@ -142,7 +141,8 @@ class ScalaTestContextProvider implements TestContextProvider {
       String clazz = flags.get(classSelectorIndex + 1);
       boolean matchesClassFlags = classSelector.equals(testClassSelectorFlag) && clazz.equals(testClassFlag);
       if (!hasTestName()) {
-        return matchesClassFlags;
+        boolean hasTestSelector = flags.contains(testNameSelectorFlag);
+        return matchesClassFlags && !hasTestSelector;
       } else {
         String nameSelector = flags.get(classSelectorIndex + 2);
         String name = flags.get(classSelectorIndex + 3);
