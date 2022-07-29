@@ -59,19 +59,6 @@ public class ScalatestTestSelectorFlagsModificationTest {
     }
 
     @Test
-    public void canHandleBackslashInTestName() {
-        ScalaTestContextProvider.ScalatestTestSelectorFlagsModification modifier =
-            new ScalaTestContextProvider.ScalatestTestSelectorFlagsModification("com.google.TestClass", "some test name\\");
-        List<String> flags = new ArrayList<>();
-
-        modifier.modifyFlags(flags);
-
-        assertThat(flags.size()).isEqualTo(4);
-        assertThat(flags).containsExactly("--test_arg=-s", "--test_arg=com.google.TestClass", "--test_arg=-t", "--test_arg=\"some test name\\\\\"").inOrder();
-        assertThat(modifier.matchesConfigState(createStateForFlags(flags))).isTrue();
-    }
-
-    @Test
     public void matchesConfigStateOnlyIfFlagsOccurInRightOrder() {
         ScalaTestContextProvider.ScalatestTestSelectorFlagsModification modifier =
             new ScalaTestContextProvider.ScalatestTestSelectorFlagsModification("com.google.TestClass", "some test name");

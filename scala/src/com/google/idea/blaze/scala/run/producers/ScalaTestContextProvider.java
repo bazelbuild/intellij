@@ -116,8 +116,8 @@ class ScalaTestContextProvider implements TestContextProvider {
       testNameSelectorFlag = BlazeFlags.TEST_ARG + "-t";
       if (testName != null) {
         // Scalatest names can contain spaces, so the name needs to be quoted
-        // This means we need to escape " and \ in the test name
-        String escapedTestName = testName.replace("\\", "\\\\").replace("\"", "\\\"");
+        // This means we need to escape " in the test name
+        String escapedTestName = testName.replace("\"", "\\\"");
         testNameFlag = BlazeFlags.TEST_ARG + "\"" + escapedTestName + "\"";
       } else {
         testNameFlag = null;
