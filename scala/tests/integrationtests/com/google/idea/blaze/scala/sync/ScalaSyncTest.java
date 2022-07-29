@@ -18,7 +18,9 @@ package com.google.idea.blaze.scala.sync;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
+import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
@@ -34,7 +36,17 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.model.BlazeSourceDirectory;
+
 import java.util.List;
+
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryProperties;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
+import org.jetbrains.plugins.scala.project.ScalaLanguageLevel;
+import org.jetbrains.plugins.scala.project.ScalaLibraryProperties;
+import org.jetbrains.plugins.scala.project.ScalaLibraryType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -167,5 +179,69 @@ public class ScalaSyncTest extends BlazeSyncIntegrationTestCase {
             new WorkspaceLanguageSettings(
                 WorkspaceType.JAVA,
                 ImmutableSet.of(LanguageClass.GENERIC, LanguageClass.SCALA, LanguageClass.JAVA)));
+  }
+
+  @Test
+  public void testSyncScalaLibraryVersion() throws Exception {
+    setProjectView(
+        "directories:",
+        "  src/main/scala/com/google",
+        "targets:",
+        "  //src/main/scala/com/google:lib",
+        "additional_languages:",
+        "  scala");
+
+    workspace.createFile(
+        new WorkspacePath("src/main/scala/com/google/Source.scala"),
+        "package com.google;",
+        "public class Source {}");
+
+    workspace.createFile(new WorkspacePath("lib/scala-library-2.13.8.jar"),
+        "content");
+
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setBuildFile(sourceRoot("src/main/scala/com/google/BUILD"))
+                    .setLabel("//src/main/scala/com/google:lib")
+                    .setKind("scala_library")
+                    .setJavaInfo(new JavaIdeInfo.Builder())
+                    .addDependency("//lib/scala-library:jar")
+                    .addSource(sourceRoot("src/main/scala/com/google/Source.scala")))
+            .addTarget(TargetIdeInfo.builder()
+                .setLabel("//lib/scala-library:jar")
+                .setKind("scala_import")
+                .setJavaInfo(new JavaIdeInfo.Builder()
+                    .addJar(new LibraryArtifact.Builder()
+                        .setClassJar(new ArtifactLocation.Builder().
+                            setRelativePath("lib/scala-library-2.13.8.jar")
+                            .build())))
+            )
+            .build();
+
+    setTargetMap(targetMap);
+
+    runBlazeSync(
+        BlazeSyncParams.builder()
+            .setTitle("Sync")
+            .setSyncMode(SyncMode.INCREMENTAL)
+            .setSyncOrigin("test")
+            .setAddProjectViewTargets(true)
+            .build());
+
+    errorCollector.assertNoIssues();
+
+    Library[] libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(getProject()).getLibraries();
+    assertThat(libraries.length).isEqualTo(1);
+    LibraryEx library = (LibraryEx)libraries[0];
+    assertThat(library).isNotNull();
+    PersistentLibraryKind<?> scalaLibraryKind = ScalaLibraryType.apply().getKind();
+    assertThat(library.getKind()).isEqualTo(scalaLibraryKind);
+    LibraryProperties<?> properties = library.getProperties();
+    assertThat(properties).isNotNull();
+    assertThat(properties).isInstanceOf(ScalaLibraryProperties.class);
+    ScalaLibraryProperties scalaProperties = (ScalaLibraryProperties) properties;
+    assertThat(scalaProperties.languageLevel()).isEqualTo(ScalaLanguageLevel.Scala_2_13);
   }
 }
