@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 
@@ -65,10 +66,8 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
     if (artifactLocation.isMainWorkspaceSourceArtifact()) {
       return pathResolver.resolveToFile(artifactLocation.getRelativePath());
     }
-    String path =
-        Paths.get(
-                blazeInfo.getExecutionRoot().getPath(),
-                artifactLocation.getExecutionRootRelativePath())
+    String path = Paths.get(blazeInfo.getExecutionRoot().getPath())
+            .resolve(artifactLocation.getExecutionRootRelativePath())
             .toString();
     // doesn't require file-system operations -- no attempt to resolve symlinks.
     return new File(FileUtil.toCanonicalPath(path));
@@ -101,14 +100,12 @@ public final class ArtifactLocationDecoderImpl implements ArtifactLocationDecode
    */
   private BlazeArtifact outputArtifactFromExecRoot(ArtifactLocation location) {
     // exec-root-relative path of the form 'blaze-out/mnemonic/genfiles/path'
-    String execRootPath = location.getExecutionRootRelativePath();
-    int ix1 = execRootPath.indexOf('/');
-    int ix2 = execRootPath.indexOf('/', ix1 + 1);
-    if (ix2 == -1) {
+    Path execRootPath = location.getExecutionRootRelativePath();
+    if (execRootPath.getNameCount() < 3) {
       return new SourceArtifact(decode(location));
     }
-    String blazeOutPath = execRootPath.substring(ix1 + 1);
-    String configMnemonic = execRootPath.substring(ix1 + 1, ix2);
+    String blazeOutPath = execRootPath.subpath(1, execRootPath.getNameCount()).toString();
+    String configMnemonic = execRootPath.subpath(1, 2).toString();
     return new LocalFileOutputArtifact(decode(location), blazeOutPath, configMnemonic);
   }
 }

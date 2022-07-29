@@ -30,6 +30,9 @@ import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
+import com.intellij.openapi.util.io.FileUtil;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -154,11 +157,12 @@ public final class RemoteOutputArtifacts
     if (location.isSource()) {
       return null;
     }
-    String execRootPath = location.getExecutionRootRelativePath();
-    if (!execRootPath.startsWith("blaze-out/")) {
+    Path execRootPath = location.getExecutionRootRelativePath();
+    Path blazeOutPrefix = Paths.get("blaze-out");
+    if (!execRootPath.startsWith(blazeOutPrefix)) {
       return null;
     }
-    return findRemoteOutput(execRootPath.substring("blaze-out/".length()));
+    return findRemoteOutput(FileUtil.toCanonicalPath(blazeOutPrefix.relativize(execRootPath).toString()));
   }
 
   @Nullable

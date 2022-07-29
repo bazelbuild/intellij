@@ -1454,17 +1454,17 @@ public class BlazeAndroidWorkspaceImporterTest extends BlazeTestCase {
   }
 
   private static String aarJarName(AarLibrary library) {
-    return new File(library.libraryArtifact.jarForIntellijLibrary().getExecutionRootRelativePath())
-        .getName();
+    return library.libraryArtifact.jarForIntellijLibrary().getExecutionRootRelativePath()
+        .toFile().getName();
   }
 
   private static String aarName(AarLibrary library) {
-    return new File(library.aarArtifact.getExecutionRootRelativePath()).getName();
+    return library.aarArtifact.getExecutionRootRelativePath().toFile().getName();
   }
 
   private static String libraryJarName(BlazeJarLibrary library) {
-    return new File(library.libraryArtifact.jarForIntellijLibrary().getExecutionRootRelativePath())
-        .getName();
+    return library.libraryArtifact.jarForIntellijLibrary().getExecutionRootRelativePath()
+        .toFile().getName();
   }
 
   private ArtifactLocation source(String relativePath) {

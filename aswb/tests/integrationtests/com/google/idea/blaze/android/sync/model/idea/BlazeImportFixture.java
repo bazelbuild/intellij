@@ -65,6 +65,7 @@ import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.nio.file.Paths;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -181,7 +182,7 @@ public final class BlazeImportFixture {
   }
 
   public static File decodePath(ArtifactLocation location) {
-    return new File("/src", location.getExecutionRootRelativePath());
+    return Paths.get("/src").resolve(location.getExecutionRootRelativePath()).toFile();
   }
 
   public ProjectView getProjectView() {
@@ -335,7 +336,7 @@ public final class BlazeImportFixture {
     for (String relativeJarPath : relativeJarPaths) {
       ArtifactLocation jar = source(relativeJarPath);
       builder.addJar(LibraryArtifact.builder().setClassJar(jar));
-      fileSystem.createFile(jar.getExecutionRootRelativePath());
+      fileSystem.createFile(jar.getExecutionRootRelativePath().toString());
     }
     return builder;
   }

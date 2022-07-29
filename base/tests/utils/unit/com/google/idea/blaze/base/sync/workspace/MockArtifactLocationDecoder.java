@@ -58,6 +58,6 @@ public class MockArtifactLocationDecoder implements ArtifactLocationDecoder {
       return new FakeRemoteOutputArtifact(file);
     }
     return new LocalFileOutputArtifact(
-        decode(artifact), artifact.getRelativePath(), artifact.getExecutionRootRelativePath());
+        decode(artifact), artifact.getRelativePath(), artifact.getExecutionRootRelativePath().toString());
   }
 }

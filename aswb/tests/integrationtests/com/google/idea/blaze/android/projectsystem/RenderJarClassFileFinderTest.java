@@ -54,6 +54,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Objects;
 import org.junit.Before;
@@ -85,8 +86,7 @@ public class RenderJarClassFileFinderTest extends BlazeAndroidIntegrationTestCas
         new MockArtifactLocationDecoder() {
           @Override
           public File decode(ArtifactLocation artifactLocation) {
-            File f =
-                new File(fileSystem.getRootDir(), artifactLocation.getExecutionRootRelativePath());
+            File f = Paths.get(fileSystem.getRootDir()).resolve(artifactLocation.getExecutionRootRelativePath()).toFile();
 
             // Create the artifact if it does not exist
             // This allows us to set fileModifiedTime for the file which is used by RenderJarCache

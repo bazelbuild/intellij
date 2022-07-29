@@ -75,6 +75,7 @@ import com.intellij.psi.impl.JvmPsiConversionHelperImpl;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.search.ProjectScopeBuilderImpl;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.junit.Ignore;
@@ -714,7 +715,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
           new MockArtifactLocationDecoder() {
             @Override
             public File decode(ArtifactLocation location) {
-              return new File("/src", location.getExecutionRootRelativePath());
+              return Paths.get("/src").resolve(location.getExecutionRootRelativePath()).toFile();
             }
           };
       this.blazeProjectData =

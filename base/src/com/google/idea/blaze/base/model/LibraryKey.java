@@ -31,7 +31,7 @@ public final class LibraryKey implements ProtoWrapper<String> {
   }
 
   public static String libraryNameFromArtifactLocation(ArtifactLocation artifactLocation) {
-    File file = new File(artifactLocation.getExecutionRootRelativePath());
+    File file = artifactLocation.getExecutionRootRelativePath().toFile();
     String parent = file.getParent();
     int parentHash = parent != null ? parent.hashCode() : file.hashCode();
     return FileUtil.getNameWithoutExtension(file) + "_" + Integer.toHexString(parentHash);

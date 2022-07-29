@@ -68,7 +68,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 .build());
 
     assertThat(artifactLocation.getRelativePath()).isEqualTo("com/google/Bla.java");
-    assertThat(artifactLocation.getExecutionRootRelativePath())
+    assertThat(artifactLocation.getExecutionRootRelativePath().toString())
         .isEqualTo("external/repo_name/com/google/Bla.java");
 
     ArtifactLocationDecoder decoder =
@@ -98,7 +98,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 .build());
 
     assertThat(artifactLocation.getRelativePath()).isEqualTo("com/google/Bla.java");
-    assertThat(artifactLocation.getExecutionRootRelativePath())
+    assertThat(artifactLocation.getExecutionRootRelativePath().toString())
         .isEqualTo("blaze-out/crosstool/bin/external/repo_name/com/google/Bla.java");
 
     ArtifactLocationDecoder decoder =
@@ -130,7 +130,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 .build());
 
     assertThat(artifactLocation.getRelativePath()).isEqualTo("com/google/Bla.java");
-    assertThat(artifactLocation.getExecutionRootRelativePath())
+    assertThat(artifactLocation.getExecutionRootRelativePath().toString())
         .isEqualTo("../repo_name/com/google/Bla.java");
 
     ArtifactLocationDecoder decoder =
@@ -160,7 +160,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 .build());
 
     assertThat(artifactLocation.getRelativePath()).isEqualTo("com/google/Bla.java");
-    assertThat(artifactLocation.getExecutionRootRelativePath())
+    assertThat(artifactLocation.getExecutionRootRelativePath().toString())
         .isEqualTo("../repo_name/blaze-out/crosstool/bin/com/google/Bla.java");
 
     ArtifactLocationDecoder decoder =
