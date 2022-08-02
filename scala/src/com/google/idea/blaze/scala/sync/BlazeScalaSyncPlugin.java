@@ -101,6 +101,9 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
     for (Library library :
         LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraries()) {
       // Configure metadata for the Scala library to inform the Scala plugin which SDK and version to use
+      // TODO: If there are multiple Scala library versions on the classpath, this will select a random one.
+      // TODO: We could pick the min or max version, but either choice is problematic, see SCL-18866.
+      // TODO: The best solution would be letting the user specify the expected Scala version explicitly
       if (library.getName() != null && isRuntimeLibrary(library.getName())) {
         ScalaLibraryProperties properties = ScalaLibraryProperties.apply(libraryVersion(library.getName()), List$.MODULE$.<File>empty(), List$.MODULE$.<File>empty());
         ExistingLibraryEditor editor = new ExistingLibraryEditor(library, null);
