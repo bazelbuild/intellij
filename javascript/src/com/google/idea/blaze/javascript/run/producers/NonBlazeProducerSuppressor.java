@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.javascript.jest.JestRunConfigurationProducer;
 import com.intellij.javascript.protractor.ProtractorRunConfigurationProducer;
 import com.intellij.lang.javascript.buildTools.grunt.rc.GruntRunConfigurationProducer;
 import com.intellij.lang.javascript.buildTools.gulp.rc.GulpRunConfigurationProducer;
@@ -39,7 +38,9 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
   private static final ImmutableList<Class<? extends RunConfigurationProducer<?>>>
       PRODUCERS_TO_SUPPRESS =
           ImmutableList.of(
-              JestRunConfigurationProducer.class,
+              // Not suppressing JestRunConfigurationProduce since that prevents Jest tests from
+              // running properly, see https://github.com/bazelbuild/intellij/issues/3629
+              // JestRunConfigurationProducer.class,
               GruntRunConfigurationProducer.class,
               ProtractorRunConfigurationProducer.class,
               GulpRunConfigurationProducer.class,
