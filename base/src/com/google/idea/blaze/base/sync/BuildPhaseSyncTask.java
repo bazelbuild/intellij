@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
+import com.google.idea.blaze.base.command.BlazercMigrator;
 import com.google.idea.blaze.base.dependencies.BlazeQuerySourceToTargetProvider;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -62,6 +63,7 @@ import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.sharding.SuggestBuildShardingNotification;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
@@ -227,12 +229,16 @@ final class BuildPhaseSyncTask {
       printShardingSummary(context, targetCount, shardedTargets.shardCount(), parallel);
     }
 
-    BuildInvoker syncBuildInvoker = null;
-    if (parallel) {
-      syncBuildInvoker = buildSystem.getParallelBuildInvoker(project, context).orElse(null);
-    }
-    if (syncBuildInvoker == null) {
-      syncBuildInvoker = defaultInvoker;
+    BuildInvoker syncBuildInvoker =
+        parallel
+            ? buildSystem.getParallelBuildInvoker(project, context).orElse(defaultInvoker)
+            : defaultInvoker;
+    final BlazercMigrator blazercMigrator = new BlazercMigrator(project);
+    if (!syncBuildInvoker.supportsHomeBlazerc() && blazercMigrator.needMigration()) {
+      context.output(
+          SummaryOutput.output(Prefix.INFO, "No .blazerc found at workspace root!").log().dedupe());
+      ApplicationManager.getApplication()
+          .invokeAndWait(() -> blazercMigrator.promptAndMigrate(context));
     }
     resultBuilder.setBlazeInfo(syncBuildInvoker.getBlazeInfo());
 
