@@ -38,6 +38,14 @@ java_library(
         "//sdkcompat",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
+        "@maven//:io_opentelemetry_opentelemetry_bom",
+        "@maven//:io_opentelemetry_opentelemetry_api",
+        "@maven//:io_opentelemetry_opentelemetry_sdk",
+        "@maven//:io_opentelemetry_opentelemetry_sdk_common",
+        "@maven//:io_opentelemetry_opentelemetry_sdk_trace",
+        "@maven//:io_opentelemetry_opentelemetry_exporter_otlp",
+        "@maven//:io_opentelemetry_opentelemetry_exporter_otlp_trace",
+        "@maven//:io_opentelemetry_opentelemetry_semconv",
     ],
 )
 
