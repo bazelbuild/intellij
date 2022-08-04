@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.BlazercMigrator;
+import com.google.idea.blaze.base.command.BlazercMigrator.BlazercMigrationReason;
 import com.google.idea.blaze.base.dependencies.BlazeQuerySourceToTargetProvider;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -234,7 +235,8 @@ final class BuildPhaseSyncTask {
             ? buildSystem.getParallelBuildInvoker(project, context).orElse(defaultInvoker)
             : defaultInvoker;
     final BlazercMigrator blazercMigrator = new BlazercMigrator(project);
-    if (!syncBuildInvoker.supportsHomeBlazerc() && blazercMigrator.needMigration()) {
+    if (!syncBuildInvoker.supportsHomeBlazerc()
+        && blazercMigrator.needMigration() != BlazercMigrationReason.NO_MIGRATION_NEEDED) {
       context.output(
           SummaryOutput.output(Prefix.INFO, "No .blazerc found at workspace root!").log().dedupe());
       ApplicationManager.getApplication()

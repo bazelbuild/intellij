@@ -19,34 +19,67 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.command.BlazercMigrator;
+import com.google.idea.blaze.base.command.BlazercMigrator.BlazercMigrationReason;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
 public class BlazercMigratorTest extends BlazeIntegrationTestCase {
-
-  private final BlazeContext context = BlazeContext.create();
   private static final String USER_BLAZERC = ".blazerc";
+  private static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
+  private final BlazeContext context = BlazeContext.create();
+
+  @Before
+  public void setup() {
+    System.setProperty(PLATFORM_PREFIX_KEY, "AndroidStudio");
+  }
 
   @Test
-  public void testCopyBlazercToWorkspace() {
+  public void testCopyBlazercToWorkspaceWhenAbsent() {
     MockBlazercMigrator blazercMigrator = getMockBlazercMigrator(true);
+    assertThat(blazercMigrator.needMigration())
+        .isEqualTo(BlazercMigrationReason.WORKSPACE_BLAZERC_ABSENT);
+
     ApplicationManager.getApplication()
         .runWriteAction(() -> blazercMigrator.promptAndMigrate(context));
 
     VirtualFile workspaceBlazerc = blazercMigrator.getWorkspaceBlazercDir().findChild(USER_BLAZERC);
     assertThat(workspaceBlazerc).isNotNull();
     assertThat(workspaceBlazerc.exists()).isTrue();
+    assertThat(blazercMigrator.needMigration())
+        .isEqualTo(BlazercMigrationReason.NO_MIGRATION_NEEDED);
+  }
+
+  @Test
+  public void testCopyBlazercToWorkspaceWhenOutOfSync() {
+    MockBlazercMigrator blazercMigrator = getMockBlazercMigrator(true);
+    workspace.createFile(new WorkspacePath(USER_BLAZERC), "workspace-blazerc");
+    assertThat(blazercMigrator.needMigration())
+        .isEqualTo(BlazercMigrationReason.WORKSPACE_BLAZERC_OUT_OF_SYNC);
+
+    ApplicationManager.getApplication()
+        .runWriteAction(() -> blazercMigrator.promptAndMigrate(context));
+
+    VirtualFile workspaceBlazerc = blazercMigrator.getWorkspaceBlazercDir().findChild(USER_BLAZERC);
+    assertThat(workspaceBlazerc).isNotNull();
+    assertThat(workspaceBlazerc.exists()).isTrue();
+    assertThat(blazercMigrator.needMigration())
+        .isEqualTo(BlazercMigrationReason.NO_MIGRATION_NEEDED);
   }
 
   @Test
   public void testDoNotCopyBlazercToWorkspace() {
     MockBlazercMigrator blazercMigrator = getMockBlazercMigrator(false);
+    assertThat(blazercMigrator.needMigration())
+        .isEqualTo(BlazercMigrationReason.WORKSPACE_BLAZERC_ABSENT);
+
     ApplicationManager.getApplication()
         .runWriteAction(() -> blazercMigrator.promptAndMigrate(context));
 
@@ -54,17 +87,30 @@ public class BlazercMigratorTest extends BlazeIntegrationTestCase {
     assertThat(workspaceBlazerc).isNull();
   }
 
+  @Test
+  public void testNoBlazercMigrationNeeded() {
+    MockBlazercMigrator blazercMigrator = getMockBlazercMigrator(true);
+    workspace.createFile(new WorkspacePath(USER_BLAZERC), "home-blazerc");
+    assertThat(blazercMigrator.needMigration())
+        .isEqualTo(BlazercMigrationReason.NO_MIGRATION_NEEDED);
+  }
+
+  @Test
+  public void testBlazercMigrationOnNonAndroidStudio() {
+    System.setProperty(PLATFORM_PREFIX_KEY, "Idea");
+    MockBlazercMigrator blazercMigrator = getMockBlazercMigrator(true);
+    assertThat(blazercMigrator.needMigration())
+        .isEqualTo(BlazercMigrationReason.NO_MIGRATION_NEEDED);
+  }
+
   private MockBlazercMigrator getMockBlazercMigrator(boolean userResponseToYesNoDialog) {
-    VirtualFile homeBlazerc = fileSystem.createFile(USER_BLAZERC);
+    VirtualFile homeBlazerc = fileSystem.createFile(USER_BLAZERC, "home-blazerc");
     assertThat(homeBlazerc).isNotNull();
     assertThat(homeBlazerc.exists()).isTrue();
 
     VirtualFile workspaceDir = fileSystem.findFile("workspace");
     assertThat(workspaceDir).isNotNull();
     assertThat(workspaceDir.exists()).isTrue();
-
-    VirtualFile workspaceBlazerc = workspaceDir.findChild(USER_BLAZERC);
-    assertThat(workspaceBlazerc).isNull();
 
     return new MockBlazercMigrator(homeBlazerc, workspaceDir, userResponseToYesNoDialog);
   }

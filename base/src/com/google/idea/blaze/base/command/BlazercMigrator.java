@@ -30,6 +30,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 /** Utilities to support migrating user .blazerc from home directory to workspace root */
@@ -40,6 +42,47 @@ public class BlazercMigrator {
   private static final Logger logger = Logger.getInstance(BlazercMigrator.class);
   private final VirtualFile homeBlazerc;
   private final VirtualFile workspaceBlazercDir;
+  private BlazercMigrationReason blazercMigrationReason;
+
+  /** Reason for .blazerc migration */
+  public enum BlazercMigrationReason {
+    NO_MIGRATION_NEEDED {
+      @Override
+      @Nullable
+      String getDisplayText(String homeBlazercPath, String workspaceBlazercDirPath) {
+        return null;
+      }
+    },
+    WORKSPACE_BLAZERC_ABSENT {
+      @Override
+      String getDisplayText(String homeBlazercPath, String workspaceBlazercDirPath) {
+        return String.format(
+            "You have a .blazerc file present in your home folder. The Blaze invocations from"
+                + " the IDE won't be able to read the settings from this file. If you want this"
+                + " blazerc to be used, then we recommend copying it into your workspace. Do"
+                + " you want the IDE to copy the blazerc from \n"
+                + "%s\n"
+                + " to \n"
+                + "%s?",
+            homeBlazercPath, workspaceBlazercDirPath);
+      }
+    },
+    WORKSPACE_BLAZERC_OUT_OF_SYNC {
+      @Override
+      String getDisplayText(String homeBlazercPath, String workspaceBlazercDirPath) {
+        return String.format(
+            "The contents of the .blazerc files present in your home folder and your workspace"
+                + " do not match. The Blaze invocations from the IDE will use the .blazerc file"
+                + " from your workspace. Do you want the IDE to copy the blazerc from \n"
+                + "%s\n"
+                + " to \n"
+                + "%s?",
+            homeBlazercPath, workspaceBlazercDirPath);
+      }
+    };
+
+    abstract String getDisplayText(String homeBlazercPath, String workspaceBlazercDirPath);
+  }
 
   public BlazercMigrator(Project project) {
     this.homeBlazerc = VfsUtil.findFileByIoFile(new File(USER_HOME.value(), USER_BLAZERC), true);
@@ -58,6 +101,10 @@ public class BlazercMigrator {
       return;
     }
     try {
+      VirtualFile workspaceBlazerc = VfsUtil.findRelativeFile(workspaceBlazercDir, USER_BLAZERC);
+      if (workspaceBlazerc != null && workspaceBlazerc.exists()) {
+        workspaceBlazerc.delete(this);
+      }
       VfsUtil.copy(this, homeBlazerc, workspaceBlazercDir);
       context.output(
           SummaryOutput.output(Prefix.INFO, "Copied .blazerc from home to workspace root")
@@ -74,12 +121,30 @@ public class BlazercMigrator {
     }
   }
 
-  public boolean needMigration() {
-    if (!ENABLED.getValue() || homeBlazerc == null || !MorePlatformUtils.isAndroidStudio()) {
-      return false;
-    }
+  public BlazercMigrationReason needMigration() {
     VirtualFile workspaceBlazerc = workspaceBlazercDir.findChild(USER_BLAZERC);
-    return homeBlazerc.exists() && (workspaceBlazerc == null || !workspaceBlazerc.exists());
+    if (!ENABLED.getValue()
+        || homeBlazerc == null
+        || !homeBlazerc.exists()
+        || !MorePlatformUtils.isAndroidStudio()) {
+      blazercMigrationReason = BlazercMigrationReason.NO_MIGRATION_NEEDED;
+    } else if (workspaceBlazerc == null || !workspaceBlazerc.exists()) {
+      blazercMigrationReason = BlazercMigrationReason.WORKSPACE_BLAZERC_ABSENT;
+    } else {
+      try {
+        blazercMigrationReason =
+            Arrays.equals(workspaceBlazerc.contentsToByteArray(), homeBlazerc.contentsToByteArray())
+                ? BlazercMigrationReason.NO_MIGRATION_NEEDED
+                : BlazercMigrationReason.WORKSPACE_BLAZERC_OUT_OF_SYNC;
+      } catch (IOException e) {
+        logger.error(
+            String.format(
+                "Error reading the .blazerc files; migration not triggered. \n %s",
+                e.getMessage()));
+        blazercMigrationReason = BlazercMigrationReason.NO_MIGRATION_NEEDED;
+      }
+    }
+    return blazercMigrationReason;
   }
 
   private boolean promptMigration() {
@@ -91,15 +156,7 @@ public class BlazercMigrator {
   @VisibleForTesting
   protected int showYesNoDialog() {
     return Messages.showYesNoDialog(
-        String.format(
-            "You have a .blazerc file present in your home folder. The Blaze invocations from"
-                + " the IDE won't be able to read the settings from this file. If you want this"
-                + " blazerc to be used, then we recommend copying it into your workspace. Do"
-                + " you want the IDE to copy the blazerc from \n"
-                + "%s\n"
-                + " to \n"
-                + "%s?",
-            USER_HOME.value(), workspaceBlazercDir.getPath()),
+        blazercMigrationReason.getDisplayText(USER_HOME.value(), workspaceBlazercDir.getPath()),
         "Blaze Configuration",
         null);
   }
