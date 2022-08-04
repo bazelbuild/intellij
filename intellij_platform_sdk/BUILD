@@ -617,6 +617,17 @@ java_library(
     ),
 )
 
+# IntelliJ IntelliLang plugin
+java_library(
+    name = "intellilang_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":intellilang"],
+    ),
+)
+
 # IntelliJ Kotlin plugin
 java_library(
     name = "kotlin",
