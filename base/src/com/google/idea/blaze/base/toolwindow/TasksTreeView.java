@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.base.Preconditions;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.common.ui.properties.ChangeListener;
 import com.google.idea.common.ui.properties.ObservableValue;
 import com.google.idea.common.ui.properties.Property;
@@ -365,7 +366,8 @@ final class TasksTreeView extends AbstractView<Tree> {
       }
 
       // Select top-level task when added.
-      if (model.tasksTreeProperty().isTopLevelTask(addedTask)) {
+      if (BlazeUserSettings.getInstance().getSelectNewestChildTask()
+          || model.tasksTreeProperty().isTopLevelTask(addedTask)) {
         model.selectedTaskProperty().setValue(addedTask);
       }
     }
