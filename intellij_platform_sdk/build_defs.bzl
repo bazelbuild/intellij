@@ -183,12 +183,12 @@ def _do_select_for_plugin_api(params):
     #
     # {"intellij-2016.3.1": "foo"} ->
     # {"intellij-2016.3.1": "foo", "intellij-latest": "foo"}
-    fallback_value = None
+    kythe_product_version = None
     for indirect_ij_product, resolved_plugin_api in INDIRECT_IJ_PRODUCTS.items():
         if resolved_plugin_api in params:
             expanded_params[indirect_ij_product] = params[resolved_plugin_api]
-            if not fallback_value:
-                fallback_value = params[resolved_plugin_api]
+            if not kythe_product_version:
+                kythe_product_version = params[resolved_plugin_api]
         if indirect_ij_product in params:
             expanded_params[resolved_plugin_api] = params[indirect_ij_product]
 
