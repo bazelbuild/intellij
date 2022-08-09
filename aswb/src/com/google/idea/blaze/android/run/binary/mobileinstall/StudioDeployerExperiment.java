@@ -25,7 +25,7 @@ import com.intellij.openapi.util.SystemInfo;
 public class StudioDeployerExperiment {
   /** Indicates if we should deploy via Studio or via MI. */
   private static final FeatureRolloutExperiment useStudioDeployer =
-      new FeatureRolloutExperiment("aswb.use.studio.deployer");
+      new FeatureRolloutExperiment("aswb.use.studio.deployer.2");
 
   /** Returns whether mobile install deployments should happen via the studio deployer. */
   public static boolean isEnabled() {
