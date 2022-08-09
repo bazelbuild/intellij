@@ -16,19 +16,8 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
-import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
-import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.projectview.section.sections.BazelBinarySection;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.settings.BuildBinaryType;
-import com.google.idea.blaze.base.settings.BuildSystem;
-import com.intellij.openapi.project.Project;
-import java.io.File;
-import javax.annotation.Nullable;
 
 /** Provides the bazel build system name string. */
 public class BazelBuildSystemProvider implements BuildSystemProvider {
@@ -38,33 +27,11 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   private static final ImmutableList<String> BUILD_FILE_NAMES =
       ImmutableList.of("BUILD.bazel", "BUILD");
 
-  @Override
-  public BuildSystem buildSystem() {
-    return BuildSystem.Bazel;
-  }
+  private final BuildSystem buildSystem = new BazelBuildSystem();
 
   @Override
-  public String getBinaryPath(Project project) {
-    File projectSpecificBinary = getProjectSpecificBazelBinary(project);
-    if (projectSpecificBinary != null) {
-      return projectSpecificBinary.getPath();
-    }
-    BlazeUserSettings settings = BlazeUserSettings.getInstance();
-    return settings.getBazelBinaryPath();
-  }
-
-  @Nullable
-  private static File getProjectSpecificBazelBinary(Project project) {
-    ProjectViewSet projectView = ProjectViewManager.getInstance(project).getProjectViewSet();
-    if (projectView == null) {
-      return null;
-    }
-    return projectView.getScalarValue(BazelBinarySection.KEY).orElse(null);
-  }
-
-  @Override
-  public BuildBinaryType getSyncBinaryType() {
-    return BuildBinaryType.BAZEL;
+  public BuildSystem getBuildSystem() {
+    return buildSystem;
   }
 
   @Override
@@ -103,17 +70,5 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   @Override
   public ImmutableList<String> possibleWorkspaceFileNames() {
     return ImmutableList.of("WORKSPACE", "WORKSPACE.bazel");
-  }
-
-  @Override
-  public void populateBlazeVersionData(
-      BuildSystem buildSystem,
-      WorkspaceRoot workspaceRoot,
-      BlazeInfo blazeInfo,
-      BlazeVersionData.Builder builder) {
-    if (buildSystem != BuildSystem.Bazel) {
-      return;
-    }
-    builder.setBazelVersion(BazelVersion.parseVersion(blazeInfo));
   }
 }

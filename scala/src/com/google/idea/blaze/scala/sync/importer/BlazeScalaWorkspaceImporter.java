@@ -56,7 +56,7 @@ public final class BlazeScalaWorkspaceImporter {
   public BlazeScalaImportResult importWorkspace() {
     ProjectViewTargetImportFilter importFilter =
         new ProjectViewTargetImportFilter(
-            Blaze.getBuildSystem(project), workspaceRoot, projectViewSet);
+            Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet);
 
     List<TargetKey> scalaSourceTargets =
         targetMap.targets().stream()

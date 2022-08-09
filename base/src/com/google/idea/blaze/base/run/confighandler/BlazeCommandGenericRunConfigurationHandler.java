@@ -20,7 +20,7 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -33,12 +33,12 @@ import javax.annotation.Nullable;
 public final class BlazeCommandGenericRunConfigurationHandler
     implements BlazeCommandRunConfigurationHandler {
 
-  private final BuildSystem buildSystem;
+  private final BuildSystemName buildSystemName;
   private final BlazeCommandRunConfigurationCommonState state;
 
   public BlazeCommandGenericRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    this.buildSystem = Blaze.getBuildSystem(configuration.getProject());
-    this.state = new BlazeCommandRunConfigurationCommonState(buildSystem);
+    this.buildSystemName = Blaze.getBuildSystemName(configuration.getProject());
+    this.state = new BlazeCommandRunConfigurationCommonState(buildSystemName);
   }
 
   @Override
@@ -54,7 +54,7 @@ public final class BlazeCommandGenericRunConfigurationHandler
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    state.validate(buildSystem);
+    state.validate(buildSystemName);
   }
 
   @Override

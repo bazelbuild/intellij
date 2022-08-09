@@ -49,7 +49,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.MockRemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -58,6 +58,7 @@ import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
 import com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter;
 import com.google.idea.blaze.java.sync.importer.JavaSourceFilter;
+import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings;
 import com.google.idea.blaze.java.sync.jdeps.JdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -94,7 +95,7 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     super.initTest(applicationServices, projectServices);
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     ExtensionPointImpl<Provider> ep =
@@ -105,10 +106,11 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
     registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);
+    registerExtensionPoint(EmptyLibraryFilterSettings.EP_NAME, EmptyLibraryFilterSettings.class);
 
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     importSettingsManager.setImportSettings(
-        new BlazeImportSettings("", "", "", "", BuildSystem.Blaze));
+        new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
 
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
@@ -666,7 +668,7 @@ public class BlazeScalaWorkspaceImporterTest extends BlazeTestCase {
             ImmutableSet.of(LanguageClass.GENERIC, LanguageClass.SCALA, LanguageClass.JAVA));
     JavaSourceFilter sourceFilter =
         new JavaSourceFilter(
-            Blaze.getBuildSystem(project), workspaceRoot, projectViewSet, targetMap);
+            Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet, targetMap);
     JdepsMap jdepsMap = key -> ImmutableList.of();
     ArtifactLocationDecoder decoder = new MockArtifactLocationDecoder();
     return new BlazeJavaWorkspaceImporter(

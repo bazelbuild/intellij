@@ -52,7 +52,7 @@ import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibrarySorter;
@@ -103,7 +103,7 @@ public class UnpackedAarsTest extends BlazeTestCase {
   @Override
   protected void initTest(Container applicationServices, Container projectServices) {
     writingOutputSink = new WritingOutputSink();
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(PrintOutput.class, writingOutputSink);
     workspaceRoot = new WorkspaceRoot(folder.getRoot());
     localArtifactLocationDecoder =
@@ -140,7 +140,7 @@ public class UnpackedAarsTest extends BlazeTestCase {
       File projectDataDirectory = folder.newFolder("projectdata");
       BlazeImportSettings dummyImportSettings =
           new BlazeImportSettings(
-              "", "", projectDataDirectory.getAbsolutePath(), "", BuildSystem.Bazel);
+              "", "", projectDataDirectory.getAbsolutePath(), "", BuildSystemName.Bazel);
       BlazeImportSettingsManager.getInstance(project).setImportSettings(dummyImportSettings);
     } catch (IOException e) {
       throw new AssertionError("Fail to create directory for test", e);

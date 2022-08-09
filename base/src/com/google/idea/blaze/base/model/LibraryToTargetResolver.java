@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /** Resolves a given library to a Blaze target */
 public interface LibraryToTargetResolver {
@@ -41,6 +42,19 @@ public interface LibraryToTargetResolver {
         .flatMap(Optional::stream)
         .findAny();
   }
+
+  /**
+   * Fetches the target {@link Label}s in a given Project using all implementations of
+   * LibraryToTargetResolver.
+   *
+   * @return A stream of labels. Returning a stream rather than materializing the values (e.g., as a
+   *     set) for performance reasons since a project may encompass a very large amount of targets.
+   */
+  static Stream<Label> collectAllTargets(Project project) {
+    return stream(EP_NAME.getExtensions()).flatMap(x -> x.collectTargets(project));
+  }
+
+  Stream<Label> collectTargets(Project project);
 
   Optional<Label> resolveLibraryToTarget(Project project, LibraryKey library);
 }

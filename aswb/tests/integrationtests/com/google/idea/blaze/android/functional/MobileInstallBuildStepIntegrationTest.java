@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
+import com.google.errorprone.annotations.Keep;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MessageCollector;
 import com.google.idea.blaze.android.MockSdkUtil;
@@ -45,11 +46,11 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelpe
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -60,7 +61,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import java.io.File;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Before;
@@ -111,20 +111,11 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
   public void setupBuildResultHelperProvider() throws GetArtifactsException {
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS));
-    registerExtension(
-        BuildResultHelperProvider.EP_NAME,
-        new BuildResultHelperProvider() {
-          @Override
-          public Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo) {
-            return Optional.of(mockBuildResultHelper);
-          }
-
-          @Override
-          public Optional<BuildResultHelper> doCreateForLocalBuild(Project project) {
-            return Optional.of(mockBuildResultHelper);
-          }
-        });
+        .thenReturn(
+            new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS, 0));
+    BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
+    buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
+    registerExtension(BuildSystemProvider.EP_NAME, buildSystem);
   }
 
   @Before
@@ -135,7 +126,7 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
 
     // Collect messages sent to IssueOutput.
     messageCollector = new MessageCollector();
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
   }
 
@@ -166,7 +157,6 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
     assertThat(externalTaskInterceptor.context).isEqualTo(context);
     assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
     assertThat(externalTaskInterceptor.command).containsAllIn(execFlags);
-    assertThat(externalTaskInterceptor.command).contains("--nolaunch_app");
     assertThat(externalTaskInterceptor.command)
         .containsAnyOf("serial-number", "serial-number:tcp:0");
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
@@ -205,7 +195,6 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
     assertThat(externalTaskInterceptor.context).isEqualTo(context);
     assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
     assertThat(externalTaskInterceptor.command).containsAllIn(execFlags);
-    assertThat(externalTaskInterceptor.command).contains("--nolaunch_app");
     assertThat(externalTaskInterceptor.command).contains("--device");
     // workaround for inconsistent stateful AndroidDebugBridge class.
     assertThat(externalTaskInterceptor.command)
@@ -246,7 +235,6 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
     assertThat(externalTaskInterceptor.context).isEqualTo(context);
     assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
     assertThat(externalTaskInterceptor.command).containsAllIn(execFlags);
-    assertThat(externalTaskInterceptor.command).contains("--nolaunch_app");
     assertThat(externalTaskInterceptor.command).contains("--device");
     assertThat(externalTaskInterceptor.command).contains("serial-number:tcp:12345");
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
@@ -285,7 +273,6 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
     assertThat(externalTaskInterceptor.context).isEqualTo(context);
     assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
     assertThat(externalTaskInterceptor.command).containsAllIn(execFlags);
-    assertThat(externalTaskInterceptor.command).contains("--nolaunch_app");
     assertThat(externalTaskInterceptor.command).contains("--device");
     // workaround for inconsistent stateful AndroidDebugBridge class.
     assertThat(externalTaskInterceptor.command)
@@ -389,7 +376,7 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
   public void nullExecRoot() throws Exception {
     // Return null execroot
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS));
+        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS, 0));
 
     // Mobile-install build step requires only one device be active.  DeviceFutures class is final,
     // so we have to make one with a stub AndroidDevice.
@@ -485,15 +472,18 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
     }
 
     // @Override #api42
+    @Keep
     public boolean renderLabel(
         SimpleColoredComponent simpleColoredComponent, boolean b, @Nullable String s) {
       return false;
     }
 
     // @Override #api42
+    @Keep
     public void prepareToRenderLabel() {}
 
     // api40: see new API for canRun below
+    @Keep
     public LaunchCompatibility canRun(
         com.android.sdklib.AndroidVersion androidVersion,
         IAndroidTarget iAndroidTarget,
@@ -508,16 +498,19 @@ public class MobileInstallBuildStepIntegrationTest extends BlazeAndroidIntegrati
     }
 
     // @Override #api 3.6
+    @Keep
     public ListenableFuture<IDevice> launch(Project project, String s) {
       return null;
     }
 
     // @Override #api 4.0
+    @Keep
     public ListenableFuture<IDevice> launch(Project project, List<String> list) {
       return null;
     }
 
     // @Override #api 3.6
+    @Keep
     public boolean isDebuggable() {
       return false;
     }

@@ -59,8 +59,6 @@ public interface BlazeAndroidRunContext {
       LaunchOptions launchOptions,
       @Nullable Integer userId,
       @NotNull String contributorsAmStartOptions,
-      AndroidDebugger androidDebugger,
-      AndroidDebuggerState androidDebuggerState,
       LaunchStatus launchStatus)
       throws ExecutionException;
 

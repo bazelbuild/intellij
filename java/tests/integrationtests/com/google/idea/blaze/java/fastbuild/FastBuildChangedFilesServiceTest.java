@@ -35,7 +35,7 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.google.idea.blaze.java.fastbuild.FastBuildChangedFilesService.ChangedSources;
@@ -57,7 +57,7 @@ public class FastBuildChangedFilesServiceTest extends BlazeIntegrationTestCase {
   private static final String BLAZE_TESTLOGS = BLAZE_EXECROOT + "/testlog";
   private static final BlazeInfo BLAZE_INFO =
       BlazeInfo.create(
-          BuildSystem.Blaze,
+          BuildSystemName.Blaze,
           ImmutableMap.of(
               "blaze-bin", BLAZE_BIN,
               "blaze-genfiles", BLAZE_EXECROOT + "/blaze-genfiles",

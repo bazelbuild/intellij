@@ -149,11 +149,11 @@ public abstract class IntellijAspectTest {
     TargetKey targetKey = target.getKey();
     for (String fractionalAspectId : fractionalAspectIds) {
       if (targetKey.getAspectIdsList().stream()
-          .noneMatch(aspectId -> aspectId.contains(fractionalAspectId))) {
-        return false;
+          .anyMatch(aspectId -> aspectId.contains(fractionalAspectId))) {
+        return true;
       }
     }
-    return true;
+    return false;
   }
 
   protected static List<Dependency> dependenciesForTarget(TargetIdeInfo target) {

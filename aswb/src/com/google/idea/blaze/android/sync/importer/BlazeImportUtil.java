@@ -42,7 +42,6 @@ import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -52,14 +51,6 @@ import org.jetbrains.annotations.Nullable;
 
 /** Static utility methods used for blaze import. */
 public class BlazeImportUtil {
-
-  public static Collection<ArtifactLocation> resourcesFor(TargetIdeInfo target) {
-    AndroidIdeInfo ideInfo = target.getAndroidIdeInfo();
-    if (ideInfo != null) {
-      return ideInfo.getResources();
-    }
-    return Collections.emptyList();
-  }
 
   @Nullable
   public static String javaResourcePackageFor(TargetIdeInfo target) {
@@ -170,7 +161,7 @@ public class BlazeImportUtil {
       Project project, BlazeProjectData projectData, ProjectViewSet projectViewSet) {
     ProjectViewTargetImportFilter importFilter =
         new ProjectViewTargetImportFilter(
-            Blaze.getBuildSystem(project), WorkspaceRoot.fromProject(project), projectViewSet);
+            Blaze.getBuildSystemName(project), WorkspaceRoot.fromProject(project), projectViewSet);
     return getSourceTargetsStream(projectData.getTargetMap(), importFilter);
   }
 
@@ -219,7 +210,7 @@ public class BlazeImportUtil {
   /** Returns true if the folder is outside the project view. */
   public static Predicate<ArtifactLocation> isOutsideProjectViewFilter(BlazeImportInput input) {
     ImportRoots importRoots =
-        ImportRoots.builder(input.workspaceRoot, input.buildSystem)
+        ImportRoots.builder(input.workspaceRoot, input.buildSystemName)
             .add(input.projectViewSet)
             .build();
     return artifactLocation ->

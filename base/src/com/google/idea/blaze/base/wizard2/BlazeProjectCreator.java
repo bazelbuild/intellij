@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -35,6 +35,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.swing.SwingUtilities;
 
@@ -116,10 +117,11 @@ class BlazeProjectCreator {
                   });
             });
 
-    ProjectUtil.updateLastProjectLocation(projectFilePath);
+    Path path = Paths.get(projectFilePath);
+    ProjectUtil.updateLastProjectLocation(path);
 
     ProjectManagerEx.getInstanceEx()
-        .openProject(Paths.get(projectFilePath), OpenProjectTask.withCreatedProject(newProject));
+        .openProject(path, BaseSdkCompat.createOpenProjectTask(newProject));
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);

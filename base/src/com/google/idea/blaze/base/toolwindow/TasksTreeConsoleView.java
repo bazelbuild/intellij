@@ -19,6 +19,7 @@ import com.google.idea.common.ui.properties.ChangeListener;
 import com.google.idea.common.ui.properties.ObservableValue;
 import com.google.idea.common.ui.properties.Property;
 import com.google.idea.common.ui.templates.AbstractView;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.ScrollPaneFactory;
@@ -31,6 +32,7 @@ import javax.swing.JPanel;
 /** View of the combination of the tree and output consoles as a single panel. */
 final class TasksTreeConsoleView extends AbstractView<JPanel> {
   private final TasksTreeConsoleModel model;
+  private final Disposable parentDisposable;
 
   private final ChangeListener<Task> treeSelectionListener = this::treeSelectionChanged;
 
@@ -39,8 +41,9 @@ final class TasksTreeConsoleView extends AbstractView<JPanel> {
   private final JBPanelWithEmptyText noSelectionPanel =
       new JBPanelWithEmptyText().withEmptyText("Select a task to view its output");
 
-  TasksTreeConsoleView(TasksTreeConsoleModel model) {
+  TasksTreeConsoleView(TasksTreeConsoleModel model, Disposable parentDisposable) {
     this.model = model;
+    this.parentDisposable = parentDisposable;
   }
 
   @Override
@@ -74,7 +77,8 @@ final class TasksTreeConsoleView extends AbstractView<JPanel> {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(
         ScrollPaneFactory.createScrollPane(
-            new TasksTreeView(model.getTreeModel()).getComponent(), SideBorder.NONE),
+            new TasksTreeView(model.getTreeModel(), parentDisposable).getComponent(),
+            SideBorder.NONE),
         BorderLayout.CENTER);
     return panel;
   }

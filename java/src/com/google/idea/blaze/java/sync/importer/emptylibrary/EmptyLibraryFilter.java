@@ -21,6 +21,7 @@ import com.google.idea.common.experiments.IntExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -62,8 +63,19 @@ public class EmptyLibraryFilter implements Predicate<BlazeArtifact> {
 
   EmptyLibraryFilter() {}
 
+  static boolean isEnabled() {
+    return Arrays.stream(EmptyLibraryFilterSettings.EP_NAME.getExtensions())
+        .findFirst()
+        .map(EmptyLibraryFilterSettings::isEnabled)
+        .orElse(true);
+  }
+
   @Override
   public boolean test(BlazeArtifact blazeLibrary) {
+    if (!isEnabled()) {
+      return false;
+    }
+
     try {
       return isEmpty(blazeLibrary);
     } catch (IOException e) {
@@ -71,7 +83,7 @@ public class EmptyLibraryFilter implements Predicate<BlazeArtifact> {
       return false; // If something went wrong reading the file, consider it non-empty
     }
   }
-
+  
   /**
    * Returns true if the given JAR is effectively empty (i.e. it has nothing other than a manifest
    * and directories).

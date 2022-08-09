@@ -24,6 +24,8 @@ import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguag
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import java.util.EnumSet;
 import java.util.Set;
@@ -68,11 +70,12 @@ public class LanguageSupport {
     Set<WorkspaceType> supportedTypes = supportedWorkspaceTypes();
     WorkspaceType workspaceType = languageSettings.getWorkspaceType();
     if (!supportedTypes.contains(languageSettings.getWorkspaceType())) {
-      IssueOutput.error(
-              String.format(
-                  "Workspace type '%s' is not supported by this plugin",
-                  languageSettings.getWorkspaceType().getName()))
-          .submit(context);
+      String message =
+          String.format(
+              "Workspace type '%s' is not supported by this plugin",
+              languageSettings.getWorkspaceType().getName());
+      IssueOutput.error(message).submit(context);
+      context.output(new PrintOutput(message, OutputType.ERROR));
       return false;
     }
     Set<LanguageClass> supportedLanguages = supportedLanguagesForWorkspaceType(workspaceType);
@@ -83,18 +86,19 @@ public class LanguageSupport {
 
     for (LanguageClass languageClass : languageSettings.getActiveLanguages()) {
       if (!availableLanguages.contains(languageClass)) {
-        IssueOutput.error(
-                String.format(
-                    "Language '%s' is not supported by this plugin", languageClass.getName()))
-            .submit(context);
+        String message =
+            String.format("Language '%s' is not supported by this plugin", languageClass.getName());
+        IssueOutput.error(message).submit(context);
+        context.output(new PrintOutput(message, OutputType.ERROR));
         return false;
       }
       if (!supportedLanguages.contains(languageClass)) {
-        IssueOutput.error(
-                String.format(
-                    "Language '%s' is not supported for this plugin with workspace type: '%s'",
-                    languageClass.getName(), workspaceType.getName()))
-            .submit(context);
+        String message =
+            String.format(
+                "Language '%s' is not supported for this plugin with workspace type: '%s'",
+                languageClass.getName(), workspaceType.getName());
+        IssueOutput.error(message).submit(context);
+        context.output(new PrintOutput(message, OutputType.ERROR));
         return false;
       }
     }

@@ -10,7 +10,7 @@ load(
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
 )
-load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide", "select_for_plugin_api")
+load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 load(
     "//:build-visibility.bzl",
     "PLUGIN_PACKAGES_VISIBILITY",
@@ -25,24 +25,17 @@ java_library(
         "src/com/google/idea/blaze/cpp/includes/*.java",
         "src/com/google/idea/blaze/cpp/syncstatus/*.java",
         "src/com/google/idea/blaze/cpp/navigation/*.java",
-    ]) +
-    # b/198592090 we're phasing out the workaround in BulkSymbolTableBuildingChangeListener.
-    # Details can be found in the bug.
-    select_for_plugin_api({
-        "android-studio-2020.3": ["src/com/google/idea/blaze/cpp/workaround/BulkSymbolTableBuildingChangeListener.java"],
-        "android-studio-2021.1": ["src/com/google/idea/blaze/cpp/workaround/BulkSymbolTableBuildingChangeListener.java"],
-        "clion-2020.3": ["src/com/google/idea/blaze/cpp/workaround/BulkSymbolTableBuildingChangeListener.java"],
-        "clion-2021.1": ["src/com/google/idea/blaze/cpp/workaround/BulkSymbolTableBuildingChangeListener.java"],
-        "default": [],
-    }),
+    ]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//base",
         "//common/experiments",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
         "//third_party/auto_value",
+        "@error_prone_annotations//jar",
     ],
 )
 
@@ -52,24 +45,9 @@ optional_plugin_xml(
     plugin_xml = "src/META-INF/blaze-cpp.xml",
 )
 
-optional_plugin_xml(
-    name = "workaround_cidr",
-    module = "com.intellij.modules.cidr.lang",
-    plugin_xml = "src/META-INF/workaround.xml",
-)
-
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = [":optional_cidr"] +
-                           # b/198592090 we're phasing out the workaround in BulkSymbolTableBuildingChangeListener.
-                           # Details can be found in the bug.
-                           select_for_plugin_api({
-                               "android-studio-2020.3": [":workaround_cidr"],
-                               "android-studio-2021.1": [":workaround_cidr"],
-                               "clion-2020.3": [":workaround_cidr"],
-                               "clion-2021.1": [":workaround_cidr"],
-                               "default": [],
-                           }),
+    optional_plugin_xmls = [":optional_cidr"],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":cpp"],
 )
@@ -121,7 +99,6 @@ intellij_unit_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
-        "//testing:lib",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "@junit//jar",
@@ -161,6 +138,7 @@ java_library(
         "//base:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//sdkcompat",
         "//testing:lib",
         "@junit//jar",
     ],

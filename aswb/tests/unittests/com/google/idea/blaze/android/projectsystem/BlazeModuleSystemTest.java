@@ -44,7 +44,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
@@ -154,7 +154,7 @@ public class BlazeModuleSystemTest extends BlazeTestCase {
   private void mockBlazeImportSettings(Container projectServices) {
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     importSettingsManager.setImportSettings(
-        new BlazeImportSettings("", "", "", "", BuildSystem.Blaze));
+        new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze));
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
   }
 

@@ -19,10 +19,14 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
@@ -59,6 +63,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -73,6 +78,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -84,6 +90,10 @@ public class JarCache {
   }
 
   private static final Logger logger = Logger.getInstance(JarCache.class);
+  private static final ListeningExecutorService REPACKAGE_EXECUTOR =
+      MoreExecutors.listeningDecorator(
+          AppExecutorUtil.createBoundedApplicationPoolExecutor(
+              "JarRepackagerExecutor", /*maxThreads*/ 4));
 
   private boolean isAvailable = !ApplicationManager.getApplication().isUnitTestMode();
 
@@ -92,6 +102,9 @@ public class JarCache {
 
   /** The state of the cache as of the last call to {@link #readFileState}. */
   private volatile ImmutableMap<String, File> cacheState = ImmutableMap.of();
+
+  private volatile ListenableFuture<List<Object>> repackagingTasks =
+      Futures.immediateCancelledFuture();
 
   private boolean enabled;
 
@@ -191,9 +204,18 @@ public class JarCache {
 
       List<File> removed = new ArrayList<>();
       if (removeMissingFiles) {
+        JarRepackager jarRepackager = JarRepackager.getInstance();
         removed =
             cachedFiles.entrySet().stream()
-                .filter(e -> !projectState.containsKey(e.getKey()))
+                .filter(
+                    e ->
+                        !projectState.containsKey(e.getKey())
+                            || (jarRepackager.isEnabled()
+                                && !projectState.containsKey(
+                                    e.getKey()
+                                        .substring(
+                                            e.getKey().indexOf(jarRepackager.getRepackagePrefix())
+                                                + 1))))
                 .map(Map.Entry::getValue)
                 .collect(toImmutableList());
       }
@@ -222,6 +244,9 @@ public class JarCache {
       if (!removed.isEmpty()) {
         context.output(PrintOutput.log(String.format("Removed %d jars", removed.size())));
       }
+
+      // repackage cached jars after cache has been updated
+      repackageJarsInBackground(projectData, updated.values());
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       context.setCancelled();
@@ -272,31 +297,27 @@ public class JarCache {
         newOutputs.put(cacheKeyForSourceJar(srcJar), srcJar);
       }
     }
-
-    BlazeLibraryCollector.getLintLibraries(projectViewSet, projectData).stream()
-        .filter(library -> library instanceof BlazeJarLibrary)
-        .map(
-            library ->
-                decoder.resolveOutput(
-                    ((BlazeJarLibrary) library).libraryArtifact.jarForIntellijLibrary()))
+    LintJarHelper.collectLintJarsArtifacts(projectData)
         .forEach(jar -> newOutputs.put(cacheKeyForJar(jar), jar));
 
     return ImmutableMap.copyOf(newOutputs);
   }
 
-  private Collection<ListenableFuture<?>> copyLocally(Map<String, BlazeArtifact> updated) {
+  /** Copy artifacts that needed to be updated to local cache, repackage it if it's lint jar. */
+  private List<ListenableFuture<?>> copyLocally(Map<String, BlazeArtifact> updated) {
     List<ListenableFuture<?>> futures = new ArrayList<>();
     updated.forEach(
         (key, artifact) ->
             futures.add(
                 FetchExecutor.EXECUTOR.submit(
                     () -> {
+                      File destination = jarCacheFolderProvider.getCacheFileByKey(key);
                       try {
-                        copyLocally(artifact, jarCacheFolderProvider.getCacheFileByKey(key));
+                        copyLocally(artifact, destination);
                       } catch (IOException e) {
                         logger.warn(
                             String.format(
-                                "Fail to copy artifact %s to %s",
+                                "Failed to copy artifact %s to %s",
                                 artifact, jarCacheFolderProvider.getJarCacheFolder().getPath()),
                             e);
                       }
@@ -316,6 +337,103 @@ public class JarCache {
     }
     try (InputStream stream = output.getInputStream()) {
       Files.copy(stream, Paths.get(destination.getPath()), StandardCopyOption.REPLACE_EXISTING);
+    }
+  }
+
+  /**
+   * Submit repackage tasks without blocking current thread. Log elapsed time when all tasks get
+   * completed.
+   */
+  private void repackageJarsInBackground(
+      BlazeProjectData projectData, Collection<BlazeArtifact> updatedJars) {
+    JarRepackager jarRepackager = JarRepackager.getInstance();
+    if (!jarRepackager.isEnabled()) {
+      return;
+    }
+
+    Stopwatch timer = Stopwatch.createStarted();
+    // If there are repackaging tasks from a prior sync still running, then we cancel them first.
+    if (!repackagingTasks.isCancelled() && !repackagingTasks.isDone()) {
+      logger.warn("Cancel unfinished repackaging tasks.");
+      repackagingTasks.cancel(false);
+    }
+    ImmutableList<ListenableFuture<?>> tasks =
+        repackageJars(projectData, updatedJars, jarRepackager);
+    if (tasks.isEmpty()) {
+      return;
+    }
+    repackagingTasks = Futures.allAsList(tasks);
+    Futures.addCallback(
+        repackagingTasks,
+        new FutureCallback<Object>() {
+          @Override
+          public void onSuccess(Object result) {
+            logger.info(
+                "Repackaged "
+                    + tasks.size()
+                    + " lint jars in "
+                    + timer.elapsed().toMillis()
+                    + " ms");
+          }
+
+          @Override
+          public void onFailure(Throwable t) {
+            logger.warn(
+                "Failed to repackage "
+                    + tasks.size()
+                    + " lint jars in "
+                    + timer.elapsed().toMillis()
+                    + " ms");
+          }
+        },
+        REPACKAGE_EXECUTOR);
+  }
+
+  /** Repackage jars when necessary to avoid package name conflict. */
+  private ImmutableList<ListenableFuture<?>> repackageJars(
+      BlazeProjectData projectData,
+      Collection<BlazeArtifact> updatedJars,
+      JarRepackager jarRepackager) {
+    FileOperationProvider ops = FileOperationProvider.getInstance();
+
+    return LintJarHelper.collectLintJarsArtifacts(projectData).stream()
+        .map(
+            blazeArtifact ->
+                REPACKAGE_EXECUTOR.submit(
+                    () -> {
+                      try {
+                        repackageJar(
+                            jarRepackager,
+                            blazeArtifact,
+                            file -> {
+                              // repackage a jar when it's just updated or never repackaged.
+                              if (updatedJars.contains(blazeArtifact)) {
+                                return true;
+                              }
+                              File repackagedJar =
+                                  new File(
+                                      jarCacheFolderProvider.getJarCacheFolder(),
+                                      jarRepackager.getRepackagePrefix() + file.getName());
+                              return ops.exists(file) && !ops.exists(repackagedJar);
+                            });
+                      } catch (IOException | InterruptedException e) {
+                        logger.warn(
+                            String.format(
+                                "Failed to repackage artifact %s to %s",
+                                blazeArtifact,
+                                jarCacheFolderProvider.getJarCacheFolder().getPath()),
+                            e);
+                      }
+                    }))
+        .collect(toImmutableList());
+  }
+
+  private void repackageJar(
+      JarRepackager jarRepackager, BlazeArtifact blazeArtifact, Predicate<File> shouldRepackage)
+      throws IOException, InterruptedException {
+    File jar = jarCacheFolderProvider.getCacheFileByKey(cacheKeyForJar(blazeArtifact));
+    if (shouldRepackage.test(jar)) {
+      jarRepackager.processJar(jar);
     }
   }
 
@@ -361,13 +479,49 @@ public class JarCache {
    */
   @Nullable
   public File getCachedJar(ArtifactLocationDecoder decoder, BlazeJarLibrary library) {
-    boolean enabled = isEnabled();
     BlazeArtifact artifact = decoder.resolveOutput(library.libraryArtifact.jarForIntellijLibrary());
+    return getCachedJar(artifact);
+  }
+
+  /**
+   * Gets the cached file for a jar. If it doesn't exist, we return the file from the library, or
+   * null if that also can't be accessed locally.
+   */
+  @Nullable
+  public File getCachedJar(BlazeArtifact artifact) {
+    boolean enabled = isEnabled();
     if (!enabled) {
       return getFallbackFile(artifact);
     }
     String cacheKey = cacheKeyForJar(artifact);
     return getCacheFile(cacheKey).orElseGet(() -> getFallbackFile(artifact));
+  }
+
+  @VisibleForTesting
+  public ListenableFuture<List<Object>> getRepackagingTasks() {
+    return repackagingTasks;
+  }
+
+  /**
+   * Gets the cached file for a lint jar.
+   *
+   * @return the cached & repackaged lint file, or {@code null} if there are ongoing repackaging
+   *     tasks or the repackaged file is inaccessible.
+   */
+  @Nullable
+  public File getCachedLintJar(BlazeArtifact artifact) {
+    if (!repackagingTasks.isDone() && !repackagingTasks.isCancelled()) {
+      return null;
+    }
+    File jar = getCachedJar(artifact);
+    File repackagedJar =
+        new File(
+            jarCacheFolderProvider.getJarCacheFolder(),
+            JarRepackager.getInstance().getRepackagePrefix() + jar.getName());
+    if (repackagedJar.exists()) {
+      return repackagedJar;
+    }
+    return null;
   }
 
   /**

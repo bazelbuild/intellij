@@ -21,6 +21,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.errorprone.annotations.Keep;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -91,6 +92,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
   private final Project project;
   private final CidrToolEnvironment toolEnvironment = new CidrToolEnvironment();
 
+  @Keep // Instantiated as an IntelliJ project component.
   private BlazeCWorkspace(Project project) {
     this.configurationResolver = new BlazeConfigurationResolver(project);
     this.resolverResult = BlazeConfigurationResolverResult.empty();
@@ -168,7 +170,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
         configResolveData.getAllConfigurations();
     ExecutionRootPathResolver executionRootPathResolver =
         new ExecutionRootPathResolver(
-            Blaze.getBuildSystem(project),
+            Blaze.getBuildSystemProvider(project),
             workspaceRoot,
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
             blazeProjectData.getWorkspacePathResolver());

@@ -43,7 +43,7 @@ import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
@@ -63,10 +63,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/**
- * Integration test for {@link
- * com.google.idea.blaze.android.projectsystem.BlazeModuleSystem#getAndroidLibraryDependencies()}.
- */
+/** Integration test for {@link BlazeModuleSystem#getDependentLibraries()}. */
 @RunWith(JUnit4.class)
 public class BlazeModuleSystemDependentLibrariesIntegrationTest
     extends BlazeAndroidIntegrationTestCase {
@@ -105,8 +102,8 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
           }
 
           @Override
-          public BuildSystem buildSystem() {
-            return BuildSystem.Blaze;
+          public BuildSystemName buildSystem() {
+            return BuildSystemName.Blaze;
           }
         });
 

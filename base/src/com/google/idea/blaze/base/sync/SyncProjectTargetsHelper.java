@@ -33,7 +33,7 @@ import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
@@ -96,7 +96,7 @@ public final class SyncProjectTargetsHelper {
       WorkspaceLanguageSettings languageSettings)
       throws SyncFailedException, SyncCanceledException {
     String fileBugSuggestion =
-        Blaze.getBuildSystem(project) == BuildSystem.Bazel
+        Blaze.getBuildSystemName(project) == BuildSystemName.Bazel
             ? ""
             : " Please run 'Blaze > File a Bug'";
     if (!DirectoryToTargetProvider.hasProvider()) {

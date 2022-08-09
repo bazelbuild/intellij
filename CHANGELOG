@@ -1,3 +1,42 @@
+v2022.06.28
+===========
+* Bug fixes and internal cleanup.
+
+v2022.06.14
+===========
+* Kotlin: Fix the detection of which test target to run for a newly created
+  Kotlin test. This allows the test to be run without requiring a Blaze sync.
+
+v2022.05.03
+===========
+* Added ALT+SHIFT+Y hotkey for running full Bazel syncs.
+* [Beta+Stable channel] IntelliJ + CLion: Fully switched to 2022.1.
+
+v2022.04.20
+===========
+* Add ALT+y hotkey for running a Bazel sync (⌥+y on Mac).
+
+v2022.04.05
+===========
+* Go: Fix debugging for go_test targets.
+
+v2022.03.22
+===========
+* Bug fixes and internal cleanup.
+
+v2022.03.08
+===========
+* [2021.3] Kotlin tests: Fixed suggestion of run configurations.
+
+v2022.02.22
+===========
+* Adapt Bazel plugin to the upcoming Starlark cc_library change.
+
+v2022.01.25
+===========
+* [Beta+Stable channel] CLion: Compatible with CLion 2021.3.
+* [Beta+Stable channel] IntelliJ: Compatible with IntelliJ 2021.3.
+
 v2022.01.11
 ===========
 * Don’t ship a buildifier (formatter for BUILD files) binary.

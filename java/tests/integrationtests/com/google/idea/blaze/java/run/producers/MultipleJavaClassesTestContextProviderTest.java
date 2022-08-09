@@ -142,7 +142,7 @@ public class MultipleJavaClassesTestContextProviderTest
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=com.google.test");
-    assertThat(config.getName()).isEqualTo("Blaze test all in directory 'test'");
+    assertThat(config.getName()).isEqualTo("Bazel test all in directory 'test'");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 
@@ -185,7 +185,7 @@ public class MultipleJavaClassesTestContextProviderTest
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test/sub:TestClass"));
     assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=com.google.test");
-    assertThat(config.getName()).isEqualTo("Blaze test all in directory 'test'");
+    assertThat(config.getName()).isEqualTo("Bazel test all in directory 'test'");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 
@@ -310,7 +310,7 @@ public class MultipleJavaClassesTestContextProviderTest
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:allTests"));
     assertThat(getTestFilterContents(config))
         .isEqualTo("--test_filter=\"com.google.test.TestClass1#|com.google.test.TestClass2#\"");
-    assertThat(config.getName()).isEqualTo("Blaze test TestClass1 and 1 others");
+    assertThat(config.getName()).isEqualTo("Bazel test TestClass1 and 1 others");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 

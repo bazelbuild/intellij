@@ -27,7 +27,8 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.GenericSourceFolderProvider;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
@@ -190,12 +191,13 @@ public class BlazeJavascriptSyncPlugin implements BlazeSyncPlugin {
     }
     if (!isLanguageSupportedInIde()) {
       String message = "JavaScript is not supported in this IDE.";
-      if (Blaze.getBuildSystem(project) == BuildSystem.Blaze) {
+      if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
         message +=
             " Please use IntelliJ Ultimate Edition or CLion, or else remove 'javascript' "
                 + "from the list of requested languages in your project view file";
       }
       IssueOutput.error(message).submit(context);
+      BlazeSyncManager.printAndLogError(message, context);
     }
     return true;
   }

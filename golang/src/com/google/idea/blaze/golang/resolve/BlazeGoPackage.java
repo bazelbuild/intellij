@@ -157,11 +157,37 @@ public class BlazeGoPackage extends GoPackage {
       if (target.getGoIdeInfo() == null) {
         continue;
       }
-      builder.putAll(
-          target.getKey().getLabel(),
-          getSourceFiles(target, project, projectData, libraryToTestMap));
+      ImmutableSet<File> sourceFiles =
+          getSourceFiles(target, project, projectData, libraryToTestMap).stream()
+              .map(BlazeGoPackage::toRealFile)
+              .filter(Objects::nonNull)
+              .collect(toImmutableSet());
+      builder.putAll(target.getKey().getLabel(), sourceFiles);
     }
     return builder.build();
+  }
+
+  /**
+   * Workaround for https://github.com/bazelbuild/intellij/issues/2057. External workspace symlinks
+   * can be changed externally by practically any bazel command. Such changes to symlinks will make
+   * IntelliJ red. This helper resolves such symlink to an actual location.
+   *
+   * @see com.google.idea.blaze.java.libraries.JarCache.patchExternalFilePath()
+   */
+  @Nullable
+  private static File toRealFile(@Nullable File maybeExternal) {
+    if (maybeExternal == null) {
+      return null;
+    }
+    // do string manipulation instead of .toPath().toRealPath().toFile()
+    // because there might be a race condition and symlink won't be resolved at the time
+    String externalString = maybeExternal.toString();
+    if (externalString.contains("/external/")
+        && !externalString.contains("/bazel-out/")
+        && !externalString.contains("/blaze-out/")) {
+      return new File(externalString.replaceAll("/execroot.*/external/", "/external/"));
+    }
+    return maybeExternal;
   }
 
   private static ImmutableSet<File> getSourceFiles(

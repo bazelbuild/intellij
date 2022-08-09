@@ -44,8 +44,8 @@ intellij_aspect_test_fixture(
 )
 
 java_test(
-    name = "PluginProcessorJarTest",
-    srcs = ["PluginProcessorJarTest.java"],
+    name = "BazelPluginProcessorJarTest",
+    srcs = ["BazelPluginProcessorJarTest.java"],
     data = [
         ":has_plugin_deps_fixture",
         ":has_plugin_fixture",

@@ -26,11 +26,11 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelpe
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -94,15 +94,12 @@ public class FullApkBuildStep implements ApkBuildStep {
       return;
     }
 
-    BlazeCommand.Builder command =
-        BlazeCommand.builder(
-            Blaze.getBuildSystemProvider(project).getBinaryPath(project), BlazeCommandName.BUILD);
+    BuildInvoker invoker =
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
+    BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
-    // Explicitly use a local build helper because deployInfoHelper.readDeployInfoProtoForTarget
-    // only supports local artifacts
-    try (BuildResultHelper buildResultHelper =
-        BuildResultHelperProvider.createForLocalBuild(project)) {
+    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
       command
           .addTargets(label)
           .addBlazeFlags("--output_groups=+android_deploy_info")

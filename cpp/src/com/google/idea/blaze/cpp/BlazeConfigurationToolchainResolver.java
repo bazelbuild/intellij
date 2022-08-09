@@ -15,11 +15,18 @@
  */
 package com.google.idea.blaze.cpp;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static java.util.stream.Collectors.joining;
+
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
@@ -44,6 +51,7 @@ import com.intellij.pom.NavigatableAdapter;
 import java.io.File;
 import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -72,53 +80,102 @@ public final class BlazeConfigurationToolchainResolver {
         childContext -> {
           childContext.push(new TimingScope("Build toolchain lookup map", EventType.Other));
 
-          Map<TargetKey, CToolchainIdeInfo> toolchains = Maps.newLinkedHashMap();
-          for (TargetIdeInfo target : targetMap.targets()) {
-            CToolchainIdeInfo cToolchainIdeInfo = target.getcToolchainIdeInfo();
-            if (cToolchainIdeInfo != null) {
-              toolchains.put(target.getKey(), cToolchainIdeInfo);
-            }
-          }
+          ImmutableMap<TargetKey, CToolchainIdeInfo> toolchains =
+              targetMap.targets().stream()
+                  .filter(target -> target.getcToolchainIdeInfo() != null)
+                  .collect(
+                      toImmutableMap(TargetIdeInfo::getKey, TargetIdeInfo::getcToolchainIdeInfo));
 
-          ImmutableMap.Builder<TargetKey, CToolchainIdeInfo> lookupTable = ImmutableMap.builder();
-          for (TargetIdeInfo target : targetMap.targets()) {
-            if (!target.getKind().hasLanguage(LanguageClass.C)
-                || target.getcToolchainIdeInfo() != null) {
-              continue;
-            }
-            List<TargetKey> toolchainDeps =
-                target.getDependencies().stream()
-                    .map(Dependency::getTargetKey)
-                    .filter(toolchains::containsKey)
-                    .collect(Collectors.toList());
-            if (toolchainDeps.size() != 1) {
-              issueToolchainWarning(context, target, toolchainDeps);
-            }
-            if (!toolchainDeps.isEmpty()) {
-              TargetKey toolchainKey = toolchainDeps.get(0);
-              CToolchainIdeInfo toolchainInfo = toolchains.get(toolchainKey);
-              lookupTable.put(target.getKey(), toolchainInfo);
-            } else {
-              CToolchainIdeInfo arbitraryToolchain = Iterables.getFirst(toolchains.values(), null);
-              if (arbitraryToolchain != null) {
-                lookupTable.put(target.getKey(), arbitraryToolchain);
-              }
-            }
-          }
-          return lookupTable.build();
+          ImmutableMap<TargetIdeInfo, List<TargetKey>> toolchainDepsTable =
+              buildToolchainDepsTable(targetMap.targets(), toolchains);
+          verifyToolchainDeps(context, toolchainDepsTable);
+          return buildLookupTable(toolchainDepsTable, toolchains);
         });
   }
 
+  private static ImmutableMap<TargetIdeInfo, List<TargetKey>> buildToolchainDepsTable(
+      ImmutableCollection<TargetIdeInfo> targets, Map<TargetKey, CToolchainIdeInfo> toolchains) {
+    ImmutableMap.Builder<TargetIdeInfo, List<TargetKey>> toolchainDepsTable =
+        ImmutableMap.builder();
+    for (TargetIdeInfo target : targets) {
+      if (!target.getKind().hasLanguage(LanguageClass.C) || target.getcToolchainIdeInfo() != null) {
+        continue;
+      }
+      ImmutableList<TargetKey> toolchainDeps =
+          target.getDependencies().stream()
+              .map(Dependency::getTargetKey)
+              .filter(toolchains::containsKey)
+              .collect(toImmutableList());
+      toolchainDepsTable.put(target, toolchainDeps);
+    }
+    return toolchainDepsTable.build();
+  }
+
+  private static void verifyToolchainDeps(
+      BlazeContext context, ImmutableMap<TargetIdeInfo, List<TargetKey>> toolchainDepsTable) {
+    ListMultimap<Integer, TargetIdeInfo> warningTargets = ArrayListMultimap.create();
+    for (Map.Entry<TargetIdeInfo, List<TargetKey>> entry : toolchainDepsTable.entrySet()) {
+      List<TargetKey> toolchainDeps = entry.getValue();
+      if (toolchainDeps.size() != 1) {
+        TargetIdeInfo target = entry.getKey();
+          warningTargets.put(toolchainDeps.size(), target);
+      }
+    }
+    issueToolchainWarning(context, warningTargets);
+  }
+
+  private static ImmutableMap<TargetKey, CToolchainIdeInfo> buildLookupTable(
+      ImmutableMap<TargetIdeInfo, List<TargetKey>> toolchainDepsTable,
+      ImmutableMap<TargetKey, CToolchainIdeInfo> toolchains) {
+    ImmutableMap.Builder<TargetKey, CToolchainIdeInfo> lookupTable = ImmutableMap.builder();
+    for (Map.Entry<TargetIdeInfo, List<TargetKey>> entry : toolchainDepsTable.entrySet()) {
+      TargetIdeInfo target = entry.getKey();
+      List<TargetKey> toolchainDeps = entry.getValue();
+      if (!toolchainDeps.isEmpty()) {
+        TargetKey toolchainKey = toolchainDeps.get(0);
+        CToolchainIdeInfo toolchainInfo = toolchains.get(toolchainKey);
+        lookupTable.put(target.getKey(), toolchainInfo);
+      } else {
+        CToolchainIdeInfo arbitraryToolchain = Iterables.getFirst(toolchains.values(), null);
+        if (arbitraryToolchain != null) {
+          lookupTable.put(target.getKey(), arbitraryToolchain);
+        }
+      }
+    }
+    return lookupTable.build();
+  }
+
   private static void issueToolchainWarning(
-      BlazeContext context, TargetIdeInfo target, List<TargetKey> toolchainDeps) {
-    String warningMessage =
-        String.format(
-            "cc target %s does not depend on exactly 1 cc toolchain. " + " Found %d toolchains.",
-            target.getKey(), toolchainDeps.size());
-    if (usesAppleCcToolchain(target)) {
-      logger.warn(warningMessage + " (apple_cc_toolchain)");
-    } else {
-      IssueOutput.warn(warningMessage).submit(context);
+      BlazeContext context, Multimap<Integer, TargetIdeInfo> warningTargets) {
+    for (Map.Entry<Integer, Collection<TargetIdeInfo>> entry : warningTargets.asMap().entrySet()) {
+      Map<Boolean, List<TargetIdeInfo>> partitionedTargets =
+          entry.getValue().stream()
+              .collect(
+                  Collectors.partitioningBy(
+                      BlazeConfigurationToolchainResolver::usesAppleCcToolchain));
+      if (!partitionedTargets.get(Boolean.FALSE).isEmpty()) {
+        String warningMessage =
+            String.format(
+                "cc target is expected to depend on exactly 1 cc toolchain. "
+                    + "Found %d toolchains for these targets: %s",
+                entry.getKey(),
+                partitionedTargets.get(Boolean.FALSE).stream()
+                    .map(TargetIdeInfo::getKey)
+                    .map(TargetKey::toString)
+                    .collect(joining(", ")));
+        IssueOutput.warn(warningMessage).submit(context);
+      }
+      if (!partitionedTargets.get(Boolean.TRUE).isEmpty()) {
+        logger.warn(
+            String.format(
+                "cc target is expected to depend on exactly 1 cc toolchain. "
+                    + "Found %d toolchains for these targets with apple_cc_toolchain: %s.",
+                entry.getKey(),
+                partitionedTargets.get(Boolean.TRUE).stream()
+                    .map(TargetIdeInfo::getKey)
+                    .map(TargetKey::toString)
+                    .collect(joining(", "))));
+      }
     }
   }
 

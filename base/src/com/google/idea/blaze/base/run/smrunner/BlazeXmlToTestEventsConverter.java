@@ -35,7 +35,7 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -449,7 +449,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
    */
   private static boolean bazelIsAtLeastVersion(int major, int minor, int bugfix) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (Blaze.getBuildSystem(project) == BuildSystem.Bazel) {
+      if (Blaze.getBuildSystemName(project) == BuildSystemName.Bazel) {
         BlazeProjectData projectData =
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
         if (projectData != null) {

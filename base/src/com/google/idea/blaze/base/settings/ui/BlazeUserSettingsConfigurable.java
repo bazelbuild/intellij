@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.ui.FileSelectorWithStoredHistory;
 import com.google.idea.common.settings.AutoConfigurable;
 import com.google.idea.common.settings.ConfigurableSetting;
@@ -102,6 +102,12 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           .setter(BlazeUserSettings::setCollapseProjectView)
           .componentFactory(SimpleComponent::createCheckBox);
 
+  private static final ConfigurableSetting<?, ?> ALWAYS_SELECT_NEWEST_CHILD_TASK =
+      setting("Always select the newest child task in Blaze view")
+          .getter(BlazeUserSettings::getSelectNewestChildTask)
+          .setter(BlazeUserSettings::setSelectNewestChildTask)
+          .componentFactory(SimpleComponent::createCheckBox);
+
   private static final ConfigurableSetting<?, ?> FORMAT_BUILD_FILES_ON_SAVE =
       setting("Automatically format BUILD/Starlark files on file save")
           .getter(BlazeUserSettings::getFormatBuildFilesOnSave)
@@ -119,7 +125,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
       setting("Blaze binary location")
           .getter(BlazeUserSettings::getBlazeBinaryPath)
           .setter(BlazeUserSettings::setBlazeBinaryPath)
-          .hideIf(() -> !BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Blaze))
+          .hideIf(() -> !BuildSystemProvider.isBuildSystemAvailable(BuildSystemName.Blaze))
           .componentFactory(fileSelector(BLAZE_BINARY_PATH_KEY, "Specify the blaze binary path"));
 
   public static final String BAZEL_BINARY_PATH_KEY = "bazel.binary.path";
@@ -127,7 +133,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
       setting("Bazel binary location")
           .getter(BlazeUserSettings::getBazelBinaryPath)
           .setter(BlazeUserSettings::setBazelBinaryPath)
-          .hideIf(() -> !BuildSystemProvider.isBuildSystemAvailable(BuildSystem.Bazel))
+          .hideIf(() -> !BuildSystemProvider.isBuildSystemAvailable(BuildSystemName.Bazel))
           .componentFactory(fileSelector(BAZEL_BINARY_PATH_KEY, "Specify the bazel binary path"));
 
   public static final String BUILDIFIER_BINARY_PATH_KEY = "buildifier.binary.path";
@@ -147,6 +153,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           COLLAPSE_PROJECT_VIEW,
           FORMAT_BUILD_FILES_ON_SAVE,
           SHOW_ADD_FILE_TO_PROJECT,
+          ALWAYS_SELECT_NEWEST_CHILD_TASK,
           BLAZE_BINARY_PATH,
           BAZEL_BINARY_PATH,
           BUILDIFIER_BINARY_PATH);
@@ -175,6 +182,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
             COLLAPSE_PROJECT_VIEW,
             FORMAT_BUILD_FILES_ON_SAVE,
             SHOW_ADD_FILE_TO_PROJECT,
+            ALWAYS_SELECT_NEWEST_CHILD_TASK,
             BLAZE_BINARY_PATH,
             BAZEL_BINARY_PATH,
             BUILDIFIER_BINARY_PATH));

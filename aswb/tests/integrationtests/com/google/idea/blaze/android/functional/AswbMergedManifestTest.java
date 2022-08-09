@@ -322,7 +322,6 @@ public class AswbMergedManifestTest extends BlazeAndroidIntegrationTestCase {
 
     MergedManifestSnapshot manifest =
         MergedManifestManager.getMergedManifest(module).get(5, TimeUnit.SECONDS);
-    assertThat(manifest.getApplicationId()).isEqualTo("com.example.merged");
     assertThat(manifest.getVersionCode()).isEqualTo(1);
     assertThat(manifest.getMinSdkVersion().getApiLevel()).isEqualTo(28);
     assertThat(manifest.getTargetSdkVersion().getApiLevel()).isEqualTo(29);

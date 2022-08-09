@@ -21,12 +21,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.pico.DefaultPicoContainer;
 import java.io.ByteArrayOutputStream;
@@ -62,28 +57,6 @@ public class TestUtils {
     public <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
       return executor.submit(action);
     }
-  }
-
-  public static void createMockApplication(Disposable parentDisposable) {
-    final BlazeMockApplication instance = new BlazeMockApplication(parentDisposable);
-
-    // If there was no previous application,
-    // ApplicationManager leaves the MockApplication in place, which can break future tests.
-    Application oldApplication = ApplicationManager.getApplication();
-    if (oldApplication == null) {
-      Disposer.register(
-          parentDisposable,
-          () -> {
-            new ApplicationManager() {
-              {
-                ourApplication = null;
-              }
-            };
-          });
-    }
-
-    ApplicationManager.setApplication(instance, FileTypeManager::getInstance, parentDisposable);
-    instance.registerService(EncodingManager.class, EncodingManagerImpl.class);
   }
 
   @NotNull

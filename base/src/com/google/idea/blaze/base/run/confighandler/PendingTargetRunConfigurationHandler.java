@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.run.PendingRunConfigurationContext;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -40,12 +40,12 @@ import javax.annotation.Nullable;
 
 class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
 
-  private final BuildSystem buildSystem;
+  private final BuildSystemName buildSystemName;
   private final BlazeCommandRunConfigurationCommonState state;
 
   PendingTargetRunConfigurationHandler(BlazeCommandRunConfiguration config) {
-    this.buildSystem = Blaze.getBuildSystem(config.getProject());
-    this.state = new BlazeCommandRunConfigurationCommonState(buildSystem);
+    this.buildSystemName = Blaze.getBuildSystemName(config.getProject());
+    this.state = new BlazeCommandRunConfigurationCommonState(buildSystemName);
   }
 
   @Override
@@ -62,7 +62,7 @@ class PendingTargetRunConfigurationHandler implements BlazeCommandRunConfigurati
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    state.validate(buildSystem);
+    state.validate(buildSystemName);
   }
 
   @Nullable

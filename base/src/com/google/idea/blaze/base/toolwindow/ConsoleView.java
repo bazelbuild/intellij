@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.console.NonProblemFilterWrapper;
-import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -93,7 +92,11 @@ final class ConsoleView implements Disposable {
   static ConsoleView create(
       Project project, ImmutableList<Filter> consoleFilters, Disposable parentDisposable) {
     ConsoleView view = new ConsoleView(project, parentDisposable);
-    view.setCustomFilters(consoleFilters);
+    view.addDefaultAndCustomFilters(consoleFilters);
+
+    // The consoleView component must be created for issue filters such as errors to be detected
+    // even if the console is never viewed in the blaze tool window tree.
+    view.consoleView.getComponent();
     return view;
   }
 
@@ -106,16 +109,14 @@ final class ConsoleView implements Disposable {
             /* viewer= */ false,
             /* usePredefinedFilters= */ false);
 
-    consoleView.addMessageFilter(customFilters);
-    addWrappedPredefinedFilters();
-    // add target filter last, so it doesn't override other links containing a target string
-    consoleView.addMessageFilter(new BlazeTargetFilter(false));
     Disposer.register(parentDisposable, this);
     Disposer.register(this, consoleView);
   }
 
-  void setCustomFilters(List<Filter> filters) {
-    customFilters.setCustomFilters(filters);
+  private void addDefaultAndCustomFilters(List<Filter> customFilters) {
+    this.customFilters.setCustomFilters(customFilters);
+    consoleView.addMessageFilter(this.customFilters);
+    addWrappedPredefinedFilters();
   }
 
   public void setStopHandler(@Nullable Runnable stopHandler) {

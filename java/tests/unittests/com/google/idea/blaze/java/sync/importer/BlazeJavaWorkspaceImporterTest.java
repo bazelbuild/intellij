@@ -64,7 +64,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.MockRemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -74,6 +74,7 @@ import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
+import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings;
 import com.google.idea.blaze.java.sync.jdeps.MockJdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -155,7 +156,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
       };
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", BuildSystem.Bazel);
+      new BlazeImportSettings("", "", "", "", BuildSystemName.Bazel);
   private ExtensionPointImpl<BlazeJavaSyncAugmenter> augmenters;
 
   private BlazeContext context;
@@ -208,19 +209,22 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
 
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     augmenters =
         registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);
+    registerExtensionPoint(EmptyLibraryFilterSettings.EP_NAME, EmptyLibraryFilterSettings.class);
 
     registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class)
         .registerExtension(new JavaLikeLanguage.Java());
 
-    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(new BazelBuildSystemProvider());
-
     projectServices.register(JarCache.class, new MockJarCache(project));
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   private BlazeJavaImportResult importWorkspace(
@@ -231,7 +235,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     TargetMap targetMap = targetMapBuilder.build();
     com.google.idea.blaze.java.sync.importer.JavaSourceFilter sourceFilter =
         new com.google.idea.blaze.java.sync.importer.JavaSourceFilter(
-            Blaze.getBuildSystem(project), workspaceRoot, projectViewSet, targetMap);
+            Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet, targetMap);
     com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter blazeWorkspaceImporter =
         new com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter(
             project,
@@ -1633,7 +1637,9 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     assertThat(
             result.pluginProcessorJars.stream()
-                .map(BlazeJavaWorkspaceImporterTest::libraryFileName))
+                .map(
+                    artifactLocation ->
+                        new File(artifactLocation.getExecutionRootRelativePath()).getName()))
         .containsExactly("lint.jar");
   }
 

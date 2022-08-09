@@ -58,11 +58,13 @@ import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider
 import com.google.idea.blaze.java.sync.projectstructure.Jdks;
 import com.google.idea.blaze.java.sync.workingset.JavaWorkingSet;
 import com.google.idea.common.util.Transactions;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import java.util.Collection;
@@ -72,6 +74,7 @@ import javax.annotation.Nullable;
 /** Sync support for Java. */
 public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
   private final JdepsFileReader jdepsFileReader = new JdepsFileReader();
+  private static final Logger logger = Logger.getInstance(BlazeJavaSyncPlugin.class);
 
   @Override
   public ImmutableList<WorkspaceType> getSupportedWorkspaceTypes() {
@@ -123,7 +126,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
     }
     JavaSourceFilter sourceFilter =
         new JavaSourceFilter(
-            Blaze.getBuildSystem(project), workspaceRoot, projectViewSet, targetMap);
+            Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet, targetMap);
 
     JdepsMap jdepsMap =
         jdepsFileReader.loadJdepsFiles(
@@ -193,11 +196,12 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
       BlazeContext context,
       ProjectViewSet projectViewSet,
       BlazeProjectData blazeProjectData) {
+    Sdk currentSdk = ProjectRootManager.getInstance(project).getProjectSdk();
 
     LanguageLevel javaLanguageLevel =
         JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData);
 
-    final Sdk sdk = Jdks.chooseOrCreateJavaSdk(javaLanguageLevel);
+    Sdk sdk = Jdks.chooseOrCreateJavaSdk(currentSdk, javaLanguageLevel);
     if (sdk == null) {
       String msg =
           String.format(
@@ -208,7 +212,12 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
       IssueOutput.error(msg).submit(context);
       return;
     }
-    setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
+
+    LanguageLevel currentLanguageLevel =
+        LanguageLevelProjectExtension.getInstance(project).getLanguageLevel();
+    if (sdk != currentSdk || javaLanguageLevel != currentLanguageLevel) {
+      setProjectSdkAndLanguageLevel(project, sdk, javaLanguageLevel);
+    }
   }
 
   private static void setProjectSdkAndLanguageLevel(
@@ -270,15 +279,16 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
       if (artifactLocation.getRelativePath().endsWith("deploy.jar")
           || artifactLocation.getRelativePath().endsWith("deploy-ijar.jar")
           || artifactLocation.getRelativePath().endsWith("deploy-hjar.jar")) {
-        context.output(
-            new PerformanceWarning(
-                "Performance warning: You have added a deploy jar as a library. "
-                    + "This can lead to poor indexing performance, and the debugger may "
-                    + "become confused and step into the deploy jar instead of your code. "
-                    + "Consider redoing the rule to not use deploy jars, exclude the target "
-                    + "from your .blazeproject, or exclude the library.\n"
-                    + "Library path: "
-                    + artifactLocation.getRelativePath()));
+        String warningMessage =
+            "Performance warning: You have added a deploy jar as a library. "
+                + "This can lead to poor indexing performance, and the debugger may "
+                + "become confused and step into the deploy jar instead of your code. "
+                + "Consider redoing the rule to not use deploy jars, exclude the target "
+                + "from your .blazeproject, or exclude the library.\n"
+                + "Library path: "
+                + artifactLocation.getRelativePath();
+        logger.warn(warningMessage);
+        context.output(new PerformanceWarning(warningMessage));
       }
     }
   }

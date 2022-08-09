@@ -38,12 +38,12 @@ import com.google.idea.blaze.android.run.runner.ExecRootUtil;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -53,7 +53,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -88,8 +88,10 @@ public class MobileInstallBuildStep implements ApkBuildStep {
    * removed once mobile-install v2 is open sourced, at which point the internal and external
    * versions will both use _mi.deployinfo.pb
    */
-  public static String getDeployInfoSuffix(BuildSystem buildSystem) {
-    return buildSystem == BuildSystem.Bazel ? "_incremental.deployinfo.pb" : "_mi.deployinfo.pb";
+  public static String getDeployInfoSuffix(BuildSystemName buildSystemName) {
+    return buildSystemName == BuildSystemName.Bazel
+        ? "_incremental.deployinfo.pb"
+        : "_mi.deployinfo.pb";
   }
 
   private MobileInstallBuildStep(
@@ -148,10 +150,10 @@ public class MobileInstallBuildStep implements ApkBuildStep {
       return;
     }
 
-    BlazeCommand.Builder command =
-        BlazeCommand.builder(
-            Blaze.getBuildSystemProvider(project).getBinaryPath(project),
-            BlazeCommandName.MOBILE_INSTALL);
+    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
+    BuildInvoker invoker =
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
+    BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.MOBILE_INSTALL);
 
     if (passAdbArgWithSerialToMi.getValue()) {
       // Redundant, but we need this to get around bug in bazel.
@@ -166,10 +168,9 @@ public class MobileInstallBuildStep implements ApkBuildStep {
     }
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    final String deployInfoSuffix = getDeployInfoSuffix(Blaze.getBuildSystem(project));
+    final String deployInfoSuffix = getDeployInfoSuffix(buildSystemName);
 
-    try (BuildResultHelper buildResultHelper =
-            BuildResultHelperProvider.createForLocalBuild(project);
+    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
         AdbTunnelConfigurator tunnelConfig = getTunnelConfigurator(context)) {
       tunnelConfig.setupConnection(context);
 
@@ -195,9 +196,12 @@ public class MobileInstallBuildStep implements ApkBuildStep {
           .addTargets(label)
           .addBlazeFlags(blazeFlags)
           .addBlazeFlags(buildResultHelper.getBuildFlags())
-          .addExeFlags(exeFlags)
+          .addExeFlags(exeFlags);
+
+      if (buildSystemName == BuildSystemName.Blaze) {
           // MI launches apps by default. Defer app launch to BlazeAndroidLaunchTasksProvider.
-          .addExeFlags("--nolaunch_app");
+          command.addExeFlags("--nolaunch_app");
+      }
 
       if (StudioDeployerExperiment.isEnabled()) {
         command.addExeFlags("--nodeploy");

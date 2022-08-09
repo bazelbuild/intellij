@@ -20,15 +20,19 @@ import com.google.idea.blaze.base.issueparser.NonProblemHyperlinkInfo;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.lang.buildfile.references.LabelUtils;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.settings.Blaze;
+import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.UIUtil;
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -49,11 +53,6 @@ public class BlazeTargetFilter implements Filter {
 
   @VisibleForTesting static final Pattern TARGET_PATTERN = Pattern.compile(TARGET_REGEX);
 
-  private final boolean highlightMatches;
-
-  public BlazeTargetFilter(boolean highlightMatches) {
-    this.highlightMatches = highlightMatches;
-  }
 
   @Nullable
   @Override
@@ -61,12 +60,10 @@ public class BlazeTargetFilter implements Filter {
     Matcher matcher = TARGET_PATTERN.matcher(line);
     List<ResultItem> results = new ArrayList<>();
     while (matcher.find()) {
-      String labelString = matcher.group();
-      String prefix = matcher.group(1);
-      if (prefix != null) {
-        labelString = labelString.substring(prefix.length());
-      }
-      Label label = LabelUtils.createLabelFromString(null, labelString);
+      int prefixLength = Optional.ofNullable(matcher.group(1)).map(String::length).orElse(0);
+
+      String labelString = matcher.group().substring(prefixLength);
+      Label label = LabelUtils.createLabelFromString(/* blazePackage= */ null, labelString);
       if (label == null) {
         continue;
       }
@@ -81,23 +78,29 @@ public class BlazeTargetFilter implements Filter {
       int offset = entireLength - line.length();
       results.add(
           new ResultItem(
-              matcher.start() + offset, matcher.end() + offset, link, getHighlightAttributes()));
+              /* highlightStartOffset= */ matcher.start() + offset + prefixLength,
+              /* highlightEndOffset= */ matcher.end() + offset,
+              link,
+              getHighlightAttributes()));
     }
     return results.isEmpty() ? null : new Result(results);
   }
 
-  @Nullable
   private TextAttributes getHighlightAttributes() {
-    if (highlightMatches) {
-      // normal link highlighting, when we don't expect too many targets in the output
-      return null;
-    }
-    // avoid a sea of blue in sync output: just add a grey underline to navigable targets
+    // Avoid a sea of blue in the console: just add a grey underline to navigable targets.
     return new TextAttributes(
         UIUtil.getActiveTextColor(),
-        null,
+        /* backgroundColor= */ null,
         UIUtil.getInactiveTextColor(),
         EffectType.LINE_UNDERSCORE,
         Font.PLAIN);
+  }
+
+  /** Provider for {@link BlazeTargetFilter} */
+  static class Provider implements ConsoleFilterProvider {
+    @Override
+    public Filter[] getDefaultFilters(Project project) {
+      return Blaze.isBlazeProject(project) ? new Filter[] {new BlazeTargetFilter()} : new Filter[0];
+    }
   }
 }

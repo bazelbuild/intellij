@@ -23,7 +23,6 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.LaunchInfo;
 import com.android.tools.idea.run.ProcessHandlerConsolePrinter;
-import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTaskBase;
 import com.android.tools.idea.run.tasks.ConnectJavaDebuggerTask;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
@@ -31,7 +30,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,11 +43,9 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTaskBase {
 
   public ConnectBlazeTestDebuggerTask(
       Project project,
-      AndroidDebugger debugger,
-      @Nullable Set<String> applicationIds, // parameter present only for #api42 compat
       ApplicationIdProvider applicationIdProvider,
       BlazeAndroidTestRunContext runContext) {
-    super(applicationIdProvider, debugger, project, true);
+    super(applicationIdProvider, project, true);
     this.project = project;
     this.applicationIdProvider = applicationIdProvider;
     this.runContext = runContext;

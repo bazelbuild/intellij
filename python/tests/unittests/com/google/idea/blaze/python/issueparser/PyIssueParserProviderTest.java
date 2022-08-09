@@ -27,7 +27,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.TextRange;
 import org.junit.Test;
@@ -39,7 +39,7 @@ import org.junit.runners.JUnit4;
 public class PyIssueParserProviderTest extends BlazeTestCase {
 
   private static final BlazeImportSettings DUMMY_SETTINGS =
-      new BlazeImportSettings("root", "", "", "", BuildSystem.Bazel);
+      new BlazeImportSettings("root", "", "", "", BuildSystemName.Bazel);
   private static final WorkspaceRoot ROOT = WorkspaceRoot.fromImportSettings(DUMMY_SETTINGS);
   private ImmutableList<BlazeIssueParser.Parser> parsers;
 
@@ -50,7 +50,7 @@ public class PyIssueParserProviderTest extends BlazeTestCase {
     projectServices.register(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
     BlazeImportSettings importSettings =
-        new BlazeImportSettings("root", "", "", "", BuildSystem.Bazel);
+        new BlazeImportSettings("root", "", "", "", BuildSystemName.Bazel);
     BlazeImportSettingsManager.getInstance(getProject()).setImportSettings(importSettings);
 
     ExtensionPointImpl<BlazeIssueParserProvider> ep =

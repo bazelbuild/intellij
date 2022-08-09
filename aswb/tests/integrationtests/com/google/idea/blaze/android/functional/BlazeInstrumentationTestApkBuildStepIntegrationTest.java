@@ -37,20 +37,18 @@ import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuild
 import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep.InstrumentorToTarget;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -104,27 +102,18 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   public void setupBuildResultHelperProvider() throws GetArtifactsException {
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS));
-    registerExtension(
-        BuildResultHelperProvider.EP_NAME,
-        new BuildResultHelperProvider() {
-          @Override
-          public Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo) {
-            return Optional.of(mockBuildResultHelper);
-          }
-
-          @Override
-          public Optional<BuildResultHelper> doCreateForLocalBuild(Project project) {
-            return Optional.of(mockBuildResultHelper);
-          }
-        });
+        .thenReturn(
+            new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS, 0));
+    BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
+    buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
+    registerExtension(BuildSystemProvider.EP_NAME, buildSystem);
   }
 
   @Test
   public void getInstrumentorToTargetPair_separateInstrumentorAndTestTargets() {
     setupProject();
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     BlazeInstrumentationTestApkBuildStep buildStep =
@@ -146,7 +135,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   public void getInstrumentorToTargetPair_selfInstrumentingTest() {
     setupProject();
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     BlazeInstrumentationTestApkBuildStep buildStep =
@@ -171,7 +160,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     Label testTarget = Label.create("//java/com/foo/app:instrumentation_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app");
     Label appTarget = Label.create("//java/com/foo/app:app");
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     ImmutableList<String> blazeFlags = ImmutableList.of("some_blaze_flag", "some_other_flag");
 
     // Setup interceptor for fake running of blaze commands and capture details.
@@ -217,7 +206,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     setupProject();
     Label testTarget = Label.create("//java/com/foo/app:self_instrumenting_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app_self_instrumenting");
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     ImmutableList<String> blazeFlags = ImmutableList.of("some_blaze_flag", "some_other_flag");
 
     // Setup interceptor for fake running of blaze commands and capture details.
@@ -258,7 +247,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     Label appTarget = Label.create("//java/com/foo/app:app");
 
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     // Make blaze command invocation always pass.
@@ -298,7 +287,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     Label appTarget = Label.create("//java/com/foo/app:app");
 
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     // Return a non-zero value to indicate blaze command run failure.
@@ -344,12 +333,12 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     ImmutableList<String> blazeFlags = ImmutableList.of("some_blaze_flag", "some_other_flag");
 
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     // Return null execroot
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS));
+        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS, 0));
 
     // Setup interceptor for fake running of blaze commands and capture details.
     ExternalTaskInterceptor externalTaskInterceptor = new ExternalTaskInterceptor();
@@ -414,7 +403,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     runFullBlazeSyncWithNoIssues();
 
     MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     BlazeInstrumentationTestApkBuildStep buildStep =
@@ -457,7 +446,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     InstrumentorToTarget pair =
         buildStep.getInstrumentorToTargetPair(
-            new BlazeContext(),
+            BlazeContext.create(),
             BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData());
     assertThat(pair.instrumentor).isEqualTo(Label.create("//java/com/foo/app:test_app"));
     assertThat(pair.target).isEqualTo(Label.create("//java/com/foo/app:app"));

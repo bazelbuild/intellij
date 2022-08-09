@@ -52,7 +52,7 @@ public class AllInDirectoryRecursiveTestContextProviderTest
   public final void before() {
     projectViewManager = new MockProjectViewManager(getProject());
     errorCollector = new ErrorCollector();
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
 

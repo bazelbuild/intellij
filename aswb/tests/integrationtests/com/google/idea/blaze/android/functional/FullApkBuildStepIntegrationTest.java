@@ -38,11 +38,11 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.Devic
 import com.google.idea.blaze.android.run.runner.FullApkBuildStep;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -51,9 +51,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.google.idea.testing.ServiceHelper;
-import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -98,7 +96,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   public void setupTestInfoGatherers() {
     // Message collector for collecting errors.
     messageCollector = new MessageCollector();
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
     // Setup interceptor for fake running of blaze commands and capture details.
@@ -111,20 +109,11 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   public void setupBuildResultHelperProvider() throws GetArtifactsException {
     mockBuildResultHelper = mock(BuildResultHelper.class);
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS));
-    registerExtension(
-        BuildResultHelperProvider.EP_NAME,
-        new BuildResultHelperProvider() {
-          @Override
-          public Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo) {
-            return Optional.of(mockBuildResultHelper);
-          }
-
-          @Override
-          public Optional<BuildResultHelper> doCreateForLocalBuild(Project project) {
-            return Optional.of(mockBuildResultHelper);
-          }
-        });
+        .thenReturn(
+            new ParsedBepOutput(null, getExecRoot(), null, null, 0, BuildResult.SUCCESS, 0));
+    BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
+    buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
+    registerExtension(BuildSystemProvider.EP_NAME, buildSystem);
   }
 
   @Test
@@ -283,7 +272,7 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   public void build_withNullExecRoot_shouldFail() throws Exception {
     // Return null execroot
     when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS));
+        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS, 0));
 
     // Return fake deploy info proto and mocked deploy info data object.
     AndroidDeployInfo fakeProto = AndroidDeployInfo.newBuilder().build();
@@ -309,12 +298,10 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
   /** Saves the latest blaze command and context for later verification. */
   private static class ExternalTaskInterceptor implements ExternalTaskProvider {
     ImmutableList<String> command;
-    BlazeContext context;
 
     @Override
     public ExternalTask build(ExternalTask.Builder builder) {
       command = builder.command.build();
-      context = builder.context;
       return scopes -> 0;
     }
   }

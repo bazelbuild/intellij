@@ -15,12 +15,12 @@
  */
 package com.google.idea.blaze.cpp;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.executor.MockBlazeExecutor;
@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.CIdeInfo;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.ideinfo.TargetMapBuilder;
 import com.google.idea.blaze.base.io.FileOperationProvider;
@@ -66,6 +65,8 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -74,7 +75,7 @@ import org.junit.runners.JUnit4;
 /** Tests for {@link BlazeConfigurationResolver}. */
 @RunWith(JUnit4.class)
 public class BlazeConfigurationResolverTest extends BlazeTestCase {
-  private final BlazeContext context = new BlazeContext();
+  private final BlazeContext context = BlazeContext.create();
   private final ErrorCollector errorCollector = new ErrorCollector();
   private final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/root"));
 
@@ -106,12 +107,10 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
     projectServices.register(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(project));
-    BuildSystemProvider buildSystemProvider = new BazelBuildSystemProvider();
-    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(buildSystemProvider);
     BlazeImportSettingsManager.getInstance(getProject())
         .setImportSettings(
-            new BlazeImportSettings("", "", "", "", buildSystemProvider.buildSystem()));
+            new BlazeImportSettings(
+                "", "", "", "", getBuildSystemProvider().getBuildSystem().getName()));
 
     registerExtensionPoint(
         BlazeCompilerFlagsProcessor.EP_NAME, BlazeCompilerFlagsProcessor.Provider.class);
@@ -120,6 +119,11 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
 
     resolver = new BlazeConfigurationResolver(project);
     resolverResult = BlazeConfigurationResolverResult.empty();
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   @Test
@@ -139,7 +143,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
-                    ImmutableList.of()))
+                    ImmutableList.of(),
+                    "//:toolchain"))
             .build();
     assertThatResolving(projectView, targetMap).producesNoConfigurations();
   }
@@ -154,7 +159,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
-                    ImmutableList.of(gen("foo/bar/library.cc"))))
+                    ImmutableList.of(gen("foo/bar/library.cc")),
+                    "//:toolchain"))
             .build();
     assertThatResolving(projectView, targetMap).producesNoConfigurations();
   }
@@ -169,7 +175,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"), gen("foo/bar/generated.cc"))))
+                    ImmutableList.of(src("foo/bar/binary.cc"), gen("foo/bar/generated.cc")),
+                    "//:toolchain"))
             .build();
     assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
   }
@@ -184,7 +191,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"))))
+                    ImmutableList.of(src("foo/bar/binary.cc")),
+                    "//:toolchain"))
             .build();
     assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
   }
@@ -199,19 +207,22 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                         "//foo/bar:binary",
                         CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                        ImmutableList.of(src("foo/bar/binary.cc")))
+                        ImmutableList.of(src("foo/bar/binary.cc")),
+                        "//:toolchain")
                     .addDependency("//bar/baz:library")
                     .addDependency("//third_party:library"))
             .addTarget(
                 createCcTarget(
                     "//bar/baz:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
-                    ImmutableList.of(src("bar/baz/library.cc"))))
+                    ImmutableList.of(src("bar/baz/library.cc")),
+                    "//:toolchain"))
             .addTarget(
                 createCcTarget(
                     "//third_party:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
-                    ImmutableList.of(src("third_party/library.cc"))))
+                    ImmutableList.of(src("third_party/library.cc")),
+                    "//:toolchain"))
             .build();
     assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
   }
@@ -226,7 +237,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                         "//foo/bar:binary",
                         CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                        ImmutableList.of(src("foo/bar/binary.cc")))
+                        ImmutableList.of(src("foo/bar/binary.cc")),
+                        "//:toolchain")
                     .addDependency("//foo/bar:library")
                     .addDependency("//third_party:library"))
             .addTarget(
@@ -234,30 +246,131 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//foo/bar:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
                     ImmutableList.of(src("foo/bar/library.cc")),
-                    ImmutableList.of("-DSOME_DEFINE=1")))
+                    ImmutableList.of("-DSOME_DEFINE=1"),
+                    "//:toolchain"))
             .addTarget(
                 createCcTarget(
                     "//third_party:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
-                    ImmutableList.of(src("third_party/library.cc"))))
+                    ImmutableList.of(src("third_party/library.cc")),
+                    "//:toolchain"))
             .build();
     assertThatResolving(projectView, targetMap)
         .producesConfigurationsFor("//foo/bar:binary", "//foo/bar:library");
   }
 
   @Test
-  public void withCcToolchainSuite_testSingleSourceTarget() {
+  public void withCcToolchainSuite_testSingleSourceCcBinaryTarget() {
     ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:binary"));
+    CToolchainIdeInfo.Builder cToolchainIdeInfoBuilder =
+        CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc"));
+    TargetIdeInfo ccTarget =
+        createCcTarget(
+                "//foo/bar:binary",
+                CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
+                ImmutableList.of(src("foo/bar/binary.cc")),
+                "//:toolchain_suite")
+            .build();
     TargetMap targetMap =
         TargetMapBuilder.builder()
-            .addTarget(createCcToolchainSuite())
-            .addTarget(
-                createCcTarget(
-                    "//foo/bar:binary",
-                    CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"))))
+            .addTarget(createCcToolchainSuite(cToolchainIdeInfoBuilder))
+            .addTarget(ccTarget)
             .build();
-    assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
+    assertThatResolving(projectView, targetMap)
+        .producesCToolchainIdeInfoForTarget("//foo/bar:binary", cToolchainIdeInfoBuilder.build());
+  }
+
+  // Java cc_library depends directly on a cc_toolchain_suite target. Should use the
+  // CToolchainIdeInfo from the cc_toolchain_suite to build the toolchainLookupMap.
+  @Test
+  public void withCcToolchainSuite_testSingleSourceCcLibraryTarget() {
+    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:library"));
+    CToolchainIdeInfo.Builder cToolchainIdeInfoBuilder =
+        CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc"));
+    TargetIdeInfo ccTarget =
+        createCcTarget(
+                "//foo/bar:library",
+                CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
+                ImmutableList.of(src("foo/bar/library.cc")),
+                ImmutableList.of(),
+                "//:toolchain_suite")
+            .build();
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchainSuite(cToolchainIdeInfoBuilder))
+            .addTarget(ccTarget)
+            .build();
+    assertThatResolving(projectView, targetMap)
+        .producesCToolchainIdeInfoForTarget("//foo/bar:library", cToolchainIdeInfoBuilder.build());
+  }
+
+  // Starlark cc_library depends on an intermediate cc_toolchain_alias target which has a direct
+  // dependency on a cc_toolchain_suite target. Should use the CToolchainIdeInfo from the
+  // cc_toolchain_alias to build the toolchainLookupMap.
+  @Test
+  public void withCcToolchainAlias_testSingleSourceTarget() {
+    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:library"));
+    // The CToolchainIdeInfo extracted from cc_toolchain_alias and cc_toolchain_suite should be
+    // identical, but we differentiate them here to verify that the CToolchainIdeInfo from
+    // cc_toolchain_alias target is used to build the toolchainLookupMap.
+    CToolchainIdeInfo.Builder cToolchainIdeInfoBuilderSuite =
+        CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc"));
+    CToolchainIdeInfo.Builder cToolchainIdeInfoBuilderAlias =
+        CToolchainIdeInfo.builder()
+            .setCppExecutable(new ExecutionRootPath("cc"))
+            .setTargetName("toolchain_alias");
+    TargetIdeInfo ccTarget =
+        createCcTarget(
+                "//foo/bar:library",
+                CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
+                ImmutableList.of(src("foo/bar/library.cc")),
+                ImmutableList.of(),
+                "//:toolchain_alias")
+            .build();
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchainSuite(cToolchainIdeInfoBuilderSuite))
+            .addTarget(
+                createCcToolchainAlias(cToolchainIdeInfoBuilderAlias)
+                    .addDependency("//:toolchain_suite"))
+            .addTarget(ccTarget)
+            .build();
+    assertThatResolving(projectView, targetMap)
+        .producesCToolchainIdeInfoForTarget(
+            "//foo/bar:library", cToolchainIdeInfoBuilderAlias.build());
+  }
+
+  // This is for an intermediate state where the cc_library starlarkification is rolled out, and
+  // the cc_library target directly depends on cc_toolchain_alias instead of cc_toolchain_suite, but
+  // users haven't updated their cache yet and the IDE does not add the cc_toolchain_alias to target
+  // map. In this case, we expect there to be a toolchain warning, but it should still produce
+  // configuration for the cc_library target and use the CToolchainIdeInfo from the
+  // cc_toolchain_suite target.
+  @Test
+  public void withCcToolchainAlias_testSingleSourceTarget_missingCcToolChainAliasTarget() {
+    ProjectView projectView = projectView(directories("foo/bar"), targets("//foo/bar:library"));
+    CToolchainIdeInfo.Builder cToolchainIdeInfoBuilder =
+        CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc"));
+    TargetIdeInfo ccTarget =
+        createCcTarget(
+                "//foo/bar:library",
+                CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
+                ImmutableList.of(src("foo/bar/library.cc")),
+                ImmutableList.of(),
+                "//:toolchain_alias")
+            .build();
+    TargetMap targetMap =
+        TargetMapBuilder.builder()
+            .addTarget(createCcToolchainSuite(cToolchainIdeInfoBuilder))
+            .addTarget(ccTarget)
+            .build();
+    String errMessage =
+        String.format(
+            "cc target is expected to depend on exactly 1 cc toolchain."
+                + " Found 0 toolchains for these targets: %s",
+            ccTarget.getKey());
+    assertThatResolving(projectView, targetMap, errMessage)
+        .producesCToolchainIdeInfoForTarget("//foo/bar:library", cToolchainIdeInfoBuilder.build());
   }
 
   @Test
@@ -273,7 +386,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                         "//foo:test",
                         CppBlazeRules.RuleTypes.CC_TEST.getKind(),
-                        ImmutableList.of(src("foo/test.cc")))
+                        ImmutableList.of(src("foo/test.cc")),
+                        "//:toolchain")
                     .addDependency("//foo:library")
                     .addDependency("//foo/bar:library")
                     .addDependency("//third_party:library"))
@@ -281,13 +395,15 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo:library",
                     CppBlazeRules.RuleTypes.CC_TEST.getKind(),
-                    ImmutableList.of(src("foo/library.cc"))))
+                    ImmutableList.of(src("foo/library.cc")),
+                    "//:toolchain"))
             .addTarget(
                 createCcTarget(
                         "//foo/bar:binary",
                         CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                         ImmutableList.of(src("foo/bar/binary.cc")),
-                        ImmutableList.of("-DSOME_DEFINE=1"))
+                        ImmutableList.of("-DSOME_DEFINE=1"),
+                        "//:toolchain")
                     .addDependency("//foo/bar:library")
                     .addDependency("//foo/bar:empty")
                     .addDependency("//foo/bar:generated")
@@ -298,29 +414,34 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//foo/bar:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
                     ImmutableList.of(src("foo/bar/library.cc")),
-                    ImmutableList.of("-DSOME_DEFINE=2")))
+                    ImmutableList.of("-DSOME_DEFINE=2"),
+                    "//:toolchain"))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:empty",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
-                    ImmutableList.of()))
+                    ImmutableList.of(),
+                    "//:toolchain"))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:generated",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
-                    ImmutableList.of(gen("foo/bar/generated.cc"))))
+                    ImmutableList.of(gen("foo/bar/generated.cc")),
+                    "//:toolchain"))
             .addTarget(
                 createCcTarget(
                     "//foo/bar:mixed",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
                     ImmutableList.of(src("foo/bar/mixed_src.cc"), gen("foo/bar/mixed_gen.cc")),
-                    ImmutableList.of("-DSOME_DEFINE=3")))
+                    ImmutableList.of("-DSOME_DEFINE=3"),
+                    "//:toolchain"))
             .addTarget(
                 createCcTarget(
                         "//foo/baz:test",
                         CppBlazeRules.RuleTypes.CC_TEST.getKind(),
                         ImmutableList.of(src("foo/baz/test.cc")),
-                        ImmutableList.of("-DSOME_DEFINE=4"))
+                        ImmutableList.of("-DSOME_DEFINE=4"),
+                        "//:toolchain")
                     .addDependency("//foo/baz:binary")
                     .addDependency("//foo/baz:library")
                     .addDependency("//foo/qux:library"))
@@ -329,23 +450,27 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//foo/baz:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
                     ImmutableList.of(src("foo/baz/binary.cc")),
-                    ImmutableList.of("-DSOME_DEFINE=5")))
+                    ImmutableList.of("-DSOME_DEFINE=5"),
+                    "//:toolchain"))
             .addTarget(
                 createCcTarget(
                     "//foo/baz:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
                     ImmutableList.of(src("foo/baz/library.cc")),
-                    ImmutableList.of("-DSOME_DEFINE=6")))
+                    ImmutableList.of("-DSOME_DEFINE=6"),
+                    "//:toolchain"))
             .addTarget(
                 createCcTarget(
                     "//foo/qux:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
-                    ImmutableList.of(src("foo/qux/library.cc"))))
+                    ImmutableList.of(src("foo/qux/library.cc")),
+                    "//:toolchain"))
             .addTarget(
                 createCcTarget(
                     "//third_party:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
-                    ImmutableList.of(src("third_party/library.cc"))))
+                    ImmutableList.of(src("third_party/library.cc")),
+                    "//:toolchain"))
             .build();
     assertThatResolving(projectView, targetMap)
         .producesConfigurationsFor(
@@ -368,7 +493,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"))))
+                    ImmutableList.of(src("foo/bar/binary.cc")),
+                    "//:toolchain"))
             .build();
     ImmutableList<BlazeResolveConfiguration> noReusedConfigurations = ImmutableList.of();
     assertThatResolving(projectView, targetMap)
@@ -385,7 +511,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"))))
+                    ImmutableList.of(src("foo/bar/binary.cc")),
+                    "//:toolchain"))
             .build();
 
     assertThatResolving(projectView, targetMap).producesConfigurationsFor("//foo/bar:binary");
@@ -407,7 +534,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"))));
+                    ImmutableList.of(src("foo/bar/binary.cc")),
+                    "//:toolchain"));
     createVirtualFile("/root/foo/bar/binary.cc");
     createVirtualFile("/root/foo/bar/binary_helper.cc");
 
@@ -422,7 +550,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"), src("foo/bar/binary_helper.cc"))));
+                    ImmutableList.of(src("foo/bar/binary.cc"), src("foo/bar/binary_helper.cc")),
+                    "//:toolchain"));
 
     assertThatResolving(projectView, targetMap.build())
         .reusedConfigurations(ImmutableList.of(), "//foo/bar:binary");
@@ -439,7 +568,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"))));
+                    ImmutableList.of(src("foo/bar/binary.cc")),
+                    "//:toolchain"));
     assertThatResolving(projectView, targetMapBuilder.build())
         .producesConfigurationsFor("//foo/bar:binary");
     Collection<BlazeResolveConfiguration> initialConfigurations =
@@ -451,7 +581,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
             "//foo/bar:library",
             CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
             ImmutableList.of(src("foo/bar/library.cc")),
-            ImmutableList.of("-DOTHER=1")));
+            ImmutableList.of("-DOTHER=1"),
+            "//:toolchain"));
 
     assertThatResolving(projectView, targetMapBuilder.build())
         .reusedConfigurations(initialConfigurations, "//foo/bar:library");
@@ -468,7 +599,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"))))
+                    ImmutableList.of(src("foo/bar/binary.cc")),
+                    "//:toolchain"))
             .build();
     ImmutableList<BlazeResolveConfiguration> noReusedConfigurations = ImmutableList.of();
     assertThatResolving(projectView, targetMap)
@@ -483,7 +615,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//foo/bar:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
                     ImmutableList.of(src("foo/bar/library.cc")),
-                    ImmutableList.of("-DOTHER=1")))
+                    ImmutableList.of("-DOTHER=1"),
+                    "//:toolchain"))
             .build();
     assertThatResolving(projectView, targetMap2)
         .reusedConfigurations(noReusedConfigurations, "//foo/bar:library");
@@ -500,7 +633,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"))))
+                    ImmutableList.of(src("foo/bar/binary.cc")),
+                    "//:toolchain"))
             .build();
     ImmutableList<BlazeResolveConfiguration> noReusedConfigurations = ImmutableList.of();
     assertThatResolving(projectView, targetMap)
@@ -516,7 +650,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                     "//foo/zoo:library",
                     CppBlazeRules.RuleTypes.CC_LIBRARY.getKind(),
                     ImmutableList.of(src("foo/zoo/library.cc")),
-                    ImmutableList.of("-DOTHER=1")))
+                    ImmutableList.of("-DOTHER=1"),
+                    "//:toolchain"))
             .build();
     assertThatResolving(projectView2, targetMap2)
         .reusedConfigurations(noReusedConfigurations, "//foo/zoo:library");
@@ -533,7 +668,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"))))
+                    ImmutableList.of(src("foo/bar/binary.cc")),
+                    "//:toolchain"))
             .build();
 
     ImmutableList<BlazeResolveConfiguration> noReusedConfigurations = ImmutableList.of();
@@ -557,7 +693,8 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 createCcTarget(
                     "//foo/bar:binary",
                     CppBlazeRules.RuleTypes.CC_BINARY.getKind(),
-                    ImmutableList.of(src("foo/bar/binary.cc"))))
+                    ImmutableList.of(src("foo/bar/binary.cc")),
+                    "//:toolchain"))
             .build();
     createVirtualFile("/root/foo/bar/binary.cc");
 
@@ -625,12 +762,10 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     computeResolverResult(projectView, targetMap);
     errorCollector.assertNoIssues();
 
-    ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainMap =
-        BlazeConfigurationToolchainResolver.buildToolchainLookupMap(context, targetMap);
-    assertThat(toolchainMap.get(targetWith32Dep.build().getKey()))
-        .isEqualTo(aarch32Toolchain.build());
-    assertThat(toolchainMap.get(targetWith64Dep.build().getKey()))
-        .isEqualTo(aarch64Toolchain.build());
+    assertCToolchainIdeInfoForTarget(
+        targetWith32Dep.build().getKey().toString(), aarch32Toolchain.build());
+    assertCToolchainIdeInfoForTarget(
+        targetWith64Dep.build().getKey().toString(), aarch64Toolchain.build());
   }
 
   private static ArtifactLocation src(String path) {
@@ -642,17 +777,18 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   }
 
   private static TargetIdeInfo.Builder createCcTarget(
-      String label, Kind kind, ImmutableList<ArtifactLocation> sources) {
-    return createCcTarget(label, kind, sources, ImmutableList.of());
+      String label, Kind kind, ImmutableList<ArtifactLocation> sources, String toolchainDep) {
+    return createCcTarget(label, kind, sources, ImmutableList.of(), toolchainDep);
   }
 
   private static TargetIdeInfo.Builder createCcTarget(
       String label,
       Kind kind,
       ImmutableList<ArtifactLocation> sources,
-      ImmutableList<String> copts) {
+      ImmutableList<String> copts,
+      String toolchainDep) {
     TargetIdeInfo.Builder targetInfo =
-        TargetIdeInfo.builder().setLabel(label).setKind(kind).addDependency("//:toolchain");
+        TargetIdeInfo.builder().setLabel(label).setKind(kind).addDependency(toolchainDep);
     sources.forEach(targetInfo::addSource);
     return targetInfo.setCInfo(CIdeInfo.builder().addSources(sources).addLocalCopts(copts));
   }
@@ -662,15 +798,25 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
         .setLabel("//:toolchain")
         .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN.getKind())
         .setCToolchainInfo(
-            CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc")));
+            CToolchainIdeInfo.builder()
+                .setCppExecutable(new ExecutionRootPath("cc"))
+                .setTargetName("toolchain"));
   }
 
-  private static TargetIdeInfo.Builder createCcToolchainSuite() {
+  private static TargetIdeInfo.Builder createCcToolchainSuite(
+      CToolchainIdeInfo.Builder cToolchainIdeInfoBuilder) {
     return TargetIdeInfo.builder()
-        .setLabel("//:toolchain")
+        .setLabel("//:toolchain_suite")
         .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN_SUITE.getKind())
-        .setCToolchainInfo(
-            CToolchainIdeInfo.builder().setCppExecutable(new ExecutionRootPath("cc")));
+        .setCToolchainInfo(cToolchainIdeInfoBuilder);
+  }
+
+  private static TargetIdeInfo.Builder createCcToolchainAlias(
+      CToolchainIdeInfo.Builder cToolchainIdeInfoBuilder) {
+    return TargetIdeInfo.builder()
+        .setLabel("//:toolchain_alias")
+        .setKind(CppBlazeRules.RuleTypes.CC_TOOLCHAIN_ALIAS.getKind())
+        .setCToolchainInfo(cToolchainIdeInfoBuilder);
   }
 
   private static ListSection<DirectoryEntry> directories(String... directories) {
@@ -719,8 +865,17 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
   }
 
   private Subject assertThatResolving(ProjectView projectView, TargetMap targetMap) {
+    return assertThatResolving(projectView, targetMap, "");
+  }
+
+  private Subject assertThatResolving(
+      ProjectView projectView, TargetMap targetMap, String issueMessage) {
     computeResolverResult(projectView, targetMap);
-    errorCollector.assertNoIssues();
+    if (issueMessage.isEmpty()) {
+      errorCollector.assertNoIssues();
+    } else {
+      errorCollector.assertIssues(issueMessage);
+    }
     return new Subject() {
       @Override
       public void producesConfigurationsFor(String... expected) {
@@ -729,6 +884,12 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
                 .map(configuration -> configuration.getDisplayName())
                 .collect(Collectors.toList());
         assertThat(targets).containsExactly((Object[]) expected);
+      }
+
+      @Override
+      public void producesCToolchainIdeInfoForTarget(
+          String target, CToolchainIdeInfo expectedCToolchainIdeInfo) {
+        assertCToolchainIdeInfoForTarget(target, expectedCToolchainIdeInfo);
       }
 
       @Override
@@ -760,8 +921,19 @@ public class BlazeConfigurationResolverTest extends BlazeTestCase {
     };
   }
 
+  private void assertCToolchainIdeInfoForTarget(String target, CToolchainIdeInfo expected) {
+    ImmutableList<Map.Entry<BlazeResolveConfigurationData, BlazeResolveConfiguration>> entry =
+        resolverResult.getConfigurationMap().entrySet().stream()
+            .filter(e -> Objects.equals(e.getValue().getDisplayName(), target))
+            .collect(toImmutableList());
+    assertThat(entry).hasSize(1);
+    assertThat(entry.get(0).getKey().getCToolchainIdeInfo()).isEqualTo(expected);
+  }
+
   private interface Subject {
     void producesConfigurationsFor(String... expected);
+
+    void producesCToolchainIdeInfoForTarget(String target, CToolchainIdeInfo expected);
 
     void producesNoConfigurations();
 

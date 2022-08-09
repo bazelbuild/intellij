@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.java.run.fastbuild;
 
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -25,8 +25,8 @@ interface FastBuildTestEnvironmentCreatorFactory extends BuildSystemExtensionPoi
   ExtensionPointName<FastBuildTestEnvironmentCreatorFactory> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.FastBuildTestEnvironmentCreatorFactory");
 
-  static FastBuildTestEnvironmentCreatorFactory getInstance(BuildSystem buildSystem) {
-    return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystem);
+  static FastBuildTestEnvironmentCreatorFactory getInstance(BuildSystemName buildSystemName) {
+    return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystemName);
   }
 
   FastBuildTestEnvironmentCreator getTestEnvironmentCreator(Project project);

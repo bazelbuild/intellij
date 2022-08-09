@@ -22,66 +22,76 @@ import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.Intellij
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.TargetIdeInfo;
 import com.google.idea.blaze.BazelIntellijAspectTest;
 import com.google.idea.blaze.aspect.IntellijAspectTest;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests that plugin processor jars from java targets are extracted correctly by the aspects. */
+/**
+ * Tests that plugin processor jars from java & kotlin targets are extracted correctly by the
+ * aspects for blaze.
+ */
 @RunWith(JUnit4.class)
 public class PluginProcessorJarTest extends BazelIntellijAspectTest {
-  private static final boolean IS_BAZEL_TEST =
-      System.getProperties().containsKey("bazel.test_suite");
-
   // blaze and bazel have different annotation processor paths & names.
-  private static final String JAR_STR =
-      jarString(
-          IS_BAZEL_TEST
-              ? "auto-value-1.6.2.jar"
-              : "third_party/java_src/auto/value/libvalue_processor.jar",
-          /*iJar=*/ null,
-          /*sourceJar=*/ null);
-  private static final String OUTPUT_GROUP_FILES =
-      IS_BAZEL_TEST
-          ? "../auto_value/auto-value-1.6.2.jar"
-          : "third_party/java_src/auto/value/libvalue_processor.jar";
+  private static final String CUSTOMIZE_LINT_RULE_JAR =
+      "third_party/java_src/auto/value/libvalue_processor.jar";
+  private static final String CUSTOMIZE_LINT_RULE_JAR_STR =
+      jarString(CUSTOMIZE_LINT_RULE_JAR, /*iJar=*/ null, /*sourceJar=*/ null);
+  private static final String GLOBAL_LINT_CHECK_JAR_PATH = "java/com/google/android/tools/lint/";
 
-  @Ignore("b/211509545")
   @Test
   public void ruleWithNoPlugins() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":no_plugin_fixture");
     TargetIdeInfo targetIdeInfo = findTarget(testFixture, ":no_plugin");
     assertThat(targetIdeInfo.getJavaIdeInfo().getPluginProcessorJarsList()).isEmpty();
+    targetIdeInfo = findTarget(testFixture, ":no_plugin_kt");
+    // only kotlin rules can export global lint rule jars
+    assertGlobalLintRuleJarIsIncluded(targetIdeInfo, testFixture);
   }
 
-  @Ignore("b/211509545")
+  private void assertCustomizedLintRuleJarIsIncluded(
+      TargetIdeInfo targetIdeInfo, IntellijAspectTestFixture testFixture) {
+    assertThat(
+            targetIdeInfo.getJavaIdeInfo().getPluginProcessorJarsList().stream()
+                .map(IntellijAspectTest::libraryArtifactToString)
+                .collect(toList()))
+        .contains(CUSTOMIZE_LINT_RULE_JAR_STR);
+
+    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
+        .contains(CUSTOMIZE_LINT_RULE_JAR);
+  }
+
+  private void assertGlobalLintRuleJarIsIncluded(
+      TargetIdeInfo targetIdeInfo, IntellijAspectTestFixture testFixture) {
+    assertThat(targetIdeInfo.getJavaIdeInfo().getPluginProcessorJarsList()).isNotEmpty();
+    assertThat(
+            targetIdeInfo.getJavaIdeInfo().getPluginProcessorJarsList().stream()
+                .map(IntellijAspectTest::libraryArtifactToString)
+                .anyMatch(jar -> jar.contains(GLOBAL_LINT_CHECK_JAR_PATH)))
+        .isTrue();
+    assertThat(
+            getOutputGroupFiles(testFixture, "intellij-resolve-java").stream()
+                .anyMatch(jar -> jar.contains(GLOBAL_LINT_CHECK_JAR_PATH)))
+        .isTrue();
+  }
+
   @Test
   public void ruleWithPlugins_createsPluginProcessorJars() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":has_plugin_fixture");
     TargetIdeInfo targetIdeInfo = findTarget(testFixture, ":has_plugin");
-
-    assertThat(
-            targetIdeInfo.getJavaIdeInfo().getPluginProcessorJarsList().stream()
-                .map(IntellijAspectTest::libraryArtifactToString)
-                .collect(toList()))
-        .contains(JAR_STR);
-
-    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .contains(OUTPUT_GROUP_FILES);
+    assertCustomizedLintRuleJarIsIncluded(targetIdeInfo, testFixture);
+    targetIdeInfo = findTarget(testFixture, ":has_plugin_kt");
+    assertCustomizedLintRuleJarIsIncluded(targetIdeInfo, testFixture);
+    assertGlobalLintRuleJarIsIncluded(targetIdeInfo, testFixture);
   }
 
-  @Ignore("b/211509545")
   @Test
   public void ruleWithDeps_createsPluginProcessorJars() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":has_plugin_deps_fixture");
     TargetIdeInfo targetIdeInfo = findTarget(testFixture, ":has_plugin_deps");
-
-    assertThat(
-            targetIdeInfo.getJavaIdeInfo().getPluginProcessorJarsList().stream()
-                .map(IntellijAspectTest::libraryArtifactToString)
-                .collect(toList()))
-        .contains(JAR_STR);
-    assertThat(getOutputGroupFiles(testFixture, "intellij-resolve-java"))
-        .contains(OUTPUT_GROUP_FILES);
+    assertCustomizedLintRuleJarIsIncluded(targetIdeInfo, testFixture);
+    targetIdeInfo = findTarget(testFixture, ":has_plugin_deps_kt");
+    assertCustomizedLintRuleJarIsIncluded(targetIdeInfo, testFixture);
+    assertGlobalLintRuleJarIsIncluded(targetIdeInfo, testFixture);
   }
 }

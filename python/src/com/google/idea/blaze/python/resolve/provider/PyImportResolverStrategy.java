@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.python.resolve.provider;
 
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -48,5 +48,5 @@ public interface PyImportResolverStrategy {
   void addImportCandidates(PsiReference reference, String name, AutoImportQuickFix quickFix);
 
   /** Whether this import resolver strategy is applicable to the given build system */
-  boolean appliesToBuildSystem(BuildSystem buildSystem);
+  boolean appliesToBuildSystem(BuildSystemName buildSystemName);
 }

@@ -35,7 +35,7 @@ public final class Scope {
 
   /** Runs a scoped function in a new nested scope. */
   public static <T> T push(@Nullable BlazeContext parentContext, ScopedFunction<T> scopedFunction) {
-    BlazeContext context = new BlazeContext(parentContext);
+    BlazeContext context = BlazeContext.create(parentContext);
     try {
       return scopedFunction.execute(context);
     } catch (ProcessCanceledException e) {
@@ -52,7 +52,7 @@ public final class Scope {
 
   /** Runs a scoped operation in a new nested scope. */
   public static void push(@Nullable BlazeContext parentContext, ScopedOperation scopedOperation) {
-    BlazeContext context = new BlazeContext(parentContext);
+    BlazeContext context = BlazeContext.create(parentContext);
     try {
       scopedOperation.execute(context);
     } catch (ProcessCanceledException e) {

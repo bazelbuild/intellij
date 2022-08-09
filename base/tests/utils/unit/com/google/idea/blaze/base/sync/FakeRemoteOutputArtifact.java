@@ -70,4 +70,18 @@ public class FakeRemoteOutputArtifact implements RemoteOutputArtifact {
   public long getSyncTimeMillis() {
     return 0;
   }
+
+  @Override
+  public int hashCode() {
+    return file.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    return obj instanceof FakeRemoteOutputArtifact
+        && getRelativePath().equals(((FakeRemoteOutputArtifact) obj).getRelativePath());
+  }
 }

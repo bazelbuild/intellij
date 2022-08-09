@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 /** A heuristic to recognize JUnit test runner classes which have parameterized test cases. */
 public interface JUnitParameterizedClassHeuristic {
 
-  String STANDARD_JUNIT_TEST_SUFFIX = "(\\[.+\\])?";
+  String STANDARD_JUNIT_TEST_SUFFIX = "(\\[.*\\])?";
   String USER_SPECIFIED_TEST_SUFFIX = ".*";
 
   /** Information about the parameterized test. */

@@ -15,44 +15,220 @@
  */
 package com.google.idea.sdkcompat.indexing;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl;
+import com.intellij.util.indexing.diagnostic.IndexingTimes;
+import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
+import com.intellij.util.indexing.diagnostic.StatsPerFileType;
+import com.intellij.util.indexing.diagnostic.StatsPerIndexer;
+import com.intellij.util.indexing.diagnostic.dto.JsonDuration;
+import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics;
+import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics;
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 /** #api212: inline into IndexingLoggerTest */
+@SuppressWarnings("UnstableApiUsage")
 public class ProjectIndexingHistoryWrapper {
-  private final ProjectIndexingHistoryImpl projectIndexingHistoryImpl;
+  private final ProjectIndexingHistory projectIndexingHistory;
 
-  private ProjectIndexingHistoryWrapper(ProjectIndexingHistoryImpl projectIndexingHistoryImpl) {
-    this.projectIndexingHistoryImpl = projectIndexingHistoryImpl;
+  private ProjectIndexingHistoryWrapper(ProjectIndexingHistory projectIndexingHistory) {
+    this.projectIndexingHistory = projectIndexingHistory;
   }
 
   public static ProjectIndexingHistoryWrapper create(Project project) {
+    return create(project, /* providerName= */ "");
+  }
+
+  public static ProjectIndexingHistoryWrapper create(Project project, String providerName) {
+    return create(project, providerName, /* providerIndexingTime= */ Duration.ZERO);
+  }
+
+  public static ProjectIndexingHistoryWrapper create(
+      Project project, String providerName, Duration providerIndexingTime) {
+    return create(
+        project,
+        /* totalIndexingTime= */ Duration.ZERO,
+        /* scanFilesDuration= */ Duration.ZERO,
+        /* totalUpdatingTime= */ Duration.ZERO,
+        providerName,
+        /* providerIndexingTime= */ providerIndexingTime);
+  }
+
+  public static ProjectIndexingHistoryWrapper create(
+      Project project,
+      Duration totalIndexingTime,
+      Duration scanFilesDuration,
+      Duration totalUpdatingTime,
+      String providerName,
+      Duration providerIndexingTime) {
+    ImmutableList<JsonFileProviderIndexStatistics> provider;
+    if (providerName.isEmpty()) {
+      provider = ImmutableList.of();
+    } else {
+      provider =
+          ImmutableList.of(
+              new JsonFileProviderIndexStatistics(
+                  providerName,
+                  /* totalNumberOfIndexedFiles= */ 0,
+                  /* totalNumberOfFilesFullyIndexedByExtensions= */ 0,
+                  /* totalIndexingTime= */ new JsonDuration(
+                      /* nano= */ providerIndexingTime.toNanos()),
+                  /* contentLoadingTime= */ new JsonDuration(/* nano= */ 0),
+                  /* numberOfTooLargeForIndexingFiles= */ 0,
+                  /* slowIndexedFiles= */ ImmutableList.of(),
+                  /* indexedFiles= */ ImmutableList.of()));
+    }
+
     return new ProjectIndexingHistoryWrapper(
-        new ProjectIndexingHistoryImpl(project, /* indexingReason= */ ""));
+        new FakeProjectIndexingHistory(
+            project,
+            provider,
+            new FakeIndexingTimes(totalIndexingTime, totalUpdatingTime, scanFilesDuration)));
   }
 
-  /** #api203: inline into IndexingLoggerTest */
-  public static void setIndexingVisibleTime(
-      IndexingJobStatistics indexingStatistic, Duration expectedIndexingVisibleTime) {
-    indexingStatistic.setIndexingVisibleTime(expectedIndexingVisibleTime.toNanos());
+  public ProjectIndexingHistory getProjectIndexingHistory() {
+    return projectIndexingHistory;
   }
+  /**
+   * #api212: review fields and consider inlining this class into IndexingLoggerTest since new
+   * versions only add/remove fields, and we can just omit @Override (with an @SuppressWarnings and
+   * #api annotation
+   */
+  private static final class FakeProjectIndexingHistory implements ProjectIndexingHistory {
 
-  public ProjectIndexingHistoryImpl getProjectIndexingHistory() {
-    return projectIndexingHistoryImpl;
+    private final Project project;
+    private final ImmutableList<JsonFileProviderIndexStatistics> statistics;
+    private final FakeIndexingTimes fakeIndexingTimes;
+
+    public FakeProjectIndexingHistory(
+        Project project,
+        ImmutableList<JsonFileProviderIndexStatistics> statistics,
+        FakeIndexingTimes fakeIndexingTimes) {
+      this.project = project;
+      this.statistics = statistics;
+      this.fakeIndexingTimes = fakeIndexingTimes;
+    }
+
+    @Override
+    public String getIndexingReason() {
+      return "";
+    }
+
+    @Override
+    public long getIndexingSessionId() {
+      return 0;
+    }
+
+    @Override
+    public Project getProject() {
+      return project;
+    }
+
+    @Override
+    public ImmutableList<JsonFileProviderIndexStatistics> getProviderStatistics() {
+      return statistics;
+    }
+
+    @Override
+    public ImmutableList<JsonScanningStatistics> getScanningStatistics() {
+      return ImmutableList.of();
+    }
+
+    @Override
+    public IndexingTimes getTimes() {
+      return fakeIndexingTimes;
+    }
+
+    @Override
+    public ImmutableMap<String, StatsPerFileType> getTotalStatsPerFileType() {
+      return ImmutableMap.of();
+    }
+
+    @Override
+    public ImmutableMap<String, StatsPerIndexer> getTotalStatsPerIndexer() {
+      return ImmutableMap.of();
+    }
   }
+  /**
+   * #api212: review fields and consider inlining this class into IndexingLoggerTest since new
+   * versions only add/remove fields, and we can just omit @Override (with an @SuppressWarnings and
+   * #api annotation
+   */
+  private static final class FakeIndexingTimes implements IndexingTimes {
 
-  public void addProviderStatistics(IndexingJobStatistics statistics) {
-    projectIndexingHistoryImpl.addProviderStatistics(statistics);
-  }
+    private final Duration indexingDuration;
+    private final Duration totalUpdatingTime;
+    private final Duration scanFilesDuration;
 
-  public void setIndexingTimes(
-      Duration expectedIndexingDuration,
-      Duration expectedUpdatingDuration,
-      Duration expectedScanFilesDuration) {
-    projectIndexingHistoryImpl.getTimes().setIndexingDuration(expectedIndexingDuration);
-    projectIndexingHistoryImpl.getTimes().setTotalUpdatingTime(expectedUpdatingDuration.toNanos());
-    projectIndexingHistoryImpl.getTimes().setScanFilesDuration(expectedScanFilesDuration);
+    public FakeIndexingTimes(
+        Duration indexingDuration, Duration updatingDuration, Duration scanFilesDuration) {
+      this.indexingDuration = indexingDuration;
+      this.totalUpdatingTime = updatingDuration;
+      this.scanFilesDuration = scanFilesDuration;
+    }
+
+    @Override
+    public Duration getIndexExtensionsDuration() {
+      return Duration.ZERO;
+    }
+
+    @Override
+    public Duration getContentLoadingDuration() {
+      return Duration.ZERO;
+    }
+
+    @Override
+    public Duration getIndexingDuration() {
+      return indexingDuration;
+    }
+
+    @Override
+    public String getIndexingReason() {
+      return "";
+    }
+
+    @Override
+    public Duration getPushPropertiesDuration() {
+      return Duration.ZERO;
+    }
+
+    @Override
+    public Duration getScanFilesDuration() {
+      return scanFilesDuration;
+    }
+
+    @Override
+    public Duration getSuspendedDuration() {
+      return Duration.ZERO;
+    }
+
+    @Override
+    public long getTotalUpdatingTime() {
+      return totalUpdatingTime.toNanos();
+    }
+
+    @Override
+    public ZonedDateTime getUpdatingEnd() {
+      return LocalDateTime.MIN.atZone(ZoneOffset.UTC);
+    }
+
+    @Override
+    public ZonedDateTime getUpdatingStart() {
+      return LocalDateTime.MIN.atZone(ZoneOffset.UTC);
+    }
+
+    @Override
+    public boolean getWasFullIndexing() {
+      return false;
+    }
+
+    @Override
+    public boolean getWasInterrupted() {
+      return false;
+    }
   }
 }

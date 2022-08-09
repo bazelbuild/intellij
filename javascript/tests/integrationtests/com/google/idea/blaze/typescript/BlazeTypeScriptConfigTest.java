@@ -56,7 +56,7 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
   public final void before() {
     fileSystem.createFile(
         "/src/workspace/project/foo/tsconfig.json",
-        "{\"extends\": \"../../blaze-bin/project/foo/tsconfig_editor.json\"}");
+        "{\"extends\": \"../../bazel-bin/project/foo/tsconfig_editor.json\"}");
     String[] tsconfigEditorContents =
         new String[] {
           "{",
@@ -125,24 +125,24 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     fileSystem.createFile(
         "/src/out/execroot/bin/project/foo/tsconfig_editor.json", tsconfigEditorContents);
     fileSystem.createFile(
-        "/src/workspace/blaze-bin/project/foo/tsconfig_editor.json", tsconfigEditorContents);
+        "/src/workspace/bazel-bin/project/foo/tsconfig_editor.json", tsconfigEditorContents);
     fileSystem.createFile("/src/workspace/project/foo/included.ts");
     fileSystem.createFile("/src/workspace/project/foo/excluded.ts");
     fileSystem.createFile(
         "/src/out/execroot/bin/project/foo/tsconfig.runfiles/workspace/javascript/closure/base.d.ts");
     fileSystem.createFile(
-        "/src/workspace/blaze-bin/project/foo/tsconfig.runfiles/workspace/javascript/closure/base.d.ts");
+        "/src/workspace/bazel-bin/project/foo/tsconfig.runfiles/workspace/javascript/closure/base.d.ts");
     fileSystem.createDirectory(
         "/src/out/execroot/bin/project/foo/tsconfig.runfiles/workspace/project/foo");
     fileSystem.createDirectory(
-        "/src/workspace/blaze-bin/project/foo/tsconfig.runfiles/workspace/project/foo");
+        "/src/workspace/bazel-bin/project/foo/tsconfig.runfiles/workspace/project/foo");
 
     registerApplicationService(
         FileOperationProvider.class,
         new MockFileOperationProviderWithSymlinks(
             ImmutableMap.of(
-                "/src/workspace/blaze-bin", "/src/out/execroot/bin",
-                "/src/workspace/blaze-genfiles", "/src/out/execroot/genfiles")));
+                "/src/workspace/bazel-bin", "/src/out/execroot/bin",
+                "/src/workspace/bazel-genfiles", "/src/out/execroot/genfiles")));
 
     MockProjectViewManager projectViewManager = new MockProjectViewManager(getProject());
     projectViewManager.setProjectView(
@@ -260,8 +260,8 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     assertThat(projectPath.getMappings())
         .containsExactly(
             "../../../../../workspace/*",
-            "../../../../../workspace/blaze-bin/*",
-            "../../../../../workspace/blaze-genfiles/*",
+            "../../../../../workspace/bazel-bin/*",
+            "../../../../../workspace/bazel-genfiles/*",
             "../../*",
             "../../../genfiles/*",
             "./tsconfig.runfiles/workspace/*")
@@ -272,8 +272,8 @@ public class BlazeTypeScriptConfigTest extends BlazeIntegrationTestCase {
     assertThat(projectFooPath.getMappings())
         .containsExactly(
             "../../../../../workspace/project/foo/*",
-            "../../../../../workspace/blaze-bin/project/foo/*",
-            "../../../../../workspace/blaze-genfiles/project/foo/*",
+            "../../../../../workspace/bazel-bin/project/foo/*",
+            "../../../../../workspace/bazel-genfiles/project/foo/*",
             "../../project/foo/*",
             "../../../genfiles/project/foo/*",
             "./tsconfig.runfiles/workspace/project/foo/*")

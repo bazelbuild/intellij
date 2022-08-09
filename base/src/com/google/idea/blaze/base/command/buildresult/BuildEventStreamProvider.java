@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.CountingInputStream;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent;
 import java.io.IOException;
@@ -47,16 +48,22 @@ public interface BuildEventStreamProvider {
   }
 
   static BuildEventStreamProvider fromInputStream(InputStream stream) {
+    CountingInputStream countingStream = new CountingInputStream(stream);
     return new BuildEventStreamProvider() {
       @Nullable
       @Override
       public BuildEvent getNext() throws BuildEventStreamException {
-        return parseNextEventFromStream(stream);
+        return parseNextEventFromStream(countingStream);
       }
 
       @Override
       public ImmutableList<String> getStderr() {
         return ImmutableList.of();
+      }
+
+      @Override
+      public long getBytesConsumed() {
+        return countingStream.getCount();
       }
     };
   }
@@ -66,4 +73,6 @@ public interface BuildEventStreamProvider {
   BuildEventStreamProtos.BuildEvent getNext() throws BuildEventStreamException;
 
   ImmutableList<String> getStderr() throws BuildEventStreamException;
+
+  long getBytesConsumed();
 }

@@ -17,7 +17,7 @@ package com.google.idea.blaze.java.run.hotswap;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -51,7 +51,7 @@ public interface JavaClasspathAspectStrategy {
 
     @Override
     public boolean isApplicable(BlazeVersionData versionData) {
-      return versionData.buildSystem() == BuildSystem.Bazel
+      return versionData.buildSystem() == BuildSystemName.Bazel
           && versionData.bazelIsAtLeastVersion(0, 5, 0);
     }
 

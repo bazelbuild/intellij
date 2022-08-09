@@ -30,7 +30,7 @@ public final class TargetName {
   // Rule names must be alpha-numeric or consist of the following allowed chars:
   // (note, rule names can also contain '/'; we handle that case separately)
   private static final ImmutableSet<Character> ALLOWED_META =
-      ImmutableSet.of('+', '_', ',', '=', '-', '.', '@', '~', '#', ' ', '(', ')', '$');
+      ImmutableSet.of('+', '_', ',', '=', '-', '.', '@', '~', '#', ' ', '(', ')', '$', '!');
 
   private final String name;
 

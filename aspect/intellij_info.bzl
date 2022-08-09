@@ -31,8 +31,11 @@ def get_go_import_path(ctx):
         import_path += "/" + ctx.label.name
     return import_path
 
-def get_py_launcher(ctx):
+def get_py_launcher(target, ctx):
     """Returns the python launcher for a given rule."""
+
+    # Used by other implementations of get_launcher
+    _ = target  # @unused
     attr = ctx.rule.attr
     if hasattr(attr, "_launcher") and attr._launcher != None:
         return str(attr._launcher.label)

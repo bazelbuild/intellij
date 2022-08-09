@@ -20,7 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.TestUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -60,7 +59,6 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);
@@ -101,7 +99,6 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);
@@ -142,7 +139,6 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);
@@ -180,7 +176,6 @@ public class JavascriptSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);

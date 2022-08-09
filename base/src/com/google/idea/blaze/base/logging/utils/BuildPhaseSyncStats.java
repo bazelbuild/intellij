@@ -19,11 +19,12 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /** Sync stats from a single build phase. */
 @AutoValue
@@ -49,8 +50,11 @@ public abstract class BuildPhaseSyncStats {
 
   public abstract Duration totalTime();
 
-  @Nullable
-  public abstract ShardStats shardStats();
+  public abstract long bepBytesConsumed();
+
+  public abstract Optional<ShardStats> shardStats();
+
+  public abstract Optional<BuildBinaryType> buildBinaryType();
 
   public static Builder builder() {
     return new AutoValue_BuildPhaseSyncStats.Builder()
@@ -62,6 +66,7 @@ public abstract class BuildPhaseSyncStats {
         .setTargetsDerivedFromDirectories(false)
         .setBuildResult(BuildResult.FATAL_ERROR)
         .setTimedEvents(ImmutableList.of())
+        .setBepBytesConsumed(0L)
         .setBuildIds(ImmutableList.of())
         .setTotalTime(Duration.ZERO);
   }
@@ -88,7 +93,11 @@ public abstract class BuildPhaseSyncStats {
 
     public abstract Builder setTotalTime(Duration totalTime);
 
+    public abstract Builder setBepBytesConsumed(long bytes);
+
     public abstract Builder setShardStats(ShardStats shardStats);
+
+    public abstract Builder setBuildBinaryType(BuildBinaryType type);
 
     public abstract BuildPhaseSyncStats build();
   }

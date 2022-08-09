@@ -381,7 +381,8 @@ class AddSourceToProjectHelper {
     }
 
     ImportRoots getImportRoots() {
-      return ImportRoots.builder(WorkspaceRoot.fromProject(project), Blaze.getBuildSystem(project))
+      return ImportRoots.builder(
+              WorkspaceRoot.fromProject(project), Blaze.getBuildSystemName(project))
           .add(projectViewSet)
           .build();
     }

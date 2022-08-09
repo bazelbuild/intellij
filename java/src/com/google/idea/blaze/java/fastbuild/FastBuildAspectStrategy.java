@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.joining;
 
 import com.google.devtools.intellij.aspect.FastBuildInfo;
 import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.google.repackaged.bazel.protobuf.TextFormat;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -48,8 +48,8 @@ abstract class FastBuildAspectStrategy implements BuildSystemExtensionPoint {
           str.endsWith(".ide-fast-build-info.txt") || str.endsWith(".ide-fast-build-info.txt.gz");
   private static final String OUTPUT_GROUP = "ide-fast-build";
 
-  static FastBuildAspectStrategy getInstance(BuildSystem buildSystem) {
-    return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystem);
+  static FastBuildAspectStrategy getInstance(BuildSystemName buildSystemName) {
+    return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystemName);
   }
 
   protected abstract List<String> getAspectFlags();

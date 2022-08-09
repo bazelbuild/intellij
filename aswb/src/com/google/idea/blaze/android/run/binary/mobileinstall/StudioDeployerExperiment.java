@@ -29,10 +29,12 @@ public class StudioDeployerExperiment {
 
   /** Returns whether mobile install deployments should happen via the studio deployer. */
   public static boolean isEnabled() {
+    // The Studio deployer experiment is specific to local builds on Linux. For other platforms,
+    // we'll rely entirely on the new Blaze specific deployment flow.
     if (!SystemInfo.isLinux) {
-      // TODO(b/197761450): Enable this for Macs after mdproxy related issues are sorted out.
       return false;
     }
+
     return useStudioDeployer.isEnabled();
   }
 

@@ -28,7 +28,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.run.BlazeAndroidRunState;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -40,8 +42,10 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.toolwindow.Task;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
@@ -176,8 +180,18 @@ public final class BlazeAndroidRunConfigurationRunner
                           new IssueOutputFilter(
                               project,
                               WorkspaceRoot.fromProject(project),
-                              BlazeInvocationContext.ContextType.RunConfiguration,
+                              BlazeInvocationContext.ContextType.BeforeRunTask,
                               true))
+                      .build())
+              .push(
+                  new ToolWindowScope.Builder(
+                          project, new Task(project, "Build apk", Task.Type.BEFORE_LAUNCH))
+                      .setPopupBehavior(settings.getShowBlazeConsoleOnRun())
+                      .setIssueParsers(
+                          BlazeIssueParser.defaultIssueParsers(
+                              project,
+                              WorkspaceRoot.fromProject(project),
+                              ContextType.BeforeRunTask))
                       .build())
               .push(new IdeaLogScope());
 

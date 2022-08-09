@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.java.sync.importer;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -27,6 +26,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.Dependency.DependencyType;
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
@@ -41,7 +41,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -70,7 +69,7 @@ import javax.annotation.Nullable;
 public final class BlazeJavaWorkspaceImporter {
   private final Project project;
   private final WorkspaceRoot workspaceRoot;
-  private final BuildSystem buildSystem;
+  private final BuildSystemProvider buildSystemProvider;
   private final ImportRoots importRoots;
   private final TargetMap targetMap;
   private final JdepsMap jdepsMap;
@@ -96,8 +95,11 @@ public final class BlazeJavaWorkspaceImporter {
       @Nullable SyncState oldSyncState) {
     this.project = project;
     this.workspaceRoot = workspaceRoot;
-    this.buildSystem = Blaze.getBuildSystem(project);
-    this.importRoots = ImportRoots.builder(workspaceRoot, buildSystem).add(projectViewSet).build();
+    this.buildSystemProvider = Blaze.getBuildSystemProvider(project);
+    this.importRoots =
+        ImportRoots.builder(workspaceRoot, buildSystemProvider.getBuildSystem().getName())
+            .add(projectViewSet)
+            .build();
     this.targetMap = targetMap;
     this.sourceFilter = sourceFilter;
     this.jdepsMap = jdepsMap;
@@ -161,12 +163,9 @@ public final class BlazeJavaWorkspaceImporter {
     Map<String, BlazeJarLibrary> jdepsPathToLibrary = Maps.newHashMap();
 
     // Add any output jars from source rules
-    for (TargetKey key : workspaceBuilder.outputJarsFromSourceTargets.keySet()) {
-      Collection<BlazeJarLibrary> jars = workspaceBuilder.outputJarsFromSourceTargets.get(key);
-      targetKeyToLibrary.putAll(key, jars);
-      for (BlazeJarLibrary library : jars) {
-        addLibraryToJdeps(jdepsPathToLibrary, library);
-      }
+    targetKeyToLibrary.putAll(workspaceBuilder.outputJarsFromSourceTargets);
+    for (BlazeJarLibrary library : workspaceBuilder.outputJarsFromSourceTargets.values()) {
+      addLibraryToJdeps(jdepsPathToLibrary, library);
     }
 
     for (TargetIdeInfo target : libraryTargets) {
@@ -174,19 +173,16 @@ public final class BlazeJavaWorkspaceImporter {
       if (javaIdeInfo == null) {
         continue;
       }
-      List<LibraryArtifact> allJars = Lists.newArrayList();
-      allJars.addAll(javaIdeInfo.getJars());
-      Collection<BlazeJarLibrary> libraries =
-          allJars.stream().map(jar -> new BlazeJarLibrary(jar, target.getKey())).collect(toList());
 
-      targetKeyToLibrary.putAll(target.getKey(), libraries);
-      for (BlazeJarLibrary library : libraries) {
+      for (LibraryArtifact jar : javaIdeInfo.getJars()) {
+        BlazeJarLibrary library = new BlazeJarLibrary(jar, target.getKey());
+        targetKeyToLibrary.put(target.getKey(), library);
         addLibraryToJdeps(jdepsPathToLibrary, library);
       }
-      workspaceBuilder.pluginProcessorJars.addAll(
-          javaIdeInfo.getPluginProcessorJars().stream()
-              .map(jar -> new BlazeJarLibrary(jar, target.getKey()))
-              .collect(toImmutableList()));
+
+      javaIdeInfo.getPluginProcessorJars().stream()
+          .map(LibraryArtifact::jarForIntellijLibrary)
+          .forEach(workspaceBuilder.pluginProcessorJars::add);
     }
 
     // Preserve classpath order. Add leaf level dependencies first and work the way up. This
@@ -200,7 +196,8 @@ public final class BlazeJavaWorkspaceImporter {
 
     // Collect jars from jdep references
     for (String jdepsPath : workspaceBuilder.jdeps) {
-      ArtifactLocation artifact = ExecutionPathHelper.parse(workspaceRoot, buildSystem, jdepsPath);
+      ArtifactLocation artifact =
+          ExecutionPathHelper.parse(workspaceRoot, buildSystemProvider, jdepsPath);
       if (sourceFilter.jdepsPathsForExcludedJars.contains(artifact.getRelativePath())) {
         continue;
       }
@@ -303,10 +300,9 @@ public final class BlazeJavaWorkspaceImporter {
       }
     }
     if (augmenters.stream().allMatch(argument -> argument.shouldAttachGenJar(target))) {
-      workspaceBuilder.generatedJarsFromSourceTargets.addAll(
-          javaIdeInfo.getGeneratedJars().stream()
-              .map(jar -> new BlazeJarLibrary(jar, targetKey))
-              .collect(toList()));
+      javaIdeInfo.getGeneratedJars().stream()
+          .map(jar -> new BlazeJarLibrary(jar, targetKey))
+          .forEach(workspaceBuilder.generatedJarsFromSourceTargets::add);
     }
     if (javaIdeInfo.getFilteredGenJar() != null) {
       workspaceBuilder.generatedJarsFromSourceTargets.add(
@@ -328,10 +324,9 @@ public final class BlazeJavaWorkspaceImporter {
           workspaceBuilder.generatedJarsFromSourceTargets);
     }
 
-    workspaceBuilder.pluginProcessorJars.addAll(
-        javaIdeInfo.getPluginProcessorJars().stream()
-            .map(jar -> new BlazeJarLibrary(jar, target.getKey()))
-            .collect(toImmutableList()));
+    javaIdeInfo.getPluginProcessorJars().stream()
+        .map(LibraryArtifact::jarForIntellijLibrary)
+        .forEach(workspaceBuilder.pluginProcessorJars::add);
   }
 
   @Nullable
@@ -352,7 +347,7 @@ public final class BlazeJavaWorkspaceImporter {
     List<ArtifactLocation> buildOutputJars = Lists.newArrayList();
     List<SourceArtifact> sourceArtifacts = Lists.newArrayList();
     Map<TargetKey, ArtifactLocation> javaPackageManifests = Maps.newHashMap();
-    Set<BlazeJarLibrary> pluginProcessorJars = Sets.newHashSet();
+    final Set<ArtifactLocation> pluginProcessorJars = Sets.newHashSet();
   }
 
   /**

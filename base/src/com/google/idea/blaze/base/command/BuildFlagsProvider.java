@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.util.List;
@@ -33,4 +34,13 @@ public interface BuildFlagsProvider {
       BlazeCommandName command,
       BlazeInvocationContext invocationContext,
       List<String> flags);
+
+  /** Flags to add to blaze/bazel sync invocations of the given type. */
+  default void addSyncFlags(
+      Project project,
+      ProjectViewSet projectViewSet,
+      BlazeCommandName command,
+      BlazeContext context,
+      BlazeInvocationContext invocationContext,
+      List<String> flags) {}
 }

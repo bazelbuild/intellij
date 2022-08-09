@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
@@ -57,8 +57,8 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
   private static final ExtensionPointName<FastBuildTestEnvironmentCreator> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.FastBuildTestEnvironmentCreator");
 
-  static FastBuildTestEnvironmentCreator getInstance(BuildSystem buildSystem) {
-    return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystem);
+  static FastBuildTestEnvironmentCreator getInstance(BuildSystemName buildSystemName) {
+    return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystemName);
   }
 
   abstract String getTestClassProperty();
@@ -126,7 +126,7 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
     }
 
     for (FastBuildTestEnvironmentModifier modifier :
-        FastBuildTestEnvironmentModifier.getModifiers(Blaze.getBuildSystem(project))) {
+        FastBuildTestEnvironmentModifier.getModifiers(Blaze.getBuildSystemName(project))) {
       modifier.modify(
           commandBuilder, config.getTargetKind(), fastBuildInfo, fastBuildInfo.blazeInfo());
     }
@@ -239,7 +239,7 @@ abstract class FastBuildTestEnvironmentCreator implements BuildSystemExtensionPo
         .addEnvironmentVariable(
             "TEST_WARNINGS_OUTPUT_FILE", getTestOutputFile(testOutputDir, "test.warnings"));
 
-    if (Blaze.getBuildSystem(project).equals(BuildSystem.Blaze)) {
+    if (Blaze.getBuildSystemName(project).equals(BuildSystemName.Blaze)) {
       File testDiagnosticsDir = new File(testOutputDir, "test.test_diagnostics");
 
       try {

@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
 import com.google.idea.blaze.base.run.state.RunConfigurationStateEditor;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.ui.UiUtil;
 import com.intellij.openapi.project.Project;
@@ -86,7 +87,8 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
       BlazeCommandName command,
       BlazeInvocationContext context) {
     return ImmutableList.<String>builder()
-        .addAll(BlazeFlags.blazeFlags(project, projectViewSet, command, context))
+        .addAll(
+            BlazeFlags.blazeFlags(project, projectViewSet, command, BlazeContext.create(), context))
         .addAll(getBlazeFlagsState().getFlagsForExternalProcesses())
         .addAll(getNativeDebuggerFlags())
         .build();

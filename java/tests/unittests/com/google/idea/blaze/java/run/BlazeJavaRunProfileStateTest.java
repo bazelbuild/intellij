@@ -16,13 +16,14 @@
 package com.google.idea.blaze.java.run;
 
 import static com.google.common.truth.Truth.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.FakeBuildInvoker;
+import com.google.idea.blaze.base.bazel.FakeBuildSystem;
+import com.google.idea.blaze.base.bazel.FakeBuildSystemProvider;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -48,7 +49,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
@@ -73,7 +74,7 @@ import org.junit.runners.JUnit4;
 public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", BuildSystem.Blaze);
+      new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze);
 
   private BlazeCommandRunConfiguration configuration;
 
@@ -117,16 +118,20 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerProviderEp.registerExtension(
         new BlazeCommandGenericRunConfigurationHandlerProvider(), testDisposable);
 
-    ExtensionPointImpl<BuildSystemProvider> buildSystemProviderEp =
-        registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
-    BuildSystemProvider buildSystemProvider = mock(BuildSystemProvider.class);
-    when(buildSystemProvider.getBinaryPath(project)).thenReturn("/usr/bin/blaze");
-    buildSystemProviderEp.registerExtension(buildSystemProvider, testDisposable);
-
     registerExtensionPoint(HotSwapCommandBuilder.EP_NAME, HotSwapCommandBuilder.class);
 
     configuration =
         new BlazeCommandRunConfigurationType().getFactory().createTemplateConfiguration(project);
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return FakeBuildSystemProvider.builder()
+        .setBuildSystem(
+            FakeBuildSystem.builder(BuildSystemName.Bazel)
+                .setBuildInvoker(FakeBuildInvoker.builder().binaryPath("/usr/bin/blaze").build())
+                .build())
+        .build();
   }
 
   @Test
@@ -139,7 +144,11 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerState.getBlazeFlagsState().setRawFlags(ImmutableList.of("--flag1", "--flag2"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommandBuilder(
-                    project, configuration, ImmutableList.of(), ExecutorType.RUN)
+                    project,
+                    configuration,
+                    ImmutableList.of(),
+                    ExecutorType.RUN,
+                    /*kotlinxCoroutinesJavaAgent=*/ null)
                 .build()
                 .toList())
         .isEqualTo(
@@ -162,7 +171,11 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommandBuilder(
-                    project, configuration, ImmutableList.of(), ExecutorType.DEBUG)
+                    project,
+                    configuration,
+                    ImmutableList.of(),
+                    ExecutorType.DEBUG,
+                    /*kotlinxCoroutinesJavaAgent=*/ null)
                 .build()
                 .toList())
         .isEqualTo(
@@ -185,7 +198,11 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
     handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
     assertThat(
             BlazeJavaRunProfileState.getBlazeCommandBuilder(
-                    project, configuration, ImmutableList.of(), ExecutorType.DEBUG)
+                    project,
+                    configuration,
+                    ImmutableList.of(),
+                    ExecutorType.DEBUG,
+                    /*kotlinxCoroutinesJavaAgent=*/ null)
                 .build()
                 .toList())
         .isEqualTo(
@@ -196,6 +213,26 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
                 "--",
                 "//label:java_binary_rule",
                 "--wrapper_script_flag=--debug=5005"));
+  }
+
+  @Test
+  public void kotlinxCoroutinesJavaAgentShouldBeAddedAsJavaAgent() {
+    configuration.setTargetInfo(
+        TargetInfo.builder(Label.create("//label:main"), "java_binary").build());
+    BlazeCommandRunConfigurationCommonState handlerState =
+        (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
+    handlerState.getCommandState().setCommand(BlazeCommandName.fromString("command"));
+
+    assertThat(
+            BlazeJavaRunProfileState.getBlazeCommandBuilder(
+                    project,
+                    configuration,
+                    ImmutableList.of(),
+                    ExecutorType.DEBUG,
+                    "/path/to/kotlinx-coroutines-lib.jar")
+                .build()
+                .toList())
+        .contains("--jvmopt=-javaagent:/path/to/kotlinx-coroutines-lib.jar");
   }
 
   @Test
@@ -255,7 +292,7 @@ public class BlazeJavaRunProfileStateTest extends BlazeTestCase {
   private static class DisabledFastBuildService implements FastBuildService {
 
     @Override
-    public boolean supportsFastBuilds(BuildSystem buildSystem, Kind kind) {
+    public boolean supportsFastBuilds(BuildSystemName buildSystemName, Kind kind) {
       return false;
     }
 

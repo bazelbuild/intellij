@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.scope.scopes;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
@@ -25,7 +27,9 @@ import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
+import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.toolwindow.TasksToolWindowService;
@@ -33,6 +37,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -55,6 +60,7 @@ public final class ToolWindowScope implements BlazeScope {
     private ProgressIndicator progressIndicator;
     private boolean startTaskOnScopeBegin = true;
     private boolean finishTaskOnScopeEnd = true;
+    private boolean showSummaryOutput = false;
     private FocusBehavior popupBehavior = FocusBehavior.ON_ERROR;
     private ImmutableList<BlazeIssueParser.Parser> parsers = ImmutableList.of();
 
@@ -63,6 +69,7 @@ public final class ToolWindowScope implements BlazeScope {
       this.task = task;
     }
 
+    @CanIgnoreReturnValue
     public Builder setProgressIndicator(ProgressIndicator progressIndicator) {
       this.progressIndicator = progressIndicator;
       return this;
@@ -72,6 +79,7 @@ public final class ToolWindowScope implements BlazeScope {
      * Makes the scope to start or not start the task when scope begins. The default behaviour is to
      * start the task.
      */
+    @CanIgnoreReturnValue
     public Builder setStartTaskOnScopeBegin(boolean startTaskOnScopeBegin) {
       this.startTaskOnScopeBegin = startTaskOnScopeBegin;
       return this;
@@ -81,18 +89,27 @@ public final class ToolWindowScope implements BlazeScope {
      * Makes the scope to stop or not stop the task when the scope ends. The default behaviour is to
      * stop the task.
      */
+    @CanIgnoreReturnValue
     public Builder setFinishTaskOnScopeEnd(boolean finishTaskOnScopeEnd) {
       this.finishTaskOnScopeEnd = finishTaskOnScopeEnd;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setIssueParsers(ImmutableList<BlazeIssueParser.Parser> parsers) {
       this.parsers = parsers;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setPopupBehavior(FocusBehavior popupBehavior) {
       this.popupBehavior = popupBehavior;
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder showSummaryOutput() {
+      this.showSummaryOutput = true;
       return this;
     }
 
@@ -106,11 +123,12 @@ public final class ToolWindowScope implements BlazeScope {
           progressIndicator,
           startTaskOnScopeBegin,
           finishTaskOnScopeEnd,
+          showSummaryOutput,
           popupBehavior,
           parsers.isEmpty() || !startTaskOnScopeBegin
               ? ImmutableList.of()
               : ImmutableList.of(
-                  new ToolWindowTaskIssueOutputFilter(project, parsers, task, true)));
+                  ToolWindowTaskIssueOutputFilter.createWithLinkToTask(project, parsers, task)));
     }
   }
 
@@ -122,9 +140,12 @@ public final class ToolWindowScope implements BlazeScope {
   private final TasksToolWindowService tasksToolWindowController;
   private final OutputSink<PrintOutput> printSink;
   private final OutputSink<StatusOutput> statusSink;
+  private final OutputSink<StateUpdate> stateSink;
+  @Nullable private final OutputSink<SummaryOutput> summarySink;
 
   private boolean finishTaskOnScopeEnd;
   private boolean activated;
+  private final Set<String> dedupedSummaryOutput = Sets.newHashSet();
 
   private ToolWindowScope(
       Project project,
@@ -132,6 +153,7 @@ public final class ToolWindowScope implements BlazeScope {
       @Nullable ProgressIndicator progressIndicator,
       boolean startTaskOnScopeBegin,
       boolean finishTaskOnScopeEnd,
+      boolean showSummaryOutput,
       FocusBehavior popupBehavior,
       ImmutableList<Filter> consoleFilters) {
     this.task = task;
@@ -153,21 +175,48 @@ public final class ToolWindowScope implements BlazeScope {
           activateIfNeeded(OutputType.NORMAL);
           return Propagation.Stop;
         };
+    stateSink =
+        (output) -> {
+          tasksToolWindowController.state(task, output);
+          return Propagation.Stop;
+        };
+    if (showSummaryOutput) {
+      summarySink =
+          (output) -> {
+            if (task.getParent().isPresent()) {
+              return Propagation.Continue;
+            }
+            if (!output.shouldDedupe() || dedupedSummaryOutput.add(output.getRawText())) {
+              return printSink.onOutput(output.toPrintOutput());
+            } else {
+              return Propagation.Stop;
+            }
+          };
+    } else {
+      summarySink = null;
+    }
   }
 
   @Override
   public void onScopeBegin(BlazeContext context) {
     context.addOutputSink(PrintOutput.class, printSink);
     context.addOutputSink(StatusOutput.class, statusSink);
+    context.addOutputSink(StateUpdate.class, stateSink);
+    if (summarySink != null) {
+      context.addOutputSink(SummaryOutput.class, summarySink);
+    }
+    context.addCancellationHandler(
+        () -> {
+          if (progressIndicator != null) {
+            progressIndicator.cancel();
+          }
+        });
     if (startTaskOnScopeBegin) {
       tasksToolWindowController.startTask(task, consoleFilters);
     }
     tasksToolWindowController.setStopHandler(
         task,
         () -> {
-          if (progressIndicator != null) {
-            progressIndicator.cancel();
-          }
           context.setCancelled();
         });
   }
@@ -175,7 +224,7 @@ public final class ToolWindowScope implements BlazeScope {
   @Override
   public void onScopeEnd(BlazeContext context) {
     if (finishTaskOnScopeEnd) {
-      tasksToolWindowController.finishTask(task, context.hasErrors());
+      tasksToolWindowController.finishTask(task, context.hasErrors(), context.isCancelled());
     }
     tasksToolWindowController.removeStopHandler(task);
   }

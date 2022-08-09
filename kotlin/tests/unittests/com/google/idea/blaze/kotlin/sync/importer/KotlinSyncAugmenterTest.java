@@ -69,7 +69,7 @@ public class KotlinSyncAugmenterTest extends BlazeTestCase {
         registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     syncPlugins.registerExtension(new BlazeJavaSyncPlugin());
     syncPlugins.registerExtension(new BlazeKotlinSyncPlugin());
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
     ExtensionPointImpl<Kind.Provider> ep =
         registerExtensionPoint(Kind.Provider.EP_NAME, Kind.Provider.class);

@@ -61,7 +61,7 @@ import javax.swing.Icon;
 /**
  * Copy and replacement of {@link BlazeProblemsView}.
  *
- * The class handles how the warnings and errors of the tasks are displayed.
+ * <p>The class handles how the warnings and errors of the tasks are displayed.
  */
 public class BuildTasksProblemsView {
 
@@ -92,7 +92,9 @@ public class BuildTasksProblemsView {
 
   public BuildTasksProblemsView(Project project) {
     this.project = project;
-    this.toolWindowId = Blaze.getBuildSystem(project).getName() + " Tasks Problems (NEW)";
+    // The trailing space serves to distinguish this tool window id from BlazeProblemsView
+    // while the v1 console is still in use.
+    this.toolWindowId = Blaze.getBuildSystemName(project).getName() + " Problems ";
     uiFuture =
         new FutureTask<>(
             () -> {
@@ -120,7 +122,10 @@ public class BuildTasksProblemsView {
       return;
     }
     ToolWindow toolWindow =
-        wm.registerToolWindow(toolWindowId, false, ToolWindowAnchor.LEFT, project, true, true);
+        wm.registerToolWindow(toolWindowId, false, ToolWindowAnchor.BOTTOM, project, true, true);
+    String toolWindowTitle = Blaze.getBuildSystemName(project).getName() + " Problems";
+    toolWindow.setTitle(toolWindowTitle);
+    toolWindow.setStripeTitle(toolWindowTitle);
     Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
     toolWindow.getContentManager().addContent(content);
     Disposer.register(project, () -> toolWindow.getContentManager().removeAllContents(true));

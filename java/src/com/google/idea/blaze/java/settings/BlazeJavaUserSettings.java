@@ -18,7 +18,7 @@ package com.google.idea.blaze.java.settings;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.logging.LoggedSettingsProvider;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.common.util.MorePlatformUtils;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -37,7 +37,7 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
   }
 
   private static boolean getDefaultJarCacheValue() {
-    return BuildSystemProvider.defaultBuildSystem().buildSystem() == BuildSystem.Blaze;
+    return BuildSystemProvider.defaultBuildSystem().buildSystem() == BuildSystemName.Blaze;
   }
 
   @Override
@@ -76,7 +76,7 @@ public class BlazeJavaUserSettings implements PersistentStateComponent<BlazeJava
 
   static boolean allowJarCache() {
     return !SystemInfo.isMac
-        || BuildSystemProvider.defaultBuildSystem().buildSystem() == BuildSystem.Bazel
+        || BuildSystemProvider.defaultBuildSystem().buildSystem() == BuildSystemName.Bazel
         || MorePlatformUtils.isAndroidStudio();
   }
 }

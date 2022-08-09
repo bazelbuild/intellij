@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.BuildFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestFlagsSection;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
@@ -54,22 +55,23 @@ public final class BlazeFlags {
   // during syncing projects.
   public static final String DISABLE_VALIDATIONS = "--noexperimental_run_validations";
 
-  /**
-   * Flags to add to blaze/bazel invocations of the given type.
-   *
-   * @param context
-   */
+  /** Flags to add to blaze/bazel invocations of the given type. */
   public static List<String> blazeFlags(
       Project project,
       ProjectViewSet projectViewSet,
       BlazeCommandName command,
-      BlazeInvocationContext context) {
+      BlazeContext context,
+      BlazeInvocationContext invocationContext) {
     List<String> flags = Lists.newArrayList();
     for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
-      buildFlagsProvider.addBuildFlags(project, projectViewSet, command, context, flags);
+      buildFlagsProvider.addBuildFlags(project, projectViewSet, command, invocationContext, flags);
     }
     flags.addAll(expandBuildFlags(projectViewSet.listItems(BuildFlagsSection.KEY)));
-    if (context.type() == ContextType.Sync) {
+    if (invocationContext.type() == ContextType.Sync) {
+      for (BuildFlagsProvider buildFlagsProvider : BuildFlagsProvider.EP_NAME.getExtensions()) {
+        buildFlagsProvider.addSyncFlags(
+            project, projectViewSet, command, context, invocationContext, flags);
+      }
       flags.addAll(expandBuildFlags(projectViewSet.listItems(SyncFlagsSection.KEY)));
     }
     if (BlazeCommandName.TEST.equals(command)) {

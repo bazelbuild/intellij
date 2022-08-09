@@ -16,7 +16,9 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.common.ui.templates.Behavior;
 import com.intellij.execution.filters.Filter;
@@ -42,14 +44,19 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
     model
         .getConsolesOfTasks()
         .computeIfAbsent(task, t -> ConsoleView.create(project, filters, parentDisposable));
-    treeModel.selectedTaskProperty().setValue(task); // select the new task
+  }
+
+  void removeTask(Task task) {
+    removeTaskAndConsole(task);
+    model.getTopLevelFinishedTasks().remove(task);
   }
 
   void finishTask(Task task) {
+    updateTask(task);
     if (task.getParent().isPresent()) {
       return;
     }
-    model.getTopLevelFinishedTasks().offer(task);
+    model.getTopLevelFinishedTasks().add(task);
     cleanUpTasksExceedingLimit();
   }
 
@@ -59,6 +66,16 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
 
   void taskStatus(Task task, StatusOutput output) {
     getConsole(task).println(output);
+  }
+
+  void taskState(Task task, StateUpdate output) {
+    task.setState(output.getState());
+    updateTask(task);
+  }
+
+  // Notifies the View that a task has been updated, to keep it in sync with the state.
+  private void updateTask(Task task) {
+    model.getTreeModel().tasksTreeProperty().updateTask(task);
   }
 
   public void navigate(Task task, HyperlinkInfo link, int offset) {
@@ -79,15 +96,33 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
   }
 
   private void cleanUpTasksExceedingLimit() {
-    while (model.getTopLevelFinishedTasks().size() > TasksTreeConsoleModel.MAX_FINISHED_TASKS) {
-      Task task = model.getTopLevelFinishedTasks().poll();
-      model.getTreeModel().tasksTreeProperty().removeTask(task);
-      ConsoleView consoleView = model.getConsolesOfTasks().remove(task);
-      if (consoleView == null) {
-        throw new IllegalStateException(
-            "Finished task `" + task.getName() + "` doesn't have a corresponding console view");
+    while (model.getTopLevelFinishedTasks().size()
+        > BlazeConsoleExperimentManager.getTasksHistorySize()) {
+      Task task = model.pollOldestFinishedTask();
+      if (task == null) {
+        throw new IllegalStateException("Tried to remove oldest finished task but none found.");
       }
-      Disposer.dispose(consoleView);
+      removeTaskAndConsole(task);
     }
+  }
+
+  private void removeTaskAndConsole(Task task) {
+    model.getTreeModel().tasksTreeProperty().removeTask(task);
+
+    Task selectedTask = model.getTreeModel().selectedTaskProperty().getValue();
+    while (selectedTask != null) {
+      if (selectedTask.equals(task)) {
+        model.getTreeModel().selectedTaskProperty().setValue(null);
+        break;
+      }
+      selectedTask = selectedTask.getParent().orElse(null);
+    }
+
+    ConsoleView consoleView = model.getConsolesOfTasks().remove(task);
+    if (consoleView == null) {
+      throw new IllegalStateException(
+          "Finished task `" + task.getName() + "` doesn't have a corresponding console view");
+    }
+    Disposer.dispose(consoleView);
   }
 }

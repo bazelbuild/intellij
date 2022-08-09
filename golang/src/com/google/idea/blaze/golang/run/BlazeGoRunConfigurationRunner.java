@@ -17,6 +17,7 @@ package com.google.idea.blaze.golang.run;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.goide.execution.GoBuildingRunConfiguration.Kind;
 import com.goide.execution.application.GoApplicationConfiguration;
 import com.goide.execution.application.GoApplicationRunConfigurationType;
 import com.goide.execution.application.GoApplicationRunningState;
@@ -47,14 +48,13 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfig
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.golang.GoLangCompat.KindWrapper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -166,7 +166,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
               GoApplicationRunConfigurationType.getInstance()
                   .getConfigurationFactories()[0]
                   .createTemplateConfiguration(project, RunManager.getInstance(project));
-      nativeConfig.setKind(KindWrapper.PACKAGE.getKind());
+      nativeConfig.setKind(Kind.PACKAGE);
       // prevents binary from being deleted by
       // GoBuildingRunningState$ProcessHandler#processTerminated
       nativeConfig.setOutputDirectory(executable.binary.getParent());
@@ -286,7 +286,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.createForLocalBuild(project)) {
       ImmutableList.Builder<String> flags = ImmutableList.builder();
-      if (Blaze.getBuildSystem(project) == BuildSystem.Blaze) {
+      if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
         // $ go tool compile
         //   -N    disable optimizations
         //   -l    disable inlining
@@ -401,6 +401,8 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
 
   // Matches TEST_SRCDIR=<dir>
   private static final Pattern TEST_SRCDIR = Pattern.compile("TEST_SRCDIR=([^ ]+)");
+  // Matches RUNFILES_<NAME>=<value>
+  private static final Pattern RUNFILES_VAR = Pattern.compile("RUNFILES_([A-Z_]+)=([^ ]+)");
   // Matches a space-delimited arg list. Supports wrapping arg in single quotes.
   private static final Pattern ARGS = Pattern.compile("([^\']\\S*|\'.+?\')\\s*");
 
@@ -431,6 +433,10 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
         throw new ExecutionException("Failed to parse args in script_path: " + scriptPath);
       }
       envVars.put("TEST_SRCDIR", testScrDir.group(1));
+      Matcher runfilesVars = RUNFILES_VAR.matcher(text);
+      while (runfilesVars.find()) {
+        envVars.put(String.format("RUNFILES_%s", runfilesVars.group(1)), runfilesVars.group(2));
+      }
       workingDir = workspaceRoot.directory();
       String workspaceName = execRoot.getName();
       binary =

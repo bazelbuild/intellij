@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.sync;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.aspect.Common;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.AndroidIdeInfo;
@@ -35,7 +36,6 @@ import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import java.util.Collection;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -87,7 +87,7 @@ public class BlazeIdeInterfaceAspectsImplTest extends BlazeTestCase {
             .build();
     TargetIdeInfo target = TargetIdeInfo.fromProto(ideProto);
     assertThat(target).isNotNull();
-    Collection<AndroidResFolder> resources = target.getAndroidIdeInfo().getResFolders();
+    ImmutableList<AndroidResFolder> resources = target.getAndroidIdeInfo().getResources();
     assertThat(resources)
         .containsExactly(
             resFolderLocation(artifactLocation(localResFolder)),

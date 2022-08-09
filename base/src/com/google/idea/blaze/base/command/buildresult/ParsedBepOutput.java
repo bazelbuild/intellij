@@ -25,11 +25,14 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.NamedSetOfFilesId;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.NamedSetOfFiles;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -50,12 +53,32 @@ import javax.annotation.Nullable;
 /** A data class representing blaze's build event protocol (BEP) output for a build. */
 public final class ParsedBepOutput {
 
+  /** Parses BEP events into {@link ParsedBepOutput} */
   static ParsedBepOutput parseBepArtifacts(InputStream bepStream) throws BuildEventStreamException {
     return parseBepArtifacts(BuildEventStreamProvider.fromInputStream(bepStream));
   }
 
+  /** Parses BEP events into {@link ParsedBepOutput} */
   public static ParsedBepOutput parseBepArtifacts(BuildEventStreamProvider stream)
       throws BuildEventStreamException {
+    return parseBepArtifacts(stream, null);
+  }
+
+  /**
+   * Parses BEP events into {@link ParsedBepOutput}. String references in {@link
+   * BuildEventStreamProtos.NamedSetOfFiles} are interned to conserve memory.
+   *
+   * <p>BEP protos often contain many duplicate strings both within a single stream and across
+   * shards running in parallel, so a {@link Interner} is used to share references.
+   */
+  public static ParsedBepOutput parseBepArtifacts(
+      BuildEventStreamProvider stream, @Nullable Interner<String> interner)
+      throws BuildEventStreamException {
+
+    if (interner == null) {
+      interner = Interners.newStrongInterner();
+    }
+
     BuildEventStreamProtos.BuildEvent event;
     Map<String, String> configIdToMnemonic = new HashMap<>();
     Set<String> topLevelFileSets = new HashSet<>();
@@ -78,7 +101,7 @@ public final class ParsedBepOutput {
               event.getId().getConfiguration().getId(), event.getConfiguration().getMnemonic());
           continue;
         case NAMED_SET:
-          NamedSetOfFiles namedSet = event.getNamedSetOfFiles();
+          NamedSetOfFiles namedSet = internNamedSet(event.getNamedSetOfFiles(), interner);
           fileSets.compute(
               event.getId().getNamedSet().getId(),
               (k, v) ->
@@ -120,7 +143,7 @@ public final class ParsedBepOutput {
       }
     }
     // If stream is empty, it means that service failed to retrieve any blaze build event from build
-    // event stream. This should not happened if a build start correctly.
+    // event stream. This should not happen if a build start correctly.
     if (emptyBuildEventStream) {
       throw new BuildEventStreamException("No build events found");
     }
@@ -128,7 +151,13 @@ public final class ParsedBepOutput {
         fillInTransitiveFileSetData(
             fileSets, topLevelFileSets, configIdToMnemonic, startTimeMillis);
     return new ParsedBepOutput(
-        buildId, localExecRoot, filesMap, targetToFileSets.build(), startTimeMillis, buildResult);
+        buildId,
+        localExecRoot,
+        filesMap,
+        targetToFileSets.build(),
+        startTimeMillis,
+        buildResult,
+        stream.getBytesConsumed());
   }
 
   private static List<String> getFileSets(BuildEventStreamProtos.OutputGroup group) {
@@ -185,6 +214,7 @@ public final class ParsedBepOutput {
   final long syncStartTimeMillis;
 
   private final BuildResult buildResult;
+  private final long bepBytesConsumed;
 
   @VisibleForTesting
   public ParsedBepOutput(
@@ -193,13 +223,15 @@ public final class ParsedBepOutput {
       ImmutableMap<String, FileSet> fileSets,
       ImmutableSetMultimap<String, String> targetFileSets,
       long syncStartTimeMillis,
-      BuildResult buildResult) {
+      BuildResult buildResult,
+      long bepBytesConsumed) {
     this.buildId = buildId;
     this.localExecRoot = localExecRoot;
     this.fileSets = fileSets;
     this.targetFileSets = targetFileSets;
     this.syncStartTimeMillis = syncStartTimeMillis;
     this.buildResult = buildResult;
+    this.bepBytesConsumed = bepBytesConsumed;
   }
 
   /** Returns the local execroot. */
@@ -211,6 +243,10 @@ public final class ParsedBepOutput {
   /** Returns the build result. */
   public BuildResult getBuildResult() {
     return buildResult;
+  }
+
+  public long getBepBytesConsumed() {
+    return bepBytesConsumed;
   }
 
   /** Returns all output artifacts of the build. */
@@ -291,6 +327,7 @@ public final class ParsedBepOutput {
       final Set<String> outputGroups = new HashSet<>();
       final Set<String> targets = new HashSet<>();
 
+      @CanIgnoreReturnValue
       Builder updateFromParent(Builder parent) {
         configId = parent.configId;
         outputGroups.addAll(parent.outputGroups);
@@ -298,21 +335,25 @@ public final class ParsedBepOutput {
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder setNamedSet(NamedSetOfFiles namedSet) {
         this.namedSet = namedSet;
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder setConfigId(String configId) {
         this.configId = configId;
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder addOutputGroups(Set<String> outputGroups) {
         this.outputGroups.addAll(outputGroups);
         return this;
       }
 
+      @CanIgnoreReturnValue
       Builder addTargets(Set<String> targets) {
         this.targets.addAll(targets);
         return this;
@@ -327,5 +368,32 @@ public final class ParsedBepOutput {
             namedSet, configIdToMnemonic.get(configId), startTimeMillis, outputGroups, targets);
       }
     }
+  }
+
+  /**
+   * Returns a copy of a {@link BuildEventStreamProtos.NamedSetOfFiles} with interned string
+   * references.
+   */
+  private static NamedSetOfFiles internNamedSet(
+      NamedSetOfFiles namedSet, Interner<String> interner) {
+    return namedSet.toBuilder()
+        .clearFiles()
+        .addAllFiles(
+            namedSet.getFilesList().stream()
+                .map(
+                    file ->
+                        file.toBuilder()
+                            // The digest is not used when parsing output artifacts
+                            .setDigest("")
+                            .setUri(interner.intern(file.getUri()))
+                            .setName(interner.intern(file.getName()))
+                            .clearPathPrefix()
+                            .addAllPathPrefix(
+                                file.getPathPrefixList().stream()
+                                    .map(interner::intern)
+                                    .collect(Collectors.toUnmodifiableList()))
+                            .build())
+                .collect(Collectors.toUnmodifiableList()))
+        .build();
   }
 }

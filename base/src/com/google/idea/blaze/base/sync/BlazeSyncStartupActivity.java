@@ -25,6 +25,8 @@ import com.intellij.openapi.startup.StartupActivity;
 /** Syncs the project upon startup. */
 public class BlazeSyncStartupActivity implements StartupActivity {
 
+  public static final String SYNC_REASON = "BlazeSyncStartupActivity";
+
   @Override
   public void runActivity(Project project) {
     BlazeImportSettings importSettings =
@@ -33,10 +35,9 @@ public class BlazeSyncStartupActivity implements StartupActivity {
       return;
     }
     if (hasProjectData(project, importSettings)) {
-      BlazeSyncManager.getInstance(project).requestProjectSync(startupSyncParams(project));
+      BlazeSyncManager.getInstance(project).requestProjectSync(startupSyncParams());
     } else {
-      BlazeSyncManager.getInstance(project)
-          .incrementalProjectSync(/* reason= */ "BlazeSyncStartupActivity");
+      BlazeSyncManager.getInstance(project).incrementalProjectSync(SYNC_REASON);
     }
   }
 
@@ -44,12 +45,11 @@ public class BlazeSyncStartupActivity implements StartupActivity {
     return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings) != null;
   }
 
-  private static BlazeSyncParams startupSyncParams(Project project) {
+  private static BlazeSyncParams startupSyncParams() {
     return BlazeSyncParams.builder()
         .setTitle("Sync Project")
         .setSyncMode(SyncMode.STARTUP)
-        .setSyncOrigin("BlazeSyncStartupActivity")
-        .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
+        .setSyncOrigin(SYNC_REASON)
         .setAddProjectViewTargets(true)
         .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
         .build();

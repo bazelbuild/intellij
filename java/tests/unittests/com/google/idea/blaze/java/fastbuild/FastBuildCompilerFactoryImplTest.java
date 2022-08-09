@@ -386,7 +386,8 @@ public final class FastBuildCompilerFactoryImplTest {
   }
 
   private static BlazeContext createBlazeContext(Writer javacOutput) {
-    return new BlazeContext().addOutputSink(PrintOutput.class, new WritingOutputSink(javacOutput));
+    return BlazeContext.create()
+        .addOutputSink(PrintOutput.class, new WritingOutputSink(javacOutput));
   }
 
   private static class WritingOutputSink implements OutputSink<PrintOutput> {

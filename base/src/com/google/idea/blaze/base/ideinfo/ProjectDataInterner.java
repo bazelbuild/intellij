@@ -71,6 +71,10 @@ public final class ProjectDataInterner {
     return state.doIntern(executionRootPath);
   }
 
+  static LibraryArtifact intern(LibraryArtifact libraryArtifact) {
+    return state.doIntern(libraryArtifact);
+  }
+
   private interface State {
     Label doIntern(Label label);
 
@@ -85,6 +89,8 @@ public final class ProjectDataInterner {
     AndroidResFolder doIntern(AndroidResFolder androidResFolder);
 
     ExecutionRootPath doIntern(ExecutionRootPath executionRootPath);
+
+    LibraryArtifact doIntern(LibraryArtifact libraryArtifact);
   }
 
   private static class NoOp implements State {
@@ -122,6 +128,11 @@ public final class ProjectDataInterner {
     public ExecutionRootPath doIntern(ExecutionRootPath executionRootPath) {
       return executionRootPath;
     }
+
+    @Override
+    public LibraryArtifact doIntern(LibraryArtifact libraryArtifact) {
+      return libraryArtifact;
+    }
   }
 
   private static class Impl implements State {
@@ -133,6 +144,7 @@ public final class ProjectDataInterner {
     private final Interner<AndroidResFolder> androidResFolderInterner = Interners.newWeakInterner();
     private final Interner<ExecutionRootPath> executionRootPathInterner =
         Interners.newWeakInterner();
+    private final Interner<LibraryArtifact> libraryArtifactInterner = Interners.newWeakInterner();
 
     @Override
     public Label doIntern(Label label) {
@@ -167,6 +179,11 @@ public final class ProjectDataInterner {
     @Override
     public ExecutionRootPath doIntern(ExecutionRootPath executionRootPath) {
       return executionRootPathInterner.intern(executionRootPath);
+    }
+
+    @Override
+    public LibraryArtifact doIntern(LibraryArtifact libraryArtifact) {
+      return libraryArtifactInterner.intern(libraryArtifact);
     }
   }
 

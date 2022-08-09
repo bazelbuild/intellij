@@ -72,7 +72,7 @@ final class BlazeConfigurationResolver {
       BlazeConfigurationResolverResult oldResult) {
     ExecutionRootPathResolver executionRootPathResolver =
         new ExecutionRootPathResolver(
-            Blaze.getBuildSystem(project),
+            Blaze.getBuildSystemProvider(project),
             WorkspaceRoot.fromProject(project),
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
             blazeProjectData.getWorkspacePathResolver());
@@ -85,10 +85,10 @@ final class BlazeConfigurationResolver {
             project,
             toolchainLookupMap,
             executionRootPathResolver,
-            oldResult.compilerSettings);
+            oldResult.getCompilerSettings());
     ProjectViewTargetImportFilter projectViewFilter =
         new ProjectViewTargetImportFilter(
-            Blaze.getBuildSystem(project), workspaceRoot, projectViewSet);
+            Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet);
     Predicate<TargetIdeInfo> targetFilter = getTargetFilter(projectViewFilter);
     BlazeConfigurationResolverResult.Builder builder = BlazeConfigurationResolverResult.builder();
     buildBlazeConfigurationData(

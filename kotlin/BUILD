@@ -6,6 +6,10 @@ load(
     "stamped_plugin_xml",
 )
 load(
+    "//intellij_platform_sdk:build_defs.bzl",
+    "combine_visibilities",
+)
+load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
     "intellij_unit_test_suite",
@@ -13,6 +17,7 @@ load(
 load(
     "//:build-visibility.bzl",
     "ASWB_SUBPACKAGES_VISIBILITY",
+    "KOTLIN_PACKAGE_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
@@ -21,7 +26,7 @@ licenses(["notice"])
 java_library(
     name = "kotlin",
     srcs = glob(["src/**/*.java"]),
-    visibility = ASWB_SUBPACKAGES_VISIBILITY,
+    visibility = combine_visibilities(ASWB_SUBPACKAGES_VISIBILITY, KOTLIN_PACKAGE_VISIBILITY),
     deps = [
         "//base",
         "//common/experiments",
@@ -30,6 +35,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//java",
         "//proto:proto_deps",
+        "//sdkcompat",
     ],
 )
 

@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
@@ -49,6 +50,8 @@ public abstract class BlazeSyncBuildResult {
     return getBuildResult() != null && getBuildResult().buildResult.status != Status.FATAL_ERROR;
   }
 
+  public abstract BlazeInfo getBlazeInfo();
+
   @Nullable
   public abstract BlazeBuildOutputs getBuildResult();
 
@@ -63,6 +66,8 @@ public abstract class BlazeSyncBuildResult {
   /** A builder for {@link BlazeSyncBuildResult} objects. */
   @AutoValue.Builder
   public abstract static class Builder {
+    public abstract Builder setBlazeInfo(BlazeInfo info);
+
     public abstract Builder setBuildResult(BlazeBuildOutputs buildResult);
 
     public abstract Builder setBuildPhaseStats(Iterable<BuildPhaseSyncStats> stats);

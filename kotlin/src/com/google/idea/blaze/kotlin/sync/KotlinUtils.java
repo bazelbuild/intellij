@@ -21,7 +21,7 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.common.experiments.BoolExperiment;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -38,7 +38,8 @@ class KotlinUtils {
       return false;
     }
     // enable for all external users, behind an experiment for internal users
-    return Blaze.defaultBuildSystem().equals(BuildSystem.Bazel) || blazeKotlinSupport.getValue();
+    return Blaze.defaultBuildSystem().equals(BuildSystemName.Bazel)
+        || blazeKotlinSupport.getValue();
   }
 
   /**

@@ -46,7 +46,7 @@ public class Blaze {
    * Returns the build system associated with this project, or falls back to the default blaze build
    * system if the project is null or not a blaze project.
    */
-  public static BuildSystem getBuildSystem(@Nullable Project project) {
+  public static BuildSystemName getBuildSystemName(@Nullable Project project) {
     BlazeImportSettings importSettings =
         project == null
             ? null
@@ -63,7 +63,7 @@ public class Blaze {
    */
   public static BuildSystemProvider getBuildSystemProvider(@Nullable Project project) {
     BuildSystemProvider provider =
-        BuildSystemProvider.getBuildSystemProvider(getBuildSystem(project));
+        BuildSystemProvider.getBuildSystemProvider(getBuildSystemName(project));
     return provider != null ? provider : BuildSystemProvider.defaultBuildSystem();
   }
 
@@ -72,11 +72,11 @@ public class Blaze {
    * blaze build system if the project is null or not a blaze project.
    */
   public static String buildSystemName(@Nullable Project project) {
-    return getBuildSystem(project).getName();
+    return getBuildSystemName(project).getName();
   }
 
   /** The default build system */
-  public static BuildSystem defaultBuildSystem() {
+  public static BuildSystemName defaultBuildSystem() {
     return BuildSystemProvider.defaultBuildSystem().buildSystem();
   }
 

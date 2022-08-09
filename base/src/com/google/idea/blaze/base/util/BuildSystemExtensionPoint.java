@@ -21,14 +21,14 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Arrays;
 
 /** An extension point that works for only a specific set of build systems. */
 public interface BuildSystemExtensionPoint {
 
-  ImmutableSet<BuildSystem> getSupportedBuildSystems();
+  ImmutableSet<BuildSystemName> getSupportedBuildSystems();
 
   /**
    * Get the bound instance of the given extension point that matches the given build system. Any
@@ -36,26 +36,27 @@ public interface BuildSystemExtensionPoint {
    * system that the plugin supports. Failure to do so will result in an IllegalStateException.
    */
   static <T extends BuildSystemExtensionPoint> T getInstance(
-      ExtensionPointName<T> extensionPointName, BuildSystem buildSystem) {
+      ExtensionPointName<T> extensionPointName, BuildSystemName buildSystemName) {
     ImmutableSet<T> matching =
         Arrays.stream(extensionPointName.getExtensions())
-            .filter(f -> f.getSupportedBuildSystems().contains(buildSystem))
+            .filter(f -> f.getSupportedBuildSystems().contains(buildSystemName))
             .collect(toImmutableSet());
-    checkState(!matching.isEmpty(), "No %s for build system %s", extensionPointName, buildSystem);
+    checkState(
+        !matching.isEmpty(), "No %s for build system %s", extensionPointName, buildSystemName);
     checkState(
         matching.size() == 1,
         "Multiple instances of %s for build system %s: %s",
         extensionPointName,
-        buildSystem,
+        buildSystemName,
         matching);
     return matching.iterator().next();
   }
 
   /** Get all the bound instances of the given extension point that match the given build system. */
   static <T extends BuildSystemExtensionPoint> ImmutableList<T> getInstances(
-      ExtensionPointName<T> extensionPointName, BuildSystem buildSystem) {
+      ExtensionPointName<T> extensionPointName, BuildSystemName buildSystemName) {
     return Arrays.stream(extensionPointName.getExtensions())
-        .filter(f -> f.getSupportedBuildSystems().contains(buildSystem))
+        .filter(f -> f.getSupportedBuildSystems().contains(buildSystemName))
         .collect(toImmutableList());
   }
 }

@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.sync.aspects.strategy;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import java.io.File;
@@ -32,7 +32,7 @@ public class AspectStrategyBazel extends AspectStrategy {
     @Override
     @Nullable
     public AspectStrategy getStrategy(BlazeVersionData versionData) {
-      return versionData.buildSystem() == BuildSystem.Bazel ? new AspectStrategyBazel() : null;
+      return versionData.buildSystem() == BuildSystemName.Bazel ? new AspectStrategyBazel() : null;
     }
   }
 

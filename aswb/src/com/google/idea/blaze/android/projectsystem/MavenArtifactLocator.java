@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.projectsystem;
 import com.android.ide.common.repository.GradleCoordinate;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Arrays;
 import java.util.List;
@@ -27,8 +27,9 @@ import java.util.stream.Collectors;
 /**
  * Build systems can implement their own {@link MavenArtifactLocator} to help the IDE to locate
  * artifacts referenced using {@link GradleCoordinate}. Note that there can be multiple artifact
- * locators enabled at the same time; see {@link MavenArtifactLocator#forBuildSystem(BuildSystem)}
- * on how to obtain them for a given build system.
+ * locators enabled at the same time; see {@link
+ * MavenArtifactLocator#forBuildSystem(BuildSystemName)} on how to obtain them for a given build
+ * system.
  */
 public interface MavenArtifactLocator {
   ExtensionPointName<MavenArtifactLocator> EP_NAME =
@@ -42,16 +43,16 @@ public interface MavenArtifactLocator {
    */
   Label labelFor(GradleCoordinate coordinate);
 
-  /** @return The {@link BuildSystem} this {@link MavenArtifactLocator} supports. */
-  BuildSystem buildSystem();
+  /** Returns the {@link BuildSystemName} this {@link MavenArtifactLocator} supports. */
+  BuildSystemName buildSystem();
 
   /**
-   * @return An {@link ImmutableList} of {@link MavenArtifactLocator} that supports the given build
-   *     system.
+   * Returns an {@link ImmutableList} of {@link MavenArtifactLocator} that supports the given build
+   * system.
    */
-  static List<MavenArtifactLocator> forBuildSystem(BuildSystem buildSystem) {
+  static List<MavenArtifactLocator> forBuildSystem(BuildSystemName buildSystemName) {
     return Arrays.stream(EP_NAME.getExtensions())
-        .filter(provider -> provider.buildSystem().equals(buildSystem))
+        .filter(provider -> provider.buildSystem().equals(buildSystemName))
         .collect(Collectors.toList());
   }
 }

@@ -69,6 +69,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
+    <LintCollector implementation="com.google.idea.blaze.android.libraries.AndroidLintCollector"/>
     <SyncPlugin implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncPlugin"/>
     <SyncListener implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncListener"/>
     <SyncListener implementation="com.google.idea.blaze.android.manifest.ParsedManifestService$ClearManifestParser"/>
@@ -93,6 +94,7 @@
     <ComposeStatusProvider implementation="com.google.idea.blaze.android.compose.ExperimentComposeStatusProvider"/>
     <BlazeBuildListener implementation="com.google.idea.blaze.android.projectsystem.BlazeProjectSystemBuildManager$BuildCallbackPublisher"/>
     <android.ApkBuildStepProvider implementation="com.google.idea.blaze.android.run.BazelApkBuildStepProvider" />
+    <BuildFlagsProvider implementation="com.google.idea.blaze.android.sync.BlazeAndroidSyncBuildFlagsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.android.ide">

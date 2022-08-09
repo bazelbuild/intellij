@@ -15,26 +15,38 @@
  */
 package com.google.idea.blaze.base.console;
 
-import com.google.idea.common.experiments.BoolExperiment;
+import com.google.common.primitives.Ints;
+import com.google.idea.common.experiments.FeatureRolloutExperiment;
+import com.google.idea.common.experiments.IntExperiment;
+import com.google.idea.common.util.MorePlatformUtils;
 
 /**
  * The experiments that turn on/off the new (v2) and old (v1) Blaze Consoles. The IDE restart is
- * needed for the new experiment values to take effect.
+ * needed for the new experiment values to take effect. The experiment also allows users to set a
+ * limit on how much task history is to be displayed in the new (v2) Blaze console's tree-view.
  */
 public final class BlazeConsoleExperimentManager {
 
-  // The values of experiments are being read once on startup. This because dynamic switching
-  // between v1 and v2 consoles is not supported.
-  private static final boolean V1_ENABLED = new BoolExperiment("blazeconsole.v1", true).getValue();
-  private static final boolean V2_ENABLED = new BoolExperiment("blazeconsole.v2", false).getValue();
+  // The experiment is read once on startup, as the tool window is only created
+  // once during the lifetime of the IDE
+  private static final boolean V2_ENABLED =
+      new FeatureRolloutExperiment("blazeconsole.v2.rollout").isEnabled();
 
   private BlazeConsoleExperimentManager() {}
 
   public static boolean isBlazeConsoleV1Enabled() {
-    return V1_ENABLED || !V2_ENABLED;
+    return !V2_ENABLED;
   }
 
   public static boolean isBlazeConsoleV2Enabled() {
     return V2_ENABLED;
+  }
+
+  public static int getTasksHistorySize() {
+    int historySize =
+        new IntExperiment(
+                "blazeconsole.v2.history.size", MorePlatformUtils.isAndroidStudio() ? 2 : 10)
+            .getValue();
+    return Ints.constrainToRange(historySize, 2, 10);
   }
 }

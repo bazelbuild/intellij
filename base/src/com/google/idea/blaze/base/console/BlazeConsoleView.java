@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.console;
 
-import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.intellij.codeEditor.printing.PrintAction;
+import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.ConsoleDependentFilterProvider;
 import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.ConsoleFilterProviderEx;
@@ -64,7 +64,7 @@ public class BlazeConsoleView implements Disposable {
   private static final Class<?>[] IGNORED_CONSOLE_ACTION_TYPES = {
     PreviousOccurenceToolbarAction.class,
     NextOccurenceToolbarAction.class,
-    ConsoleViewImpl.ClearAllAction.class,
+    ClearConsoleAction.class,
     PrintAction.class
   };
 
@@ -85,8 +85,6 @@ public class BlazeConsoleView implements Disposable {
 
     consoleView.addMessageFilter(customFilters);
     addWrappedPredefinedFilters();
-    // add target filter last, so it doesn't override other links containing a target string
-    consoleView.addMessageFilter(new BlazeTargetFilter(false));
     Disposer.register(this, consoleView);
   }
 
@@ -251,8 +249,7 @@ public class BlazeConsoleView implements Disposable {
     @Nullable
     @Override
     public Result applyFilter(String line, int entireLength) {
-      return customFilters
-          .stream()
+      return customFilters.stream()
           .map(f -> f.applyFilter(line, entireLength))
           .filter(Objects::nonNull)
           .reduce(this::combine)

@@ -41,7 +41,6 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.WithBrowserHyperlinkExecutionException;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationRunner.BlazeCommandRunProfileState;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
-import com.google.idea.blaze.base.run.filter.BlazeTargetFilter;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -227,7 +226,6 @@ public class BlazePyRunConfigurationRunner implements BlazeCommandRunConfigurati
 
   private static ImmutableList<Filter> getFilters() {
     return ImmutableList.<Filter>builder()
-        .add(new BlazeTargetFilter(true))
         .add(new UrlFilter())
         .build();
   }

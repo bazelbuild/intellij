@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -61,7 +61,7 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
   @Override
   public ListenableFuture<BlazeInfo> runBlazeInfo(
       BlazeContext context,
-      BuildSystem buildSystem,
+      BuildSystemName buildSystemName,
       String binaryPath,
       WorkspaceRoot workspaceRoot,
       List<String> blazeFlags) {
@@ -73,7 +73,7 @@ class BlazeInfoRunnerImpl extends BlazeInfoRunner {
                       .toString()
                       .trim();
               ImmutableMap<String, String> blazeInfoMap = parseBlazeInfoResult(blazeInfoString);
-              return BlazeInfo.create(buildSystem, blazeInfoMap);
+              return BlazeInfo.create(buildSystemName, blazeInfoMap);
             });
   }
 

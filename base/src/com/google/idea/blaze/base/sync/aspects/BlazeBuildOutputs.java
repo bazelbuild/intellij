@@ -33,19 +33,23 @@ import java.util.function.Predicate;
 public class BlazeBuildOutputs {
 
   public static BlazeBuildOutputs noOutputs(BuildResult buildResult) {
-    return new BlazeBuildOutputs(buildResult, ImmutableMap.of(), ImmutableList.of());
+    return new BlazeBuildOutputs(buildResult, ImmutableMap.of(), ImmutableList.of(), 0L);
   }
 
   public static BlazeBuildOutputs fromParsedBepOutput(
       BuildResult result, ParsedBepOutput parsedOutput) {
     ImmutableList<String> id =
         parsedOutput.buildId != null ? ImmutableList.of(parsedOutput.buildId) : ImmutableList.of();
-    return new BlazeBuildOutputs(result, parsedOutput.getFullArtifactData(), id);
+    return new BlazeBuildOutputs(
+        result, parsedOutput.getFullArtifactData(), id, parsedOutput.getBepBytesConsumed());
   }
 
   public final BuildResult buildResult;
   public final ImmutableList<String> buildIds;
-  private final ImmutableMap<String, BepArtifactData> artifacts;
+  public final long bepBytesConsumed;
+
+  /** {@link BepArtifactData} by {@link OutputArtifact#getKey()} for all artifacts from a build. */
+  public final ImmutableMap<String, BepArtifactData> artifacts;
 
   /** The artifacts transitively associated with each top-level target. */
   private final ImmutableSetMultimap<String, OutputArtifact> perTargetArtifacts;
@@ -53,10 +57,12 @@ public class BlazeBuildOutputs {
   private BlazeBuildOutputs(
       BuildResult buildResult,
       Map<String, BepArtifactData> artifacts,
-      ImmutableList<String> buildIds) {
+      ImmutableList<String> buildIds,
+      long bepBytesConsumed) {
     this.buildResult = buildResult;
     this.artifacts = ImmutableMap.copyOf(artifacts);
     this.buildIds = buildIds;
+    this.bepBytesConsumed = bepBytesConsumed;
 
     ImmutableSetMultimap.Builder<String, OutputArtifact> perTarget = ImmutableSetMultimap.builder();
     artifacts.values().forEach(a -> a.topLevelTargets.forEach(t -> perTarget.put(t, a.artifact)));
@@ -111,6 +117,7 @@ public class BlazeBuildOutputs {
     return new BlazeBuildOutputs(
         BuildResult.combine(buildResult, nextOutputs.buildResult),
         combined,
-        ImmutableList.<String>builder().addAll(buildIds).addAll(nextOutputs.buildIds).build());
+        ImmutableList.<String>builder().addAll(buildIds).addAll(nextOutputs.buildIds).build(),
+        bepBytesConsumed + nextOutputs.bepBytesConsumed);
   }
 }

@@ -222,6 +222,7 @@ class GenerateDeployableJarTaskProvider
                         new ToolWindowScope.Builder(
                                 project,
                                 new com.google.idea.blaze.base.toolwindow.Task(
+                                    project,
                                     title,
                                     com.google.idea.blaze.base.toolwindow.Task.Type.DEPLOYABLE_JAR))
                             .setPopupBehavior(
@@ -248,7 +249,11 @@ class GenerateDeployableJarTaskProvider
                         .addTargets(target.withTargetName(target.targetName() + "_deploy.jar"))
                         .addBlazeFlags(
                             BlazeFlags.blazeFlags(
-                                project, projectViewSet, BlazeCommandName.BUILD, invocationContext))
+                                project,
+                                projectViewSet,
+                                BlazeCommandName.BUILD,
+                                context,
+                                invocationContext))
                         .addBlazeFlags(buildResultHelper.getBuildFlags())
                         .build();
                 int exitCode =

@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.projectview.section.sections.ShardBlazeBuildsS
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.settings.ui.OpenProjectViewAction;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.intellij.notification.Notification;
@@ -53,16 +53,16 @@ public class SuggestBuildShardingNotification {
   }
 
   private static void suggestIncreasingServerMemory(Project project, BlazeContext context) {
-    BuildSystem buildSystem = Blaze.getBuildSystem(project);
+    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
     String message =
         String.format(
             "The %s server ran out of memory during sync. You can work around this by "
                 + "allocating more memory to the %s server, for example by adding this line to "
                 + "your %s:<br>"
                 + "startup --host_jvm_args=-Xmx15g --host_jvm_args=-Xms15g",
-            buildSystem.getName(),
-            buildSystem.getName(),
-            buildSystem == BuildSystem.Bazel ? ".bazelrc" : "~/.blazerc");
+            buildSystemName.getName(),
+            buildSystemName.getName(),
+            buildSystemName == BuildSystemName.Bazel ? ".bazelrc" : "~/.blazerc");
 
     IssueOutput.error(StringUtil.stripHtml(message, true)).submit(context);
 

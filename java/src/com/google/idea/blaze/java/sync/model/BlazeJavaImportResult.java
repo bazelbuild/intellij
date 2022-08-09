@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.LibraryKey;
@@ -39,7 +40,7 @@ public final class BlazeJavaImportResult
   public final ImmutableMap<LibraryKey, BlazeJarLibrary> libraries;
   public final ImmutableList<ArtifactLocation> buildOutputJars;
   public final ImmutableSet<ArtifactLocation> javaSourceFiles;
-  public final ImmutableSet<BlazeJarLibrary> pluginProcessorJars;
+  public final ImmutableSet<ArtifactLocation> pluginProcessorJars;
   @Nullable public final String sourceVersion;
   public final EmptyJarTracker emptyJarTracker;
 
@@ -50,7 +51,7 @@ public final class BlazeJavaImportResult
       ImmutableSet<ArtifactLocation> javaSourceFiles,
       @Nullable String sourceVersion,
       EmptyJarTracker emptyJarTracker,
-      ImmutableSet<BlazeJarLibrary> pluginProcessorJars) {
+      ImmutableSet<ArtifactLocation> pluginProcessorJars) {
     this.contentEntries = contentEntries;
     this.libraries = libraries;
     this.buildOutputJars = buildOutputJars;
@@ -78,8 +79,8 @@ public final class BlazeJavaImportResult
         .setEmptyJarTracker(EmptyJarTracker.fromProto(proto.getEmptyJarTracker()))
         .setPluginProcessorJars(
             ProtoWrapper.map(
-                proto.getPluginProcessorJarsList(),
-                BlazeJarLibrary::fromProto,
+                proto.getPluginProcessorJarArtifactsList(),
+                ArtifactLocation::fromProto,
                 ImmutableSet.toImmutableSet()))
         .build();
   }
@@ -93,7 +94,7 @@ public final class BlazeJavaImportResult
             .addAllBuildOutputJars(ProtoWrapper.mapToProtos(buildOutputJars))
             .addAllJavaSourceFiles(ProtoWrapper.mapToProtos(javaSourceFiles))
             .setEmptyJarTracker(emptyJarTracker.toProto())
-            .addAllPluginProcessorJars(ProtoWrapper.mapToProtos(pluginProcessorJars));
+            .addAllPluginProcessorJarArtifacts(ProtoWrapper.mapToProtos(pluginProcessorJars));
     ProtoWrapper.setIfNotNull(builder::setSourceVersion, sourceVersion);
     return builder.build();
   }
@@ -138,39 +139,46 @@ public final class BlazeJavaImportResult
     private ImmutableSet<ArtifactLocation> javaSourceFiles;
     @Nullable private String sourceVersion = null;
     private EmptyJarTracker emptyJarTracker;
-    private ImmutableSet<BlazeJarLibrary> pluginProcessorJars;
+    private ImmutableSet<ArtifactLocation> pluginProcessorJars;
 
+    @CanIgnoreReturnValue
     public Builder setContentEntries(List<BlazeContentEntry> contentEntries) {
       this.contentEntries = ImmutableList.copyOf(contentEntries);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setLibraries(Map<LibraryKey, BlazeJarLibrary> libraries) {
       this.libraries = ImmutableMap.copyOf(libraries);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setBuildOutputJars(List<ArtifactLocation> buildOutputJars) {
       this.buildOutputJars = ImmutableList.copyOf(buildOutputJars);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setJavaSourceFiles(Set<ArtifactLocation> javaSourceFiles) {
       this.javaSourceFiles = ImmutableSet.copyOf(javaSourceFiles);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setSourceVersion(@Nullable String sourceVersion) {
       this.sourceVersion = sourceVersion;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setEmptyJarTracker(EmptyJarTracker emptyJarTracker) {
       this.emptyJarTracker = emptyJarTracker;
       return this;
     }
 
-    public Builder setPluginProcessorJars(Set<BlazeJarLibrary> pluginProcessorJars) {
+    @CanIgnoreReturnValue
+    public Builder setPluginProcessorJars(Set<ArtifactLocation> pluginProcessorJars) {
       this.pluginProcessorJars = ImmutableSet.copyOf(pluginProcessorJars);
       return this;
     }

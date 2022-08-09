@@ -18,11 +18,10 @@ package com.google.idea.blaze.android;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder.targetMap;
 
-import com.android.sdklib.repository.AndroidSdkHandlerCompat;
+import com.android.sdklib.repository.AndroidSdkHandler;
 import com.google.idea.blaze.android.targetmapbuilder.NbTargetBuilder;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.settings.BuildSystem;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.JdepsFileWriter;
@@ -48,13 +47,13 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
   }
 
   @Override
-  protected final BuildSystem buildSystem() {
-    return BuildSystem.Bazel;
+  protected final BuildSystemName buildSystem() {
+    return BuildSystemName.Bazel;
   }
 
   @After
   public void cleanUpAndroidSdkHandler() {
-    AndroidSdkHandlerCompat.resetInstance(workspaceRoot.fileForPath(MockSdkUtil.SDK_DIR));
+    AndroidSdkHandler.resetInstance(workspaceRoot.fileForPath(MockSdkUtil.SDK_DIR).toPath());
   }
 
   public void setTargetMap(NbTargetBuilder... builders) {
@@ -79,7 +78,6 @@ public class BlazeAndroidIntegrationTestCase extends BlazeSyncIntegrationTestCas
             .setTitle("full sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
   }

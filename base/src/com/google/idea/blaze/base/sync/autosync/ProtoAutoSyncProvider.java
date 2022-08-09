@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -33,7 +32,6 @@ import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
@@ -81,7 +79,6 @@ class ProtoAutoSyncProvider implements AutoSyncProvider {
             .setTitle(AUTO_SYNC_TITLE)
             .setSyncMode(SyncMode.PARTIAL)
             .setSyncOrigin(AUTO_SYNC_REASON + ".ProtoAutoSyncProvider")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .addTargetExpressions(plainTargets)
             .setBackgroundSync(true)
             .build();
@@ -95,7 +92,7 @@ class ProtoAutoSyncProvider implements AutoSyncProvider {
     if (target.isPlainTarget()) {
       return ImmutableList.of(target.getLabel());
     }
-    List<Label> output = new ArrayList<>();
+    ImmutableList.Builder<Label> output = new ImmutableList.Builder<>();
     Queue<TargetKey> todo = Queues.newArrayDeque();
     ImmutableMultimap<TargetKey, TargetKey> reverseDependencyMap =
         ReverseDependencyMap.get(project);
@@ -112,6 +109,6 @@ class ProtoAutoSyncProvider implements AutoSyncProvider {
         todo.addAll(reverseDependencyMap.get(targetKey));
       }
     }
-    return output;
+    return output.build();
   }
 }

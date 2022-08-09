@@ -81,8 +81,17 @@ java_import(
 )
 
 java_import(
+    name = "intellilang",
+    jars = [],
+)
+
+java_import(
     name = "kotlin",
     jars = glob(["plugins/Kotlin/lib/*.jar"]),
+)
+
+filegroup(
+    name = "kotlinc_version",
 )
 
 java_import(

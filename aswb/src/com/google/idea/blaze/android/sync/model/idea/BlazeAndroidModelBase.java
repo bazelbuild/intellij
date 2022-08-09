@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.sync.model.idea;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.android.sdklib.AndroidVersion;
@@ -24,29 +23,12 @@ import com.android.tools.idea.model.ClassJarProvider;
 import com.android.tools.lint.detector.api.Desugaring;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.android.sync.model.AarLibrary;
-import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.intellij.openapi.application.ApplicationManager;
+import com.google.idea.blaze.base.sync.libraries.LintCollector;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
@@ -57,7 +39,7 @@ import javax.annotation.Nullable;
  * user-selected build variant.
  */
 abstract class BlazeAndroidModelBase implements AndroidModel {
-  private final Project project;
+  protected final Project project;
   private final ListenableFuture<String> applicationId;
   private final int minSdkVersion;
   private final boolean desugarJava8Libs;
@@ -121,75 +103,9 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
     return null;
   }
 
-  @Override
-  public boolean isGenerated(VirtualFile file) {
-    return false;
-  }
-
-  @Override
+  // @Override #api212, moved in #api213
   public ClassJarProvider getClassJarProvider() {
     return new BlazeClassJarProvider(project);
-  }
-
-  @Override
-  public boolean isClassFileOutOfDate(Module module, String fqcn, VirtualFile classFile) {
-    return testIsClassFileOutOfDate(project, fqcn, classFile);
-  }
-
-  public static boolean testIsClassFileOutOfDate(
-      Project project, String fqcn, VirtualFile classFile) {
-    VirtualFile sourceFile =
-        ApplicationManager.getApplication()
-            .runReadAction(
-                (Computable<VirtualFile>)
-                    () -> {
-                      PsiClass psiClass =
-                          JavaPsiFacade.getInstance(project)
-                              .findClass(fqcn, GlobalSearchScope.projectScope(project));
-                      if (psiClass == null) {
-                        return null;
-                      }
-                      PsiFile psiFile = psiClass.getContainingFile();
-                      if (psiFile == null) {
-                        return null;
-                      }
-                      return psiFile.getVirtualFile();
-                    });
-    if (sourceFile == null) {
-      return false;
-    }
-
-    // Edited but not yet saved?
-    if (FileDocumentManager.getInstance().isFileModified(sourceFile)) {
-      return true;
-    }
-
-    long sourceTimeStamp = sourceFile.getTimeStamp();
-    long buildTimeStamp = classFile.getTimeStamp();
-
-    if (classFile.getFileSystem() instanceof JarFileSystem) {
-      JarFileSystem jarFileSystem = (JarFileSystem) classFile.getFileSystem();
-      VirtualFile jarFile = jarFileSystem.getVirtualFileForJar(classFile);
-      if (jarFile != null) {
-        if (jarFile.getFileSystem() instanceof LocalFileSystem) {
-          // The virtual file timestamp could be stale since we don't watch this file.
-          buildTimeStamp = VfsUtilCore.virtualToIoFile(jarFile).lastModified();
-        } else {
-          buildTimeStamp = jarFile.getTimeStamp();
-        }
-      }
-    }
-
-    if (sourceTimeStamp > buildTimeStamp) {
-      // It's possible that the source file's timestamp has been updated, but the content remains
-      // same. In this case, blaze will not try to rebuild the jar, we have to also check whether
-      // the user recently clicked the build button. So they can at least manually get rid of the
-      // error.
-      Long projectBuildTimeStamp = BlazeBuildService.getLastBuildTimeStamp(project);
-      return projectBuildTimeStamp == null || sourceTimeStamp > projectBuildTimeStamp;
-    }
-
-    return false;
   }
 
   @Override
@@ -202,13 +118,6 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
   public Iterable<File> getLintRuleJarsOverride() {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-    ArtifactLocationDecoder artifactLocationDecoder = blazeProjectData.getArtifactLocationDecoder();
-    return BlazeLibraryCollector.getLibraries(
-            ProjectViewManager.getInstance(project).getProjectViewSet(), blazeProjectData)
-        .stream()
-        .filter(library -> library instanceof AarLibrary)
-        .map(library -> ((AarLibrary) library).getLintRuleJar(project, artifactLocationDecoder))
-        .filter(Objects::nonNull)
-        .collect(toImmutableList());
+    return LintCollector.getLintJars(project, blazeProjectData);
   }
 }

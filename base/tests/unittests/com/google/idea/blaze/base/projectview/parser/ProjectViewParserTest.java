@@ -89,7 +89,7 @@ public class ProjectViewParserTest extends BlazeTestCase {
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     super.initTest(applicationServices, projectServices);
-    context = new BlazeContext();
+    context = BlazeContext.create();
     errorCollector = new ErrorCollector();
     context.addOutputSink(IssueOutput.class, errorCollector);
     projectViewParser =

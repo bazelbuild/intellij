@@ -27,6 +27,7 @@ class TypeScriptBlazeRules implements Kind.Provider {
     return ImmutableSet.of(
         Kind.Provider.create("ng_module", LanguageClass.TYPESCRIPT, RuleType.LIBRARY),
         Kind.Provider.create("ts_library", LanguageClass.TYPESCRIPT, RuleType.LIBRARY),
+        Kind.Provider.create("ts_declaration", LanguageClass.TYPESCRIPT, RuleType.LIBRARY),
         Kind.Provider.create("ts_config", LanguageClass.TYPESCRIPT, RuleType.BINARY));
   }
 }

@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.openapi.project.Project;
@@ -73,6 +74,10 @@ public class AlwaysPresentKotlinSyncPlugin implements BlazeSyncPlugin {
     IssueOutput.error(message)
         .navigatable(PluginUtils.installOrEnablePluginNavigable(KOTLIN_PLUGIN_ID))
         .submit(context);
+    BlazeSyncManager.printAndLogError(
+        "Kotlin support requires the Kotlin plugin. Please install/enable the Kotlin "
+            + "plugin, then restart the IDE",
+        context);
     return false;
   }
 }
