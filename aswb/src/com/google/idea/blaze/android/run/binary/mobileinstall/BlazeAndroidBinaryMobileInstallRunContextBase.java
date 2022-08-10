@@ -88,7 +88,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
   @Override
   public void augmentLaunchOptions(LaunchOptions.Builder options) {
     options
-        .setDeploy(StudioDeployerExperiment.isEnabled())
+        .setDeploy(buildStep.needsIdeDeploy())
         .setOpenLogcatAutomatically(configState.showLogcatAutomatically());
     // This is needed for compatibility with #api211
     options.addExtraOptions(
@@ -110,7 +110,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
     return buildStep;
   }
 
-  // @Override #api211
+  @Override
   public ProfilerState getProfileState() {
     return configState.getProfilerState();
   }
@@ -118,7 +118,7 @@ abstract class BlazeAndroidBinaryMobileInstallRunContextBase implements BlazeAnd
   @Override
   public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
-    if (!StudioDeployerExperiment.isEnabled()) {
+    if (!buildStep.needsIdeDeploy()) {
       return ImmutableList.of();
     }
 

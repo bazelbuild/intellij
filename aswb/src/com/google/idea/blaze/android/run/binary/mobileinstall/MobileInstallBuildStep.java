@@ -259,6 +259,11 @@ public class MobileInstallBuildStep implements ApkBuildStep {
   }
 
   @Override
+  public boolean needsIdeDeploy() {
+    return StudioDeployerExperiment.isEnabled();
+  }
+
+  @Override
   public BlazeAndroidDeployInfo getDeployInfo() throws ApkProvisionException {
     if (deployInfo != null) {
       return deployInfo;
