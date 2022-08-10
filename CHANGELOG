@@ -1,3 +1,10 @@
+v2022.08.09
+===========
+* Automatically import projects from directory.
+* Roll out Kotlin coroutines debugging to 50% of users
+* Roll out the new sync window to 50% of users
+* Fix Blaze target highlighting in the integrated terminal
+
 v2022.06.28
 ===========
 * Bug fixes and internal cleanup.
