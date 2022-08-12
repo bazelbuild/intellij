@@ -32,9 +32,11 @@ import java.util.function.Predicate;
 /** Provides out-of-project go sources for indexing. */
 public final class BlazeGoAdditionalLibraryRootsProvider extends BlazeExternalLibraryProvider {
 
+  public static final String GO_EXTERNAL_LIBRARY_ROOT_NAME = "Go Libraries";
+
   @Override
   protected String getLibraryName() {
-    return "Go Libraries";
+    return GO_EXTERNAL_LIBRARY_ROOT_NAME;
   }
 
   @Override

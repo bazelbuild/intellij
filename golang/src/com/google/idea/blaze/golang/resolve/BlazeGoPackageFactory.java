@@ -36,7 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import javax.annotation.Nullable;
 
-class BlazeGoPackageFactory implements GoPackageFactory {
+/** Updates and exposes a map of import paths to files. */
+public class BlazeGoPackageFactory implements GoPackageFactory {
   @Nullable
   @Override
   public GoPackage createPackage(GoFile goFile) {
@@ -54,7 +55,7 @@ class BlazeGoPackageFactory implements GoPackageFactory {
   }
 
   @Nullable
-  static ConcurrentMap<File, String> getFileToImportPathMap(Project project) {
+  public static ConcurrentMap<File, String> getFileToImportPathMap(Project project) {
     return SyncCache.getInstance(project)
         .get(BlazeGoPackageFactory.class, BlazeGoPackageFactory::buildFileToImportPathMap);
   }
