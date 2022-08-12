@@ -57,9 +57,8 @@ java_import(
     jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
 )
 
-java_import(
+java_library(
     name = "intellilang",
-    jars = [],
 )
 
 java_import(

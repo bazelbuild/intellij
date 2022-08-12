@@ -80,9 +80,8 @@ java_import(
     jars = glob(["plugins/AngularJS/lib/*.jar"]),
 )
 
-java_import(
+java_library(
     name = "intellilang",
-    jars = [],
 )
 
 java_import(
