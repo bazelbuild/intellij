@@ -115,22 +115,22 @@ public class BlazeScalaSyncPlugin implements BlazeSyncPlugin {
       new ScalaSdkJar("^scala-library-.+", true),
 
       // Scala 2 support
-      new ScalaSdkJar("^scala-reflect-.+", true),
-      new ScalaSdkJar("^scala-compiler-.+", false)
+      // new ScalaSdkJar("^scala-reflect-.+", true),
+      // new ScalaSdkJar("^scala-compiler-.+", false)
 
       // Scala 3 support
-      // new ScalaSdkJar("^scala3-library_3.+", true),
-      // new ScalaSdkJar("^jna-.+", false),
-      // new ScalaSdkJar("^jline-reader-.+", false),
-      // new ScalaSdkJar("^jline-terminal-.+", false),
-      // new ScalaSdkJar("^jline-terminal-.+", false),
-      // new ScalaSdkJar("^scala-asm-.+", false),
-      // new ScalaSdkJar("^scala3-compiler_3.+", false),
-      // new ScalaSdkJar("^scala3-interfaces.+", false),
-      // new ScalaSdkJar("^tasty-core_3.+", false),
-      // new ScalaSdkJar("^compiler-interface.+", false),
-      // new ScalaSdkJar("^util-interface-.+", false),
-      // new ScalaSdkJar("^protobuf-java-.+", false)
+      new ScalaSdkJar("^scala3-library_3.+", true),
+      new ScalaSdkJar("^jna-.+", false),
+      new ScalaSdkJar("^jline-reader-.+", false),
+      new ScalaSdkJar("^jline-terminal-.+", false),
+      new ScalaSdkJar("^jline-terminal-.+", false),
+      new ScalaSdkJar("^scala-asm-.+", false),
+      new ScalaSdkJar("^scala3-compiler_3.+", false),
+      new ScalaSdkJar("^scala3-interfaces.+", false),
+      new ScalaSdkJar("^tasty-core_3.+", false),
+      new ScalaSdkJar("^compiler-interface.+", false),
+      new ScalaSdkJar("^util-interface-.+", false),
+      new ScalaSdkJar("^protobuf-java-.+", false)
     };
 
     // The point of the rest of this function is to identify and set up a Scala SDK
