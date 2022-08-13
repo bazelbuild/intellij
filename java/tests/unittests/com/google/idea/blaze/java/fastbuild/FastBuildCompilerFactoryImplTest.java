@@ -287,9 +287,7 @@ public final class FastBuildCompilerFactoryImplTest {
                   /* bootJars= */ ImmutableList.of(),
                   /* sourceVersion= */ "7",
                   /* targetVersion= */ "8"))
-          .compile(
-              createBlazeContext(javacOutput),
-              createCompileInstructions(java, javacOutput).build());
+          .compile(createBlazeContext(javacOutput), createCompileInstructions(java).build());
       fail("Should have thrown FastBuildIncrementalCompileException");
     } catch (FastBuildIncrementalCompileException e) {
       assertThat(javacOutput.toString()).contains("lambda");
@@ -317,7 +315,7 @@ public final class FastBuildCompilerFactoryImplTest {
     try {
       compiler.compile(
           createBlazeContext(javacOutput),
-          createCompileInstructions(java, javacOutput, AUTO_VALUE_JAR)
+          createCompileInstructions(java, AUTO_VALUE_JAR)
               .annotationProcessorClasspath(ImmutableSet.of(AUTO_VALUE_PLUGIN_JAR))
               .annotationProcessorClassNames(ImmutableSet.of(AUTO_VALUE_PROCESSOR))
               .build());
@@ -330,19 +328,17 @@ public final class FastBuildCompilerFactoryImplTest {
       throws IOException, FastBuildException {
     getCompiler()
         .compile(
-            createBlazeContext(javacOutput),
-            createCompileInstructions(source, javacOutput, classpath).build());
+            createBlazeContext(javacOutput), createCompileInstructions(source, classpath).build());
   }
 
-  private CompileInstructions.Builder createCompileInstructions(
-      String source, Writer javacOutput, File... classpath) throws IOException {
+  private CompileInstructions.Builder createCompileInstructions(String source, File... classpath)
+      throws IOException {
     Path outputDirectory = createOutputDirectory();
     Path javaFile = createJavaFile(source);
     return CompileInstructions.builder()
         .outputDirectory(outputDirectory.toFile())
         .filesToCompile(ImmutableList.of(javaFile.toFile()))
-        .classpath(ImmutableList.copyOf(classpath))
-        .outputWriter(javacOutput);
+        .classpath(ImmutableList.copyOf(classpath));
   }
 
   private Path createJavaFile(String java) throws IOException {

@@ -32,7 +32,6 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
@@ -49,7 +48,6 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.NetworkTrafficTrackingScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
@@ -684,17 +682,6 @@ final class SyncPhaseCoordinator {
                 .setIssueParsers(
                     BlazeIssueParser.defaultIssueParsers(
                         project, WorkspaceRoot.fromProject(project), ContextType.Sync))
-                .build())
-        .push(
-            new BlazeConsoleScope.Builder(project, indicator)
-                .setPopupBehavior(
-                    syncParams.backgroundSync()
-                        ? FocusBehavior.NEVER
-                        : userSettings.getShowBlazeConsoleOnSync())
-                .addConsoleFilters(
-                    new IssueOutputFilter(
-                        project, WorkspaceRoot.fromProject(project), ContextType.Sync, true))
-                .setClearPreviousState(clearProblems)
                 .build())
         .push(
             new ProblemsViewScope(

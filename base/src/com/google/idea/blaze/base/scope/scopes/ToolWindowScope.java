@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.scope.scopes;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -40,18 +39,8 @@ import com.intellij.openapi.project.Project;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-/**
- * Passes print outputs to the Blaze Outputs Tool Window.
- *
- * <p>Will replace {@link com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope}
- */
+/** ToolWindowScope passes print outputs to the Blaze Outputs Tool Window. */
 public final class ToolWindowScope implements BlazeScope {
-
-  /**
-   * The scope implementation that doesn't do anything. It's used when the ToolWindow experiment is
-   * turned off.
-   */
-  private static final NoOpBlazeScope NO_OP_SCOPE_INSTANCE = new NoOpBlazeScope();
 
   /** Builder for the {@link ToolWindowScope} */
   public static final class Builder {
@@ -114,9 +103,6 @@ public final class ToolWindowScope implements BlazeScope {
     }
 
     public BlazeScope build() {
-      if (!BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()) {
-        return NO_OP_SCOPE_INSTANCE;
-      }
       return new ToolWindowScope(
           project,
           task,

@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.RuleType;
@@ -118,11 +117,6 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
               kotlinxCoroutinesJavaAgent);
     }
     addConsoleFilters(
-        new IssueOutputFilter(
-            project,
-            WorkspaceRoot.fromProject(project),
-            BlazeInvocationContext.ContextType.RunConfiguration,
-            false),
         ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
             project,
             WorkspaceRoot.fromProject(project),

@@ -134,6 +134,8 @@
         overrides="true"/>
     <postStartupActivity implementation="com.google.idea.blaze.java.run.producers.NonBlazeProducerSuppressor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.java.run.hotswap.BlazeHotSwapAction$Customizer"/>
+    <notificationGroup id="Fastbuild failed notification"
+        displayType="STICKY_BALLOON"/>
   </extensions>
 
   <project-components>

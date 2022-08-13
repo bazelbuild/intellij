@@ -16,11 +16,13 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
+import com.google.common.primitives.Ints;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.common.experiments.IntExperiment;
 import com.google.idea.common.ui.templates.Behavior;
+import com.google.idea.common.util.MorePlatformUtils;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.Disposable;
@@ -31,6 +33,13 @@ import javax.annotation.Nullable;
 /** Behaviour class of the combination of the tree and console view. */
 final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel> {
   private TasksTreeConsoleModel model;
+  private static final int TASK_HISTORY_SIZE =
+      Ints.constrainToRange(
+          new IntExperiment(
+                  "blazeconsole.v2.history.size", MorePlatformUtils.isAndroidStudio() ? 2 : 10)
+              .getValue(),
+          /* min= */ 2,
+          /* max= */ 10);
 
   @Override
   public void defineBehavior(TasksTreeConsoleModel model) {
@@ -96,8 +105,7 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
   }
 
   private void cleanUpTasksExceedingLimit() {
-    while (model.getTopLevelFinishedTasks().size()
-        > BlazeConsoleExperimentManager.getTasksHistorySize()) {
+    while (model.getTopLevelFinishedTasks().size() > TASK_HISTORY_SIZE) {
       Task task = model.pollOldestFinishedTask();
       if (task == null) {
         throw new IllegalStateException("Tried to remove oldest finished task but none found.");

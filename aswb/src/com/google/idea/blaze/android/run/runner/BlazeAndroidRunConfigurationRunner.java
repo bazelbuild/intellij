@@ -27,11 +27,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.run.BlazeAndroidRunState;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
-import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
@@ -39,7 +37,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
@@ -143,6 +140,7 @@ public final class BlazeAndroidRunConfigurationRunner
     return new BlazeAndroidRunState(env, launchOptionsBuilder, deviceSession, runContext);
   }
 
+  @Nullable
   private static String canDebug(
       DeviceFutures deviceFutures, AndroidFacet facet, String moduleName) {
     // If we are debugging on a device, then the app needs to be debuggable
@@ -173,16 +171,6 @@ public final class BlazeAndroidRunConfigurationRunner
           context
               .push(new ProblemsViewScope(project, settings.getShowProblemsViewOnRun()))
               .push(new ExperimentScope())
-              .push(
-                  new BlazeConsoleScope.Builder(project)
-                      .setPopupBehavior(settings.getShowBlazeConsoleOnRun())
-                      .addConsoleFilters(
-                          new IssueOutputFilter(
-                              project,
-                              WorkspaceRoot.fromProject(project),
-                              BlazeInvocationContext.ContextType.BeforeRunTask,
-                              true))
-                      .build())
               .push(
                   new ToolWindowScope.Builder(
                           project, new Task(project, "Build apk", Task.Type.BEFORE_LAUNCH))

@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests for {@link TasksToolWindowService} */
+/** Tests for {@link TasksToolWindowServiceImpl} */
 @RunWith(JUnit4.class)
 public class TasksToolWindowServiceTest {
   private static final Instant NOW_INSTANT = Instant.ofEpochSecond(333);
@@ -35,7 +35,7 @@ public class TasksToolWindowServiceTest {
 
   private Task task;
   private final TasksToolWindowService service =
-      new TasksToolWindowService(intellij.getProject(), () -> NOW_INSTANT);
+      new TasksToolWindowServiceImpl(intellij.getProject(), () -> NOW_INSTANT);
 
   @Before
   public void before() {

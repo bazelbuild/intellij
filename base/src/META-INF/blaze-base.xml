@@ -175,19 +175,12 @@
     <postStartupActivity implementation="com.google.idea.blaze.base.prefetch.PrefetchProjectInitializer" />
 
 
-    <toolWindow id="Blaze Console"
-                      anchor="bottom"
-                      secondary="true"
-                      conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"
-                      icon="BlazeIcons.ToolWindow"
-                      factoryClass="com.google.idea.blaze.base.console.BlazeConsoleToolWindowFactory"/>
     <toolWindow id="Blaze"
         anchor="bottom"
         secondary="false"
         conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"
         icon="BlazeIcons.ToolWindow"
         factoryClass="com.google.idea.blaze.base.toolwindow.TasksToolWindowFactory"/>
-    <projectService serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleView"/>
     <fileTypeFactory implementation="com.google.idea.blaze.base.plugin.BlazeFileTypeFactory" />
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.BuildTasksProblemsView"/>
 
@@ -227,9 +220,8 @@
                     serviceImplementation="com.google.idea.blaze.base.projectview.ProjectViewManagerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface"
                         serviceImplementation="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceAspectsImpl"/>
-    <projectService serviceInterface="com.google.idea.blaze.base.console.BlazeConsoleService"
-                    serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleServiceImpl"/>
-    <projectService serviceImplementation="com.google.idea.blaze.base.toolwindow.TasksToolWindowService"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.toolwindow.TasksToolWindowService"
+                    serviceImplementation="com.google.idea.blaze.base.toolwindow.TasksToolWindowServiceImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.SourceToTargetMap"
                     serviceImplementation="com.google.idea.blaze.base.targetmaps.SourceToTargetMapImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap"

@@ -15,13 +15,11 @@
  */
 package com.google.idea.blaze.base.scope.scopes;
 
-import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
-import com.google.idea.blaze.base.ui.problems.BlazeProblemsView;
 import com.google.idea.blaze.base.ui.problems.BuildTasksProblemsView;
 import com.intellij.openapi.project.Project;
 
@@ -47,27 +45,13 @@ public class ProblemsViewScope implements BlazeScope, OutputSink<IssueOutput> {
   public void onScopeBegin(BlazeContext context) {
     context.addOutputSink(IssueOutput.class, this);
     if (resetProblemsContext) {
-      if (BlazeConsoleExperimentManager.isBlazeConsoleV1Enabled()) {
-        BlazeProblemsView.getInstance(project)
-            .newProblemsContext(
-                BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()
-                    ? FocusBehavior.NEVER // because it occupies the same space as the new console
-                    : problemsViewFocusBehavior);
-      }
-      if (BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()) {
         BuildTasksProblemsView.getInstance(project).newProblemsContext(problemsViewFocusBehavior);
-      }
     }
   }
 
   @Override
   public Propagation onOutput(IssueOutput output) {
-    if (BlazeConsoleExperimentManager.isBlazeConsoleV1Enabled()) {
-      BlazeProblemsView.getInstance(project).addMessage(output, null);
-    }
-    if (BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()) {
       BuildTasksProblemsView.getInstance(project).addMessage(output, null);
-    }
     return Propagation.Continue;
   }
 }

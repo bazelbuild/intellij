@@ -23,7 +23,7 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
+import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -309,11 +309,10 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   private ImmutableList<Filter> getConsoleFilters() {
     return ImmutableList.of(
         new UrlFilter(),
-        new IssueOutputFilter(
+        ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
             project,
             WorkspaceRoot.fromProject(project),
-            BlazeInvocationContext.ContextType.RunConfiguration,
-            false));
+            BlazeInvocationContext.ContextType.RunConfiguration));
   }
 
   private CidrConsoleBuilder createConsoleBuilder(@Nullable BlazeTestUiSession testUiSession) {

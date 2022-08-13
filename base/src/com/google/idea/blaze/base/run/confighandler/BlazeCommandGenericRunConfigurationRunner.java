@@ -24,9 +24,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
-import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -100,16 +98,10 @@ public final class BlazeCommandGenericRunConfigurationRunner
       this.consoleFilters =
           ImmutableList.of(
               new UrlFilter(),
-              BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()
-                  ? ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
-                      project,
-                      WorkspaceRoot.fromProject(project),
-                      BlazeInvocationContext.ContextType.RunConfiguration)
-                  : new IssueOutputFilter(
-                      project,
-                      WorkspaceRoot.fromProject(project),
-                      BlazeInvocationContext.ContextType.RunConfiguration,
-                      false));
+              ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
+                  project,
+                  WorkspaceRoot.fromProject(project),
+                  BlazeInvocationContext.ContextType.RunConfiguration));
     }
 
     private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {

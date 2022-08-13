@@ -46,7 +46,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import java.io.File;
-import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -139,11 +138,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
 
   @FunctionalInterface
   private interface Javac {
-    boolean compile(
-        BlazeContext context,
-        List<String> javacArgs,
-        Collection<File> files,
-        PrintWriter outputWriter)
+    boolean compile(BlazeContext context, List<String> javacArgs, Collection<File> files)
         throws FastBuildException;
   }
 
@@ -163,7 +158,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
       FastBuildJavac javaCompiler =
           Reflection.newProxy(
               FastBuildJavac.class, new MatchingMethodInvocationHandler(javacClass, javacInstance));
-      return (context, javacArgs, files, writer) -> {
+      return (context, javacArgs, files) -> {
         Stopwatch timer = Stopwatch.createStarted();
         Object[] rawOutput = javaCompiler.compile(javacArgs, files);
         CompilerOutput output = CompilerOutput.decode(rawOutput);
@@ -269,8 +264,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
       logger.info("Running javac with options: " + trimmedArgs);
 
       Stopwatch timer = Stopwatch.createStarted();
-      boolean success =
-          javac.compile(context, args, instructions.filesToCompile(), instructions.outputWriter());
+      boolean success = javac.compile(context, args, instructions.filesToCompile());
       timer.stop();
       writeCompilationFinishedMessage(context, instructions, success, timer);
       if (!success) {
