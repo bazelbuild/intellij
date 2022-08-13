@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.TempDirectoryProvider;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -38,7 +37,6 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -128,15 +126,7 @@ public final class BlazeBeforeRunCommandHelper {
                             .build())
                     .push(
                         new ProblemsViewScope(
-                            project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
-                    .push(
-                        new BlazeConsoleScope.Builder(project)
-                            .setPopupBehavior(
-                                BlazeUserSettings.getInstance().getShowBlazeConsoleOnRun())
-                            .addConsoleFilters(
-                                new IssueOutputFilter(
-                                    project, workspaceRoot, invocationContext.type(), true))
-                            .build());
+                            project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()));
 
                 context.output(new StatusOutput(progressMessage));
 

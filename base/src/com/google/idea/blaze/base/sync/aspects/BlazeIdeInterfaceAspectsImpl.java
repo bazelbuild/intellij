@@ -44,14 +44,12 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArt
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.info.BlazeConfigurationHandler;
-import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.filecache.ArtifactState;
 import com.google.idea.blaze.base.filecache.ArtifactsDiff;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.lang.AdditionalLanguagesHelper;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
@@ -76,7 +74,6 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
@@ -694,14 +691,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             .setIssueParsers(
                 BlazeIssueParser.defaultIssueParsers(project, workspaceRoot, contextType))
             .build());
-
-    if (BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()) {
-      childContext.push(
-          new BlazeConsoleScope.Builder(project)
-              .addConsoleFilters(new IssueOutputFilter(project, workspaceRoot, contextType, true))
-              .setClearPreviousState(false)
-              .build());
-    }
   }
 
   /** Runs a blaze build for the given output groups. */

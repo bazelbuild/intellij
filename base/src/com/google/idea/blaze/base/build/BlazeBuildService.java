@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -40,7 +39,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.ScopedTask;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
@@ -196,15 +194,6 @@ public class BlazeBuildService {
                                         BlazeInvocationContext.ContextType.Sync))
                                 .build())
                         .push(new ExperimentScope())
-                        .push(
-                            new BlazeConsoleScope.Builder(project)
-                                .addConsoleFilters(
-                                    new IssueOutputFilter(
-                                        project,
-                                        WorkspaceRoot.fromProject(project),
-                                        BlazeInvocationContext.ContextType.Sync,
-                                        true))
-                                .build())
                         .push(new ProblemsViewScope(project, problemsViewFocus))
                         .push(new IdeaLogScope())
                         .push(new TimingScope("Make", EventType.BlazeInvocation))

@@ -20,8 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import java.io.File;
-import java.io.PrintWriter;
-import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
 
@@ -36,9 +34,6 @@ interface FastBuildCompiler {
     abstract ImmutableList<File> classpath();
 
     abstract File outputDirectory();
-
-    @Deprecated
-    abstract PrintWriter outputWriter();
 
     abstract ImmutableSet<String> annotationProcessorClassNames();
 
@@ -59,14 +54,6 @@ interface FastBuildCompiler {
       abstract Builder classpath(List<File> classpath);
 
       abstract Builder outputDirectory(File outputDirectory);
-
-      @Deprecated
-      abstract Builder outputWriter(PrintWriter outputWriter);
-
-      @Deprecated
-      Builder outputWriter(Writer writer) {
-        return this.outputWriter(new PrintWriter(writer));
-      }
 
       abstract Builder annotationProcessorClassNames(
           Collection<String> annotationProcessorClassNames);
