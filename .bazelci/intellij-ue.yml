@@ -76,5 +76,3 @@ tasks:
       - //:ijwb_ue_tests
     soft_fail:
       - exit_status: 1
-
-Footer
