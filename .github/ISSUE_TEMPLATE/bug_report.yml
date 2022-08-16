@@ -22,17 +22,17 @@ body:
     id: os
     attributes:
       label: >
-        Which Intellij IDE is used and its version?
+        Which Intellij IDE are you using? Please provide the specific version.
   - type: input
     id: version
     attributes:
       label: >
-        Which programming language and tools used to reproduce the issue and its version?
+        What programming languages and tools are you using? Please provide specific versions.
   - type: input
-    id: version
+    id: plugin
     attributes:
       label: >
-        What bazel plugin version used?
+        What Bazel plugin version are you using?
   - type: textarea
     id: relevant-info
     attributes:
