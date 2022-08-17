@@ -21,7 +21,7 @@ body:
     id: os
     attributes:
       label: >
-        What operating system, Intellij IDE, and programming languages are you using? Please provide specific versions.
+        What operating system, Intellij IDE and programming languages are you using? Please provide specific versions.
   - type: textarea
     id: relevant-info
     attributes:
