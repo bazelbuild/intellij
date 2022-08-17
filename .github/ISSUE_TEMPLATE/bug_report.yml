@@ -5,10 +5,10 @@ body:
     attributes:
       value: >
         **Attention:** if this is a _question_ about how to build / test / query / deploy using
-        Bazel intellij, or a _discussion starter_, send it to bazel-discuss@googlegroups.com or discuss on
-        [Bazel Slack](https://slack.bazel.build/) #intellij channel instead!
+        Bazel intellij, or a _discussion starter_, send it to intellij-bazel-plugin@googlegroups.com or discuss on
+        [Bazel Slack](https://bazelbuild.slack.com/#intellij) channel instead!
   - type: textarea
-    id: desc
+    id: bug
     attributes:
       label: >
         Description of the bug:
@@ -19,12 +19,12 @@ body:
         What's the simplest, easiest way to reproduce this bug? Please provide a minimal example if
         possible.
   - type: input
-    id: os
+    id: product
     attributes:
       label: >
         Which Intellij IDE are you using? Please provide the specific version.
   - type: input
-    id: version
+    id: tools
     attributes:
       label: >
         What programming languages and tools are you using? Please provide specific versions.
@@ -41,7 +41,7 @@ body:
         Places to look:
 
          * GitHub issues: https://github.com/bazelbuild/intellij/issues
-         * Email threads on https://groups.google.com/forum/#!forum/bazel-discuss
+         * Email threads on https://groups.google.com/forum/#!forum/intellij-bazel-plugin
   - type: textarea
     id: extras
     attributes:
