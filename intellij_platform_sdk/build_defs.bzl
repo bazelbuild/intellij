@@ -303,21 +303,22 @@ def get_versions_to_build(product):
     """"Returns a set of unique product version aliases to test and build during regular release process.
 
     For each product, we care about four versions aliases to build and release to JetBrains
-    repository; -latest, -beta, -oss-stable and oss-beta. However, some of these aliases can
-    point to the same IDE version and this can lead to conflicts if we attempt to blindly
-    build and upload the four versions. This function is used to return only the aliases
-    that point to different IDE versions of the given product.
+    repository; -latest, -beta, -oss-oldest-stable and oss-latest-stable.
+    However, some of these aliases can point to the same IDE version and this can lead
+    to conflicts if we attempt to blindly build and upload the four versions.
+    This function is used to return only the aliases that point to different
+    IDE versions of the given product.
 
     Args:
         product: name of the product; android-studio, clion, intellij-ue
 
     Returns:
         A space separated list of product version aliases to build, the values can be
-        oss-stable, oss-beta, internal-stable and internal-beta.
+        oss-oldest-stable, oss-latest-stable, internal-stable and internal-beta.
     """
     aliases_to_build = []
     plugin_api_versions = []
-    for alias in ["oss-stable", "latest", "oss-beta", "beta"]:
+    for alias in ["oss-oldest-stable", "latest", "oss-latest-stable", "beta"]:
         indirect_ij_product = product + "-" + alias
         if indirect_ij_product not in INDIRECT_IJ_PRODUCTS:
             fail(
