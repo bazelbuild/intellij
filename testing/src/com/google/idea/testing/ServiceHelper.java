@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.serviceContainer.ComponentManagerImpl;
@@ -47,6 +48,16 @@ public class ServiceHelper {
       ExtensionPointName<T> name, T instance, Disposable parentDisposable) {
     ExtensionPoint<T> ep = Extensions.getRootArea().getExtensionPoint(name);
     ep.registerExtension(instance);
+    Disposer.register(parentDisposable, () -> ep.unregisterExtension(instance));
+  }
+
+  public static <T> void registerExtensionFirst(
+      ExtensionPointName<T> name, T instance, Disposable parentDisposable) {
+    ExtensionPoint<T> ep =
+        ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(name);
+    // Using the new {@code ExtensionPoint$registerExtension} requires updating test case base class
+    // to stop unregistering the EP manually during tear down.
+    ep.registerExtension(instance, LoadingOrder.FIRST);
     Disposer.register(parentDisposable, () -> ep.unregisterExtension(instance));
   }
 
@@ -81,7 +92,7 @@ public class ServiceHelper {
       if (!application.hasComponent(key)) {
         // registers component from scratch
         ServiceContainerUtil.registerComponentImplementation(
-            application, key, key, /* shouldBeAlreadyRegistered=*/ false);
+            application, key, key, /*shouldBeRegistered=*/ false);
       }
       // replaces existing component
       ServiceContainerUtil.registerComponentInstance(
