@@ -37,6 +37,8 @@ public class BlazercMigrator {
   private static final String USER_BLAZERC = ".blazerc";
   private static final BoolExperiment ENABLED =
       new BoolExperiment("blaze.sync.runner.enablebuildapi", true);
+  private static final BoolExperiment BLAZERC_MIGRATION_EXPERIMENT =
+      new BoolExperiment("blaze.sync.userblazerc.enablemigration", false);
   private static final Logger logger = Logger.getInstance(BlazercMigrator.class);
   private final VirtualFile homeBlazerc;
   private final VirtualFile workspaceBlazercDir;
@@ -75,7 +77,10 @@ public class BlazercMigrator {
   }
 
   public boolean needMigration() {
-    if (!ENABLED.getValue() || homeBlazerc == null || !MorePlatformUtils.isAndroidStudio()) {
+    if (!BLAZERC_MIGRATION_EXPERIMENT.getValue()
+        || !ENABLED.getValue()
+        || homeBlazerc == null
+        || !MorePlatformUtils.isAndroidStudio()) {
       return false;
     }
     VirtualFile workspaceBlazerc = workspaceBlazercDir.findChild(USER_BLAZERC);
