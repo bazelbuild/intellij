@@ -21,17 +21,17 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-beta": "clion-2022.1",
     "clion-under-dev": "clion-2022.1",
     # Indirect ij_product mapping for Bazel Plugin OSS
-    "intellij-oss-stable": "intellij-2022.1",
-    "intellij-oss-beta": "intellij-2022.1",
+    "intellij-oss-oldest-stable": "intellij-2022.1",
+    "intellij-oss-latest-stable": "intellij-2022.2",
     "intellij-oss-under-dev": "intellij-2022.2",
-    "intellij-ue-oss-stable": "intellij-ue-2022.1",
-    "intellij-ue-oss-beta": "intellij-ue-2022.1",
+    "intellij-ue-oss-oldest-stable": "intellij-ue-2022.1",
+    "intellij-ue-oss-latest-stable": "intellij-ue-2022.2",
     "intellij-ue-oss-under-dev": "intellij-ue-2022.2",
-    "android-studio-oss-stable": "android-studio-2021.3",
-    "android-studio-oss-beta": "android-studio-2021.3",
+    "android-studio-oss-oldest-stable": "android-studio-2021.3",
+    "android-studio-oss-latest-stable": "android-studio-2021.3",
     "android-studio-oss-under-dev": "android-studio-2021.3",
-    "clion-oss-stable": "clion-2022.1",
-    "clion-oss-beta": "clion-2022.1",
+    "clion-oss-oldest-stable": "clion-2022.1",
+    "clion-oss-latest-stable": "clion-2022.2",
     "clion-oss-under-dev": "clion-2022.2",
 }
 
@@ -301,21 +301,22 @@ def get_versions_to_build(product):
     """"Returns a set of unique product version aliases to test and build during regular release process.
 
     For each product, we care about four versions aliases to build and release to JetBrains
-    repository; -latest, -beta, -oss-stable and oss-beta. However, some of these aliases can
-    point to the same IDE version and this can lead to conflicts if we attempt to blindly
-    build and upload the four versions. This function is used to return only the aliases
-    that point to different IDE versions of the given product.
+    repository; -latest, -beta, -oss-oldest-stable and oss-latest-stable.
+    However, some of these aliases can point to the same IDE version and this can lead
+    to conflicts if we attempt to blindly build and upload the four versions.
+    This function is used to return only the aliases that point to different
+    IDE versions of the given product.
 
     Args:
         product: name of the product; android-studio, clion, intellij-ue
 
     Returns:
         A space separated list of product version aliases to build, the values can be
-        oss-stable, oss-beta, internal-stable and internal-beta.
+        oss-oldest-stable, oss-latest-stable, internal-stable and internal-beta.
     """
     aliases_to_build = []
     plugin_api_versions = []
-    for alias in ["oss-stable", "latest", "oss-beta", "beta"]:
+    for alias in ["oss-oldest-stable", "latest", "oss-latest-stable", "beta"]:
         indirect_ij_product = product + "-" + alias
         if indirect_ij_product not in INDIRECT_IJ_PRODUCTS:
             fail(
