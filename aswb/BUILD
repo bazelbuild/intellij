@@ -99,6 +99,7 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//testing:lib",
+        "@error_prone_annotations//jar",
         "@junit//jar",
     ],
 )
@@ -117,7 +118,7 @@ java_library(
     deps = [
         "//base",
         "//common/experiments",
-        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep
         "//intellij_platform_sdk:kotlin",
         "//intellij_platform_sdk:plugin_api",
         "//java",
@@ -195,7 +196,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
-        "@error_prone_annotations//jar",
         "@junit//jar",
     ],
 )

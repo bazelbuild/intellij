@@ -494,7 +494,7 @@
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.run.coverage.CoverageBuildFlagsProvider"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandler"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.FallbackBlazeVcsHandler" order="last" id="fallback"/>
-    <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" order="last"/>
+    <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" id="BazelBuildSystemProvider" order="last"/>
     <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.DefaultBuildifierBinaryProvider"/>
     <BuildResultHelperProvider order="last" implementation="com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep$Provider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandlerProvider"/>
