@@ -48,6 +48,7 @@ public interface BlazeAndroidDeviceSelector {
     }
   }
 
+  @Nullable
   DeviceSession getDevice(
       Project project,
       AndroidFacet facet,
@@ -95,6 +96,7 @@ public interface BlazeAndroidDeviceSelector {
     }
 
     @Override
+    @Nullable
     public DeviceSession getDevice(
         Project project,
         AndroidFacet facet,
