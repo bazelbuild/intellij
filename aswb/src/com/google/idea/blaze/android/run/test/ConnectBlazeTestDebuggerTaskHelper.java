@@ -37,6 +37,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.Locale;
+import javax.annotation.Nullable;
 
 /** Connects the blaze debugger during execution. */
 class ConnectBlazeTestDebuggerTaskHelper {
@@ -46,6 +47,7 @@ class ConnectBlazeTestDebuggerTaskHelper {
    * Nearly a clone of {@link ConnectJavaDebuggerTask#launchDebugger}. There are a few changes to
    * account for null variables that could occur in our implementation.
    */
+  @Nullable
   public static ProcessHandler launchDebugger(
       Project project,
       LaunchInfo currentLaunchInfo,
