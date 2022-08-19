@@ -24,28 +24,37 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.idea.blaze.base.command.buildresult.BepArtifactData;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
+import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
-/** The result of a blaze build. */
+/** The result of a (potentially sharded) blaze build. */
 public class BlazeBuildOutputs {
 
   public static BlazeBuildOutputs noOutputs(BuildResult buildResult) {
-    return new BlazeBuildOutputs(buildResult, ImmutableMap.of(), ImmutableList.of(), 0L);
+    return new BlazeBuildOutputs(buildResult, ImmutableMap.of(), ImmutableMap.of(), 0L);
   }
 
   public static BlazeBuildOutputs fromParsedBepOutput(
       BuildResult result, ParsedBepOutput parsedOutput) {
-    ImmutableList<String> id =
-        parsedOutput.buildId != null ? ImmutableList.of(parsedOutput.buildId) : ImmutableList.of();
+    ImmutableMap<String, BuildResult> buildIdWithResult =
+        parsedOutput.buildId != null
+            ? ImmutableMap.of(parsedOutput.buildId, result)
+            : ImmutableMap.of();
     return new BlazeBuildOutputs(
-        result, parsedOutput.getFullArtifactData(), id, parsedOutput.getBepBytesConsumed());
+        result,
+        result.status == Status.FATAL_ERROR
+            ? ImmutableMap.of()
+            : parsedOutput.getFullArtifactData(),
+        buildIdWithResult,
+        parsedOutput.getBepBytesConsumed());
   }
 
   public final BuildResult buildResult;
-  public final ImmutableList<String> buildIds;
+  // Maps build id to the build result of individual shards
+  private final ImmutableMap<String, BuildResult> buildShardResults;
   public final long bepBytesConsumed;
 
   /** {@link BepArtifactData} by {@link OutputArtifact#getKey()} for all artifacts from a build. */
@@ -57,11 +66,11 @@ public class BlazeBuildOutputs {
   private BlazeBuildOutputs(
       BuildResult buildResult,
       Map<String, BepArtifactData> artifacts,
-      ImmutableList<String> buildIds,
+      ImmutableMap<String, BuildResult> buildShardResults,
       long bepBytesConsumed) {
     this.buildResult = buildResult;
     this.artifacts = ImmutableMap.copyOf(artifacts);
-    this.buildIds = buildIds;
+    this.buildShardResults = buildShardResults;
     this.bepBytesConsumed = bepBytesConsumed;
 
     ImmutableSetMultimap.Builder<String, OutputArtifact> perTarget = ImmutableSetMultimap.builder();
@@ -117,7 +126,21 @@ public class BlazeBuildOutputs {
     return new BlazeBuildOutputs(
         BuildResult.combine(buildResult, nextOutputs.buildResult),
         combined,
-        ImmutableList.<String>builder().addAll(buildIds).addAll(nextOutputs.buildIds).build(),
+        ImmutableMap.<String, BuildResult>builder()
+            .putAll(buildShardResults)
+            .putAll(nextOutputs.buildShardResults)
+            .build(),
         bepBytesConsumed + nextOutputs.bepBytesConsumed);
+  }
+
+  public ImmutableList<String> getBuildIds() {
+    return buildShardResults.keySet().asList();
+  }
+
+  /** Returns true if all component builds had fatal errors. */
+  public boolean allBuildsFailed() {
+    return !buildShardResults.isEmpty()
+        && buildShardResults.values().stream()
+            .allMatch(result -> result.status == Status.FATAL_ERROR);
   }
 }

@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
-import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import javax.annotation.Nullable;
 
 /**
@@ -45,9 +44,9 @@ public abstract class BlazeSyncBuildResult {
         .build();
   }
 
-  /** Returns false if this build result is incomplete or invalid. */
-  public boolean isValid() {
-    return getBuildResult() != null && getBuildResult().buildResult.status != Status.FATAL_ERROR;
+  /** Returns true if at least one build shard does not have fatal errors */
+  public boolean hasValidOutputs() {
+    return getBuildResult() != null && !getBuildResult().allBuildsFailed();
   }
 
   public abstract BlazeInfo getBlazeInfo();
