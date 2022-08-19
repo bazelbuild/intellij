@@ -72,7 +72,13 @@ import java.util.List;
 import java.util.Set;
 
 /** Runs the 'blaze build' phase of sync. */
-final class BuildPhaseSyncTask {
+public final class BuildPhaseSyncTask {
+
+  /**
+   * If true, allows the sync to continue if a fatal error (e.g. OOM) occurs in a component shard
+   */
+  public static final BoolExperiment continueSyncOnOom =
+      new BoolExperiment("sync.continue.on.oom", true);
 
   /**
    * Runs the build phase of sync, and returns a possibly partially filled in {@link
@@ -253,7 +259,7 @@ final class BuildPhaseSyncTask {
     resultBuilder.setBuildResult(blazeBuildResult);
     buildStats
         .setBuildResult(blazeBuildResult.buildResult)
-        .setBuildIds(blazeBuildResult.buildIds)
+        .setBuildIds(blazeBuildResult.getBuildIds())
         .setBuildBinaryType(syncBuildInvoker.getType())
         .setBepBytesConsumed(blazeBuildResult.bepBytesConsumed);
 
@@ -266,8 +272,11 @@ final class BuildPhaseSyncTask {
       if (blazeBuildResult.buildResult.outOfMemory()) {
         SuggestBuildShardingNotification.syncOutOfMemoryError(project, context);
       }
-      context.output(PrintOutput.error(invocationResultMsg));
-      throw new SyncFailedException();
+
+      if (!continueSyncOnOom.getValue() || blazeBuildResult.artifacts.isEmpty()) {
+        context.output(PrintOutput.error(invocationResultMsg));
+        throw new SyncFailedException();
+      }
     }
     context.output(PrintOutput.log(invocationResultMsg));
   }

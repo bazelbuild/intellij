@@ -83,6 +83,7 @@ import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.BlazeSyncBuildResult;
+import com.google.idea.blaze.base.sync.BuildPhaseSyncTask;
 import com.google.idea.blaze.base.sync.SyncProjectState;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
@@ -183,7 +184,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       @Nullable BlazeProjectData oldProjectData) {
     // If there was a partial error, make a best-effort attempt to sync. Retain
     // any old state that we have in an attempt not to lose too much code.
-    if (buildResult.getBuildResult().buildResult.status == BuildResult.Status.BUILD_ERROR) {
+    if (buildResult.getBuildResult().buildResult.status == BuildResult.Status.BUILD_ERROR
+        || buildResult.getBuildResult().buildResult.status == Status.FATAL_ERROR) {
       mergeWithOldState = true;
     }
 
@@ -636,21 +638,28 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                           outputGroups,
                           additionalBlazeFlags);
 
+                  if (result.buildResult.outOfMemory()) {
+                    logger.warn(
+                        String.format(
+                            "Build shard failed with OOM error build-id=%s",
+                            result.getBuildIds().stream().findFirst().orElse(null)));
+                  }
+
                   progressTracker.onBuildCompleted(context); // TODO(b/216104482) track failures
                   printShardFinishedSummary(context, task.getName(), result);
-                  if (!result.buildResult.outOfMemory()) {
-                    synchronized (combinedResult) {
-                      combinedResult.set(
-                          combinedResult.isNull()
-                              ? result
-                              : combinedResult.get().updateOutputs(result));
-                    }
+                  synchronized (combinedResult) {
+                    combinedResult.set(
+                        combinedResult.isNull()
+                            ? result
+                            : combinedResult.get().updateOutputs(result));
                   }
                   return result.buildResult;
                 });
     BuildResult buildResult =
         shardedTargets.runShardedCommand(project, context, progressMessage, invocation, invoker);
-    if (combinedResult.isNull() || buildResult.status == Status.FATAL_ERROR) {
+    if (combinedResult.isNull()
+        || (!BuildPhaseSyncTask.continueSyncOnOom.getValue()
+            && buildResult.status == Status.FATAL_ERROR)) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
     return combinedResult.get();
@@ -669,7 +678,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             taskName, result.buildResult.status == Status.BUILD_ERROR ? "build" : "fatal"));
     String invocationId =
         Iterables.getOnlyElement(
-            result.buildIds,
+            result.getBuildIds(),
             null); // buildIds has exactly one invocationId because this is called only when a shard
     // is built and not when buildResults are combined
     outputText.append(
