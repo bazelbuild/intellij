@@ -55,6 +55,9 @@ public final class BlazeFlags {
   // during syncing projects.
   public static final String DISABLE_VALIDATIONS = "--noexperimental_run_validations";
 
+  // Custom build metadata. This option takes a key-value pair as an argument.
+  public static final String BUILD_METADATA = "--build_metadata=";
+
   /** Flags to add to blaze/bazel invocations of the given type. */
   public static List<String> blazeFlags(
       Project project,
