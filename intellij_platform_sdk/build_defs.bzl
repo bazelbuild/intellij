@@ -21,6 +21,8 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-beta": "clion-2022.1",
     "clion-under-dev": "clion-2022.1",
     # Indirect ij_product mapping for Bazel Plugin OSS
+    # The old names for -oss-oldest-stable and -oss-latest-stable were
+    # -oss-stable and -oss-beta respectively.
     "intellij-oss-oldest-stable": "intellij-2022.1",
     "intellij-oss-latest-stable": "intellij-2022.2",
     "intellij-oss-under-dev": "intellij-2022.2",
