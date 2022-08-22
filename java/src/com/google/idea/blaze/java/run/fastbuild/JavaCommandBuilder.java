@@ -120,9 +120,11 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
     return this;
   }
 
+  @SuppressWarnings("LenientFormatStringValidation")
   @Override
   public String getEnvironmentVariable(String variable) {
     String value = environmentVariables.get(variable);
+    // Expected 1 args, but got 0.
     checkArgument(value != null, "JavaCommandBuilder doesn't have '%s' environment variable set");
     return value;
   }
