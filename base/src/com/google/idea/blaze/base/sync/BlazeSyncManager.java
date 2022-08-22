@@ -37,6 +37,7 @@ import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
+import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -112,7 +113,12 @@ public class BlazeSyncManager {
                                   context -> {
                                     context
                                         .push(new ProgressIndicatorScope(indicator))
-                                        .push(buildToolWindowScope(syncParams, indicator));
+                                        .push(buildToolWindowScope(syncParams, indicator))
+                                        .push(
+                                            new ProblemsViewScope(
+                                                project,
+                                                BlazeUserSettings.getInstance()
+                                                    .getShowProblemsViewOnSync()));
                                     if (!runInitialDirectoryOnlySync(syncParams)) {
                                       executeTask(project, syncParams, context);
                                       return;
