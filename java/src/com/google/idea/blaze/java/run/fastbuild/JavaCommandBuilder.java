@@ -123,7 +123,8 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
   @Override
   public String getEnvironmentVariable(String variable) {
     String value = environmentVariables.get(variable);
-    checkArgument(value != null, "JavaCommandBuilder doesn't have '%s' environment variable set");
+    checkArgument(
+        value != null, "JavaCommandBuilder doesn't have '%s' environment variable set", variable);
     return value;
   }
 
