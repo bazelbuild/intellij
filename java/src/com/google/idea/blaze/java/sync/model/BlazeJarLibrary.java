@@ -71,7 +71,7 @@ public final class BlazeJarLibrary extends BlazeLibrary {
       Library.ModifiableModel libraryModel) {
     JarCache jarCache = JarCache.getInstance(project);
     File jar = jarCache.getCachedJar(artifactLocationDecoder, this);
-    if (jar != null) {
+    if (jar != null && jar.exists()) {
       libraryModel.addRoot(pathToUrl(jar), OrderRootType.CLASSES);
     } else {
       logger.error("No local jar file found for " + libraryArtifact.jarForIntellijLibrary());
@@ -89,7 +89,7 @@ public final class BlazeJarLibrary extends BlazeLibrary {
     }
     for (ArtifactLocation srcJar : libraryArtifact.getSourceJars()) {
       File sourceJar = jarCache.getCachedSourceJar(artifactLocationDecoder, srcJar);
-      if (sourceJar != null) {
+      if (sourceJar != null && sourceJar.exists()) {
         libraryModel.addRoot(pathToUrl(sourceJar), OrderRootType.SOURCES);
       }
     }

@@ -176,6 +176,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
         .getAarList()
         .forEach(aar -> AarLibraryFileBuilder.aar(workspaceRoot, aar.getRelativePath()).build());
 
+    workspace.createFile(new WorkspacePath("third_party/guava-21.jar"));
     setTargetMap(
         binaryTarget,
         android_library(individualLibrary).res("res"),

@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.sync.importer;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ArrayListMultimap;
@@ -258,7 +259,13 @@ public final class BlazeJavaWorkspaceImporter {
     TargetKey targetKey = target.getKey();
     Collection<String> jars = jdepsMap.getDependenciesForTarget(targetKey);
     if (jars != null) {
-      workspaceBuilder.jdeps.addAll(jars);
+      // TODO (b/242871251): switch back to jars when we are able to access these -kt-ijar.jar from
+      // provider. Otherwise they fall back to LocalArtifact since they cannot be accessed and make
+      // loading time longer.
+      workspaceBuilder.jdeps.addAll(
+          jars.stream()
+              .filter(jar -> !jar.contains("-kt-ijar.jar") && !jar.contains("-kt-src.jar"))
+              .collect(toImmutableList()));
     }
 
     // Add all deps if this target is in the current working set
