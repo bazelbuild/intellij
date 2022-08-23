@@ -422,18 +422,18 @@ def _build_cargo_toml(ctx, target, source_files):
     args.add("--output-manifest")
     args.add(output_manifest.path)
 
-    path_deps = []
+    path_deps = {}
     external_deps = {}
     for dependency in getattr(ctx.rule.attr, "deps", []):
         if _is_cargo_raze_crate(dependency):
-            external_deps[_cargo_raze_crate_name(dependency)] = _cargo_raze_crate_version(dependency)
+            external_deps[_crate_name(dependency)] = _cargo_raze_crate_version(dependency)
         else:
-            path_deps.append(_path_dep_crate_name(dependency))
+            path_deps[_crate_name(dependency)] = _cargo_path_dep_path(target, dependency)
 
     args.add("--name")
-    args.add(_crate_name(target, ctx))
+    args.add(_ctx_crate_name(ctx))
 
-    args.add_joined("--path-deps", path_deps, join_with = ":")
+    args.add_joined("--path-deps", ["{}={}".format(k, v) for k, v in path_deps.items()], join_with = ":")
     args.add_joined("--external-deps", ["{}={}".format(k, v) for k, v in external_deps.items()], join_with = ":")
 
     args.add("--root-path")
@@ -486,19 +486,40 @@ def _path_fragments(path):
 def _is_cargo_raze_crate(target):
     return str(target.label).startswith("@raze__")
 
-def _cargo_raze_crate_name(target):
+def _crate_name(target):
+    # guess crate name from target label
     # example: @raze__cfg_if__1_0_0//:cfg_if --> cfg-if
-    return str(target.label).split("//:")[1].replace("_", "-")
+    return str(target.label).split(":")[1].replace("_", "-")
 
 def _cargo_raze_crate_version(target):
     # example: @raze__rand__0_8_4//:rand --> 0.8.4
     return str(target.label).split("//:")[0].split("__")[-1].replace("_", ".")
 
-def _path_dep_crate_name(target):
-    # example: //lib1:lib1
-    return str(target.label).split(":")[1]
+def _cargo_path_dep_path(current_target, dep_target):
+    return _cargo_path_dep_path_external_workspace(current_target, dep_target) if "@" in str(dep_target.label) else _cargo_path_dep_path_current_workspace(current_target, dep_target)
 
-def _crate_name(target, ctx):
+def _cargo_path_dep_path_current_workspace(current_target, dep_target):
+    # example: (//lib1:lib1, //lib2/internal:internal) --> ../lib2/internal
+    return _cargo_path_dep_double_dots(current_target) + str(dep_target.label).split("//")[1].split(":")[0]
+
+def _cargo_path_dep_path_external_workspace(current_target, dep_target):
+    # example: (//lib1:lib1, @extern_workspace//lib2/exported:exported) --> ../external/extern_workspace/lib2/exported
+    return _cargo_path_dep_double_dots(current_target) + "external/" + str(dep_target.label)[1:].split("//")[0] + "/" + str(dep_target.label).split("//")[1].split(":")[0]
+
+def _cargo_path_dep_double_dots(current_target):
+    double_dots = ""
+    if str(current_target.label).count("/") > 2:
+        for i in range(str(current_target.label).count("/") - 1):
+            double_dots = double_dots + "../"
+    elif str(current_target.label).count("/") < 2:
+        fail("cannot find the path of dependency '%s' as it does not look like a valid target label (not enough slashes)" % current_target.label)
+    else:
+        if len(str(current_target.label).split("//")[1].split(":")[0]):
+            double_dots = "../"
+    return double_dots
+
+def _ctx_crate_name(ctx):
+    # use contextual information about the current target (e.g: tags) to ensure correctness
     name = ctx.rule.attr.name
     for tag in ctx.rule.attr.tags:
         if tag.startswith("crate-name"):
