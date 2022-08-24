@@ -31,7 +31,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
@@ -42,8 +41,6 @@ import javax.annotation.Nullable;
 
 /** Contains the state to build a new project throughout the new project wizard process. */
 public final class BlazeNewProjectBuilder {
-  private static final Logger logger = Logger.getInstance(BlazeNewProjectBuilder.class);
-
   // The import wizard should keep this many items around for fields that care about history
   public static final int HISTORY_SIZE = 8;
 
