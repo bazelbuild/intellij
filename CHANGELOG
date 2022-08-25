@@ -1,3 +1,9 @@
+v2022.08.24
+===========
+* Display Go external libraries in tree structure (currently experimental)
+* Remove --nolaunch_app flag to fix running mobile-install
+* Oldest supported Bazel version will be upgraded to 1.2.0
+
 v2022.08.09
 ===========
 * Automatically import projects from directory.
