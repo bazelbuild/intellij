@@ -426,12 +426,12 @@ def _build_cargo_toml(ctx, target, source_files):
     external_deps = {}
     for dependency in getattr(ctx.rule.attr, "deps", []):
         if _is_cargo_raze_crate(dependency):
-            external_deps[_crate_name(dependency)] = _cargo_raze_crate_version(dependency)
+            external_deps[_cargo_raze_crate_name(dependency)] = _cargo_raze_crate_version(dependency)
         else:
-            path_deps[_crate_name(dependency)] = _cargo_path_dep_path(target, dependency)
+            path_deps[_crate_pathname(dependency)] = _cargo_path_dep_path(target, dependency)
 
     args.add("--name")
-    args.add(_ctx_crate_name(ctx))
+    args.add(_crate_pathname(target))
 
     args.add_joined("--path-deps", ["{}={}".format(k, v) for k, v in path_deps.items()], join_with = ":")
     args.add_joined("--external-deps", ["{}={}".format(k, v) for k, v in external_deps.items()], join_with = ":")
@@ -486,10 +486,13 @@ def _path_fragments(path):
 def _is_cargo_raze_crate(target):
     return str(target.label).startswith("@raze__")
 
-def _crate_name(target):
+def _cargo_raze_crate_name(target):
     # guess crate name from target label
     # example: @raze__cfg_if__1_0_0//:cfg_if --> cfg-if
-    return str(target.label).split(":")[1].replace("_", "-")
+    return _crate_pathname(target).replace("_", "-")
+
+def _crate_pathname(target):
+    return str(target.label).split(":")[1]
 
 def _cargo_raze_crate_version(target):
     # example: @raze__rand__0_8_4//:rand --> 0.8.4
@@ -517,14 +520,6 @@ def _cargo_path_dep_double_dots(current_target):
         if len(str(current_target.label).split("//")[1].split(":")[0]):
             double_dots = "../"
     return double_dots
-
-def _ctx_crate_name(ctx):
-    # use contextual information about the current target (e.g: tags) to ensure correctness
-    name = ctx.rule.attr.name
-    for tag in ctx.rule.attr.tags:
-        if tag.startswith("crate-name"):
-            name = tag.split("=")[1]
-    return name
 
 def collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Rust-specific output groups, returns false if not a recognized Rust target."""
