@@ -506,15 +506,26 @@ def _is_cargo_raze_crate(rust_target):
     return str(rust_target.label).startswith("@raze__")
 
 def _cargo_path_dep_path(current_target, dep_target):
-    return _cargo_path_dep_path_external_workspace(current_target, dep_target) if "@" in str(dep_target.label) else _cargo_path_dep_path_current_workspace(current_target, dep_target)
+    if str(current_target.label).split("//")[0] == str(dep_target.label).split("//")[0]:
+        return _cargo_dep_path_same_workspace(current_target, dep_target)
+    elif "@" not in str(current_target.label):
+        return _cargo_dep_path_local_to_external(current_target, dep_target)
+    else:
+        return _cargo_dep_path_external_to_external(current_target, dep_target)
 
-def _cargo_path_dep_path_current_workspace(current_target, dep_target):
-    # example: (//lib1:lib1, //lib2/internal:internal) --> ../lib2/internal
+def _cargo_dep_path_same_workspace(current_target, dep_target):
+    # examples:
+    # (//lib1:lib1, //lib2/internal:internal) --> ../lib2/internal
+    # (@extern_workspace//:root, @extern_workspace//lib2:lib2 --> lib2
     return _cargo_path_dep_double_dots(current_target) + str(dep_target.label).split("//")[1].split(":")[0]
 
-def _cargo_path_dep_path_external_workspace(current_target, dep_target):
+def _cargo_dep_path_local_to_external(current_target, dep_target):
     # example: (//lib1:lib1, @extern_workspace//lib2/exported:exported) --> ../external/extern_workspace/lib2/exported
     return _cargo_path_dep_double_dots(current_target) + "external/" + str(dep_target.label)[1:].split("//")[0] + "/" + str(dep_target.label).split("//")[1].split(":")[0]
+
+def _cargo_dep_path_external_to_external(current_target, dep_target):
+    # example: (//@extern_workspace0//lib1:lib1, @extern_workspace//lib2/exported:exported) --> ../../extern_workspace/lib2/exported
+    return _cargo_path_dep_double_dots(current_target) + "../" + str(dep_target.label)[1:].split("//")[0] + "/" + str(dep_target.label).split("//")[1].split(":")[0]
 
 def _cargo_path_dep_double_dots(current_target):
     double_dots = ""
@@ -546,7 +557,19 @@ def collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         ctx.actions.write(source_path_copy, "// This file is intentionally blank. IntelliJ uses it to identify test targets.")
         update_sync_output_groups(output_groups, "intellij-resolve-rs", depset([source_path_copy]))
 
-    ide_info["rust_ide_info"] = struct_omit_none(sources = [artifact_location(f) for f in sources])
+#    for source in sources:
+#        source_copy = ctx.actions.declare_file(source.basename)
+##        if ("protocol" in source.path):
+##            fail("source: short_path = %s, path = %s" % (source.short_path, source.path))
+#
+#        ctx.actions.run_shell(
+#            inputs = [source],
+#            outputs = [source_copy],
+#            arguments = [source.path, source_copy.path],
+#            command = "cp $1 $2",
+#        )
+
+    ide_info["rust_ide_info"] = struct_omit_none(sources = sources_from_target(ctx))
     update_sync_output_groups(output_groups, "intellij-info-rs", depset([ide_info_file]))
     return crate_info
 
