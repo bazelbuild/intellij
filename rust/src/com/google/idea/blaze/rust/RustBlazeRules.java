@@ -31,6 +31,7 @@ public final class RustBlazeRules implements Kind.Provider {
     public enum RuleTypes {
         RUST_BINARY("rust_binary", LanguageClass.RUST, RuleType.BINARY),
         RUST_LIBRARY("rust_library", LanguageClass.RUST, RuleType.LIBRARY),
+        RUST_PROC_MACRO("rust_proc_macro", LanguageClass.RUST, RuleType.LIBRARY),
         RUST_TEST("rust_test", LanguageClass.RUST, RuleType.TEST);
 
         private final String name;

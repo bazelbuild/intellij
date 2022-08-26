@@ -33,6 +33,7 @@ DEPS = [
     "_java_toolchain",  # From java rules
     "deps",
     "jars",  # from java_import rules
+    "proc_macro_deps",  # from rust rules
     "exports",
     "java_lib",  # From old proto_library rules
     "_android_sdk",  # from android rules
@@ -414,7 +415,17 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     update_sync_output_groups(output_groups, "intellij-resolve-go", depset(generated))
     return True
 
-def _build_cargo_toml(ctx, target, source_files):
+def _crate_info(ctx):
+    name = ctx.rule.attr.name
+    for tag in ctx.rule.attr.tags:
+        if tag.startswith("crate-name"):
+            name = tag.split("=")[1]
+    return struct(
+        name = name,
+        version = getattr(ctx.rule.attr, "version", "0.0.0")
+    )
+
+def _build_cargo_toml(ctx, target, source_files, crate_info):
     """Builds the Rust package manifest for the given source files."""
     output_manifest = ctx.actions.declare_file("Cargo.toml")
 
@@ -424,14 +435,19 @@ def _build_cargo_toml(ctx, target, source_files):
 
     path_deps = {}
     external_deps = {}
-    for dependency in getattr(ctx.rule.attr, "deps", []):
+    for dependency in getattr(ctx.rule.attr, "deps", []) + getattr(ctx.rule.attr, "proc_macro_deps", []):
+        if dependency.intellij_info.kind not in ["rust_binary", "rust_library", "rust_proc_macro"]:
+            continue
         if _is_cargo_raze_crate(dependency):
-            external_deps[_cargo_raze_crate_name(dependency)] = _cargo_raze_crate_version(dependency)
+            external_deps[dependency.intellij_info.crate.name] = dependency.intellij_info.crate.version
         else:
-            path_deps[_crate_pathname(dependency)] = _cargo_path_dep_path(target, dependency)
+            path_deps[dependency.intellij_info.crate.name] = _cargo_path_dep_path(target, dependency)
 
     args.add("--name")
-    args.add(_crate_pathname(target))
+    args.add(crate_info.name)
+
+    args.add("--edition")
+    args.add(ctx.rule.attr.edition or "2021")
 
     args.add_joined("--path-deps", ["{}={}".format(k, v) for k, v in path_deps.items()], join_with = ":")
     args.add_joined("--external-deps", ["{}={}".format(k, v) for k, v in external_deps.items()], join_with = ":")
@@ -439,22 +455,25 @@ def _build_cargo_toml(ctx, target, source_files):
     args.add("--root-path")
     args.add(_target_root_path(target))
 
-    args.add("--lib-path" if ctx.rule.kind == "rust_library" else "--bin-path")
-    canonical_entry_point_name = "lib.rs" if ctx.rule.kind == "rust_library" else "main.rs"
-    canonical_entry_points = [f for f in source_files if f.basename == canonical_entry_point_name]
-    if len(canonical_entry_points) == 1:
-        args.add(canonical_entry_points[0].short_path)
-    elif len(canonical_entry_points) == 0:
-        alternative_entry_point_name = "%s.rs" % ctx.rule.attr.name
-        alternative_entry_points = [f for f in source_files if f.basename == alternative_entry_point_name]
-        if len(alternative_entry_points) == 1:
-            args.add(alternative_entry_points[0].short_path)
-        elif len(alternative_entry_points) == 0:
-            fail("cannot determine entry point for %s target '%s': no files named '%s' or '%s' found in srcs" % (ctx.rule.kind, target.label.name, canonical_entry_point_name, alternative_entry_point_name))
-        else:
-            fail("cannot determine entry point for %s target '%s': multiple files named '%s' found in srcs" % (ctx.rule.kind, target.label.name, alternative_entry_point_name))
+    args.add("--lib-path" if ctx.rule.kind in ["rust_library", "rust_proc_macro"] else "--bin-path")
+    if getattr(ctx.rule.attr, "crate_root", None):
+        args.add(ctx.rule.attr.crate_root)
     else:
-        fail("cannot determine entry point for %s target '%s': multiple files named '%s' found in srcs" % (ctx.rule.kind, target.label.name, canonical_entry_point_name))
+        canonical_entry_point_name = "lib.rs" if ctx.rule.kind in ["rust_library", "rust_proc_macro"] else "main.rs"
+        canonical_entry_points = [f for f in source_files if f.basename == canonical_entry_point_name]
+        if len(canonical_entry_points) == 1:
+            args.add(canonical_entry_points[0].short_path)
+        elif len(canonical_entry_points) == 0:
+            alternative_entry_point_name = "%s.rs" % ctx.rule.attr.name
+            alternative_entry_points = [f for f in source_files if f.basename == alternative_entry_point_name]
+            if len(alternative_entry_points) == 1:
+                args.add(alternative_entry_points[0].short_path)
+            elif len(alternative_entry_points) == 0:
+                fail("cannot determine entry point for %s target '%s': no files named '%s' or '%s' found in srcs, and no explicit crate_root" % (ctx.rule.kind, target.label.name, canonical_entry_point_name, alternative_entry_point_name))
+            else:
+                fail("cannot determine entry point for %s target '%s': multiple files named '%s' found in srcs, and no explicit crate_root" % (ctx.rule.kind, target.label.name, alternative_entry_point_name))
+        else:
+            fail("cannot determine entry point for %s target '%s': multiple files named '%s' found in srcs, and no explicit crate_root" % (ctx.rule.kind, target.label.name, canonical_entry_point_name))
 
     ctx.actions.run(
         inputs = source_files,
@@ -483,20 +502,8 @@ def _relativize(root_path, full_path):
 def _path_fragments(path):
     return [fragment for fragment in path.split("/") if fragment and not fragment.isspace()]
 
-def _is_cargo_raze_crate(target):
-    return str(target.label).startswith("@raze__")
-
-def _cargo_raze_crate_name(target):
-    # guess crate name from target label
-    # example: @raze__cfg_if__1_0_0//:cfg_if --> cfg-if
-    return _crate_pathname(target).replace("_", "-")
-
-def _crate_pathname(target):
-    return str(target.label).split(":")[1]
-
-def _cargo_raze_crate_version(target):
-    # example: @raze__rand__0_8_4//:rand --> 0.8.4
-    return str(target.label).split("//:")[0].split("__")[-1].replace("_", ".")
+def _is_cargo_raze_crate(rust_target):
+    return str(rust_target.label).startswith("@raze__")
 
 def _cargo_path_dep_path(current_target, dep_target):
     return _cargo_path_dep_path_external_workspace(current_target, dep_target) if "@" in str(dep_target.label) else _cargo_path_dep_path_current_workspace(current_target, dep_target)
@@ -523,13 +530,14 @@ def _cargo_path_dep_double_dots(current_target):
 
 def collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates Rust-specific output groups, returns false if not a recognized Rust target."""
-    if ctx.rule.kind not in ["rust_binary", "rust_library", "rust_test"]:
-        return False
+    if ctx.rule.kind not in ["rust_binary", "rust_library", "rust_proc_macro", "rust_test"]:
+        return None
 
     sources = [f for src in getattr(ctx.rule.attr, "srcs", []) for f in src.files.to_list()]
+    crate_info = _crate_info(ctx)
 
-    if ctx.rule.kind in ["rust_binary", "rust_library"]:
-        cargo_toml = _build_cargo_toml(ctx, target, sources)
+    if ctx.rule.kind in ["rust_binary", "rust_library", "rust_proc_macro"]:
+        cargo_toml = _build_cargo_toml(ctx, target, sources, crate_info)
         update_sync_output_groups(output_groups, "intellij-resolve-rs", depset([cargo_toml]))
     else:
         if len(sources) != 1:
@@ -540,7 +548,7 @@ def collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
 
     ide_info["rust_ide_info"] = struct_omit_none(sources = [artifact_location(f) for f in sources])
     update_sync_output_groups(output_groups, "intellij-info-rs", depset([ide_info_file]))
-    return True
+    return crate_info
 
 def collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups):
     """Updates C++-specific output groups, returns false if not a C++ target."""
@@ -1240,7 +1248,10 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     handled = collect_cpp_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_c_toolchain_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
-    handled = collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
+
+    crate_info = collect_rust_info(target, ctx, semantics, ide_info, ide_info_file, output_groups)
+    handled = (crate_info != None) or handled
+
     handled = collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
     handled = collect_java_toolchain_info(target, ide_info, ide_info_file, output_groups) or handled
     handled = collect_android_info(target, ctx, semantics, ide_info, ide_info_file, output_groups) or handled
@@ -1265,6 +1276,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
             kind = ctx.rule.kind,
             output_groups = output_groups,
             target_key = target_key,
+            crate = crate_info,
         ),
         output_groups = output_groups,
     )

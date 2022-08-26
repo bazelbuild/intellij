@@ -28,6 +28,7 @@ public class CargoTomlBuilder {
 
     static final class Options {
         String name;
+        String edition;
         Path rootPath;
         Path binPath;
         Path libPath;
@@ -39,6 +40,7 @@ public class CargoTomlBuilder {
     static Options parseArgs(String[] args) {
         Options options = new Options();
         options.name = OptionParser.parseSingleOption(args, "name", x -> x);
+        options.edition = OptionParser.parseSingleOption(args, "edition", x -> x);
         options.rootPath = OptionParser.parseSingleOption(args, "root-path", Paths::get);
         options.binPath = OptionParser.parseSingleOption(args, "bin-path", Paths::get);
         options.libPath = OptionParser.parseSingleOption(args, "lib-path", Paths::get);
@@ -69,7 +71,7 @@ public class CargoTomlBuilder {
         pkg.set("version", "0.0.0");
         // TODO(alexjpwalker): remove 'edition' field once https://github.com/intellij-rust/intellij-rust/issues/4907
         //  is actually fixed (at the time of writing, the issue is closed, but still reproducible)
-        pkg.set("edition", "2018");
+        pkg.set("edition", options.edition);
 
         Config deps = cargoToml.createSubConfig();
         cargoToml.set("dependencies", deps);
