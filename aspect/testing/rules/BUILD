@@ -6,7 +6,7 @@ load(
     "ASPECT_TEST_RULES_VISIBILITY_TO_TESTS",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 proto_library(
     name = "intellij_aspect_test_fixture_proto",
