@@ -180,10 +180,6 @@ public final class BlazeJavaWorkspaceImporter {
         targetKeyToLibrary.put(target.getKey(), library);
         addLibraryToJdeps(jdepsPathToLibrary, library);
       }
-
-      javaIdeInfo.getPluginProcessorJars().stream()
-          .map(LibraryArtifact::jarForIntellijLibrary)
-          .forEach(workspaceBuilder.pluginProcessorJars::add);
     }
 
     // Preserve classpath order. Add leaf level dependencies first and work the way up. This

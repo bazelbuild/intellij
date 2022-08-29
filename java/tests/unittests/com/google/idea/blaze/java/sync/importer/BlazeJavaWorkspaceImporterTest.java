@@ -1643,6 +1643,53 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
         .containsExactly("lint.jar");
   }
 
+  /** Test that only top level targets' the plugin processor jars are included. */
+  @Test
+  public void testOnlyTopLevelPluginProcessorJarsAreIncluded() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/apps"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/apps/example:example_debug")
+                    .setBuildFile(source("java/apps/example/BUILD"))
+                    .setKind("android_binary")
+                    .addSource(source("java/apps/example/MainActivity.java"))
+                    .addSource(source("java/apps/example/subdir/SubdirHelper.java"))
+                    .addDependency("//third_party:deps")
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addPluginProcessorJars(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(gen("java/example/lint.jar")))))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//third_party:deps")
+                    .setKind("android_library")
+                    .addSource(source("third_party/deps.java"))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addPluginProcessorJars(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(gen("third_party/lint.jar")))));
+
+    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    errorCollector.assertNoIssues();
+
+    assertThat(
+            result.pluginProcessorJars.stream()
+                .map(
+                    artifactLocation ->
+                        new File(artifactLocation.getExecutionRootRelativePath()).getName()))
+        .containsExactly("lint.jar");
+  }
+
   /* Utility methods */
 
   private static String libraryFileName(BlazeJarLibrary library) {
