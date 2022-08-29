@@ -448,6 +448,12 @@ public final class BlazeEditProjectViewControl {
   }
 
   public BlazeValidationResult validate() {
+    if (projectViewOption.getOptionName().equals("generate-from-project-proto")) {
+      // nothing to validate in this instance.
+      // TODO(mathewi) this is a workaround, ideally we would not even show the "edit project view"
+      // step in this case.
+      return BlazeValidationResult.success();
+    }
     // Validate project settings fields
     String projectName = projectNameField.getText().trim();
     if (StringUtil.isEmpty(projectName)) {

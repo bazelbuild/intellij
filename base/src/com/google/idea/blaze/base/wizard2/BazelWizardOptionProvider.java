@@ -30,10 +30,15 @@ public class BazelWizardOptionProvider implements BlazeWizardOptionProvider {
   @Override
   public ImmutableList<BlazeSelectProjectViewOption> getSelectProjectViewOptions(
       BlazeNewProjectBuilder builder) {
-    return ImmutableList.of(
-        new CreateFromScratchProjectViewOption(),
-        new ImportFromWorkspaceProjectViewOption(builder),
-        new GenerateFromBuildFileSelectProjectViewOption(builder),
-        new CopyExternalProjectViewOption(builder));
+    ImmutableList.Builder<BlazeSelectProjectViewOption> options = ImmutableList.builder();
+    options
+        .add(new CreateFromScratchProjectViewOption())
+        .add(new ImportFromWorkspaceProjectViewOption(builder))
+        .add(new GenerateFromBuildFileSelectProjectViewOption(builder))
+        .add(new CopyExternalProjectViewOption(builder));
+    if (GenerateFromProjectProto.ENABLED.getValue()) {
+      options.add(new GenerateFromProjectProto(builder));
+    }
+    return options.build();
   }
 }
