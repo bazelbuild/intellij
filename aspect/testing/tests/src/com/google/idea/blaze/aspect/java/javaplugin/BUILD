@@ -1,4 +1,4 @@
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 load(
     "//aspect/testing/rules:intellij_aspect_test_fixture.bzl",
