@@ -41,6 +41,7 @@ import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
@@ -94,9 +95,15 @@ public class BlazeSyncManager {
     }
     SaveUtil.saveAllFiles();
 
-    if (BlazeImportSettingsManager.getInstance(project).getImportSettings() == null) {
+    BlazeImportSettings importSettings =
+        BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    if (importSettings == null) {
       throw new IllegalStateException(
           String.format("Attempt to sync non-%s project.", Blaze.buildSystemName(project)));
+    }
+    if (importSettings.getProjectProtoFile() != null) {
+      // TODO(mathewi) implement new sync prototype flow.
+      return;
     }
 
     // an additional call to 'sync started'. This disables the sync actions while we wait for

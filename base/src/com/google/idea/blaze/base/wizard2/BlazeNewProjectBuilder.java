@@ -31,19 +31,17 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Contains the state to build a new project throughout the new project wizard process. */
 public final class BlazeNewProjectBuilder {
-  private static final Logger logger = Logger.getInstance(BlazeNewProjectBuilder.class);
-
   // The import wizard should keep this many items around for fields that care about history
   public static final int HISTORY_SIZE = 8;
 
@@ -74,6 +72,7 @@ public final class BlazeNewProjectBuilder {
   private String projectName;
   private String projectDataDirectory;
   private WorkspaceRoot workspaceRoot;
+  private String projectProtoFile;
 
   public BlazeNewProjectBuilder() {
     this.userSettings = BlazeWizardUserSettingsStorage.getInstance().copyUserSettings();
@@ -131,6 +130,10 @@ public final class BlazeNewProjectBuilder {
     return projectDataDirectory;
   }
 
+  public String getProjectProtoFile() {
+    return projectProtoFile;
+  }
+
   @Nullable
   public BuildSystemName getBuildSystem() {
     return workspaceData != null ? workspaceData.buildSystem() : null;
@@ -163,6 +166,12 @@ public final class BlazeNewProjectBuilder {
   @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectViewFile(File projectViewFile) {
     this.projectViewFile = projectViewFile;
+    return this;
+  }
+
+  @CanIgnoreReturnValue
+  public BlazeNewProjectBuilder setProjectProtoFile(String projectProtoFile) {
+    this.projectProtoFile = projectProtoFile;
     return this;
   }
 
@@ -204,9 +213,13 @@ public final class BlazeNewProjectBuilder {
     }
 
     try {
-      logger.assertTrue(projectViewFile != null);
-      ProjectViewStorageManager.getInstance()
-          .writeProjectView(ProjectViewParser.projectViewToString(projectView), projectViewFile);
+      if (projectProtoFile != null) {
+        // TODO(mathewi): should we still populate the project view? Seems like we shouldn't
+        //  strictly need it, but its absence may break many assumptions elsewhere.
+      } else {
+        ProjectViewStorageManager.getInstance()
+            .writeProjectView(ProjectViewParser.projectViewToString(projectView), projectViewFile);
+      }
     } catch (IOException e) {
       throw new BlazeProjectCommitException("Could not create project view file", e);
     }
@@ -231,7 +244,8 @@ public final class BlazeNewProjectBuilder {
         workspaceRoot.directory().getPath(),
         projectName,
         projectDataDirectory,
-        projectViewFile.getPath(),
+        Optional.ofNullable(projectViewFile).map(File::getPath).orElse(null),
+        projectProtoFile,
         getBuildSystem());
   }
 }
