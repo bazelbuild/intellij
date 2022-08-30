@@ -54,6 +54,7 @@ class BlazeProjectCreator {
     try {
       doCreate();
     } catch (final IOException e) {
+      logger.error("Project creation failed", e);
       ApplicationManager.getApplication()
           .invokeLater(
               () -> Messages.showErrorDialog(e.getMessage(), "Project Initialization Failed"));
