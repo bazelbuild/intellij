@@ -332,6 +332,13 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-2022.1",
+    values = {
+        "define": "ij_product=android-studio-2022.1",
+    },
+)
+
+config_setting(
     name = "clion-latest",
     values = {
         "define": "ij_product=clion-latest",
@@ -484,6 +491,7 @@ java_library(
     data = select_from_plugin_api_directory(
         android_studio = [
             ":layoutlib_data",
+            ":kotlinc_version",
         ],
         clion = [],
         # From 2022.1 forward, the version of kotlinc will be obtained
@@ -549,6 +557,7 @@ java_library(
         "intellij-ue-2022.2": ["@jsr305_annotations//jar"],
         "android-studio-2021.2": ["@jsr305_annotations//jar"],
         "android-studio-2021.3": ["@jsr305_annotations//jar"],
+        "android-studio-2022.1": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.
         "default": [":bundled_jsr305"],
     }),

@@ -99,6 +99,10 @@ java_import(
     jars = glob(["android-studio/plugins/Kotlin/lib/*.jar"]),
 )
 
+filegroup(
+    name = "kotlinc_version",
+)
+
 java_import(
     name = "coverage",
     jars = glob(["android-studio/plugins/coverage/lib/*.jar"]),

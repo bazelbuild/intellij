@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.run.binary;
 
 import com.android.tools.idea.profilers.ProfileRunExecutor;
 import com.android.tools.idea.run.AndroidProgramRunner;
-import com.android.tools.idea.run.AndroidSessionInfo;
+import com.android.tools.idea.run.AndroidSessionInfoCompat;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -69,7 +69,7 @@ public class BlazeAndroidBinaryProgramRunner extends AndroidProgramRunner {
           (runProfile instanceof RunConfiguration) ? (RunConfiguration) runProfile : null;
 
       // The created AndroidSessionInfo is already added to userdata by #create.
-      AndroidSessionInfo.create(
+      AndroidSessionInfoCompat.create(
           processHandler,
           descriptor,
           runConfiguration,

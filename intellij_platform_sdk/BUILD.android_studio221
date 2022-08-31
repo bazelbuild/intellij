@@ -20,7 +20,7 @@ java_import(
         ],
         exclude = [
             # mockito-extensions needs to be removed from these jars.
-            "android-studio/lib/idea.jar",
+            "android-studio/lib/app.jar",
         ],
     ) + ["android-studio/plugins/c-clangd/lib/c-clangd.jar"],
     tags = ["intellij-provided-by-sdk"],
@@ -34,7 +34,7 @@ java_import(
 no_mockito_extensions(
     name = "jars_without_mockito_extensions",
     jars = [
-        "android-studio/lib/idea.jar",
+        "android-studio/lib/app.jar",
     ],
 )
 
@@ -57,7 +57,7 @@ java_library(name = "jsr305")  # not bundled
 
 java_import(
     name = "java",
-    jars = glob(["android-studio/plugins/java/lib/*.jar"]),
+    jars = glob(["android-studio/plugins/java/lib/*.jar"]) + ["android-studio/plugins/java/lib/resources/jdkAnnotations.jar"],
 )
 
 java_import(
@@ -97,6 +97,11 @@ java_import(
 java_import(
     name = "kotlin",
     jars = glob(["android-studio/plugins/Kotlin/lib/*.jar"]),
+)
+
+filegroup(
+    name = "kotlinc_version",
+    srcs = ["plugins/Kotlin/kotlinc/build.txt"],
 )
 
 java_import(

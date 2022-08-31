@@ -17,6 +17,7 @@ java_library(
     exports = select_for_plugin_api({
         "android-studio-2021.2": ["//sdkcompat/v212"],
         "android-studio-2021.3": ["//sdkcompat/v213"],
+        "android-studio-2022.1": ["//sdkcompat/v221"],
         "intellij-2021.2": ["//sdkcompat/v212"],
         "intellij-ue-2021.2": ["//sdkcompat/v212"],
         "intellij-2021.3": ["//sdkcompat/v213"],
