@@ -86,6 +86,9 @@ java_library(
         "android-studio-2021.3": glob([
             "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/functional/*.java",
         ]),
+        "android-studio-2022.1": glob([
+            "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/functional/*.java",
+        ]),
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
@@ -109,6 +112,7 @@ java_library(
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-2021.2": glob(["sdkcompat/as212/**/*.java"]),
         "android-studio-2021.3": glob(["sdkcompat/as213/**/*.java"]),
+        "android-studio-2022.1": glob(["sdkcompat/as221/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     visibility = combine_visibilities(

@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.jetbrains.annotations.NotNull;
 
 /** Blaze implementation of {@link ProjectSystemBuildManager} */
@@ -33,6 +34,7 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
       new Topic<>("Blaze Project Build", ProjectSystemBuildManager.BuildListener.class);
 
   private final Project project;
+  private final AtomicInteger buildCount = new AtomicInteger(0);
 
   BlazeProjectSystemBuildManager(Project project) {
     this.project = project;
@@ -59,6 +61,11 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
         .subscribe(PROJECT_SYSTEM_BUILD_TOPIC, buildListener);
   }
 
+  // @Override #api221
+  public boolean isBuilding() {
+    return buildCount.get() > 0;
+  }
+
   @NotNull
   @Override
   public BuildResult getLastBuildResult() {
@@ -69,9 +76,10 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
    * Class to publish BlazeBuildListener callbacks to {@link
    * BlazeProjectSystemBuildManager#PROJECT_SYSTEM_BUILD_TOPIC}
    */
-  static final class BuildCallbackPublisher implements BlazeBuildListener {
+  final class BuildCallbackPublisher implements BlazeBuildListener {
     @Override
     public void buildStarting(Project project) {
+      buildCount.incrementAndGet();
       project
           .getMessageBus()
           .syncPublisher(PROJECT_SYSTEM_BUILD_TOPIC)
@@ -80,6 +88,7 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
 
     @Override
     public void buildCompleted(Project project, BlazeBuildOutputs buildOutputs) {
+      buildCount.decrementAndGet();
       LastBuildResultCache lastBuildResultCache = LastBuildResultCache.getInstance(project);
       BuildResult projectSystemBuildResult =
           lastBuildResultCache.updateBuildResult(buildOutputs.buildResult);
