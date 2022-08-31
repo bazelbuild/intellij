@@ -16,22 +16,27 @@
 package com.google.idea.blaze.base.sync.aspects;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.command.buildresult.BepArtifactData;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
+import com.intellij.openapi.diagnostic.Logger;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /** The result of a (potentially sharded) blaze build. */
 public class BlazeBuildOutputs {
+  private static final Logger logger = Logger.getInstance(BlazeBuildOutputs.class);
 
   public static BlazeBuildOutputs noOutputs(BuildResult buildResult) {
     return new BlazeBuildOutputs(buildResult, ImmutableMap.of(), ImmutableMap.of(), 0L);
@@ -123,13 +128,25 @@ public class BlazeBuildOutputs {
         }
       }
     }
+
+    Set<String> duplicateBuildIds =
+        Sets.intersection(this.buildShardResults.keySet(), nextOutputs.buildShardResults.keySet());
+    if (!duplicateBuildIds.isEmpty()) {
+      logger.warn(
+          String.format(
+              "Updating build outputs with results from duplicate build ids: ids=%s",
+              duplicateBuildIds));
+    }
+
     return new BlazeBuildOutputs(
         BuildResult.combine(buildResult, nextOutputs.buildResult),
         combined,
-        ImmutableMap.<String, BuildResult>builder()
-            .putAll(buildShardResults)
-            .putAll(nextOutputs.buildShardResults)
-            .build(),
+        Stream.concat(
+                nextOutputs.buildShardResults.entrySet().stream(),
+                buildShardResults.entrySet().stream())
+            .collect(
+                // On duplicate buildIds, preserve most recent result
+                toImmutableMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1)),
         bepBytesConsumed + nextOutputs.bepBytesConsumed);
   }
 
