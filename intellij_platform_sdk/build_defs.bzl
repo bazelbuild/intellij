@@ -342,6 +342,32 @@ def get_versions_to_build(product):
 
     return " ".join(aliases_to_build)
 
+def get_unique_supported_oss_ide_versions(product):
+    """"Returns the unique supported IDE versions for the given product in the OSS Bazel plugin
+
+    Args:
+        product: name of the product; android-studio, clion, intellij-ue
+
+    Returns:
+        A space separated list of the aliases of the unique IDE versions for the
+        OSS Bazel plugin.
+    """
+    supported_versions = []
+    unique_aliases = []
+    for alias in ["oss-oldest-stable", "oss-latest-stable"]:
+        indirect_ij_product = product + "-" + alias
+        if indirect_ij_product not in INDIRECT_IJ_PRODUCTS:
+            fail(
+                "Product-version alias %s not found." % indirect_ij_product,
+                "Invalid product: %s, only android-studio, clion and intellij-ue are accepted." % product,
+            )
+        ver = INDIRECT_IJ_PRODUCTS[indirect_ij_product]
+        if ver not in supported_versions:
+            supported_versions.append(ver)
+            unique_aliases.append(alias)
+
+    return " ".join(unique_aliases)
+
 def combine_visibilities(*args):
     """
     Concatenates the given lists of visibilities and returns the combined list.
