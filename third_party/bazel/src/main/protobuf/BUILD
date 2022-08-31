@@ -84,27 +84,19 @@ java_proto_library(
     deps = [":failure_details_proto"],
 )
 
-# This new option tagging method is in flux while being applied to the options
-# in the Bazel code base. The visibility should not be changed to allow external
-# dependencies until the interface has stabilized and can commit to maintaining
-# backwards compatibility for 6 months' time.
-# TODO(bazel-team) Make these visibility:public when the interface is stable.
 proto_library(
     name = "option_filters_proto",
     srcs = ["option_filters.proto"],
-    visibility = ["//visibility:private"],
 )
 
 java_proto_library(
     name = "option_filters_java_proto",
-    visibility = ["//src:__subpackages__"],
     deps = [":option_filters_proto"],
 )
 
 proto_library(
     name = "command_line_proto",
     srcs = ["command_line.proto"],
-    visibility = ["//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:__pkg__"],
     deps = [":option_filters_proto"],
 )
 
