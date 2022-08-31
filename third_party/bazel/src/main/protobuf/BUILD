@@ -110,7 +110,6 @@ proto_library(
 
 java_proto_library(
     name = "command_line_java_proto",
-    visibility = ["//src:__subpackages__"],
     deps = [":command_line_proto"],
 )
 
