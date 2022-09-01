@@ -1,6 +1,9 @@
 package com.google.idea.blaze.aspect;
 
 import com.electronwill.nightconfig.core.Config;
+import com.electronwill.nightconfig.core.conversion.ConvertedConfig;
+import com.electronwill.nightconfig.core.io.ConfigParser;
+import com.electronwill.nightconfig.toml.TomlParser;
 import com.electronwill.nightconfig.toml.TomlWriter;
 import com.google.common.base.Preconditions;
 
@@ -16,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static com.google.common.collect.Lists.newArrayList;
 
@@ -28,24 +32,24 @@ public class CargoTomlBuilder {
 
     static final class Options {
         String name;
+        String version;
         String edition;
         Path rootPath;
         Path binPath;
         Path libPath;
-        List<String> pathDeps;
-        List<String> externalDeps;
+        List<String> deps;
         Path outputManifest;
     }
 
     static Options parseArgs(String[] args) {
         Options options = new Options();
         options.name = OptionParser.parseSingleOption(args, "name", x -> x);
+        options.version = OptionParser.parseSingleOption(args, "version", x -> x);
         options.edition = OptionParser.parseSingleOption(args, "edition", x -> x);
         options.rootPath = OptionParser.parseSingleOption(args, "root-path", Paths::get);
         options.binPath = OptionParser.parseSingleOption(args, "bin-path", Paths::get);
         options.libPath = OptionParser.parseSingleOption(args, "lib-path", Paths::get);
-        options.pathDeps = OptionParser.parseSingleOption(args, "path-deps", CargoTomlBuilder::parseStringList);
-        options.externalDeps = OptionParser.parseSingleOption(args, "external-deps", CargoTomlBuilder::parseStringList);
+        options.deps = OptionParser.parseSingleOption(args, "deps", CargoTomlBuilder::parseStringList);
         options.outputManifest =
                 OptionParser.parseSingleOption(
                         args, "output-manifest", string -> FileSystems.getDefault().getPath(string));
@@ -68,29 +72,29 @@ public class CargoTomlBuilder {
         Config pkg = cargoToml.createSubConfig();
         cargoToml.set("package", pkg);
         pkg.set("name", options.name);
-        pkg.set("version", "0.0.0");
-        // TODO(alexjpwalker): remove 'edition' field once https://github.com/intellij-rust/intellij-rust/issues/4907
-        //  is actually fixed (at the time of writing, the issue is closed, but still reproducible)
+        pkg.set("version", options.version);
         pkg.set("edition", options.edition);
 
         Config deps = cargoToml.createSubConfig();
         cargoToml.set("dependencies", deps);
-        if (options.pathDeps != null) {
-            options.pathDeps.forEach(dep -> {
-                String[] nameAndPath = dep.split("=");
-                String name = nameAndPath[0];
-                String path = nameAndPath[1];
-                Config pathObj = Config.inMemory();
-                pathObj.set("path", path);
-                deps.set(name, pathObj);
-            });
-        }
-        if (options.externalDeps != null) {
-            options.externalDeps.forEach(dep -> {
-                String[] nameAndVersion = dep.split("=");
-                String name = nameAndVersion[0];
-                String version = nameAndVersion[1];
-                deps.set(name, version);
+        if (options.deps != null) {
+            options.deps.forEach(dep -> {
+                String[] keyAndValue = dep.split("=", 2);
+                String key = keyAndValue[0];
+                String value = keyAndValue[1];
+                Config valueObj = Config.inMemory();
+                String[] valueParts = value.split(";");
+                for (String valuePart : valueParts) {
+                    String[] nestedKeyAndValue = valuePart.split("=", 2);
+                    String nestedKey = nestedKeyAndValue[0];
+                    String nestedValue = nestedKeyAndValue[1];
+                    if (nestedKey.equals("features")) {
+                        valueObj.set(nestedKey, Arrays.stream(nestedValue.split(",")).collect(Collectors.toList()));
+                    } else {
+                        valueObj.set(nestedKey, nestedValue);
+                    }
+                }
+                deps.set(key, valueObj);
             });
         }
 
