@@ -79,6 +79,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private String blazeBinaryPath = DEFAULT_BLAZE_PATH;
   private String bazelBinaryPath = DEFAULT_BAZEL_PATH;
   private String buildifierBinaryPath = DEFAULT_BUILDIFIER_PATH;
+  private boolean forceBazelAutoImport = false;
 
   public static BlazeUserSettings getInstance() {
     return ServiceManager.getService(BlazeUserSettings.class);
@@ -222,6 +223,13 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
       EditorNotifications.getInstance(project).updateAllNotifications();
     }
   }
+  public boolean getForceBazelAutoImport() {
+    return forceBazelAutoImport;
+  }
+
+  public void setForceBazelAutoImport(boolean forceBazelAutoImport) {
+    this.forceBazelAutoImport = forceBazelAutoImport;
+  }
 
   static class SettingsLogger implements LoggedSettingsProvider {
 
@@ -247,6 +255,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
       builder.put("blazeBinaryPath", settings.blazeBinaryPath);
       builder.put("bazelBinaryPath", settings.bazelBinaryPath);
       builder.put("buildifierBinaryPath", settings.buildifierBinaryPath);
+      builder.put("forceBazelAutoImport", Boolean.toString(settings.forceBazelAutoImport));
       return builder.build();
     }
   }

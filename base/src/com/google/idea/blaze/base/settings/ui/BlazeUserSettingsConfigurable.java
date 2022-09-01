@@ -144,6 +144,14 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           .componentFactory(
               fileSelector(BUILDIFIER_BINARY_PATH_KEY, "Specify the buildifier binary path"));
 
+  public static final String FORCE_BAZEL_AUTO_IMPORT_KEY ="force.bazel.auto.import";
+
+  private static final ConfigurableSetting<?, ?> FORCE_BAZEL_AUTO_IMPORT =
+          setting("Enforce Bazel auto import, even if there are alternative import methods")
+                  .getter(BlazeUserSettings::getForceBazelAutoImport)
+                  .setter(BlazeUserSettings::setForceBazelAutoImport)
+                  .componentFactory(SimpleComponent::createCheckBox);
+
   private static final ImmutableList<ConfigurableSetting<?, ?>> SETTINGS =
       ImmutableList.of(
           SHOW_CONSOLE_ON_SYNC,
@@ -156,7 +164,8 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
           ALWAYS_SELECT_NEWEST_CHILD_TASK,
           BLAZE_BINARY_PATH,
           BAZEL_BINARY_PATH,
-          BUILDIFIER_BINARY_PATH);
+          BUILDIFIER_BINARY_PATH,
+          FORCE_BAZEL_AUTO_IMPORT);
 
   private static ConfigurableSetting.Builder<BlazeUserSettings> setting(String label) {
     return ConfigurableSetting.builder(BlazeUserSettings::getInstance).label(label);
@@ -185,7 +194,8 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
             ALWAYS_SELECT_NEWEST_CHILD_TASK,
             BLAZE_BINARY_PATH,
             BAZEL_BINARY_PATH,
-            BUILDIFIER_BINARY_PATH));
+            BUILDIFIER_BINARY_PATH,
+            FORCE_BAZEL_AUTO_IMPORT));
   }
 
   private JComponent getFocusBehaviorSettingsUi() {
