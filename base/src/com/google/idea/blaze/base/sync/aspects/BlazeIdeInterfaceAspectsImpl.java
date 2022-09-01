@@ -112,6 +112,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -646,7 +647,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                   }
 
                   progressTracker.onBuildCompleted(context); // TODO(b/216104482) track failures
-                  printShardFinishedSummary(context, task.getName(), result);
+                  printShardFinishedSummary(context, task.getName(), result, invoker);
                   synchronized (combinedResult) {
                     combinedResult.set(
                         combinedResult.isNull()
@@ -667,24 +668,24 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
   /* Prints summary only for failed shards */
   private void printShardFinishedSummary(
-      BlazeContext context, String taskName, BlazeBuildOutputs result) {
+      BlazeContext context, String taskName, BlazeBuildOutputs result, BuildInvoker invoker) {
     if (result.buildResult.status == Status.SUCCESS) {
       return;
     }
     StringBuilder outputText = new StringBuilder();
     outputText.append(
         String.format(
-            "%s finished with %s errors; ",
+            "%s finished with %s errors. ",
             taskName, result.buildResult.status == Status.BUILD_ERROR ? "build" : "fatal"));
     String invocationId =
         Iterables.getOnlyElement(
             result.getBuildIds(),
             null); // buildIds has exactly one invocationId because this is called only when a shard
     // is built and not when buildResults are combined
-    outputText.append(
-        invocationId != null
-            ? String.format("see build results at http://sponge2/%s", invocationId)
-            : String.format("could not fetch the invocation ID of %s", taskName));
+    Optional<String> invocationLink = invoker.getBuildSystem().getInvocationLink(invocationId);
+    if (invocationLink.isPresent()) {
+      outputText.append(String.format("See build results at %s", invocationLink));
+    }
     context.output(SummaryOutput.error(Prefix.TIMESTAMP, outputText.toString()));
   }
 

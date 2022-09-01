@@ -104,6 +104,11 @@ public abstract class AbstractBuildInvoker implements BuildInvoker {
   }
 
   @Override
+  public BuildSystem getBuildSystem() {
+    return buildSystem;
+  }
+
+  @Override
   @Nullable
   public synchronized BlazeInfo getBlazeInfo() throws SyncFailedException {
     if (blazeInfo == null) {

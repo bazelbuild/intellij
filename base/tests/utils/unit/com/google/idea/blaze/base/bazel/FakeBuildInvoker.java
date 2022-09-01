@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
@@ -34,7 +35,8 @@ public abstract class FakeBuildInvoker implements BuildInvoker {
         .type(BuildBinaryType.NONE)
         .binaryPath("")
         .supportsParallelism(false)
-        .buildResultHelperSupplier(() -> null);
+        .buildResultHelperSupplier(() -> null)
+        .buildSystem(FakeBuildSystem.builder(BuildSystemName.Blaze).build());
   }
 
   @Override
@@ -88,6 +90,8 @@ public abstract class FakeBuildInvoker implements BuildInvoker {
     public abstract Builder buildResultHelperSupplier(Supplier<BuildResultHelper> supplier);
 
     public abstract Builder commandRunner(BlazeCommandRunner runner);
+
+    public abstract Builder buildSystem(BuildSystem buildSystem);
   }
 
 }
