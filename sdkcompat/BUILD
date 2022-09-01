@@ -7,7 +7,7 @@ load(
     "create_sdkcompat_visibility_package",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 create_sdkcompat_visibility_package()
 

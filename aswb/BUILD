@@ -34,7 +34,7 @@ load(
     "TEST_ASWB_SUBPACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 optional_plugin_xml(
     name = "optional_ndk_xml",

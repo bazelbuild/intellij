@@ -13,7 +13,7 @@ load(
     "create_proto_visibility_group",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 create_proto_visibility_group()
 
