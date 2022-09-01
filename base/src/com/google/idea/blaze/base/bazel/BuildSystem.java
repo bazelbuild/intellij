@@ -79,6 +79,9 @@ public interface BuildSystem {
     default boolean supportsHomeBlazerc() {
       return true;
     }
+
+    /** Returns the BuildSystem object. */
+    BuildSystem getBuildSystem();
   }
 
   /** Returns the type of the build system. */
@@ -111,5 +114,10 @@ public interface BuildSystem {
     } else {
       return getBuildInvoker(project, context);
     }
+  }
+
+  /** Returns invocation link for the given invocation ID. */
+  default Optional<String> getInvocationLink(String invocationId) {
+    return Optional.empty();
   }
 }
