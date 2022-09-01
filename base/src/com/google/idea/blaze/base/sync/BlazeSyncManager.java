@@ -102,8 +102,11 @@ public class BlazeSyncManager {
           String.format("Attempt to sync non-%s project.", Blaze.buildSystemName(project)));
     }
     if (importSettings.getProjectProtoFile() != null) {
-      // TODO(mathewi) implement new sync prototype flow.
-      return;
+      NewSync newSync = NewSync.getNewSync();
+      if (newSync != null) {
+        newSync.run(project, importSettings);
+        return;
+      }
     }
 
     // an additional call to 'sync started'. This disables the sync actions while we wait for
