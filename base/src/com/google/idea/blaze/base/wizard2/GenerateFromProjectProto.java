@@ -20,7 +20,6 @@ import com.google.common.collect.Iterables;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.ui.UiUtil;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDialog;
@@ -48,8 +47,6 @@ import javax.swing.JLabel;
 public class GenerateFromProjectProto implements BlazeSelectProjectViewOption {
   private static final String LAST_WORKSPACE_PATH =
       "generate-from-project-proto.last-workspace-path";
-  public static final BoolExperiment ENABLED =
-      new BoolExperiment("sync.prototype.project.proto.enabled", false);
 
   private final BlazeNewProjectBuilder builder;
   private final BlazeWizardUserSettings userSettings;
