@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -123,8 +122,9 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Nullable
   private Project createProject(@NotNull VirtualFile virtualFile) {
-    String projectDataSubdirectory = BlazeDataStorage.getProjectDataSubdirectory();
-    String projectFilePath = virtualFile.getPath() + "/" + projectDataSubdirectory;
+    String projectFilePath =
+        virtualFile.getPath() + "/" + BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY;
+
     createDirs(projectFilePath);
 
     String name = virtualFile.getName();
