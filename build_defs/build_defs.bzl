@@ -44,6 +44,7 @@ def stamped_plugin_xml(
         vendor_file = None,
         since_build_numbers = None,
         until_build_numbers = None,
+        application_info_json = None,
         **kwargs):
     """Stamps a plugin xml file with the IJ build number.
 
@@ -66,6 +67,7 @@ def stamped_plugin_xml(
       until_build_numbers: A map from plugin-api versions to the until build number
           that should be used in their supporting plugin, the default is all minor
           versions of plugin_api major version. Example: {"212": "212.1.*"}
+      application_info_json: A product info file, if provided, overrides the default.
       **kwargs: Any additional arguments to pass to the final target.
     """
     stamp_tool = "//build_defs:stamp_plugin_xml"
@@ -74,6 +76,7 @@ def stamped_plugin_xml(
     api_version_txt(
         name = api_version_txt_name,
         check_eap = True,
+        application_info_json = application_info_json,
     )
 
     args = [
@@ -155,15 +158,17 @@ def stamped_plugin_xml(
         **kwargs
     )
 
-def api_version_txt(name, check_eap, **kwargs):
+def api_version_txt(name, check_eap, application_info_json = None, **kwargs):
     """Produces an api_version.txt file with the api version, including the product code.
 
     Args:
       name: name of this target
       check_eap: whether the produced api_version should mark the build number with `EAP` if it is or this is not needed.
+      application_info_json: A product info file, if provided, overrides the default.
       **kwargs: Any additional arguments to pass to the final target.
     """
-    application_info_json = "//intellij_platform_sdk:application_info_json"
+    if application_info_json == None:
+        application_info_json = "//intellij_platform_sdk:application_info_json"
     api_version_txt_tool = "//build_defs:api_version_txt"
 
     args = [
