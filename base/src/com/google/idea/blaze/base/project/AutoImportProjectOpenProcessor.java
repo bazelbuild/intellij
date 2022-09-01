@@ -15,6 +15,7 @@ import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.wizard2.BlazeProjectCommitException;
@@ -24,6 +25,7 @@ import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -121,8 +123,8 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Nullable
   private Project createProject(@NotNull VirtualFile virtualFile) {
-
-    String projectFilePath = virtualFile.getPath() + "/.ijwb";
+    String projectDataSubdirectory = BlazeDataStorage.getProjectDataSubdirectory();
+    String projectFilePath = virtualFile.getPath() + "/" + projectDataSubdirectory;
     createDirs(projectFilePath);
 
     String name = virtualFile.getName();

@@ -33,7 +33,7 @@ public class BlazeDataStorage {
   public static final String BLAZE_DATA_SUBDIRECTORY = ".blaze";
   public static final String PROJECT_DATA_SUBDIRECTORY = getProjectDataSubdirectory();
 
-  private static String getProjectDataSubdirectory() {
+  public static String getProjectDataSubdirectory() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return ".ijwb";
     }
