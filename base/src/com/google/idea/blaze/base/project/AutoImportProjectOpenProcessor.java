@@ -72,11 +72,6 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   @Override
-  public boolean isStrongProjectInfoHolder() {
-    return true;
-  }
-
-  @Override
   public boolean lookForProjectsInDirectory() {
     return false;
   }
