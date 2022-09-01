@@ -8,7 +8,7 @@ load(
 
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 py_binary(
     name = "merge_xml",

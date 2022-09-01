@@ -3,6 +3,6 @@ load(
     "create_common_plugins_package",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 create_common_plugins_package()

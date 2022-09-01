@@ -5,7 +5,7 @@
 
 package(default_visibility = ["//aspect:__pkg__"])
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 # To prevent versioning conflicts when developing internally, we always use the same
 # guava version bundled with the IntelliJ plugin API.

@@ -28,7 +28,7 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 optional_plugin_xml(
     name = "optional_java",
