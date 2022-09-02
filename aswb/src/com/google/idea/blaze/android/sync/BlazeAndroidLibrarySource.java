@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
@@ -32,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /** {@link LibrarySource} for android. */
@@ -39,6 +41,9 @@ public class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
 
   private static final BoolExperiment filterResourceJarsEnabled =
       new BoolExperiment("aswb.filter.resource.jars", true);
+
+  private static final BoolExperiment filterJarsInBlockListEnabled =
+      new BoolExperiment("aswb.filter.blocklist.jars", true);
 
   private final BlazeProjectData blazeProjectData;
 
@@ -79,6 +84,11 @@ public class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
       finalPredicate = finalPredicate == null ? resJarFilter : finalPredicate.and(resJarFilter);
     }
 
+    if (filterJarsInBlockListEnabled.getValue()) {
+      Predicate<BlazeLibrary> blocklistJarFilter = new BlocklistJarFilter();
+      finalPredicate =
+          finalPredicate == null ? blocklistJarFilter : finalPredicate.and(blocklistJarFilter);
+    }
     return finalPredicate;
   }
 
@@ -146,6 +156,29 @@ public class BlazeAndroidLibrarySource extends LibrarySource.Adapter {
               .libraryArtifact
               .jarForIntellijLibrary()
               .getRelativePath());
+    }
+  }
+
+  /** Filters out any resource JARs exported by android targets. */
+  @VisibleForTesting
+  public static class BlocklistJarFilter implements Predicate<BlazeLibrary> {
+    // third_party/android/robolectric_android_all contains android sdk that may conflick with local
+    // android sdk
+    private final ImmutableList<Pattern> blockedTargets =
+        ImmutableList.of(Pattern.compile("//third_party/android/robolectric_android_all:.+"));
+
+    @Override
+    public boolean test(BlazeLibrary blazeLibrary) {
+      if (!(blazeLibrary instanceof BlazeJarLibrary)) {
+        return true;
+      }
+      TargetKey targetKey = ((BlazeJarLibrary) blazeLibrary).targetKey;
+      if (targetKey == null) {
+        return true;
+      }
+      return blockedTargets.stream()
+          .noneMatch(
+              blockedTarget -> blockedTarget.matcher(targetKey.getLabel().toString()).find());
     }
   }
 }
