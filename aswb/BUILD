@@ -236,6 +236,7 @@ intellij_plugin(
         "//dart:plugin_library",
         "//java:plugin_library",
         "//kotlin:plugin_library",
+        "//plugin_dev:plugin_library_for_aswb",
         "//python:plugin_library",
         "//skylark:plugin_library",
         "//terminal:plugin_library",

@@ -609,7 +609,7 @@ java_library(
     name = "devkit",
     neverlink = 1,
     exports = select_from_plugin_api_directory(
-        android_studio = [],
+        android_studio = [":devkit"],
         clion = [],
         intellij = [":devkit"],
     ),

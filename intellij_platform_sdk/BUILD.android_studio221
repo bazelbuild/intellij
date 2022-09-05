@@ -110,6 +110,11 @@ java_import(
 )
 
 java_import(
+    name = "devkit",
+    jars = ["plugins/devkit/lib/devkit.jar"],
+)
+
+java_import(
     name = "hg4idea",
     jars = ["android-studio/plugins/hg4idea/lib/hg4idea.jar"],
 )
