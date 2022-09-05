@@ -113,6 +113,8 @@ java_import(
     jars = glob(["android-studio/plugins/coverage/lib/*.jar"]),
 )
 
+java_library(name = "devkit")  # not present
+
 java_import(
     name = "hg4idea",
     jars = ["android-studio/plugins/hg4idea/lib/hg4idea.jar"],
