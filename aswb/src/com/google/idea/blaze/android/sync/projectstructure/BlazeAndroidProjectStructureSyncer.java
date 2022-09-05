@@ -388,7 +388,8 @@ public class BlazeAndroidProjectStructureSyncer {
 
   /**
    * Parses the provided manifest to calculate applicationId. Returns the provided default if the
-   * manifest file does not exist, or is invalid
+   * manifest file does not exist, or is invalid. This method is potentially called concurrently
+   * from background threads so it must be thread safe.
    */
   static String getApplicationIdFromManifestOrDefault(
       Project project,

@@ -17,7 +17,7 @@ java_library(
         android_studio = glob([
             "com/google/idea/sdkcompat/cpp/**",
             "com/google/idea/sdkcompat/java/**",
-            "com/google/idea/sdkcompat/kotlin/**",
+            "aswb/com/google/idea/sdkcompat/kotlin/*.java",
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/cpp/**",

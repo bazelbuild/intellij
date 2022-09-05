@@ -79,7 +79,10 @@ java_test(
     size = "small",
     srcs = ["tests/unittests/com/google/idea/blaze/aspect/PackageParserTest.java"],
     test_class = "com.google.idea.blaze.aspect.PackageParserTest",
-    deps = [":test_lib"],
+    deps = [
+        ":test_lib",
+        "@error_prone_annotations//jar",
+    ],
 )
 
 java_test(

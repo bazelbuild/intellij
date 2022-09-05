@@ -105,6 +105,11 @@ public final class TasksToolWindowService implements Disposable {
     ApplicationManager.getApplication().invokeLater(() -> tabs.navigate(task, link, offset));
   }
 
+  /** Remove a {@link Task}, including all children of that task */
+  public void removeTask(Task task) {
+    tabs.removeTask(task);
+  }
+
   /** Activate the view */
   public void activate() {
     ToolWindow toolWindow =

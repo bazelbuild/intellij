@@ -123,6 +123,7 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTaskBase {
    * account for null variables that could occur in our implementation.
    */
   @Override
+  @Nullable
   public ProcessHandler launchDebugger(
       @NotNull LaunchInfo currentLaunchInfo,
       @NotNull Client client,

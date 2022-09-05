@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -91,16 +92,19 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
     @Nullable private String importPath = null;
     private final ImmutableList.Builder<Label> libraryLabels = ImmutableList.builder();
 
+    @CanIgnoreReturnValue
     public Builder addSource(ArtifactLocation source) {
       this.sources.add(source);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setImportPath(String importPath) {
       this.importPath = importPath;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addLibraryLabel(String libraryLabel) {
       this.libraryLabels.add(Label.create(libraryLabel));
       return this;

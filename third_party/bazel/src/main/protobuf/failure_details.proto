@@ -1172,6 +1172,7 @@ message Analysis {
     ASPECT_CREATION_FAILED = 17 [(metadata) = { exit_code: 1 }];
     CONFIGURED_VALUE_CREATION_FAILED = 18 [(metadata) = { exit_code: 1 }];
     INCOMPATIBLE_TARGET_REQUESTED = 19 [(metadata) = { exit_code: 1 }];
+    ANALYSIS_FAILURE_PROPAGATION_FAILED = 20 [(metadata) = { exit_code: 1 }];
   }
 
   Code code = 1;
@@ -1250,6 +1251,7 @@ message StarlarkLoading {
     IO_ERROR = 7 [(metadata) = { exit_code: 1 }];
     LABEL_CROSSES_PACKAGE_BOUNDARY = 8 [(metadata) = { exit_code: 1 }];
     BUILTINS_ERROR = 9 [(metadata) = { exit_code: 1 }];
+    VISIBILITY_ERROR = 10 [(metadata) = { exit_code: 1 }];
   }
 
   Code code = 1;

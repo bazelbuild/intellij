@@ -167,8 +167,8 @@ public class MobileInstallBuildStep implements ApkBuildStep {
     }
 
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    final String deployInfoSuffix = getDeployInfoSuffix(Blaze.getBuildSystemName(project));
-
+    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
+    String deployInfoSuffix = getDeployInfoSuffix(buildSystemName);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
         AdbTunnelConfigurator tunnelConfig = getTunnelConfigurator(context)) {
       tunnelConfig.setupConnection(context);
@@ -195,9 +195,12 @@ public class MobileInstallBuildStep implements ApkBuildStep {
           .addTargets(label)
           .addBlazeFlags(blazeFlags)
           .addBlazeFlags(buildResultHelper.getBuildFlags())
-          .addExeFlags(exeFlags)
-          // MI launches apps by default. Defer app launch to BlazeAndroidLaunchTasksProvider.
-          .addExeFlags("--nolaunch_app");
+          .addExeFlags(exeFlags);
+
+      if (buildSystemName == BuildSystemName.Blaze) {
+        // MI launches apps by default. Defer app launch to BlazeAndroidLaunchTasksProvider.
+        command.addExeFlags("--nolaunch_app");
+      }
 
       if (StudioDeployerExperiment.isEnabled()) {
         command.addExeFlags("--nodeploy");
@@ -256,6 +259,11 @@ public class MobileInstallBuildStep implements ApkBuildStep {
       IssueOutput.error("Could not read apk deploy info from build: " + e.getMessage())
           .submit(context);
     }
+  }
+
+  @Override
+  public boolean needsIdeDeploy() {
+    return StudioDeployerExperiment.isEnabled();
   }
 
   @Override

@@ -112,12 +112,13 @@ public class AlwaysPresentGoSyncPlugin implements BlazeSyncPlugin {
       ProjectViewSet projectViewSet,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
     if (workspaceLanguageSettings.isLanguageActive(LanguageClass.GO) && !isGoPluginSupported()) {
-      IssueOutput.error(
-              String.format(
-                  "Go is no longer supported by the %s plugin with IntelliJ Community Edition.\n"
-                      + "Please install Ultimate Edition and upgrade to the JetBrains Go plugin",
-                  Blaze.defaultBuildSystemName()))
-          .submit(context);
+      String msg =
+          String.format(
+              "Go is no longer supported by the %s plugin with IntelliJ Community Edition.\n"
+                  + "Please install Ultimate Edition and upgrade to the JetBrains Go plugin",
+              Blaze.defaultBuildSystemName());
+      IssueOutput.error(msg).submit(context);
+      BlazeSyncManager.printAndLogError(msg, context);
       return false;
     }
     if (goWorkspaceTypeSupported()
@@ -133,6 +134,7 @@ public class AlwaysPresentGoSyncPlugin implements BlazeSyncPlugin {
             && topLevelProjectViewFile != null
             && topLevelProjectViewFile.projectView.getScalarValue(WorkspaceTypeSection.KEY)
                 == WorkspaceType.GO;
+    BlazeSyncManager.printAndLogError(msg, context);
     msg += fixable ? ". Click here to fix your .blazeproject and resync." : ", then resync.";
     IssueOutput.error(msg)
         .navigatable(

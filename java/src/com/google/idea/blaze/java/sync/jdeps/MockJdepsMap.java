@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.sync.jdeps;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import java.util.HashMap;
 import java.util.List;
@@ -33,6 +34,7 @@ public final class MockJdepsMap implements JdepsMap {
     return jdeps.get(targetKey);
   }
 
+  @CanIgnoreReturnValue
   public MockJdepsMap put(TargetKey targetKey, List<String> values) {
     jdeps.put(targetKey, values);
     return this;

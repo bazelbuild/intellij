@@ -46,12 +46,17 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
         .computeIfAbsent(task, t -> ConsoleView.create(project, filters, parentDisposable));
   }
 
+  void removeTask(Task task) {
+    removeTaskAndConsole(task);
+    model.getTopLevelFinishedTasks().remove(task);
+  }
+
   void finishTask(Task task) {
     updateTask(task);
     if (task.getParent().isPresent()) {
       return;
     }
-    model.getTopLevelFinishedTasks().offer(task);
+    model.getTopLevelFinishedTasks().add(task);
     cleanUpTasksExceedingLimit();
   }
 
@@ -93,24 +98,31 @@ final class TasksTreeConsoleBehaviour implements Behavior<TasksTreeConsoleModel>
   private void cleanUpTasksExceedingLimit() {
     while (model.getTopLevelFinishedTasks().size()
         > BlazeConsoleExperimentManager.getTasksHistorySize()) {
-      Task task = model.getTopLevelFinishedTasks().poll();
-      model.getTreeModel().tasksTreeProperty().removeTask(task);
-
-      Task selectedTask = model.getTreeModel().selectedTaskProperty().getValue();
-      while (selectedTask != null) {
-        if (selectedTask.equals(task)) {
-          model.getTreeModel().selectedTaskProperty().setValue(null);
-          break;
-        }
-        selectedTask = selectedTask.getParent().orElse(null);
+      Task task = model.pollOldestFinishedTask();
+      if (task == null) {
+        throw new IllegalStateException("Tried to remove oldest finished task but none found.");
       }
-
-      ConsoleView consoleView = model.getConsolesOfTasks().remove(task);
-      if (consoleView == null) {
-        throw new IllegalStateException(
-            "Finished task `" + task.getName() + "` doesn't have a corresponding console view");
-      }
-      Disposer.dispose(consoleView);
+      removeTaskAndConsole(task);
     }
+  }
+
+  private void removeTaskAndConsole(Task task) {
+    model.getTreeModel().tasksTreeProperty().removeTask(task);
+
+    Task selectedTask = model.getTreeModel().selectedTaskProperty().getValue();
+    while (selectedTask != null) {
+      if (selectedTask.equals(task)) {
+        model.getTreeModel().selectedTaskProperty().setValue(null);
+        break;
+      }
+      selectedTask = selectedTask.getParent().orElse(null);
+    }
+
+    ConsoleView consoleView = model.getConsolesOfTasks().remove(task);
+    if (consoleView == null) {
+      throw new IllegalStateException(
+          "Finished task `" + task.getName() + "` doesn't have a corresponding console view");
+    }
+    Disposer.dispose(consoleView);
   }
 }

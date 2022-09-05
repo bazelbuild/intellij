@@ -252,4 +252,8 @@ public abstract class BlazeIntegrationTestCase {
   protected <T> void registerExtension(ExtensionPointName<T> name, T instance) {
     ServiceHelper.registerExtension(name, instance, getTestRootDisposable());
   }
+
+  protected <T> void registerExtensionFirst(ExtensionPointName<T> name, T instance) {
+    ServiceHelper.registerExtensionFirst(name, instance, getTestRootDisposable());
+  }
 }

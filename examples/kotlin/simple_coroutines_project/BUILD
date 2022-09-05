@@ -23,9 +23,6 @@ kt_jvm_binary(
 kt_jvm_test(
     name = "test_greeting",
     srcs = ["test/GreetingTest.kt"],
-    # Add kotlinx_coroutines javaagent to enable coroutines debugging or use
-    # java_test instead.
-    jvm_flags = ["-javaagent:$(location @kotlinx_coroutines//jar)"],
     test_class = "test.GreetingTest",
     deps = [
         ":greeting_lib",

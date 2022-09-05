@@ -19,7 +19,7 @@ import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.java.run.BlazeJavaDebuggingSetupHandler;
-import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.util.Key;
 import java.util.Optional;
@@ -35,15 +35,15 @@ import java.util.concurrent.atomic.AtomicReference;
 public class BlazeKotlinDebuggingSetupHandler implements BlazeJavaDebuggingSetupHandler {
 
   // Experiment supporting Kotlin coroutines debugging
-  static final BoolExperiment COROUTINES_DEBUGGING_ENABLED =
-      new BoolExperiment("kotlin.coroutinesDebugging.enabled", false);
+  static final FeatureRolloutExperiment COROUTINES_DEBUGGING_ENABLED =
+      new FeatureRolloutExperiment("kotlin.coroutinesDebugging.enabled");
 
   // Used to store the path of the Coroutines lib needed to be used as a javaagent for debugging.
   static final Key<AtomicReference<String>> COROUTINES_LIB_PATH = Key.create("coroutines.lib.path");
 
   @Override
   public void setUpDebugging(ExecutionEnvironment env) {
-    if (COROUTINES_DEBUGGING_ENABLED.getValue()) {
+    if (COROUTINES_DEBUGGING_ENABLED.isEnabled()) {
       BlazeCommandRunConfiguration config =
           BlazeCommandRunConfigurationRunner.getConfiguration(env);
       Optional<ArtifactLocation> libArtifact =

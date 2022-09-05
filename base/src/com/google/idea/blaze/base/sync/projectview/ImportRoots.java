@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -76,6 +77,7 @@ public final class ImportRoots {
       this.buildSystemName = buildSystemName;
     }
 
+    @CanIgnoreReturnValue
     public Builder add(ProjectViewSet projectViewSet) {
       for (DirectoryEntry entry : projectViewSet.listItems(DirectorySection.KEY)) {
         add(entry);
@@ -86,6 +88,7 @@ public final class ImportRoots {
       return this;
     }
 
+    @CanIgnoreReturnValue
     @VisibleForTesting
     public Builder add(DirectoryEntry entry) {
       if (entry.included) {

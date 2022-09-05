@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.command;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import java.util.Arrays;
@@ -121,6 +122,7 @@ public final class BlazeCommand {
       return this.addTargets(Arrays.asList(targets));
     }
 
+    @CanIgnoreReturnValue
     public Builder addTargets(List<? extends TargetExpression> targets) {
       this.targets.addAll(targets);
       return this;
@@ -130,6 +132,7 @@ public final class BlazeCommand {
       return addExeFlags(Arrays.asList(flags));
     }
 
+    @CanIgnoreReturnValue
     public Builder addExeFlags(List<String> flags) {
       this.exeFlags.addAll(flags);
       return this;
@@ -139,6 +142,7 @@ public final class BlazeCommand {
       return addBlazeFlags(Arrays.asList(flags));
     }
 
+    @CanIgnoreReturnValue
     public Builder addBlazeFlags(List<String> flags) {
       this.blazeCmdlineFlags.addAll(flags);
       return this;
@@ -151,6 +155,7 @@ public final class BlazeCommand {
      * cannot update blazerc used by blaze and you are sure new flags will not break running blaze
      * server.
      */
+    @CanIgnoreReturnValue
     public BlazeCommand.Builder addBlazeStartupFlags(List<String> flags) {
       this.blazeStartupFlags.addAll(flags);
       return this;

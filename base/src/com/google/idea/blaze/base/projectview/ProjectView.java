@@ -19,6 +19,7 @@ import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.Section;
@@ -132,11 +133,13 @@ public final class ProjectView implements Serializable {
       return add(builder.build());
     }
 
+    @CanIgnoreReturnValue
     public <T, SectionType extends Section<T>> Builder add(SectionType section) {
       sections.add(section);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public <T> Builder remove(Section<T> section) {
       sections.remove(section);
       return this;

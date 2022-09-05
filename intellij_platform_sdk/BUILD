@@ -68,30 +68,30 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-oss-stable",
+    name = "intellij-oss-oldest-stable",
     values = {
-        "define": "ij_product=intellij-oss-stable",
+        "define": "ij_product=intellij-oss-oldest-stable",
     },
 )
 
 config_setting(
-    name = "intellij-ue-oss-stable",
+    name = "intellij-ue-oss-oldest-stable",
     values = {
-        "define": "ij_product=intellij-ue-oss-stable",
+        "define": "ij_product=intellij-ue-oss-oldest-stable",
     },
 )
 
 config_setting(
-    name = "intellij-oss-beta",
+    name = "intellij-oss-latest-stable",
     values = {
-        "define": "ij_product=intellij-oss-beta",
+        "define": "ij_product=intellij-oss-latest-stable",
     },
 )
 
 config_setting(
-    name = "intellij-ue-oss-beta",
+    name = "intellij-ue-oss-latest-stable",
     values = {
-        "define": "ij_product=intellij-ue-oss-beta",
+        "define": "ij_product=intellij-ue-oss-latest-stable",
     },
 )
 
@@ -281,16 +281,16 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-oss-stable",
+    name = "android-studio-oss-oldest-stable",
     values = {
-        "define": "ij_product=android-studio-oss-stable",
+        "define": "ij_product=android-studio-oss-oldest-stable",
     },
 )
 
 config_setting(
-    name = "android-studio-oss-beta",
+    name = "android-studio-oss-latest-stable",
     values = {
-        "define": "ij_product=android-studio-oss-beta",
+        "define": "ij_product=android-studio-oss-latest-stable",
     },
 )
 
@@ -339,16 +339,16 @@ config_setting(
 )
 
 config_setting(
-    name = "clion-oss-stable",
+    name = "clion-oss-oldest-stable",
     values = {
-        "define": "ij_product=clion-oss-stable",
+        "define": "ij_product=clion-oss-oldest-stable",
     },
 )
 
 config_setting(
-    name = "clion-oss-beta",
+    name = "clion-oss-latest-stable",
     values = {
-        "define": "ij_product=clion-oss-beta",
+        "define": "ij_product=clion-oss-latest-stable",
     },
 )
 
@@ -614,6 +614,17 @@ java_library(
         android_studio = [":hg4idea"],
         clion = [":hg4idea"],
         intellij = [":hg4idea"],
+    ),
+)
+
+# IntelliJ IntelliLang plugin
+java_library(
+    name = "intellilang_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":intellilang"],
     ),
 )
 

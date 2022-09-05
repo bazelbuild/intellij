@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Collection;
 import java.util.Objects;
 
@@ -110,16 +111,19 @@ public final class JavaToolchainIdeInfo
     String targetVersion;
     ImmutableList.Builder<ArtifactLocation> javacJars = ImmutableList.builder();
 
+    @CanIgnoreReturnValue
     public Builder setSourceVersion(String sourceVersion) {
       this.sourceVersion = sourceVersion;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTargetVersion(String targetVersion) {
       this.targetVersion = targetVersion;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addJavacJars(Collection<ArtifactLocation> javacJars) {
       this.javacJars.addAll(javacJars);
       return this;

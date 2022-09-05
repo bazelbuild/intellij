@@ -22,7 +22,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests for target name validation */
+/** Unit tests for {@link TargetName} validation */
 @RunWith(JUnit4.class)
 public class TargetNameTest extends BlazeTestCase {
 
@@ -45,6 +45,7 @@ public class TargetNameTest extends BlazeTestCase {
     assertThat(TargetName.validate("foo@bar")).isNull();
     assertThat(TargetName.validate("foo~bar")).isNull();
     assertThat(TargetName.validate("foo#bar")).isNull();
+    assertThat(TargetName.validate("foo!bar")).isNull();
     assertThat(TargetName.validate("foo bar")).isNull();
 
     // Illegal names

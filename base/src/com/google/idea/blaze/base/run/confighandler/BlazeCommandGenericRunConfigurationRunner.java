@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
@@ -92,19 +93,18 @@ public final class BlazeCommandGenericRunConfigurationRunner
           (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
       Project project = environment.getProject();
       this.consoleFilters =
-          ImmutableList.<Filter>builder()
-              .add(
-                  new UrlFilter(),
-                  new IssueOutputFilter(
+          ImmutableList.of(
+              new UrlFilter(),
+              BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled()
+                  ? ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
+                      project,
+                      WorkspaceRoot.fromProject(project),
+                      BlazeInvocationContext.ContextType.RunConfiguration)
+                  : new IssueOutputFilter(
                       project,
                       WorkspaceRoot.fromProject(project),
                       BlazeInvocationContext.ContextType.RunConfiguration,
-                      false),
-                  ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
-                      project,
-                      WorkspaceRoot.fromProject(project),
-                      BlazeInvocationContext.ContextType.RunConfiguration))
-              .build();
+                      false));
     }
 
     private static BlazeCommandRunConfiguration getConfiguration(ExecutionEnvironment environment) {

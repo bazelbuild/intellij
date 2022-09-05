@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.logging.utils;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -92,6 +93,7 @@ public abstract class SyncStats {
 
     abstract ImmutableList.Builder<TimedEvent> timedEventsBuilder();
 
+    @CanIgnoreReturnValue
     public Builder addTimedEvents(List<TimedEvent> timedEvents) {
       timedEventsBuilder().addAll(timedEvents);
       return this;
@@ -103,6 +105,7 @@ public abstract class SyncStats {
 
     abstract ImmutableMap.Builder<String, Long> networkUsageBuilder();
 
+    @CanIgnoreReturnValue
     public Builder addNetworkUsage(Map<String, Long> stats) {
       networkUsageBuilder().putAll(stats);
       return this;
@@ -124,11 +127,13 @@ public abstract class SyncStats {
 
     abstract ImmutableList.Builder<BuildPhaseSyncStats> buildPhaseStatsBuilder();
 
+    @CanIgnoreReturnValue
     public Builder addBuildPhaseStats(BuildPhaseSyncStats buildPhaseStats) {
       buildPhaseStatsBuilder().add(buildPhaseStats);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addAllBuildPhaseStats(Iterable<BuildPhaseSyncStats> buildPhaseStats) {
       buildPhaseStatsBuilder().addAll(buildPhaseStats);
       return this;

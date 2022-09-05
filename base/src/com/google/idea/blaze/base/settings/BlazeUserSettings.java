@@ -72,6 +72,8 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean expandSyncToWorkingSet = true;
   private boolean showPerformanceWarnings = false;
   private boolean collapseProjectView = true;
+
+  private boolean selectNewestChildTask = false;
   private boolean formatBuildFilesOnSave = true;
   private boolean showAddFileToProjectNotification = true;
   private String blazeBinaryPath = DEFAULT_BLAZE_PATH;
@@ -189,6 +191,14 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setCollapseProjectView(boolean collapseProjectView) {
     this.collapseProjectView = collapseProjectView;
+  }
+
+  public boolean getSelectNewestChildTask() {
+    return selectNewestChildTask;
+  }
+
+  public void setSelectNewestChildTask(boolean selectNewestChildTask) {
+    this.selectNewestChildTask = selectNewestChildTask;
   }
 
   public boolean getFormatBuildFilesOnSave() {

@@ -69,7 +69,9 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
@@ -501,14 +503,26 @@ final class SyncPhaseCoordinator {
   }
 
   private SyncResult syncResultFromBuildPhase(
-      BlazeSyncBuildResult buildResult, BlazeContext context) {
-    if (!context.shouldContinue()) {
-      return context.getSyncResult();
+      BlazeSyncBuildResult syncBuildResult, BlazeContext context) {
+    if (context.isCancelled()) {
+      return SyncResult.CANCELLED;
     }
-    if (!buildResult.isValid()) {
+    BlazeBuildOutputs buildOutputs = syncBuildResult.getBuildResult();
+    if (buildOutputs == null || !syncBuildResult.hasValidOutputs()) {
       return SyncResult.FAILURE;
     }
-    if (buildResult.getBuildResult().buildResult.status == BuildResult.Status.BUILD_ERROR) {
+    if (buildOutputs.buildResult.status == Status.FATAL_ERROR) {
+      if (BuildPhaseSyncTask.continueSyncOnOom.getValue()) {
+        context.output(
+            PrintOutput.error(
+                "One or more build shards failed to complete. "
+                    + "The project may not be fully updated or resolve for affected targets."));
+        return SyncResult.PARTIAL_SUCCESS;
+      } else {
+        return SyncResult.FAILURE;
+      }
+    }
+    if (buildOutputs.buildResult.status == BuildResult.Status.BUILD_ERROR) {
       String buildSystem = Blaze.buildSystemName(project);
       String message =
           String.format(
@@ -530,7 +544,7 @@ final class SyncPhaseCoordinator {
     SyncResult syncResult = updateTask.syncResult();
     try {
       fillInBuildStats(stats, updateTask.projectState(), updateTask.buildResult());
-      if (!syncResult.successful() || !updateTask.buildResult().isValid()) {
+      if (!syncResult.successful() || !updateTask.buildResult().hasValidOutputs()) {
         return;
       }
       List<TimedEvent> timedEvents =
