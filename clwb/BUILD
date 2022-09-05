@@ -71,6 +71,7 @@ intellij_plugin(
         "//dart:plugin_library",
         "//javascript:plugin_library",
         "//python:plugin_library",
+        "//rust:plugin_library",
         "//skylark:plugin_library",
         "//terminal:plugin_library",
     ],
