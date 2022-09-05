@@ -34,7 +34,10 @@ import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestConfig
 import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestTestFramework;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * {@link TestContextProvider} for run configurations related to Scala test classes (not handled by
@@ -45,13 +48,13 @@ class ScalaTestContextProvider implements TestContextProvider {
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {
-    ClassAndTestName classAndTestName = getTestClass(context);
+    ClassAndTestNames classAndTestNames = getTestClass(context);
 
-    if (classAndTestName == null) {
+    if (classAndTestNames == null) {
       return null;
     }
 
-    ScTypeDefinition testClass = classAndTestName.testClass;
+    ScTypeDefinition testClass = classAndTestNames.testClass;
 
     ListenableFuture<TargetInfo> target =
         TestTargetHeuristic.targetFutureForPsiElement(
@@ -62,24 +65,27 @@ class ScalaTestContextProvider implements TestContextProvider {
 
     return TestContext.builder(testClass, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
-        .addBlazeFlagsModification(new ScalatestTestSelectorFlagsModification(testClass.getQualifiedName(), classAndTestName.testName))
+        .addBlazeFlagsModification(new ScalatestTestSelectorFlagsModification(testClass.getQualifiedName(), classAndTestNames.testNames))
         .setDescription(testClass.getName())
         .build();
   }
 
-  private static class ClassAndTestName {
+  private static class ClassAndTestNames {
     private final ScTypeDefinition testClass;
+    /**
+     * If set, contains a newline delimited list of test names.
+     */
     @Nullable
-    private final String testName;
+    private final String testNames;
 
-    public ClassAndTestName(ScTypeDefinition testClass, @Nullable String testName) {
+    public ClassAndTestNames(ScTypeDefinition testClass, @Nullable String testNames) {
       this.testClass = testClass;
-      this.testName = testName;
+      this.testNames = testNames;
     }
   }
 
   @Nullable
-  private static ClassAndTestName getTestClass(ConfigurationContext context) {
+  private static ClassAndTestNames getTestClass(ConfigurationContext context) {
     Location<?> location = context.getLocation();
     if (location == null) {
       return null;
@@ -94,38 +100,38 @@ class ScalaTestContextProvider implements TestContextProvider {
     }
     ScalaTestConfigurationProducer scalaTestConfigurationProducer = ScalaTestConfigurationProducer.instance();
     return scalaTestConfigurationProducer.getTestClassWithTestName(location)
-        .map(classWithTestName -> new ClassAndTestName(classWithTestName.testClass(), classWithTestName.testName().getOrElse(() -> null)))
+        .map(classWithTestName -> new ClassAndTestNames(classWithTestName.testClass(), classWithTestName.testName().getOrElse(() -> null)))
         .getOrElse(() -> null);
   }
 
   public static class ScalatestTestSelectorFlagsModification implements TestContext.BlazeFlagsModification {
-    @Nullable
-    private final String testName;
+
+    private final List<String> testNames;
+
+    private final List<String> testNameFlags;
 
     private final String testClassSelectorFlag;
     private final String testClassFlag;
-    @Nullable
     private final String testNameSelectorFlag;
-    @Nullable
-    private final String testNameFlag;
 
-    public ScalatestTestSelectorFlagsModification(String testClassFqn, @Nullable String testName) {
-      this.testName = testName;
+    public ScalatestTestSelectorFlagsModification(String testClassFqn, @Nullable String testNames) {
+      if (testNames != null) {
+        this.testNames = Arrays.stream(testNames.split("\n"))
+            .filter(name -> !name.isEmpty())
+            .collect(Collectors.toList());
+        this.testNameFlags = this.testNames.stream()
+            // Scalatest names can contain spaces, so the name needs to be quoted
+            // This means we need to escape " in the test name
+            .map(name -> name.replace("\"", "\\\""))
+            .map(escapedName -> BlazeFlags.TEST_ARG + "\"" + escapedName + "\"")
+            .collect(Collectors.toList());
+      } else {
+        this.testNames = Collections.emptyList();
+        this.testNameFlags = Collections.emptyList();
+      }
       testClassSelectorFlag = BlazeFlags.TEST_ARG + "-s";
       testClassFlag = BlazeFlags.TEST_ARG + testClassFqn;
       testNameSelectorFlag = BlazeFlags.TEST_ARG + "-t";
-      if (testName != null) {
-        // Scalatest names can contain spaces, so the name needs to be quoted
-        // This means we need to escape " in the test name
-        String escapedTestName = testName.replace("\"", "\\\"");
-        testNameFlag = BlazeFlags.TEST_ARG + "\"" + escapedTestName + "\"";
-      } else {
-        testNameFlag = null;
-      }
-    }
-
-    private boolean hasTestName() {
-      return testName != null;
     }
 
     private boolean flagsMatchSettings(List<String> flags) {
@@ -133,23 +139,39 @@ class ScalaTestContextProvider implements TestContextProvider {
       if (classSelectorIndex == -1) {
         return false;
       }
-      int expectedSize = hasTestName() ? 4 : 2;
+      int expectedSize = 2 + 2 * testNames.size();
       if (flags.size() < classSelectorIndex + expectedSize) {
         return false;
       }
       String classSelector = flags.get(classSelectorIndex);
       String clazz = flags.get(classSelectorIndex + 1);
+
       boolean matchesClassFlags = classSelector.equals(testClassSelectorFlag) && clazz.equals(testClassFlag);
-      if (!hasTestName()) {
-        boolean hasTestSelector = flags.contains(testNameSelectorFlag);
-        return matchesClassFlags && !hasTestSelector;
-      } else {
-        String nameSelector = flags.get(classSelectorIndex + 2);
-        String name = flags.get(classSelectorIndex + 3);
-        boolean matchesNameFlags = nameSelector.equals(testNameSelectorFlag) &&
-            name.equals(testNameFlag);
-        return matchesClassFlags && matchesNameFlags;
+
+      if (!matchesClassFlags) {
+        return false;
       }
+
+      // The test name flags we expect should be present
+      int firstNameSelectorIndex = classSelectorIndex + 2;
+      for (int i = 0; i < testNameFlags.size(); i++) {
+        int nameSelectorIndex = firstNameSelectorIndex + i * 2;
+        String nameSelectorFlag = flags.get(nameSelectorIndex);
+        String nameFlag = flags.get(nameSelectorIndex + 1);
+        boolean matchesNameFlags = nameSelectorFlag.equals(testNameSelectorFlag) &&
+            nameFlag.equals(testNameFlags.get(i));
+        if (!matchesNameFlags) {
+          return false;
+        }
+      }
+
+      // No test name flags we don't expect should be present after the class name
+      long testSelectorCount = flags.stream()
+          .skip(firstNameSelectorIndex)
+          .filter(flag -> flag.equals(testNameSelectorFlag))
+          .count();
+
+      return testSelectorCount == testNames.size();
     }
 
     @Override
@@ -159,7 +181,7 @@ class ScalaTestContextProvider implements TestContextProvider {
       if(!flagsMatchSettings(flags)) {
         flags.add(testClassSelectorFlag);
         flags.add(testClassFlag);
-        if (hasTestName()) {
+        for (String testNameFlag : testNameFlags) {
           flags.add(testNameSelectorFlag);
           flags.add(testNameFlag);
         }

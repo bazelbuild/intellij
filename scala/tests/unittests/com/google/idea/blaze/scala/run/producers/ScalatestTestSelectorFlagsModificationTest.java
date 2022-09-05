@@ -59,6 +59,23 @@ public class ScalatestTestSelectorFlagsModificationTest {
     }
 
     @Test
+    public void canHandleNewlineSplitTestNames() {
+        ScalaTestContextProvider.ScalatestTestSelectorFlagsModification modifier =
+            new ScalaTestContextProvider.ScalatestTestSelectorFlagsModification("com.google.TestClass", "some test name\nsome other test name");
+        List<String> flags = new ArrayList<>();
+
+        modifier.modifyFlags(flags);
+
+        assertThat(flags.size()).isEqualTo(6);
+        assertThat(flags).containsExactly(
+            "--test_arg=-s", "--test_arg=com.google.TestClass",
+            "--test_arg=-t", "--test_arg=\"some test name\"",
+            "--test_arg=-t", "--test_arg=\"some other test name\""
+            );
+        assertThat(modifier.matchesConfigState(createStateForFlags(flags))).isTrue();
+    }
+
+    @Test
     public void matchesConfigStateOnlyIfFlagsOccurInRightOrder() {
         ScalaTestContextProvider.ScalatestTestSelectorFlagsModification modifier =
             new ScalaTestContextProvider.ScalatestTestSelectorFlagsModification("com.google.TestClass", "some test name");
