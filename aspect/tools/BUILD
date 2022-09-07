@@ -20,8 +20,8 @@ java_library(
     srcs = glob(["src/**/*.java"]),
     deps = [
         ":guava",
-        "//intellij_platform_sdk:jsr305",
         "//proto:proto_deps",
+        "@jsr305_annotations//jar",
     ],
 )
 

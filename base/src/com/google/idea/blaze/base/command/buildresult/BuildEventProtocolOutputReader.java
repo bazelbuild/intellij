@@ -146,7 +146,7 @@ public final class BuildEventProtocolOutputReader {
   private static SourceArtifact parseLocalFile(
       BuildEventStreamProtos.File file, Predicate<String> fileFilter) {
     String uri = file.getUri();
-    if (uri == null || !uri.startsWith(URLUtil.FILE_PROTOCOL)) {
+    if (!uri.startsWith(URLUtil.FILE_PROTOCOL)) {
       return null;
     }
     try {

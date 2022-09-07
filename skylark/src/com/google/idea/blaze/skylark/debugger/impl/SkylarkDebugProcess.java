@@ -17,7 +17,6 @@ package com.google.idea.blaze.skylark.debugger.impl;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.devtools.build.lib.starlarkdebugging.StarlarkDebuggingProtos;
@@ -576,7 +575,7 @@ public class SkylarkDebugProcess extends XDebugProcess {
   private void handleConditionalBreakpointError(
       XLineBreakpoint<XBreakpointProperties> breakpoint, PausedThread thread) {
     // TODO(brendandouglas): also navigate to the problematic breakpoint
-    String error = Preconditions.checkNotNull(thread.getConditionalBreakpointError().getMessage());
+    String error = thread.getConditionalBreakpointError().getMessage();
     String title = "Breakpoint Condition Error";
     String message =
         String.format(
