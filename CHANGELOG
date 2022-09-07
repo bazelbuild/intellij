@@ -1,3 +1,7 @@
+v2022.09.07
+===========
+* Restrict printing sponge links of build shards only to blaze builds(fixes #3877)
+
 v2022.08.24
 ===========
 * Display Go external libraries in tree structure (currently experimental)
