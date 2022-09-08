@@ -118,6 +118,7 @@ java_library(
     visibility = combine_visibilities(
         ASWB_SUBPACKAGES_VISIBILITY,
         TEST_ASWB_SUBPACKAGES_VISIBILITY,
+        ["//newsync/src/com/google/idea/blaze/sync/android:__subpackages__"],
     ),
     deps = [
         "//base",
