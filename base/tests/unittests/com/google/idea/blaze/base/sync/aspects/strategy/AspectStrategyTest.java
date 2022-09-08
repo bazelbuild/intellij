@@ -117,6 +117,7 @@ public class AspectStrategyTest extends BlazeTestCase {
             "intellij-resolve-android",
             "intellij-resolve-py",
             "intellij-resolve-go",
+            "intellij-resolve-rs",
             "intellij-resolve-js",
             "intellij-resolve-ts",
             "intellij-resolve-dart");
@@ -135,6 +136,7 @@ public class AspectStrategyTest extends BlazeTestCase {
             "intellij-compile-android",
             "intellij-compile-py",
             "intellij-compile-go",
+            "intellij-compile-rs",
             "intellij-compile-js",
             "intellij-compile-ts",
             "intellij-compile-dart");
