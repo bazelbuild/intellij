@@ -3,10 +3,9 @@
 This is an early-access version of our Bazel plugins for IntelliJ,
 Android Studio, and CLion.
 
-This repository is generally in a state matching the most recently uploaded 
-plugins in the JetBrains' plugin repository. See the 
-[releases](https://github.com/bazelbuild/intellij/releases) tab for more
-information.
+The Bazel plugin uploaded to the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/8609-bazel) 
+regularly from the state of this repository. See the [releases](https://github.com/bazelbuild/intellij/releases) 
+tab for more information.
 
 **Please see our latest community update for Bazel IntelliJ plugin:**
 [Announcing Bazel & JetBrains co-maintenance of IntelliJ IDEA Bazel Plugin](https://blog.bazel.build/2022/07/11/Bazel-IntelliJ-Update.html#announcing-bazel-jetbrains-co-maintenance-of-intellij-idea-bazel).
@@ -19,8 +18,15 @@ systems.
 
 ## Installation
 
-You can find our plugin in the Jetbrains plugin repository by going to
-`Settings -> Browse Repositories`, and searching for `Bazel`.
+You can find our plugin in the [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/8609-bazel)
+or directly from the IDE by going to `Settings -> Plugins -> Marketplace`, and searching for `Bazel`.
+
+### Beta versions
+
+Beta versions are usually uploaded to the Beta channel 2 weeks before they become full releases. Ways to install them: 
+- download and install them manually from the [Beta channel page](https://plugins.jetbrains.com/plugin/8609-bazel/versions/beta) on JetBrains Marketplace
+- add the Beta channel to the IDE under `Settings -> Plugins -> Gear Icon -> Manage Plugin repositories` and add the URL:
+  `https://plugins.jetbrains.com/plugins/beta/8609`. You can now find the latest Beta under `Settings -> Plugins -> Marketplace` or update the Bazel plugin to Beta if you already installed it.
 
 ## Usage
 
@@ -114,7 +120,7 @@ the review process faster and easier, we recommend the following:
          Preferred to Adapter and Wrapper when applicable. We add a util-class with 
          only static methods and a private constructor and wrap the changed method by one of the 
          static methods. If the change is small enough, you do not need to create a new util-class
-         and should add the change to [BaseSdkCompat class](./sdkcompat/v203/com/google/idea/sdkcompat/general/BaseSdkCompat.java) 
+         and should add the change to [BaseSdkCompat class](./sdkcompat/v222/com/google/idea/sdkcompat/general/BaseSdkCompat.java) 
          instead. Example: [pr/2345](https://github.com/bazelbuild/intellij/pull/2345)
 
       * **Adapter**  
