@@ -15,6 +15,7 @@
   -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.google.idea.blaze">
+    <SyncPlugin implementation="com.google.idea.blaze.rust.sync.AlwaysPresentRustSyncPlugin"/>
     <TargetKindProvider implementation="com.google.idea.blaze.rust.RustBlazeRules"/>
   </extensions>
 </idea-plugin>

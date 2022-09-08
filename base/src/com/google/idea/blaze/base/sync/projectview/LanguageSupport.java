@@ -60,7 +60,6 @@ public class LanguageSupport {
             .addAll(workspaceType.getLanguages())
             .addAll(projectViewSet.listItems(AdditionalLanguagesSection.KEY))
             .add(LanguageClass.GENERIC)
-            .add(LanguageClass.RUST)
             .build();
     return new WorkspaceLanguageSettings(workspaceType, activeLanguages);
   }
@@ -133,7 +132,6 @@ public class LanguageSupport {
       supportedLanguages.addAll(syncPlugin.getSupportedLanguagesInWorkspace(type));
     }
     supportedLanguages.add(LanguageClass.GENERIC);
-    supportedLanguages.add(LanguageClass.RUST);
     return supportedLanguages;
   }
 
