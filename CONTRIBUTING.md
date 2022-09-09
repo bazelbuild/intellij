@@ -1,6 +1,7 @@
 Want to contribute? Great! First, read this page (including the small print at the end).
 
 ### Before you contribute
+
 **Before we can use your code, you must sign the
 [Google Individual Contributor License Agreement](https://developers.google.com/open-source/cla/individual?csw=1)
 (CLA)**, which you can do online.
@@ -18,10 +19,16 @@ with us first. Use the issue tracker to explain your idea so we can help and
 possibly guide you.
 
 ### Code reviews and other contributions.
+
 **All submissions, including submissions by project members, require review.**
 Please follow the instructions in [the contributors documentation](http://bazel.io/contributing.html).
 
+### Set up IntelliJ to work on the plugin.
+
+Setting up IntelliJ to work on the plugin can be tricky. Please read [this guide](DEV_IDE_SETUP.md) for instructions.
+
 ### The small print
+
 Contributions made by corporations are covered by a different agreement than
 the one above, the
 [Software Grant and Corporate Contributor License Agreement](https://cla.developers.google.com/about/google-corporate).
