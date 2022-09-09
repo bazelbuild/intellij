@@ -233,22 +233,19 @@ def _is_language_specific_proto_library(ctx, target):
         return True
     return False
 
-def _stringify_label(label):
+def stringify_label(label):
+    """Stringifies a label, making sure any leading '@'s are stripped from main repo labels."""
     s = str(label)
 
     # If the label is in the main repo, make sure any leading '@'s are stripped so that tests are
     # okay with the fixture setups.
-    if s.startswith("@@//"):
-        return s[2:]
-    if s.startswith("@//"):
-        return s[1:]
-    return s
+    return s.lstrip("@") if s.startswith("@@//") or s.startswith("@//") else s
 
 def make_target_key(label, aspect_ids):
     """Returns a TargetKey proto struct from a target."""
     return struct_omit_none(
         aspect_ids = tuple(aspect_ids) if aspect_ids else None,
-        label = _stringify_label(label),
+        label = stringify_label(label),
     )
 
 def make_dep(dep, dependency_type):
@@ -266,7 +263,7 @@ def make_dep_from_label(label, dependency_type):
     """Returns a Dependency proto struct from a label."""
     return struct(
         dependency_type = dependency_type,
-        target = struct(label = _stringify_label(label)),
+        target = struct(label = stringify_label(label)),
     )
 
 def update_sync_output_groups(groups_dict, key, new_set):
