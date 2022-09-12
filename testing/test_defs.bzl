@@ -6,6 +6,23 @@ load(
     "api_version_txt",
 )
 
+_ADD_OPENS = [
+    "--add-opens=%s=ALL-UNNAMED" % x
+    for x in [
+        # keep sorted
+        "java.base/java.io",
+        "java.base/java.lang",
+        "java.base/java.util",
+        "java.base/java.util.concurrent",
+        "java.desktop/java.awt",
+        "java.desktop/java.awt.event",
+        "java.desktop/javax.swing",
+        "java.desktop/javax.swing.plaf.basic",
+        "java.desktop/sun.awt",
+        "java.desktop/sun.font",
+    ]
+]
+
 def _generate_test_suite_impl(ctx):
     """Generates a JUnit4 test suite pulling in all the referenced classes.
 
@@ -98,6 +115,7 @@ def intellij_unit_test_suite(
         "-Djava.awt.headless=true",
         "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
     ])
+    jvm_flags.extend(_ADD_OPENS)
 
     _generate_test_suite(
         name = suite_class_name,
@@ -185,6 +203,7 @@ def intellij_integration_test_suite(
         "-Djava.awt.headless=true",
         "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
     ])
+    jvm_flags.extend(_ADD_OPENS)
 
     if required_plugins:
         jvm_flags.append("-Didea.required.plugins.id=" + required_plugins)
