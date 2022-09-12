@@ -228,7 +228,11 @@ final class ConsoleView implements Disposable {
   }
 
   void println(StatusOutput output) {
-    println(output.getStatus(), OutputType.NORMAL);
+    if (output.getHyperlinkInfo() != null) {
+      printHyperlink(output.getStatus(), output.getHyperlinkInfo());
+    } else {
+      println(output.getStatus(), OutputType.NORMAL);
+    }
   }
 
   void println(PrintOutput output) {

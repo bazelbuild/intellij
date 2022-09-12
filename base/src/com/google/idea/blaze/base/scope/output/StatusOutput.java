@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.scope.output;
 
 import com.google.idea.blaze.base.scope.Output;
+import com.intellij.execution.filters.HyperlinkInfo;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,12 +29,23 @@ import org.jetbrains.annotations.NotNull;
 public class StatusOutput implements Output {
   @NotNull String status;
 
+   HyperlinkInfo hyperlinkInfo;
+
   public StatusOutput(@NotNull String status) {
+    this(status, null);
+  }
+
+  public StatusOutput(@NotNull String status, HyperlinkInfo hyperlinkInfo) {
     this.status = status;
+    this.hyperlinkInfo = hyperlinkInfo;
   }
 
   @NotNull
   public String getStatus() {
     return status;
+  }
+
+  public HyperlinkInfo getHyperlinkInfo() {
+    return hyperlinkInfo;
   }
 }

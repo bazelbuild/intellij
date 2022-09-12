@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfig
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
@@ -178,7 +179,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
       logger.warn(e);
       if (e.getCause() instanceof FastBuildIncrementalCompileException) {
         handleJavacError(
-            env, project, label, buildService, (FastBuildIncrementalCompileException) e.getCause());
+            env, project, label, buildService, (FastBuildIncrementalCompileException) e.getCause(), context);
       } else {
         ExecutionUtil.handleExecutionError(env, new ExecutionException(e.getCause()));
       }
@@ -193,15 +194,17 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
       Project project,
       Label label,
       FastBuildService buildService,
-      FastBuildIncrementalCompileException e) {
+      FastBuildIncrementalCompileException e, BlazeContext context) {
 
     BlazeConsoleService console = BlazeConsoleService.getInstance(project);
     console.print(e.getMessage() + "\n", ConsoleViewContentType.ERROR_OUTPUT);
-    console.printHyperlink(
-        "Click here to run the tests again with a fresh "
-            + Blaze.getBuildSystemName(project)
-            + " build.\n",
-        new RerunTestsWithBlazeHyperlink(buildService, label, env));
+    final String statusMessage = "Click here to run the tests again with a fresh "
+        + Blaze.getBuildSystemName(project)
+        + " build.\n";
+    final RerunTestsWithBlazeHyperlink rerunTestsWithBlazeHyperlink =
+        new RerunTestsWithBlazeHyperlink(buildService, label, env);
+    console.printHyperlink(statusMessage, rerunTestsWithBlazeHyperlink);
+    context.output(new StatusOutput(statusMessage, rerunTestsWithBlazeHyperlink));
     ExecutionUtil.handleExecutionError(
         env, new ExecutionException("See the Blaze Console for javac output", e.getCause()));
   }
