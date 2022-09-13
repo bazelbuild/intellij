@@ -377,8 +377,11 @@ final class SyncPhaseCoordinator {
               },
               new TimingScope("Filtering project targets", EventType.Other));
       stats.addTimedEvents(timedEvents);
-      syncResult = context.getSyncResult();
-
+      if (context.shouldContinue()) {
+        syncResult = SyncResult.SUCCESS;
+      } else {
+        syncResult = context.getSyncResult();
+      }
     } catch (Throwable e) {
       logSyncError(context, e);
     } finally {
