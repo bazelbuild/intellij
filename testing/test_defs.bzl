@@ -6,7 +6,7 @@ load(
     "api_version_txt",
 )
 
-_ADD_OPENS = [
+ADD_OPENS = [
     "--add-opens=%s=ALL-UNNAMED" % x
     for x in [
         # keep sorted
@@ -115,7 +115,7 @@ def intellij_unit_test_suite(
         "-Djava.awt.headless=true",
         "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
     ])
-    jvm_flags.extend(_ADD_OPENS)
+    jvm_flags.extend(ADD_OPENS)
 
     _generate_test_suite(
         name = suite_class_name,
@@ -203,7 +203,7 @@ def intellij_integration_test_suite(
         "-Djava.awt.headless=true",
         "-Dblaze.idea.api.version.file=$(location %s)" % api_version_txt_name,
     ])
-    jvm_flags.extend(_ADD_OPENS)
+    jvm_flags.extend(ADD_OPENS)
 
     if required_plugins:
         jvm_flags.append("-Didea.required.plugins.id=" + required_plugins)
