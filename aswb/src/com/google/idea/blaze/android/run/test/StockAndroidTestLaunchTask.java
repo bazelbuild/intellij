@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.run.test;
 
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
+import com.android.tools.idea.run.AndroidProcessHandler;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
@@ -27,11 +28,13 @@ import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 class StockAndroidTestLaunchTask implements LaunchTask {
@@ -55,6 +58,7 @@ class StockAndroidTestLaunchTask implements LaunchTask {
     this.testApplicationId = testPackage;
   }
 
+  @Nullable
   public static LaunchTask getStockTestLaunchTask(
       BlazeAndroidTestRunConfigurationState configState,
       ApplicationIdProvider applicationIdProvider,
@@ -189,7 +193,22 @@ class StockAndroidTestLaunchTask implements LaunchTask {
         .executeOnPooledThread(
             () -> {
               try {
+                // This issues "am instrument" command and blocks execution.
                 runner.run(new AndroidTestListener(printer));
+
+                // Detach the device from the android process handler manually as soon as "am
+                // instrument" command finishes. This is required because the android process
+                // handler may overlook target process especially when the test
+                // runs really fast (~10ms). Because the android process handler discovers new
+                // processes by polling, this race condition happens easily. By detaching the device
+                // manually, we can avoid the android process handler waiting for (already finished)
+                // process to show up until it times out (10 secs).
+                // Note: this is a copy of ag/9593981, but it is worth figuring out a better
+                // strategy here if the behavior of AndroidTestListener is not guaranteed.
+                ProcessHandler processHandler = launchContext.getProcessHandler();
+                if (processHandler instanceof AndroidProcessHandler) {
+                  ((AndroidProcessHandler) processHandler).detachDevice(launchContext.getDevice());
+                }
               } catch (Exception e) {
                 LOG.info(e);
                 printer.stderr("Error: Unexpected exception while running tests: " + e);
