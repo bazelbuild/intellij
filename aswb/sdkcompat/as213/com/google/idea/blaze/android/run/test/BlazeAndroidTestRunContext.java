@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -39,6 +40,15 @@ import org.jetbrains.android.facet.AndroidFacet;
  * <p>#api203
  */
 public class BlazeAndroidTestRunContext extends BlazeAndroidTestRunContextBase {
+  /**
+   * Indicates whether we should create deploy tasks when running a test using Blaze.
+   *
+   * <p>This is unnecessary, but we use an experiment just to be conservative. We can delete this
+   * code after it is confirmed that this doesn't cause any issues. See b/246649171.
+   */
+  private static final BoolExperiment blazeTestForceDeploy =
+      new BoolExperiment("aswb.blaze.test.force.deploy", false);
+
   BlazeAndroidTestRunContext(
       Project project,
       AndroidFacet facet,
@@ -58,12 +68,19 @@ public class BlazeAndroidTestRunContext extends BlazeAndroidTestRunContextBase {
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {
       case NON_BLAZE:
-        // fall through
-      case BLAZE_TEST:
         return ImmutableList.of(
             BlazeAndroidDeploymentService.getInstance(project)
                 .getDeployTask(
                     getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
+      case BLAZE_TEST:
+        if (blazeTestForceDeploy.getValue()) {
+          return ImmutableList.of(
+              BlazeAndroidDeploymentService.getInstance(project)
+                  .getDeployTask(
+                      getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
+        } else {
+          return ImmutableList.of();
+        }
       case MOBILE_INSTALL:
         return ImmutableList.of();
     }
