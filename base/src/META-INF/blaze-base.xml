@@ -312,6 +312,7 @@
         implementationClass="com.google.idea.blaze.base.run.producers.BuildFileRunLineMarkerContributor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.base.plugin.BlazeHideMakeActions"/>
     <notificationGroup displayType="BALLOON" id="BuildifierBinaryMissing"/>
+    <registryKey defaultValue="false" description="Disable auto import of bazel projects" key="bazel.auto.import.disabled"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

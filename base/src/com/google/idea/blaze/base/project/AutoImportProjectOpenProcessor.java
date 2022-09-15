@@ -84,7 +84,7 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean canOpenProject(@NotNull VirtualFile virtualFile) {
-    return !Registry.is("external.system.auto.import.disabled", false)
+    return !Registry.is("bazel.auto.import.disabled")
             && isBazelWorkspace(virtualFile);
   }
 
