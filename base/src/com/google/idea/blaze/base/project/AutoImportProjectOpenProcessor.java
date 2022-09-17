@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import icons.BlazeIcons;
@@ -84,7 +85,8 @@ public class AutoImportProjectOpenProcessor extends ProjectOpenProcessor {
 
   @Override
   public boolean canOpenProject(@NotNull VirtualFile virtualFile) {
-    return isBazelWorkspace(virtualFile);
+    return !Registry.is("bazel.auto.import.disabled")
+            && isBazelWorkspace(virtualFile);
   }
 
   private boolean isBazelWorkspace(VirtualFile virtualFile) {
