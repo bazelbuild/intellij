@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolUtils;
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.run.testlogs.BuildEventProtocolTestFinderStrategy;
 import com.intellij.openapi.project.Project;
@@ -47,5 +48,20 @@ public class TestUiSessionProviderImpl implements TestUiSessionProvider {
 
     return BlazeTestUiSession.create(
         flags, new BuildEventProtocolTestFinderStrategy(bepOutputFile));
+  }
+
+  @Nullable
+  @Override
+  public BlazeTestUiSession getTestUiSession(
+      ImmutableList<? extends TargetExpression> targets, BuildEventStreamProvider streamProvider) {
+    if (streamProvider == null) {
+      return getTestUiSession(targets);
+    }
+    if (!BlazeTestEventsHandler.targetsSupported(project, targets)) {
+      return null;
+    }
+    ImmutableList<String> flags = ImmutableList.of("--runs_per_test=1", "--flaky_test_attempts=1");
+    return BlazeTestUiSession.create(
+        flags, new BuildEventProtocolTestFinderStrategy(streamProvider));
   }
 }

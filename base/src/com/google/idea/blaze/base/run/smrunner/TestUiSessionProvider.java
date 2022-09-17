@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -30,4 +31,8 @@ public interface TestUiSessionProvider {
 
   @Nullable
   BlazeTestUiSession getTestUiSession(ImmutableList<? extends TargetExpression> targets);
+
+  @Nullable
+  BlazeTestUiSession getTestUiSession(
+      ImmutableList<? extends TargetExpression> targets, BuildEventStreamProvider streamProvider);
 }

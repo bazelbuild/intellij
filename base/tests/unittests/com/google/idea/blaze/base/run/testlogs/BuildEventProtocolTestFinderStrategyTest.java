@@ -23,6 +23,7 @@ import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.TestResultId;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolOutputReader;
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.MockInputStreamProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -86,10 +87,13 @@ public class BuildEventProtocolTestFinderStrategyTest extends BlazeTestCase {
     BlazeTestResults results;
     try (InputStream inputStream = inputStreamProvider.forFile(bepOutputFile)) {
       results = BuildEventProtocolOutputReader.parseTestResults(inputStream);
+    } catch (BuildEventStreamException e) {
+      results = BlazeTestResults.NO_RESULTS;
     }
     BlazeTestResults finderStrategyResults = strategy.findTestResults();
 
-    assertThat(finderStrategyResults.perTargetResults).isEqualTo(results.perTargetResults);
+    assertThat(finderStrategyResults.perTargetResults)
+        .containsExactlyEntriesIn(results.perTargetResults);
   }
 
   private File createMockFile(String path, byte[] contents) {
