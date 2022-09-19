@@ -18,6 +18,8 @@ package com.google.idea.blaze.base.run.confighandler;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
@@ -44,6 +46,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -68,6 +71,8 @@ import java.util.List;
  */
 public final class BlazeCommandGenericRunConfigurationRunner
     implements BlazeCommandRunConfigurationRunner {
+  private static final BoolExperiment useRabbitForTestCommands =
+      new BoolExperiment("localtests.userabbit", false);
 
   @Override
   public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment) {
@@ -147,9 +152,20 @@ public final class BlazeCommandGenericRunConfigurationRunner
       }
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
 
+      BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
+      BlazeContext context = BlazeContext.create();
+      BuildInvoker invoker =
+          getCommand().equals(BlazeCommandName.TEST) && useRabbitForTestCommands.getValue()
+              ? buildSystem.getParallelBuildInvoker(project, context).orElseThrow()
+              : buildSystem.getBuildInvoker(project, context);
+
       BlazeCommand blazeCommand =
           getBlazeCommand(
-              project, ExecutorType.fromExecutor(getEnvironment().getExecutor()), testHandlerFlags);
+              project,
+              ExecutorType.fromExecutor(getEnvironment().getExecutor()),
+              invoker,
+              testHandlerFlags,
+              context);
 
       WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
       return new ScopedBlazeProcessHandler(
@@ -177,7 +193,11 @@ public final class BlazeCommandGenericRunConfigurationRunner
     }
 
     private BlazeCommand getBlazeCommand(
-        Project project, ExecutorType executorType, ImmutableList<String> testHandlerFlags) {
+        Project project,
+        ExecutorType executorType,
+        BuildInvoker invoker,
+        ImmutableList<String> testHandlerFlags,
+        BlazeContext context) {
       ProjectViewSet projectViewSet =
           Preconditions.checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet());
 
@@ -187,19 +207,14 @@ public final class BlazeCommandGenericRunConfigurationRunner
         command = BlazeCommandName.COVERAGE;
       }
 
-      String binaryPath =
-          handlerState.getBlazeBinaryState().getBlazeBinary() != null
-              ? handlerState.getBlazeBinaryState().getBlazeBinary()
-              : Blaze.getBuildSystemProvider(project).getBinaryPath(project);
-
-      return BlazeCommand.builder(binaryPath, command)
+      return BlazeCommand.builder(invoker, command)
           .addTargets(configuration.getTargets())
           .addBlazeFlags(
               BlazeFlags.blazeFlags(
                   project,
                   projectViewSet,
                   getCommand(),
-                  BlazeContext.create(),
+                  context,
                   BlazeInvocationContext.runConfigContext(
                       executorType, configuration.getType(), false)))
           .addBlazeFlags(extraBlazeFlags)
