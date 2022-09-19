@@ -212,6 +212,89 @@ public class UnpackedAarsTest extends BlazeTestCase {
   }
 
   @Test
+  public void refresh_localArtifact_srcJarIsCopied() throws IOException {
+    testRefreshSrcJarIsCopied(localArtifactLocationDecoder);
+  }
+
+  @Test
+  public void refresh_remoteArtifact_srcJarIsCopied() throws IOException {
+    testRefreshSrcJarIsCopied(remoteArtifactLocationDecoder);
+  }
+
+  private void testRefreshSrcJarIsCopied(ArtifactLocationDecoder decoder) throws IOException {
+    UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
+    File aarCacheDir = unpackedAars.getCacheDir();
+
+    // new aar with jar files
+    String importedAar = "import.aar";
+    String importedAarJar = "importAar.jar";
+    String importedAarSrcJar = "importAar-src.jar";
+    String colorsXmlRelativePath = "res/values/colors.xml";
+    AarLibraryFileBuilder.aar(workspaceRoot, importedAar)
+        .src(colorsXmlRelativePath, ImmutableList.of(COLORS_XML_CONTENT))
+        .build();
+    File jar = workspaceRoot.fileForPath(new WorkspacePath(importedAarJar));
+    try (ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(jar))) {
+      zo.putNextEntry(new ZipEntry("com/google/foo/gen/Gen.java"));
+      zo.write("package gen; class Gen {}".getBytes(UTF_8));
+      zo.closeEntry();
+    }
+
+    File srcJar = workspaceRoot.fileForPath(new WorkspacePath(importedAarSrcJar));
+    try (ZipOutputStream zo = new ZipOutputStream(new FileOutputStream(srcJar))) {
+      zo.putNextEntry(new ZipEntry("com/google/foo/gen/Gen.class"));
+      zo.write("package gen; class Gen {}".getBytes(UTF_8));
+      zo.closeEntry();
+    }
+    ArtifactLocation importedAarArtifactLocation = generateArtifactLocation(importedAar);
+    ArtifactLocation jarArtifactLocation = generateArtifactLocation(importedAarJar);
+    ArtifactLocation srcJarArtifactLocation = generateArtifactLocation(importedAarSrcJar);
+    LibraryArtifact libraryArtifact =
+        LibraryArtifact.builder()
+            .setInterfaceJar(jarArtifactLocation)
+            .addSourceJar(srcJarArtifactLocation)
+            .build();
+    AarLibrary importedAarLibrary =
+        new AarLibrary(libraryArtifact, importedAarArtifactLocation, null);
+
+    BlazeAndroidImportResult importResult =
+        new BlazeAndroidImportResult(
+            ImmutableList.of(),
+            ImmutableMap.of(
+                LibraryKey.libraryNameFromArtifactLocation(importedAarArtifactLocation),
+                importedAarLibrary),
+            ImmutableList.of(),
+            ImmutableList.of());
+    BlazeAndroidSyncData syncData =
+        new BlazeAndroidSyncData(importResult, new AndroidSdkPlatform("stable", 15));
+    BlazeProjectData blazeProjectData =
+        MockBlazeProjectDataBuilder.builder(workspaceRoot)
+            .setWorkspaceLanguageSettings(
+                new WorkspaceLanguageSettings(WorkspaceType.ANDROID, ImmutableSet.of()))
+            .setSyncState(new SyncState.Builder().put(syncData).build())
+            .setArtifactLocationDecoder(decoder)
+            .build();
+    FileCache.EP_NAME
+        .extensions()
+        .forEach(
+            ep ->
+                ep.onSync(
+                    getProject(),
+                    context,
+                    ProjectViewSet.builder().add(ProjectView.builder().build()).build(),
+                    blazeProjectData,
+                    null,
+                    SyncMode.INCREMENTAL));
+
+    assertThat(aarCacheDir.list()).hasLength(1);
+
+    ImmutableList<File> cachedSrcJars = unpackedAars.getCachedSrcJars(decoder, importedAarLibrary);
+    assertThat(cachedSrcJars).hasSize(1);
+    assertThat(Files.readAllBytes(cachedSrcJars.get(0).toPath()))
+        .isEqualTo(Files.readAllBytes(srcJar.toPath()));
+  }
+
+  @Test
   public void refresh_localArtifact_fileNotExist_success() {
     testRefreshFileNotExist(localArtifactLocationDecoder);
   }

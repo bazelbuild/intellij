@@ -349,7 +349,7 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
         "android_sdk_platform: android-25");
 
     workspace.createFile(new WorkspacePath("java/com/google/foo.aar"));
-    workspace.createFile(new WorkspacePath("java/com/google/foo.srcjar"));
+    workspace.createFile(new WorkspacePath("foo.srcjar"));
     workspace.createDirectory(new WorkspacePath("java/com/google"));
     workspace.createFile(
         new WorkspacePath("java/com/google/Source.java"),
