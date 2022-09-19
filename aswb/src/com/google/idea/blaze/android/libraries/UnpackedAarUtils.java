@@ -28,6 +28,11 @@ import java.io.File;
 
 /** Utility methods to convert aar to other type that needed by {@link UnpackedAars} */
 public final class UnpackedAarUtils {
+  /**
+   * The name of imported_aar' ijar. It will always be same for any aars due to aar's format (more
+   * details http://tools.android.com/tech-docs/new-build-system/aar-format).
+   */
+  public static final String CLASS_JAR_FILE_NAME = "classes_and_libs_merged.jar";
 
   /* Converts {@link BlazeArtifact} to the key which is used to create aar directory name */
   public static String getArtifactKey(BlazeArtifact artifact) {
@@ -46,6 +51,16 @@ public final class UnpackedAarUtils {
     String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(key));
     return generateAarDirectoryName(/* name= */ name, /* hashCode= */ key.hashCode())
         + SdkConstants.DOT_AAR;
+  }
+
+  /**
+   * Returns the source jar name according to {@link BlazeArtifact}. Differen with ijar that share
+   * same name accoss different aars, source jars can have different names.
+   */
+  public static String getSrcJarName(BlazeArtifact srcJar) {
+    String key = getArtifactKey(srcJar);
+    String name = FileUtil.getNameWithoutExtension(PathUtil.getFileName(key));
+    return name + SdkConstants.DOT_SRCJAR;
   }
 
   /**
@@ -72,7 +87,7 @@ public final class UnpackedAarUtils {
     // At this point, we don't know the name of the original jar, but we must give the cache
     // file a name. Just use a name similar to what bazel currently uses, and that conveys
     // the origin of the jar (merged from classes.jar and libs/*.jar).
-    return new File(jarsDirectory, "classes_and_libs_merged.jar");
+    return new File(jarsDirectory, CLASS_JAR_FILE_NAME);
   }
 
   /**

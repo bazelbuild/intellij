@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -141,12 +140,12 @@ public final class AarLibrary extends BlazeLibrary {
     // BlazeSourceJarNavigationPolicy, LibraryActionHelper etc) are all tied to Java specific
     // libraries, and 2) So far, aar_imports are primarily used for very few 3rd party dependencies.
     // Longer term, we may want to make this behave just like the Java libraries.
-    for (ArtifactLocation srcJar : libraryArtifact.getSourceJars()) {
-      File sourceJar =
-          JarCache.getInstance(project).getCachedSourceJar(artifactLocationDecoder, srcJar);
-      if (sourceJar != null) {
-        libraryModel.addRoot(pathToUrl(sourceJar), OrderRootType.SOURCES);
+    for (File sourceJar : unpackedAars.getCachedSrcJars(artifactLocationDecoder, this)) {
+      if (!sourceJar.exists()) {
+        logger.warn("Fail to find sourcejar: " + sourceJar);
+        continue;
       }
+      libraryModel.addRoot(pathToUrl(sourceJar), OrderRootType.SOURCES);
     }
   }
 
