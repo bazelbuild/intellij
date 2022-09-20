@@ -16,17 +16,19 @@
 package com.google.idea.blaze.base.run.testlogs;
 
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolOutputReader;
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * A strategy for locating results from a single 'blaze test' invocation (e.g. output XML files).
  *
- * <p>Parses the output BEP proto written by blaze to locate the test XML files.
+ * <p>Parses the output BEP proto either from a bepOutputFile written by blaze or from the
+ * BuildEventStream to locate the test XML files.
  */
 public final class BuildEventProtocolTestFinderStrategy implements BlazeTestResultFinderStrategy {
 
@@ -34,21 +36,38 @@ public final class BuildEventProtocolTestFinderStrategy implements BlazeTestResu
       Logger.getInstance(BuildEventProtocolTestFinderStrategy.class);
 
   private final File outputFile;
+  private final BuildEventStreamProvider streamProvider;
+  private final boolean useLocalFileForTestResults;
 
   public BuildEventProtocolTestFinderStrategy(File bepOutputFile) {
-    this.outputFile = bepOutputFile;
+    this(bepOutputFile, null, true);
+  }
+
+  public BuildEventProtocolTestFinderStrategy(BuildEventStreamProvider streamProvider) {
+    this(null, streamProvider, false);
+  }
+
+  private BuildEventProtocolTestFinderStrategy(
+      File outputFile, BuildEventStreamProvider streamProvider, boolean useLocalFile) {
+    this.outputFile = outputFile;
+    this.streamProvider = streamProvider;
+    this.useLocalFileForTestResults = useLocalFile;
   }
 
   @Override
   public BlazeTestResults findTestResults() {
-    try (InputStream inputStream =
-        new BufferedInputStream(InputStreamProvider.getInstance().forFile(outputFile))) {
-      return BuildEventProtocolOutputReader.parseTestResults(inputStream);
-    } catch (IOException e) {
-      logger.warn(e);
+    try {
+      if (useLocalFileForTestResults) {
+        return BuildEventProtocolOutputReader.parseTestResults(
+            new BufferedInputStream(InputStreamProvider.getInstance().forFile(outputFile)));
+      } else {
+        return BuildEventProtocolOutputReader.parseTestResults(streamProvider);
+      }
+    } catch (IOException | BuildEventStreamException e) {
+      logger.warn(e.getMessage());
       return BlazeTestResults.NO_RESULTS;
     } finally {
-      if (!outputFile.delete()) {
+      if (useLocalFileForTestResults && !outputFile.delete()) {
         logger.warn("Could not delete BEP output file: " + outputFile);
       }
     }
