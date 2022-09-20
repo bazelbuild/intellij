@@ -16,6 +16,7 @@ load(
     "INTELLIJ_PLUGINS_VISIBILITY",
     "create_test_libs_visibility_package",
 )
+load("//tools/build_defs/java_single_jar:java_single_jar.bzl", "java_single_jar")
 
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
 
@@ -484,6 +485,24 @@ java_library(
     exports = [":plugin_api_internal"],
 )
 
+java_single_jar(
+    name = "plugin_api_single_jar",
+    deps = [":plugin_api_internal"],
+)
+
+java_import(
+    name = "plugin_api_single_jar_lib",
+    jars = [":plugin_api_single_jar"],
+    tags = [
+        "incomplete-deps",
+    ],
+    deps = [
+        # guava v20+ requires this at compile-time when using annotation processors.
+        "@error_prone_annotations//jar",
+        "//third_party/java/junit:not-testonly",
+    ],
+)
+
 # For tests, we need the IJ API at runtime, so we can't use the neverlink rule.
 java_library(
     name = "plugin_api_for_tests",
@@ -499,7 +518,7 @@ java_library(
         # so we need to provide this to our tests
         intellij = [":kotlinc_version"],
     ),
-    exports = [":plugin_api_internal"],
+    exports = [":plugin_api_single_jar_lib"],
 )
 
 # These libraries should only be used by open-source plugins.

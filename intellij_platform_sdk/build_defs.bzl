@@ -420,3 +420,63 @@ def no_mockito_extensions(name, jars, **kwargs):
         jars = output_jars,
         **kwargs
     )
+
+def rezipped_jar(name, jar):
+    """Unzip and re-zip and jar file. This is a workaround for b/247742771.
+
+    Args:
+      name: name of the resultant target.
+      jar: jar file to rezip.
+    """
+    out_jar = jar
+    if out_jar.endswith(".jar"):
+        out_jar = out_jar[:-4]
+    out_jar = out_jar + "_rezip.jar"
+    native.genrule(
+        name = name,
+        srcs = [jar],
+        outs = [out_jar],
+        cmd = "\n".join([
+            "mkdir $(@D)/files",
+            "unzip -q $< -d $(@D)/files",
+            "(cd $(@D)/files ; zip -q -r tmp.zip .)",
+            "mv $(@D)/files/tmp.zip $@",
+        ]),
+    )
+
+def ij_lib_import(name, jars, rezip_jars = [], **kwargs):
+    """Import IntelliJ lib jars as java libraries.
+
+    This is largely a wrapper around java_library, but with some extra
+    functionality to address problems with the jars themselves.
+
+    Args:
+      name: name of the java_import target
+      jars: jars to import
+      rezip_jars: a subset of jars that need rezipping to workaround b/247742771
+      **kwargs: Arbitrary attributes for the java_import target.
+    """
+
+    # we require that rezip_jars are a subset of jars so that we can preserve
+    # the order of all jars imported.
+    bad_rezip_jars = [jar for jar in rezip_jars if jar not in jars]
+    if bad_rezip_jars:
+        fail("rezip_jars must be a subset of jars. The following are not in jars: %s" % bad_rezip_jars)
+
+    import_jars = []
+    for jar in jars:
+        if jar in rezip_jars:
+            rezip_name = name + "_rezip_" + jar
+            rezipped_jar(
+                name = rezip_name,
+                jar = jar,
+            )
+            import_jars.append(rezip_name)
+        else:
+            import_jars.append(jar)
+
+    native.java_import(
+        name = name,
+        jars = import_jars,
+        **kwargs
+    )
