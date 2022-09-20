@@ -88,6 +88,10 @@ java_library(
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
+        "//java/com/google/common/base",
+        "//java/com/google/common/collect",
+        "//java/com/google/common/io",
+        "//java/com/google/common/util/concurrent",
         "@junit//jar",
     ],
 )

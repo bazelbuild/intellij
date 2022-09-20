@@ -16,6 +16,7 @@ load(
     "INTELLIJ_PLUGINS_VISIBILITY",
     "create_test_libs_visibility_package",
 )
+load("//build_defs:repackage.bzl", "repackaged_testonly_jar")
 
 package(default_visibility = INTELLIJ_PLUGINS_VISIBILITY)
 
@@ -484,6 +485,12 @@ java_library(
     exports = [":plugin_api_internal"],
 )
 
+repackaged_testonly_jar(
+    name = "plugin_api_repackaged",
+    rules = "api_for_tests",
+    deps = [":plugin_api_internal"],
+)
+
 # For tests, we need the IJ API at runtime, so we can't use the neverlink rule.
 java_library(
     name = "plugin_api_for_tests",
@@ -499,7 +506,7 @@ java_library(
         # so we need to provide this to our tests
         intellij = [":kotlinc_version"],
     ),
-    exports = [":plugin_api_internal"],
+    exports = [":plugin_api_repackaged"],
 )
 
 # These libraries should only be used by open-source plugins.
