@@ -1,3 +1,8 @@
+v2022.09.20
+===========
+* Set project data directory based on IDE product for project auto-import #3901
+* Added registry key to disable project auto-import #3885
+
 v2022.09.07
 ===========
 * Restrict printing sponge links of build shards only to blaze builds(fixes #3877)
