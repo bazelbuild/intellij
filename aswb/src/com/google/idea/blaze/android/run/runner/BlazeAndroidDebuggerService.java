@@ -37,13 +37,13 @@ public interface BlazeAndroidDebuggerService {
   AndroidDebugger getDebugger(boolean isNativeDebuggingEnabled);
 
   /**
-   * Returns fully initialized debugger states.
+   * Returns fully initialized debugger states. Bad types.
    *
    * <p>Note: Blaze projects should always use this method instead of the debuggers' {@link
    * AndroidDebugger#createState()} method. Blaze projects require additional setup such as
    * workspace directory flags that cannot be handled by the debuggers themselves.
    */
-  AndroidDebuggerState getDebuggerState(AndroidDebugger debugger);
+  AndroidDebuggerState getDebuggerState(AndroidDebugger debuggerRenamed);
 
   /** Default debugger service. */
   class DefaultDebuggerService implements BlazeAndroidDebuggerService {
@@ -59,8 +59,8 @@ public interface BlazeAndroidDebuggerService {
     }
 
     @Override
-    public AndroidDebuggerState getDebuggerState(AndroidDebugger debugger) {
-      AndroidDebuggerState debuggerState = debugger.createState();
+    public AndroidDebuggerState getDebuggerState(AndroidDebugger debuggerRenamed) {
+      AndroidDebuggerState debuggerState = debuggerRenamed.createState();
       if (isNdkPluginLoaded() && debuggerState instanceof NativeAndroidDebuggerState) {
         NativeAndroidDebuggerState nativeState = (NativeAndroidDebuggerState) debuggerState;
 
