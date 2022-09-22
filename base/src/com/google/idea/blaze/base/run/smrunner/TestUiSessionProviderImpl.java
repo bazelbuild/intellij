@@ -17,8 +17,11 @@ package com.google.idea.blaze.base.run.smrunner;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolUtils;
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.run.testlogs.BuildEventProtocolTestFinderStrategy;
+import com.google.idea.blaze.base.run.testlogs.BuildEventProtocolLocalTestFinderStrategy;
+import com.google.idea.blaze.base.run.testlogs.BuildEventProtocolRemoteTestFinderStrategy;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -34,18 +37,25 @@ public class TestUiSessionProviderImpl implements TestUiSessionProvider {
 
   @Nullable
   @Override
-  public BlazeTestUiSession getTestUiSession(ImmutableList<? extends TargetExpression> targets) {
+  public BlazeTestUiSession getTestUiSession(
+      ImmutableList<? extends TargetExpression> targets, BuildResultHelper buildResultHelper) {
     if (!BlazeTestEventsHandler.targetsSupported(project, targets)) {
       return null;
     }
-    File bepOutputFile = BuildEventProtocolUtils.createTempOutputFile();
-    ImmutableList<String> flags =
-        ImmutableList.<String>builder()
-            .add("--runs_per_test=1", "--flaky_test_attempts=1")
-            .addAll(BuildEventProtocolUtils.getBuildFlags(bepOutputFile))
-            .build();
-
-    return BlazeTestUiSession.create(
-        flags, new BuildEventProtocolTestFinderStrategy(bepOutputFile));
+    ImmutableList<String> flags = ImmutableList.of("--runs_per_test=1", "--flaky_test_attempts=1");
+    if (buildResultHelper.areBuildResultsRemote()) {
+      BuildEventStreamProvider streamProvider =
+          buildResultHelper.getBuildEventStream().orElseThrow();
+      return BlazeTestUiSession.create(
+          flags, new BuildEventProtocolRemoteTestFinderStrategy(streamProvider));
+    } else {
+      File bepOutputFile = BuildEventProtocolUtils.createTempOutputFile();
+      return BlazeTestUiSession.create(
+          ImmutableList.<String>builder()
+              .addAll(flags)
+              .addAll(BuildEventProtocolUtils.getBuildFlags(bepOutputFile))
+              .build(),
+          new BuildEventProtocolLocalTestFinderStrategy(bepOutputFile));
+    }
   }
 }

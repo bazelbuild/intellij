@@ -41,10 +41,14 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
@@ -118,11 +122,17 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
               runConfiguration.getSingleTarget(), runConfiguration.getTargetKind());
       Logger.getInstance(BlazeAndroidTestRunContext.class).warn(msg);
 
-      BlazeTestUiSession testUiSession =
-          canUseTestUi(env.getExecutor())
-              ? TestUiSessionProvider.getInstance(env.getProject())
-                  .getTestUiSession(ImmutableList.of(label))
-              : null;
+      BuildInvoker invoker =
+          Blaze.getBuildSystemProvider(project)
+              .getBuildSystem()
+              .getBuildInvoker(project, BlazeContext.create());
+
+      try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+        BlazeTestUiSession testUiSession =
+            canUseTestUi(env.getExecutor())
+                ? TestUiSessionProvider.getInstance(env.getProject())
+                    .getTestUiSession(ImmutableList.of(label), buildResultHelper)
+                : null;
 
       ImmutableList.Builder<String> blazeFlagsBuilder =
           ImmutableList.<String>builder().addAll(blazeFlags);
@@ -130,8 +140,9 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
         blazeFlagsBuilder.addAll(testUiSession.getBlazeFlags());
       }
       this.blazeFlags = blazeFlagsBuilder.build();
-      consoleProvider =
-          new AndroidTestConsoleProvider(project, runConfiguration, configState, testUiSession);
+        consoleProvider =
+            new AndroidTestConsoleProvider(project, runConfiguration, configState, testUiSession);
+      }
     }
 
     applicationIdProvider = new BlazeAndroidTestApplicationIdProvider(buildStep);

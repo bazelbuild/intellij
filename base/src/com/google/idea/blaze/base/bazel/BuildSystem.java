@@ -80,6 +80,10 @@ public interface BuildSystem {
       return true;
     }
 
+    default boolean supportsRemoteInvocations() {
+      return getBinaryPath().equals("/usr/bin/rabbit");
+    }
+
     /** Returns the BuildSystem object. */
     BuildSystem getBuildSystem();
   }

@@ -23,6 +23,7 @@ import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.TestResultId;
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolOutputReader;
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.MockInputStreamProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -39,9 +40,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.mockito.Mockito;
 
-/** Unit tests for {@link BuildEventProtocolTestFinderStrategy}. */
+/** Unit tests for {@link BuildEventProtocolLocalTestFinderStrategy}. */
 @RunWith(JUnit4.class)
-public class BuildEventProtocolTestFinderStrategyTest extends BlazeTestCase {
+public class BuildEventProtocolLocalTestFinderStrategyTest extends BlazeTestCase {
 
   private MockInputStreamProvider inputStreamProvider;
   private final Set<File> deletedFiles = new HashSet<>();
@@ -61,10 +62,10 @@ public class BuildEventProtocolTestFinderStrategyTest extends BlazeTestCase {
   public void testFinder_fileDeletedAfterCleanup() throws IOException {
     File file = createMockFile("/tmp/bep_output.txt", new byte[0]);
 
-    BuildEventProtocolTestFinderStrategy testFinder =
-        new BuildEventProtocolTestFinderStrategy(file);
+    BuildEventProtocolLocalTestFinderStrategy testFinder =
+        new BuildEventProtocolLocalTestFinderStrategy(file);
     try {
-      testFinder.findTestResults();
+      BlazeTestResults unused = testFinder.findTestResults();
     } finally {
       testFinder.deleteTemporaryOutputFiles();
     }
@@ -86,12 +87,14 @@ public class BuildEventProtocolTestFinderStrategyTest extends BlazeTestCase {
             ImmutableList.of("/usr/local/tmp/_cache/second_result.xml"));
     File bepOutputFile =
         createMockFile("/tmp/bep_output.txt", asByteArray(ImmutableList.of(test1, test2)));
-    BuildEventProtocolTestFinderStrategy strategy =
-        new BuildEventProtocolTestFinderStrategy(bepOutputFile);
+    BuildEventProtocolLocalTestFinderStrategy strategy =
+        new BuildEventProtocolLocalTestFinderStrategy(bepOutputFile);
 
     BlazeTestResults results;
     try (InputStream inputStream = inputStreamProvider.forFile(bepOutputFile)) {
       results = BuildEventProtocolOutputReader.parseTestResults(inputStream);
+    } catch (BuildEventStreamException e) {
+      results = BlazeTestResults.NO_RESULTS;
     }
     BlazeTestResults finderStrategyResults = strategy.findTestResults();
 
@@ -132,7 +135,7 @@ public class BuildEventProtocolTestFinderStrategyTest extends BlazeTestCase {
                 .setStatus(status)
                 .addAllTestActionOutput(
                     filePaths.stream()
-                        .map(BuildEventProtocolTestFinderStrategyTest::toEventFile)
+                        .map(BuildEventProtocolLocalTestFinderStrategyTest::toEventFile)
                         .collect(toImmutableList())));
   }
 

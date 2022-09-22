@@ -19,10 +19,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.Kind;
@@ -86,77 +88,83 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
     Project project = getConfiguration().getProject();
 
     BlazeCommand.Builder blazeCommand;
-    BlazeTestUiSession testUiSession =
-        useTestUi()
-            ? TestUiSessionProvider.getInstance(project)
-                .getTestUiSession(getConfiguration().getTargets())
-            : null;
-    if (testUiSession != null) {
-      blazeCommand =
-          getBlazeCommandBuilder(
-              project,
-              getConfiguration(),
-              testUiSession.getBlazeFlags(),
-              getExecutorType(),
-              kotlinxCoroutinesJavaAgent);
-      setConsoleBuilder(
-          new TextConsoleBuilderImpl(project) {
-            @Override
-            protected ConsoleView createConsole() {
-              return SmRunnerUtils.getConsoleView(
-                  project, getConfiguration(), getEnvironment().getExecutor(), testUiSession);
-            }
-          });
-    } else {
-      blazeCommand =
-          getBlazeCommandBuilder(
-              project,
-              getConfiguration(),
-              ImmutableList.of(),
-              getExecutorType(),
-              kotlinxCoroutinesJavaAgent);
-    }
-    addConsoleFilters(
-        ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
-            project,
-            WorkspaceRoot.fromProject(project),
-            BlazeInvocationContext.ContextType.RunConfiguration));
+    BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
+    BlazeContext context = BlazeContext.create();
 
-    List<String> command;
-    if (HotSwapUtils.canHotSwap(getEnvironment())) {
-      try {
-        command = HotSwapCommandBuilder.getBashCommandsToRunScript(project, blazeCommand);
-      } catch (IOException e) {
-        logger.warn("Failed to create script path. Hot swap will be disabled.", e);
+    try (BuildResultHelper buildResultHelper =
+        buildSystem.getBuildInvoker(project, context).createBuildResultHelper()) {
+      BlazeTestUiSession testUiSession =
+          useTestUi()
+              ? TestUiSessionProvider.getInstance(project)
+                  .getTestUiSession(getConfiguration().getTargets(), buildResultHelper)
+              : null;
+      if (testUiSession != null) {
+        blazeCommand =
+            getBlazeCommandBuilder(
+                project,
+                getConfiguration(),
+                testUiSession.getBlazeFlags(),
+                getExecutorType(),
+                kotlinxCoroutinesJavaAgent);
+        setConsoleBuilder(
+            new TextConsoleBuilderImpl(project) {
+              @Override
+              protected ConsoleView createConsole() {
+                return SmRunnerUtils.getConsoleView(
+                    project, getConfiguration(), getEnvironment().getExecutor(), testUiSession);
+              }
+            });
+      } else {
+        blazeCommand =
+            getBlazeCommandBuilder(
+                project,
+                getConfiguration(),
+                ImmutableList.of(),
+                getExecutorType(),
+                kotlinxCoroutinesJavaAgent);
+      }
+      addConsoleFilters(
+          ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
+              project,
+              WorkspaceRoot.fromProject(project),
+              BlazeInvocationContext.ContextType.RunConfiguration));
+
+      ImmutableList<String> command;
+      if (HotSwapUtils.canHotSwap(getEnvironment())) {
+        try {
+          command = HotSwapCommandBuilder.getBashCommandsToRunScript(project, blazeCommand);
+        } catch (IOException e) {
+          logger.warn("Failed to create script path. Hot swap will be disabled.", e);
+          command = blazeCommand.build().toList();
+        }
+      } else {
         command = blazeCommand.build().toList();
       }
-    } else {
-      command = blazeCommand.build().toList();
+
+      WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
+      return new ScopedBlazeProcessHandler(
+          project,
+          command,
+          workspaceRoot,
+          new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
+            @Override
+            public void onBlazeContextStart(BlazeContext context) {
+              context
+                  .push(
+                      new ProblemsViewScope(
+                          project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
+                  .push(new IdeaLogScope());
+            }
+
+            @Override
+            public ImmutableList<ProcessListener> createProcessListeners(BlazeContext context) {
+              LineProcessingOutputStream outputStream =
+                  LineProcessingOutputStream.of(
+                      BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
+              return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
+            }
+          });
     }
-
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    return new ScopedBlazeProcessHandler(
-        project,
-        command,
-        workspaceRoot,
-        new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
-          @Override
-          public void onBlazeContextStart(BlazeContext context) {
-            context
-                .push(
-                    new ProblemsViewScope(
-                        project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
-                .push(new IdeaLogScope());
-          }
-
-          @Override
-          public ImmutableList<ProcessListener> createProcessListeners(BlazeContext context) {
-            LineProcessingOutputStream outputStream =
-                LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
-            return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
-          }
-        });
   }
 
   @Override

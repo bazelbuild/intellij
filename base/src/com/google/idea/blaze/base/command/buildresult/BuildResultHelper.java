@@ -32,6 +32,14 @@ public interface BuildResultHelper extends AutoCloseable {
    */
   List<String> getBuildFlags();
 
+  default boolean areBuildResultsRemote() {
+    return false;
+  }
+  /** Returns the stream to read/parse the build results */
+  default Optional<BuildEventStreamProvider> getBuildEventStream() {
+    // Implemented only in BuildResultHelperRabbit
+    return Optional.empty();
+  }
   /**
    * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
    * called once, after the build is complete.
