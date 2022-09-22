@@ -60,7 +60,7 @@ class AndroidTestConsoleProvider implements ConsoleProvider {
         return console;
       case NON_BLAZE:
       case MOBILE_INSTALL:
-        return getStockConsoleProvider().createAndAttach(parent, handler, executor);
+        return createAndAttachStockConsole(parent, handler, executor);
     }
     throw new AssertionError();
   }
@@ -78,14 +78,13 @@ class AndroidTestConsoleProvider implements ConsoleProvider {
     return executor instanceof DefaultDebugExecutor;
   }
 
-  private ConsoleProvider getStockConsoleProvider() {
-    return (parent, handler, executor) -> {
-      AndroidTestConsoleProperties properties =
-          new AndroidTestConsoleProperties(runConfiguration, executor);
-      ConsoleView consoleView =
-          SMTestRunnerConnectionUtil.createAndAttachConsole("Android", handler, properties);
-      Disposer.register(parent, consoleView);
-      return consoleView;
-    };
+  private ConsoleView createAndAttachStockConsole(
+      Disposable parent, ProcessHandler handler, Executor executor) throws ExecutionException {
+    AndroidTestConsoleProperties properties =
+        new AndroidTestConsoleProperties(runConfiguration, executor);
+    ConsoleView consoleView =
+        SMTestRunnerConnectionUtil.createAndAttachConsole("Android", handler, properties);
+    Disposer.register(parent, consoleView);
+    return consoleView;
   }
 }
