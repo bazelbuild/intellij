@@ -112,7 +112,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -682,10 +681,10 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
             result.getBuildIds(),
             null); // buildIds has exactly one invocationId because this is called only when a shard
     // is built and not when buildResults are combined
-    Optional<String> invocationLink = invoker.getBuildSystem().getInvocationLink(invocationId);
-    if (invocationLink.isPresent()) {
-      outputText.append(String.format("See build results at %s", invocationLink));
-    }
+    invoker
+        .getBuildSystem()
+        .getInvocationLink(invocationId)
+        .ifPresent(link -> outputText.append(String.format("See build results at %s", link)));
     context.output(SummaryOutput.error(Prefix.TIMESTAMP, outputText.toString()));
   }
 
