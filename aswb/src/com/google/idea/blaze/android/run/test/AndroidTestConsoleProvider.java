@@ -16,7 +16,8 @@
 package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.ConsoleProvider;
-import com.android.tools.idea.testartifacts.instrumented.AndroidTestConsoleProperties;
+import com.google.common.base.Preconditions;
+import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
@@ -25,18 +26,15 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import javax.annotation.Nullable;
 
 /** Console provider for android_test */
 class AndroidTestConsoleProvider implements ConsoleProvider {
   private final Project project;
   private final BlazeCommandRunConfiguration runConfiguration;
-  private final BlazeAndroidTestRunConfigurationState configState;
   @Nullable private final BlazeTestUiSession testUiSession;
 
   AndroidTestConsoleProvider(
@@ -44,25 +42,20 @@ class AndroidTestConsoleProvider implements ConsoleProvider {
       BlazeCommandRunConfiguration runConfiguration,
       BlazeAndroidTestRunConfigurationState configState,
       @Nullable BlazeTestUiSession testUiSession) {
+    Preconditions.checkArgument(
+        configState.getLaunchMethod() == AndroidTestLaunchMethod.BLAZE_TEST);
+
     this.project = project;
     this.runConfiguration = runConfiguration;
-    this.configState = configState;
     this.testUiSession = testUiSession;
   }
 
   @Override
   public ConsoleView createAndAttach(Disposable parent, ProcessHandler handler, Executor executor)
       throws ExecutionException {
-    switch (configState.getLaunchMethod()) {
-      case BLAZE_TEST:
-        ConsoleView console = createBlazeTestConsole(executor);
-        console.attachToProcess(handler);
-        return console;
-      case NON_BLAZE:
-      case MOBILE_INSTALL:
-        return createAndAttachStockConsole(parent, handler, executor);
-    }
-    throw new AssertionError();
+    ConsoleView console = createBlazeTestConsole(executor);
+    console.attachToProcess(handler);
+    return console;
   }
 
   private ConsoleView createBlazeTestConsole(Executor executor) {
@@ -76,15 +69,5 @@ class AndroidTestConsoleProvider implements ConsoleProvider {
 
   private static boolean isDebugging(Executor executor) {
     return executor instanceof DefaultDebugExecutor;
-  }
-
-  private ConsoleView createAndAttachStockConsole(
-      Disposable parent, ProcessHandler handler, Executor executor) throws ExecutionException {
-    AndroidTestConsoleProperties properties =
-        new AndroidTestConsoleProperties(runConfiguration, executor);
-    ConsoleView consoleView =
-        SMTestRunnerConnectionUtil.createAndAttachConsole("Android", handler, properties);
-    Disposer.register(parent, consoleView);
-    return consoleView;
   }
 }

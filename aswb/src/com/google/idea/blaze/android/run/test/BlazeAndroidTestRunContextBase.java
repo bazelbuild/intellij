@@ -87,12 +87,19 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
     this.label = label;
     this.configState = configState;
 
+    // TODO(b/248317444): The majority of the complexity in the code below is because it still
+    // supports the deprecated `android_test` rule. The final else can be deleted once we
+    // are sure it isn't needed anymore.
     if (configState.getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)) {
-      this.buildStep = new MobileInstallBuildStep(project, label, blazeFlags, exeFlags, launchId);
+      buildStep = new MobileInstallBuildStep(project, label, blazeFlags, exeFlags, launchId);
+      consoleProvider = new AitConsoleProvider(project, runConfiguration, configState);
+      this.blazeFlags = blazeFlags;
     } else if (runConfiguration.getTargetKind()
         == AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
       // android_instrumentation_test builds both test and app target APKs.
-      this.buildStep = new BlazeInstrumentationTestApkBuildStep(project, label, blazeFlags);
+      buildStep = new BlazeInstrumentationTestApkBuildStep(project, label, blazeFlags);
+      consoleProvider = new AitConsoleProvider(project, runConfiguration, configState);
+      this.blazeFlags = blazeFlags;
     } else {
       // This path is only invoked for the deprecated {@code android_test} targets.
       // In order to determine if this is in use, we add a log statement.
@@ -102,28 +109,26 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
                   + " in favor of `android_instrumentation_test`",
               runConfiguration.getSingleTarget(), runConfiguration.getTargetKind());
       Logger.getInstance(BlazeAndroidTestRunContextBase.class).warn(msg);
-      this.buildStep = new FullApkBuildStep(project, label, blazeFlags);
+      buildStep = new FullApkBuildStep(project, label, blazeFlags);
+
+      BlazeTestUiSession testUiSession =
+          canUseTestUi(env.getExecutor())
+              ? TestUiSessionProvider.getInstance(env.getProject())
+                  .getTestUiSession(ImmutableList.of(label))
+              : null;
+
+      ImmutableList.Builder<String> blazeFlagsBuilder =
+          ImmutableList.<String>builder().addAll(blazeFlags);
+      if (testUiSession != null) {
+        blazeFlagsBuilder.addAll(testUiSession.getBlazeFlags());
+      }
+      this.blazeFlags = blazeFlagsBuilder.build();
+      consoleProvider =
+          new AndroidTestConsoleProvider(project, runConfiguration, configState, testUiSession);
     }
 
-    this.applicationIdProvider = new BlazeAndroidTestApplicationIdProvider(buildStep);
-    this.apkProvider = BlazeApkProviderService.getInstance().getApkProvider(project, buildStep);
-
-    BlazeTestUiSession testUiSession =
-        canUseTestUi(env.getExecutor())
-            ? TestUiSessionProvider.getInstance(env.getProject())
-                .getTestUiSession(ImmutableList.of(label))
-            : null;
-    if (testUiSession != null) {
-      this.blazeFlags =
-          ImmutableList.<String>builder()
-              .addAll(testUiSession.getBlazeFlags())
-              .addAll(blazeFlags)
-              .build();
-    } else {
-      this.blazeFlags = blazeFlags;
-    }
-    this.consoleProvider =
-        new AndroidTestConsoleProvider(project, runConfiguration, configState, testUiSession);
+    applicationIdProvider = new BlazeAndroidTestApplicationIdProvider(buildStep);
+    apkProvider = BlazeApkProviderService.getInstance().getApkProvider(project, buildStep);
   }
 
   private static boolean canUseTestUi(Executor executor) {
@@ -160,7 +165,7 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
     return buildStep;
   }
 
-  // @Override #api211
+  @Override
   public ProfilerState getProfileState() {
     return null;
   }
@@ -172,7 +177,7 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
         project, this, applicationIdProvider, launchOptionsBuilder);
   }
 
-  // @Override #api212
+  @Override
   @Nullable
   public LaunchTask getApplicationLaunchTask(
       LaunchOptions launchOptions,
