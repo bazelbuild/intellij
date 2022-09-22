@@ -49,6 +49,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -93,6 +94,14 @@ abstract class BlazeAndroidTestRunContextBase implements BlazeAndroidRunContext 
       // android_instrumentation_test builds both test and app target APKs.
       this.buildStep = new BlazeInstrumentationTestApkBuildStep(project, label, blazeFlags);
     } else {
+      // This path is only invoked for the deprecated {@code android_test} targets.
+      // In order to determine if this is in use, we add a log statement.
+      String msg =
+          String.format(
+              "`%1$s` is an `%2$s` target. This has been deprecated"
+                  + " in favor of `android_instrumentation_test`",
+              runConfiguration.getSingleTarget(), runConfiguration.getTargetKind());
+      Logger.getInstance(BlazeAndroidTestRunContextBase.class).warn(msg);
       this.buildStep = new FullApkBuildStep(project, label, blazeFlags);
     }
 
