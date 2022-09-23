@@ -32,8 +32,8 @@ public interface ApkBuildStepProvider extends BuildSystemExtensionPoint {
     return BuildSystemExtensionPoint.getInstance(EP_NAME, buildSystemName);
   }
 
-  /** Returns a build step for the given build configurations. */
-  ApkBuildStep getBuildStep(
+  /** Returns a build step that can build artifacts required for an {@code android_binary}. */
+  ApkBuildStep getBinaryBuildStep(
       Project project,
       boolean useMobileInstall,
       Label label,

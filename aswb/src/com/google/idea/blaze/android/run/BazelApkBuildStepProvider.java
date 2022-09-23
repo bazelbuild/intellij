@@ -27,7 +27,7 @@ import com.intellij.openapi.project.Project;
 /** Provides APK build step for Bazel projects. */
 public class BazelApkBuildStepProvider implements ApkBuildStepProvider {
   @Override
-  public ApkBuildStep getBuildStep(
+  public ApkBuildStep getBinaryBuildStep(
       Project project,
       boolean useMobileInstall,
       Label label,

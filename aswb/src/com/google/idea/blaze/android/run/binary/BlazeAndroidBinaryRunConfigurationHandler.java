@@ -138,7 +138,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
             configState.getCommonState().getExeFlagsState().getFlagsForExternalProcesses());
     ApkBuildStep buildStep =
         ApkBuildStepProvider.getInstance(Blaze.getBuildSystemName(project))
-            .getBuildStep(
+            .getBinaryBuildStep(
                 project,
                 AndroidBinaryLaunchMethodsUtils.useMobileInstall(configState.getLaunchMethod()),
                 Label.create(configuration.getSingleTarget().toString()),
