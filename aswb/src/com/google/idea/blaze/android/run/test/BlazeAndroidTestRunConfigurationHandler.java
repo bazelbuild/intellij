@@ -24,8 +24,12 @@ import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationUtil;
 import com.google.idea.blaze.android.run.LaunchMetrics;
+import com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallBuildStep;
+import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
+import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep;
+import com.google.idea.blaze.android.run.runner.FullApkBuildStep;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -40,6 +44,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
+import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaExecutionUtil;
@@ -108,18 +113,21 @@ public class BlazeAndroidTestRunConfigurationHandler
     // We collect metrics from a few different locations. In order to tie them all
     // together, we create a unique launch id.
     String launchId = LaunchMetrics.newLaunchId();
+    Label label = Label.create(configuration.getSingleTarget().toString());
+
+    ApkBuildStep buildStep;
+    if (configState.getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)) {
+      buildStep = new MobileInstallBuildStep(project, label, blazeFlags, exeFlags, launchId);
+    } else if (configuration.getTargetKind()
+        == AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
+      buildStep = new BlazeInstrumentationTestApkBuildStep(project, label, blazeFlags);
+    } else {
+      buildStep = new FullApkBuildStep(project, label, blazeFlags);
+    }
 
     BlazeAndroidRunContext runContext =
         new BlazeAndroidTestRunContext(
-            project,
-            facet,
-            configuration,
-            env,
-            configState,
-            Label.create(configuration.getSingleTarget().toString()),
-            blazeFlags,
-            exeFlags,
-            launchId);
+            project, facet, configuration, env, configState, label, blazeFlags, buildStep);
 
     LaunchMetrics.logTestLaunch(
         launchId, configState.getLaunchMethod().name(), env.getExecutor().getId());

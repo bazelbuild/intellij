@@ -34,15 +34,12 @@ import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
-import com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallBuildStep;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
-import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep;
-import com.google.idea.blaze.android.run.runner.FullApkBuildStep;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -92,26 +89,23 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
       BlazeAndroidTestRunConfigurationState configState,
       Label label,
       ImmutableList<String> blazeFlags,
-      ImmutableList<String> exeFlags,
-      String launchId) {
+      ApkBuildStep buildStep) {
     this.project = project;
     this.facet = facet;
     this.runConfiguration = runConfiguration;
     this.env = env;
     this.label = label;
     this.configState = configState;
+    this.buildStep = buildStep;
 
     // TODO(b/248317444): The majority of the complexity in the code below is because it still
     // supports the deprecated `android_test` rule. The final else can be deleted once we
     // are sure it isn't needed anymore.
     if (configState.getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)) {
-      buildStep = new MobileInstallBuildStep(project, label, blazeFlags, exeFlags, launchId);
       consoleProvider = new AitConsoleProvider(project, runConfiguration, configState);
       this.blazeFlags = blazeFlags;
     } else if (runConfiguration.getTargetKind()
         == AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
-      // android_instrumentation_test builds both test and app target APKs.
-      buildStep = new BlazeInstrumentationTestApkBuildStep(project, label, blazeFlags);
       consoleProvider = new AitConsoleProvider(project, runConfiguration, configState);
       this.blazeFlags = blazeFlags;
     } else {
@@ -123,7 +117,6 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
                   + " in favor of `android_instrumentation_test`",
               runConfiguration.getSingleTarget(), runConfiguration.getTargetKind());
       Logger.getInstance(BlazeAndroidTestRunContext.class).warn(msg);
-      buildStep = new FullApkBuildStep(project, label, blazeFlags);
 
       BlazeTestUiSession testUiSession =
           canUseTestUi(env.getExecutor())
