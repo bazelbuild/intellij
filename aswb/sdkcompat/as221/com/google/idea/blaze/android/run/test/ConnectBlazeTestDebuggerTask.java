@@ -26,6 +26,7 @@ import com.android.tools.idea.run.ProcessHandlerConsolePrinter;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTaskBase;
 import com.android.tools.idea.run.tasks.ConnectJavaDebuggerTask;
 import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -124,7 +125,7 @@ class ConnectBlazeTestDebuggerTask extends ConnectDebuggerTaskBase {
       @NotNull Client client,
       @NotNull ProcessHandlerLaunchStatus launchStatus,
       @NotNull ProcessHandlerConsolePrinter printer) {
-    var unused =
+    ProcessHandler unused =
         ConnectBlazeTestDebuggerTaskHelper.launchDebugger(
             project, currentLaunchInfo, client, launchStatus, printer);
   }

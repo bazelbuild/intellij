@@ -101,7 +101,7 @@ java_import(
 
 filegroup(
     name = "kotlinc_version",
-    srcs = ["plugins/Kotlin/kotlinc/build.txt"],
+    srcs = ["android-studio/plugins/Kotlin/kotlinc/build.txt"],
 )
 
 java_import(
@@ -111,7 +111,7 @@ java_import(
 
 java_import(
     name = "devkit",
-    jars = ["plugins/devkit/lib/devkit.jar"],
+    jars = ["android-studio/plugins/devkit/lib/devkit.jar"],
 )
 
 java_import(
