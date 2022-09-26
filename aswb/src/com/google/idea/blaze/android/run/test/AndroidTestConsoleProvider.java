@@ -17,10 +17,10 @@ package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.ConsoleProvider;
 import com.google.common.base.Preconditions;
-import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
+import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -43,7 +43,7 @@ class AndroidTestConsoleProvider implements ConsoleProvider {
       BlazeAndroidTestRunConfigurationState configState,
       @Nullable BlazeTestUiSession testUiSession) {
     Preconditions.checkArgument(
-        configState.getLaunchMethod() == AndroidTestLaunchMethod.BLAZE_TEST);
+        RuleTypes.ANDROID_TEST.getKind().equals(runConfiguration.getTargetKind()));
 
     this.project = project;
     this.runConfiguration = runConfiguration;
