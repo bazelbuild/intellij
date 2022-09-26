@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -125,12 +126,20 @@ public final class BlazeCommandGenericRunConfigurationRunner
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       assert projectViewSet != null;
 
+      BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
+      BlazeContext context = BlazeContext.create();
+      BuildInvoker invoker =
+          getCommand().equals(BlazeCommandName.TEST) && useRabbitForTestCommands.getValue()
+              ? buildSystem.getParallelBuildInvoker(project, context).orElseThrow()
+              : buildSystem.getBuildInvoker(project, context);
+
+      try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
       ImmutableList<String> testHandlerFlags = ImmutableList.of();
-      BlazeTestUiSession testUiSession =
-          canUseTestUi()
-              ? TestUiSessionProvider.getInstance(project)
-                  .getTestUiSession(configuration.getTargets())
-              : null;
+        BlazeTestUiSession testUiSession =
+            canUseTestUi()
+                ? TestUiSessionProvider.getInstance(project)
+                    .getTestUiSession(configuration.getTargets())
+                : null;
       if (testUiSession != null) {
         testHandlerFlags = testUiSession.getBlazeFlags();
         setConsoleBuilder(
@@ -144,44 +153,39 @@ public final class BlazeCommandGenericRunConfigurationRunner
       }
       addConsoleFilters(consoleFilters.toArray(new Filter[0]));
 
-      BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
-      BlazeContext context = BlazeContext.create();
-      BuildInvoker invoker =
-          getCommand().equals(BlazeCommandName.TEST) && useRabbitForTestCommands.getValue()
-              ? buildSystem.getParallelBuildInvoker(project, context).orElseThrow()
-              : buildSystem.getBuildInvoker(project, context);
-
-      BlazeCommand blazeCommand =
-          getBlazeCommand(
-              project,
-              ExecutorType.fromExecutor(getEnvironment().getExecutor()),
-              invoker,
-              testHandlerFlags,
-              context);
+        BlazeCommand blazeCommand =
+            getBlazeCommand(
+                project,
+                ExecutorType.fromExecutor(getEnvironment().getExecutor()),
+                invoker,
+                testHandlerFlags,
+                context);
 
       WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
-      return new ScopedBlazeProcessHandler(
-          project,
-          blazeCommand,
-          workspaceRoot,
-          new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
-            @Override
-            public void onBlazeContextStart(BlazeContext context) {
-              context
-                  .push(
-                      new ProblemsViewScope(
-                          project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
-                  .push(new IdeaLogScope());
-            }
 
-            @Override
-            public ImmutableList<ProcessListener> createProcessListeners(BlazeContext context) {
-              LineProcessingOutputStream outputStream =
-                  LineProcessingOutputStream.of(
-                      BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
-              return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
-            }
-          });
+        return new ScopedBlazeProcessHandler(
+            project,
+            blazeCommand,
+            workspaceRoot,
+            new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
+              @Override
+              public void onBlazeContextStart(BlazeContext context) {
+                context
+                    .push(
+                        new ProblemsViewScope(
+                            project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
+                    .push(new IdeaLogScope());
+              }
+
+              @Override
+              public ImmutableList<ProcessListener> createProcessListeners(BlazeContext context) {
+                LineProcessingOutputStream outputStream =
+                    LineProcessingOutputStream.of(
+                        BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
+                return ImmutableList.of(new LineProcessingProcessAdapter(outputStream));
+              }
+            });
+      }
     }
 
     private BlazeCommand getBlazeCommand(
