@@ -40,4 +40,16 @@ public interface ApkBuildStepProvider extends BuildSystemExtensionPoint {
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags,
       String launchId);
+
+  /**
+   * Returns a build step that can build artifacts required for an {@code
+   * android_instrumentation_test}.
+   */
+  ApkBuildStep getAitBuildStep(
+      Project project,
+      boolean useMobileInstall,
+      Label label,
+      ImmutableList<String> blazeFlags,
+      ImmutableList<String> exeFlags,
+      String launchId);
 }

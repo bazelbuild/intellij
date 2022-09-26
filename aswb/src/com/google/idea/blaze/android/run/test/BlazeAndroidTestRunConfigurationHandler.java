@@ -20,15 +20,14 @@ import static com.android.tools.idea.run.deployment.DeviceAndSnapshotComboBoxAct
 import com.android.tools.idea.run.ValidationError;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.idea.blaze.android.run.ApkBuildStepProvider;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationValidationUtil;
 import com.google.idea.blaze.android.run.LaunchMetrics;
-import com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallBuildStep;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunConfigurationRunner;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
-import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep;
 import com.google.idea.blaze.android.run.runner.FullApkBuildStep;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -115,15 +114,9 @@ public class BlazeAndroidTestRunConfigurationHandler
     String launchId = LaunchMetrics.newLaunchId();
     Label label = Label.create(configuration.getSingleTarget().toString());
 
-    ApkBuildStep buildStep;
-    if (configState.getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)) {
-      buildStep = new MobileInstallBuildStep(project, label, blazeFlags, exeFlags, launchId);
-    } else if (configuration.getTargetKind()
-        == AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
-      buildStep = new BlazeInstrumentationTestApkBuildStep(project, label, blazeFlags);
-    } else {
-      buildStep = new FullApkBuildStep(project, label, blazeFlags);
-    }
+    ApkBuildStep buildStep =
+        getTestBuildStep(
+            project, configState, configuration, blazeFlags, exeFlags, launchId, label);
 
     BlazeAndroidRunContext runContext =
         new BlazeAndroidTestRunContext(
@@ -133,6 +126,27 @@ public class BlazeAndroidTestRunConfigurationHandler
         launchId, configState.getLaunchMethod().name(), env.getExecutor().getId());
 
     return new BlazeAndroidRunConfigurationRunner(module, runContext, configuration);
+  }
+
+  private static ApkBuildStep getTestBuildStep(
+      Project project,
+      BlazeAndroidTestRunConfigurationState configState,
+      BlazeCommandRunConfiguration configuration,
+      ImmutableList<String> blazeFlags,
+      ImmutableList<String> exeFlags,
+      String launchId,
+      Label label) {
+    if (configuration.getTargetKind()
+        == AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
+      boolean useMobileInstall =
+          AndroidTestLaunchMethod.MOBILE_INSTALL.equals(configState.getLaunchMethod());
+      return ApkBuildStepProvider.getInstance(Blaze.getBuildSystemName(project))
+          .getAitBuildStep(project, useMobileInstall, label, blazeFlags, exeFlags, launchId);
+    } else {
+      // TODO(b/248317444): This path is only invoked for the deprecated {@code android_test}
+      // targets, and should eventually be removed.
+      return new FullApkBuildStep(project, label, blazeFlags);
+    }
   }
 
   @Override
