@@ -83,38 +83,42 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   @Override
   public void flushBufferOnProcessTermination(int exitCode) {
     super.flushBufferOnProcessTermination(exitCode);
-    BlazeTestResults testResults = testResultFinderStrategy.findTestResults();
-    if (testResults == null || testResults == BlazeTestResults.NO_RESULTS) {
-      BlazeTestExitStatus exitStatus = BlazeTestExitStatus.forExitCode(exitCode);
-      if (exitStatus == null) {
-        reportTestRuntimeError(
-            "Unknown Error",
-            "Test runtime terminated unexpectedly with exit code " + exitCode + ".");
+
+    try {
+      BlazeTestResults testResults = testResultFinderStrategy.findTestResults();
+      if (testResults == null || testResults == BlazeTestResults.NO_RESULTS) {
+        reportError(exitCode);
       } else {
-        reportTestRuntimeError(exitStatus.title, exitStatus.message);
+        processAllTestResults(testResults);
       }
-    } else {
-      processAllTestResults(testResults);
+    } finally {
+      testResultFinderStrategy.deleteTemporaryOutputFiles();
     }
   }
 
   private void processAllTestResults(BlazeTestResults testResults) {
     onStartTesting();
     getProcessor().onTestsReporterAttached();
-    try {
-      List<ListenableFuture<ParsedTargetResults>> futures = new ArrayList<>();
-      for (Label label : testResults.perTargetResults.keySet()) {
-        futures.add(
-            FetchExecutor.EXECUTOR.submit(
-                () -> parseTestXml(label, testResults.perTargetResults.get(label))));
-      }
-      List<ParsedTargetResults> parsedResults =
-          FuturesUtil.getIgnoringErrors(Futures.allAsList(futures));
-      if (parsedResults != null) {
-        parsedResults.forEach(this::processParsedTestResults);
-      }
-    } finally {
-      testResultFinderStrategy.deleteTemporaryOutputXmlFiles();
+    List<ListenableFuture<ParsedTargetResults>> futures = new ArrayList<>();
+    for (Label label : testResults.perTargetResults.keySet()) {
+      futures.add(
+          FetchExecutor.EXECUTOR.submit(
+              () -> parseTestXml(label, testResults.perTargetResults.get(label))));
+    }
+    List<ParsedTargetResults> parsedResults =
+        FuturesUtil.getIgnoringErrors(Futures.allAsList(futures));
+    if (parsedResults != null) {
+      parsedResults.forEach(this::processParsedTestResults);
+    }
+  }
+
+  private void reportError(int exitCode) {
+    BlazeTestExitStatus exitStatus = BlazeTestExitStatus.forExitCode(exitCode);
+    if (exitStatus == null) {
+      reportTestRuntimeError(
+          "Unknown Error", "Test runtime terminated unexpectedly with exit code " + exitCode + ".");
+    } else {
+      reportTestRuntimeError(exitStatus.title, exitStatus.message);
     }
   }
 
