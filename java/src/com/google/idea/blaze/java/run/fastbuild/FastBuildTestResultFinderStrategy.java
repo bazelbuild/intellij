@@ -62,7 +62,7 @@ final class FastBuildTestResultFinderStrategy implements BlazeTestResultFinderSt
   }
 
   @Override
-  public void deleteTemporaryOutputXmlFiles() {
+  public void deleteTemporaryOutputFiles() {
     outputFile.delete();
   }
 }

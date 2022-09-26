@@ -58,10 +58,16 @@ public class BuildEventProtocolTestFinderStrategyTest extends BlazeTestCase {
   }
 
   @Test
-  public void findTestResults_fileDeletedAfterReading() throws IOException {
+  public void testFinder_fileDeletedAfterCleanup() throws IOException {
     File file = createMockFile("/tmp/bep_output.txt", new byte[0]);
 
-    new BuildEventProtocolTestFinderStrategy(file).findTestResults();
+    BuildEventProtocolTestFinderStrategy testFinder =
+        new BuildEventProtocolTestFinderStrategy(file);
+    try {
+      testFinder.findTestResults();
+    } finally {
+      testFinder.deleteTemporaryOutputFiles();
+    }
 
     assertThat(deletedFiles).contains(file);
   }
@@ -89,7 +95,8 @@ public class BuildEventProtocolTestFinderStrategyTest extends BlazeTestCase {
     }
     BlazeTestResults finderStrategyResults = strategy.findTestResults();
 
-    assertThat(finderStrategyResults.perTargetResults).isEqualTo(results.perTargetResults);
+    assertThat(finderStrategyResults.perTargetResults.entries())
+        .containsExactlyElementsIn(results.perTargetResults.entries());
   }
 
   private File createMockFile(String path, byte[] contents) {
@@ -124,8 +131,7 @@ public class BuildEventProtocolTestFinderStrategyTest extends BlazeTestCase {
             BuildEventStreamProtos.TestResult.newBuilder()
                 .setStatus(status)
                 .addAllTestActionOutput(
-                    filePaths
-                        .stream()
+                    filePaths.stream()
                         .map(BuildEventProtocolTestFinderStrategyTest::toEventFile)
                         .collect(toImmutableList())));
   }

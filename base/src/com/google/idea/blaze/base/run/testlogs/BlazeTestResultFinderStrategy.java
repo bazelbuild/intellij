@@ -28,5 +28,5 @@ public interface BlazeTestResultFinderStrategy {
   BlazeTestResults findTestResults();
 
   /** Remove any temporary files used by this result finder. */
-  void deleteTemporaryOutputXmlFiles();
+  void deleteTemporaryOutputFiles();
 }

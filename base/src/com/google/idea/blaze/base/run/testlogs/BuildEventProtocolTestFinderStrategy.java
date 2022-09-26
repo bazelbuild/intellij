@@ -47,13 +47,13 @@ public final class BuildEventProtocolTestFinderStrategy implements BlazeTestResu
     } catch (IOException e) {
       logger.warn(e);
       return BlazeTestResults.NO_RESULTS;
-    } finally {
-      if (!outputFile.delete()) {
-        logger.warn("Could not delete BEP output file: " + outputFile);
-      }
     }
   }
 
   @Override
-  public void deleteTemporaryOutputXmlFiles() {}
+  public void deleteTemporaryOutputFiles() {
+    if (!outputFile.delete()) {
+      logger.warn("Could not delete BEP output file: " + outputFile);
+    }
+  }
 }
