@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallBuildStep;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
+import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep;
 import com.google.idea.blaze.android.run.runner.FullApkBuildStep;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.BuildSystemName;
@@ -38,6 +39,21 @@ public class BazelApkBuildStepProvider implements ApkBuildStepProvider {
       return new MobileInstallBuildStep(project, label, blazeFlags, exeFlags, launchId);
     } else {
       return new FullApkBuildStep(project, label, blazeFlags);
+    }
+  }
+
+  @Override
+  public ApkBuildStep getAitBuildStep(
+      Project project,
+      boolean useMobileInstall,
+      Label label,
+      ImmutableList<String> blazeFlags,
+      ImmutableList<String> exeFlags,
+      String launchId) {
+    if (useMobileInstall) {
+      return new MobileInstallBuildStep(project, label, blazeFlags, exeFlags, launchId);
+    } else {
+      return new BlazeInstrumentationTestApkBuildStep(project, label, blazeFlags);
     }
   }
 
