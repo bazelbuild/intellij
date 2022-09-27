@@ -150,6 +150,7 @@ final class ProjectUpdateSyncTask {
     this.oldProjectData = getOldProjectData(project, syncMode);
   }
 
+  @Nullable
   private static BlazeProjectData getOldProjectData(Project project, SyncMode syncMode) {
     return syncMode == SyncMode.FULL
         ? null

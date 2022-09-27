@@ -468,6 +468,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.ExperimentLoader" interface="com.google.idea.common.experiments.ExperimentLoader"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.EmptyLibraryFilterSettings" interface="com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings" />
     <extensionPoint qualifiedName="com.google.idea.blaze.NewSync" interface="com.google.idea.blaze.base.sync.NewSync"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.LibraryConverter" interface="com.google.idea.blaze.base.sync.libraries.LibraryConverter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -554,6 +555,7 @@
     <ExperimentLoader implementation="com.google.idea.common.experiments.SystemPropertyExperimentLoader" order="first" id="SystemPropertyExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.UserOverridesExperimentLoader" order="after SystemPropertyExperimentLoader" id="UserOverridesExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.DefaultValuesExperimentLoader" order="last" id="DefaultValuesExperimentLoader"/>
+    <LibraryConverter implementation="com.google.idea.blaze.base.sync.libraries.DefaultLibraryConverter" order="last"/>
   </extensions>
 
   <projectListeners>
