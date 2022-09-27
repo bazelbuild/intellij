@@ -402,6 +402,7 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//testing:lib",
         "//third_party/auto_value",
+        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
         "@junit//jar",
     ],
 )

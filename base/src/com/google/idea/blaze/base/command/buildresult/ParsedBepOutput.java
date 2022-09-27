@@ -54,7 +54,8 @@ import javax.annotation.Nullable;
 public final class ParsedBepOutput {
 
   /** Parses BEP events into {@link ParsedBepOutput} */
-  static ParsedBepOutput parseBepArtifacts(InputStream bepStream) throws BuildEventStreamException {
+  public static ParsedBepOutput parseBepArtifacts(InputStream bepStream)
+      throws BuildEventStreamException {
     return parseBepArtifacts(BuildEventStreamProvider.fromInputStream(bepStream));
   }
 
