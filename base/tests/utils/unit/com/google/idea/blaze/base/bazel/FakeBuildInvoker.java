@@ -18,7 +18,6 @@ package com.google.idea.blaze.base.bazel;
 import com.google.auto.value.AutoValue;
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
-import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
@@ -36,6 +35,7 @@ public abstract class FakeBuildInvoker implements BuildInvoker {
         .binaryPath("")
         .supportsParallelism(false)
         .buildResultHelperSupplier(() -> null)
+        .commandRunner(new FakeBlazeCommandRunner())
         .buildSystem(FakeBuildSystem.builder(BuildSystemName.Blaze).build());
   }
 
@@ -66,8 +66,7 @@ public abstract class FakeBuildInvoker implements BuildInvoker {
   abstract Supplier<BuildResultHelper> getBuildResultHelperSupplier();
 
   @Override
-  @Nullable
-  public abstract BlazeCommandRunner getCommandRunner();
+  public abstract FakeBlazeCommandRunner getCommandRunner();
 
   /**
    * Builder class for instances of {@link com.google.idea.blaze.base.bazel.FakeBuildInvoker}.
@@ -89,7 +88,7 @@ public abstract class FakeBuildInvoker implements BuildInvoker {
 
     public abstract Builder buildResultHelperSupplier(Supplier<BuildResultHelper> supplier);
 
-    public abstract Builder commandRunner(BlazeCommandRunner runner);
+    public abstract Builder commandRunner(FakeBlazeCommandRunner runner);
 
     public abstract Builder buildSystem(BuildSystem buildSystem);
   }

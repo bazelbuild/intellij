@@ -21,15 +21,25 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
-public class FakeBuildResultHelperBep implements BuildResultHelper {
+public final class FakeBuildResultHelperBep implements BuildResultHelper {
   private static final ImmutableList.Builder<String> startupOptions = ImmutableList.builder();
   private static final ImmutableList.Builder<String> cmdlineOptions = ImmutableList.builder();
+  @Nullable private final ParsedBepOutput parsedBepOutput;
 
   public FakeBuildResultHelperBep(
       ImmutableList<String> startupOptions, ImmutableList<String> cmdlineOptions) {
+    this(startupOptions, cmdlineOptions, null);
+  }
+
+  public FakeBuildResultHelperBep(
+      ImmutableList<String> startupOptions,
+      ImmutableList<String> cmdlineOptions,
+      @Nullable ParsedBepOutput output) {
     FakeBuildResultHelperBep.startupOptions.addAll(startupOptions);
     FakeBuildResultHelperBep.cmdlineOptions.addAll(cmdlineOptions);
+    parsedBepOutput = output;
   }
 
   @Override
@@ -40,7 +50,11 @@ public class FakeBuildResultHelperBep implements BuildResultHelper {
   @Override
   public ParsedBepOutput getBuildOutput(Optional<String> completedBuildId)
       throws GetArtifactsException {
-    return null;
+    if (parsedBepOutput == null) {
+      throw new GetArtifactsException("Could not get artifacts from null bep");
+    }
+
+    return parsedBepOutput;
   }
 
   @Override
