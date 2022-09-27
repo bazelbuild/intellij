@@ -49,7 +49,7 @@ public class BazelBuildSystemProvider implements BuildSystemProvider {
   @Override
   public String getRuleDocumentationUrl(RuleDefinition rule) {
     // TODO: URL pointing to specific BUILD rule.
-    return "http://www.bazel.build/docs/be/overview.html";
+    return "https://bazel.build/reference/be/overview#rules";
   }
 
   @Override
