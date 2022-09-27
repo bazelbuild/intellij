@@ -15,11 +15,15 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
+import static java.lang.Math.max;
+
+import com.android.annotations.concurrency.UiThread;
 import com.android.tools.idea.projectsystem.ProjectSystemBuildManager;
 import com.google.idea.blaze.base.build.BlazeBuildListener;
 import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +38,6 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
       new Topic<>("Blaze Project Build", ProjectSystemBuildManager.BuildListener.class);
 
   private final Project project;
-  private final AtomicInteger buildCount = new AtomicInteger(0);
 
   BlazeProjectSystemBuildManager(Project project) {
     this.project = project;
@@ -45,7 +48,7 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
     BlazeBuildService.getInstance(project).buildProject();
   }
 
-  // @Override #api203
+  @Override
   public void compileFilesAndDependencies(Collection<? extends VirtualFile> files) {
     // TODO(b/191937319): Implement incremental builds for individual files
     // Just compile the entire project for now.
@@ -61,15 +64,39 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
         .subscribe(PROJECT_SYSTEM_BUILD_TOPIC, buildListener);
   }
 
-  // @Override #api221
-  public boolean isBuilding() {
-    return buildCount.get() > 0;
-  }
-
   @NotNull
   @Override
   public BuildResult getLastBuildResult() {
     return LastBuildResultCache.getInstance(project).getLastBuildResult();
+  }
+
+  @UiThread
+  // @Override #api221
+  public boolean isBuilding() {
+    return BlazeBuildCounter.getInstance(project).isBuilding();
+  }
+
+  @Service
+  static final class BlazeBuildCounter {
+    private final AtomicInteger buildCount = new AtomicInteger(0);
+
+    public BlazeBuildCounter(Project project) {}
+
+    public void onBuildStarted() {
+      buildCount.incrementAndGet();
+    }
+
+    public void onBuildCompleted() {
+      buildCount.updateAndGet(i -> max(i - 1, 0));
+    }
+
+    public boolean isBuilding() {
+      return buildCount.get() > 0;
+    }
+
+    public static BlazeBuildCounter getInstance(Project project) {
+      return project.getService(BlazeBuildCounter.class);
+    }
   }
 
   /**
@@ -79,7 +106,7 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
   final class BuildCallbackPublisher implements BlazeBuildListener {
     @Override
     public void buildStarting(Project project) {
-      buildCount.incrementAndGet();
+      BlazeBuildCounter.getInstance(project).onBuildStarted();
       project
           .getMessageBus()
           .syncPublisher(PROJECT_SYSTEM_BUILD_TOPIC)
@@ -88,7 +115,6 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
 
     @Override
     public void buildCompleted(Project project, BlazeBuildOutputs buildOutputs) {
-      buildCount.decrementAndGet();
       LastBuildResultCache lastBuildResultCache = LastBuildResultCache.getInstance(project);
       BuildResult projectSystemBuildResult =
           lastBuildResultCache.updateBuildResult(buildOutputs.buildResult);
@@ -99,7 +125,7 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
           .getMessageBus()
           .syncPublisher(PROJECT_SYSTEM_BUILD_TOPIC)
           .beforeBuildCompleted(projectSystemBuildResult);
-
+      BlazeBuildCounter.getInstance(project).onBuildCompleted();
       project
           .getMessageBus()
           .syncPublisher(PROJECT_SYSTEM_BUILD_TOPIC)
