@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.run.testlogs;
 
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolOutputReader;
+import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.BufferedInputStream;
@@ -28,14 +29,13 @@ import java.io.InputStream;
  *
  * <p>Parses the output BEP proto written by blaze to locate the test XML files.
  */
-public final class BuildEventProtocolTestFinderStrategy implements BlazeTestResultFinderStrategy {
-
+public final class LocalBuildEventProtocolTestFinderStrategy
+    implements BlazeTestResultFinderStrategy {
   private static final Logger logger =
-      Logger.getInstance(BuildEventProtocolTestFinderStrategy.class);
-
+      Logger.getInstance(LocalBuildEventProtocolTestFinderStrategy.class);
   private final File outputFile;
 
-  public BuildEventProtocolTestFinderStrategy(File bepOutputFile) {
+  public LocalBuildEventProtocolTestFinderStrategy(File bepOutputFile) {
     this.outputFile = bepOutputFile;
   }
 
@@ -44,7 +44,7 @@ public final class BuildEventProtocolTestFinderStrategy implements BlazeTestResu
     try (InputStream inputStream =
         new BufferedInputStream(InputStreamProvider.getInstance().forFile(outputFile))) {
       return BuildEventProtocolOutputReader.parseTestResults(inputStream);
-    } catch (IOException e) {
+    } catch (IOException | BuildEventStreamException e) {
       logger.warn(e);
       return BlazeTestResults.NO_RESULTS;
     }
