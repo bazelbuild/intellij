@@ -26,6 +26,7 @@ public class BlazeAndroidDeployInfo {
   private final ParsedManifest mergedManifest;
   @Nullable private final ParsedManifest testTargetMergedManifest;
   private final ImmutableList<File> apksToDeploy;
+  private final ImmutableList<File> symbolFiles;
 
   /**
    * Note: Not every deployment has a test target, so {@param testTargetMergedManifest} can be null.
@@ -34,9 +35,18 @@ public class BlazeAndroidDeployInfo {
       ParsedManifest mergedManifest,
       @Nullable ParsedManifest testTargetMergedManifest,
       ImmutableList<File> apksToDeploy) {
+    this(mergedManifest, testTargetMergedManifest, apksToDeploy, ImmutableList.of());
+  }
+
+  public BlazeAndroidDeployInfo(
+      ParsedManifest mergedManifest,
+      @Nullable ParsedManifest testTargetMergedManifest,
+      ImmutableList<File> apksToDeploy,
+      ImmutableList<File> symbolFiles) {
     this.mergedManifest = mergedManifest;
     this.testTargetMergedManifest = testTargetMergedManifest;
     this.apksToDeploy = apksToDeploy;
+    this.symbolFiles = symbolFiles;
   }
 
   /**
@@ -62,5 +72,10 @@ public class BlazeAndroidDeployInfo {
   /** Returns the full list of apks to deploy, if any. */
   public ImmutableList<File> getApksToDeploy() {
     return apksToDeploy;
+  }
+
+  /** Returns the full list of C++ symbol files to provide to LLDB to symbolize debugging. */
+  public ImmutableList<File> getSymbolFiles() {
+    return symbolFiles;
   }
 }

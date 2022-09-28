@@ -15,16 +15,21 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
+import static java.util.stream.Collectors.joining;
+
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;
 import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
+import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import javax.annotation.Nullable;
 
 /** Provides android debuggers and debugger states for blaze projects. */
 public interface BlazeAndroidDebuggerService {
@@ -42,8 +47,25 @@ public interface BlazeAndroidDebuggerService {
    * <p>Note: Blaze projects should always use this method instead of the debuggers' {@link
    * AndroidDebugger#createState()} method. Blaze projects require additional setup such as
    * workspace directory flags that cannot be handled by the debuggers themselves.
+   *
+   * @deprecated Use {@link getDebuggerState(AndroidDebugger, BlazeAndroidDeployInfo)} where
+   *     possible.
    */
+  @CanIgnoreReturnValue
+  @Deprecated
   AndroidDebuggerState getDebuggerState(AndroidDebugger debugger);
+
+  /**
+   * Returns fully initialized debugger states, incorporating info from {@link
+   * BlazeAndroidDeployInfo}.
+   *
+   * <p>Note: Blaze projects should always use this method instead of the debuggers' {@link
+   * AndroidDebugger#createState()} method. Blaze projects require additional setup such as
+   * workspace directory flags that cannot be handled by the debuggers themselves.
+   */
+  @CanIgnoreReturnValue
+  AndroidDebuggerState getDebuggerState(
+      AndroidDebugger debugger, BlazeAndroidDeployInfo deployInfo);
 
   /** Default debugger service. */
   class DefaultDebuggerService implements BlazeAndroidDebuggerService {
@@ -58,8 +80,21 @@ public interface BlazeAndroidDebuggerService {
       return isNativeDebuggingEnabled ? new BlazeAutoAndroidDebugger() : new AndroidJavaDebugger();
     }
 
+    /**
+     * @deprecated Use {@link getDebuggerState(AndroidDebugger, BlazeAndroidDeployInfo)} where
+     *     possible.
+     */
     @Override
+    @CanIgnoreReturnValue
+    @Deprecated
     public AndroidDebuggerState getDebuggerState(AndroidDebugger debugger) {
+      return getDebuggerState(debugger, null);
+    }
+
+    @Override
+    @CanIgnoreReturnValue
+    public AndroidDebuggerState getDebuggerState(
+        AndroidDebugger debugger, @Nullable BlazeAndroidDeployInfo deployInfo) {
       AndroidDebuggerState debuggerState = debugger.createState();
       if (isNdkPluginLoaded() && debuggerState instanceof NativeAndroidDebuggerState) {
         NativeAndroidDebuggerState nativeState = (NativeAndroidDebuggerState) debuggerState;
@@ -75,10 +110,21 @@ public interface BlazeAndroidDebuggerService {
         // LLDB.
         String sourceMapToWorkspaceRootCommand =
             "settings append target.source-map /proc/self/cwd/ " + workingDirPath;
+
+        String symbolSearchPathsCommand = "";
+        if (deployInfo != null && !deployInfo.getSymbolFiles().isEmpty()) {
+          symbolSearchPathsCommand =
+              "settings append target.exec-search-paths "
+                  + deployInfo.getSymbolFiles().stream()
+                      .map(symbol -> symbol.getParentFile().getAbsolutePath())
+                      .collect(joining(" "));
+        }
+
         ImmutableList<String> startupCommands =
             ImmutableList.<String>builder()
                 .addAll(nativeState.getUserStartupCommands())
                 .add(sourceMapToWorkspaceRootCommand)
+                .add(symbolSearchPathsCommand)
                 .build();
         nativeState.setUserStartupCommands(startupCommands);
       }
