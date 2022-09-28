@@ -34,7 +34,7 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelpe
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
 import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep;
-import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep.InstrumentationInfo;
+import com.google.idea.blaze.android.run.runner.InstrumentationInfo;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
@@ -118,7 +118,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     Label instrumentationTestLabel = Label.create("//java/com/foo/app:instrumentation_test");
     InstrumentationInfo pair =
-        BlazeInstrumentationTestApkBuildStep.getInstrumentationInfo(
+        InstrumentationInfo.getInstrumentationInfo(
             instrumentationTestLabel,
             BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
             context);
@@ -138,7 +138,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     Label instrumentationTestLabel = Label.create("//java/com/foo/app:self_instrumenting_test");
     InstrumentationInfo pair =
-        BlazeInstrumentationTestApkBuildStep.getInstrumentationInfo(
+        InstrumentationInfo.getInstrumentationInfo(
             instrumentationTestLabel,
             BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
             context);
@@ -404,7 +404,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     Label instrumentationTestLabel = Label.create("//java/com/foo/app:instrumentation_test");
     InstrumentationInfo pair =
-        BlazeInstrumentationTestApkBuildStep.getInstrumentationInfo(
+        InstrumentationInfo.getInstrumentationInfo(
             instrumentationTestLabel,
             BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
             context);
@@ -434,7 +434,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     setupProject();
     Label instrumentationTestLabel = Label.create("//java/com/foo/app:instrumentation_test");
     InstrumentationInfo pair =
-        BlazeInstrumentationTestApkBuildStep.getInstrumentationInfo(
+        InstrumentationInfo.getInstrumentationInfo(
             instrumentationTestLabel,
             BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
             BlazeContext.create());
