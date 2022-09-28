@@ -34,7 +34,6 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelpe
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
 import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep;
-import com.google.idea.blaze.android.run.runner.InstrumentationInfo;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
@@ -47,7 +46,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import java.io.File;
 import org.junit.Before;
 import org.junit.Test;
@@ -107,47 +105,6 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
     buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
     registerExtension(BuildSystemProvider.EP_NAME, buildSystem);
-  }
-
-  @Test
-  public void getInstrumentorToTargetPair_separateInstrumentorAndTestTargets() {
-    setupProject();
-    MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = BlazeContext.create();
-    context.addOutputSink(IssueOutput.class, messageCollector);
-
-    Label instrumentationTestLabel = Label.create("//java/com/foo/app:instrumentation_test");
-    InstrumentationInfo pair =
-        InstrumentationInfo.getInstrumentationInfo(
-            instrumentationTestLabel,
-            BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
-            context);
-
-    assertThat(pair.testApp).isEqualTo(Label.create("//java/com/foo/app:test_app"));
-    assertThat(pair.targetApp).isEqualTo(Label.create("//java/com/foo/app:app"));
-    assertThat(pair.isSelfInstrumentingTest()).isFalse();
-    assertThat(messageCollector.getMessages()).isEmpty();
-  }
-
-  @Test
-  public void getInstrumentorToTargetPair_selfInstrumentingTest() {
-    setupProject();
-    MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = BlazeContext.create();
-    context.addOutputSink(IssueOutput.class, messageCollector);
-
-    Label instrumentationTestLabel = Label.create("//java/com/foo/app:self_instrumenting_test");
-    InstrumentationInfo pair =
-        InstrumentationInfo.getInstrumentationInfo(
-            instrumentationTestLabel,
-            BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
-            context);
-
-    assertThat(pair.testApp)
-        .isEqualTo(Label.create("//java/com/foo/app:test_app_self_instrumenting"));
-    assertThat(pair.targetApp).isNull();
-    assertThat(pair.isSelfInstrumentingTest()).isTrue();
-    assertThat(messageCollector.getMessages()).isEmpty();
   }
 
   @Test
@@ -368,54 +325,6 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     assertThat(messageCollector.getMessages()).contains("Could not locate execroot!");
   }
 
-  @Test
-  public void noTestAppSpecified() {
-    setProjectView(
-        "directories:",
-        "  java/com/foo/app",
-        "targets:",
-        "  //java/com/foo/app:instrumentation_test",
-        "android_sdk_platform: android-27");
-    MockSdkUtil.registerSdk(workspace, "27");
-
-    workspace.createFile(
-        new WorkspacePath("java/com/foo/app/MainActivity.java"),
-        "package com.foo.app",
-        "import android.app.Activity;",
-        "public class MainActivity extends Activity {}");
-
-    workspace.createFile(
-        new WorkspacePath("java/com/foo/app/Test.java"),
-        "package com.foo.app",
-        "public class Test {}");
-
-    setTargetMap(
-        android_binary("//java/com/foo/app:app").src("MainActivity.java"),
-        android_binary("//java/com/foo/app:test_app")
-            .setResourceJavaPackage("com.foo.app.androidtest")
-            .src("Test.java")
-            .instruments("//java/com/foo/app:app"),
-        android_instrumentation_test("//java/com/foo/app:instrumentation_test"));
-    runFullBlazeSyncWithNoIssues();
-
-    MessageCollector messageCollector = new MessageCollector();
-    BlazeContext context = BlazeContext.create();
-    context.addOutputSink(IssueOutput.class, messageCollector);
-
-    Label instrumentationTestLabel = Label.create("//java/com/foo/app:instrumentation_test");
-    InstrumentationInfo pair =
-        InstrumentationInfo.getInstrumentationInfo(
-            instrumentationTestLabel,
-            BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
-            context);
-
-    assertThat(pair).isNull();
-    assertThat(messageCollector.getMessages()).hasSize(1);
-    assertThat(messageCollector.getMessages().get(0))
-        .contains(
-            "No \"test_app\" in target definition for //java/com/foo/app:instrumentation_test.");
-  }
-
   /** Saves the latest blaze command and context for later verification. */
   private static class ExternalTaskInterceptor implements ExternalTaskProvider {
     ImmutableList<String> command;
@@ -427,18 +336,5 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
       context = builder.context;
       return scopes -> 0;
     }
-  }
-
-  @Test
-  public void findInstrumentorAndTestTargets() {
-    setupProject();
-    Label instrumentationTestLabel = Label.create("//java/com/foo/app:instrumentation_test");
-    InstrumentationInfo pair =
-        InstrumentationInfo.getInstrumentationInfo(
-            instrumentationTestLabel,
-            BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
-            BlazeContext.create());
-    assertThat(pair.testApp).isEqualTo(Label.create("//java/com/foo/app:test_app"));
-    assertThat(pair.targetApp).isEqualTo(Label.create("//java/com/foo/app:app"));
   }
 }
