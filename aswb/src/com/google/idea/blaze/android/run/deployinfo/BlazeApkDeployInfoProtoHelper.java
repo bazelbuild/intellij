@@ -100,6 +100,16 @@ public class BlazeApkDeployInfoProtoHelper {
   public BlazeAndroidDeployInfo extractDeployInfoAndInvalidateManifests(
       Project project, File executionRoot, AndroidDeployInfo deployInfoProto)
       throws GetDeployInfoException {
+    return extractDeployInfoAndInvalidateManifests(
+        project, executionRoot, deployInfoProto, ImmutableList.of());
+  }
+
+  public BlazeAndroidDeployInfo extractDeployInfoAndInvalidateManifests(
+      Project project,
+      File executionRoot,
+      AndroidDeployInfo deployInfoProto,
+      ImmutableList<File> symbolFiles)
+      throws GetDeployInfoException {
     File mergedManifestFile =
         new File(executionRoot, deployInfoProto.getMergedManifest().getExecRootPath());
     ParsedManifest mergedManifest = getParsedManifestSafe(project, mergedManifestFile);
@@ -122,7 +132,8 @@ public class BlazeApkDeployInfoProtoHelper {
             .map(artifact -> new File(executionRoot, artifact.getExecRootPath()))
             .collect(ImmutableList.toImmutableList());
 
-    return new BlazeAndroidDeployInfo(mergedManifest, testTargetMergedManifest, apksToDeploy);
+    return new BlazeAndroidDeployInfo(
+        mergedManifest, testTargetMergedManifest, apksToDeploy, symbolFiles);
   }
 
   public BlazeAndroidDeployInfo extractInstrumentationTestDeployInfoAndInvalidateManifests(

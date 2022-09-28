@@ -15,11 +15,14 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
+import static java.util.stream.Collectors.joining;
+
 import com.android.tools.idea.run.ApkProvisionException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoOuterClass.AndroidDeployInfo;
+import com.google.idea.blaze.android.run.NativeSymbolFinder;
 import com.google.idea.blaze.android.run.RemoteApkDownloader;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
@@ -50,6 +53,7 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 
 /** Builds the APK using normal blaze build. */
 public class FullApkBuildStep implements ApkBuildStep {
@@ -100,9 +104,15 @@ public class FullApkBuildStep implements ApkBuildStep {
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+      List<NativeSymbolFinder> nativeSymbolFinderList =
+          NativeSymbolFinder.EP_NAME.getExtensionList();
       command
           .addTargets(label)
           .addBlazeFlags("--output_groups=+android_deploy_info")
+          .addBlazeFlags(
+              nativeSymbolFinderList.stream()
+                  .map(NativeSymbolFinder::getAdditionalBuildFlags)
+                  .collect(joining(" ")))
           .addBlazeFlags(buildFlags)
           .addBlazeFlags(buildResultHelper.getBuildFlags());
 
@@ -136,9 +146,15 @@ public class FullApkBuildStep implements ApkBuildStep {
       AndroidDeployInfo deployInfoProto =
           deployInfoHelper.readDeployInfoProtoForTarget(
               label, buildResultHelper, fileName -> fileName.endsWith(DEPLOY_INFO_SUFFIX));
+      ImmutableList<File> libs =
+          nativeSymbolFinderList.stream()
+              .flatMap(
+                  finder ->
+                      finder.getNativeSymbolsForBuild(context, label, buildResultHelper).stream())
+              .collect(ImmutableList.toImmutableList());
       deployInfo =
           deployInfoHelper.extractDeployInfoAndInvalidateManifests(
-              project, new File(executionRoot), deployInfoProto);
+              project, new File(executionRoot), deployInfoProto, libs);
     } catch (GetArtifactsException e) {
       IssueOutput.error("Could not read BEP output: " + e.getMessage()).submit(context);
     } catch (GetDeployInfoException e) {
