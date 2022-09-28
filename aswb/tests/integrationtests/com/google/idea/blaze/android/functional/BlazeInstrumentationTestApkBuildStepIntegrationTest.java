@@ -34,7 +34,7 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelpe
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
 import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep;
-import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep.InstrumentorToTarget;
+import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep.InstrumentationInfo;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
@@ -116,17 +116,15 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
-    BlazeInstrumentationTestApkBuildStep buildStep =
-        new BlazeInstrumentationTestApkBuildStep(
-            getProject(),
-            Label.create("//java/com/foo/app:instrumentation_test"),
-            ImmutableList.of());
-    InstrumentorToTarget pair =
-        buildStep.getInstrumentorToTargetPair(
-            context, BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData());
+    Label instrumentationTestLabel = Label.create("//java/com/foo/app:instrumentation_test");
+    InstrumentationInfo pair =
+        BlazeInstrumentationTestApkBuildStep.getInstrumentationInfo(
+            instrumentationTestLabel,
+            BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
+            context);
 
-    assertThat(pair.instrumentor).isEqualTo(Label.create("//java/com/foo/app:test_app"));
-    assertThat(pair.target).isEqualTo(Label.create("//java/com/foo/app:app"));
+    assertThat(pair.testApp).isEqualTo(Label.create("//java/com/foo/app:test_app"));
+    assertThat(pair.targetApp).isEqualTo(Label.create("//java/com/foo/app:app"));
     assertThat(pair.isSelfInstrumentingTest()).isFalse();
     assertThat(messageCollector.getMessages()).isEmpty();
   }
@@ -138,18 +136,16 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
-    BlazeInstrumentationTestApkBuildStep buildStep =
-        new BlazeInstrumentationTestApkBuildStep(
-            getProject(),
-            Label.create("//java/com/foo/app:self_instrumenting_test"),
-            ImmutableList.of());
-    InstrumentorToTarget pair =
-        buildStep.getInstrumentorToTargetPair(
-            context, BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData());
+    Label instrumentationTestLabel = Label.create("//java/com/foo/app:self_instrumenting_test");
+    InstrumentationInfo pair =
+        BlazeInstrumentationTestApkBuildStep.getInstrumentationInfo(
+            instrumentationTestLabel,
+            BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
+            context);
 
-    assertThat(pair.instrumentor)
+    assertThat(pair.testApp)
         .isEqualTo(Label.create("//java/com/foo/app:test_app_self_instrumenting"));
-    assertThat(pair.target).isNull();
+    assertThat(pair.targetApp).isNull();
     assertThat(pair.isSelfInstrumentingTest()).isTrue();
     assertThat(messageCollector.getMessages()).isEmpty();
   }
@@ -406,14 +402,12 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
     BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, messageCollector);
 
-    BlazeInstrumentationTestApkBuildStep buildStep =
-        new BlazeInstrumentationTestApkBuildStep(
-            getProject(),
-            Label.create("//java/com/foo/app:instrumentation_test"),
-            ImmutableList.of());
-    InstrumentorToTarget pair =
-        buildStep.getInstrumentorToTargetPair(
-            context, BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData());
+    Label instrumentationTestLabel = Label.create("//java/com/foo/app:instrumentation_test");
+    InstrumentationInfo pair =
+        BlazeInstrumentationTestApkBuildStep.getInstrumentationInfo(
+            instrumentationTestLabel,
+            BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
+            context);
 
     assertThat(pair).isNull();
     assertThat(messageCollector.getMessages()).hasSize(1);
@@ -438,17 +432,13 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   @Test
   public void findInstrumentorAndTestTargets() {
     setupProject();
-    BlazeInstrumentationTestApkBuildStep buildStep =
-        new BlazeInstrumentationTestApkBuildStep(
-            getProject(),
-            Label.create("//java/com/foo/app:instrumentation_test"),
-            ImmutableList.of());
-
-    InstrumentorToTarget pair =
-        buildStep.getInstrumentorToTargetPair(
-            BlazeContext.create(),
-            BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData());
-    assertThat(pair.instrumentor).isEqualTo(Label.create("//java/com/foo/app:test_app"));
-    assertThat(pair.target).isEqualTo(Label.create("//java/com/foo/app:app"));
+    Label instrumentationTestLabel = Label.create("//java/com/foo/app:instrumentation_test");
+    InstrumentationInfo pair =
+        BlazeInstrumentationTestApkBuildStep.getInstrumentationInfo(
+            instrumentationTestLabel,
+            BlazeProjectDataManager.getInstance(getProject()).getBlazeProjectData(),
+            BlazeContext.create());
+    assertThat(pair.testApp).isEqualTo(Label.create("//java/com/foo/app:test_app"));
+    assertThat(pair.targetApp).isEqualTo(Label.create("//java/com/foo/app:app"));
   }
 }
