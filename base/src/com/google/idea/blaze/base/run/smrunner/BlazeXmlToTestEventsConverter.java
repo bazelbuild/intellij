@@ -86,7 +86,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
 
     try {
       BlazeTestResults testResults = testResultFinderStrategy.findTestResults();
-      if (testResults == null || testResults == BlazeTestResults.NO_RESULTS) {
+      if (testResults == BlazeTestResults.NO_RESULTS) {
         reportError(exitCode);
       } else {
         processAllTestResults(testResults);
