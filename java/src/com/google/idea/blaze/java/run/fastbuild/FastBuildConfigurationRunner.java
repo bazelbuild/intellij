@@ -50,10 +50,10 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import java.util.Objects;
@@ -202,11 +202,13 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
     NotificationGroupManager.getInstance()
         .getNotificationGroup("Fastbuild failed notification")
         .createNotification(
-            "Click here to run the tests again with a fresh "
+            "To run the tests again with a fresh "
                 + Blaze.getBuildSystemName(project)
-                + " build.\n",
+                + " build, click",
             NotificationType.ERROR)
-        .addAction(DumbAwareAction.create((event) -> rerunTests(env, label, buildService)))
+        .addAction(
+            NotificationAction.createExpiring(
+                "here", (event, notification) -> rerunTests(env, label, buildService)))
         .notify(project);
 
     ExecutionUtil.handleExecutionError(
