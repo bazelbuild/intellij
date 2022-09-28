@@ -15,10 +15,7 @@
  */
 package com.google.idea.blaze.android.filecache;
 
-import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.toCollection;
-
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
@@ -27,7 +24,6 @@ import com.google.idea.blaze.base.async.FutureUtil;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
-import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.prefetch.FetchExecutor;
 import com.google.idea.blaze.base.prefetch.RemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -38,23 +34,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -85,9 +76,6 @@ import javax.annotation.Nullable;
  */
 public class LocalArtifactCache implements ArtifactCache {
   private static final Logger logger = Logger.getInstance(LocalArtifactCache.class);
-
-  /** Name of file that contains the cache state. */
-  @VisibleForTesting static final String CACHE_DATA_FILENAME = "cache_data.json";
 
   private final Project project;
 
@@ -128,16 +116,9 @@ public class LocalArtifactCache implements ArtifactCache {
   @Override
   public synchronized void clearCache() {
     try {
-      // List and delete all files in the cache directory
-      File[] filesInDir = FileOperationProvider.getInstance().listFiles(cacheDir.toFile());
-      if (filesInDir == null) {
-        logger.warn(String.format("Could not list files in %s", cacheDir));
-        return;
-      }
-      ImmutableList<ListenableFuture<?>> deletionFutures =
-          deleteFiles(ImmutableList.copyOf(filesInDir));
+      ImmutableList<ListenableFuture<?>> deletionFutures = LocalCacheUtils.clearCache(cacheDir);
       Futures.allAsList(deletionFutures).get();
-    } catch (ExecutionException e) {
+    } catch (ExecutionException | LocalCacheOperationException e) {
       logger.warn("Could not delete contents of " + cacheDir, e);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -146,6 +127,11 @@ public class LocalArtifactCache implements ArtifactCache {
       cacheState.clear();
       writeCacheData();
     }
+  }
+
+  @Override
+  public void refresh() {
+    throw new UnsupportedOperationException("Operation is not supported.");
   }
 
   /**
@@ -251,6 +237,16 @@ public class LocalArtifactCache implements ArtifactCache {
 
   @Override
   @Nullable
+  public synchronized Path get(String cacheKey) {
+    CacheEntry cacheEntry = cacheState.get(cacheKey);
+    if (cacheEntry == null) {
+      return null;
+    }
+    return LocalCacheUtils.getPathToCachedFile(cacheDir, cacheEntry.getFileName());
+  }
+
+  @Override
+  @Nullable
   public synchronized Path get(OutputArtifact artifact) {
     CacheEntry queriedEntry;
     try {
@@ -258,12 +254,7 @@ public class LocalArtifactCache implements ArtifactCache {
     } catch (ArtifactNotFoundException e) {
       return null;
     }
-    String cacheKey = queriedEntry.getCacheKey();
-    CacheEntry cacheEntry = cacheState.get(cacheKey);
-    if (cacheEntry == null) {
-      return null;
-    }
-    return getPathToCachedFile(cacheEntry.getFileName());
+    return get(queriedEntry.getCacheKey());
   }
 
   /**
@@ -272,49 +263,41 @@ public class LocalArtifactCache implements ArtifactCache {
    * state is found, makes a best effort to fix cache state and make it consistent.
    */
   private void loadCacheData() {
-    File cacheDirFile = cacheDir.toFile();
-
-    // mkdirs is no-op if the directory already exists.
-    FileOperationProvider.getInstance().mkdirs(cacheDirFile);
-
-    if (!FileOperationProvider.getInstance().isDirectory(cacheDirFile)) {
-      throw new IllegalArgumentException(
-          "Cache Directory '" + cacheDirFile + "' is not a valid directory");
-    }
-
-    // List files in the cache directory to ensure that the cache is in a consistent state.
-    File[] allFilesInCacheDir = FileOperationProvider.getInstance().listFiles(cacheDirFile);
-    if (allFilesInCacheDir == null) {
-      throw new IllegalArgumentException("Could not list files in directory: " + cacheDirFile);
-    }
-
     // All files in cache directory except the serialized cache state json
-    Set<File> cachedFiles =
-        stream(allFilesInCacheDir)
-            .filter(s -> !s.getName().equals(CACHE_DATA_FILENAME))
-            .collect(toCollection(HashSet::new));
+    Set<File> cachedFiles = LocalCacheUtils.getCacheFiles(cacheDir);
 
-    File cacheDataFile = getCacheDataFile();
+    File cacheDataFile = LocalCacheUtils.getCacheDataFile(cacheDir);
     // No cache data file, but there are other files present in cache directory
-    if (!FileOperationProvider.getInstance().exists(getCacheDataFile()) && !cachedFiles.isEmpty()) {
+    if (!FileOperationProvider.getInstance().exists(cacheDataFile) && !cachedFiles.isEmpty()) {
       logger.warn(
           String.format(
               "%s does not exist, but %s contains cached files. Clearing directory for a clean"
                   + " start.",
-              cacheDataFile, cacheDirFile));
+              cacheDataFile, cacheDir));
       clearCache();
       return;
     }
 
-    // Read cache state from disk
-    ArtifactCacheData artifactCacheData = readJsonFromDisk(cacheDataFile);
-    cacheState.clear();
-    artifactCacheData.getCacheEntries().forEach(e -> cacheState.put(e.getCacheKey(), e));
+    try {
+      // Read cache state from disk
+      LocalCacheUtils.loadCacheDataFileToCacheState(cacheDataFile, cacheState);
 
-    // Remove any references to files that no longer exists in file system
-    removeStaleReferences(cachedFiles);
-    // Remove any file in FS that is not referenced by the cache
-    removeUntrackedFiles(cachedFiles);
+      // Remove any references to files that no longer exists in file system
+      ImmutableCollection<String> removedReferences =
+          LocalCacheUtils.removeStaleReferences(cachedFiles, cacheState);
+
+      if (!removedReferences.isEmpty()) {
+        logger.warn(
+            String.format(
+                "%d invalid references in %s. Removed invalid references.",
+                removedReferences.size(), cacheName));
+      }
+
+      // Remove any file in FS that is not referenced by the cache
+      removeUntrackedFiles(cachedFiles);
+    } finally {
+      writeCacheData();
+    }
   }
 
   /**
@@ -332,8 +315,8 @@ public class LocalArtifactCache implements ArtifactCache {
                       try {
                         copyLocally(
                             kv.getValue(),
-                            getPathToCachedFile(
-                                updatedKeyToCacheEntry.get(kv.getKey()).getFileName()));
+                            LocalCacheUtils.getPathToCachedFile(
+                                cacheDir, updatedKeyToCacheEntry.get(kv.getKey()).getFileName()));
                         // return cache key of successfully copied file
                         return kv.getKey();
                       } catch (IOException e) {
@@ -382,47 +365,15 @@ public class LocalArtifactCache implements ArtifactCache {
         .collect(ImmutableList.toImmutableList());
   }
 
-  /**
-   * Removes entries in {@link #cacheState} that do not have a corresponding file in {@code
-   * cachedFiles}.
-   */
-  private void removeStaleReferences(Set<File> cachedFiles) {
-    Map<String, String> staleFilesToKey =
-        cacheState.values().stream()
-            .collect(Collectors.toMap(CacheEntry::getFileName, CacheEntry::getCacheKey));
-    cachedFiles.stream().map(File::getName).forEach(staleFilesToKey::remove);
-
-    if (staleFilesToKey.isEmpty()) {
-      return;
-    }
-
-    logger.warn(
-        String.format(
-            "%d invalid references in %s. Removing invalid references.",
-            staleFilesToKey.size(), cacheName));
-    staleFilesToKey.values().forEach(cacheState::remove);
-    writeCacheData();
-  }
-
   /** Deletes files in {@code cachedFiles} that are not tracked in {@link #cacheState}. */
   private void removeUntrackedFiles(Set<File> cachedFiles) {
-    // Files in cachedFiles not referenced by cacheState
-    Set<File> untrackedFiles = new HashSet<>(cachedFiles);
-    cacheState.values().stream()
-        .map(CacheEntry::getFileName)
-        .map(this::getPathToCachedFile)
-        .map(Path::toFile)
-        .forEach(untrackedFiles::remove);
+    ImmutableList<ListenableFuture<?>> futures =
+        LocalCacheUtils.removeUntrackedFiles(cachedFiles, cacheState);
 
-    if (untrackedFiles.isEmpty()) {
+    if (futures.isEmpty()) {
       return;
     }
 
-    logger.warn(
-        String.format(
-            "%d untracked files in %s. Removing untracked files.",
-            untrackedFiles.size(), cacheName));
-    ImmutableList<ListenableFuture<?>> futures = deleteFiles(untrackedFiles);
     try {
       Futures.allAsList(futures).get();
     } catch (InterruptedException e) {
@@ -432,94 +383,17 @@ public class LocalArtifactCache implements ArtifactCache {
     }
   }
 
-  private ImmutableList<ListenableFuture<?>> deleteFiles(Collection<File> removed) {
-    return removed.stream()
-        .map(
-            f ->
-                FetchExecutor.EXECUTOR.submit(
-                    () -> {
-                      try {
-                        Files.deleteIfExists(f.toPath());
-                      } catch (IOException e) {
-                        logger.warn(e);
-                      }
-                    }))
-        .collect(ImmutableList.toImmutableList());
-  }
-
   /** Serializes {@link #cacheState} to a file on disk. */
   private void writeCacheData() {
-    File cacheDataFile = getCacheDataFile();
-    ArtifactCacheData artifactCacheData = new ArtifactCacheData(cacheState.values());
+    File cacheDataFile = LocalCacheUtils.getCacheDataFile(cacheDir);
+    CacheData cacheData = new CacheData(cacheState.values());
 
     try {
-      ListenableFuture<?> writeFuture = writeCacheData(cacheDir, cacheDataFile, artifactCacheData);
-      writeFuture.get();
+      LocalCacheUtils.writeCacheData(cacheDir, cacheDataFile, cacheData).get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (ExecutionException e) {
       logger.warn(String.format("Failed to write cache state file %s", cacheDataFile));
     }
-  }
-
-  private static ListenableFuture<?> writeCacheData(
-      Path cacheDir, File cacheDataFile, ArtifactCacheData artifactCacheData) {
-    // Logger will catch any issues with writing the cache state
-    return FetchExecutor.EXECUTOR.submit(
-        () -> {
-          try {
-            writeJsonToDisk(cacheDataFile, artifactCacheData);
-            logCacheInfo(cacheDir.toFile());
-          } catch (IOException e) {
-            logger.warn(String.format("Failed to write cache state file %s", cacheDataFile));
-          }
-        });
-  }
-
-  @VisibleForTesting
-  public static ArtifactCacheData readJsonFromDisk(File cacheDataFile) {
-    if (!FileOperationProvider.getInstance().exists(cacheDataFile)) {
-      return new ArtifactCacheData(ImmutableList.of());
-    }
-
-    try (InputStream inputStream = new FileInputStream(cacheDataFile)) {
-      return ArtifactCacheData.readJson(inputStream);
-    } catch (IOException e) {
-      logger.warn("Could not read " + cacheDataFile, e);
-    }
-    return new ArtifactCacheData(ImmutableList.of());
-  }
-
-  private static void writeJsonToDisk(File cacheDataFile, ArtifactCacheData artifactCacheData)
-      throws IOException {
-    try (OutputStream stream = new FileOutputStream(cacheDataFile)) {
-      artifactCacheData.writeJson(stream);
-    }
-  }
-
-  private static void logCacheInfo(File cacheDirFile) {
-    long cacheDirSize = FileOperationProvider.getInstance().getFileSize(cacheDirFile);
-
-    int numFiles = 0;
-    File[] filesInDir = FileOperationProvider.getInstance().listFiles(cacheDirFile);
-    if (filesInDir != null) {
-      numFiles = filesInDir.length - 1;
-    }
-
-    ImmutableMap.Builder<String, String> data = ImmutableMap.builder();
-    data.put("CacheDir", cacheDirFile.toString());
-    data.put("CacheSize", Long.toString(cacheDirSize));
-    data.put("NumCachedFiles", Integer.toString(numFiles));
-    EventLoggingService.getInstance()
-        .logEvent(LocalArtifactCache.class, "CacheDataWritten", data.build());
-  }
-
-  /** Returns the {@link File} containing serialized cache data */
-  private File getCacheDataFile() {
-    return cacheDir.resolve(CACHE_DATA_FILENAME).toFile();
-  }
-
-  private Path getPathToCachedFile(String fileName) {
-    return cacheDir.resolve(fileName);
   }
 }

@@ -24,16 +24,7 @@ import javax.annotation.Nullable;
 /**
  * Interface to be used by file caches. See {@link LocalArtifactCache} for more detailed JavaDoc.
  */
-public interface ArtifactCache {
-  /**
-   * Method to initialize the cache helper. This method should be called once before any other
-   * public methods
-   */
-  void initialize();
-
-  /** Removes all artifacts stored in the cache. */
-  void clearCache();
-
+public interface ArtifactCache extends LocalCache {
   /**
    * Fetches and caches the given collection of {@link OutputArtifact} to disk.
    *

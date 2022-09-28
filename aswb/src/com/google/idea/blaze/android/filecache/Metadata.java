@@ -20,15 +20,16 @@ import com.google.devtools.intellij.model.ProjectData.LocalFile;
 import com.google.devtools.intellij.model.ProjectData.LocalFileOrOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
+import java.io.File;
 import java.util.Objects;
 
 /** Data class to (de)serialize metadata of an artifact in cache */
-public final class ArtifactMetadata {
+public final class Metadata {
   private final String relativePath;
   // String to uniquely identify a file with a given relative path
   private final String identifier;
 
-  public ArtifactMetadata(String relativePath, String identifier) {
+  public Metadata(String relativePath, String identifier) {
     this.relativePath = relativePath;
     this.identifier = identifier;
   }
@@ -47,11 +48,11 @@ public final class ArtifactMetadata {
       return true;
     }
 
-    if (!(o instanceof ArtifactMetadata)) {
+    if (!(o instanceof Metadata)) {
       return false;
     }
 
-    ArtifactMetadata other = (ArtifactMetadata) o;
+    Metadata other = (Metadata) o;
     return Objects.equals(relativePath, other.relativePath)
         && Objects.equals(identifier, other.identifier);
   }
@@ -66,8 +67,7 @@ public final class ArtifactMetadata {
    *
    * @throws ArtifactNotFoundException if the artifact is not present.
    */
-  public static ArtifactMetadata forArtifact(OutputArtifact artifact)
-      throws ArtifactNotFoundException {
+  public static Metadata forArtifact(OutputArtifact artifact) throws ArtifactNotFoundException {
     ArtifactState artifactState = artifact.toArtifactState();
     if (artifactState == null) {
       throw new ArtifactNotFoundException(artifact);
@@ -76,11 +76,16 @@ public final class ArtifactMetadata {
     LocalFileOrOutputArtifact serializedArtifact = artifactState.serializeToProto();
     if (serializedArtifact.hasArtifact()) {
       ProjectData.OutputArtifact o = serializedArtifact.getArtifact();
-      return new ArtifactMetadata(o.getRelativePath(), o.getId());
+      return new Metadata(o.getRelativePath(), o.getId());
     } else {
       LocalFile o = serializedArtifact.getLocalFile();
       String relativePath = o.getRelativePath().isEmpty() ? o.getPath() : o.getRelativePath();
-      return new ArtifactMetadata(relativePath, Long.toString(o.getTimestamp()));
+      return new Metadata(relativePath, Long.toString(o.getTimestamp()));
     }
+  }
+
+  /** Returns the relevant metadata for an {@code file} that needs to be persisted. */
+  public static Metadata forFile(File file) {
+    return new Metadata(file.getPath(), Long.toString(file.lastModified()));
   }
 }
