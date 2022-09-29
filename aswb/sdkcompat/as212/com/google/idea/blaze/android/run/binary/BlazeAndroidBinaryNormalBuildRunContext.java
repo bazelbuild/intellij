@@ -50,12 +50,12 @@ public class BlazeAndroidBinaryNormalBuildRunContext
 
   @SuppressWarnings("unchecked") // upstream API
   @Override
-  public LaunchTask getApplicationLaunchTask(
+  public <S extends AndroidDebuggerState> LaunchTask getApplicationLaunchTask(
       LaunchOptions launchOptions,
       @Nullable Integer userId,
       String contributorsAmStartOptions,
-      AndroidDebugger androidDebugger,
-      AndroidDebuggerState androidDebuggerState,
+      AndroidDebugger<S> androidDebugger,
+      S androidDebuggerState,
       LaunchStatus launchStatus)
       throws ExecutionException {
     String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
@@ -84,10 +84,8 @@ public class BlazeAndroidBinaryNormalBuildRunContext
 
   @Nullable
   @Override
-  @SuppressWarnings("unchecked")
-  public ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
-      throws ExecutionException {
+  public <S extends AndroidDebuggerState> ConnectDebuggerTask getDebuggerTask(
+      AndroidDebugger<S> androidDebugger, S androidDebuggerState) throws ExecutionException {
     return androidDebugger.getConnectDebuggerTask(
         env,
         null,

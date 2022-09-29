@@ -80,10 +80,8 @@ public class BlazeAndroidBinaryNormalBuildRunContext
 
   @Nullable
   @Override
-  @SuppressWarnings("unchecked")
-  public ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
-      throws ExecutionException {
+  public <S extends AndroidDebuggerState> ConnectDebuggerTask getDebuggerTask(
+      AndroidDebugger<S> androidDebugger, S androidDebuggerState) throws ExecutionException {
     return androidDebugger.getConnectDebuggerTask(
         env, applicationIdProvider, facet, androidDebuggerState);
   }
