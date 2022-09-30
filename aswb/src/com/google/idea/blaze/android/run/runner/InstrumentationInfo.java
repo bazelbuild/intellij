@@ -48,7 +48,8 @@ public class InstrumentationInfo {
    */
   public final Label testApp;
 
-  InstrumentationInfo(@Nullable Label targetApp, Label testApp) {
+  @VisibleForTesting
+  public InstrumentationInfo(@Nullable Label targetApp, Label testApp) {
     this.targetApp = targetApp;
     this.testApp = testApp;
   }

@@ -34,6 +34,7 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelpe
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
 import com.google.idea.blaze.android.run.runner.BlazeInstrumentationTestApkBuildStep;
+import com.google.idea.blaze.android.run.runner.InstrumentationInfo;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
@@ -110,9 +111,10 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   @Test
   public void deployInfoBuiltCorrectly() throws GetDeployInfoException, ApkProvisionException {
     setupProject();
-    Label testTarget = Label.create("//java/com/foo/app:instrumentation_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app");
     Label appTarget = Label.create("//java/com/foo/app:app");
+    InstrumentationInfo info = new InstrumentationInfo(appTarget, instrumentorTarget);
+
     BlazeContext context = BlazeContext.create();
     ImmutableList<String> blazeFlags = ImmutableList.of("some_blaze_flag", "some_other_flag");
 
@@ -140,7 +142,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     // Perform
     BlazeInstrumentationTestApkBuildStep buildStep =
-        new BlazeInstrumentationTestApkBuildStep(getProject(), testTarget, blazeFlags, helper);
+        new BlazeInstrumentationTestApkBuildStep(getProject(), info, blazeFlags, helper);
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -157,8 +159,9 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   public void deployInfoBuiltCorrectly_selfInstrumentingTest()
       throws GetDeployInfoException, ApkProvisionException {
     setupProject();
-    Label testTarget = Label.create("//java/com/foo/app:self_instrumenting_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app_self_instrumenting");
+    InstrumentationInfo info = new InstrumentationInfo(null, instrumentorTarget);
+
     BlazeContext context = BlazeContext.create();
     ImmutableList<String> blazeFlags = ImmutableList.of("some_blaze_flag", "some_other_flag");
 
@@ -180,7 +183,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     // Perform
     BlazeInstrumentationTestApkBuildStep buildStep =
-        new BlazeInstrumentationTestApkBuildStep(getProject(), testTarget, blazeFlags, helper);
+        new BlazeInstrumentationTestApkBuildStep(getProject(), info, blazeFlags, helper);
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -195,9 +198,9 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   @Test
   public void exceptionDuringDeployInfoExtraction() throws GetDeployInfoException {
     setupProject();
-    Label testTarget = Label.create("//java/com/foo/app:instrumentation_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app");
     Label appTarget = Label.create("//java/com/foo/app:app");
+    InstrumentationInfo info = new InstrumentationInfo(instrumentorTarget, appTarget);
 
     MessageCollector messageCollector = new MessageCollector();
     BlazeContext context = BlazeContext.create();
@@ -222,8 +225,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     // Perform
     BlazeInstrumentationTestApkBuildStep buildStep =
-        new BlazeInstrumentationTestApkBuildStep(
-            getProject(), testTarget, ImmutableList.of(), helper);
+        new BlazeInstrumentationTestApkBuildStep(getProject(), info, ImmutableList.of(), helper);
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -235,9 +237,9 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   @Test
   public void blazeCommandFailed() throws GetDeployInfoException {
     setupProject();
-    Label testTarget = Label.create("//java/com/foo/app:instrumentation_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app");
     Label appTarget = Label.create("//java/com/foo/app:app");
+    InstrumentationInfo info = new InstrumentationInfo(appTarget, instrumentorTarget);
 
     MessageCollector messageCollector = new MessageCollector();
     BlazeContext context = BlazeContext.create();
@@ -266,8 +268,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     // Perform
     BlazeInstrumentationTestApkBuildStep buildStep =
-        new BlazeInstrumentationTestApkBuildStep(
-            getProject(), testTarget, ImmutableList.of(), helper);
+        new BlazeInstrumentationTestApkBuildStep(getProject(), info, ImmutableList.of(), helper);
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
@@ -280,9 +281,9 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
   public void nullExecRoot()
       throws GetDeployInfoException, ApkProvisionException, GetArtifactsException {
     setupProject();
-    Label testTarget = Label.create("//java/com/foo/app:instrumentation_test");
     Label instrumentorTarget = Label.create("//java/com/foo/app:test_app");
     Label appTarget = Label.create("//java/com/foo/app:app");
+    InstrumentationInfo info = new InstrumentationInfo(appTarget, instrumentorTarget);
     ImmutableList<String> blazeFlags = ImmutableList.of("some_blaze_flag", "some_other_flag");
 
     MessageCollector messageCollector = new MessageCollector();
@@ -317,7 +318,7 @@ public class BlazeInstrumentationTestApkBuildStepIntegrationTest
 
     // Perform
     BlazeInstrumentationTestApkBuildStep buildStep =
-        new BlazeInstrumentationTestApkBuildStep(getProject(), testTarget, blazeFlags, helper);
+        new BlazeInstrumentationTestApkBuildStep(getProject(), info, blazeFlags, helper);
     buildStep.build(context, new DeviceSession(null, null, null));
 
     // Verify
