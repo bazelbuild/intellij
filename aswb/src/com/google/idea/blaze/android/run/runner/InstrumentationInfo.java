@@ -23,8 +23,6 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import javax.annotation.Nullable;
 
@@ -55,15 +53,27 @@ public class InstrumentationInfo {
     this.testApp = testApp;
   }
 
+  /** Returns whether the test app contains the target itself (self-instrumenting). */
+  public boolean isSelfInstrumentingTest() {
+    return targetApp == null;
+  }
+
+  /** Exception thrown on errors while retrieving {@link InstrumentationInfo} from project data. */
+  public static final class InstrumentationParserException extends RuntimeException {
+    public InstrumentationParserException(String msg) {
+      super(msg);
+    }
+  }
+
   /**
    * Extracts information about the test and target apps from the instrumentation test rule.
    *
    * @return The labels contained in an {@link InstrumentationInfo} object.
    */
-  @Nullable
   @VisibleForTesting
   public static InstrumentationInfo getInstrumentationInfo(
-      Label instrumentationTestLabel, BlazeProjectData projectData, BlazeContext context) {
+      Label instrumentationTestLabel, BlazeProjectData projectData)
+      throws InstrumentationParserException {
     // The following extracts the dependency info required during an instrumentation test.
     // To disambiguate, we try to follow the same terminology as used by the
     // android_instrumentation_test rule docs:
@@ -75,61 +85,49 @@ public class InstrumentationInfo {
     TargetIdeInfo testTarget = targetMap.get(TargetKey.forPlainTarget(instrumentationTestLabel));
     if (testTarget == null
         || testTarget.getKind() != RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
-      IssueOutput.error(
-              "Unable to identify target \""
-                  + instrumentationTestLabel
-                  + "\". Please sync the project and try again.")
-          .submit(context);
-      return null;
+      String msg =
+          "Unable to identify target \""
+              + instrumentationTestLabel
+              + "\". Please sync the project and try again.";
+      throw new InstrumentationParserException(msg);
     }
     AndroidInstrumentationInfo testInstrumentationInfo = testTarget.getAndroidInstrumentationInfo();
     if (testInstrumentationInfo == null) {
-      IssueOutput.error(
-              "Required target data missing for \""
-                  + instrumentationTestLabel
-                  + "\".  Has the target definition changed recently? Please sync the project and"
-                  + " try again.")
-          .submit(context);
-      return null;
+      String msg =
+          "Required target data missing for \""
+              + instrumentationTestLabel
+              + "\".  Has the target definition changed recently? Please sync the project and"
+              + " try again.";
+      throw new InstrumentationParserException(msg);
     }
 
     Label testApp = testInstrumentationInfo.getTestApp();
     if (testApp == null) {
-      IssueOutput.error(
-              "No \"test_app\" in target definition for "
-                  + testTarget.getKey().getLabel()
-                  + ". Please ensure \"test_app\" attribute is set.  See"
-                  + " https://docs.bazel.build/versions/master/be/android.html#android_instrumentation_test.test_app"
-                  + " for more information.")
-          .submit(context);
-      return null;
+      String msg =
+          "No \"test_app\" in target definition for "
+              + testTarget.getKey().getLabel()
+              + ". Please ensure \"test_app\" attribute is set.  See"
+              + " https://docs.bazel.build/versions/master/be/android.html#android_instrumentation_test.test_app"
+              + " for more information.";
+      throw new InstrumentationParserException(msg);
     }
 
     TargetIdeInfo testAppIdeInfo = targetMap.get(TargetKey.forPlainTarget(testApp));
     if (testAppIdeInfo == null) {
-      IssueOutput.error(
-              "Unable to identify target \""
-                  + testApp
-                  + "\". Please sync the project and try again.")
-          .submit(context);
-      return null;
+      String msg =
+          "Unable to identify target \"" + testApp + "\". Please sync the project and try again.";
+      throw new InstrumentationParserException(msg);
     }
     AndroidIdeInfo testAppAndroidInfo = testAppIdeInfo.getAndroidIdeInfo();
     if (testAppAndroidInfo == null) {
-      IssueOutput.error(
-              "Required target data missing for \""
-                  + testApp
-                  + "\".  Has the target definition changed recently? Please sync the project and"
-                  + " try again.")
-          .submit(context);
-      return null;
+      String msg =
+          "Required target data missing for \""
+              + testApp
+              + "\".  Has the target definition changed recently? Please sync the project and"
+              + " try again.";
+      throw new InstrumentationParserException(msg);
     }
     Label targetApp = testAppAndroidInfo.getInstruments();
     return new InstrumentationInfo(targetApp, testApp);
-  }
-
-  /** Returns whether the test app contains the target itself (self-instrumenting). */
-  public boolean isSelfInstrumentingTest() {
-    return targetApp == null;
   }
 }

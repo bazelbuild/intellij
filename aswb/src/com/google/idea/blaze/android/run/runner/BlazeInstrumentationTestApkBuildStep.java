@@ -23,6 +23,7 @@ import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoO
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
+import com.google.idea.blaze.android.run.runner.InstrumentationInfo.InstrumentationParserException;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
@@ -87,9 +88,12 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
       return;
     }
 
-    InstrumentationInfo testComponents =
-        InstrumentationInfo.getInstrumentationInfo(instrumentationTestLabel, projectData, context);
-    if (testComponents == null) {
+    InstrumentationInfo testComponents;
+    try {
+      testComponents =
+          InstrumentationInfo.getInstrumentationInfo(instrumentationTestLabel, projectData);
+    } catch (InstrumentationParserException e) {
+      IssueOutput.error(e.getMessage()).submit(context);
       return;
     }
 
