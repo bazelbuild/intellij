@@ -20,6 +20,7 @@ import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 
@@ -51,5 +52,6 @@ public interface ApkBuildStepProvider extends BuildSystemExtensionPoint {
       Label label,
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags,
-      String launchId);
+      String launchId)
+      throws ExecutionException;
 }

@@ -135,7 +135,8 @@ public class BlazeAndroidTestRunConfigurationHandler
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags,
       String launchId,
-      Label label) {
+      Label label)
+      throws ExecutionException {
     if (configuration.getTargetKind()
         == AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
       boolean useMobileInstall =

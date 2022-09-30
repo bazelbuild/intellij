@@ -23,7 +23,6 @@ import com.google.devtools.build.lib.rules.android.deployinfo.AndroidDeployInfoO
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
-import com.google.idea.blaze.android.run.runner.InstrumentationInfo.InstrumentationParserException;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
@@ -34,7 +33,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -54,7 +52,7 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
   private static final String DEPLOY_INFO_FILE_SUFFIX = ".deployinfo.pb";
 
   private final Project project;
-  private final Label instrumentationTestLabel;
+  private final InstrumentationInfo instrumentationInfo;
   private final ImmutableList<String> buildFlags;
   private final BlazeApkDeployInfoProtoHelper deployInfoHelper;
   private BlazeAndroidDeployInfo deployInfo = null;
@@ -63,18 +61,18 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
    * Note: Target kind of {@param instrumentationTestlabel} must be "android_instrumentation_test".
    */
   public BlazeInstrumentationTestApkBuildStep(
-      Project project, Label instrumentationTestLabel, ImmutableList<String> buildFlags) {
-    this(project, instrumentationTestLabel, buildFlags, new BlazeApkDeployInfoProtoHelper());
+      Project project, InstrumentationInfo instrumentationInfo, ImmutableList<String> buildFlags) {
+    this(project, instrumentationInfo, buildFlags, new BlazeApkDeployInfoProtoHelper());
   }
 
   @VisibleForTesting
   public BlazeInstrumentationTestApkBuildStep(
       Project project,
-      Label instrumentationTestLabel,
+      InstrumentationInfo instrumentationInfo,
       ImmutableList<String> buildFlags,
       BlazeApkDeployInfoProtoHelper deployInfoHelper) {
     this.project = project;
-    this.instrumentationTestLabel = instrumentationTestLabel;
+    this.instrumentationInfo = instrumentationInfo;
     this.buildFlags = buildFlags;
     this.deployInfoHelper = deployInfoHelper;
   }
@@ -88,15 +86,6 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
       return;
     }
 
-    InstrumentationInfo testComponents;
-    try {
-      testComponents =
-          InstrumentationInfo.getInstrumentationInfo(instrumentationTestLabel, projectData);
-    } catch (InstrumentationParserException e) {
-      IssueOutput.error(e.getMessage()).submit(context);
-      return;
-    }
-
     BuildInvoker invoker =
         Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
     BlazeCommand.Builder command = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
@@ -106,10 +95,10 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
     //   will always return a local invoker (deployInfoHelper below required that the artifacts
     //   are on the local filesystem).
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-      if (testComponents.isSelfInstrumentingTest()) {
-        command.addTargets(testComponents.testApp);
+      if (instrumentationInfo.isSelfInstrumentingTest()) {
+        command.addTargets(instrumentationInfo.testApp);
       } else {
-        command.addTargets(testComponents.targetApp, testComponents.testApp);
+        command.addTargets(instrumentationInfo.targetApp, instrumentationInfo.testApp);
       }
       command
           .addBlazeFlags("--output_groups=+android_deploy_info")
@@ -145,17 +134,17 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
 
         AndroidDeployInfo instrumentorDeployInfoProto =
             deployInfoHelper.readDeployInfoProtoForTarget(
-                testComponents.testApp,
+                instrumentationInfo.testApp,
                 buildResultHelper,
                 fileName -> fileName.endsWith(DEPLOY_INFO_FILE_SUFFIX));
-        if (testComponents.isSelfInstrumentingTest()) {
+        if (instrumentationInfo.isSelfInstrumentingTest()) {
           deployInfo =
               deployInfoHelper.extractDeployInfoAndInvalidateManifests(
                   project, new File(executionRoot), instrumentorDeployInfoProto);
         } else {
           AndroidDeployInfo targetDeployInfoProto =
               deployInfoHelper.readDeployInfoProtoForTarget(
-                  testComponents.targetApp,
+                  instrumentationInfo.targetApp,
                   buildResultHelper,
                   fileName -> fileName.endsWith(DEPLOY_INFO_FILE_SUFFIX));
           deployInfo =
