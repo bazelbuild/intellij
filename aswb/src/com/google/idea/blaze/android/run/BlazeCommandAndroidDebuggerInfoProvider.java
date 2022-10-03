@@ -21,6 +21,7 @@ import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebugger;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
+import com.google.idea.blaze.android.run.runner.BlazeAndroidDebuggerService;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationState;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
@@ -42,7 +43,6 @@ public class BlazeCommandAndroidDebuggerInfoProvider implements AndroidDebuggerI
   }
 
   @Override
-  @SuppressWarnings("rawtypes") // Parameters in use are incompatible.
   public List<AndroidDebugger> getAndroidDebuggers(RunConfiguration configuration) {
     if (getCommonState(configuration) != null) {
       return Arrays.asList(new BlazeNativeAndroidDebugger(), new AndroidJavaDebugger());
@@ -52,8 +52,7 @@ public class BlazeCommandAndroidDebuggerInfoProvider implements AndroidDebuggerI
 
   @Nullable
   @Override
-  public AndroidDebugger<AndroidDebuggerState> getSelectedAndroidDebugger(
-      RunConfiguration configuration) {
+  public AndroidDebugger getSelectedAndroidDebugger(RunConfiguration configuration) {
     // b/170159822 Always return java debugger because BlazeAutoAndroidDebugger doesn't work and
     //             users likely want the java debugger not the native debugger.
     return new AndroidJavaDebugger();
@@ -62,14 +61,14 @@ public class BlazeCommandAndroidDebuggerInfoProvider implements AndroidDebuggerI
   @Nullable
   @Override
   public AndroidDebuggerState getSelectedAndroidDebuggerState(RunConfiguration configuration) {
-    AndroidDebugger<AndroidDebuggerState> debugger = getSelectedAndroidDebugger(configuration);
+    AndroidDebugger debugger = getSelectedAndroidDebugger(configuration);
     if (debugger == null) {
       return null;
     }
-    return debugger.createState();
+    return BlazeAndroidDebuggerService.getInstance(configuration.getProject())
+        .getDebuggerState(debugger);
   }
 
-  @Nullable
   private BlazeAndroidRunConfigurationCommonState getCommonState(RunConfiguration configuration) {
     if (!(configuration instanceof BlazeCommandRunConfiguration)) {
       return null;

@@ -53,12 +53,12 @@ public class BlazeAndroidBinaryMobileInstallRunContext
 
   @SuppressWarnings("unchecked") // upstream API
   @Override
-  public <S extends AndroidDebuggerState> LaunchTask getApplicationLaunchTask(
+  public LaunchTask getApplicationLaunchTask(
       LaunchOptions launchOptions,
       @Nullable Integer userId,
       String contributorsAmStartOptions,
-      AndroidDebugger<S> androidDebugger,
-      S androidDebuggerState,
+      AndroidDebugger androidDebugger,
+      AndroidDebuggerState androidDebuggerState,
       LaunchStatus launchStatus)
       throws ExecutionException {
 
@@ -87,8 +87,10 @@ public class BlazeAndroidBinaryMobileInstallRunContext
 
   @Nullable
   @Override
-  public <S extends AndroidDebuggerState> ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger<S> androidDebugger, S androidDebuggerState) throws ExecutionException {
+  @SuppressWarnings("unchecked")
+  public ConnectDebuggerTask getDebuggerTask(
+      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
+      throws ExecutionException {
     return androidDebugger.getConnectDebuggerTask(
         env,
         null,
