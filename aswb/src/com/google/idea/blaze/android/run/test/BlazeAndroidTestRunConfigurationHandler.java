@@ -142,11 +142,18 @@ public class BlazeAndroidTestRunConfigurationHandler
       boolean useMobileInstall =
           AndroidTestLaunchMethod.MOBILE_INSTALL.equals(configState.getLaunchMethod());
       return ApkBuildStepProvider.getInstance(Blaze.getBuildSystemName(project))
-          .getAitBuildStep(project, useMobileInstall, label, blazeFlags, exeFlags, launchId);
+          .getAitBuildStep(
+              project,
+              useMobileInstall,
+              /* nativeDebuggingEnabled= */ false,
+              label,
+              blazeFlags,
+              exeFlags,
+              launchId);
     } else {
       // TODO(b/248317444): This path is only invoked for the deprecated {@code android_test}
       // targets, and should eventually be removed.
-      return new FullApkBuildStep(project, label, blazeFlags);
+      return new FullApkBuildStep(project, label, blazeFlags, /* nativeDebuggingEnabled= */ false);
     }
   }
 

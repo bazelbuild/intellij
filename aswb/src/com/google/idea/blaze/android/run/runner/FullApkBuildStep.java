@@ -70,6 +70,7 @@ public class FullApkBuildStep implements ApkBuildStep {
   private final Label label;
   private final ImmutableList<String> buildFlags;
   private final BlazeApkDeployInfoProtoHelper deployInfoHelper;
+  private final boolean nativeDebuggingEnabled;
   private BlazeAndroidDeployInfo deployInfo = null;
 
   @VisibleForTesting
@@ -77,15 +78,72 @@ public class FullApkBuildStep implements ApkBuildStep {
       Project project,
       Label label,
       ImmutableList<String> buildFlags,
+      boolean nativeDebuggingEnabled,
       BlazeApkDeployInfoProtoHelper deployInfoHelper) {
     this.project = project;
     this.label = label;
     this.buildFlags = buildFlags;
     this.deployInfoHelper = deployInfoHelper;
+    this.nativeDebuggingEnabled = nativeDebuggingEnabled;
   }
 
-  public FullApkBuildStep(Project project, Label label, ImmutableList<String> buildFlags) {
-    this(project, label, buildFlags, new BlazeApkDeployInfoProtoHelper());
+  public FullApkBuildStep(
+      Project project,
+      Label label,
+      ImmutableList<String> buildFlags,
+      boolean nativeDebuggingEnabled) {
+    this(project, label, buildFlags, nativeDebuggingEnabled, new BlazeApkDeployInfoProtoHelper());
+  }
+
+  private static boolean apksRequireDownload(BlazeAndroidDeployInfo deployInfo) {
+    for (File apk : deployInfo.getApksToDeploy()) {
+      for (RemoteApkDownloader downloader : RemoteApkDownloader.EP_NAME.getExtensionList()) {
+        if (downloader.canDownload(apk)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static File downloadApkIfRemote(File apk, BlazeContext context) {
+    for (RemoteApkDownloader downloader : RemoteApkDownloader.EP_NAME.getExtensionList()) {
+      if (downloader.canDownload(apk)) {
+        try {
+          context.output(new StatusOutput("Downloading " + apk.getPath()));
+          File tempFile = Files.createTempFile("localcopy", apk.getName()).toFile();
+          tempFile.deleteOnExit();
+          downloader.download(apk, tempFile);
+          return tempFile;
+        } catch (IOException ex) {
+          // fallback to using original, don't want to block the whole app deployment process.
+          log.warn("Couldn't create local copy of file " + apk.getPath(), ex);
+        }
+      }
+    }
+    return apk;
+  }
+
+  private static File downloadLibIfRemote(File lib, BlazeContext context) {
+    for (RemoteApkDownloader downloader : RemoteApkDownloader.EP_NAME.getExtensionList()) {
+      if (downloader.canDownload(lib)) {
+        try {
+          // File name must be preserved for LLDB lookup, but multiple files will have the same name
+          // if multiple android_platforms are built, so place each file in its own temp dir.
+          context.output(new StatusOutput("Downloading " + lib.getPath()));
+          File tempDir = Files.createTempDirectory("localcopy").toFile();
+          tempDir.deleteOnExit();
+          File tempFile = new File(tempDir, lib.getName());
+          tempFile.deleteOnExit();
+          downloader.download(lib, tempFile);
+          return tempFile;
+        } catch (IOException ex) {
+          // fallback to using original, don't want to block the whole app deployment process.
+          log.warn("Couldn't create local copy of file " + lib.getPath(), ex);
+        }
+      }
+    }
+    return lib;
   }
 
   @Override
@@ -168,40 +226,20 @@ public class FullApkBuildStep implements ApkBuildStep {
           deployInfo.getApksToDeploy().stream()
               .map(apk -> FullApkBuildStep.downloadApkIfRemote(apk, context))
               .collect(ImmutableList.toImmutableList());
+      ImmutableList<File> localLibs =
+          this.nativeDebuggingEnabled
+              ? deployInfo.getSymbolFiles().stream()
+                  .map(lib -> FullApkBuildStep.downloadLibIfRemote(lib, context))
+                  .collect(ImmutableList.toImmutableList())
+              : ImmutableList.of();
       deployInfo =
           new BlazeAndroidDeployInfo(
-              deployInfo.getMergedManifest(), deployInfo.getTestTargetMergedManifest(), localApks);
+              deployInfo.getMergedManifest(),
+              deployInfo.getTestTargetMergedManifest(),
+              localApks,
+              localLibs);
       context.output(new StatusOutput("Done fetching APKs."));
     }
-  }
-
-  private static boolean apksRequireDownload(BlazeAndroidDeployInfo deployInfo) {
-    for (File apk : deployInfo.getApksToDeploy()) {
-      for (RemoteApkDownloader downloader : RemoteApkDownloader.EP_NAME.getExtensionList()) {
-        if (downloader.canDownload(apk)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  private static File downloadApkIfRemote(File apk, BlazeContext context) {
-    for (RemoteApkDownloader downloader : RemoteApkDownloader.EP_NAME.getExtensionList()) {
-      if (downloader.canDownload(apk)) {
-        try {
-          context.output(new StatusOutput("Downloading " + apk.getPath()));
-          File tempFile = Files.createTempFile("localcopy", apk.getName()).toFile();
-          tempFile.deleteOnExit();
-          downloader.download(apk, tempFile);
-          return tempFile;
-        } catch (IOException ex) {
-          // fallback to using original, don't want to block the whole app deployment process.
-          log.warn("Couldn't create local copy of file " + apk.getPath(), ex);
-        }
-      }
-    }
-    return apk;
   }
 
   @Override
