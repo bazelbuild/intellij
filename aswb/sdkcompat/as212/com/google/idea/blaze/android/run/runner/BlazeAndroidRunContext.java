@@ -55,19 +55,20 @@ public interface BlazeAndroidRunContext {
 
   /** Returns the task to launch the application. */
   @Nullable
-  <S extends AndroidDebuggerState> LaunchTask getApplicationLaunchTask(
+  LaunchTask getApplicationLaunchTask(
       LaunchOptions launchOptions,
       @Nullable Integer userId,
       @NotNull String contributorsAmStartOptions,
-      AndroidDebugger<S> androidDebugger,
-      S androidDebuggerState,
+      AndroidDebugger androidDebugger,
+      AndroidDebuggerState androidDebuggerState,
       LaunchStatus launchStatus)
       throws ExecutionException;
 
   /** Returns the task to connect the debugger. */
   @Nullable
-  <S extends AndroidDebuggerState> ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger<S> androidDebugger, S androidDebuggerState) throws ExecutionException;
+  ConnectDebuggerTask getDebuggerTask(
+      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
+      throws ExecutionException;
 
   @Nullable
   Integer getUserId(IDevice device, ConsolePrinter consolePrinter) throws ExecutionException;

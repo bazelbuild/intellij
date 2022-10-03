@@ -20,16 +20,16 @@ import static java.util.stream.Collectors.joining;
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;
-import com.android.tools.ndk.run.editor.AutoAndroidDebuggerState;
+import com.android.tools.ndk.run.editor.NativeAndroidDebuggerState;
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 
 /** Provides android debuggers and debugger states for blaze projects. */
 public interface BlazeAndroidDebuggerService {
@@ -38,20 +38,34 @@ public interface BlazeAndroidDebuggerService {
     return ServiceManager.getService(project, BlazeAndroidDebuggerService.class);
   }
 
-  /** Returns the standard debugger for non-native (Java) debugging. */
-  @NotNull
-  AndroidDebugger<AndroidDebuggerState> getDebugger();
-
-  /** Returns the standard debugger for native (C++) debugging. */
-  @NotNull
-  AndroidDebugger<AutoAndroidDebuggerState> getNativeDebugger();
+  /** Returns a different debugger depending on whether or not native debugging is required. */
+  AndroidDebugger getDebugger(boolean isNativeDebuggingEnabled);
 
   /**
-   * Performs additional necessary setup for native debugging, incorporating info from {@link
-   * BlazeAndroidDeployInfo}.
+   * Returns fully initialized debugger states.
+   *
+   * <p>Note: Blaze projects should always use this method instead of the debuggers' {@link
+   * AndroidDebugger#createState()} method. Blaze projects require additional setup such as
+   * workspace directory flags that cannot be handled by the debuggers themselves.
+   *
+   * @deprecated Use {@link getDebuggerState(AndroidDebugger, BlazeAndroidDeployInfo)} where
+   *     possible.
    */
-  void configureNativeDebugger(
-      AutoAndroidDebuggerState state, @Nullable BlazeAndroidDeployInfo deployInfo);
+  @CanIgnoreReturnValue
+  @Deprecated
+  AndroidDebuggerState getDebuggerState(AndroidDebugger debugger);
+
+  /**
+   * Returns fully initialized debugger states, incorporating info from {@link
+   * BlazeAndroidDeployInfo}.
+   *
+   * <p>Note: Blaze projects should always use this method instead of the debuggers' {@link
+   * AndroidDebugger#createState()} method. Blaze projects require additional setup such as
+   * workspace directory flags that cannot be handled by the debuggers themselves.
+   */
+  @CanIgnoreReturnValue
+  AndroidDebuggerState getDebuggerState(
+      AndroidDebugger debugger, BlazeAndroidDeployInfo deployInfo);
 
   /** Default debugger service. */
   class DefaultDebuggerService implements BlazeAndroidDebuggerService {
@@ -62,49 +76,59 @@ public interface BlazeAndroidDebuggerService {
     }
 
     @Override
-    public AndroidDebugger<AndroidDebuggerState> getDebugger() {
-      return new AndroidJavaDebugger();
+    public AndroidDebugger getDebugger(boolean isNativeDebuggingEnabled) {
+      return isNativeDebuggingEnabled ? new BlazeAutoAndroidDebugger() : new AndroidJavaDebugger();
+    }
+
+    /**
+     * @deprecated Use {@link getDebuggerState(AndroidDebugger, BlazeAndroidDeployInfo)} where
+     *     possible.
+     */
+    @Override
+    @CanIgnoreReturnValue
+    @Deprecated
+    public AndroidDebuggerState getDebuggerState(AndroidDebugger debugger) {
+      return getDebuggerState(debugger, null);
     }
 
     @Override
-    public AndroidDebugger<AutoAndroidDebuggerState> getNativeDebugger() {
-      return new BlazeAutoAndroidDebugger();
-    }
+    @CanIgnoreReturnValue
+    public AndroidDebuggerState getDebuggerState(
+        AndroidDebugger debugger, @Nullable BlazeAndroidDeployInfo deployInfo) {
+      AndroidDebuggerState debuggerState = debugger.createState();
+      if (isNdkPluginLoaded() && debuggerState instanceof NativeAndroidDebuggerState) {
+        NativeAndroidDebuggerState nativeState = (NativeAndroidDebuggerState) debuggerState;
 
-    @Override
-    public void configureNativeDebugger(
-        AutoAndroidDebuggerState state, @Nullable BlazeAndroidDeployInfo deployInfo) {
-      if (!isNdkPluginLoaded()) {
-        return;
+        // Source code is always relative to the workspace root in a blaze project.
+        String workingDirPath = WorkspaceRoot.fromProject(project).directory().getPath();
+        nativeState.setWorkingDir(workingDirPath);
+
+        // Remote built binaries may use /proc/self/cwd to represent the working directory
+        // so we manually map /proc/self/cwd to the workspace root.  We used to use
+        // `plugin.symbol-file.dwarf.comp-dir-symlink-paths = "/proc/self/cwd"`
+        // to automatically resolve this but it's no longer supported in newer versions of
+        // LLDB.
+        String sourceMapToWorkspaceRootCommand =
+            "settings append target.source-map /proc/self/cwd/ " + workingDirPath;
+
+        String symbolSearchPathsCommand = "";
+        if (deployInfo != null && !deployInfo.getSymbolFiles().isEmpty()) {
+          symbolSearchPathsCommand =
+              "settings append target.exec-search-paths "
+                  + deployInfo.getSymbolFiles().stream()
+                      .map(symbol -> symbol.getParentFile().getAbsolutePath())
+                      .collect(joining(" "));
+        }
+
+        ImmutableList<String> startupCommands =
+            ImmutableList.<String>builder()
+                .addAll(nativeState.getUserStartupCommands())
+                .add(sourceMapToWorkspaceRootCommand)
+                .add(symbolSearchPathsCommand)
+                .build();
+        nativeState.setUserStartupCommands(startupCommands);
       }
-      // Source code is always relative to the workspace root in a blaze project.
-      String workingDirPath = WorkspaceRoot.fromProject(project).directory().getPath();
-      state.setWorkingDir(workingDirPath);
-
-      // Remote built binaries may use /proc/self/cwd to represent the working directory,
-      // so we manually map /proc/self/cwd to the workspace root.  We used to use
-      // `plugin.symbol-file.dwarf.comp-dir-symlink-paths = "/proc/self/cwd"`
-      // to automatically resolve this, but it's no longer supported in newer versions of
-      // LLDB.
-      String sourceMapToWorkspaceRootCommand =
-          "settings append target.source-map /proc/self/cwd/ " + workingDirPath;
-
-      String symbolSearchPathsCommand = "";
-      if (deployInfo != null && !deployInfo.getSymbolFiles().isEmpty()) {
-        symbolSearchPathsCommand =
-            "settings append target.exec-search-paths "
-                + deployInfo.getSymbolFiles().stream()
-                    .map(symbol -> symbol.getParentFile().getAbsolutePath())
-                    .collect(joining(" "));
-      }
-
-      ImmutableList<String> startupCommands =
-          ImmutableList.<String>builder()
-              .addAll(state.getUserStartupCommands())
-              .add(sourceMapToWorkspaceRootCommand)
-              .add(symbolSearchPathsCommand)
-              .build();
-      state.setUserStartupCommands(startupCommands);
+      return debuggerState;
     }
 
     private static boolean isNdkPluginLoaded() {
