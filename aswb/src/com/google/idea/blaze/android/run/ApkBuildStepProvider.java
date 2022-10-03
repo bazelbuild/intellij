@@ -37,6 +37,7 @@ public interface ApkBuildStepProvider extends BuildSystemExtensionPoint {
   ApkBuildStep getBinaryBuildStep(
       Project project,
       boolean useMobileInstall,
+      boolean nativeDebuggingEnabled,
       Label label,
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags,
@@ -49,6 +50,7 @@ public interface ApkBuildStepProvider extends BuildSystemExtensionPoint {
   ApkBuildStep getAitBuildStep(
       Project project,
       boolean useMobileInstall,
+      boolean nativeDebuggingEnabled,
       Label label,
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags,

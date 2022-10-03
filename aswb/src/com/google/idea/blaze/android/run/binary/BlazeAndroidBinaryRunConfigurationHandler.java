@@ -141,6 +141,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
             .getBinaryBuildStep(
                 project,
                 AndroidBinaryLaunchMethodsUtils.useMobileInstall(configState.getLaunchMethod()),
+                configState.getCommonState().isNativeDebuggingEnabled(),
                 Label.create(configuration.getSingleTarget().toString()),
                 blazeFlags,
                 exeFlags,

@@ -40,6 +40,7 @@ public class BazelApkBuildStepProvider implements ApkBuildStepProvider {
   public ApkBuildStep getBinaryBuildStep(
       Project project,
       boolean useMobileInstall,
+      boolean nativeDebuggingEnabled,
       Label label,
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags,
@@ -47,7 +48,7 @@ public class BazelApkBuildStepProvider implements ApkBuildStepProvider {
     if (useMobileInstall) {
       return new MobileInstallBuildStep(project, label, blazeFlags, exeFlags, launchId);
     } else {
-      return new FullApkBuildStep(project, label, blazeFlags);
+      return new FullApkBuildStep(project, label, blazeFlags, nativeDebuggingEnabled);
     }
   }
 
@@ -55,6 +56,7 @@ public class BazelApkBuildStepProvider implements ApkBuildStepProvider {
   public ApkBuildStep getAitBuildStep(
       Project project,
       boolean useMobileInstall,
+      boolean nativeDebuggingEnabled,
       Label label,
       ImmutableList<String> blazeFlags,
       ImmutableList<String> exeFlags,
