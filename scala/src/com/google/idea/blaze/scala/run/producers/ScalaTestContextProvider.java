@@ -48,7 +48,7 @@ class ScalaTestContextProvider implements TestContextProvider {
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {
-    ClassAndTestNames classAndTestNames = getTestClass(context);
+    ClassAndTestNames classAndTestNames = getClassAndTestNames(context);
 
     if (classAndTestNames == null) {
       return null;
@@ -85,7 +85,7 @@ class ScalaTestContextProvider implements TestContextProvider {
   }
 
   @Nullable
-  private static ClassAndTestNames getTestClass(ConfigurationContext context) {
+  private static ClassAndTestNames getClassAndTestNames(ConfigurationContext context) {
     Location<?> location = context.getLocation();
     if (location == null) {
       return null;
@@ -106,13 +106,15 @@ class ScalaTestContextProvider implements TestContextProvider {
 
   public static class ScalatestTestSelectorFlagsModification implements TestContext.BlazeFlagsModification {
 
+    private static final String testClassSelectorFlag = BlazeFlags.TEST_ARG + "-s";
+
+    private static final String testNameSelectorFlag = BlazeFlags.TEST_ARG + "-t";
+
     private final List<String> testNames;
 
     private final List<String> testNameFlags;
 
-    private final String testClassSelectorFlag;
     private final String testClassFlag;
-    private final String testNameSelectorFlag;
 
     public ScalatestTestSelectorFlagsModification(String testClassFqn, @Nullable String testNames) {
       if (testNames != null) {
@@ -129,9 +131,7 @@ class ScalaTestContextProvider implements TestContextProvider {
         this.testNames = Collections.emptyList();
         this.testNameFlags = Collections.emptyList();
       }
-      testClassSelectorFlag = BlazeFlags.TEST_ARG + "-s";
       testClassFlag = BlazeFlags.TEST_ARG + testClassFqn;
-      testNameSelectorFlag = BlazeFlags.TEST_ARG + "-t";
     }
 
     private boolean flagsMatchSettings(List<String> flags) {
