@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.command.buildresult;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -80,6 +81,15 @@ public interface BuildResultHelper extends AutoCloseable {
    * (e.g. remote builds).
    */
   ParsedBepOutput getBuildOutput(Optional<String> completedBuildId) throws GetArtifactsException;
+
+  /**
+   * Retrieves test results, parses them and returns the corresponding {@link BlazeTestResults}. May
+   * only be called once, after the build is complete.
+   */
+  BlazeTestResults getTestResults();
+
+  /** Deletes the local BEP output file associated with the test results */
+  default void deleteTemporaryOutputFiles() {}
 
   /**
    * Parses the BEP output data to collect all build flags used. Return all flags that pass filters

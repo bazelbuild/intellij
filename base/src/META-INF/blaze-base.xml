@@ -271,8 +271,6 @@
     <runConfigurationProducer
         implementation="com.google.idea.blaze.base.run.producers.BinaryContextRunConfigurationProducer"
         order="first"/>
-    <projectService serviceInterface="com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider"
-                    serviceImplementation="com.google.idea.blaze.base.run.smrunner.TestUiSessionProviderImpl"/>
     <stepsBeforeRunProvider implementation="com.google.idea.blaze.base.run.BlazeBeforeRunTaskProvider"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.help.BlazeHelpHandler"
                         serviceImplementation="com.google.idea.blaze.base.help.BlazeHelpHandlerImpl"/>

@@ -15,14 +15,7 @@
  */
 package com.google.idea.blaze.base.run.testlogs;
 
-import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolOutputReader;
-import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
-import com.google.idea.blaze.base.io.InputStreamProvider;
-import com.intellij.openapi.diagnostic.Logger;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 
 /**
  * A strategy for locating results from a single 'blaze test' invocation (e.g. output XML files).
@@ -31,29 +24,19 @@ import java.io.InputStream;
  */
 public final class LocalBuildEventProtocolTestFinderStrategy
     implements BlazeTestResultFinderStrategy {
-  private static final Logger logger =
-      Logger.getInstance(LocalBuildEventProtocolTestFinderStrategy.class);
-  private final File outputFile;
+  private final BuildResultHelper buildResultHelper;
 
-  public LocalBuildEventProtocolTestFinderStrategy(File bepOutputFile) {
-    this.outputFile = bepOutputFile;
+  public LocalBuildEventProtocolTestFinderStrategy(BuildResultHelper buildResultHelper) {
+    this.buildResultHelper = buildResultHelper;
   }
 
   @Override
   public BlazeTestResults findTestResults() {
-    try (InputStream inputStream =
-        new BufferedInputStream(InputStreamProvider.getInstance().forFile(outputFile))) {
-      return BuildEventProtocolOutputReader.parseTestResults(inputStream);
-    } catch (IOException | BuildEventStreamException e) {
-      logger.warn(e);
-      return BlazeTestResults.NO_RESULTS;
-    }
+    return buildResultHelper.getTestResults();
   }
 
   @Override
   public void deleteTemporaryOutputFiles() {
-    if (!outputFile.delete()) {
-      logger.warn("Could not delete BEP output file: " + outputFile);
-    }
+    buildResultHelper.deleteTemporaryOutputFiles();
   }
 }

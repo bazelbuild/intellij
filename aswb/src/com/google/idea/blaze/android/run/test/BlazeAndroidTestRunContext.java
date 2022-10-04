@@ -41,10 +41,15 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
-import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
+import com.google.idea.blaze.base.run.testlogs.LocalBuildEventProtocolTestFinderStrategy;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
@@ -118,11 +123,20 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
               runConfiguration.getSingleTarget(), runConfiguration.getTargetKind());
       Logger.getInstance(BlazeAndroidTestRunContext.class).warn(msg);
 
-      BlazeTestUiSession testUiSession =
-          canUseTestUi(env.getExecutor())
-              ? TestUiSessionProvider.getInstance(env.getProject())
-                  .getTestUiSession(ImmutableList.of(label))
-              : null;
+      BuildInvoker invoker =
+          Blaze.getBuildSystemProvider(project)
+              .getBuildSystem()
+              .getBuildInvoker(project, BlazeContext.create());
+      BlazeTestUiSession testUiSession = null;
+      try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+        if (canUseTestUi(env.getExecutor())
+            && BlazeTestEventsHandler.targetsSupported(project, ImmutableList.of(label))) {
+          testUiSession =
+              BlazeTestUiSession.create(
+                  ImmutableList.of("--runs_per_test=1", "--flaky_test_attempts=1"),
+                  new LocalBuildEventProtocolTestFinderStrategy(buildResultHelper));
+        }
+      }
 
       ImmutableList.Builder<String> blazeFlagsBuilder =
           ImmutableList.<String>builder().addAll(blazeFlags);

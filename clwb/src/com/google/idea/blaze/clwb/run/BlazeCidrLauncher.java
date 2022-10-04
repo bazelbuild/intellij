@@ -18,10 +18,12 @@ package com.google.idea.blaze.clwb.run;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.logging.EventLoggingService;
@@ -33,9 +35,10 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
+import com.google.idea.blaze.base.run.testlogs.LocalBuildEventProtocolTestFinderStrategy;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -108,11 +111,19 @@ public final class BlazeCidrLauncher extends CidrLauncher {
   private ProcessHandler createProcess(CommandLineState state, List<String> extraBlazeFlags)
       throws ExecutionException {
     ImmutableList<String> testHandlerFlags = ImmutableList.of();
-    BlazeTestUiSession testUiSession =
-        useTestUi()
-            ? TestUiSessionProvider.getInstance(project)
-                .getTestUiSession(configuration.getTargets())
-            : null;
+    BlazeContext context = BlazeContext.create();
+    BuildInvoker invoker =
+        Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
+    BlazeTestUiSession testUiSession = null;
+    if (useTestUi()
+        && BlazeTestEventsHandler.targetsSupported(project, configuration.getTargets())) {
+      try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+        testUiSession =
+            BlazeTestUiSession.create(
+                ImmutableList.of("--runs_per_test=1", "--flaky_test_attempts=1"),
+                new LocalBuildEventProtocolTestFinderStrategy(buildResultHelper));
+      }
+    }
     if (testUiSession != null) {
       testHandlerFlags = testUiSession.getBlazeFlags();
     }
@@ -154,7 +165,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
                     project,
                     projectViewSet,
                     handlerState.getCommandState().getCommand(),
-                    BlazeContext.create(),
+                    context,
                     BlazeInvocationContext.runConfigContext(
                         ExecutorType.fromExecutor(env.getExecutor()),
                         configuration.getType(),

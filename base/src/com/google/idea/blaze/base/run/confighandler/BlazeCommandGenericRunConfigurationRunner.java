@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.issueparser.ToolWindowTaskIssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -33,10 +34,11 @@ import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
 import com.google.idea.blaze.base.run.processhandler.ScopedBlazeProcessHandler;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.google.idea.blaze.base.run.smrunner.TestUiSessionProvider;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
+import com.google.idea.blaze.base.run.testlogs.LocalBuildEventProtocolTestFinderStrategy;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
@@ -125,31 +127,42 @@ public final class BlazeCommandGenericRunConfigurationRunner
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       assert projectViewSet != null;
 
-      ImmutableList<String> testHandlerFlags = ImmutableList.of();
-      BlazeTestUiSession testUiSession =
-          canUseTestUi()
-              ? TestUiSessionProvider.getInstance(project)
-                  .getTestUiSession(configuration.getTargets())
-              : null;
-      if (testUiSession != null) {
-        testHandlerFlags = testUiSession.getBlazeFlags();
-        setConsoleBuilder(
-            new TextConsoleBuilderImpl(project) {
-              @Override
-              protected ConsoleView createConsole() {
-                return SmRunnerUtils.getConsoleView(
-                    project, configuration, getEnvironment().getExecutor(), testUiSession);
-              }
-            });
-      }
-      addConsoleFilters(consoleFilters.toArray(new Filter[0]));
-
       BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
       BlazeContext context = BlazeContext.create();
       BuildInvoker invoker =
           getCommand().equals(BlazeCommandName.TEST) && useRabbitForTestCommands.getValue()
               ? buildSystem.getParallelBuildInvoker(project, context).orElseThrow()
               : buildSystem.getBuildInvoker(project, context);
+
+      ImmutableList<String> testHandlerFlags;
+      try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+        testHandlerFlags = ImmutableList.copyOf(buildResultHelper.getBuildFlags());
+        BlazeTestUiSession testUiSession = null;
+        if (canUseTestUi()
+            && BlazeTestEventsHandler.targetsSupported(project, configuration.getTargets())) {
+          testUiSession =
+              BlazeTestUiSession.create(
+                  ImmutableList.of("--runs_per_test=1", "--flaky_test_attempts=1"),
+                  new LocalBuildEventProtocolTestFinderStrategy(buildResultHelper));
+        }
+        if (testUiSession != null) {
+          testHandlerFlags =
+              ImmutableList.<String>builder()
+                  .addAll(testHandlerFlags)
+                  .addAll(testUiSession.getBlazeFlags())
+                  .build();
+          final BlazeTestUiSession finalTestUiSession = testUiSession;
+          setConsoleBuilder(
+              new TextConsoleBuilderImpl(project) {
+                @Override
+                protected ConsoleView createConsole() {
+                  return SmRunnerUtils.getConsoleView(
+                      project, configuration, getEnvironment().getExecutor(), finalTestUiSession);
+                }
+              });
+        }
+      }
+      addConsoleFilters(consoleFilters.toArray(new Filter[0]));
 
       BlazeCommand blazeCommand =
           getBlazeCommand(
