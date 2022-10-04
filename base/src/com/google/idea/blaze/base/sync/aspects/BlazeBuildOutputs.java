@@ -21,6 +21,7 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.idea.blaze.base.command.buildresult.BepArtifactData;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
@@ -78,6 +79,11 @@ public class BlazeBuildOutputs {
     ImmutableSetMultimap.Builder<String, OutputArtifact> perTarget = ImmutableSetMultimap.builder();
     artifacts.values().forEach(a -> a.topLevelTargets.forEach(t -> perTarget.put(t, a.artifact)));
     this.perTargetArtifacts = perTarget.build();
+  }
+
+  /** Returns the output artifacts generated for target with given label. */
+  public ImmutableSet<OutputArtifact> artifactsForTarget(String label) {
+    return perTargetArtifacts.get(label);
   }
 
   @VisibleForTesting
