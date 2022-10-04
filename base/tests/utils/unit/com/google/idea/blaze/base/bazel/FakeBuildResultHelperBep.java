@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.BuildFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -55,6 +56,11 @@ public final class FakeBuildResultHelperBep implements BuildResultHelper {
     }
 
     return parsedBepOutput;
+  }
+
+  @Override
+  public BlazeTestResults getTestResults() {
+    return BlazeTestResults.NO_RESULTS;
   }
 
   @Override
