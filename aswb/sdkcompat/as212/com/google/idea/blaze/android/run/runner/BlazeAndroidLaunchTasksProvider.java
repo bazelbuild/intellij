@@ -37,6 +37,7 @@ import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
+import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -119,8 +120,9 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     }
 
     try {
+      BlazeAndroidDeployInfo deployInfo = runContext.getBuildStep().getDeployInfo();
       if (launchOptions.isDebug()) {
-        launchTasks.add(new CheckApkDebuggableTask(runContext.getBuildStep().getDeployInfo()));
+        launchTasks.add(new CheckApkDebuggableTask(deployInfo));
       }
 
       ImmutableList.Builder<String> amStartOptions = ImmutableList.builder();
@@ -144,7 +146,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
           BlazeAndroidDebuggerService.getInstance(project);
       AndroidDebugger debugger =
           debuggerService.getDebugger(isNativeDebuggingEnabled(launchOptions));
-      AndroidDebuggerState debuggerState = debuggerService.getDebuggerState(debugger);
+      AndroidDebuggerState debuggerState = debuggerService.getDebuggerState(debugger, deployInfo);
       LaunchTask appLaunchTask =
           runContext.getApplicationLaunchTask(
               launchOptions,
@@ -181,11 +183,19 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       return null;
     }
 
+    BlazeAndroidDeployInfo deployInfo;
+    try {
+      deployInfo = runContext.getBuildStep().getDeployInfo();
+    } catch (ApkProvisionException e) {
+      LOG.error(e);
+      deployInfo = null;
+    }
+
     // Do not get debugger state directly from the debugger itself.
     // See BlazeAndroidDebuggerService#getDebuggerState for an explanation.
     BlazeAndroidDebuggerService debuggerService = BlazeAndroidDebuggerService.getInstance(project);
     AndroidDebugger debugger = debuggerService.getDebugger(isNativeDebuggingEnabled(launchOptions));
-    AndroidDebuggerState debuggerState = debuggerService.getDebuggerState(debugger);
+    AndroidDebuggerState debuggerState = debuggerService.getDebuggerState(debugger, deployInfo);
     if (debugger == null || debuggerState == null) {
       return null;
     }
