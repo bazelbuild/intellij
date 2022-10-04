@@ -63,6 +63,11 @@ java_library(
 java_library(
     name = "fast_build_javac",
     srcs = _FAST_BUILD_JAVAC_SRCS + _FAST_BUILD_JAVAC_IMPL_SRCS,
+    javacopts = [
+        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+    ],
     visibility = FAST_BUILD_JAVAC_VISIBILITY,
 )
 
@@ -129,6 +134,9 @@ intellij_unit_test_suite(
         "-Dfast_build_javac.jar=$(location :fast_build_javac)",
         "-Dguava.jar=$(location :guava_lib_deploy.jar)",
         "-Dtruth.jar=$(location :truth_lib_deploy.jar)",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
     ],
     test_package_root = "com.google.idea.blaze.java",
     deps = [
