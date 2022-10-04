@@ -119,9 +119,8 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     }
 
     try {
-      BlazeAndroidDeployInfo deployInfo = runContext.getBuildStep().getDeployInfo();
       if (launchOptions.isDebug()) {
-        launchTasks.add(new CheckApkDebuggableTask(deployInfo));
+        launchTasks.add(new CheckApkDebuggableTask(runContext.getBuildStep().getDeployInfo()));
       }
 
       ImmutableList.Builder<String> amStartOptions = ImmutableList.builder();
@@ -139,13 +138,6 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
                 project, packageName));
       }
 
-      // Do not get debugger state directly from the debugger itself.
-      // See BlazeAndroidDebuggerService#getDebuggerState for an explanation.
-      BlazeAndroidDebuggerService debuggerService =
-          BlazeAndroidDebuggerService.getInstance(project);
-      AndroidDebugger debugger =
-          debuggerService.getDebugger(isNativeDebuggingEnabled(launchOptions));
-      AndroidDebuggerState debuggerState = debuggerService.getDebuggerState(debugger, deployInfo);
       LaunchTask appLaunchTask =
           runContext.getApplicationLaunchTask(
               launchOptions,
