@@ -85,6 +85,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//java",
+        "//java/com/google/common/collect",
         "@junit//jar",
     ],
 )
@@ -107,6 +108,8 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//java",
+        "//java/com/google/common/base",
+        "//java/com/google/common/collect",
         "//proto:proto_deps",
         "//third_party/auto_value",
         "@junit//jar",
