@@ -220,28 +220,11 @@ public class JarCache {
                 .collect(toImmutableList());
       }
 
-      // Prefetch all libraries to local before reading and copying content
-      ListenableFuture<?> downloadArtifactsFuture =
-          RemoteArtifactPrefetcher.getInstance()
-              .downloadArtifacts(
-                  /* projectName= */ project.getName(),
-                  /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(updated.values()));
-      FutureUtil.waitForFuture(context, downloadArtifactsFuture)
-          .timed("FetchJars", EventType.Prefetching)
-          .withProgressMessage("Fetching jar files...")
-          .run();
+      downloadAndCopyArtifacts(context, updated);
 
-      // update cache files, and remove files if required
-      List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(updated));
+      // and remove files if required
       if (removeMissingFiles) {
-        futures.addAll(deleteCacheFiles(removed));
-      }
-
-      Futures.allAsList(futures).get();
-      if (!updated.isEmpty()) {
-        context.output(PrintOutput.log(String.format("Copied %d jars", updated.size())));
-      }
-      if (!removed.isEmpty()) {
+        Futures.allAsList(deleteCacheFiles(removed)).get();
         context.output(PrintOutput.log(String.format("Removed %d jars", removed.size())));
       }
 
@@ -257,6 +240,26 @@ public class JarCache {
       // update the in-memory record of which files are cached
       ImmutableMap<String, File> state = readFileState();
       logCacheSize(context, state);
+    }
+  }
+
+  public void downloadAndCopyArtifacts(BlazeContext context, Map<String, BlazeArtifact> artifacts)
+      throws ExecutionException, InterruptedException {
+    // Prefetch all libraries to local before reading and copying content
+    ListenableFuture<?> downloadArtifactsFuture =
+        RemoteArtifactPrefetcher.getInstance()
+            .downloadArtifacts(
+                /* projectName= */ project.getName(),
+                /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(artifacts.values()));
+    FutureUtil.waitForFuture(context, downloadArtifactsFuture)
+        .timed("FetchJars", EventType.Prefetching)
+        .withProgressMessage("Fetching jar files...")
+        .run();
+    // update cache files
+    List<ListenableFuture<?>> futures = new ArrayList<>(copyLocally(artifacts));
+    Futures.allAsList(futures).get();
+    if (!artifacts.isEmpty()) {
+      context.output(PrintOutput.log(String.format("Copied %d jars", artifacts.size())));
     }
   }
 
@@ -334,6 +337,11 @@ public class JarCache {
           StandardCopyOption.REPLACE_EXISTING,
           StandardCopyOption.COPY_ATTRIBUTES);
       return;
+    }
+    if (!destination.getParentFile().exists()) {
+      if (!destination.getParentFile().mkdirs()) {
+        throw new IOException("Failed to create parent dir for: " + destination);
+      }
     }
     try (InputStream stream = output.getInputStream()) {
       Files.copy(stream, Paths.get(destination.getPath()), StandardCopyOption.REPLACE_EXISTING);

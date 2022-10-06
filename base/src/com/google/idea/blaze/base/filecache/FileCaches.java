@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.filecache;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -29,6 +30,8 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Static helper methods to update file caches. */
@@ -51,6 +54,14 @@ public class FileCaches {
           });
     }
     LocalFileSystem.getInstance().refresh(true);
+  }
+
+  public static void populate(
+      Project project, BlazeContext context, Map<String, BlazeArtifact> artifacts)
+      throws ExecutionException, InterruptedException {
+    for (FileCache fileCache : FileCache.EP_NAME.getExtensions()) {
+      fileCache.populate(project, context, artifacts);
+    }
   }
 
   /**
