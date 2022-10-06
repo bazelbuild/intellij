@@ -15,6 +15,10 @@ load(
     "GOLANG_PACKAGES_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
+load(
+    "//build_defs:repackage.bzl",
+    "repackaged_testonly_jar",
+)
 
 licenses(["notice"])
 
@@ -63,11 +67,18 @@ intellij_plugin(
     ],
 )
 
+repackaged_testonly_jar(
+    name = "go_for_tests_repackaged",
+    rules = "api_for_tests",
+    deps = ["//third_party/go:go_for_tests"],
+)
+
 intellij_unit_test_suite(
     name = "unit_tests",
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.golang",
     deps = [
+        ":go_for_tests_repackaged",
         ":golang",
         "//base",
         "//base:unit_test_utils",
@@ -76,8 +87,8 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//java/com/google/common/collect",
         "//testing:lib",
-        "//third_party/go:go_for_tests",
         "@junit//jar",
     ],
 )
@@ -98,6 +109,7 @@ intellij_integration_test_suite(
         ":golang_integration_test_plugin",
     ],
     deps = [
+        ":go_for_tests_repackaged",
         ":golang",
         "//base",
         "//base:integration_test_utils",
@@ -108,7 +120,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "//third_party/go:go_for_tests",
+        "//java/com/google/common/collect",
         "@junit//jar",
     ],
 )

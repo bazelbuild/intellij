@@ -73,6 +73,7 @@ java_library(
         "//base",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "//java/com/google/common/base",
     ],
 )
 
@@ -101,7 +102,12 @@ java_library(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//java",
+        "//java/com/google/common/base",
+        "//java/com/google/common/collect",
+        "//java/com/google/common/io",
+        "//java/com/google/common/util/concurrent",
         "//testing:lib",
+        "//testing/pluginapi/adapters:adpaters",
         "@error_prone_annotations//jar",
         "@junit//jar",
     ],
@@ -128,6 +134,7 @@ java_library(
         "//java",
         "//proto:proto_deps",
         "//third_party/auto_value",
+        "//third_party/java/gson",
     ],
 )
 
@@ -149,6 +156,8 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//java",
+        "//java/com/google/common/base",
+        "//java/com/google/common/collect",
         "//proto:proto_deps",
         "//testing:lib",
         "@junit//jar",
@@ -200,6 +209,8 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//java",
+        "//java/com/google/common/base",
+        "//java/com/google/common/collect",
         "//proto:proto_deps",
         "@junit//jar",
     ],
