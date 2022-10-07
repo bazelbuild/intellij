@@ -31,7 +31,9 @@ public interface BuildResultHelper extends AutoCloseable {
    *
    * <p>The user must add these flags to their build command.
    */
-  List<String> getBuildFlags();
+  default List<String> getBuildFlags() {
+    return ImmutableList.of();
+  }
 
   /**
    * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
@@ -148,7 +150,7 @@ public interface BuildResultHelper extends AutoCloseable {
   }
 
   @Override
-  void close();
+  default void close() {}
 
   /** Indicates a failure to get artifact information */
   class GetArtifactsException extends Exception {
