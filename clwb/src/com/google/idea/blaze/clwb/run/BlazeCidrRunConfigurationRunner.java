@@ -16,6 +16,7 @@
 package com.google.idea.blaze.clwb.run;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Streams;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
@@ -25,12 +26,15 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.cpp.BlazeCompilerInfoMap;
+import com.google.idea.blaze.cpp.CompilerInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
@@ -41,11 +45,16 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
+import com.intellij.openapi.util.registry.Registry;
+
+import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import java.util.stream.Stream;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
@@ -107,16 +116,23 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.createForLocalBuild(env.getProject())) {
 
+        ImmutableList<String> extraClangFlags = isClangBuild() && !Registry.is("bazel.trim.absolute.path.disabled")
+                ? ImmutableList.of(
+                "--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()),
+                "--linkopt=-Wl,-oso_prefix .")
+                : ImmutableList.of();
+
       List<String> extraDebugFlags;
       if (!BlazeGDBServerProvider.shouldUseGdbserver()) {
         extraDebugFlags =
-            ImmutableList.of(
-                "--compilation_mode=dbg",
-                "--copt=-O0",
-                "--copt=-g",
-                "--strip=never",
-                "--dynamic_mode=off",
-                "--fission=yes");
+                Streams.concat(
+                        Stream.of(
+                                "--compilation_mode=dbg",
+                                "--copt=-O0",
+                                "--copt=-g",
+                                "--strip=never",
+                                "--dynamic_mode=off",
+                                "--fission=yes"), extraClangFlags.stream()).collect(Collectors.toList());
       } else {
         extraDebugFlags =
             BlazeGDBServerProvider.getFlagsForDebugging(configuration.getHandler().getState());
@@ -172,6 +188,21 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
       LocalFileSystem.getInstance().refreshIoFiles(ImmutableList.of(file));
       return file;
     }
+  }
+
+  private boolean isClangBuild() {
+    Set<String> targets = this.configuration.getTargets().stream()
+            .filter(t -> t instanceof Label)
+            .map(t -> ((Label) t).toString())
+            .collect(Collectors.toSet());
+    Map<String, CompilerInfo> allCompilers = BlazeCompilerInfoMap.getInstance(configuration.getProject()).getState().getCompilerInfoMap();
+    List<CompilerInfo> filteredCompilers = null;
+    if (allCompilers != null) {
+      filteredCompilers = allCompilers.entrySet().stream()
+              .filter(x -> targets.contains(x.getKey())).map(Map.Entry::getValue)
+              .collect(Collectors.toList());
+    }
+    return filteredCompilers != null && filteredCompilers.stream().allMatch(x -> x.getVersionString().contains("clang"));
   }
 
   /**

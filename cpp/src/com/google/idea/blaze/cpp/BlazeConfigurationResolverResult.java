@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import java.io.File;
 import java.util.Map;
 import javax.annotation.concurrent.Immutable;
@@ -33,15 +34,17 @@ final class BlazeConfigurationResolverResult {
       uniqueResolveConfigurations;
   private final ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings;
   private final ImmutableSet<File> validHeaderRoots;
+  public Map<TargetKey, CompilerInfo> targetToCompilerVersion;
 
   private BlazeConfigurationResolverResult(
-      ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration>
-          uniqueResolveConfigurations,
+      ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration> uniqueResolveConfigurations,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
-      ImmutableSet<File> validHeaderRoots) {
+      ImmutableSet<File> validHeaderRoots,
+      Map<TargetKey, CompilerInfo> setToolchainLookupMap) {
     this.uniqueResolveConfigurations = uniqueResolveConfigurations;
     this.compilerSettings = compilerSettings;
     this.validHeaderRoots = validHeaderRoots;
+    this.targetToCompilerVersion = setToolchainLookupMap;
   }
 
   static Builder builder() {
@@ -89,12 +92,13 @@ final class BlazeConfigurationResolverResult {
         ImmutableMap.of();
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings = ImmutableMap.of();
     ImmutableSet<File> validHeaderRoots = ImmutableSet.of();
+    private Map<TargetKey, CompilerInfo> setTargetToVersionMap;
 
     public Builder() {}
 
     BlazeConfigurationResolverResult build() {
       return new BlazeConfigurationResolverResult(
-          uniqueConfigurations, compilerSettings, validHeaderRoots);
+          uniqueConfigurations, compilerSettings, validHeaderRoots, setTargetToVersionMap);
     }
 
     void setUniqueConfigurations(
@@ -110,6 +114,10 @@ final class BlazeConfigurationResolverResult {
 
     void setValidHeaderRoots(ImmutableSet<File> validHeaderRoots) {
       this.validHeaderRoots = validHeaderRoots;
+    }
+
+    public void setTargetToVersionMap(Map<TargetKey, CompilerInfo> targetToVersionMap) {
+      this.setTargetToVersionMap = targetToVersionMap;
     }
   }
 }
