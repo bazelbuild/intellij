@@ -55,6 +55,7 @@ test_suite(
     name = "ijwb_ue_tests",
     tests = [
         ":ijwb_common_tests",
+        "//gazelle:integration_tests",
         "//golang:integration_tests",
         "//golang:unit_tests",
         "//javascript:integration_tests",

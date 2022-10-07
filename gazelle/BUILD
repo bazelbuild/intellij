@@ -1,7 +1,6 @@
 load(
     "//testing:test_defs.bzl",
     "intellij_integration_test_suite",
-    "intellij_unit_test_suite",
 )
 load(
     "//build_defs:build_defs.bzl",
@@ -80,6 +79,7 @@ intellij_integration_test_suite(
         "--add-exports=java.desktop/com.apple.eawt.event=ALL-UNNAMED",
     ],
     required_plugins = "com.google.idea.blaze.gazelle",
+    tags = ["large"],
     test_package_root = "com.google.idea.blaze.gazelle",
     runtime_deps = [
         ":gazelle_integration_test_plugin",

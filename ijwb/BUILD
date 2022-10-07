@@ -85,10 +85,10 @@ intellij_plugin(
         "//scala:plugin_library",
         "//skylark:plugin_library",
         "//terminal:plugin_library",
-        "//gazelle:plugin_library",
     ] + select_for_ide(
         intellij = [],
         intellij_ue = [
+            "//gazelle:plugin_library",
             "//golang:plugin_library",
             "//javascript:plugin_library",
         ],

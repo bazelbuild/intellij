@@ -10,36 +10,43 @@ import com.google.idea.common.settings.SearchableText;
 import com.google.idea.common.settings.SettingComponent;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.ui.TextFieldWithStoredHistory;
+import com.intellij.util.PlatformUtils;
 
 class GazelleUserSettingsConfigurable extends AutoConfigurable {
-    static class UiContributor implements BlazeUserSettingsCompositeConfigurable.UiContributor {
+  static class UiContributor implements BlazeUserSettingsCompositeConfigurable.UiContributor {
 
-        @Override
-        public UnnamedConfigurable getConfigurable() {
-            return new GazelleUserSettingsConfigurable();
-        }
-
-        @Override
-        public ImmutableCollection<SearchableText> getSearchableText() {
-            return SearchableText.collect(SETTINGS);
-        }
+    @Override
+    public UnnamedConfigurable getConfigurable() {
+      return new GazelleUserSettingsConfigurable();
     }
 
-    private static final ConfigurableSetting<?, ?> GAZELLE_TARGET = ConfigurableSetting.builder(GazelleUserSettings::getInstance)
-            .label("Gazelle target to run on Sync.")
-            .getter(GazelleUserSettings::getGazelleTarget)
-            .setter(GazelleUserSettings::setGazelleTarget)
-            .componentFactory(
-                    SettingComponent.LabeledComponent.factory(
-                            () -> new TextFieldWithStoredHistory("TEST"),
-                            s -> Strings.nullToEmpty(s.getText()).trim(),
-                            TextFieldWithStoredHistory::setTextAndAddToHistory
-                    )
-            );
-
-    private static final ImmutableList<ConfigurableSetting<?, ?>> SETTINGS = ImmutableList.of(GAZELLE_TARGET);
-
-    private GazelleUserSettingsConfigurable() {
-        super(SETTINGS);
+    @Override
+    public ImmutableCollection<SearchableText> getSearchableText() {
+      return SearchableText.collect(SETTINGS);
     }
+  }
+
+  private static boolean shouldShow() {
+    return PlatformUtils.isIdeaUltimate() || PlatformUtils.isGoIde();
+  }
+
+  private static final String GAZELLE_TARGET_KEY = "gazelle.target";
+  private static final ConfigurableSetting<?, ?> GAZELLE_TARGET =
+      ConfigurableSetting.builder(GazelleUserSettings::getInstance)
+          .label("Gazelle target to run on Sync.")
+          .getter(GazelleUserSettings::getGazelleTarget)
+          .setter(GazelleUserSettings::setGazelleTarget)
+          .hideIf(() -> !shouldShow())
+          .componentFactory(
+              SettingComponent.LabeledComponent.factory(
+                  () -> new TextFieldWithStoredHistory(GAZELLE_TARGET_KEY),
+                  s -> Strings.nullToEmpty(s.getText()).trim(),
+                  TextFieldWithStoredHistory::setTextAndAddToHistory));
+
+  private static final ImmutableList<ConfigurableSetting<?, ?>> SETTINGS =
+      ImmutableList.of(GAZELLE_TARGET);
+
+  private GazelleUserSettingsConfigurable() {
+    super(SETTINGS);
+  }
 }
