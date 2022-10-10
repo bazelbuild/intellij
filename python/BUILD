@@ -103,7 +103,7 @@ intellij_unit_test_suite(
     ],
 )
 
-java_library(
+java_library                          (
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]),
