@@ -29,7 +29,6 @@ import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchCompatibility;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.errorprone.annotations.Keep;
 import com.google.idea.blaze.android.functional.AndroidDeviceCompat;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
@@ -47,6 +46,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleColoredComponent;
+import ijlib.testonly.com.google.common.util.concurrent.ListenableFuture;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -152,7 +152,7 @@ public class MobileInstallBuildStepTestCase extends BlazeAndroidIntegrationTestC
     public ListenableFuture<IDevice> getLaunchedDevice() {
       IDevice device = mock(IDevice.class);
       when(device.getSerialNumber()).thenReturn("serial-number");
-      return Futures.immediateFuture(device);
+      return ijlib.testonly.adapters.ListenableFutureAdapter.wrap(Futures.immediateFuture(device));
     }
 
     //
