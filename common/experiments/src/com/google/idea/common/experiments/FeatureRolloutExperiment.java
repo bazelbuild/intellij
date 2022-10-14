@@ -39,9 +39,6 @@ public class FeatureRolloutExperiment extends Experiment {
         "disabled")) {
       return false;
     }
-    if (InternalDevFlag.isInternalDev()) {
-      return true;
-    }
     return getUserHash(ExperimentUsernameProvider.getUsername()) < getRolloutPercentage();
   }
 
@@ -62,15 +59,25 @@ public class FeatureRolloutExperiment extends Experiment {
   }
 
   /**
-   * Returns an integer between 0 and 99, inclusive, based on a hash of the feature key and
-   * username. If the rollout percentage is greater than this value, the feature will be enabled for
-   * this user.
+   * Returns an integer between 0 and 99, inclusive, based on {@link String#hashCode()} of the
+   * feature key and username. If the rollout percentage is greater than this value, the feature
+   * will be enabled for this user.
    *
-   * <p>If {@code userName} is null, returns 99 (meaning the feature will be inactive, unless it's
-   * set to 100% rollout).
+   * @param userName the username of the current IDE user.
+   *     <ol>
+   *       Special cases (in order of priority, highest priority first):
+   *       <li>If the current user is determined to be an internal developer via {@link
+   *           InternalDevFlag#isInternalDev()}, return 0. This means that the feature will be
+   *           enabled as soon as the rollout is greater than 0%.
+   *       <li>If {@code userName} is null, return 99. This means that the feature will be inactive,
+   *           unless it's set to 100% rollout. </>
+   *     </ol>
    */
   @VisibleForTesting
   int getUserHash(@Nullable String userName) {
+    if (InternalDevFlag.isInternalDev()) {
+      return 0;
+    }
     if (userName == null) {
       return 99;
     }

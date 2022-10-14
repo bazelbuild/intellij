@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.actions;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.util.MorePlatformUtils;
@@ -70,7 +70,7 @@ public final class FileGitHubIssueAction extends BlazeProjectAction {
   protected void updateForBlazeProject(Project project, AnActionEvent e) {
     // Hide and disable this action for Google-internal usage.
     if (!enabled.getValue()
-        || Blaze.defaultBuildSystem() == BuildSystem.Blaze
+        || Blaze.defaultBuildSystem() == BuildSystemName.Blaze
         || isCorpMachine.getValue()) {
       e.getPresentation().setEnabledAndVisible(false);
     }

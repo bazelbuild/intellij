@@ -19,32 +19,55 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.idea.blaze.base.sync.SyncResult;
+import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /** Scoped operation context. */
 public class BlazeContext {
+
   @Nullable private BlazeContext parentContext;
 
   private final List<BlazeScope> scopes = Lists.newArrayList();
 
+  // List of all active child contexts.
+  private final List<BlazeContext> childContexts =
+      Collections.synchronizedList(Lists.newArrayList());
+
   private final ListMultimap<Class<? extends Output>, OutputSink<?>> outputSinks =
       ArrayListMultimap.create();
 
+  private final List<Runnable> cancellationHandlers =
+      Collections.synchronizedList(Lists.newArrayList());
+
   private boolean isEnding;
-  private boolean isCancelled;
+  private final AtomicBoolean isCancelled = new AtomicBoolean(false);
   private int holdCount;
   private boolean hasErrors;
   private boolean propagatesErrors = true;
 
-  public BlazeContext() {
-    this(null);
-  }
-
-  public BlazeContext(@Nullable BlazeContext parentContext) {
+  private BlazeContext(@Nullable BlazeContext parentContext) {
     this.parentContext = parentContext;
   }
 
+  public static BlazeContext create() {
+    return new BlazeContext(null);
+  }
+
+  public static BlazeContext create(BlazeContext parentContext) {
+    BlazeContext context = new BlazeContext(parentContext);
+    if (parentContext != null) {
+      parentContext.addChildContext(context);
+    }
+    return context;
+  }
+
+  @CanIgnoreReturnValue
   public BlazeContext push(BlazeScope scope) {
     scopes.add(scope);
     scope.onScopeBegin(this);
@@ -61,8 +84,19 @@ public class BlazeContext {
       scopes.get(i).onScopeEnd(this);
     }
 
-    if (parentContext != null && hasErrors && propagatesErrors) {
-      parentContext.setHasError();
+    if (parentContext != null) {
+      parentContext.removeChildContext(this);
+      if (hasErrors && propagatesErrors) {
+        parentContext.setHasError();
+      }
+    }
+  }
+
+  public void onException(Throwable t) {
+    if (t instanceof SyncCanceledException || t instanceof ProcessCanceledException) {
+      setCancelled();
+    } else {
+      setHasError();
     }
   }
 
@@ -72,14 +106,28 @@ public class BlazeContext {
    * <p>Each context holder must handle cancellation individually.
    */
   public void setCancelled() {
-    if (isEnding || isCancelled) {
-      return;
+
+    synchronized (this) {
+      if (isEnding || isCancelled.get()) {
+        return;
+      }
+      isCancelled.set(true);
     }
 
-    isCancelled = true;
+    synchronized (cancellationHandlers) {
+      for (Runnable handler : cancellationHandlers) {
+        handler.run();
+      }
+    }
 
     if (parentContext != null) {
       parentContext.setCancelled();
+    }
+
+    synchronized (childContexts) {
+      for (BlazeContext childContext : childContexts) {
+        childContext.setCancelled();
+      }
     }
   }
 
@@ -98,7 +146,7 @@ public class BlazeContext {
   }
 
   public boolean isCancelled() {
-    return isCancelled;
+    return isCancelled.get();
   }
 
   @Nullable
@@ -184,6 +232,7 @@ public class BlazeContext {
     }
   }
 
+  @CanIgnoreReturnValue
   public <T extends Output> BlazeContext addOutputSink(
       Class<T> outputClass, OutputSink<T> outputSink) {
     outputSinks.put(outputClass, outputSink);
@@ -236,5 +285,31 @@ public class BlazeContext {
   /** Sets whether errors are propagated to the parent context. */
   public void setPropagatesErrors(boolean propagatesErrors) {
     this.propagatesErrors = propagatesErrors;
+  }
+
+  /** Registers a function to be called if the context is cancelled */
+  public void addCancellationHandler(Runnable handler) {
+    this.cancellationHandlers.add(handler);
+  }
+
+  private void addChildContext(BlazeContext childContext) {
+    this.childContexts.add(childContext);
+  }
+
+  private void removeChildContext(BlazeContext childContext) {
+    this.childContexts.remove(childContext);
+  }
+
+  public SyncResult getSyncResult() {
+    if (shouldContinue()) {
+      throw new IllegalStateException("Sync result requested for ongoing context");
+    }
+    if (isCancelled()) {
+      return SyncResult.CANCELLED;
+    }
+    if (hasErrors()) {
+      return SyncResult.FAILURE;
+    }
+    return SyncResult.SUCCESS;
   }
 }

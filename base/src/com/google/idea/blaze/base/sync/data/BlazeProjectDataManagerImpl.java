@@ -104,6 +104,9 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
             (ProgressIndicator indicator) -> {
               try {
                 File file = getCacheFile(project, importSettings);
+                if (!file.getParentFile().exists()) {
+                  file.getParentFile().mkdirs();
+                }
                 synchronized (this) {
                   projectData.saveToDisk(file);
                 }

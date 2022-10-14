@@ -33,7 +33,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -43,9 +43,9 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
@@ -160,11 +160,18 @@ public final class BuildPluginBeforeRunTaskProvider
               .push(new ExperimentScope())
               .push(new ProblemsViewScope(project, userSettings.getShowProblemsViewOnRun()))
               .push(
-                  new BlazeConsoleScope.Builder(project)
+                  new ToolWindowScope.Builder(
+                          project,
+                          new com.google.idea.blaze.base.toolwindow.Task(
+                              project,
+                              "Build Plugin Jar",
+                              com.google.idea.blaze.base.toolwindow.Task.Type.BEFORE_LAUNCH))
                       .setPopupBehavior(userSettings.getShowBlazeConsoleOnRun())
-                      .addConsoleFilters(
-                          new IssueOutputFilter(
-                              project, workspaceRoot, ContextType.RunConfiguration, true))
+                      .setIssueParsers(
+                          BlazeIssueParser.defaultIssueParsers(
+                              project,
+                              WorkspaceRoot.fromProject(project),
+                              ContextType.BeforeRunTask))
                       .build())
               .push(new IdeaLogScope());
 
@@ -235,6 +242,7 @@ public final class BuildPluginBeforeRunTaskProvider
                                     project,
                                     projectViewSet,
                                     BlazeCommandName.BUILD,
+                                    context,
                                     BlazeInvocationContext.runConfigContext(
                                         ExecutorType.fromExecutor(env.getExecutor()),
                                         config.getType(),

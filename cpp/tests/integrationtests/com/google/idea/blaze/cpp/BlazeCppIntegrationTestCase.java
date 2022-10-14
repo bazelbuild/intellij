@@ -23,13 +23,13 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.testing.cidr.BaseClionSdkTestCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache;
 import com.jetbrains.cidr.lang.symbols.symtable.FileSymbolTablesCache.SymbolsProperties.SymbolsKind;
+import com.jetbrains.cidr.lang.symbols.symtable.building.OCSymbolTablesBuildingActivity;
 import java.util.List;
 import org.junit.After;
 import org.junit.Before;
@@ -61,7 +61,7 @@ public class BlazeCppIntegrationTestCase extends BlazeIntegrationTestCase {
     // However, because we run well after a project is created, we need to manually queue
     // OCSymbolTablesBuildingActivity after toggling on setShouldBuildTablesInTests.
 
-    BaseClionSdkTestCompat.rebuildSymbols(project);
+    OCSymbolTablesBuildingActivity.getInstance(project).rebuildSymbols();
   }
 
   @After

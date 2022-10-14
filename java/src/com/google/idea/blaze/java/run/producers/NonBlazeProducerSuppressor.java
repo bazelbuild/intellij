@@ -17,37 +17,47 @@ package com.google.idea.blaze.java.run.producers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.execution.RunConfigurationProducerService;
-import com.intellij.execution.actions.RunConfigurationProducer;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
 public class NonBlazeProducerSuppressor implements StartupActivity {
 
-  private static final String KOTLIN_PLUGIN_ID = "org.jetbrains.kotlin";
-  private static final String ANDROID_PLUGIN_ID = "org.jetbrains.android";
-  private static final String GRADLE_PLUGIN_ID = "org.jetbrains.plugins.gradle";
-
   private static final ImmutableList<String> KOTLIN_PRODUCERS =
       ImmutableList.of(
+          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.common.KotlinMultiplatformCommonTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.common.KotlinMultiplatformCommonTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer",
+          "org.jetbrains.kotlin.idea.gradle.native.KotlinNativeRunConfigurationProducer",
+          "org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer",
+          "org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinJvmTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinMultiplatformJvmTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer",
+          /** #api212: remove these duplicate producers. */
           "org.jetbrains.kotlin.idea.run.KotlinJUnitRunConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinPatternConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer",
           "org.jetbrains.kotlin.idea.run.KotlinTestClassGradleConfigurationProducer",
-          "org.jetbrains.kotlin.idea.run.KotlinTestMethodGradleConfigurationProducer");
+          "org.jetbrains.kotlin.idea.run.KotlinTestMethodGradleConfigurationProducer",
+          "org.jetbrains.kotlin.idea.run.KotlinJvmTestMethodGradleConfigurationProducer");
 
   private static final ImmutableList<String> ANDROID_PRODUCERS =
       ImmutableList.of(
           "com.android.tools.idea.run.AndroidConfigurationProducer",
+          "com.android.tools.idea.run.configuration.AndroidComplicationRunConfigurationProducer",
+          "com.android.tools.idea.run.configuration.AndroidTileRunConfigurationProducer",
+          "com.android.tools.idea.run.configuration.AndroidWatchFaceRunConfigurationProducer",
           "com.android.tools.idea.testartifacts.instrumented.AndroidTestConfigurationProducer",
           "com.android.tools.idea.testartifacts.junit.TestClassAndroidConfigurationProducer",
           "com.android.tools.idea.testartifacts.junit.TestDirectoryAndroidConfigurationProducer",
@@ -65,63 +75,17 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
           "org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer",
           "org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer");
 
-  private static final ImmutableList<Class<? extends RunConfigurationProducer<?>>> JAVA_PRODUCERS =
+  private static final ImmutableList<String> JAVA_PRODUCERS =
       ImmutableList.of(
-          com.intellij.execution.junit.AbstractAllInDirectoryConfigurationProducer.class,
-          com.intellij.execution.junit.AllInDirectoryConfigurationProducer.class,
-          com.intellij.execution.junit.AllInPackageConfigurationProducer.class,
-          com.intellij.execution.junit.TestInClassConfigurationProducer.class,
-          com.intellij.execution.junit.TestClassConfigurationProducer.class,
-          com.intellij.execution.junit.PatternConfigurationProducer.class,
-          com.intellij.execution.junit.UniqueIdConfigurationProducer.class,
-          com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer.class,
-          com.intellij.execution.application.ApplicationConfigurationProducer.class);
-
-  // #api211 TestMethodConfigurationProducer is removed in 2021.2 so after 2021.1 is no longer
-  // supported we can remove this function and directly add the list of JAVA_PRODUCERS to the
-  // suppressed producers.
-  private static ImmutableList<Class<? extends RunConfigurationProducer<?>>> getJavaProducers() {
-    ClassLoader classLoader = JAVA_PRODUCERS.get(0).getClassLoader();
-    Class<? extends RunConfigurationProducer<?>> clazz =
-        loadClass(classLoader, "com.intellij.execution.junit.TestMethodConfigurationProducer");
-    if (clazz != null) {
-      return ImmutableList.<Class<? extends RunConfigurationProducer<?>>>builder()
-          .addAll(JAVA_PRODUCERS)
-          .add(clazz)
-          .build();
-    }
-    return JAVA_PRODUCERS;
-  }
-
-  private static Collection<Class<? extends RunConfigurationProducer<?>>> getProducers(
-      String pluginId, Collection<String> qualifiedClassNames) {
-    // rather than compiling against additional plugins, and including a switch in the our
-    // plugin.xml, just get the classes manually via the plugin class loader.
-    IdeaPluginDescriptor plugin = PluginManager.getPlugin(PluginId.getId(pluginId));
-    if (plugin == null || !plugin.isEnabled()) {
-      return ImmutableList.of();
-    }
-    ClassLoader loader = plugin.getPluginClassLoader();
-    return qualifiedClassNames.stream()
-        .map((qualifiedName) -> loadClass(loader, qualifiedName))
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-  }
-
-  @SuppressWarnings("unchecked") // Instanceof check is right before cast.
-  @Nullable
-  private static Class<? extends RunConfigurationProducer<?>> loadClass(
-      ClassLoader loader, String qualifiedName) {
-    try {
-      Class<?> clazz = loader.loadClass(qualifiedName);
-      if (RunConfigurationProducer.class.isAssignableFrom(clazz)) {
-        return (Class<? extends RunConfigurationProducer<?>>) clazz;
-      }
-      return null;
-    } catch (PluginException | ClassNotFoundException | NoClassDefFoundError ignored) {
-      return null;
-    }
-  }
+          "com.intellij.execution.junit.AbstractAllInDirectoryConfigurationProducer",
+          "com.intellij.execution.junit.AllInDirectoryConfigurationProducer",
+          "com.intellij.execution.junit.AllInPackageConfigurationProducer",
+          "com.intellij.execution.junit.TestInClassConfigurationProducer",
+          "com.intellij.execution.junit.TestClassConfigurationProducer",
+          "com.intellij.execution.junit.PatternConfigurationProducer",
+          "com.intellij.execution.junit.UniqueIdConfigurationProducer",
+          "com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer",
+          "com.intellij.execution.application.ApplicationConfigurationProducer");
 
   @Override
   public void runActivity(Project project) {
@@ -130,15 +94,12 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
     }
   }
 
-  private static void suppressProducers(Project project) {
+  static void suppressProducers(Project project) {
     RunConfigurationProducerService producerService =
         RunConfigurationProducerService.getInstance(project);
-    ImmutableList.<Class<? extends RunConfigurationProducer<?>>>builder()
-        .addAll(getJavaProducers())
-        .addAll(getProducers(KOTLIN_PLUGIN_ID, KOTLIN_PRODUCERS))
-        .addAll(getProducers(ANDROID_PLUGIN_ID, ANDROID_PRODUCERS))
-        .addAll(getProducers(GRADLE_PLUGIN_ID, GRADLE_PRODUCERS))
-        .build()
-        .forEach(producerService::addIgnoredProducer);
+    producerService.getState().ignoredProducers.addAll(JAVA_PRODUCERS);
+    producerService.getState().ignoredProducers.addAll(KOTLIN_PRODUCERS);
+    producerService.getState().ignoredProducers.addAll(ANDROID_PRODUCERS);
+    producerService.getState().ignoredProducers.addAll(GRADLE_PRODUCERS);
   }
 }

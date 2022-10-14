@@ -55,6 +55,12 @@ abstract class DelegatingCodeStyleManager extends CodeStyleManager
   }
 
   @Override
+  public void reformatTextWithContext(PsiFile file, Collection<? extends TextRange> ranges)
+      throws IncorrectOperationException {
+    delegate.reformatTextWithContext(file, ranges);
+  }
+
+  @Override
   public int getSpacing(PsiFile file, int offset) {
     return delegate.getSpacing(file, offset);
   }
@@ -118,26 +124,10 @@ abstract class DelegatingCodeStyleManager extends CodeStyleManager
     delegate.reformatText(file, startOffset, endOffset);
   }
 
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
-  public void reformatText(
-      PsiFile file,
-      // #api203 replace with "Collection<? extends TextRange>"
-      Collection ranges)
+  public void reformatText(PsiFile file, Collection<? extends TextRange> ranges)
       throws IncorrectOperationException {
     delegate.reformatText(file, ranges);
-  }
-
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
-  @Override
-  public void reformatTextWithContext(
-      PsiFile file,
-      // #api203 replace with "Collection<? extends TextRange>"
-      Collection ranges)
-      throws IncorrectOperationException {
-    delegate.reformatTextWithContext(file, ranges);
   }
 
   @Override

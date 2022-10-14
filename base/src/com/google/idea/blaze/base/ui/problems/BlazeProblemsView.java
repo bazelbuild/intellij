@@ -88,7 +88,7 @@ public class BlazeProblemsView {
 
   public BlazeProblemsView(Project project) {
     this.project = project;
-    this.toolWindowId = Blaze.getBuildSystem(project).getName() + " Problems";
+    this.toolWindowId = Blaze.getBuildSystemName(project).getName() + " Problems";
     uiFuture =
         new FutureTask<>(
             () -> {

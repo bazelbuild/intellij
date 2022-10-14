@@ -24,12 +24,8 @@ import zipfile
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
-    "--application_info_container",
-    help="A file containing the product information details, can be a json file or a jar file containing `application_info_name` file.",
-    required=True,)
-parser.add_argument(
-    "--application_info_name",
-    help="A .txt file containing the application info xml name",
+    "--application_info_json",
+    help="A json file containing the product information details.",
     required=True,)
 parser.add_argument(
     "--check_eap",
@@ -126,15 +122,13 @@ def main():
 
   args = parser.parse_args()
 
-  application_info_container = args.application_info_container
-  if application_info_container.endswith(".json"):
-    _parse_app_info_json(application_info_container, args.check_eap)
-  elif application_info_container.endswith(".jar"):
-    _parse_app_info_jar(application_info_container, args.application_info_name)
+  application_info_json = args.application_info_json
+  if application_info_json.endswith(".json"):
+    _parse_app_info_json(application_info_json, args.check_eap)
   else:
     raise ValueError(
-        "Invalid application_info_container: {}, only accepts .jar or .json files"
-        .format(application_info_container))
+        "Invalid application_info_json: {}, only accepts .json files"
+        .format(application_info_json))
 
 if __name__ == "__main__":
   main()

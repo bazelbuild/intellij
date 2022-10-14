@@ -16,18 +16,22 @@
 package com.google.idea.blaze.base.sync.sharding;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.base.sync.sharding.LexicographicTargetSharder.computeParallelShardSize;
 import static com.google.idea.blaze.base.sync.sharding.LexicographicTargetSharder.maximumRemoteShardSize;
+import static com.google.idea.blaze.base.sync.sharding.LexicographicTargetSharder.minimumRemoteShardSize;
 import static com.google.idea.blaze.base.sync.sharding.LexicographicTargetSharder.parallelThreshold;
+import static com.google.idea.blaze.base.sync.sharding.LexicographicTargetSharder.useLegacySharding;
 import static com.google.idea.blaze.base.sync.sharding.ShardedTargetList.remoteConcurrentSyncs;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import java.util.Set;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -61,14 +65,28 @@ public class LexicographicTargetSharderTest extends BlazeTestCase {
     mockExperimentService.setExperimentInt(maximumRemoteShardSize, value);
   }
 
+  private void setMinimumRemoteShardSize(int value) {
+    mockExperimentService.setExperimentInt(minimumRemoteShardSize, value);
+  }
+
+  private void setLegacySharding(boolean value) {
+    mockExperimentService.setExperiment(useLegacySharding, value);
+  }
+
+  @Before
+  public void setUp() {
+    setMaximumRemoteShardSize(1000);
+    setMinimumRemoteShardSize(1);
+    setLegacySharding(false);
+  }
+
   @Test
   public void calculateTargetBatches_testLocalBuildType_suggestedSizeIsUsed() {
     setParallelThreshold(1000);
     setRemoteConcurrentSyncs(10);
-    setMaximumRemoteShardSize(1000);
     Set<Label> targets = ImmutableSet.of(LABEL_ONE, LABEL_TWO, LABEL_THREE, LABEL_FOUR);
     ImmutableList<ImmutableList<Label>> shardedTargets =
-        lexicographicTargetSharder.calculateTargetBatches(targets, BuildBinaryType.BLAZE, 2);
+        lexicographicTargetSharder.calculateTargetBatches(targets, SyncStrategy.SERIAL, 2);
     assertThat(shardedTargets).hasSize(2);
     assertThat(shardedTargets.get(0)).containsExactly(LABEL_FOUR, LABEL_ONE).inOrder();
     assertThat(shardedTargets.get(1)).containsExactly(LABEL_THREE, LABEL_TWO).inOrder();
@@ -80,9 +98,8 @@ public class LexicographicTargetSharderTest extends BlazeTestCase {
     Set<Label> targets = ImmutableSet.of(LABEL_ONE, LABEL_TWO, LABEL_THREE, LABEL_FOUR);
     setParallelThreshold(4);
     setRemoteConcurrentSyncs(1);
-    setMaximumRemoteShardSize(1000);
     ImmutableList<ImmutableList<Label>> shardedTargets =
-        lexicographicTargetSharder.calculateTargetBatches(targets, BuildBinaryType.RABBIT, 2);
+        lexicographicTargetSharder.calculateTargetBatches(targets, SyncStrategy.PARALLEL, 2);
     assertThat(shardedTargets).hasSize(2);
     assertThat(shardedTargets.get(0)).containsExactly(LABEL_FOUR, LABEL_ONE).inOrder();
     assertThat(shardedTargets.get(1)).containsExactly(LABEL_THREE, LABEL_TWO).inOrder();
@@ -94,9 +111,8 @@ public class LexicographicTargetSharderTest extends BlazeTestCase {
     Set<Label> targets = ImmutableSet.of(LABEL_ONE, LABEL_TWO, LABEL_THREE, LABEL_FOUR);
     setParallelThreshold(4);
     setRemoteConcurrentSyncs(10);
-    setMaximumRemoteShardSize(1000);
     ImmutableList<ImmutableList<Label>> shardedTargets =
-        lexicographicTargetSharder.calculateTargetBatches(targets, BuildBinaryType.RABBIT, 2);
+        lexicographicTargetSharder.calculateTargetBatches(targets, SyncStrategy.PARALLEL, 2);
     assertThat(shardedTargets).hasSize(4);
     assertThat(shardedTargets.get(0)).containsExactly(LABEL_FOUR);
     assertThat(shardedTargets.get(1)).containsExactly(LABEL_ONE);
@@ -112,9 +128,120 @@ public class LexicographicTargetSharderTest extends BlazeTestCase {
     setRemoteConcurrentSyncs(1);
     setMaximumRemoteShardSize(3);
     ImmutableList<ImmutableList<Label>> shardedTargets =
-        lexicographicTargetSharder.calculateTargetBatches(targets, BuildBinaryType.RABBIT, 100);
+        lexicographicTargetSharder.calculateTargetBatches(targets, SyncStrategy.PARALLEL, 100);
     assertThat(shardedTargets).hasSize(2);
     assertThat(shardedTargets.get(0)).containsExactly(LABEL_FOUR, LABEL_ONE, LABEL_THREE).inOrder();
     assertThat(shardedTargets.get(1)).containsExactly(LABEL_TWO);
+  }
+
+  @Test
+  public void
+      calculateTargetBatches_testRemoteBuildTypeAndMinimumRemoteShardSizeIsLargerThanCalculated_minimumRemoteShardSizeIsUsed() {
+    ImmutableSet<Label> targets = ImmutableSet.of(LABEL_ONE, LABEL_TWO, LABEL_THREE, LABEL_FOUR);
+    setParallelThreshold(4);
+    setRemoteConcurrentSyncs(10);
+    setMinimumRemoteShardSize(2);
+    ImmutableList<ImmutableList<Label>> shardedTargets =
+        lexicographicTargetSharder.calculateTargetBatches(targets, SyncStrategy.PARALLEL, 100);
+    assertThat(shardedTargets).hasSize(2);
+    assertThat(shardedTargets.get(0)).containsExactly(LABEL_FOUR, LABEL_ONE).inOrder();
+    assertThat(shardedTargets.get(1)).containsExactly(LABEL_THREE, LABEL_TWO).inOrder();
+  }
+
+  @Test
+  public void computeParallelShardSize_legacyShardingEnabled() {
+    setLegacySharding(true);
+
+    // Minimum # of targets for splitting
+    int sMin = 1000;
+    // # shards running in parallel
+    int nShards = 100;
+    // Minimum # targets per shard
+    int min = 500;
+    // Maximum # targets per shard
+    int max = 1000;
+    // Suggested # targets per shard
+    int sug = 2000;
+
+    // nTargets less than splitting threshold sMin (1000) defaults to suggested size
+    assertThat(computeParallelShardSize(900, sMin, nShards, min, max, sug)).isEqualTo(sug);
+
+    // nTargets between splitting threshold sMin (1000) and min (500) *
+    // LEGACY_CONCURRENT_SHARD_COUNT (10)
+    // splits targets across LEGACY_CONCURRENT_SHARD_COUNT(10) shards.
+    assertThat(computeParallelShardSize(1000, sMin, nShards, min, max, sug)).isEqualTo(100);
+    assertThat(computeParallelShardSize(3000, sMin, nShards, min, max, sug)).isEqualTo(300);
+
+    // After this point, shard size is min (500) until
+    // nTargets > min (500) * nShards (100)
+    assertThat(computeParallelShardSize(5000, sMin, nShards, min, max, sug)).isEqualTo(min);
+    assertThat(computeParallelShardSize(6000, sMin, nShards, min, max, sug)).isEqualTo(min);
+    assertThat(computeParallelShardSize(50000, sMin, nShards, min, max, sug)).isEqualTo(min);
+
+    // Then shard size grows until max (1000) threshold reached
+    assertThat(computeParallelShardSize(60000, sMin, nShards, min, max, sug)).isEqualTo(600);
+    assertThat(computeParallelShardSize(100000, sMin, nShards, min, max, sug)).isEqualTo(1000);
+    assertThat(computeParallelShardSize(110000, sMin, nShards, min, max, sug)).isEqualTo(max);
+  }
+
+  @Test
+  public void computeParallelShardSize_legacyShardingDisabled() {
+    setLegacySharding(false);
+    // Minimum # of targets for splitting build
+    int sMin = 1000;
+    // # shards running in parallel
+    int nShards = 100;
+    // Minimum # targets per shard
+    int min = 500;
+    // Maximum # targets per shard
+    int max = 1000;
+    // Suggested # targets per shard
+    int sug = 2000;
+
+    // nTargets less than splitting threshold sMin (1000) defaults to suggested size
+    assertThat(computeParallelShardSize(900, sMin, nShards, min, max, sug)).isEqualTo(sug);
+
+    // Shard size remains min (500) until nTargets > min (500) *
+    // nShards (100), at which point it scales up until max (1000) threshold
+    assertThat(computeParallelShardSize(1000, sMin, nShards, min, max, sug)).isEqualTo(min);
+    assertThat(computeParallelShardSize(3000, sMin, nShards, min, max, sug)).isEqualTo(min);
+    assertThat(computeParallelShardSize(5000, sMin, nShards, min, max, sug)).isEqualTo(min);
+    assertThat(computeParallelShardSize(6000, sMin, nShards, min, max, sug)).isEqualTo(min);
+    assertThat(computeParallelShardSize(50000, sMin, nShards, min, max, sug)).isEqualTo(min);
+    assertThat(computeParallelShardSize(60000, sMin, nShards, min, max, sug)).isEqualTo(600);
+    assertThat(computeParallelShardSize(100000, sMin, nShards, min, max, sug)).isEqualTo(1000);
+    assertThat(computeParallelShardSize(110000, sMin, nShards, min, max, sug)).isEqualTo(max);
+  }
+
+  @Test
+  public void computeParallelShardSize_userSpecifiedSizeTakesPriorityIfSmallerThanMinimum() {
+    int numTargets = 100000;
+    int numConcurrentShards = 100;
+    int minTargetsPerShard = 500;
+    int maxTargetsPerShard = 1000;
+    int suggestedTargetsPerShard = 20;
+    int parallelThreshold = 1000;
+
+    setLegacySharding(false);
+    assertThat(
+            computeParallelShardSize(
+                numTargets,
+                parallelThreshold,
+                numConcurrentShards,
+                minTargetsPerShard,
+                maxTargetsPerShard,
+                suggestedTargetsPerShard))
+        .isEqualTo(suggestedTargetsPerShard);
+
+    setLegacySharding(true);
+    assertThat(
+            computeParallelShardSize(
+                numTargets,
+                parallelThreshold,
+                numConcurrentShards,
+                minTargetsPerShard,
+                maxTargetsPerShard,
+                suggestedTargetsPerShard))
+        .isEqualTo(suggestedTargetsPerShard);
   }
 }

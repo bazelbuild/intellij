@@ -28,30 +28,16 @@ public abstract class ShardStats {
 
   public abstract ShardingApproach shardingApproach();
 
-  public static ShardStats.Builder builder() {
-    return new AutoValue_ShardStats.Builder()
-        .setActualTargetSizePerShard(ImmutableList.of())
-        .setSuggestedTargetSizePerShard(0)
-        .setShardingApproach(ShardingApproach.NONE);
-  }
-
-  /** Auto value builder for SyncStats. */
-  @AutoValue.Builder
-  public abstract static class Builder {
-    public abstract ShardStats.Builder setSuggestedTargetSizePerShard(
-        int suggestedTargetSizePerShard);
-
-    public abstract ShardStats.Builder setActualTargetSizePerShard(
-        ImmutableList<Integer> actualTargetSizePerShard);
-
-    public abstract ShardStats.Builder setShardingApproach(ShardingApproach shardingApproach);
-
-    public abstract ShardStats build();
+  public static ShardStats create(
+      int suggestedTargetSizePerShard,
+      ImmutableList<Integer> actualTargetSizePerShard,
+      ShardingApproach shardingApproach) {
+    return new AutoValue_ShardStats(
+        suggestedTargetSizePerShard, actualTargetSizePerShard, shardingApproach);
   }
 
   /** Types of sharding method */
   public enum ShardingApproach {
-    NONE,
     PARTITION_WITHOUT_EXPANDING,
     BUILD_TARGET_BATCHING_SERVICE,
     LEXICOGRAPHIC_TARGET_SHARDER,

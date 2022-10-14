@@ -27,6 +27,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.MockEventLoggingService;
 import com.google.idea.blaze.base.MockProjectViewManager;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
@@ -48,7 +50,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -58,6 +60,8 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.sharding.ShardedTargetList;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.google.idea.testing.ServiceHelper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.WriteAction;
@@ -108,7 +112,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   public void doSetup() throws Throwable {
     thisClassDisposable = Disposer.newDisposable();
     projectViewManager = new MockProjectViewManager(getProject());
-    new MockBlazeVcsHandler(thisClassDisposable);
+    ServiceHelper.registerExtension(
+        BlazeVcsHandler.EP_NAME, new MockBlazeVcsHandler(), thisClassDisposable);
     blazeInfoData = new MockBlazeInfoRunner();
     blazeIdeInterface = new MockBlazeIdeInterface();
     eventLogger = new MockEventLoggingService(thisClassDisposable);
@@ -132,9 +137,9 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
 
     blazeInfoData.setResults(
         ImmutableMap.<String, String>builder()
-            .put(BlazeInfo.blazeBinKey(Blaze.getBuildSystem(getProject())), blazeBin)
-            .put(BlazeInfo.blazeGenfilesKey(Blaze.getBuildSystem(getProject())), blazeGenfiles)
-            .put(BlazeInfo.blazeTestlogsKey(Blaze.getBuildSystem(getProject())), blazeTestlogs)
+            .put(BlazeInfo.blazeBinKey(Blaze.getBuildSystemName(getProject())), blazeBin)
+            .put(BlazeInfo.blazeGenfilesKey(Blaze.getBuildSystemName(getProject())), blazeGenfiles)
+            .put(BlazeInfo.blazeTestlogsKey(Blaze.getBuildSystemName(getProject())), blazeTestlogs)
             .put(BlazeInfo.EXECUTION_ROOT_KEY, execRoot)
             .put(BlazeInfo.OUTPUT_BASE_KEY, outputBase)
             .put(BlazeInfo.OUTPUT_PATH_KEY, outputPath)
@@ -191,7 +196,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   }
 
   protected void setProjectView(String... contents) {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
     ProjectViewParser projectViewParser =
         new ProjectViewParser(context, new WorkspacePathResolverImpl(workspaceRoot));
@@ -240,7 +245,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   }
 
   protected void runBlazeSync(BlazeSyncParams syncParams) {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     // We need to run sync off EDT to keep IntelliJ's transaction system happy
@@ -293,11 +298,12 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
     @Override
     public ListenableFuture<BlazeInfo> runBlazeInfo(
         @Nullable BlazeContext context,
-        BuildSystem buildSystem,
+        BuildSystemName buildSystemName,
         String binaryPath,
         WorkspaceRoot workspaceRoot,
         List<String> blazeFlags) {
-      return Futures.immediateFuture(BlazeInfo.create(buildSystem, ImmutableMap.copyOf(results)));
+      return Futures.immediateFuture(
+          BlazeInfo.create(buildSystemName, ImmutableMap.copyOf(results)));
     }
 
     public void setResults(Map<String, String> results) {
@@ -315,7 +321,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
         SyncProjectState projectState,
-        BlazeBuildOutputs buildResult,
+        BlazeSyncBuildResult buildResult,
         boolean mergeWithOldState,
         @Nullable BlazeProjectData oldProjectData) {
       return new ProjectTargetData(targetMap, null, RemoteOutputArtifacts.fromProjectData(null));
@@ -327,12 +333,12 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         BlazeContext context,
         WorkspaceRoot workspaceRoot,
         BlazeVersionData blazeVersion,
-        BlazeBuildParams buildParams,
+        BuildInvoker invoker,
         ProjectViewSet projectViewSet,
-        BlazeInfo blazeInfo,
         ShardedTargetList shardedTargets,
         WorkspaceLanguageSettings workspaceLanguageSettings,
-        ImmutableSet<OutputGroup> outputGroups) {
+        ImmutableSet<OutputGroup> outputGroups,
+        BlazeInvocationContext blazeInvocationContext) {
       return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
     }
   }

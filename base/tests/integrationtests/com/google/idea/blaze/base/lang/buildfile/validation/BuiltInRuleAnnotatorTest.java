@@ -28,12 +28,9 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -343,21 +340,9 @@ public class BuiltInRuleAnnotatorTest extends BuildFileIntegrationTestCase {
   }
 
   private List<Annotation> validateFile(BuildFile file) {
-    BuiltInRuleAnnotator annotator = createAnnotator(file);
-    PsiUtils.findAllChildrenOfClassRecursive(file, FuncallExpression.class)
-        .forEach(annotator::visitFuncallExpression);
-    return annotationHolder;
+    return BaseSdkTestCompat.testAnnotator(
+        new BuiltInRuleAnnotator(),
+        PsiUtils.findAllChildrenOfClassRecursive(file, FuncallExpression.class)
+            .toArray(FuncallExpression[]::new));
   }
-
-  private BuiltInRuleAnnotator createAnnotator(PsiFile file) {
-    annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
-    return new BuiltInRuleAnnotator() {
-      @Override
-      protected AnnotationHolder getHolder() {
-        return annotationHolder;
-      }
-    };
-  }
-
-  private AnnotationHolderImpl annotationHolder = null;
 }

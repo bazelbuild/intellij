@@ -32,6 +32,7 @@ import com.google.common.collect.TreeMultimap;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
+import com.google.idea.blaze.base.ideinfo.AndroidResFolder;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -159,6 +160,7 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
     SortedMap<ArtifactLocation, TargetIdeInfo> generatedResources = Maps.newTreeMap();
     generatedResources.putAll(
         target.getAndroidIdeInfo().getResources().stream()
+            .map(AndroidResFolder::getRoot)
             .filter(ArtifactLocation::isGenerated)
             .collect(Collectors.toMap(Function.identity(), resource -> target)));
     return generatedResources;

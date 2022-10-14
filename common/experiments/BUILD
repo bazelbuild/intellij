@@ -10,7 +10,7 @@ load(
     "SERVICES_EXPERIMENT_SUBPACKAGES",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 java_library(
     name = "experiments",

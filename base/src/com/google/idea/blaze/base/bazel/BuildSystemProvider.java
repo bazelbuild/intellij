@@ -16,13 +16,11 @@
 package com.google.idea.blaze.base.bazel;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.lang.buildfile.language.semantics.RuleDefinition;
-import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BuildBinaryType;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.ExactFileNameMatcher;
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
@@ -48,51 +46,70 @@ public interface BuildSystemProvider {
   }
 
   @Nullable
-  static BuildSystemProvider getBuildSystemProvider(BuildSystem buildSystem) {
+  static BuildSystemProvider getBuildSystemProvider(BuildSystemName buildSystemName) {
     for (BuildSystemProvider provider : EP_NAME.getExtensions()) {
-      if (provider.buildSystem() == buildSystem) {
+      if (provider.buildSystem() == buildSystemName) {
         return provider;
       }
     }
     return null;
   }
 
-  static boolean isBuildSystemAvailable(BuildSystem buildSystem) {
-    return getBuildSystemProvider(buildSystem) != null;
+  static boolean isBuildSystemAvailable(BuildSystemName buildSystemName) {
+    return getBuildSystemProvider(buildSystemName) != null;
   }
 
-  static WorkspaceRootProvider getWorkspaceRootProvider(BuildSystem buildSystem) {
-    BuildSystemProvider provider = getBuildSystemProvider(buildSystem);
+  static WorkspaceRootProvider getWorkspaceRootProvider(BuildSystemName buildSystemName) {
+    BuildSystemProvider provider = getBuildSystemProvider(buildSystemName);
     if (provider == null) {
       throw new RuntimeException(
-          String.format("Build system '%s' not supported by this plugin", buildSystem));
+          String.format("Build system '%s' not supported by this plugin", buildSystemName));
     }
     return provider.getWorkspaceRootProvider();
   }
 
+  BuildSystem getBuildSystem();
+
   /**
    * Returns the default build system for this application. This should only be called in situations
    * where it doesn't make sense to use the current project.<br>
-   * Otherwise, use {@link com.google.idea.blaze.base.settings.Blaze#getBuildSystem}
+   * Otherwise, use {@link com.google.idea.blaze.base.settings.Blaze#getBuildSystemName}
+   *
+   * @deprecated Use {@link #getBuildSystem()} instead.
    */
-  BuildSystem buildSystem();
-
-  /** @return The location of the blaze/bazel binary. */
-  String getBinaryPath(Project project);
-
-  /** @return The location of the blaze/bazel binary to use for syncing. */
-  default String getSyncBinaryPath(Project project) {
-    return getBinaryPath(project);
+  @Deprecated
+  default BuildSystemName buildSystem() {
+    return getBuildSystem().getName();
   }
 
-  /** @return The type of the blaze/bazel binary to use for syncing */
-  BuildBinaryType getSyncBinaryType();
+  /**
+   * @return The location of the blaze/bazel binary.
+   * @deprecated Use {@link #getBuildSystem()} instead.
+   */
+  @Deprecated
+  default String getBinaryPath(Project project) {
+    return getBuildSystem().getBuildInvoker(project, BlazeContext.create()).getBinaryPath();
+  }
 
-  /** Returns true if syncing is done off the user's local machine. */
+  /**
+   * @return The location of the blaze/bazel binary to use for syncing.
+   * @deprecated Use {@link #getBuildSystem()} instead.
+   */
+  @Deprecated
+  default String getSyncBinaryPath(Project project) {
+    return getBuildSystem().getBuildInvoker(project, BlazeContext.create()).getBinaryPath();
+  }
+
+  /**
+   * Returns true if syncing is done off the user's local machine.
+   *
+   * @deprecated Whether syncs happen remotely is not determined statically anymore. Logic depending
+   *     on this should be reconsidered, or updated to use the state of the most recent sync as
+   *     appropriate.
+   */
+  @Deprecated
   default boolean syncingRemotely() {
-    // TODO(brendandouglas): make this configurable based on context, move somewhere more
-    // appropriate
-    return getSyncBinaryType().isRemote;
+    return false;
   }
 
   WorkspaceRootProvider getWorkspaceRootProvider();
@@ -176,10 +193,4 @@ public interface BuildSystemProvider {
     return list.build();
   }
 
-  /** Populates the passed builder with version data. */
-  void populateBlazeVersionData(
-      BuildSystem buildSystem,
-      WorkspaceRoot workspaceRoot,
-      BlazeInfo blazeInfo,
-      BlazeVersionData.Builder builder);
 }

@@ -18,6 +18,7 @@ package com.google.idea.common.settings;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.auto.value.AutoValue;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.common.settings.Property.Getter;
 import com.google.idea.common.settings.Property.Setter;
 import java.util.Optional;
@@ -109,6 +110,7 @@ public abstract class ConfigurableSetting<ValueT, ComponentT extends SettingComp
     abstract BuilderT self();
 
     /** Sets the UI label for this setting. */
+    @CanIgnoreReturnValue
     public BuilderT label(String label) {
       searchableTextBuilder.setLabel(label);
       return self();
@@ -118,6 +120,7 @@ public abstract class ConfigurableSetting<ValueT, ComponentT extends SettingComp
      * Adds search terms, allowing this setting to be a result for the given strings, even if they
      * don't appear in the user-visible label.
      */
+    @CanIgnoreReturnValue
     public BuilderT addTags(String... tags) {
       searchableTextBuilder.addTags(tags);
       return self();
@@ -128,13 +131,26 @@ public abstract class ConfigurableSetting<ValueT, ComponentT extends SettingComp
      *
      * <p>The condition will only be checked when the UI is created, not on subsequent updates.
      *
-     * @throws IllegalStateException if {@code hideIf} has already been called. Only one condition
-     *     is supported.
+     * @throws IllegalStateException if {@link #hideIf} or {@link #showIf} has already been called.
+     *     Only one condition is supported.
      */
+    @CanIgnoreReturnValue
     public BuilderT hideIf(Supplier<Boolean> hideCondition) {
-      checkState(this.hideCondition == null, "hideIf can only be called once");
+      checkState(this.hideCondition == null, "hideIf/showIf can only be called once");
       this.hideCondition = hideCondition;
       return self();
+    }
+
+    /**
+     * Sets a condition for showing and enabling this setting in the UI.
+     *
+     * <p>The condition will only be checked when the UI is created, not on subsequent updates.
+     *
+     * @throws IllegalStateException if {@link #hideIf} or {@link #showIf} has already been called.
+     *     Only one condition is supported.
+     */
+    public BuilderT showIf(Supplier<Boolean> showCondition) {
+      return hideIf(() -> !showCondition.get());
     }
   }
 
@@ -179,12 +195,14 @@ public abstract class ConfigurableSetting<ValueT, ComponentT extends SettingComp
     }
 
     /** Sets the {@link Getter} used to retrieve the setting value. */
+    @CanIgnoreReturnValue
     public TypedBuilder<SettingsT, ValueT> getter(Getter<SettingsT, ValueT> getter) {
       this.getter = getter;
       return self();
     }
 
     /** Sets the {@link Setter} used to update the setting value. */
+    @CanIgnoreReturnValue
     public TypedBuilder<SettingsT, ValueT> setter(Setter<SettingsT, ValueT> setter) {
       this.setter = setter;
       return self();

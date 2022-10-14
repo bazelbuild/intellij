@@ -30,11 +30,10 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
-import com.intellij.openapi.extensions.ExtensionPoint;
 import java.io.File;
 import java.util.Collection;
 import java.util.Set;
@@ -75,13 +74,15 @@ public class BuildTargetFinderTest extends BlazeTestCase {
     applicationServices.register(ExperimentService.class, new MockExperimentService());
     projectServices.register(
         BlazeImportSettingsManager.class, mock(BlazeImportSettingsManager.class));
-    ExtensionPoint<BuildSystemProvider> extensionPoint =
-        registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
-    extensionPoint.registerExtension(new BazelBuildSystemProvider());
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   private BuildTargetFinder buildTargetFinder(Collection<WorkspacePath> roots) {
-    ImportRoots.Builder builder = ImportRoots.builder(workspaceRoot, BuildSystem.Bazel);
+    ImportRoots.Builder builder = ImportRoots.builder(workspaceRoot, BuildSystemName.Bazel);
     for (WorkspacePath root : roots) {
       builder.add(DirectoryEntry.include(root));
     }

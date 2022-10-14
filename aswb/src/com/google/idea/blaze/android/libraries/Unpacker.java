@@ -88,12 +88,12 @@ public final class Unpacker {
    * with same name is found next time.
    */
   private static void unpackAarToDir(
-      FileOperationProvider ops, AarLibraryContents aarAndJar, AarCache aarCache) {
-    String cacheKey = UnpackedAarUtils.getAarDirName(aarAndJar.aar());
+      FileOperationProvider ops, AarLibraryContents aarLibraryContents, AarCache aarCache) {
+    String cacheKey = UnpackedAarUtils.getAarDirName(aarLibraryContents.aar());
     try {
       File aarDir = aarCache.recreateAarDir(ops, cacheKey);
       // TODO(brendandouglas): decompress via ZipInputStream so we don't require a local file
-      File toCopy = getOrCreateLocalFile(aarAndJar.aar());
+      File toCopy = getOrCreateLocalFile(aarLibraryContents.aar());
       ZipUtil.extract(
           toCopy,
           aarDir,
@@ -102,7 +102,7 @@ public final class Unpacker {
           // which is more lightweight. But it's not applied to lint.jar
           (dir, name) -> name.equals(FN_LINT_JAR) || !name.endsWith(".jar"));
 
-      BlazeArtifact aar = aarAndJar.aar();
+      BlazeArtifact aar = aarLibraryContents.aar();
 
       try {
         aarCache.createTimeStampFile(
@@ -113,18 +113,31 @@ public final class Unpacker {
       }
 
       // copy merged jar
-      if (aarAndJar.jar() != null) {
-        try (InputStream stream = aarAndJar.jar().getInputStream()) {
+      if (aarLibraryContents.jar() != null) {
+        try (InputStream stream = aarLibraryContents.jar().getInputStream()) {
           Path destination = Paths.get(UnpackedAarUtils.getJarFile(aarDir).getPath());
           ops.mkdirs(destination.getParent().toFile());
           Files.copy(stream, destination, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+          logger.warn("Failed to copy class jar for " + aar, e);
         }
       }
 
+      // copy src jars
+      for (BlazeArtifact srcjar : aarLibraryContents.srcJars()) {
+        try (InputStream stream = srcjar.getInputStream()) {
+          Path destination = aarDir.toPath().resolve(UnpackedAarUtils.getSrcJarName(srcjar));
+          ops.mkdirs(destination.getParent().toFile());
+          Files.copy(stream, destination, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+          logger.warn("Failed to copy source jar for " + aar, e);
+        }
+      }
     } catch (IOException e) {
       logger.warn(
           String.format(
-              "Failed to extract AAR %s to %s", aarAndJar.aar(), aarCache.aarDirForKey(cacheKey)),
+              "Failed to extract AAR %s to %s",
+              aarLibraryContents.aar(), aarCache.aarDirForKey(cacheKey)),
           e);
     }
   }

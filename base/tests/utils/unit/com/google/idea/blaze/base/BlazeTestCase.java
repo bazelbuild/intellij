@@ -15,6 +15,11 @@
  */
 package com.google.idea.blaze.base;
 
+import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.FakeBuildSystem;
+import com.google.idea.blaze.base.bazel.FakeBuildSystemProvider;
+import com.google.idea.blaze.base.settings.BuildSystemName;
+import com.google.idea.testing.TestUtils;
 import com.intellij.mock.MockComponentManager;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
@@ -65,6 +70,7 @@ public class BlazeTestCase {
   protected Project project;
   private ExtensionsAreaImpl extensionsArea;
   protected Disposable testDisposable;
+  private BuildSystemProvider buildSystemProvider;
 
   private static class RootDisposable implements Disposable {
     @Override
@@ -96,11 +102,27 @@ public class BlazeTestCase {
 
     extensionsArea = (ExtensionsAreaImpl) Extensions.getRootArea();
 
+    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
+        .registerExtension(getBuildSystemProvider(), testDisposable);
+
     this.project = mockProject;
 
     initTest(
         new Container((MockComponentManager) ApplicationManager.getApplication(), testDisposable),
         new Container(mockProject, testDisposable));
+  }
+
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return FakeBuildSystemProvider.builder()
+        .setBuildSystem(FakeBuildSystem.builder(BuildSystemName.Bazel).build())
+        .build();
+  }
+
+  protected final synchronized BuildSystemProvider getBuildSystemProvider() {
+    if (buildSystemProvider == null) {
+      buildSystemProvider = createBuildSystemProvider();
+    }
+    return buildSystemProvider;
   }
 
   @After

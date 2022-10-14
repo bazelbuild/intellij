@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.sdkcompat.typescript.TypeScriptSDKCompat;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigService;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfigServiceImpl;
@@ -84,32 +83,27 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
     return impl.getPreferableConfig(scopeFile);
   }
 
-  /** #api203: Added in 2021.1, therefore @Override is ommitted. */
   @Nullable
+  @Override
   public TypeScriptConfig getPreferableOrParentConfig(@Nullable VirtualFile virtualFile) {
-    return TypeScriptSDKCompat.getPreferableOrParentConfig(impl, virtualFile);
+    return impl.getPreferableOrParentConfig(virtualFile);
   }
 
-  /** #api203: Added in 2021.1, therefore @Override is ommitted. */
   @Nullable
+  @Override
   public TypeScriptConfig getDirectIncludePreferableConfig(@Nullable VirtualFile virtualFile) {
-    return TypeScriptSDKCompat.getDirectIncludePreferableConfig(impl, virtualFile);
+    return impl.getDirectIncludePreferableConfig(virtualFile);
   }
 
-  /** #api203: Added in 2021.1, therefore @Override is ommitted. */
+  @Override
   public List<VirtualFile> getRootConfigFiles() {
-    return TypeScriptSDKCompat.getRootConfigFiles(impl);
+    return impl.getRootConfigFiles();
   }
 
   @Nullable
   @Override
   public TypeScriptConfig parseConfigFile(VirtualFile file) {
     return impl.parseConfigFile(file);
-  }
-
-  /** Removed in 2021.1. #api203 https://github.com/bazelbuild/intellij/issues/2329 */
-  public List<TypeScriptConfig> getConfigs() {
-    return TypeScriptSDKCompat.getConfigs(impl);
   }
 
   public List<TypeScriptConfig> getTypeScriptConfigs() {
@@ -122,11 +116,6 @@ class DelegatingTypeScriptConfigService implements TypeScriptConfigService {
   @Override
   public void addChangeListener(TypeScriptConfigsChangedListener listener) {
     impl.addChangeListener(listener);
-  }
-
-  /** #api203: Removed in 2021.1, therefore @Override is ommitted. */
-  public boolean hasConfigs() {
-    return TypeScriptSDKCompat.hasConfigs(impl);
   }
 
   @Override

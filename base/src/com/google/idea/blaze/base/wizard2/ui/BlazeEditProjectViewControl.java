@@ -42,7 +42,7 @@ import com.google.idea.blaze.base.scope.OutputSink.Propagation;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.IssueOutput.Category;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.settings.ui.JPanelProvidingProject;
 import com.google.idea.blaze.base.settings.ui.ProjectViewUi;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
@@ -237,10 +237,10 @@ public final class BlazeEditProjectViewControl {
   }
 
   private static String modifyInitialProjectView(
-      BuildSystem buildSystem,
+      BuildSystemName buildSystemName,
       String initialProjectViewText,
       WorkspacePathResolver workspacePathResolver) {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     ProjectViewParser projectViewParser = new ProjectViewParser(context, workspacePathResolver);
     projectViewParser.parseProjectView(initialProjectViewText);
     ProjectViewSet projectViewSet = projectViewParser.getResult();
@@ -259,20 +259,21 @@ public final class BlazeEditProjectViewControl {
         Comparator.comparingInt(val -> sectionKeys.indexOf(val.getSectionKey())));
     for (ProjectViewDefaultValueProvider defaultValueProvider : defaultValueProviders) {
       projectView =
-          defaultValueProvider.addProjectViewDefaultValue(buildSystem, projectViewSet, projectView);
+          defaultValueProvider.addProjectViewDefaultValue(
+              buildSystemName, projectViewSet, projectView);
     }
     return ProjectViewParser.projectViewToString(projectView);
   }
 
   private void init(
-      BuildSystem buildSystem,
+      BuildSystemName buildSystemName,
       WorkspacePathResolver workspacePathResolver,
       @Nullable WorkspacePath sharedProjectView,
       @Nullable String initialProjectViewText,
       boolean allowAddDefaultValues) {
     if (allowAddDefaultValues && initialProjectViewText != null) {
       initialProjectViewText =
-          modifyInitialProjectView(buildSystem, initialProjectViewText, workspacePathResolver);
+          modifyInitialProjectView(buildSystemName, initialProjectViewText, workspacePathResolver);
     }
     this.workspacePathResolver = workspacePathResolver;
 
@@ -447,6 +448,12 @@ public final class BlazeEditProjectViewControl {
   }
 
   public BlazeValidationResult validate() {
+    if (projectViewOption.getOptionName().equals("generate-from-project-proto")) {
+      // nothing to validate in this instance.
+      // TODO(mathewi) this is a workaround, ideally we would not even show the "edit project view"
+      // step in this case.
+      return BlazeValidationResult.success();
+    }
     // Validate project settings fields
     String projectName = projectNameField.getText().trim();
     if (StringUtil.isEmpty(projectName)) {
@@ -495,7 +502,7 @@ public final class BlazeEditProjectViewControl {
 
     List<DirectoryEntry> directories = projectViewSet.listItems(DirectorySection.KEY);
     if (directories.isEmpty()) {
-      if (workspaceData.buildSystem().equals(BuildSystem.Blaze)) {
+      if (workspaceData.buildSystem().equals(BuildSystemName.Blaze)) {
         int result =
             Messages.showOkCancelDialog(
                 getUiComponent(),

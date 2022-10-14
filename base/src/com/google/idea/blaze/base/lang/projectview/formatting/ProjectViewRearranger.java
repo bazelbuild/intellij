@@ -73,29 +73,23 @@ public class ProjectViewRearranger implements Rearranger<Entry>, ArrangementStan
     }
   }
 
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression"})
   @Nullable
   @Override
   public Pair<Entry, List<Entry>> parseWithNew(
       PsiElement root,
       @Nullable Document document,
-      // #api203 replace with "Collection<? extends TextRange>"
-      Collection ranges,
+      Collection<? extends TextRange> ranges,
       PsiElement element,
       ArrangementSettings settings) {
     // no support for generating new elements
     return null;
   }
 
-  // #api203: remove "@SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})"
-  @SuppressWarnings({"rawtypes", "RedundantSuppression", "unchecked"})
   @Override
   public List<Entry> parse(
       PsiElement root,
       @Nullable Document document,
-      // #api203 replace with "Collection<? extends TextRange>"
-      Collection ranges,
+      Collection<? extends TextRange> ranges,
       ArrangementSettings settings) {
     if (root instanceof ProjectViewPsiListSection) {
       Entry entry = fromListSection(ranges, (ProjectViewPsiListSection) root);
@@ -113,7 +107,7 @@ public class ProjectViewRearranger implements Rearranger<Entry>, ArrangementStan
 
   @Nullable
   private static Entry fromListSection(
-      Collection<TextRange> ranges, ProjectViewPsiListSection listSection) {
+      Collection<? extends TextRange> ranges, ProjectViewPsiListSection listSection) {
     if (!isWithinBounds(ranges, listSection.getTextRange())) {
       return null;
     }
@@ -137,7 +131,7 @@ public class ProjectViewRearranger implements Rearranger<Entry>, ArrangementStan
     return parent;
   }
 
-  private static boolean isWithinBounds(Collection<TextRange> ranges, TextRange range) {
+  private static boolean isWithinBounds(Collection<? extends TextRange> ranges, TextRange range) {
     return ranges.stream().anyMatch(r -> r.intersects(range));
   }
 

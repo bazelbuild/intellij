@@ -16,10 +16,16 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.google.idea.common.ui.properties.Property;
+import com.intellij.openapi.project.Project;
 
 /** Model for tree of tasks. */
 final class TasksTreeModel {
-  private final TasksTreeProperty tasksTreeProperty = new TasksTreeProperty();
+  private final TasksTreeProperty tasksTreeProperty;
+
+  public TasksTreeModel(Project project) {
+    tasksTreeProperty = new TasksTreeProperty(project);
+  }
+
   private final Property<Task> selectedTask = new Property<>();
 
   TasksTreeProperty tasksTreeProperty() {

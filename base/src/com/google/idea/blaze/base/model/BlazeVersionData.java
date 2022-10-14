@@ -16,12 +16,13 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.bazel.BazelVersion;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -81,8 +82,8 @@ public final class BlazeVersionData implements ProtoWrapper<ProjectData.BlazeVer
     return bazelVersion != null && bazelVersion.isAtLeast(version);
   }
 
-  public BuildSystem buildSystem() {
-    return bazelVersion != null ? BuildSystem.Bazel : BuildSystem.Blaze;
+  public BuildSystemName buildSystem() {
+    return bazelVersion != null ? BuildSystemName.Bazel : BuildSystemName.Blaze;
   }
 
   @Override
@@ -114,10 +115,11 @@ public final class BlazeVersionData implements ProtoWrapper<ProjectData.BlazeVer
 
   public static BlazeVersionData build(
       BuildSystem buildSystem, WorkspaceRoot workspaceRoot, BlazeInfo blazeInfo) {
+    // TODO(mathewi) This should probably be refatored into a createBlazeVersionData method in
+    //    BuildSystem, or perhaps better, remove the need for it by improving encapsulation of
+    //    BuildSystem.
     Builder builder = builder();
-    for (BuildSystemProvider provider : BuildSystemProvider.EP_NAME.getExtensions()) {
-      provider.populateBlazeVersionData(buildSystem, workspaceRoot, blazeInfo, builder);
-    }
+    buildSystem.populateBlazeVersionData(workspaceRoot, blazeInfo, builder);
     return builder.build();
   }
 
@@ -131,16 +133,19 @@ public final class BlazeVersionData implements ProtoWrapper<ProjectData.BlazeVer
     @Nullable private Long clientCl;
     @Nullable private BazelVersion bazelVersion;
 
+    @CanIgnoreReturnValue
     public Builder setBlazeCl(@Nullable Long blazeCl) {
       this.blazeCl = blazeCl;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setClientCl(@Nullable Long clientCl) {
       this.clientCl = clientCl;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setBazelVersion(BazelVersion bazelVersion) {
       this.bazelVersion = bazelVersion;
       return this;

@@ -182,7 +182,7 @@ public class CPrefetchFileSourceTest extends BlazeIntegrationTestCase {
 
   private ProjectViewSet parseProjectView(String... contents) {
     ProjectViewParser projectViewParser =
-        new ProjectViewParser(new BlazeContext(), new WorkspacePathResolverImpl(workspaceRoot));
+        new ProjectViewParser(BlazeContext.create(), new WorkspacePathResolverImpl(workspaceRoot));
     projectViewParser.parseProjectView(Joiner.on("\n").join(contents));
     return projectViewParser.getResult();
   }

@@ -52,7 +52,7 @@ public class AndroidOutputsProvider implements OutputsProvider {
 
     ImmutableList.Builder<ArtifactLocation> list = ImmutableList.builder();
     androidInfo
-        .getResFolders()
+        .getResources()
         .forEach(
             f -> {
               if (f.getAar() != null) {

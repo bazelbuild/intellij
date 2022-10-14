@@ -16,7 +16,7 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 java_library(
     name = "golang",
@@ -29,7 +29,6 @@ java_library(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
-        "//sdkcompat",
         "//third_party/go",
     ],
 )
@@ -72,10 +71,12 @@ intellij_unit_test_suite(
         ":golang",
         "//base",
         "//base:unit_test_utils",
+        "//common/experiments",
+        "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "//sdkcompat",
+        "//testing:lib",
         "//third_party/go:go_for_tests",
         "@junit//jar",
     ],
@@ -84,6 +85,13 @@ intellij_unit_test_suite(
 intellij_integration_test_suite(
     name = "integration_tests",
     srcs = glob(["tests/integrationtests/**/*.java"]),
+    env = {
+        # Disable runtime checks because GoGenericsLibraryRootsProvider causes them to trigger
+        # genericsStub folder containing builtin.go should be added to source roots, but it's not.
+        # #api212: This affects only 2021.3 version of the platform. Should be fixed in 2022.1 and potentially
+        # in a Go plugin release after 213.6461.48 version.
+        "NO_FS_ROOTS_ACCESS_CHECK": "true",
+    },
     required_plugins = "com.google.idea.blaze.golang,org.jetbrains.plugins.go",
     test_package_root = "com.google.idea.blaze.golang",
     runtime_deps = [
@@ -96,6 +104,7 @@ intellij_integration_test_suite(
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//intellij_platform_sdk:intellilang_for_tests",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",

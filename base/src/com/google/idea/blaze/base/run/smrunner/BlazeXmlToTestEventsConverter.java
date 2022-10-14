@@ -35,7 +35,7 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResult.TestStatus;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -83,38 +83,42 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
   @Override
   public void flushBufferOnProcessTermination(int exitCode) {
     super.flushBufferOnProcessTermination(exitCode);
-    BlazeTestResults testResults = testResultFinderStrategy.findTestResults();
-    if (testResults == null || testResults == BlazeTestResults.NO_RESULTS) {
-      BlazeTestExitStatus exitStatus = BlazeTestExitStatus.forExitCode(exitCode);
-      if (exitStatus == null) {
-        reportTestRuntimeError(
-            "Unknown Error",
-            "Test runtime terminated unexpectedly with exit code " + exitCode + ".");
+
+    try {
+      BlazeTestResults testResults = testResultFinderStrategy.findTestResults();
+      if (testResults == BlazeTestResults.NO_RESULTS) {
+        reportError(exitCode);
       } else {
-        reportTestRuntimeError(exitStatus.title, exitStatus.message);
+        processAllTestResults(testResults);
       }
-    } else {
-      processAllTestResults(testResults);
+    } finally {
+      testResultFinderStrategy.deleteTemporaryOutputFiles();
     }
   }
 
   private void processAllTestResults(BlazeTestResults testResults) {
     onStartTesting();
     getProcessor().onTestsReporterAttached();
-    try {
-      List<ListenableFuture<ParsedTargetResults>> futures = new ArrayList<>();
-      for (Label label : testResults.perTargetResults.keySet()) {
-        futures.add(
-            FetchExecutor.EXECUTOR.submit(
-                () -> parseTestXml(label, testResults.perTargetResults.get(label))));
-      }
-      List<ParsedTargetResults> parsedResults =
-          FuturesUtil.getIgnoringErrors(Futures.allAsList(futures));
-      if (parsedResults != null) {
-        parsedResults.forEach(this::processParsedTestResults);
-      }
-    } finally {
-      testResultFinderStrategy.deleteTemporaryOutputXmlFiles();
+    List<ListenableFuture<ParsedTargetResults>> futures = new ArrayList<>();
+    for (Label label : testResults.perTargetResults.keySet()) {
+      futures.add(
+          FetchExecutor.EXECUTOR.submit(
+              () -> parseTestXml(label, testResults.perTargetResults.get(label))));
+    }
+    List<ParsedTargetResults> parsedResults =
+        FuturesUtil.getIgnoringErrors(Futures.allAsList(futures));
+    if (parsedResults != null) {
+      parsedResults.forEach(this::processParsedTestResults);
+    }
+  }
+
+  private void reportError(int exitCode) {
+    BlazeTestExitStatus exitStatus = BlazeTestExitStatus.forExitCode(exitCode);
+    if (exitStatus == null) {
+      reportTestRuntimeError(
+          "Unknown Error", "Test runtime terminated unexpectedly with exit code " + exitCode + ".");
+    } else {
+      reportTestRuntimeError(exitStatus.title, exitStatus.message);
     }
   }
 
@@ -449,7 +453,7 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
    */
   private static boolean bazelIsAtLeastVersion(int major, int minor, int bugfix) {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (Blaze.getBuildSystem(project) == BuildSystem.Bazel) {
+      if (Blaze.getBuildSystemName(project) == BuildSystemName.Bazel) {
         BlazeProjectData projectData =
             BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
         if (projectData != null) {

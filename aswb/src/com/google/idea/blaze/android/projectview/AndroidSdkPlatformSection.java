@@ -31,7 +31,7 @@ import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlock;
 import com.google.idea.blaze.base.projectview.section.sections.TextBlockSection;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.List;
@@ -69,7 +69,9 @@ public class AndroidSdkPlatformSection {
       implements ProjectViewDefaultValueProvider {
     @Override
     public ProjectView addProjectViewDefaultValue(
-        BuildSystem buildSystem, ProjectViewSet projectViewSet, ProjectView topLevelProjectView) {
+        BuildSystemName buildSystemName,
+        ProjectViewSet projectViewSet,
+        ProjectView topLevelProjectView) {
       if (!topLevelProjectView.getSectionsOfType(KEY).isEmpty()) {
         return topLevelProjectView;
       }

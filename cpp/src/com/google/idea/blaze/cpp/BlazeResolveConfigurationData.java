@@ -91,4 +91,8 @@ final class BlazeResolveConfigurationData {
         toolchainIdeInfo,
         compilerSettings.getCompilerVersion());
   }
+
+  CToolchainIdeInfo getCToolchainIdeInfo() {
+    return toolchainIdeInfo;
+  }
 }

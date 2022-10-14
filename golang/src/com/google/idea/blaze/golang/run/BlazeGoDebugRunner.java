@@ -21,6 +21,7 @@ import com.goide.dlv.DlvRemoteVmConnection;
 import com.goide.execution.GoBuildingRunner;
 import com.goide.execution.application.GoApplicationRunningState;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.RuleType;
@@ -79,6 +80,7 @@ public class BlazeGoDebugRunner extends GoBuildingRunner {
   protected RunContentDescriptor doExecute(
       ExecutionEnvironment environment, BlazeGoDummyDebugProfileState blazeState)
       throws ExecutionException {
+    EventLoggingService.getInstance().logEvent(getClass(), "debugging-go");
     GoApplicationRunningState goState = blazeState.toNativeState(environment);
     ExecutionResult executionResult = goState.execute(environment.getExecutor(), this);
     return XDebuggerManager.getInstance(environment.getProject())

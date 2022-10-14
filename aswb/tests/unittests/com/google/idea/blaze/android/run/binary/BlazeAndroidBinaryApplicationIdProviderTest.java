@@ -24,7 +24,7 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.manifest.ManifestParser.ParsedManifest;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
+import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -40,7 +40,7 @@ public class BlazeAndroidBinaryApplicationIdProviderTest {
     ParsedManifest manifest = new ParsedManifest("package.name", ImmutableList.of(), null);
     BlazeAndroidDeployInfo deployInfo =
         new BlazeAndroidDeployInfo(manifest, null, ImmutableList.of());
-    BlazeApkBuildStep mockBuildStep = mock(BlazeApkBuildStep.class);
+    ApkBuildStep mockBuildStep = mock(ApkBuildStep.class);
     when(mockBuildStep.getDeployInfo()).thenReturn(deployInfo);
 
     BlazeAndroidBinaryApplicationIdProvider provider =
@@ -53,7 +53,7 @@ public class BlazeAndroidBinaryApplicationIdProviderTest {
     ParsedManifest manifest = new ParsedManifest(null, ImmutableList.of(), null);
     BlazeAndroidDeployInfo deployInfo =
         new BlazeAndroidDeployInfo(manifest, null, ImmutableList.of());
-    BlazeApkBuildStep mockBuildStep = mock(BlazeApkBuildStep.class);
+    ApkBuildStep mockBuildStep = mock(ApkBuildStep.class);
     when(mockBuildStep.getDeployInfo()).thenReturn(deployInfo);
 
     BlazeAndroidBinaryApplicationIdProvider provider =

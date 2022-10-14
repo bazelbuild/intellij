@@ -25,7 +25,7 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 intellij_plugin_library(
     name = "plugin_library",

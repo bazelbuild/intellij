@@ -27,9 +27,9 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.android.run.BlazeAndroidRunState;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
-import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
@@ -37,11 +37,12 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
+import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.toolwindow.Task;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
@@ -139,6 +140,7 @@ public final class BlazeAndroidRunConfigurationRunner
     return new BlazeAndroidRunState(env, launchOptionsBuilder, deviceSession, runContext);
   }
 
+  @Nullable
   private static String canDebug(
       DeviceFutures deviceFutures, AndroidFacet facet, String moduleName) {
     // If we are debugging on a device, then the app needs to be debuggable
@@ -157,10 +159,7 @@ public final class BlazeAndroidRunConfigurationRunner
   }
 
   private static LaunchOptions.Builder getDefaultLaunchOptions() {
-    return LaunchOptions.builder()
-        .setClearLogcatBeforeStart(false)
-        .setSkipNoopApkInstallations(true)
-        .setForceStopRunningApp(true);
+    return LaunchOptionsCompat.getDefaultLaunchOptions();
   }
 
   @Override
@@ -173,14 +172,14 @@ public final class BlazeAndroidRunConfigurationRunner
               .push(new ProblemsViewScope(project, settings.getShowProblemsViewOnRun()))
               .push(new ExperimentScope())
               .push(
-                  new BlazeConsoleScope.Builder(project)
+                  new ToolWindowScope.Builder(
+                          project, new Task(project, "Build apk", Task.Type.BEFORE_LAUNCH))
                       .setPopupBehavior(settings.getShowBlazeConsoleOnRun())
-                      .addConsoleFilters(
-                          new IssueOutputFilter(
+                      .setIssueParsers(
+                          BlazeIssueParser.defaultIssueParsers(
                               project,
                               WorkspaceRoot.fromProject(project),
-                              BlazeInvocationContext.ContextType.RunConfiguration,
-                              true))
+                              ContextType.BeforeRunTask))
                       .build())
               .push(new IdeaLogScope());
 
@@ -192,7 +191,7 @@ public final class BlazeAndroidRunConfigurationRunner
           BlazeAndroidDeviceSelector.DeviceSession deviceSession =
               env.getCopyableUserData(DEVICE_SESSION_KEY);
 
-          BlazeApkBuildStep buildStep = runContext.getBuildStep();
+          ApkBuildStep buildStep = runContext.getBuildStep();
           ScopedTask<Void> buildTask =
               new ScopedTask<Void>(context) {
                 @Override

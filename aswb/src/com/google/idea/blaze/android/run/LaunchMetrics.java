@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.run;
 
+import com.android.tools.idea.BaseAsCompat;
 import com.android.tools.idea.run.tasks.LaunchResult;
 import com.google.common.base.StandardSystemProperty;
 import com.google.common.base.Strings;
@@ -88,7 +89,7 @@ public class LaunchMetrics {
             KEY_DEPLOY_DURATION_MILLIS,
             Long.toString(duration.toMillis()),
             KEY_DEPLOY_STATUS,
-            Boolean.toString(launchResult.getSuccess()));
+            Boolean.toString(BaseAsCompat.wasSuccessfulLaunch(launchResult)));
     EventLoggingService.getInstance().logEvent(LaunchMetrics.class, "DeployTiming", metrics);
   }
 

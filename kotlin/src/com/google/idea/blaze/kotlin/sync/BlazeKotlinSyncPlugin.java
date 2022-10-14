@@ -37,15 +37,14 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.common.experiments.BoolExperiment;
+import com.google.idea.sdkcompat.kotlin.KotlinCompat;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,8 +63,6 @@ import org.jetbrains.kotlin.config.LanguageVersion;
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JvmCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings;
-import org.jetbrains.kotlin.idea.configuration.KotlinJavaModuleConfigurator;
-import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType;
 
@@ -78,8 +75,6 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
   private static final LanguageVersion DEFAULT_VERSION = LanguageVersion.KOTLIN_1_2;
   private static final BoolExperiment setCompilerFlagsExperiment =
       new BoolExperiment("blaze.kotlin.sync.set.compiler.flags", true);
-  private static final BoolExperiment earlyKotlinLibraryAdditionEnabled =
-      new BoolExperiment("blaze.kotlin.sync.add.library.early.enable", true);
 
   @Override
   public Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
@@ -126,9 +121,8 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     String versionString = languageLevel.getVersionString();
     CommonCompilerArguments settings =
         (CommonCompilerArguments)
-            KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project)
-                .getSettings()
-                .unfrozen();
+            KotlinCompat.unfreezeSettings(
+                KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).getSettings());
     boolean updated = false;
     String apiVersion = settings.getApiVersion();
     String languageVersion = settings.getLanguageVersion();
@@ -147,7 +141,8 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     if (setCompilerFlagsExperiment.getValue()) {
       CompilerSettings compilerSettings =
           (CompilerSettings)
-              KotlinCompilerSettings.Companion.getInstance(project).getSettings().unfrozen();
+              KotlinCompat.unfreezeSettings(
+                  KotlinCompilerSettings.Companion.getInstance(project).getSettings());
       // Order matters since we have parameter like -jvm-target 1.8 where two parameters must be
       // aligned in order.
       // Currently, we list all common compiler flags in settings even though it may be duplicated
@@ -238,19 +233,6 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     setJavaLanguageLevel(
         kotlinFacet,
         JavaLanguageLevelHelper.getJavaLanguageLevel(projectViewSet, blazeProjectData));
-
-    // #api211
-    // b/198439707: When the old project model is in use, get ModifiableModel for a module may lead
-    // to thousands of root change events if it has thousands of jars attached. In order to
-    // avoid this, we attach kotlin library to ModifiableModel before it's committed. So
-    // KotlinLibraryConfigurator.configureModule does not need to attach kotlin library to module
-    // and it avoids potential conversion.
-    if (earlyKotlinLibraryAdditionEnabled.getValue()
-        && (Registry.is("ide.old.project.model", false)
-            || !Registry.is("ide.new.project.model", true))) {
-      KotlinLibraryConfiguratorForOldProjectModel.INSTANCE.configureModel(
-          project, workspaceModifiableModel, workspaceModule);
-    }
   }
 
   /**
@@ -285,9 +267,8 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
     Project project = kotlinFacet.getModule().getProject();
     K2JVMCompilerArguments k2JVMCompilerArguments =
         (K2JVMCompilerArguments)
-            Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project)
-                .getSettings()
-                .unfrozen();
+            KotlinCompat.unfreezeSettings(
+                Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project).getSettings());
     String javaVersion = languageLevel.toJavaVersion().toString();
     k2JVMCompilerArguments.setJvmTarget(javaVersion);
     Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project)
@@ -320,31 +301,7 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
       if (workspaceModule == null) {
         return;
       }
-      ApplicationManager.getApplication()
-          .invokeLater(
-              () -> KotlinLibraryConfigurator.INSTANCE.configureModule(project, workspaceModule));
-    }
-  }
-
-  /**
-   * We want to configure only a single module, without a user-facing dialog (the configuration
-   * process takes O(seconds) per module, on the EDT, and there can be 100s of modules for Android
-   * Studio).
-   *
-   * <p>The single-module configuration method isn't exposed though, so we need to subclass the
-   * configurator.
-   *
-   * <p>TODO(brendandouglas): remove this hack as soon as there's an appropriate upstream method.
-   */
-  private static class KotlinLibraryConfigurator extends KotlinJavaModuleConfigurator {
-    static final KotlinLibraryConfigurator INSTANCE = new KotlinLibraryConfigurator();
-
-    void configureModule(Project project, Module module) {
-      configureModule(
-          module,
-          getDefaultPathToJarFile(project),
-          null,
-          new NotificationMessageCollector(project, "Configuring Kotlin", "Configuring Kotlin"));
+      KotlinCompat.configureModule(project, workspaceModule);
     }
   }
 }

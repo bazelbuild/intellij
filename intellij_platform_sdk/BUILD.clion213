@@ -28,7 +28,7 @@ no_mockito_extensions(
 java_import(
     name = "guava",
     jars = glob([
-        "clion-*/lib/3rd-party.jar",
+        "clion-*/lib/3rd-party-rt.jar",
     ]),
 )
 
@@ -71,14 +71,6 @@ java_import(
 )
 
 java_import(
-    name = "tasks",
-    jars = glob([
-        "clion-*/plugins/tasks/lib/tasks-api.jar",
-        "clion-*/plugins/tasks/lib/tasks-core.jar",
-    ]),
-)
-
-java_import(
     name = "terminal",
     jars = glob(["clion-*/plugins/terminal/lib/terminal.jar"]),
 )
@@ -86,6 +78,11 @@ java_import(
 java_import(
     name = "python",
     jars = glob(["clion-*/plugins/python-ce/lib/*.jar"]),
+)
+
+filegroup(
+    name = "python_helpers",
+    srcs = glob(["clion-*/plugins/python-ce/helpers/**/*"]),
 )
 
 # The plugins required by CLwB. Presumably there will be some, when we write

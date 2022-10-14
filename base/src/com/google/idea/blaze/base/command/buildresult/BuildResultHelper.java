@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.model.primitives.Label;
 import java.util.List;
 import java.util.Optional;
@@ -34,14 +35,49 @@ public interface BuildResultHelper extends AutoCloseable {
   /**
    * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
    * called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
    */
   default ParsedBepOutput getBuildOutput() throws GetArtifactsException {
     return getBuildOutput(Optional.empty());
   }
 
   /**
+   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
+   * called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
+   */
+  default ParsedBepOutput getBuildOutput(Interner<String> stringInterner)
+      throws GetArtifactsException {
+    return getBuildOutput(Optional.empty(), stringInterner);
+  }
+
+  /**
+   * Parses the BEP output data and returns the corresponding {@link ParsedBepOutput}. May only be
+   * called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
+   */
+  default ParsedBepOutput getBuildOutput(
+      Optional<String> completionBuildId, Interner<String> stringInterner)
+      throws GetArtifactsException {
+    return getBuildOutput(completionBuildId);
+  }
+
+  /**
    * Retrieves BEP build events according to given id, parses them and returns the corresponding
    * {@link ParsedBepOutput}. May only be called once, after the build is complete.
+   *
+   * <p>As BEP retrieval can be memory-intensive for large projects, implementations of
+   * getBuildOutput may restrict parallelism for cases in which many builds are executed in parallel
+   * (e.g. remote builds).
    */
   ParsedBepOutput getBuildOutput(Optional<String> completedBuildId) throws GetArtifactsException;
 
@@ -113,8 +149,16 @@ public interface BuildResultHelper extends AutoCloseable {
 
   /** Indicates a failure to get artifact information */
   class GetFlagsException extends Exception {
+    public GetFlagsException(String message, Throwable cause) {
+      super(message, cause);
+    }
+
     public GetFlagsException(String message) {
       super(message);
+    }
+
+    public GetFlagsException(Throwable cause) {
+      super(cause);
     }
   }
 

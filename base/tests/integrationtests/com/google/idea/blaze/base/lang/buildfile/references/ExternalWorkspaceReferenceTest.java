@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.lang.buildfile.psi.FuncallExpression;
 import com.google.idea.blaze.base.lang.buildfile.psi.StringLiteral;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.intellij.psi.PsiFile;
@@ -39,8 +39,8 @@ import org.junit.runners.JUnit4;
 public class ExternalWorkspaceReferenceTest extends BuildFileIntegrationTestCase {
 
   @Override
-  protected BuildSystem buildSystem() {
-    return BuildSystem.Bazel;
+  protected BuildSystemName buildSystem() {
+    return BuildSystemName.Bazel;
   }
 
   @Test

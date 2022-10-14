@@ -27,7 +27,7 @@ import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
 import com.google.idea.blaze.android.projectsystem.MavenArtifactLocator;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.intellij.openapi.module.Module;
 import java.nio.file.Path;
@@ -65,8 +65,8 @@ public class BlazeModuleSystemExternalDependencyIntegrationTest
           }
 
           @Override
-          public BuildSystem buildSystem() {
-            return BuildSystem.Bazel;
+          public BuildSystemName buildSystem() {
+            return BuildSystemName.Bazel;
           }
         });
 

@@ -15,34 +15,24 @@
  */
 package com.google.idea.blaze.base.toolwindow;
 
-import com.google.idea.blaze.base.console.BlazeConsoleExperimentManager;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 
 /**
- * Factory for the console view window.
- *
- * <p>Replacement for {@link com.google.idea.blaze.base.console.BlazeConsoleToolWindowFactory}
+ * Factory for the Blaze tool window.
  */
 public class TasksToolWindowFactory implements DumbAware, ToolWindowFactory {
 
-  /**
-   * Tool window ID that matches the one in
-   * base/src/META-INF/blaze-base.xml
-   */
-  public static final String ID = "Build Tasks";
+  /** Tool window ID that matches the one in blaze-base.xml. */
+  public static final String ID = "Blaze";
 
   @Override
   public void createToolWindowContent(Project project, ToolWindow toolWindow) {
-    String title = "Build Tasks (NEW)"; // TODO(olegsa) remove "(NEW)", and find some better name
+    String title = Blaze.getBuildSystemName(project).getName();
     toolWindow.setTitle(title);
     toolWindow.setStripeTitle(title);
-  }
-
-  @Override
-  public boolean shouldBeAvailable(Project project) {
-    return BlazeConsoleExperimentManager.isBlazeConsoleV2Enabled();
   }
 }

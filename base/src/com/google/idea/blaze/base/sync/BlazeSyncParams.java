@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.sync;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import java.util.Collection;
@@ -31,8 +32,6 @@ public abstract class BlazeSyncParams {
 
   /** A string describing what triggered the sync (e.g. on startup, auto-sync, etc.). */
   public abstract String syncOrigin();
-
-  public abstract BlazeBuildParams blazeBuildParams();
 
   public abstract boolean backgroundSync();
 
@@ -67,8 +66,6 @@ public abstract class BlazeSyncParams {
 
     public abstract Builder setSyncOrigin(String syncOrigin);
 
-    public abstract Builder setBlazeBuildParams(BlazeBuildParams value);
-
     public abstract Builder setBackgroundSync(boolean value);
 
     public abstract Builder setAddProjectViewTargets(boolean value);
@@ -79,11 +76,13 @@ public abstract class BlazeSyncParams {
 
     abstract ImmutableSet.Builder<TargetExpression> targetExpressionsBuilder();
 
+    @CanIgnoreReturnValue
     public Builder addTargetExpression(TargetExpression targetExpression) {
       targetExpressionsBuilder().add(targetExpression);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addTargetExpressions(Collection<? extends TargetExpression> targets) {
       targetExpressionsBuilder().addAll(targets);
       return this;
@@ -91,6 +90,7 @@ public abstract class BlazeSyncParams {
 
     abstract ImmutableSet.Builder<WorkspacePath> sourceFilesToSyncBuilder();
 
+    @CanIgnoreReturnValue
     public Builder addSourceFilesToSync(Collection<WorkspacePath> targets) {
       sourceFilesToSyncBuilder().addAll(targets);
       return this;
@@ -107,7 +107,6 @@ public abstract class BlazeSyncParams {
         .setTitle(base.title())
         .setSyncMode(base.syncMode())
         .setSyncOrigin(base.syncOrigin())
-        .setBlazeBuildParams(base.blazeBuildParams())
         .setBackgroundSync(first.backgroundSync() && second.backgroundSync())
         .addTargetExpressions(first.targetExpressions())
         .addTargetExpressions(second.targetExpressions())

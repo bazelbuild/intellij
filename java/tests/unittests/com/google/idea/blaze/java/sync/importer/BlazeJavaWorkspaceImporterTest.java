@@ -64,7 +64,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.MockRemoteArtifactPrefetcher;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -74,6 +74,7 @@ import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.google.idea.blaze.java.JavaBlazeRules;
 import com.google.idea.blaze.java.libraries.JarCache;
 import com.google.idea.blaze.java.sync.BlazeJavaSyncAugmenter;
+import com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings;
 import com.google.idea.blaze.java.sync.jdeps.MockJdepsMap;
 import com.google.idea.blaze.java.sync.model.BlazeContentEntry;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -155,7 +156,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
       };
 
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", BuildSystem.Bazel);
+      new BlazeImportSettings("", "", "", "", BuildSystemName.Bazel);
   private ExtensionPointImpl<BlazeJavaSyncAugmenter> augmenters;
 
   private BlazeContext context;
@@ -208,19 +209,22 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     applicationServices.register(PackageManifestReader.class, new PackageManifestReader());
     applicationServices.register(PrefetchService.class, new MockPrefetchService());
 
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
 
     augmenters =
         registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);
+    registerExtensionPoint(EmptyLibraryFilterSettings.EP_NAME, EmptyLibraryFilterSettings.class);
 
     registerExtensionPoint(JavaLikeLanguage.EP_NAME, JavaLikeLanguage.class)
         .registerExtension(new JavaLikeLanguage.Java());
 
-    registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class)
-        .registerExtension(new BazelBuildSystemProvider());
-
     projectServices.register(JarCache.class, new MockJarCache(project));
+  }
+
+  @Override
+  protected BuildSystemProvider createBuildSystemProvider() {
+    return new BazelBuildSystemProvider();
   }
 
   private BlazeJavaImportResult importWorkspace(
@@ -231,7 +235,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
     TargetMap targetMap = targetMapBuilder.build();
     com.google.idea.blaze.java.sync.importer.JavaSourceFilter sourceFilter =
         new com.google.idea.blaze.java.sync.importer.JavaSourceFilter(
-            Blaze.getBuildSystem(project), workspaceRoot, projectViewSet, targetMap);
+            Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet, targetMap);
     com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter blazeWorkspaceImporter =
         new com.google.idea.blaze.java.sync.importer.BlazeJavaWorkspaceImporter(
             project,
@@ -342,12 +346,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     assertThat(
-            result
-                .libraries
-                .values()
-                .stream()
-                .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
-                .collect(Collectors.toList()))
+            result.libraries.values().stream().map(BlazeJavaWorkspaceImporterTest::libraryFileName))
         .containsExactly("lib-gen.jar");
   }
 
@@ -1053,12 +1052,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     assertThat(
-            result
-                .libraries
-                .values()
-                .stream()
-                .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
-                .collect(Collectors.toList()))
+            result.libraries.values().stream().map(BlazeJavaWorkspaceImporterTest::libraryFileName))
         .containsExactly("a.jar", "c.jar");
   }
 
@@ -1086,12 +1080,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
     assertThat(
-            result
-                .libraries
-                .values()
-                .stream()
-                .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
-                .collect(Collectors.toList()))
+            result.libraries.values().stream().map(BlazeJavaWorkspaceImporterTest::libraryFileName))
         .containsExactly("a.jar", "c.jar");
   }
 
@@ -1238,12 +1227,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMap, projectView);
     assertThat(
-            result
-                .libraries
-                .values()
-                .stream()
-                .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
-                .collect(Collectors.toList()))
+            result.libraries.values().stream().map(BlazeJavaWorkspaceImporterTest::libraryFileName))
         .containsExactly("c.jar");
   }
 
@@ -1269,12 +1253,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     assertThat(
-            result
-                .libraries
-                .values()
-                .stream()
-                .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
-                .collect(Collectors.toList()))
+            result.libraries.values().stream().map(BlazeJavaWorkspaceImporterTest::libraryFileName))
         .containsExactly("a.jar");
   }
 
@@ -1296,10 +1275,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
 
     BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
     assertThat(
-            result
-                .libraries
-                .values()
-                .stream()
+            result.libraries.values().stream()
                 .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
                 .collect(Collectors.toList()))
         .isEmpty();
@@ -1629,6 +1605,89 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                 .map(BlazeJavaWorkspaceImporterTest::libraryFileName)
                 .collect(Collectors.toList()))
         .containsExactly("source.jar", "generated.jar");
+  }
+
+  /** Test that the plugin processor jars are included. */
+  @Test
+  public void testPluginProcessorJarsAreIncluded() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath(""))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/apps/example:example_debug")
+                    .setBuildFile(source("java/apps/example/BUILD"))
+                    .setKind("android_binary")
+                    .addSource(source("java/apps/example/MainActivity.java"))
+                    .addSource(source("java/apps/example/subdir/SubdirHelper.java"))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addPluginProcessorJars(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(gen("java/example/lint.jar")))));
+
+    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    errorCollector.assertNoIssues();
+
+    assertThat(
+            result.pluginProcessorJars.stream()
+                .map(
+                    artifactLocation ->
+                        new File(artifactLocation.getExecutionRootRelativePath()).getName()))
+        .containsExactly("lint.jar");
+  }
+
+  /** Test that only top level targets' the plugin processor jars are included. */
+  @Test
+  public void testOnlyTopLevelPluginProcessorJarsAreIncluded() {
+    ProjectView projectView =
+        ProjectView.builder()
+            .add(
+                ListSection.builder(DirectorySection.KEY)
+                    .add(DirectoryEntry.include(new WorkspacePath("java/apps"))))
+            .build();
+
+    TargetMapBuilder targetMapBuilder =
+        TargetMapBuilder.builder()
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//java/apps/example:example_debug")
+                    .setBuildFile(source("java/apps/example/BUILD"))
+                    .setKind("android_binary")
+                    .addSource(source("java/apps/example/MainActivity.java"))
+                    .addSource(source("java/apps/example/subdir/SubdirHelper.java"))
+                    .addDependency("//third_party:deps")
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addPluginProcessorJars(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(gen("java/example/lint.jar")))))
+            .addTarget(
+                TargetIdeInfo.builder()
+                    .setLabel("//third_party:deps")
+                    .setKind("android_library")
+                    .addSource(source("third_party/deps.java"))
+                    .setJavaInfo(
+                        JavaIdeInfo.builder()
+                            .addPluginProcessorJars(
+                                LibraryArtifact.builder()
+                                    .setInterfaceJar(gen("third_party/lint.jar")))));
+
+    BlazeJavaImportResult result = importWorkspace(workspaceRoot, targetMapBuilder, projectView);
+    errorCollector.assertNoIssues();
+
+    assertThat(
+            result.pluginProcessorJars.stream()
+                .map(
+                    artifactLocation ->
+                        new File(artifactLocation.getExecutionRootRelativePath()).getName()))
+        .containsExactly("lint.jar");
   }
 
   /* Utility methods */

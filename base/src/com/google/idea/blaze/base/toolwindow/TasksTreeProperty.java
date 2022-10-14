@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.base.Preconditions;
+import com.intellij.openapi.project.Project;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -29,14 +30,17 @@ import java.util.WeakHashMap;
  * ability to add the listeners for addition and removal of the tasks into the tree.
  */
 final class TasksTreeProperty {
-  private final Task root = new Task("root", Task.Type.OTHER);
+  private final Task root;
   // The weak hash map implementation is to indicate that orphaned nodes can be cleaned up
   // implicitly or explicitly. The explicit clean up is performed by the method
   // `cleanUpDetachedSubtree` below.
   private final Map<Task, List<Task>> adjacencyList = new WeakHashMap<>();
 
-  private final Set<AddListener> addListeners = new HashSet<>();
-  private final Set<RemoveListener> removeListeners = new HashSet<>();
+  private final Set<InvalidationListener> invalidationListeners = new HashSet<>();
+
+  public TasksTreeProperty(Project project) {
+    root = new Task(project, "root", Task.Type.OTHER);
+  }
 
   Task getRoot() {
     return root;
@@ -50,13 +54,15 @@ final class TasksTreeProperty {
     return task.getParent().orElse(root);
   }
 
+  boolean isTopLevelTask(Task task) {
+    return !root.equals(task) && task.getParent().isEmpty();
+  }
+
   void addTask(Task task) {
     Preconditions.checkNotNull(task);
     List<Task> siblings = adjacencyList.computeIfAbsent(getParent(task), t -> new ArrayList<>());
     siblings.add(task);
-    for (AddListener listener : addListeners) {
-      listener.taskAdded(task, siblings.size() - 1);
-    }
+    notifyTreeInvalidated(getParent(task));
   }
 
   void removeTask(Task task) {
@@ -75,9 +81,12 @@ final class TasksTreeProperty {
     }
     children.remove(task);
     cleanUpDetachedSubtree(task);
-    for (RemoveListener listener : removeListeners) {
-      listener.taskRemoved(task, taskIndex);
-    }
+    notifyTreeInvalidated(parent);
+  }
+
+  /** Update the UI following a change in state of a task. */
+  void updateTask(Task task) {
+    notifyTreeInvalidated(task);
   }
 
   private void cleanUpDetachedSubtree(Task task) {
@@ -89,27 +98,21 @@ final class TasksTreeProperty {
     }
   }
 
-  void addAdditionListener(AddListener listener) {
-    addListeners.add(listener);
+  private void notifyTreeInvalidated(Task task) {
+    for (InvalidationListener listener : invalidationListeners) {
+      listener.taskInvalidated(task);
+    }
   }
 
-  void addRemovalListener(RemoveListener listener) {
-    removeListeners.add(listener);
+  void addInvalidationListener(InvalidationListener listener) {
+    invalidationListeners.add(listener);
   }
 
-  void removeAdditionListener(AddListener listener) {
-    addListeners.remove(listener);
+  void removeInvalidationListener(InvalidationListener listener) {
+    invalidationListeners.remove(listener);
   }
 
-  void removeRemovalListener(RemoveListener listener) {
-    removeListeners.remove(listener);
-  }
-
-  interface AddListener {
-    void taskAdded(Task task, int index);
-  }
-
-  interface RemoveListener {
-    void taskRemoved(Task task, int index);
+  interface InvalidationListener {
+    void taskInvalidated(Task task);
   }
 }

@@ -242,7 +242,7 @@ public class BlazeAndroidWorkspaceImporter {
       return androidResourceModule;
     }
 
-    for (AndroidResFolder androidResFolder : androidIdeInfo.getResFolders()) {
+    for (AndroidResFolder androidResFolder : androidIdeInfo.getResources()) {
       if (!includeManifestOnlyAars.getValue()
           && androidResFolder.getRoot().getRelativePath().isEmpty()) {
         continue;
@@ -273,7 +273,7 @@ public class BlazeAndroidWorkspaceImporter {
 
   public static boolean containsSourcesOrAllowedGeneratedResources(
       AndroidIdeInfo androidIdeInfo, Predicate<ArtifactLocation> allowlistTester) {
-    return androidIdeInfo.getResFolders().stream()
+    return androidIdeInfo.getResources().stream()
         .map(resource -> resource.getRoot())
         .anyMatch(location -> isSourceOrAllowedGenPath(location, allowlistTester));
   }

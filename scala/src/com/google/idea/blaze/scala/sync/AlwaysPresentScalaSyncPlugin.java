@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
+import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.openapi.project.Project;
@@ -62,9 +63,11 @@ public class AlwaysPresentScalaSyncPlugin implements BlazeSyncPlugin {
       return true;
     }
     if (!PluginUtils.isPluginEnabled(SCALA_PLUGIN_ID)) {
-      IssueOutput.error("Scala plugin needed for Scala language support.")
+      String msg = "Scala plugin needed for Scala language support.";
+      IssueOutput.error(msg)
           .navigatable(PluginUtils.installOrEnablePluginNavigable(SCALA_PLUGIN_ID))
           .submit(context);
+      BlazeSyncManager.printAndLogError(msg, context);
       return false;
     }
     return true;

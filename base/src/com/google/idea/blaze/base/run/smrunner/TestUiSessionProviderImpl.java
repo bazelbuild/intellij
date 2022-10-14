@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.run.smrunner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolUtils;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
-import com.google.idea.blaze.base.run.testlogs.BuildEventProtocolTestFinderStrategy;
+import com.google.idea.blaze.base.run.testlogs.LocalBuildEventProtocolTestFinderStrategy;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -46,6 +46,6 @@ public class TestUiSessionProviderImpl implements TestUiSessionProvider {
             .build();
 
     return BlazeTestUiSession.create(
-        flags, new BuildEventProtocolTestFinderStrategy(bepOutputFile));
+        flags, new LocalBuildEventProtocolTestFinderStrategy(bepOutputFile));
   }
 }

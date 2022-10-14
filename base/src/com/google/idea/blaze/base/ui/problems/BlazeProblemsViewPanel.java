@@ -19,8 +19,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
-import com.intellij.ide.actions.NextOccurenceToolbarAction; // NOTYPO
-import com.intellij.ide.actions.PreviousOccurenceToolbarAction; // NOTYPO
+import com.intellij.ide.actions.NextOccurenceToolbarAction;
+import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.NavigatableMessageElement;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
@@ -95,6 +95,11 @@ class BlazeProblemsViewPanel extends NewErrorTreeViewPanel {
     ActionToolbar toolbar =
         ActionManager.getInstance()
             .createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, group, false);
+    // As target for the toolbar, we'd ideally use myMessageComponent of NewErrorTreeViewPanel as
+    // the upstream implementation does in NewErrorTreeViewPanel#createToolbarPanel. However,
+    // myMessageComponent is private. As next best option, we can only use the panel which
+    // encompasses myMessageComponent, which is the whole BlazeProblemsViewPanel.
+    toolbar.setTargetComponent(this);
     return toolbar.getComponent();
   }
 

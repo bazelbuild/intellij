@@ -15,68 +15,98 @@
  */
 package com.google.idea.blaze.base.toolwindow;
 
+import com.google.common.base.Preconditions;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.common.ui.properties.ChangeListener;
 import com.google.idea.common.ui.properties.ObservableValue;
 import com.google.idea.common.ui.properties.Property;
 import com.google.idea.common.ui.templates.AbstractView;
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.openapi.Disposable;
 import com.intellij.ui.AnimatedIcon;
-import com.intellij.ui.render.LabelBasedRenderer;
-import com.intellij.ui.tree.BaseTreeModel;
+import com.intellij.ui.LoadingNode;
+import com.intellij.ui.RelativeFont;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import java.awt.Component;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.awt.Color;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Shape;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
-import javax.swing.Icon;
+import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeSelectionModel;
 
 /** The view that represents the tree of the hierarchy of tasks. */
 final class TasksTreeView extends AbstractView<Tree> {
   private final TasksTreeModel model;
-  private final JTreeModel jTreeModel = new JTreeModel();
+  private final Disposable parentDisposable;
+  private Tree tree;
+  private StructureTreeModel<TasksTreeStructure> treeStructureModel;
 
   private final TreeSelectionListener treeSelectionListener = this::onTaskSelected;
   private final ChangeListener<Task> modelSelectedTaskListener = this::selectTask;
+  private final TasksTreeProperty.InvalidationListener invalidationListener =
+      this::invalidateTreeAt;
+  private final TasksTreeStructure treeStructure = new TasksTreeStructure();
 
-  TasksTreeView(TasksTreeModel model) {
+  TasksTreeView(TasksTreeModel model, Disposable parentDisposable) {
     this.model = model;
-    // looks like the insertion and removal listeners for the JTree's model need to be executed even
-    // when the tree is not displayed
-    model.tasksTreeProperty().addAdditionListener(jTreeModel::newTaskAdded);
-    model.tasksTreeProperty().addRemovalListener(jTreeModel::taskRemoved);
+    this.parentDisposable = parentDisposable;
   }
 
   @Override
   protected Tree createComponent() {
-    Tree tree = new Tree(jTreeModel);
+    treeStructureModel = new StructureTreeModel<>(treeStructure, parentDisposable);
+    AsyncTreeModel asyncModel = new AsyncTreeModel(treeStructureModel, parentDisposable);
+    asyncModel.addTreeModelListener(new TaskNodeAutoExpandingListener());
+    tree = new Tree(asyncModel);
+    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.setRootVisible(false);
-    tree.setCellRenderer(new TreeCellRenderer());
+    tree.setCellRenderer(new TaskDurationNodeRenderer());
+
+    // This is required since we use animated icons in tree cell renderers:
+    UIUtil.putClientProperty(tree, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, Boolean.TRUE);
     return tree;
   }
 
   @Override
   protected void bind() {
     getComponent().addTreeSelectionListener(treeSelectionListener);
+    getComponent().addMouseListener(new PopupMenuMouseListener());
     Property<Task> selectedTaskProperty = model.selectedTaskProperty();
     selectedTaskProperty.addListener(modelSelectedTaskListener);
     selectTask(selectedTaskProperty, null, selectedTaskProperty.getValue());
+    model.tasksTreeProperty().addInvalidationListener(invalidationListener);
+    invalidateTreeAt(model.tasksTreeProperty().getRoot());
   }
 
   @Override
   protected void unbind() {
+    model.tasksTreeProperty().removeInvalidationListener(invalidationListener);
     getComponent().removeTreeSelectionListener(treeSelectionListener);
     model.selectedTaskProperty().removeListener(modelSelectedTaskListener);
   }
@@ -84,132 +114,297 @@ final class TasksTreeView extends AbstractView<Tree> {
   private void onTaskSelected(TreeSelectionEvent event) {
     TreePath selectionPath = event.getNewLeadSelectionPath();
     Object selection = selectionPath == null ? null : selectionPath.getLastPathComponent();
-    model.selectedTaskProperty().setValue(selection instanceof Task ? (Task) selection : null);
+
+    if (selection instanceof LoadingNode) {
+      selection = null;
+    }
+
+    if (selection != null) {
+      Task task = treeNodeToTask(selection);
+      model.selectedTaskProperty().setValue(task);
+    }
   }
 
+  /*
+   * To avoid async update issues with how Swing handles selection callbacks on collapsing
+   * multi-level trees, this method should run synchronously.
+   */
   private void selectTask(
       ObservableValue<? extends Task> observable, @Nullable Task oldTask, @Nullable Task task) {
-    if (Objects.equals(task, getComponent().getLastSelectedPathComponent())) {
+    Task currentSelectedTask =
+        Optional.ofNullable(tree.getLastSelectedPathComponent())
+            .map(TasksTreeView::treeNodeToTask)
+            .orElse(null);
+    if (Objects.equals(task, currentSelectedTask)) {
       return;
     }
-    JTree tree = getComponent();
+
     if (task == null) {
       tree.clearSelection();
+      return;
     }
-    TreeUtil.selectPath(tree, taskToTreePath(task), false);
-    tree.repaint();
+    Optional<TreePath> treePath = taskToTreePath(task);
+    treePath.ifPresent(
+        path -> UIUtil.invokeAndWaitIfNeeded(() -> TreeUtil.selectPath(tree, path, false)));
   }
 
-  private TreePath taskToTreePath(Task task) {
-    Task root = model.tasksTreeProperty().getRoot();
-    if (root.equals(task)) {
-      return new TreePath(root);
-    }
-    Deque<Object> path = new ArrayDeque<>();
-    path.push(task);
-    while (task.getParent().isPresent()) {
-      Task parent = task.getParent().get();
-      path.push(parent);
-      task = parent;
-    }
-    path.push(root);
-    return new TreePath(path.toArray());
+  private void invalidateTreeAt(Task task) {
+    taskToTreePath(task)
+        .ifPresentOrElse(
+            path -> treeStructureModel.invalidate(path, true), treeStructureModel::invalidate);
   }
 
-  /** Swing's TreeModel implementation that reflects the hierarchy of the tasks. */
-  private final class JTreeModel extends BaseTreeModel<Task> {
-    @Override
-    public List<Task> getChildren(Object parent) {
-      if (!(parent instanceof Task)) {
-        throw new IllegalStateException("Task trees can only contain Task instances");
+  private Optional<TreePath> taskToTreePath(Task task) {
+    try {
+      return treeStructureModel.getInvoker().compute(() -> taskToTreePathInternal(task)).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new IllegalStateException("Failed to compute selected path", e);
+    }
+  }
+
+  /** Must be called on treeStructureModel's invoker thread */
+  private Optional<TreePath> taskToTreePathInternal(Task task) {
+    Deque<Task> taskDeque = new ArrayDeque<>();
+
+    Optional<Task> currentTask = Optional.of(task);
+    while (currentTask.isPresent()) {
+      taskDeque.push(currentTask.get());
+      currentTask = currentTask.get().getParent();
+    }
+
+    DefaultMutableTreeNode treeNode = objectToTreeNode(treeStructureModel.getRoot());
+    TreePath resultPath = new TreePath(treeNode);
+
+    while (!taskDeque.isEmpty()) {
+      Task taskToMatch = taskDeque.pop();
+      Optional<DefaultMutableTreeNode> matchingNode =
+          treeStructureModel.getChildren(treeNode).stream()
+              .map(TasksTreeView::objectToTreeNode)
+              .filter(node -> taskToMatch.equals(treeNodeToTask(node)))
+              .findFirst();
+      if (matchingNode.isEmpty()) {
+        return Optional.empty();
+      } else {
+        treeNode = matchingNode.get();
+        resultPath = resultPath.pathByAddingChild(treeNode);
       }
-      return model.tasksTreeProperty().getChildren((Task) parent);
     }
+    return Optional.of(resultPath);
+  }
 
+  private class PopupMenuMouseListener extends MouseAdapter {
     @Override
-    public Object getRoot() {
+    public void mouseReleased(MouseEvent e) {
+      if (SwingUtilities.isRightMouseButton(e)) {
+        Task selectedTask = model.selectedTaskProperty().getValue();
+        if (selectedTask != null
+            && selectedTask.getParent().isEmpty()
+            && selectedTask.isFinished()) {
+          JPopupMenu menu = new JPopupMenu("Popup Menu");
+          JMenuItem removeTaskMenuItem = new JMenuItem("Remove Task");
+          removeTaskMenuItem.addActionListener(
+              it -> {
+                model.selectedTaskProperty().setValue(null);
+                TasksToolWindowService.getInstance(selectedTask.getProject())
+                    .removeTask(selectedTask);
+              });
+          menu.add(removeTaskMenuItem);
+          menu.show(e.getComponent(), e.getX(), e.getY());
+        }
+      }
+    }
+  }
+
+  private final class TasksTreeStructure extends AbstractTreeStructure {
+    @Override
+    public Task getRootElement() {
       return model.tasksTreeProperty().getRoot();
     }
 
-    void newTaskAdded(Task task, int taskIndex) {
-      treeNodesInserted(
-          /* path= */ taskToTreePath(model.tasksTreeProperty().getParent(task)),
-          /* indices= */ new int[] {taskIndex},
-          /* children= */ new Task[] {task});
+    @Override
+    public Task[] getChildElements(Object element) {
+      List<Task> children = model.tasksTreeProperty().getChildren((Task) element);
+      if (children == null) {
+        return new Task[0];
+      } else {
+        return children.toArray(new Task[0]);
+      }
     }
 
-    void taskRemoved(Task task, int taskIndex) {
-      treeNodesRemoved(
-          /* path= */ taskToTreePath(model.tasksTreeProperty().getParent(task)),
-          /* indices= */ new int[] {taskIndex},
-          /* children= */ new Task[] {task});
+    @Override
+    public Task getParentElement(Object element) {
+      return model.tasksTreeProperty().getParent((Task) element);
+    }
+
+    @Override
+    @SuppressWarnings("rawtypes") // Interface is defined by IntelliJ
+    public TaskNodeDescriptor createDescriptor(
+        Object element, @Nullable NodeDescriptor parentDescriptor) {
+      if (!(element instanceof Task)) {
+        throw new IllegalStateException("Tree structure should only contain Task instances");
+      }
+      if (parentDescriptor != null && !(parentDescriptor instanceof TaskNodeDescriptor)) {
+        throw new IllegalStateException(
+            "Expected parentDescriptor to be instance of TaskNodeDescriptor");
+      }
+      Task task = (Task) element;
+      return new TaskNodeDescriptor(task, (TaskNodeDescriptor) parentDescriptor);
+    }
+
+    @Override
+    public void commit() {}
+
+    @Override
+    public boolean hasSomethingToCommit() {
+      return false;
+    }
+
+    @Override
+    public boolean isAlwaysLeaf(Object element) {
+      return false;
     }
   }
 
-  /** Swing's TreeCellRenderer that defines the representation of the tree node. */
-  private static final class TreeCellRenderer extends LabelBasedRenderer.Tree {
-    static final Icon NODE_ICON_RUNNING = new AnimatedIcon.Default();
-    static final Icon NODE_ICON_OK = AllIcons.RunConfigurations.TestPassed;
-    static final Icon NODE_ICON_ERROR = AllIcons.RunConfigurations.TestError;
-    static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
+  /** Renders task duration on the right of the tree cell. Adapted from IntelliJ's Build window */
+  private static class TaskDurationNodeRenderer extends NodeRenderer {
+    @Nullable private String durationText;
+    private Color durationColor;
+    private int durationWidth = 0;
+    private int durationOffset = 0;
 
     @Override
-    public Component getTreeCellRendererComponent(
+    public void customizeCellRenderer(
         JTree tree,
-        Object value,
+        Object treeNode,
         boolean selected,
         boolean expanded,
         boolean leaf,
         int row,
         boolean hasFocus) {
-      if (!(value instanceof Task)) {
-        throw new IllegalStateException("Task trees can only contain Task instances");
+      super.customizeCellRenderer(tree, treeNode, selected, expanded, leaf, row, hasFocus);
+
+      if (treeNode instanceof LoadingNode) {
+        return;
       }
 
-      super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
-
-      Task task = (Task) value;
-      if (task.isFinished()) {
-        setIcon(task.getHasErrors() ? NODE_ICON_ERROR : NODE_ICON_OK);
-      } else {
-        setIcon(NODE_ICON_RUNNING);
+      Task task = treeNodeToTask(treeNode);
+      durationText = task.getDurationString().orElse(null);
+      if (durationText != null) {
+        FontMetrics metrics = getFontMetrics(RelativeFont.SMALL.derive(getFont()));
+        durationWidth = metrics.stringWidth(durationText);
+        durationOffset = metrics.getHeight() / 2; // an empty area before and after the text
+        durationColor =
+            selected
+                ? UIUtil.getTreeSelectionForeground(hasFocus)
+                : SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor();
       }
-      setText(makeLabelText(task, selected));
-
-      return this;
     }
 
-    private static String makeLabelText(Task task, boolean selected) {
-      return String.format(
-          "<html>%s%s</html>", nameLabel(task.getName()), timesLabel(task, selected));
+    @Override
+    protected void paintComponent(Graphics g) {
+      UISettings.setupAntialiasing(g);
+      Shape clip = null;
+      int width = getWidth();
+      int height = getHeight();
+      if (isOpaque()) {
+        // paint background for expanded row
+        g.setColor(getBackground());
+        g.fillRect(0, 0, width, height);
+      }
+      if (durationText != null && durationWidth > 0) {
+        width -= durationWidth;
+        width -= durationOffset;
+        if (width > 0 && height > 0) {
+          g.setColor(durationColor);
+          g.setFont(RelativeFont.SMALL.derive(getFont()));
+          g.drawString(
+              durationText,
+              width + durationOffset / 2,
+              getTextBaseLine(g.getFontMetrics(), height));
+          clip = g.getClip();
+          g.clipRect(0, 0, width, height);
+        }
+      }
+
+      super.paintComponent(g);
+      // restore clip area if needed
+      if (clip != null) {
+        g.setClip(clip);
+      }
+    }
+  }
+
+  private class TaskNodeAutoExpandingListener implements TreeModelListener {
+    @Override
+    public void treeNodesInserted(TreeModelEvent e) {
+
+      TreePath pathToParent = e.getTreePath();
+      DefaultMutableTreeNode addedNode = objectToTreeNode(e.getChildren()[0]);
+      Task addedTask = treeNodeToTask(addedNode);
+
+      // Auto-expand tree to show only one level below top-level tasks (grandchildren remain
+      // collapsed by default). The tree is expanded at the top-level task if it is not a leaf node
+      // at the time of insertion, or if it exists in the tree as a leaf and a child task is added
+      // to it.
+      if (tree != null && pathToParent != null) {
+
+        // Added task is top-level task with children
+        if (model.tasksTreeProperty().isTopLevelTask(addedTask) && !addedNode.isLeaf()) {
+          TreePath pathToExpand = pathToParent.pathByAddingChild(addedNode);
+          if (!tree.isExpanded(pathToExpand)) {
+            tree.expandPath(pathToExpand);
+          }
+        } else {
+          // Added task is child of top-level task
+          Task parentTask = treeNodeToTask(pathToParent.getLastPathComponent());
+          if (model.tasksTreeProperty().isTopLevelTask(parentTask)) {
+            if (!tree.isExpanded(pathToParent)) {
+              tree.expandPath(pathToParent);
+            }
+          }
+        }
+      }
+
+      // Select top-level task when added.
+      if (BlazeUserSettings.getInstance().getSelectNewestChildTask()
+          || model.tasksTreeProperty().isTopLevelTask(addedTask)) {
+        model.selectedTaskProperty().setValue(addedTask);
+      }
     }
 
-    private static CharSequence nameLabel(String name) {
-      // truncate the name to avoid very long horizontal scroll in the tree
-      return name.length() < 81 ? name : name.substring(0, 80) + "...";
-    }
+    @Override
+    public void treeNodesChanged(TreeModelEvent e) {}
 
-    private static CharSequence timesLabel(Task task, boolean selected) {
-      return startTimeLabel(task)
-          .map(
-              s ->
-                  " <font"
-                      + (selected ? '>' : " color=gray>")
-                      + s
-                      + durationLabel(task).map(d -> " [" + d + ']').orElse("")
-                      + "</font>")
-          .orElse("");
-    }
+    @Override
+    public void treeNodesRemoved(TreeModelEvent e) {}
 
-    private static Optional<String> startTimeLabel(Task task) {
-      return task.getStartTime()
-          .map(s -> LocalDateTime.ofInstant(s, ZoneId.systemDefault()).format(TIME_FORMATTER));
-    }
+    @Override
+    public void treeStructureChanged(TreeModelEvent e) {}
+  }
 
-    private static Optional<String> durationLabel(Task task) {
-      return task.getStartTime()
-          .flatMap(s -> task.getEndTime().map(e -> Duration.between(s, e)))
-          .map(d -> StringUtil.formatDuration(d.toMillis()));
+  /**
+   * Utility for extracting and casting of Task instances from tree nodes treated as Objects from
+   * method return values or parameters
+   */
+  private static Task treeNodeToTask(Object node) {
+    Object userObj = objectToTreeNode(node).getUserObject();
+    if (userObj instanceof TaskNodeDescriptor) {
+      return ((TaskNodeDescriptor) userObj).getElement();
     }
+    throw new IllegalStateException(
+        "Expected TaskNodeDescriptor userObject, found " + userObj.getClass().getName());
+  }
+
+  /**
+   * Utility for casting DefaultMutableTreeNodes treated as Objects from method return values or
+   * parameters
+   */
+  private static DefaultMutableTreeNode objectToTreeNode(Object node) {
+    Preconditions.checkNotNull(node);
+    if (node instanceof DefaultMutableTreeNode) {
+      return (DefaultMutableTreeNode) node;
+    }
+    throw new IllegalStateException(
+        "Expected DefaultMutableTreeNode, but found " + node.getClass().getName());
   }
 }

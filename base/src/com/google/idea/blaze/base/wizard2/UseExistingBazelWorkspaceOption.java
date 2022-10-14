@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.settings.ui.ProjectViewUi;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.base.ui.UiUtil;
@@ -50,9 +50,9 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
   public UseExistingBazelWorkspaceOption(BlazeNewProjectBuilder builder) {
     directoryField = new TextFieldWithHistory();
     directoryField.setName("workspace-directory-field");
-    directoryField.setHistory(builder.getWorkspaceHistory(BuildSystem.Bazel));
+    directoryField.setHistory(builder.getWorkspaceHistory(BuildSystemName.Bazel));
     directoryField.setHistorySize(BlazeNewProjectBuilder.HISTORY_SIZE);
-    directoryField.setText(builder.getLastImportedWorkspace(BuildSystem.Bazel));
+    directoryField.setText(builder.getLastImportedWorkspace(BuildSystemName.Bazel));
     directoryField.setMinimumAndPreferredWidth(MINIMUM_FIELD_WIDTH);
 
     JButton button = new JButton("...");
@@ -129,7 +129,7 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
         .setCanonicalProjectDataLocation(workspaceRootFile)
         .setFileBrowserRoot(workspaceRootFile)
         .setWorkspacePathResolver(new WorkspacePathResolverImpl(root))
-        .setBuildSystem(BuildSystem.Bazel)
+        .setBuildSystem(BuildSystemName.Bazel)
         .build();
   }
 
@@ -183,7 +183,8 @@ public class UseExistingBazelWorkspaceOption implements TopLevelSelectWorkspaceO
   }
 
   private static boolean isWorkspaceRoot(File file) {
-    return BuildSystemProvider.getWorkspaceRootProvider(BuildSystem.Bazel).isWorkspaceRoot(file);
+    return BuildSystemProvider.getWorkspaceRootProvider(BuildSystemName.Bazel)
+        .isWorkspaceRoot(file);
   }
 
   private static boolean isWorkspaceRoot(VirtualFile file) {

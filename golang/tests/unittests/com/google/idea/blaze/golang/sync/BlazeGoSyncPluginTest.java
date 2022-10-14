@@ -77,7 +77,7 @@ public class BlazeGoSyncPluginTest extends BlazeTestCase {
             return WorkspaceType.JAVA;
           }
         });
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
 

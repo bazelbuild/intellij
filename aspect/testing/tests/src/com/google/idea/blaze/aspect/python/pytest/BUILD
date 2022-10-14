@@ -3,7 +3,7 @@ load(
     "intellij_aspect_test_fixture",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 py_test(
     name = "simple",

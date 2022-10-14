@@ -60,7 +60,8 @@ public interface LoggedDirectoryProvider {
    * Provides a directory for which metrics should be logged.
    *
    * <p>The returned value may change over the lifetime of the IDE. An empty {@link Optional}
-   * signifies that the directory is currently not available.
+   * signifies that the directory is currently not available. It's still acceptable to return a
+   * directory whose existence on disk is not guaranteed.
    *
    * @param project the project context (if this is relevant)
    * @return the directory to log metrics for

@@ -28,7 +28,6 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -83,7 +82,6 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);
@@ -144,7 +142,6 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
 
@@ -191,7 +188,6 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
     errorCollector.assertNoIssues();
@@ -203,7 +199,6 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
 
@@ -245,7 +240,6 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);
@@ -288,7 +282,6 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);
@@ -331,7 +324,6 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);
@@ -378,7 +370,6 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);
@@ -409,7 +400,6 @@ public class JavaSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);

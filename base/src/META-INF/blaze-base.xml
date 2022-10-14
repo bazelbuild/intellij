@@ -36,11 +36,17 @@
       class="com.google.idea.blaze.base.sync.actions.IncrementalSyncProjectAction"
       text="Sync Project with BUILD Files"
       icon="BlazeIcons.Logo">
+      <keyboard-shortcut
+          keymap="$default"
+          first-keystroke="alt Y"/>
     </action>
     <action id="Blaze.FullSyncProject"
       class="com.google.idea.blaze.base.sync.actions.FullSyncProjectAction"
       text="Non-Incrementally Sync Project with BUILD Files"
       icon="BlazeIcons.BlazeSlow">
+      <keyboard-shortcut
+          keymap="$default"
+          first-keystroke="alt shift Y"/>
     </action>
     <action id="Blaze.SyncWorkingSet"
       class="com.google.idea.blaze.base.sync.actions.SyncWorkingSetAction"
@@ -122,6 +128,7 @@
         <reference id="Blaze.SyncWorkingSet"/>
         <reference id="Blaze.PartialSync"/>
         <reference id="Blaze.UpdateDirectories"/>
+        <reference id="Blaze.CleanProjectTargets"/>
         <reference id="Blaze.ExpandSyncToWorkingSet"/>
         <reference id="Blaze.ShowPerformanceWarnings"/>
       </group>
@@ -165,20 +172,15 @@
     <postStartupActivity implementation="com.google.idea.blaze.base.sync.BlazeSyncStartupActivity"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.project.DisableAndroidFrameworkActivity"/>
     <postStartupActivity implementation="com.google.idea.blaze.base.formatter.ExternalFormatterCodeStyleManager$Installer"/>
+    <postStartupActivity implementation="com.google.idea.blaze.base.prefetch.PrefetchProjectInitializer" />
 
-    <toolWindow id="Blaze Console"
-                      anchor="bottom"
-                      secondary="true"
-                      conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"
-                      icon="BlazeIcons.ToolWindow"
-                      factoryClass="com.google.idea.blaze.base.console.BlazeConsoleToolWindowFactory"/>
-    <toolWindow id="Build Tasks"
+
+    <toolWindow id="Blaze"
         anchor="bottom"
         secondary="false"
         conditionClass="com.google.idea.blaze.base.settings.IsBlazeProjectCondition"
         icon="BlazeIcons.ToolWindow"
         factoryClass="com.google.idea.blaze.base.toolwindow.TasksToolWindowFactory"/>
-    <projectService serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleView"/>
     <fileTypeFactory implementation="com.google.idea.blaze.base.plugin.BlazeFileTypeFactory" />
     <projectService serviceImplementation="com.google.idea.blaze.base.ui.problems.BuildTasksProblemsView"/>
 
@@ -218,9 +220,8 @@
                     serviceImplementation="com.google.idea.blaze.base.projectview.ProjectViewManagerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterface"
                         serviceImplementation="com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceAspectsImpl"/>
-    <projectService serviceInterface="com.google.idea.blaze.base.console.BlazeConsoleService"
-                    serviceImplementation="com.google.idea.blaze.base.console.BlazeConsoleServiceImpl"/>
-    <projectService serviceImplementation="com.google.idea.blaze.base.toolwindow.TasksToolWindowService"/>
+    <projectService serviceInterface="com.google.idea.blaze.base.toolwindow.TasksToolWindowService"
+                    serviceImplementation="com.google.idea.blaze.base.toolwindow.TasksToolWindowServiceImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.SourceToTargetMap"
                     serviceImplementation="com.google.idea.blaze.base.targetmaps.SourceToTargetMapImpl"/>
     <projectService serviceInterface="com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap"
@@ -281,6 +282,8 @@
     <additionalTextAttributes scheme="Default" file="resources/colorSchemes/BuildDefault.xml"/>
     <typedHandler implementation="com.google.idea.blaze.base.lang.buildfile.completion.BuildCompletionAutoPopupHandler"/>
     <projectOpenProcessor implementation="com.google.idea.blaze.base.project.BlazeProjectOpenProcessor"/>
+    <!-- not yet imported project handling must be done last -->
+    <projectOpenProcessor implementation="com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor" order="last"/>
     <projectViewNodeDecorator implementation="com.google.idea.blaze.base.syncstatus.SyncStatusNodeDecorator"/>
     <editorTabColorProvider implementation="com.google.idea.blaze.base.syncstatus.SyncStatusEditorTabColorProvider"/>
     <editorTabTitleProvider implementation="com.google.idea.blaze.base.syncstatus.SyncStatusEditorTabTitleProvider"/>
@@ -291,6 +294,8 @@
         order="first"/>
     <consoleFilterProvider implementation="com.google.idea.blaze.base.run.filter.GenericFileMessageFilter$Provider"/>
     <consoleFilterProvider implementation="com.google.idea.blaze.base.run.filter.TestLogFilter$Provider"/>
+    <!-- Add target filter last, so it doesn't override other links containing a target string.-->
+    <consoleFilterProvider implementation="com.google.idea.blaze.base.run.filter.BlazeTargetFilter$Provider" order="last"/>
     <codeInsight.lineMarkerProvider
         language="BUILD"
         implementationClass="com.google.idea.blaze.base.query.MacroLineMarkerProvider"/>
@@ -298,6 +303,8 @@
         language="BUILD"
         implementationClass="com.google.idea.blaze.base.run.producers.BuildFileRunLineMarkerContributor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.base.plugin.BlazeHideMakeActions"/>
+    <notificationGroup displayType="BALLOON" id="BuildifierBinaryMissing"/>
+    <registryKey defaultValue="false" description="Disable auto import of bazel projects" key="bazel.auto.import.disabled"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -329,7 +336,6 @@
     <referencesSearch implementation="com.google.idea.blaze.base.lang.buildfile.search.GlobReferenceSearcher"/>
     <readWriteAccessDetector implementation="com.google.idea.blaze.base.lang.buildfile.findusages.BuildReadWriteAccessDetector"/>
     <elementDescriptionProvider implementation="com.google.idea.blaze.base.lang.buildfile.findusages.BuildElementDescriptionProvider"/>
-    <usageGroupingRuleProvider implementation="com.google.idea.blaze.base.lang.buildfile.findusages.UsageGroupingRuleProviderOverride" order="first"/>
     <targetElementEvaluator language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.findusages.BuildTargetElementEvaluator"/>
     <quoteHandler fileType="BUILD" className="com.google.idea.blaze.base.lang.buildfile.editor.BuildQuoteHandler"/>
     <enterHandlerDelegate implementation="com.google.idea.blaze.base.lang.buildfile.editor.BuildEnterBetweenBracketsHandler" order="before EnterBetweenBracesHandler"/>
@@ -374,8 +380,6 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.SyncStatusContributor" interface="com.google.idea.blaze.base.syncstatus.SyncStatusContributor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildResultHelperProvider"
                     interface="com.google.idea.blaze.base.command.buildresult.BuildResultHelperProvider"/>
-    <extensionPoint qualifiedName="com.google.idea.blaze.BlazeCommandRunner"
-                    interface="com.google.idea.blaze.base.command.BlazeCommandRunner"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputArtifactParser"
                     interface="com.google.idea.blaze.base.command.buildresult.OutputArtifactParser"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.RemoteOutputArtifactParser"
@@ -394,12 +398,6 @@
     <component>
       <interface-class>com.google.idea.common.experiments.ExperimentService</interface-class>
       <implementation-class>com.google.idea.common.experiments.ExperimentServiceImpl</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.google.idea.blaze.base.prefetch.PrefetchProjectInitializer</implementation-class>
-    </component>
-    <component>
-      <implementation-class>com.google.idea.blaze.base.lang.buildfile.findusages.UsageGroupingRuleProviderOverride</implementation-class>
     </component>
   </application-components>
 
@@ -439,6 +437,7 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.EventLogger" interface="com.google.idea.blaze.base.logging.EventLogger"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.LoggedSettingsProvider" interface="com.google.idea.blaze.base.logging.LoggedSettingsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.LoggedDirectoryProvider" interface="com.google.idea.blaze.base.logging.LoggedDirectoryProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.LintCollector" interface="com.google.idea.blaze.base.sync.libraries.LintCollector"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ProjectViewDefaultValueProvider" interface="com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValueProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BlazeLibrarySorter" interface="com.google.idea.blaze.base.sync.libraries.BlazeLibrarySorter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildSystemVersionChecker" interface="com.google.idea.blaze.base.plugin.BuildSystemVersionChecker"/>
@@ -460,12 +459,16 @@
     <extensionPoint qualifiedName="com.google.idea.blaze.BinaryContextProvider" interface="com.google.idea.blaze.base.run.producers.BinaryContextProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.HeuristicTestIdentifier" interface="com.google.idea.blaze.base.run.producers.HeuristicTestIdentifier"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputsProvider" interface="com.google.idea.blaze.base.model.OutputsProvider"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.LibraryToTargetResolver" interface="com.google.idea.blaze.base.model.LibraryToTargetResolver"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.VcsSyncListener" interface="com.google.idea.blaze.base.vcs.VcsSyncListener"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.CommonMacroContributor" interface="com.google.idea.blaze.base.lang.buildfile.completion.CommonMacroContributor"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BinaryPathRemapper" interface="com.google.idea.blaze.base.async.process.BinaryPathRemapper"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.CustomFormatter" interface="com.google.idea.blaze.base.formatter.CustomFormatter"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.OutputGroupsProvider" interface="com.google.idea.blaze.base.sync.aspects.strategy.OutputGroupsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.ExperimentLoader" interface="com.google.idea.common.experiments.ExperimentLoader"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.EmptyLibraryFilterSettings" interface="com.google.idea.blaze.java.sync.importer.emptylibrary.EmptyLibraryFilterSettings" />
+    <extensionPoint qualifiedName="com.google.idea.blaze.NewSync" interface="com.google.idea.blaze.base.sync.NewSync"/>
+    <extensionPoint qualifiedName="com.google.idea.blaze.LibraryConverter" interface="com.google.idea.blaze.base.sync.libraries.LibraryConverter"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.google.idea.blaze">
@@ -485,10 +488,9 @@
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.run.coverage.CoverageBuildFlagsProvider"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandler"/>
     <VcsHandler implementation="com.google.idea.blaze.base.vcs.FallbackBlazeVcsHandler" order="last" id="fallback"/>
-    <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" order="last"/>
-    <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.BazelBuildifierBinaryProvider"/>
+    <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" id="BazelBuildSystemProvider" order="last"/>
+    <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.DefaultBuildifierBinaryProvider"/>
     <BuildResultHelperProvider order="last" implementation="com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep$Provider"/>
-    <BlazeCommandRunner order="last" implementation="com.google.idea.blaze.base.command.CommandLineBlazeCommandRunner"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.PendingTargetRunConfigurationHandlerProvider"/>
     <BlazeCommandRunConfigurationHandlerProvider implementation="com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfigurationHandlerProvider" order="last"/>
     <TestTargetHeuristic implementation="com.google.idea.blaze.base.run.TargetNameHeuristic" id="TargetNameHeuristic"/>
@@ -553,6 +555,7 @@
     <ExperimentLoader implementation="com.google.idea.common.experiments.SystemPropertyExperimentLoader" order="first" id="SystemPropertyExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.UserOverridesExperimentLoader" order="after SystemPropertyExperimentLoader" id="UserOverridesExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.DefaultValuesExperimentLoader" order="last" id="DefaultValuesExperimentLoader"/>
+    <LibraryConverter implementation="com.google.idea.blaze.base.sync.libraries.DefaultLibraryConverter" order="last"/>
   </extensions>
 
   <projectListeners>

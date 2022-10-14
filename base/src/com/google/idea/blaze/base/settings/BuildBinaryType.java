@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.settings;
 
 /** The kind of the build system's binary */
 public enum BuildBinaryType {
+  NONE(false),
   BLAZE(false),
   BAZEL(false),
   RABBIT(true), // rabbit CLI

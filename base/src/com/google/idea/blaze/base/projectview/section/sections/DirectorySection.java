@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.projectview.section.ListSectionParser;
 import com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValueProvider;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.util.PathUtil;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -80,13 +80,15 @@ public class DirectorySection {
       implements ProjectViewDefaultValueProvider {
     @Override
     public ProjectView addProjectViewDefaultValue(
-        BuildSystem buildSystem, ProjectViewSet projectViewSet, ProjectView topLevelProjectView) {
+        BuildSystemName buildSystemName,
+        ProjectViewSet projectViewSet,
+        ProjectView topLevelProjectView) {
       if (!topLevelProjectView.getSectionsOfType(KEY).isEmpty()) {
         return topLevelProjectView;
       }
       ListSection.Builder<DirectoryEntry> builder = ListSection.builder(KEY);
       builder.add(TextBlock.of("  # Add the directories you want added as source here"));
-      if (buildSystem == BuildSystem.Bazel) {
+      if (buildSystemName == BuildSystemName.Bazel) {
         builder.add(TextBlock.of("  # By default, we've added your entire workspace ('.')"));
         builder.add(DirectoryEntry.include(new WorkspacePath(".")));
       }

@@ -195,7 +195,7 @@ public class ExternalFileProjectManagementHelper
         SyncMode syncMode,
         SyncResult syncResult) {
       // update the editor notifications if the target map might have changed
-      if (SyncMode.involvesBlazeBuild(syncMode) && syncResult.successful()) {
+      if (syncMode.involvesBlazeBuild() && syncResult.successful()) {
         EditorNotifications.getInstance(project).updateAllNotifications();
       }
     }

@@ -22,4 +22,13 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.google.idea.blaze.KotlinPluginOptionsProvider" interface="com.google.idea.blaze.kotlin.sync.KotlinPluginOptionsProvider"/>
   </extensionPoints>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.google.idea.blaze.kotlinxCoroutinesLibFinder" interface="com.google.idea.blaze.kotlin.run.debug.KotlinxCoroutinesLibFinder"/>
+  </extensionPoints>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.google.idea.blaze.kotlinxCoroutinesDebuggingLibProvider" interface="com.google.idea.blaze.kotlin.run.debug.KotlinxCoroutinesDebuggingLibProvider"/>
+  </extensionPoints>
+
 </idea-plugin>

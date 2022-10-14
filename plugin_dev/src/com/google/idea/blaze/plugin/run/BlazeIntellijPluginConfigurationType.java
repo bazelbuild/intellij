@@ -33,6 +33,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunConfigurationSingletonPolicy;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -148,8 +149,8 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
     }
 
     @Override
-    public boolean isConfigurationSingletonByDefault() {
-      return true;
+    public RunConfigurationSingletonPolicy getSingletonPolicy() {
+      return RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
     }
 
     private static String defaultVmOptions() {

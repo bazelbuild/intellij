@@ -18,7 +18,7 @@ package com.google.idea.blaze.java.run.fastbuild;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.util.BuildSystemExtensionPoint;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 import com.intellij.execution.ExecutionException;
@@ -30,8 +30,9 @@ public interface FastBuildTestEnvironmentModifier extends BuildSystemExtensionPo
   ExtensionPointName<FastBuildTestEnvironmentModifier> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.FastBuildTestEnvironmentModifier");
 
-  static ImmutableList<FastBuildTestEnvironmentModifier> getModifiers(BuildSystem buildSystem) {
-    return BuildSystemExtensionPoint.getInstances(EP_NAME, buildSystem);
+  static ImmutableList<FastBuildTestEnvironmentModifier> getModifiers(
+      BuildSystemName buildSystemName) {
+    return BuildSystemExtensionPoint.getInstances(EP_NAME, buildSystemName);
   }
 
   void modify(

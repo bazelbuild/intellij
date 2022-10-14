@@ -130,7 +130,7 @@ public class JdepsFileReader {
     List<OutputArtifact> outputArtifacts = diff.getUpdatedOutputs();
     // b/187759986: if there was no build, then all the needed artifacts should've been cached
     // already. Additional logging to identify what is going wrong.
-    if (!outputArtifacts.isEmpty() && !SyncMode.involvesBlazeBuild(syncMode)) {
+    if (!outputArtifacts.isEmpty() && !syncMode.involvesBlazeBuild()) {
       logger.warn(
           "ArtifactDiff: "
               + outputArtifacts.size()

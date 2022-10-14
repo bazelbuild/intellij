@@ -20,7 +20,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeFlags;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -41,9 +41,9 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
   protected final RunConfigurationFlagsState exeFlags;
   protected final BlazeBinaryState blazeBinary;
 
-  public BlazeCommandRunConfigurationCommonState(BuildSystem buildSystem) {
+  public BlazeCommandRunConfigurationCommonState(BuildSystemName buildSystemName) {
     command = new BlazeCommandState();
-    blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystem + " flags:");
+    blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystemName + " flags:");
     exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG_TAG, "Executable flags:");
     blazeBinary = new BlazeBinaryState();
   }
@@ -111,13 +111,13 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
         .collect(toImmutableList());
   }
 
-  public void validate(BuildSystem buildSystem) throws RuntimeConfigurationException {
+  public void validate(BuildSystemName buildSystemName) throws RuntimeConfigurationException {
     if (getCommandState().getCommand() == null) {
       throw new RuntimeConfigurationError("You must specify a command.");
     }
     String blazeBinaryString = getBlazeBinaryState().getBlazeBinary();
     if (blazeBinaryString != null && !(new File(blazeBinaryString).exists())) {
-      throw new RuntimeConfigurationError(buildSystem.getName() + " binary does not exist");
+      throw new RuntimeConfigurationError(buildSystemName.getName() + " binary does not exist");
     }
   }
 

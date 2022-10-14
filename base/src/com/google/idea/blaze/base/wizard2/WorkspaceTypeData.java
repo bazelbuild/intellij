@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -49,7 +49,7 @@ public abstract class WorkspaceTypeData {
   @Nullable
   public abstract String branchName();
 
-  public abstract BuildSystem buildSystem();
+  public abstract BuildSystemName buildSystem();
 
   public static WorkspaceTypeData.Builder builder() {
     return new AutoValue_WorkspaceTypeData.Builder();
@@ -73,7 +73,7 @@ public abstract class WorkspaceTypeData {
 
     public abstract WorkspaceTypeData.Builder setBranchName(@Nullable String branchName);
 
-    public abstract WorkspaceTypeData.Builder setBuildSystem(BuildSystem buildSystem);
+    public abstract WorkspaceTypeData.Builder setBuildSystem(BuildSystemName buildSystemName);
 
     public abstract WorkspaceTypeData build();
   }

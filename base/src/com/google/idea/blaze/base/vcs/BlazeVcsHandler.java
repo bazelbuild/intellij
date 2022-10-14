@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -36,10 +36,10 @@ public interface BlazeVcsHandler {
 
   @Nullable
   static BlazeVcsHandler vcsHandlerForProject(Project project) {
-    BuildSystem buildSystem = Blaze.getBuildSystem(project);
+    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     for (BlazeVcsHandler candidate : BlazeVcsHandler.EP_NAME.getExtensions()) {
-      if (candidate.handlesProject(buildSystem, workspaceRoot)) {
+      if (candidate.handlesProject(buildSystemName, workspaceRoot)) {
         return candidate;
       }
     }
@@ -50,7 +50,7 @@ public interface BlazeVcsHandler {
   String getVcsName();
 
   /** Returns whether this vcs handler can manage this project */
-  boolean handlesProject(BuildSystem buildSystem, WorkspaceRoot workspaceRoot);
+  boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot);
 
   /** Returns the working set of modified files compared to some "upstream". */
   ListenableFuture<WorkingSet> getWorkingSet(

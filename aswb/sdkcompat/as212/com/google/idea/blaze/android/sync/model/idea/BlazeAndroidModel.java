@@ -15,11 +15,14 @@
  */
 package com.google.idea.blaze.android.sync.model.idea;
 
+
 import com.android.tools.idea.model.AndroidModel;
 import com.android.tools.idea.model.Namespacing;
 import com.android.tools.idea.projectsystem.NamedIdeaSourceProvider;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 
 /** Blaze model for an android project. #api42. */
@@ -49,5 +52,15 @@ public class BlazeAndroidModel extends BlazeAndroidModelBase {
   @Override
   protected String uninitializedApplicationId() {
     return AndroidModel.UNINITIALIZED_APPLICATION_ID;
+  }
+
+  @Override
+  public boolean isGenerated(VirtualFile file) {
+    return false;
+  }
+
+  @Override
+  public boolean isClassFileOutOfDate(Module module, String fqcn, VirtualFile classFile) {
+    return BlazeClassJarProvider.testIsClassFileOutOfDate(project, fqcn, classFile);
   }
 }

@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.testing.EdtRule;
 import com.google.idea.testing.IntellijTestSetupRule;
@@ -48,7 +48,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import java.io.BufferedInputStream;
@@ -194,7 +194,7 @@ public abstract class BlazeIntegrationTestCase {
 
     if (isLightTestCase()) {
       TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
-          factory.createLightFixtureBuilder(LightCodeInsightFixtureTestCase.JAVA_8);
+          factory.createLightFixtureBuilder(LightJavaCodeInsightFixtureTestCase.JAVA_8);
       IdeaProjectTestFixture lightFixture = fixtureBuilder.getFixture();
       return factory.createCodeInsightFixture(lightFixture, new LightTempDirTestFixtureImpl(true));
     }
@@ -213,9 +213,9 @@ public abstract class BlazeIntegrationTestCase {
     return true;
   }
 
-  /** Override to run tests with bazel specified as the project's build system. */
-  protected BuildSystem buildSystem() {
-    return BuildSystem.Blaze;
+  /** Override to run tests with blaze specified as the project's build system. */
+  protected BuildSystemName buildSystem() {
+    return BuildSystemName.Bazel;
   }
 
   /** Override to run tests off the EDT. */
@@ -251,5 +251,9 @@ public abstract class BlazeIntegrationTestCase {
 
   protected <T> void registerExtension(ExtensionPointName<T> name, T instance) {
     ServiceHelper.registerExtension(name, instance, getTestRootDisposable());
+  }
+
+  protected <T> void registerExtensionFirst(ExtensionPointName<T> name, T instance) {
+    ServiceHelper.registerExtensionFirst(name, instance, getTestRootDisposable());
   }
 }

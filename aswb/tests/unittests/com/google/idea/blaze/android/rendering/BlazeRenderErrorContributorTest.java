@@ -46,7 +46,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.MockArtifactLocationDecoder;
@@ -69,10 +69,8 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JvmPsiConversionHelper;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.JvmPsiConversionHelperImpl;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.search.ProjectScopeBuilderImpl;
@@ -93,6 +91,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
   private static final String MISSING_CLASS_DEPENDENCIES_ERROR = "Missing class dependencies";
 
   private static final WorkspaceRoot workspaceRoot = new WorkspaceRoot(new File("/"));
+  private ProjectFileIndex projectFileIndex;
   private Module module;
   private MockBlazeProjectDataManager projectDataManager;
   private BlazeRenderErrorContributor.BlazeProvider provider;
@@ -102,7 +101,8 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     super.initTest(applicationServices, projectServices);
     applicationServices.register(FileTypeManager.class, new MockFileTypeManager());
 
-    projectServices.register(ProjectFileIndex.class, mock(ProjectFileIndex.class));
+    projectFileIndex = mock(ProjectFileIndex.class);
+    projectServices.register(ProjectFileIndex.class, projectFileIndex);
     projectServices.register(BuildReferenceManager.class, new MockBuildReferenceManager(project));
     projectServices.register(TransitiveDependencyMap.class, new TransitiveDependencyMap(project));
     projectServices.register(ProjectScopeBuilder.class, new ProjectScopeBuilderImpl(project));
@@ -115,7 +115,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     applicationServices.register(Kind.ApplicationState.class, new Kind.ApplicationState());
 
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
-    BlazeImportSettings settings = new BlazeImportSettings("", "", "", "", BuildSystem.Blaze);
+    BlazeImportSettings settings = new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze);
     importSettingsManager.setImportSettings(settings);
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
 
@@ -151,7 +151,9 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
 
   @Test
   public void testNoIssuesIfNoErrors() {
-    PsiFile file = new MockPsiFile(new MockPsiManager(project));
+    VirtualFile virtualFile = new MockVirtualFile("layout.xml");
+    when(projectFileIndex.getModuleForFile(virtualFile)).thenReturn(module);
+    PsiFile file = new MockPsiFile(virtualFile, new MockPsiManager(project));
     file.putUserData(ModuleUtilCore.KEY_MODULE, module);
     RenderResult result = RenderResult.createBlank(file);
     RenderErrorModel errorModel = RenderErrorModelFactory.createErrorModel(null, result, null);
@@ -324,7 +326,9 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
   }
 
   private RenderErrorModel createRenderErrorModelWithBrokenClasses() {
-    PsiFile file = new MockPsiFile(new MockPsiManager(project));
+    VirtualFile virtualFile = new MockVirtualFile("layout.xml");
+    when(projectFileIndex.getModuleForFile(virtualFile)).thenReturn(module);
+    PsiFile file = new MockPsiFile(virtualFile, new MockPsiManager(project));
     file.putUserData(ModuleUtilCore.KEY_MODULE, module);
     RenderResult result = RenderResult.createBlank(file);
     result
@@ -334,7 +338,9 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
   }
 
   private RenderErrorModel createRenderErrorModelWithMissingClasses(String... classNames) {
-    PsiFile file = new MockPsiFile(new MockPsiManager(project));
+    VirtualFile virtualFile = new MockVirtualFile("layout.xml");
+    when(projectFileIndex.getModuleForFile(virtualFile)).thenReturn(module);
+    PsiFile file = new MockPsiFile(virtualFile, new MockPsiManager(project));
     file.putUserData(ModuleUtilCore.KEY_MODULE, module);
     RenderResult result = RenderResult.createBlank(file);
     for (String className : classNames) {
@@ -646,8 +652,6 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
   }
 
   private void createPsiClassesAndSourceToTargetMap(Container projectServices) {
-    PsiManager psiManager = new MockPsiManager(project);
-
     VirtualFile independentLibraryView =
         new MockVirtualFile("src/com/google/example/independent/LibraryView.java");
     VirtualFile independentLibraryView2 =
@@ -658,18 +662,6 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
         new MockVirtualFile("src/com/google/example/dependent/LibraryView.java");
     VirtualFile resourceView = new MockVirtualFile("src/com/google/example/ResourceView.java");
 
-    ImmutableMap<String, PsiClass> classes =
-        ImmutableMap.of(
-            "com.google.example.independent.LibraryView",
-            mockPsiClass(independentLibraryView),
-            "com.google.example.independent.LibraryView2",
-            mockPsiClass(independentLibraryView2),
-            "com.google.example.independent.Library2View",
-            mockPsiClass(independentLibrary2View),
-            "com.google.example.dependent.LibraryView",
-            mockPsiClass(dependentLibraryView),
-            "com.google.example.ResourceView",
-            mockPsiClass(resourceView));
 
     ImmutableMap<File, TargetKey> sourceToTarget =
         ImmutableMap.of(
@@ -685,6 +677,19 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
             TargetKey.forPlainTarget(Label.create("//com/google/example:resources")));
 
     /* b/145809318
+    ImmutableMap<String, PsiClass> classes =
+        ImmutableMap.of(
+            "com.google.example.independent.LibraryView",
+            mockPsiClass(independentLibraryView),
+            "com.google.example.independent.LibraryView2",
+            mockPsiClass(independentLibraryView2),
+            "com.google.example.independent.Library2View",
+            mockPsiClass(independentLibrary2View),
+            "com.google.example.dependent.LibraryView",
+            mockPsiClass(dependentLibraryView),
+            "com.google.example.ResourceView",
+            mockPsiClass(resourceView));
+
         projectServices.register(
             JavaPsiFacade.class, new MockJavaPsiFacade(project, classes));
     b/145809318 */
@@ -695,14 +700,12 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     return TargetIdeInfo.builder().setKind(AndroidBlazeRules.RuleTypes.ANDROID_LIBRARY.getKind());
   }
 
-  private static PsiClass mockPsiClass(VirtualFile virtualFile) {
-    PsiFile psiFile = mock(PsiFile.class);
-    when(psiFile.getVirtualFile()).thenReturn(virtualFile);
-    PsiClass psiClass = mock(PsiClass.class);
-    when(psiClass.getContainingFile()).thenReturn(psiFile);
-    return psiClass;
-  }
-
+  /**
+   * b/145809318 private static PsiClass mockPsiClass(VirtualFile virtualFile) { PsiFile psiFile =
+   * mock(PsiFile.class); when(psiFile.getVirtualFile()).thenReturn(virtualFile); PsiClass psiClass
+   * = mock(PsiClass.class); when(psiClass.getContainingFile()).thenReturn(psiFile); return
+   * psiClass; } b/145809318
+   */
   private static class MockBlazeProjectDataManager implements BlazeProjectDataManager {
     private BlazeProjectData blazeProjectData;
 

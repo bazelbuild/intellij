@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.buildmodifier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import com.google.idea.blaze.base.formatter.FormatUtils.FileContentsProvider;
 import com.google.idea.blaze.base.formatter.FormatUtils.Replacements;
@@ -24,7 +25,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Collection;
@@ -36,11 +36,11 @@ public class BuildFileFormatter {
   private static final Logger logger = Logger.getInstance(BuildFileFormatter.class);
 
   @Nullable
-  private static File getBuildifierBinary() {
+  private static String getBuildifierBinaryPath() {
     for (BuildifierBinaryProvider provider : BuildifierBinaryProvider.EP_NAME.getExtensions()) {
-      File file = provider.getBuildifierBinary();
-      if (file != null) {
-        return file;
+      String path = provider.getBuildifierBinaryPath();
+      if (!Strings.isNullOrEmpty(path)) {
+        return path;
       }
     }
     return null;
@@ -53,8 +53,8 @@ public class BuildFileFormatter {
   @Nullable
   static Replacements getReplacements(
       BlazeFileType fileType, FileContentsProvider fileContents, Collection<TextRange> ranges) {
-    File buildifierBinary = getBuildifierBinary();
-    if (buildifierBinary == null) {
+    String buildifierBinaryPath = getBuildifierBinaryPath();
+    if (buildifierBinaryPath == null) {
       return null;
     }
     String text = fileContents.getFileContentsIfUnchanged();
@@ -65,7 +65,7 @@ public class BuildFileFormatter {
     try {
       for (TextRange range : ranges) {
         String input = range.substring(text);
-        String result = formatText(buildifierBinary, fileType, input);
+        String result = formatText(buildifierBinaryPath, fileType, input);
         if (result == null) {
           return null;
         }
@@ -84,9 +84,9 @@ public class BuildFileFormatter {
    * failed.
    */
   @Nullable
-  private static String formatText(File buildifierBinary, BlazeFileType fileType, String inputText)
-      throws IOException {
-    Process process = new ProcessBuilder(buildifierBinary.getPath(), fileTypeArg(fileType)).start();
+  private static String formatText(
+      String buildifierBinaryPath, BlazeFileType fileType, String inputText) throws IOException {
+    Process process = new ProcessBuilder(buildifierBinaryPath, fileTypeArg(fileType)).start();
     process.getOutputStream().write(inputText.getBytes(UTF_8));
     process.getOutputStream().close();
 

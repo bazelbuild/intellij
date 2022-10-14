@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedInputStream;
@@ -38,7 +37,7 @@ public class BuildResultHelperBep implements BuildResultHelper {
   private static final Logger logger = Logger.getInstance(BuildResultHelperBep.class);
   private final File outputFile;
 
-  BuildResultHelperBep() {
+  public BuildResultHelperBep() {
     outputFile = BuildEventProtocolUtils.createTempOutputFile();
   }
 
@@ -63,7 +62,7 @@ public class BuildResultHelperBep implements BuildResultHelper {
     try (InputStream inputStream = new BufferedInputStream(new FileInputStream(outputFile))) {
       return BuildFlags.parseBep(inputStream);
     } catch (IOException | BuildEventStreamException e) {
-      throw new GetFlagsException(e.getMessage());
+      throw new GetFlagsException(e);
     }
   }
 
@@ -75,11 +74,6 @@ public class BuildResultHelperBep implements BuildResultHelper {
   }
 
   static class Provider implements BuildResultHelperProvider {
-
-    @Override
-    public Optional<BuildResultHelper> doCreate(Project project, BlazeInfo blazeInfo) {
-      return Optional.of(new BuildResultHelperBep());
-    }
 
     @Override
     public Optional<BuildResultHelper> doCreateForLocalBuild(Project project) {

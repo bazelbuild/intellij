@@ -17,11 +17,13 @@ package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
@@ -47,7 +49,15 @@ final class ToolWindowTabs {
   void addTask(Task task, ImmutableList<Filter> consoleFilters, Disposable parentDisposable) {
     Tab tab = tabs.computeIfAbsent(task.getType(), this::newTab);
     tab.behaviour.addTask(task, project, consoleFilters, parentDisposable);
-    getContentManager().setSelectedContent(tab.content);
+    // Only auto-select top level tasks
+    if (task.getParent().isEmpty()) {
+      getContentManager().setSelectedContent(tab.content);
+    }
+  }
+
+  void removeTask(Task task) {
+    Tab tab = getTab(task);
+    tab.behaviour.removeTask(task);
   }
 
   void finishTask(Task task) {
@@ -61,6 +71,10 @@ final class ToolWindowTabs {
 
   void statusOutput(Task task, StatusOutput output) {
     getTab(task).behaviour.taskStatus(task, output);
+  }
+
+  void updateState(Task task, StateUpdate output) {
+    getTab(task).behaviour.taskState(task, output);
   }
 
   void navigate(Task task, HyperlinkInfo link, int offset) {
@@ -84,19 +98,23 @@ final class ToolWindowTabs {
 
   private Tab newTab(Task.Type type) {
     TasksTreeConsoleBehaviour behaviour = new TasksTreeConsoleBehaviour();
-    TasksTreeConsoleModel model = TasksTreeConsoleModel.create(behaviour);
+    TasksTreeConsoleModel model = TasksTreeConsoleModel.create(project, behaviour);
     Content content = createToolWindowContent(model, type);
     getContentManager().addContent(content);
     return new Tab(behaviour, content);
   }
 
   private Content createToolWindowContent(TasksTreeConsoleModel model, Task.Type type) {
+    Disposable viewParentDisposable = Disposer.newDisposable();
     Content content =
         ContentFactory.SERVICE
             .getInstance()
             .createContent(
-                new TasksTreeConsoleView(model).getComponent(), type.getDisplayName(), false);
+                new TasksTreeConsoleView(model, viewParentDisposable).getComponent(),
+                type.getDisplayName(),
+                false);
     content.setCloseable(false);
+    content.setDisposer(viewParentDisposable);
     return content;
   }
 

@@ -107,7 +107,7 @@ public class BlazeJavaTestClassConfigurationProducerTest
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=com.google.test.TestClass#");
-    assertThat(config.getName()).isEqualTo("Blaze test TestClass");
+    assertThat(config.getName()).isEqualTo("Bazel test TestClass");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 
@@ -154,7 +154,7 @@ public class BlazeJavaTestClassConfigurationProducerTest
     assertThat(config.getTargets())
         .containsExactly(TargetExpression.fromStringSafe("//java/com/google/test:TestClass"));
     assertThat(getTestFilterContents(config)).isEqualTo("--test_filter=com.google.test.TestClass#");
-    assertThat(config.getName()).isEqualTo("Blaze test TestClass");
+    assertThat(config.getName()).isEqualTo("Bazel test TestClass");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 
@@ -207,7 +207,7 @@ public class BlazeJavaTestClassConfigurationProducerTest
     assertThat(getTestFilterContents(config))
         .isEqualTo(
             "--test_filter=\"com.google.test.OuterClass#|com.google.test.OuterClass.InnerClass#\"");
-    assertThat(config.getName()).isEqualTo("Blaze test OuterClass");
+    assertThat(config.getName()).isEqualTo("Bazel test OuterClass");
     assertThat(getCommandType(config)).isEqualTo(BlazeCommandName.TEST);
   }
 

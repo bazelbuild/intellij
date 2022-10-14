@@ -19,15 +19,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.run.state.EnvironmentVariablesState;
 import com.google.idea.blaze.base.run.state.RunConfigurationState;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 
 /** A version of the common state allowing environment variables to be set when debugging. */
 final class BlazePyRunConfigState extends BlazeCommandRunConfigurationCommonState {
 
   private final EnvironmentVariablesState envVars = new EnvironmentVariablesState();
 
-  BlazePyRunConfigState(BuildSystem buildSystem) {
-    super(buildSystem);
+  BlazePyRunConfigState(BuildSystemName buildSystemName) {
+    super(buildSystemName);
   }
 
   @Override

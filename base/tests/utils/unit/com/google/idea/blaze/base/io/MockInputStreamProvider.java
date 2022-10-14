@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.io;
 
 import static org.junit.Assert.fail;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.intellij.util.containers.HashMap;
@@ -38,6 +39,7 @@ public class MockInputStreamProvider implements InputStreamProvider {
   private final Map<String, byte[]> files = new HashMap<>();
 
   /** Add a file to provide an {@link InputStream} for, with specified contents. */
+  @CanIgnoreReturnValue
   public MockInputStreamProvider addFile(String filePath, String src) {
     try {
       addFile(filePath, src.getBytes("UTF-8"));
@@ -48,6 +50,7 @@ public class MockInputStreamProvider implements InputStreamProvider {
   }
 
   /** Add a file to provide an {@link InputStream} for, with specified contents. */
+  @CanIgnoreReturnValue
   public MockInputStreamProvider addFile(String filePath, byte[] contents) {
     files.put(filePath, contents);
     return this;

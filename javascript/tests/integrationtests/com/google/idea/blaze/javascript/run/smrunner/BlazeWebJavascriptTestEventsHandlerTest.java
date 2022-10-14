@@ -254,11 +254,9 @@ public class BlazeWebJavascriptTestEventsHandlerTest extends BlazeIntegrationTes
         JasmineFileStructureBuilder.getInstance().buildTestFileStructure(barFile);
     JasmineSuiteStructure barSuite = barFileStructure.findTopLevelSuiteByName("bar");
     assertThat(barSuite).isNotNull();
-    JasmineSuiteStructure nestedSuite =
-        BlazeJavascriptTestEventsHandlerTestUtils.findSuite(barSuite, "nested");
+    JasmineSuiteStructure nestedSuite = barSuite.findChildSuiteByName("nested");
     assertThat(nestedSuite).isNotNull();
-    JasmineSuiteStructure superNestedSuite =
-        BlazeJavascriptTestEventsHandlerTestUtils.findSuite(nestedSuite, "super nested");
+    JasmineSuiteStructure superNestedSuite = nestedSuite.findChildSuiteByName("super nested");
     assertThat(superNestedSuite).isNotNull();
     {
       String url = handler.suiteLocationUrl(label, kind, "bar");

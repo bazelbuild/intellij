@@ -19,14 +19,14 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
+import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import javax.annotation.Nullable;
 
 /** Application id provider for android_binary. */
 public class BlazeAndroidBinaryApplicationIdProvider implements ApplicationIdProvider {
-  private final BlazeApkBuildStep buildStep;
+  private final ApkBuildStep buildStep;
 
-  public BlazeAndroidBinaryApplicationIdProvider(BlazeApkBuildStep buildStep) {
+  public BlazeAndroidBinaryApplicationIdProvider(ApkBuildStep buildStep) {
     this.buildStep = buildStep;
   }
 
