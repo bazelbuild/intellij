@@ -403,6 +403,7 @@ java_library(
         "//testing:lib",
         "//third_party/auto_value",
         "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -421,6 +422,7 @@ java_library(
         "//proto:proto_deps",
         "//sdkcompat",
         "//testing:lib",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -452,6 +454,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
         "//testing:lib",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -472,6 +475,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )

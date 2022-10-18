@@ -151,6 +151,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//intellij_platform_sdk:truth",
         "//proto:proto_deps",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -200,6 +201,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )

@@ -73,6 +73,7 @@ java_library(
         "//base",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "@com_google_guava_guava//jar",
     ],
 )
 
@@ -102,6 +103,7 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//testing:lib",
+        "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
         "@junit//jar",
     ],
@@ -151,6 +153,7 @@ intellij_unit_test_suite(
         "//java",
         "//proto:proto_deps",
         "//testing:lib",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -201,6 +204,8 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//proto:proto_deps",
+        "@com_google_guava_guava//jar",
+        "@gson//jar",
         "@junit//jar",
     ],
 )

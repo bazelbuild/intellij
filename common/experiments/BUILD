@@ -62,6 +62,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//testing:lib",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )

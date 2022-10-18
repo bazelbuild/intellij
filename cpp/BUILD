@@ -95,6 +95,7 @@ intellij_unit_test_suite(
     runtime_deps = ["//intellij_platform_sdk:test_libs"],
     deps = [
         ":cpp",
+        "@com_google_guava_guava//jar",
         "//base",
         "//base:unit_test_utils",
         "//common/experiments",
@@ -140,6 +141,7 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//sdkcompat",
         "//testing:lib",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -168,6 +170,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//sdkcompat",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
