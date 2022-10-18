@@ -85,6 +85,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//java",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -109,6 +110,7 @@ intellij_integration_test_suite(
         "//java",
         "//proto:proto_deps",
         "//third_party/auto_value",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )

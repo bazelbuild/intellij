@@ -78,6 +78,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//testing:lib",
         "//third_party/go:go_for_tests",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -109,6 +110,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//third_party/go:go_for_tests",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
