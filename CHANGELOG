@@ -1,6 +1,7 @@
 v2022.10.18
 ===========
-
+* Allow running single Scalatest method in IntelliJ
+* Internal cleanup
 
 v2022.10.04
 ===========
