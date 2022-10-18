@@ -10,25 +10,20 @@ java_library(
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/indexing/**",
         "com/google/idea/sdkcompat/logging/**",
-        "com/google/idea/sdkcompat/platform/**",
-        "com/google/idea/sdkcompat/python/**",
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
         android_studio = glob([
             "com/google/idea/sdkcompat/cpp/**",
-            "com/google/idea/sdkcompat/java/**",
             "aswb/com/google/idea/sdkcompat/kotlin/*.java",
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/cpp/**",
         ]),
         intellij = glob([
-            "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/kotlin/**",
         ]),
         intellij_ue = glob([
-            "com/google/idea/sdkcompat/java/**",
             "com/google/idea/sdkcompat/scala/**",
             "com/google/idea/sdkcompat/kotlin/**",
         ]),
