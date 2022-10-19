@@ -9,9 +9,14 @@ import (
 
 func main() {
 	num := 3
-	fmt.Printf("AddToTwo(%s) = %s", num, lib.AddToTwo(num))
+	fmt.Printf("AddToTwo(%d) = %d", num, lib.AddToTwo(num))
 }
 
+// This function exists to check that:
+// - Third party symbols (`grpc.Server`) resolve.
+// - Code generated from protobuf resolves (symbols in the `proto` package).
+//   - We should be able to "go to definition" in `proto.FooServiceServer`.
+//   - We should be able to go to definition in `GetName`, a completely generated method.
 func serv(grpcSrv *grpc.Server, protoSrv *proto.FooServiceServer) {
 	name := "World"
 	req := proto.HelloRequest{Name: &name}
