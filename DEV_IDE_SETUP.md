@@ -11,29 +11,23 @@ Press `Edit`, and make a note of `JDK home path`, as well as the version of the 
 
 ## Download and Install the JetBrains Runtime SDK
 
-Head to [the JetBrains Runtime releases page](https://github.com/JetBrains/JetBrainsRuntime/releases)
-and pick a version of the `JBRSDK` that matches your OS, architecture, and JDK version.
+Most of the time, the IntelliJ Platform Plugin SDK bundled with your IntelliJ installation shuould be enuogh to compile and run the plugin.
 
-Install it appropriately:
+To install it, please head to the SDK menu (`Cmd+;` or `Ctrl+;`), and then to `Platform Settings -> SDKs`.
 
-- If you've downloaded a tarfile, just note the directory where you untarred it.
-- If you're on macOS and have chosen a `.pkg` release, it will be installed under `/Library/Java/JavaVirtualMachines/jbrsdk-<version and os>/Contents`
+In the list of SDKs, press the `+` icon, then `Add IntelliJ Platform Plugin SDK`. A file explorer window should open in the `Contents` directory of your IntelliJ installation. Select that directory.
 
-Back in IntelliJ, head to the SDK menu (`Cmd+;` or `Ctrl+;`), and go to `SDKs` in the sidebar.
-
-Add a new SDK by pressing the `+` button at the top.
-Pick `Add IntelliJ Platform Plugin SDK`, and select the path where you've just installed it.
-
-Add the java standard library, so that IntelliJ can index common symbols such as `java.io.File`:
-
-- Head to the "Classpath" tab under the IntelliJ Platform SDK you've just created, and press the `+` icon.
-- Navigate to the root directory of the SDK you've noted before (e.g. `/opt/homebrew/Cellar/openjdk@17/17.0.4.1/libexec/openjdk.jdk/Contents/Home` for an openjdk installed via Homebrew).
-- Navigate to `<jdk_home>/Contents/Home/lib/jrt-fs.jar`, and open it.
-- Apply the changes in IntelliJ.
+Make sure that the `Internal Java Platform` is set to the JDK you want to use to develop your plugin.
 
 ## Import the plugin project.
 
 Clone and import this repository as you would any other Bazel project.
+When asked, use the bundled project view file (`ijwb/ijwb.bazelproject`). This will:
+
+- Set the plugin to build with the latest development version by default.
+- Automatically import the relevant target, and exclude the irrelevant ones.
+
+Depending on which JetBrains product you're targetting, you may want to adjust the `--define` flag in the `build_flags` section. For more information on which values you can pass, please refer to [Building the Plugin](README.md#building-the-plugin)
 
 ## Create a run configuration and add appropriate flags
 
@@ -43,24 +37,5 @@ Configure the `Plugin SDK` field to use the SDK you've just installed.
 
 ### If Using JDK17
 
-You'll need to add some additional flags to the VM Options:
-
-```
---add-opens=java.base/java.lang=ALL-UNNAMED
---add-opens=java.desktop/java.awt.event=ALL-UNNAMED
---add-opens=java.desktop/sun.font=ALL-UNNAMED
---add-opens=java.desktop/java.awt=ALL-UNNAMED
---add-opens=java.desktop/sun.awt=ALL-UNNAMED
---add-opens=java.base/java.lang=ALL-UNNAMED
---add-opens=java.base/java.util=ALL-UNNAMED
---add-opens=java.desktop/javax.swing=ALL-UNNAMED
---add-opens=java.desktop/sun.swing=ALL-UNNAMED
---add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED
---add-opens=java.desktop/java.awt.peer=ALL-UNNAMED
---add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED
---add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED
---add-exports=java.desktop/sun.font=ALL-UNNAMED
---add-exports=java.desktop/com.apple.eawt=ALL-UNNAMED
---add-exports=java.desktop/com.apple.laf=ALL-UNNAMED
---add-exports=java.desktop/com.apple.eawt.event=ALL-UNNAMED
-```
+You'll need to add some additional flags to the VM Options to open the required modules.
+You can find an up to date list in [the JetBrains/intellij-community repository](https://raw.githubusercontent.com/JetBrains/intellij-community/master/plugins/devkit/devkit-core/src/run/OpenedPackages.txt)
