@@ -543,6 +543,23 @@ public class BuildParserTest extends BuildFileIntegrationTestCase {
   }
 
   @Test
+  public void testNestedFunctionDefinition() throws Exception {
+    ASTNode tree =
+            createAST(
+                    "def function(name = 'foo', srcs, outs, *args, **kwargs):",
+                    "   def inner():",
+                    "     pass",
+                    "   native.java_library(",
+                    "     name = name,",
+                    "     srcs = srcs,",
+                    "   )",
+                    "   return");
+    List<BuildElement> stmts = getTopLevelNodesOfType(tree, BuildElement.class);
+    assertThat(stmts).hasSize(1);
+    assertNoErrors();
+  }
+
+  @Test
   public void testFunctionCall() throws Exception {
     ASTNode tree = createAST("function(name = 'foo', srcs, *args, **kwargs)");
     List<BuildElement> stmts = getTopLevelNodesOfType(tree, BuildElement.class);
