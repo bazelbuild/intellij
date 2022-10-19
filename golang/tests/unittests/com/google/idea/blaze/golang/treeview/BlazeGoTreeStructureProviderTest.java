@@ -30,8 +30,6 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.libraries.BlazeExternalSyntheticLibrary;
 import com.google.idea.blaze.golang.resolve.BlazeGoPackageFactory;
-import com.google.idea.common.experiments.ExperimentService;
-import com.google.idea.common.experiments.MockExperimentService;
 import com.google.idea.testing.IntellijRule;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
@@ -87,10 +85,6 @@ public class BlazeGoTreeStructureProviderTest {
 
     intellij.registerProjectService(
         BlazeImportSettingsManager.class, new BlazeImportSettingsManager(intellij.getProject()));
-
-    MockExperimentService experimentService = new MockExperimentService();
-    intellij.registerApplicationService(ExperimentService.class, experimentService);
-    experimentService.setFeatureRolloutExperiment(BlazeGoTreeStructureProvider.experiment, 100);
 
     intellij.registerApplicationService(VirtualFileSystemProvider.class, MockLocalFileSystem::new);
     intellij.registerProjectService(SyncCache.class, syncCache);

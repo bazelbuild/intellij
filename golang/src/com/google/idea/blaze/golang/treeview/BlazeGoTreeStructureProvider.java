@@ -26,7 +26,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.golang.resolve.BlazeGoPackageFactory;
-import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
@@ -51,15 +50,11 @@ import java.util.function.Function;
  */
 public final class BlazeGoTreeStructureProvider implements TreeStructureProvider, DumbAware {
 
-  public static final FeatureRolloutExperiment experiment =
-      new FeatureRolloutExperiment("go.import.treestructure");
-
   @Override
   public Collection<AbstractTreeNode<?>> modify(
       AbstractTreeNode<?> parent, Collection<AbstractTreeNode<?>> children, ViewSettings settings) {
     Project project = parent.getProject();
     if (!Blaze.isBlazeProject(project)
-        || !experiment.isEnabled()
         || !isGoBlazeExternalLibraryRoot(parent)) {
       return children;
     }
