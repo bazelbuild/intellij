@@ -10,6 +10,10 @@ tab for more information.
 **Please see our latest community update for Bazel IntelliJ plugin:**
 [Announcing Bazel & JetBrains co-maintenance of IntelliJ IDEA Bazel Plugin](https://blog.bazel.build/2022/07/11/Bazel-IntelliJ-Update.html#announcing-bazel-jetbrains-co-maintenance-of-intellij-idea-bazel).
 
+## Community
+The Bazel project is hosting a Special Interest Group (SIG) for Bazel IntelliJ IDE plug-in. Details about the SIG and 
+how to join the discussion can be found in the [SIG charter](https://github.com/bazelbuild/community/blob/main/sigs/bazel-intellij/CHARTER.md).
+
 ## Support
 
 See the [documentation entry](https://ij.bazel.build/docs/bazel-support.html)
