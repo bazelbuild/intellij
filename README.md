@@ -12,7 +12,7 @@ tab for more information.
 
 ## Community
 The Bazel project is hosting a Special Interest Group (SIG) for Bazel IntelliJ IDE plug-in. Details about the SIG and 
-how to join the discussion can be found in the [SIG charter]{https://github.com/bazelbuild/community/blob/main/sigs/bazel-intellij/CHARTER.md}.
+how to join the discussion can be found in the [SIG charter](https://github.com/bazelbuild/community/blob/main/sigs/bazel-intellij/CHARTER.md).
 
 ## Support
 
