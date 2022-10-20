@@ -15,10 +15,11 @@
  */
 package com.google.idea.blaze.java.libraries;
 
-import static java.util.stream.Collectors.toList;
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
@@ -68,7 +69,7 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
     Library library = LibraryActionHelper.findLibraryForAction(e);
     if (library != null) {
       visible = true;
-      if (getDirectoryToAddForLibrary(project, library) != null) {
+      if (!getDirectoryToAddForLibrary(project, library).isEmpty()) {
         enabled = true;
       }
     }
@@ -77,52 +78,56 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
   }
 
   @Nullable
-  static WorkspacePath getDirectoryToAddForLibrary(Project project, Library library) {
+  static ImmutableSet<WorkspacePath> getDirectoryToAddForLibrary(Project project, Library library) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    Set<WorkspacePath> workspacePaths = Sets.newHashSet();
     if (blazeProjectData == null) {
-      return null;
+      return ImmutableSet.of();
     }
-    BlazeJarLibrary blazeLibrary =
+    ImmutableSet<BlazeJarLibrary> blazeLibraries =
         LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library);
-    if (blazeLibrary == null) {
-      return null;
+    if (blazeLibraries.isEmpty()) {
+      return ImmutableSet.of();
     }
-    TargetKey originatingTarget = findOriginatingTargetForLibrary(blazeProjectData, blazeLibrary);
-    if (originatingTarget == null) {
-      return null;
+
+    for (BlazeJarLibrary blazeJarLibrary : blazeLibraries) {
+      TargetKey originatingTarget =
+          findOriginatingTargetForLibrary(blazeProjectData, blazeJarLibrary);
+      if (originatingTarget == null) {
+        continue;
+      }
+      TargetIdeInfo target = blazeProjectData.getTargetMap().get(originatingTarget);
+      if (target == null) {
+        continue;
+      }
+      // To start with, we allow only library rules
+      // It makes no sense to add directories for java_imports and the like
+      if (!target.getKind().getRuleType().equals(RuleType.LIBRARY)) {
+        continue;
+      }
+      if (target.getBuildFile() == null) {
+        continue;
+      }
+      File buildFile = new File(target.getBuildFile().getRelativePath());
+      WorkspacePath workspacePath = new WorkspacePath(Strings.nullToEmpty(buildFile.getParent()));
+      ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+      if (projectViewSet == null) {
+        continue;
+      }
+      boolean exists =
+          WorkspacePathUtil.isUnderAnyWorkspacePath(
+              projectViewSet.listItems(DirectorySection.KEY).stream()
+                  .filter(entry -> entry.included)
+                  .map(entry -> entry.directory)
+                  .collect(toImmutableList()),
+              workspacePath);
+      if (exists) {
+        continue;
+      }
+      workspacePaths.add(workspacePath);
     }
-    TargetIdeInfo target = blazeProjectData.getTargetMap().get(originatingTarget);
-    if (target == null) {
-      return null;
-    }
-    // To start with, we allow only library rules
-    // It makes no sense to add directories for java_imports and the like
-    if (!target.getKind().getRuleType().equals(RuleType.LIBRARY)) {
-      return null;
-    }
-    if (target.getBuildFile() == null) {
-      return null;
-    }
-    File buildFile = new File(target.getBuildFile().getRelativePath());
-    WorkspacePath workspacePath = new WorkspacePath(Strings.nullToEmpty(buildFile.getParent()));
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    if (projectViewSet == null) {
-      return null;
-    }
-    boolean exists =
-        WorkspacePathUtil.isUnderAnyWorkspacePath(
-            projectViewSet
-                .listItems(DirectorySection.KEY)
-                .stream()
-                .filter(entry -> entry.included)
-                .map(entry -> entry.directory)
-                .collect(toList()),
-            workspacePath);
-    if (exists) {
-      return null;
-    }
-    return workspacePath;
+    return ImmutableSet.copyOf(workspacePaths);
   }
 
   @Nullable
@@ -143,10 +148,7 @@ class AddLibraryTargetDirectoryToProjectViewAction extends BlazeProjectAction {
   static void addDirectoriesToProjectView(Project project, List<Library> libraries) {
     Set<WorkspacePath> workspacePaths = Sets.newHashSet();
     for (Library library : libraries) {
-      WorkspacePath workspacePath = getDirectoryToAddForLibrary(project, library);
-      if (workspacePath != null) {
-        workspacePaths.add(workspacePath);
-      }
+      workspacePaths.addAll(getDirectoryToAddForLibrary(project, library));
     }
     ProjectViewEdit edit =
         ProjectViewEdit.editLocalProjectView(

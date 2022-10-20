@@ -15,13 +15,15 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
-import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -104,14 +106,17 @@ final class BlazeSourceJarNavigationPolicy extends ClsCustomNavigationPolicyEx {
       return null;
     }
 
-    BlazeJarLibrary blazeLibrary =
-        LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library);
-    if (blazeLibrary == null) {
+    ImmutableSet<ArtifactLocation> sourceJars =
+        LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library)
+            .stream()
+            .flatMap(blazeJarLibrary -> blazeJarLibrary.libraryArtifact.getSourceJars().stream())
+            .collect(toImmutableSet());
+    if (sourceJars.isEmpty()) {
       return null;
     }
 
     // TODO: If there are multiple source jars, search for one containing this PsiJavaFile.
-    for (ArtifactLocation jar : blazeLibrary.libraryArtifact.getSourceJars()) {
+    for (ArtifactLocation jar : sourceJars) {
       VirtualFile root =
           getSourceJarRoot(project, blazeProjectData.getArtifactLocationDecoder(), jar);
       if (root != null) {

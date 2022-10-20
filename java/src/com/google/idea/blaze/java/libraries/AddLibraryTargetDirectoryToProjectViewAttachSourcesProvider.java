@@ -16,6 +16,7 @@
 package com.google.idea.blaze.java.libraries;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -48,10 +49,10 @@ public class AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider
     List<Library> librariesToAttachSourceTo = Lists.newArrayList();
     for (LibraryOrderEntry orderEntry : orderEntries) {
       Library library = orderEntry.getLibrary();
-      WorkspacePath workspacePath =
+      ImmutableSet<WorkspacePath> workspacePaths =
           AddLibraryTargetDirectoryToProjectViewAction.getDirectoryToAddForLibrary(
               project, library);
-      if (workspacePath == null) {
+      if (workspacePaths.isEmpty()) {
         continue;
       }
       librariesToAttachSourceTo.add(library);

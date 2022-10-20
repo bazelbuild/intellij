@@ -15,9 +15,12 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.libraries.LibraryFilesProviderFactory;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
@@ -55,7 +58,8 @@ public final class LibraryActionHelper {
   }
 
   @Nullable
-  public static BlazeJarLibrary findLibraryFromIntellijLibrary(Project project, Library library) {
+  public static ImmutableSet<BlazeJarLibrary> findLibraryFromIntellijLibrary(
+      Project project, Library library) {
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return projectData != null
@@ -63,24 +67,31 @@ public final class LibraryActionHelper {
         : null;
   }
 
+  /** Return a list of BlazeJarLibrary that mapped to Library. */
   @Nullable
-  public static BlazeJarLibrary findLibraryFromIntellijLibrary(
+  public static ImmutableSet<BlazeJarLibrary> findLibraryFromIntellijLibrary(
       Project project, BlazeProjectData blazeProjectData, Library library) {
     String libName = library.getName();
     if (libName == null) {
       return null;
     }
-    LibraryKey libraryKey = LibraryKey.fromIntelliJLibraryName(libName);
     BlazeJavaSyncData syncData = blazeProjectData.getSyncState().get(BlazeJavaSyncData.class);
     if (syncData == null) {
       Messages.showErrorDialog(project, "Project isn't synced. Please resync project.", "Error");
       return null;
     }
-    return syncData.getImportResult().libraries.get(libraryKey);
+
+    LibraryFilesProviderFactory libraryFilesProviderFactory =
+        LibraryFilesProviderFactory.getInstance(project);
+    return syncData.getImportResult().libraries.values().stream()
+        .filter(
+            blazeJarLibrary ->
+                libName.equals(libraryFilesProviderFactory.get(blazeJarLibrary).getName()))
+        .collect(toImmutableSet());
   }
 
   @Nullable
-  static BlazeJarLibrary findBlazeLibraryForAction(Project project, AnActionEvent e) {
+  static ImmutableSet<BlazeJarLibrary> findBlazeLibraryForAction(Project project, AnActionEvent e) {
     Library library = findLibraryForAction(e);
     if (library == null) {
       return null;
@@ -89,7 +100,7 @@ public final class LibraryActionHelper {
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return projectData != null
         ? findLibraryFromIntellijLibrary(project, projectData, library)
-        : null;
+        : ImmutableSet.of();
   }
 
   @Nullable

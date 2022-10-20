@@ -15,8 +15,10 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
-import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
 import com.google.idea.blaze.base.projectview.section.Glob;
@@ -24,7 +26,6 @@ import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.projectview.ExcludeLibrarySection;
-import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -45,16 +46,19 @@ class ExcludeLibraryAction extends BlazeProjectAction {
     if (library == null) {
       return;
     }
-    BlazeJarLibrary blazeLibrary =
-        LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library);
-    if (blazeLibrary == null) {
+    ImmutableList<Glob> paths =
+        LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library)
+            .stream()
+            .map(
+                blazeJarLibrary ->
+                    new Glob(
+                        blazeJarLibrary.libraryArtifact.jarForIntellijLibrary().getRelativePath()))
+            .collect(toImmutableList());
+    if (paths.isEmpty()) {
       Messages.showErrorDialog(
           project, "Could not find this library in the project.", CommonBundle.getErrorTitle());
       return;
     }
-
-    final LibraryArtifact libraryArtifact = blazeLibrary.libraryArtifact;
-    final String path = libraryArtifact.jarForIntellijLibrary().getRelativePath();
 
     ProjectViewEdit edit =
         ProjectViewEdit.editLocalProjectView(
@@ -63,17 +67,15 @@ class ExcludeLibraryAction extends BlazeProjectAction {
               ListSection<Glob> existingSection = builder.getLast(ExcludeLibrarySection.KEY);
               builder.replace(
                   existingSection,
-                  ListSection.update(ExcludeLibrarySection.KEY, existingSection)
-                      .add(new Glob(path)));
+                  ListSection.update(ExcludeLibrarySection.KEY, existingSection).addAll(paths));
               return true;
             });
     if (edit == null) {
       Messages.showErrorDialog(
           "Could not modify project view. Check for errors in your project view and try again",
           "Error");
-      return;
+      edit.apply();
     }
-    edit.apply();
 
     BlazeSyncManager.getInstance(project)
         .incrementalProjectSync(/* reason= */ "ExcludeLibraryAction");

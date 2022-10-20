@@ -15,9 +15,11 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryKey;
@@ -76,16 +78,15 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
       if (AttachedSourceJarManager.getInstance(project).hasSourceJarAttached(libraryKey)) {
         continue;
       }
-      BlazeJarLibrary blazeLibrary =
-          LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library);
-      if (blazeLibrary == null) {
+      ImmutableSet<BlazeJarLibrary> blazeJarLibraries =
+          LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library)
+              .stream()
+              .filter(blazeJarLibrary -> !blazeJarLibrary.libraryArtifact.getSourceJars().isEmpty())
+              .collect(toImmutableSet());
+      if (blazeJarLibraries.isEmpty()) {
         continue;
       }
-      LibraryArtifact libraryArtifact = blazeLibrary.libraryArtifact;
-      if (libraryArtifact.getSourceJars().isEmpty()) {
-        continue;
-      }
-      librariesToAttachSourceTo.add(blazeLibrary);
+      librariesToAttachSourceTo.addAll(blazeJarLibraries);
     }
 
     if (librariesToAttachSourceTo.isEmpty()) {

@@ -15,8 +15,10 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibraryEditor;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
@@ -26,6 +28,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.libraries.Library;
 
 class AttachSourceJarAction extends BlazeProjectAction {
 
@@ -38,14 +41,27 @@ class AttachSourceJarAction extends BlazeProjectAction {
       hideAction(presentation);
       return;
     }
-    BlazeJarLibrary library = LibraryActionHelper.findBlazeLibraryForAction(project, e);
-    if (library == null || library.libraryArtifact.getSourceJars().isEmpty()) {
+
+    Library library = LibraryActionHelper.findLibraryForAction(e);
+    if (library == null) {
+      hideAction(presentation);
+      return;
+    }
+
+    ImmutableSet<BlazeJarLibrary> blazeJarLibraries =
+        LibraryActionHelper.findBlazeLibraryForAction(project, e);
+    if (blazeJarLibraries.isEmpty()
+        || blazeJarLibraries.stream()
+            .filter(blazeJarLibrary -> !blazeJarLibrary.libraryArtifact.getSourceJars().isEmpty())
+            .findAny()
+            .isEmpty()) {
       hideAction(presentation);
       return;
     }
     presentation.setEnabledAndVisible(true);
     boolean attached =
-        AttachedSourceJarManager.getInstance(project).hasSourceJarAttached(library.key);
+        AttachedSourceJarManager.getInstance(project)
+            .hasSourceJarAttached(LibraryKey.fromIntelliJLibraryName(library.getName()));
     presentation.setText(attached ? "Detach Source Jar" : "Attach Source Jar");
   }
 
@@ -60,21 +76,46 @@ class AttachSourceJarAction extends BlazeProjectAction {
     if (projectData == null) {
       return;
     }
-    BlazeJarLibrary library = LibraryActionHelper.findBlazeLibraryForAction(project, e);
-    if (library == null || library.libraryArtifact.getSourceJars().isEmpty()) {
+
+    Library library = LibraryActionHelper.findLibraryForAction(e);
+    if (library == null) {
+      return;
+    }
+
+    ImmutableSet<BlazeJarLibrary> blazeJarLibraries =
+        LibraryActionHelper.findBlazeLibraryForAction(project, e);
+    if (blazeJarLibraries.isEmpty()
+        || blazeJarLibraries.stream()
+            .filter(blazeJarLibrary -> !blazeJarLibrary.libraryArtifact.getSourceJars().isEmpty())
+            .findAny()
+            .isEmpty()) {
       return;
     }
     AttachedSourceJarManager sourceJarManager = AttachedSourceJarManager.getInstance(project);
-    boolean attachSourceJar = !sourceJarManager.hasSourceJarAttached(library.key);
-    sourceJarManager.setHasSourceJarAttached(library.key, attachSourceJar);
+    toggleAttachSourceJarStatus(
+        sourceJarManager, LibraryKey.fromIntelliJLibraryName(library.getName()));
+    blazeJarLibraries.forEach(
+        blazeJarLibrary -> toggleAttachSourceJarStatus(sourceJarManager, blazeJarLibrary.key));
 
     ApplicationManager.getApplication()
         .runWriteAction(
             () -> {
               IdeModifiableModelsProvider modelsProvider =
                   BaseSdkCompat.createModifiableModelsProvider(project);
-              LibraryEditor.updateLibrary(project, projectData, modelsProvider, library);
+              LibraryEditor.updateLibrary(
+                  project,
+                  projectData,
+                  modelsProvider,
+                  // LibraryEditor will update the Library that BlazeJarLibrary mapped to, so only
+                  // provide one of them
+                  blazeJarLibraries.iterator().next());
               modelsProvider.commit();
             });
+  }
+
+  private void toggleAttachSourceJarStatus(
+      AttachedSourceJarManager sourceJarManager, LibraryKey libraryKey) {
+    boolean attachSourceJar = !sourceJarManager.hasSourceJarAttached(libraryKey);
+    sourceJarManager.setHasSourceJarAttached(libraryKey, attachSourceJar);
   }
 }

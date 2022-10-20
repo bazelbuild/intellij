@@ -15,10 +15,12 @@
  */
 package com.google.idea.blaze.java.libraries;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.actions.BlazeProjectAction;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -45,24 +47,25 @@ class DescribeLibraryAction extends BlazeProjectAction {
     if (library == null) {
       return;
     }
-    BlazeJarLibrary blazeLibrary =
-        LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library);
-    if (blazeLibrary == null) {
+    ImmutableSet<String> relativePaths =
+        LibraryActionHelper.findLibraryFromIntellijLibrary(project, blazeProjectData, library)
+            .stream()
+            .map(lib -> lib.libraryArtifact.jarForIntellijLibrary().getRelativePath())
+            .collect(toImmutableSet());
+    if (relativePaths.isEmpty()) {
       Messages.showErrorDialog(
           project, "Could not find this library in the project.", CommonBundle.getErrorTitle());
       return;
     }
-    showLibraryDescription(project, blazeLibrary);
+    showLibraryDescription(project, relativePaths);
   }
 
-  private static void showLibraryDescription(Project project, BlazeJarLibrary library) {
+  private static void showLibraryDescription(Project project, ImmutableSet<String> relativePaths) {
     ApplicationManager.getApplication()
         .invokeLater(
             () ->
                 Messages.showInfoMessage(
-                    project,
-                    library.libraryArtifact.jarForIntellijLibrary().getRelativePath(),
-                    "Original path to library jar"));
+                    project, String.join(",", relativePaths), "Original paths to library jar"));
   }
 
   @Override
