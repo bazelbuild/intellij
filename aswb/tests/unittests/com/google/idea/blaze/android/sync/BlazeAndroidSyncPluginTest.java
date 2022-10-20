@@ -46,6 +46,7 @@ import com.google.idea.blaze.java.sync.model.BlazeJavaImportResult;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
+import com.google.idea.sdkcompat.roots.ex.ProjectRootManagerExWrapper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -230,7 +231,7 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
   }
 
   /** Stores a project sdk so that it can be obtained later for verification. */
-  private static class MockProjectRootManagerEx extends ProjectRootManagerEx {
+  private static class MockProjectRootManagerEx extends ProjectRootManagerExWrapper {
     Sdk projectSdk;
 
     @Nullable
@@ -317,7 +318,7 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
     }
 
     @Nullable
-    // @Override #api193
+    @Override
     public String getProjectSdkTypeName() {
       return null;
     }
@@ -325,7 +326,7 @@ public class BlazeAndroidSyncPluginTest extends BlazeTestCase {
     // @Override #api211
     public void setProjectSdkName(String s) {}
 
-    // @Override #api193
+    @Override
     public void setProjectSdkName(String name, String sdkTypeName) {}
   }
 }

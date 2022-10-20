@@ -11,7 +11,7 @@ licenses(["restricted"])
 exports_files(["LICENSE"])
 
 java_import(
-    name = "sdk",
+    name = "sdk_import",
     jars = glob(
         [
             "android-studio/lib/*.jar",
@@ -24,10 +24,17 @@ java_import(
         ],
     ) + ["android-studio/plugins/c-clangd/lib/c-clangd.jar"],
     tags = ["intellij-provided-by-sdk"],
-    exports = [":jars_without_mockito_extensions"],
     deps = [
         # guava v20+ requires this at compile-time when using annotation processors.
         "@error_prone_annotations//jar",
+    ],
+)
+
+java_library(
+    name = "sdk",
+    exports = [
+        ":jars_without_mockito_extensions",
+        ":sdk_import",
     ],
 )
 
