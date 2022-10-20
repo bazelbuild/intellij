@@ -7,6 +7,7 @@
 
 load(
     ":build_defs.bzl",
+    "plugin_api_dir_name",
     "select_for_plugin_api",
     "select_from_plugin_api_directory",
 )
@@ -481,7 +482,28 @@ java_library(
 java_library(
     name = "plugin_api",
     neverlink = 1,
-    exports = [":plugin_api_internal"],
+    exports = [
+        ":plugin_api_repackaged",
+        "//java/com/google/common/collect",
+    ],
+)
+
+repackaged_testonly_jar(
+    name = "plugin_api_for_tests_repackaged",
+    data = select_from_plugin_api_directory(
+        android_studio = [
+            ":layoutlib_data",
+            ":kotlinc_version",
+        ],
+        clion = [],
+        # From 2022.1 forward, the version of kotlinc will be obtained
+        # by KotlinPluginLayout from plugins/kotlin/kotlinc/build.txt
+        # so we need to provide this to our tests
+        intellij = [":kotlinc_version"],
+    ),
+    data_subdir = plugin_api_dir_name(),
+    rules = "api_for_tests",
+    deps = [":plugin_api_internal"],
 )
 
 # For tests, we need the IJ API at runtime, so we can't use the neverlink rule.
@@ -499,7 +521,7 @@ java_library(
         # so we need to provide this to our tests
         intellij = [":kotlinc_version"],
     ),
-    exports = [":plugin_api_internal"],
+    exports = [":plugin_api_for_tests_repackaged"],
 )
 
 # These libraries should only be used by open-source plugins.

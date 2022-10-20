@@ -68,6 +68,7 @@ intellij_unit_test_suite(
     srcs = glob(["tests/unittests/**/*.java"]),
     test_package_root = "com.google.idea.blaze.golang",
     deps = [
+        ":go_for_tests_repackaged",
         ":golang",
         "//base",
         "//base:unit_test_utils",
@@ -77,7 +78,6 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//testing:lib",
-        "//third_party/go:go_for_tests",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
@@ -99,6 +99,7 @@ intellij_integration_test_suite(
         ":golang_integration_test_plugin",
     ],
     deps = [
+        ":go_for_tests_repackaged",
         ":golang",
         "//base",
         "//base:integration_test_utils",
@@ -109,7 +110,6 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "//third_party/go:go_for_tests",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],

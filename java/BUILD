@@ -56,6 +56,7 @@ java_library(
         "//proto:proto_deps",
         "//sdkcompat",
         "//third_party/auto_value",
+        "//third_party/java/auto:common",
     ],
 )
 
