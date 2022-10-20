@@ -30,7 +30,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 )
 class ProblemsViewConfiguration implements PersistentStateComponent<ProblemsViewConfiguration> {
 
-  private boolean autoscrollToConsole = false;
+  private boolean autoscrollToConsole = true;
 
   public static ProblemsViewConfiguration getInstance(Project project) {
     return ServiceManager.getService(project, ProblemsViewConfiguration.class);
