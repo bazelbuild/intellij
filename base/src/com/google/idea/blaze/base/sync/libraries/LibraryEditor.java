@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -75,10 +74,7 @@ public class LibraryEditor {
                 LibraryFilesProviderFactory.getInstance(project).get(library);
             String key = libraryFilesProvider.getName();
             if (newLibraryKeys.add(key)) {
-              updateLibrary(
-                  modelsProvider,
-                  blazeProjectData.getArtifactLocationDecoder(),
-                  libraryFilesProvider);
+              updateLibrary(modelsProvider, blazeProjectData, libraryFilesProvider);
             }
           });
 
@@ -121,28 +117,30 @@ public class LibraryEditor {
    * commit()} should only be called once after all modifications as frequent calls can be slow.
    *
    * @param project the IntelliJ project
-   * @param artifactLocationDecoder a decoder to determine the location of artifacts
+   * @param blazeProjectData data class contains BlazeLibrary information, decoder for artifact
+   *     location. Since it has not yet been cached on disk during sync, we cannot get latest one
+   *     via BlazeProjectData.getInstance. Callers need to provide it.
    * @param modelsProvider a modifier for IntelliJ's project model which supports quick application
    *     of massive modifications to the project model
    * @param blazeLibrary the library which should be updated in the project context
    */
   public static void updateLibrary(
       Project project,
-      ArtifactLocationDecoder artifactLocationDecoder,
+      BlazeProjectData blazeProjectData,
       IdeModifiableModelsProvider modelsProvider,
       BlazeLibrary blazeLibrary) {
     updateLibrary(
         modelsProvider,
-        artifactLocationDecoder,
+        blazeProjectData,
         LibraryFilesProviderFactory.getInstance(project).get(blazeLibrary));
   }
 
   private static void updateLibrary(
       IdeModifiableModelsProvider modelsProvider,
-      ArtifactLocationDecoder artifactLocationDecoder,
+      BlazeProjectData blazeProjectData,
       LibraryFilesProvider libraryFilesProvider) {
     LibraryModifier libraryModifier = new LibraryModifier(libraryFilesProvider, modelsProvider);
-    libraryModifier.updateModifiableModel(artifactLocationDecoder);
+    libraryModifier.updateModifiableModel(blazeProjectData);
   }
 
   /**
