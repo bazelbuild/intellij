@@ -295,7 +295,8 @@ public class UnpackedAars {
     return ((LocalFileArtifact) output).getFile();
   }
 
-  static class FileCacheAdapter implements FileCache {
+  /** An implementation of {@link FileCache} delegating to {@link UnpackedAars}. */
+  public static class FileCacheAdapter implements FileCache {
     @Override
     public String getName() {
       return "Unpacked AAR libraries";

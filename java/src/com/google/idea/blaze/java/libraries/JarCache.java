@@ -591,7 +591,8 @@ public class JarCache {
     return cacheKeyInternal(srcjar) + "-src.jar";
   }
 
-  static class FileCacheAdapter implements FileCache {
+  /** An implementation of {@link FileCache} delegating to {@link JarCache}. */
+  public static class FileCacheAdapter implements FileCache {
     @Override
     public String getName() {
       return "Jar Cache";
