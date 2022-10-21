@@ -69,19 +69,13 @@ java_import(
     name = "android",
     jars = glob([
         "android-studio/plugins/android/lib/*.jar",
-        "android-studio/plugins/android-layoutlib/lib/*.jar",
-        "android-studio/plugins/android-wizardTemplate-plugin/lib/*.jar",
-        "android-studio/plugins/android-wizardTemplate-impl/lib/*.jar",
         "android-studio/plugins/android-ndk/lib/*.jar",
-        "android-studio/plugins/sdk-updates/lib/*.jar",
     ]),
 )
 
 filegroup(
     name = "layoutlib_data",
-    srcs = glob([
-        "android-studio/plugins/android/lib/layoutlib/**/*",
-    ]),
+    srcs = [],
 )
 
 java_import(
