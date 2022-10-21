@@ -43,7 +43,7 @@ public class StatementParsing extends Parsing {
     }
   }
 
-  // Unlike in Python grammar, 'def' is only allowed as a top-level statement
+  // Unlike in Python grammar, 'load' is only allowed as a top-level statement
   public void parseTopLevelStatement() {
     if (currentToken() == TokenKind.IDENTIFIER && "load".equals(builder.getTokenText())) {
       parseLoadStatement();
