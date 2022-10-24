@@ -51,7 +51,6 @@ import com.google.idea.blaze.base.run.testlogs.LocalBuildEventProtocolTestFinder
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.java.AndroidBlazeRules;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -64,15 +63,6 @@ import org.jetbrains.android.facet.AndroidFacet;
 
 /** Run context for android_test. */
 public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
-  /**
-   * Indicates whether we should create deploy tasks when running a test using Blaze.
-   *
-   * <p>This is unnecessary, but we use an experiment just to be conservative. We can delete this
-   * code after it is confirmed that this doesn't cause any issues. See b/246649171.
-   */
-  private static final BoolExperiment blazeTestForceDeploy =
-      new BoolExperiment("aswb.blaze.test.force.deploy", false);
-
   protected final Project project;
   protected final AndroidFacet facet;
   protected final BlazeCommandRunConfiguration runConfiguration;
@@ -212,25 +202,13 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   @Override
   public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
-    switch (configState.getLaunchMethod()) {
-      case NON_BLAZE:
-        return ImmutableList.of(
-            BlazeAndroidDeploymentService.getInstance(project)
-                .getDeployTask(
-                    getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
-      case BLAZE_TEST:
-        if (blazeTestForceDeploy.getValue()) {
-          return ImmutableList.of(
-              BlazeAndroidDeploymentService.getInstance(project)
-                  .getDeployTask(
-                      getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
-        } else {
-          return ImmutableList.of();
-        }
-      case MOBILE_INSTALL:
-        return ImmutableList.of();
+    if (configState.getLaunchMethod() != AndroidTestLaunchMethod.NON_BLAZE) {
+      return ImmutableList.of();
     }
-    throw new AssertionError();
+
+    return ImmutableList.of(
+        BlazeAndroidDeploymentService.getInstance(project)
+            .getDeployTask(getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
   }
 
   @SuppressWarnings({"rawtypes"}) // Raw type from upstream.
