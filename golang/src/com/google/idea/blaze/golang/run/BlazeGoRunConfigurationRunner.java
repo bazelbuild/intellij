@@ -112,7 +112,7 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
   }
 
   private static final BoolExperiment scriptPathEnabled =
-      new BoolExperiment("blaze.go.script.path.enabled.2", true);
+      new BoolExperiment("blaze.go.script.path.enabled.2", false);
 
   /** Used to store a runner to an {@link ExecutionEnvironment}. */
   private static final Key<AtomicReference<ExecutableInfo>> EXECUTABLE_KEY =
