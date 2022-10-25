@@ -471,7 +471,7 @@ public class BlazeJavaWorkspaceImporterTest extends BlazeTestCase {
                 TargetIdeInfo.builder()
                     .setLabel("//javatests/apps/example:example")
                     .setBuildFile(source("javatests/apps/example/BUILD"))
-                    .setKind("android_test")
+                    .setKind("android_instrumentation_test")
                     .addSource(source("javatests/apps/example/ExampleTests.java"))
                     .setAndroidInfo(
                         AndroidIdeInfo.builder()

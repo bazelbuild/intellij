@@ -156,8 +156,7 @@ public class BlazeAndroidProjectStructureSyncer {
 
       TargetIdeInfo target = blazeProjectData.getTargetMap().get(androidResourceModule.targetKey);
       Verify.verifyNotNull(target);
-      boolean isApp =
-          target.kindIsOneOf(RuleTypes.ANDROID_BINARY.getKind(), RuleTypes.ANDROID_TEST.getKind());
+      boolean isApp = target.getKind().equals(RuleTypes.ANDROID_BINARY.getKind());
       AndroidFacetModuleCustomizer.createAndroidFacet(module, isApp);
 
       AndroidIdeInfo androidIdeInfo = Verify.verifyNotNull(target.getAndroidIdeInfo());

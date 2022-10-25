@@ -82,8 +82,8 @@ public class TestRecorderBlazeCommandRunConfigurationTest extends BlazeIntegrati
                     .build())
             .addTarget(
                 TargetIdeInfo.builder()
-                    .setKind(AndroidBlazeRules.RuleTypes.ANDROID_TEST.getKind())
-                    .setLabel("//label:android_test_rule")
+                    .setKind(AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind())
+                    .setLabel("//label:android_instrumentation_test_rule")
                     .build())
             .build());
     registerProjectService(
