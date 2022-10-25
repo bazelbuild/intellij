@@ -194,7 +194,6 @@ def intellij_integration_test_suite(
     runtime_deps = list(runtime_deps)
     runtime_deps.extend([
         "//intellij_platform_sdk:bundled_plugins",
-        "//third_party:jpda-jdi",
     ])
 
     jvm_flags = list(jvm_flags)

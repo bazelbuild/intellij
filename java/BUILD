@@ -42,7 +42,6 @@ java_library(
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":fast_build_javac_interface",
-        ":neverlinked_jpda-jdi",
         "//base",
         "//common/actions",
         "//common/experiments",
@@ -69,13 +68,6 @@ java_library(
         "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
     ],
     visibility = FAST_BUILD_JAVAC_VISIBILITY,
-)
-
-# This is provided by the IDE at runtime
-java_library(
-    name = "neverlinked_jpda-jdi",
-    neverlink = 1,
-    exports = ["//third_party:jpda-jdi"],
 )
 
 stamped_plugin_xml(
