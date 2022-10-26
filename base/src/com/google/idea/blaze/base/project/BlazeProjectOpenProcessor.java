@@ -17,12 +17,12 @@ package com.google.idea.blaze.base.project;
 
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
-import com.intellij.ide.impl.ProjectUtil;
+import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import icons.BlazeIcons;
-import java.io.IOException;
+
 import javax.annotation.Nullable;
 import javax.swing.Icon;
 
@@ -85,6 +85,6 @@ public class BlazeProjectOpenProcessor extends ProjectOpenProcessor {
       return null;
     }
     VirtualFile projectSubdirectory = ideaSubdirectory.getParent();
-    return ProjectUtil.openProject(projectSubdirectory.getPath(), projectToClose, forceOpenInNewFrame);
+    return BaseSdkCompat.openProject(projectSubdirectory,projectToClose, forceOpenInNewFrame);
   }
 }

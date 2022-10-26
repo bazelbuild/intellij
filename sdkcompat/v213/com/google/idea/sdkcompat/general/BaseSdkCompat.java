@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.fileChooser.ex.FileLookup;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextComponentAccessors;
@@ -87,4 +88,10 @@ public final class BaseSdkCompat {
   public static OpenProjectTask createOpenProjectTask(Project project) {
     return OpenProjectTask.withCreatedProject(project);
   }
+
+  /** #api213 inline when this api support is dropped */
+  public static Project openProject(VirtualFile projectSubdirectory, Project projectToClose, boolean forceOpenInNewFrame) {
+    return ProjectUtil.openProject(projectSubdirectory.getPath(), projectToClose, forceOpenInNewFrame);
+  }
+
 }
