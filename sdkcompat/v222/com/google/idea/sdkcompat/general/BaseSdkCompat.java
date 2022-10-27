@@ -1,6 +1,7 @@
 package com.google.idea.sdkcompat.general;
 
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -33,6 +34,7 @@ import com.intellij.util.ui.VcsExecutablePathSelector;
 import com.intellij.vcs.log.VcsLogProperties;
 import com.intellij.vcs.log.VcsLogProperties.VcsLogProperty;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -168,5 +170,11 @@ public final class BaseSdkCompat {
   /** #api213: Inline into BlazeProjectCreator. */
   public static OpenProjectTask createOpenProjectTask(Project project) {
     return OpenProjectTask.build().withProject(project);
+  }
+
+  /** #api213 inline when this api support is dropped */
+  public static Project openProject(VirtualFile projectSubdirectory, Project projectToClose, boolean forceOpenInNewFrame) {
+    OpenProjectTask options = OpenProjectTask.build().withForceOpenInNewFrame(forceOpenInNewFrame).withProjectToClose(projectToClose);
+    return ProjectUtil.openProject(Paths.get(projectSubdirectory.getPath()),options);
   }
 }
