@@ -27,7 +27,7 @@ import com.intellij.ui.EditorNotifications;
 import com.jetbrains.cidr.cpp.cmake.workspace.CMakeNotificationProvider;
 
 import javax.annotation.Nullable;
-import javax.swing.*;
+import javax.swing.JComponent;
 
 /** Need to filter out CMake messages if we are a Blaze project. */
 public class CMakeNotificationFilter extends EditorNotifications.Provider<JComponent>
