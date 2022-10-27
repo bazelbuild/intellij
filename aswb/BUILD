@@ -106,6 +106,7 @@ java_library(
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//testing:lib",
+        "//testing/pluginapi/adapters:adpaters",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
         "@junit//jar",
@@ -134,6 +135,7 @@ java_library(
         "//java",
         "//proto:proto_deps",
         "//third_party/auto_value",
+        "@gson//jar",
     ],
 )
 
