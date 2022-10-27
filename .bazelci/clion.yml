@@ -66,10 +66,13 @@ tasks:
     name: CLion OSS Under Development
     platform: ubuntu1804
     build_flags:
+      - --java_language_version=17
       - --define=ij_product=clion-oss-under-dev
     build_targets:
       - //clwb/...
     test_flags:
+      - --java_language_version=17
+      - --java_runtime_version=17
       - --define=ij_product=clion-oss-under-dev
       - --test_output=errors
     test_targets:
