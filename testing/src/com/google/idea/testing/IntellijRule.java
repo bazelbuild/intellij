@@ -93,13 +93,12 @@ public final class IntellijRule extends ExternalResource {
     Object old = ApplicationManager.getApplication().getComponent(key);
     container.unregisterComponent(key.getName());
     container.registerComponentInstance(key.getName(), implementation);
-    Object finalOld = old;
     Disposer.register(
         parentDisposable,
         () -> {
           container.unregisterComponent(key.getName());
-          if (finalOld != null) {
-            container.registerComponentInstance(key.getName(), finalOld);
+          if (old != null) {
+            container.registerComponentInstance(key.getName(), old);
           }
         });
   }
