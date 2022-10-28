@@ -26,15 +26,16 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 
-/** Console provider for {@code android_instrumentation_test} aka AIT. */
-class AitConsoleProvider implements ConsoleProvider {
+/**
+ * Console provider for {@code android_instrumentation_test} aka AIT, when the tests are run
+ * directly by the IDE.
+ */
+class AitIdeTestConsoleProvider implements ConsoleProvider {
   private final BlazeCommandRunConfiguration runConfiguration;
 
-  AitConsoleProvider(
-      Project project,
+  AitIdeTestConsoleProvider(
       BlazeCommandRunConfiguration runConfiguration,
       BlazeAndroidTestRunConfigurationState configState) {
     Preconditions.checkArgument(

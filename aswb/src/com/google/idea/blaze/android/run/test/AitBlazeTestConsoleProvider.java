@@ -16,11 +16,10 @@
 package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.ConsoleProvider;
-import com.google.common.base.Preconditions;
+import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
-import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -31,20 +30,19 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
-/** Console provider for android_test */
-class AndroidTestConsoleProvider implements ConsoleProvider {
+/**
+ * Console provider for {@code android_instrumentation_test}, when the tests are run using Blaze
+ * {@link AndroidTestLaunchMethod#BLAZE_TEST}.
+ */
+class AitBlazeTestConsoleProvider implements ConsoleProvider {
   private final Project project;
   private final BlazeCommandRunConfiguration runConfiguration;
   @Nullable private final BlazeTestUiSession testUiSession;
 
-  AndroidTestConsoleProvider(
+  AitBlazeTestConsoleProvider(
       Project project,
       BlazeCommandRunConfiguration runConfiguration,
-      BlazeAndroidTestRunConfigurationState configState,
       @Nullable BlazeTestUiSession testUiSession) {
-    Preconditions.checkArgument(
-        RuleTypes.ANDROID_TEST.getKind().equals(runConfiguration.getTargetKind()));
-
     this.project = project;
     this.runConfiguration = runConfiguration;
     this.testUiSession = testUiSession;
