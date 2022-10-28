@@ -86,12 +86,22 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
     switch (configState.getLaunchMethod()) {
       case MOBILE_INSTALL:
       case NON_BLAZE:
-        consoleProvider = new AitConsoleProvider(project, runConfiguration, configState);
+        consoleProvider = new AitIdeTestConsoleProvider(runConfiguration, configState);
         this.blazeFlags = blazeFlags;
         break;
       case BLAZE_TEST:
-        // TODO(b/254645410): restore support for blaze_test
-        throw new IllegalArgumentException("blaze test not supported for instrumentation tests");
+        // TODO(b/254645410): When run using blaze test, test results were parsed using the
+        // following sequence of events:
+        //    - A Test UI Session is created that contains a BlazeTestResultFinderStrategy.
+        //    - When the test is run, it is expected to produce the BEP in a place that the
+        // BlazeTestResultFinderStrategy knows about.
+        //    - When the test completes, the console provider is set up to call the test result
+        // finder to parse the results.
+        // This sequence doesn't really work well with the build invoker setup, and should be
+        // modified to directly parse the test results from the build invoker.
+        this.blazeFlags = blazeFlags;
+        this.consoleProvider = new AitBlazeTestConsoleProvider(project, runConfiguration, null);
+        break;
       default:
         throw new IllegalStateException(
             "Unsupported launch method " + configState.getLaunchMethod());
