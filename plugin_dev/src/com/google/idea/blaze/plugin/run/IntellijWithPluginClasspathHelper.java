@@ -46,21 +46,41 @@ public class IntellijWithPluginClasspathHelper {
   private static final ImmutableList<String> IJ_LIBRARIES_AFTER_2022_1 =
       ImmutableList.of("util_rt.jar");
 
+  private static final ImmutableList<String> IJ_LIBRARIES_AFTER_2022_3 =
+      ImmutableList.of(
+          "3rd-party-rt.jar",
+          "app.jar",
+          "xml-dom.jar",
+          "xml-dom-impl.jar",
+          "jps-model.jar",
+          "protobuf.jar",
+          "rd.jar",
+          "stats.jar",
+          "external-system-rt.jar",
+          "forms_rt.jar",
+          "intellij-test-discovery.jar"
+      );
   private static void addIntellijLibraries(JavaParameters params, Sdk ideaJdk) {
     String libPath = ideaJdk.getHomePath() + File.separator + "lib";
     PathsList list = params.getClassPath();
-    for (String lib : IJ_LIBRARIES) {
-      list.addFirst(libPath + File.separator + lib);
-    }
+    addLibrariesToList(IJ_LIBRARIES, libPath, list);
 
     BuildNumber buildNumber = BuildNumber.fromString(IdeaJdkHelper.getBuildNumber(ideaJdk));
     if (buildNumber != null && buildNumber.getBaselineVersion() >= 221) {
-      for (String lib : IJ_LIBRARIES_AFTER_2022_1) {
-        list.addFirst(libPath + File.separator + lib);
-      }
+      addLibrariesToList(IJ_LIBRARIES_AFTER_2022_1, libPath, list);
+    }
+
+    if(buildNumber != null && buildNumber.getBaselineVersion() >= 223) {
+      addLibrariesToList(IJ_LIBRARIES_AFTER_2022_3, libPath, list);
     }
 
     list.addFirst(((JavaSdkType) ideaJdk.getSdkType()).getToolsPath(ideaJdk));
+  }
+
+  private static void addLibrariesToList(ImmutableList<String> ijLibraries, String libPath, PathsList list) {
+    for (String lib : ijLibraries) {
+      list.addFirst(libPath + File.separator + lib);
+    }
   }
 
   public static void addRequiredVmParams(
