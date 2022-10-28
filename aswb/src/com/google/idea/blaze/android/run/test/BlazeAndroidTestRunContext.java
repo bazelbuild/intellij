@@ -139,18 +139,6 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   }
 
   @Override
-  @Nullable
-  public LaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions,
-      @Nullable Integer userId,
-      String contributorsAmStartOptions,
-      LaunchStatus launchStatus)
-      throws ExecutionException {
-    return getApplicationLaunchTask(
-        launchOptions, userId, contributorsAmStartOptions, null, null, launchStatus);
-  }
-
-  @Override
   public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
     if (configState.getLaunchMethod() != AndroidTestLaunchMethod.NON_BLAZE) {
@@ -162,14 +150,12 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
             .getDeployTask(getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
   }
 
-  @SuppressWarnings({"rawtypes"}) // Raw type from upstream.
+  @Override
   @Nullable
   public LaunchTask getApplicationLaunchTask(
       LaunchOptions launchOptions,
       @Nullable Integer userId,
       String contributorsAmStartOptions,
-      AndroidDebugger androidDebugger,
-      AndroidDebuggerState androidDebuggerState,
       LaunchStatus launchStatus)
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {
