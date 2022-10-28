@@ -41,21 +41,11 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
-import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.smrunner.BlazeTestEventsHandler;
-import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
-import com.google.idea.blaze.base.run.testlogs.LocalBuildEventProtocolTestFinderStrategy;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.java.AndroidBlazeRules;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -93,61 +83,22 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
     this.configState = configState;
     this.buildStep = buildStep;
 
-    // TODO(b/248317444): The majority of the complexity in the code below is because it still
-    // supports the deprecated `android_test` rule. The final else can be deleted once we
-    // are sure it isn't needed anymore.
-    if (configState.getLaunchMethod().equals(AndroidTestLaunchMethod.MOBILE_INSTALL)) {
-      consoleProvider = new AitConsoleProvider(project, runConfiguration, configState);
-      this.blazeFlags = blazeFlags;
-    } else if (runConfiguration.getTargetKind()
-        == AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST.getKind()) {
-      consoleProvider = new AitConsoleProvider(project, runConfiguration, configState);
-      this.blazeFlags = blazeFlags;
-    } else {
-      // This path is only invoked for the deprecated {@code android_test} targets.
-      // In order to determine if this is in use, we add a log statement.
-      String msg =
-          String.format(
-              "`%1$s` is an `%2$s` target. This has been deprecated"
-                  + " in favor of `android_instrumentation_test`",
-              runConfiguration.getSingleTarget(), runConfiguration.getTargetKind());
-      Logger.getInstance(BlazeAndroidTestRunContext.class).warn(msg);
-
-      BuildInvoker invoker =
-          Blaze.getBuildSystemProvider(project)
-              .getBuildSystem()
-              .getBuildInvoker(project, BlazeContext.create());
-      BlazeTestUiSession testUiSession = null;
-      try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-        if (canUseTestUi(env.getExecutor())
-            && BlazeTestEventsHandler.targetsSupported(project, ImmutableList.of(label))) {
-          testUiSession =
-              BlazeTestUiSession.create(
-                  ImmutableList.of("--runs_per_test=1", "--flaky_test_attempts=1"),
-                  new LocalBuildEventProtocolTestFinderStrategy(buildResultHelper));
-        }
-      }
-
-      ImmutableList.Builder<String> blazeFlagsBuilder =
-          ImmutableList.<String>builder().addAll(blazeFlags);
-      if (testUiSession != null) {
-        blazeFlagsBuilder.addAll(testUiSession.getBlazeFlags());
-      }
-      this.blazeFlags = blazeFlagsBuilder.build();
-      consoleProvider =
-          new AndroidTestConsoleProvider(project, runConfiguration, configState, testUiSession);
+    switch (configState.getLaunchMethod()) {
+      case MOBILE_INSTALL:
+      case NON_BLAZE:
+        consoleProvider = new AitConsoleProvider(project, runConfiguration, configState);
+        this.blazeFlags = blazeFlags;
+        break;
+      case BLAZE_TEST:
+        // TODO(b/254645410): restore support for blaze_test
+        throw new IllegalArgumentException("blaze test not supported for instrumentation tests");
+      default:
+        throw new IllegalStateException(
+            "Unsupported launch method " + configState.getLaunchMethod());
     }
 
     applicationIdProvider = new BlazeAndroidTestApplicationIdProvider(buildStep);
     apkProvider = BlazeApkProviderService.getInstance().getApkProvider(project, buildStep);
-  }
-
-  private static boolean canUseTestUi(Executor executor) {
-    return !isDebugging(executor);
-  }
-
-  private static boolean isDebugging(Executor executor) {
-    return executor instanceof DefaultDebugExecutor;
   }
 
   @Override
