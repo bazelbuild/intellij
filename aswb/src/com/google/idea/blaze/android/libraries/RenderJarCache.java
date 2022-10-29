@@ -127,7 +127,7 @@ public class RenderJarCache {
     ImmutableList<OutputArtifact> artifactsToCache =
         getArtifactsToCache(projectViewSet, projectData);
 
-    artifactCache.putAll(artifactsToCache, context, removeMissingFiles);
+    artifactCache.putAll(artifactsToCache, context, removeMissingFiles, "renderjarcache");
   }
 
   /**
@@ -149,7 +149,7 @@ public class RenderJarCache {
       return;
     }
 
-    artifactCache.putAll(renderJars, context, false);
+    artifactCache.putAll(renderJars, context, false, "rendercache");
   }
 
   private ImmutableList<OutputArtifact> getArtifactsToCache(

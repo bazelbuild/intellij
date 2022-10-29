@@ -134,7 +134,7 @@ public class LocalArtifactCacheTest {
 
     // Put blaze artifacts in cache
     artifactCache.initialize();
-    artifactCache.putAll(outputArtifacts, blazeContext, false);
+    artifactCache.putAll(outputArtifacts, blazeContext, false, "test");
 
     // Check that the artifacts were added to the cache.
     ImmutableList<File> expectedFiles =
@@ -174,7 +174,7 @@ public class LocalArtifactCacheTest {
 
     // Add the artifacts to cache
     artifactCache.initialize();
-    artifactCache.putAll(outputArtifacts, blazeContext, false);
+    artifactCache.putAll(outputArtifacts, blazeContext, false, "test");
 
     // Attempt to get an arbitraty artifact
     OutputArtifact artifactToFetch = outputArtifacts.get(1);

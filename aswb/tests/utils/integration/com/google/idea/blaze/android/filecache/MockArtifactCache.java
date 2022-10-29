@@ -43,7 +43,10 @@ public class MockArtifactCache implements ArtifactCache {
 
   @Override
   public void putAll(
-      Collection<OutputArtifact> artifacts, BlazeContext context, boolean removeMissingArtifacts) {
+      Collection<OutputArtifact> artifacts,
+      BlazeContext context,
+      boolean removeMissingArtifacts,
+      String reason) {
     throw new UnsupportedOperationException(
         "MockArtifactCache does not support putting files in file system. Use `addTrackedFile`"
             + " instead");
