@@ -54,8 +54,6 @@ public class ServiceHelper {
       ExtensionPointName<T> name, T instance, Disposable parentDisposable) {
     ExtensionPoint<T> ep =
         ApplicationManager.getApplication().getExtensionArea().getExtensionPoint(name);
-    // Using the new {@code ExtensionPoint$registerExtension} requires updating test case base class
-    // to stop unregistering the EP manually during tear down.
     ep.registerExtension(instance, LoadingOrder.FIRST, parentDisposable);
   }
 
