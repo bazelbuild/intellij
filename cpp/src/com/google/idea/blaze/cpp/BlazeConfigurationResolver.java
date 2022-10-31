@@ -15,11 +15,7 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.*;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
@@ -47,16 +43,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nullable;
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
-
-import static java.util.AbstractMap.*;
 
 final class BlazeConfigurationResolver {
   private static final Logger logger = Logger.getInstance(BlazeConfigurationResolver.class);
@@ -90,7 +86,7 @@ final class BlazeConfigurationResolver {
             executionRootPathResolver,
             oldResult.getCompilerSettings());
 
-    Map<TargetKey, CompilerInfo> targetToVersion = getTargetToVersionMap(toolchainLookupMap, compilerSettings);
+    ImmutableMap<TargetKey, CompilerInfo> targetToVersion = getTargetToVersionMap(toolchainLookupMap, compilerSettings);
     ProjectViewTargetImportFilter projectViewFilter =
         new ProjectViewTargetImportFilter(
             Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet);
@@ -108,14 +104,17 @@ final class BlazeConfigurationResolver {
   }
 
   @NotNull
-  private static Map<TargetKey, CompilerInfo> getTargetToVersionMap(ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap, ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
+  private static ImmutableMap<TargetKey, CompilerInfo> getTargetToVersionMap(ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap, ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
     Map<ExecutionRootPath, String> compilerVersionByPath =
-            compilerSettings.entrySet().stream()
-                    .map(x -> new SimpleImmutableEntry<>(x.getKey().getCppExecutable(), x.getValue().getCompilerVersion()))
-                    .collect(Collectors.toMap(SimpleImmutableEntry::getKey, SimpleImmutableEntry::getValue));
-    return toolchainLookupMap.entrySet().stream()
-            .map(x -> new SimpleImmutableEntry<>(x.getKey(), compilerVersionByPath.get(x.getValue().getCppExecutable())))
-            .collect(Collectors.toMap(SimpleImmutableEntry::getKey, entry -> new CompilerInfo(entry.getValue())));
+            compilerSettings.entrySet().stream().collect(
+                    Collectors.toMap(
+                            e -> e.getKey().getCppExecutable(),
+                            e -> e.getValue().getCompilerVersion()));
+    Map<TargetKey, CompilerInfo> map = toolchainLookupMap.entrySet().stream().collect(
+            Collectors.toMap(
+                    Map.Entry::getKey,
+                    e -> new CompilerInfo(compilerVersionByPath.get(e.getValue().getCppExecutable()))));
+    return ImmutableMap.copyOf(map);
   }
 
   private static Predicate<TargetIdeInfo> getTargetFilter(

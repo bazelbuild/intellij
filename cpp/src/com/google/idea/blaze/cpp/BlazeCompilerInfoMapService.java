@@ -13,9 +13,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @State(name="BlazeCompilerInfoMap", storages = @Storage(value = "blazeInfo.xml", roamingType = RoamingType.DISABLED))
-final public class BlazeCompilerInfoMap implements PersistentStateComponent<BlazeCompilerInfoMap.State> {
+final public class BlazeCompilerInfoMapService implements PersistentStateComponent<BlazeCompilerInfoMapService.State> {
     @Override
-    public @Nullable BlazeCompilerInfoMap.State getState() {
+    public @Nullable BlazeCompilerInfoMapService.State getState() {
         return this.state;
     }
 
@@ -40,7 +40,7 @@ final public class BlazeCompilerInfoMap implements PersistentStateComponent<Blaz
         }
     }
 
-    BlazeCompilerInfoMap(Project p) {
+    BlazeCompilerInfoMapService(Project p) {
 
     }
 
@@ -50,8 +50,8 @@ final public class BlazeCompilerInfoMap implements PersistentStateComponent<Blaz
     }
     State state = new State(null);
 
-    public static BlazeCompilerInfoMap getInstance(Project p) {
-        return p.getService(BlazeCompilerInfoMap.class);
+    public static BlazeCompilerInfoMapService getInstance(Project p) {
+        return p.getService(BlazeCompilerInfoMapService.class);
     }
 
 }

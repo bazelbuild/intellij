@@ -33,7 +33,7 @@ import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.util.SaveUtil;
-import com.google.idea.blaze.cpp.BlazeCompilerInfoMap;
+import com.google.idea.blaze.cpp.BlazeCompilerInfoMapService;
 import com.google.idea.blaze.cpp.CompilerInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -50,8 +50,6 @@ import com.intellij.openapi.util.registry.Registry;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -116,14 +114,13 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     try (BuildResultHelper buildResultHelper =
         BuildResultHelperProvider.createForLocalBuild(env.getProject())) {
 
+      List<String> extraDebugFlags;
+      if (!BlazeGDBServerProvider.shouldUseGdbserver()) {
         ImmutableList<String> extraClangFlags = isClangBuild() && !Registry.is("bazel.trim.absolute.path.disabled")
                 ? ImmutableList.of(
                 "--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()),
                 "--linkopt=-Wl,-oso_prefix .")
                 : ImmutableList.of();
-
-      List<String> extraDebugFlags;
-      if (!BlazeGDBServerProvider.shouldUseGdbserver()) {
         extraDebugFlags =
                 Streams.concat(
                         Stream.of(
@@ -190,19 +187,14 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
     }
   }
 
-  private boolean isClangBuild() {
-    Set<String> targets = this.configuration.getTargets().stream()
-            .filter(t -> t instanceof Label)
-            .map(t -> ((Label) t).toString())
-            .collect(Collectors.toSet());
-    Map<String, CompilerInfo> allCompilers = BlazeCompilerInfoMap.getInstance(configuration.getProject()).getState().getCompilerInfoMap();
-    List<CompilerInfo> filteredCompilers = null;
-    if (allCompilers != null) {
-      filteredCompilers = allCompilers.entrySet().stream()
-              .filter(x -> targets.contains(x.getKey())).map(Map.Entry::getValue)
-              .collect(Collectors.toList());
+  private boolean isClangBuild() throws ExecutionException {
+    String targets = getSingleTarget(configuration).toString();
+    BlazeCompilerInfoMapService.State allCompilers = BlazeCompilerInfoMapService.getInstance(configuration.getProject()).getState();
+    if (allCompilers != null && allCompilers.getCompilerInfoMap() != null) {
+      CompilerInfo targetCompiler = allCompilers.getCompilerInfoMap().get(targets);
+      return targetCompiler.getVersionString().contains("clang");
     }
-    return filteredCompilers != null && filteredCompilers.stream().allMatch(x -> x.getVersionString().contains("clang"));
+    return false;
   }
 
   /**

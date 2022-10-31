@@ -34,17 +34,17 @@ final class BlazeConfigurationResolverResult {
       uniqueResolveConfigurations;
   private final ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings;
   private final ImmutableSet<File> validHeaderRoots;
-  public Map<TargetKey, CompilerInfo> targetToCompilerVersion;
+  private final ImmutableMap<TargetKey, CompilerInfo> targetToCompilerVersion;
 
   private BlazeConfigurationResolverResult(
       ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration> uniqueResolveConfigurations,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
       ImmutableSet<File> validHeaderRoots,
-      Map<TargetKey, CompilerInfo> setToolchainLookupMap) {
+      ImmutableMap<TargetKey, CompilerInfo> targetToCompilerVersion) {
     this.uniqueResolveConfigurations = uniqueResolveConfigurations;
     this.compilerSettings = compilerSettings;
     this.validHeaderRoots = validHeaderRoots;
-    this.targetToCompilerVersion = setToolchainLookupMap;
+    this.targetToCompilerVersion = targetToCompilerVersion;
   }
 
   static Builder builder() {
@@ -87,12 +87,16 @@ final class BlazeConfigurationResolverResult {
     return validHeaderRoots.equals(other.validHeaderRoots);
   }
 
+  public Map<TargetKey, CompilerInfo> getTargetToCompilerVersion() {
+    return targetToCompilerVersion;
+  }
+
   static class Builder {
     ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration> uniqueConfigurations =
         ImmutableMap.of();
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings = ImmutableMap.of();
     ImmutableSet<File> validHeaderRoots = ImmutableSet.of();
-    private Map<TargetKey, CompilerInfo> setTargetToVersionMap;
+    private ImmutableMap<TargetKey, CompilerInfo> setTargetToVersionMap;
 
     public Builder() {}
 
@@ -116,7 +120,7 @@ final class BlazeConfigurationResolverResult {
       this.validHeaderRoots = validHeaderRoots;
     }
 
-    public void setTargetToVersionMap(Map<TargetKey, CompilerInfo> targetToVersionMap) {
+    public void setTargetToVersionMap(ImmutableMap<TargetKey, CompilerInfo> targetToVersionMap) {
       this.setTargetToVersionMap = targetToVersionMap;
     }
   }
