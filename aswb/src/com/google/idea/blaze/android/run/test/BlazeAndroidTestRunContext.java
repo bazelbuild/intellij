@@ -43,6 +43,7 @@ import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvider.AndroidTestLaunchMethod;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -65,6 +66,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   protected final ApkBuildStep buildStep;
   protected final ApplicationIdProvider applicationIdProvider;
   protected final ApkProvider apkProvider;
+  private final BlazeTestResultHolder testResultsHolder = new BlazeTestResultHolder();
 
   public BlazeAndroidTestRunContext(
       Project project,
@@ -82,25 +84,17 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
     this.label = label;
     this.configState = configState;
     this.buildStep = buildStep;
+    this.blazeFlags = blazeFlags;
 
     switch (configState.getLaunchMethod()) {
       case MOBILE_INSTALL:
       case NON_BLAZE:
         consoleProvider = new AitIdeTestConsoleProvider(runConfiguration, configState);
-        this.blazeFlags = blazeFlags;
         break;
       case BLAZE_TEST:
-        // TODO(b/254645410): When run using blaze test, test results were parsed using the
-        // following sequence of events:
-        //    - A Test UI Session is created that contains a BlazeTestResultFinderStrategy.
-        //    - When the test is run, it is expected to produce the BEP in a place that the
-        // BlazeTestResultFinderStrategy knows about.
-        //    - When the test completes, the console provider is set up to call the test result
-        // finder to parse the results.
-        // This sequence doesn't really work well with the build invoker setup, and should be
-        // modified to directly parse the test results from the build invoker.
-        this.blazeFlags = blazeFlags;
-        this.consoleProvider = new AitBlazeTestConsoleProvider(project, runConfiguration, null);
+        BlazeTestUiSession session =
+            BlazeTestUiSession.create(ImmutableList.of(), testResultsHolder);
+        this.consoleProvider = new AitBlazeTestConsoleProvider(project, runConfiguration, session);
         break;
       default:
         throw new IllegalStateException(
@@ -170,17 +164,20 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {
       case BLAZE_TEST:
-        return new BlazeAndroidTestLaunchTask(
-            project,
-            label,
-            blazeFlags,
+        BlazeAndroidTestFilter testFilter =
             new BlazeAndroidTestFilter(
                 configState.getTestingType(),
                 configState.getClassName(),
                 configState.getMethodName(),
-                configState.getPackageName()),
+                configState.getPackageName());
+        return new BlazeAndroidTestLaunchTask(
+            project,
+            label,
+            blazeFlags,
+            testFilter,
             this,
-            launchOptions.isDebug());
+            launchOptions.isDebug(),
+            testResultsHolder);
       case NON_BLAZE:
       case MOBILE_INSTALL:
         BlazeAndroidDeployInfo deployInfo;
