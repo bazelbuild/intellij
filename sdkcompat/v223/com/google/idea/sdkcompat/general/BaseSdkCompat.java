@@ -172,6 +172,7 @@ public final class BaseSdkCompat {
     return OpenProjectTask.build().withProject(project);
   }
 
+  /** #api213 interface is different in 221, inline when 213 support is dropped*/
   public static Project openProject(VirtualFile projectSubdirectory, Project projectToClose, boolean forceOpenInNewFrame) {
     OpenProjectTask options = OpenProjectTask.build().withForceOpenInNewFrame(forceOpenInNewFrame).withProjectToClose(projectToClose);
     return ProjectUtil.openProject(Paths.get(projectSubdirectory.getPath()),options);
