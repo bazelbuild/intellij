@@ -24,7 +24,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-/** */
+/**
+ * #api222 interface is different in 223, inline when 222 support is dropped
+ * */
 public abstract class AttachSourcesProviderAdapter
     implements AttachSourcesProvider {
 
