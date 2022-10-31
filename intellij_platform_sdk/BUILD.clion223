@@ -10,10 +10,10 @@ java_import(
     name = "sdk",
     jars = glob(
         ["lib/*.jar"],
-        exclude = glob([
+        exclude = [
             # mockito-extensions needs to be removed from this jar.
             "lib/testFramework.jar",
-        ]),
+        ],
     ),
     tags = ["intellij-provided-by-sdk"],
     exports = [":jars_without_mockito_extensions"],
@@ -22,7 +22,7 @@ java_import(
 
 no_mockito_extensions(
     name = "jars_without_mockito_extensions",
-    jars = glob(["lib/testFramework.jar"]),
+    jars = ["lib/testFramework.jar"],
 )
 
 java_import(
