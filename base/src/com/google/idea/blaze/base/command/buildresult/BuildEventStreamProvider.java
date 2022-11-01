@@ -27,7 +27,7 @@ public interface BuildEventStreamProvider {
 
   /** An exception parsing a stream of build events. */
   class BuildEventStreamException extends Exception {
-    public BuildEventStreamException(String message, Exception e) {
+    public BuildEventStreamException(String message, Throwable e) {
       super(message, e);
     }
 
