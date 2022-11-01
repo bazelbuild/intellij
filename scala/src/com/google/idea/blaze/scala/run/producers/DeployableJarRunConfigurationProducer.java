@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
 import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducer;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.java.run.RunUtil;
@@ -67,6 +67,10 @@ class DeployableJarRunConfigurationProducer
       return false;
     }
 
+    // Update to a more specific element so the resulting run configuration will have higher
+    // priority
+    sourceElement.set(mainObject);
+
     configuration.putUserData(TARGET_LABEL, target.label);
     configuration.setModule(context.getModule());
     configuration.setMainClassName(mainObject.qualifiedName());
@@ -105,7 +109,7 @@ class DeployableJarRunConfigurationProducer
 
   @Nullable
   private static TargetInfo findTarget(Project project, ScObject mainObject) {
-    if (Blaze.getBuildSystem(project) != BuildSystem.Bazel) {
+    if (Blaze.getBuildSystemName(project) != BuildSystemName.Bazel) {
       // disabled for blaze projects for performance reasons. If we want this for blaze projects,
       // first look at limiting search to direct deps of
       return null;

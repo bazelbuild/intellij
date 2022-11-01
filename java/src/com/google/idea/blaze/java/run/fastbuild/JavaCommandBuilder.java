@@ -21,6 +21,7 @@ import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
 import java.io.File;
@@ -40,6 +41,7 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
   private final Map<String, String> systemProperties = new HashMap<>();
   private final Map<String, String> environmentVariables = new HashMap<>();
 
+  @CanIgnoreReturnValue
   JavaCommandBuilder setJavaBinary(File javaBinary) {
     checkNotNull(javaBinary);
     checkArgument(this.javaBinary == null, "javaBinary was previously set");
@@ -47,6 +49,7 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
     return this;
   }
 
+  @CanIgnoreReturnValue
   JavaCommandBuilder setWorkingDirectory(File workingDirectory) {
     checkNotNull(workingDirectory);
     checkArgument(this.workingDirectory == null, "workingDirectory was previously set");
@@ -59,6 +62,7 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
     return workingDirectory;
   }
 
+  @CanIgnoreReturnValue
   JavaCommandBuilder setMainClass(String mainClass) {
     checkNotNull(mainClass);
     checkArgument(this.mainClass == null, "mainClass was previously set");
@@ -66,6 +70,7 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
     return this;
   }
 
+  @CanIgnoreReturnValue
   @Override
   public JavaCommandBuilder addJvmArgument(String jvmArgument) {
     checkNotNull(jvmArgument);
@@ -77,6 +82,7 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
     return ImmutableList.copyOf(jvmArgs);
   }
 
+  @CanIgnoreReturnValue
   @Override
   public JavaCommandBuilder addClasspathElement(File classpath) {
     checkNotNull(classpath);
@@ -84,6 +90,7 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
     return this;
   }
 
+  @CanIgnoreReturnValue
   @Override
   public JavaCommandBuilder addProgramArgument(String programArgument) {
     checkNotNull(programArgument);
@@ -95,6 +102,7 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
     return ImmutableList.copyOf(programArgs);
   }
 
+  @CanIgnoreReturnValue
   @Override
   public JavaCommandBuilder addSystemProperty(String property, String value) {
     checkNotNull(property);
@@ -103,6 +111,7 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
     return this;
   }
 
+  @CanIgnoreReturnValue
   @Override
   public JavaCommandBuilder addEnvironmentVariable(String variable, String value) {
     checkNotNull(variable);
@@ -114,7 +123,8 @@ final class JavaCommandBuilder implements ModifiableJavaCommand {
   @Override
   public String getEnvironmentVariable(String variable) {
     String value = environmentVariables.get(variable);
-    checkArgument(value != null, "JavaCommandBuilder doesn't have '%s' environment variable set");
+    checkArgument(
+        value != null, "JavaCommandBuilder doesn't have '%s' environment variable set", variable);
     return value;
   }
 

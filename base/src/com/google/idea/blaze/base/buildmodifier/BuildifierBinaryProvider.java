@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.buildmodifier;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import java.io.File;
 import javax.annotation.Nullable;
 
 /** Provides a buildifier binary. */
@@ -26,5 +25,5 @@ public interface BuildifierBinaryProvider {
       ExtensionPointName.create("com.google.idea.blaze.BuildifierBinaryProvider");
 
   @Nullable
-  File getBuildifierBinary();
+  String getBuildifierBinaryPath();
 }

@@ -51,7 +51,8 @@ class WorkspaceFileFinderImpl implements SyncListener, WorkspaceFileFinder {
       SyncMode syncMode,
       SyncResult syncResult) {
     importRoots =
-        ImportRoots.builder(WorkspaceRoot.fromProjectSafe(project), Blaze.getBuildSystem(project))
+        ImportRoots.builder(
+                WorkspaceRoot.fromProjectSafe(project), Blaze.getBuildSystemName(project))
             .add(projectViewSet)
             .build();
   }

@@ -16,24 +16,23 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 java_library(
     name = "base",
     srcs = glob(["src/**/*.java"]),
     javacopts = ["-Xep:FutureReturnValueIgnored:OFF"],
-    resources = glob(["resources/**/*"]),
+    resources = glob(["src/resources/**/*"]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//common/actions",
         "//common/experiments",
         "//common/settings",
         "//common/ui/properties",
-        "//common/util:binaryhelper",
         "//common/util:concurrency",
         "//common/util:platform",
         "//common/util:transactions",
-        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
@@ -172,7 +171,7 @@ java_library(
         "src/com/google/idea/blaze/base/model/primitives/WorkspaceRoot.java",
         "src/com/google/idea/blaze/base/settings/BlazeImportSettings.java",
         "src/com/google/idea/blaze/base/settings/BlazeImportSettingsManager.java",
-        "src/com/google/idea/blaze/base/settings/BuildSystem.java",
+        "src/com/google/idea/blaze/base/settings/BuildSystemName.java",
         "src/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolver.java",
         "src/com/google/idea/blaze/base/sync/workspace/WorkspacePathResolverProvider.java",
     ],
@@ -236,6 +235,23 @@ java_library(
 
 # neverlink library exposed so other plugins can optionally depend on it
 java_library(
+    name = "library_to_target_api",
+    srcs = [
+        "src/com/google/idea/blaze/base/model/LibraryKey.java",
+        "src/com/google/idea/blaze/base/model/LibraryToTargetResolver.java",
+    ],
+    neverlink = 1,
+    visibility = G3PLUGINS_VISIBILITY,
+    deps = [
+        ":label_api",
+        ":proto_wrapper",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Immutable
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+# neverlink library exposed so other plugins can optionally depend on it
+java_library(
     name = "blaze_user_settings_api",
     srcs = [
         "src/com/google/idea/blaze/base/settings/BlazeUserSettings.java",
@@ -243,7 +259,7 @@ java_library(
     neverlink = 1,
     deps = [
         ":logging_api",
-        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
     ],
 )
@@ -276,8 +292,8 @@ java_library(
 java_library(
     name = "build_batching_service_api",
     srcs = [
+        "src/com/google/idea/blaze/base/bazel/BuildSystem.java",
         "src/com/google/idea/blaze/base/logging/utils/ShardStats.java",
-        "src/com/google/idea/blaze/base/settings/BuildBinaryType.java",
         "src/com/google/idea/blaze/base/sync/sharding/BuildBatchingService.java",
     ],
     neverlink = 1,
@@ -313,7 +329,7 @@ java_library(
     ],
     neverlink = 1,
     deps = [
-        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
     ],
 )
@@ -380,12 +396,14 @@ java_library(
     srcs = glob(["tests/utils/unit/**/*.java"]),
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
-        "//base",
+        ":base",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
-        "//sdkcompat",
         "//testing:lib",
+        "//third_party/auto_value",
+        "//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:build_event_stream_java_proto",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -404,6 +422,7 @@ java_library(
         "//proto:proto_deps",
         "//sdkcompat",
         "//testing:lib",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -430,10 +449,12 @@ intellij_unit_test_suite(
         ":unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
+        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
         "//testing:lib",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -454,6 +475,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )

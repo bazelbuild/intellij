@@ -53,7 +53,7 @@ import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
 import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.java.AndroidBlazeRules;
@@ -79,11 +79,11 @@ import javax.annotation.Nullable;
 
 final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
-  private static final ImmutableSetMultimap<BuildSystem, Kind> SUPPORTED_KINDS =
-      ImmutableSetMultimap.<BuildSystem, Kind>builder()
-          .putAll(BuildSystem.Bazel, JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
+  private static final ImmutableSetMultimap<BuildSystemName, Kind> SUPPORTED_KINDS =
+      ImmutableSetMultimap.<BuildSystemName, Kind>builder()
+          .putAll(BuildSystemName.Bazel, JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
           .putAll(
-              BuildSystem.Blaze,
+              BuildSystemName.Blaze,
               AndroidBlazeRules.RuleTypes.ANDROID_ROBOLECTRIC_TEST.getKind(),
               AndroidBlazeRules.RuleTypes.ANDROID_LOCAL_TEST.getKind(),
               JavaBlazeRules.RuleTypes.JAVA_TEST.getKind())
@@ -107,8 +107,8 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
   }
 
   @Override
-  public boolean supportsFastBuilds(BuildSystem buildSystem, Kind kind) {
-    return SUPPORTED_KINDS.get(buildSystem).contains(kind);
+  public boolean supportsFastBuilds(BuildSystemName buildSystemName, Kind kind) {
+    return SUPPORTED_KINDS.get(buildSystemName).contains(kind);
   }
 
   @Override
@@ -126,7 +126,8 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
       throws FastBuildException {
 
     try {
-      FastBuildParameters buildParameters = generateBuildParameters(blazeBinaryPath, blazeFlags);
+      FastBuildParameters buildParameters =
+          generateBuildParameters(blazeBinaryPath, blazeFlags, context);
       FastBuildState buildState =
           builds.compute(
               label,
@@ -147,16 +148,18 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
   }
 
   private FastBuildParameters generateBuildParameters(
-      String blazeBinaryPath, List<String> userBlazeFlags) {
+      String blazeBinaryPath, List<String> userBlazeFlags, BlazeContext context) {
 
     ProjectViewSet projectViewSet = projectViewManager.getProjectViewSet();
-    BlazeInvocationContext context =
+    BlazeInvocationContext invocationContext =
         BlazeInvocationContext.runConfigContext(
             ExecutorType.FAST_BUILD_RUN, BlazeCommandRunConfigurationType.getInstance(), true);
     List<String> buildFlags =
-        BlazeFlags.blazeFlags(project, projectViewSet, BlazeCommandName.BUILD, context);
+        BlazeFlags.blazeFlags(
+            project, projectViewSet, BlazeCommandName.BUILD, context, invocationContext);
     List<String> infoFlags =
-        BlazeFlags.blazeFlags(project, projectViewSet, BlazeCommandName.INFO, context);
+        BlazeFlags.blazeFlags(
+            project, projectViewSet, BlazeCommandName.INFO, context, invocationContext);
 
     return FastBuildParameters.builder()
         .setBlazeBinary(blazeBinaryPath)
@@ -271,7 +274,7 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
 
     BlazeInfo blazeInfo = getBlazeInfo(context, buildParameters);
     FastBuildAspectStrategy aspectStrategy =
-        FastBuildAspectStrategy.getInstance(Blaze.getBuildSystem(project));
+        FastBuildAspectStrategy.getInstance(Blaze.getBuildSystemName(project));
 
     Stopwatch timer = Stopwatch.createStarted();
 
@@ -329,25 +332,26 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
   }
 
   private BlazeInfo getBlazeInfo(BlazeContext context, FastBuildParameters buildParameters) {
-    BuildSystem buildSystem = Blaze.getBuildSystem(project);
+    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
     ListenableFuture<BlazeInfo> blazeInfoFuture =
         BlazeInfoRunner.getInstance()
             .runBlazeInfo(
                 context,
-                buildSystem,
+                buildSystemName,
                 buildParameters.blazeBinary(),
                 WorkspaceRoot.fromProject(project),
                 buildParameters.infoFlags());
     BlazeInfo info =
         FutureUtil.waitForFuture(context, blazeInfoFuture)
-            .timed(buildSystem.getName() + "Info", EventType.BlazeInvocation)
+            .timed(buildSystemName.getName() + "Info", EventType.BlazeInvocation)
             .withProgressMessage(
-                String.format("Running %s info...", buildSystem.getLowerCaseName()))
-            .onError(String.format("Could not run %s info", buildSystem.getLowerCaseName()))
+                String.format("Running %s info...", buildSystemName.getLowerCaseName()))
+            .onError(String.format("Could not run %s info", buildSystemName.getLowerCaseName()))
             .run()
             .result();
     if (info == null) {
-      throw new RuntimeException(String.format("%s info failed", buildSystem.getLowerCaseName()));
+      throw new RuntimeException(
+          String.format("%s info failed", buildSystemName.getLowerCaseName()));
     }
     return info;
   }

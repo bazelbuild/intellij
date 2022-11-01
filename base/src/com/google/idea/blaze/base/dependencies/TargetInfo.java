@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.dependencies;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -131,21 +132,25 @@ public class TargetInfo {
       this.kindString = kindString;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTestSize(@Nullable TestSize testSize) {
       this.testSize = testSize;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTestClass(@Nullable String testClass) {
       this.testClass = testClass;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setSyncTime(@Nullable Instant syncTime) {
       this.syncTime = syncTime;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setSources(ImmutableList<ArtifactLocation> sources) {
       this.sources = sources;
       return this;

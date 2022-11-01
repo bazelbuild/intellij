@@ -18,7 +18,7 @@ package com.google.idea.blaze.java.run.fastbuild;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.primitives.Kind;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.java.fastbuild.FastBuildInfo;
 
 final class BazelTestEnvironmentVariables implements FastBuildTestEnvironmentModifier {
@@ -47,7 +47,7 @@ final class BazelTestEnvironmentVariables implements FastBuildTestEnvironmentMod
   }
 
   @Override
-  public ImmutableSet<BuildSystem> getSupportedBuildSystems() {
-    return ImmutableSet.of(BuildSystem.Bazel);
+  public ImmutableSet<BuildSystemName> getSupportedBuildSystems() {
+    return ImmutableSet.of(BuildSystemName.Bazel);
   }
 }

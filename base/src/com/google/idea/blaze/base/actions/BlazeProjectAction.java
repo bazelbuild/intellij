@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.actions;
 
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -72,15 +72,15 @@ public abstract class BlazeProjectAction extends AnAction {
   protected abstract void actionPerformedInBlazeProject(Project project, AnActionEvent e);
 
   private boolean compatibleBuildSystem(Project project) {
-    BuildSystem requiredBuildSystem = requiredBuildSystem();
-    if (requiredBuildSystem == null) {
+    BuildSystemName requiredBuildSystemName = requiredBuildSystem();
+    if (requiredBuildSystemName == null) {
       return true;
     }
-    return Blaze.getBuildSystem(project) == requiredBuildSystem;
+    return Blaze.getBuildSystemName(project) == requiredBuildSystemName;
   }
 
   @Nullable
-  protected BuildSystem requiredBuildSystem() {
+  protected BuildSystemName requiredBuildSystem() {
     return null;
   }
 }

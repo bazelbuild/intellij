@@ -17,7 +17,7 @@ package com.google.idea.blaze.java.fastbuild;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -45,7 +45,7 @@ final class BazelFastBuildAspectStrategy extends FastBuildAspectStrategy {
   }
 
   @Override
-  public ImmutableSet<BuildSystem> getSupportedBuildSystems() {
-    return ImmutableSet.of(BuildSystem.Bazel);
+  public ImmutableSet<BuildSystemName> getSupportedBuildSystems() {
+    return ImmutableSet.of(BuildSystemName.Bazel);
   }
 }

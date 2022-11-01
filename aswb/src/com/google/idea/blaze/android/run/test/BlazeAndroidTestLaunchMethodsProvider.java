@@ -35,8 +35,24 @@ public interface BlazeAndroidTestLaunchMethodsProvider {
 
   /** All possible test launch methods. */
   enum AndroidTestLaunchMethod {
+    /**
+     * Build using Blaze; have the IDE run the test on a locally attached device. This approach is
+     * the default. It however does not support all attributes in {@code android_local_test}, esp.
+     * those around custom target devices, or installing special APKs before running the tests.
+     */
     NON_BLAZE,
+
+    /**
+     * Equivalent to calling {@code blaze test} on a target. This only works on forge (i.e. cannot
+     * be used with {@code --test_strategy=local}. It doesn't seem like you can debug a test in this
+     * mode.
+     */
     BLAZE_TEST,
+
+    /**
+     * Runs a test using mobile-install. (i.e. {@code blaze mobile-install
+     * //some/android_local_test}.
+     */
     MOBILE_INSTALL,
   }
 

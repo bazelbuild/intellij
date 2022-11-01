@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.run;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -58,18 +59,21 @@ public class BlazeConfigurationNameBuilder {
    * Sets the build system name to the name of the build system used by {@code project}, e.g.
    * "Blaze" or "Bazel".
    */
+  @CanIgnoreReturnValue
   public BlazeConfigurationNameBuilder setBuildSystemName(Project project) {
     buildSystemName = Blaze.buildSystemName(project);
     return this;
   }
 
   /** Sets the command name to {@code commandName}. */
+  @CanIgnoreReturnValue
   public BlazeConfigurationNameBuilder setCommandName(String commandName) {
     this.commandName = commandName;
     return this;
   }
 
   /** Sets the target string to {@code targetString}. */
+  @CanIgnoreReturnValue
   public BlazeConfigurationNameBuilder setTargetString(String targetString) {
     this.targetString = targetString;
     return this;
@@ -80,6 +84,7 @@ public class BlazeConfigurationNameBuilder {
    * label}'s target, and the 'package' is the containing package. For example, the {@link Label}
    * "//javatests/com/google/foo/bar/baz:FooTest" will set the target string to "baz:FooTest".
    */
+  @CanIgnoreReturnValue
   public BlazeConfigurationNameBuilder setTargetString(Label label) {
     this.targetString =
         String.format("%s:%s", getImmediatePackage(label), label.targetName().toString());

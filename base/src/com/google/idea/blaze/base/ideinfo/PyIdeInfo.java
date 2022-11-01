@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonSrcsVersion;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.PyIdeInfo.PythonVersion;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.execution.BlazeParametersListUtil;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.util.execution.ParametersListUtil;
@@ -122,26 +123,31 @@ public final class PyIdeInfo implements ProtoWrapper<IntellijIdeInfo.PyIdeInfo> 
     private PythonSrcsVersion srcsVersion;
     private final ImmutableList.Builder<String> args = ImmutableList.builder();
 
+    @CanIgnoreReturnValue
     public Builder addSources(Iterable<ArtifactLocation> sources) {
       this.sources.addAll(sources);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setLauncher(@Nullable String launcher) {
       this.launcher = (launcher == null) ? null : Label.createIfValid(launcher);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setPythonVersion(PythonVersion version) {
       this.version = version;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setSrcsVersion(PythonSrcsVersion srcsVersion) {
       this.srcsVersion = srcsVersion;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addArgs(Iterable<String> args) {
       this.args.addAll(args);
       return this;

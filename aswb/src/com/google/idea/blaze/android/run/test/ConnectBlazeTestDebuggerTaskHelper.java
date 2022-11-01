@@ -20,6 +20,7 @@ import com.android.tools.idea.run.AndroidDebugState;
 import com.android.tools.idea.run.AndroidProcessText;
 import com.android.tools.idea.run.AndroidRunConfiguration;
 import com.android.tools.idea.run.AndroidSessionInfo;
+import com.android.tools.idea.run.AndroidSessionInfoCompat;
 import com.android.tools.idea.run.LaunchInfo;
 import com.android.tools.idea.run.ProcessHandlerConsolePrinter;
 import com.android.tools.idea.run.tasks.ConnectJavaDebuggerTask;
@@ -37,6 +38,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.Locale;
+import javax.annotation.Nullable;
 
 /** Connects the blaze debugger during execution. */
 class ConnectBlazeTestDebuggerTaskHelper {
@@ -46,6 +48,7 @@ class ConnectBlazeTestDebuggerTaskHelper {
    * Nearly a clone of {@link ConnectJavaDebuggerTask#launchDebugger}. There are a few changes to
    * account for null variables that could occur in our implementation.
    */
+  @Nullable
   public static ProcessHandler launchDebugger(
       Project project,
       LaunchInfo currentLaunchInfo,
@@ -86,7 +89,7 @@ class ConnectBlazeTestDebuggerTaskHelper {
     RunContentDescriptor oldDescriptor;
     AndroidSessionInfo oldSession = oldProcessHandler.getUserData(AndroidSessionInfo.KEY);
     if (oldSession != null) {
-      oldDescriptor = oldSession.getDescriptor();
+      oldDescriptor = AndroidSessionInfoCompat.getDescriptor(oldSession);
     } else {
       // This is the first time we are attaching the debugger; get it from the environment instead.
       oldDescriptor = currentLaunchInfo.env.getContentToReuse();
@@ -125,7 +128,7 @@ class ConnectBlazeTestDebuggerTaskHelper {
     RunConfiguration runConfiguration =
         runProfile instanceof AndroidRunConfiguration ? (AndroidRunConfiguration) runProfile : null;
     AndroidSessionInfo sessionInfo =
-        AndroidSessionInfo.create(
+        AndroidSessionInfoCompat.create(
             debugProcessHandler,
             debugDescriptor,
             runConfiguration,
@@ -134,7 +137,7 @@ class ConnectBlazeTestDebuggerTaskHelper {
             currentLaunchInfo.env.getExecutionTarget());
 
     debugProcessHandler.putUserData(AndroidSessionInfo.KEY, sessionInfo);
-    debugProcessHandler.putUserData(AndroidSessionInfo.ANDROID_DEBUG_CLIENT, client);
+    AndroidSessionInfoCompat.putAndroidDebugClient(debugProcessHandler, client);
     debugProcessHandler.putUserData(
         AndroidSessionInfo.ANDROID_DEVICE_API_LEVEL, client.getDevice().getVersion());
 

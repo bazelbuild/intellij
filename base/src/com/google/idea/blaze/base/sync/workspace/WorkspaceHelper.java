@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.model.primitives.TargetName;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -158,7 +158,7 @@ public class WorkspaceHelper {
   @Nullable
   private static synchronized Map<String, WorkspaceRoot> getExternalWorkspaceRoots(
       Project project) {
-    if (Blaze.getBuildSystem(project) == BuildSystem.Blaze) {
+    if (Blaze.getBuildSystemName(project) == BuildSystemName.Blaze) {
       return ImmutableMap.of();
     }
     return SyncCache.getInstance(project)

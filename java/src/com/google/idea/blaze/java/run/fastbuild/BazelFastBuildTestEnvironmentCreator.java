@@ -17,7 +17,7 @@ package com.google.idea.blaze.java.run.fastbuild;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -48,7 +48,7 @@ final class BazelFastBuildTestEnvironmentCreator extends FastBuildTestEnvironmen
   }
 
   @Override
-  public ImmutableSet<BuildSystem> getSupportedBuildSystems() {
-    return ImmutableSet.of(BuildSystem.Bazel);
+  public ImmutableSet<BuildSystemName> getSupportedBuildSystems() {
+    return ImmutableSet.of(BuildSystemName.Bazel);
   }
 }

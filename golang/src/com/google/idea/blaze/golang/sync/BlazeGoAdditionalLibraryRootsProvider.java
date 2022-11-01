@@ -25,26 +25,22 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.sync.libraries.BlazeExternalLibraryProvider;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.golang.resolve.BlazeGoPackage;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.function.Predicate;
 
 /** Provides out-of-project go sources for indexing. */
 public final class BlazeGoAdditionalLibraryRootsProvider extends BlazeExternalLibraryProvider {
-  private static final BoolExperiment useGoAdditionalLibraryRootsProvider =
-      new BoolExperiment("use.go.additional.library.roots.provider4", true);
+
+  public static final String GO_EXTERNAL_LIBRARY_ROOT_NAME = "Go Libraries";
 
   @Override
   protected String getLibraryName() {
-    return "Go Libraries";
+    return GO_EXTERNAL_LIBRARY_ROOT_NAME;
   }
 
   @Override
   protected ImmutableList<File> getLibraryFiles(Project project, BlazeProjectData projectData) {
-    if (!useGoAdditionalLibraryRootsProvider.getValue()) {
-      return ImmutableList.of();
-    }
     ImportRoots importRoots = ImportRoots.forProjectSafe(project);
     return importRoots != null
         ? getLibraryFiles(project, projectData, importRoots)

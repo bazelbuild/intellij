@@ -26,7 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/** Tests for {@link TasksToolWindowService} */
+/** Tests for {@link TasksToolWindowServiceImpl} */
 @RunWith(JUnit4.class)
 public class TasksToolWindowServiceTest {
   private static final Instant NOW_INSTANT = Instant.ofEpochSecond(333);
@@ -35,11 +35,11 @@ public class TasksToolWindowServiceTest {
 
   private Task task;
   private final TasksToolWindowService service =
-      new TasksToolWindowService(intellij.getProject(), () -> NOW_INSTANT);
+      new TasksToolWindowServiceImpl(intellij.getProject(), () -> NOW_INSTANT);
 
   @Before
   public void before() {
-    task = new Task("Test task", Task.Type.BLAZE_SYNC);
+    task = new Task(intellij.getProject(), "Test task", Task.Type.SYNC);
   }
 
   @Test
@@ -50,7 +50,7 @@ public class TasksToolWindowServiceTest {
 
   @Test
   public void testFinishTask() {
-    service.finishTask(task, false);
+    service.finishTask(task, false, false);
     assertThat(task.getEndTime()).hasValue(NOW_INSTANT);
   }
 }

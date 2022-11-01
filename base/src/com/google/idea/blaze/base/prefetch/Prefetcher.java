@@ -34,7 +34,7 @@ public interface Prefetcher {
    * files it isn't interested in. When listing directories, one can supply a set of
    * excludedDirectories that should not be walked down recursively during prefetch.
    */
-  ListenableFuture<?> prefetchFiles(
+  ListenableFuture<PrefetchStats> prefetchFiles(
       Set<File> excludedDirectories,
       Collection<ListenableFuture<File>> fileFutures,
       ListeningExecutorService executor,

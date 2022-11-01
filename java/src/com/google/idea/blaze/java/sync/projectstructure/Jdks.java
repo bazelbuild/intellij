@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.sync.projectstructure;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.intellij.openapi.util.io.FileUtil.notNullize;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -41,6 +42,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Utility methods related to IDEA JDKs. */
@@ -48,35 +50,51 @@ public class Jdks {
 
   private static final Logger logger = Logger.getInstance(Jdks.class);
 
+  private static final BoolExperiment keepCurrentJdkPreferentially =
+      new BoolExperiment("blaze.keep.current.jdk", true);
+
   private static final BoolExperiment useExistingJdkPreferentially =
       new BoolExperiment("blaze.use.existing.jdk", false);
 
   @Nullable
-  public static Sdk chooseOrCreateJavaSdk(LanguageLevel langLevel) {
-    if (useExistingJdkPreferentially.getValue()) {
-      Sdk existing = findClosestMatch(langLevel);
-      if (existing != null) {
-        return existing;
-      }
-    }
-    String jdkHomePath = null;
-    for (BlazeJdkProvider jdkProvider : BlazeJdkProvider.EP_NAME.getExtensions()) {
-      File jdkRoot = jdkProvider.provideJdkForLanguageLevel(langLevel);
-      if (jdkRoot != null) {
-        jdkHomePath = jdkRoot.getPath();
-        break;
+  public static Sdk chooseOrCreateJavaSdk(@Nullable Sdk currentSdk, LanguageLevel langLevel) {
+    ImmutableList<String> jdkHomePaths =
+        BlazeJdkProvider.EP_NAME
+            .extensions()
+            .map(provider -> provider.provideJdkForLanguageLevel(langLevel))
+            .filter(Objects::nonNull)
+            .map(File::getPath)
+            .collect(toImmutableList());
+
+    if (keepCurrentJdkPreferentially.getValue()
+        && currentSdk != null
+        && currentSdk.getSdkType() == JavaSdk.getInstance()
+        && ProjectJdkTable.getInstance().findJdk(currentSdk.getName()) == currentSdk) {
+      if (jdkHomePaths.stream().anyMatch(homePath -> jdkPathMatches(currentSdk, homePath))) {
+        return currentSdk;
+      } else if (jdkHomePaths.isEmpty()) {
+        LanguageLevel currentLangLevel = getJavaLanguageLevel(currentSdk);
+        if (currentLangLevel != null
+            && currentLangLevel.isAtLeast(langLevel)
+            && isValid(currentSdk)) {
+          return currentSdk;
+        }
       }
     }
 
-    if (jdkHomePath == null) {
+    if (jdkHomePaths.isEmpty() || useExistingJdkPreferentially.getValue()) {
       // fall back to looking for closest match before using suggesters
       Sdk existing = findClosestMatch(langLevel);
       if (existing != null) {
         return existing;
       }
-      jdkHomePath = getJdkHomePath(langLevel);
     }
-    return jdkHomePath != null ? getOrCreateSdk(jdkHomePath) : null;
+
+    return jdkHomePaths.stream()
+        .findFirst()
+        .or(() -> Optional.ofNullable(getJdkHomePath(langLevel)))
+        .map(Jdks::getOrCreateSdk)
+        .orElse(null);
   }
 
   private static Sdk getOrCreateSdk(String homePath) {
@@ -187,8 +205,7 @@ public class Jdks {
 
   @Nullable
   private static String getBestJdk(List<String> jdkRoots, LanguageLevel langLevel) {
-    return jdkRoots
-        .stream()
+    return jdkRoots.stream()
         .filter(root -> JavaSdk.getInstance().isValidSdkHome(root))
         .filter(root -> getVersion(root).getMaxLanguageLevel().isAtLeast(langLevel))
         .min(Comparator.comparing(o -> getVersion(o).getMaxLanguageLevel()))

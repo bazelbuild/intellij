@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncListener;
@@ -74,6 +73,7 @@ public class AutoSyncHandler implements ProjectComponent {
       new PendingChangesHandler<VirtualFile>(AUTO_SYNC_DELAY) {
         @Override
         boolean runTask(ImmutableSet<VirtualFile> changes) {
+          // TODO(b/226553780) update for go/rabbit-decide-automatically
           if (!Blaze.getBuildSystemProvider(project).syncingRemotely()
               && BlazeSyncStatus.getInstance(project).syncInProgress()) {
             return false;
@@ -113,7 +113,6 @@ public class AutoSyncHandler implements ProjectComponent {
             .setTitle(AutoSyncProvider.AUTO_SYNC_TITLE)
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin(AutoSyncProvider.AUTO_SYNC_REASON + "." + reason)
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(project))
             .setAddProjectViewTargets(true)
             .setAddWorkingSet(BlazeUserSettings.getInstance().getExpandSyncToWorkingSet())
             .setBackgroundSync(true)
@@ -214,7 +213,6 @@ public class AutoSyncHandler implements ProjectComponent {
         .setTitle(AutoSyncProvider.AUTO_SYNC_TITLE)
         .setSyncMode(mode)
         .setSyncOrigin(origin)
-        .setBlazeBuildParams(params2.blazeBuildParams())
         .setBackgroundSync(params1.backgroundSync() && params2.backgroundSync())
         .addTargetExpressions(params1.targetExpressions())
         .addTargetExpressions(params2.targetExpressions())

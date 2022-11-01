@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.projectview.section.ScalarSection;
 import com.google.idea.blaze.base.projectview.section.ScalarSectionParser;
 import com.google.idea.blaze.base.projectview.section.SectionKey;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import javax.annotation.Nullable;
 
 /** If set to true, automatically derives targets from the project directories. */
@@ -73,7 +73,9 @@ public class AutomaticallyDeriveTargetsSection {
   static class DefaultValueProvider implements ProjectViewDefaultValueProvider {
     @Override
     public ProjectView addProjectViewDefaultValue(
-        BuildSystem buildSystem, ProjectViewSet projectViewSet, ProjectView topLevelProjectView) {
+        BuildSystemName buildSystemName,
+        ProjectViewSet projectViewSet,
+        ProjectView topLevelProjectView) {
       if (!topLevelProjectView.getSectionsOfType(KEY).isEmpty()) {
         return topLevelProjectView;
       }

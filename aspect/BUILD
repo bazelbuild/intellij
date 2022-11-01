@@ -7,7 +7,7 @@ load(
     "define_flag_hack",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 # Files needed at runtime for blaze-invoking integration tests
 filegroup(

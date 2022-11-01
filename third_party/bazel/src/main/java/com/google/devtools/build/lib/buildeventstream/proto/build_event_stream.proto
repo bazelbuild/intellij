@@ -401,7 +401,8 @@ message WorkspaceStatus {
 // build.
 message BuildMetadata {
   // Custom metadata for the build.
-  map<string, string> metadata = 1;
+  map<string, string> metadata = 1
+      ;
 }
 
 // Payload of an event reporting details of a given configuration.
@@ -409,7 +410,10 @@ message Configuration {
   string mnemonic = 1;
   string platform_name = 2;
   string cpu = 3;
-  map<string, string> make_variable = 4;
+  map<string, string> make_variable = 4
+      ;
+  // Whether this configuration is used for building tools.
+  bool is_tool = 5;
 }
 
 // Payload of the event indicating the expansion of a target pattern.
@@ -479,6 +483,13 @@ message File {
     // The contents of the file, if they are guaranteed to be short.
     bytes contents = 3;
   }
+
+  // Digest of the file, using the build tool's configured digest algorithm,
+  // hex-encoded.
+  string digest = 5;
+
+  // Length of the file in bytes.
+  int64 length = 6;
 }
 
 // Payload of a message to describe a set of files, usually build artifacts, to
@@ -792,6 +803,7 @@ message BuildFinished {
     // Examples of suspensions are SIGSTOP, or the hardware being put to sleep.
     // If was_suspended is true, then most of the timings for this build are
     // suspect.
+    // NOTE: This is no longer set and is deprecated.
     bool was_suspended = 1;
   }
 
@@ -812,7 +824,7 @@ message BuildFinished {
   // End of the build.
   google.protobuf.Timestamp finish_time = 5;
 
-  AnomalyReport anomaly_report = 4;
+  AnomalyReport anomaly_report = 4 [deprecated = true];
 }
 
 message BuildMetrics {
@@ -874,6 +886,10 @@ message BuildMetrics {
     // if there was no major GC during the build.
     int64 peak_post_gc_heap_size = 2;
 
+    // Size of the peak tenured space JVM heap size event in bytes post GC. Note
+    // that this reports 0 if there was no major GC during the build.
+    int64 peak_post_gc_tenured_space_heap_size = 4;
+
     message GarbageMetrics {
       // Type of garbage collected, e.g. G1 Old Gen.
       string type = 1;
@@ -908,7 +924,19 @@ message BuildMetrics {
   TargetMetrics target_metrics = 3;
 
   message PackageMetrics {
-    // Number of BUILD files (aka packages) loaded during this build.
+    // Number of BUILD files (aka packages) successfully loaded during this
+    // build.
+    //
+    // [For Bazel binaries built at source states] Before Dec 2021, this value
+    // was the number of packages attempted to be loaded, for a particular
+    // definition of "attempted".
+    //
+    // After Dec 2021, this value would sometimes overcount because the same
+    // package could sometimes be attempted to be loaded multiple times due to
+    // memory pressure.
+    //
+    // After Feb 2022, this value is the number of packages successfully
+    // loaded.
     int64 packages_loaded = 1;
   }
   PackageMetrics package_metrics = 4;
@@ -919,6 +947,8 @@ message BuildMetrics {
     // The elapsed wall time in milliseconds during this build.
     int64 wall_time_in_ms = 2;
     // The elapsed wall time in milliseconds during the analysis phase.
+    // When analysis and execution phases are interleaved, this measures the
+    // elapsed time from the first analysis work to the last.
     int64 analysis_phase_time_in_ms = 3;
   }
   TimingMetrics timing_metrics = 5;
@@ -1006,6 +1036,65 @@ message BuildMetrics {
   }
 
   BuildGraphMetrics build_graph_metrics = 8;
+
+  // Information about all workers that were alive during the invocation.
+  message WorkerMetrics {
+    // Unique id of worker.
+    int32 worker_id = 1;
+    // Worker process id. If there is no process for worker, equals to zero.
+    uint32 process_id = 2;
+    // Mnemonic of running worker.
+    string mnemonic = 3;
+    // Multiplex or singleplex worker.
+    bool is_multiplex = 4;
+    // Using worker sandbox file system or not.
+    bool is_sandbox = 5;
+    // Shows is worker stats measured at the end of invocation.
+    bool is_measurable = 6;
+
+    // Information collected from worker at some point.
+    message WorkerStats {
+      // Epoch unix time of collection of metrics.
+      int64 collect_time_in_ms = 1;
+      // RSS size of worker process.
+      int32 worker_memory_in_kb = 2;
+      // Epoch unix time of last action started on specific worker.
+      int64 last_action_start_time_in_ms = 3;
+    }
+
+    // Combined workers statistics.
+    repeated WorkerStats worker_stats = 7;
+  }
+
+  repeated WorkerMetrics worker_metrics = 9;
+
+  // Information about host network.
+  message NetworkMetrics {
+    // Information for all the network traffic going on on the host machine
+    // during the invocation.
+    message SystemNetworkStats {
+      // Total bytes sent during the invocation.
+      uint64 bytes_sent = 1;
+      // Total bytes received during the invocation.
+      uint64 bytes_recv = 2;
+      // Total packets sent during the invocation.
+      uint64 packets_sent = 3;
+      // Total packets received during the invocation.
+      uint64 packets_recv = 4;
+      // Peak bytes/sec sent during the invocation.
+      uint64 peak_bytes_sent_per_sec = 5;
+      // Peak bytes/sec received during the invocation.
+      uint64 peak_bytes_recv_per_sec = 6;
+      // Peak packets/sec sent during the invocation.
+      uint64 peak_packets_sent_per_sec = 7;
+      // Peak packets/sec received during the invocation.
+      uint64 peak_packets_recv_per_sec = 8;
+    }
+
+    SystemNetworkStats system_network_stats = 1;
+  }
+
+  NetworkMetrics network_metrics = 10;
 }
 
 // Event providing additional statistics/logs after completion of the build.

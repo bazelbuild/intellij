@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 
 /** Mocks the blaze project data manager. */
 public class MockBlazeProjectDataManager implements BlazeProjectDataManager {
-  private final BlazeProjectData blazeProjectData;
+  @Nullable private BlazeProjectData blazeProjectData;
 
   public MockBlazeProjectDataManager(BlazeProjectData blazeProjectData) {
     this.blazeProjectData = blazeProjectData;
@@ -30,5 +30,9 @@ public class MockBlazeProjectDataManager implements BlazeProjectDataManager {
   @Override
   public BlazeProjectData getBlazeProjectData() {
     return blazeProjectData;
+  }
+
+  public void setBlazeProjectData(@Nullable BlazeProjectData blazeProjectData) {
+    this.blazeProjectData = blazeProjectData;
   }
 }

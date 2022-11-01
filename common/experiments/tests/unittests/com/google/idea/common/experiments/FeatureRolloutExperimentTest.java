@@ -49,13 +49,12 @@ public class FeatureRolloutExperimentTest {
     rolloutExperiment = new FeatureRolloutExperiment("feature.name.for.canary.rollout");
   }
 
-
   private void setFeatureRolloutPercentage(int percentage) {
     experimentService.setFeatureRolloutExperiment(rolloutExperiment, percentage);
   }
 
   @Test
-  public void testUserHashesInCorrectRange() {
+  public void userHashesInCorrectRange() {
     List<String> userNames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
@@ -69,7 +68,7 @@ public class FeatureRolloutExperimentTest {
   }
 
   @Test
-  public void testUserHashIsSameForEqualUsernameAndExperiment() {
+  public void userHashIsSameForEqualUsernameAndExperiment() {
     rolloutExperiment = new FeatureRolloutExperiment("rollout.experiment.one");
     FeatureRolloutExperiment equalExperiment =
         new FeatureRolloutExperiment("rollout.experiment.one");
@@ -89,7 +88,7 @@ public class FeatureRolloutExperimentTest {
   }
 
   @Test
-  public void testUserHashForSameUserDependsOnExperimentKey() {
+  public void userHashForSameUserDependsOnExperimentKey() {
     rolloutExperiment = new FeatureRolloutExperiment("rollout.experiment.one");
     FeatureRolloutExperiment differentExperiment =
         new FeatureRolloutExperiment("rollout.experiment.two");
@@ -114,7 +113,7 @@ public class FeatureRolloutExperimentTest {
    * have the feature enabled.
    */
   @Test
-  public void testRolloutPercentageApproximatelyCorrect() {
+  public void rolloutPercentageApproximatelyCorrect() {
     List<String> userNames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
@@ -143,7 +142,7 @@ public class FeatureRolloutExperimentTest {
   }
 
   @Test
-  public void testAlwaysDisabledIfInvalidRolloutPercentage() {
+  public void alwaysDisabled_ifInvalidRolloutPercentage() {
     List<String> userNames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
@@ -160,14 +159,14 @@ public class FeatureRolloutExperimentTest {
   }
 
   @Test
-  public void testAlwaysEnabledForDevs() {
+  public void alwaysEnabledForDevs_ifRolloutGreaterZero() {
     List<String> userNames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
             .collect(Collectors.toList());
     InternalDevFlag.markUserAsInternalDev(true);
 
-    setFeatureRolloutPercentage(0);
+    setFeatureRolloutPercentage(1);
     assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
 
     setFeatureRolloutPercentage(20);
@@ -175,13 +174,10 @@ public class FeatureRolloutExperimentTest {
 
     setFeatureRolloutPercentage(100);
     assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
-
-    setFeatureRolloutPercentage(-1);
-    assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
   }
 
   @Test
-  public void testNotAlwaysEnabledWhenDevMarkerDisabled() {
+  public void notAlwaysEnabled_whenDevMarkerDisabled() {
     List<String> userNames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
@@ -199,13 +195,25 @@ public class FeatureRolloutExperimentTest {
 
     setFeatureRolloutPercentage(100);
     assertThat(userNames.stream().allMatch(this::isEnabled)).isTrue();
+  }
+
+  @Test
+  public void disabledForDevs_ifRolloutZeroOrLess() {
+    List<String> userNames =
+        Stream.generate(FeatureRolloutExperimentTest::generateUsername)
+            .limit(10000)
+            .collect(Collectors.toList());
+    InternalDevFlag.markUserAsInternalDev(true);
+
+    setFeatureRolloutPercentage(0);
+    assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
 
     setFeatureRolloutPercentage(-1);
     assertThat(userNames.stream().noneMatch(this::isEnabled)).isTrue();
   }
 
   @Test
-  public void testAlwaysDisabledWhenExplicitlyDisabled() {
+  public void alwaysDisabled_whenExplicitlyDisabled() {
     List<String> userNames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)

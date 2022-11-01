@@ -107,6 +107,7 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
     }
 
     setIfEmpty("idea.plugins.path", Joiner.on(File.pathSeparator).join(pluginJars));
+    setIfEmpty("idea.force.use.core.classloader", "true");
   }
 
   @Nullable

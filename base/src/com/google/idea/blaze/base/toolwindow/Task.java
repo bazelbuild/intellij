@@ -16,19 +16,24 @@
 package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.base.MoreObjects;
+import com.intellij.ide.nls.NlsMessages;
+import com.intellij.openapi.project.Project;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Represents a Blaze Outputs Tool Window Task, which can be hierarchical. */
 public final class Task {
+  private final Project project;
   private final String name;
   private final Type type;
   @Nullable private Task parent;
-  private String status = "";
+  private String state = "";
   @Nullable private Instant startTime;
   @Nullable private Instant endTime;
   private boolean hasErrors;
+  private boolean isCancelled;
 
   /**
    * Creates a new top level task without a parent.
@@ -36,8 +41,8 @@ public final class Task {
    * @param name name of new task
    * @param type type of new task
    */
-  public Task(String name, Type type) {
-    this(name, type, null);
+  public Task(Project project, String name, Type type) {
+    this(project, name, type, null);
   }
 
   /**
@@ -48,17 +53,18 @@ public final class Task {
    * @param type type of new task
    * @param parent parent of the new task, null if the new task is a top level task.
    */
-  public Task(String name, Type type, @Nullable Task parent) {
+  public Task(Project project, String name, Type type, @Nullable Task parent) {
+    this.project = project;
     this.name = name;
     this.type = type;
     this.parent = parent;
   }
 
-  String getName() {
+  public String getName() {
     return name;
   }
 
-  Type getType() {
+  public Type getType() {
     return type;
   }
 
@@ -78,19 +84,27 @@ public final class Task {
     this.hasErrors = hasErrors;
   }
 
+  boolean isCancelled() {
+    return isCancelled;
+  }
+
+  void setCancelled(boolean isCancelled) {
+    this.isCancelled = isCancelled;
+  }
+
   boolean isFinished() {
     return endTime != null;
   }
 
-  String getStatus() {
-    return status;
+  String getState() {
+    return state;
   }
 
-  void setStatus(String status) {
-    this.status = status;
+  void setState(String state) {
+    this.state = state;
   }
 
-  Optional<Task> getParent() {
+  public Optional<Task> getParent() {
     return Optional.ofNullable(parent);
   }
 
@@ -106,6 +120,23 @@ public final class Task {
     return Optional.ofNullable(endTime);
   }
 
+  Optional<String> getDurationString() {
+    Optional<Instant> start = getStartTime();
+    return start
+        .map(
+            startTime ->
+                Duration.between(startTime, getEndTime().orElse(Instant.now())).toSeconds())
+        .map(
+            duration ->
+                duration < 1
+                    ? getEndTime().isEmpty() ? "0 sec" : "<1 sec"
+                    : NlsMessages.formatDuration(duration * 1000));
+  }
+
+  Project getProject() {
+    return project;
+  }
+
   @Override
   public String toString() {
     return MoreObjects.toStringHelper(this)
@@ -118,17 +149,16 @@ public final class Task {
 
   /** Type of the task. */
   public enum Type {
-    // TODO(olegsa) consider merging some categories
-    G4_FIX("G4 Fix"),
-    G4_LINT("G4 Lint"),
+    FORMAT("Format"),
+    LINT("Lint"),
     BUILD_CLEANER("Build Cleaner"),
     FIX_DEPS("Fix Deps"),
     SUGGESTED_FIXES("Suggested Fixes"),
     FAST_BUILD("Fast Build"),
     DEPLOYABLE_JAR("DeployableJar"),
-    BLAZE_MAKE("Blaze Make"),
-    BLAZE_BEFORE_RUN("Blaze Before Run"),
-    BLAZE_SYNC("Blaze Sync"),
+    MAKE("Make"),
+    BEFORE_LAUNCH("Before Launch"),
+    SYNC("Sync"),
     OTHER("Other");
 
     private final String displayName;

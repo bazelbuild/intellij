@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.projectview.section;
 
 import com.google.idea.blaze.base.projectview.ProjectView;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 /** Allows the adding default values to sections. Used during the wizard. */
@@ -26,7 +26,9 @@ public interface ProjectViewDefaultValueProvider {
       ExtensionPointName.create("com.google.idea.blaze.ProjectViewDefaultValueProvider");
 
   ProjectView addProjectViewDefaultValue(
-      BuildSystem buildSystem, ProjectViewSet projectViewSet, ProjectView topLevelProjectView);
+      BuildSystemName buildSystemName,
+      ProjectViewSet projectViewSet,
+      ProjectView topLevelProjectView);
 
   SectionKey<?, ?> getSectionKey();
 }

@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -31,6 +32,7 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
   @Nullable private final ArtifactLocation jdepsFile;
   @Nullable private final String javaBinaryMainClass;
   @Nullable private final String testClass;
+  private final ImmutableList<LibraryArtifact> pluginProcessorJars;
 
   private JavaIdeInfo(
       ImmutableList<LibraryArtifact> jars,
@@ -40,7 +42,8 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
       @Nullable ArtifactLocation packageManifest,
       @Nullable ArtifactLocation jdepsFile,
       @Nullable String javaBinaryMainClass,
-      @Nullable String testClass) {
+      @Nullable String testClass,
+      ImmutableList<LibraryArtifact> pluginProcessorJars) {
     this.jars = jars;
     this.generatedJars = generatedJars;
     this.sources = sources;
@@ -49,6 +52,7 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     this.filteredGenJar = filteredGenJar;
     this.javaBinaryMainClass = javaBinaryMainClass;
     this.testClass = testClass;
+    this.pluginProcessorJars = pluginProcessorJars;
   }
 
   static JavaIdeInfo fromProto(IntellijIdeInfo.JavaIdeInfo proto) {
@@ -60,7 +64,8 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
         proto.hasPackageManifest() ? ArtifactLocation.fromProto(proto.getPackageManifest()) : null,
         proto.hasJdeps() ? ArtifactLocation.fromProto(proto.getJdeps()) : null,
         Strings.emptyToNull(proto.getMainClass()),
-        Strings.emptyToNull(proto.getTestClass()));
+        Strings.emptyToNull(proto.getTestClass()),
+        ProtoWrapper.map(proto.getPluginProcessorJarsList(), LibraryArtifact::fromProto));
   }
 
   @Override
@@ -69,7 +74,8 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
         IntellijIdeInfo.JavaIdeInfo.newBuilder()
             .addAllJars(ProtoWrapper.mapToProtos(jars))
             .addAllGeneratedJars(ProtoWrapper.mapToProtos(generatedJars))
-            .addAllSources(ProtoWrapper.mapToProtos(sources));
+            .addAllSources(ProtoWrapper.mapToProtos(sources))
+            .addAllPluginProcessorJars(ProtoWrapper.mapToProtos(pluginProcessorJars));
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setFilteredGenJar, filteredGenJar);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setPackageManifest, packageManifest);
     ProtoWrapper.unwrapAndSetIfNotNull(builder::setJdeps, jdepsFile);
@@ -123,6 +129,11 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     return javaBinaryMainClass;
   }
 
+  /** Jars needed to apply the encapsulated annotation processors. . */
+  public ImmutableList<LibraryArtifact> getPluginProcessorJars() {
+    return pluginProcessorJars;
+  }
+
   /** test_class attribute value for java_test targets */
   @Nullable
   public String getTestClass() {
@@ -141,34 +152,47 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
     @Nullable String mainClass;
     @Nullable String testClass;
     @Nullable ArtifactLocation jdepsFile;
+    ImmutableList.Builder<LibraryArtifact> pluginProcessorJars = ImmutableList.builder();
 
+    @CanIgnoreReturnValue
     public Builder addJar(LibraryArtifact.Builder jar) {
       jars.add(jar.build());
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addGeneratedJar(LibraryArtifact.Builder jar) {
       generatedJars.add(jar.build());
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setFilteredGenJar(LibraryArtifact.Builder jar) {
       this.filteredGenJar = jar.build();
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setMainClass(@Nullable String mainClass) {
       this.mainClass = mainClass;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setTestClass(@Nullable String testClass) {
       this.testClass = testClass;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setJdepsFile(@Nullable ArtifactLocation jdepsFile) {
       this.jdepsFile = jdepsFile;
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder addPluginProcessorJars(LibraryArtifact.Builder jar) {
+      pluginProcessorJars.add(jar.build());
       return this;
     }
 
@@ -181,7 +205,8 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
           null,
           jdepsFile,
           mainClass,
-          testClass);
+          testClass,
+          pluginProcessorJars.build());
     }
   }
 
@@ -201,7 +226,8 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
         && Objects.equals(packageManifest, that.packageManifest)
         && Objects.equals(jdepsFile, that.jdepsFile)
         && Objects.equals(javaBinaryMainClass, that.javaBinaryMainClass)
-        && Objects.equals(testClass, that.testClass);
+        && Objects.equals(testClass, that.testClass)
+        && Objects.equals(pluginProcessorJars, that.pluginProcessorJars);
   }
 
   @Override
@@ -214,6 +240,7 @@ public final class JavaIdeInfo implements ProtoWrapper<IntellijIdeInfo.JavaIdeIn
         packageManifest,
         jdepsFile,
         javaBinaryMainClass,
-        testClass);
+        testClass,
+        pluginProcessorJars);
   }
 }

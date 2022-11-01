@@ -17,32 +17,23 @@ package com.google.idea.blaze.java.plugin;
 
 import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.common.util.Transactions;
-import com.intellij.application.Topics;
-import com.intellij.ide.AppLifecycleListener;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.startup.StartupActivity.DumbAware;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.messages.MessageBusConnection;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.util.List;
-import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.event.HyperlinkEvent;
 
@@ -50,30 +41,24 @@ import javax.swing.event.HyperlinkEvent;
  * Runs on startup, displaying an error if the JUnit plugin (required for the blaze plugin to
  * properly function) is not enabled.
  */
-public class JUnitPluginDependencyWarning implements ApplicationComponent {
+public class JUnitPluginDependencyWarning implements StartupActivity, DumbAware {
 
   private static final String JUNIT_PLUGIN_ID = "JUnit";
 
   @Override
-  public void initComponent() {
-    Topics.subscribe(
-        AppLifecycleListener.TOPIC,
-        /* disposable= */ null,
-        new AppLifecycleListener() {
-          @Override
-          public void appStarting(@Nullable Project projectFromCommandLine) {
-            if (PlatformUtils.isIntelliJ() && !PluginUtils.isPluginEnabled(JUNIT_PLUGIN_ID)) {
-              notifyJUnitNotEnabled();
-            }
-          }
-        });
+  public void runActivity(Project project) {
+    if (PlatformUtils.isIntelliJ()
+        && Blaze.isBlazeProject(project)
+        && !PluginUtils.isPluginEnabled(JUNIT_PLUGIN_ID)) {
+      notifyJUnitNotEnabled(project);
+    }
   }
 
   /**
    * Pop up a notification asking user to enable the JUnit plugin, and also add an error item to the
    * event log.
    */
-  private static void notifyJUnitNotEnabled() {
+  private static void notifyJUnitNotEnabled(Project project) {
     String buildSystem = Blaze.defaultBuildSystemName();
 
     String message =
@@ -101,42 +86,12 @@ public class JUnitPluginDependencyWarning implements ApplicationComponent {
             listener);
     notification.setImportant(true);
 
-    Application app = ApplicationManager.getApplication();
-    MessageBusConnection connection = app.getMessageBus().connect(app);
-    connection.subscribe(
-        AppLifecycleListener.TOPIC,
-        new AppLifecycleListener() {
-          @Override
-          public void appStarting(@Nullable Project projectFromCommandLine) {
-            // Adds an error item to the 'Event Log' tab.
-            // Easy to ignore, but remains in event log until manually cleared.
-            Transactions.submitTransactionAndWait(() -> Notifications.Bus.notify(notification));
-          }
-
-          // #api211 @Override is removed because this function is removed from
-          // AppLifecycleListener in 2021.2. We will need to remove it when 2021.1 is no longer
-          // supported.
-          public void appFrameCreated(
-              List<String> commandLineArgs, Ref<? super Boolean> willOpenProject) {}
-
-          @Override
-          public void appFrameCreated(List<String> commandLineArgs) {
-            // Popup dialog in welcome screen.
-            app.invokeLater(() -> showPopupNotification(message));
-          }
-        });
+    // Adds an error item to the 'Event Log' tab.
+    // Easy to ignore, but remains in event log until manually cleared.
+    Notifications.Bus.notify(notification, project);
+    // Popup dialog on project open.
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      connection.subscribe(
-          ProjectManager.TOPIC,
-          new ProjectManagerAdapter() {
-            @Override
-            public void projectOpened(Project project) {
-              // Popup dialog on project open, for users bypassing the welcome screen.
-              if (Blaze.isBlazeProject(project)) {
-                app.invokeLater(() -> showPopupNotification(message));
-              }
-            }
-          });
+      showPopupNotification(message);
     }
   }
 

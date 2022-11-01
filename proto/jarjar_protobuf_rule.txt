@@ -1,1 +1,0 @@
-rule com.google.protobuf.** com.google.repackaged.bazel.protobuf.@1

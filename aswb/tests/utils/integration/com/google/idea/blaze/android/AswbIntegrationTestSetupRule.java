@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android;
 
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -41,8 +40,6 @@ public class AswbIntegrationTestSetupRule extends ExternalResource {
   }
 
   private void symlinkRequiredLibraries() {
-    VfsRootAccess.allowRootAccess("/"); // Bazel tests are sandboxed so we disable VfsRoot checks.
-
     /*
      * Android annotation requires a different path to match one of the candidate paths in
      * {@link com.android.tools.idea.startup.ExternalAnnotationsSupport.DEVELOPMENT_ANNOTATIONS_PATHS}

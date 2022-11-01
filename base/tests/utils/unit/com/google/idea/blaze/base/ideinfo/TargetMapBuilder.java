@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.ideinfo;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Collection;
 import java.util.List;
 
@@ -28,6 +29,7 @@ public class TargetMapBuilder {
     return new TargetMapBuilder();
   }
 
+  @CanIgnoreReturnValue
   public TargetMapBuilder addTarget(TargetIdeInfo target) {
     targets.add(target);
     return this;
@@ -37,6 +39,7 @@ public class TargetMapBuilder {
     return addTarget(target.build());
   }
 
+  @CanIgnoreReturnValue
   public TargetMapBuilder addTargets(Collection<? extends TargetIdeInfo> targets) {
     this.targets.addAll(targets);
     return this;

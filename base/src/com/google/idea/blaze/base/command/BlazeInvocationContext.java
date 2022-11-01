@@ -35,6 +35,7 @@ public interface BlazeInvocationContext {
   ContextType type();
 
   SyncContext SYNC_CONTEXT = new SyncContext();
+  OtherContext OTHER_CONTEXT = new OtherContext();
 
   static RunConfigurationContext runConfigContext(
       ExecutorType executorType, ConfigurationType configurationType, boolean beforeRunTask) {
@@ -51,6 +52,16 @@ public interface BlazeInvocationContext {
     @Override
     public final ContextType type() {
       return ContextType.Sync;
+    }
+  }
+
+  /** Invocation context for other build actions. */
+  final class OtherContext implements BlazeInvocationContext {
+    private OtherContext() {}
+
+    @Override
+    public final ContextType type() {
+      return ContextType.Other;
     }
   }
 

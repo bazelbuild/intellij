@@ -19,6 +19,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ComparisonChain;
 import com.google.devtools.intellij.aspect.Common;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.intellij.openapi.util.text.StringUtil;
 import java.nio.file.Paths;
 import java.util.List;
@@ -126,21 +127,25 @@ public final class ArtifactLocation
     boolean isSource;
     boolean isExternal;
 
+    @CanIgnoreReturnValue
     public Builder setRelativePath(String relativePath) {
       this.relativePath = relativePath;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setRootExecutionPathFragment(String rootExecutionPathFragment) {
       this.rootExecutionPathFragment = rootExecutionPathFragment;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setIsSource(boolean isSource) {
       this.isSource = isSource;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setIsExternal(boolean isExternal) {
       this.isExternal = isExternal;
       return this;

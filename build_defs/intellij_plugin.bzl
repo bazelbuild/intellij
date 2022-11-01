@@ -180,10 +180,13 @@ def _package_meta_inf_files(ctx, final_plugin_xml_file, module_to_merged_xmls):
     for module, merged_xml in module_to_merged_xmls.items():
         args.append(merged_xml.path)
         args.append(_filename_for_module_dependency(module))
+    for plugin_icon_file in ctx.files.plugin_icons:
+        args.append(plugin_icon_file.path)
+        args.append(plugin_icon_file.basename)
     ctx.actions.run(
         executable = ctx.executable._package_meta_inf_files,
         arguments = args,
-        inputs = [ctx.file.deploy_jar, final_plugin_xml_file] + module_to_merged_xmls.values(),
+        inputs = [ctx.file.deploy_jar, final_plugin_xml_file] + module_to_merged_xmls.values() + ctx.files.plugin_icons,
         outputs = [jar_file],
         mnemonic = "PackagePluginJar",
         progress_message = "Packaging plugin jar",
@@ -222,6 +225,7 @@ _intellij_plugin_jar = rule(
         "optional_plugin_xmls": attr.label_list(providers = [_OptionalPluginXmlInfo]),
         "jar_name": attr.string(mandatory = True),
         "deps": attr.label_list(providers = [[_IntellijPluginLibraryInfo]]),
+        "plugin_icons": attr.label_list(allow_files = True),
         "_merge_xml_binary": attr.label(
             default = Label("//build_defs:merge_xml"),
             executable = True,
@@ -240,7 +244,7 @@ _intellij_plugin_jar = rule(
     },
 )
 
-def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, extra_runtime_deps = [], **kwargs):
+def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name = None, extra_runtime_deps = [], plugin_icons = [], **kwargs):
     """Creates an intellij plugin from the given deps and plugin.xml.
 
     Args:
@@ -249,8 +253,9 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
       plugin_xml: An xml file to be placed in META-INF/plugin.jar
       optional_plugin_xmls: A list of optional_plugin_xml targets.
       jar_name: The name of the final plugin jar, or <name>.jar if None
-      **kwargs: Any further arguments to be passed to the final target
       extra_runtime_deps: runtime_deps added to java_binary or java_test calls
+      plugin_icons: Plugin logo files to be placed in META-INF. Follow https://plugins.jetbrains.com/docs/intellij/plugin-icon-file.html#plugin-logo-requirements
+      **kwargs: Any further arguments to be passed to the final target
     """
     java_deps_name = name + "_java_deps"
     binary_name = name + "_binary"
@@ -272,6 +277,7 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         deps = deps,
         plugin_xml = plugin_xml,
         optional_plugin_xmls = optional_plugin_xmls,
+        plugin_icons = plugin_icons,
     )
 
     # included (with tag) as a hack so that IJwB can recognize this is an intellij plugin

@@ -18,7 +18,13 @@ package com.google.idea.blaze.base.scope.output;
 import com.google.idea.blaze.base.scope.Output;
 import org.jetbrains.annotations.NotNull;
 
-/** Status message output. */
+/**
+ * Status message output.
+ *
+ * <p>Status output are shown sequentially, with previous status strings still visible.
+ *
+ * <p>See also {@link StateUpdate}.
+ */
 public class StatusOutput implements Output {
   @NotNull String status;
 

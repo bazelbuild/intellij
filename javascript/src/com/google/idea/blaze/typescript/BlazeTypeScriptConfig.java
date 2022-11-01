@@ -29,7 +29,7 @@ import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.lang.javascript.frameworks.modules.JSModulePathSubstitution;
 import com.intellij.lang.javascript.library.JSLibraryUtil;
 import com.intellij.lang.typescript.tsconfig.TypeScriptConfig;
@@ -396,7 +396,7 @@ class BlazeTypeScriptConfig implements TypeScriptConfig {
     VirtualFile base = baseUrlFile.getValue();
     if (base != null) {
       Path baseUrlPath = VfsUtil.virtualToIoFile(base).toPath();
-      BuildSystem buildSystem = Blaze.getBuildSystem(project);
+      BuildSystemName buildSystem = Blaze.getBuildSystemName(project);
       File workspaceRoot = WorkspaceRoot.fromProject(project).directory();
       File blazeBin = new File(workspaceRoot, BlazeInfo.blazeBinKey(buildSystem));
       File blazeGenfiles = new File(workspaceRoot, BlazeInfo.blazeGenfilesKey(buildSystem));

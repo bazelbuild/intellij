@@ -147,6 +147,8 @@ message FailureDetail {
     StarlarkLoading starlark_loading = 179;
     ExternalDeps external_deps = 181;
     DiffAwareness diff_awareness = 182;
+    ModqueryCommand modquery_command = 183;
+    BuildReport build_report = 184;
   }
 
   reserved 102; // For internal use
@@ -245,6 +247,7 @@ message ExternalRepository {
     EXTERNAL_REPOSITORY_UNKNOWN = 0 [(metadata) = { exit_code: 37 }];
     OVERRIDE_DISALLOWED_MANAGED_DIRECTORIES = 1 [(metadata) = { exit_code: 2 }];
     BAD_DOWNLOADER_CONFIG = 2 [(metadata) = { exit_code: 2 }];
+    REPOSITORY_MAPPING_RESOLUTION_FAILED = 3 [(metadata) = { exit_code: 37 }];
   }
   Code code = 1;
   // Additional data could include external repository names.
@@ -337,6 +340,19 @@ message SymlinkForest {
   }
 
   Code code = 1;
+}
+
+message BuildReport {
+  enum Code {
+    BUILD_REPORT_UNKNOWN = 0 [(metadata) = { exit_code: 37 }];
+    BUILD_REPORT_UPLOADER_NEEDS_PACKAGE_PATHS = 1
+        [(metadata) = { exit_code: 36 }];
+    BUILD_REPORT_WRITE_FAILED = 2 [(metadata) = { exit_code: 36 }];
+  }
+
+  Code code = 1;
+  // Additional data for partial failures might include the build report that
+  // failed to be written.
 }
 
 message PackageOptions {
@@ -448,7 +464,7 @@ message Workspaces {
     WORKSPACES_LOG_WRITE_FAILURE = 2 [(metadata) = { exit_code: 36 }];
 
     // See `managed_directories` in
-    // https://docs.bazel.build/versions/main/skylark/lib/globals.html#workspace.
+    // https://bazel.build/rules/lib/globals#workspace.
     ILLEGAL_WORKSPACE_FILE_SYMLINK_WITH_MANAGED_DIRECTORIES = 3
         [(metadata) = { exit_code: 1 }];
     WORKSPACE_FILE_READ_FAILURE_WITH_MANAGED_DIRECTORIES = 4
@@ -665,6 +681,10 @@ message Query {
     INVALID_LABEL_IN_TEST_SUITE = 39 [(metadata) = { exit_code: 7 }];
     // Indicates any usage of flags that must not be combined.
     ILLEGAL_FLAG_COMBINATION = 40 [(metadata) = { exit_code: 2 }];
+    // Indicates a non-detailed exception that halted a query. This is a
+    // deficiency in Blaze/Bazel and code should be changed to attach a detailed
+    // exit code to this failure mode.
+    NON_DETAILED_ERROR = 41 [(metadata) = { exit_code: 1 }];
 
     reserved 7 to 12; // For internal use
   }
@@ -793,6 +813,7 @@ message ActionQuery {
         [(metadata) = { exit_code: 2 }];
     SKYFRAME_STATE_AFTER_EXECUTION = 12 [(metadata) = { exit_code: 1 }];
     LABELS_FUNCTION_NOT_SUPPORTED = 13 [(metadata) = { exit_code: 2 }];
+    TEMPLATE_EXPANSION_FAILURE = 14 [(metadata) = { exit_code: 2 }];
   }
 
   Code code = 1;
@@ -1166,6 +1187,7 @@ message Analysis {
     ASPECT_CREATION_FAILED = 17 [(metadata) = { exit_code: 1 }];
     CONFIGURED_VALUE_CREATION_FAILED = 18 [(metadata) = { exit_code: 1 }];
     INCOMPATIBLE_TARGET_REQUESTED = 19 [(metadata) = { exit_code: 1 }];
+    ANALYSIS_FAILURE_PROPAGATION_FAILED = 20 [(metadata) = { exit_code: 1 }];
   }
 
   Code code = 1;
@@ -1244,6 +1266,7 @@ message StarlarkLoading {
     IO_ERROR = 7 [(metadata) = { exit_code: 1 }];
     LABEL_CROSSES_PACKAGE_BOUNDARY = 8 [(metadata) = { exit_code: 1 }];
     BUILTINS_ERROR = 9 [(metadata) = { exit_code: 1 }];
+    VISIBILITY_ERROR = 10 [(metadata) = { exit_code: 1 }];
   }
 
   Code code = 1;
@@ -1266,6 +1289,17 @@ message DiffAwareness {
   enum Code {
     DIFF_AWARENESS_UNKNOWN = 0 [(metadata) = { exit_code: 37 }];
     DIFF_STAT_FAILED = 1 [(metadata) = { exit_code: 36 }];
+  }
+
+  Code code = 1;
+}
+
+message ModqueryCommand {
+  enum Code {
+    MODQUERY_COMMAND_UNKNOWN = 0 [(metadata) = { exit_code: 37 }];
+    MISSING_ARGUMENTS = 1 [(metadata) = { exit_code: 2 }];
+    TOO_MANY_ARGUMENTS = 2 [(metadata) = { exit_code: 2 }];
+    INVALID_ARGUMENTS = 3 [(metadata) = { exit_code: 2 }];
   }
 
   Code code = 1;

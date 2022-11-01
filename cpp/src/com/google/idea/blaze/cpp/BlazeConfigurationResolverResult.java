@@ -31,7 +31,7 @@ final class BlazeConfigurationResolverResult {
 
   private final ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration>
       uniqueResolveConfigurations;
-  final ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings;
+  private final ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings;
   private final ImmutableSet<File> validHeaderRoots;
 
   private BlazeConfigurationResolverResult(
@@ -54,6 +54,14 @@ final class BlazeConfigurationResolverResult {
 
   ImmutableList<BlazeResolveConfiguration> getAllConfigurations() {
     return uniqueResolveConfigurations.values().asList();
+  }
+
+  ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration> getConfigurationMap() {
+    return uniqueResolveConfigurations;
+  }
+
+  ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> getCompilerSettings() {
+    return compilerSettings;
   }
 
   boolean isValidHeaderRoot(File absolutePath) {

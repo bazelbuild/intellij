@@ -19,8 +19,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.BlazeTestCase;
-import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
-import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectView;
@@ -52,15 +50,12 @@ public class BlazeKotlinSyncPluginTest extends BlazeTestCase {
   protected void initTest(
       @NotNull Container applicationServices, @NotNull Container projectServices) {
     super.initTest(applicationServices, projectServices);
-    ExtensionPointImpl<BuildSystemProvider> buildSystems =
-        registerExtensionPoint(BuildSystemProvider.EP_NAME, BuildSystemProvider.class);
-    buildSystems.registerExtension(new BazelBuildSystemProvider());
 
     ExtensionPointImpl<BlazeSyncPlugin> syncPlugins =
         registerExtensionPoint(BlazeSyncPlugin.EP_NAME, BlazeSyncPlugin.class);
     syncPlugins.registerExtension(new BlazeJavaSyncPlugin());
     syncPlugins.registerExtension(new BlazeKotlinSyncPlugin());
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
   }
 

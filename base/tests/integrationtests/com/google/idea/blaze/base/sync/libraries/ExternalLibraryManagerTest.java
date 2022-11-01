@@ -145,7 +145,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
     mockSync(SyncResult.SUCCESS);
     assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isNotEmpty();
 
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     syncListener.onSyncStart(getProject(), context, SyncMode.INCREMENTAL);
     assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isEmpty();
 
@@ -166,7 +166,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
     mockSync(SyncResult.SUCCESS);
     assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isNotEmpty();
 
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     syncListener.onSyncStart(getProject(), context, SyncMode.INCREMENTAL);
     assertThat(libraryProvider.getAdditionalProjectLibraries(getProject())).isEmpty();
 
@@ -176,7 +176,7 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
   }
 
   private void mockSync(SyncResult syncResult) throws Exception {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     syncListener.onSyncStart(getProject(), context, SyncMode.INCREMENTAL);
     if (syncResult.successful()) {
       syncPlugin.refreshExecutionRoot(getProject(), MockBlazeProjectDataBuilder.builder().build());

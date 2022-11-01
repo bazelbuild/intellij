@@ -17,6 +17,7 @@ package com.google.idea.blaze.android.run.test;
 
 import com.android.tools.idea.run.AndroidProgramRunner;
 import com.android.tools.idea.run.AndroidSessionInfo;
+import com.android.tools.idea.run.AndroidSessionInfoCompat;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.intellij.execution.ExecutionException;
@@ -67,7 +68,7 @@ public class BlazeAndroidTestProgramRunner extends AndroidProgramRunner {
       RunConfiguration runConfiguration =
           (runProfile instanceof RunConfiguration) ? (RunConfiguration) runProfile : null;
       AndroidSessionInfo sessionInfo =
-          AndroidSessionInfo.create(
+          AndroidSessionInfoCompat.create(
               processHandler,
               descriptor,
               runConfiguration,

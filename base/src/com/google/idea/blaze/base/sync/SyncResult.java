@@ -19,7 +19,10 @@ package com.google.idea.blaze.base.sync;
 public enum SyncResult {
   /** Full success */
   SUCCESS(true),
-  /** The user has errors in their BUILD files or compilation errors */
+  /**
+   * The user has errors in their BUILD files, compilation errors, or a one of the shards fails to
+   * complete
+   */
   PARTIAL_SUCCESS(true),
   /** The user cancelled */
   CANCELLED(false),

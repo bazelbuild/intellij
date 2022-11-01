@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.aspect.cpp.cclibrary;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.truth.Truth.assertThat;
 
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.IntellijAspectTestFixture;
@@ -69,11 +70,16 @@ public class CcLibraryTest extends BazelIntellijAspectTest {
   public void testCcLibraryHasToolchain() throws Exception {
     IntellijAspectTestFixture testFixture = loadTestFixture(":simple_fixture");
     List<TargetIdeInfo> toolchains =
-        testFixture
-            .getTargetsList()
-            .stream()
-            .filter(TargetIdeInfo::hasCToolchainIdeInfo)
+        testFixture.getTargetsList().stream()
+            .filter(x -> x.hasCToolchainIdeInfo() && x.getKindString().equals("cc_toolchain_alias"))
             .collect(Collectors.toList());
+    // TODO(b/200011173): Remove once Blaze/Bazel has been released with Starlark cc_library.
+    if (toolchains.isEmpty()) {
+      toolchains =
+          testFixture.getTargetsList().stream()
+              .filter(TargetIdeInfo::hasCToolchainIdeInfo)
+              .collect(toImmutableList());
+    }
     assertThat(toolchains).hasSize(1);
 
     TargetIdeInfo target = findTarget(testFixture, ":simple");

@@ -15,11 +15,10 @@
  */
 package com.google.idea.blaze.java.sync.importer;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BuildSystem;
-import java.util.List;
 
 /**
  * Derives an {@link ArtifactLocation} from a workspace-root relative paths, possibly representing a
@@ -35,7 +34,9 @@ final class ExecutionPathHelper {
 
   /** Parse an {@link ArtifactLocation} from an execution-root-relative path. */
   static ArtifactLocation parse(
-      WorkspaceRoot root, BuildSystem buildSystem, String executionRootRelativePath) {
+      WorkspaceRoot root,
+      BuildSystemProvider buildSystemProvider,
+      String executionRootRelativePath) {
     // Bazel should always use '/' as the file separator char for these paths.
     int firstSep = executionRootRelativePath.indexOf('/');
     if (firstSep < 0) {
@@ -52,8 +53,7 @@ final class ExecutionPathHelper {
           .setRelativePath(executionRootRelativePath)
           .build();
     }
-    List<String> outputDirs =
-        BuildSystemProvider.getBuildSystemProvider(buildSystem).buildArtifactDirectories(root);
+    ImmutableList<String> outputDirs = buildSystemProvider.buildArtifactDirectories(root);
     boolean isSource = !outputDirs.contains(firstPathComponent);
     if (isSource) {
       return ArtifactLocation.builder()

@@ -21,7 +21,6 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
@@ -61,18 +60,12 @@ public final class FastBuildCompilerFactoryImplTest {
   private static final File FAST_BUILD_JAVAC_JAR =
       new File(System.getProperty("fast_build_javac.jar"));
   private static final File GUAVA_JAR = new File(System.getProperty("guava.jar"));
-  private static final File JDK_TOOLS_JAR = new File(System.getProperty("jdk_tools.jar"));
   private static final File TRUTH_JAR = new File(System.getProperty("truth.jar"));
   private static final String WORKSPACE_NAME = "io_bazel";
 
-  private static ImmutableList<ArtifactLocation> getJavacJars() {
-    return ImmutableList.of(
-        ArtifactLocation.builder().setRelativePath(JDK_TOOLS_JAR.getPath()).build());
-  }
-
   private static final JavaToolchainInfo JAVA_TOOLCHAIN =
       JavaToolchainInfo.create(
-          getJavacJars(),
+          /* javacJars= */ ImmutableList.of(),
           /* bootJars= */ ImmutableList.of(),
           /* sourceVersion= */ "8",
           /* targetVersion= */ "8");
@@ -86,7 +79,6 @@ public final class FastBuildCompilerFactoryImplTest {
     checkState(AUTO_VALUE_PLUGIN_JAR.exists());
     checkState(GUAVA_JAR.exists());
     checkState(FAST_BUILD_JAVAC_JAR.exists());
-    checkState(JDK_TOOLS_JAR.exists());
     checkState(TRUTH_JAR.exists());
   }
 
@@ -157,7 +149,7 @@ public final class FastBuildCompilerFactoryImplTest {
             .setJavaInfo(JAVA_LIBRARY_WITHOUT_SOURCES)
             .setJavaToolchainInfo(
                 JavaToolchainInfo.create(
-                    getJavacJars(),
+                    /* javacJars= */ ImmutableList.of(),
                     /* bootJars= */ ImmutableList.of(),
                     /* sourceVersion= */ "12345",
                     /* targetVersion= */ "9876"))
@@ -291,13 +283,11 @@ public final class FastBuildCompilerFactoryImplTest {
     try {
       getCompiler(
               JavaToolchainInfo.create(
-                  getJavacJars(),
+                  /* javacJars= */ ImmutableList.of(),
                   /* bootJars= */ ImmutableList.of(),
                   /* sourceVersion= */ "7",
                   /* targetVersion= */ "8"))
-          .compile(
-              createBlazeContext(javacOutput),
-              createCompileInstructions(java, javacOutput).build());
+          .compile(createBlazeContext(javacOutput), createCompileInstructions(java).build());
       fail("Should have thrown FastBuildIncrementalCompileException");
     } catch (FastBuildIncrementalCompileException e) {
       assertThat(javacOutput.toString()).contains("lambda");
@@ -325,7 +315,7 @@ public final class FastBuildCompilerFactoryImplTest {
     try {
       compiler.compile(
           createBlazeContext(javacOutput),
-          createCompileInstructions(java, javacOutput, AUTO_VALUE_JAR)
+          createCompileInstructions(java, AUTO_VALUE_JAR)
               .annotationProcessorClasspath(ImmutableSet.of(AUTO_VALUE_PLUGIN_JAR))
               .annotationProcessorClassNames(ImmutableSet.of(AUTO_VALUE_PROCESSOR))
               .build());
@@ -338,19 +328,17 @@ public final class FastBuildCompilerFactoryImplTest {
       throws IOException, FastBuildException {
     getCompiler()
         .compile(
-            createBlazeContext(javacOutput),
-            createCompileInstructions(source, javacOutput, classpath).build());
+            createBlazeContext(javacOutput), createCompileInstructions(source, classpath).build());
   }
 
-  private CompileInstructions.Builder createCompileInstructions(
-      String source, Writer javacOutput, File... classpath) throws IOException {
+  private CompileInstructions.Builder createCompileInstructions(String source, File... classpath)
+      throws IOException {
     Path outputDirectory = createOutputDirectory();
     Path javaFile = createJavaFile(source);
     return CompileInstructions.builder()
         .outputDirectory(outputDirectory.toFile())
         .filesToCompile(ImmutableList.of(javaFile.toFile()))
-        .classpath(ImmutableList.copyOf(classpath))
-        .outputWriter(javacOutput);
+        .classpath(ImmutableList.copyOf(classpath));
   }
 
   private Path createJavaFile(String java) throws IOException {
@@ -394,7 +382,8 @@ public final class FastBuildCompilerFactoryImplTest {
   }
 
   private static BlazeContext createBlazeContext(Writer javacOutput) {
-    return new BlazeContext().addOutputSink(PrintOutput.class, new WritingOutputSink(javacOutput));
+    return BlazeContext.create()
+        .addOutputSink(PrintOutput.class, new WritingOutputSink(javacOutput));
   }
 
   private static class WritingOutputSink implements OutputSink<PrintOutput> {

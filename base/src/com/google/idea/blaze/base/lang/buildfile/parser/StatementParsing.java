@@ -43,12 +43,10 @@ public class StatementParsing extends Parsing {
     }
   }
 
-  // Unlike in Python grammar, 'load' and 'def' are only allowed as a top-level statement
+  // Unlike in Python grammar, 'load' is only allowed as a top-level statement
   public void parseTopLevelStatement() {
     if (currentToken() == TokenKind.IDENTIFIER && "load".equals(builder.getTokenText())) {
       parseLoadStatement();
-    } else if (currentToken() == TokenKind.DEF) {
-      parseFunctionDefStatement();
     } else {
       parseStatement();
     }
@@ -57,7 +55,9 @@ public class StatementParsing extends Parsing {
   // simple_stmt | compound_stmt
   public void parseStatement() {
     TokenKind current = currentToken();
-    if (current == TokenKind.IF) {
+    if (currentToken() == TokenKind.DEF) {
+      parseFunctionDefStatement();
+    } else if (current == TokenKind.IF) {
       parseIfStatement();
     } else if (current == TokenKind.FOR) {
       parseForStatement();

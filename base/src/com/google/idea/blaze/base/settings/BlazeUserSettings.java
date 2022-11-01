@@ -62,6 +62,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
       SystemInfo.isMac ? "/usr/local/bin/blaze" : "/usr/bin/blaze";
   private static final String DEFAULT_BLAZE_PATH = "blaze";
   private static final String DEFAULT_BAZEL_PATH = "bazel";
+  private static final String DEFAULT_BUILDIFIER_PATH = "buildifier";
 
   private FocusBehavior showBlazeConsoleOnSync = FocusBehavior.ALWAYS;
   private FocusBehavior showBlazeProblemsViewOnSync = FocusBehavior.ALWAYS;
@@ -71,10 +72,13 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean expandSyncToWorkingSet = true;
   private boolean showPerformanceWarnings = false;
   private boolean collapseProjectView = true;
+
+  private boolean selectNewestChildTask = false;
   private boolean formatBuildFilesOnSave = true;
   private boolean showAddFileToProjectNotification = true;
   private String blazeBinaryPath = DEFAULT_BLAZE_PATH;
   private String bazelBinaryPath = DEFAULT_BAZEL_PATH;
+  private String buildifierBinaryPath = DEFAULT_BUILDIFIER_PATH;
 
   public static BlazeUserSettings getInstance() {
     return ServiceManager.getService(BlazeUserSettings.class);
@@ -164,6 +168,15 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
         || OLD_DEFAULT_BLAZE_PATH.equals(getBlazeBinaryPath());
   }
 
+  public String getBuildifierBinaryPath() {
+    return StringUtil.defaultIfEmpty(buildifierBinaryPath, DEFAULT_BUILDIFIER_PATH).trim();
+  }
+
+  public void setBuildifierBinaryPath(String buildifierBinaryPath) {
+    this.buildifierBinaryPath =
+        StringUtil.defaultIfEmpty(buildifierBinaryPath, DEFAULT_BUILDIFIER_PATH).trim();
+  }
+
   public String getBazelBinaryPath() {
     return StringUtil.defaultIfEmpty(bazelBinaryPath, DEFAULT_BAZEL_PATH).trim();
   }
@@ -178,6 +191,14 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setCollapseProjectView(boolean collapseProjectView) {
     this.collapseProjectView = collapseProjectView;
+  }
+
+  public boolean getSelectNewestChildTask() {
+    return selectNewestChildTask;
+  }
+
+  public void setSelectNewestChildTask(boolean selectNewestChildTask) {
+    this.selectNewestChildTask = selectNewestChildTask;
   }
 
   public boolean getFormatBuildFilesOnSave() {
@@ -225,6 +246,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
           Boolean.toString(settings.showAddFileToProjectNotification));
       builder.put("blazeBinaryPath", settings.blazeBinaryPath);
       builder.put("bazelBinaryPath", settings.bazelBinaryPath);
+      builder.put("buildifierBinaryPath", settings.buildifierBinaryPath);
       return builder.build();
     }
   }

@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.ForwardingListenableFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.lang.buildfile.validation.GlobPatternValidator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -229,6 +230,7 @@ public final class UnixGlob {
      *
      * <p>For a description of the syntax of the patterns, see {@link UnixGlob}.
      */
+    @CanIgnoreReturnValue
     public Builder addPattern(String pattern) {
       this.patterns.add(pattern);
       return this;
@@ -239,6 +241,7 @@ public final class UnixGlob {
      *
      * <p>For a description of the syntax of the patterns, see {@link UnixGlob}.
      */
+    @CanIgnoreReturnValue
     public Builder addPatterns(String... patterns) {
       Collections.addAll(this.patterns, patterns);
       return this;
@@ -249,6 +252,7 @@ public final class UnixGlob {
      *
      * <p>For a description of the syntax of the patterns, see {@link UnixGlob}.
      */
+    @CanIgnoreReturnValue
     public Builder addPatterns(Collection<String> patterns) {
       this.patterns.addAll(patterns);
       return this;
@@ -259,6 +263,7 @@ public final class UnixGlob {
      *
      * <p>For a description of the syntax of the patterns, see {@link UnixGlob}.
      */
+    @CanIgnoreReturnValue
     public Builder addExcludes(String... excludes) {
       Collections.addAll(this.excludes, excludes);
       return this;
@@ -269,12 +274,14 @@ public final class UnixGlob {
      *
      * <p>For a description of the syntax of the patterns, see {@link UnixGlob}.
      */
+    @CanIgnoreReturnValue
     public Builder addExcludes(Collection<String> excludes) {
       this.excludes.addAll(excludes);
       return this;
     }
 
     /** If set to true, directories are not returned in the glob result. */
+    @CanIgnoreReturnValue
     public Builder setExcludeDirectories(boolean excludeDirectories) {
       this.excludeDirectories = excludeDirectories;
       return this;
@@ -284,6 +291,7 @@ public final class UnixGlob {
      * Sets the threadpool to use for parallel glob evaluation. If unset, evaluation is done
      * in-thread.
      */
+    @CanIgnoreReturnValue
     public Builder setThreadPool(ThreadPoolExecutor pool) {
       this.threadPool = pool;
       return this;
@@ -294,6 +302,7 @@ public final class UnixGlob {
      * the corresponding item is not returned in the output and directories are not traversed
      * either.
      */
+    @CanIgnoreReturnValue
     public Builder setDirectoryFilter(Predicate<File> pathFilter) {
       this.pathFilter = pathFilter;
       return this;

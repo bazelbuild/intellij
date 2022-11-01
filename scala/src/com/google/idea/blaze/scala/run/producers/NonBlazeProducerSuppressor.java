@@ -44,7 +44,7 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
     }
   }
 
-  private static void suppressProducers(Project project) {
+  static void suppressProducers(Project project) {
     RunConfigurationProducerService producerService =
         RunConfigurationProducerService.getInstance(project);
     PRODUCERS_TO_SUPPRESS.forEach(producerService::addIgnoredProducer);

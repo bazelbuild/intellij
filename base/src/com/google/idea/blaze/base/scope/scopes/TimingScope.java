@@ -15,9 +15,9 @@
  */
 package com.google.idea.blaze.base.scope.scopes;
 
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScopeListener.TimedEvent;
@@ -93,6 +93,7 @@ public class TimingScope implements BlazeScope {
   }
 
   /** Adds a TimingScope listener to its list of listeners. */
+  @CanIgnoreReturnValue
   public TimingScope addScopeListener(TimingScopeListener listener) {
     scopeListeners.add(listener);
     return this;

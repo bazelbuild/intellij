@@ -22,6 +22,7 @@ import com.jetbrains.cidr.lang.psi.OCFile;
 import com.jetbrains.cidr.lang.psi.OCReferenceElement;
 import com.jetbrains.cidr.lang.quickfixes.OCImportSymbolFix;
 import com.jetbrains.cidr.lang.quickfixes.OCImportSymbolFix.AutoImportItem;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -34,6 +35,7 @@ import org.junit.runners.JUnit4;
 public class BlazeCppAutoImportHelperTest extends BlazeCppResolvingTestCase {
 
   @Test
+  @Ignore("b/156117635")
   public void stlPathsUnderWorkspaceRoot_importStlHeader() {
     // Normally this is <vector> without .h, but we need to trick the file type detector into
     // realizing that this is an OCFile.

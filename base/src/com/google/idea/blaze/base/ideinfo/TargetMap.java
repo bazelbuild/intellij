@@ -78,4 +78,8 @@ public final class TargetMap implements ProtoWrapper<ProjectData.TargetMap> {
   public int hashCode() {
     return Objects.hash(targetMap);
   }
+
+  public int size() {
+    return this.targetMap.size();
+  }
 }

@@ -82,6 +82,6 @@ public class PyDynamicImportResolverInitializer implements ApplicationComponent 
 
   private static boolean providerEnabled(Project project, PyImportResolverStrategy provider) {
     return Blaze.isBlazeProject(project)
-        && provider.appliesToBuildSystem(Blaze.getBuildSystem(project));
+        && provider.appliesToBuildSystem(Blaze.getBuildSystemName(project));
   }
 }

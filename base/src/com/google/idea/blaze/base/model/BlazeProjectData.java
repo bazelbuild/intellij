@@ -20,7 +20,7 @@ import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceState;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -67,8 +67,8 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
 
   @VisibleForTesting
   public static BlazeProjectData fromProto(
-      BuildSystem buildSystem, ProjectData.BlazeProjectData proto) {
-    BlazeInfo blazeInfo = BlazeInfo.fromProto(buildSystem, proto.getBlazeInfo());
+      BuildSystemName buildSystemName, ProjectData.BlazeProjectData proto) {
+    BlazeInfo blazeInfo = BlazeInfo.fromProto(buildSystemName, proto.getBlazeInfo());
     WorkspacePathResolver workspacePathResolver =
         WorkspacePathResolver.fromProto(proto.getWorkspacePathResolver());
     ProjectTargetData targetData = parseTargetData(proto);
@@ -145,10 +145,10 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
     return syncState;
   }
 
-  public static BlazeProjectData loadFromDisk(BuildSystem buildSystem, File file)
+  public static BlazeProjectData loadFromDisk(BuildSystemName buildSystemName, File file)
       throws IOException {
     try (InputStream stream = new GZIPInputStream(new FileInputStream(file))) {
-      return fromProto(buildSystem, ProjectData.BlazeProjectData.parseFrom(stream));
+      return fromProto(buildSystemName, ProjectData.BlazeProjectData.parseFrom(stream));
     }
   }
 

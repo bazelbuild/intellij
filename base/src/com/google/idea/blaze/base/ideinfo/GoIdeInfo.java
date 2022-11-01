@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.ideinfo;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
@@ -47,23 +48,16 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
         ProtoWrapper.map(proto.getSourcesList(), ArtifactLocation::fromProto),
         ImportPathReplacer.fixImportPath(
             Strings.emptyToNull(proto.getImportPath()), targetLabel, targetKind),
-        extractLibraryLabels(
-            targetKind,
-            proto.getLibraryLabelsList(),
-            Strings.emptyToNull(proto.getLibraryLabel())));
+        extractLibraryLabels(targetKind, proto.getLibraryLabelsList()));
   }
 
-  private static ImmutableList<Label> extractLibraryLabels(
-      Kind kind, List<String> libraryLabels, @Nullable String libraryLabel) {
-    if (!kind.hasLanguage(LanguageClass.GO) || kind.getRuleType() != RuleType.TEST) {
+  private static ImmutableList<Label> extractLibraryLabels(Kind kind, List<String> libraryLabels) {
+    if (!kind.hasLanguage(LanguageClass.GO)
+        || kind.getRuleType() != RuleType.TEST
+        || libraryLabels.isEmpty()) {
       return ImmutableList.of();
     }
-    if (!libraryLabels.isEmpty()) {
-      return libraryLabels.stream().map(Label::create).collect(ImmutableList.toImmutableList());
-    } else if (libraryLabel != null) {
-      return ImmutableList.of(Label.create(libraryLabel));
-    }
-    return ImmutableList.of();
+    return libraryLabels.stream().map(Label::create).collect(ImmutableList.toImmutableList());
   }
 
   @Override
@@ -98,16 +92,19 @@ public final class GoIdeInfo implements ProtoWrapper<IntellijIdeInfo.GoIdeInfo> 
     @Nullable private String importPath = null;
     private final ImmutableList.Builder<Label> libraryLabels = ImmutableList.builder();
 
+    @CanIgnoreReturnValue
     public Builder addSource(ArtifactLocation source) {
       this.sources.add(source);
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setImportPath(String importPath) {
       this.importPath = importPath;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addLibraryLabel(String libraryLabel) {
       this.libraryLabels.add(Label.create(libraryLabel));
       return this;

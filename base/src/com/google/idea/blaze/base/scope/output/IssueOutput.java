@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.scope.output;
 
 import com.google.common.base.Objects;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Output;
 import com.intellij.openapi.util.TextRange;
@@ -73,26 +74,31 @@ public class IssueOutput implements Output {
       this.message = message;
     }
 
+    @CanIgnoreReturnValue
     public Builder inFile(@Nullable File file) {
       this.file = file;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder onLine(int line) {
       this.line = line;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder inColumn(int column) {
       this.column = column;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder navigatable(@Nullable Navigatable navigatable) {
       this.navigatable = navigatable;
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder consoleHyperlinkRange(@Nullable TextRange consoleHyperlinkRange) {
       this.consoleHyperlinkRange = consoleHyperlinkRange;
       return this;

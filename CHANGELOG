@@ -1,6 +1,87 @@
-v2021.10.19
+v2022.11.01
+===========
+* Enable the Autoscroll to console by default #4006
+* Support Starlark nested function definitions #4035
+* Internal cleanup to support IJ 2022.3
+
+v2022.10.18
+===========
+* Allow running single Scalatest method in IntelliJ
+* Internal cleanup
+
+v2022.10.04
+===========
+* Fix the native rules documentation URL
+* Fix fast-test rerun notification
+
+v2022.09.20
+===========
+* Set project data directory based on IDE product for project auto-import #3901
+* Added registry key to disable project auto-import #3885
+
+v2022.09.07
+===========
+* Restrict printing sponge links of build shards only to blaze builds(fixes #3877)
+
+v2022.08.24
+===========
+* Display Go external libraries in tree structure (currently experimental)
+* Remove --nolaunch_app flag to fix running mobile-install
+* Oldest supported Bazel version will be upgraded to 1.2.0
+
+v2022.08.09
+===========
+* Automatically import projects from directory.
+* Roll out Kotlin coroutines debugging to 50% of users
+* Roll out the new sync window to 50% of users
+* Fix Blaze target highlighting in the integrated terminal
+
+v2022.06.28
 ===========
 * Bug fixes and internal cleanup.
+
+v2022.06.14
+===========
+* Kotlin: Fix the detection of which test target to run for a newly created
+  Kotlin test. This allows the test to be run without requiring a Blaze sync.
+
+v2022.05.03
+===========
+* Added ALT+SHIFT+Y hotkey for running full Bazel syncs.
+* [Beta+Stable channel] IntelliJ + CLion: Fully switched to 2022.1.
+
+v2022.04.20
+===========
+* Add ALT+y hotkey for running a Bazel sync (⌥+y on Mac).
+
+v2022.04.05
+===========
+* Go: Fix debugging for go_test targets.
+
+v2022.03.22
+===========
+* Bug fixes and internal cleanup.
+
+v2022.03.08
+===========
+* [2021.3] Kotlin tests: Fixed suggestion of run configurations.
+
+v2022.02.22
+===========
+* Adapt Bazel plugin to the upcoming Starlark cc_library change.
+
+v2022.01.25
+===========
+* [Beta+Stable channel] CLion: Compatible with CLion 2021.3.
+* [Beta+Stable channel] IntelliJ: Compatible with IntelliJ 2021.3.
+
+v2022.01.11
+===========
+* Don’t ship a buildifier (formatter for BUILD files) binary.
+  * Users will now be shown a notification in case the buildifier binary is not
+    available with a link to a guide on how to install it.
+  * Allow specifying a custom buildifier binary.
+
 
 v2021.10.05
 ===========

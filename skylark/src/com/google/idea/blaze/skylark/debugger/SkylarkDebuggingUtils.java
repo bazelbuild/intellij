@@ -17,7 +17,7 @@ package com.google.idea.blaze.skylark.debugger;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
@@ -43,7 +43,7 @@ public final class SkylarkDebuggingUtils {
       return false;
     }
     // available in the earliest-supported version of bazel
-    if (blazeVersion.buildSystem() != BuildSystem.Blaze) {
+    if (blazeVersion.buildSystem() != BuildSystemName.Blaze) {
       return true;
     }
     return !blazeVersion.blazeVersionIsKnown()

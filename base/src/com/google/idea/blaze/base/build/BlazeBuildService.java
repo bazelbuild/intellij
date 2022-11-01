@@ -23,11 +23,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
+import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.experiments.ExperimentScope;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -37,7 +39,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedFunction;
 import com.google.idea.blaze.base.scope.ScopedTask;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
@@ -47,7 +48,6 @@ import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.SyncProjectTargetsHelper;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
@@ -82,9 +82,11 @@ public class BlazeBuildService {
   }
 
   private final Project project;
+  private final BuildSystem buildSystem;
 
   public BlazeBuildService(Project project) {
     this.project = project;
+    this.buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
   }
 
   public void buildFile(String fileName, ImmutableCollection<Label> targets) {
@@ -106,7 +108,8 @@ public class BlazeBuildService {
         context -> Lists.newArrayList(targets),
         new NotificationScope(
             project, "Make", title, title + " completed successfully", title + " failed"),
-        title);
+        title,
+        buildSystem);
   }
 
   public void buildProject() {
@@ -150,7 +153,8 @@ public class BlazeBuildService {
             "Make project",
             "Make project completed successfully",
             "Make project failed"),
-        "Make project");
+        "Make project",
+        buildSystem);
 
     // In case the user touched a file, but didn't change its content. The user will get a false
     // positive for class file out of date. We need a way for the user to suppress the false
@@ -164,7 +168,8 @@ public class BlazeBuildService {
       BlazeProjectData projectData,
       ScopedFunction<List<TargetExpression>> targetsFunction,
       NotificationScope notificationScope,
-      String taskName) {
+      String taskName,
+      BuildSystem buildSystem) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // a gross hack to avoid breaking change detector tests. We had a few tests which relied on
       // this never being called *and* relied on PROJECT_LAST_BUILD_TIMESTAMP_KEY being set
@@ -178,7 +183,7 @@ public class BlazeBuildService {
                 new ScopedTask<Void>() {
                   @Override
                   public Void execute(BlazeContext context) {
-                    Task task = new Task(taskName, Task.Type.BLAZE_MAKE);
+                    Task task = new Task(project, taskName, Task.Type.MAKE);
                     context
                         .push(
                             new ToolWindowScope.Builder(project, task)
@@ -189,15 +194,6 @@ public class BlazeBuildService {
                                         BlazeInvocationContext.ContextType.Sync))
                                 .build())
                         .push(new ExperimentScope())
-                        .push(
-                            new BlazeConsoleScope.Builder(project)
-                                .addConsoleFilters(
-                                    new IssueOutputFilter(
-                                        project,
-                                        WorkspaceRoot.fromProject(project),
-                                        BlazeInvocationContext.ContextType.Sync,
-                                        true))
-                                .build())
                         .push(new ProblemsViewScope(project, problemsViewFocus))
                         .push(new IdeaLogScope())
                         .push(new TimingScope("Make", EventType.BlazeInvocation))
@@ -208,21 +204,23 @@ public class BlazeBuildService {
                       return null;
                     }
 
-                    BlazeBuildParams buildParams = BlazeBuildParams.fromProject(project);
                     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
 
                     SaveUtil.saveAllFiles();
                     BlazeBuildListener.EP_NAME.extensions().forEach(e -> e.buildStarting(project));
+
+                    BuildInvoker buildInvoker = buildSystem.getBuildInvoker(project, context);
 
                     ShardedTargetsResult shardedTargets =
                         BlazeBuildTargetSharder.expandAndShardTargets(
                             project,
                             context,
                             workspaceRoot,
-                            buildParams,
                             projectView,
                             projectData.getWorkspacePathResolver(),
-                            targets);
+                            targets,
+                            buildInvoker,
+                            SyncStrategy.SERIAL);
                     if (shardedTargets.buildResult.status == BuildResult.Status.FATAL_ERROR) {
                       return null;
                     }
@@ -233,12 +231,12 @@ public class BlazeBuildService {
                                 context,
                                 workspaceRoot,
                                 projectData.getBlazeVersionData(),
-                                buildParams,
+                                buildInvoker,
                                 projectView,
-                                projectData.getBlazeInfo(),
                                 shardedTargets.shardedTargets,
                                 projectData.getWorkspaceLanguageSettings(),
-                                ImmutableSet.of(OutputGroup.COMPILE));
+                                ImmutableSet.of(OutputGroup.COMPILE),
+                                BlazeInvocationContext.OTHER_CONTEXT);
 
                     refreshFileCachesAndNotifyListeners(context, buildOutputs, project);
 

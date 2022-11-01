@@ -39,7 +39,9 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Parses issues from blaze output, forwarding to {@link TasksToolWindowService}.
+ * A {@link Filter} to identify issues in the Blaze output. The identified issues will be shown in
+ * the {@link BuildTasksProblemsView}. Such reported issues allow navigating to the corresponding
+ * line in the console output of a task if the connection between them is known.
  *
  * <p>Copy and replacement of {@link IssueOutputFilter}.
  */
@@ -47,27 +49,28 @@ public class ToolWindowTaskIssueOutputFilter implements Filter {
 
   private final Project project;
   private final BlazeIssueParser issueParser;
-  private final boolean linkToBlazeConsole;
-  private final Task task;
+  @Nullable private final Task linkedTask;
 
-  public ToolWindowTaskIssueOutputFilter(
+  public static ToolWindowTaskIssueOutputFilter createWithDefaultParsers(
       Project project,
       WorkspaceRoot workspaceRoot,
-      BlazeInvocationContext.ContextType invocationContext,
-      Task task) {
-    this(
+      BlazeInvocationContext.ContextType invocationContext) {
+    return new ToolWindowTaskIssueOutputFilter(
         project,
         BlazeIssueParser.defaultIssueParsers(project, workspaceRoot, invocationContext),
-        task,
-        true);
+        null);
   }
 
-  public ToolWindowTaskIssueOutputFilter(
-      Project project, ImmutableList<Parser> parsers, Task task, boolean linkToBlazeConsole) {
+  public static ToolWindowTaskIssueOutputFilter createWithLinkToTask(
+      Project project, ImmutableList<Parser> parsers, Task task) {
+    return new ToolWindowTaskIssueOutputFilter(project, parsers, task);
+  }
+
+  private ToolWindowTaskIssueOutputFilter(
+      Project project, ImmutableList<Parser> parsers, @Nullable Task task) {
     this.issueParser = new BlazeIssueParser(parsers);
     this.project = project;
-    this.linkToBlazeConsole = linkToBlazeConsole;
-    this.task = task;
+    this.linkedTask = task;
   }
 
   @Nullable
@@ -79,10 +82,12 @@ public class ToolWindowTaskIssueOutputFilter implements Filter {
     }
     List<ResultItem> links = new ArrayList<>();
     int offset = entireLength - line.length();
-    if (linkToBlazeConsole) {
+    if (linkedTask != null) {
       ResultItem dummyResult = dummyResult(offset);
       BuildTasksProblemsView.getInstance(project)
-          .addMessage(issue, openConsoleToHyperlink(dummyResult.getHyperlinkInfo(), offset));
+          .addMessage(
+              issue,
+              openConsoleToHyperlink(project, linkedTask, dummyResult.getHyperlinkInfo(), offset));
       links.add(dummyResult);
     } else {
       BuildTasksProblemsView.getInstance(project).addMessage(issue, null);
@@ -153,7 +158,8 @@ public class ToolWindowTaskIssueOutputFilter implements Filter {
     return resolved != null ? resolved : file;
   }
 
-  private Navigatable openConsoleToHyperlink(HyperlinkInfo link, int originalOffset) {
+  private static Navigatable openConsoleToHyperlink(
+      Project project, Task task, HyperlinkInfo link, int originalOffset) {
     return new Navigatable() {
       @Override
       public void navigate(boolean requestFocus) {

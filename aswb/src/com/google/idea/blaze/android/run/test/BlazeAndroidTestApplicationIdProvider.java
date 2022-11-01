@@ -19,13 +19,13 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
+import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 
 /** Application id provider for android_test and android_instrumentation_test. */
 public class BlazeAndroidTestApplicationIdProvider implements ApplicationIdProvider {
-  private final BlazeApkBuildStep buildStep;
+  private final ApkBuildStep buildStep;
 
-  BlazeAndroidTestApplicationIdProvider(BlazeApkBuildStep buildStep) {
+  BlazeAndroidTestApplicationIdProvider(ApkBuildStep buildStep) {
     this.buildStep = buildStep;
   }
 

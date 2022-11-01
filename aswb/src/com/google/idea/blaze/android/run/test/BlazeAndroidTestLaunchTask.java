@@ -83,7 +83,7 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
 
   private ListenableFuture<Boolean> blazeResult;
 
-  private final BlazeAndroidTestRunContextBase runContext;
+  private final BlazeAndroidTestRunContext runContext;
 
   private final boolean debug;
 
@@ -92,7 +92,7 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
       Label target,
       List<String> buildFlags,
       BlazeAndroidTestFilter testFilter,
-      BlazeAndroidTestRunContextBase runContext,
+      BlazeAndroidTestRunContext runContext,
       boolean debug) {
     this.project = project;
     this.target = target;

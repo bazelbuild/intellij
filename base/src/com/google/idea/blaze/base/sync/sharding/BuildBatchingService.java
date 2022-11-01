@@ -16,9 +16,9 @@
 package com.google.idea.blaze.base.sync.sharding;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.logging.utils.ShardStats.ShardingApproach;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Arrays;
 import java.util.Objects;
@@ -48,7 +48,7 @@ public interface BuildBatchingService {
    */
   @Nullable
   ImmutableList<ImmutableList<Label>> calculateTargetBatches(
-      Set<Label> targets, BuildBinaryType buildType, int suggestedShardSize);
+      Set<Label> targets, SyncStrategy syncStrategy, int suggestedShardSize);
 
   ShardingApproach getShardingApproach();
 
@@ -60,9 +60,9 @@ public interface BuildBatchingService {
    * else falling back to returning a single batch.
    */
   static ShardedTargetList batchTargets(
-      Set<Label> targets, BuildBinaryType buildType, int suggestedShardSize) {
+      Set<Label> targets, SyncStrategy syncStrategy, int suggestedShardSize) {
     return Arrays.stream(EP_NAME.getExtensions())
-        .map(s -> s.getShardedTargetList(targets, buildType, suggestedShardSize))
+        .map(s -> s.getShardedTargetList(targets, syncStrategy, suggestedShardSize))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(
@@ -80,9 +80,9 @@ public interface BuildBatchingService {
    */
   @Nullable
   default ShardedTargetList getShardedTargetList(
-      Set<Label> targets, BuildBinaryType buildType, int suggestedShardSize) {
+      Set<Label> targets, SyncStrategy syncStrategy, int suggestedShardSize) {
     ImmutableList<ImmutableList<Label>> targetBatches =
-        calculateTargetBatches(targets, buildType, suggestedShardSize);
+        calculateTargetBatches(targets, syncStrategy, suggestedShardSize);
     return targetBatches == null
         ? null
         : new ShardedTargetList(targetBatches, getShardingApproach(), suggestedShardSize);

@@ -94,6 +94,7 @@ public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
                     .setJavaSourceFiles(ImmutableSet.of())
                     .setSourceVersion(null)
                     .setEmptyJarTracker(EmptyJarTracker.builder().build())
+                    .setPluginProcessorJars(ImmutableSet.of())
                     .build(),
                 new GlobSet(ImmutableList.of())));
 
@@ -148,6 +149,7 @@ public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
                     .setJavaSourceFiles(ImmutableSet.of())
                     .setSourceVersion(null)
                     .setEmptyJarTracker(EmptyJarTracker.builder().build())
+                    .setPluginProcessorJars(ImmutableSet.of())
                     .build(),
                 new GlobSet(ImmutableList.of())));
 
@@ -190,6 +192,7 @@ public class JavaSourceFolderProviderTest extends BlazeIntegrationTestCase {
                     .setJavaSourceFiles(ImmutableSet.of())
                     .setSourceVersion(null)
                     .setEmptyJarTracker(EmptyJarTracker.builder().build())
+                    .setPluginProcessorJars(ImmutableSet.of())
                     .build(),
                 new GlobSet(ImmutableList.of())));
 

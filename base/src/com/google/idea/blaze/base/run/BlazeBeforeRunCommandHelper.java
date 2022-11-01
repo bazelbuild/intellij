@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -28,7 +29,7 @@ import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.io.TempDirectoryProvider;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
+import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -36,7 +37,6 @@ import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonSt
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.ScopedTask;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -60,7 +60,11 @@ public final class BlazeBeforeRunCommandHelper {
 
   private BlazeBeforeRunCommandHelper() {}
 
-  /** Kicks off the blaze task, returning a corresponding {@link ListenableFuture}. */
+  /**
+   * Kicks off the blaze task, returning a corresponding {@link ListenableFuture}.
+   *
+   * <p>Runs the blaze command on the targets specified in the given {@code configuration}.
+   */
   public static ListenableFuture<BuildResult> runBlazeCommand(
       BlazeCommandName commandName,
       BlazeCommandRunConfiguration configuration,
@@ -69,6 +73,31 @@ public final class BlazeBeforeRunCommandHelper {
       List<String> overridableExtraBlazeFlags,
       BlazeInvocationContext invocationContext,
       String progressMessage) {
+    return runBlazeCommand(
+        commandName,
+        configuration,
+        buildResultHelper,
+        requiredExtraBlazeFlags,
+        overridableExtraBlazeFlags,
+        invocationContext,
+        progressMessage,
+        configuration.getTargets());
+  }
+
+  /**
+   * Runs the given blaze command on the given list of {@code targets} instead of retrieving the
+   * targets from the run {@code configuration}.
+   */
+  public static ListenableFuture<BuildResult> runBlazeCommand(
+      BlazeCommandName commandName,
+      BlazeCommandRunConfiguration configuration,
+      BuildResultHelper buildResultHelper,
+      List<String> requiredExtraBlazeFlags,
+      List<String> overridableExtraBlazeFlags,
+      BlazeInvocationContext invocationContext,
+      String progressMessage,
+      ImmutableList<TargetExpression> targets) {
+
     Project project = configuration.getProject();
     BlazeCommandRunConfigurationCommonState handlerState =
         (BlazeCommandRunConfigurationCommonState) configuration.getHandler().getState();
@@ -88,7 +117,7 @@ public final class BlazeBeforeRunCommandHelper {
                 context
                     .push(
                         new ToolWindowScope.Builder(
-                                project, new Task(TASK_TITLE, Task.Type.BLAZE_BEFORE_RUN))
+                                project, new Task(project, TASK_TITLE, Task.Type.BEFORE_LAUNCH))
                             .setPopupBehavior(
                                 BlazeUserSettings.getInstance().getShowBlazeConsoleOnRun())
                             .setIssueParsers(
@@ -97,25 +126,21 @@ public final class BlazeBeforeRunCommandHelper {
                             .build())
                     .push(
                         new ProblemsViewScope(
-                            project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()))
-                    .push(
-                        new BlazeConsoleScope.Builder(project)
-                            .setPopupBehavior(
-                                BlazeUserSettings.getInstance().getShowBlazeConsoleOnRun())
-                            .addConsoleFilters(
-                                new IssueOutputFilter(
-                                    project, workspaceRoot, invocationContext.type(), true))
-                            .build());
+                            project, BlazeUserSettings.getInstance().getShowProblemsViewOnRun()));
 
                 context.output(new StatusOutput(progressMessage));
 
                 BlazeCommand.Builder command =
                     BlazeCommand.builder(binaryPath, commandName)
-                        .addTargets(configuration.getTargets())
+                        .addTargets(targets)
                         .addBlazeFlags(overridableExtraBlazeFlags)
                         .addBlazeFlags(
                             BlazeFlags.blazeFlags(
-                                project, projectViewSet, BlazeCommandName.BUILD, invocationContext))
+                                project,
+                                projectViewSet,
+                                BlazeCommandName.BUILD,
+                                context,
+                                invocationContext))
                         .addBlazeFlags(
                             handlerState.getBlazeFlagsState().getFlagsForExternalProcesses())
                         .addBlazeFlags(requiredExtraBlazeFlags)

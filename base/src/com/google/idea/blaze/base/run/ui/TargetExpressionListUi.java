@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.TableUtil;
@@ -172,29 +171,23 @@ public class TargetExpressionListUi extends JPanel {
               project,
               new TargetCompletionProvider(project),
               /* showCompletionHint= */ true,
-              /* text= */ (String) value) {
-            @Override
-            public void addNotify() {
-              // base class ignores 'enter' keypress events, causing entire dialog to close without
-              // committing changes... fix copied from upstream PsiClassTableCellEditor
-              super.addNotify();
-              Editor editor = getEditor();
-              if (editor == null) {
-                return;
-              }
-              JComponent c = editor.getContentComponent();
-              c.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
-              c.getActionMap()
-                  .put(
-                      "ENTER",
-                      new AbstractAction() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                          stopCellEditing();
-                        }
-                      });
-            }
-          };
+              /* text= */ (String) value);
+      textField.addSettingsProvider(
+          editorEx -> {
+            // base class ignores 'enter' keypress events, causing entire dialog to close without
+            // committing changes... fix copied from upstream PsiClassTableCellEditor
+            JComponent c = editorEx.getContentComponent();
+            c.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "ENTER");
+            c.getActionMap()
+                .put(
+                    "ENTER",
+                    new AbstractAction() {
+                      @Override
+                      public void actionPerformed(ActionEvent e) {
+                        stopCellEditing();
+                      }
+                    });
+          });
       textField.setBorder(BorderFactory.createLineBorder(JBColor.BLACK));
       return textField;
     }

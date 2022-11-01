@@ -52,7 +52,7 @@ import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
@@ -213,8 +213,8 @@ public final class BlazeImportFixture {
             }
 
             @Override
-            public BuildSystem buildSystem() {
-              return BuildSystem.Blaze;
+            public BuildSystemName buildSystem() {
+              return BuildSystemName.Blaze;
             }
           };
     }

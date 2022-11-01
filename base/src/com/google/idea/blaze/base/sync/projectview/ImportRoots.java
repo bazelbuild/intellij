@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -31,7 +32,7 @@ import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
 import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
 import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.util.WorkspacePathUtil;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -56,7 +57,7 @@ public final class ImportRoots {
     if (root == null || projectViewSet == null) {
       return null;
     }
-    return ImportRoots.builder(root, Blaze.getBuildSystem(project)).add(projectViewSet).build();
+    return ImportRoots.builder(root, Blaze.getBuildSystemName(project)).add(projectViewSet).build();
   }
 
   /** Builder for import roots */
@@ -69,13 +70,14 @@ public final class ImportRoots {
     private boolean deriveTargetsFromDirectories = false;
 
     private final WorkspaceRoot workspaceRoot;
-    private final BuildSystem buildSystem;
+    private final BuildSystemName buildSystemName;
 
-    private Builder(WorkspaceRoot workspaceRoot, BuildSystem buildSystem) {
+    private Builder(WorkspaceRoot workspaceRoot, BuildSystemName buildSystemName) {
       this.workspaceRoot = workspaceRoot;
-      this.buildSystem = buildSystem;
+      this.buildSystemName = buildSystemName;
     }
 
+    @CanIgnoreReturnValue
     public Builder add(ProjectViewSet projectViewSet) {
       for (DirectoryEntry entry : projectViewSet.listItems(DirectorySection.KEY)) {
         add(entry);
@@ -86,6 +88,7 @@ public final class ImportRoots {
       return this;
     }
 
+    @CanIgnoreReturnValue
     @VisibleForTesting
     public Builder add(DirectoryEntry entry) {
       if (entry.included) {
@@ -98,7 +101,7 @@ public final class ImportRoots {
 
     public ImportRoots build() {
       ImmutableCollection<WorkspacePath> rootDirectories = rootDirectoriesBuilder.build();
-      if (buildSystem == BuildSystem.Bazel) {
+      if (buildSystemName == BuildSystemName.Bazel) {
         if (hasWorkspaceRoot(rootDirectories)) {
           excludeBuildSystemArtifacts();
           excludeProjectDataSubDirectory();
@@ -127,7 +130,7 @@ public final class ImportRoots {
 
     private void excludeBuildSystemArtifacts() {
       for (String dir :
-          BuildSystemProvider.getBuildSystemProvider(buildSystem)
+          BuildSystemProvider.getBuildSystemProvider(buildSystemName)
               .buildArtifactDirectories(workspaceRoot)) {
         excludeDirectoriesBuilder.add(new WorkspacePath(dir));
       }
@@ -150,11 +153,11 @@ public final class ImportRoots {
   private final TargetExpressionList projectTargets;
 
   public static Builder builder(Project project) {
-    return new Builder(WorkspaceRoot.fromProject(project), Blaze.getBuildSystem(project));
+    return new Builder(WorkspaceRoot.fromProject(project), Blaze.getBuildSystemName(project));
   }
 
-  public static Builder builder(WorkspaceRoot workspaceRoot, BuildSystem buildSystem) {
-    return new Builder(workspaceRoot, buildSystem);
+  public static Builder builder(WorkspaceRoot workspaceRoot, BuildSystemName buildSystemName) {
+    return new Builder(workspaceRoot, buildSystemName);
   }
 
   private ImportRoots(

@@ -47,7 +47,6 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -204,7 +203,7 @@ public class BlazeCoverageEngine extends CoverageEngine {
         return new CoverageListRootNode(
             project, resolveFile(project, root.directory()), suites, stateBean) {
           @Override
-          public Collection<? extends AbstractTreeNode<?>> getChildren() {
+          public List<? extends AbstractTreeNode<?>> getChildren() {
             return getRootChildren(this);
           }
         };

@@ -18,7 +18,7 @@ package com.google.idea.blaze.base.command.info;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.components.ServiceManager;
 import java.util.List;
 
@@ -62,7 +62,7 @@ public abstract class BlazeInfoRunner {
    */
   public abstract ListenableFuture<BlazeInfo> runBlazeInfo(
       BlazeContext context,
-      BuildSystem buildSystem,
+      BuildSystemName buildSystemName,
       String binaryPath,
       WorkspaceRoot workspaceRoot,
       List<String> blazeFlags);

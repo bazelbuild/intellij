@@ -15,16 +15,16 @@
  */
 package com.google.idea.blaze.plugin.run;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PathsList;
 import java.io.File;
-import java.util.List;
 
 /**
  * Boilerplate for running an IJ application with an additional plugin, copied from
@@ -32,8 +32,8 @@ import java.util.List;
  */
 public class IntellijWithPluginClasspathHelper {
 
-  private static final List<String> IJ_LIBRARIES =
-      Lists.newArrayList(
+  private static final ImmutableList<String> IJ_LIBRARIES =
+      ImmutableList.of(
           "log4j.jar",
           "trove4j.jar",
           "openapi.jar",
@@ -43,13 +43,44 @@ public class IntellijWithPluginClasspathHelper {
           "idea.jar",
           "idea_rt.jar");
 
+  private static final ImmutableList<String> IJ_LIBRARIES_AFTER_2022_1 =
+      ImmutableList.of("util_rt.jar");
+
+  private static final ImmutableList<String> IJ_LIBRARIES_AFTER_2022_3 =
+      ImmutableList.of(
+          "3rd-party-rt.jar",
+          "app.jar",
+          "xml-dom.jar",
+          "xml-dom-impl.jar",
+          "jps-model.jar",
+          "protobuf.jar",
+          "rd.jar",
+          "stats.jar",
+          "external-system-rt.jar",
+          "forms_rt.jar",
+          "intellij-test-discovery.jar"
+      );
   private static void addIntellijLibraries(JavaParameters params, Sdk ideaJdk) {
     String libPath = ideaJdk.getHomePath() + File.separator + "lib";
     PathsList list = params.getClassPath();
-    for (String lib : IJ_LIBRARIES) {
+    addLibrariesToList(IJ_LIBRARIES, libPath, list);
+
+    BuildNumber buildNumber = BuildNumber.fromString(IdeaJdkHelper.getBuildNumber(ideaJdk));
+    if (buildNumber != null && buildNumber.getBaselineVersion() >= 221) {
+      addLibrariesToList(IJ_LIBRARIES_AFTER_2022_1, libPath, list);
+    }
+
+    if(buildNumber != null && buildNumber.getBaselineVersion() >= 223) {
+      addLibrariesToList(IJ_LIBRARIES_AFTER_2022_3, libPath, list);
+    }
+
+    list.addFirst(((JavaSdkType) ideaJdk.getSdkType()).getToolsPath(ideaJdk));
+  }
+
+  private static void addLibrariesToList(ImmutableList<String> ijLibraries, String libPath, PathsList list) {
+    for (String lib : ijLibraries) {
       list.addFirst(libPath + File.separator + lib);
     }
-    list.addFirst(((JavaSdkType) ideaJdk.getSdkType()).getToolsPath(ideaJdk));
   }
 
   public static void addRequiredVmParams(

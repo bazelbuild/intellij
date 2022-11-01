@@ -1,84 +1,33 @@
 package com.google.idea.sdkcompat.general;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
+import com.intellij.openapi.fileChooser.ex.FileLookup;
+import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
-import com.intellij.ui.CoreIconManager;
-import com.intellij.ui.IconManager;
-import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usages.TextChunk;
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory.IndexingTimes;
+import com.intellij.openapi.ui.TextComponentAccessor;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.ui.TextFieldWithStoredHistory;
+import com.intellij.util.Restarter;
+import com.intellij.util.indexing.diagnostic.dto.JsonDuration;
+import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics;
+import com.intellij.vcs.log.VcsLogProperties.VcsLogProperty;
+import java.io.File;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.util.List;
 import javax.annotation.Nullable;
 
 /** Provides SDK compatibility shims for base plugin API classes, available to all IDEs. */
 public final class BaseSdkCompat {
   private BaseSdkCompat() {}
 
-  /** #api203: refactor this function back into CodesearchResultData and make it private. */
-  public static void addLineNumber(int lineNumber, List<TextChunk> chunks) {
-    chunks.add(
-        new TextChunk(
-            UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes(),
-            String.valueOf(lineNumber)));
-  }
-
-  /** #api203: refactor back into MoveChangesToChangeListAction#getUnversionedFileStreamFromEvent */
-  @Nullable
-  public static Iterable<FilePath> getFilePaths(AnActionEvent e) {
-    return e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
-  }
-
-  /**
-   * See {@link PathManager#getIndexRoot()}.
-   *
-   * <p>#api203: Method return type changed in 2021.1 from File to Path.
-   */
-  public static Path getIndexRoot() {
-    return PathManager.getIndexRoot();
-  }
-
-  /** #api211 Activating IconManager requires an IconManager parameter in 2021.2 */
-  public static void activateIconManager() throws Throwable {
-    IconManager.activate(new CoreIconManager());
-  }
-
-  /** #api203: inline this method into IndexingLogger */
-  public static Duration getTotalUpdatingTime(IndexingTimes times) {
-    return Duration.ofNanos(times.getTotalUpdatingTime());
-  }
-
-  /** #api203: inline this method into IndexingLogger */
-  public static Duration getScanFilesDuration(IndexingTimes times) {
-    return times.getScanFilesDuration();
-  }
-
-  /** #api203: inline this method into IndexingLogger */
-  public static Duration getTotalIndexingTime(IndexingTimes times) {
-    return times.getIndexingDuration();
-  }
-
-  /**
-   * See {@link ModifiableRootModel#addLibraryEntries(List, DependencyScope, boolean)}.
-   *
-   * <p>#api211: New method addLibraryEntries() is only available from 2021.2.1 on (or from 2021.1.4
-   * if that bugfix release will ever be published).
-   */
-  public static void addLibraryEntriesToModel(
-      ModifiableRootModel modifiableRootModel, List<Library> libraries) {
-    for (Library library : libraries) {
-      modifiableRootModel.addLibraryEntry(library);
-    }
-  }
+  /** #api212: inline into FileSelectorWithStoredHistory */
+  public static final TextComponentAccessor<TextFieldWithStoredHistory>
+      TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT =
+          TextComponentAccessor.TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT;
 
   /**
    * Creates an {@link IdeModifiableModelsProvider} for performant updates of the project model even
@@ -91,5 +40,49 @@ public final class BaseSdkCompat {
     // Switch to ProjectDataManager#createModifiableModelsProvider in 2021.3 for a public, stable
     // API to create an IdeModifiableModelsProvider.
     return new IdeModifiableModelsProviderImpl(project);
+  }
+
+  /** #api212: inline into BlazeNewProjectWizard */
+  public static void setContextWizard(WizardContext context, AbstractWizard<?> wizard) {
+    context.setWizard(wizard);
+  }
+
+  /** #api212: inline this method. */
+  @SuppressWarnings("rawtypes")
+  public static boolean isIncrementalRefreshProperty(VcsLogProperty property) {
+    return false;
+  }
+
+  /** #api213: inline this method */
+  @Nullable
+  public static String getIdeRestarterPath() {
+    File startFile = Restarter.getIdeStarter();
+    return startFile == null ? null : startFile.getPath();
+  }
+
+  /** #api213: inline into IndexingLogger */
+  public static JsonDuration getTotalIndexingTime(
+      JsonFileProviderIndexStatistics providerStatisticInput) {
+    return providerStatisticInput.getTotalIndexingTime();
+  }
+
+  /** #api213: Inline into KytheRenameProcessor. */
+  public static RenamePsiElementProcessor[] renamePsiElementProcessorsList() {
+    return RenamePsiElementProcessor.EP_NAME.getExtensions();
+  }
+
+  /** #api213: Inline into WorkspaceFileTextField . */
+  public static LocalFsFinder.VfsFile getVfsFile(VirtualFile file) {
+    return new LocalFsFinder.VfsFile(/* unused LocalFsFinder */ null, file);
+  }
+
+  /** #api213: Inline into WorkspaceFileTextField. */
+  public static FileLookup.LookupFile getIoFile(Path path) {
+    return new LocalFsFinder.IoFile(path.toFile());
+  }
+
+  /** #api213: Inline into BlazeProjectCreator. */
+  public static OpenProjectTask createOpenProjectTask(Project project) {
+    return OpenProjectTask.withCreatedProject(project);
   }
 }

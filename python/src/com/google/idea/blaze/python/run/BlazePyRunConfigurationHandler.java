@@ -21,7 +21,7 @@ import com.google.idea.blaze.base.run.BlazeConfigurationNameBuilder;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -30,12 +30,12 @@ import javax.annotation.Nullable;
 /** Python-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public final class BlazePyRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
 
-  private final BuildSystem buildSystem;
+  private final BuildSystemName buildSystemName;
   private final BlazePyRunConfigState state;
 
   public BlazePyRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    this.buildSystem = Blaze.getBuildSystem(configuration.getProject());
-    this.state = new BlazePyRunConfigState(buildSystem);
+    this.buildSystemName = Blaze.getBuildSystemName(configuration.getProject());
+    this.state = new BlazePyRunConfigState(buildSystemName);
   }
 
   @Override
@@ -51,7 +51,7 @@ public final class BlazePyRunConfigurationHandler implements BlazeCommandRunConf
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    state.validate(buildSystem);
+    state.validate(buildSystemName);
   }
 
   @Override

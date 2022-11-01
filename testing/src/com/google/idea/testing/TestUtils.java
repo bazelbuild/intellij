@@ -20,10 +20,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.intellij.mock.MockApplication;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.util.pico.DefaultPicoContainer;
@@ -117,6 +116,11 @@ public final class TestUtils {
     }
 
     @Override
+    public void invokeLater(Runnable runnable, ModalityState state) {
+      runnable.run();
+    }
+
+    @Override
     public Future<?> executeOnPooledThread(Runnable action) {
       return executor.submit(action);
     }
@@ -127,28 +131,14 @@ public final class TestUtils {
     }
   }
 
-  static void createMockApplication(Disposable parentDisposable) {
+  public static void createMockApplication(Disposable parentDisposable) {
     final MyMockApplication instance = new MyMockApplication(parentDisposable);
-
-    // If there was no previous application, ApplicationManager leaves the MockApplication in place,
-    // which can break future tests.
-    Application oldApplication = ApplicationManager.getApplication();
-    if (oldApplication == null) {
-      Disposer.register(
-          parentDisposable,
-          () ->
-              new ApplicationManager() {
-                {
-                  ourApplication = null;
-                }
-              });
-    }
-
     ApplicationManager.setApplication(instance, FileTypeManager::getInstance, parentDisposable);
     instance.registerService(EncodingManager.class, EncodingManagerImpl.class);
   }
 
-  static MockProject mockProject(@Nullable PicoContainer container, Disposable parentDisposable) {
+  public static MockProject mockProject(
+      @Nullable PicoContainer container, Disposable parentDisposable) {
     container = container != null ? container : new DefaultPicoContainer();
     return new MockProject(container, parentDisposable);
   }

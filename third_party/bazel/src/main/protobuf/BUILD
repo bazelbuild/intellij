@@ -18,6 +18,7 @@ FILES = [
     "java_compilation",
     "test_status",
     "worker_protocol",
+    "execution_graph",
 ]
 
 [proto_library(
@@ -29,25 +30,6 @@ FILES = [
     name = s + "_java_proto",
     deps = [":" + s + "_proto"],
 ) for s in FILES]
-
-proto_library(
-    name = "analysis_proto",
-    srcs = ["analysis.proto"],
-    deps = [":build_proto"],
-)
-
-py_proto_library(
-    name = "analysis_py_proto",
-    srcs = ["analysis.proto"],
-    default_runtime = "//third_party/protobuf:protobuf_python",
-    protoc = "//third_party/protobuf:protoc",
-    deps = [":build_pb_py"],
-)
-
-java_proto_library(
-    name = "analysis_java_proto",
-    deps = [":analysis_proto"],
-)
 
 proto_library(
     name = "analysis_v2_proto",
@@ -103,33 +85,24 @@ java_proto_library(
     deps = [":failure_details_proto"],
 )
 
-# This new option tagging method is in flux while being applied to the options
-# in the Bazel code base. The visibility should not be changed to allow external
-# dependencies until the interface has stabilized and can commit to maintaining
-# backwards compatibility for 6 months' time.
-# TODO(bazel-team) Make these visibility:public when the interface is stable.
 proto_library(
     name = "option_filters_proto",
     srcs = ["option_filters.proto"],
-    visibility = ["//visibility:private"],
 )
 
 java_proto_library(
     name = "option_filters_java_proto",
-    visibility = ["//src:__subpackages__"],
     deps = [":option_filters_proto"],
 )
 
 proto_library(
     name = "command_line_proto",
     srcs = ["command_line.proto"],
-    visibility = ["//third_party/bazel/src/main/java/com/google/devtools/build/lib/buildeventstream/proto:__pkg__"],
     deps = [":option_filters_proto"],
 )
 
 java_proto_library(
     name = "command_line_java_proto",
-    visibility = ["//src:__subpackages__"],
     deps = [":command_line_proto"],
 )
 
@@ -229,7 +202,6 @@ filegroup(
 filegroup(
     name = "dist_jars",
     srcs = [s + "_java_proto_srcs" for s in FILES] + [
-        ":analysis_java_proto_srcs",
         ":analysis_v2_java_proto_srcs",
         ":command_line_java_proto_srcs",
         ":command_server_java_grpc_srcs",

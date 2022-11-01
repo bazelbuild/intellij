@@ -65,7 +65,7 @@ import org.jetbrains.annotations.Nullable;
 public class RenderJarClassFileFinder implements ClassFileFinder {
   /** Experiment to control whether class file finding from render jars should be enabled. */
   private static final BoolExperiment enabled =
-      new BoolExperiment("aswb.renderjar.cff.enabled.1", true);
+      new BoolExperiment("aswb.renderjar.cff.enabled.3", true);
 
   /**
    * Experiment to toggle whether resource resolution is allowed from Render JARs. Render JARs

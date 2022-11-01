@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandGenericRunConfig
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationHandler;
 import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfigurationRunner;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -33,12 +33,12 @@ import javax.annotation.Nullable;
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public final class BlazeCidrRunConfigurationHandler implements BlazeCommandRunConfigurationHandler {
 
-  private final BuildSystem buildSystem;
+  private final BuildSystemName buildSystemName;
   private final BlazeCidrRunConfigState state;
 
   public BlazeCidrRunConfigurationHandler(BlazeCommandRunConfiguration configuration) {
-    this.buildSystem = Blaze.getBuildSystem(configuration.getProject());
-    this.state = new BlazeCidrRunConfigState(buildSystem);
+    this.buildSystemName = Blaze.getBuildSystemName(configuration.getProject());
+    this.state = new BlazeCidrRunConfigState(buildSystemName);
   }
 
   @Override
@@ -60,7 +60,7 @@ public final class BlazeCidrRunConfigurationHandler implements BlazeCommandRunCo
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    state.validate(buildSystem);
+    state.validate(buildSystemName);
   }
 
   @Override

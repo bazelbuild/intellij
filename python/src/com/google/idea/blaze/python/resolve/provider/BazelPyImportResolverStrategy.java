@@ -16,7 +16,7 @@
 package com.google.idea.blaze.python.resolve.provider;
 
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.python.resolve.BlazePyResolverUtils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -33,8 +33,8 @@ import javax.annotation.Nullable;
 public class BazelPyImportResolverStrategy extends AbstractPyImportResolverStrategy {
 
   @Override
-  public boolean appliesToBuildSystem(BuildSystem buildSystem) {
-    return buildSystem == BuildSystem.Bazel;
+  public boolean appliesToBuildSystem(BuildSystemName buildSystemName) {
+    return buildSystemName == BuildSystemName.Bazel;
   }
 
   @Nullable

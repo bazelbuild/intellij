@@ -32,7 +32,13 @@ public final class SyncScope {
   private SyncScope() {}
 
   /** Checked exception representing a failed sync action. */
-  public static class SyncFailedException extends Exception {}
+  public static class SyncFailedException extends Exception {
+    public SyncFailedException() {}
+
+    public SyncFailedException(String message, Throwable cause) {
+      super(message, cause);
+    }
+  }
 
   /** Checked exception representing a cancelled sync action. */
   public static class SyncCanceledException extends Exception {}
@@ -84,7 +90,7 @@ public final class SyncScope {
    */
   @Nullable
   static <T> T push(@Nullable BlazeContext parentContext, ScopedSyncFunction<T> scopedOperation) {
-    BlazeContext context = new BlazeContext(parentContext);
+    BlazeContext context = BlazeContext.create(parentContext);
     try {
       return scopedOperation.execute(context);
     } catch (SyncCanceledException e) {

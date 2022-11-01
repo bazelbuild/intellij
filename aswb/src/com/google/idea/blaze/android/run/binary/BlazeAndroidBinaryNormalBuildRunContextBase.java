@@ -27,23 +27,17 @@ import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
-import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
-import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
-import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
+import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidLaunchTasksProvider;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidRunContext;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -64,9 +58,10 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   protected final ExecutionEnvironment env;
   protected final BlazeAndroidBinaryRunConfigurationState configState;
   protected final ConsoleProvider consoleProvider;
-  protected final BlazeApkBuildStep buildStep;
+  protected final ApkBuildStep buildStep;
   protected final ApkProvider apkProvider;
   protected final ApplicationIdProvider applicationIdProvider;
+  private final String launchId;
 
   BlazeAndroidBinaryNormalBuildRunContextBase(
       Project project,
@@ -74,7 +69,8 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
       RunConfiguration runConfiguration,
       ExecutionEnvironment env,
       BlazeAndroidBinaryRunConfigurationState configState,
-      BlazeApkBuildStep buildStep) {
+      ApkBuildStep buildStep,
+      String launchId) {
     this.project = project;
     this.facet = facet;
     this.runConfiguration = runConfiguration;
@@ -84,6 +80,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
     this.buildStep = buildStep;
     this.apkProvider = BlazeApkProviderService.getInstance().getApkProvider(project, buildStep);
     this.applicationIdProvider = new BlazeAndroidBinaryApplicationIdProvider(buildStep);
+    this.launchId = launchId;
   }
 
   @Override
@@ -96,7 +93,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
     options.setDeploy(true).setOpenLogcatAutomatically(configState.showLogcatAutomatically());
     options.addExtraOptions(
         ImmutableMap.of(
-            ProfilerState.ANDROID_PROFILER_STATE_ID,
+            "android.profilers.state", // Not used after #api211
             configState.getProfilerState(),
             NATIVE_DEBUGGING_ENABLED,
             configState.getCommonState().isNativeDebuggingEnabled()));
@@ -113,7 +110,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   }
 
   @Override
-  public BlazeApkBuildStep getBuildStep() {
+  public ApkBuildStep getBuildStep() {
     return buildStep;
   }
 
@@ -132,50 +129,23 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   }
 
   @Override
-  public LaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions,
-      @Nullable Integer userId,
-      @NotNull String contributorsAmStartOptions,
-      AndroidDebugger androidDebugger,
-      AndroidDebuggerState androidDebuggerState,
-      LaunchStatus launchStatus)
-      throws ExecutionException {
-    String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
-    if (!contributorsAmStartOptions.isEmpty()) {
-      extraFlags += (extraFlags.isEmpty() ? "" : " ") + contributorsAmStartOptions;
-    }
-
-    final StartActivityFlagsProvider startActivityFlagsProvider =
-        new DefaultStartActivityFlagsProvider(
-            androidDebugger, androidDebuggerState, project, launchOptions.isDebug(), extraFlags);
-
-    BlazeAndroidDeployInfo deployInfo;
-    try {
-      deployInfo = buildStep.getDeployInfo();
-    } catch (ApkProvisionException e) {
-      throw new ExecutionException(e);
-    }
-
-    return BlazeAndroidBinaryApplicationLaunchTaskProvider.getApplicationLaunchTask(
-        applicationIdProvider,
-        deployInfo.getMergedManifest(),
-        configState,
-        startActivityFlagsProvider,
-        launchStatus);
-  }
-
-  @Override
   public String getAmStartOptions() {
     return configState.getAmStartOptions();
+  }
+
+  // @Override  #api211
+  public ProfilerState getProfileState() {
+    return configState.getProfilerState();
   }
 
   @Nullable
   @Override
   public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
-    return ImmutableList.of(
+    LaunchTask deployTask =
         DeployTasksCompat.getDeployTask(
-            project, env, launchOptions, getApkInfoToInstall(device, launchOptions, apkProvider)));
+            project, env, launchOptions, getApkInfoToInstall(device, launchOptions, apkProvider));
+    return ImmutableList.of(new DeploymentTimingReporterTask(launchId, deployTask));
   }
 
   /** Returns a list of APKs excluding any APKs for features that are disabled. */

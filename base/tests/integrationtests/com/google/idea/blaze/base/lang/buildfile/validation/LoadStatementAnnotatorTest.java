@@ -22,12 +22,9 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildElement;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.util.PsiUtils;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.psi.PsiFile;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Test;
@@ -71,7 +68,7 @@ public class LoadStatementAnnotatorTest extends BuildFileIntegrationTestCase {
             "load('/tools/ide/build_test.bzl', 'build_test')");
     assertHasAnnotation(
         file,
-        "Deprecated load syntax; loaded Starlark module should by in label format.",
+        "Deprecated load syntax; loaded Starlark module should be in label format.",
         HighlightSeverity.WARNING);
   }
 
@@ -108,21 +105,9 @@ public class LoadStatementAnnotatorTest extends BuildFileIntegrationTestCase {
   }
 
   private List<Annotation> validateFile(BuildFile file) {
-    LoadStatementAnnotator annotator = createAnnotator(file);
-    PsiUtils.findAllChildrenOfClassRecursive(file, BuildElement.class)
-        .forEach(element -> element.accept(annotator));
-    return annotationHolder;
+    return BaseSdkTestCompat.testAnnotator(
+        new LoadStatementAnnotator(),
+        PsiUtils.findAllChildrenOfClassRecursive(file, BuildElement.class)
+            .toArray(BuildElement[]::new));
   }
-
-  private LoadStatementAnnotator createAnnotator(PsiFile file) {
-    annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
-    return new LoadStatementAnnotator() {
-      @Override
-      protected AnnotationHolder getHolder() {
-        return annotationHolder;
-      }
-    };
-  }
-
-  private AnnotationHolderImpl annotationHolder = null;
 }

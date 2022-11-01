@@ -33,7 +33,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
-import com.google.idea.blaze.base.sync.BlazeBuildParams;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -65,6 +64,12 @@ import org.junit.runners.JUnit4;
 /** Kotlin-specific sync integration tests. */
 @RunWith(JUnit4.class)
 public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
+
+  @Override
+  protected final boolean isLightTestCase() {
+    return false;
+  }
+
   @Test
   public void testKotlinClassesPresentInClassPath() {
     setProjectView(
@@ -105,7 +110,6 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Full Sync")
             .setSyncMode(SyncMode.FULL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build();
     runBlazeSync(syncParams);
@@ -182,7 +186,6 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
 
@@ -217,8 +220,8 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
         "  kotlin");
 
     workspace.createDirectory(new WorkspacePath("src/main/kotlin/com/google"));
-    workspace.createFile(new WorkspacePath("bin/kotlinsdk/stdlib.jar"));
-    workspace.createFile(new WorkspacePath("bin/kotlinsdk/stdlib-ijar.jar"));
+    fileSystem.createFile("execroot/root/bin/kotlinsdk/stdlib.jar");
+    fileSystem.createFile("execroot/root/bin/kotlinsdk/stdlib-ijar.jar");
 
     TargetMap targetMap =
         TargetMapBuilder.builder()
@@ -258,7 +261,6 @@ public class KotlinSyncTest extends BlazeSyncIntegrationTestCase {
             .setTitle("Sync")
             .setSyncMode(SyncMode.INCREMENTAL)
             .setSyncOrigin("test")
-            .setBlazeBuildParams(BlazeBuildParams.fromProject(getProject()))
             .setAddProjectViewTargets(true)
             .build());
 

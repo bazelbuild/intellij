@@ -16,7 +16,7 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-licenses(["notice"])  # Apache 2.0
+licenses(["notice"])
 
 _FAST_BUILD_JAVAC_SRCS = ["src/com/google/idea/blaze/java/fastbuild/FastBuildJavac.java"]
 
@@ -42,7 +42,6 @@ java_library(
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         ":fast_build_javac_interface",
-        ":neverlinked_jpda-jdi",
         "//base",
         "//common/actions",
         "//common/experiments",
@@ -63,14 +62,12 @@ java_library(
 java_library(
     name = "fast_build_javac",
     srcs = _FAST_BUILD_JAVAC_SRCS + _FAST_BUILD_JAVAC_IMPL_SRCS,
+    javacopts = [
+        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+    ],
     visibility = FAST_BUILD_JAVAC_VISIBILITY,
-)
-
-# This is provided by the IDE at runtime
-java_library(
-    name = "neverlinked_jpda-jdi",
-    neverlink = 1,
-    exports = ["//third_party:jpda-jdi"],
 )
 
 stamped_plugin_xml(
@@ -121,7 +118,6 @@ intellij_unit_test_suite(
         ":auto_value_plugin_lib_deploy.jar",
         ":fast_build_javac",
         ":guava_lib_deploy.jar",
-        ":jdk_tools_lib_deploy.jar",
         ":truth_lib_deploy.jar",
     ],
     jvm_flags = [
@@ -129,8 +125,10 @@ intellij_unit_test_suite(
         "-Dauto_value_plugin.jar=$(location :auto_value_plugin_lib_deploy.jar)",
         "-Dfast_build_javac.jar=$(location :fast_build_javac)",
         "-Dguava.jar=$(location :guava_lib_deploy.jar)",
-        "-Djdk_tools.jar=$(location :jdk_tools_lib_deploy.jar)",
         "-Dtruth.jar=$(location :truth_lib_deploy.jar)",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
     ],
     test_package_root = "com.google.idea.blaze.java",
     deps = [
@@ -145,6 +143,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//intellij_platform_sdk:truth",
         "//proto:proto_deps",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )
@@ -169,12 +168,6 @@ java_binary(
 )
 
 java_binary(
-    name = "jdk_tools_lib",
-    main_class = "None",
-    runtime_deps = ["//third_party/java/jdk:langtools"],
-)
-
-java_binary(
     name = "truth_lib",
     testonly = 1,
     main_class = "None",
@@ -194,10 +187,13 @@ intellij_integration_test_suite(
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",
+        "//common/experiments",
+        "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
 )

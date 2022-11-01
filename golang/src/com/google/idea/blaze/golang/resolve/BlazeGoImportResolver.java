@@ -38,6 +38,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementResolveResult;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.ResolveResult;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.SyntheticFileSystemItem;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ThreeState;
@@ -58,7 +59,10 @@ class BlazeGoImportResolver implements GoImportResolver {
   @Nullable
   @Override
   public Collection<GoPackage> resolve(
-      String importPath, Project project, @Nullable Module module, @Nullable PsiElement context) {
+      String importPath,
+      Project project,
+      @Nullable Module module,
+      @Nullable ResolveState resolveState) {
     GoPackage goPackage = doResolve(importPath, project);
     return goPackage != null ? ImmutableList.of(goPackage) : null;
   }

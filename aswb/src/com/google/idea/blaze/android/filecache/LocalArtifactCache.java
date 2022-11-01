@@ -162,7 +162,13 @@ public class LocalArtifactCache implements ArtifactCache {
     Map<String, CacheEntry> keyToCacheEntry = new HashMap<>();
     artifacts.forEach(
         a -> {
-          CacheEntry cacheEntry = CacheEntry.forArtifact(a);
+          CacheEntry cacheEntry;
+          try {
+            cacheEntry = CacheEntry.forArtifact(a);
+          } catch (ArtifactNotFoundException e) {
+            // If the artifact to cache doesn't exist, we skip caching it.
+            return;
+          }
           keyToArtifact.put(cacheEntry.getCacheKey(), a);
           keyToCacheEntry.put(cacheEntry.getCacheKey(), cacheEntry);
         });
@@ -246,9 +252,13 @@ public class LocalArtifactCache implements ArtifactCache {
   @Override
   @Nullable
   public synchronized Path get(OutputArtifact artifact) {
-    CacheEntry queriedEntry = CacheEntry.forArtifact(artifact);
+    CacheEntry queriedEntry;
+    try {
+      queriedEntry = CacheEntry.forArtifact(artifact);
+    } catch (ArtifactNotFoundException e) {
+      return null;
+    }
     String cacheKey = queriedEntry.getCacheKey();
-
     CacheEntry cacheEntry = cacheState.get(cacheKey);
     if (cacheEntry == null) {
       return null;

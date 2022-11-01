@@ -53,7 +53,7 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildSystem;
+import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -100,7 +100,7 @@ public class RenderJarCacheTest {
   public void initTest() throws IOException {
     errorCollector = new ErrorCollector();
     outputSink = new WritingOutputSink();
-    context = new BlazeContext();
+    context = BlazeContext.create();
     context.addOutputSink(PrintOutput.class, outputSink);
     workspaceRoot = new WorkspaceRoot(temporaryFolder.getRoot());
     artifactLocationDecoder =
@@ -255,7 +255,7 @@ public class RenderJarCacheTest {
             intellijRule.getProject().getName(),
             projectDataDir.getAbsolutePath(),
             /*projectViewFile=*/ "",
-            BuildSystem.Blaze));
+            BuildSystemName.Blaze));
     intellijRule.registerProjectService(BlazeImportSettingsManager.class, importSettingsManager);
   }
 
@@ -273,7 +273,7 @@ public class RenderJarCacheTest {
    * {@code contents} is incorrectly formatted as a projectview file
    */
   private void setProjectView(String... contents) {
-    BlazeContext context = new BlazeContext();
+    BlazeContext context = BlazeContext.create();
     context.addOutputSink(IssueOutput.class, errorCollector);
     ProjectViewParser projectViewParser =
         new ProjectViewParser(context, new WorkspacePathResolverImpl(workspaceRoot));
@@ -296,10 +296,6 @@ public class RenderJarCacheTest {
     public Propagation onOutput(PrintOutput output) {
       writer.println(output.getText());
       return Propagation.Continue;
-    }
-
-    public String getMessages() {
-      return stringWriter.toString();
     }
   }
 }

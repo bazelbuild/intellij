@@ -18,7 +18,7 @@
     <importResolver
         implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver"
         id="Blaze.GoImportResolver"
-        order="before default"/>
+        order="first"/>
     <packageFactory implementation="com.google.idea.blaze.golang.resolve.BlazeGoPackageFactory"/>
     <dlv.positionConverterFactory
         implementation="com.google.idea.blaze.golang.run.BlazeDlvPositionConverter$Factory"
@@ -44,5 +44,6 @@
     <documentationProvider implementation="com.google.idea.blaze.golang.resolve.BlazeGoImportResolver$GoPackageDocumentationProvider"/>
     <additionalLibraryRootsProvider implementation="com.google.idea.blaze.golang.sync.BlazeGoAdditionalLibraryRootsProvider"/>
     <postStartupActivity implementation="com.google.idea.blaze.golang.run.producers.NonBlazeProducerSuppressor"/>
+    <treeStructureProvider implementation="com.google.idea.blaze.golang.treeview.BlazeGoTreeStructureProvider" order="last"/>
   </extensions>
 </idea-plugin>

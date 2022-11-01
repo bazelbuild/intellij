@@ -1,0 +1,8 @@
+directories:
+  examples/kotlin/simple_coroutines_project
+
+targets:
+  //examples/kotlin/simple_coroutines_project/...
+
+additional_languages:
+  kotlin

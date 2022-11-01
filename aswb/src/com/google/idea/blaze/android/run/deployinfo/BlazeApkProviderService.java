@@ -16,23 +16,23 @@
 package com.google.idea.blaze.android.run.deployinfo;
 
 import com.android.tools.idea.run.ApkProvider;
-import com.google.idea.blaze.android.run.runner.BlazeApkBuildStep;
+import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
-/** Service to provide ApkProviders that source APKs from {@link BlazeApkBuildStep}. */
+/** Service to provide ApkProviders that source APKs from {@link ApkBuildStep}. */
 public interface BlazeApkProviderService {
   static BlazeApkProviderService getInstance() {
     return ServiceManager.getService(BlazeApkProviderService.class);
   }
 
-  /** Returns an APK provider that sources APKs from the given {@link BlazeApkBuildStep}. */
-  ApkProvider getApkProvider(Project project, BlazeApkBuildStep deployInfo);
+  /** Returns an APK provider that sources APKs from the given {@link ApkBuildStep}. */
+  ApkProvider getApkProvider(Project project, ApkBuildStep deployInfo);
 
   /** Default implementation using {@link BlazeApkProvider}. */
   class DefaultImpl implements BlazeApkProviderService {
     @Override
-    public ApkProvider getApkProvider(Project project, BlazeApkBuildStep deployInfo) {
+    public ApkProvider getApkProvider(Project project, ApkBuildStep deployInfo) {
       return new BlazeApkProvider(project, deployInfo);
     }
   }

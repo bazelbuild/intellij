@@ -46,7 +46,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import java.io.File;
-import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -139,11 +138,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
 
   @FunctionalInterface
   private interface Javac {
-    boolean compile(
-        BlazeContext context,
-        List<String> javacArgs,
-        Collection<File> files,
-        PrintWriter outputWriter)
+    boolean compile(BlazeContext context, List<String> javacArgs, Collection<File> files)
         throws FastBuildException;
   }
 
@@ -163,7 +158,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
       FastBuildJavac javaCompiler =
           Reflection.newProxy(
               FastBuildJavac.class, new MatchingMethodInvocationHandler(javacClass, javacInstance));
-      return (context, javacArgs, files, writer) -> {
+      return (context, javacArgs, files) -> {
         Stopwatch timer = Stopwatch.createStarted();
         Object[] rawOutput = javaCompiler.compile(javacArgs, files);
         CompilerOutput output = CompilerOutput.decode(rawOutput);
@@ -200,17 +195,8 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
     for (int i = 0; i < jars.size(); ++i) {
       urls[i] = jars.get(i).toURI().toURL();
     }
-    URLClassLoader urlClassLoader = new URLClassLoader(urls, platformClassLoader());
+    URLClassLoader urlClassLoader = new URLClassLoader(urls, ClassLoader.getPlatformClassLoader());
     return urlClassLoader.loadClass(javaCompilerClass);
-  }
-
-  private static ClassLoader platformClassLoader() {
-    try {
-      return (ClassLoader) ClassLoader.class.getMethod("getPlatformClassLoader").invoke(null);
-    } catch (ReflectiveOperationException e) {
-      // Java 8
-      return null;
-    }
   }
 
   private static class JavacRunner implements FastBuildCompiler {
@@ -242,12 +228,6 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
               .add("-cp")
               .add(instructions.classpath().stream().map(File::getPath).collect(joining(":")))
               .add("-g");
-      if ("8".equals(sourceVersion) && "11".equals(targetVersion)) {
-        // Disable StringConcatFactory (not available in JDK 8) to avoid issues when using
-        // "-source 8 -target 11" and a JDK 8 bootclasspath. Remove when only full JDK 11 is
-        // supported.
-        argsBuilder.add("-XDstringConcat=inline");
-      }
       if (!bootClassPathJars.isEmpty()) {
         argsBuilder
             .add("-bootclasspath")
@@ -284,8 +264,7 @@ final class FastBuildCompilerFactoryImpl implements FastBuildCompilerFactory {
       logger.info("Running javac with options: " + trimmedArgs);
 
       Stopwatch timer = Stopwatch.createStarted();
-      boolean success =
-          javac.compile(context, args, instructions.filesToCompile(), instructions.outputWriter());
+      boolean success = javac.compile(context, args, instructions.filesToCompile());
       timer.stop();
       writeCompilationFinishedMessage(context, instructions, success, timer);
       if (!success) {

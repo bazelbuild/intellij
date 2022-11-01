@@ -17,7 +17,6 @@ package com.google.idea.blaze.aspect.cpp.cctoolchain;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.devtools.intellij.IntellijAspectTestFixtureOuterClass.IntellijAspectTestFixture;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo.CToolchainIdeInfo;
@@ -38,56 +37,52 @@ public class CcToolchainTest extends BazelIntellijAspectTest {
     IntellijAspectTestFixture testFixture = loadTestFixture(":fixture");
     List<TargetIdeInfo> toolchains = findToolchainTarget(testFixture);
 
-    CToolchainIdeInfo toolchainInfo = Iterables.getOnlyElement(toolchains).getCToolchainIdeInfo();
-    assertThat(toolchainInfo.getBuiltInIncludeDirectoryList()).isNotEmpty();
-    assertThat(toolchainInfo.getCppExecutable()).isNotEmpty();
-    assertThat(toolchainInfo.getTargetName()).isNotEmpty();
-    assertThat(toolchainInfo.getCOptionList()).isNotEmpty();
-    assertThat(toolchainInfo.getCppOptionList()).isNotEmpty();
+    for (TargetIdeInfo toolchain : toolchains) {
+      CToolchainIdeInfo toolchainInfo = toolchain.getCToolchainIdeInfo();
+      assertThat(toolchainInfo.getBuiltInIncludeDirectoryList()).isNotEmpty();
+      assertThat(toolchainInfo.getCppExecutable()).isNotEmpty();
+      assertThat(toolchainInfo.getTargetName()).isNotEmpty();
+      assertThat(toolchainInfo.getCOptionList()).isNotEmpty();
+      assertThat(toolchainInfo.getCppOptionList()).isNotEmpty();
 
-    // Should at least know the -std level (from some list of flags) to avoid b/70223102.
-    // This is *usually* deliberately chosen, though nowadays it may be fine to omit -std.
-    // Compilers like Clang now default to a modern language level:
-    // https://github.com/llvm-mirror/clang/commit/466d8da5f89b1a780f735c86f414fa69ce63221b
-    // The -std= flag could also be in the form -Xclang-only=-std=<s>
-    Pattern stdRegex = Pattern.compile("^(-std=.*|-X[a-zA-Z]+-only=-std=.*)");
-    assertThat(
-            toolchainInfo.getCppOptionList().stream()
-                .anyMatch(option -> stdRegex.matcher(option).matches()))
-        .isTrue();
-    // There should be several include directories, including:
-    // - from compiler (for xmmintrin.h, etc.) (gcc/.../include, or clang/.../include)
-    // - libc (currently something without gcc or clang and ends with "include",
-    //   which is a bit of a weak check)
-    // - c++ library (usual several directories)
-    //   - if libstdc++, something like .../x86_64-vendor-linux-gnu/include/c++/<version>
-    //   - if libcxx, something like .../include/c++/<version>
-    // This is assuming gcc or clang.
-    assertThat(
-            toolchainInfo
-                .getBuiltInIncludeDirectoryList()
-                .stream()
-                .anyMatch(
-                    dir ->
-                        (dir.contains("gcc/") || dir.contains("clang/"))
-                            && dir.endsWith("include")))
-        .isTrue();
-    assertThat(
-            toolchainInfo
-                .getBuiltInIncludeDirectoryList()
-                .stream()
-                .anyMatch(
-                    dir ->
-                        !dir.contains("gcc/")
-                            && !dir.contains("clang/")
-                            && dir.endsWith("include")))
-        .isTrue();
-    assertThat(
-            toolchainInfo
-                .getBuiltInIncludeDirectoryList()
-                .stream()
-                .anyMatch(dir -> dir.contains("c++")))
-        .isTrue();
+      // Should at least know the -std level (from some list of flags) to avoid b/70223102.
+      // This is *usually* deliberately chosen, though nowadays it may be fine to omit -std.
+      // Compilers like Clang now default to a modern language level:
+      // https://github.com/llvm-mirror/clang/commit/466d8da5f89b1a780f735c86f414fa69ce63221b
+      // The -std= flag could also be in the form -Xclang-only=-std=<s>
+      Pattern stdRegex = Pattern.compile("^(-std=.*|-X[a-zA-Z]+-only=-std=.*)");
+      assertThat(
+              toolchainInfo.getCppOptionList().stream()
+                  .anyMatch(option -> stdRegex.matcher(option).matches()))
+          .isTrue();
+      // There should be several include directories, including:
+      // - from compiler (for xmmintrin.h, etc.) (gcc/.../include, or clang/.../include)
+      // - libc (currently something without gcc or clang and ends with "include",
+      //   which is a bit of a weak check)
+      // - c++ library (usual several directories)
+      //   - if libstdc++, something like .../x86_64-vendor-linux-gnu/include/c++/<version>
+      //   - if libcxx, something like .../include/c++/<version>
+      // This is assuming gcc or clang.
+      assertThat(
+              toolchainInfo.getBuiltInIncludeDirectoryList().stream()
+                  .anyMatch(
+                      dir ->
+                          (dir.contains("gcc/") || dir.contains("clang/"))
+                              && dir.endsWith("include")))
+          .isTrue();
+      assertThat(
+              toolchainInfo.getBuiltInIncludeDirectoryList().stream()
+                  .anyMatch(
+                      dir ->
+                          !dir.contains("gcc/")
+                              && !dir.contains("clang/")
+                              && dir.endsWith("include")))
+          .isTrue();
+      assertThat(
+              toolchainInfo.getBuiltInIncludeDirectoryList().stream()
+                  .anyMatch(dir -> dir.contains("c++")))
+          .isTrue();
+    }
   }
 
   private static List<TargetIdeInfo> findToolchainTarget(IntellijAspectTestFixture testFixture) {
