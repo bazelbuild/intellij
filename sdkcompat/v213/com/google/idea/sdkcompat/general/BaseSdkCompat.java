@@ -89,7 +89,7 @@ public final class BaseSdkCompat {
     return OpenProjectTask.withCreatedProject(project);
   }
 
-  /** #api213 inline when this api support is dropped */
+  /** #api213 interface is different in 221, inline when 213 support is dropped*/
   public static Project openProject(VirtualFile projectSubdirectory, Project projectToClose, boolean forceOpenInNewFrame) {
     return ProjectUtil.openProject(projectSubdirectory.getPath(), projectToClose, forceOpenInNewFrame);
   }
