@@ -34,13 +34,13 @@ final class BlazeConfigurationResolverResult {
       uniqueResolveConfigurations;
   private final ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings;
   private final ImmutableSet<File> validHeaderRoots;
-  private final ImmutableMap<TargetKey, CompilerInfo> targetToCompilerVersion;
+  private final ImmutableMap<TargetKey, String> targetToCompilerVersion;
 
   private BlazeConfigurationResolverResult(
       ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration> uniqueResolveConfigurations,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
       ImmutableSet<File> validHeaderRoots,
-      ImmutableMap<TargetKey, CompilerInfo> targetToCompilerVersion) {
+      ImmutableMap<TargetKey, String> targetToCompilerVersion) {
     this.uniqueResolveConfigurations = uniqueResolveConfigurations;
     this.compilerSettings = compilerSettings;
     this.validHeaderRoots = validHeaderRoots;
@@ -87,7 +87,7 @@ final class BlazeConfigurationResolverResult {
     return validHeaderRoots.equals(other.validHeaderRoots);
   }
 
-  public Map<TargetKey, CompilerInfo> getTargetToCompilerVersion() {
+  public Map<TargetKey, String> getTargetToCompilerVersion() {
     return targetToCompilerVersion;
   }
 
@@ -96,7 +96,7 @@ final class BlazeConfigurationResolverResult {
         ImmutableMap.of();
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings = ImmutableMap.of();
     ImmutableSet<File> validHeaderRoots = ImmutableSet.of();
-    private ImmutableMap<TargetKey, CompilerInfo> setTargetToVersionMap;
+    private ImmutableMap<TargetKey, String> setTargetToVersionMap;
 
     public Builder() {}
 
@@ -120,7 +120,7 @@ final class BlazeConfigurationResolverResult {
       this.validHeaderRoots = validHeaderRoots;
     }
 
-    public void setTargetToVersionMap(ImmutableMap<TargetKey, CompilerInfo> targetToVersionMap) {
+    public void setTargetToVersionMap(ImmutableMap<TargetKey, String> targetToVersionMap) {
       this.setTargetToVersionMap = targetToVersionMap;
     }
   }

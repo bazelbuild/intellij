@@ -34,7 +34,6 @@ import com.google.idea.blaze.base.run.confighandler.BlazeCommandRunConfiguration
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.cpp.BlazeCompilerInfoMapService;
-import com.google.idea.blaze.cpp.CompilerInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
@@ -42,10 +41,10 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.PathUtil;
 import com.jetbrains.cidr.execution.CidrCommandLineState;
-import com.intellij.openapi.util.registry.Registry;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -56,7 +55,6 @@ import java.util.stream.Stream;
 
 /** CLion-specific handler for {@link BlazeCommandRunConfiguration}s. */
 public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigurationRunner {
-
   private final BlazeCommandRunConfiguration configuration;
 
   /** Calculated during the before-run task, and made available to the debugger. */
@@ -188,13 +186,8 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
   }
 
   private boolean isClangBuild() throws ExecutionException {
-    String targets = getSingleTarget(configuration).toString();
-    BlazeCompilerInfoMapService.State allCompilers = BlazeCompilerInfoMapService.getInstance(configuration.getProject()).getState();
-    if (allCompilers != null && allCompilers.getCompilerInfoMap() != null) {
-      CompilerInfo targetCompiler = allCompilers.getCompilerInfoMap().get(targets);
-      return targetCompiler.getVersionString().contains("clang");
-    }
-    return false;
+    Label target = getSingleTarget(configuration);
+    return BlazeCompilerInfoMapService.getInstance(configuration.getProject()).isClangTarget(target);
   }
 
   /**

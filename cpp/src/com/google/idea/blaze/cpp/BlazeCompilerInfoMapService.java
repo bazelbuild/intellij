@@ -1,19 +1,23 @@
 package com.google.idea.blaze.cpp;
 
 import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @State(name="BlazeCompilerInfoMap", storages = @Storage(value = "blazeInfo.xml", roamingType = RoamingType.DISABLED))
 final public class BlazeCompilerInfoMapService implements PersistentStateComponent<BlazeCompilerInfoMapService.State> {
+    final public static Logger logger = Logger.getInstance(BlazeCompilerInfoMapService.class);
     @Override
     public @Nullable BlazeCompilerInfoMapService.State getState() {
         return this.state;
@@ -25,18 +29,14 @@ final public class BlazeCompilerInfoMapService implements PersistentStateCompone
     }
 
     public static class State{
-        public Map<String, CompilerInfo> compilerInfoMap;
+        @NotNull private Map<String, String> compilerVersionStringMap = Collections.emptyMap();
 
         public State() {
 
         }
 
-        public Map<String, CompilerInfo> getCompilerInfoMap() {
-            return compilerInfoMap;
-        }
-
-        public State(Map<String, CompilerInfo> compilerInfoMap) {
-            this.compilerInfoMap = compilerInfoMap;
+        public State(@NotNull Map<String, String> compilerInfoMap) {
+            this.compilerVersionStringMap = compilerInfoMap;
         }
     }
 
@@ -44,14 +44,23 @@ final public class BlazeCompilerInfoMapService implements PersistentStateCompone
 
     }
 
-    public void setState(Map<TargetKey, CompilerInfo> compilerInfoMap) {
+    public void setState(Map<TargetKey, String> compilerInfoMap) {
         this.state = new State(compilerInfoMap.entrySet().stream()
                 .collect(Collectors.toMap(e -> e.getKey().getLabel().toString(), Map.Entry::getValue)));
     }
-    State state = new State(null);
+    State state = new State();
 
+    @NotNull
     public static BlazeCompilerInfoMapService getInstance(Project p) {
         return p.getService(BlazeCompilerInfoMapService.class);
     }
 
+    public boolean isClangTarget(Label label) {
+        String result = getState().compilerVersionStringMap.get(label.toString());
+        if(result == null) {
+            logger.warn(String.format("Could not find version string for target %s", label));
+            return false;
+        }
+        return result.contains("clang");
+    }
 }

@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -86,7 +87,7 @@ final class BlazeConfigurationResolver {
             executionRootPathResolver,
             oldResult.getCompilerSettings());
 
-    ImmutableMap<TargetKey, CompilerInfo> targetToVersion = getTargetToVersionMap(toolchainLookupMap, compilerSettings);
+    ImmutableMap<TargetKey, String> targetToVersion = getTargetToVersionMap(toolchainLookupMap, compilerSettings);
     ProjectViewTargetImportFilter projectViewFilter =
         new ProjectViewTargetImportFilter(
             Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet);
@@ -104,16 +105,19 @@ final class BlazeConfigurationResolver {
   }
 
   @NotNull
-  private static ImmutableMap<TargetKey, CompilerInfo> getTargetToVersionMap(ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap, ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
+  private static ImmutableMap<TargetKey, String> getTargetToVersionMap(ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap, ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
     Map<ExecutionRootPath, String> compilerVersionByPath =
             compilerSettings.entrySet().stream().collect(
                     Collectors.toMap(
                             e -> e.getKey().getCppExecutable(),
                             e -> e.getValue().getCompilerVersion()));
-    Map<TargetKey, CompilerInfo> map = toolchainLookupMap.entrySet().stream().collect(
-            Collectors.toMap(
-                    Map.Entry::getKey,
-                    e -> new CompilerInfo(compilerVersionByPath.get(e.getValue().getCppExecutable()))));
+    Map<TargetKey, String> map = toolchainLookupMap.entrySet().stream()
+            .map(e -> new AbstractMap.SimpleImmutableEntry<>(
+                    e.getKey(),
+                    compilerVersionByPath.get(e.getValue().getCppExecutable())))
+            // In case of a broken compiler, the version string is null, but Collectors.toMap requires non-null value function.
+            .filter(e -> e.getValue() != null)
+            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
     return ImmutableMap.copyOf(map);
   }
 
