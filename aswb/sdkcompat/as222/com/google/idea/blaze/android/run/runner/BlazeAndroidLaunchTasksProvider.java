@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Bazel Authors. All rights reserved.
+ * Copyright 2022 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import static com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContribu
 
 import com.android.ddmlib.IDevice;
 import com.android.tools.deployer.ApkVerifierTracker;
+import com.android.tools.idea.editors.literals.LiveEditService;
 import com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContributor;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
@@ -32,12 +33,14 @@ import com.android.tools.idea.run.tasks.DismissKeyguardTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.tasks.ShowLogcatTask;
+import com.android.tools.idea.run.tasks.StartLiveUpdateMonitoringTask;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.ndk.run.editor.AutoAndroidDebuggerState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -49,6 +52,8 @@ import org.jetbrains.annotations.Nullable;
 public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
   public static final String NATIVE_DEBUGGING_ENABLED = "NATIVE_DEBUGGING_ENABLED";
   private static final Logger LOG = Logger.getInstance(BlazeAndroidLaunchTasksProvider.class);
+  private static final BoolExperiment isLiveEditEnabled =
+      new BoolExperiment("aswb.live.edit.enabled", false);
 
   private final Project project;
   private final BlazeAndroidRunContext runContext;
@@ -144,6 +149,11 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
               launchOptions, userId, String.join(" ", amStartOptions.build()), launchStatus);
       if (appLaunchTask != null) {
         launchTasks.add(appLaunchTask);
+        if (isLiveEditEnabled.getValue()) {
+          launchTasks.add(
+              new StartLiveUpdateMonitoringTask(
+                  LiveEditService.getInstance(project).getCallback(packageName, device)));
+        }
       }
     } catch (ApkProvisionException e) {
       LOG.error(e);
