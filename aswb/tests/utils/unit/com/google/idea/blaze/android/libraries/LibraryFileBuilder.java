@@ -15,11 +15,11 @@
  */
 package com.google.idea.blaze.android.libraries;
 
-import static com.android.SdkConstants.FN_LINT_JAR;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.android.annotations.NonNull;
 import com.google.common.base.Joiner;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,58 +31,54 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-/** Util class to generate temp aar file used during test */
-public class AarLibraryFileBuilder {
-  private static final Logger LOG = Logger.getInstance(AarLibraryFileBuilder.class);
-  private final File aarFile;
+/** Util class to generate temp aar or jar file used during test */
+public class LibraryFileBuilder {
+  private static final Logger LOG = Logger.getInstance(LibraryFileBuilder.class);
+  private final File file;
   private final Map<String, byte[]> resourceNameToContent;
-  private byte[] lintJar = new byte[0];
 
-  public static AarLibraryFileBuilder aar(
+  public static LibraryFileBuilder aar(
       @NonNull WorkspaceRoot workspaceRoot, @NonNull String aarFilePath) {
-    return new AarLibraryFileBuilder(workspaceRoot, aarFilePath);
+    return new LibraryFileBuilder(workspaceRoot, aarFilePath);
   }
 
-  AarLibraryFileBuilder(@NonNull WorkspaceRoot workspaceRoot, @NonNull String aarFilePath) {
-    aarFile = workspaceRoot.fileForPath(new WorkspacePath(aarFilePath));
+  LibraryFileBuilder(@NonNull WorkspaceRoot workspaceRoot, @NonNull String filePath) {
+    this(workspaceRoot.fileForPath(new WorkspacePath(filePath)));
+  }
+
+  public LibraryFileBuilder(@NonNull File file) {
+    this.file = file;
     this.resourceNameToContent = new HashMap<>();
   }
 
-  public AarLibraryFileBuilder src(String relativePath, List<String> contentLines) {
+  @CanIgnoreReturnValue
+  public LibraryFileBuilder addContent(String relativePath, List<String> contentLines) {
     resourceNameToContent.put(relativePath, Joiner.on("\n").join(contentLines).getBytes(UTF_8));
     return this;
   }
 
-  public AarLibraryFileBuilder src(String relativePath, byte[] content) {
+  @CanIgnoreReturnValue
+  public LibraryFileBuilder addContent(String relativePath, byte[] content) {
     resourceNameToContent.put(relativePath, content);
     return this;
   }
 
-  public AarLibraryFileBuilder setLintJar(byte[] lintJar) {
-    this.lintJar = lintJar;
-    return this;
-  }
-
+  @CanIgnoreReturnValue
   public File build() {
     try {
-      // create aarFilePath if it does not exist
-      aarFile.getParentFile().mkdirs();
-      aarFile.createNewFile();
-      try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(aarFile))) {
+      // create file if it does not exist
+      file.getParentFile().mkdirs();
+      file.createNewFile();
+      try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(file))) {
         for (Map.Entry<String, byte[]> entry : resourceNameToContent.entrySet()) {
           out.putNextEntry(new ZipEntry(entry.getKey()));
           out.write(entry.getValue(), 0, entry.getValue().length);
-          out.closeEntry();
-        }
-        if (lintJar.length > 0) {
-          out.putNextEntry(new ZipEntry(FN_LINT_JAR));
-          out.write(lintJar, 0, lintJar.length);
           out.closeEntry();
         }
       }
     } catch (Exception e) {
       LOG.error(e);
     }
-    return aarFile;
+    return file;
   }
 }

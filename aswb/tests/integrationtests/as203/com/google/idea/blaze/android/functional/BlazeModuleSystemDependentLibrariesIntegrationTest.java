@@ -31,7 +31,7 @@ import com.android.tools.idea.projectsystem.GoogleMavenArtifactId;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
-import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
+import com.google.idea.blaze.android.libraries.LibraryFileBuilder;
 import com.google.idea.blaze.android.libraries.UnpackedAarUtils;
 import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.projectsystem.BlazeModuleSystem;
@@ -139,8 +139,8 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
         aar_import(aarFile)
             .aar("lib_aar.aar")
             .generated_jar("_aar/an_aar/classes_and_libs_merged.jar");
-    AarLibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
-        .src(
+    LibraryFileBuilder.aar(workspaceRoot, aarTarget.getAar().getRelativePath())
+        .addContent(
             "res/values/colors.xml",
             ImmutableList.of(
                 "<?xml version=\"1.0\" encoding=\"utf-8\"?>",
@@ -158,14 +158,14 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
             .dep(guava, quantum, aarFile, intermediateDependency);
     binaryTarget
         .getAarList()
-        .forEach(aar -> AarLibraryFileBuilder.aar(workspaceRoot, aar.getRelativePath()).build());
+        .forEach(aar -> LibraryFileBuilder.aar(workspaceRoot, aar.getRelativePath()).build());
 
     NbAndroidTarget quantumTarget =
         android_library(quantum)
             .res_folder("//third_party/quantum/res", "values-third_party-quantum-res.aar");
     quantumTarget
         .getAarList()
-        .forEach(aar -> AarLibraryFileBuilder.aar(workspaceRoot, aar.getRelativePath()).build());
+        .forEach(aar -> LibraryFileBuilder.aar(workspaceRoot, aar.getRelativePath()).build());
 
     NbAndroidTarget constraintLayoutTarget =
         android_library(constraintLayout)
@@ -174,7 +174,7 @@ public class BlazeModuleSystemDependentLibrariesIntegrationTest
                 "constraint_layout-third_party-constraint_layout-res.aar");
     constraintLayoutTarget
         .getAarList()
-        .forEach(aar -> AarLibraryFileBuilder.aar(workspaceRoot, aar.getRelativePath()).build());
+        .forEach(aar -> LibraryFileBuilder.aar(workspaceRoot, aar.getRelativePath()).build());
 
     workspace.createFile(new WorkspacePath("third_party/guava-21.jar"));
     setTargetMap(
