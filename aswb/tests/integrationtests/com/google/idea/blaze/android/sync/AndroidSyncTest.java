@@ -28,7 +28,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
-import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
+import com.google.idea.blaze.android.libraries.LibraryFileBuilder;
 import com.google.idea.blaze.android.sdk.BlazeSdkProvider;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.android.sync.sdk.SdkUtil;
@@ -361,8 +361,8 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
         "public class Other {}");
 
     // construct an aar file with a res file.
-    AarLibraryFileBuilder.aar(workspaceRoot, "java/com/google/foo.aar")
-        .src(
+    LibraryFileBuilder.aar(workspaceRoot, "java/com/google/foo.aar")
+        .addContent(
             "res/values/colors.xml",
             ImmutableList.of(
                 "<?xml version=\"1.0\" encoding=\"utf-8\"?>",

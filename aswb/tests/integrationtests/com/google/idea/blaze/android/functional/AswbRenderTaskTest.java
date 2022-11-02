@@ -34,7 +34,7 @@ import com.google.idea.blaze.android.AswbImageDiffUtil;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.fixtures.ManifestFixture;
-import com.google.idea.blaze.android.libraries.AarLibraryFileBuilder;
+import com.google.idea.blaze.android.libraries.LibraryFileBuilder;
 import com.google.idea.blaze.android.targetmapbuilder.NbAndroidTarget;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
@@ -199,9 +199,9 @@ public class AswbRenderTaskTest extends BlazeAndroidIntegrationTestCase {
     NbAndroidTarget bar =
         android_library("//java/com/bar:bar")
             .res_folder("//java/com/bar/res", "bar-java-com-bar-res.aar");
-    AarLibraryFileBuilder.aar(workspaceRoot, bar.getAarList().get(0).getRelativePath())
-        .src("res/values/dimens.xml", ImmutableList.singleton(DIMENS_XML))
-        .src(
+    LibraryFileBuilder.aar(workspaceRoot, bar.getAarList().get(0).getRelativePath())
+        .addContent("res/values/dimens.xml", ImmutableList.singleton(DIMENS_XML))
+        .addContent(
             "res/drawable/ic_banner.png",
             Files.readAllBytes(getTestResource("testdata/ic_banner.png")))
         .build();
