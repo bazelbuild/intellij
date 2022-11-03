@@ -1,2 +1,2 @@
-build --java_language_version=17
-test --java_language_version=17 --java_runtime_version=17
+build --java_language_version=17 --javacopt=-source --javacopt=8 --javacopt=-target --javacopt=8
+test  --java_language_version=17 --javacopt=-source --javacopt=8 --javacopt=-target --javacopt=8 --java_runtime_version=17
