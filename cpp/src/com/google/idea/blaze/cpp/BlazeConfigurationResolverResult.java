@@ -19,10 +19,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.ideinfo.CToolchainIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
+
+import javax.annotation.concurrent.Immutable;
 import java.io.File;
 import java.util.Map;
-import javax.annotation.concurrent.Immutable;
 
 /**
  * Resolve configuration maps, etc. obtained from running the {@link BlazeConfigurationResolver}.
@@ -34,13 +34,13 @@ final class BlazeConfigurationResolverResult {
       uniqueResolveConfigurations;
   private final ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings;
   private final ImmutableSet<File> validHeaderRoots;
-  private final ImmutableMap<TargetKey, String> targetToCompilerVersion;
+  private final ImmutableMap<String, String> targetToCompilerVersion;
 
   private BlazeConfigurationResolverResult(
       ImmutableMap<BlazeResolveConfigurationData, BlazeResolveConfiguration> uniqueResolveConfigurations,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings,
       ImmutableSet<File> validHeaderRoots,
-      ImmutableMap<TargetKey, String> targetToCompilerVersion) {
+      ImmutableMap<String, String> targetToCompilerVersion) {
     this.uniqueResolveConfigurations = uniqueResolveConfigurations;
     this.compilerSettings = compilerSettings;
     this.validHeaderRoots = validHeaderRoots;
@@ -87,7 +87,7 @@ final class BlazeConfigurationResolverResult {
     return validHeaderRoots.equals(other.validHeaderRoots);
   }
 
-  public Map<TargetKey, String> getTargetToCompilerVersion() {
+  public Map<String, String> getTargetToCompilerVersion() {
     return targetToCompilerVersion;
   }
 
@@ -96,7 +96,7 @@ final class BlazeConfigurationResolverResult {
         ImmutableMap.of();
     ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings = ImmutableMap.of();
     ImmutableSet<File> validHeaderRoots = ImmutableSet.of();
-    private ImmutableMap<TargetKey, String> setTargetToVersionMap;
+    private ImmutableMap<String, String> setTargetToVersionMap;
 
     public Builder() {}
 
@@ -120,7 +120,7 @@ final class BlazeConfigurationResolverResult {
       this.validHeaderRoots = validHeaderRoots;
     }
 
-    public void setTargetToVersionMap(ImmutableMap<TargetKey, String> targetToVersionMap) {
+    public void setTargetToVersionMap(ImmutableMap<String, String> targetToVersionMap) {
       this.setTargetToVersionMap = targetToVersionMap;
     }
   }

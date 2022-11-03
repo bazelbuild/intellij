@@ -87,7 +87,7 @@ final class BlazeConfigurationResolver {
             executionRootPathResolver,
             oldResult.getCompilerSettings());
 
-    ImmutableMap<TargetKey, String> targetToVersion = getTargetToVersionMap(toolchainLookupMap, compilerSettings);
+    ImmutableMap<String, String> targetToVersion = getTargetToVersionMap(toolchainLookupMap, compilerSettings);
     ProjectViewTargetImportFilter projectViewFilter =
         new ProjectViewTargetImportFilter(
             Blaze.getBuildSystemName(project), workspaceRoot, projectViewSet);
@@ -105,20 +105,19 @@ final class BlazeConfigurationResolver {
   }
 
   @NotNull
-  private static ImmutableMap<TargetKey, String> getTargetToVersionMap(ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap, ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
+  private static ImmutableMap<String, String> getTargetToVersionMap(ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap, ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
     Map<ExecutionRootPath, String> compilerVersionByPath =
             compilerSettings.entrySet().stream().collect(
                     Collectors.toMap(
                             e -> e.getKey().getCppExecutable(),
                             e -> e.getValue().getCompilerVersion()));
-    Map<TargetKey, String> map = toolchainLookupMap.entrySet().stream()
+    return toolchainLookupMap.entrySet().stream()
             .map(e -> new AbstractMap.SimpleImmutableEntry<>(
-                    e.getKey(),
+                    e.getKey().getLabel().toString(),
                     compilerVersionByPath.get(e.getValue().getCppExecutable())))
             // In case of a broken compiler, the version string is null, but Collectors.toMap requires non-null value function.
             .filter(e -> e.getValue() != null)
-            .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-    return ImmutableMap.copyOf(map);
+            .collect(ImmutableMap.toImmutableMap(e -> e.getKey(), e -> e.getValue()));
   }
 
   private static Predicate<TargetIdeInfo> getTargetFilter(

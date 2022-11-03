@@ -8,6 +8,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,9 @@ final public class BlazeCompilerInfoMapService implements PersistentStateCompone
     }
 
     public static class State{
-        @NotNull private Map<String, String> compilerVersionStringMap = Collections.emptyMap();
+        // We annotate non-public property in order to be saved using PersistentStateComponent interface
+        // https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html
+        @NotNull @Property Map<String, String> compilerVersionStringMap = Collections.emptyMap();
 
         public State() {
 
@@ -44,11 +47,14 @@ final public class BlazeCompilerInfoMapService implements PersistentStateCompone
 
     }
 
-    public void setState(Map<TargetKey, String> compilerInfoMap) {
-        this.state = new State(compilerInfoMap.entrySet().stream()
-                .collect(Collectors.toMap(e -> e.getKey().getLabel().toString(), Map.Entry::getValue)));
+    public void setState(Map<String, String> compilerInfoMap) {
+        this.state = new State(compilerInfoMap);
     }
-    State state = new State();
+
+    // We annotate non-public property in order to be saved using PersistentStateComponent interface
+    // https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html
+    @Property
+    private State state = new State();
 
     @NotNull
     public static BlazeCompilerInfoMapService getInstance(Project p) {
