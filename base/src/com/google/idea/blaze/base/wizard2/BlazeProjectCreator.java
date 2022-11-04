@@ -91,7 +91,7 @@ class BlazeProjectCreator {
     projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
 
     StartupManager.getInstance(newProject)
-        .registerPostStartupActivity(
+        .runAfterOpened(
             () -> {
               // ensure the dialog is shown after all startup activities are done
               //noinspection SSBasedInspection
