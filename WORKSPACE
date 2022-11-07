@@ -184,8 +184,8 @@ http_archive(
 http_archive(
     name = "python_2022_3",
     build_file_content = _PYTHON_CE_BUILD_FILE,
-    sha256 = "eda2e43de7a87f8df08213eec808a31e3689f7e89dba309a5e6ae1fde627755f",
-    url = "https://plugins.jetbrains.com/files/7322/238523/python-ce-223.6646.99.zip"
+    sha256 = "ea262949bed63a4b5b5667aa79a9e23f5c749c545baf33ff63d86a2c87b1d38f",
+    url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/223.7401.7/PythonCore-223.7401.7.zip"
 )
 
 _GO_BUILD_FILE = """
