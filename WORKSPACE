@@ -43,7 +43,7 @@ http_archive(
 http_archive(
     name = "intellij_ce_2022_3",
     build_file = "@//intellij_platform_sdk:BUILD.idea223",
-    sha256 = "a87a05e9debdb49bc0b509eb090b214c8b0a05a15de495a23da98d90fc59545f",
+    sha256 = "c75f323788eb967f9549f33b6805d705549b39db4d08a937a522b4eeb30ef37b",
     url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/223.7401.7-EAP-SNAPSHOT/ideaIC-223.7401.7-EAP-SNAPSHOT.zip"
 )
 
