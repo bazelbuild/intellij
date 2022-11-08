@@ -18,9 +18,7 @@ package com.google.idea.blaze.base.model;
 import com.google.common.base.Objects;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
 import javax.annotation.concurrent.Immutable;
 
 /** A model object for something that will map to an IntelliJ library. */
@@ -48,12 +46,11 @@ public abstract class BlazeLibrary implements ProtoWrapper<ProjectData.BlazeLibr
   }
 
   /**
-   * Returns a {@link BlazeLibraryModelModifier} that can be used to update library model content.
+   * Returns a {@link LibraryFilesProvider} that can be used to update library model content. Many
+   * BlazeLibrary instances may return the same LibraryFilesProvider, and that all BlazeLibraries
+   * with the same FilesProvider will be mapped to the same library in the IJ project model.
    */
-  public abstract BlazeLibraryModelModifier getModelModifier(
-      Project project,
-      ArtifactLocationDecoder artifactLocationDecoder,
-      ModifiableModel modifiableModel);
+  public abstract LibraryFilesProvider getDefaultLibraryFilesProvider(Project project);
 
   @Override
   public boolean equals(Object other) {
@@ -67,4 +64,6 @@ public abstract class BlazeLibrary implements ProtoWrapper<ProjectData.BlazeLibr
     BlazeLibrary that = (BlazeLibrary) other;
     return Objects.equal(key, that.key);
   }
+
+  public abstract String getExtension();
 }
