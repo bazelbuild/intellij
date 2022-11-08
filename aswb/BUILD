@@ -134,6 +134,7 @@ java_library(
         "//java",
         "//proto:proto_deps",
         "//third_party/auto_value",
+        "@gson//jar",
     ],
 )
 

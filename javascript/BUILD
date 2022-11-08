@@ -29,6 +29,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//sdkcompat",
         "//third_party/javascript",
+        "@gson//jar",
     ],
 )
 
