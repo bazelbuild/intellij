@@ -15,13 +15,25 @@
  */
 package com.google.idea.blaze.base.model;
 
+import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.roots.libraries.Library;
+import java.io.File;
 
-/** Provides ability to modify library content in {@link Library.ModifiableModel}. */
-public interface BlazeLibraryModelModifier {
-  /** Writes the library content to its {@link Library.ModifiableModel}. */
-  void updateModifiableModel();
-
+/** Provides files to be updated in {@link Library.ModifiableModel}. */
+public interface LibraryFilesProvider {
   /** Returns the name of library that the modifier will update. */
   String getName();
+
+  /**
+   * Returns a list of files that should be added to {@link Library.ModifiableModel} as
+   * OrderRootType.CLASSES.
+   */
+  ImmutableList<File> getClassFiles(ArtifactLocationDecoder artifactLocationDecoder);
+
+  /**
+   * Returns a list of files that should be added to {@link Library.ModifiableModel} as
+   * OrderRootType.SOURCES.
+   */
+  ImmutableList<File> getSourceFiles(ArtifactLocationDecoder artifactLocationDecoder);
 }

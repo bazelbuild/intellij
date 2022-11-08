@@ -390,7 +390,7 @@ final class ProjectUpdateSyncTask {
         BlazeLibraryCollector.getLibraries(projectViewSet, newBlazeProjectData);
     LibraryEditor.updateProjectLibraries(
         project, context, projectViewSet, newBlazeProjectData, libraries);
-    LibraryEditor.configureDependencies(workspaceModifiableModel, libraries);
+    LibraryEditor.configureDependencies(project, workspaceModifiableModel, libraries);
 
     for (BlazeSyncPlugin blazeSyncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
       blazeSyncPlugin.updateProjectStructure(
