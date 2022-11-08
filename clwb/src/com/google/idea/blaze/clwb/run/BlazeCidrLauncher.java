@@ -69,7 +69,6 @@ import com.jetbrains.cidr.execution.TrivialInstaller;
 import com.jetbrains.cidr.execution.TrivialRunParameters;
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess;
 import com.jetbrains.cidr.execution.debugger.CidrLocalDebugProcess;
-import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemoteDebugParameters;
 import com.jetbrains.cidr.execution.debugger.remote.CidrRemotePathMapping;
 import com.jetbrains.cidr.execution.testing.google.CidrGoogleTestConsoleProperties;
@@ -250,7 +249,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
       TrivialRunParameters parameters =
           new TrivialRunParameters(
               ToolchainUtils.getToolchain().getDebuggerKind() == Kind.BUNDLED_LLDB
-                  ? new LLDBDriverConfiguration()
+                  ? new BlazeLLDBDriverConfiguration(project, workspaceRoot.directory().toPath())
                   : new BlazeGDBDriverConfiguration(project, startupCommands, workspaceRoot),
               installer);
 

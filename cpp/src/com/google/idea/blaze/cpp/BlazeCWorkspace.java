@@ -67,6 +67,7 @@ import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Message;
 import com.jetbrains.cidr.lang.workspace.compiler.CompilerInfoCache.Session;
 import com.jetbrains.cidr.lang.workspace.compiler.OCCompilerKind;
 import com.jetbrains.cidr.lang.workspace.compiler.TempFilesPool;
+
 import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
@@ -126,6 +127,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     BlazeConfigurationResolverResult newResult =
         configurationResolver.update(
             context, workspaceRoot, projectViewSet, blazeProjectData, oldResult);
+    BlazeCompilerInfoMapService.getInstance(project).setState(newResult.getTargetToCompilerVersion());
     // calculateConfigurations is expensive, so run async without a read lock (b/78570947)
     ProgressManager.getInstance()
         .run(
@@ -322,7 +324,6 @@ public final class BlazeCWorkspace implements ProjectComponent {
       fileCompilerSettings.setCompilerSwitches(compilerOpts.switches);
     }
   }
-
   /** Group compiler options for a specific file. */
   private static class PerFileCompilerOpts {
     final OCLanguageKind kind;
