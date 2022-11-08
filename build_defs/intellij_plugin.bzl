@@ -269,6 +269,7 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         runtime_deps = [":" + java_deps_name] + extra_runtime_deps,
         create_executable = 0,
     )
+
     jar_target_name = name + "_intellij_plugin_jar"
     _intellij_plugin_jar(
         name = jar_target_name,
