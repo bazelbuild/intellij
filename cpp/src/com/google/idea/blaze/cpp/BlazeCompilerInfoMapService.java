@@ -1,5 +1,6 @@
 package com.google.idea.blaze.cpp;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -32,13 +33,14 @@ final public class BlazeCompilerInfoMapService implements PersistentStateCompone
     public static class State{
         // We annotate non-public property in order to be saved using PersistentStateComponent interface
         // https://plugins.jetbrains.com/docs/intellij/persisting-state-of-components.html
-        @NotNull @Property Map<String, String> compilerVersionStringMap = Collections.emptyMap();
+        @NotNull @Property
+        ImmutableMap<String, String> compilerVersionStringMap = ImmutableMap.of();
 
         public State() {
 
         }
 
-        public State(@NotNull Map<String, String> compilerInfoMap) {
+        public State(@NotNull ImmutableMap<String, String> compilerInfoMap) {
             this.compilerVersionStringMap = compilerInfoMap;
         }
     }
@@ -47,7 +49,7 @@ final public class BlazeCompilerInfoMapService implements PersistentStateCompone
 
     }
 
-    public void setState(Map<String, String> compilerInfoMap) {
+    public void setState(ImmutableMap<String, String> compilerInfoMap) {
         this.state = new State(compilerInfoMap);
     }
 

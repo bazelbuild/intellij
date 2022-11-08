@@ -15,7 +15,11 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
@@ -106,9 +110,9 @@ final class BlazeConfigurationResolver {
 
   @NotNull
   private static ImmutableMap<String, String> getTargetToVersionMap(ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap, ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> compilerSettings) {
-    Map<ExecutionRootPath, String> compilerVersionByPath =
+    ImmutableMap<ExecutionRootPath, String> compilerVersionByPath =
             compilerSettings.entrySet().stream().collect(
-                    Collectors.toMap(
+                    ImmutableMap.toImmutableMap(
                             e -> e.getKey().getCppExecutable(),
                             e -> e.getValue().getCompilerVersion()));
     return toolchainLookupMap.entrySet().stream()

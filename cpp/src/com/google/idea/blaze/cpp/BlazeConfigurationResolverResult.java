@@ -87,7 +87,7 @@ final class BlazeConfigurationResolverResult {
     return validHeaderRoots.equals(other.validHeaderRoots);
   }
 
-  public Map<String, String> getTargetToCompilerVersion() {
+  public ImmutableMap<String, String> getTargetToCompilerVersion() {
     return targetToCompilerVersion;
   }
 
