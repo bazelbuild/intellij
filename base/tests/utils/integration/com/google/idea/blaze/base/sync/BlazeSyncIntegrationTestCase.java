@@ -106,7 +106,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   @Nullable private ProjectModuleMocker moduleMocker; // this will be null for heavy test cases
 
   protected ErrorCollector errorCollector;
-  private String execRoot;
+  protected String execRoot;
 
   @Before
   public void doSetup() throws Throwable {
