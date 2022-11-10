@@ -67,6 +67,7 @@ def _intellij_plugin_library_impl(ctx):
     # dependencies. This means that any native parts (.so files) are excluded
     # from the plugin, which means Bazel does not attempt to build them, so
     # they do not break the build.
+    # TODO(b/258450529) Fix this properly so that this workaround is not needed.
     compile = []
     runtime = []
     for dep in ctx.attr.deps:
