@@ -42,7 +42,11 @@ public class GazelleUserSettings implements PersistentStateComponent<GazelleUser
     if (rawTarget.equals(EMPTY_GAZELLE_TARGET)) {
       return Optional.empty();
     }
-    Label targetLabel = (Label) TargetExpression.fromString(rawTarget);
+    String validationError = Label.validate(rawTarget);
+    if ( validationError != null) {
+      throw new InvalidTargetException(validationError);
+    }
+    Label targetLabel = Label.create(rawTarget);
     return Optional.of(targetLabel);
   }
 

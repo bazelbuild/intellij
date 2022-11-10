@@ -10,7 +10,6 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser.Parser;
-import com.google.idea.blaze.base.issueparser.IssueOutputFilter;
 import com.google.idea.blaze.base.model.primitives.InvalidTargetException;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -20,7 +19,6 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
-import com.google.idea.blaze.base.scope.scopes.BlazeConsoleScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
@@ -106,15 +104,6 @@ public class GazelleSyncListener implements SyncListener {
                 .showSummaryOutput()
                 .build())
         .push(
-            new BlazeConsoleScope.Builder(project, indicator)
-                .addConsoleFilters(
-                    new IssueOutputFilter(
-                        project,
-                        WorkspaceRoot.fromProject(project),
-                        BlazeInvocationContext.ContextType.Sync,
-                        true))
-                .build())
-        .push(
             new NotificationScope(
                 project,
                 "Gazelle",
@@ -174,7 +163,7 @@ public class GazelleSyncListener implements SyncListener {
 
   public void onSyncStart(Project project, BlazeContext parentContext, SyncMode syncMode)
       throws SyncScope.SyncFailedException, SyncScope.SyncCanceledException {
-    if (syncMode == SyncMode.NO_BUILD) {
+    if (syncMode == SyncMode.NO_BUILD || syncMode == SyncMode.STARTUP) {
       return;
     }
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
@@ -213,6 +202,9 @@ public class GazelleSyncListener implements SyncListener {
   }
 
   private Collection<WorkspacePath> importantDirectories(Project project) {
+    // TODO: This currently fetches every directory in `directories` from the project view.
+    //       For very large repositories, this can be quite slow.
+    //       We should find a smarter way to figure out what to run gazelle on.
     ImportRoots roots = ImportRoots.forProjectSafe(project);
     Collection<WorkspacePath> paths =
         roots.rootDirectories().stream()

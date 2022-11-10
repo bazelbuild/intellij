@@ -21,11 +21,12 @@ public class GazelleIssueParsers {
   }
 
   private static final String GAZELLE_ISSUE_REGEX =
-      "^gazelle: "
-          + // Prefix for gazelle errors.
-          "(.*?): "
-          + // File
-          "(.*)$"; // Message
+      // Prefix for gazelle errors. We match the beginning to get rid of the control characters.
+      "^.*gazelle: " +
+          // File
+          "(.*?): " +
+          // Message
+          "(.*)$";
 
   private static class GenericGazelleIssueParser extends BlazeIssueParser.SingleLineParser {
 

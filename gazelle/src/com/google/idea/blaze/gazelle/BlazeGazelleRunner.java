@@ -21,7 +21,8 @@ public abstract class BlazeGazelleRunner {
   /**
    * Run the provided Gazelle target via Blaze.
    *
-   * @return
+   * @return GazelleRunResult,
+   *         an enum determining whether the command succeeded, failed, and/or had errors.
    */
   public abstract GazelleRunResult runBlazeGazelle(
       BlazeContext context,
