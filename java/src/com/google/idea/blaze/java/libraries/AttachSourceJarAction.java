@@ -73,8 +73,7 @@ class AttachSourceJarAction extends BlazeProjectAction {
             () -> {
               IdeModifiableModelsProvider modelsProvider =
                   BaseSdkCompat.createModifiableModelsProvider(project);
-              LibraryEditor.updateLibrary(
-                  project, projectData.getArtifactLocationDecoder(), modelsProvider, library);
+              LibraryEditor.updateLibrary(project, projectData, modelsProvider, library);
               modelsProvider.commit();
             });
   }

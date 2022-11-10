@@ -81,11 +81,7 @@ class DetachAllSourceJarsAction extends BlazeProjectAction {
             if (blazeLibrary == null) {
               continue;
             }
-            LibraryEditor.updateLibrary(
-                project,
-                blazeProjectData.getArtifactLocationDecoder(),
-                modelsProvider,
-                blazeLibrary);
+            LibraryEditor.updateLibrary(project, blazeProjectData, modelsProvider, blazeLibrary);
           }
           modelsProvider.commit();
         });

@@ -23,6 +23,7 @@ import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeLibrary;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryFilesProvider;
 import com.google.idea.blaze.base.model.LibraryKey;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
@@ -158,17 +159,18 @@ public final class AarLibrary extends BlazeLibrary {
     }
 
     @Override
-    public ImmutableList<File> getClassFiles(ArtifactLocationDecoder artifactLocationDecoder) {
+    public ImmutableList<File> getClassFiles(BlazeProjectData blazeProjectData) {
       UnpackedAars unpackedAars = UnpackedAars.getInstance(project);
       File resourceDirectory =
           UnpackedAars.getInstance(project)
-              .getResourceDirectory(artifactLocationDecoder, AarLibrary.this);
+              .getResourceDirectory(blazeProjectData.getArtifactLocationDecoder(), AarLibrary.this);
       if (resourceDirectory == null) {
         logger.warn("No resource directory found for aar: " + aarArtifact);
         return ImmutableList.of();
       }
 
-      File jar = unpackedAars.getClassJar(artifactLocationDecoder, AarLibrary.this);
+      File jar =
+          unpackedAars.getClassJar(blazeProjectData.getArtifactLocationDecoder(), AarLibrary.this);
       // not every aar has class jar attached, do not return non-existent jar to avoid false alarm
       // log.
       if (jar != null && jar.exists()) {
@@ -178,7 +180,7 @@ public final class AarLibrary extends BlazeLibrary {
     }
 
     @Override
-    public ImmutableList<File> getSourceFiles(ArtifactLocationDecoder artifactLocationDecoder) {
+    public ImmutableList<File> getSourceFiles(BlazeProjectData blazeProjectData) {
       // Unconditionally add any linked to source jars. BlazeJarLibrary doesn't do this - it only
       // attaches sources for libraries that the user explicitly asks for. We don't do that for two
       // reasons: 1) all the logic for attaching sources to a library (AttachSourceJarAction,
@@ -187,7 +189,7 @@ public final class AarLibrary extends BlazeLibrary {
       // dependencies.
       // Longer term, we may want to make this behave just like the Java libraries.
       return UnpackedAars.getInstance(project)
-          .getCachedSrcJars(artifactLocationDecoder, AarLibrary.this);
+          .getCachedSrcJars(blazeProjectData.getArtifactLocationDecoder(), AarLibrary.this);
     }
 
     @Override
