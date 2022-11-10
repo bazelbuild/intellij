@@ -167,10 +167,7 @@ public class BlazeAttachSourceProvider extends AttachSourcesProviderAdapter {
                 AttachedSourceJarManager.getInstance(project)
                     .setHasSourceJarAttached(blazeLibrary.key, true);
                 LibraryEditor.updateLibrary(
-                    project,
-                    blazeProjectData.getArtifactLocationDecoder(),
-                    modelsProvider,
-                    blazeLibrary);
+                    project, blazeProjectData, modelsProvider, blazeLibrary);
               }
               modelsProvider.commit();
             });

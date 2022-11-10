@@ -16,8 +16,8 @@
 package com.google.idea.blaze.base.sync.libraries;
 
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.LibraryFilesProvider;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.roots.OrderRootType;
@@ -47,13 +47,13 @@ public class LibraryModifier {
   }
 
   /** Writes the library content to its {@link Library.ModifiableModel}. */
-  public void updateModifiableModel(ArtifactLocationDecoder decoder) {
+  public void updateModifiableModel(BlazeProjectData blazeProjectData) {
     removeAllContents();
-    for (File classFile : libraryFilesProvider.getClassFiles(decoder)) {
+    for (File classFile : libraryFilesProvider.getClassFiles(blazeProjectData)) {
       addRoot(classFile, OrderRootType.CLASSES);
     }
 
-    for (File sourceFile : libraryFilesProvider.getSourceFiles(decoder)) {
+    for (File sourceFile : libraryFilesProvider.getSourceFiles(blazeProjectData)) {
       addRoot(sourceFile, OrderRootType.SOURCES);
     }
   }

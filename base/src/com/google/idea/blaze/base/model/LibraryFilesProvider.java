@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.roots.libraries.Library;
 import java.io.File;
 
@@ -29,11 +28,11 @@ public interface LibraryFilesProvider {
    * Returns a list of files that should be added to {@link Library.ModifiableModel} as
    * OrderRootType.CLASSES.
    */
-  ImmutableList<File> getClassFiles(ArtifactLocationDecoder artifactLocationDecoder);
+  ImmutableList<File> getClassFiles(BlazeProjectData blazeProjectData);
 
   /**
    * Returns a list of files that should be added to {@link Library.ModifiableModel} as
    * OrderRootType.SOURCES.
    */
-  ImmutableList<File> getSourceFiles(ArtifactLocationDecoder artifactLocationDecoder);
+  ImmutableList<File> getSourceFiles(BlazeProjectData blazeProjectData);
 }
