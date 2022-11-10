@@ -60,44 +60,7 @@ optional_plugin_xml = rule(
 _IntellijPluginLibraryInfo = provider(fields = ["plugin_xmls", "optional_plugin_xmls", "java_info"])
 
 def _intellij_plugin_library_impl(ctx):
-    java_info = []
-
-    # IntelliJ plugins depend transitively on targets that do not support mac.
-    # To workaround this, we explicitly pull out only the java parts of the
-    # dependencies. This means that any native parts (.so files) are excluded
-    # from the plugin, which means Bazel does not attempt to build them, so
-    # they do not break the build.
-    # TODO(b/258450529) Fix this properly so that this workaround is not needed.
-    compile = []
-    runtime = []
-    for dep in ctx.attr.deps:
-        # Exclude plugin_api targets, they should not be built in the jar.
-        # TODO(mathewi): this is a bit of a hack, find a better way.
-        if str(dep.label).startswith("//intellij_platform_sdk:"):
-            continue
-        compile.append(dep[JavaInfo].full_compile_jars)
-        runtime.append(dep[JavaInfo].transitive_runtime_jars)
-
-    # Wrap each runtime jar in a JavaInfo provider.
-    transtive_runtime = [
-        JavaInfo(output_jar = runtime_jar, compile_jar = runtime_jar)
-        for runtime_jar in depset(transitive = runtime).to_list()
-    ]
-
-    # Wrap each top-level compile time jar in a JavaInfo provider.
-    # Use the runtime JavaInfo providers from above as dependencies to keep the
-    # transitive runtime jars.
-    full_compile = [
-        JavaInfo(
-            output_jar = compile_jar,
-            compile_jar = compile_jar,
-            deps = transtive_runtime,
-        )
-        for compile_jar in depset(transitive = compile).to_list()
-    ]
-
-    # Construct a JavaInfo from the above to be included in the plugin jar.
-    java_info = java_common.merge(full_compile)
+    java_info = java_common.merge([dep[JavaInfo] for dep in ctx.attr.deps])
 
     plugin_xmls = []
     for target in ctx.attr.plugin_xmls:
