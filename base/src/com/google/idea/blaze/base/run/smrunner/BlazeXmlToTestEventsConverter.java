@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -49,6 +50,7 @@ import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import java.io.InputStream;
@@ -91,6 +93,8 @@ public class BlazeXmlToTestEventsConverter extends OutputToGeneralTestEventsConv
       } else {
         processAllTestResults(testResults);
       }
+    } catch (GetArtifactsException e) {
+      Logger.getInstance(this.getClass()).error(e.getMessage());
     } finally {
       testResultFinderStrategy.deleteTemporaryOutputFiles();
     }

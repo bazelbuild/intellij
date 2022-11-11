@@ -44,6 +44,7 @@ import com.google.idea.blaze.android.run.test.BlazeAndroidTestLaunchMethodsProvi
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.smrunner.BlazeTestUiSession;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResultHolder;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;

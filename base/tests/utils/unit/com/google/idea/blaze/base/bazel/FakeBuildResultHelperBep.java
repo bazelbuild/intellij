@@ -59,7 +59,7 @@ public final class FakeBuildResultHelperBep implements BuildResultHelper {
   }
 
   @Override
-  public BlazeTestResults getTestResults() {
+  public BlazeTestResults getTestResults(Optional<String> completedBuildId) {
     return BlazeTestResults.NO_RESULTS;
   }
 

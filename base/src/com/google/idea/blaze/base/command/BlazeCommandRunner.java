@@ -17,14 +17,30 @@ package com.google.idea.blaze.base.command;
 
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.intellij.openapi.project.Project;
 
-/** Runs a blaze build command */
+/** Runs a blaze command */
 public interface BlazeCommandRunner {
 
+  /**
+   * Runs a blaze build command, parses the build results into a {@link BlazeBuildOutputs} object
+   * using the given {@link BuildResultHelper}.
+   */
   BlazeBuildOutputs run(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      WorkspaceRoot workspaceRoot,
+      BlazeContext context);
+
+  /**
+   * Runs a blaze test command, parses the test results into a {@link BlazeTestResults} object using
+   * the given {@link BuildResultHelper}.
+   */
+  BlazeTestResults runTest(
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,

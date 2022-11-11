@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
@@ -42,23 +43,13 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       WorkspaceRoot workspaceRoot,
       BlazeContext context) {
-    int retVal =
-        ExternalTask.builder(workspaceRoot)
-            .addBlazeCommand(blazeCommandBuilder.build())
-            .context(context)
-            .stderr(
-                LineProcessingOutputStream.of(
-                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
-            .build()
-            .run();
 
-    BuildResult buildResult = BuildResult.fromExitCode(retVal);
+    BuildResult buildResult = issueBuild(blazeCommandBuilder, workspaceRoot, context);
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
+    context.output(PrintOutput.log("Build command finished. Retrieving BEP outputs..."));
     try {
-      context.output(PrintOutput.log("Build command finished. Retrieving BEP outputs..."));
-
       Interner<String> stringInterner =
           Optional.ofNullable(context.getScope(SharedStringPoolScope.class))
               .map(SharedStringPoolScope::getStringInterner)
@@ -69,5 +60,39 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
+  }
+
+  @Override
+  public BlazeTestResults runTest(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      WorkspaceRoot workspaceRoot,
+      BlazeContext context) {
+    BuildResult buildResult = issueBuild(blazeCommandBuilder, workspaceRoot, context);
+    if (buildResult.status == Status.FATAL_ERROR) {
+      return BlazeTestResults.NO_RESULTS;
+    }
+    context.output(PrintOutput.log("Build command finished. Retrieving BEP outputs..."));
+    try {
+      return buildResultHelper.getTestResults(Optional.empty());
+    } catch (GetArtifactsException e) {
+      IssueOutput.error("Failed to get build outputs: " + e.getMessage()).submit(context);
+      return BlazeTestResults.NO_RESULTS;
+    }
+  }
+
+  private BuildResult issueBuild(
+      BlazeCommand.Builder blazeCommandBuilder, WorkspaceRoot workspaceRoot, BlazeContext context) {
+    int retVal =
+        ExternalTask.builder(workspaceRoot)
+            .addBlazeCommand(blazeCommandBuilder.build())
+            .context(context)
+            .stderr(
+                LineProcessingOutputStream.of(
+                    BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context)))
+            .build()
+            .run();
+    return BuildResult.fromExitCode(retVal);
   }
 }
