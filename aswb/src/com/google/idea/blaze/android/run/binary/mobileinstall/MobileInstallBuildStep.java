@@ -23,6 +23,7 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.DeviceFutures;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -220,7 +221,8 @@ public class MobileInstallBuildStep implements ApkBuildStep {
 
       Stopwatch s = Stopwatch.createStarted();
       int exitCode = task.run();
-      logBuildTime(launchId, StudioDeployerExperiment.isEnabled(), s.elapsed(), exitCode);
+      logBuildTime(
+          launchId, StudioDeployerExperiment.isEnabled(), s.elapsed(), exitCode, ImmutableMap.of());
 
       if (exitCode != 0) {
         IssueOutput.error("Blaze build failed. See Blaze Console for details.").submit(context);
