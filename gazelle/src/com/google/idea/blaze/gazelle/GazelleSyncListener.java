@@ -19,10 +19,13 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
+import com.google.idea.blaze.base.scope.scopes.IdeaLogScope;
 import com.google.idea.blaze.base.scope.scopes.NotificationScope;
+import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.TimingScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncScope;
@@ -101,15 +104,19 @@ public class GazelleSyncListener implements SyncListener {
             new ToolWindowScope.Builder(project, gazelleTask)
                 .setProgressIndicator(indicator)
                 .setIssueParsers(issueParsers)
+                .setPopupBehavior(BlazeUserSettings.getInstance().getShowBlazeConsoleOnSync())
                 .showSummaryOutput()
                 .build())
+        .push(new ProblemsViewScope(
+            project, BlazeUserSettings.getInstance().getShowProblemsViewOnSync()))
         .push(
             new NotificationScope(
                 project,
                 "Gazelle",
                 "Gazelle Run",
                 "Gazelle completed successfully.",
-                "Gazelle run completed with errors."));
+                "Gazelle run completed with errors."))
+        .push(new IdeaLogScope());
   }
 
   private ListenableFuture<Void> createGazelleFuture(

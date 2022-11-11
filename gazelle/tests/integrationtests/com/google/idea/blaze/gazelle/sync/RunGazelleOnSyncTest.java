@@ -22,7 +22,9 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
+import com.google.idea.blaze.base.ui.problems.BlazeProblemsView;
 import com.google.idea.blaze.gazelle.GazelleUserSettings;
+import com.intellij.openapi.wm.ToolWindowManager;
 import java.io.File;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -90,6 +92,10 @@ public class RunGazelleOnSyncTest extends BlazeSyncIntegrationTestCase {
   }
 
   private void runBazelSync() {
+    // This forces the plugin to register the appropriate views with the IntelliJ UI,
+    // so that gazelle can create the appropriate tool windows even within a test project.
+    BlazeProblemsView.getInstance(getProject()).addMessage(null, null);
+
     BlazeSyncParams syncParams =
         BlazeSyncParams.builder()
             .setTitle("Full Sync")
