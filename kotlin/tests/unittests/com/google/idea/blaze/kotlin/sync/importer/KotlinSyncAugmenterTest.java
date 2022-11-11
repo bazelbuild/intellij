@@ -44,6 +44,7 @@ import com.google.idea.blaze.java.sync.BlazeJavaSyncPlugin;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.google.idea.blaze.kotlin.KotlinBlazeRules;
 import com.google.idea.blaze.kotlin.sync.BlazeKotlinSyncPlugin;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
@@ -79,6 +80,10 @@ public class KotlinSyncAugmenterTest extends BlazeTestCase {
 
     MockExperimentService experimentService = new MockExperimentService();
     applicationServices.register(ExperimentService.class, experimentService);
+    experimentService.setExperiment(
+        new BoolExperiment("blaze.sync.kotlin.attach.genjar", true), false);
+    experimentService.setExperiment(
+        new BoolExperiment("blaze.sync.kotlin.attach.classjar", false), true);
 
     augmenters =
         registerExtensionPoint(BlazeJavaSyncAugmenter.EP_NAME, BlazeJavaSyncAugmenter.class);
