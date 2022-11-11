@@ -129,6 +129,7 @@ public final class ProjectView implements Serializable {
       return null;
     }
 
+    @CanIgnoreReturnValue
     public <T, SectionType extends Section<T>> Builder add(SectionBuilder<T, SectionType> builder) {
       return add(builder.build());
     }
@@ -146,12 +147,14 @@ public final class ProjectView implements Serializable {
     }
 
     /** Replaces a section if it already exists. If it doesn't, just add the section. */
+    @CanIgnoreReturnValue
     public <T, SectionType extends Section<T>> Builder replace(
         @Nullable Section<T> section, SectionBuilder<T, SectionType> builder) {
       return replace(section, builder.build());
     }
 
     /** Replaces a section if it already exists. If it doesn't, just add the section. */
+    @CanIgnoreReturnValue
     public <T> Builder replace(@Nullable Section<T> toReplace, Section<T> replaceWith) {
       if (toReplace == null) {
         return add(replaceWith);

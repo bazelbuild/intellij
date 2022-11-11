@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.Maps;
 import com.google.common.collect.SortedSetMultimap;
 import com.google.common.collect.TreeMultimap;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
@@ -307,6 +308,7 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
                 });
   }
 
+  @CanIgnoreReturnValue
   private HtmlBuilder addTargetLink(
       HtmlBuilder builder, TargetIdeInfo target, ArtifactLocationDecoder decoder) {
     File buildFile =

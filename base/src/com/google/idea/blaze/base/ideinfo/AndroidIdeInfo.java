@@ -194,6 +194,7 @@ public final class AndroidIdeInfo implements ProtoWrapper<IntellijIdeInfo.Androi
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addResource(ArtifactLocation artifactLocation) {
       return addResource(AndroidResFolder.builder().setRoot(artifactLocation).build());
     }

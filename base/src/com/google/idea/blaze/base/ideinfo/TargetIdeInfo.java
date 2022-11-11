@@ -421,6 +421,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     private KotlinToolchainIdeInfo kotlinToolchainIdeInfo;
     private Long syncTime;
 
+    @CanIgnoreReturnValue
     public Builder setLabel(String label) {
       return setLabel(Label.create(label));
     }
@@ -438,6 +439,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
     }
 
     @VisibleForTesting
+    @CanIgnoreReturnValue
     public Builder setKind(String kindString) {
       Kind kind = Preconditions.checkNotNull(Kind.fromRuleName(kindString));
       return setKind(kind);
@@ -455,6 +457,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addSource(ArtifactLocation.Builder source) {
       return addSource(source.build());
     }
@@ -552,6 +555,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addDependency(String s) {
       return addDependency(Label.create(s));
     }
@@ -563,6 +567,7 @@ public final class TargetIdeInfo implements ProtoWrapper<IntellijIdeInfo.TargetI
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addRuntimeDep(String s) {
       return addRuntimeDep(Label.create(s));
     }

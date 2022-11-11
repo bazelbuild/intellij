@@ -118,6 +118,7 @@ public final class BlazeCommand {
       return new BlazeCommand(binaryPath, name, blazeStartupFlags.build(), getArguments());
     }
 
+    @CanIgnoreReturnValue
     public Builder addTargets(TargetExpression... targets) {
       return this.addTargets(Arrays.asList(targets));
     }
@@ -128,6 +129,7 @@ public final class BlazeCommand {
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addExeFlags(String... flags) {
       return addExeFlags(Arrays.asList(flags));
     }
@@ -138,6 +140,7 @@ public final class BlazeCommand {
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addBlazeFlags(String... flags) {
       return addBlazeFlags(Arrays.asList(flags));
     }
