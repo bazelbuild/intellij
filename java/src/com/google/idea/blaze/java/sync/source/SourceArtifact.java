@@ -47,6 +47,7 @@ public class SourceArtifact {
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder setArtifactLocation(ArtifactLocation.Builder artifactLocation) {
       return setArtifactLocation(artifactLocation.build());
     }

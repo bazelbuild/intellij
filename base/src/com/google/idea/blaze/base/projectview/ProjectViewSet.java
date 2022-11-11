@@ -106,6 +106,7 @@ public final class ProjectViewSet implements Serializable {
   public static class Builder {
     ImmutableList.Builder<ProjectViewFile> projectViewFiles = ImmutableList.builder();
 
+    @CanIgnoreReturnValue
     public Builder add(ProjectView projectView) {
       return add(null, projectView);
     }

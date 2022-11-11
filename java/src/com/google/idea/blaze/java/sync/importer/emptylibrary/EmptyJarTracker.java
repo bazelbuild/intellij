@@ -151,6 +151,7 @@ public class EmptyJarTracker implements ProtoWrapper<ProjectData.EmptyJarTracker
       return this;
     }
 
+    @CanIgnoreReturnValue
     public Builder addAllEntries(EmptyJarTracker other) {
       return addAllEntries(other.stateToEmptyStatus);
     }

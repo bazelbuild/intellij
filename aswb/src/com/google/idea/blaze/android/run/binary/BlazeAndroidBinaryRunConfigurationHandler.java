@@ -22,6 +22,7 @@ import com.android.tools.idea.run.ValidationError;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.android.run.ApkBuildStepProvider;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationCommonState;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
@@ -228,6 +229,7 @@ public class BlazeAndroidBinaryRunConfigurationHandler
    *
    * @return true if dialog was shown and user migrated, otherwise false
    */
+  @CanIgnoreReturnValue
   private boolean maybeShowMobileInstallOptIn(
       Project project, BlazeCommandRunConfiguration configuration) {
     long lastPrompt = PropertiesComponent.getInstance(project).getOrInitLong(MI_LAST_PROMPT, 0L);
