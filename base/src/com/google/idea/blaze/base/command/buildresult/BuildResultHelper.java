@@ -86,7 +86,7 @@ public interface BuildResultHelper extends AutoCloseable {
    * Retrieves test results, parses them and returns the corresponding {@link BlazeTestResults}. May
    * only be called once, after the build is complete.
    */
-  BlazeTestResults getTestResults();
+  BlazeTestResults getTestResults(Optional<String> completedBuildId) throws GetArtifactsException;
 
   /** Deletes the local BEP output file associated with the test results */
   default void deleteTemporaryOutputFiles() {}

@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.run.testlogs;
 
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import java.util.Optional;
 
 /**
  * A strategy for locating results from a single 'blaze test' invocation (e.g. output XML files).
@@ -31,8 +33,8 @@ public final class LocalBuildEventProtocolTestFinderStrategy
   }
 
   @Override
-  public BlazeTestResults findTestResults() {
-    return buildResultHelper.getTestResults();
+  public BlazeTestResults findTestResults() throws GetArtifactsException {
+    return buildResultHelper.getTestResults(Optional.empty());
   }
 
   @Override

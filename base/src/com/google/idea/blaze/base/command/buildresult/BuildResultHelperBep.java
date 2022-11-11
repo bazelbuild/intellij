@@ -66,7 +66,7 @@ public class BuildResultHelperBep implements BuildResultHelper {
   }
 
   @Override
-  public BlazeTestResults getTestResults() {
+  public BlazeTestResults getTestResults(Optional<String> completedBuildId) {
     try (InputStream inputStream =
         new BufferedInputStream(InputStreamProvider.getInstance().forFile(outputFile))) {
       return BuildEventProtocolOutputReader.parseTestResults(inputStream);

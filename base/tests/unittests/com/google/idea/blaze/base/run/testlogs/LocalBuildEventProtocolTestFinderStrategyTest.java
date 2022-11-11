@@ -24,6 +24,7 @@ import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.Bui
 import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolOutputReader;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.io.InputStreamProvider;
 import com.google.idea.blaze.base.io.MockInputStreamProvider;
@@ -60,7 +61,7 @@ public class LocalBuildEventProtocolTestFinderStrategyTest extends BlazeTestCase
   }
 
   @Test
-  public void testFinder_fileDeletedAfterCleanup() {
+  public void testFinder_fileDeletedAfterCleanup() throws GetArtifactsException {
     File file = createMockFile("/tmp/bep_output.txt", new byte[0]);
 
     LocalBuildEventProtocolTestFinderStrategy testFinder =
@@ -76,7 +77,7 @@ public class LocalBuildEventProtocolTestFinderStrategyTest extends BlazeTestCase
 
   @Test
   public void findTestResults_shouldMatchBuildEventProtocolOutputReader()
-      throws IOException, BuildEventStreamException {
+      throws IOException, BuildEventStreamException, GetArtifactsException {
     BuildEventStreamProtos.BuildEvent.Builder test1 =
         testResultEvent(
             "//java/com/google:Test1",

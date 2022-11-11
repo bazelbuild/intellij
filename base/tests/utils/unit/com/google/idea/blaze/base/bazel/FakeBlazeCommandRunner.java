@@ -20,6 +20,7 @@ import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
@@ -46,6 +47,16 @@ public final class FakeBlazeCommandRunner implements BlazeCommandRunner {
     } catch (GetArtifactsException e) {
       return BlazeBuildOutputs.noOutputs(BuildResult.FATAL_ERROR);
     }
+  }
+
+  @Override
+  public BlazeTestResults runTest(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      WorkspaceRoot workspaceRoot,
+      BlazeContext context) {
+    return BlazeTestResults.NO_RESULTS;
   }
 
   public BlazeCommand getIssuedCommand() {

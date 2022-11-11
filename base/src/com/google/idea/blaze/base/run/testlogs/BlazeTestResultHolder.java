@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.android.run.test;
+package com.google.idea.blaze.base.run.testlogs;
 
-import com.google.idea.blaze.base.run.testlogs.BlazeTestResultFinderStrategy;
-import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
-
-class BlazeTestResultHolder implements BlazeTestResultFinderStrategy {
+/**
+ * A holder class through which the results of a "blaze test" are communicated to the test console
+ * responsible for displaying the results of the test.
+ */
+public class BlazeTestResultHolder implements BlazeTestResultFinderStrategy {
   private BlazeTestResults results;
 
   public void setTestResults(BlazeTestResults results) {

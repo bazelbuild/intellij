@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep;
 import com.google.idea.blaze.base.filecache.FileCaches;
 import com.google.idea.blaze.base.ideinfo.AndroidInstrumentationInfo;
@@ -40,6 +41,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.testlogs.BlazeTestResultHolder;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -54,6 +56,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import org.jetbrains.annotations.NotNull;
@@ -223,16 +226,17 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
                         if (retVal != 0) {
                           context.setHasError();
                         } else {
-                          testResultsHolder.setTestResults(buildResultHelper.getTestResults());
+                          testResultsHolder.setTestResults(
+                              buildResultHelper.getTestResults(Optional.empty()));
                         }
+                        ListenableFuture<Void> unusedFuture =
+                            FileCaches.refresh(
+                                project,
+                                context,
+                                BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(retVal)));
+                      } catch (GetArtifactsException e) {
+                        LOG.error(e.getMessage());
                       }
-
-                      ListenableFuture<Void> unusedFuture =
-                          FileCaches.refresh(
-                              project,
-                              context,
-                              BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(retVal)));
-
                       return !context.hasErrors();
                     }));
 
