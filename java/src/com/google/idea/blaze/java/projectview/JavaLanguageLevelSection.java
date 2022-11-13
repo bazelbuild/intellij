@@ -44,17 +44,17 @@ public class JavaLanguageLevelSection {
   @Nullable
   @VisibleForTesting
   static LanguageLevel getLanguageLevel(String level, @Nullable LanguageLevel defaultValue) {
-      try {
-        return LanguageLevel.valueOf(level.toUpperCase(Locale.ROOT));
-      } catch(IllegalArgumentException e) {
-        // fall through
-      }
+    try {
+      return LanguageLevel.valueOf(level.toUpperCase(Locale.ROOT));
+    } catch (IllegalArgumentException e) {
+      // fall through
+    }
 
-      LanguageLevel languageLevel = LanguageLevel.parse(level);
-      if (languageLevel != null) {
-        return languageLevel;
-      }
-      return defaultValue;
+    LanguageLevel languageLevel = LanguageLevel.parse(level);
+    if (languageLevel != null) {
+      return languageLevel;
+    }
+    return defaultValue;
   }
 
   private static class JavaLanguageLevelParser extends ScalarSectionParser<LanguageLevel> {
@@ -64,7 +64,8 @@ public class JavaLanguageLevelSection {
 
     @Nullable
     @Override
-    protected LanguageLevel parseItem(ProjectViewParser parser, ParseContext parseContext, String rest) {
+    protected LanguageLevel parseItem(ProjectViewParser parser, ParseContext parseContext,
+        String rest) {
       LanguageLevel languageLevel = getLanguageLevel(rest, null);
       if (languageLevel == null) {
         // Fall through to error handler

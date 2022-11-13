@@ -74,7 +74,8 @@ public class Jdks {
         return currentSdk;
       } else if (jdkHomePaths.isEmpty()) {
         LanguageLevel currentLangLevel = getJavaLanguageLevel(currentSdk);
-        if (isLanguageLevelSupportedBySdkLevel(langLevel, currentLangLevel) && isValid(currentSdk)) {
+        if (isLanguageLevelSupportedBySdkLevel(langLevel, currentLangLevel) && isValid(
+            currentSdk)) {
           return currentSdk;
         }
       }
