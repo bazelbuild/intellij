@@ -74,9 +74,7 @@ public class Jdks {
         return currentSdk;
       } else if (jdkHomePaths.isEmpty()) {
         LanguageLevel currentLangLevel = getJavaLanguageLevel(currentSdk);
-        if (currentLangLevel != null
-            && currentLangLevel.isAtLeast(langLevel)
-            && isValid(currentSdk)) {
+        if (isLanguageLevelSupportedBySdkLevel(langLevel, currentLangLevel) && isValid(currentSdk)) {
           return currentSdk;
         }
       }
@@ -122,14 +120,21 @@ public class Jdks {
   @VisibleForTesting
   static Sdk findClosestMatch(LanguageLevel langLevel) {
     return ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()).stream()
-        .filter(
-            sdk -> {
-              LanguageLevel level = getJavaLanguageLevel(sdk);
-              return level != null && level.isAtLeast(langLevel);
-            })
+        .filter(sdk -> isLanguageLevelSupportedBySdkLevel(langLevel, getJavaLanguageLevel(sdk)))
         .filter(Jdks::isValid)
         .min(Comparator.comparing(Jdks::getJavaLanguageLevel))
         .orElse(null);
+  }
+
+  private static boolean isLanguageLevelSupportedBySdkLevel(LanguageLevel requestedLanguageLevel,
+      LanguageLevel sdkLanguageLevel) {
+    if (sdkLanguageLevel == null) {
+      return false;
+    } else if (requestedLanguageLevel.isPreview()) {
+      return requestedLanguageLevel.toJavaVersion().equals(sdkLanguageLevel.toJavaVersion());
+    } else {
+      return sdkLanguageLevel.isAtLeast(requestedLanguageLevel);
+    }
   }
 
   private static boolean isValid(Sdk jdk) {
@@ -207,7 +212,8 @@ public class Jdks {
   private static String getBestJdk(List<String> jdkRoots, LanguageLevel langLevel) {
     return jdkRoots.stream()
         .filter(root -> JavaSdk.getInstance().isValidSdkHome(root))
-        .filter(root -> getVersion(root).getMaxLanguageLevel().isAtLeast(langLevel))
+        .filter(root -> isLanguageLevelSupportedBySdkLevel(langLevel,
+            getVersion(root).getMaxLanguageLevel()))
         .min(Comparator.comparing(o -> getVersion(o).getMaxLanguageLevel()))
         .orElse(null);
   }
