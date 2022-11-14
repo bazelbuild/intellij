@@ -1167,13 +1167,13 @@ def make_intellij_info_aspect(aspect_impl, semantics):
     attrs = {
         "_package_parser": attr.label(
             default = tool_label("PackageParser"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),
         "_jar_filter": attr.label(
             default = tool_label("JarFilter"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),
@@ -1182,7 +1182,7 @@ def make_intellij_info_aspect(aspect_impl, semantics):
         ),
         "_create_aar": attr.label(
             default = tool_label("CreateAar"),
-            cfg = "host",
+            cfg = "exec",
             executable = True,
             allow_files = True,
         ),

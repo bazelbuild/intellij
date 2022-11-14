@@ -304,7 +304,7 @@ _plugin_deploy_zip = rule(
         "_zip_plugin_files": attr.label(
             default = Label("//build_defs:zip_plugin_files"),
             executable = True,
-            cfg = "host",
+            cfg = "exec",
         ),
     },
 )
