@@ -312,6 +312,14 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-canary-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=android-studio-canary",
+    },
+)
+
+config_setting(
     name = "android-studio-oss-oldest-stable",
     values = {
         "define": "ij_product=android-studio-oss-oldest-stable",
