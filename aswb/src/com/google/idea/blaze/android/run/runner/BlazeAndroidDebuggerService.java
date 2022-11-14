@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
-import static java.util.stream.Collectors.joining;
 
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
@@ -88,22 +87,21 @@ public interface BlazeAndroidDebuggerService {
       String sourceMapToWorkspaceRootCommand =
           "settings append target.source-map /proc/self/cwd/ " + workingDirPath;
 
-      String symbolSearchPathsCommand = "";
-      if (deployInfo != null && !deployInfo.getSymbolFiles().isEmpty()) {
-        symbolSearchPathsCommand =
-            "settings append target.exec-search-paths "
-                + deployInfo.getSymbolFiles().stream()
-                    .map(symbol -> symbol.getParentFile().getAbsolutePath())
-                    .collect(joining(" "));
-      }
-
       ImmutableList<String> startupCommands =
           ImmutableList.<String>builder()
               .addAll(state.getUserStartupCommands())
               .add(sourceMapToWorkspaceRootCommand)
-              .add(symbolSearchPathsCommand)
               .build();
       state.setUserStartupCommands(startupCommands);
+
+      // NDK plugin will pass symbol directories to LLDB as `settings append
+      // target.exec-search-paths`.
+      if (deployInfo != null) {
+        state.setSymbolDirs(
+            deployInfo.getSymbolFiles().stream()
+                .map(symbol -> symbol.getParentFile().getAbsolutePath())
+                .collect(ImmutableList.toImmutableList()));
+      }
     }
   }
 
