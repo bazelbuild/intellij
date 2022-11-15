@@ -1,3 +1,8 @@
+v2022.11.15
+===========
+* Do not include absolute paths in debug build items #4003
+* Build with IJ 223 #4019
+
 v2022.11.01
 ===========
 * Enable the Autoscroll to console by default #4006
