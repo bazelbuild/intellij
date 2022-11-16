@@ -88,6 +88,7 @@ intellij_plugin(
     ] + select_for_ide(
         intellij = [],
         intellij_ue = [
+            "//gazelle:plugin_library",
             "//golang:plugin_library",
             "//javascript:plugin_library",
         ],

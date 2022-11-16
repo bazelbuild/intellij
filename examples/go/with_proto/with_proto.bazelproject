@@ -1,3 +1,4 @@
+
 directories:
   .
 
@@ -5,3 +6,5 @@ derive_targets_from_directories: true
 
 additional_languages:
   go
+
+gazelle_target: //:gazelle
