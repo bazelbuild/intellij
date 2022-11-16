@@ -51,6 +51,10 @@ public class GazelleSyncListener implements SyncListener {
     return settings.getGazelleTargetLabel();
   }
 
+  private boolean runGazelleHeadless() {
+    return GazelleUserSettings.getInstance().shouldRunHeadless();
+  }
+
   private GazelleRunResult doRunGazelle(
       Project project,
       BlazeContext context,
@@ -83,7 +87,7 @@ public class GazelleSyncListener implements SyncListener {
         .build();
   }
 
-  private void setUpContext(
+  private void setUpUI(
       BlazeContext context,
       BlazeContext parentContext,
       Project project,
@@ -134,8 +138,9 @@ public class GazelleSyncListener implements SyncListener {
 
                       ImmutableList<BlazeIssueParser.Parser> issueParsers =
                           gazelleIssueParsers(project, workspaceRoot);
-
-                      setUpContext(context, parentContext, project, indicator, issueParsers);
+                      if (! this.runGazelleHeadless()) {
+                        setUpUI(context, parentContext, project, indicator, issueParsers);
+                      }
 
                       Collection<WorkspacePath> importantDirectories =
                           importantDirectories(project);

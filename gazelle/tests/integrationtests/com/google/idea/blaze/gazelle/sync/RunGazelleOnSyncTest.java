@@ -55,23 +55,23 @@ public class RunGazelleOnSyncTest extends BlazeSyncIntegrationTestCase {
         "",
         "http_archive(",
         "    name = \"io_bazel_rules_go\",",
-        "    sha256 = \"2b1641428dff9018f9e85c0384f03ec6c10660d935b750e3fa1492a281a53b0f\",",
+        "    sha256 = \"099a9fb96a376ccbbb7d291ed4ecbdfd42f6bc822ab77ae6f1b5cb9e914e94fa\",",
         "    urls = [",
         "       "
-            + " \"https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.29.0/rules_go-v0.29.0.zip\",",
+            + " \"https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.35.0/rules_go-v0.35.0.zip\",",
         "       "
-            + " \"https://github.com/bazelbuild/rules_go/releases/download/v0.29.0/rules_go-v0.29.0.zip\",",
+            + " \"https://github.com/bazelbuild/rules_go/releases/download/v0.35.0/rules_go-v0.35.0.zip\",",
         "    ],",
         ")",
         "",
         "http_archive(",
         "    name = \"bazel_gazelle\",",
-        "    sha256 = \"de69a09dc70417580aabf20a28619bb3ef60d038470c7cf8442fafcf627c21cb\",",
+        "    sha256 = \"efbbba6ac1a4fd342d5122cbdfdb82aeb2cf2862e35022c752eaddffada7c3f3\",",
         "    urls = [",
         "       "
-            + " \"https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz\",",
+            + " \"https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.27.0/bazel-gazelle-v0.27.0.tar.gz\",",
         "       "
-            + " \"https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.24.0/bazel-gazelle-v0.24.0.tar.gz\",",
+            + " \"https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.27.0/bazel-gazelle-v0.27.0.tar.gz\",",
         "    ],",
         ")",
         "",
@@ -79,7 +79,7 @@ public class RunGazelleOnSyncTest extends BlazeSyncIntegrationTestCase {
             + " \"go_rules_dependencies\")",
         "load(\"@bazel_gazelle//:deps.bzl\", \"gazelle_dependencies\", \"go_repository\")",
         "go_rules_dependencies()",
-        "go_register_toolchains(version = \"1.17.2\")",
+        "go_register_toolchains(version = \"1.18.3\")",
         "gazelle_dependencies()");
     workspace.createDirectory(new WorkspacePath("src"));
     workspace.createFile(
@@ -92,9 +92,7 @@ public class RunGazelleOnSyncTest extends BlazeSyncIntegrationTestCase {
   }
 
   private void runBazelSync() {
-    // This forces the plugin to register the appropriate views with the IntelliJ UI,
-    // so that gazelle can create the appropriate tool windows even within a test project.
-    BlazeProblemsView.getInstance(getProject()).addMessage(null, null);
+    GazelleUserSettings.getInstance().setGazelleHeadless(true);
 
     BlazeSyncParams syncParams =
         BlazeSyncParams.builder()

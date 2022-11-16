@@ -2,7 +2,6 @@ package com.google.idea.blaze.gazelle;
 
 import com.google.idea.blaze.base.model.primitives.InvalidTargetException;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -19,10 +18,26 @@ import org.jetbrains.annotations.Nullable;
 public class GazelleUserSettings implements PersistentStateComponent<GazelleUserSettings> {
 
   private static final String EMPTY_GAZELLE_TARGET = "";
+
+  private static final boolean GAZELLE_HEADLESS_MODE = false;
+
   private String gazelleTarget = EMPTY_GAZELLE_TARGET;
+
+  // Headless mode will not try to set up the UI at all.
+  // Used mainly for testing,
+  // not registered in the global configuration UI on purpose,
+  private boolean gazelleHeadless = GAZELLE_HEADLESS_MODE;
 
   public static GazelleUserSettings getInstance() {
     return ServiceManager.getService(GazelleUserSettings.class);
+  }
+
+  public boolean shouldRunHeadless() {
+    return gazelleHeadless;
+  }
+
+  public void setGazelleHeadless(boolean headless) {
+    gazelleHeadless = headless;
   }
 
   public void clearGazelleTarget() {
