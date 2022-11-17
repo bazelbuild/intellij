@@ -184,9 +184,14 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
     String packageName = getPackageName(project, context, type, expr);
     String rdepsQuery =
         String.format("kind(\".*_test\", rdeps(%s:all, %s, 2))", packageName, sources.toArray()[0]);
+    // TODO(b/259555274): Re-enable graphless mode once blaze team improves the query performance
     BlazeCommand command =
         getBlazeCommand(
-            project, type, rdepsQuery, ImmutableList.of("--output=label_kind"), context);
+            project,
+            type,
+            rdepsQuery,
+            ImmutableList.of("--output=label_kind", "--experimental_graphless_query=no"),
+            context);
     BlazeQueryLabelKindParser blazeQueryLabelKindParser = new BlazeQueryLabelKindParser(t -> true);
     ByteArrayOutputStream stderr = new ByteArrayOutputStream();
     int retVal =
