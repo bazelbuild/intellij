@@ -46,4 +46,9 @@ public interface BlazeCommandRunner {
       BuildResultHelper buildResultHelper,
       WorkspaceRoot workspaceRoot,
       BlazeContext context);
+
+  /** Allows enabling the use of command runner for restricted set of users. */
+  default boolean shouldUseForLocalTests() {
+    return false;
+  }
 }

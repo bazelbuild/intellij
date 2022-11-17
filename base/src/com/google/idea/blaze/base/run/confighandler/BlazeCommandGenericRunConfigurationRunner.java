@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -99,9 +100,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
   private static final BoolExperiment useRabbitForTestCommands =
       new BoolExperiment("localtests.userabbit", false);
   private static final FeatureRolloutExperiment useBlazeCommandRunnerForTestsLinux =
-      new FeatureRolloutExperiment("localtests.useblazecommandrunner.linux");
-  private static final FeatureRolloutExperiment useBlazeCommandRunnerForTestsMac =
-      new FeatureRolloutExperiment("localtests.useblazecommandrunner.mac");
+      new FeatureRolloutExperiment("blaze.commandrunner.localtests.linux.enable");
 
   @Override
   public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment) {
@@ -175,7 +174,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
                 context);
 
         BlazeTestResultFinderStrategy testResultFinderStrategy;
-        if (useBlazeCommandRunner()) {
+        if (useBlazeCommandRunner(invoker.getCommandRunner())) {
           testResultFinderStrategy = new BlazeTestResultHolder();
           // Initialize with empty test results and NO_STATUS to avoid IllegalStateException
           ((BlazeTestResultHolder) testResultFinderStrategy)
@@ -217,7 +216,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
           context.addOutputSink(PrintOutput.class, new WritingOutputSink(console));
         }
         addConsoleFilters(consoleFilters.toArray(new Filter[0]));
-        if (!useBlazeCommandRunner()) {
+        if (!useBlazeCommandRunner(invoker.getCommandRunner())) {
           return getScopedProcessHandler(project, blazeCommand.build(), workspaceRoot);
         }
 
@@ -356,8 +355,8 @@ public final class BlazeCommandGenericRunConfigurationRunner
       return BlazeCommandName.TEST.equals(getCommand());
     }
 
-    private boolean useBlazeCommandRunner() {
-      return (SystemInfo.isMac && useBlazeCommandRunnerForTestsMac.isEnabled())
+    private boolean useBlazeCommandRunner(BlazeCommandRunner runner) {
+      return (SystemInfo.isMac && runner.shouldUseForLocalTests())
           || (SystemInfo.isLinux && useBlazeCommandRunnerForTestsLinux.isEnabled());
     }
   }
