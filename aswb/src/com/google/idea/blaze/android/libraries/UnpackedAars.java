@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArt
 import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.filecache.FileCache;
 import com.google.idea.blaze.base.filecache.FileCacheDiffer;
+import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -281,7 +282,12 @@ public class UnpackedAars {
 
   @Nullable
   public File getAarDir(ArtifactLocationDecoder decoder, AarLibrary library) {
-    BlazeArtifact artifact = decoder.resolveOutput(library.aarArtifact);
+    return getAarDir(decoder, library.aarArtifact);
+  }
+
+  @Nullable
+  public File getAarDir(ArtifactLocationDecoder decoder, ArtifactLocation aar) {
+    BlazeArtifact artifact = decoder.resolveOutput(aar);
     String aarDirName = UnpackedAarUtils.getAarDirName(artifact);
     return aarCache.getCachedAarDir(aarDirName);
   }

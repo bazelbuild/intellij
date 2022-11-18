@@ -35,10 +35,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.compose.ComposeStatusProvider;
+import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.npw.project.BlazeAndroidModuleTemplate;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
+import com.google.idea.blaze.base.ideinfo.AndroidAarIdeInfo;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.Dependency;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -111,12 +113,12 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     return module;
   }
 
-  // @Override #as42: Method added in AS 203
+  @Override
   public ClassFileFinder getModuleClassFileFinder() {
     return classFileFinder;
   }
 
-  // @Override #as42: Method added in AS 203
+  @Override
   public ClassFileFinder getClassFileFinderForSourceFile(VirtualFile sourceFile) {
     return classFileFinder;
   }
@@ -270,7 +272,7 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
     return getResolvedDependency(coordinate, DependencyScopeType.MAIN);
   }
 
-  // @Override #api42 : Method added in api203
+  @Override
   @Nullable
   public GradleCoordinate getResolvedDependency(
       GradleCoordinate gradleCoordinate, DependencyScopeType dependencyScopeType)
@@ -285,16 +287,27 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
    * @param coordinate external coordinates for the dependency.
    * @return the absolute path of the dependency including workspace root and path.
    */
+  @Override
   @Nullable
-  // @Override #api42
   public Path getDependencyPath(GradleCoordinate coordinate) {
     TargetKey target = getResolvedTarget(coordinate);
-    if (target != null) {
-      return WorkspaceRoot.fromProject(project)
-          .fileForPath(target.getLabel().blazePackage())
-          .toPath();
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    Path defaultPath =
+        WorkspaceRoot.fromProject(project).fileForPath(target.getLabel().blazePackage()).toPath();
+    if (projectData == null) {
+      return defaultPath;
     }
-    return null;
+
+    AndroidAarIdeInfo aarIdeInfo = projectData.getTargetMap().get(target).getAndroidAarIdeInfo();
+    // Returns its local aar directory path (if exists) instead of google3 one for imported aars.
+    if (aarIdeInfo == null) {
+      return defaultPath;
+    }
+    File aarDir =
+        UnpackedAars.getInstance(module.getProject())
+            .getAarDir(projectData.getArtifactLocationDecoder(), aarIdeInfo.getAar());
+    return aarDir == null || !aarDir.exists() ? defaultPath : aarDir.toPath();
   }
 
   private Stream<TargetKey> locateArtifactsFor(GradleCoordinate coordinate) {
