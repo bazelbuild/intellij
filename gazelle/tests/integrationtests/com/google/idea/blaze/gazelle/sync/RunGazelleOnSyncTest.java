@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -93,6 +94,10 @@ public class RunGazelleOnSyncTest extends BlazeSyncIntegrationTestCase {
 
   private void runBazelSync() {
     GazelleUserSettings.getInstance().setGazelleHeadless(true);
+
+    // We set the desired bazel because the Gazelle plugin needs to read it.
+    BlazeUserSettings bazelUserSettings = BlazeUserSettings.getInstance();
+    bazelUserSettings.setBazelBinaryPath(System.getenv("USE_BAZEL_VERSION"));
 
     BlazeSyncParams syncParams =
         BlazeSyncParams.builder()
