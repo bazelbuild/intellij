@@ -24,7 +24,7 @@ import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
-import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
@@ -122,7 +122,9 @@ public class QuerySyncManager {
                                         new ToolWindowScope.Builder(project, task)
                                             .setProgressIndicator(indicator)
                                             .showSummaryOutput()
-                                            .setPopupBehavior(FocusBehavior.ALWAYS)
+                                            .setPopupBehavior(
+                                                BlazeUserSettings.getInstance()
+                                                    .getShowBlazeConsoleOnSync())
                                             .build();
                                     context.push(new ProgressIndicatorScope(indicator)).push(scope);
                                     operation.execute(context);
