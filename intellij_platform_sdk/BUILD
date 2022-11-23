@@ -378,8 +378,24 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-2022.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=android-studio-2022.1",
+    },
+)
+
+config_setting(
     name = "android-studio-2022.2",
     values = {
+        "define": "ij_product=android-studio-2022.2",
+    },
+)
+
+config_setting(
+    name = "android-studio-2022.2-mac",
+    values = {
+        "cpu": "darwin_x86_64",
         "define": "ij_product=android-studio-2022.2",
     },
 )
