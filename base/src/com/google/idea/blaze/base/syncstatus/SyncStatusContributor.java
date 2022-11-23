@@ -74,8 +74,14 @@ public interface SyncStatusContributor {
 
   /**
    * Converts a {@link ProjectViewNode} to a corresponding {@link PsiFile}, or returns null if this
-   * contributor doesn't handle the given node type for this project.
+   * contributor doesn't handle the given node type for this project. Only to be used with
+   * query-sync.
    */
+  @Nullable
+  default PsiFileAndName toPsiFileAndName(ProjectViewNode<?> node) {
+    return null;
+  }
+
   @Nullable
   PsiFileAndName toPsiFileAndName(BlazeProjectData projectData, ProjectViewNode<?> node);
 

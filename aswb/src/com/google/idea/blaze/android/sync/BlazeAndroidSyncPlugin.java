@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -148,6 +149,21 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
               return workspaceImporter.importWorkspace();
             });
     syncStateBuilder.put(new BlazeAndroidSyncData(importResult, androidSdkPlatform));
+  }
+
+  @Override
+  public void updateProjectSdk(
+      Project project, BlazeContext context, ProjectViewSet projectViewSet) {
+    if (QuerySyncManager.useQuerySync.getValue()) {
+      AndroidSdkPlatform androidSdkPlatform =
+          AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
+      Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
+      LanguageLevel javaLanguageLevel = LanguageLevel.JDK_11; // todo
+      ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
+      rootManager.setProjectSdk(sdk);
+      LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
+      ext.setLanguageLevel(javaLanguageLevel);
+    }
   }
 
   @Override
