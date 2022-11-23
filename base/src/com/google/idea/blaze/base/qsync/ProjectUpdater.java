@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.qsync.BuildGraph.BuildGraphListener;
-import com.google.idea.blaze.base.qsync.BuildGraph.Location;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -57,9 +56,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -76,24 +75,14 @@ public class ProjectUpdater implements BuildGraphListener {
     graph.addListener(this);
   }
 
-  public void update(BlazeContext context) throws IOException {}
-
   private Map<String, Map<String, String>> calculateRootSources(
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ImportRoots ir,
-      Map<String, Location> locations,
-      Set<String> javaSources)
+      BlazeContext context, WorkspaceRoot workspaceRoot, ImportRoots ir, List<String> files)
       throws IOException {
 
     Map<String, Path> allDirs = new TreeMap<>();
     // Convert to directories
-    for (String src : javaSources) {
-      Location location = locations.get(src);
-      if (location == null) {
-        continue;
-      }
-      Path path = Paths.get(location.file);
+    for (String file : files) {
+      Path path = Paths.get(file);
       Path dir = path.getParent();
       String rel = workspaceRoot.workspacePathFor(dir.toFile()).toString();
       allDirs.computeIfAbsent(rel, x -> path);
@@ -200,7 +189,7 @@ public class ProjectUpdater implements BuildGraphListener {
             .build();
 
     Map<String, Map<String, String>> rootToPrefix =
-        calculateRootSources(context, workspaceRoot, ir, graph.locations, graph.javaSources);
+        calculateRootSources(context, workspaceRoot, ir, graph.getSourceFiles());
 
     ModuleManager moduleManager = ModuleManager.getInstance(project);
 

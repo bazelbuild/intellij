@@ -60,44 +60,17 @@ public class DependencyTracker {
     this.cache = cache;
   }
 
-  public Set<String> getTargetDependencies(String target) {
-    Set<String> val = graph.transitiveSourceDeps.get(target);
-    if (val != null) {
-      return val;
-    }
-    Set<String> ret = new HashSet<>();
-    // There are no cycles in blaze, so we can recursively call down
-    Set<String> deps = graph.ruleDeps.get(target);
-    if (deps == null) {
-      ret.add(target);
-    } else {
-      for (String dep : deps) {
-        ret.addAll(getTargetDependencies(dep));
-      }
-    }
-    ret.removeIf(x -> !graph.projectDeps.contains(x));
-    graph.transitiveSourceDeps.put(target, ret);
-    return ret;
-  }
   /** Recursively get all the transitive deps outside the project */
   @Nullable
   public Set<String> getPendingTargets(Project project, VirtualFile vf) {
-    String target = virtualFileToTarget(project, vf);
-
-    Set<String> targets = getTargetDependencies(target);
-    if (target == null) {
-      return null;
-    }
-    targets.removeIf(syncedTargets::contains);
-    return targets;
-  }
-
-  private String virtualFileToTarget(Project project, VirtualFile vf) {
     BlazeImportSettings settings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     String rel =
         Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath())).toString();
-    return graph.fileToTarget.get(rel);
+
+    Set<String> targets = graph.getFileDependencies(rel);
+    targets.removeIf(syncedTargets::contains);
+    return targets;
   }
 
   public void buildDependenciesForFile(BlazeContext context, List<WorkspacePath> paths)
@@ -115,9 +88,8 @@ public class DependencyTracker {
     Set<String> targets = new HashSet<>();
     Set<String> buildTargets = new HashSet<>();
     for (WorkspacePath path : paths) {
-      String syncTarget = graph.fileToTarget.get(path.toString());
-      buildTargets.add(graph.sourceOwner.get(syncTarget));
-      Set<String> t = getTargetDependencies(syncTarget);
+      buildTargets.add(graph.getTargetOwner(path.toString()));
+      Set<String> t = graph.getFileDependencies(path.toString());
       if (t != null) {
         targets.addAll(t);
       }

@@ -34,24 +34,25 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 
 /** The build graph of all the rules that make up the project. */
 public class BuildGraph {
 
   // A map from target to file on disk for all source files
-  public final Map<String, Location> locations;
+  private final Map<String, Location> locations;
   // A set of all the targets that show up in java rules 'src' attributes
-  public final Set<String> javaSources;
+  private final Set<String> javaSources;
   // A map from a file path to its target
-  public final Map<String, String> fileToTarget;
+  private final Map<String, String> fileToTarget;
   // From source target to the rule that builds it. If multiple one is picked.
-  public final Map<String, String> sourceOwner;
+  private final Map<String, String> sourceOwner;
   // All the dependencies from source files to things it needs outside the project
-  public final Map<String, Set<String>> transitiveSourceDeps;
+  private final Map<String, Set<String>> transitiveSourceDeps;
   // All the dependencies of a java rule
-  public final Map<String, Set<String>> ruleDeps;
+  private final Map<String, Set<String>> ruleDeps;
   // All dependencies external to this project
-  public final Set<String> projectDeps;
+  private final Set<String> projectDeps;
 
   // Listeners for changes to the build graph
   private final List<BuildGraphListener> listeners;
@@ -247,7 +248,7 @@ public class BuildGraph {
   }
 
   /** Recursively get all the transitive deps outside the project */
-  public Set<String> getTargetDependencies(String target) {
+  private Set<String> getTargetDependencies(String target) {
     Set<String> val = transitiveSourceDeps.get(target);
     if (val != null) {
       return val;
@@ -265,6 +266,42 @@ public class BuildGraph {
     ret.removeIf(x -> !projectDeps.contains(x));
     transitiveSourceDeps.put(target, ret);
     return ret;
+  }
+
+  /**
+   * Given a path to a file it returns the target that owns the file. Note that in general there
+   * could be multiple targets that compile a file, but we try to choose the smallest one, as it
+   * would have everything the file needs to be compiled.
+   */
+  public String getTargetOwner(String path) {
+    String syncTarget = fileToTarget.get(path);
+    return sourceOwner.get(syncTarget);
+  }
+
+  /**
+   * For a given path to a file, returns all the targets outside the project that this file needs to
+   * be edited fully.
+   */
+  @Nullable
+  public Set<String> getFileDependencies(String rel) {
+    String target = fileToTarget.get(rel);
+    if (target == null) {
+      return null;
+    }
+    return getTargetDependencies(target);
+  }
+
+  /** Returns a list of all the source files of the project. */
+  public List<String> getSourceFiles() {
+    List<String> files = new ArrayList<>();
+    for (String src : javaSources) {
+      Location location = locations.get(src);
+      if (location == null) {
+        continue;
+      }
+      files.add(location.file);
+    }
+    return files;
   }
 
   /** A listener interface for changes made to the build graph. */
