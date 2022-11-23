@@ -31,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import javax.annotation.Nullable;
 
 class GoTestContextProvider implements TestContextProvider {
+  public static final String GO_TEST_WRAP_TESTV = "GO_TEST_WRAP_TESTV=1";
   @Nullable
   @Override
   public RunConfigurationContext getTestContext(ConfigurationContext context) {
@@ -50,11 +51,13 @@ class GoTestContextProvider implements TestContextProvider {
     GoFunctionOrMethodDeclaration function = GoTestFinder.findTestFunctionInContext(element);
     if (function == null) {
       return TestContext.builder(/* sourceElement= */ file, ExecutorType.DEBUG_SUPPORTED_TYPES)
+          .addTestEnv(GO_TEST_WRAP_TESTV)
           .setTarget(target)
           .setDescription(file.getName())
           .build();
     }
     return TestContext.builder(/* sourceElement= */ function, ExecutorType.DEBUG_SUPPORTED_TYPES)
+        .addTestEnv(GO_TEST_WRAP_TESTV)
         .setTarget(target)
         .setTestFilter("^" + function.getName() + "$")
         .setDescription(String.format("%s#%s", file.getName(), function.getName()))

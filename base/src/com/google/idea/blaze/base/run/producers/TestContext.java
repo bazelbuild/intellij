@@ -175,6 +175,24 @@ public abstract class TestContext implements RunConfigurationContext {
         }
       };
     }
+
+    static BlazeFlagsModification testEnv(String testEnv) {
+      return new BlazeFlagsModification() {
+        @Override
+        public void modifyFlags(List<String> flags) {
+          if (testEnv != null) {
+            flags.add(BlazeFlags.TEST_ENV + "=" + BlazeParametersListUtil.encodeParam(testEnv));
+          }
+        }
+
+        @Override
+        public boolean matchesConfigState(RunConfigurationFlagsState state) {
+          return state
+              .getRawFlags()
+              .contains(BlazeFlags.TEST_ENV + "=" + BlazeParametersListUtil.encodeParam(testEnv));
+        }
+      };
+    }
   }
 
   public static Builder builder(
@@ -232,6 +250,11 @@ public abstract class TestContext implements RunConfigurationContext {
     @CanIgnoreReturnValue
     public Builder setDescription(String description) {
       this.description = description;
+      return this;
+    }
+
+    public Builder addTestEnv(String env) {
+      this.blazeFlags.add(BlazeFlagsModification.testEnv(env));
       return this;
     }
 

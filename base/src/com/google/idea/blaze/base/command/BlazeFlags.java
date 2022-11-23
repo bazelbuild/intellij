@@ -48,6 +48,9 @@ public final class BlazeFlags {
   public static final String TEST_FILTER = "--test_filter";
   // Re-run the test even if the results are cached.
   public static final String NO_CACHE_TEST_RESULTS = "--nocache_test_results";
+  // Environment variables for the test runner
+  public static final String TEST_ENV = "--test_env";
+
 
   public static final String DELETED_PACKAGES = "--deleted_packages";
 
