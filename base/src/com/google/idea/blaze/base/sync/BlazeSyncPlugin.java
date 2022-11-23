@@ -133,6 +133,10 @@ public interface BlazeSyncPlugin {
    */
   default void createSdks(Project project, BlazeProjectData blazeProjectData) {}
 
+  /** Updates the sdk for the project -- only used for the new query-sync */
+  default void updateProjectSdk(
+      Project project, BlazeContext context, ProjectViewSet projectViewSet) {}
+
   /** Updates the sdk for the project. */
   default void updateProjectSdk(
       Project project,
