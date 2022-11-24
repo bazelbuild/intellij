@@ -22,6 +22,8 @@ import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeFlags;
+import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
@@ -29,6 +31,8 @@ import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
@@ -40,6 +44,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Set;
 
 /** An object that knows how to build dependencies for given targets */
@@ -75,10 +80,22 @@ public class DependencyBuilder {
       content = content.replace("#insert __PROJECT__", def.toString());
       Files.writeString(workspaceRoot.directory().toPath().resolve(".aswb.bzl"), content);
 
+      ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+      // TODO This is not SYNC_CONTEXT, but also not OTHER_CONTEXT, we need to decide what kind
+      // of flags need to be passed here.
+      List<String> additionalBlazeFlags =
+          BlazeFlags.blazeFlags(
+              project,
+              projectViewSet,
+              BlazeCommandName.BUILD,
+              context,
+              BlazeInvocationContext.OTHER_CONTEXT);
+
       BlazeCommand builder =
           BlazeCommand.builder(invoker, BlazeCommandName.BUILD)
               .addBlazeFlags(buildTargets.toArray(new String[] {}))
               .addBlazeFlags(buildResultHelper.getBuildFlags())
+              .addBlazeFlags(additionalBlazeFlags)
               .addBlazeFlags(
                   "--aspects=//:.aswb.bzl%collect_dependencies,//:.aswb.bzl%package_dependencies")
               .addBlazeFlags("--output_groups=ij_query_sync")
