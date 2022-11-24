@@ -5,7 +5,6 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
-import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser.Parser;
 import com.google.idea.blaze.base.issueparser.IssueOutputLineProcessor;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -15,9 +14,8 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import java.io.ByteArrayOutputStream;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class BlazeGazelleRunnerImpl extends BlazeGazelleRunner {
+public class GazelleRunnerImpl extends GazelleRunner {
 
   @Override
   public GazelleRunResult runBlazeGazelle(
@@ -28,13 +26,7 @@ public class BlazeGazelleRunnerImpl extends BlazeGazelleRunner {
       Label gazelleTarget,
       Collection<WorkspacePath> directories,
       ImmutableList<Parser> issueParsers) {
-    BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.RUN);
-    builder.addBlazeFlags(blazeFlags);
-    builder.addTargets(gazelleTarget);
-    List<String> directoriesToRegenerate =
-        directories.stream().map(WorkspacePath::toString).collect(Collectors.toList());
-    builder.addExeFlags(directoriesToRegenerate);
-    BlazeCommand command = builder.build();
+    BlazeCommand command = GazelleRunner.createGazelleCommand(invoker, blazeFlags, gazelleTarget, directories);
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     int exitCode =
         ExternalTask.builder(workspaceRoot)

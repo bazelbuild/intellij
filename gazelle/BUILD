@@ -6,6 +6,7 @@ load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
+    "merged_plugin_xml",
     "optional_plugin_xml",
     "stamped_plugin_xml",
 )
@@ -30,10 +31,20 @@ java_library(
     ],
 )
 
+merged_plugin_xml(
+    name = "gazelle_xml",
+    srcs = [
+        "src/META-INF/gazelle.xml",
+        "src/META-INF/gazelle-mocked.xml",
+    ],
+)
+
 intellij_plugin_library(
     name = "plugin_library",
     optional_plugin_xmls = [],
-    plugin_xmls = ["src/META-INF/blaze-gazelle.xml"],
+    plugin_xmls = [
+        ":gazelle_xml",
+    ],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":gazelle"],
 )
@@ -44,12 +55,31 @@ stamped_plugin_xml(
     plugin_name = "com.google.idea.blaze.gazelle",
 )
 
+merged_plugin_xml(
+    name = "gazelle_xml_for_tests",
+    srcs = [
+        "src/META-INF/gazelle.xml",
+        "tests/integrationtests/gazelle-mocks.xml",
+    ],
+)
+
+# We create a separate plugin library with its own xml
+# so that we can mock out certain interfaces for testing.
+intellij_plugin_library(
+    name = "integration_test_plugin_library",
+    plugin_xmls = [
+        ":gazelle_xml_for_tests",
+    ],
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
+    deps = [":gazelle"],
+)
+
 intellij_plugin(
     name = "gazelle_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":gazelle_plugin_xml",
     deps = [
-        ":plugin_library",
+        ":integration_test_plugin_library",
         "//base:plugin_library",
     ],
 )

@@ -20,8 +20,6 @@
     <SettingsUiContributor implementation="com.google.idea.blaze.gazelle.GazelleUserSettingsConfigurable$UiContributor" />
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.google.idea.blaze.gazelle.BlazeGazelleRunner"
-                        serviceImplementation="com.google.idea.blaze.gazelle.BlazeGazelleRunnerImpl"/>
     <applicationService id="GazelleUserSettings" serviceImplementation="com.google.idea.blaze.gazelle.GazelleUserSettings"/>
   </extensions>
 </idea-plugin>

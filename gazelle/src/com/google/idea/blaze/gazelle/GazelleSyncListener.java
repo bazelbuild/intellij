@@ -66,7 +66,7 @@ public class GazelleSyncListener implements SyncListener {
     BuildSystem.BuildInvoker invoker =
         Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
 
-    return BlazeGazelleRunner.getInstance()
+    return GazelleRunner.getInstance()
         .runBlazeGazelle(
             context,
             invoker,
