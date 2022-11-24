@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.base.Preconditions;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Attribute;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target.Discriminator;
@@ -63,18 +64,29 @@ public class BuildGraph {
 
   /** Represents a location on a file. */
   public static class Location {
-    private static final Pattern PATTERN = Pattern.compile("(.*):(\\d+):(\\d+)");
-    public String file;
-    public int row;
-    public int column;
 
-    public Location(String full) {
+    // TODO does this belong in the open source code? Should it be encapsulated somehow else?
+    private static final String READONLY_WORKSPACE = "/workspace/READONLY/google3/";
+    private static final Pattern PATTERN = Pattern.compile("(.*):(\\d+):(\\d+)");
+
+    public final String file;
+    public final int row;
+    public final int column;
+
+    public Location(String full, File workspaceRoot) {
       Matcher matcher = PATTERN.matcher(full);
-      if (matcher.matches()) {
-        file = matcher.group(1);
-        row = Integer.parseInt(matcher.group(2));
-        column = Integer.parseInt(matcher.group(3));
+      Preconditions.checkArgument(matcher.matches(), "Location not recognized: %s", full);
+      String file = matcher.group(1);
+      if (!file.startsWith(workspaceRoot.getAbsolutePath())) {
+        Preconditions.checkArgument(
+            file.startsWith(READONLY_WORKSPACE),
+            "Path not in workspace not readonly workspace: %s",
+            file);
+        file = workspaceRoot.getAbsolutePath() + "/" + file.substring(READONLY_WORKSPACE.length());
       }
+      this.file = file;
+      row = Integer.parseInt(matcher.group(2));
+      column = Integer.parseInt(matcher.group(3));
     }
   }
 
@@ -126,7 +138,7 @@ public class BuildGraph {
           break;
         }
         if (target.getType() == Discriminator.SOURCE_FILE) {
-          Location l = new Location(target.getSourceFile().getLocation());
+          Location l = new Location(target.getSourceFile().getLocation(), root.directory());
           if (l.file.endsWith("/BUILD")) {
             packages.computeIfAbsent(l.file, x -> new ArrayList<>());
           }
