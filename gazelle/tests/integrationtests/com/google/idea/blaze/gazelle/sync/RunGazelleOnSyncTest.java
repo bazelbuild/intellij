@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The Bazel Authors. All rights reserved.
+ * Copyright 2022 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,199 +15,144 @@
  */
 package com.google.idea.blaze.gazelle.sync;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.bazel.BuildSystem;
+import com.google.idea.blaze.base.command.BlazeCommand;
+import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.settings.BlazeUserSettings;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeSyncIntegrationTestCase;
 import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncMode;
-import com.google.idea.blaze.base.ui.problems.BlazeProblemsView;
+import com.google.idea.blaze.gazelle.GazelleRunResult;
+import com.google.idea.blaze.gazelle.GazelleRunner;
 import com.google.idea.blaze.gazelle.GazelleUserSettings;
-import com.intellij.openapi.wm.ToolWindowManager;
-import java.io.File;
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.Collection;
+import java.util.List;
+
+import static com.google.common.truth.Truth.assertThat;
+
 @RunWith(JUnit4.class)
 public class RunGazelleOnSyncTest extends BlazeSyncIntegrationTestCase {
+    private final String GAZELLE_RUN_COMMAND =
+            "bazel run --tool_tag=.* --curses=no --color=yes --progress_in_terminal_title=no -- //:gazelle";
 
-  @Override
-  protected boolean isLightTestCase() {
-    return false;
-  }
+    private MockGazelleRunner mockGazelleRunner;
 
-  @Before
-  public void setUpRepoWithGazelle() {
-    workspace.createFile(
-        new WorkspacePath("BUILD.bazel"),
-        "load(\"@bazel_gazelle//:def.bzl\", \"gazelle\")",
-        "# gazelle:prefix github.com/bazelbuild/intellij",
-        "gazelle(name = \"gazelle\")");
-    workspace.createFile(
-        new WorkspacePath("WORKSPACE"),
-        "load(\"@bazel_tools//tools/build_defs/repo:http.bzl\", \"http_archive\")",
-        "",
-        "http_archive(",
-        "    name = \"io_bazel_rules_go\",",
-        "    sha256 = \"099a9fb96a376ccbbb7d291ed4ecbdfd42f6bc822ab77ae6f1b5cb9e914e94fa\",",
-        "    urls = [",
-        "       "
-            + " \"https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.35.0/rules_go-v0.35.0.zip\",",
-        "       "
-            + " \"https://github.com/bazelbuild/rules_go/releases/download/v0.35.0/rules_go-v0.35.0.zip\",",
-        "    ],",
-        ")",
-        "",
-        "http_archive(",
-        "    name = \"bazel_gazelle\",",
-        "    sha256 = \"efbbba6ac1a4fd342d5122cbdfdb82aeb2cf2862e35022c752eaddffada7c3f3\",",
-        "    urls = [",
-        "       "
-            + " \"https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.27.0/bazel-gazelle-v0.27.0.tar.gz\",",
-        "       "
-            + " \"https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.27.0/bazel-gazelle-v0.27.0.tar.gz\",",
-        "    ],",
-        ")",
-        "",
-        "load(\"@io_bazel_rules_go//go:deps.bzl\", \"go_register_toolchains\","
-            + " \"go_rules_dependencies\")",
-        "load(\"@bazel_gazelle//:deps.bzl\", \"gazelle_dependencies\", \"go_repository\")",
-        "go_rules_dependencies()",
-        "go_register_toolchains(version = \"1.18.3\")",
-        "gazelle_dependencies()");
-    workspace.createDirectory(new WorkspacePath("src"));
-    workspace.createFile(
-        new WorkspacePath("src/main.go"),
-        "package main",
-        "import \"fmt\"",
-        "func main() {",
-        "  fmt.Println(\"Hello World\")",
-        "}");
-  }
-
-  private void runBazelSync() {
-    GazelleUserSettings.getInstance().setGazelleHeadless(true);
-
-    // We set the desired bazel because the Gazelle plugin needs to read it.
-    BlazeUserSettings bazelUserSettings = BlazeUserSettings.getInstance();
-    bazelUserSettings.setBazelBinaryPath(System.getenv("USE_BAZEL_VERSION"));
-
-    BlazeSyncParams syncParams =
-        BlazeSyncParams.builder()
-            .setTitle("Full Sync")
-            .setSyncMode(SyncMode.INCREMENTAL)
-            .setSyncOrigin("test")
-            .setAddProjectViewTargets(true)
-            .build();
-    runBlazeSync(syncParams);
-  }
-
-  // Common directories so that the tests can cache the download of Gazelle.
-  private static final String REPOSITORY_CACHE_LOCATION =
-      FileUtils.getTempDirectoryPath() + "/temp_repository_cache";
-  private static final String DISK_CACHE_LOCATION =
-      FileUtils.getTempDirectoryPath() + "/temp_disk_cache";
-
-  @BeforeClass
-  public static void createCacheDirs() {
-    ImmutableList<String> cachedirs =
-        ImmutableList.of(REPOSITORY_CACHE_LOCATION, DISK_CACHE_LOCATION);
-    for (String cachedir : cachedirs) {
-      File directory = new File(cachedir);
-      if (!directory.exists()) {
-        directory.mkdirs();
-      }
+    @Override
+    protected boolean isLightTestCase() {
+        return false;
     }
-  }
 
-  @After
-  public void clearState() {
-    // Some test modify this global state, which doesn't get reset by regular cleanup.
-    GazelleUserSettings.getInstance().clearGazelleTarget();
-  }
+    private void runBazelSync() {
+        GazelleUserSettings.getInstance().setGazelleHeadless(true);
 
-  private static final String GENERATED_BUILD_FILE_PATH = "src/BUILD.bazel";
-  private static final String WANTED_BUILD_CONTENTS =
-      "load(\"@io_bazel_rules_go//go:def.bzl\", \"go_binary\", \"go_library\")\n"
-          + "\n"
-          + "go_library(\n"
-          + "    name = \"src_lib\",\n"
-          + "    srcs = [\"main.go\"],\n"
-          + "    importpath = \"github.com/bazelbuild/intellij/src\",\n"
-          + "    visibility = [\"//visibility:private\"],\n"
-          + ")\n"
-          + "\n"
-          + "go_binary(\n"
-          + "    name = \"src\",\n"
-          + "    embed = [\":src_lib\"],\n"
-          + "    visibility = [\"//visibility:public\"],\n"
-          + ")\n";
+        BlazeSyncParams syncParams = BlazeSyncParams.builder().setTitle(
+                "Full Sync").setSyncMode(SyncMode.INCREMENTAL).setSyncOrigin(
+                "test").setAddProjectViewTargets(true).build();
 
-  @Test
-  public void testGazelleDoesntRunWhenNotConfigured() throws Exception {
-    setProjectView(
-        "directories:",
-        "  .",
-        "build_flags:",
-        "  --repository_cache=" + REPOSITORY_CACHE_LOCATION,
-        "  --disk_cache=" + DISK_CACHE_LOCATION);
+        runBlazeSync(syncParams);
+    }
 
-    runBazelSync();
+    @Before
+    public void setUpTest() {
+        mockGazelleRunner = new MockGazelleRunner();
+        registerApplicationService(GazelleRunner.class, mockGazelleRunner);
+    }
 
-    errorCollector.assertNoIssues();
+    @After
+    public void clearState() {
+        // Some tests modify global state, which doesn't get reset by
+        // regular cleanup.
+        GazelleUserSettings.getInstance().clearGazelleTarget();
+    }
 
-    File resultBuildFile = workspaceRoot.fileForPath(new WorkspacePath(GENERATED_BUILD_FILE_PATH));
-    assertThat(resultBuildFile.exists()).isFalse();
-  }
+    @Test
+    public void testGazelleDoesntRunWhenNotConfigured() {
+        setProjectView(
+            "directories:",
+            "  ."
+        );
 
-  @Test
-  public void testRunGazelleWhenConfiguredInProject() throws Exception {
-    setProjectView(
-        "directories:",
-        "  .",
-        "gazelle_target: //:gazelle",
-        "build_flags:",
-        "  --repository_cache=" + REPOSITORY_CACHE_LOCATION,
-        "  --disk_cache=" + DISK_CACHE_LOCATION);
+        runBazelSync();
 
-    runBazelSync();
+        errorCollector.assertNoIssues();
+        assertThat(mockGazelleRunner.command).isNull();
+    }
 
-    errorCollector.assertNoIssues();
+    @Test
+    public void testRunGazelleWhenConfiguredInProject() {
+        setProjectView(
+            "directories:",
+            "  .",
+            "gazelle_target: //:gazelle"
+        );
 
-    File resultBuildFile = workspaceRoot.fileForPath(new WorkspacePath(GENERATED_BUILD_FILE_PATH));
-    assertThat(resultBuildFile.exists()).isTrue();
-    assertThat(workspaceRoot.isInWorkspace(resultBuildFile)).isTrue();
-    assertThat(FileUtils.readFileToString(resultBuildFile, "UTF-8"))
-        .contains(WANTED_BUILD_CONTENTS);
-  }
+        runBazelSync();
 
-  @Test
-  public void testRunGazelleWhenConfiguredGlobally() throws Exception {
-    GazelleUserSettings gazelleSettings = GazelleUserSettings.getInstance();
-    gazelleSettings.setGazelleTarget("//:gazelle");
+        errorCollector.assertNoIssues();
+        assertThat(mockGazelleRunner.command).isNotNull();
+        assertThat(mockGazelleRunner.command.toString().strip()).matches(
+                GAZELLE_RUN_COMMAND);
+    }
 
-    setProjectView(
-        "directories:",
-        "  .",
-        "build_flags:",
-        "  --repository_cache=" + REPOSITORY_CACHE_LOCATION,
-        "  --disk_cache=" + DISK_CACHE_LOCATION);
+    @Test
+    public void testRunGazelleWhenConfiguredGlobally() {
+        GazelleUserSettings gazelleSettings = GazelleUserSettings.getInstance();
+        gazelleSettings.setGazelleTarget("//:gazelle");
+        setProjectView(
+            "directories:",
+            "  ."
+        );
 
-    runBazelSync();
+        runBazelSync();
 
-    errorCollector.assertNoIssues();
+        errorCollector.assertNoIssues();
+        assertThat(mockGazelleRunner.command).isNotNull();
+        assertThat(mockGazelleRunner.command.toString().strip()).matches(
+                GAZELLE_RUN_COMMAND);
+    }
 
-    File resultBuildFile = workspaceRoot.fileForPath(new WorkspacePath("src/BUILD.bazel"));
-    assertThat(resultBuildFile.exists()).isTrue();
-    assertThat(workspaceRoot.isInWorkspace(resultBuildFile)).isTrue();
-    assertThat(FileUtils.readFileToString(resultBuildFile, "UTF-8"))
-        .contains(WANTED_BUILD_CONTENTS);
-  }
+    @Test
+    public void testGazelleDoesntRunWithInvalidGazelleTarget() {
+        GazelleUserSettings gazelleSettings = GazelleUserSettings.getInstance();
+        gazelleSettings.setGazelleTarget("INVALID_TARGET");
+        setProjectView(
+                "directories:",
+                "  ."
+        );
+
+        runBazelSync();
+
+        errorCollector.assertNoIssues();
+        assertThat(mockGazelleRunner.command).isNull();
+    }
+
+    private static class MockGazelleRunner extends GazelleRunner {
+        BlazeCommand command;
+
+        @Override
+        public GazelleRunResult runBlazeGazelle(BlazeContext context,
+                                                BuildSystem.BuildInvoker invoker,
+                                                WorkspaceRoot workspaceRoot,
+                                                List<String> blazeFlags,
+                                                Label gazelleTarget,
+                                                Collection<WorkspacePath> directories,
+                                                ImmutableList<BlazeIssueParser.Parser> issueParsers) {
+            // For now, we can't run bazel on tests, since some of these tests
+            // might be run remotely. Therefore, we just check that the Bazel
+            // command that would have been run has the right shape.
+            command = GazelleRunner.createGazelleRunCommand(invoker, blazeFlags,
+                    gazelleTarget, directories);
+            return GazelleRunResult.SUCCESS;
+        }
+    }
 }

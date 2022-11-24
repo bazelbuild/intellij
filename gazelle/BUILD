@@ -22,10 +22,7 @@ java_library(
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [
         "//base",
-        "//common/experiments",
         "//common/settings",
-        "//common/util:transactions",
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api",
     ],
 )
@@ -88,11 +85,6 @@ intellij_integration_test_suite(
         ":gazelle",
         "//base",
         "//base:integration_test_utils",
-        "//base:unit_test_utils",
-        "//common/experiments",
-        "//common/experiments:unit_test_utils",
-        "//intellij_platform_sdk:intellilang_for_tests",
-        "//intellij_platform_sdk:jsr305",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "@junit//jar",
