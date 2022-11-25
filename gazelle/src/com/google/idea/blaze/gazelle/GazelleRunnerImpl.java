@@ -43,13 +43,8 @@ public class GazelleRunnerImpl extends GazelleRunner {
       Label gazelleTarget,
       Collection<WorkspacePath> directories,
       ImmutableList<Parser> issueParsers) {
-    BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.RUN);
-    builder.addBlazeFlags(blazeFlags);
-    builder.addTargets(gazelleTarget);
-    List<String> directoriesToRegenerate =
-        directories.stream().map(WorkspacePath::toString).collect(Collectors.toList());
-    builder.addExeFlags(directoriesToRegenerate);
-    BlazeCommand command = builder.build();
+    BlazeCommand command = GazelleRunner.createGazelleRunCommand(invoker,
+            blazeFlags, gazelleTarget, directories);
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     int exitCode =
         ExternalTask.builder(workspaceRoot)
