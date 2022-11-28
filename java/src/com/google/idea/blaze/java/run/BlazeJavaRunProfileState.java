@@ -63,6 +63,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -155,6 +156,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
     return new ScopedBlazeProcessHandler(
         project,
         command,
+        Collections.EMPTY_MAP,
         workspaceRoot,
         new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
           @Override

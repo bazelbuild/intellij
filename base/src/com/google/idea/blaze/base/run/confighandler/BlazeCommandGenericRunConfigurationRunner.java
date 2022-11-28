@@ -296,6 +296,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
       return new ScopedBlazeProcessHandler(
           project,
           blazeCommand,
+          handlerState.getEnvVarsState().getData(),
           workspaceRoot,
           new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
             @Override

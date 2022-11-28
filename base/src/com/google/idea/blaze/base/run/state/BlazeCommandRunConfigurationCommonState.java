@@ -37,12 +37,14 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
   private static final String TEST_FILTER_FLAG_PREFIX = BlazeFlags.TEST_FILTER + '=';
 
   protected final BlazeCommandState command;
+  protected final EnvironmentVariablesState envVarsState;
   protected final RunConfigurationFlagsState blazeFlags;
   protected final RunConfigurationFlagsState exeFlags;
   protected final BlazeBinaryState blazeBinary;
 
   public BlazeCommandRunConfigurationCommonState(BuildSystemName buildSystemName) {
     command = new BlazeCommandState();
+    envVarsState = new EnvironmentVariablesState(command);
     blazeFlags = new RunConfigurationFlagsState(USER_BLAZE_FLAG_TAG, buildSystemName + " flags:");
     exeFlags = new RunConfigurationFlagsState(USER_EXE_FLAG_TAG, "Executable flags:");
     blazeBinary = new BlazeBinaryState();
@@ -50,7 +52,12 @@ public class BlazeCommandRunConfigurationCommonState extends RunConfigurationCom
 
   @Override
   protected ImmutableList<RunConfigurationState> initializeStates() {
-    return ImmutableList.of(command, blazeFlags, exeFlags, blazeBinary);
+    return ImmutableList.of(command, envVarsState, blazeFlags, exeFlags, blazeBinary);
+  }
+
+  /** @return The list of blaze flags that the user specified manually. */
+  public EnvironmentVariablesState getEnvVarsState() {
+    return envVarsState;
   }
 
   /** @return The list of blaze flags that the user specified manually. */

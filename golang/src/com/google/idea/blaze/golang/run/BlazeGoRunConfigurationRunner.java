@@ -60,6 +60,7 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
 import com.intellij.execution.RunCanceledByUserException;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionUtil;
@@ -173,14 +174,17 @@ public class BlazeGoRunConfigurationRunner implements BlazeCommandRunConfigurati
       nativeConfig.setParams(ParametersListUtil.join(getParameters(executable)));
       nativeConfig.setWorkingDirectory(executable.workingDir.getPath());
 
+      EnvironmentVariablesData envState = this.state.getEnvVarsState().getData();
       Map<String, String> customEnvironment = new HashMap<>(nativeConfig.getCustomEnvironment());
-      for (Map.Entry<String, String> entry : executable.envVars.entrySet()) {
-        customEnvironment.put(entry.getKey(), entry.getValue());
-      }
+      customEnvironment.putAll(executable.envVars);
+      customEnvironment.putAll(envState.getEnvs());
+
       String testFilter = getTestFilter();
       if (testFilter != null) {
         customEnvironment.put("TESTBRIDGE_TEST_ONLY", testFilter);
       }
+
+      nativeConfig.setPassParentEnvironment(envState.isPassParentEnvs());
       nativeConfig.setCustomEnvironment(customEnvironment);
 
       Module module =

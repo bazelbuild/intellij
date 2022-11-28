@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.util.ProcessGroupUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Platform;
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
@@ -35,6 +36,7 @@ import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Scoped process handler.
@@ -72,21 +74,24 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
   public ScopedBlazeProcessHandler(
       Project project,
       BlazeCommand blazeCommand,
+      EnvironmentVariablesData envData,
       WorkspaceRoot workspaceRoot,
       ScopedProcessHandlerDelegate scopedProcessHandlerDelegate)
       throws ExecutionException {
-    this(project, blazeCommand.toList(), workspaceRoot, scopedProcessHandlerDelegate);
+    this(project, blazeCommand.toList(), envData.getEnvs(), workspaceRoot, scopedProcessHandlerDelegate);
   }
 
   public ScopedBlazeProcessHandler(
       Project project,
       List<String> command,
+      Map<String, String> environment,
       WorkspaceRoot workspaceRoot,
       ScopedProcessHandlerDelegate scopedProcessHandlerDelegate)
       throws ExecutionException {
     super(
         ProcessGroupUtil.newProcessGroupFor(
             new CommandLineWithRemappedPath(command)
+                    .withEnvironment(environment)
                 .withWorkDirectory(workspaceRoot.directory().getPath())
                 .withRedirectErrorStream(true)));
 
