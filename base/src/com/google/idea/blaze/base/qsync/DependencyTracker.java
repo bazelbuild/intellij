@@ -16,6 +16,8 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -36,8 +38,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * A file that tracks what files in the project can be analyzed and what is the status of their
@@ -60,17 +62,32 @@ public class DependencyTracker {
     this.cache = cache;
   }
 
-  /** Recursively get all the transitive deps outside the project */
-  @Nullable
-  public Set<String> getPendingTargets(Project project, VirtualFile vf) {
+  private String projectRelativePathFor(VirtualFile vf) {
     BlazeImportSettings settings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    String rel =
-        Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath())).toString();
+    return Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath())).toString();
+  }
 
-    Set<String> targets = graph.getFileDependencies(rel);
-    targets.removeIf(syncedTargets::contains);
-    return targets;
+  /**
+   * Returns true if the given file is a source file, i.e. it appears in the build graph.
+   */
+  public boolean isProjectSource(VirtualFile vf) {
+    return graph.isSourceFile(projectRelativePathFor(vf));
+  }
+
+  /**
+   * Recursively get all the transitive deps outside the project.
+   *
+   * <p>Returns {@code Optional.empty()} if the givem file is not a source file in the build graph.
+   */
+  public Optional<ImmutableSet<String>> getPendingTargets(VirtualFile vf) {
+    String relativeFilePath = projectRelativePathFor(vf);
+    if (!graph.isSourceFile(relativeFilePath)) {
+      return Optional.empty();
+    }
+    return Optional.of(
+        Sets.difference(graph.getFileDependencies(projectRelativePathFor(vf)), syncedTargets)
+            .immutableCopy());
   }
 
   public void buildDependenciesForFile(BlazeContext context, List<WorkspacePath> paths)
@@ -89,10 +106,7 @@ public class DependencyTracker {
     Set<String> buildTargets = new HashSet<>();
     for (WorkspacePath path : paths) {
       buildTargets.add(graph.getTargetOwner(path.toString()));
-      Set<String> t = graph.getFileDependencies(path.toString());
-      if (t != null) {
-        targets.addAll(t);
-      }
+      targets.addAll(graph.getFileDependencies(path.toString()));
     }
 
     int size = targets.size();

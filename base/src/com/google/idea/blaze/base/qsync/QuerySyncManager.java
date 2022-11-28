@@ -41,7 +41,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Future;
 import org.jetbrains.annotations.NotNull;
 
@@ -157,10 +156,14 @@ public class QuerySyncManager {
     @Override
     public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      Set<String> pendingTargets = dependencyTracker.getPendingTargets(project, file);
-      int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
-      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, unsynced == 0);
-      DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
+      dependencyTracker
+          .getPendingTargets(file)
+          .ifPresent(
+              pendingTargets -> {
+                DaemonCodeAnalyzer.getInstance(project)
+                    .setHighlightingEnabled(psiFile, pendingTargets.isEmpty());
+                DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
+              });
     }
   }
 }
