@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2017 The Bazel Authors. All rights reserved.
+  ~ Copyright 2022 The Bazel Authors. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@
     <SettingsUiContributor implementation="com.google.idea.blaze.gazelle.GazelleUserSettingsConfigurable$UiContributor" />
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.google.idea.blaze.gazelle.BlazeGazelleRunner"
-                        serviceImplementation="com.google.idea.blaze.gazelle.BlazeGazelleRunnerImpl"/>
+    <applicationService serviceInterface="com.google.idea.blaze.gazelle.GazelleRunner"
+                        serviceImplementation="com.google.idea.blaze.gazelle.GazelleRunnerImpl"/>
     <applicationService id="GazelleUserSettings" serviceImplementation="com.google.idea.blaze.gazelle.GazelleUserSettings"/>
   </extensions>
 </idea-plugin>
