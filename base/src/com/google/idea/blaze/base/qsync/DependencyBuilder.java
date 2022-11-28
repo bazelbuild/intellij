@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
@@ -29,7 +30,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Set;
 
@@ -67,18 +68,12 @@ public class DependencyBuilder {
           PluginManager.getPlugin(
               PluginManager.getPluginByClassName(AspectStrategy.class.getName()));
       Path aspect = Paths.get(plugin.getPath().toString(), "aspect", "build_dependencies.bzl");
-      String content = Files.readString(aspect);
-      StringBuilder def = new StringBuilder("INCLUDE = [\n");
-      for (WorkspacePath d : ir.rootDirectories()) {
-        def.append("  \"//").append(d.toString()).append("\",\n");
-      }
-      def.append("]\n\nEXCLUDE = [\n");
-      for (WorkspacePath d : ir.excludeDirectories()) {
-        def.append("  \"//").append(d.toString()).append("\",\n");
-      }
-      def.append("]\n\n");
-      content = content.replace("#insert __PROJECT__", def.toString());
-      Files.writeString(workspaceRoot.directory().toPath().resolve(".aswb.bzl"), content);
+      String includes = Joiner.on(',').join(ir.rootDirectories());
+      String excludes = Joiner.on(',').join(ir.excludeDirectories());
+      Files.copy(
+          aspect,
+          workspaceRoot.directory().toPath().resolve(".aswb.bzl"),
+          StandardCopyOption.REPLACE_EXISTING);
 
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       // TODO This is not SYNC_CONTEXT, but also not OTHER_CONTEXT, we need to decide what kind
@@ -98,6 +93,8 @@ public class DependencyBuilder {
               .addBlazeFlags(additionalBlazeFlags)
               .addBlazeFlags(
                   "--aspects=//:.aswb.bzl%collect_dependencies,//:.aswb.bzl%package_dependencies")
+              .addBlazeFlags(String.format("--aspects_parameters=include=%s", includes))
+              .addBlazeFlags(String.format("--aspects_parameters=exclude=%s", excludes))
               .addBlazeFlags("--output_groups=ij_query_sync")
               .addBlazeFlags("--noexperimental_run_validations")
               .build();
