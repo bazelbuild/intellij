@@ -108,7 +108,7 @@ public class EnvironmentVariablesState implements RunConfigurationState {
       component.setEnabled(enabled);
 
       // Only enable when the env variables are settable
-      component.setVisible(this.command != null && SUPPORTED_COMMANDS.contains(this.command.getCommand()));
+      component.setVisible(this.command != null && this.command.getCommand() != null && SUPPORTED_COMMANDS.contains(this.command.getCommand()));
     }
   }
 }
