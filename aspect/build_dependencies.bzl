@@ -65,18 +65,16 @@ package_dependencies = aspect(
     required_aspect_providers = [[DependenciesInfo]],
 )
 
-#insert __PROJECT__
-
 def _collect_dependencies_impl(target, ctx):
     label = str(target.label)
     included = False
-    for inc in INCLUDE:
+    for inc in ctx.attr.include.split(","):
         if label.startswith(inc):
             if label[len(inc)] in [":", "/"]:
                 included = True
                 break
-    if included:
-        for exc in EXCLUDE:
+    if included and len(ctx.attr.exclude) > 0:
+        for exc in ctx.attr.exclude.split(","):
             if label.startswith(exc):
                 if label[len(exc)] in [":", "/"]:
                     included = False
@@ -97,4 +95,14 @@ collect_dependencies = aspect(
     provides = [DependenciesInfo],
     attr_aspects = ["deps"],
     required_providers = [[JavaInfo]],
+    attrs = {
+        "include": attr.string(
+            doc = "Comma separated list of workspace paths included in the project as source. Any targets inside here will not be built.",
+            mandatory = True,
+        ),
+        "exclude": attr.string(
+            doc = "Comma separated list of exclusions to 'include'.",
+            default = "",
+        ),
+    },
 )
