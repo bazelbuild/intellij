@@ -91,7 +91,7 @@ public final class ScopedBlazeProcessHandler extends KillableColoredProcessHandl
     super(
         ProcessGroupUtil.newProcessGroupFor(
             new CommandLineWithRemappedPath(command)
-                    .withEnvironment(environment)
+                .withEnvironment(environment)
                 .withWorkDirectory(workspaceRoot.directory().getPath())
                 .withRedirectErrorStream(true)));
 
