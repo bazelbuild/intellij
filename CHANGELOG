@@ -1,3 +1,8 @@
+v2022.11.29
+===========
+* feat: Add gazelle to plugin #3910
+* fix(test-go): add test_env to output all test results #3028
+
 v2022.11.15
 ===========
 * Do not include absolute paths in debug build items #4003
