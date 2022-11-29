@@ -58,7 +58,9 @@ public class IntellijWithPluginClasspathHelper {
           "stats.jar",
           "external-system-rt.jar",
           "forms_rt.jar",
-          "intellij-test-discovery.jar"
+          "intellij-test-discovery.jar",
+          "annotations.jar",
+          "groovy.jar"
       );
   private static void addIntellijLibraries(JavaParameters params, Sdk ideaJdk) {
     String libPath = ideaJdk.getHomePath() + File.separator + "lib";
