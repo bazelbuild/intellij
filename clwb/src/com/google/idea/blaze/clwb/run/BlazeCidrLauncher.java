@@ -186,6 +186,7 @@ public final class BlazeCidrLauncher extends CidrLauncher {
     return new ScopedBlazeProcessHandler(
         project,
         command,
+        handlerState.getEnvVarsState().getData(),
         workspaceRoot,
         new ScopedBlazeProcessHandler.ScopedProcessHandlerDelegate() {
           @Override
