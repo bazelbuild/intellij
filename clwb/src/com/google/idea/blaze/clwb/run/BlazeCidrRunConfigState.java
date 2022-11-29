@@ -38,10 +38,6 @@ final class BlazeCidrRunConfigState extends BlazeCommandRunConfigurationCommonSt
     return ImmutableList.of(command, blazeFlags, exeFlags, envVars, debugPortState, blazeBinary);
   }
 
-  EnvironmentVariablesState getEnvVarsState() {
-    return envVars;
-  }
-
   DebugPortState getDebugPortState() {
     return debugPortState;
   }
