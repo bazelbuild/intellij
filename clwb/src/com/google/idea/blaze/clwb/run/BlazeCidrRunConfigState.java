@@ -26,7 +26,7 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 final class BlazeCidrRunConfigState extends BlazeCommandRunConfigurationCommonState {
   private static final int DEFAULT_DEBUG_PORT = 5006;
 
-  private final EnvironmentVariablesState envVars = new EnvironmentVariablesState();
+  private final EnvironmentVariablesState envVars = new EnvironmentVariablesState(command);
   private final DebugPortState debugPortState = new DebugPortState(DEFAULT_DEBUG_PORT);
 
   BlazeCidrRunConfigState(BuildSystemName buildSystemName) {
