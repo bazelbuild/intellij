@@ -154,7 +154,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
   @Override
   public void updateProjectSdk(
       Project project, BlazeContext context, ProjectViewSet projectViewSet) {
-    if (QuerySyncManager.useQuerySync.getValue()) {
+    if (QuerySyncManager.isEnabled()) {
       AndroidSdkPlatform androidSdkPlatform =
           AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
       Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);

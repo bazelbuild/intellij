@@ -35,7 +35,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
     if (importSettings == null) {
       return;
     }
-    if (QuerySyncManager.useQuerySync.getValue()) {
+    if (QuerySyncManager.isEnabled()) {
       QuerySyncManager.getInstance(project).initialProjectSync();
       return;
     }
