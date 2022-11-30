@@ -558,11 +558,4 @@
     <ExperimentLoader implementation="com.google.idea.common.experiments.UserOverridesExperimentLoader" order="after SystemPropertyExperimentLoader" id="UserOverridesExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.DefaultValuesExperimentLoader" order="last" id="DefaultValuesExperimentLoader"/>
   </extensions>
-
-  <projectListeners>
-    <listener
-        class="com.google.idea.blaze.base.actions.ProjectFrameUpdater"
-        activeInHeadlessMode="false" activeInTestMode="false"
-        topic="com.intellij.openapi.project.ProjectManagerListener"/>
-  </projectListeners>
 </idea-plugin>
