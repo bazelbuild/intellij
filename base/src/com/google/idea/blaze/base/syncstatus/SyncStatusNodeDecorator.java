@@ -43,7 +43,7 @@ public class SyncStatusNodeDecorator implements ProjectViewNodeDecorator {
     if (project == null) {
       return;
     }
-    if (QuerySyncManager.useQuerySync.getValue()) {
+    if (QuerySyncManager.isEnabled()) {
       PsiFileAndName psiFileAndName =
           Arrays.stream(SyncStatusContributor.EP_NAME.getExtensions())
               .map(c -> c.toPsiFileAndName(node))

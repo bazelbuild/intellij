@@ -48,7 +48,8 @@ import org.jetbrains.annotations.NotNull;
 /** The project component for a query based sync. */
 public class QuerySyncManager {
 
-  public static final BoolExperiment useQuerySync = new BoolExperiment("use.query.sync", false);
+  // Only read the initial value, as the sync mode should not change over a single run of the IDE.
+  private static final boolean ENABLED = new BoolExperiment("use.query.sync", false).getValue();
 
   private final Project project;
   private final BuildGraph graph;
@@ -62,6 +63,10 @@ public class QuerySyncManager {
     return ServiceManager.getService(project, QuerySyncManager.class);
   }
 
+  public static boolean isEnabled() {
+    return ENABLED;
+  }
+
   public QuerySyncManager(Project project) {
     this.project = project;
     this.graph = new BuildGraph();
@@ -71,7 +76,7 @@ public class QuerySyncManager {
     this.projectQuerier = new ProjectQuerier(project, graph);
     this.projectUpdater = new ProjectUpdater(project, graph);
 
-    if (useQuerySync.getValue()) {
+    if (isEnabled()) {
       FileEditorManagerListener listener = new MyFileEditorManagerListener(project);
       project
           .getMessageBus()
