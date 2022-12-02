@@ -51,6 +51,7 @@ import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
 import com.google.idea.blaze.java.sync.projectstructure.JavaSourceFolderProvider;
@@ -158,7 +159,8 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
       AndroidSdkPlatform androidSdkPlatform =
           AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
       Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
-      LanguageLevel javaLanguageLevel = LanguageLevel.JDK_11; // todo
+      LanguageLevel javaLanguageLevel =
+          JavaLanguageLevelSection.getLanguageLevel(projectViewSet, LanguageLevel.JDK_11);
       ProjectRootManagerEx rootManager = ProjectRootManagerEx.getInstanceEx(project);
       rootManager.setProjectSdk(sdk);
       LanguageLevelProjectExtension ext = LanguageLevelProjectExtension.getInstance(project);
