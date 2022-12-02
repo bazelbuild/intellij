@@ -223,7 +223,7 @@ public class JdksTest extends BlazeIntegrationTestCase {
   }
 
   @Test
-  public void testChooseSameVersionAsPreviewLanguageLevel() {
+  public void testChooseJdkProvidingRequestedPreviewLanguageLevel() {
     Sdk jdk11 = getUniqueMockJdk(LanguageLevel.JDK_11);
     Sdk jdk17 = getUniqueMockJdk(LanguageLevel.JDK_17);
 
@@ -240,22 +240,21 @@ public class JdksTest extends BlazeIntegrationTestCase {
   }
 
   @Test
-  public void testChooseNoJdkIfNoMatchingPreviewVersionInAvailable() {
-    Sdk jdk8 = getUniqueMockJdk(LanguageLevel.JDK_1_8);
+  public void testChoosesJdkProvidingLevelWhenMultipleLevelsProvided() {
     Sdk jdk11 = getUniqueMockJdk(LanguageLevel.JDK_11);
+    Sdk jdk17 = getUniqueMockJdk(LanguageLevel.JDK_17);
 
     registerJdkProvider(
         ImmutableMap.of(
-            LanguageLevel.JDK_1_8, jdk8,
-            LanguageLevel.JDK_11, jdk11
+            LanguageLevel.JDK_11, jdk11,
+            LanguageLevel.JDK_17, jdk17,
+            LanguageLevel.JDK_17_PREVIEW, jdk17
         ));
 
-    setJdkTable(jdk8, jdk11);
+    setJdkTable(jdk11, jdk17);
 
     Sdk chosenSdk = Jdks.chooseOrCreateJavaSdk(jdk11, LanguageLevel.JDK_17_PREVIEW);
-    // chosenSdk may be non-null when finding a local, system-installed sdk that provides the preview version
-    assertThat(chosenSdk).isNotEqualTo(jdk8);
-    assertThat(chosenSdk).isNotEqualTo(jdk11);
+    assertThat(chosenSdk).isEqualTo(jdk17);
   }
 
   private void setJdkTable(Sdk... jdks) {
