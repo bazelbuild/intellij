@@ -802,7 +802,7 @@ final class SyncPhaseCoordinator {
   private static void validate(
       Project project, BlazeContext context, BlazeProjectData blazeProjectData) {
     for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-      syncPlugin.validate(project, context, blazeProjectData);
+      boolean unused = syncPlugin.validate(project, context, blazeProjectData);
     }
   }
 
