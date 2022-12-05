@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -48,9 +47,6 @@ import org.jetbrains.annotations.NotNull;
 /** The project component for a query based sync. */
 public class QuerySyncManager {
 
-  // Only read the initial value, as the sync mode should not change over a single run of the IDE.
-  private static final boolean ENABLED = new BoolExperiment("use.query.sync", false).getValue();
-
   private final Project project;
   private final BuildGraph graph;
   private final DependencyTracker dependencyTracker;
@@ -63,10 +59,6 @@ public class QuerySyncManager {
     return ServiceManager.getService(project, QuerySyncManager.class);
   }
 
-  public static boolean isEnabled() {
-    return ENABLED;
-  }
-
   public QuerySyncManager(Project project) {
     this.project = project;
     this.graph = new BuildGraph();
@@ -76,7 +68,7 @@ public class QuerySyncManager {
     this.projectQuerier = new ProjectQuerier(project, graph);
     this.projectUpdater = new ProjectUpdater(project, graph);
 
-    if (isEnabled()) {
+    if (QuerySync.isEnabled()) {
       FileEditorManagerListener listener = new MyFileEditorManagerListener(project);
       project
           .getMessageBus()

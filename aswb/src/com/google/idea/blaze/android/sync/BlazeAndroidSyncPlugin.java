@@ -38,7 +38,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
-import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -155,7 +155,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
   @Override
   public void updateProjectSdk(
       Project project, BlazeContext context, ProjectViewSet projectViewSet) {
-    if (QuerySyncManager.isEnabled()) {
+    if (QuerySync.isEnabled()) {
       AndroidSdkPlatform androidSdkPlatform =
           AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
       Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
