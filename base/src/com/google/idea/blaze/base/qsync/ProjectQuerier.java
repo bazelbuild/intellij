@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.joining;
 
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -61,7 +62,8 @@ public class ProjectQuerier {
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     WorkspaceRoot root = WorkspaceRoot.fromImportSettings(settings);
 
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    ProjectViewSet projectViewSet =
+        checkNotNull(ProjectViewManager.getInstance(project).reloadProjectView(context));
     ImportRoots ir =
         ImportRoots.builder(root, settings.getBuildSystem()).add(projectViewSet).build();
 
