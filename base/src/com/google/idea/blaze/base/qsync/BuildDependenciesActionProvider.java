@@ -49,7 +49,7 @@ public class BuildDependenciesActionProvider implements InspectionWidgetActionPr
   @Nullable
   @Override
   public AnAction createAction(@NotNull Editor editor) {
-    if (!QuerySyncManager.isEnabled()) {
+    if (!QuerySync.isEnabled()) {
       return null;
     }
     if (!editor.getEditorKind().equals(EditorKind.MAIN_EDITOR)) {

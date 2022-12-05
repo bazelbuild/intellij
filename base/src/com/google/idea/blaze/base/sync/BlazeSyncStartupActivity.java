@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync;
 
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -35,7 +36,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
     if (importSettings == null) {
       return;
     }
-    if (QuerySyncManager.isEnabled()) {
+    if (QuerySync.isEnabled()) {
       QuerySyncManager.getInstance(project).initialProjectSync();
       return;
     }

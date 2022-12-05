@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.syncstatus;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -43,7 +44,7 @@ public class SyncStatusNodeDecorator implements ProjectViewNodeDecorator {
     if (project == null) {
       return;
     }
-    if (QuerySyncManager.isEnabled()) {
+    if (QuerySync.isEnabled()) {
       PsiFileAndName psiFileAndName =
           Arrays.stream(SyncStatusContributor.EP_NAME.getExtensions())
               .map(c -> c.toPsiFileAndName(node))
