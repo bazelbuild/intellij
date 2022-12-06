@@ -15,8 +15,10 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.base.Suppliers;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.diagnostic.Logger;
+import java.util.function.Supplier;
 
 /** Holder class for basic information about querysync, e.g. is it enabled? */
 public class QuerySync {
@@ -24,12 +26,13 @@ public class QuerySync {
   private static final Logger logger = Logger.getInstance(QuerySync.class);
 
   // Only read the initial value, as the sync mode should not change over a single run of the IDE.
-  private static final boolean ENABLED = new BoolExperiment("use.query.sync", false).getValue();
+  private static final Supplier<Boolean> ENABLED =
+      Suppliers.memoize(new BoolExperiment("use.query.sync", false)::getValue);
 
   private QuerySync() {}
 
   public static boolean isEnabled() {
-    return ENABLED;
+    return ENABLED.get();
   }
 
   public static void assertNotEnabled(String reason) {
