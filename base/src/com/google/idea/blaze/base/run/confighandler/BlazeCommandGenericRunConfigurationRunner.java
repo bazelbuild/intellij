@@ -29,7 +29,7 @@ import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeCommandRunner;
+import com.google.idea.blaze.base.command.BlazeCommandRunnerExperiments;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -64,7 +64,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -84,7 +83,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,8 +97,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
     implements BlazeCommandRunConfigurationRunner {
   private static final BoolExperiment useRabbitForTestCommands =
       new BoolExperiment("localtests.userabbit", false);
-  private static final FeatureRolloutExperiment useBlazeCommandRunnerForTestsLinux =
-      new FeatureRolloutExperiment("blaze.commandrunner.localtests.linux.enable");
 
   @Override
   public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment) {
@@ -174,7 +170,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
                 context);
 
         BlazeTestResultFinderStrategy testResultFinderStrategy;
-        if (useBlazeCommandRunner(invoker.getCommandRunner())) {
+        if (BlazeCommandRunnerExperiments.isEnabledForTests(invoker.getCommandRunner())) {
           testResultFinderStrategy = new BlazeTestResultHolder();
           // Initialize with empty test results and NO_STATUS to avoid IllegalStateException
           ((BlazeTestResultHolder) testResultFinderStrategy)
@@ -216,7 +212,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
           context.addOutputSink(PrintOutput.class, new WritingOutputSink(console));
         }
         addConsoleFilters(consoleFilters.toArray(new Filter[0]));
-        if (!useBlazeCommandRunner(invoker.getCommandRunner())) {
+        if (!BlazeCommandRunnerExperiments.isEnabledForTests(invoker.getCommandRunner())) {
           return getScopedProcessHandler(project, blazeCommand.build(), workspaceRoot);
         }
 
@@ -353,11 +349,6 @@ public final class BlazeCommandGenericRunConfigurationRunner
 
     private boolean canUseTestUi() {
       return BlazeCommandName.TEST.equals(getCommand());
-    }
-
-    private boolean useBlazeCommandRunner(BlazeCommandRunner runner) {
-      return (SystemInfo.isMac && runner.shouldUseForLocalTests())
-          || (SystemInfo.isLinux && useBlazeCommandRunnerForTestsLinux.isEnabled());
     }
   }
 

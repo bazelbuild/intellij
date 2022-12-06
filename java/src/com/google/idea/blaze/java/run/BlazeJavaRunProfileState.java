@@ -30,6 +30,8 @@ import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeCommandRunner;
+import com.google.idea.blaze.base.command.BlazeCommandRunnerExperiments;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
@@ -66,7 +68,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.java.run.hotswap.HotSwapCommandBuilder;
 import com.google.idea.blaze.java.run.hotswap.HotSwapUtils;
-import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -98,8 +99,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfileState {
   private static final Logger logger = Logger.getInstance(BlazeJavaRunProfileState.class);
-  private static final FeatureRolloutExperiment useBlazeCommandRunnerForTestsLinux =
-      new FeatureRolloutExperiment("blaze.commandrunner.localtests.linux.enable");
   @Nullable private String kotlinxCoroutinesJavaAgent;
 
   BlazeJavaRunProfileState(ExecutionEnvironment environment) {
@@ -136,7 +135,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
               kotlinxCoroutinesJavaAgent);
 
       BlazeTestResultFinderStrategy testResultFinderStrategy;
-      if (useBlazeCommandRunner()) {
+      if (useBlazeCommandRunner(invoker.getCommandRunner())) {
         testResultFinderStrategy = new BlazeTestResultHolder();
         // Initialize with empty test results and NO_STATUS to avoid IllegalStateException
         ((BlazeTestResultHolder) testResultFinderStrategy)
@@ -193,7 +192,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
     } else {
       command = blazeCommand.build().toList();
     }
-      if (!useBlazeCommandRunner()) {
+      if (!useBlazeCommandRunner(invoker.getCommandRunner())) {
         return getScopedProcessHandler(project, command, workspaceRoot);
       }
 
@@ -309,12 +308,12 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
     return state != null && BlazeCommandName.TEST.equals(state.getCommandState().getCommand());
   }
 
-  private boolean useBlazeCommandRunner() {
+  private boolean useBlazeCommandRunner(BlazeCommandRunner runner) {
     if (SystemInfo.isMac) {
       // Debugging java tests and android local tests isn't supported on Mac yet
       return false;
     }
-    return SystemInfo.isLinux && useBlazeCommandRunnerForTestsLinux.isEnabled();
+    return BlazeCommandRunnerExperiments.isEnabledForTests(runner);
   }
 
   private static BlazeJavaRunConfigState getState(BlazeCommandRunConfiguration config) {
