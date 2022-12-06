@@ -91,7 +91,6 @@ final class ProjectViewManagerImpl extends ProjectViewManager {
       BlazeContext context, WorkspacePathResolver workspacePathResolver) {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    assert importSettings != null;
     if (importSettings.getProjectViewFile() == null) {
       // TODO(mathewi) work out what needs doing here for the new sync flow.
       return null;
