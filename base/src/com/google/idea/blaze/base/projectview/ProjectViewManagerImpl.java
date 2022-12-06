@@ -69,7 +69,7 @@ final class ProjectViewManagerImpl extends ProjectViewManager {
         classLoaders.add(Thread.currentThread().getContextClassLoader());
         loadedProjectViewSet = (ProjectViewSet) SerializationUtil.loadFromDisk(file, classLoaders);
       } catch (IOException e) {
-        logger.info(e);
+        logger.warn("Failed to load project view set: " + e.getMessage());
       }
       this.projectViewSet = loadedProjectViewSet;
       this.projectViewSetLoaded = true;
