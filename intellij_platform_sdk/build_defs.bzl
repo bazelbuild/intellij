@@ -24,17 +24,17 @@ INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for Bazel Plugin OSS
     # The old names for -oss-oldest-stable and -oss-latest-stable were
     # -oss-stable and -oss-beta respectively.
-    "intellij-oss-oldest-stable": "intellij-2022.1",
-    "intellij-oss-latest-stable": "intellij-2022.2",
+    "intellij-oss-oldest-stable": "intellij-2022.2",
+    "intellij-oss-latest-stable": "intellij-2022.3",
     "intellij-oss-under-dev": "intellij-2022.3",
-    "intellij-ue-oss-oldest-stable": "intellij-ue-2022.1",
-    "intellij-ue-oss-latest-stable": "intellij-ue-2022.2",
+    "intellij-ue-oss-oldest-stable": "intellij-ue-2022.2",
+    "intellij-ue-oss-latest-stable": "intellij-ue-2022.3",
     "intellij-ue-oss-under-dev": "intellij-ue-2022.3",
     "android-studio-oss-oldest-stable": "android-studio-2021.3",
     "android-studio-oss-latest-stable": "android-studio-2021.3",
     "android-studio-oss-under-dev": "android-studio-2022.2",
-    "clion-oss-oldest-stable": "clion-2022.1",
-    "clion-oss-latest-stable": "clion-2022.2",
+    "clion-oss-oldest-stable": "clion-2022.2",
+    "clion-oss-latest-stable": "clion-2022.3",
     "clion-oss-under-dev": "clion-2022.3",
 }
 
