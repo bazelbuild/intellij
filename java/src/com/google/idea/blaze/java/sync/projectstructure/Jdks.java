@@ -129,6 +129,10 @@ public class Jdks {
 
   private static boolean isLanguageLevelSupportedBySdk(LanguageLevel requestedLanguageLevel,
       Sdk sdk) {
+    if (!(sdk.getSdkType() instanceof JavaSdk)) {
+      return false;
+    }
+
     JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
     return isLanguageLevelSupportedBySdkVersion(requestedLanguageLevel, version);
   }

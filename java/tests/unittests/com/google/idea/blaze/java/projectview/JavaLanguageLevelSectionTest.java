@@ -45,4 +45,12 @@ public class JavaLanguageLevelSectionTest {
       assertThat(level.toJavaVersion().feature).isEqualTo(languageLevel.toJavaVersion().feature);
     }
   }
+
+  @Test
+  public void testInvalidLanguageLevelsAreRejected() {
+    for (String invalidLevel : new String[]{"INVALID_11_INVALID", "-11", "117", "0"}) {
+      LanguageLevel level = JavaLanguageLevelSection.getLanguageLevel(invalidLevel, null);
+      assertThat(level).isNull();
+    }
+  }
 }

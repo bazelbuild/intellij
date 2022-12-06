@@ -50,7 +50,19 @@ public class JavaLanguageLevelSection {
       // fall through
     }
 
-    LanguageLevel languageLevel = LanguageLevel.parse(level);
+    final int numericVersion;
+    try {
+      // LanguageLevel.parse will return levels for strings containing numeric components
+      // like FOO_11_FOO that should not be accepted by the plugin
+      numericVersion = Integer.parseInt(level);
+      if (numericVersion <= 0) {
+        return defaultValue;
+      }
+    } catch (NumberFormatException nje) {
+      return defaultValue;
+    }
+
+    LanguageLevel languageLevel = LanguageLevel.parse(Integer.toString(numericVersion));
     if (languageLevel != null) {
       return languageLevel;
     }
