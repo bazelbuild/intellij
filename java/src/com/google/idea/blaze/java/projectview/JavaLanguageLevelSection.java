@@ -58,7 +58,7 @@ public class JavaLanguageLevelSection {
       if (numericVersion <= 0) {
         return defaultValue;
       }
-    } catch (NumberFormatException nje) {
+    } catch (NumberFormatException e) {
       return defaultValue;
     }
 
