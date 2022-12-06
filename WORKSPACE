@@ -39,6 +39,14 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2022.2/ideaIC-2022.2.zip",
 )
 
+# The plugin api for intellij_ce_2022_3 idea. This is required to build IJwB and run integration tests.
+http_archive(
+    name = "intellij_ce_2022_3",
+    build_file = "@//intellij_platform_sdk:BUILD.idea223",
+    sha256 = "f6ea9aee6dec73b55ea405b37402394095be3c658d1c2707a8f30ac848974eac",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2022.3/ideaIC-2022.3.zip",
+)
+
 # The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
 # integration tests.
 http_archive(
@@ -157,6 +165,13 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/7322/201536/python-ce-222.3345.126.zip",
 )
 
+http_archive(
+    name = "python_2022_3",
+    build_file_content = _PYTHON_CE_BUILD_FILE,
+    sha256 = "65db7c364a3f1756cf07fb161ff4eb67fd8f8612a8c3da812b2f9ba5b2d6e13d",
+    url = "https://plugins.jetbrains.com/files/7322/260987/python-ce-223.7571.182.zip",
+)
+
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
@@ -196,6 +211,13 @@ http_archive(
     url = "https://plugins.jetbrains.com/files/9568/200544/go-222.3345.118.zip",
 )
 
+http_archive(
+    name = "go_2022_3",
+    build_file_content = _GO_BUILD_FILE,
+    sha256 = "11d30e00aa21fc8c7aa47df3743c0180058556cbb73292c712e151a0c3d59908",
+    url = "https://plugins.jetbrains.com/files/9568/259330/go-plugin-223.7571.182.zip",
+)
+
 _SCALA_BUILD_FILE = """
 java_import(
     name = "scala",
@@ -233,6 +255,13 @@ http_archive(
     build_file_content = _SCALA_BUILD_FILE,
     sha256 = "c250726ef598d9f942a1aeaf3b7376d6816d73824b2308bbff1007bcc1871482",
     url = "https://plugins.jetbrains.com/files/1347/198991/scala-intellij-bin-2022.2.10.zip",
+)
+
+http_archive(
+    name = "scala_2022_3",
+    build_file_content = _SCALA_BUILD_FILE,
+    sha256 = "f028ac7263433c8692d9d4c92aaba9e114fc75f6299d4d86817db371409f74f3",
+    url = "https://plugins.jetbrains.com/files/1347/257708/scala-intellij-bin-2022.3.13.zip",
 )
 
 # The plugin api for android_studio_2021_2. This is required to build ASwB,
