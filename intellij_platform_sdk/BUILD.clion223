@@ -44,6 +44,7 @@ java_import(
         "plugins/clion-test-google/lib/*.jar",
         "plugins/clion-test-catch/lib/*.jar",
         "plugins/clion-test-boost/lib/*.jar",
+        "plugins/nativeDebug-plugin/lib/*.jar"
     ]),
 )
 
