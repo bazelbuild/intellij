@@ -124,8 +124,8 @@ http_archive(
 http_archive(
     name = "clion_2022_3",
     build_file = "@//intellij_platform_sdk:BUILD.clion223",
-    sha256 = "92f36acd856a23286e124dda03e0ee5c9cb016754fd069dcf491b3ab468169d2",
-    url = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/223.7401.10-EAP-SNAPSHOT/clion-223.7401.10-EAP-SNAPSHOT.zip"
+    sha256 = "5c248465a99f7286e7863ccc4fbd6772af890b57d71a02690e20031aa16d7957",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2022.3/clion-2022.3.zip"
 )
 
 _PYTHON_CE_BUILD_FILE = """
