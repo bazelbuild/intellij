@@ -49,6 +49,7 @@ import com.google.idea.blaze.base.io.VfsUtils;
 import com.google.idea.blaze.base.lang.buildfile.references.BuildReferenceManager;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -330,6 +331,9 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
    */
   @Override
   public List<Module> getResourceModuleDependencies() {
+    if (QuerySync.isEnabled()) {
+      return ImmutableList.of();
+    }
     AndroidResourceModuleRegistry resourceModuleRegistry =
         AndroidResourceModuleRegistry.getInstance(project);
 

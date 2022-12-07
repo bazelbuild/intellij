@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
+import com.google.idea.blaze.base.qsync.BuildGraph;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -79,19 +80,25 @@ public interface BlazeSyncPlugin {
     return ImmutableList.of();
   }
 
-  /** @return The default workspace type recommended by this plugin. */
+  /**
+   * @return The default workspace type recommended by this plugin.
+   */
   @Nullable
   default WorkspaceType getDefaultWorkspaceType() {
     return null;
   }
 
-  /** @return The module type for the workspace given the workspace type. */
+  /**
+   * @return The module type for the workspace given the workspace type.
+   */
   @Nullable
   default ModuleType<?> getWorkspaceModuleType(WorkspaceType workspaceType) {
     return null;
   }
 
-  /** @return The set of supported languages under this workspace type. */
+  /**
+   * @return The set of supported languages under this workspace type.
+   */
   default Set<LanguageClass> getSupportedLanguagesInWorkspace(WorkspaceType workspaceType) {
     return ImmutableSet.of();
   }
@@ -161,6 +168,14 @@ public interface BlazeSyncPlugin {
       ModuleEditor moduleEditor,
       Module workspaceModule,
       ModifiableRootModel workspaceModifiableModel) {}
+
+  /** Modifies the IDE project structure -- only used for the new query-sync */
+  default void updateProjectStructure(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      Module workspaceModule,
+      BuildGraph buildGraph) {}
 
   /**
    * Updates in-memory state that isn't serialized by IntelliJ.
