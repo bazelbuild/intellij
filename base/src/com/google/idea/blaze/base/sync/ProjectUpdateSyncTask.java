@@ -158,7 +158,7 @@ final class ProjectUpdateSyncTask {
   }
 
   private void run(BlazeContext context) throws SyncCanceledException, SyncFailedException {
-    TargetMap targetMap = targetData.targetMap;
+    TargetMap targetMap = targetData.targetMap();
     RemoteOutputArtifacts oldRemoteState = RemoteOutputArtifacts.fromProjectData(oldProjectData);
     RemoteOutputArtifacts newRemoteState = targetData.remoteOutputs;
 

@@ -114,7 +114,7 @@ public final class BlazeProjectData implements ProtoWrapper<ProjectData.BlazePro
   }
 
   public TargetMap getTargetMap() {
-    return targetData.targetMap;
+    return targetData.targetMap();
   }
 
   public BlazeInfo getBlazeInfo() {

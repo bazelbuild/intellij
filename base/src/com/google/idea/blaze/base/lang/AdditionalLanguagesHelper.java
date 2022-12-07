@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.plugin.PluginUtils;
 import com.google.idea.blaze.base.projectview.ProjectViewEdit;
 import com.google.idea.blaze.base.projectview.section.ListSection;
 import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguagesSection;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
@@ -98,6 +99,10 @@ public class AdditionalLanguagesHelper
     }
     LanguageClass language = LanguageClass.fromExtension(ext);
     if (language == null || notifiedLanguages.contains(language)) {
+      return null;
+    }
+    if (QuerySync.isEnabled()) {
+      // TODO(b/260643753)
       return null;
     }
     BlazeProjectData projectData =

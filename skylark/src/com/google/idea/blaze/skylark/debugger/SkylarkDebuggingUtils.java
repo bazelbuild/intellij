@@ -17,6 +17,7 @@ package com.google.idea.blaze.skylark.debugger;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.common.experiments.BoolExperiment;
@@ -33,6 +34,10 @@ public final class SkylarkDebuggingUtils {
       new BoolExperiment("skylark.debugging.enabled", true);
 
   public static boolean debuggingEnabled(Project project) {
+    if (QuerySync.isEnabled()) {
+      // TODO(b/260643753)
+      return false;
+    }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     return projectData != null && debuggingEnabled(projectData.getBlazeVersionData());

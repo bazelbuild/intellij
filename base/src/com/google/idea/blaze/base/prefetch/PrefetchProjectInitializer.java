@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -49,6 +50,10 @@ public class PrefetchProjectInitializer implements StartupActivity.DumbAware {
 
   private static void prefetchProjectFiles(Project project) {
     if (!Blaze.isBlazeProject(project)) {
+      return;
+    }
+    if (QuerySync.isEnabled()) {
+      // TODO(querysync)
       return;
     }
     PrefetchIndexingTask.submitPrefetchingTask(

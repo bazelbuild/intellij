@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.actions;
 
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -51,6 +52,12 @@ public abstract class BlazeProjectAction extends AnAction {
     e.getPresentation().setEnabledAndVisible(true);
 
     if (!compatibleBuildSystem(project)) {
+      e.getPresentation().setEnabled(false);
+      return;
+    }
+    if (QuerySync.isEnabled()) {
+      // TODO(b/260643753) disabling all blaze actions for querysync is way too broad, instead we
+      //  should investigate which can be supported and update them accordingly.
       e.getPresentation().setEnabled(false);
       return;
     }
