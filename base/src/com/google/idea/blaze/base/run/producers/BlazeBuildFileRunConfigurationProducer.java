@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.RuleType;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.google.idea.blaze.base.run.BlazeRunConfigurationFactory;
@@ -72,6 +73,10 @@ public class BlazeBuildFileRunConfigurationProducer
       BlazeCommandRunConfiguration configuration,
       ConfigurationContext context,
       Ref<PsiElement> sourceElement) {
+    if (QuerySync.isEnabled()) {
+      // TODO(b/260643753) update for querysync
+      return false;
+    }
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(configuration.getProject()).getBlazeProjectData();
     if (blazeProjectData == null) {

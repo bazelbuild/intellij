@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndi
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.common.util.ConcurrencyUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,6 +76,7 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
   @Override
   @Nullable
   public BlazeProjectData getBlazeProjectData() {
+    QuerySync.assertNotEnabled("BlazeProjectData");
     return projectData;
   }
 
