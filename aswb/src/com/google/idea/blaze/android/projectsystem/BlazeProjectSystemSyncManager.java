@@ -147,6 +147,18 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
           .syncPublisher(PROJECT_SYSTEM_SYNC_TOPIC)
           .syncEnded(lastSyncResultCache.lastSyncResult);
     }
+
+    @Override
+    public void afterSync(Project project, BlazeContext context) {
+      LastSyncResultCache lastSyncResultCache = LastSyncResultCache.getInstance(project);
+
+      lastSyncResultCache.lastSyncResult = ProjectSystemSyncManager.SyncResult.SUCCESS;
+
+      project
+          .getMessageBus()
+          .syncPublisher(PROJECT_SYSTEM_SYNC_TOPIC)
+          .syncEnded(lastSyncResultCache.lastSyncResult);
+    }
   }
 
   @VisibleForTesting

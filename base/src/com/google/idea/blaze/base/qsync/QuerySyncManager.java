@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
@@ -97,6 +98,9 @@ public class QuerySyncManager {
         context -> {
           try {
             projectQuerier.rebuild(context);
+            for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
+              syncListener.afterSync(project, context);
+            }
           } catch (IOException e) {
             e.printStackTrace();
           }

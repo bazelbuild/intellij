@@ -163,7 +163,7 @@ public class ProjectUpdater implements BuildGraphListener {
 
   private static final Pattern PACKAGE_PATTERN = Pattern.compile("^\\s*package\\s+([\\w\\.]+)");
 
-  public String readPackage(String file) throws IOException {
+  public static String readPackage(String file) throws IOException {
     BufferedReader javaReader =
         new BufferedReader(new InputStreamReader(new FileInputStream(file)));
     String javaLine;
@@ -239,6 +239,10 @@ public class ProjectUpdater implements BuildGraphListener {
           LibraryOrderEntry entry = roots.addLibraryEntry(library);
           entry.setScope(DependencyScope.COMPILE);
           entry.setExported(false);
+
+          for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
+            syncPlugin.updateProjectStructure(project, context, workspaceRoot, module, graph);
+          }
           models.commit();
           roots.commit();
         });
