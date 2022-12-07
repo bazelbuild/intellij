@@ -125,7 +125,7 @@ http_archive(
     name = "clion_2022_3",
     build_file = "@//intellij_platform_sdk:BUILD.clion223",
     sha256 = "5c248465a99f7286e7863ccc4fbd6772af890b57d71a02690e20031aa16d7957",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2022.3/clion-2022.3.zip"
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2022.3/clion-2022.3.zip",
 )
 
 _PYTHON_CE_BUILD_FILE = """
@@ -185,7 +185,7 @@ http_archive(
     name = "python_2022_3",
     build_file_content = _PYTHON_CE_BUILD_FILE,
     sha256 = "65db7c364a3f1756cf07fb161ff4eb67fd8f8612a8c3da812b2f9ba5b2d6e13d",
-    url = "https://plugins.jetbrains.com/files/7322/260987/python-ce-223.7571.182.zip",
+    url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/223.7571.182/PythonCore-223.7571.182.zip",
 )
 
 _GO_BUILD_FILE = """
@@ -238,8 +238,8 @@ java_import(
 http_archive(
     name = "go_2022_3",
     build_file_content = _GO_BUILD_FILE_223,
-    sha256 = "9f9b3b1c9e8ef38cd50554c052da585bb5ac8b2c6e2eabf80777f32a69a22471",
-    url = "https://plugins.jetbrains.com/files/9568/256878/go-plugin-223.7571.123.zip",
+    sha256 = "11d30e00aa21fc8c7aa47df3743c0180058556cbb73292c712e151a0c3d59908",
+    url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/223.7571.182/org.jetbrains.plugins.go-223.7571.182.zip",
 )
 
 _SCALA_BUILD_FILE = """
@@ -284,8 +284,8 @@ http_archive(
 http_archive(
     name = "scala_2022_3",
     build_file_content = _SCALA_BUILD_FILE,
-    sha256 = "65330540b1e1d11349cf4fc9067f6c4b06fdcb74816858283e91c96c0fbafb48",
-    url = "https://plugins.jetbrains.com/files/1347/260946/scala-intellij-bin-2022.3.890.zip",
+    sha256 = "f028ac7263433c8692d9d4c92aaba9e114fc75f6299d4d86817db371409f74f3",
+    url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2022.3.13/org.intellij.scala-2022.3.13.zip",
 )
 
 # The plugin api for android_studio_2021_2. This is required to build ASwB,
