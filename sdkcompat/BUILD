@@ -19,6 +19,7 @@ java_library(
         "android-studio-2021.3": ["//sdkcompat/v213"],
         "android-studio-2022.1": ["//sdkcompat/v221"],
         "android-studio-2022.2": ["//sdkcompat/v222"],
+        "android-studio-dev": ["//sdkcompat/asdev"],
         "intellij-2021.2": ["//sdkcompat/v212"],
         "intellij-ue-2021.2": ["//sdkcompat/v212"],
         "intellij-2021.3": ["//sdkcompat/v213"],
