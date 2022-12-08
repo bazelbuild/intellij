@@ -6,11 +6,11 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2021.3",
     "intellij-latest-mac": "intellij-2021.3-mac",
     "intellij-beta": "intellij-2022.1",
-    "intellij-under-dev": "intellij-2022.2",
+    "intellij-under-dev": "intellij-2022.3",
     "intellij-ue-latest": "intellij-ue-2021.3",
     "intellij-ue-latest-mac": "intellij-ue-2021.3-mac",
     "intellij-ue-beta": "intellij-ue-2022.1",
-    "intellij-ue-under-dev": "intellij-ue-2022.2",
+    "intellij-ue-under-dev": "intellij-ue-2022.3",
     "android-studio-latest": "android-studio-2021.3",
     "android-studio-latest-mac": "android-studio-2021.3-mac",
     "android-studio-beta": "android-studio-2021.3",
@@ -20,7 +20,7 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-latest": "clion-2021.3",
     "clion-latest-mac": "clion-2021.3-mac",
     "clion-beta": "clion-2022.1",
-    "clion-under-dev": "clion-2022.1",
+    "clion-under-dev": "clion-2022.3",
     # Indirect ij_product mapping for Bazel Plugin OSS
     # The old names for -oss-oldest-stable and -oss-latest-stable were
     # -oss-stable and -oss-beta respectively.

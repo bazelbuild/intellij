@@ -273,7 +273,6 @@ config_setting(
     },
 )
 
-
 config_setting(
     name = "android-studio-latest",
     values = {
@@ -524,6 +523,7 @@ config_setting(
         "define": "ij_product=clion-2022.3",
     },
 )
+
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
 # There will be additional versions added in the future
