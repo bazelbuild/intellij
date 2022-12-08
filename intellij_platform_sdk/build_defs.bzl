@@ -6,11 +6,11 @@ INDIRECT_IJ_PRODUCTS = {
     "intellij-latest": "intellij-2021.3",
     "intellij-latest-mac": "intellij-2021.3-mac",
     "intellij-beta": "intellij-2022.1",
-    "intellij-under-dev": "intellij-2022.2",
+    "intellij-under-dev": "intellij-2022.3",
     "intellij-ue-latest": "intellij-ue-2021.3",
     "intellij-ue-latest-mac": "intellij-ue-2021.3-mac",
     "intellij-ue-beta": "intellij-ue-2022.1",
-    "intellij-ue-under-dev": "intellij-ue-2022.2",
+    "intellij-ue-under-dev": "intellij-ue-2022.3",
     "android-studio-latest": "android-studio-2021.3",
     "android-studio-latest-mac": "android-studio-2021.3-mac",
     "android-studio-beta": "android-studio-2021.3",
@@ -20,7 +20,7 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-latest": "clion-2021.3",
     "clion-latest-mac": "clion-2021.3-mac",
     "clion-beta": "clion-2022.1",
-    "clion-under-dev": "clion-2022.1",
+    "clion-under-dev": "clion-2022.3",
     # Indirect ij_product mapping for Bazel Plugin OSS
     "intellij-oss-oldest-stable": "intellij-2022.1",
     "intellij-oss-latest-stable": "intellij-2022.2",
@@ -65,9 +65,17 @@ DIRECT_IJ_PRODUCTS = {
         ide = "intellij",
         directory = "intellij_ce_2022_2",
     ),
+    "intellij-2022.3": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2022_3",
+    ),
     "intellij-2022.2-mac": struct(
         ide = "intellij",
         directory = "intellij_ce_2022_2",
+    ),
+    "intellij-2022.3-mac": struct(
+        ide = "intellij",
+        directory = "intellij_ce_2022_3",
     ),
     "intellij-ue-2021.2": struct(
         ide = "intellij-ue",
@@ -100,6 +108,14 @@ DIRECT_IJ_PRODUCTS = {
     "intellij-ue-2022.2-mac": struct(
         ide = "intellij-ue",
         directory = "intellij_ue_2022_2",
+    ),
+    "intellij-ue-2022.3": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2022_3",
+    ),
+    "intellij-ue-2022.3-mac": struct(
+        ide = "intellij-ue",
+        directory = "intellij_ue_2022_3",
     ),
     "android-studio-2021.2": struct(
         ide = "android-studio",
@@ -148,6 +164,14 @@ DIRECT_IJ_PRODUCTS = {
     "clion-2022.2-mac": struct(
         ide = "clion",
         directory = "clion_2022_2",
+    ),
+    "clion-2022.3": struct(
+        ide = "clion",
+        directory = "clion_2022_3",
+    ),
+    "clion-2022.3-mac": struct(
+        ide = "clion",
+        directory = "clion_2022_3",
     ),
 }
 
