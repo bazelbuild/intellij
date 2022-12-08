@@ -69,7 +69,9 @@ public class DependencyTracker {
         Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath())).toString();
 
     Set<String> targets = graph.getFileDependencies(rel);
-    targets.removeIf(syncedTargets::contains);
+    if (targets != null) {
+      targets.removeIf(syncedTargets::contains);
+    }
     return targets;
   }
 
