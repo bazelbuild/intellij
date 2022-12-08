@@ -15,7 +15,8 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.common.base.Joiner;
+import static java.util.stream.Collectors.joining;
+
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
@@ -30,6 +31,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtif
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -68,8 +70,14 @@ public class DependencyBuilder {
           PluginManager.getPlugin(
               PluginManager.getPluginByClassName(AspectStrategy.class.getName()));
       Path aspect = Paths.get(plugin.getPath().toString(), "aspect", "build_dependencies.bzl");
-      String includes = Joiner.on(',').join(ir.rootDirectories());
-      String excludes = Joiner.on(',').join(ir.excludeDirectories());
+      String includes =
+          ir.rootDirectories().stream()
+              .map(DependencyBuilder::directoryToLabel)
+              .collect(joining(","));
+      String excludes =
+          ir.excludeDirectories().stream()
+              .map(DependencyBuilder::directoryToLabel)
+              .collect(joining(","));
       Files.copy(
           aspect,
           workspaceRoot.directory().toPath().resolve(".aswb.bzl"),
@@ -113,5 +121,9 @@ public class DependencyBuilder {
 
       return buildOutput.getOutputGroupArtifacts("ij_query_sync", x -> true);
     }
+  }
+
+  private static String directoryToLabel(WorkspacePath directory) {
+    return String.format("//%s", directory);
   }
 }
