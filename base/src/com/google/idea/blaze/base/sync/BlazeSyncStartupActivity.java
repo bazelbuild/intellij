@@ -20,7 +20,7 @@ import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 
@@ -48,7 +48,7 @@ public class BlazeSyncStartupActivity implements StartupActivity {
   }
 
   private static boolean hasProjectData(Project project, BlazeImportSettings importSettings) {
-    return BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings) != null;
+    return BlazeProjectDataManager.getInstance(project).loadProject(importSettings) != null;
   }
 
   private static BlazeSyncParams startupSyncParams() {

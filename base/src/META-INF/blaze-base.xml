@@ -190,7 +190,7 @@
 
     <projectService serviceImplementation="com.google.idea.blaze.base.build.BlazeBuildService"/>
     <projectService serviceInterface="com.google.idea.blaze.base.sync.data.BlazeProjectDataManager"
-                    serviceImplementation="com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl"/>
+                    serviceImplementation="com.google.idea.blaze.base.sync.data.DelegatingBlazeProjectDataManager"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.BlazeSyncManager"/>
     <projectService serviceImplementation="com.google.idea.blaze.base.qsync.QuerySyncManager"/>
     <iw.actionProvider implementation="com.google.idea.blaze.base.qsync.BuildDependenciesActionProvider"/>

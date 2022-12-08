@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2022 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,38 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.model;
+package com.google.idea.blaze.base.qsync;
 
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
-/** Mocks the blaze project data manager. */
-public class MockBlazeProjectDataManager implements BlazeProjectDataManager {
-  @Nullable private BlazeProjectData blazeProjectData;
+/**
+ * Implementation of {@link BlazeProjectDataManager} specific to querysync.
+ *
+ * <p>TODO: it's not yet clear how useful this class is for querysync. This is currently a pragmatic
+ * approach to get more IDE functionality working with querysync. The ideal long term design is not
+ * yet determined.
+ */
+public class QuerySyncProjectDataManager implements BlazeProjectDataManager {
 
-  public MockBlazeProjectDataManager(BlazeProjectData blazeProjectData) {
-    this.blazeProjectData = blazeProjectData;
+  private final Project project;
+  private volatile QuerySyncProjectData projectData;
+
+  public QuerySyncProjectDataManager(Project project) {
+    this.project = project;
   }
 
   @Nullable
   @Override
   public BlazeProjectData getBlazeProjectData() {
-    return blazeProjectData;
+    return projectData;
   }
 
   @Nullable
   @Override
   public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
-    throw new UnsupportedOperationException();
+    // TODO(b/260231317): implement loading if necessary
+    projectData = new QuerySyncProjectData(project, importSettings);
+    return projectData;
   }
 
   @Override
   public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
-    throw new UnsupportedOperationException();
-  }
-
-  public void setBlazeProjectData(@Nullable BlazeProjectData blazeProjectData) {
-    this.blazeProjectData = blazeProjectData;
+    // TODO(b/260231317): implement if necessary
   }
 }
