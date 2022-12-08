@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /** Stores a cache of blaze project data and issues any side effects when that data is updated. */
@@ -100,24 +101,25 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-    ProgressiveTaskWithProgressIndicator.builder(project, "Saving sync data...")
-        .setExecutor(writeDataExecutor)
-        .submitTask(
-            (ProgressIndicator indicator) -> {
-              try {
-                File file = getCacheFile(project, importSettings);
-                if (!file.getParentFile().exists()) {
-                  file.getParentFile().mkdirs();
-                }
-                synchronized (this) {
-                  projectData.saveToDisk(file);
-                }
-                logFileSize(projectData, file);
+    Future<?> unused =
+        ProgressiveTaskWithProgressIndicator.builder(project, "Saving sync data...")
+            .setExecutor(writeDataExecutor)
+            .submitTask(
+                (ProgressIndicator indicator) -> {
+                  try {
+                    File file = getCacheFile(project, importSettings);
+                    if (!file.getParentFile().exists()) {
+                      file.getParentFile().mkdirs();
+                    }
+                    synchronized (this) {
+                      projectData.saveToDisk(file);
+                    }
+                    logFileSize(projectData, file);
 
-              } catch (Throwable e) {
-                logger.error(serializationErrorMessage(e), e);
-              }
-            });
+                  } catch (Throwable e) {
+                    logger.error(serializationErrorMessage(e), e);
+                  }
+                });
   }
 
   private static void logFileSize(BlazeProjectData projectData, File cacheFile) {
