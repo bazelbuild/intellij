@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.syncstatus;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.qsync.QuerySync;
-import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.sync.autosync.ProjectTargetManager.SyncStatus;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor.PsiFileAndName;
@@ -27,12 +26,10 @@ import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Grays out any project view nodes (of a handled type) unreachable from project view targets. */
@@ -40,33 +37,11 @@ public class SyncStatusNodeDecorator implements ProjectViewNodeDecorator {
   @Override
   @SuppressWarnings("rawtypes")
   public void decorate(ProjectViewNode node, PresentationData data) {
-    Project project = node.getProject();
-    if (project == null) {
+    if (QuerySync.isEnabled()) {
       return;
     }
-    if (QuerySync.isEnabled()) {
-      PsiFileAndName psiFileAndName =
-          Arrays.stream(SyncStatusContributor.EP_NAME.getExtensions())
-              .map(c -> c.toPsiFileAndName(node))
-              .filter(Objects::nonNull)
-              .findFirst()
-              .orElse(null);
-
-      if (psiFileAndName == null) {
-        return;
-      }
-
-      PsiFile file = psiFileAndName.psiFile;
-      VirtualFile vf = file.getVirtualFile();
-      Set<String> targets =
-          QuerySyncManager.getInstance(project)
-              .getDependencyTracker()
-              .getPendingTargets(project, vf);
-      if (targets != null && !targets.isEmpty()) {
-        data.clearText();
-        data.addText(vf.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        data.addText(String.format("(%s)", targets.size()), SimpleTextAttributes.GRAY_ATTRIBUTES);
-      }
+    Project project = node.getProject();
+    if (project == null) {
       return;
     }
     BlazeProjectData projectData =

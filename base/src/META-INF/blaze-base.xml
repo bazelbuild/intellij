@@ -288,6 +288,7 @@
     <!-- not yet imported project handling must be done last -->
     <projectOpenProcessor implementation="com.google.idea.blaze.base.project.AutoImportProjectOpenProcessor" order="last"/>
     <projectViewNodeDecorator implementation="com.google.idea.blaze.base.syncstatus.SyncStatusNodeDecorator"/>
+    <projectViewNodeDecorator implementation="com.google.idea.blaze.base.syncstatus.QuerySyncNodeDecorator"/>
     <editorTabColorProvider implementation="com.google.idea.blaze.base.syncstatus.SyncStatusEditorTabColorProvider"/>
     <editorTabTitleProvider implementation="com.google.idea.blaze.base.syncstatus.SyncStatusEditorTabTitleProvider"/>
     <macro implementation="com.google.idea.blaze.base.actions.WorkspaceRootMacro"/>
