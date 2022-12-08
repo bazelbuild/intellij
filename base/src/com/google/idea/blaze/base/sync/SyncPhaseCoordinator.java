@@ -72,7 +72,6 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManagerImpl;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.blaze.base.toolwindow.Task;
@@ -322,7 +321,7 @@ final class SyncPhaseCoordinator {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     BlazeProjectData blazeProjectData =
-        BlazeProjectDataManagerImpl.getImpl(project).loadProjectRoot(importSettings);
+        BlazeProjectDataManager.getInstance(project).loadProject(importSettings);
     if (blazeProjectData == null && mode != SyncMode.NO_BUILD) {
       context.output(
           new StatusOutput(

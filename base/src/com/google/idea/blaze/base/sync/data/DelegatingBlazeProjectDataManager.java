@@ -13,38 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.model;
+package com.google.idea.blaze.base.sync.data;
 
+import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.QuerySyncProjectDataManager;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
-/** Mocks the blaze project data manager. */
-public class MockBlazeProjectDataManager implements BlazeProjectDataManager {
-  @Nullable private BlazeProjectData blazeProjectData;
+/** Stores a cache of blaze project data and issues any side effects when that data is updated. */
+public class DelegatingBlazeProjectDataManager implements BlazeProjectDataManager {
 
-  public MockBlazeProjectDataManager(BlazeProjectData blazeProjectData) {
-    this.blazeProjectData = blazeProjectData;
+  private final BlazeProjectDataManager delegate;
+
+  public DelegatingBlazeProjectDataManager(Project project) {
+    if (QuerySync.isEnabled()) {
+      delegate = new QuerySyncProjectDataManager(project);
+    } else {
+      delegate = new AspectSyncProjectDataManager(project);
+    }
   }
 
-  @Nullable
   @Override
+  @Nullable
   public BlazeProjectData getBlazeProjectData() {
-    return blazeProjectData;
+    return delegate.getBlazeProjectData();
   }
 
   @Nullable
   @Override
   public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
-    throw new UnsupportedOperationException();
+    return delegate.loadProject(importSettings);
   }
 
   @Override
   public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
-    throw new UnsupportedOperationException();
-  }
+    delegate.saveProject(importSettings, projectData);
+    }
 
-  public void setBlazeProjectData(@Nullable BlazeProjectData blazeProjectData) {
-    this.blazeProjectData = blazeProjectData;
-  }
 }

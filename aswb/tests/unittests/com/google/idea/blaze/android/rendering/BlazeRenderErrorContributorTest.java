@@ -729,6 +729,18 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     public BlazeProjectData getBlazeProjectData() {
       return blazeProjectData;
     }
+
+    @Nullable
+    @Override
+    public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void saveProject(
+        final BlazeImportSettings importSettings, final BlazeProjectData projectData) {
+      throw new UnsupportedOperationException();
+    }
   }
 
   private static class MockBuildReferenceManager extends BuildReferenceManager {

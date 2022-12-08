@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.logging.EventLoggingService;
+import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -38,39 +39,41 @@ import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /** Stores a cache of blaze project data and issues any side effects when that data is updated. */
-public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
+public class AspectSyncProjectDataManager implements BlazeProjectDataManager {
 
   private static final Logger logger =
-      Logger.getInstance(BlazeProjectDataManagerImpl.class.getName());
+      Logger.getInstance(AspectSyncProjectDataManager.class.getName());
 
   private final Project project;
   // a per-project single-threaded executor to write project data to disk
   private final ListeningExecutorService writeDataExecutor;
 
-  @Nullable private volatile BlazeProjectData projectData;
+  @Nullable private volatile AspectSyncProjectData projectData;
 
-  public static BlazeProjectDataManagerImpl getImpl(Project project) {
-    return (BlazeProjectDataManagerImpl) BlazeProjectDataManager.getInstance(project);
-  }
-
-  public BlazeProjectDataManagerImpl(Project project) {
+  public AspectSyncProjectDataManager(Project project) {
     this.project = project;
     writeDataExecutor =
         MoreExecutors.listeningDecorator(
             Executors.newSingleThreadExecutor(
-                ConcurrencyUtil.namedDaemonThreadPoolFactory(BlazeProjectDataManagerImpl.class)));
+                ConcurrencyUtil.namedDaemonThreadPoolFactory(AspectSyncProjectDataManager.class)));
     Disposer.register(project, writeDataExecutor::shutdown);
   }
 
   @Nullable
-  public BlazeProjectData loadProjectRoot(BlazeImportSettings importSettings) {
-    BlazeProjectData projectData = this.projectData;
+  @Override
+  public synchronized BlazeProjectData loadProject(BlazeImportSettings importSettings) {
     if (projectData != null) {
       return projectData;
     }
-    synchronized (this) {
-      projectData = this.projectData;
-      return projectData != null ? projectData : loadProject(importSettings);
+    try {
+      File file = getCacheFile(project, importSettings);
+      projectData = AspectSyncProjectData.loadFromDisk(importSettings.getBuildSystem(), file);
+      return projectData;
+    } catch (Throwable e) {
+      if (!(e instanceof FileNotFoundException)) {
+        logger.warn(e);
+      }
+      return null;
     }
   }
 
@@ -81,23 +84,10 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
     return projectData;
   }
 
-  @Nullable
-  private synchronized BlazeProjectData loadProject(BlazeImportSettings importSettings) {
-    try {
-      File file = getCacheFile(project, importSettings);
-      projectData = BlazeProjectData.loadFromDisk(importSettings.getBuildSystem(), file);
-      return projectData;
-    } catch (Throwable e) {
-      if (!(e instanceof FileNotFoundException)) {
-        logger.warn(e);
-      }
-      return null;
-    }
-  }
-
+  @Override
   public void saveProject(
       final BlazeImportSettings importSettings, final BlazeProjectData projectData) {
-    this.projectData = projectData;
+    this.projectData = (AspectSyncProjectData) projectData;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -112,7 +102,7 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
                       file.getParentFile().mkdirs();
                     }
                     synchronized (this) {
-                      projectData.saveToDisk(file);
+                      this.projectData.saveToDisk(file);
                     }
                     logFileSize(projectData, file);
 
@@ -130,7 +120,7 @@ public class BlazeProjectDataManagerImpl implements BlazeProjectDataManager {
       data.put("cl", Long.toString(clientCl));
     }
     EventLoggingService.getInstance()
-        .logEvent(BlazeProjectDataManagerImpl.class, "ProjectDataSerialized", data.build());
+        .logEvent(AspectSyncProjectDataManager.class, "ProjectDataSerialized", data.build());
   }
 
   private static String serializationErrorMessage(Throwable e) {
