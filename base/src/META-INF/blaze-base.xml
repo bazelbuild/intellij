@@ -286,6 +286,7 @@
     <typedHandler implementation="com.google.idea.blaze.base.lang.buildfile.completion.BuildCompletionAutoPopupHandler"/>
     <projectOpenProcessor implementation="com.google.idea.blaze.base.project.BlazeProjectOpenProcessor"/>
     <projectViewNodeDecorator implementation="com.google.idea.blaze.base.syncstatus.SyncStatusNodeDecorator"/>
+    <projectViewNodeDecorator implementation="com.google.idea.blaze.base.syncstatus.QuerySyncNodeDecorator"/>
     <editorTabColorProvider implementation="com.google.idea.blaze.base.syncstatus.SyncStatusEditorTabColorProvider"/>
     <editorTabTitleProvider implementation="com.google.idea.blaze.base.syncstatus.SyncStatusEditorTabTitleProvider"/>
     <macro implementation="com.google.idea.blaze.base.actions.WorkspaceRootMacro"/>
