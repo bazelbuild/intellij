@@ -44,6 +44,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
@@ -230,22 +231,61 @@ public class ProjectUpdater implements BuildGraphListener {
 
           IdeModifiableModelsProvider models =
               ProjectDataManager.getInstance().createModifiableModelsProvider(project);
-          Library library = models.createLibrary(".dependencies");
-          ModifiableModel modifiableModel = library.getModifiableModel();
-          Path libs = Paths.get(project.getBasePath()).resolve(".blaze/libraries");
-          modifiableModel.addJarDirectory(UrlUtil.fileToIdeaUrl(libs.toFile()), false);
-          modifiableModel.commit();
+          String libraryName = ".dependencies";
+          int removedLibCount = removeUnusedLibraries(models, libraryName);
+          if (removedLibCount > 0) {
+            context.output(PrintOutput.output("Removed " + removedLibCount + " libs"));
+          }
+          Library library = getOrCreateLibrary(models, libraryName);
+          models.commit();
 
           LibraryOrderEntry entry = roots.addLibraryEntry(library);
           entry.setScope(DependencyScope.COMPILE);
           entry.setExported(false);
-
           for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
             syncPlugin.updateProjectStructure(project, context, workspaceRoot, module, graph);
           }
-          models.commit();
           roots.commit();
         });
+  }
+
+  private Library getOrCreateLibrary(IdeModifiableModelsProvider models, String libraryName) {
+    Library library = models.getLibraryByName(libraryName);
+    if (library == null) {
+      library = models.createLibrary(libraryName);
+    }
+    // make sure the library contains only jar directory url
+    ModifiableModel modifiableModel = library.getModifiableModel();
+    Path libs = Paths.get(project.getBasePath()).resolve(".blaze/libraries");
+
+    boolean findJarDirectory = false;
+    for (String url : modifiableModel.getUrls(OrderRootType.CLASSES)) {
+      if (url.equals(UrlUtil.fileToIdeaUrl(libs.toFile())) && modifiableModel.isJarDirectory(url)) {
+        findJarDirectory = true;
+      } else {
+        modifiableModel.removeRoot(url, OrderRootType.CLASSES);
+      }
+    }
+    if (!findJarDirectory) {
+      modifiableModel.addJarDirectory(UrlUtil.fileToIdeaUrl(libs.toFile()), false);
+    }
+    modifiableModel.commit();
+    return library;
+  }
+
+  /**
+   * Removes any existing library that should not be used by this project e.g. inherit rom old
+   * project.
+   */
+  private int removeUnusedLibraries(IdeModifiableModelsProvider models, String libraryToKeep) {
+    int removedLibCount = 0;
+    for (Library library : models.getAllLibraries()) {
+      if (!libraryToKeep.equals(library.getName())) {
+        removedLibCount++;
+        models.removeLibrary(library);
+      }
+    }
+    return removedLibCount;
   }
 
   public static Multimap<WorkspacePath, WorkspacePath> sortExcludesByRootDirectory(
