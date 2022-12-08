@@ -93,6 +93,9 @@ java_library(
         "android-studio-2022.2": glob([
             "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/functional/*.java",
         ]),
+        "android-studio-dev": glob([
+            "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/functional/*.java",
+        ]),
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
@@ -119,6 +122,7 @@ java_library(
         "android-studio-2021.3": glob(["sdkcompat/as213/**/*.java"]),
         "android-studio-2022.1": glob(["sdkcompat/as221/**/*.java"]),
         "android-studio-2022.2": glob(["sdkcompat/as222/**/*.java"]),
+        "android-studio-dev": glob(["sdkcompat/asdev/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
     visibility = combine_visibilities(

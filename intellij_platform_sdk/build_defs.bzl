@@ -135,6 +135,10 @@ DIRECT_IJ_PRODUCTS = {
         ide = "android-studio",
         directory = "android_studio_2022_2",
     ),
+    "android-studio-dev": struct(
+        ide = "android-studio",
+        directory = "android_studio_dev",
+    ),
     "clion-2021.2": struct(
         ide = "clion",
         directory = "clion_2021_2",
@@ -305,7 +309,18 @@ def _plugin_api_directory(value):
     return "@" + value.directory + "//"
 
 def select_from_plugin_api_directory(intellij, android_studio, clion, intellij_ue = None):
-    """Internal convenience method to generate select statement from the IDE's plugin_api directories."""
+    """Internal convenience method to generate select statement from the IDE's plugin_api directories.
+
+    Args:
+      intellij: the items that IntelliJ product to use.
+      android_studio: the items that android studio product to use.
+      clion: the items that clion product to use.
+      intellij_ue: the items that intellij ue product to use.
+
+    Returns:
+      a select statement map from DIRECT_IJ_PRODUCTS to items that they should use.
+
+    """
 
     ide_to_value = {
         "intellij": intellij,
