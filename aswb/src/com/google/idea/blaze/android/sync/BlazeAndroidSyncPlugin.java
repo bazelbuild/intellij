@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.sync;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.stream.Collectors.joining;
 
 import com.android.tools.idea.model.AndroidModel;
@@ -37,7 +38,6 @@ import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
 import com.google.idea.blaze.android.sync.projectstructure.AndroidFacetModuleCustomizer;
 import com.google.idea.blaze.android.sync.projectstructure.BlazeAndroidProjectStructureSyncer;
-import com.google.idea.blaze.android.sync.qsync.BlazeAndroidQuerySyncHeuristics;
 import com.google.idea.blaze.android.sync.sdk.AndroidSdkFromProjectView;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -241,15 +241,16 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
 
     // Add all source resource directories to this AndroidFacet
     AndroidFacet workspaceFacet = AndroidFacet.getInstance(workspaceModule);
-    ImmutableList<File> resourceDirectories =
-        BlazeAndroidQuerySyncHeuristics.collectAndroidResourceDirectories(project, workspaceRoot);
+    ImmutableSet<File> androidResourceDirectories =
+        buildGraph.getAndroidResourceDirectories().stream()
+            .map(dir -> new File(workspaceRoot.directory(), dir).getAbsoluteFile())
+            .collect(toImmutableSet());
     NamedIdeaSourceProvider sourceProvider =
         NamedIdeaSourceProviderBuilder.create(
                 workspaceModule.getName(), VfsUtilCore.fileToUrl(new File("MissingManifest.xml")))
             .withScopeType(ScopeType.MAIN)
             .withResDirectoryUrls(
-                ContainerUtil.map(
-                    resourceDirectories, dir -> VfsUtilCore.fileToUrl(dir.getAbsoluteFile())))
+                ContainerUtil.map(androidResourceDirectories, VfsUtilCore::fileToUrl))
             .build();
 
     // Set AndroidModel for this AndroidFacet
@@ -269,16 +270,14 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
             desugarJava8Libs);
     AndroidModel.set(workspaceFacet, androidModel);
     workspaceFacet.getProperties().RES_FOLDERS_RELATIVE_PATH =
-        resourceDirectories.stream()
-            .map(f -> VfsUtilCore.fileToUrl(f.getAbsoluteFile()))
+        androidResourceDirectories.stream()
+            .map(VfsUtilCore::fileToUrl)
             .collect(joining(AndroidFacetProperties.PATH_LIST_SEPARATOR_IN_FACET_CONFIGURATION));
 
     // Register all source java packages as workspace packages
-    ImmutableSet<String> sourcePackages =
-        BlazeAndroidQuerySyncHeuristics.collectSourcePackages(buildGraph);
     BlazeLightResourceClassService.Builder rClassBuilder =
         new BlazeLightResourceClassService.Builder(project);
-    rClassBuilder.addWorkspacePackages(sourcePackages);
+    rClassBuilder.addWorkspacePackages(buildGraph.getAndroidSourcePackages());
 
     BlazeLightResourceClassService.getInstance(project).installRClasses(rClassBuilder);
   }
