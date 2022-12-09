@@ -27,6 +27,7 @@ import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
+import com.google.idea.blaze.android.sync.qsync.AarLibraryManager;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -50,6 +51,14 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
   }
 
   public Collection<ExternalAndroidLibrary> getDependentLibraries() {
+    // TODO: handle multiple modules
+    if (QuerySync.isEnabled()) {
+      if (isWorkspaceModule) {
+        return project.getService(AarLibraryManager.class).getLibraries();
+      } else {
+        return ImmutableList.of();
+      }
+    }
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
@@ -148,10 +157,6 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
   @Override
   public Collection<ExternalAndroidLibrary> getAndroidLibraryDependencies(
       DependencyScopeType dependencyScopeType) {
-    // TODO(b/260636723): support external android libraries with query-sync
-    if (QuerySync.isEnabled()) {
-      return ImmutableList.of();
-    }
     if (dependencyScopeType == DependencyScopeType.MAIN) {
       return getDependentLibraries();
     } else {

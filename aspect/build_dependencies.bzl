@@ -81,8 +81,14 @@ def _collect_dependencies_impl(target, ctx):
                     break
 
     trs = []
+    if not included and AndroidIdeInfo in target and hasattr(ctx.rule.files, "resource_files"):
+        android = target[AndroidIdeInfo]
+        resource_files = ctx.rule.files.resource_files
+        if android.defines_android_resources and len(resource_files) > 0:
+            trs = [depset([android.aar])]
+
     if not included:
-        trs = [target[JavaInfo].compile_jars]
+        trs.append(target[JavaInfo].compile_jars)
     for dep in ctx.rule.attr.deps:
         if DependenciesInfo in dep:
             trs.append(dep[DependenciesInfo].compile_time_jars)

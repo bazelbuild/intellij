@@ -18,7 +18,9 @@ package com.google.idea.blaze.base.qsync;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.PrintOutput;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.io.ZipUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,6 +53,22 @@ public class DependencyCache {
     return label.replaceAll("/", "_").replace(":", "_") + label.hashCode() + ".jar";
   }
 
+  private String labelToAarDir(String label) {
+    return label.replace('/', '_').replace(':', '_');
+  }
+
+  private void unzipAar(String dirName, ZipInputStream parentStream) throws IOException {
+    Path libs = Paths.get(project.getBasePath()).resolve(".blaze/libraries");
+    Path aarDir = libs.resolve(dirName);
+    // TODO: decompress via ZipInputStream so we don't require a local file
+    Path tmpDir = Files.createTempDirectory(dirName);
+    tmpDir.toFile().deleteOnExit();
+    Files.createDirectories(aarDir);
+    Files.copy(parentStream, tmpDir.resolve(dirName), StandardCopyOption.REPLACE_EXISTING);
+    ZipUtil.extract(tmpDir.resolve(dirName), aarDir, (dir, name) -> !name.endsWith(".jar"));
+    project.getService(AarDependencyRegistry.class).registerAar(dirName);
+  }
+
   public ArrayList<File> addArchive(BlazeContext context, OutputArtifact zip) throws IOException {
     ArrayList<File> newFiles = new ArrayList<>();
     long now = System.nanoTime();
@@ -60,6 +78,11 @@ public class DependencyCache {
         ZipInputStream zis = new ZipInputStream(lis)) {
       ZipEntry entry = null;
       while ((entry = zis.getNextEntry()) != null) {
+        if (entry.getName().endsWith(".aar")) {
+          unzipAar(labelToAarDir(entry.getName()), zis);
+          total++;
+          continue;
+        }
         Path libFile = labelToLib(entry.getName());
         total++;
         if (Files.exists(libFile)) {
@@ -69,6 +92,10 @@ public class DependencyCache {
         Files.copy(zis, libFile, StandardCopyOption.REPLACE_EXISTING);
         newFiles.add(libFile.toFile());
       }
+      // TODO: If the last entry is an AAR file, the input stream will be closed after that AAR is
+      // unzipped.
+    } catch (IOException e) {
+      Logger.getInstance(DependencyCache.class).warn(e);
     }
     long elapsedMs = (System.nanoTime() - now) / 1000000L;
     context.output(
