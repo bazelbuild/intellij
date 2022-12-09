@@ -80,6 +80,9 @@ def _collect_dependencies_impl(target, ctx):
                     included = False
                     break
 
+    if included and ctx.rule.kind in ["java_proto_library", "java_lite_proto_library"]:
+        included = False
+
     trs = []
     if not included:
         trs = [target[JavaInfo].compile_jars]
