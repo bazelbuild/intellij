@@ -129,6 +129,7 @@ class BlazeGoImportResolver implements GoImportResolver {
   @Nullable
   @Override
   public ResolveResult[] resolve(GoImportReference reference) {
+    System.err.println(">>> BlazeGoImportResolver");
     String importPath = reference.getFileReferenceSet().getPathString();
     Project project = reference.getElement().getProject();
     BlazeGoPackage goPackage = doResolve(importPath, project);
