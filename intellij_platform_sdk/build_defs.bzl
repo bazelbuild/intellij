@@ -3,12 +3,12 @@
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for internal Blaze Plugin
-    "intellij-latest": "intellij-2021.3",
-    "intellij-latest-mac": "intellij-2021.3-mac",
+    "intellij-latest": "intellij-2022.1",
+    "intellij-latest-mac": "intellij-2022.1-mac",
     "intellij-beta": "intellij-2022.1",
     "intellij-under-dev": "intellij-2022.3",
-    "intellij-ue-latest": "intellij-ue-2021.3",
-    "intellij-ue-latest-mac": "intellij-ue-2021.3-mac",
+    "intellij-ue-latest": "intellij-ue-2022.1",
+    "intellij-ue-latest-mac": "intellij-ue-2022.1-mac",
     "intellij-ue-beta": "intellij-ue-2022.1",
     "intellij-ue-under-dev": "intellij-ue-2022.3",
     "android-studio-latest": "android-studio-2021.3",
@@ -17,8 +17,8 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-beta-mac": "android-studio-2021.3-mac",
     "android-studio-canary": "android-studio-2022.2",
     "android-studio-canary-mac": "android-studio-2022.2-mac",
-    "clion-latest": "clion-2021.3",
-    "clion-latest-mac": "clion-2021.3-mac",
+    "clion-latest": "clion-2022.1",
+    "clion-latest-mac": "clion-2022.1-mac",
     "clion-beta": "clion-2022.1",
     "clion-under-dev": "clion-2022.3",
     # Indirect ij_product mapping for Bazel Plugin OSS
