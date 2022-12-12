@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.SectionParser;
-import com.google.idea.blaze.base.qsync.BuildGraph;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -175,7 +174,8 @@ public interface BlazeSyncPlugin {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       Module workspaceModule,
-      BuildGraph buildGraph) {}
+      Set<String> androidResourceDirectories,
+      Set<String> androidSourcePackages) {}
 
   /**
    * Updates in-memory state that isn't serialized by IntelliJ.
