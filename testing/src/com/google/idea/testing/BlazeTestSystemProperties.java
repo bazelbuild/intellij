@@ -32,32 +32,20 @@ import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.junit.rules.ExternalResource;
 
 /**
- * Test utilities specific to running IntelliJ integration tests in a blaze/bazel environment.
- * Should be instantiated as a @ClassRule in the outermost test class/suite.
+ * Test utilities specific to running IntelliJ integration tests in a blaze/bazel environment. To be
+ * used with IntellijIntegrationSuite runner.
  */
-public class BlazeTestSystemPropertiesRule extends ExternalResource {
+class BlazeTestSystemProperties {
 
-  private Disposable disposable;
-
-  @Override
-  protected void before() throws Throwable {
-    disposable = Disposer.newDisposable();
-    configureSystemProperties();
-  }
-
-  @Override
-  protected void after() {
-    Disposer.dispose(disposable);
-  }
+  private BlazeTestSystemProperties() {}
 
   /** The absolute path to the runfiles directory. */
   private static final String RUNFILES_PATH = TestUtils.getUserValue("TEST_SRCDIR");
 
   /** Sets up the necessary system properties for running IntelliJ tests via blaze/bazel. */
-  private void configureSystemProperties() throws IOException {
+  public static void configureSystemProperties() {
     File sandbox = new File(TestUtils.getTmpDirFile(), "_intellij_test_sandbox");
 
     setSandboxPath("idea.home.path", new File(sandbox, "home"));
@@ -87,6 +75,8 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
 
     // Tests fail if they access files outside of the project roots and other system directories.
     // Ensure runfiles and platform api are allowed.
+    // Note: We want this access to be true for all tests so we don't dispose the disposable.
+    Disposable disposable = Disposer.newDisposable();
     VfsRootAccess.allowRootAccess(disposable, RUNFILES_PATH);
     String platformApi = getPlatformApiPath();
     if (platformApi != null) {
@@ -96,7 +86,7 @@ public class BlazeTestSystemPropertiesRule extends ExternalResource {
     List<String> pluginJars = Lists.newArrayList();
     try {
       Enumeration<URL> urls =
-          BlazeTestSystemPropertiesRule.class.getClassLoader().getResources("META-INF/plugin.xml");
+          BlazeTestSystemProperties.class.getClassLoader().getResources("META-INF/plugin.xml");
       while (urls.hasMoreElements()) {
         URL url = urls.nextElement();
         addArchiveFile(url, pluginJars);
