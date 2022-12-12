@@ -78,6 +78,17 @@ java_library(
     ],
 )
 
+# formatter_api for tests.
+java_library(
+    name = "formatter_api_for_test",
+    testonly = True,
+    srcs = glob(["src/com/google/idea/blaze/base/formatter/*.java"]),
+    visibility = G3PLUGINS_VISIBILITY,
+    deps = [
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
 # self-contained label parsing API, exposed so other plugins can optionally depend on it
 java_library(
     name = "label_api",
