@@ -95,8 +95,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
   private static final JavaVersion JAVA_VERSION = LanguageLevel.JDK_1_9.toJavaVersion();
   // Mimic JavaLanguageLevelSection.KEY as we don't want to add a dependency on the whole :java
   // package for this language-independent class.
-  private static final SectionKey<Integer, ScalarSection<Integer>> JAVA_LANGUAGE_LEVEL_SECTION_KEY =
-      new SectionKey<>("java_language_level");
+  private static final SectionKey<LanguageLevel, ScalarSection<LanguageLevel>> JAVA_LANGUAGE_LEVEL_SECTION_KEY = new SectionKey<>(
+      "java_language_level");
 
   private Disposable thisClassDisposable; // disposed prior to calling parent class's @After methods
   private MockProjectViewManager projectViewManager;
@@ -218,7 +218,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         && projectViewSet.getScalarValue(JAVA_LANGUAGE_LEVEL_SECTION_KEY).isEmpty()) {
       ProjectView additionalProjectView =
           ProjectView.builder()
-              .add(ScalarSection.builder(JAVA_LANGUAGE_LEVEL_SECTION_KEY).set(JAVA_VERSION.feature))
+              .add(ScalarSection.builder(JAVA_LANGUAGE_LEVEL_SECTION_KEY)
+                  .set(LanguageLevel.parse(Integer.toString(JAVA_VERSION.feature))))
               .build();
       return ProjectViewSet.builder()
           .add(additionalProjectView)
