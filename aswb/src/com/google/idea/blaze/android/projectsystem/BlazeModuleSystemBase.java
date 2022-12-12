@@ -236,6 +236,12 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
 
   @Nullable
   private TargetKey getResolvedTarget(GradleCoordinate coordinate) {
+    if (QuerySync.isEnabled()) {
+      // TODO (b/262289199): While there is a way of mapping a gradle coordinate to a target,
+      //  that is a very tricky practice that while it could be supported with Query Sync, we
+      //  should try to avoid it.
+      return null;
+    }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(module.getProject()).getBlazeProjectData();
 
