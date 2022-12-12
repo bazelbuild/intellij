@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -69,10 +70,10 @@ public class DependencyTracker {
         Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath())).toString();
 
     Set<String> targets = graph.getFileDependencies(rel);
-    if (targets != null) {
-      targets.removeIf(syncedTargets::contains);
+    if (targets == null) {
+      return null;
     }
-    return targets;
+    return Sets.difference(targets, syncedTargets).immutableCopy();
   }
 
   public void buildDependenciesForFile(BlazeContext context, List<WorkspacePath> paths)

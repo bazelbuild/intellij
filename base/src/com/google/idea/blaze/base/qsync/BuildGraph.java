@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Attribute;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target.Discriminator;
@@ -60,7 +61,7 @@ public class BuildGraph {
   // From source target to the rule that builds it. If multiple one is picked.
   private final Map<String, String> sourceOwner;
   // All the dependencies from source files to things it needs outside the project
-  private final Map<String, Set<String>> transitiveSourceDeps;
+  private final Map<String, ImmutableSet<String>> transitiveSourceDeps;
   // All the dependencies of a java rule
   private final Map<String, Set<String>> ruleDeps;
   // All dependencies external to this project
@@ -305,24 +306,24 @@ public class BuildGraph {
   }
 
   /** Recursively get all the transitive deps outside the project */
-  private Set<String> getTargetDependencies(String target) {
-    Set<String> val = transitiveSourceDeps.get(target);
-    if (val != null) {
-      return val;
+  private ImmutableSet<String> getTargetDependencies(String target) {
+    ImmutableSet<String> transitiveDeps = transitiveSourceDeps.get(target);
+    if (transitiveDeps != null) {
+      return transitiveDeps;
     }
-    Set<String> ret = new HashSet<>();
+    ImmutableSet.Builder<String> builder = ImmutableSet.builder();
     // There are no cycles in blaze, so we can recursively call down
-    Set<String> deps = ruleDeps.get(target);
-    if (deps == null) {
-      ret.add(target);
+    Set<String> immediateDeps = ruleDeps.get(target);
+    if (immediateDeps == null) {
+      builder.add(target);
     } else {
-      for (String dep : deps) {
-        ret.addAll(getTargetDependencies(dep));
+      for (String dep : immediateDeps) {
+        builder.addAll(getTargetDependencies(dep));
       }
     }
-    ret.removeIf(x -> !projectDeps.contains(x));
-    transitiveSourceDeps.put(target, ret);
-    return ret;
+    transitiveDeps = Sets.intersection(builder.build(), projectDeps).immutableCopy();
+    transitiveSourceDeps.put(target, transitiveDeps);
+    return transitiveDeps;
   }
 
   /**
@@ -340,7 +341,7 @@ public class BuildGraph {
    * be edited fully.
    */
   @Nullable
-  public Set<String> getFileDependencies(String rel) {
+  public ImmutableSet<String> getFileDependencies(String rel) {
     String target = fileToTarget.get(rel);
     if (target == null) {
       return null;
