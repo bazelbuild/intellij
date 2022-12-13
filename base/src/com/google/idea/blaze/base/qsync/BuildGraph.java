@@ -132,7 +132,7 @@ public class BuildGraph {
     // This for AGSA is 1.6m objects.
     context.output(PrintOutput.log("Analyzing project structure..."));
 
-    Map<String, List<String>> packages = new HashMap<>();
+    Set<String> packages = new HashSet<>();
     long now = System.nanoTime();
     try (BufferedInputStream fis = new BufferedInputStream(new FileInputStream(protoFile))) {
 
@@ -156,7 +156,7 @@ public class BuildGraph {
         if (target.getType() == Discriminator.SOURCE_FILE) {
           Location l = new Location(target.getSourceFile().getLocation(), root.directory());
           if (l.file.endsWith("/BUILD")) {
-            packages.computeIfAbsent(l.file, x -> new ArrayList<>());
+            packages.add(l.file);
           }
           locations.put(target.getSourceFile().getName(), l);
           String rel = root.workspacePathFor(new File(l.file)).toString();
