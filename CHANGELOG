@@ -1,3 +1,9 @@
+v2022.12.13
+===========
+* Remove ProjectFrameUpdater workaround (fixes UI components repeated on titlebar when NewUI is enabled, on 2022.3 EAP #4094)
+* Include implicit dependencies from proto compilers #3248
+* Support Preview Java Language Levels #4061
+
 v2022.11.29
 ===========
 * feat: Add gazelle to plugin #3910
