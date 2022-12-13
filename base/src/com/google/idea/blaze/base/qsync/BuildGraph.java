@@ -21,13 +21,13 @@ import com.google.common.collect.Sets;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Attribute;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target.Discriminator;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.PrintOutput;
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -86,16 +86,20 @@ public class BuildGraph {
     public final int row;
     public final int column;
 
-    public Location(String full, File workspaceRoot) {
-      Matcher matcher = PATTERN.matcher(full);
-      Preconditions.checkArgument(matcher.matches(), "Location not recognized: %s", full);
+    /**
+     * @param location A location as provided by bazel, i.e. {@code /path/to/file:lineno:columnno}
+     * @param workspaceRoot Absolute path to the workspace root bazel was running in
+     */
+    public Location(String location, Path workspaceRoot) {
+      Matcher matcher = PATTERN.matcher(location);
+      Preconditions.checkArgument(matcher.matches(), "Location not recognized: %s", location);
       String file = matcher.group(1);
-      if (!file.startsWith(workspaceRoot.getAbsolutePath())) {
+      if (!file.startsWith(workspaceRoot.toString())) {
         Preconditions.checkArgument(
             file.startsWith(READONLY_WORKSPACE),
             "Path not in workspace not readonly workspace: %s",
             file);
-        file = workspaceRoot.getAbsolutePath() + "/" + file.substring(READONLY_WORKSPACE.length());
+        file = workspaceRoot + "/" + file.substring(READONLY_WORKSPACE.length());
       }
       this.file = file;
       row = Integer.parseInt(matcher.group(2));
@@ -125,7 +129,7 @@ public class BuildGraph {
     projectDeps.clear();
   }
 
-  public void initialize(WorkspaceRoot root, BlazeContext context, String protoFile)
+  public void initialize(Path workspaceRoot, BlazeContext context, String protoFile)
       throws IOException {
     clear();
     // At this point the query is done, and we parse the proto output of it.
@@ -154,12 +158,12 @@ public class BuildGraph {
           break;
         }
         if (target.getType() == Discriminator.SOURCE_FILE) {
-          Location l = new Location(target.getSourceFile().getLocation(), root.directory());
+          Location l = new Location(target.getSourceFile().getLocation(), workspaceRoot);
           if (l.file.endsWith("/BUILD")) {
             packages.add(l.file);
           }
           locations.put(target.getSourceFile().getName(), l);
-          String rel = root.workspacePathFor(new File(l.file)).toString();
+          String rel = workspaceRoot.relativize(Paths.get(l.file)).toString();
           fileToTarget.put(rel, target.getSourceFile().getName());
         } else if (target.getType() == Discriminator.RULE) {
           ruleCount.compute(target.getRule().getRuleClass(), (k, v) -> (v == null ? 0 : v) + 1);

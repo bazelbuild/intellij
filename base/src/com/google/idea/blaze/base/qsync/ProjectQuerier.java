@@ -103,7 +103,7 @@ public class ProjectQuerier {
         .build()
         .run();
 
-    buildGraph.initialize(root, context, protoFile);
+    buildGraph.initialize(root.directory().toPath().toAbsolutePath(), context, protoFile);
   }
 
   private static List<String> getValidDirectories(
