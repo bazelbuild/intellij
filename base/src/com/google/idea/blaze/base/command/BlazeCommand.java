@@ -85,7 +85,7 @@ public final class BlazeCommand {
   /** Builder for a blaze command */
   public static class Builder {
     private final String binaryPath;
-    private final BlazeCommandName name;
+    private BlazeCommandName name;
     private final ImmutableList.Builder<String> blazeStartupFlags = ImmutableList.builder();
     private final ImmutableList.Builder<TargetExpression> targets = ImmutableList.builder();
     private final ImmutableList.Builder<String> blazeCmdlineFlags = ImmutableList.builder();
@@ -161,6 +161,12 @@ public final class BlazeCommand {
     @CanIgnoreReturnValue
     public BlazeCommand.Builder addBlazeStartupFlags(List<String> flags) {
       this.blazeStartupFlags.addAll(flags);
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public BlazeCommand.Builder changeCommandName(BlazeCommandName newCommandName) {
+      this.name = newCommandName;
       return this;
     }
   }

@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -66,6 +67,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
   public BlazeTestResults runTest(
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
+      ExecutorType executorType,
       BuildResultHelper buildResultHelper,
       WorkspaceRoot workspaceRoot,
       BlazeContext context) {

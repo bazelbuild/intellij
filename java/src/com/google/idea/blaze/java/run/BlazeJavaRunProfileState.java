@@ -161,8 +161,7 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
                 testResultFinderStrategy);
       }
 
-
-    if (testUiSession != null) {
+      if (testUiSession != null) {
         ConsoleView console =
             SmRunnerUtils.getConsoleView(
                 project, getConfiguration(), getEnvironment().getExecutor(), testUiSession);
@@ -174,24 +173,24 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
               }
             });
         context.addOutputSink(PrintOutput.class, new WritingOutputSink(console));
-    }
-    addConsoleFilters(
-        ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
-            project,
-            WorkspaceRoot.fromProject(project),
-            BlazeInvocationContext.ContextType.RunConfiguration));
+      }
+      addConsoleFilters(
+          ToolWindowTaskIssueOutputFilter.createWithDefaultParsers(
+              project,
+              WorkspaceRoot.fromProject(project),
+              BlazeInvocationContext.ContextType.RunConfiguration));
 
-    List<String> command;
-    if (HotSwapUtils.canHotSwap(getEnvironment())) {
-      try {
-        command = HotSwapCommandBuilder.getBashCommandsToRunScript(project, blazeCommand);
-      } catch (IOException e) {
-        logger.warn("Failed to create script path. Hot swap will be disabled.", e);
+      ImmutableList<String> command;
+      if (HotSwapUtils.canHotSwap(getEnvironment())) {
+        try {
+          command = HotSwapCommandBuilder.getBashCommandsToRunScript(project, blazeCommand);
+        } catch (IOException e) {
+          logger.warn("Failed to create script path. Hot swap will be disabled.", e);
+          command = blazeCommand.build().toList();
+        }
+      } else {
         command = blazeCommand.build().toList();
       }
-    } else {
-      command = blazeCommand.build().toList();
-    }
       if (!useBlazeCommandRunner(invoker.getCommandRunner())) {
         return getScopedProcessHandler(project, command, workspaceRoot);
       }
@@ -204,7 +203,12 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
                       invoker
                           .getCommandRunner()
                           .runTest(
-                              project, blazeCommand, buildResultHelper, workspaceRoot, context));
+                              project,
+                              blazeCommand,
+                              getExecutorType(),
+                              buildResultHelper,
+                              workspaceRoot,
+                              context));
       Futures.addCallback(
           blazeTestResultsFuture,
           new FutureCallback<BlazeTestResults>() {
