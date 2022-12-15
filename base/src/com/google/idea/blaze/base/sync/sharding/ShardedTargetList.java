@@ -72,6 +72,10 @@ public class ShardedTargetList {
     return shardedTargets.size();
   }
 
+  public int getTotalTargets() {
+    return shardedTargets.stream().mapToInt(List::size).sum();
+  }
+
   public ShardStats shardStats() {
     return shardStats;
   }
