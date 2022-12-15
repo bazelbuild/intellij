@@ -31,6 +31,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
@@ -147,6 +148,10 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
   @Override
   public Collection<ExternalAndroidLibrary> getAndroidLibraryDependencies(
       DependencyScopeType dependencyScopeType) {
+    // TODO(b/260636723): support external android libraries with query-sync
+    if (QuerySync.isEnabled()) {
+      return ImmutableList.of();
+    }
     if (dependencyScopeType == DependencyScopeType.MAIN) {
       return getDependentLibraries();
     } else {
