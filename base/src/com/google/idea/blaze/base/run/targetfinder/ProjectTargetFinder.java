@@ -22,6 +22,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import java.util.Objects;
@@ -33,6 +34,10 @@ class ProjectTargetFinder implements TargetFinder {
 
   @Override
   public Future<TargetInfo> findTarget(Project project, Label label) {
+    // TODO(b/262428615): Retrieve data from query sync
+    if (QuerySync.isEnabled()) {
+      return Futures.immediateFuture(null);
+    }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     TargetInfo target = projectData != null ? findTarget(projectData.getTargetMap(), label) : null;
