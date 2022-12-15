@@ -23,6 +23,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Functions;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.hash.Hasher;
@@ -180,11 +181,13 @@ public final class RemoteOutputsCache {
           return;
         }
       }
+      ImmutableList<RemoteOutputArtifact> artifactsToDownload =
+          BlazeArtifact.getRemoteArtifacts(updatedOutputs.values());
       ListenableFuture<?> downloadArtifactsFuture =
           RemoteArtifactPrefetcher.getInstance()
               .downloadArtifacts(
-                  /* projectName= */ project.getName(),
-                  /* outputArtifacts= */ BlazeArtifact.getRemoteArtifacts(updatedOutputs.values()));
+                  /* projectName= */ project.getName(), /* outputArtifacts= */ artifactsToDownload);
+      logger.info(String.format("Prefetching %d output artifacts", artifactsToDownload.size()));
       FutureUtil.waitForFuture(context, downloadArtifactsFuture)
           .timed("PrefetchRemoteOutput", EventType.Prefetching)
           .withProgressMessage("Prefetching output artifacts...")
