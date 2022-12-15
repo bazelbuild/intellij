@@ -22,6 +22,8 @@ import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Output;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /** Scoped operation context. */
-public class BlazeContext {
+public class BlazeContext implements Context {
 
   @Nullable private BlazeContext parentContext;
 
@@ -241,6 +243,7 @@ public class BlazeContext {
 
   /** Produces output by sending it to any registered sinks. */
   @SuppressWarnings("unchecked")
+  @Override
   public synchronized <T extends Output> void output(T output) {
     Class<? extends Output> outputClass = output.getClass();
     List<OutputSink<?>> outputSinks = this.outputSinks.get(outputClass);
@@ -264,6 +267,7 @@ public class BlazeContext {
    *
    * <p>The error state will be propagated to any parents.
    */
+  @Override
   public void setHasError() {
     this.hasErrors = true;
   }

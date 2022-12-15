@@ -24,9 +24,9 @@ import com.google.idea.blaze.base.projectview.section.sections.AdditionalLanguag
 import com.google.idea.blaze.base.projectview.section.sections.WorkspaceTypeSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput.OutputType;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.stream.Collectors;

@@ -21,8 +21,8 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput.OutputType;
 import com.intellij.openapi.project.Project;
 
 /**

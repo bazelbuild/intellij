@@ -46,6 +46,7 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.java.projectview.ExcludeLibrarySection;
 import com.google.idea.blaze.java.projectview.ExcludedLibrarySection;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
@@ -172,8 +173,7 @@ public class BlazeJavaSyncPlugin implements BlazeSyncPlugin {
   }
 
   @Override
-  public void updateProjectSdk(
-      Project project, BlazeContext context, ProjectViewSet projectViewSet) {
+  public void updateProjectSdk(Project project, Context context, ProjectViewSet projectViewSet) {
     if (!QuerySync.isEnabled()) {
       return;
     }

@@ -24,14 +24,14 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.qsync.BuildGraph.BuildGraphListener;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.util.UrlUtil;
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -80,7 +80,7 @@ public class ProjectUpdater implements BuildGraphListener {
   }
 
   private Map<String, Map<String, String>> calculateRootSources(
-      BlazeContext context, WorkspaceRoot workspaceRoot, ImportRoots ir, List<String> files)
+      Context context, WorkspaceRoot workspaceRoot, ImportRoots ir, List<String> files)
       throws IOException {
 
     Map<String, Path> allDirs = new TreeMap<>();
@@ -181,7 +181,7 @@ public class ProjectUpdater implements BuildGraphListener {
   }
 
   @Override
-  public void graphCreated(BlazeContext context) throws IOException {
+  public void graphCreated(Context context) throws IOException {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
@@ -291,9 +291,7 @@ public class ProjectUpdater implements BuildGraphListener {
    * for large projects with many android targets. To be replaced by a more robust implementation.
    */
   private Set<String> computeAndroidSourcePackages(
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      Map<String, Map<String, String>> rootToPrefix) {
+      Context context, WorkspaceRoot workspaceRoot, Map<String, Map<String, String>> rootToPrefix) {
     Set<String> androidSourcePackages = new HashSet<>();
     for (String androidSourceFile : graph.getAndroidSourceFiles()) {
       boolean found = false;

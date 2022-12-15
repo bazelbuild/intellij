@@ -20,7 +20,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.PerformanceWarning;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput;
 import java.util.List;
 
 /** Shows performance warnings. */

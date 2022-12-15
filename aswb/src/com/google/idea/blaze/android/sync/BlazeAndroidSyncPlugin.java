@@ -63,6 +63,7 @@ import com.google.idea.blaze.base.sync.libraries.LibrarySource;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.java.projectview.JavaLanguageLevelSection;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.blaze.java.sync.model.BlazeJavaSyncData;
@@ -169,8 +170,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
   }
 
   @Override
-  public void updateProjectSdk(
-      Project project, BlazeContext context, ProjectViewSet projectViewSet) {
+  public void updateProjectSdk(Project project, Context context, ProjectViewSet projectViewSet) {
     if (QuerySync.isEnabled()) {
       AndroidSdkPlatform androidSdkPlatform =
           AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
@@ -230,7 +230,7 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
   @Override
   public void updateProjectStructure(
       Project project,
-      BlazeContext context,
+      Context context,
       WorkspaceRoot workspaceRoot,
       Module workspaceModule,
       Set<String> androidResourceDirectories,
