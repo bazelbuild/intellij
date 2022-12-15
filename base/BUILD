@@ -35,6 +35,7 @@ java_library(
         "//intellij_platform_sdk:jsr305",  # unuseddeps: keep for @Nullable
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
+        "//querysync",
         "//sdkcompat",
         "//shared",
         "//third_party/auto_value",
