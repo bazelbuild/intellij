@@ -33,8 +33,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.SummaryOutput;
 import com.google.idea.blaze.base.scope.output.SummaryOutput.Prefix;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
@@ -52,6 +50,9 @@ import com.google.idea.blaze.base.sync.projectview.SyncDirectoriesWarning;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput.OutputType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -81,7 +82,7 @@ public class BlazeSyncManager {
     return ServiceManager.getService(project, BlazeSyncManager.class);
   }
 
-  public static void printAndLogError(String errorMessage, BlazeContext context) {
+  public static void printAndLogError(String errorMessage, Context context) {
     context.output(PrintOutput.error(errorMessage));
     logger.error(errorMessage);
   }

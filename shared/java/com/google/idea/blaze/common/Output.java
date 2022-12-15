@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.scope;
+package com.google.idea.blaze.common;
 
 /** A base interface for contextual output operations. */
 public interface Output {}

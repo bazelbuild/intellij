@@ -17,9 +17,9 @@ package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.console.NonProblemFilterWrapper;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
-import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput.OutputType;
 import com.intellij.codeEditor.printing.PrintAction;
 import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.ConsoleDependentFilterProvider;

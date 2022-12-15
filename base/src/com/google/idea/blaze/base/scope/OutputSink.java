@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.scope;
 
+import com.google.idea.blaze.common.Output;
 import org.jetbrains.annotations.NotNull;
 
 /**

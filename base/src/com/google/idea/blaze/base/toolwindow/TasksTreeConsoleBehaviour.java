@@ -17,9 +17,9 @@ package com.google.idea.blaze.base.toolwindow;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
 import com.google.idea.blaze.base.scope.output.StateUpdate;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.common.experiments.IntExperiment;
 import com.google.idea.common.ui.templates.Behavior;
 import com.google.idea.common.util.MorePlatformUtils;

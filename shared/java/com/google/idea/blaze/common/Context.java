@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2022 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.scope.output;
+package com.google.idea.blaze.common;
 
-import com.google.idea.blaze.common.Output;
+/** Context interface, used to track operation specific state and output. */
+public interface Context {
 
-/** Output that is collected when running in performance collection mode. */
-public class PerformanceWarning implements Output {
-  public final String text;
+  /**
+   * Sends an output message.
+   *
+   * @param output The output. The specific subclass will determine how the output is handled.
+   * @param <T> The type of {@code output}.
+   */
+  <T extends Output> void output(T output);
 
-  public PerformanceWarning(String text) {
-    this.text = text;
-  }
+  void setHasError();
 }

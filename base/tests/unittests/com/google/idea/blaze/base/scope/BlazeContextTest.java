@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.base.BlazeTestCase;
+import com.google.idea.blaze.common.Output;
 import java.util.List;
 import org.junit.Test;
 import org.junit.runner.RunWith;

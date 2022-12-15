@@ -54,6 +54,7 @@ java_library(
         "//intellij_platform_sdk:plugin_api",
         "//proto:proto_deps",
         "//sdkcompat",
+        "//shared",
         "//third_party/auto_value",
     ],
 )
@@ -144,6 +145,7 @@ intellij_unit_test_suite(
         "//intellij_platform_sdk:test_libs",
         "//intellij_platform_sdk:truth",
         "//proto:proto_deps",
+        "//shared",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
@@ -194,6 +196,7 @@ intellij_integration_test_suite(
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
         "//proto:proto_deps",
+        "//shared",
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],

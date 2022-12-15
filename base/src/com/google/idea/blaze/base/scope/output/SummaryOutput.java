@@ -15,8 +15,9 @@
  */
 package com.google.idea.blaze.base.scope.output;
 
-import com.google.idea.blaze.base.scope.Output;
-import com.google.idea.blaze.base.scope.output.PrintOutput.OutputType;
+import com.google.idea.blaze.common.Output;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput.OutputType;
 import com.intellij.openapi.diagnostic.Logger;
 import java.time.LocalTime;
 import java.time.ZoneId;

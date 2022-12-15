@@ -19,8 +19,8 @@ import com.google.common.base.Stopwatch;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
-import com.google.idea.blaze.base.scope.Output;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
+import com.google.idea.blaze.common.Output;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

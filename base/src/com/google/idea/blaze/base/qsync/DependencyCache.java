@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;

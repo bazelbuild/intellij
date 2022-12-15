@@ -21,8 +21,8 @@ import com.google.common.collect.Sets;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Attribute;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target.Discriminator;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.scope.output.PrintOutput;
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.PrintOutput;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -129,8 +129,7 @@ public class BuildGraph {
     projectDeps.clear();
   }
 
-  public void initialize(Path workspaceRoot, BlazeContext context, String protoFile)
-      throws IOException {
+  public void initialize(Path workspaceRoot, Context context, String protoFile) throws IOException {
     clear();
     // At this point the query is done, and we parse the proto output of it.
     // This for AGSA is 1.6m objects.
@@ -360,6 +359,6 @@ public class BuildGraph {
 
   /** A listener interface for changes made to the build graph. */
   public interface BuildGraphListener {
-    void graphCreated(BlazeContext context) throws IOException;
+    void graphCreated(Context context) throws IOException;
   }
 }
