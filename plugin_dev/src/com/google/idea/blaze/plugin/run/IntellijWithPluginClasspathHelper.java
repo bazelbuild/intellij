@@ -60,7 +60,8 @@ public class IntellijWithPluginClasspathHelper {
           "forms_rt.jar",
           "intellij-test-discovery.jar",
           "annotations.jar",
-          "groovy.jar"
+          "groovy.jar",
+          "jsp-base.jar"
       );
   private static void addIntellijLibraries(JavaParameters params, Sdk ideaJdk) {
     String libPath = ideaJdk.getHomePath() + File.separator + "lib";
