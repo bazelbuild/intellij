@@ -44,6 +44,10 @@ java_library(
             "testcompat/v222/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v222/com/google/idea/testing/java/*.java",
         ]),
+        "android-studio-dev": glob([
+            "testcompat/asdev/com/google/idea/sdkcompat/**/*.java",
+            "testcompat/asdev/com/google/idea/testing/java/*.java",
+        ]),
         "clion-2021.2": glob(["testcompat/v212/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2021.3": glob(["testcompat/v213/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2022.1": glob([

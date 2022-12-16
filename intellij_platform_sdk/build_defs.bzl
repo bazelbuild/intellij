@@ -17,6 +17,8 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-beta-mac": "android-studio-2021.3-mac",
     "android-studio-canary": "android-studio-2022.2",
     "android-studio-canary-mac": "android-studio-2022.2-mac",
+    "android-studio-dev": "android-studio-dev",
+    "android-studio-dev-mac": "android-studio-dev-mac",
     "clion-latest": "clion-2022.1",
     "clion-latest-mac": "clion-2022.1-mac",
     "clion-beta": "clion-2022.1",
@@ -220,7 +222,7 @@ def select_for_plugin_api(params):
       )
     """
     for indirect_ij_product in INDIRECT_IJ_PRODUCTS:
-        if indirect_ij_product in params:
+        if indirect_ij_product in params and indirect_ij_product != "android-studio-dev":
             error_message = "".join([
                 "Do not select on indirect ij_product %s. " % indirect_ij_product,
                 "Instead, select on an exact ij_product.",
