@@ -231,8 +231,7 @@ public class BuildGraph {
       }
 
       long elapsedMs = (System.nanoTime() - now) / 1000000L;
-      context.output(
-          PrintOutput.log(String.format("Processed %d targets, in %d ms", nTargets, elapsedMs)));
+      context.output(PrintOutput.log("Processed %d targets, in %d ms", nTargets, elapsedMs));
 
       ArrayList<Entry<String, Integer>> entries = new ArrayList<>(ruleCount.entrySet());
       entries.sort(Entry.<String, Integer>comparingByValue().reversed());
@@ -242,21 +241,18 @@ public class BuildGraph {
         if (entry.getValue() <= limit) {
           context.output(
               PrintOutput.log(
-                  String.format(
-                      "[...] truncated %d rules with <= %d count", nTargets - shown, limit)));
+                  "[...] truncated %d rules with <= %d count", nTargets - shown, limit));
           break;
         }
         shown += entry.getValue();
-        context.output(PrintOutput.log(String.format("%s: %d", entry.getKey(), entry.getValue())));
+        context.output(PrintOutput.log("%s: %d", entry.getKey(), entry.getValue()));
       }
-      context.output(PrintOutput.log(String.format("Found source files %d", locations.size())));
+      context.output(PrintOutput.log("Found source files %d", locations.size()));
+      context.output(PrintOutput.log("Found %d targets as java sources", javaSources.size()));
+      context.output(PrintOutput.log("Found %d packages", packages.size()));
+      context.output(PrintOutput.log("Found %d dependencies", deps.size()));
       context.output(
-          PrintOutput.log(String.format("Found %d targets as java sources", javaSources.size())));
-      context.output(PrintOutput.log(String.format("Found %d packages", packages.size())));
-      context.output(PrintOutput.log(String.format("Found %d dependencies", deps.size())));
-      context.output(
-          PrintOutput.log(
-              String.format("Of which %d are to targets outside the project", projectDeps.size())));
+          PrintOutput.log("Of which %d are to targets outside the project", projectDeps.size()));
 
       int maxDeps = 0;
       String worstSource = null;
@@ -266,9 +262,8 @@ public class BuildGraph {
           worstSource = e.getKey();
         }
       }
-      context.output(
-          PrintOutput.log(String.format("Source with most direct dependencies (%d) is:", maxDeps)));
-      context.output(PrintOutput.log(worstSource));
+      context.output(PrintOutput.log("Source with most direct dependencies (%d) is:", maxDeps));
+      context.output(PrintOutput.log("%s", worstSource));
       for (BuildGraphListener listener : listeners) {
         listener.graphCreated(context);
       }
