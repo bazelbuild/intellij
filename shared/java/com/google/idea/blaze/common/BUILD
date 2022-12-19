@@ -4,5 +4,8 @@ java_library(
     name = "common",
     srcs = glob(["*.java"]),
     visibility = ["//shared:__subpackages__"],
-    deps = ["@jsr305_annotations//jar"],
+    deps = [
+        "@error_prone_annotations//jar",
+        "@jsr305_annotations//jar",
+    ],
 )

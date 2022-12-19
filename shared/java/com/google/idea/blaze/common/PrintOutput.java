@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.common;
 
+import com.google.errorprone.annotations.FormatMethod;
+import com.google.errorprone.annotations.FormatString;
 import javax.annotation.Nonnull;
 
 /** Output that can be printed to a log. */
@@ -54,11 +56,26 @@ public class PrintOutput implements Output {
     return new PrintOutput(text);
   }
 
+  @FormatMethod
+  public static PrintOutput output(@FormatString String text, Object... args) {
+    return new PrintOutput(String.format(text, args));
+  }
+
   public static PrintOutput log(String text) {
     return new PrintOutput(text, OutputType.LOGGED);
   }
 
+  @FormatMethod
+  public static PrintOutput log(@FormatString String text, Object... args) {
+    return new PrintOutput(String.format(text, args), OutputType.LOGGED);
+  }
+
   public static PrintOutput error(String text) {
     return new PrintOutput(text, OutputType.ERROR);
+  }
+
+  @FormatMethod
+  public static PrintOutput error(@FormatString String text, Object... args) {
+    return new PrintOutput(String.format(text, args), OutputType.ERROR);
   }
 }
