@@ -44,6 +44,14 @@ genquery(
 )
 
 genquery(
+    name = "JavaLibraryMultiTargets",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/multitarget:*",
+    opts = ["--output=streamed_proto"],
+    scope = scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/multitarget:nodeps") +
+            scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/multitarget:externaldep"),
+)
+
+genquery(
     name = "AndroidLibQuery",
     expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/android:*",
     opts = ["--output=streamed_proto"],
@@ -57,6 +65,7 @@ java_test(
         ":AndroidLibQuery",
         ":JavaLibraryExternalDepQuery",
         ":JavaLibraryInternalDepQuery",
+        ":JavaLibraryMultiTargets",
         ":JavaLibraryNoDepsQuery",
         ":JavaLibraryProtoDepQuery",
         ":JavaLibraryTransitiveDepQuery",
