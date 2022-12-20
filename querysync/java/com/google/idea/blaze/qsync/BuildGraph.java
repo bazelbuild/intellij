@@ -310,8 +310,8 @@ public class BuildGraph {
    * be edited fully.
    */
   @Nullable
-  public ImmutableSet<String> getFileDependencies(String rel) {
-    String target = fileToTarget.get(rel);
+  public ImmutableSet<String> getFileDependencies(String path) {
+    String target = getTargetOwner(path);
     if (target == null) {
       return null;
     }
