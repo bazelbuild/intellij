@@ -81,7 +81,7 @@ public class ProjectUpdater implements BuildGraphListener {
   }
 
   private Map<String, Map<String, String>> calculateRootSources(
-      Context context, WorkspaceRoot workspaceRoot, ImportRoots ir, List<String> files)
+      Context context, Path workspaceRoot, List<Path> importRoots, List<String> files)
       throws IOException {
 
     Map<String, Path> allDirs = new TreeMap<>();
@@ -89,7 +89,7 @@ public class ProjectUpdater implements BuildGraphListener {
     for (String file : files) {
       Path path = Paths.get(file);
       Path dir = path.getParent();
-      String rel = workspaceRoot.workspacePathFor(dir.toFile()).toString();
+      String rel = workspaceRoot.relativize(dir).toString();
       allDirs.computeIfAbsent(rel, x -> path);
     }
 
@@ -107,7 +107,7 @@ public class ProjectUpdater implements BuildGraphListener {
 
     // Group per root:
     Map<String, Map<String, Path>> rootDirs = new HashMap<>();
-    for (WorkspacePath root : ir.rootDirectories()) {
+    for (Path root : importRoots) {
       Map<String, Path> inRoot = new TreeMap<>(); // Must be sorted to do prefix later
       for (Entry<String, Path> entry : dirs.entrySet()) {
         String rel = entry.getKey();
@@ -194,12 +194,16 @@ public class ProjectUpdater implements BuildGraphListener {
             .build();
 
     Map<String, Map<String, String>> rootToPrefix =
-        calculateRootSources(context, workspaceRoot, ir, graph.getJavaSourceFiles());
+        calculateRootSources(
+            context,
+            workspaceRoot.directory().toPath(),
+            ir.rootPaths(),
+            graph.getJavaSourceFiles());
 
     ImmutableSet<String> androidResourceDirectories =
         computeAndroidResourceDirectories(graph.getAllSourceFiles());
     Set<String> androidSourcePackages =
-        computeAndroidSourcePackages(context, workspaceRoot, rootToPrefix);
+        computeAndroidSourcePackages(context, workspaceRoot.directory().toPath(), rootToPrefix);
 
     context.output(
         PrintOutput.log(
@@ -292,13 +296,12 @@ public class ProjectUpdater implements BuildGraphListener {
    * for large projects with many android targets. To be replaced by a more robust implementation.
    */
   private Set<String> computeAndroidSourcePackages(
-      Context context, WorkspaceRoot workspaceRoot, Map<String, Map<String, String>> rootToPrefix) {
+      Context context, Path workspaceRoot, Map<String, Map<String, String>> rootToPrefix) {
     Set<String> androidSourcePackages = new HashSet<>();
     for (String androidSourceFile : graph.getAndroidSourceFiles()) {
       boolean found = false;
       for (Entry<String, Map<String, String>> root : rootToPrefix.entrySet()) {
-        String workspacePath =
-            workspaceRoot.workspacePathFor(new File(androidSourceFile)).toString();
+        String workspacePath = workspaceRoot.relativize(Paths.get(androidSourceFile)).toString();
         if (workspacePath.startsWith(root.getKey())) {
           String inRoot = workspacePath.substring(root.getKey().length() + 1);
           Map<String, String> sourceDirs = root.getValue();

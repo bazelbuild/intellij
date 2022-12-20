@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.sync.projectview;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -168,6 +170,13 @@ public final class ImportRoots {
 
   public Collection<WorkspacePath> rootDirectories() {
     return projectDirectories.rootDirectories;
+  }
+
+  /** Returns the import roots, as paths relative to the workspace root. */
+  public ImmutableList<Path> rootPaths() {
+    return projectDirectories.rootDirectories.stream()
+        .map(WorkspacePath::asPath)
+        .collect(toImmutableList());
   }
 
   public Set<WorkspacePath> excludeDirectories() {
