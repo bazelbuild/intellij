@@ -17,6 +17,8 @@ package com.google.idea.blaze.base.model.primitives;
 
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 
@@ -101,6 +103,11 @@ public class WorkspacePath implements ProtoWrapper<String>, Serializable {
     String parentPath =
         lastSeparatorIndex == -1 ? "" : relativePath.substring(0, lastSeparatorIndex);
     return new WorkspacePath(parentPath);
+  }
+
+  /** Returns this workspace path, relative to the workspace root. */
+  public Path asPath() {
+    return Paths.get(relativePath);
   }
 
   public boolean isWorkspaceRoot() {
