@@ -111,6 +111,8 @@ public class BuildGraphTest {
     // dependencies.
     assertThat(graph.getTargetOwner(TESTDATA_ROOT + "/multitarget/TestClassMultiTarget.java"))
         .isEqualTo("//" + TESTDATA_ROOT + "/multitarget:nodeps");
+    assertThat(graph.getFileDependencies(TESTDATA_ROOT + "/multitarget/TestClassMultiTarget.java"))
+        .isEmpty();
   }
 
   @Test
