@@ -101,6 +101,19 @@ public class BuildGraphTest {
   }
 
   @Test
+  public void testJavaLibraryMultiTargets() throws Exception {
+    BuildGraph graph = new BuildGraph();
+    graph.initialize(Paths.get(""), TEST_CONTEXT, getQueryFile("JavaLibraryMultiTargets"));
+    // Sanity check:
+    assertThat(graph.getJavaSourceFiles())
+        .contains(TESTDATA_ROOT + "/multitarget/TestClassSingleTarget.java");
+    // If a source file is included in more than one target, we prefer the one with fewer
+    // dependencies.
+    assertThat(graph.getTargetOwner(TESTDATA_ROOT + "/multitarget/TestClassMultiTarget.java"))
+        .isEqualTo("//" + TESTDATA_ROOT + "/multitarget:nodeps");
+  }
+
+  @Test
   public void testAndroidLibrary() throws Exception {
     BuildGraph graph = new BuildGraph();
     graph.initialize(Paths.get(""), TEST_CONTEXT, getQueryFile("AndroidLibQuery"));
