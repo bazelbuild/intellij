@@ -15,26 +15,23 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import com.android.tools.idea.run.AndroidProgramRunner;
-import com.android.tools.idea.run.AndroidSessionInfo;
-import com.android.tools.idea.run.AndroidSessionInfoCompat;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.GenericProgramRunner;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 
 /** Program runner for configurations from {@link BlazeAndroidTestRunConfigurationHandler}. */
-public class BlazeAndroidTestProgramRunner extends AndroidProgramRunner {
+public class BlazeAndroidTestProgramRunner extends GenericProgramRunner<RunnerSettings> {
   @Override
   public boolean canRun(String executorId, RunProfile profile) {
     BlazeAndroidRunConfigurationHandler handler =
@@ -50,35 +47,13 @@ public class BlazeAndroidTestProgramRunner extends AndroidProgramRunner {
   }
 
   @Override
-  protected boolean canRunWithMultipleDevices(String executorId) {
-    return false;
-  }
-
-  @Override
   protected RunContentDescriptor doExecute(
       final RunProfileState state, final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     ExecutionResult result = state.execute(env.getExecutor(), this);
-    RunContentDescriptor descriptor =
-        new RunContentBuilder(result, env).showRunContent(env.getContentToReuse());
-    if (descriptor != null) {
-      ProcessHandler processHandler = descriptor.getProcessHandler();
-      assert processHandler != null;
-      RunProfile runProfile = env.getRunProfile();
-      RunConfiguration runConfiguration =
-          (runProfile instanceof RunConfiguration) ? (RunConfiguration) runProfile : null;
-      AndroidSessionInfo sessionInfo =
-          AndroidSessionInfoCompat.create(
-              processHandler,
-              descriptor,
-              runConfiguration,
-              env.getExecutor().getId(),
-              env.getExecutor().getActionName(),
-              env.getExecutionTarget());
-      processHandler.putUserData(AndroidSessionInfo.KEY, sessionInfo);
-    }
-    return descriptor;
+    return new RunContentBuilder(result, env).showRunContent(env.getContentToReuse());
   }
+
   @Override
   public String getRunnerId() {
     return "AndroidTestProgramRunner";

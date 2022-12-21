@@ -154,7 +154,8 @@ public class AndroidSyncTest extends BlazeAndroidIntegrationTestCase {
             .setAddProjectViewTargets(true)
             .build());
     List<Sdk> allSdks = BlazeSdkProvider.getInstance().getAllAndroidSdks();
-    assertThat(allSdks).containsExactly(testEnvArgument.sdk);
+    assertThat(allSdks).hasSize(1);
+    assertThat(allSdks.get(0).getName()).isEqualTo(testEnvArgument.sdk.getName());
     errorCollector.assertIssues(
         String.format(
             AndroidSdkFromProjectView.NO_SDK_ERROR_TEMPLATE,

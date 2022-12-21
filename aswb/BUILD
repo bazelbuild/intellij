@@ -181,14 +181,42 @@ intellij_integration_test_suite(
     name = "normal_integration_tests",
     srcs = glob(
         [
-            "tests/integrationtests/**/*.java",
+            "tests/integrationtests/com/google/idea/blaze/android/**/*.java",
         ],
         exclude = [
             "tests/integrationtests/com/google/idea/blaze/android/plugin/NdkDependenciesTest.java",  # Extracted to separate target
             "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",  # b/177371104
             "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",  #b/222322106
         ],
-    ),
+    ) + select_for_plugin_api({
+        "android-studio-2021.3": [
+            "tests/integrationtests/as213/com/google/idea/blaze/android/functional/MobileInstallBuildStepIntegrationTest.java",
+            "tests/integrationtests/as213/com/google/idea/blaze/android/functional/FullApkBuildStepIntegrationTest.java",
+            "tests/integrationtests/as213/com/google/idea/blaze/android/run/AvailableDebuggersTest.java",
+            "tests/integrationtests/as213/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
+        ],
+        "android-studio-2022.1": [
+            "tests/integrationtests/asdev/com/google/idea/blaze/android/functional/BlazeInstrumentationTestApkBuildStepIntegrationTest.java",
+            "tests/integrationtests/as221/com/google/idea/blaze/android/functional/MobileInstallBuildStepIntegrationTest.java",
+            "tests/integrationtests/as221/com/google/idea/blaze/android/functional/FullApkBuildStepIntegrationTest.java",
+            "tests/integrationtests/as221/com/google/idea/blaze/android/run/AvailableDebuggersTest.java",
+            "tests/integrationtests/as221/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
+        ],
+        "android-studio-2022.2": [
+            "tests/integrationtests/as222/com/google/idea/blaze/android/functional/BlazeInstrumentationTestApkBuildStepIntegrationTest.java",
+            "tests/integrationtests/as222/com/google/idea/blaze/android/functional/MobileInstallBuildStepIntegrationTest.java",
+            "tests/integrationtests/as222/com/google/idea/blaze/android/functional/FullApkBuildStepIntegrationTest.java",
+            "tests/integrationtests/as222/com/google/idea/blaze/android/run/AvailableDebuggersTest.java",
+            "tests/integrationtests/as222/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
+        ],
+        "android-studio-dev": [
+            "tests/integrationtests/asdev/com/google/idea/blaze/android/functional/BlazeInstrumentationTestApkBuildStepIntegrationTest.java",
+            "tests/integrationtests/asdev/com/google/idea/blaze/android/functional/MobileInstallBuildStepIntegrationTest.java",
+            "tests/integrationtests/asdev/com/google/idea/blaze/android/functional/FullApkBuildStepIntegrationTest.java",
+            "tests/integrationtests/asdev/com/google/idea/blaze/android/run/AvailableDebuggersTest.java",
+            "tests/integrationtests/asdev/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
+        ],
+    }),
     data = [
         "testdata/golden.png",
         "testdata/ic_banner.png",

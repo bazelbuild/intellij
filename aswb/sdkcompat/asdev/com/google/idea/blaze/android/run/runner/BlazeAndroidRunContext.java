@@ -16,12 +16,12 @@
 package com.google.idea.blaze.android.run.runner;
 
 import com.android.ddmlib.IDevice;
+import com.android.tools.idea.execution.common.debug.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
@@ -65,8 +65,7 @@ public interface BlazeAndroidRunContext {
   /** Returns the task to connect the debugger. */
   @Nullable
   ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
-      throws ExecutionException;
+      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState);
 
   @Nullable
   Integer getUserId(IDevice device, ConsolePrinter consolePrinter) throws ExecutionException;
