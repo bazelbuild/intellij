@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
-
 import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;

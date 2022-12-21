@@ -15,12 +15,14 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
+import static com.android.tools.idea.run.tasks.DefaultConnectDebuggerTaskKt.getBaseDebuggerTask;
+
+import com.android.tools.idea.execution.common.debug.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.util.LaunchStatus;
@@ -59,17 +61,14 @@ public class BlazeAndroidBinaryNormalBuildRunContext
     if (!contributorsAmStartOptions.isEmpty()) {
       extraFlags += (extraFlags.isEmpty() ? "" : " ") + contributorsAmStartOptions;
     }
-
     final StartActivityFlagsProvider startActivityFlagsProvider =
         new DefaultStartActivityFlagsProvider(launchOptions.isDebug(), extraFlags);
-
     BlazeAndroidDeployInfo deployInfo;
     try {
       deployInfo = buildStep.getDeployInfo();
     } catch (ApkProvisionException e) {
       throw new ExecutionException(e);
     }
-
     return BlazeAndroidBinaryApplicationLaunchTaskProvider.getApplicationLaunchTask(
         applicationIdProvider,
         deployInfo.getMergedManifest(),
@@ -82,10 +81,9 @@ public class BlazeAndroidBinaryNormalBuildRunContext
   @Override
   @SuppressWarnings("unchecked")
   public ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
-      throws ExecutionException {
-    return androidDebugger.getConnectDebuggerTask(
-        env, applicationIdProvider, facet, androidDebuggerState);
+      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState) {
+    return getBaseDebuggerTask(
+        androidDebugger, androidDebuggerState, env, facet, applicationIdProvider);
   }
 
   @Override

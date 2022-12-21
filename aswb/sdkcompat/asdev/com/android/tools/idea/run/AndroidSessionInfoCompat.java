@@ -16,6 +16,7 @@
 package com.android.tools.idea.run;
 
 import com.android.ddmlib.Client;
+import com.android.tools.idea.execution.common.AndroidSessionInfo;
 import com.intellij.debugger.engine.RemoteDebugProcessHandler;
 import com.intellij.execution.ExecutionTarget;
 import com.intellij.execution.configurations.RunConfiguration;

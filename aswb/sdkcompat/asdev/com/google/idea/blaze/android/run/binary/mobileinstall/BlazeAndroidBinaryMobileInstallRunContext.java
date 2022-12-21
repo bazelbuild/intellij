@@ -15,12 +15,14 @@
  */
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
+import static com.android.tools.idea.run.tasks.DefaultConnectDebuggerTaskKt.getBaseDebuggerTask;
+
+import com.android.tools.idea.execution.common.debug.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.util.LaunchStatus;
@@ -50,7 +52,6 @@ public class BlazeAndroidBinaryMobileInstallRunContext
       String launchId) {
     super(project, facet, runConfiguration, env, configState, buildStep, launchId);
   }
-
   @Override
   public LaunchTask getApplicationLaunchTask(
       LaunchOptions launchOptions,
@@ -58,12 +59,10 @@ public class BlazeAndroidBinaryMobileInstallRunContext
       String contributorsAmStartOptions,
       LaunchStatus launchStatus)
       throws ExecutionException {
-
     String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
     if (!contributorsAmStartOptions.isEmpty()) {
       extraFlags += (extraFlags.isEmpty() ? "" : " ") + contributorsAmStartOptions;
     }
-
     final StartActivityFlagsProvider startActivityFlagsProvider =
         new DefaultStartActivityFlagsProvider(launchOptions.isDebug(), extraFlags);
     BlazeAndroidDeployInfo deployInfo;
@@ -72,7 +71,6 @@ public class BlazeAndroidBinaryMobileInstallRunContext
     } catch (ApkProvisionException e) {
       throw new ExecutionException(e);
     }
-
     return BlazeAndroidBinaryApplicationLaunchTaskProvider.getApplicationLaunchTask(
         applicationIdProvider,
         deployInfo.getMergedManifest(),
@@ -85,12 +83,10 @@ public class BlazeAndroidBinaryMobileInstallRunContext
   @Override
   @SuppressWarnings("unchecked")
   public ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
-      throws ExecutionException {
-    return androidDebugger.getConnectDebuggerTask(
-        env, applicationIdProvider, facet, androidDebuggerState);
+      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState) {
+    return getBaseDebuggerTask(
+        androidDebugger, androidDebuggerState, env, facet, applicationIdProvider);
   }
-
   @Override
   public Executor getExecutor() {
     return env.getExecutor();

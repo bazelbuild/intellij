@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.android.cppimpl.debug;
 
-import com.android.tools.ndk.run.attach.AndroidNativeAttachConfiguration;
-
 /**
  * API compat of {@link BlazeNativeAndroidDebuggerBase} with the following additions:
  *
