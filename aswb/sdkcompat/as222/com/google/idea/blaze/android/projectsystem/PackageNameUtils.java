@@ -21,6 +21,7 @@ import com.android.tools.idea.model.AndroidManifestIndexCompat;
 import com.android.tools.idea.model.AndroidManifestRawText;
 import com.android.tools.idea.model.MergedManifestModificationTracker;
 import com.android.tools.idea.projectsystem.ManifestOverrides;
+import com.android.tools.idea.projectsystem.SourceProviderManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.module.Module;
@@ -34,7 +35,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import org.jetbrains.android.dom.manifest.AndroidManifestUtils;
 import org.jetbrains.android.dom.manifest.AndroidManifestXmlFile;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.SourceProviderManager;
 import org.jetbrains.annotations.Nullable;
 
 /** Utilities to obtain the package name for a given module. */

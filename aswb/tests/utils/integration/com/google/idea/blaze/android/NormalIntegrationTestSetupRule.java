@@ -20,15 +20,8 @@ import static com.google.idea.blaze.android.AswbTestUtils.symlinkToSandboxHome;
 
 import org.junit.rules.ExternalResource;
 
-/**
- * Sets up the test environment specific to running ASwB integration tests in a blaze/bazel
- * environment. This setup prepares the test environment for ASwB integration tests in the same way
- * {@link com.android.tools.idea.IdeaTestSuite} does for regular android studio integration tests
- * but this rule does not pull in all the dependencies IdeaTestSuite does and should be modified
- * incrementally if the need for those dependencies arise. Should be instantiated as a @ClassRule in
- * the outermost test class/suite.
- */
-public class AswbIntegrationTestSetupRule extends ExternalResource {
+public class NormalIntegrationTestSetupRule extends ExternalResource {
+
   @Override
   protected void before() throws Throwable {
     symlinkRequiredLibraries();
@@ -41,7 +34,5 @@ public class AswbIntegrationTestSetupRule extends ExternalResource {
      */
     symlinkToSandboxHome(
         "tools/adt/idea/android/annotations", SANDBOX_IDEA_HOME + "android/android/annotations");
-    symlinkToSandboxHome("prebuilts/studio/layoutlib", "prebuilts/studio/layoutlib");
-    symlinkToSandboxHome("prebuilts/studio/sdk", "prebuilts/studio/sdk");
   }
 }

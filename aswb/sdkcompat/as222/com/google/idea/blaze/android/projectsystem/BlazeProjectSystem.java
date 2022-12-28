@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
+import static com.android.tools.idea.projectsystem.SourceProvidersKt.emptySourceProvider;
 import static org.jetbrains.android.facet.SourceProviderUtil.createSourceProvidersForLegacyModule;
 
 import com.android.tools.apk.analyzer.AaptInvoker;
@@ -26,8 +27,11 @@ import com.android.tools.idea.projectsystem.AndroidProjectSystem;
 import com.android.tools.idea.projectsystem.NamedIdeaSourceProvider;
 import com.android.tools.idea.projectsystem.ProjectSystemBuildManager;
 import com.android.tools.idea.projectsystem.ProjectSystemSyncManager;
+import com.android.tools.idea.projectsystem.ScopeType;
+import com.android.tools.idea.projectsystem.SourceProviderManager;
 import com.android.tools.idea.projectsystem.SourceProviders;
 import com.android.tools.idea.projectsystem.SourceProvidersFactory;
+import com.android.tools.idea.projectsystem.SourceProvidersImpl;
 import com.android.tools.idea.res.AndroidInnerClassFinder;
 import com.android.tools.idea.res.AndroidResourceClassPsiElementFinder;
 import com.android.tools.idea.sdk.AndroidSdks;
@@ -49,8 +53,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.SourceProviderManager;
-import org.jetbrains.android.facet.SourceProvidersImpl;
 
 /**
  * Base class to implement common methods in {@link AndroidProjectSystem} for blaze with different
@@ -142,7 +144,12 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
             ImmutableList.of(mainSourceProvider),
             ImmutableList.of(mainSourceProvider),
             ImmutableList.of(mainSourceProvider),
-            ImmutableList.of(mainSourceProvider));
+            ImmutableList.of(mainSourceProvider),
+            ImmutableList.of(mainSourceProvider),
+            emptySourceProvider(ScopeType.MAIN),
+            emptySourceProvider(ScopeType.UNIT_TEST),
+            emptySourceProvider(ScopeType.ANDROID_TEST),
+            emptySourceProvider(ScopeType.TEST_FIXTURES));
       }
     };
   }

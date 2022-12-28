@@ -15,81 +15,41 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import static com.android.tools.idea.run.debug.StartJavaReattachingDebuggerKt.startJavaReattachingDebugger;
-
-import com.android.ddmlib.AndroidDebugBridge;
-import com.android.ddmlib.Client;
-import com.android.ddmlib.ClientData;
 import com.android.ddmlib.IDevice;
-import com.android.tools.idea.run.ApkProvisionException;
-import com.android.tools.idea.run.ApplicationIdProvider;
-import com.android.tools.idea.run.LaunchInfo;
-import com.android.tools.idea.run.ProcessHandlerConsolePrinter;
+import com.android.tools.idea.run.configuration.execution.DebugSessionStarter;
+import com.android.tools.idea.run.editor.AndroidDebugger;
+import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
-import com.android.tools.idea.run.tasks.LaunchTaskDurations;
-import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
-import com.google.common.base.VerifyException;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import java.io.OutputStream;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.function.Function;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 /** Connects the blaze debugger during execution. */
-class ConnectBlazeTestDebuggerTask implements ConnectDebuggerTask {
+class ConnectBlazeTestDebuggerTask<S extends AndroidDebuggerState> implements ConnectDebuggerTask {
   private static final Logger LOG = Logger.getInstance(ConnectBlazeTestDebuggerTask.class);
 
-  private final Project project;
   private final BlazeAndroidTestRunContext runContext;
-  private final ApplicationIdProvider applicationIdProvider;
+  private final AndroidDebugger<S> myAndroidDebugger;
+  private final S myAndroidDebuggerState;
 
   public ConnectBlazeTestDebuggerTask(
-      Project project,
-      ApplicationIdProvider applicationIdProvider,
-      BlazeAndroidTestRunContext runContext) {
-    this.project = project;
-    this.applicationIdProvider = applicationIdProvider;
+      BlazeAndroidTestRunContext runContext,
+      AndroidDebugger<S> androidDebugger,
+      S androidDebuggerState) {
     this.runContext = runContext;
-  }
-
-  @Override
-  @NotNull
-  public String getDescription() {
-    return "ConnectBlazeTestDebuggerTask";
-  }
-
-  @Override
-  public int getDuration() {
-    return LaunchTaskDurations.CONNECT_DEBUGGER;
-  }
-
-  @Override
-  public int getTimeoutSeconds() {
-    return 0;
-  }
-
-  @Override
-  public void setTimeoutSeconds(int timeoutSeconds) {
-    throw new VerifyException("Unexpected code path");
-  }
-
-  @Override
-  public void perform(
-      @NotNull LaunchInfo launchInfo,
-      @NotNull IDevice device,
-      @NotNull ProcessHandlerLaunchStatus state,
-      @NotNull ProcessHandlerConsolePrinter printer) {
-    try {
-      String packageName = applicationIdProvider.getPackageName();
-      setUpForReattachingDebugger(device, packageName, launchInfo, state);
-    } catch (ApkProvisionException e) {
-      LOG.error(e);
-    }
+    myAndroidDebugger = androidDebugger;
+    myAndroidDebuggerState = androidDebuggerState;
   }
 
   /**
@@ -98,13 +58,15 @@ class ConnectBlazeTestDebuggerTask implements ConnectDebuggerTask {
    * test method, disconnecting the debugger. We listen for the start of a new method waiting for a
    * debugger, and reconnect. TODO: Support stopping Blaze from the UI. This is hard because we have
    * no way to distinguish process handler termination/debug session ending initiated by the user.
+   *
+   * @return Promise with debug session or error
    */
-  private void setUpForReattachingDebugger(
+  @Override
+  public @NotNull Promise<XDebugSessionImpl> perform(
       @NotNull IDevice device,
-      String packageName,
-      LaunchInfo launchInfo,
-      ProcessHandlerLaunchStatus launchStatus) {
-    final ProcessHandler originalProcessHandler = launchStatus.getProcessHandler();
+      @NotNull String applicationId,
+      @NotNull ExecutionEnvironment environment,
+      @NotNull ProcessHandler oldProcessHandler) {
     final ProcessHandler masterProcessHandler =
         new ProcessHandler() {
 
@@ -124,49 +86,49 @@ class ConnectBlazeTestDebuggerTask implements ConnectDebuggerTask {
           }
 
           @Override
-          @Nullable
-          public OutputStream getProcessInput() {
+          public @Nullable OutputStream getProcessInput() {
             return null;
           }
         };
-    final AndroidDebugBridge.IClientChangeListener reattachingListener =
-        new AndroidDebugBridge.IClientChangeListener() {
-          @Override
-          public synchronized void clientChanged(@NotNull Client client, int changeMask) {
-            ClientData data = client.getClientData();
-            String clientDescription = data.getClientDescription();
-            if (clientDescription != null && packageName.contains(clientDescription)) {
-              AndroidDebugBridge.removeClientChangeListener(this);
-              ApplicationManager.getApplication()
-                  .executeOnPooledThread(
-                      () ->
-                          startJavaReattachingDebugger(
-                                  project,
-                                  device,
-                                  masterProcessHandler,
-                                  new HashSet<>(Collections.singleton(packageName)),
-                                  launchInfo.env,
-                                  null)
-                              .onSuccess(
-                                  it -> {
-                                    if (!originalProcessHandler.isProcessTerminated()) {
-                                      originalProcessHandler.detachProcess();
-                                    }
-                                    ApplicationManager.getApplication()
-                                        .invokeLater(() -> it.showSessionTab());
-                                  }));
-            }
-          }
-        };
-
-    AndroidDebugBridge.addClientChangeListener(reattachingListener);
+    Promise<XDebugSessionImpl> debugSessionPromise =
+        DebugSessionStarter.INSTANCE
+            .attachReattachingDebuggerToStartedProcess(
+                device,
+                applicationId,
+                masterProcessHandler,
+                environment,
+                myAndroidDebugger,
+                myAndroidDebuggerState,
+                /* destroyRunningProcess= */ x -> Unit.INSTANCE,
+                null,
+                Long.MAX_VALUE)
+            .onSuccess(
+                session -> {
+                  oldProcessHandler.detachProcess();
+                  session.showSessionTab();
+                })
+            .onError(
+                it -> {
+                  if (it instanceof ExecutionException) {
+                    ExecutionUtil.handleExecutionError(
+                        environment.getProject(),
+                        ToolWindowId.DEBUG,
+                        it,
+                        "Error running " + environment.getRunProfile().getName(),
+                        it.getMessage(),
+                        Function.identity(),
+                        null);
+                  } else {
+                    Logger.getInstance(this.getClass()).error(it);
+                  }
+                });
 
     runContext.addLaunchTaskCompleteListener(
         () -> {
           masterProcessHandler.notifyTextAvailable(
               "Test run completed.\n", ProcessOutputTypes.STDOUT);
           masterProcessHandler.detachProcess();
-          AndroidDebugBridge.removeClientChangeListener(reattachingListener);
         });
+    return debugSessionPromise;
   }
 }

@@ -18,6 +18,7 @@ package com.google.idea.blaze.android.npw.project;
 import com.android.tools.idea.projectsystem.AndroidModulePaths;
 import com.android.tools.idea.projectsystem.IdeaSourceProvider;
 import com.android.tools.idea.projectsystem.NamedModuleTemplate;
+import com.android.tools.idea.projectsystem.SourceProviderManager;
 import com.google.common.collect.Streams;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -34,7 +35,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.SourceProviderManager;
 
 /**
  * Project paths for a Blaze Android project.
