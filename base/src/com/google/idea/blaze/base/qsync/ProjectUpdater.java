@@ -232,6 +232,9 @@ public class ProjectUpdater implements BuildGraphListener {
           Multimap<WorkspacePath, WorkspacePath> excludesByRootDirectory =
               sortExcludesByRootDirectory(ir.rootDirectories(), ir.excludeDirectories());
 
+          for (ContentEntry entry : roots.getContentEntries()) {
+            roots.removeContentEntry(entry);
+          }
           for (WorkspacePath dir : ir.rootDirectories()) {
             File rootFile = workspaceRoot.fileForPath(dir);
             ContentEntry contentEntry =
