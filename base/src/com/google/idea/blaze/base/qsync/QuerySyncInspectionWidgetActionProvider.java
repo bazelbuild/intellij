@@ -15,16 +15,12 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider;
@@ -32,9 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.JBUI;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import icons.BlazeIcons;
 import javax.swing.JComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
  * tri-color icon at the top-right of files showing analysis results. This class provides the action
  * that sits there and builds the file dependencies and enables analysis.
  */
-public class BuildDependenciesActionProvider implements InspectionWidgetActionProvider {
+public class QuerySyncInspectionWidgetActionProvider implements InspectionWidgetActionProvider {
 
   @Nullable
   @Override
@@ -71,30 +65,22 @@ public class BuildDependenciesActionProvider implements InspectionWidgetActionPr
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = editor.getProject();
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);
-      DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
-      BlazeImportSettings settings =
-          BlazeImportSettingsManager.getInstance(project).getImportSettings();
+      QuerySyncManager.getInstance(project).enableAnalysis(psiFile);
+    }
 
-      if (!BlazeSyncStatus.getInstance(project).syncInProgress()) {
-        String rel =
-            Paths.get(settings.getWorkspaceRoot())
-                .relativize(Paths.get(psiFile.getVirtualFile().getPath()))
-                .toString();
-        WorkspacePath wp = WorkspacePath.createIfValid(rel);
-        List<WorkspacePath> wps = new ArrayList<>();
-        wps.add(wp);
-        QuerySyncManager.getInstance(project).build(wps);
-      }
+    @Override
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setEnabled(!BlazeSyncStatus.getInstance(project).syncInProgress());
+      presentation.setEnabled(!BlazeSyncStatus.getInstance(e.getProject()).syncInProgress());
+      super.update(e);
     }
 
     @Override
     @NotNull
     public JComponent createCustomComponent(
         @NotNull Presentation presentation, @NotNull String place) {
-      return new ActionButtonWithText(this, presentation, place, JBUI.size(18));
+      presentation.setIcon(BlazeIcons.Logo);
+      return new ActionButton(this, presentation, place, JBUI.size(16));
     }
   }
 }

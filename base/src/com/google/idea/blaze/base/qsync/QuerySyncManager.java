@@ -25,6 +25,8 @@ import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
+import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
@@ -32,20 +34,16 @@ import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.qsync.BuildGraph;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Future;
-import org.jetbrains.annotations.NotNull;
 
 /** The project component for a query based sync. */
 public class QuerySyncManager {
@@ -70,14 +68,6 @@ public class QuerySyncManager {
     this.dependencyTracker = new DependencyTracker(project, graph, builder, cache);
     this.projectQuerier = new ProjectQuerier(project, graph);
     this.projectUpdater = new ProjectUpdater(project, graph);
-
-    if (QuerySync.isEnabled()) {
-      FileEditorManagerListener listener = new MyFileEditorManagerListener(project);
-      project
-          .getMessageBus()
-          .connect()
-          .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);
-    }
   }
 
   public void build(List<WorkspacePath> wps) {
@@ -149,24 +139,19 @@ public class QuerySyncManager {
     return dependencyTracker;
   }
 
-  /** A listener for editors opened to decide if analysis should be enabled on them. */
-  public class MyFileEditorManagerListener implements FileEditorManagerListener {
+  public void enableAnalysis(PsiFile psiFile) {
+    BlazeImportSettings settings =
+        BlazeImportSettingsManager.getInstance(project).getImportSettings();
 
-    private final Project project;
+    Path path = Paths.get(psiFile.getVirtualFile().getPath());
+    String rel = Paths.get(settings.getWorkspaceRoot()).relativize(path).toString();
+    build(List.of(WorkspacePath.createIfValid(rel)));
+  }
 
-    public MyFileEditorManagerListener(Project project) {
-      this.project = project;
-      // TODO there is more work needed for this listener to catch all the files that are
-      // already opened when the project is opened. This only catches newly opened files.
-    }
-
-    @Override
-    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-      Set<String> pendingTargets = dependencyTracker.getPendingTargets(project, file);
-      int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
-      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, unsynced == 0);
-      DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
-    }
+  public boolean isReadyForAnalysis(PsiFile psiFile) {
+    Set<String> pendingTargets =
+        dependencyTracker.getPendingTargets(project, psiFile.getVirtualFile());
+    int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
+    return unsynced == 0;
   }
 }
