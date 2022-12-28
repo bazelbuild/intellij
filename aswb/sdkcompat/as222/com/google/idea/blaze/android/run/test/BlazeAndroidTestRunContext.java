@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.run.test;
 
+import static com.android.tools.idea.run.tasks.DefaultConnectDebuggerTaskKt.getBaseDebuggerTask;
 import static com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryNormalBuildRunContextBase.getApkInfoToInstall;
 
 import com.android.ddmlib.IDevice;
@@ -200,11 +201,11 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {
       case BLAZE_TEST:
-        return new ConnectBlazeTestDebuggerTask(env.getProject(), applicationIdProvider, this);
+        return new ConnectBlazeTestDebuggerTask(this, androidDebugger, androidDebuggerState);
       case NON_BLAZE:
       case MOBILE_INSTALL:
-        return androidDebugger.getConnectDebuggerTask(
-            env, applicationIdProvider, facet, androidDebuggerState);
+        return getBaseDebuggerTask(
+            androidDebugger, androidDebuggerState, env, facet, applicationIdProvider);
     }
     throw new AssertionError();
   }

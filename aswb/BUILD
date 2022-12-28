@@ -86,15 +86,19 @@ java_library(
         ]),
         "android-studio-2021.3": glob([
             "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/functional/*.java",
+            "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/*.java",
         ]),
         "android-studio-2022.1": glob([
             "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/functional/*.java",
+            "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/*.java",
         ]),
         "android-studio-2022.2": glob([
             "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/functional/*.java",
+            "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/*.java",
         ]),
         "android-studio-dev": glob([
             "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/functional/*.java",
+            "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/*.java",
         ]),
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
@@ -217,9 +221,15 @@ intellij_integration_test_suite(
             "tests/integrationtests/asdev/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
         ],
     }),
+    additional_class_rules = select_for_plugin_api({
+        "android-studio-2022.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
+        "android-studio-dev": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
+        "default": [],
+    }),
     data = [
         "testdata/golden.png",
         "testdata/ic_banner.png",
+        "tools/adt/idea/android/annotations/empty_file",
     ],
     required_plugins = "com.google.idea.bazel.aswb",
     test_package_root = "com.google.idea.blaze.android",
@@ -327,4 +337,10 @@ plugin_deploy_zip(
     ],
     visibility = ["//visibility:public"],
     zip_filename = "aswb_bazel.zip",
+)
+
+genrule(
+    name = "create_empty_annotations_folder",
+    outs = ["tools/adt/idea/android/annotations/empty_file"],
+    cmd = "echo \"No contents\" > $@",
 )

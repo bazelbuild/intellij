@@ -15,13 +15,11 @@
  */
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
+
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
-import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
@@ -38,7 +36,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Run Context for mobile install launches, #api4.0 compat. */
-public class BlazeAndroidBinaryMobileInstallRunContext
+public abstract class BlazeAndroidBinaryMobileInstallRunContext
     extends BlazeAndroidBinaryMobileInstallRunContextBase {
   public BlazeAndroidBinaryMobileInstallRunContext(
       Project project,
@@ -79,16 +77,6 @@ public class BlazeAndroidBinaryMobileInstallRunContext
         configState,
         startActivityFlagsProvider,
         launchStatus);
-  }
-
-  @Nullable
-  @Override
-  @SuppressWarnings("unchecked")
-  public ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
-      throws ExecutionException {
-    return androidDebugger.getConnectDebuggerTask(
-        env, applicationIdProvider, facet, androidDebuggerState);
   }
 
   @Override

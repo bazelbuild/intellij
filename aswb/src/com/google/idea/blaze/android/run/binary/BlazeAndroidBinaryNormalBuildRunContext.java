@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2019 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.android.run.binary.mobileinstall;
+package com.google.idea.blaze.android.run.binary;
+
 
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
-import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.util.LaunchStatus;
-import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
-import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
-import com.google.idea.blaze.android.run.binary.UserIdHelper;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.intellij.execution.ExecutionException;
@@ -37,10 +32,10 @@ import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
-/** Run Context for mobile install launches, #api4.0 compat. */
-public class BlazeAndroidBinaryMobileInstallRunContext
-    extends BlazeAndroidBinaryMobileInstallRunContextBase {
-  public BlazeAndroidBinaryMobileInstallRunContext(
+/** Compat for #api212 */
+public abstract class BlazeAndroidBinaryNormalBuildRunContext
+    extends BlazeAndroidBinaryNormalBuildRunContextBase {
+  BlazeAndroidBinaryNormalBuildRunContext(
       Project project,
       AndroidFacet facet,
       RunConfiguration runConfiguration,
@@ -58,7 +53,6 @@ public class BlazeAndroidBinaryMobileInstallRunContext
       String contributorsAmStartOptions,
       LaunchStatus launchStatus)
       throws ExecutionException {
-
     String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
     if (!contributorsAmStartOptions.isEmpty()) {
       extraFlags += (extraFlags.isEmpty() ? "" : " ") + contributorsAmStartOptions;
@@ -66,6 +60,7 @@ public class BlazeAndroidBinaryMobileInstallRunContext
 
     final StartActivityFlagsProvider startActivityFlagsProvider =
         new DefaultStartActivityFlagsProvider(launchOptions.isDebug(), extraFlags);
+
     BlazeAndroidDeployInfo deployInfo;
     try {
       deployInfo = buildStep.getDeployInfo();
@@ -79,16 +74,6 @@ public class BlazeAndroidBinaryMobileInstallRunContext
         configState,
         startActivityFlagsProvider,
         launchStatus);
-  }
-
-  @Nullable
-  @Override
-  @SuppressWarnings("unchecked")
-  public ConnectDebuggerTask getDebuggerTask(
-      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState)
-      throws ExecutionException {
-    return androidDebugger.getConnectDebuggerTask(
-        env, applicationIdProvider, facet, androidDebuggerState);
   }
 
   @Override

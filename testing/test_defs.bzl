@@ -139,6 +139,7 @@ def intellij_integration_test_suite(
         srcs,
         test_package_root,
         deps,
+        additional_class_rules = [],
         size = "medium",
         jvm_flags = [],
         runtime_deps = [],
@@ -178,6 +179,7 @@ def intellij_integration_test_suite(
         name = suite_class_name,
         srcs = srcs,
         test_package_root = test_package_root,
+        class_rules = additional_class_rules,
         run_with = "com.google.idea.testing.IntellijIntegrationSuite",
     )
 

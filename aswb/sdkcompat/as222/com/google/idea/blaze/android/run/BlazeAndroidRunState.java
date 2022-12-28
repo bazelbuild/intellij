@@ -19,7 +19,6 @@ import com.android.tools.idea.run.AndroidProcessHandler;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.DeviceFutures;
-import com.android.tools.idea.run.LaunchInfo;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.LaunchTaskRunner;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
@@ -135,15 +134,13 @@ public final class BlazeAndroidRunState implements RunProfileState {
       assert console != null;
     }
 
-    LaunchInfo launchInfo = new LaunchInfo(executor, runner, env, runContext.getConsoleProvider());
-
     LaunchTaskRunner task =
         new LaunchTaskRunner(
             env.getProject(),
             launchConfigName,
             applicationId,
             env.getExecutionTarget().getDisplayName(),
-            launchInfo,
+            env,
             processHandler,
             deviceFutures,
             launchTasksProvider,
