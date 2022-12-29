@@ -52,4 +52,9 @@ public class OpenProjectViewAction extends BlazeProjectAction implements DumbAwa
     VirtualFile virtualFile = VfsUtil.findFileByIoFile(projectViewFile, true);
     return Optional.ofNullable(virtualFile);
   }
+
+  @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.SUPPORTED;
+  }
 }
