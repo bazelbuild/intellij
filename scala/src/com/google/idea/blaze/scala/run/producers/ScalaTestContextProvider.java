@@ -37,6 +37,7 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 /**
@@ -61,6 +62,14 @@ class ScalaTestContextProvider implements TestContextProvider {
             testClass, TestSizeFinder.getTestSize(testClass));
     if (target == null) {
       return null;
+    } else {
+      try {
+        if(target.get().kindString.equals("scala_junit_test")) {
+          return null;
+        }
+      } catch (InterruptedException | ExecutionException e){
+        //ignore
+      }
     }
 
     return TestContext.builder(testClass, ExecutorType.DEBUG_SUPPORTED_TYPES)
