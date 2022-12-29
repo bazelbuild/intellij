@@ -30,7 +30,7 @@ import javax.swing.Icon;
 /** Base class action that hides for non-blaze projects. */
 public abstract class BlazeProjectAction extends AnAction {
   /** Indicates if an action supports querysync. */
-  enum QuerySyncStatus {
+  protected enum QuerySyncStatus {
     /**
      * The action does not support querysync, and is not ever expected to. It's not visible in the
      * UI.
