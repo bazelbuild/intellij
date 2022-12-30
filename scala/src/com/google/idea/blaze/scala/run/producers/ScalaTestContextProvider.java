@@ -66,7 +66,7 @@ class ScalaTestContextProvider implements TestContextProvider {
       return null;
     } else {
       try {
-        if(target.get(3, TimeUnit.SECONDS).kindString.equals("scala_junit_test")) {
+        if(target.get(2, TimeUnit.SECONDS).kindString.equals("scala_junit_test")) {
           return null;
         }
       } catch (InterruptedException | ExecutionException | TimeoutException e){
