@@ -364,6 +364,7 @@
     <completion.confidence language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.completion.BuildFileCompletionConfidence"/>
     <spellchecker.support language="BUILD" implementationClass="com.google.idea.blaze.base.lang.buildfile.validation.BuildSpellcheckingStrategy"/>
     <highlightVisitor implementation="com.google.idea.blaze.base.editor.HighlightingStatsCollector"/>
+   <formattingService implementation="com.google.idea.blaze.base.buildmodifier.BuildifierFormattingService"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.lang">
