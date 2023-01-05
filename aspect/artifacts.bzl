@@ -68,4 +68,4 @@ def _strip_external_workspace_prefix(path):
     # Remove the 'external/' check when Bazel 0.4.4 and earlier no longer need to be supported.
     if path.startswith("../") or path.startswith("external/"):
         return "/".join(path.split("/")[2:])
-    return path
+    return path 
