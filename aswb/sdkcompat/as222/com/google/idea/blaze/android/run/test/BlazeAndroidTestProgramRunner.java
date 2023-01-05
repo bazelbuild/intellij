@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.android.run.test;
 
+import com.android.tools.idea.execution.common.AndroidSessionInfo;
 import com.android.tools.idea.run.AndroidProgramRunner;
-import com.android.tools.idea.run.AndroidSessionInfo;
 import com.android.tools.idea.run.AndroidSessionInfoCompat;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;

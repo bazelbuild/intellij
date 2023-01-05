@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.run;
 
-import com.android.tools.idea.run.AndroidProcessHandler;
+import com.android.tools.idea.execution.common.processhandler.AndroidProcessHandler;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.DeviceFutures;
