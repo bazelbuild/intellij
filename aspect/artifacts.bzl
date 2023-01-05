@@ -50,7 +50,10 @@ def to_artifact_location(exec_path, root_exec_path_fragment, is_source, is_exter
 def is_external_artifact(label):
     """Determines whether a label corresponds to an external artifact."""
 
-    return label.workspace_root.startswith("..")
+    # Label.EXTERNAL_PATH_PREFIX is due to change from 'external' to '..' in Bazel 0.4.5.
+    # This code is for forwards and backwards compatibility.
+    # Remove the 'external' check when Bazel 0.4.4 and earlier no longer need to be supported.
+    return label.workspace_root.startswith("external") or label.workspace_root.startswith("..")
 
 def _strip_root_exec_path_fragment(path, root_fragment):
     if root_fragment and path.startswith(root_fragment + "/"):
@@ -58,8 +61,11 @@ def _strip_root_exec_path_fragment(path, root_fragment):
     return path
 
 def _strip_external_workspace_prefix(path):
-    """Strip '../workspace_name/'."""
+    """Either 'external/workspace_name/' or '../workspace_name/'."""
 
-    if path.startswith("../"):
+    # Label.EXTERNAL_PATH_PREFIX is due to change from 'external' to '..' in Bazel 0.4.5.
+    # This code is for forwards and backwards compatibility.
+    # Remove the 'external/' check when Bazel 0.4.4 and earlier no longer need to be supported.
+    if path.startswith("../") or path.startswith("external/"):
         return "/".join(path.split("/")[2:])
     return path
