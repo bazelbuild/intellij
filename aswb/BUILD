@@ -81,9 +81,6 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2021.2": glob([
-            "tests/utils/sdkcompat/as212/com/google/idea/blaze/android/functional/*.java",
-        ]),
         "android-studio-2021.3": glob([
             "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/functional/*.java",
             "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/*.java",
@@ -122,7 +119,6 @@ java_library(
 java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2021.2": glob(["sdkcompat/as212/**/*.java"]),
         "android-studio-2021.3": glob(["sdkcompat/as213/**/*.java"]),
         "android-studio-2022.1": glob(["sdkcompat/as221/**/*.java"]),
         "android-studio-2022.2": glob(["sdkcompat/as222/**/*.java"]),

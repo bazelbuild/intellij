@@ -288,15 +288,6 @@ http_archive(
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2022.3.13/org.intellij.scala-2022.3.13.zip",
 )
 
-# The plugin api for android_studio_2021_2. This is required to build ASwB,
-# and run integration tests.
-http_archive(
-    name = "android_studio_2021_2",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio212",
-    sha256 = "0018e0dfc0dd2921700516f7a2c443377c557788da7fb0a45243ecb4300745be",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2021.2.1.15/android-studio-2021.2.1.15-linux.tar.gz",
-)
-
 # The plugin api for android_studio_2021_3. This is required to build ASwB,
 # and run integration tests.
 http_archive(
