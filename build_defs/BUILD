@@ -45,3 +45,8 @@ py_binary(
     srcs = ["zip_plugin_files.py"],
     python_version = "PY3",
 )
+
+exports_files([
+    "plugin_removes_213.txt",
+    "plugin_removes.txt",
+])
