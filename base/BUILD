@@ -87,6 +87,7 @@ java_library(
     srcs = glob(["src/com/google/idea/blaze/base/formatter/*.java"]),
     visibility = G3PLUGINS_VISIBILITY,
     deps = [
+        "//intellij_platform_sdk:jsr305",  # unuseddeps: keep (b/146560321)
         "//intellij_platform_sdk:plugin_api",
     ],
 )
