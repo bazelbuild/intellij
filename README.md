@@ -29,8 +29,11 @@ or directly from the IDE by going to `Settings -> Plugins -> Marketplace`, and s
 
 Beta versions are usually uploaded to the Beta channel 2 weeks before they become full releases. Ways to install them: 
 - download and install them manually from the [Beta channel page](https://plugins.jetbrains.com/plugin/8609-bazel/versions/beta) on JetBrains Marketplace
-- add the Beta channel to the IDE under `Settings -> Plugins -> Gear Icon -> Manage Plugin repositories` and add the URL:
-  `https://plugins.jetbrains.com/plugins/beta/8609`. You can now find the latest Beta under `Settings -> Plugins -> Marketplace` or update the Bazel plugin to Beta if you already installed it.
+- add the Beta channel to the IDE under `Settings -> Plugins -> Gear Icon -> Manage Plugin repositories` and add one of the following URLs depending on your product. 
+  You can now find the latest Beta under `Settings -> Plugins -> Marketplace` or update the Bazel plugin to Beta if you already installed it.
+  - IntelliJ IDEA -> `https://plugins.jetbrains.com/plugins/beta/8609`
+  - CLion -> `https://plugins.jetbrains.com/plugins/beta/9554`
+  - Android Studio -> `https://plugins.jetbrains.com/plugins/beta/9185`
 
 ## Usage
 
