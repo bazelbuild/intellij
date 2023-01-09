@@ -19,9 +19,9 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes.ANDROID_BINARY;
 import static com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes.ANDROID_INSTRUMENTATION_TEST;
 
-import com.android.tools.idea.run.editor.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.impl.java.AndroidJavaDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerInfoProvider;
-import com.android.tools.idea.run.editor.AndroidJavaDebugger;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebugger;

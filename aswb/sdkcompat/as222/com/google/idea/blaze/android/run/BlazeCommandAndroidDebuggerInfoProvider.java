@@ -15,10 +15,10 @@
  */
 package com.google.idea.blaze.android.run;
 
-import com.android.tools.idea.run.editor.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
+import com.android.tools.idea.execution.common.debug.impl.java.AndroidJavaDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerInfoProvider;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
-import com.android.tools.idea.run.editor.AndroidJavaDebugger;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebugger;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationState;

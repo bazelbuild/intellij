@@ -17,8 +17,8 @@ package com.google.idea.blaze.android.run;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidJavaDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.impl.java.AndroidJavaDebugger;
 import com.google.idea.blaze.android.BlazeAndroidIntegrationTestCase;
 import com.google.idea.blaze.android.MockSdkUtil;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;

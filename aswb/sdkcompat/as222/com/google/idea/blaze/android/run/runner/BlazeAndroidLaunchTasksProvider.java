@@ -20,13 +20,13 @@ import static com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContribu
 import com.android.ddmlib.IDevice;
 import com.android.tools.deployer.ApkVerifierTracker;
 import com.android.tools.idea.editors.literals.LiveEditService;
+import com.android.tools.idea.execution.common.debug.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContributor;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.LaunchOptions;
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.tasks.ClearLogcatTask;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.DismissKeyguardTask;

@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
-import com.android.tools.idea.run.AndroidSessionInfo;
+import com.android.tools.idea.execution.common.AndroidSessionInfo;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.editor.DeployTarget;
 import com.android.tools.idea.run.editor.DeployTargetCompat;

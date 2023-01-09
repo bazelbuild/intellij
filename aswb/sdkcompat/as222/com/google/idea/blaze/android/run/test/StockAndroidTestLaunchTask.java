@@ -16,7 +16,7 @@
 package com.google.idea.blaze.android.run.test;
 
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
-import com.android.tools.idea.run.AndroidProcessHandler;
+import com.android.tools.idea.execution.common.processhandler.AndroidProcessHandler;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
