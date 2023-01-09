@@ -185,10 +185,11 @@ public class BuildGraph {
                 .computeIfAbsent(target.getRule().getName(), x -> new HashSet<>())
                 .addAll(thisDeps);
             for (String thisSource : thisSources) {
+              // TODO Consider replace sourceDeps with a map of:
+              //   (source target) -> (rules the include it)
+              // This would involve modifying the "fewer dependencies" logic below, but may yield
+              // a cleaner solution.
               Set<String> currentDeps = sourceDeps.get(thisSource);
-              ruleDeps
-                  .computeIfAbsent(thisSource, x -> new HashSet<>())
-                  .add(target.getRule().getName());
               if (currentDeps == null) {
                 sourceDeps.put(thisSource, thisDeps);
                 sourceOwner.put(thisSource, target.getRule().getName());
