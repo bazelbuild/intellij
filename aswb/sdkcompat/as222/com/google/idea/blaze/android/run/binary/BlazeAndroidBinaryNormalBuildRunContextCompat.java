@@ -17,8 +17,8 @@ package com.google.idea.blaze.android.run.binary;
 
 import static com.android.tools.idea.run.tasks.DefaultConnectDebuggerTaskKt.getBaseDebuggerTask;
 
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
+import com.android.tools.idea.execution.common.debug.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.intellij.execution.ExecutionException;

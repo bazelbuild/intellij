@@ -15,9 +15,9 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
-import com.android.tools.idea.run.editor.AndroidDebugger;
-import com.android.tools.idea.run.editor.AndroidDebuggerState;
-import com.android.tools.idea.run.editor.AndroidJavaDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
+import com.android.tools.idea.execution.common.debug.impl.java.AndroidJavaDebugger;
 import com.android.tools.ndk.run.editor.AutoAndroidDebuggerState;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
