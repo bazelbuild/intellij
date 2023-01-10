@@ -1,6 +1,9 @@
 v2023.01.10
 ===========
-
+* community PRs merged: #4206 #4239 #4250
+* Configure the Scala version properly for the Scala plugin #3737
+* fix(go) Correctly identify subscoped tests #4131
+* Extension point to configure the way BlazePyRunConfigurationRunner selects the executable file #4180
 
 v2022.12.13
 ===========
