@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package hello;
+
+import "google/protobuf/empty.proto";
+
+service HelloService {
+  rpc SaySomething(MessageRequest) returns (MessageResponse) {}
+  // This function exists to validate that the well known types (such as google.protobuf.Empty)
+  // are picked up by the plugin.
+  rpc EmptyFunction (google.protobuf.Empty) returns (google.protobuf.Empty);
+}
+
+message MessageRequest {
+  string message = 1;
+}
+
+message MessageResponse {
+  string message = 1;
+}

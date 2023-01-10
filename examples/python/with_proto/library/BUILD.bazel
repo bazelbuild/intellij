@@ -1,0 +1,30 @@
+load("@python_deps//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
+
+py_library(
+    name = "utils",
+    srcs = ["utils.py"],
+)
+
+py_binary(
+    name = "server",
+    srcs = ["server.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//proto:python_lib",
+        requirement("grpcio"),
+        requirement("grpcio-tools"),
+    ],
+)
+
+py_binary(
+    name = "client",
+    srcs = ["client.py"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//library:utils",
+        "//proto:python_lib",
+        requirement("grpcio"),
+        requirement("grpcio-tools"),
+    ],
+)

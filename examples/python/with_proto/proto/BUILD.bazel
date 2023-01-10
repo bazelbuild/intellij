@@ -1,0 +1,37 @@
+load("@rules_proto//proto:defs.bzl", "proto_library")
+load("@rules_proto_grpc//python:defs.bzl", "python_grpc_compile", "python_proto_compile")
+load("@python_deps//:requirements.bzl", "requirement")
+
+proto_library(
+    name = "proto_lib",
+    srcs = ["hello.proto"],
+    visibility = ["//visibility:private"],
+    deps = ["@com_google_protobuf//:empty_proto"],
+)
+
+python_grpc_compile(
+    name = "python_grpc_lib",
+    protos = [":proto_lib"],
+    visibility = ["//visibility:private"],
+)
+
+# The proto files are generated in a subdirectory named after the target (i.e. python_grpc_lib)
+# followed by the directory structure in the project. E.g. the generated python proto,
+# hello_pb2_grpc.py, is placed in bazel-bin/proto/python_grpc_lib/proto/hello_pb2_grpc.py. Imports
+# in this file are not adjusted to reflect the directory structure, i.e. it attempts to import its
+# neighbor hello_pb2.py as `from proto import hello_pb2`. As seen, it disregards the generated
+# subdirectory, `python_grpc_lib`, which results in import errors when a separate python library
+# tries to consume this package. Therefore we add the directory named after the build target,
+# `python_grpc_lib`, to `imports` when building the `py_library`.
+
+# The python library for protos bundled up with all the dependencies. Consume as //proto:python_lib.
+py_library(
+    name = "python_lib",
+    srcs = [":python_grpc_lib"],
+    imports = ["python_grpc_lib"],  # see explanation above on why this is necessary.
+    visibility = ["//visibility:public"],
+    deps = [
+        requirement("grpcio"),
+        requirement("grpcio-tools"),
+    ],
+)
