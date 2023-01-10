@@ -30,7 +30,7 @@ import com.google.idea.blaze.java.run.producers.TestSizeFinder;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
-import java.util.Optional;
+import java.util.function.Supplier;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
 import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestConfigurationProducer;
 import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestTestFramework;
@@ -64,23 +64,24 @@ class ScalaTestContextProvider implements TestContextProvider {
     ListenableFuture<TargetInfo> target =
         TestTargetHeuristic.targetFutureForPsiElement(
             testClass, TestSizeFinder.getTestSize(testClass));
-    TestContext.BlazeFlagsModification flags = null;
     if (target == null) {
       return null;
-    } else {
+    }
+
+    Supplier<TestContext.BlazeFlagsModification> testFlags = () -> {
       try {
         if(target.get(2, TimeUnit.SECONDS).kindString.equals("scala_junit_test")) {
-          flags = TestContext.BlazeFlagsModification.testFilter(ProducerUtils.getTestFilterForClass(testClass));
+          return TestContext.BlazeFlagsModification.testFilter(ProducerUtils.getTestFilterForClass(classAndTestNames.testClass));
         }
       } catch (InterruptedException | ExecutionException | TimeoutException e){
         //ignore
       }
-    }
+      return new ScalatestTestSelectorFlagsModification(classAndTestNames.testClass.getQualifiedName(), classAndTestNames.testNames);
+    };
 
     return TestContext.builder(testClass, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
-        .addBlazeFlagsModification(Optional.ofNullable(flags)
-                .orElse(new ScalatestTestSelectorFlagsModification(testClass.getQualifiedName(), classAndTestNames.testNames)))
+        .addBlazeFlagsModification(testFlags.get())
         .setDescription(testClass.getName())
         .build();
   }
