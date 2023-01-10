@@ -32,11 +32,8 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -68,7 +65,7 @@ class JavaTestContextProvider implements TestContextProvider {
 
   @Nullable
   private static TestContext fromClass(PsiClass testClass) {
-    String testFilter = getTestFilterForClass(testClass);
+    String testFilter = ProducerUtils.getTestFilterForClass(testClass);
     if (testFilter == null) {
       return null;
     }
@@ -143,17 +140,5 @@ class JavaTestContextProvider implements TestContextProvider {
       return null;
     }
     return ProducerUtils.getTestClass(location);
-  }
-
-  @Nullable
-  private static String getTestFilterForClass(PsiClass testClass) {
-    Set<PsiClass> innerTestClasses = ProducerUtils.getInnerTestClasses(testClass);
-    if (innerTestClasses.isEmpty()) {
-      return BlazeJUnitTestFilterFlags.testFilterForClass(testClass);
-    }
-    innerTestClasses.add(testClass);
-    Map<PsiClass, Collection<Location<?>>> methodsPerClass =
-        innerTestClasses.stream().collect(Collectors.toMap(c -> c, c -> ImmutableList.of()));
-    return BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(methodsPerClass);
   }
 }

@@ -25,10 +25,12 @@ import com.google.idea.blaze.base.run.producers.TestContext;
 import com.google.idea.blaze.base.run.producers.TestContextProvider;
 import com.google.idea.blaze.base.run.smrunner.SmRunnerUtils;
 import com.google.idea.blaze.base.run.state.RunConfigurationFlagsState;
+import com.google.idea.blaze.java.run.producers.ProducerUtils;
 import com.google.idea.blaze.java.run.producers.TestSizeFinder;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
+import java.util.Optional;
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScTypeDefinition;
 import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestConfigurationProducer;
 import org.jetbrains.plugins.scala.testingSupport.test.scalatest.ScalaTestTestFramework;
@@ -62,12 +64,13 @@ class ScalaTestContextProvider implements TestContextProvider {
     ListenableFuture<TargetInfo> target =
         TestTargetHeuristic.targetFutureForPsiElement(
             testClass, TestSizeFinder.getTestSize(testClass));
+    TestContext.BlazeFlagsModification flags = null;
     if (target == null) {
       return null;
     } else {
       try {
         if(target.get(2, TimeUnit.SECONDS).kindString.equals("scala_junit_test")) {
-          return null;
+          flags = TestContext.BlazeFlagsModification.testFilter(ProducerUtils.getTestFilterForClass(testClass));
         }
       } catch (InterruptedException | ExecutionException | TimeoutException e){
         //ignore
@@ -76,7 +79,8 @@ class ScalaTestContextProvider implements TestContextProvider {
 
     return TestContext.builder(testClass, ExecutorType.DEBUG_SUPPORTED_TYPES)
         .setTarget(target)
-        .addBlazeFlagsModification(new ScalatestTestSelectorFlagsModification(testClass.getQualifiedName(), classAndTestNames.testNames))
+        .addBlazeFlagsModification(Optional.ofNullable(flags)
+                .orElse(new ScalatestTestSelectorFlagsModification(testClass.getQualifiedName(), classAndTestNames.testNames)))
         .setDescription(testClass.getName())
         .build();
   }

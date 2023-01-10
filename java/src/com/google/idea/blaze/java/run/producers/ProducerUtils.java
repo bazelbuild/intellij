@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.java.run.producers;
 
+import com.google.common.collect.ImmutableList;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
@@ -39,8 +40,10 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -145,6 +148,18 @@ public class ProducerUtils {
             CachedValueProvider.Result.create(
                 hasTestOrSuiteMethods(psiClass),
                 PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT));
+  }
+
+  @Nullable
+  public static String getTestFilterForClass(PsiClass testClass) {
+    Set<PsiClass> innerTestClasses = ProducerUtils.getInnerTestClasses(testClass);
+    if (innerTestClasses.isEmpty()) {
+      return BlazeJUnitTestFilterFlags.testFilterForClass(testClass);
+    }
+    innerTestClasses.add(testClass);
+    Map<PsiClass, Collection<Location<?>>> methodsPerClass =
+            innerTestClasses.stream().collect(Collectors.toMap(c -> c, c -> ImmutableList.of()));
+    return BlazeJUnitTestFilterFlags.testFilterForClassesAndMethods(methodsPerClass);
   }
 
   private static boolean isJUnit4Class(PsiClass psiClass) {
