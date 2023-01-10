@@ -1,3 +1,12 @@
+v2023.01.10
+===========
+* Plugin Development: add jsp-base.jar library to run configuration. #4206
+* Check whether the glogin command exists before running it. #4239
+* Mark module as clion's own module #4250
+* Configure the Scala version properly for the Scala plugin #3737
+* fix(go) Correctly identify subscoped tests #4131
+* Extension point to configure the way BlazePyRunConfigurationRunner selects the executable file #4180
+
 v2022.12.13
 ===========
 * Remove ProjectFrameUpdater workaround (fixes UI components repeated on titlebar when NewUI is enabled, on 2022.3 EAP #4094)
