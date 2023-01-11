@@ -61,7 +61,7 @@ public final class BuildEventProtocolUtils {
     return ImmutableList.of("--build_event_binary_file=" + outputFile.getPath(), LOCAL_FILE_PATHS);
   }
 
-  private static File getOutputDir() {
+  public static File getOutputDir() {
     String dirPath = System.getProperty(BEP_OUTPUT_FILE_VM_OVERRIDE);
     if (Strings.isNullOrEmpty(dirPath)) {
       dirPath = System.getProperty("java.io.tmpdir");
