@@ -98,7 +98,6 @@ public class QuerySyncTrafficLightRendererContributor implements TrafficLightRen
           @Override
           public void fillHectorPanels(@NotNull Container container, @NotNull GridBag bag) {}
 
-          @Override
           public boolean enableToolbar() {
             return true;
           }
