@@ -58,67 +58,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
   }
 
   @Test
-  public void testExternalSourceArtifactOldFormat() {
-    ArtifactLocation artifactLocation =
-        ArtifactLocation.fromProto(
-            Common.ArtifactLocation.newBuilder()
-                .setRelativePath("external/repo_name/com/google/Bla.java")
-                .setIsSource(true)
-                .setIsExternal(true)
-                .build());
-
-    assertThat(artifactLocation.getRelativePath()).isEqualTo("com/google/Bla.java");
-    assertThat(artifactLocation.getExecutionRootRelativePath())
-        .isEqualTo("external/repo_name/com/google/Bla.java");
-
-    ArtifactLocationDecoder decoder =
-        new ArtifactLocationDecoderImpl(
-            BlazeInfo.createMockBlazeInfo(
-                OUTPUT_BASE,
-                EXECUTION_ROOT,
-                EXECUTION_ROOT + "/blaze-out/crosstool/bin",
-                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles",
-                EXECUTION_ROOT + "/blaze-out/crosstool/testlogs"),
-            null,
-            RemoteOutputArtifacts.EMPTY);
-
-    assertThat(decoder.decode(artifactLocation).getPath())
-        .isEqualTo(EXECUTION_ROOT + "/external/repo_name/com/google/Bla.java");
-  }
-
-  @Test
-  public void testExternalDerivedArtifactOldFormat() {
-    ArtifactLocation artifactLocation =
-        ArtifactLocation.fromProto(
-            Common.ArtifactLocation.newBuilder()
-                .setRelativePath("external/repo_name/com/google/Bla.java")
-                .setRootExecutionPathFragment("blaze-out/crosstool/bin")
-                .setIsSource(false)
-                .setIsExternal(true)
-                .build());
-
-    assertThat(artifactLocation.getRelativePath()).isEqualTo("com/google/Bla.java");
-    assertThat(artifactLocation.getExecutionRootRelativePath())
-        .isEqualTo("blaze-out/crosstool/bin/external/repo_name/com/google/Bla.java");
-
-    ArtifactLocationDecoder decoder =
-        new ArtifactLocationDecoderImpl(
-            BlazeInfo.createMockBlazeInfo(
-                OUTPUT_BASE,
-                EXECUTION_ROOT,
-                EXECUTION_ROOT + "/blaze-out/crosstool/bin",
-                EXECUTION_ROOT + "/blaze-out/crosstool/genfiles",
-                EXECUTION_ROOT + "/blaze-out/crosstool/testlogs"),
-            null,
-            RemoteOutputArtifacts.EMPTY);
-
-    assertThat(decoder.decode(artifactLocation).getPath())
-        .isEqualTo(
-            EXECUTION_ROOT + "/blaze-out/crosstool/bin/external/repo_name/com/google/Bla.java");
-  }
-
-  @Test
-  public void testExternalSourceArtifactNewFormat() {
+  public void testExternalSourceArtifact() {
     ArtifactLocation artifactLocation =
         ArtifactLocation.fromProto(
             Common.ArtifactLocation.newBuilder()
@@ -126,7 +66,6 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
                 .setRootExecutionPathFragment("../repo_name")
                 .setIsSource(true)
                 .setIsExternal(true)
-                .setIsNewExternalVersion(true)
                 .build());
 
     assertThat(artifactLocation.getRelativePath()).isEqualTo("com/google/Bla.java");
@@ -149,14 +88,13 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
   }
 
   @Test
-  public void testExternalDerivedArtifactNewFormat() {
+  public void testExternalDerivedArtifact() {
     ArtifactLocation artifactLocation =
         ArtifactLocation.fromProto(
             Common.ArtifactLocation.newBuilder()
                 .setRelativePath("com/google/Bla.java")
                 .setRootExecutionPathFragment("../repo_name/blaze-out/crosstool/bin")
                 .setIsSource(false)
-                .setIsNewExternalVersion(true)
                 .build());
 
     assertThat(artifactLocation.getRelativePath()).isEqualTo("com/google/Bla.java");

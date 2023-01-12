@@ -18,7 +18,6 @@ package com.google.idea.blaze.java.sync.source;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -51,7 +50,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -201,17 +199,6 @@ public class PackageManifestReader {
   private static ArtifactLocation fromProto(Common.ArtifactLocation location) {
     String relativePath = location.getRelativePath();
     String rootExecutionPathFragment = location.getRootExecutionPathFragment();
-    if (!location.getIsNewExternalVersion() && location.getIsExternal()) {
-      // fix up incorrect paths created with older aspect version
-      // Note: bazel always uses the '/' separator here, even on windows.
-      List<String> components = StringUtil.split(relativePath, "/");
-      if (components.size() > 2) {
-        relativePath = Joiner.on('/').join(components.subList(2, components.size()));
-        String prefix = components.get(0) + "/" + components.get(1);
-        rootExecutionPathFragment =
-            rootExecutionPathFragment.isEmpty() ? prefix : rootExecutionPathFragment + "/" + prefix;
-      }
-    }
     return ArtifactLocation.builder()
         .setRootExecutionPathFragment(rootExecutionPathFragment)
         .setRelativePath(relativePath)

@@ -15,14 +15,12 @@
  */
 package com.google.idea.blaze.base.ideinfo;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.collect.ComparisonChain;
 import com.google.devtools.intellij.aspect.Common;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
-import com.intellij.openapi.util.text.StringUtil;
+
 import java.nio.file.Paths;
-import java.util.List;
 
 /** Represents a blaze-produced artifact. */
 public final class ArtifactLocation
@@ -41,35 +39,12 @@ public final class ArtifactLocation
   }
 
   public static ArtifactLocation fromProto(Common.ArtifactLocation proto) {
-    proto = fixProto(proto);
     return ProjectDataInterner.intern(
         new ArtifactLocation(
             proto.getRootExecutionPathFragment().intern(),
             proto.getRelativePath(),
             proto.getIsSource(),
             proto.getIsExternal()));
-  }
-
-  private static Common.ArtifactLocation fixProto(Common.ArtifactLocation proto) {
-    if (!proto.getIsNewExternalVersion() && proto.getIsExternal()) {
-      String relativePath = proto.getRelativePath();
-      String rootExecutionPathFragment = proto.getRootExecutionPathFragment();
-      // fix up incorrect paths created with older aspect version
-      // Note: bazel always uses the '/' separator here, even on windows.
-      List<String> components = StringUtil.split(relativePath, "/");
-      if (components.size() > 2) {
-        relativePath = Joiner.on('/').join(components.subList(2, components.size()));
-        String prefix = components.get(0) + "/" + components.get(1);
-        rootExecutionPathFragment =
-            rootExecutionPathFragment.isEmpty() ? prefix : rootExecutionPathFragment + "/" + prefix;
-        return proto
-            .toBuilder()
-            .setRootExecutionPathFragment(rootExecutionPathFragment)
-            .setRelativePath(relativePath)
-            .build();
-      }
-    }
-    return proto;
   }
 
   @Override
