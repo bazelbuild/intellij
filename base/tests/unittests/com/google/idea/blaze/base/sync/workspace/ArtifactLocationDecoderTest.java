@@ -58,7 +58,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
   }
 
   @Test
-  public void testExternalSourceArtifactNewFormat() {
+  public void testExternalSourceArtifact() {
     ArtifactLocation artifactLocation =
         ArtifactLocation.fromProto(
             Common.ArtifactLocation.newBuilder()
@@ -88,7 +88,7 @@ public class ArtifactLocationDecoderTest extends BlazeTestCase {
   }
 
   @Test
-  public void testExternalDerivedArtifactNewFormat() {
+  public void testExternalDerivedArtifact() {
     ArtifactLocation artifactLocation =
         ArtifactLocation.fromProto(
             Common.ArtifactLocation.newBuilder()
