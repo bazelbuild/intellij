@@ -270,6 +270,26 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
         create_executable = 0,
     )
 
+    if not ("testonly" in kwargs and kwargs["testonly"]):
+        DELETE_ENTRIES = [
+            # TODO(b/255334320) Remove these 2 (and hopefully the entire zip -d invocation)
+            "com/google/common/util/concurrent/ListenableFuture.class",
+        ]
+        deploy_jar = binary_name + "_cleaned.jar"
+        native.genrule(
+            name = binary_name + "_cleaned",
+            srcs = [binary_name + "_deploy.jar"],
+            outs = [deploy_jar],
+            cmd = "\n".join([
+                # zip -d operates on a single zip file, modifying it in place. So
+                # make a copy of our input first, and make it writable.
+                "cp $< $@",
+                "chmod u+w $@",
+                "zip -q -d $@ " + " ".join(DELETE_ENTRIES) + " || true ",
+            ]),
+            message = "Applying workarounds to plugin jar",
+        )
+
     jar_target_name = name + "_intellij_plugin_jar"
     _intellij_plugin_jar(
         name = jar_target_name,
