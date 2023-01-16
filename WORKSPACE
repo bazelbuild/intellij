@@ -112,6 +112,14 @@ http_archive(
     url = "https://download.jetbrains.com/cpp/CLion-2022.2.tar.gz",
 )
 
+# The plugin api for clion_2022_3 clion. This is required to build CLwB\, and run integration tests.
+http_archive(
+    name = "clion_2022_3",
+    build_file = "@//intellij_platform_sdk:BUILD.clion223",
+    sha256 = "9b8870f37c16288e6bc6f654b561756271250f9e107299cd8da879c57ce5c5d9",
+    url = "https://download.jetbrains.com/cpp/CLion-2022.3.tar.gz",
+)
+
 _PYTHON_CE_BUILD_FILE = """
 java_import(
     name = "python",
@@ -485,6 +493,7 @@ rules_proto_toolchains()
 
 # LICENSE: The Apache Software License, Version 2.0
 rules_scala_version = "a0235fda820c635732d0d7cce86710eec92909ef"
+
 http_archive(
     name = "io_bazel_rules_scala",
     sha256 = "8981e4c5bb0f854b1c5da738876093249cf16b4b533cfec2d87dcdd1c867ffee",
