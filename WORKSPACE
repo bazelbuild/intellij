@@ -471,9 +471,11 @@ http_archive(
 # specify a minimum version for bazel otherwise users on old versions may see
 # unexpressive errors when new features are used
 load("@bazel_skylib//lib:versions.bzl", "versions")
+
 versions.check(minimum_bazel_version = "5.2.0")
 
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
 bazel_skylib_workspace()
 
 http_archive(
@@ -486,10 +488,15 @@ http_archive(
 )
 
 load("@contrib_rules_bazel_integration_test//bazel_integration_test:deps.bzl", "bazel_integration_test_rules_dependencies")
+
 bazel_integration_test_rules_dependencies()
 
 load("@contrib_rules_bazel_integration_test//bazel_integration_test:defs.bzl", "bazel_binaries")
-bazel_binaries(versions = ["6.0.0", "0.28.1", "0.27.2"])
+
+bazel_binaries(versions = [
+    "6.0.0",
+    "1.2.0",
+])
 
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(
@@ -509,6 +516,7 @@ rules_proto_toolchains()
 
 # LICENSE: The Apache Software License, Version 2.0
 rules_scala_version = "a0235fda820c635732d0d7cce86710eec92909ef"
+
 http_archive(
     name = "io_bazel_rules_scala",
     sha256 = "8981e4c5bb0f854b1c5da738876093249cf16b4b533cfec2d87dcdd1c867ffee",
