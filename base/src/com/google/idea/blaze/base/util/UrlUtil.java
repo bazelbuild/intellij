@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.io.URLUtil;
 import java.io.File;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 
 /** Utility methods for converting between URLs and file paths. */
@@ -33,6 +34,10 @@ public class UrlUtil {
 
   public static String fileToIdeaUrl(File path) {
     return pathToUrl(FileUtil.toSystemIndependentName(path.getPath()));
+  }
+
+  public static String pathToIdeaUrl(Path path) {
+    return pathToUrl(FileUtil.toSystemIndependentName(path.toString()));
   }
 
   public static String pathToUrl(String filePath) {

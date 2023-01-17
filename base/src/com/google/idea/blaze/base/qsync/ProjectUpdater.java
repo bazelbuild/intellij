@@ -15,10 +15,14 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -33,6 +37,7 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BuildGraph;
 import com.google.idea.blaze.qsync.BuildGraph.BuildGraphListener;
+import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
@@ -65,6 +70,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -181,6 +187,16 @@ public class ProjectUpdater implements BuildGraphListener {
     return "";
   }
 
+  public static ModuleType<?> mapModuleType(ProjectProto.ModuleType type) {
+    switch (type) {
+      case MODULE_TYPE_DEFAULT:
+        return ModuleTypeManager.getInstance().getDefaultModuleType();
+      case UNRECOGNIZED:
+        break;
+    }
+    throw new IllegalStateException("Unrecognised module type " + type);
+  }
+
   @Override
   public void graphCreated(Context context) throws IOException {
     BlazeImportSettings importSettings =
@@ -202,7 +218,7 @@ public class ProjectUpdater implements BuildGraphListener {
 
     ImmutableSet<String> androidResourceDirectories =
         computeAndroidResourceDirectories(graph.getAllSourceFiles());
-    Set<String> androidSourcePackages =
+    ImmutableSet<String> androidSourcePackages =
         computeAndroidSourcePackages(context, workspaceRoot.directory().toPath(), rootToPrefix);
 
     context.output(
@@ -213,69 +229,138 @@ public class ProjectUpdater implements BuildGraphListener {
         PrintOutput.log(
             String.format("Detected %d android resource packages", androidSourcePackages.size())));
 
+    ProjectProto.Library depsLib =
+        ProjectProto.Library.newBuilder()
+            .setName(".dependencies")
+            .addClassesJar(
+                ProjectProto.JarDirectory.newBuilder()
+                    .setPath(".blaze/libraries")
+                    .setRecursive(false))
+            .build();
+
+    ProjectProto.Module.Builder workspaceModule =
+        ProjectProto.Module.newBuilder()
+            .setName(".workspace")
+            .setType(ProjectProto.ModuleType.MODULE_TYPE_DEFAULT)
+            .addLibraryName(depsLib.getName())
+            .addAllAndroidResourceDirectories(androidResourceDirectories)
+            .addAllAndroidSourcePackages(androidSourcePackages);
+
+    Multimap<WorkspacePath, WorkspacePath> excludesByRootDirectory =
+        sortExcludesByRootDirectory(ir.rootDirectories(), ir.excludeDirectories());
+    for (WorkspacePath dir : ir.rootDirectories()) {
+      File rootFile = workspaceRoot.fileForPath(dir);
+      ProjectProto.ContentEntry.Builder contentEntry =
+          ProjectProto.ContentEntry.newBuilder().setRoot(rootFile.getAbsolutePath());
+      Map<String, String> sourceRootsWithPrefixes = rootToPrefix.get(dir.toString());
+      for (Entry<String, String> entry : sourceRootsWithPrefixes.entrySet()) {
+        Path rDir = workspaceRoot.directory().toPath().resolve(dir.toString());
+        Path path = rDir.resolve(entry.getKey());
+        contentEntry.addSources(
+            ProjectProto.SourceFolder.newBuilder()
+                .setPath(path.toString())
+                .setPackagePrefix(entry.getValue())
+                .setIsTest(false) // TODO
+                .build());
+      }
+      for (WorkspacePath exclude : excludesByRootDirectory.get(dir)) {
+        File excludeFolder = workspaceRoot.fileForPath(exclude);
+        contentEntry.addExcludes(excludeFolder.toPath().toString());
+      }
+      workspaceModule.addContentEntries(contentEntry);
+    }
+
+    ProjectProto.Project project =
+        ProjectProto.Project.newBuilder().addLibrary(depsLib).addModules(workspaceModule).build();
+
+    updateProjectModel(project, importSettings, projectViewSet, workspaceRoot, context);
+  }
+
+  private void updateProjectModel(
+      ProjectProto.Project spec,
+      BlazeImportSettings importSettings,
+      ProjectViewSet projectViewSet,
+      WorkspaceRoot workspaceRoot,
+      Context context) {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
-
     File imlDirectory = new File(BlazeDataStorage.getProjectDataDir(importSettings), "modules");
-    ModuleType<?> mt = ModuleTypeManager.getInstance().getDefaultModuleType();
-
     Transactions.submitWriteActionTransactionAndWait(
         () -> {
           for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
             syncPlugin.updateProjectSdk(project, context, projectViewSet);
           }
 
-          Module module =
-              moduleManager.newModule(imlDirectory.toPath().resolve(".workspace.iml"), mt.getId());
-
-          ModifiableRootModel roots = ModuleRootManager.getInstance(module).getModifiableModel();
-          roots.inheritSdk();
-          Multimap<WorkspacePath, WorkspacePath> excludesByRootDirectory =
-              sortExcludesByRootDirectory(ir.rootDirectories(), ir.excludeDirectories());
-
-          for (ContentEntry entry : roots.getContentEntries()) {
-            roots.removeContentEntry(entry);
-          }
-          for (WorkspacePath dir : ir.rootDirectories()) {
-            File rootFile = workspaceRoot.fileForPath(dir);
-            ContentEntry contentEntry =
-                roots.addContentEntry(UrlUtil.pathToUrl(rootFile.getPath()));
-            Map<String, String> sourceRootsWithPrefixes = rootToPrefix.get(dir.toString());
-            for (Entry<String, String> entry : sourceRootsWithPrefixes.entrySet()) {
-              Path rDir = workspaceRoot.directory().toPath().resolve(dir.toString());
-              File path = rDir.resolve(entry.getKey()).toFile();
-              SourceFolder sourceFolder =
-                  contentEntry.addSourceFolder(UrlUtil.fileToIdeaUrl(path), false);
-              sourceFolder.setPackagePrefix(entry.getValue());
-            }
-            for (WorkspacePath exclude : excludesByRootDirectory.get(dir)) {
-              File excludeFolder = workspaceRoot.fileForPath(exclude);
-              contentEntry.addExcludeFolder(UrlUtil.fileToIdeaUrl(excludeFolder));
-            }
-          }
-
           IdeModifiableModelsProvider models =
               ProjectDataManager.getInstance().createModifiableModelsProvider(project);
-          String libraryName = ".dependencies";
-          int removedLibCount = removeUnusedLibraries(models, libraryName);
+          int removedLibCount = removeUnusedLibraries(models, spec.getLibraryList());
           if (removedLibCount > 0) {
             context.output(PrintOutput.output("Removed " + removedLibCount + " libs"));
           }
-          Library library = getOrCreateLibrary(models, libraryName);
+          ImmutableMap.Builder<String, Library> libMapBuilder = ImmutableMap.builder();
+          for (ProjectProto.Library libSpec : spec.getLibraryList()) {
+            Library library = getOrCreateLibrary(models, libSpec);
+            libMapBuilder.put(libSpec.getName(), library);
+          }
+          ImmutableMap<String, Library> libMap = libMapBuilder.buildOrThrow();
           models.commit();
 
-          LibraryOrderEntry entry = roots.addLibraryEntry(library);
-          entry.setScope(DependencyScope.COMPILE);
-          entry.setExported(false);
-          for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
-            syncPlugin.updateProjectStructure(
-                project,
-                context,
-                workspaceRoot,
-                module,
-                androidResourceDirectories,
-                androidSourcePackages);
+          for (ProjectProto.Module moduleSpec : spec.getModulesList()) {
+            Module module =
+                moduleManager.newModule(
+                    imlDirectory.toPath().resolve(moduleSpec.getName() + ".iml"),
+                    mapModuleType(moduleSpec.getType()).getId());
+
+            ModifiableRootModel roots = ModuleRootManager.getInstance(module).getModifiableModel();
+            // TODO: should this be encapsulated in ProjectProto.Module?
+            roots.inheritSdk();
+
+            // TODO instead of removing all content entries and re-adding, we should calculate the
+            //  diff.
+            for (ContentEntry entry : roots.getContentEntries()) {
+              roots.removeContentEntry(entry);
+            }
+            for (ProjectProto.ContentEntry ceSpec : moduleSpec.getContentEntriesList()) {
+
+              ContentEntry contentEntry =
+                  roots.addContentEntry(UrlUtil.pathToUrl(ceSpec.getRoot()));
+              for (ProjectProto.SourceFolder sfSpec : ceSpec.getSourcesList()) {
+                SourceFolder sourceFolder =
+                    contentEntry.addSourceFolder(
+                        UrlUtil.pathToUrl(sfSpec.getPath()), sfSpec.getIsTest());
+                sourceFolder.setPackagePrefix(sfSpec.getPackagePrefix());
+              }
+              for (String exclude : ceSpec.getExcludesList()) {
+                contentEntry.addExcludeFolder(UrlUtil.pathToUrl(exclude));
+              }
+            }
+
+            for (String lib : moduleSpec.getLibraryNameList()) {
+              Library library = libMap.get(lib);
+              if (library == null) {
+                throw new IllegalStateException(
+                    "Module refers to library " + lib + " not present in the project spec");
+              }
+              LibraryOrderEntry entry = roots.addLibraryEntry(library);
+              // TODO should this stuff be specified by the Module proto too?
+              entry.setScope(DependencyScope.COMPILE);
+              entry.setExported(false);
+            }
+
+            for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
+              // TODO update ProjectProto.Module and updateProjectStructure() to allow a more
+              // suitable
+              //   data type to be passed in here instead of androidResourceDirectories and
+              //   androidSourcePackages
+              syncPlugin.updateProjectStructure(
+                  project,
+                  context,
+                  workspaceRoot,
+                  module,
+                  ImmutableSet.copyOf(moduleSpec.getAndroidResourceDirectoriesList()),
+                  ImmutableSet.copyOf(moduleSpec.getAndroidSourcePackagesList()));
+            }
+            roots.commit();
           }
-          roots.commit();
         });
   }
 
@@ -298,9 +383,9 @@ public class ProjectUpdater implements BuildGraphListener {
    * packages of source files owned by Android targets (at most one file per target). Inefficient
    * for large projects with many android targets. To be replaced by a more robust implementation.
    */
-  private Set<String> computeAndroidSourcePackages(
+  private ImmutableSet<String> computeAndroidSourcePackages(
       Context context, Path workspaceRoot, Map<String, Map<String, String>> rootToPrefix) {
-    Set<String> androidSourcePackages = new HashSet<>();
+    ImmutableSet.Builder<String> androidSourcePackages = ImmutableSet.builder();
     for (String androidSourceFile : graph.getAndroidSourceFiles()) {
       boolean found = false;
       for (Entry<String, Map<String, String>> root : rootToPrefix.entrySet()) {
@@ -336,41 +421,54 @@ public class ProjectUpdater implements BuildGraphListener {
                 String.format("Android source %s not found in any root", androidSourceFile)));
       }
     }
-    return androidSourcePackages;
+    return androidSourcePackages.build();
   }
 
-  private Library getOrCreateLibrary(IdeModifiableModelsProvider models, String libraryName) {
-    Library library = models.getLibraryByName(libraryName);
+  private Library getOrCreateLibrary(
+      IdeModifiableModelsProvider models, ProjectProto.Library libSpec) {
+    // TODO this needs more work, it's a bit messy.
+    Library library = models.getLibraryByName(libSpec.getName());
     if (library == null) {
-      library = models.createLibrary(libraryName);
+      library = models.createLibrary(libSpec.getName());
     }
-    // make sure the library contains only jar directory url
-    ModifiableModel modifiableModel = library.getModifiableModel();
-    Path libs = Paths.get(project.getBasePath()).resolve(".blaze/libraries");
+    Path projectBase = Paths.get(project.getBasePath());
+    ImmutableMap<String, ProjectProto.JarDirectory> dirs =
+        libSpec.getClassesJarList().stream()
+            .collect(
+                ImmutableMap.toImmutableMap(
+                    d -> UrlUtil.pathToIdeaUrl(projectBase.resolve(d.getPath())),
+                    Function.identity()));
 
-    boolean findJarDirectory = false;
+    // make sure the library contains only jar directory urls we want
+    ModifiableModel modifiableModel = library.getModifiableModel();
+
+    Set<String> foundJarDirectories = Sets.newHashSet();
     for (String url : modifiableModel.getUrls(OrderRootType.CLASSES)) {
-      if (url.equals(UrlUtil.fileToIdeaUrl(libs.toFile())) && modifiableModel.isJarDirectory(url)) {
-        findJarDirectory = true;
+      if (modifiableModel.isJarDirectory(url) && dirs.containsKey(url)) {
+        foundJarDirectories.add(url);
       } else {
         modifiableModel.removeRoot(url, OrderRootType.CLASSES);
       }
     }
-    if (!findJarDirectory) {
-      modifiableModel.addJarDirectory(UrlUtil.fileToIdeaUrl(libs.toFile()), false);
+    for (String notFound : Sets.difference(dirs.keySet(), foundJarDirectories)) {
+      ProjectProto.JarDirectory dir = dirs.get(notFound);
+      modifiableModel.addJarDirectory(notFound, dir.getRecursive(), OrderRootType.CLASSES);
     }
     modifiableModel.commit();
     return library;
   }
 
   /**
-   * Removes any existing library that should not be used by this project e.g. inherit rom old
+   * Removes any existing library that should not be used by this project e.g. inherit from old
    * project.
    */
-  private int removeUnusedLibraries(IdeModifiableModelsProvider models, String libraryToKeep) {
+  private int removeUnusedLibraries(
+      IdeModifiableModelsProvider models, List<ProjectProto.Library> libraries) {
+    ImmutableSet<String> librariesToKeep =
+        libraries.stream().map(ProjectProto.Library::getName).collect(toImmutableSet());
     int removedLibCount = 0;
     for (Library library : models.getAllLibraries()) {
-      if (!libraryToKeep.equals(library.getName())) {
+      if (!librariesToKeep.contains(library.getName())) {
         removedLibCount++;
         models.removeLibrary(library);
       }
