@@ -51,7 +51,6 @@ intellij_plugin_library(
 alias(
     name = "plugin_library_for_aswb",
     actual = select_for_plugin_api({
-        "android-studio-2021.2": ":empty",
         "android-studio-2021.3": ":empty",
         # 2022.1 and all future versions should include this.
         "default": "//plugin_dev:plugin_library",
