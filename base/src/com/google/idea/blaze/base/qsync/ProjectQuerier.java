@@ -35,8 +35,11 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.BuildGraph;
+import com.google.idea.blaze.qsync.BuildGraphData;
 import com.intellij.openapi.project.Project;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -50,11 +53,11 @@ import java.util.stream.Stream;
 public class ProjectQuerier {
 
   private final Project project;
-  private final BuildGraph buildGraph;
+  private final BuildGraph graph;
 
   public ProjectQuerier(Project project, BuildGraph buildGraph) {
     this.project = project;
-    this.buildGraph = buildGraph;
+    this.graph = buildGraph;
   }
 
   public void rebuild(BlazeContext context) throws IOException {
@@ -91,7 +94,7 @@ public class ProjectQuerier {
             .addBlazeFlags("--output=streamed_proto")
             .build();
 
-    String protoFile = "/tmp/q.proto";
+    File protoFile = new File("/tmp/q.proto");
     FileOutputStream out = new FileOutputStream(protoFile);
     LineProcessingOutputStream lpos =
         LineProcessingOutputStream.of(
@@ -104,7 +107,9 @@ public class ProjectQuerier {
         .build()
         .run();
 
-    buildGraph.initialize(root.directory().toPath().toAbsolutePath(), context, protoFile);
+    BuildGraphData graphData =
+        new BlazeQueryParser(root.directory().toPath().toAbsolutePath(), context).parse(protoFile);
+    graph.setCurrent(context, graphData);
   }
 
   private static List<String> getValidDirectories(

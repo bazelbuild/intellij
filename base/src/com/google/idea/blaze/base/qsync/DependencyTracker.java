@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
@@ -70,7 +71,7 @@ public class DependencyTracker {
     String rel =
         Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath())).toString();
 
-    Set<String> targets = graph.getFileDependencies(rel);
+    ImmutableSet<String> targets = graph.getCurrent().getFileDependencies(rel);
     if (targets == null) {
       return null;
     }
@@ -92,8 +93,8 @@ public class DependencyTracker {
     Set<String> targets = new HashSet<>();
     Set<String> buildTargets = new HashSet<>();
     for (WorkspacePath path : paths) {
-      buildTargets.add(graph.getTargetOwner(path.toString()));
-      Set<String> t = graph.getFileDependencies(path.toString());
+      buildTargets.add(graph.getCurrent().getTargetOwner(path.toString()));
+      ImmutableSet<String> t = graph.getCurrent().getFileDependencies(path.toString());
       if (t != null) {
         targets.addAll(t);
       }

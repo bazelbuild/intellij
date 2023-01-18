@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.devtools.build.runtime.RunfilesPaths;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Output;
+import java.io.File;
 import java.nio.file.Paths;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,17 +41,18 @@ public class BuildGraphTest {
         public void setHasError() {}
       };
 
-  private static String getQueryFile(String genQueryName) {
+  private static File getQueryFile(String genQueryName) {
     return RunfilesPaths.resolve(
             "querysync/javatests/com/google/idea/blaze/qsync/"
                 + genQueryName)
-        .toString();
+        .toFile();
   }
 
   @Test
   public void testJavaLibraryNoDeps() throws Exception {
-    BuildGraph graph = new BuildGraph();
-    graph.initialize(Paths.get(""), TEST_CONTEXT, getQueryFile("JavaLibraryNoDepsQuery"));
+    BuildGraphData graph =
+        new BlazeQueryParser(Paths.get(""), TEST_CONTEXT)
+            .parse(getQueryFile("JavaLibraryNoDepsQuery"));
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
             TESTDATA_ROOT + "/nodeps/TestClassNoDeps.java", TESTDATA_ROOT + "/nodeps/BUILD");
@@ -64,16 +66,18 @@ public class BuildGraphTest {
 
   @Test
   public void testJavaLibraryExternalDep() throws Exception {
-    BuildGraph graph = new BuildGraph();
-    graph.initialize(Paths.get(""), TEST_CONTEXT, getQueryFile("JavaLibraryExternalDepQuery"));
+    BuildGraphData graph =
+        new BlazeQueryParser(Paths.get(""), TEST_CONTEXT)
+            .parse(getQueryFile("JavaLibraryExternalDepQuery"));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT + "/externaldep/TestClassExternalDep.java"))
         .containsExactly("//java/com/google/common/collect:collect");
   }
 
   @Test
   public void testJavaLibraryInternalDep() throws Exception {
-    BuildGraph graph = new BuildGraph();
-    graph.initialize(Paths.get(""), TEST_CONTEXT, getQueryFile("JavaLibraryInternalDepQuery"));
+    BuildGraphData graph =
+        new BlazeQueryParser(Paths.get(""), TEST_CONTEXT)
+            .parse(getQueryFile("JavaLibraryInternalDepQuery"));
     // Sanity check:
     assertThat(graph.getAllSourceFiles()).contains(TESTDATA_ROOT + "/nodeps/TestClassNoDeps.java");
     assertThat(graph.getFileDependencies(TESTDATA_ROOT + "/internaldep/TestClassInternalDep.java"))
@@ -82,8 +86,9 @@ public class BuildGraphTest {
 
   @Test
   public void testJavaLibraryTransientDep() throws Exception {
-    BuildGraph graph = new BuildGraph();
-    graph.initialize(Paths.get(""), TEST_CONTEXT, getQueryFile("JavaLibraryTransitiveDepQuery"));
+    BuildGraphData graph =
+        new BlazeQueryParser(Paths.get(""), TEST_CONTEXT)
+            .parse(getQueryFile("JavaLibraryTransitiveDepQuery"));
     // Sanity check:
     assertThat(graph.getAllSourceFiles())
         .contains(TESTDATA_ROOT + "/externaldep/TestClassExternalDep.java");
@@ -94,16 +99,18 @@ public class BuildGraphTest {
 
   @Test
   public void testJavaLibraryProtoDep() throws Exception {
-    BuildGraph graph = new BuildGraph();
-    graph.initialize(Paths.get(""), TEST_CONTEXT, getQueryFile("JavaLibraryProtoDepQuery"));
+    BuildGraphData graph =
+        new BlazeQueryParser(Paths.get(""), TEST_CONTEXT)
+            .parse(getQueryFile("JavaLibraryProtoDepQuery"));
     assertThat(graph.getFileDependencies(TESTDATA_ROOT + "/protodep/TestClassProtoDep.java"))
         .containsExactly("//" + TESTDATA_ROOT + "/protodep:proto_java_proto_lite");
   }
 
   @Test
   public void testJavaLibraryMultiTargets() throws Exception {
-    BuildGraph graph = new BuildGraph();
-    graph.initialize(Paths.get(""), TEST_CONTEXT, getQueryFile("JavaLibraryMultiTargets"));
+    BuildGraphData graph =
+        new BlazeQueryParser(Paths.get(""), TEST_CONTEXT)
+            .parse(getQueryFile("JavaLibraryMultiTargets"));
     // Sanity check:
     assertThat(graph.getJavaSourceFiles())
         .contains(TESTDATA_ROOT + "/multitarget/TestClassSingleTarget.java");
@@ -117,8 +124,8 @@ public class BuildGraphTest {
 
   @Test
   public void testAndroidLibrary() throws Exception {
-    BuildGraph graph = new BuildGraph();
-    graph.initialize(Paths.get(""), TEST_CONTEXT, getQueryFile("AndroidLibQuery"));
+    BuildGraphData graph =
+        new BlazeQueryParser(Paths.get(""), TEST_CONTEXT).parse(getQueryFile("AndroidLibQuery"));
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
             TESTDATA_ROOT + "/android/TestAndroidClass.java", TESTDATA_ROOT + "/android/BUILD");
