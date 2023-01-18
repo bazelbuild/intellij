@@ -27,10 +27,6 @@ java_library(
                ]),
                default = [],
            ) + select_for_plugin_api({
-        "android-studio-2021.2": glob([
-            "testcompat/v212/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v212/com/google/idea/testing/java/*.java",
-        ]),
         "android-studio-2021.3": glob([
             "testcompat/v213/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v213/com/google/idea/testing/java/*.java",
@@ -48,7 +44,6 @@ java_library(
             "testcompat/asdev/com/google/idea/sdkcompat/**/*.java",
             "testcompat/asdev/com/google/idea/testing/java/*.java",
         ]),
-        "clion-2021.2": glob(["testcompat/v212/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2021.3": glob(["testcompat/v213/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2022.1": glob([
             "testcompat/v221/com/google/idea/sdkcompat/**/*.java",
@@ -56,14 +51,6 @@ java_library(
         ]),
         "clion-2022.2": glob(["testcompat/v222/com/google/idea/sdkcompat/**/*.java"]),
         "clion-2022.3": glob(["testcompat/v223/com/google/idea/sdkcompat/**/*.java"]),
-        "intellij-2021.2": glob([
-            "testcompat/v212/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v212/com/google/idea/testing/java/*.java",
-        ]),
-        "intellij-ue-2021.2": glob([
-            "testcompat/v212/com/google/idea/sdkcompat/**/*.java",
-            "testcompat/v212/com/google/idea/testing/java/*.java",
-        ]),
         "intellij-2021.3": glob([
             "testcompat/v213/com/google/idea/sdkcompat/**/*.java",
             "testcompat/v213/com/google/idea/testing/java/*.java",

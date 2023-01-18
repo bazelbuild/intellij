@@ -124,21 +124,6 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-2021.2",
-    values = {
-        "define": "ij_product=intellij-2021.2",
-    },
-)
-
-config_setting(
-    name = "intellij-2021.2-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-2021.2",
-    },
-)
-
-config_setting(
     name = "intellij-2021.3",
     values = {
         "define": "ij_product=intellij-2021.3",
@@ -195,21 +180,6 @@ config_setting(
     values = {
         "cpu": "darwin_x86_64",
         "define": "ij_product=intellij-2022.3",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2021.2",
-    values = {
-        "define": "ij_product=intellij-ue-2021.2",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-2021.2-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=intellij-ue-2021.2",
     },
 )
 
@@ -355,21 +325,6 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-2021.2",
-    values = {
-        "define": "ij_product=android-studio-2021.2",
-    },
-)
-
-config_setting(
-    name = "android-studio-2021.2-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-2021.2",
-    },
-)
-
-config_setting(
     name = "android-studio-2021.3",
     values = {
         "define": "ij_product=android-studio-2021.3",
@@ -461,21 +416,6 @@ config_setting(
     name = "clion-under-dev",
     values = {
         "define": "ij_product=clion-under-dev",
-    },
-)
-
-config_setting(
-    name = "clion-2021.2",
-    values = {
-        "define": "ij_product=clion-2021.2",
-    },
-)
-
-config_setting(
-    name = "clion-2021.2-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=clion-2021.2",
     },
 )
 
@@ -634,22 +574,18 @@ java_library(
 java_library(
     name = "jsr305",
     exports = select_for_plugin_api({
-        "clion-2021.2": [":bundled_jsr305"],
         "clion-2021.3": [":bundled_jsr305"],
         "clion-2022.1": ["@jsr305_annotations//jar"],
         "clion-2022.2": ["@jsr305_annotations//jar"],
         "clion-2022.3": ["@jsr305_annotations//jar"],
-        "intellij-2021.2": ["@jsr305_annotations//jar"],
         "intellij-2021.3": ["@jsr305_annotations//jar"],
         "intellij-2022.1": ["@jsr305_annotations//jar"],
         "intellij-2022.2": ["@jsr305_annotations//jar"],
         "intellij-2022.3": ["@jsr305_annotations//jar"],
-        "intellij-ue-2021.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.3": ["@jsr305_annotations//jar"],
-        "android-studio-2021.2": ["@jsr305_annotations//jar"],
         "android-studio-2021.3": ["@jsr305_annotations//jar"],
         "android-studio-2022.1": ["@jsr305_annotations//jar"],
         "android-studio-2022.2": ["@jsr305_annotations//jar"],
