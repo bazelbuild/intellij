@@ -36,7 +36,8 @@ import com.google.idea.blaze.base.util.UrlUtil;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BuildGraph;
-import com.google.idea.blaze.qsync.BuildGraph.BuildGraphListener;
+import com.google.idea.blaze.qsync.BuildGraphData;
+import com.google.idea.blaze.qsync.BuildGraphListener;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -78,11 +79,9 @@ import java.util.regex.Pattern;
 public class ProjectUpdater implements BuildGraphListener {
 
   private Project project;
-  private final BuildGraph graph;
 
   public ProjectUpdater(Project project, BuildGraph graph) {
     this.project = project;
-    this.graph = graph;
     graph.addListener(this);
   }
 
@@ -198,7 +197,7 @@ public class ProjectUpdater implements BuildGraphListener {
   }
 
   @Override
-  public void graphCreated(Context context) throws IOException {
+  public void graphCreated(Context context, BuildGraphData graph) throws IOException {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
@@ -219,7 +218,8 @@ public class ProjectUpdater implements BuildGraphListener {
     ImmutableSet<String> androidResourceDirectories =
         computeAndroidResourceDirectories(graph.getAllSourceFiles());
     ImmutableSet<String> androidSourcePackages =
-        computeAndroidSourcePackages(context, workspaceRoot.directory().toPath(), rootToPrefix);
+        computeAndroidSourcePackages(
+            context, graph, workspaceRoot.directory().toPath(), rootToPrefix);
 
     context.output(
         PrintOutput.log(
@@ -384,7 +384,10 @@ public class ProjectUpdater implements BuildGraphListener {
    * for large projects with many android targets. To be replaced by a more robust implementation.
    */
   private ImmutableSet<String> computeAndroidSourcePackages(
-      Context context, Path workspaceRoot, Map<String, Map<String, String>> rootToPrefix) {
+      Context context,
+      BuildGraphData graph,
+      Path workspaceRoot,
+      Map<String, Map<String, String>> rootToPrefix) {
     ImmutableSet.Builder<String> androidSourcePackages = ImmutableSet.builder();
     for (String androidSourceFile : graph.getAndroidSourceFiles()) {
       boolean found = false;
