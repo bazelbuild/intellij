@@ -293,8 +293,8 @@ http_archive(
 http_archive(
     name = "android_studio_2022_2",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio222",
-    sha256 = "8b894ab4abeaca096ab6181fb05d5bcdd7fe36ea6c3dca52fdbce3aad4197ba2",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2022.2.1.11/android-studio-2022.2.1.11-linux.tar.gz",
+    sha256 = "b488265fd2a24489c8ba98085d6820e1d31ff1b4f0915a293b100ee4ed4f5007",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2022.2.1.12/android-studio-2022.2.1.12-linux.tar.gz",
 )
 
 # The plugin api for android_studio_dev android_studio. This is required to build ASwB and run integration tests
@@ -455,9 +455,11 @@ http_archive(
 # specify a minimum version for bazel otherwise users on old versions may see
 # unexpressive errors when new features are used
 load("@bazel_skylib//lib:versions.bzl", "versions")
+
 versions.check(minimum_bazel_version = "5.2.0")
 
 load("@bazel_skylib//:workspace.bzl", "bazel_skylib_workspace")
+
 bazel_skylib_workspace()
 
 http_archive(
@@ -470,10 +472,16 @@ http_archive(
 )
 
 load("@contrib_rules_bazel_integration_test//bazel_integration_test:deps.bzl", "bazel_integration_test_rules_dependencies")
+
 bazel_integration_test_rules_dependencies()
 
 load("@contrib_rules_bazel_integration_test//bazel_integration_test:defs.bzl", "bazel_binaries")
-bazel_binaries(versions = ["6.0.0", "0.28.1", "0.27.2"])
+
+bazel_binaries(versions = [
+    "6.0.0",
+    "0.28.1",
+    "0.27.2",
+])
 
 # LICENSE: The Apache Software License, Version 2.0
 http_archive(
