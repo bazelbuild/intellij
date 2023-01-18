@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.devtools.intellij.model.ProjectData;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.google.idea.blaze.base.model.primitives.ExecutionRootPath;
 import com.google.idea.blaze.base.settings.BuildSystemName;
@@ -65,9 +66,12 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
     throw new IllegalArgumentException("Unrecognized build system: " + buildSystemName);
   }
 
+  public static Builder builder() {
+    return new AutoValue_BlazeInfo.Builder();
+  }
+
   public static BlazeInfo create(
       BuildSystemName buildSystemName, ImmutableMap<String, String> blazeInfoMap) {
-
     File executionRoot = new File(getOrThrow(blazeInfoMap, EXECUTION_ROOT_KEY).trim());
     ExecutionRootPath blazeBin =
         ExecutionRootPath.createAncestorRelativePath(
@@ -79,8 +83,14 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
         ExecutionRootPath.createAncestorRelativePath(
             executionRoot, new File(getOrThrow(blazeInfoMap, blazeTestlogsKey(buildSystemName))));
     File outputBase = new File(getOrThrow(blazeInfoMap, OUTPUT_BASE_KEY).trim());
-    return new AutoValue_BlazeInfo(
-        blazeInfoMap, executionRoot, blazeBin, blazeGenfiles, blazeTestlogs, outputBase);
+    return AutoValue_BlazeInfo.builder()
+        .setBlazeInfoMap(blazeInfoMap)
+        .setExecutionRoot(executionRoot)
+        .setBlazeBin(blazeBin)
+        .setBlazeGenfiles(blazeGenfiles)
+        .setBlazeTestlogs(blazeTestlogs)
+        .setOutputBase(outputBase)
+        .autoBuild();
   }
 
   public static BlazeInfo fromProto(BuildSystemName buildSystemName, ProjectData.BlazeInfo proto) {
@@ -145,5 +155,51 @@ public abstract class BlazeInfo implements ProtoWrapper<ProjectData.BlazeInfo> {
             .put(blazeGenfilesKey(buildSystemName), blazeGenFiles)
             .put(blazeTestlogsKey(buildSystemName), blazeTestlogs);
     return BlazeInfo.create(buildSystemName, blazeInfoMap.build());
+  }
+
+  /** A builder for {@link BlazeInfo}. */
+  @AutoValue.Builder
+  public abstract static class Builder {
+
+    public abstract Builder setExecutionRoot(File value);
+
+    public abstract Builder setBlazeBin(ExecutionRootPath value);
+
+    public abstract Builder setBlazeGenfiles(ExecutionRootPath value);
+
+    public abstract Builder setBlazeTestlogs(ExecutionRootPath value);
+
+    public abstract Builder setOutputBase(File value);
+
+    public abstract BlazeInfo autoBuild();
+
+    // A build method to populate the blazeInfoMap
+    public BlazeInfo build(BuildSystemName buildSystemName) {
+      BlazeInfo blazeInfo = autoBuild();
+      blazeInfoMapBuilder().put(OUTPUT_BASE_KEY, blazeInfo.getOutputBase().getPath());
+      blazeInfoMapBuilder().put(EXECUTION_ROOT_KEY, blazeInfo.getExecutionRoot().getPath());
+      File execRoot = new File(blazeInfo.getExecutionRoot().getAbsolutePath());
+      blazeInfoMapBuilder()
+          .put(
+              blazeBinKey(buildSystemName),
+              blazeInfo.getBlazeBin().getFileRootedAt(execRoot).getAbsolutePath());
+      blazeInfoMapBuilder()
+          .put(
+              blazeGenfilesKey(buildSystemName),
+              blazeInfo.getBlazeGenfiles().getFileRootedAt(execRoot).getAbsolutePath());
+      blazeInfoMapBuilder()
+          .put(
+              blazeTestlogsKey(buildSystemName),
+              blazeInfo.getBlazeTestlogs().getFileRootedAt(execRoot).getAbsolutePath());
+      return autoBuild();
+    }
+
+    public abstract ImmutableMap.Builder<String, String> blazeInfoMapBuilder();
+
+    @CanIgnoreReturnValue
+    public Builder setBlazeInfoMap(ImmutableMap<String, String> value) {
+      blazeInfoMapBuilder().putAll(value);
+      return this;
+    }
   }
 }
