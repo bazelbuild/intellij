@@ -80,6 +80,14 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2022.2/ideaIU-2022.2.zip",
 )
 
+# The plugin api for intellij_ue_2022_3 ue. This is required to run UE-specific integration tests.
+http_archive(
+    name = "intellij_ue_2022_3",
+    build_file = "@//intellij_platform_sdk:BUILD.ue223",
+    sha256 = "0b17ea16e70290d912b6be246460907643c23f33ae2c22331084818025c2b297",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2022.3/ideaIU-2022.3.zip",
+)
+
 # The plugin api for clion_2021_2. This is required to build CLwB, and run integration tests.
 http_archive(
     name = "clion_2021_2",
