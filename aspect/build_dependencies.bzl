@@ -80,6 +80,9 @@ def _collect_dependencies_impl(target, ctx):
                     included = False
                     break
 
+    if included and ctx.rule.kind in ctx.attr.always_build_rules.split(","):
+        included = False
+
     trs = []
     if not included:
         trs = [target[JavaInfo].compile_jars]
@@ -102,6 +105,10 @@ collect_dependencies = aspect(
         ),
         "exclude": attr.string(
             doc = "Comma separated list of exclusions to 'include'.",
+            default = "",
+        ),
+        "always_build_rules": attr.string(
+            doc = "Comma separated list of rules. Any targets belonging to these rules will be built, regardless of location",
             default = "",
         ),
     },

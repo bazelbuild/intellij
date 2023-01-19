@@ -43,6 +43,12 @@ import java.util.Set;
  * yields a {@link BuildGraphData} instance derived from it.
  */
 public class BlazeQueryParser {
+
+  // Rules that will need to be built, whether or not the target is included in the
+  // project.
+  public static final ImmutableSet<String> ALWAYS_BUILD_RULE_TYPES =
+      ImmutableSet.of(
+          "java_proto_library", "java_lite_proto_library", "java_mutable_proto_library");
   private static final ImmutableSet<String> JAVA_RULE_TYPES =
       ImmutableSet.of("java_library", "java_binary", "kt_jvm_library_helper", "java_test");
   private static final ImmutableSet<String> ANDROID_RULE_TYPES =
@@ -87,8 +93,8 @@ public class BlazeQueryParser {
 
     // An aggregation of all the dependencies of java rules
     Set<String> deps = new HashSet<>();
-    // All the proto targets
-    Set<String> protos = new HashSet<>();
+    // All the project targets the aspect needs to build
+    Set<String> projectTargetsToBuild = new HashSet<>();
     // Counts of all kinds of rules
     Map<String, Integer> ruleCount = new HashMap<>();
     // All the direct dependencies from source files to things it needs outside the project
@@ -144,8 +150,8 @@ public class BlazeQueryParser {
           if (ANDROID_RULE_TYPES.contains(target.getRule().getRuleClass())) {
             graphBuilder.androidTargetsBuilder().add(target.getRule().getName());
           }
-        } else if (target.getRule().getRuleClass().equals("java_lite_proto_library")) {
-          protos.add(target.getRule().getName());
+        } else if (ALWAYS_BUILD_RULE_TYPES.contains(target.getRule().getRuleClass())) {
+          projectTargetsToBuild.add(target.getRule().getName());
         }
       }
       nTargets += 1;
@@ -156,8 +162,8 @@ public class BlazeQueryParser {
         projectDeps.add(dep);
       }
     }
-    // Treat proto deps as external deps
-    projectDeps.addAll(protos);
+    // Treat project targets the aspect needs to build as external deps
+    projectDeps.addAll(projectTargetsToBuild);
 
     // Prune the source deps to only external ones.
     // This could be technically incorrect, because if there is a path from an internal rule
