@@ -33,7 +33,6 @@ import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
-import com.google.idea.sdkcompat.cpp.CppCompat;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -455,8 +454,7 @@ public final class BlazeCWorkspace implements ProjectComponent {
     try {
       int i = 0;
       for (OCResolveConfiguration.ModifiableModel config : model.getConfigurations()) {
-        CppCompat.scheduleInSession(
-            session, i++, config, toolEnvironment, workspaceRoot.directory().getAbsolutePath());
+        session.schedule(i++, config, toolEnvironment, workspaceRoot.directory().getAbsolutePath());
       }
       MultiMap<Integer, Message> messages = new MultiMap<>();
       session.waitForAll(messages);
