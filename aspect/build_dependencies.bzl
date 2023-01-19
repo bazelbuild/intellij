@@ -82,7 +82,7 @@ def _collect_dependencies_impl(target, ctx):
 
     trs = []
     if not included:
-        trs = [target[JavaInfo].compile_jars]
+        trs = [target[JavaInfo].transitive_compile_time_jars]
     for dep in ctx.rule.attr.deps:
         if DependenciesInfo in dep:
             trs.append(dep[DependenciesInfo].compile_time_jars)
