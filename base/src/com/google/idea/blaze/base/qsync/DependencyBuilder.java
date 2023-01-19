@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import static java.util.stream.Collectors.joining;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
@@ -39,6 +40,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.project.Project;
@@ -82,6 +84,7 @@ public class DependencyBuilder {
           aspect,
           workspaceRoot.directory().toPath().resolve(".aswb.bzl"),
           StandardCopyOption.REPLACE_EXISTING);
+      String alwaysBuildRuleTypes = Joiner.on(",").join(BlazeQueryParser.ALWAYS_BUILD_RULE_TYPES);
 
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       // TODO This is not SYNC_CONTEXT, but also not OTHER_CONTEXT, we need to decide what kind
@@ -103,6 +106,8 @@ public class DependencyBuilder {
                   "--aspects=//:.aswb.bzl%collect_dependencies,//:.aswb.bzl%package_dependencies")
               .addBlazeFlags(String.format("--aspects_parameters=include=%s", includes))
               .addBlazeFlags(String.format("--aspects_parameters=exclude=%s", excludes))
+              .addBlazeFlags(
+                  String.format("--aspects_parameters=always_build_rules=%s", alwaysBuildRuleTypes))
               .addBlazeFlags("--output_groups=ij_query_sync")
               .addBlazeFlags("--noexperimental_run_validations")
               .build();
