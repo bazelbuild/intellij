@@ -152,7 +152,7 @@ public class BlazeScalaAttachSourceProvider implements AttachSourcesProvider {
                     .setHasSourceJarAttached(blazeLibrary.key, true);
                 LibraryEditor.updateLibrary(
                     project,
-                    blazeProjectData.getArtifactLocationDecoder(),
+                    blazeProjectData,
                     modelsProvider,
                     blazeLibrary);
               }
