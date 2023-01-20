@@ -65,6 +65,11 @@ package_dependencies = aspect(
     required_aspect_providers = [[DependenciesInfo]],
 )
 
+def generates_idl_jar(target):
+    if AndroidIdeInfo not in target:
+        return False
+    return target[AndroidIdeInfo].idl_class_jar != None
+
 def _collect_dependencies_impl(target, ctx):
     label = str(target.label)
     included = False
@@ -89,6 +94,11 @@ def _collect_dependencies_impl(target, ctx):
     for dep in ctx.rule.attr.deps:
         if DependenciesInfo in dep:
             trs.append(dep[DependenciesInfo].compile_time_jars)
+
+    if included and ctx.attr.generate_aidl_classes and generates_idl_jar(target):
+        idl_jar = target[AndroidIdeInfo].idl_class_jar
+        trs.append(depset([idl_jar]))
+
     cj = depset([], transitive = trs)
 
     return [DependenciesInfo(compile_time_jars = cj)]
@@ -110,6 +120,10 @@ collect_dependencies = aspect(
         "always_build_rules": attr.string(
             doc = "Comma separated list of rules. Any targets belonging to these rules will be built, regardless of location",
             default = "",
+        ),
+        "generate_aidl_classes": attr.bool(
+            doc = "If True, generates classes for aidl files included as source for the project targets",
+            default = False,
         ),
     },
 )
