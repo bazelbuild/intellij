@@ -67,7 +67,6 @@ public class BlazeQueryParser {
     this.context = context;
   }
 
-
   private static boolean isJavaRule(String ruleClass) {
     return JAVA_RULE_TYPES.contains(ruleClass) || ANDROID_RULE_TYPES.contains(ruleClass);
   }
@@ -149,6 +148,17 @@ public class BlazeQueryParser {
 
           if (ANDROID_RULE_TYPES.contains(target.getRule().getRuleClass())) {
             graphBuilder.androidTargetsBuilder().add(target.getRule().getName());
+
+            // Add android targets with aidl files as external deps so the aspect generates
+            // the classes
+            Attribute idlSrcsAttribute =
+                target.getRule().getAttributeList().stream()
+                    .filter(a -> a.getName().equals("idl_srcs"))
+                    .findFirst()
+                    .orElse(null);
+            if (idlSrcsAttribute != null && !idlSrcsAttribute.getStringListValueList().isEmpty()) {
+              projectTargetsToBuild.add(target.getRule().getName());
+            }
           }
         } else if (ALWAYS_BUILD_RULE_TYPES.contains(target.getRule().getRuleClass())) {
           projectTargetsToBuild.add(target.getRule().getName());
@@ -214,5 +224,4 @@ public class BlazeQueryParser {
     context.output(PrintOutput.log("%s", worstSource));
     return graph;
   }
-
 }

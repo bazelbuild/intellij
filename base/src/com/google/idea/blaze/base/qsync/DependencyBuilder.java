@@ -108,6 +108,7 @@ public class DependencyBuilder {
               .addBlazeFlags(String.format("--aspects_parameters=exclude=%s", excludes))
               .addBlazeFlags(
                   String.format("--aspects_parameters=always_build_rules=%s", alwaysBuildRuleTypes))
+              .addBlazeFlags("--aspects_parameters=generate_aidl_classes=True")
               .addBlazeFlags("--output_groups=ij_query_sync")
               .addBlazeFlags("--noexperimental_run_validations")
               .build();
