@@ -14,7 +14,7 @@ import com.google.idea.blaze.scala.sync.model.BlazeScalaSyncData;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.util.Transactions;
 import com.google.idea.sdkcompat.general.BaseSdkCompat;
-import com.intellij.codeInsight.AttachSourcesProvider;
+import com.google.idea.sdkcompat.java.AttachSourcesProviderAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -29,14 +29,14 @@ import java.util.Collection;
 import java.util.List;
 import javax.annotation.Nullable;
 
-public class BlazeScalaAttachSourceProvider implements AttachSourcesProvider {
+public class BlazeScalaAttachSourceProvider extends AttachSourcesProviderAdapter {
 
   private static final BoolExperiment attachAutomatically =
       new BoolExperiment("blaze.attach.source.jars.automatically.3", true);
 
   @Override
-  public Collection<AttachSourcesAction> getActions(
-      List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
+  public Collection<AttachSourcesAction> getAdapterActions(
+      List<? extends LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
     Project project = psiFile.getProject();
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
@@ -87,7 +87,7 @@ public class BlazeScalaAttachSourceProvider implements AttachSourcesProvider {
     }
 
     return ImmutableList.of(
-        new AttachSourcesAction() {
+        new AttachSourcesActionAdapter() {
           @Override
           public String getName() {
             return "Attach Blaze Source Jars";
@@ -99,7 +99,7 @@ public class BlazeScalaAttachSourceProvider implements AttachSourcesProvider {
           }
 
           @Override
-          public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
+          public ActionCallback adapterPerform(List<? extends LibraryOrderEntry> orderEntriesContainingFile) {
             ActionCallback callback =
                 new ActionCallback().doWhenDone(() -> navigateToSource(psiFile));
             Transactions.submitTransaction(
