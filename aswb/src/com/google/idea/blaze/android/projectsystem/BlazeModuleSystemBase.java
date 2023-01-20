@@ -298,6 +298,9 @@ abstract class BlazeModuleSystemBase implements AndroidModuleSystem {
   @Nullable
   public Path getDependencyPath(GradleCoordinate coordinate) {
     TargetKey target = getResolvedTarget(coordinate);
+    if (target == null) {
+      return null;
+    }
     BlazeProjectData projectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     Path defaultPath =
