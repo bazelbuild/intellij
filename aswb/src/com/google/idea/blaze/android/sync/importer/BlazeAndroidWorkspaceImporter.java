@@ -469,6 +469,12 @@ public class BlazeAndroidWorkspaceImporter {
 
       String libraryKey =
           LibraryKey.libraryNameFromArtifactLocation(target.getAndroidAarIdeInfo().getAar());
+      System.out.println(
+          "target "
+              + target
+              + " "
+              + " aar "
+              + target.getAndroidAarIdeInfo().getAar().getRelativePath());
       if (!aarLibraries.containsKey(libraryKey)) {
         // aar_import should only have one jar (a merged jar from the AAR's jars).
         LibraryArtifact firstJar = target.getJavaIdeInfo().getJars().iterator().next();
