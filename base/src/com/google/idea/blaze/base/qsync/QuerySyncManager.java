@@ -15,6 +15,11 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.Monitor;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -34,9 +39,12 @@ import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.qsync.BuildGraph;
+import com.google.idea.blaze.qsync.query.WorkspaceFileChange;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -48,13 +56,19 @@ import java.util.concurrent.Future;
 /** The project component for a query based sync. */
 public class QuerySyncManager {
 
+  private final Logger logger = Logger.getInstance(getClass());
+
   private final Project project;
   private final BuildGraph graph;
   private final DependencyTracker dependencyTracker;
-  private final ProjectQuerier projectQuerier;
+  private final ContinuousSync continuousSync;
   private final ProjectUpdater projectUpdater;
   private final DependencyBuilder builder;
   private final DependencyCache cache;
+
+  private volatile boolean initialSyncComplete = false;
+  private final Monitor syncMonitor = new Monitor();
+  private final Set<WorkspaceFileChange> pendingFileChanges = Sets.newHashSet();
 
   public static QuerySyncManager getInstance(Project project) {
     return ServiceManager.getService(project, QuerySyncManager.class);
@@ -66,8 +80,10 @@ public class QuerySyncManager {
     this.builder = new DependencyBuilder();
     this.cache = new DependencyCache(project);
     this.dependencyTracker = new DependencyTracker(project, graph, builder, cache);
-    this.projectQuerier = new ProjectQuerier(project, graph);
+    this.continuousSync = new ContinuousSync(project, graph);
     this.projectUpdater = new ProjectUpdater(project, graph);
+    VirtualFileManager.getInstance()
+        .addAsyncFileListener(new QuerySyncFileListener(project, this), project);
   }
 
   public void build(List<WorkspacePath> wps) {
@@ -88,13 +104,82 @@ public class QuerySyncManager {
         "Initiating project sync",
         "Importing project",
         context -> {
+          syncMonitor.enter();
           try {
-            projectQuerier.rebuild(context);
+            continuousSync.initialSync(context);
             for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
               syncListener.afterSync(project, context);
             }
+            initialSyncComplete = true;
           } catch (IOException e) {
             e.printStackTrace();
+          } finally {
+            syncMonitor.leave();
+          }
+          processPendingFilesystemChanges();
+        });
+  }
+
+  private void addFilesystemChanges(ImmutableCollection<WorkspaceFileChange> changes) {
+    synchronized (pendingFileChanges) {
+      pendingFileChanges.addAll(changes);
+    }
+  }
+
+  private ImmutableSet<WorkspaceFileChange> takeFilesystemChanges() {
+    synchronized (pendingFileChanges) {
+      ImmutableSet<WorkspaceFileChange> changes = ImmutableSet.copyOf(pendingFileChanges);
+      pendingFileChanges.clear();
+      return changes;
+    }
+  }
+
+  private boolean havePendingFilesystemChanges() {
+    synchronized (pendingFileChanges) {
+      return !pendingFileChanges.isEmpty();
+    }
+  }
+
+  public void handleFileSystemChange(ImmutableList<WorkspaceFileChange> changes) {
+    addFilesystemChanges(changes);
+    processPendingFilesystemChanges();
+  }
+
+  private void processPendingFilesystemChanges() {
+    if (!havePendingFilesystemChanges()) {
+      logger.info("processPendingFilesystemChanges: nothing to do");
+      return;
+    }
+    if (!initialSyncComplete) {
+      logger.info("processPendingFilesystemChanges: initial sync not complete");
+      return;
+    }
+    if (syncMonitor.isOccupied()) {
+      // Don't attempt, as entering the code below has user visible consequences
+      // TODO this likely causes a race condition which may cause pending changes to be left
+      //  unprocessed.
+      logger.info("processPendingFilesystemChanges: sync running");
+      return;
+    }
+    run(
+        "Automatic delta sync",
+        "Re-syncing project",
+        context -> {
+          if (syncMonitor.tryEnter()) {
+            try {
+              ImmutableSet<WorkspaceFileChange> changes = takeFilesystemChanges();
+              logger.info("processPendingFilesystemChanges: processing");
+              if (!continuousSync.onFileSystemChange(context, changes)) {
+                // re-queue the changes
+                logger.info("processPendingFilesystemChanges: failed, re-queuing");
+                addFilesystemChanges(changes);
+              }
+            } catch (IOException e) {
+              e.printStackTrace();
+            } finally {
+              syncMonitor.leave();
+            }
+            processPendingFilesystemChanges();
           }
         });
   }

@@ -21,7 +21,7 @@ import com.google.devtools.build.runtime.RunfilesPaths;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Output;
 import com.google.idea.blaze.qsync.query.Query;
-import com.google.idea.blaze.qsync.query.QueryOutputSummarizer;
+import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.io.IOException;
 import java.nio.file.Path;
 import org.junit.Test;
@@ -46,8 +46,8 @@ public class BuildGraphTest {
       };
 
   private static Query.Summary getQuerySummary(String genQueryName) throws IOException {
-    return QueryOutputSummarizer.summarize(
-        RunfilesPaths.resolve(TEST_ROOT.resolve(genQueryName)).toFile());
+    return QuerySummary.create(RunfilesPaths.resolve(TEST_ROOT.resolve(genQueryName)).toFile())
+        .getProto();
   }
 
   @Test

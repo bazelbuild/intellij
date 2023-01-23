@@ -15,6 +15,11 @@
  */
 package com.google.idea.blaze.qsync.query;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
+import com.google.common.base.Preconditions;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target;
@@ -23,7 +28,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Summaries the output from a {@code query} invocation into just the data needed by the rest of
@@ -41,11 +50,18 @@ import java.util.Map;
  * <p>Instances of the the {@link Query.Summary} proto are maintained in memory so data should not
  * be added to it unnecessarily.
  */
-public class QueryOutputSummarizer {
+public class QuerySummary {
 
-  private QueryOutputSummarizer() {}
+  public static final QuerySummary EMPTY = new QuerySummary(Query.Summary.getDefaultInstance());
 
-  public static Query.Summary summarize(InputStream protoInputStream) throws IOException {
+  private final Query.Summary proto;
+  private final Supplier<ImmutableSet<Path>> packages = Suppliers.memoize(this::derivePackages);
+
+  private QuerySummary(Query.Summary proto) {
+    this.proto = proto;
+  }
+
+  public static QuerySummary create(InputStream protoInputStream) throws IOException {
     Map<String, Query.SourceFile> sourceFileMap = Maps.newHashMap();
     Map<String, Query.Rule> ruleMap = Maps.newHashMap();
     Build.Target target;
@@ -79,10 +95,69 @@ public class QueryOutputSummarizer {
           break;
       }
     }
-    return Query.Summary.newBuilder().putAllSourceFiles(sourceFileMap).putAllRules(ruleMap).build();
+    return new QuerySummary(
+        Query.Summary.newBuilder().putAllSourceFiles(sourceFileMap).putAllRules(ruleMap).build());
   }
 
-  public static Query.Summary summarize(File protoFile) throws IOException {
-    return summarize(new BufferedInputStream(new FileInputStream(protoFile)));
+  public static QuerySummary create(File protoFile) throws IOException {
+    return create(new BufferedInputStream(new FileInputStream(protoFile)));
+  }
+
+  private static Path blazePackageFromTargetName(String target) {
+    int colonPos = target.indexOf(':');
+    Preconditions.checkState(colonPos > 0, "Invalid target: %s", target);
+    return Path.of(target.substring(0, colonPos));
+  }
+
+  private ImmutableSet<Path> derivePackages() {
+    return proto.getRulesMap().keySet().stream()
+        .map(QuerySummary::blazePackageFromTargetName)
+        .collect(toImmutableSet());
+  }
+
+  public ImmutableSet<Path> getPackages() {
+    return packages.get();
+  }
+
+  public Optional<Path> getParentPackage(Path buildPackage) {
+    ImmutableSet<Path> packages = getPackages();
+    Path packagePath = buildPackage.getParent();
+    while (packagePath != null) {
+      if (packages.contains(packagePath)) {
+        return Optional.of(packagePath);
+      }
+    }
+    return Optional.empty();
+  }
+
+  public Query.Summary getProto() {
+    return proto;
+  }
+
+  public QuerySummary applyDelta(QuerySummary deltaQuery, Set<Path> deletedPackages) {
+
+    // copy all unaffected rules / source files to result:
+    Map<String, Query.SourceFile> newSourceFiles = Maps.newHashMap();
+    for (Map.Entry<String, Query.SourceFile> sfEntry : proto.getSourceFilesMap().entrySet()) {
+      Path buildPackage = blazePackageFromTargetName(sfEntry.getKey());
+      if (!(deletedPackages.contains(buildPackage)
+          || deltaQuery.getPackages().contains(buildPackage))) {
+        newSourceFiles.put(sfEntry.getKey(), sfEntry.getValue());
+      }
+    }
+    Map<String, Query.Rule> newRules = Maps.newHashMap();
+    for (Map.Entry<String, Query.Rule> ruleEntry : proto.getRulesMap().entrySet()) {
+      Path buildPackage = blazePackageFromTargetName(ruleEntry.getKey());
+      if (!(deletedPackages.contains(buildPackage)
+          || deltaQuery.getPackages().contains(buildPackage))) {
+        newRules.put(ruleEntry.getKey(), ruleEntry.getValue());
+      }
+    }
+
+    // now add all rules from the delta
+    newSourceFiles.putAll(deltaQuery.getProto().getSourceFilesMap());
+    newRules.putAll(deltaQuery.getProto().getRulesMap());
+    return new QuerySummary(
+        Query.Summary.newBuilder().putAllSourceFiles(newSourceFiles).putAllRules(newRules).build());
   }
 }

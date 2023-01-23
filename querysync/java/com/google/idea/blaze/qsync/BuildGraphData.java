@@ -66,6 +66,13 @@ public abstract class BuildGraphData {
 
   abstract ImmutableSet<String> androidTargets();
 
+  @Override
+  public final String toString() {
+    // The default autovalue toString() implementation can result in a very large string which
+    // chokes the debugger.
+    return getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this));
+  }
+
   static Builder builder() {
     return new AutoValue_BuildGraphData.Builder().transitiveSourceDeps(Maps.newHashMap());
   }
