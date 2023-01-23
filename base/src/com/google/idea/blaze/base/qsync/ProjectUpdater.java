@@ -400,14 +400,17 @@ public class ProjectUpdater implements BuildGraphListener {
             if (inRoot.startsWith(prefixes.getKey())) {
               found = true;
               String inSource = inRoot.substring(prefixes.getKey().length());
-              int ix = inRoot.lastIndexOf('/');
+              int ix = inSource.lastIndexOf('/');
               String suffix = ix != -1 ? inSource.substring(0, ix) : "";
               if (suffix.startsWith("/")) {
                 suffix = suffix.substring(1);
               }
               String pkg = prefixes.getValue();
               if (!suffix.isEmpty()) {
-                pkg = pkg + "." + suffix.replace('/', '.');
+                if (pkg.length() > 0) {
+                  pkg += ".";
+                }
+                pkg += suffix.replace('/', '.');
               }
               androidSourcePackages.add(pkg);
               break;
