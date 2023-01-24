@@ -92,6 +92,7 @@ public class ProjectQuerier {
         BlazeCommand.builder(invoker, BlazeCommandName.QUERY)
             .addBlazeFlags(targets.toString())
             .addBlazeFlags("--output=streamed_proto")
+            .addBlazeFlags("--relative_locations=true")
             .build();
 
     File protoFile = new File("/tmp/q.proto");
@@ -107,8 +108,7 @@ public class ProjectQuerier {
         .build()
         .run();
 
-    BuildGraphData graphData =
-        new BlazeQueryParser(root.directory().toPath().toAbsolutePath(), context).parse(protoFile);
+    BuildGraphData graphData = new BlazeQueryParser(context).parse(protoFile);
     graph.setCurrent(context, graphData);
   }
 

@@ -58,11 +58,9 @@ public class BlazeQueryParser {
           "android_instrumentation_test",
           "kt_android_library_helper");
 
-  private final Path workspaceRoot;
   private final Context context;
 
-  public BlazeQueryParser(Path workspaceRoot, Context context) {
-    this.workspaceRoot = workspaceRoot;
+  public BlazeQueryParser(Context context) {
     this.context = context;
   }
 
@@ -103,7 +101,7 @@ public class BlazeQueryParser {
         break;
       }
       if (target.getType() == Discriminator.SOURCE_FILE) {
-        Location l = new Location(target.getSourceFile().getLocation(), workspaceRoot);
+        Location l = new Location(target.getSourceFile().getLocation());
         if (l.file.endsWith(Path.of("BUILD"))) {
           packages.add(l.file);
         }
