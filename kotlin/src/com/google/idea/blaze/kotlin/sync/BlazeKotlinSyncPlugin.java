@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.LanguageClass;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -35,6 +36,8 @@ import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.java.sync.JavaLanguageLevelHelper;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.sdkcompat.kotlin.KotlinCompat;
@@ -303,5 +306,24 @@ public class BlazeKotlinSyncPlugin implements BlazeSyncPlugin {
       }
       KotlinCompat.configureModule(project, workspaceModule);
     }
+
+    @Override
+    public void afterSync(Project project, BlazeContext context) {
+      if (!isKotlinProject(project)) {
+        return;
+      }
+      Module workspaceModule = getWorkspaceModule(project);
+      if (workspaceModule == null) {
+        return;
+      }
+      KotlinCompat.configureModule(project, workspaceModule);
+    }
+  }
+
+  private static boolean isKotlinProject(Project project) {
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    WorkspaceLanguageSettings workspaceLanguageSettings =
+        LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
+    return workspaceLanguageSettings.isLanguageActive(LanguageClass.KOTLIN);
   }
 }
