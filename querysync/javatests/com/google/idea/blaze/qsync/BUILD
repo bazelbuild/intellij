@@ -78,3 +78,15 @@ java_test(
         "@truth//jar",
     ],
 )
+
+java_test(
+    name = "GraphToProjectConverterTest",
+    srcs = ["GraphToProjectConverterTest.java"],
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync",
+        "//shared",
+        "@com_google_guava_guava//jar",
+        "@junit//jar",
+        "@truth//jar",
+    ],
+)

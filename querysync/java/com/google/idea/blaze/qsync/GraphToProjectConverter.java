@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.qsync;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
@@ -58,7 +59,8 @@ public class GraphToProjectConverter {
     this.excludePaths = excludePaths;
   }
 
-  private Map<String, Map<String, String>> calculateRootSources(List<String> files)
+  @VisibleForTesting
+  public Map<String, Map<String, String>> calculateRootSources(List<String> files)
       throws IOException {
 
     Map<String, Path> allDirs = new TreeMap<>();
