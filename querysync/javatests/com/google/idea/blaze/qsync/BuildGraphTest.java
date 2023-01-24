@@ -21,6 +21,7 @@ import com.google.devtools.build.runtime.RunfilesPaths;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Output;
 import java.io.File;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,8 +30,10 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class BuildGraphTest {
 
-  private static final String TESTDATA_ROOT =
-      "querysync/javatests/com/google/idea/blaze/qsync/testdata";
+  private static final Path TEST_ROOT =
+      Path.of("querysync/javatests/com/google/idea/blaze/qsync");
+
+  private static final Path TESTDATA_ROOT = TEST_ROOT.resolve("testdata");
 
   private static final Context TEST_CONTEXT =
       new Context() {
@@ -42,10 +45,7 @@ public class BuildGraphTest {
       };
 
   private static File getQueryFile(String genQueryName) {
-    return RunfilesPaths.resolve(
-            "querysync/javatests/com/google/idea/blaze/qsync/"
-                + genQueryName)
-        .toFile();
+    return RunfilesPaths.resolve(TEST_ROOT.resolve(genQueryName)).toFile();
   }
 
   @Test
@@ -55,13 +55,18 @@ public class BuildGraphTest {
             .parse(getQueryFile("JavaLibraryNoDepsQuery"));
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
-            TESTDATA_ROOT + "/nodeps/TestClassNoDeps.java", TESTDATA_ROOT + "/nodeps/BUILD");
+            TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java"),
+            TESTDATA_ROOT.resolve("nodeps/BUILD"));
     assertThat(graph.getJavaSourceFiles())
-        .containsExactly(TESTDATA_ROOT + "/nodeps/TestClassNoDeps.java");
+        .containsExactly(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java"));
     assertThat(graph.getAndroidSourceFiles()).isEmpty();
-    assertThat(graph.getTargetOwner(TESTDATA_ROOT + "/nodeps/TestClassNoDeps.java"))
+    assertThat(
+            graph.getTargetOwner(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java").toString()))
         .isEqualTo("//" + TESTDATA_ROOT + "/nodeps:nodeps");
-    assertThat(graph.getFileDependencies(TESTDATA_ROOT + "/nodeps/TestClassNoDeps.java")).isEmpty();
+    assertThat(
+            graph.getFileDependencies(
+                TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java").toString()))
+        .isEmpty();
   }
 
   @Test
@@ -79,8 +84,11 @@ public class BuildGraphTest {
         new BlazeQueryParser(Paths.get(""), TEST_CONTEXT)
             .parse(getQueryFile("JavaLibraryInternalDepQuery"));
     // Sanity check:
-    assertThat(graph.getAllSourceFiles()).contains(TESTDATA_ROOT + "/nodeps/TestClassNoDeps.java");
-    assertThat(graph.getFileDependencies(TESTDATA_ROOT + "/internaldep/TestClassInternalDep.java"))
+    assertThat(graph.getAllSourceFiles())
+        .contains(TESTDATA_ROOT.resolve("nodeps/TestClassNoDeps.java"));
+    assertThat(
+            graph.getFileDependencies(
+                TESTDATA_ROOT.resolve("internaldep/TestClassInternalDep.java").toString()))
         .isEmpty();
   }
 
@@ -91,7 +99,7 @@ public class BuildGraphTest {
             .parse(getQueryFile("JavaLibraryTransitiveDepQuery"));
     // Sanity check:
     assertThat(graph.getAllSourceFiles())
-        .contains(TESTDATA_ROOT + "/externaldep/TestClassExternalDep.java");
+        .contains(TESTDATA_ROOT.resolve("externaldep/TestClassExternalDep.java"));
     assertThat(
             graph.getFileDependencies(TESTDATA_ROOT + "/transitivedep/TestClassTransitiveDep.java"))
         .containsExactly("//java/com/google/common/collect:collect");
@@ -113,7 +121,7 @@ public class BuildGraphTest {
             .parse(getQueryFile("JavaLibraryMultiTargets"));
     // Sanity check:
     assertThat(graph.getJavaSourceFiles())
-        .contains(TESTDATA_ROOT + "/multitarget/TestClassSingleTarget.java");
+        .contains(TESTDATA_ROOT.resolve("multitarget/TestClassSingleTarget.java"));
     // If a source file is included in more than one target, we prefer the one with fewer
     // dependencies.
     assertThat(graph.getTargetOwner(TESTDATA_ROOT + "/multitarget/TestClassMultiTarget.java"))
@@ -128,11 +136,12 @@ public class BuildGraphTest {
         new BlazeQueryParser(Paths.get(""), TEST_CONTEXT).parse(getQueryFile("AndroidLibQuery"));
     assertThat(graph.getAllSourceFiles())
         .containsExactly(
-            TESTDATA_ROOT + "/android/TestAndroidClass.java", TESTDATA_ROOT + "/android/BUILD");
+            TESTDATA_ROOT.resolve("android/TestAndroidClass.java"),
+            TESTDATA_ROOT.resolve("android/BUILD"));
     assertThat(graph.getJavaSourceFiles())
-        .containsExactly(TESTDATA_ROOT + "/android/TestAndroidClass.java");
+        .containsExactly(TESTDATA_ROOT.resolve("android/TestAndroidClass.java"));
     assertThat(graph.getAndroidSourceFiles())
-        .containsExactly(TESTDATA_ROOT + "/android/TestAndroidClass.java");
+        .containsExactly(TESTDATA_ROOT.resolve("android/TestAndroidClass.java"));
     assertThat(graph.getTargetOwner(TESTDATA_ROOT + "/android/TestAndroidClass.java"))
         .isEqualTo("//" + TESTDATA_ROOT + "/android:android");
     assertThat(graph.getFileDependencies(TESTDATA_ROOT + "/android/TestAndroidClass.java"))

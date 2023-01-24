@@ -36,6 +36,7 @@ import com.google.idea.blaze.qsync.BuildGraphData;
 import com.google.idea.blaze.qsync.BuildGraphListener;
 import com.google.idea.blaze.qsync.GraphToProjectConverter;
 import com.google.idea.blaze.qsync.PackageStatementParser;
+import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -97,9 +98,8 @@ public class ProjectUpdater implements BuildGraphListener {
 
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
-            new PackageStatementParser(),
+            new WorkspaceResolvingPackageReader(workspaceRoot.path(), new PackageStatementParser()),
             context,
-            workspaceRoot.directory().toPath(),
             ir.rootPaths(),
             ir.excludePaths());
     ProjectProto.Project proto = converter.createProject(graph);
@@ -153,15 +153,18 @@ public class ProjectUpdater implements BuildGraphListener {
             for (ProjectProto.ContentEntry ceSpec : moduleSpec.getContentEntriesList()) {
 
               ContentEntry contentEntry =
-                  roots.addContentEntry(UrlUtil.pathToUrl(ceSpec.getRoot()));
+                  roots.addContentEntry(
+                      UrlUtil.pathToIdeaUrl(workspaceRoot.absolutePathFor(ceSpec.getRoot())));
               for (ProjectProto.SourceFolder sfSpec : ceSpec.getSourcesList()) {
                 SourceFolder sourceFolder =
                     contentEntry.addSourceFolder(
-                        UrlUtil.pathToUrl(sfSpec.getPath()), sfSpec.getIsTest());
+                        UrlUtil.pathToIdeaUrl(workspaceRoot.absolutePathFor(sfSpec.getPath())),
+                        sfSpec.getIsTest());
                 sourceFolder.setPackagePrefix(sfSpec.getPackagePrefix());
               }
               for (String exclude : ceSpec.getExcludesList()) {
-                contentEntry.addExcludeFolder(UrlUtil.pathToUrl(exclude));
+                contentEntry.addExcludeFolder(
+                    UrlUtil.pathToIdeaUrl(workspaceRoot.absolutePathFor(exclude)));
               }
             }
 
