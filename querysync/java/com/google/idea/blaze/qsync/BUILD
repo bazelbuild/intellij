@@ -3,6 +3,7 @@ java_library(
     srcs = glob(["*.java"]),
     visibility = ["//querysync:__subpackages__"],
     deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//shared",
         "//third_party/auto_value",
         "//third_party/bazel/src/main/protobuf:build_java_proto",
