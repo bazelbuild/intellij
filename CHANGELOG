@@ -1,3 +1,8 @@
+v2023.01.24
+===========
+* Internal cleanup.
+* Plugin compatible with Android Studio 2022.1
+
 v2023.01.10
 ===========
 * `BlazeAndroidSyncBuildFlagsProvider` is removed in (https://github.com/bazelbuild/intellij/commit/583537c63866eac13169ce128bb53aa0017bc6e0) (addresses issues: #3787 and #3703)
