@@ -111,8 +111,6 @@ public abstract class BuildGraphData {
   /** Represents a location on a file. */
   public static class Location {
 
-    // TODO does this belong in the open source code? Should it be encapsulated somehow else?
-    private static final Path READONLY_WORKSPACE = Path.of("/workspace/READONLY/google3/");
     private static final Pattern PATTERN = Pattern.compile("(.*):(\\d+):(\\d+)");
 
     public final Path file; // Relative to workspace root
@@ -120,25 +118,16 @@ public abstract class BuildGraphData {
     public final int column;
 
     /**
-     * @param location A location as provided by bazel, i.e. {@code /path/to/file:lineno:columnno}
-     * @param workspaceRoot Absolute path to the workspace root bazel was running in
+     * @param location A location as provided by bazel, i.e. {@code path/to/file:lineno:columnno}
      */
-    public Location(String location, Path workspaceRoot) {
+    public Location(String location) {
       Matcher matcher = PATTERN.matcher(location);
       Preconditions.checkArgument(matcher.matches(), "Location not recognized: %s", location);
-      Path file = Path.of(matcher.group(1));
-      if (workspaceRoot.toString().isEmpty()) {
-        // When running tests the workspaceRoot is empty, but that fails the startsWith check below.
-        this.file = file;
-      } else if (file.startsWith(workspaceRoot)) {
-        this.file = workspaceRoot.relativize(file);
-      } else {
-        Preconditions.checkArgument(
-            file.startsWith(READONLY_WORKSPACE),
-            "Path not in workspace nor readonly workspace: %s",
-            file);
-        this.file = READONLY_WORKSPACE.relativize(file);
-      }
+      file = Path.of(matcher.group(1));
+      Preconditions.checkState(
+          !file.startsWith("/"),
+          "Filename starts with /: ensure that "
+              + "`--relative_locations=true` was specified in the query invocation.");
       row = Integer.parseInt(matcher.group(2));
       column = Integer.parseInt(matcher.group(3));
     }
