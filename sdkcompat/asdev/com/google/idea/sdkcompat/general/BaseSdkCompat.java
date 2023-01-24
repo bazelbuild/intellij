@@ -41,11 +41,6 @@ import javax.annotation.Nullable;
 public final class BaseSdkCompat {
   private BaseSdkCompat() {}
 
-  /** #api212: inline into FileSelectorWithStoredHistory */
-  public static final TextComponentAccessor<TextFieldWithStoredHistory>
-      TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT =
-          TextComponentAccessors.TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT;
-
   /** #api203: refactor this function back into CodesearchResultData and make it private. */
   public static void addLineNumber(int lineNumber, List<TextChunk> chunks) {
     chunks.add(
