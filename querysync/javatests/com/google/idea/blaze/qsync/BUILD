@@ -58,10 +58,18 @@ genquery(
     scope = scopeForAndroidPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/android"),
 )
 
+genquery(
+    name = "AndroidAidlSourceQuery",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/aidl:*",
+    opts = ["--output=streamed_proto"],
+    scope = scopeForAndroidPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/aidl"),
+)
+
 java_test(
     name = "BuildGraphTest",
     srcs = ["BuildGraphTest.java"],
     data = [
+        ":AndroidAidlSourceQuery",
         ":AndroidLibQuery",
         ":JavaLibraryExternalDepQuery",
         ":JavaLibraryInternalDepQuery",
