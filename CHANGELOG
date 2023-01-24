@@ -1,3 +1,11 @@
+v2023.01.24
+===========
+* Allow for more flexibility when reporting test failures #2148
+* Add Scala support to plugin workspace #3553
+* remove site-packages from import string #3808
+* Bazel 'info' command doesn't require target specification #4281
+* Fixes: Syncing is incompatible with bazel-6 #4067
+
 v2023.01.10
 ===========
 * Plugin Development: add jsp-base.jar library to run configuration. #4206
