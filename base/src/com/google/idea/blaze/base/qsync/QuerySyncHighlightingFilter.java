@@ -27,6 +27,9 @@ public class QuerySyncHighlightingFilter implements HighlightInfoFilter {
   @Override
   public boolean accept(@NotNull HighlightInfo highlightInfo, @Nullable PsiFile psiFile) {
     if (QuerySync.isEnabled()) {
+      if (psiFile == null) {
+        return true;
+      }
       return QuerySyncManager.getInstance(psiFile.getProject()).isReadyForAnalysis(psiFile);
     } else {
       return true;
