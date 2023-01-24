@@ -13,8 +13,12 @@ java_library(
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
         android_studio = glob([
-            "aswb/com/google/idea/sdkcompat/kotlin/*.java",
+            "com/google/idea/sdkcompat/cpp/**",
             "com/google/idea/sdkcompat/java/**",
+            "aswb/com/google/idea/sdkcompat/kotlin/*.java",
+        ]),
+        clion = glob([
+            "com/google/idea/sdkcompat/cpp/**",
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/scala/**",
