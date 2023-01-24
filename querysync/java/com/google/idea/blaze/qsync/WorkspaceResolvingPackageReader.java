@@ -18,8 +18,22 @@ package com.google.idea.blaze.qsync;
 import java.io.IOException;
 import java.nio.file.Path;
 
-/** Calculates the package for a java source file. */
-public interface PackageReader {
+/**
+ * A {@link PackageReader} that accepts paths relative to the workspace root and then delegates to a
+ * {@link PackageReader} that expects an absolute file path.
+ */
+public class WorkspaceResolvingPackageReader implements PackageReader {
 
-  public String readPackage(Path path) throws IOException;
+  private final Path workspaceRoot;
+  private final PackageReader inner;
+
+  public WorkspaceResolvingPackageReader(Path workspaceRoot, PackageReader inner) {
+    this.workspaceRoot = workspaceRoot;
+    this.inner = inner;
+  }
+
+  @Override
+  public String readPackage(Path path) throws IOException {
+    return inner.readPackage(workspaceRoot.resolve(path));
+  }
 }

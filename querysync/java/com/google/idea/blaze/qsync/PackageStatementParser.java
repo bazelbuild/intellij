@@ -31,10 +31,9 @@ public class PackageStatementParser implements PackageReader {
   private static final Pattern PACKAGE_PATTERN = Pattern.compile("^\\s*package\\s+([\\w\\.]+)");
 
   @Override
-  public String readPackage(Path absolutePath) throws IOException {
+  public String readPackage(Path path) throws IOException {
     BufferedReader javaReader =
-        new BufferedReader(
-            new InputStreamReader(new FileInputStream(absolutePath.toFile()), UTF_8));
+        new BufferedReader(new InputStreamReader(new FileInputStream(path.toFile()), UTF_8));
     String javaLine;
     while ((javaLine = javaReader.readLine()) != null) {
       Matcher packageMatch = PACKAGE_PATTERN.matcher(javaLine);

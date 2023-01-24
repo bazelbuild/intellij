@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 
 /** Represents a workspace root */
@@ -72,6 +73,14 @@ public class WorkspaceRoot implements ProtoWrapper<String> {
 
   public File directory() {
     return directory;
+  }
+
+  public Path absolutePathFor(String workspaceRelativePath) {
+    return path().resolve(workspaceRelativePath);
+  }
+
+  public Path path() {
+    return directory.toPath();
   }
 
   public WorkspacePath workspacePathFor(File file) {

@@ -15,18 +15,21 @@
  */
 package com.google.idea.blaze.qsync;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
+import com.google.common.collect.Lists;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,7 +44,6 @@ public class GraphToProjectConverter {
 
   private final PackageReader packageReader;
   private final Context context;
-  private final Path workspaceRoot;
 
   private final ImmutableList<Path> importRoots;
   private final ImmutableList<Path> excludePaths;
@@ -49,33 +51,28 @@ public class GraphToProjectConverter {
   public GraphToProjectConverter(
       PackageReader packageReader,
       Context context,
-      Path workspaceRoot,
       ImmutableList<Path> importRoots,
       ImmutableList<Path> excludePaths) {
     this.packageReader = packageReader;
     this.context = context;
-    this.workspaceRoot = workspaceRoot;
     this.importRoots = importRoots;
     this.excludePaths = excludePaths;
   }
 
   @VisibleForTesting
-  public Map<String, Map<String, String>> calculateRootSources(List<String> files)
+  public Map<String, Map<String, String>> calculateRootSources(Collection<Path> files)
       throws IOException {
 
-    Map<String, Path> allDirs = new TreeMap<>();
-    // Convert to directories
-    for (String file : files) {
-      Path path = Paths.get(file);
-      Path dir = path.getParent();
-      String rel = workspaceRoot.relativize(dir).toString();
-      allDirs.computeIfAbsent(rel, x -> path);
+    Map<Path, Path> allDirs = new TreeMap<>();
+    // Map directories to a source file they contain
+    for (Path file : files) {
+      allDirs.putIfAbsent(file.getParent(), file);
     }
 
     // Keep only one
-    Map<String, Path> dirs = new HashMap<>();
+    Map<Path, Path> dirs = new HashMap<>();
     // They are sorted, so prefixes should work:
-    Map.Entry<String, Path>[] dirsArray = allDirs.entrySet().toArray(new Map.Entry[0]);
+    Map.Entry<Path, Path>[] dirsArray = allDirs.entrySet().toArray(new Map.Entry[0]);
     int last = -1;
     for (int i = 0; i < dirsArray.length; i++) {
       if (last == -1 || !dirsArray[i].getKey().startsWith(dirsArray[last].getKey())) {
@@ -88,10 +85,10 @@ public class GraphToProjectConverter {
     Map<String, Map<String, Path>> rootDirs = new HashMap<>();
     for (Path root : importRoots) {
       Map<String, Path> inRoot = new TreeMap<>(); // Must be sorted to do prefix later
-      for (Entry<String, Path> entry : dirs.entrySet()) {
-        String rel = entry.getKey();
-        if (rel.startsWith(root.toString())) {
-          Path relToRoot = Paths.get(root.toString()).relativize(Paths.get(rel));
+      for (Entry<Path, Path> entry : dirs.entrySet()) {
+        Path rel = entry.getKey();
+        if (rel.startsWith(root)) {
+          Path relToRoot = root.relativize(rel);
           inRoot.put(relToRoot.toString(), entry.getValue());
         }
       }
@@ -122,7 +119,7 @@ public class GraphToProjectConverter {
   }
 
   private String[] calculatePrefix(String rel, Path path) throws IOException {
-    String pkg = packageReader.readPackage(path);
+    String pkg = Preconditions.checkNotNull(packageReader.readPackage(path), path);
 
     String pkgAsDir = "/" + pkg.replaceAll("\\.", "/");
     rel = "/" + rel;
@@ -148,7 +145,7 @@ public class GraphToProjectConverter {
   public ProjectProto.Project createProject(BuildGraphData graph) throws IOException {
     Map<String, Map<String, String>> rootToPrefix =
         calculateRootSources(graph.getJavaSourceFiles());
-    ImmutableSet<String> androidResourceDirectories =
+    ImmutableSet<Path> androidResourceDirectories =
         computeAndroidResourceDirectories(graph.getAllSourceFiles());
     ImmutableSet<String> androidSourcePackages =
         computeAndroidSourcePackages(graph.getAndroidSourceFiles(), rootToPrefix);
@@ -175,19 +172,18 @@ public class GraphToProjectConverter {
             .setName(".workspace")
             .setType(ProjectProto.ModuleType.MODULE_TYPE_DEFAULT)
             .addLibraryName(depsLib.getName())
-            .addAllAndroidResourceDirectories(androidResourceDirectories)
+            .addAllAndroidResourceDirectories(
+                androidResourceDirectories.stream().map(Path::toString).collect(toImmutableList()))
             .addAllAndroidSourcePackages(androidSourcePackages);
 
     ListMultimap<Path, Path> excludesByRootDirectory =
         sortExcludesByRootDirectory(importRoots, excludePaths);
     for (Path dir : importRoots) {
-      Path rootFile = workspaceRoot.resolve(dir);
       ProjectProto.ContentEntry.Builder contentEntry =
-          ProjectProto.ContentEntry.newBuilder().setRoot(rootFile.toString());
+          ProjectProto.ContentEntry.newBuilder().setRoot(dir.toString());
       Map<String, String> sourceRootsWithPrefixes = rootToPrefix.get(dir.toString());
       for (Entry<String, String> entry : sourceRootsWithPrefixes.entrySet()) {
-        Path rDir = workspaceRoot.resolve(dir);
-        Path path = rDir.resolve(entry.getKey());
+        Path path = dir.resolve(entry.getKey());
         contentEntry.addSources(
             ProjectProto.SourceFolder.newBuilder()
                 .setPath(path.toString())
@@ -196,8 +192,7 @@ public class GraphToProjectConverter {
                 .build());
       }
       for (Path exclude : excludesByRootDirectory.get(dir)) {
-        Path excludeFolder = workspaceRoot.resolve(exclude);
-        contentEntry.addExcludes(excludeFolder.toString());
+        contentEntry.addExcludes(exclude.toString());
       }
       workspaceModule.addContentEntries(contentEntry);
     }
@@ -212,11 +207,16 @@ public class GraphToProjectConverter {
    * Heuristic for determining Android resource directories, by searching for .xml source files with
    * /res/ somewhere in the path. To be replaced by a more robust implementation.
    */
-  private ImmutableSet<String> computeAndroidResourceDirectories(List<String> sourceFiles) {
-    Set<String> directories = new HashSet<>();
-    for (String sourceFile : sourceFiles) {
-      if (sourceFile.endsWith(".xml") && sourceFile.contains("/res/")) {
-        directories.add(sourceFile.substring(0, sourceFile.indexOf("/res/")) + "/res");
+  private ImmutableSet<Path> computeAndroidResourceDirectories(List<Path> sourceFiles) {
+    Set<Path> directories = new HashSet<>();
+    for (Path sourceFile : sourceFiles) {
+
+      if (sourceFile.getFileName().endsWith(".xml")) {
+        List<Path> pathParts = Lists.newArrayList(sourceFile);
+        int resPos = pathParts.indexOf(Path.of("res"));
+        if (resPos > 0) {
+          directories.add(sourceFile.subpath(0, resPos + 1));
+        }
       }
     }
     return ImmutableSet.copyOf(directories);
@@ -228,14 +228,13 @@ public class GraphToProjectConverter {
    * for large projects with many android targets. To be replaced by a more robust implementation.
    */
   private ImmutableSet<String> computeAndroidSourcePackages(
-      List<String> androidSourceFiles, Map<String, Map<String, String>> rootToPrefix) {
+      List<Path> androidSourceFiles, Map<String, Map<String, String>> rootToPrefix) {
     ImmutableSet.Builder<String> androidSourcePackages = ImmutableSet.builder();
-    for (String androidSourceFile : androidSourceFiles) {
+    for (Path androidSourceFile : androidSourceFiles) {
       boolean found = false;
       for (Entry<String, Map<String, String>> root : rootToPrefix.entrySet()) {
-        String workspacePath = workspaceRoot.relativize(Paths.get(androidSourceFile)).toString();
-        if (workspacePath.startsWith(root.getKey())) {
-          String inRoot = workspacePath.substring(root.getKey().length() + 1);
+        if (androidSourceFile.startsWith(root.getKey())) {
+          String inRoot = androidSourceFile.toString().substring(root.getKey().length() + 1);
           Map<String, String> sourceDirs = root.getValue();
           for (Entry<String, String> prefixes : sourceDirs.entrySet()) {
             if (inRoot.startsWith(prefixes.getKey())) {

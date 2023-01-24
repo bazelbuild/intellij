@@ -30,7 +30,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -78,7 +77,7 @@ public class BlazeQueryParser {
   public BuildGraphData parse(InputStream protoInputStream) throws IOException {
     context.output(PrintOutput.log("Analyzing project structure..."));
 
-    Set<String> packages = new HashSet<>();
+    Set<Path> packages = new HashSet<>();
     long now = System.nanoTime();
 
     BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
@@ -105,12 +104,11 @@ public class BlazeQueryParser {
       }
       if (target.getType() == Discriminator.SOURCE_FILE) {
         Location l = new Location(target.getSourceFile().getLocation(), workspaceRoot);
-        if (l.file.endsWith("/BUILD")) {
+        if (l.file.endsWith(Path.of("BUILD"))) {
           packages.add(l.file);
         }
         graphBuilder.locationsBuilder().put(target.getSourceFile().getName(), l);
-        String rel = workspaceRoot.relativize(Paths.get(l.file)).toString();
-        graphBuilder.fileToTargetBuilder().put(rel, target.getSourceFile().getName());
+        graphBuilder.fileToTargetBuilder().put(l.file, target.getSourceFile().getName());
       } else if (target.getType() == Discriminator.RULE) {
         ruleCount.compute(target.getRule().getRuleClass(), (k, v) -> (v == null ? 0 : v) + 1);
         if (isJavaRule(target.getRule().getRuleClass())) {
