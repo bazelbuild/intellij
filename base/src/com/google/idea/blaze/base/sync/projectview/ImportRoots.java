@@ -183,6 +183,12 @@ public final class ImportRoots {
     return projectDirectories.excludeDirectories;
   }
 
+  public ImmutableList<Path> excludePaths() {
+    return projectDirectories.excludeDirectories.stream()
+        .map(WorkspacePath::asPath)
+        .collect(toImmutableList());
+  }
+
   /** Returns true if this rule should be imported as source. */
   public boolean importAsSource(Label label) {
     if (label.isExternal()) {
