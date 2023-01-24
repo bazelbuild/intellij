@@ -9,11 +9,8 @@ import com.intellij.openapi.fileChooser.ex.FileLookup;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
-import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.Restarter;
 import com.intellij.util.indexing.diagnostic.dto.JsonDuration;
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics;
@@ -26,11 +23,6 @@ import javax.annotation.Nullable;
 /** Provides SDK compatibility shims for base plugin API classes, available to all IDEs. */
 public final class BaseSdkCompat {
   private BaseSdkCompat() {}
-
-  /** #api212: inline into FileSelectorWithStoredHistory */
-  public static final TextComponentAccessor<TextFieldWithStoredHistory>
-      TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT =
-          TextComponentAccessors.TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT;
 
   /**
    * Creates an {@link IdeModifiableModelsProvider} for performant updates of the project model even
