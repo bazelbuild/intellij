@@ -139,5 +139,22 @@ public class BuildGraphTest {
         .isEqualTo("//" + TESTDATA_ROOT + "/android:android");
     assertThat(graph.getFileDependencies(TESTDATA_ROOT + "/android/TestAndroidClass.java"))
         .isEmpty();
+    assertThat(graph.projectDeps()).isEmpty();
+  }
+
+  @Test
+  public void testProjectAndroidLibrariesWithAidlSource_areProjectDeps() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(TEST_CONTEXT).parse(getQueryFile("AndroidAidlSourceQuery"));
+    assertThat(graph.getAllSourceFiles())
+        .containsExactly(
+            TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java"),
+            TESTDATA_ROOT.resolve("aidl/TestAidlService.aidl"),
+            TESTDATA_ROOT.resolve("aidl/BUILD"));
+    assertThat(graph.getJavaSourceFiles())
+        .containsExactly(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java"));
+    assertThat(graph.getAndroidSourceFiles())
+        .containsExactly(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java"));
+    assertThat(graph.projectDeps()).containsExactly("//" + TESTDATA_ROOT + "/aidl:aidl");
   }
 }
