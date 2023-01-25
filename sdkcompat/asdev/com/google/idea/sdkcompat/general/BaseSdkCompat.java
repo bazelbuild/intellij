@@ -1,8 +1,6 @@
 package com.google.idea.sdkcompat.general;
 
 import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.fileChooser.ex.FileLookup;
@@ -24,8 +22,6 @@ import com.intellij.util.indexing.diagnostic.dto.JsonDuration;
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics;
 import com.intellij.util.indexing.roots.kind.LibraryOrigin;
 import com.intellij.util.ui.VcsExecutablePathSelector;
-import com.intellij.vcs.log.VcsLogProperties;
-import com.intellij.vcs.log.VcsLogProperties.VcsLogProperty;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,11 +64,6 @@ public final class BaseSdkCompat {
     return new IdeModifiableModelsProviderImpl(project);
   }
 
-  /** #api212: inline into BlazeNewProjectWizard */
-  public static void setContextWizard(WizardContext context, AbstractWizard<?> wizard) {
-    context.putUserData(AbstractWizard.KEY, wizard);
-  }
-
   /** #api211: inline into HgConfigurationProjectPanel. Method params changed in 2021.2.4 */
   public static void reset(
       VcsExecutablePathSelector executablePathSelector,
@@ -82,12 +73,6 @@ public final class BaseSdkCompat {
       String autoDetectedPath) {
     executablePathSelector.reset(globalPath, pathOverriddenForProject, projectPath);
     executablePathSelector.setAutoDetectedPath(autoDetectedPath);
-  }
-
-  /** #api212: inline this method. */
-  @SuppressWarnings("rawtypes")
-  public static boolean isIncrementalRefreshProperty(VcsLogProperty property) {
-    return property == VcsLogProperties.SUPPORTS_INCREMENTAL_REFRESH;
   }
 
   /** #api213: inline this method */
