@@ -1,8 +1,6 @@
 package com.google.idea.sdkcompat.general;
 
 import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.fileChooser.ex.FileLookup;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
@@ -46,19 +44,6 @@ public final class BaseSdkCompat {
     // ModifiableRootModel#addLibraryEntry.
     modifiableRootModel.addLibraryEntries(
         libraries, DependencyScope.COMPILE, /* exported= */ false);
-  }
-
-  /**
-   * Creates an {@link IdeModifiableModelsProvider} for performant updates of the project model even
-   * when many modifications are involved. {@link IdeModifiableModelsProvider#commit()} must be
-   * called for any changes to take effect but call that method only after completing all changes.
-   *
-   * <p>#api212: New method createModifiableModelsProvider() is only available from 2021.3 on.
-   */
-  public static IdeModifiableModelsProvider createModifiableModelsProvider(Project project) {
-    // Switch to ProjectDataManager#createModifiableModelsProvider in 2021.3 for a public, stable
-    // API to create an IdeModifiableModelsProvider.
-    return new IdeModifiableModelsProviderImpl(project);
   }
 
   /** #api211: inline into HgConfigurationProjectPanel. Method params changed in 2021.2.4 */
