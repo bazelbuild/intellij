@@ -3,8 +3,6 @@ package com.google.idea.sdkcompat.general;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.fileChooser.ex.FileLookup;
@@ -15,16 +13,12 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextComponentAccessors;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessorBase;
 import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.TextFieldWithStoredHistory;
-import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usages.TextChunk;
 import com.intellij.util.Restarter;
 import com.intellij.util.indexing.diagnostic.dto.JsonDuration;
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics;
@@ -45,29 +39,6 @@ public final class BaseSdkCompat {
   public static final TextComponentAccessor<TextFieldWithStoredHistory>
       TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT =
           TextComponentAccessors.TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT;
-
-  /** #api203: refactor this function back into CodesearchResultData and make it private. */
-  public static void addLineNumber(int lineNumber, List<TextChunk> chunks) {
-    chunks.add(
-        new TextChunk(
-            UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes(),
-            String.valueOf(lineNumber)));
-  }
-
-  /** #api203: refactor back into MoveChangesToChangeListAction#getUnversionedFileStreamFromEvent */
-  @Nullable
-  public static Iterable<FilePath> getFilePaths(AnActionEvent e) {
-    return e.getData(ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY);
-  }
-
-  /**
-   * See {@link PathManager#getIndexRoot()}.
-   *
-   * <p>#api203: Method return type changed in 2021.1 from File to Path.
-   */
-  public static Path getIndexRoot() {
-    return PathManager.getIndexRoot();
-  }
 
   /** #api211 Activating IconManager requires an IconManager parameter in 2021.2 */
   public static void activateIconManager() throws Throwable {
