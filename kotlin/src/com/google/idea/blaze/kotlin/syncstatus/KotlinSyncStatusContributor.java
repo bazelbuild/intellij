@@ -34,6 +34,12 @@ class KotlinSyncStatusContributor implements SyncStatusContributor {
     if (!projectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.KOTLIN)) {
       return null;
     }
+    return toPsiFileAndName(node);
+  }
+
+  @Nullable
+  @Override
+  public PsiFileAndName toPsiFileAndName(ProjectViewNode<?> node) {
     if (node instanceof KtFileTreeNode) {
       KtFile file = ((KtFileTreeNode) node).getKtFile();
       return new PsiFileAndName(file, file.getName());
