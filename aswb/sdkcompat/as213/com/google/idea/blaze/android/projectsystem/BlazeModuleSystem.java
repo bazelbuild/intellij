@@ -27,6 +27,7 @@ import com.google.idea.blaze.android.libraries.UnpackedAars;
 import com.google.idea.blaze.android.sync.model.AarLibrary;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.sync.model.BlazeAndroidSyncData;
+import com.google.idea.blaze.android.sync.qsync.AndroidExternalLibraryManager;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -45,11 +46,17 @@ import org.jetbrains.annotations.Nullable;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
 public class BlazeModuleSystem extends BlazeModuleSystemBase {
+  private final AndroidExternalLibraryManager androidExternalLibraryManager;
+
   BlazeModuleSystem(Module module) {
     super(module);
+    androidExternalLibraryManager = new AndroidExternalLibraryManager(ImmutableList::of);
   }
 
   public Collection<ExternalAndroidLibrary> getDependentLibraries() {
+    if (QuerySync.isEnabled()) {
+      return androidExternalLibraryManager.getExternalLibraries();
+    }
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
@@ -148,10 +155,6 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
   @Override
   public Collection<ExternalAndroidLibrary> getAndroidLibraryDependencies(
       DependencyScopeType dependencyScopeType) {
-    // TODO(b/260636723): support external android libraries with query-sync
-    if (QuerySync.isEnabled()) {
-      return ImmutableList.of();
-    }
     if (dependencyScopeType == DependencyScopeType.MAIN) {
       return getDependentLibraries();
     } else {
