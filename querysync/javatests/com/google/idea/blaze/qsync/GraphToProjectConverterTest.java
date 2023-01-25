@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Output;
 import java.io.IOException;
@@ -167,5 +168,44 @@ public class GraphToProjectConverterTest {
         .containsExactly(
             "repackaged", "",
             "", "com.test");
+  }
+
+  @Test
+  public void testCalculateAndroidResourceDirectories_single_directory() {
+    ImmutableList<Path> sourceFiles =
+        ImmutableList.of(
+            Path.of("java/com/test/AndroidManifest.xml"),
+            Path.of("java/com/test/res/values/strings.xml"));
+
+    ImmutableSet<Path> androidResourceDirectories =
+        GraphToProjectConverter.computeAndroidResourceDirectories(sourceFiles);
+    assertThat(androidResourceDirectories).containsExactly(Path.of("java/com/test/res"));
+  }
+
+  @Test
+  public void testCalculateAndroidResourceDirectories_multiple_directories() {
+    ImmutableList<Path> sourceFiles =
+        ImmutableList.of(
+            Path.of("java/com/test/AndroidManifest.xml"),
+            Path.of("java/com/test/res/values/strings.xml"),
+            Path.of("java/com/test2/AndroidManifest.xml"),
+            Path.of("java/com/test2/res/layout/some-activity.xml"),
+            Path.of("java/com/test2/res/layout/another-activity.xml"));
+
+    ImmutableSet<Path> androidResourceDirectories =
+        GraphToProjectConverter.computeAndroidResourceDirectories(sourceFiles);
+    assertThat(androidResourceDirectories)
+        .containsExactly(Path.of("java/com/test/res"), Path.of("java/com/test2/res"));
+  }
+
+  @Test
+  public void testCalculateAndroidResourceDirectories_manifest_without_res_directory() {
+    ImmutableList<Path> sourceFiles =
+        ImmutableList.of(
+            Path.of("java/com/nores/AndroidManifest.xml"), Path.of("java/com/nores/Foo.java"));
+
+    ImmutableSet<Path> androidResourceDirectories =
+        GraphToProjectConverter.computeAndroidResourceDirectories(sourceFiles);
+    assertThat(androidResourceDirectories).isEmpty();
   }
 }
