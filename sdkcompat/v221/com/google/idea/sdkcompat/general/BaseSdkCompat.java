@@ -2,8 +2,6 @@ package com.google.idea.sdkcompat.general;
 
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.fileChooser.ex.FileLookup;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
@@ -21,19 +19,6 @@ import javax.annotation.Nullable;
 /** Provides SDK compatibility shims for base plugin API classes, available to all IDEs. */
 public final class BaseSdkCompat {
   private BaseSdkCompat() {}
-
-  /**
-   * Creates an {@link IdeModifiableModelsProvider} for performant updates of the project model even
-   * when many modifications are involved. {@link IdeModifiableModelsProvider#commit()} must be
-   * called for any changes to take effect but call that method only after completing all changes.
-   *
-   * <p>#api212: New method createModifiableModelsProvider() is only available from 2021.3 on.
-   */
-  public static IdeModifiableModelsProvider createModifiableModelsProvider(Project project) {
-    // Switch to ProjectDataManager#createModifiableModelsProvider in 2021.3 for a public, stable
-    // API to create an IdeModifiableModelsProvider.
-    return new IdeModifiableModelsProviderImpl(project);
-  }
 
   /** #api213: inline this method */
   @Nullable
