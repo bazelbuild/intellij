@@ -22,7 +22,6 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BuildGraphData.Location;
 import com.google.idea.blaze.qsync.query.Query;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,7 +61,7 @@ public class BlazeQueryParser {
     return JAVA_RULE_TYPES.contains(ruleClass) || ANDROID_RULE_TYPES.contains(ruleClass);
   }
 
-  public BuildGraphData parse(Query.Summary query) throws IOException {
+  public BuildGraphData parse(Query.Summary query) {
     context.output(PrintOutput.log("Analyzing project structure..."));
 
     Set<Path> packages = new HashSet<>();
