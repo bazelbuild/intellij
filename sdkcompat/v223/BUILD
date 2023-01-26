@@ -19,6 +19,7 @@ java_library(
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/cpp/**",
+            "com/google/idea/sdkcompat/clion/**" # For classes incompatible with Android Studio
         ]),
         intellij = glob([
             "com/google/idea/sdkcompat/java/**",

@@ -5,7 +5,7 @@ load("//intellij_platform_sdk:build_defs.bzl", "select_for_ide")
 licenses(["notice"])
 
 java_library(
-    name = "v222",
+    name = "v231",
     srcs = glob([
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/indexing/**",

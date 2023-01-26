@@ -16,6 +16,8 @@ java_library(
         "intellij-ue-2022.2": ["@scala_2022_2//:scala"],
         "intellij-2022.3": ["@scala_2022_3//:scala"],
         "intellij-ue-2022.3": ["@scala_2022_3//:scala"],
+        "intellij-2023.1": ["@scala_2023_1//:scala"],
+        "intellij-ue-2023.1": ["@scala_2023_1//:scala"],
         "default": [],
     }),
 )

@@ -184,6 +184,21 @@ config_setting(
 )
 
 config_setting(
+    name = "intellij-2023.1",
+    values = {
+        "define": "ij_product=intellij-2023.1",
+    },
+)
+
+config_setting(
+    name = "intellij-2023.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-2023.1",
+    },
+)
+
+config_setting(
     name = "intellij-ue-2021.3",
     values = {
         "define": "ij_product=intellij-ue-2021.3",
@@ -243,6 +258,20 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "intellij-ue-2023.1",
+    values = {
+        "define": "ij_product=intellij-ue-2023.1",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-2023.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=intellij-ue-2023.1",
+    },
+)
 config_setting(
     name = "android-studio-latest",
     values = {
@@ -479,6 +508,21 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "clion-2023.1",
+    values = {
+        "define": "ij_product=clion-2023.1",
+    },
+)
+
+config_setting(
+    name = "clion-2023.1-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=clion-2023.1",
+    },
+)
+
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
 # There will be additional versions added in the future
@@ -586,6 +630,7 @@ java_library(
         "intellij-ue-2022.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.3": ["@jsr305_annotations//jar"],
+        "intellij-ue-2023.1": ["@jsr305_annotations//jar"],
         "android-studio-2021.3": ["@jsr305_annotations//jar"],
         "android-studio-2022.1": ["@jsr305_annotations//jar"],
         "android-studio-2022.2": ["@jsr305_annotations//jar"],

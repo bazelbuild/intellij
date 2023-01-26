@@ -16,6 +16,7 @@
 package com.google.idea.blaze.plugin;
 
 import com.google.idea.blaze.base.settings.Blaze;
+import com.google.idea.sdkcompat.cpp.CMakeNotificationProviderWrapper;
 import com.google.idea.sdkcompat.general.EditorNotificationCompat;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -32,12 +33,12 @@ import javax.swing.JComponent;
 /** Need to filter out CMake messages if we are a Blaze project. */
 public class CMakeNotificationFilter extends EditorNotifications.Provider<JComponent>
     implements DumbAware {
-  private final EditorNotifications.Provider<?> delegate;
+  private final CMakeNotificationProviderWrapper delegate;
 
   private static final Key<JComponent> KEY = Key.create("CMakeNotificationFilter");
 
-  private CMakeNotificationFilter(Project project) {
-    this.delegate = Blaze.isBlazeProject(project) ? null : new CMakeNotificationProvider();
+  public CMakeNotificationFilter(Project project) {
+    this.delegate = Blaze.isBlazeProject(project) ? null : new CMakeNotificationProviderWrapper();
   }
 
   @Override
