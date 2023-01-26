@@ -26,12 +26,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.methods.HeadMethod;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 
 /** Provides quick docs for some .blazeproject elements. */
 public class ProjectViewDocumentationProvider extends AbstractDocumentationProvider
@@ -112,15 +111,15 @@ public class ProjectViewDocumentationProvider extends AbstractDocumentationProvi
     return url;
   }
 
-  private static boolean pageExists(String url) {
-    final HttpClient client = new HttpClient();
-    final HttpConnectionManagerParams params = client.getHttpConnectionManager().getParams();
-    params.setSoTimeout(5 * 1000);
-    params.setConnectionTimeout(5 * 1000);
-
+  private static boolean pageExists(String urlStr) {
     try {
-      final HeadMethod method = new HeadMethod(url);
-      final int rc = client.executeMethod(method);
+      URL url = new URL(urlStr);
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+      con.setRequestMethod("HEAD");
+      con.setReadTimeout(5 * 1000);
+      con.setConnectTimeout(5 * 1000);
+      con.connect();
+      final int rc = con.getResponseCode();
       if (rc == 404) {
         return false;
       }
