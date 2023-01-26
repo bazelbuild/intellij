@@ -8,14 +8,13 @@ java_library(
     name = "v213",
     srcs = glob([
         "com/google/idea/sdkcompat/general/**",
-        "com/google/idea/sdkcompat/indexing/**",
         "com/google/idea/sdkcompat/logging/**",
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
         android_studio = glob([
             "com/google/idea/sdkcompat/cpp/**",
-            "aswb/com/google/idea/sdkcompat/kotlin/*.java",
             "com/google/idea/sdkcompat/java/**",
+            "aswb/com/google/idea/sdkcompat/kotlin/*.java",
         ]),
         clion = glob([
             "com/google/idea/sdkcompat/cpp/**",
