@@ -88,7 +88,7 @@ public class ServiceHelper {
       if (!application.hasComponent(key)) {
         // registers component from scratch
         ServiceContainerUtil.registerComponentImplementation(
-            application, key, key, /*shouldBeRegistered=*/ false);
+            application, key, key, /* shouldBeRegistered= */ false);
       }
       // replaces existing component
       ServiceContainerUtil.registerComponentInstance(
@@ -152,7 +152,8 @@ public class ServiceHelper {
     }
     Disposer.register(
         parentDisposable,
-        () ->
+        () -> // Call third_party/intellij/plugin/testing/testcompat
+            // BaseSdkTestCompat.unregisterComponent(componentManager, key)) for v223
             ((ComponentManagerImpl) componentManager.getPicoContainer()).unregisterComponent(key));
   }
 }

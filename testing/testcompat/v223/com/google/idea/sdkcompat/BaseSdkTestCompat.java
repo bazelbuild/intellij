@@ -36,6 +36,11 @@ public final class BaseSdkTestCompat {
     return CodeInsightTestUtil.testAnnotator(annotator, elements);
   }
 
+  /** #api223: inline into ServiceHelper */
+  public static void unregisterComponent(ComponentManager componentManager, Class<?> componentKey) {
+    ((ComponentManagerImpl) componentManager).unregisterComponent(componentKey);
+  }
+
   /** #api213: inline into tests */
   public static TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(
       IdeaTestFixtureFactory factory, String projectName) {
