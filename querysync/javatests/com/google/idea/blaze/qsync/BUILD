@@ -81,6 +81,8 @@ java_test(
     deps = [
         "//java/com/google/devtools/build/runtime:runfiles",
         "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/query",
+        "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
         "@junit//jar",
         "@truth//jar",

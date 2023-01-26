@@ -38,6 +38,8 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.BuildGraph;
 import com.google.idea.blaze.qsync.BuildGraphData;
+import com.google.idea.blaze.qsync.query.Query;
+import com.google.idea.blaze.qsync.query.QueryOutputSummarizer;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -108,7 +110,12 @@ public class ProjectQuerier {
         .build()
         .run();
 
-    BuildGraphData graphData = new BlazeQueryParser(context).parse(protoFile);
+    Query.Summary summary = QueryOutputSummarizer.summarize(protoFile);
+    context.output(
+        PrintOutput.output(
+            "Summarized %d query bytes into %s of summary",
+            protoFile.length(), summary.toByteArray().length));
+    BuildGraphData graphData = new BlazeQueryParser(context).parse(summary);
     graph.setCurrent(context, graphData);
   }
 
