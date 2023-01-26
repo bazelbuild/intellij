@@ -15,6 +15,7 @@
  */
 package com.google.idea.testing;
 
+import com.google.idea.sdkcompat.BaseSdkTestCompat;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -121,15 +122,15 @@ public class ServiceHelper {
     } catch (UnsatisfiableDependenciesException e) {
       old = null;
     }
-    container.unregisterComponent(key);
-    container.registerComponentInstance(key, implementation);
+    container.unregisterComponent(key.getName());
+    container.registerComponentInstance(key.getName(), implementation);
     Object finalOld = old;
     Disposer.register(
         parentDisposable,
         () -> {
-          container.unregisterComponent(key);
+          container.unregisterComponent(key.getName());
           if (finalOld != null) {
-            container.registerComponentInstance(key, finalOld);
+            container.registerComponentInstance(key.getName(), finalOld);
           }
         });
   }
@@ -152,7 +153,6 @@ public class ServiceHelper {
     }
     Disposer.register(
         parentDisposable,
-        () ->
-            ((ComponentManagerImpl) componentManager.getPicoContainer()).unregisterComponent(key));
+        () -> BaseSdkTestCompat.unregisterComponent(componentManager, key.getName()));
   }
 }
