@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.targetmaps.TransitiveDependencyMap;
@@ -65,6 +66,12 @@ public class BlazeClassJarProvider implements ClassJarProvider {
 
   @Override
   public List<File> getModuleExternalLibraries(Module module) {
+
+    // TODO(b/266726517): Query sync does not support render jars.
+    if (QuerySync.isEnabled()) {
+      return ImmutableList.of();
+    }
+
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
 
