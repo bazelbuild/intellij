@@ -148,7 +148,7 @@ public class GraphToProjectConverter {
     ImmutableSet<Path> androidResourceDirectories =
         computeAndroidResourceDirectories(graph.getAllSourceFiles());
     ImmutableSet<String> androidSourcePackages =
-        computeAndroidSourcePackages(context, graph.getAndroidSourceFiles(), rootToPrefix);
+        computeAndroidSourcePackages(graph.getAndroidSourceFiles(), rootToPrefix);
 
     context.output(
         PrintOutput.log(
@@ -229,10 +229,8 @@ public class GraphToProjectConverter {
    * for large projects with many android targets. To be replaced by a more robust implementation.
    */
   @VisibleForTesting
-  public static ImmutableSet<String> computeAndroidSourcePackages(
-      Context context,
-      List<Path> androidSourceFiles,
-      Map<String, Map<String, String>> rootToPrefix) {
+  public ImmutableSet<String> computeAndroidSourcePackages(
+      List<Path> androidSourceFiles, Map<String, Map<String, String>> rootToPrefix) {
     ImmutableSet.Builder<String> androidSourcePackages = ImmutableSet.builder();
     for (Path androidSourceFile : androidSourceFiles) {
       boolean found = false;
