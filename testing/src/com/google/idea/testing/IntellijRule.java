@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.junit.rules.ExternalResource;
 import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.defaults.UnsatisfiableDependenciesException;
 
 /**
  * A lightweight IntelliJ test rule.
@@ -93,7 +92,7 @@ public final class IntellijRule extends ExternalResource {
     Object old;
     try {
       old = container.getComponentInstance(key);
-    } catch (UnsatisfiableDependenciesException e) {
+    } catch (RuntimeException e) {
       old = null;
     }
     container.unregisterComponent(key.getName());

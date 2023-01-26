@@ -52,9 +52,12 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
   private static final BoolExperiment attachAutomatically =
       new BoolExperiment("blaze.attach.source.jars.automatically.3", true);
 
+  /* #api223 Use List<? extends LibraryOrderEntry> as parameter. */
   @Override
   public Collection<AttachSourcesAction> getActions(
-      List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
+      List untypedOrderEntries, final PsiFile psiFile) {
+    List<? extends LibraryOrderEntry> orderEntries =
+        (List<? extends LibraryOrderEntry>) untypedOrderEntries;
     Project project = psiFile.getProject();
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
@@ -116,8 +119,9 @@ public class BlazeAttachSourceProvider implements AttachSourcesProvider {
             return "Attaching source jars...";
           }
 
+          /* #api223 Use List<? extends LibraryOrderEntry> as parameter. */
           @Override
-          public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
+          public ActionCallback perform(List orderEntriesContainingFile) {
             ActionCallback callback =
                 new ActionCallback().doWhenDone(() -> navigateToSource(psiFile));
             Transactions.submitTransaction(

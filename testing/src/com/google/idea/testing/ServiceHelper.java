@@ -31,7 +31,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.testFramework.ServiceContainerUtil;
 import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.defaults.UnsatisfiableDependenciesException;
 
 /** Utility class for registering project services, application services and extensions. */
 public class ServiceHelper {
@@ -119,7 +118,7 @@ public class ServiceHelper {
     Object old;
     try {
       old = container.getComponentInstance(key);
-    } catch (UnsatisfiableDependenciesException e) {
+    } catch (RuntimeException e) {
       old = null;
     }
     container.unregisterComponent(key.getName());

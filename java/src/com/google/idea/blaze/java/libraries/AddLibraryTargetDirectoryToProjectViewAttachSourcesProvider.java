@@ -34,10 +34,13 @@ import org.jetbrains.annotations.NotNull;
 public class AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider
     implements AttachSourcesProvider {
 
+  /* #api223 Use List<? extends LibraryOrderEntry> as parameter. */
   @NotNull
   @Override
   public Collection<AttachSourcesAction> getActions(
-      List<LibraryOrderEntry> orderEntries, final PsiFile psiFile) {
+      List untypedOrderEntries, final PsiFile psiFile) {
+    List<? extends LibraryOrderEntry> orderEntries =
+        (List<? extends LibraryOrderEntry>) untypedOrderEntries;
     Project project = psiFile.getProject();
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
@@ -73,8 +76,9 @@ public class AddLibraryTargetDirectoryToProjectViewAttachSourcesProvider
             return "Adding directories...";
           }
 
+          /* #api223 Use List<? extends LibraryOrderEntry> as parameter. */
           @Override
-          public ActionCallback perform(List<LibraryOrderEntry> orderEntriesContainingFile) {
+          public ActionCallback perform(List orderEntriesContainingFile) {
             AddLibraryTargetDirectoryToProjectViewAction.addDirectoriesToProjectView(
                 project, librariesToAttachSourceTo);
             return ActionCallback.DONE;
