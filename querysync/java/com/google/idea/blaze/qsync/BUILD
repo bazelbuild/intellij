@@ -4,9 +4,9 @@ java_library(
     visibility = ["//querysync:__subpackages__"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
         "//shared",
         "//third_party/auto_value",
-        "//third_party/bazel/src/main/protobuf:build_java_proto",
         "@com_google_guava_guava//jar",
         "@error_prone_annotations//jar",
         "@jsr305_annotations//jar",

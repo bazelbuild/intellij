@@ -18,17 +18,11 @@ package com.google.idea.blaze.qsync;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.devtools.build.lib.query2.proto.proto2api.Build.Attribute;
-import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target;
-import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target.Discriminator;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BuildGraphData.Location;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import com.google.idea.blaze.qsync.query.Query;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,11 +62,7 @@ public class BlazeQueryParser {
     return JAVA_RULE_TYPES.contains(ruleClass) || ANDROID_RULE_TYPES.contains(ruleClass);
   }
 
-  public BuildGraphData parse(File protoFile) throws IOException {
-    return parse(new BufferedInputStream(new FileInputStream(protoFile)));
-  }
-
-  public BuildGraphData parse(InputStream protoInputStream) throws IOException {
+  public BuildGraphData parse(Query.Summary query) throws IOException {
     context.output(PrintOutput.log("Analyzing project structure..."));
 
     Set<Path> packages = new HashSet<>();
@@ -82,8 +72,6 @@ public class BlazeQueryParser {
     Map<String, String> sourceOwner = Maps.newHashMap();
     Map<String, Set<String>> ruleDeps = Maps.newHashMap();
     Set<String> projectDeps = Sets.newHashSet();
-
-    int nTargets = 0;
 
     // A hacky collection the project state. This is the equivalent of the targetmap data:
 
@@ -95,73 +83,58 @@ public class BlazeQueryParser {
     Map<String, Integer> ruleCount = new HashMap<>();
     // All the direct dependencies from source files to things it needs outside the project
     Map<String, Set<String>> sourceDeps = new HashMap<>();
-    while (true) {
-      Target target = Target.parseDelimitedFrom(protoInputStream);
-      if (target == null) {
-        break;
+    for (Map.Entry<String, Query.SourceFile> sourceFileEntry :
+        query.getSourceFilesMap().entrySet()) {
+      Location l = new Location(sourceFileEntry.getValue().getLocation());
+      if (l.file.endsWith(Path.of("BUILD"))) {
+        packages.add(l.file);
       }
-      if (target.getType() == Discriminator.SOURCE_FILE) {
-        Location l = new Location(target.getSourceFile().getLocation());
-        if (l.file.endsWith(Path.of("BUILD"))) {
-          packages.add(l.file);
-        }
-        graphBuilder.locationsBuilder().put(target.getSourceFile().getName(), l);
-        graphBuilder.fileToTargetBuilder().put(l.file, target.getSourceFile().getName());
-      } else if (target.getType() == Discriminator.RULE) {
-        ruleCount.compute(target.getRule().getRuleClass(), (k, v) -> (v == null ? 0 : v) + 1);
-        if (isJavaRule(target.getRule().getRuleClass())) {
-          Set<String> thisSources = new HashSet<>();
-          Set<String> thisDeps = new HashSet<>();
-          for (Attribute attribute : target.getRule().getAttributeList()) {
-            if (attribute.getName().equals("srcs")) {
-              thisSources.addAll(attribute.getStringListValueList());
-            } else if (attribute.getName().equals("deps")) {
-              thisDeps.addAll(attribute.getStringListValueList());
-            }
-          }
-          ruleDeps
-              .computeIfAbsent(target.getRule().getName(), x -> Sets.newHashSet())
-              .addAll(thisDeps);
-          for (String thisSource : thisSources) {
-            // TODO Consider replace sourceDeps with a map of:
-            //   (source target) -> (rules the include it)
-            // This would involve modifying the "fewer dependencies" logic below, but may yield
-            // a cleaner solution.
-            Set<String> currentDeps = sourceDeps.get(thisSource);
-            if (currentDeps == null) {
-              sourceDeps.put(thisSource, thisDeps);
-              sourceOwner.put(thisSource, target.getRule().getName());
-            } else {
-              currentDeps.retainAll(thisDeps);
-              if (ruleDeps.get(sourceOwner.get(thisSource)).size() > thisDeps.size()) {
-                // Replace the owner with one with fewer dependencies
-                sourceOwner.put(thisSource, target.getRule().getName());
-              }
-            }
-          }
-          graphBuilder.javaSourcesBuilder().addAll(thisSources);
-          deps.addAll(thisDeps);
-
-          if (ANDROID_RULE_TYPES.contains(target.getRule().getRuleClass())) {
-            graphBuilder.androidTargetsBuilder().add(target.getRule().getName());
-
-            // Add android targets with aidl files as external deps so the aspect generates
-            // the classes
-            Attribute idlSrcsAttribute =
-                target.getRule().getAttributeList().stream()
-                    .filter(a -> a.getName().equals("idl_srcs"))
-                    .findFirst()
-                    .orElse(null);
-            if (idlSrcsAttribute != null && !idlSrcsAttribute.getStringListValueList().isEmpty()) {
-              projectTargetsToBuild.add(target.getRule().getName());
-            }
-          }
-        } else if (ALWAYS_BUILD_RULE_TYPES.contains(target.getRule().getRuleClass())) {
-          projectTargetsToBuild.add(target.getRule().getName());
-        }
-      }
-      nTargets += 1;
+      graphBuilder.locationsBuilder().put(sourceFileEntry.getKey(), l);
+      graphBuilder.fileToTargetBuilder().put(l.file, sourceFileEntry.getKey());
     }
+    for (Map.Entry<String, Query.Rule> ruleEntry : query.getRulesMap().entrySet()) {
+      String ruleClass = ruleEntry.getValue().getRuleClass();
+      ruleCount.compute(ruleClass, (k, v) -> (v == null ? 0 : v) + 1);
+      if (isJavaRule(ruleClass)) {
+        ImmutableSet<String> thisSources =
+            ImmutableSet.copyOf(ruleEntry.getValue().getSourcesList());
+        Set<String> thisDeps = Sets.newHashSet(ruleEntry.getValue().getDepsList());
+        ruleDeps.computeIfAbsent(ruleEntry.getKey(), x -> Sets.newHashSet()).addAll(thisDeps);
+        for (String thisSource : thisSources) {
+          // TODO Consider replace sourceDeps with a map of:
+          //   (source target) -> (rules the include it)
+          // This would involve modifying the "fewer dependencies" logic below, but may yield
+          // a cleaner solution.
+          Set<String> currentDeps = sourceDeps.get(thisSource);
+          if (currentDeps == null) {
+            sourceDeps.put(thisSource, thisDeps);
+            sourceOwner.put(thisSource, ruleEntry.getKey());
+          } else {
+            currentDeps.retainAll(thisDeps);
+            if (ruleDeps.get(sourceOwner.get(thisSource)).size() > thisDeps.size()) {
+              // Replace the owner with one with fewer dependencies
+              sourceOwner.put(thisSource, ruleEntry.getKey());
+            }
+          }
+        }
+        graphBuilder.javaSourcesBuilder().addAll(thisSources);
+        deps.addAll(thisDeps);
+
+        if (ANDROID_RULE_TYPES.contains(ruleClass)) {
+          graphBuilder.androidTargetsBuilder().add(ruleEntry.getKey());
+
+          // Add android targets with aidl files as external deps so the aspect generates
+          // the classes
+          if (!ruleEntry.getValue().getIdlSourcesList().isEmpty()) {
+            projectTargetsToBuild.add(ruleEntry.getKey());
+          }
+        }
+      } else if (ALWAYS_BUILD_RULE_TYPES.contains(ruleClass)) {
+        projectTargetsToBuild.add(ruleEntry.getKey());
+      }
+    }
+    int nTargets = query.getRulesCount();
+
     // Calculate all the dependencies outside the project.
     for (String dep : deps) {
       if (!ruleDeps.containsKey(dep)) {

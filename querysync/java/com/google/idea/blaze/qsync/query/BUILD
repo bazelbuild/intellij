@@ -1,0 +1,28 @@
+package(
+    default_visibility = [
+        "//querysync:__subpackages__",
+        "//querysync/java/com/google/idea/blaze/qsync:__pkg__",
+        "//querysync/javatests/com/google/idea/blaze/qsync:__pkg__",
+    ],
+)
+
+proto_library(
+    name = "querysummary",
+    srcs = ["querysummary.proto"],
+)
+
+java_proto_library(
+    name = "querysummary_java_proto",
+    visibility = ["//querysync:__subpackages__"],
+    deps = [":querysummary"],
+)
+
+java_library(
+    name = "query",
+    srcs = glob(["*.java"]),
+    deps = [
+        ":querysummary_java_proto",
+        "//third_party/bazel/src/main/protobuf:build_java_proto",
+        "@com_google_guava_guava//jar",
+    ],
+)
