@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessorBase;
 import com.intellij.ui.CoreIconManager;
@@ -131,5 +132,9 @@ public final class BaseSdkCompat {
         extensionPoint.unregisterExtension(extension);
       }
     }
+  }
+
+  public static String getX11WindowManagerName() {
+    return X11UiUtil.getWmName();
   }
 }

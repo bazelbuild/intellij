@@ -133,4 +133,9 @@ public final class BaseSdkCompat {
       }
     }
   }
+
+  public static String getX11WindowManagerName() {
+    // TODO(b/266782325): Investigate if i3 still crashes for system notifications.
+    return "";
+  }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.ex.FileLookup;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
@@ -79,5 +80,9 @@ public final class BaseSdkCompat {
         extensionPoint.unregisterExtension(extension);
       }
     }
+  }
+
+  public static String getX11WindowManagerName() {
+    return X11UiUtil.getWmName();
   }
 }
