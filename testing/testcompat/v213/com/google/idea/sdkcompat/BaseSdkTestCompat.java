@@ -38,9 +38,10 @@ public final class BaseSdkTestCompat {
     return CodeInsightTestUtil.testAnnotator(annotator, elements);
   }
 
-  /** #api212: inline into ServiceHelper */
-  public static void unregisterComponent(ComponentManager componentManager, String name) {
-    ((ComponentManagerImpl) componentManager.getPicoContainer()).unregisterComponent(name);
+  /** #api223: inline into ServiceHelper */
+  public static void unregisterComponent(ComponentManager componentManager, Class<?> componentKey) {
+    ((ComponentManagerImpl) componentManager.getPicoContainer())
+        .unregisterComponent(componentKey.getName());
   }
 
   /** #api213: inline into tests */

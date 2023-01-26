@@ -152,7 +152,6 @@ public class ServiceHelper {
       Disposer.register(parentDisposable, (Disposable) implementation);
     }
     Disposer.register(
-        parentDisposable,
-        () -> BaseSdkTestCompat.unregisterComponent(componentManager, key.getName()));
+        parentDisposable, () -> BaseSdkTestCompat.unregisterComponent(componentManager, key));
   }
 }
