@@ -8,7 +8,6 @@ java_library(
     name = "v231",
     srcs = glob([
         "com/google/idea/sdkcompat/general/**",
-        "com/google/idea/sdkcompat/indexing/**",
         "com/google/idea/sdkcompat/logging/**",
         "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
