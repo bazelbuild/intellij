@@ -56,7 +56,7 @@ java_library(
         "clion-2022.1": ["@clion_2022_1//:tslint"],
         "clion-2022.2": ["@clion_2022_2//:tslint"],
         "clion-2022.3": ["@clion_2022_3//:tslint"],
-        "clion-2023.1": ["@clion_2022_3//:tslint"],
+        "clion-2023.1": ["@clion_2023_1//:tslint"],
         "default": [],
     }),
 )
