@@ -57,6 +57,8 @@ java_import(
     jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
 )
 
+filegroup(name = "javascript-lsp")
+
 java_import(
     name = "javascript",
     jars = glob(["plugins/JavaScriptLanguage/lib/*.jar"]),
