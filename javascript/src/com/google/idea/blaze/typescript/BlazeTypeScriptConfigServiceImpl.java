@@ -190,17 +190,17 @@ class BlazeTypeScriptConfigServiceImpl implements TypeScriptConfigService {
     return configs.values().asList();
   }
 
-  @Override
+  // @Override // Removed in 2023.1
   public List<VirtualFile> getConfigFiles() {
     return this.configs.keySet().asList();
   }
 
-  @Override
+  // @Override // removed in 2023.1
   public void addChangeListener(TypeScriptConfigsChangedListener listener) {
     listeners.add(listener);
   }
 
-  @Override
+  // @Override // removed in 2023.1
   public ModificationTracker getConfigTracker(@Nullable VirtualFile file) {
     return BlazeSyncModificationTracker.getInstance(project);
   }
