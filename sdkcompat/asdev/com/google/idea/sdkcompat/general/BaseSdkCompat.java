@@ -5,69 +5,23 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileChooser.ex.FileLookup;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.ui.TextComponentAccessor;
-import com.intellij.openapi.ui.TextComponentAccessors;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessorBase;
-import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.EditorNotificationProvider;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.util.Restarter;
 import com.intellij.util.indexing.diagnostic.dto.JsonDuration;
 import com.intellij.util.indexing.diagnostic.dto.JsonFileProviderIndexStatistics;
 import com.intellij.util.indexing.roots.kind.LibraryOrigin;
-import com.intellij.util.ui.VcsExecutablePathSelector;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /** Provides SDK compatibility shims for base plugin API classes, available to all IDEs. */
 public final class BaseSdkCompat {
   private BaseSdkCompat() {}
-
-  /** #api212: inline into FileSelectorWithStoredHistory */
-  public static final TextComponentAccessor<TextFieldWithStoredHistory>
-      TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT =
-          TextComponentAccessors.TEXT_FIELD_WITH_STORED_HISTORY_WHOLE_TEXT;
-
-  /** #api211 Activating IconManager requires an IconManager parameter in 2021.2 */
-  public static void activateIconManager() throws Throwable {
-    IconManager.activate(new CoreIconManager());
-  }
-
-  /**
-   * See {@link ModifiableRootModel#addLibraryEntries(List, DependencyScope, boolean)}.
-   *
-   * <p>#api211: New method addLibraryEntries() is only available from 2021.2.1 on (or from 2021.1.4
-   * if that bugfix release will ever be published).
-   */
-  public static void addLibraryEntriesToModel(
-      ModifiableRootModel modifiableRootModel, List<Library> libraries) {
-    // Use the batch addition of libraries as adding them one after the other is not performant.
-    // The other parameters (scope + exported flag) are derived from their default values in
-    // ModifiableRootModel#addLibraryEntry.
-    modifiableRootModel.addLibraryEntries(
-        libraries, DependencyScope.COMPILE, /* exported= */ false);
-  }
-
-  /** #api211: inline into HgConfigurationProjectPanel. Method params changed in 2021.2.4 */
-  public static void reset(
-      VcsExecutablePathSelector executablePathSelector,
-      @Nullable String globalPath,
-      boolean pathOverriddenForProject,
-      @Nullable String projectPath,
-      String autoDetectedPath) {
-    executablePathSelector.reset(globalPath, pathOverriddenForProject, projectPath);
-    executablePathSelector.setAutoDetectedPath(autoDetectedPath);
-  }
 
   /** #api213: inline this method */
   @Nullable
