@@ -115,7 +115,7 @@ abstract class BlazeAndroidModelBase implements AndroidModel {
     return desugarJava8Libs ? Desugaring.FULL : Desugaring.DEFAULT;
   }
 
-  // #api211 @Override
+  @Override
   @Nullable
   public Iterable<File> getLintRuleJarsOverride() {
     if (QuerySync.isEnabled()) {
