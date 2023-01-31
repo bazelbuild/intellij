@@ -94,6 +94,7 @@ public class BlazeCppResolvingTestCase extends BlazeCppIntegrationTestCase {
         new BazelBuildSystemProvider(),
         workspaceRoot,
         projectData.getBlazeInfo().getExecutionRoot(),
+        projectData.getBlazeInfo().getOutputBase(),
         projectData.getWorkspacePathResolver());
   }
 

@@ -86,7 +86,7 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
   }
 
   @Test
-  public void relativeSysroot_makesAbsolutePathInWorkspace() {
+  public void relativeSysroot_makesAbsolutePathInMainWorkspace() {
     ImmutableList<String> cFlags = ImmutableList.of("--sysroot=third_party/toolchain/");
     BlazeCompilerSettings settings =
         new BlazeCompilerSettings(
@@ -118,9 +118,32 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
   }
 
   @Test
-  public void relativeIsystem_makesAbsolutePathInExecRoot() {
+  public void relativeIsystem_makesAbsolutePathInWorkspaces() {
     ImmutableList<String> cFlags =
         ImmutableList.of("-isystem", "external/arm_gcc/include", "-DFOO=1", "-Ithird_party/stl");
+    BlazeCompilerSettings settings =
+        new BlazeCompilerSettings(
+            getProject(),
+            new File("bin/c"),
+            new File("bin/c++"),
+            cFlags,
+            cFlags,
+            "cc version (trunk r123456)");
+
+    String outputBase = blazeProjectData.getBlazeInfo().getOutputBase().toString();
+    assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
+        .containsExactly(
+            "-isystem",
+            outputBase + "/external/arm_gcc/include",
+            "-DFOO=1",
+            "-I",
+            workspaceRoot + "/third_party/stl");
+  }
+
+  @Test
+  public void relativeIquote_makesAbsolutePathInExecRoot() {
+    ImmutableList<String> cFlags =
+        ImmutableList.of("-iquote", "bazel-out/android-arm64-v8a-opt/bin/external/boringssl");
     BlazeCompilerSettings settings =
         new BlazeCompilerSettings(
             getProject(),
@@ -133,11 +156,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
     String execRoot = blazeProjectData.getBlazeInfo().getExecutionRoot().toString();
     assertThat(settings.getCompilerSwitches(CLanguageKind.C, null))
         .containsExactly(
-            "-isystem",
-            execRoot + "/external/arm_gcc/include",
-            "-DFOO=1",
-            "-I",
-            workspaceRoot + "/third_party/stl");
+            "-iquote",
+            execRoot + "/bazel-out/android-arm64-v8a-opt/bin/external/boringssl");
   }
 
   @Test

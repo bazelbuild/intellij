@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -40,15 +39,18 @@ public class ExecutionRootPathResolver {
 
   private final ImmutableList<String> buildArtifactDirectories;
   private final File executionRoot;
+  private final File outputBase;
   private final WorkspacePathResolver workspacePathResolver;
 
   public ExecutionRootPathResolver(
       BuildSystemProvider buildSystemProvider,
       WorkspaceRoot workspaceRoot,
       File executionRoot,
+      File outputBase,
       WorkspacePathResolver workspacePathResolver) {
     this.buildArtifactDirectories = buildArtifactDirectories(buildSystemProvider, workspaceRoot);
     this.executionRoot = executionRoot;
+    this.outputBase = outputBase;
     this.workspacePathResolver = workspacePathResolver;
   }
 
@@ -63,6 +65,7 @@ public class ExecutionRootPathResolver {
         Blaze.getBuildSystemProvider(project),
         WorkspaceRoot.fromProject(project),
         projectData.getBlazeInfo().getExecutionRoot(),
+        projectData.getBlazeInfo().getOutputBase(),
         projectData.getWorkspacePathResolver());
   }
 
@@ -75,10 +78,18 @@ public class ExecutionRootPathResolver {
     if (path.isAbsolute()) {
       return path.getAbsoluteOrRelativeFile();
     }
-    if (isInWorkspace(path)) {
-      return workspacePathResolver.resolveToFile(path.getAbsoluteOrRelativeFile().getPath());
+    String firstPathComponent = getFirstPathComponent(path.getAbsoluteOrRelativeFile().getPath());
+    if (buildArtifactDirectories.contains(firstPathComponent)) {
+      // Build artifacts accumulate under the execution root, independent of symlink settings
+      return path.getFileRootedAt(executionRoot);
     }
-    return convertExternalToStable(path.getFileRootedAt(executionRoot));
+    if (firstPathComponent.equals("external")) { // In external workspace
+      // External workspaces accumulate under the output base.
+      // The symlinks to them under the execution root are unstable, and only linked per build.
+      return path.getFileRootedAt(outputBase);
+    }
+    // Else, in main workspace
+    return workspacePathResolver.resolveToFile(path.getAbsoluteOrRelativeFile().getPath());
   }
 
   /**
@@ -90,54 +101,32 @@ public class ExecutionRootPathResolver {
     if (path.isAbsolute()) {
       return ImmutableList.of(path.getAbsoluteOrRelativeFile());
     }
-    if (isInWorkspace(path)) {
-      WorkspacePath workspacePath =
-          WorkspacePath.createIfValid(path.getAbsoluteOrRelativeFile().getPath());
-      if (workspacePath != null) {
-        return workspacePathResolver.resolveToIncludeDirectories(workspacePath);
-      } else {
-        return ImmutableList.of();
-      }
+    String firstPathComponent = getFirstPathComponent(path.getAbsoluteOrRelativeFile().getPath());
+    if (buildArtifactDirectories.contains(firstPathComponent)) {
+      // Build artifacts accumulate under the execution root, independent of symlink settings
+      return ImmutableList.of(path.getFileRootedAt(executionRoot));
     }
-    return ImmutableList.of(convertExternalToStable(path.getFileRootedAt(executionRoot)));
+    if (firstPathComponent.equals("external")) { // In external workspace
+      // External workspaces accumulate under the output base.
+      // The symlinks to them under the execution root are unstable, and only linked per build.
+      return ImmutableList.of(path.getFileRootedAt(outputBase));
+    }
+    // Else, in main workspace
+    WorkspacePath workspacePath =
+        WorkspacePath.createIfValid(path.getAbsoluteOrRelativeFile().getPath());
+    if (workspacePath != null) {
+      return workspacePathResolver.resolveToIncludeDirectories(workspacePath);
+    } else {
+      return ImmutableList.of();
+    }
   }
 
   public File getExecutionRoot() {
     return executionRoot;
   }
 
-  private boolean isInWorkspace(ExecutionRootPath path) {
-    String firstPathComponent = getFirstPathComponent(path.getAbsoluteOrRelativeFile().getPath());
-    return !buildArtifactDirectories.contains(firstPathComponent)
-        && !isExternalWorkspacePath(firstPathComponent);
-  }
-
   private static String getFirstPathComponent(String path) {
     int index = path.indexOf(File.separatorChar);
     return index == -1 ? path : path.substring(0, index);
-  }
-
-  private static boolean isExternalWorkspacePath(String firstPathComponent) {
-    return firstPathComponent.equals("external");
-  }
-
-  /**
-  * Converts external paths in unstable locations under execroot that may change on the next build
-  * to stable ones under their external workspace.
-  * That is, converts paths under <outputBase>/execroot/<workspace_name>/external/ to paths under
-  * <outputBase>/external/.
-  * Safe to call on all paths; non-external paths are left as they are.
-  * See https://github.com/bazelbuild/intellij/issues/2766 for more details.
-  */
-  private static File convertExternalToStable(File f) {
-    String regexSep = Pattern.quote(f.separator);
-    // Workspace name defaults to __main__ per DEFAULT_REPOSITORY_DIRECTORY in 
-    // https://github.com/bazelbuild/bazel/blob/master/src/main/java/com/google/devtools/build/lib/cmdline/LabelConstants.java
-    // Valid workspace name regex copied from LEGAL_WORKSPACE_NAME in 
-    // https://github.com/bazelbuild/bazel/blob/9302ebd906a2f5e9678f994efb2fbc8abab544c0/src/main/java/com/google/devtools/build/lib/packages/WorkspaceGlobals.java
-    String regexUnstableExecrootSubpath = // ↓ matches workspace name.
-      regexSep + "execroot" + regexSep + "(__main__|\\p{Alpha}[-.\\w]*)" + regexSep + "external" + regexSep;
-    String stableExternalSubpath = f.separator + "external" + f.separator;
-    return new File(f.getAbsolutePath().replaceFirst(regexUnstableExecrootSubpath, stableExternalSubpath));
   }
 }
