@@ -115,6 +115,10 @@ public class BlazeQueryParser {
               sourceOwner.put(thisSource, ruleEntry.getKey());
             }
           }
+          // Source labels may refer to generated targets
+          if (!query.containsSourceFiles(thisSource)) {
+            projectTargetsToBuild.add(ruleEntry.getKey());
+          }
         }
         graphBuilder.javaSourcesBuilder().addAll(thisSources);
         deps.addAll(thisDeps);

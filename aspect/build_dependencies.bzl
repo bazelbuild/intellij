@@ -70,6 +70,23 @@ def generates_idl_jar(target):
         return False
     return target[AndroidIdeInfo].idl_class_jar != None
 
+def contains_generated_srcs(ctx):
+    """
+    Returns true if a target contains generated sources
+
+    Args:
+      ctx: the target context
+    Returns:
+      True if any target in the srcs attribute contains a file that is not source
+    """
+    if not hasattr(ctx.rule.attr, "srcs"):
+        return False
+    for src in ctx.rule.attr.srcs:
+        for file in src.files.to_list():
+            if file.is_source == False:
+                return True
+    return False
+
 def _collect_dependencies_impl(target, ctx):
     label = str(target.label)
     included = False
@@ -98,6 +115,9 @@ def _collect_dependencies_impl(target, ctx):
     if included and ctx.attr.generate_aidl_classes and generates_idl_jar(target):
         idl_jar = target[AndroidIdeInfo].idl_class_jar
         trs.append(depset([idl_jar]))
+
+    if included and contains_generated_srcs(ctx):
+        trs.append(target[JavaInfo].compile_jars)
 
     cj = depset([], transitive = trs)
 
