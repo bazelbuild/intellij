@@ -42,7 +42,7 @@ public final class BaseSdkCompat {
   public static RenamePsiElementProcessor[] renamePsiElementProcessorsList() {
     ArrayList<RenamePsiElementProcessor> result = new ArrayList<>();
     for (RenamePsiElementProcessorBase processor :
-        RenamePsiElementProcessor.EP_NAME.getExtension s()) {
+        RenamePsiElementProcessor.EP_NAME.getExtensions()) {
       if (processor instanceof RenamePsiElementProcessor) {
         result.add((RenamePsiElementProcessor) processor);
       }
