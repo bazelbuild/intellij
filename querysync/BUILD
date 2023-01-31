@@ -21,5 +21,8 @@ test_suite(
     tests = [
         "//querysync/javatests/com/google/idea/blaze/qsync:BuildGraphTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:GraphToProjectConverterTest",
+        "//querysync/javatests/com/google/idea/blaze/qsync/query:AffectedPackagesTest",
+        "//querysync/javatests/com/google/idea/blaze/qsync/query:QueryStateTest",
+        "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTest",
     ],
 )
