@@ -132,6 +132,16 @@ public class BuildGraphTest {
   }
 
   @Test
+  public void testJavaLibaryExportingExternalTargets() throws Exception {
+    BuildGraphData graph =
+        new BlazeQueryParser(TEST_CONTEXT).parse(getQuerySummary(TestData.JAVA_EXPORTED_DEP_QUERY));
+    Path sourceFile = TESTDATA_ROOT.resolve("exports/TestClassUsingExport.java");
+    assertThat(graph.getJavaSourceFiles()).containsExactly(sourceFile);
+    assertThat(graph.getFileDependencies(sourceFile.toString()))
+        .containsExactly("//java/com/google/common/collect:collect");
+  }
+
+  @Test
   public void testAndroidLibrary() throws Exception {
     BuildGraphData graph =
         new BlazeQueryParser(TEST_CONTEXT).parse(getQuerySummary(TestData.ANDROID_LIB_QUERY));
