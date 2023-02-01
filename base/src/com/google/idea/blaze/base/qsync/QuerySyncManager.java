@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -33,8 +34,10 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BuildGraph;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -47,6 +50,8 @@ import java.util.concurrent.Future;
 
 /** The project component for a query based sync. */
 public class QuerySyncManager {
+
+  private final Logger logger = Logger.getInstance(getClass());
 
   private final Project project;
   private final BuildGraph graph;
@@ -70,6 +75,15 @@ public class QuerySyncManager {
     this.projectUpdater = new ProjectUpdater(project, graph);
   }
 
+  /** Log & display a message to the user when a user-initiated action fails. */
+  private void onError(String description, Exception e, BlazeContext context) {
+    logger.error(description, e);
+    context.output(PrintOutput.error(description + ": " + e.getClass().getSimpleName()));
+    if (e.getMessage() != null) {
+      context.output(PrintOutput.error("Cause: " + e.getMessage()));
+    }
+  }
+
   public void build(List<WorkspacePath> wps) {
     run(
         "Building dependencies",
@@ -78,7 +92,7 @@ public class QuerySyncManager {
           try {
             build(context, wps);
           } catch (Exception e) {
-            e.printStackTrace();
+            onError("Failed to build dependencies " + Joiner.on(' ').join(wps), e, context);
           }
         });
   }
@@ -94,7 +108,7 @@ public class QuerySyncManager {
               syncListener.afterSync(project, context);
             }
           } catch (IOException e) {
-            e.printStackTrace();
+            onError("Project sync failed", e, context);
           }
         });
   }
