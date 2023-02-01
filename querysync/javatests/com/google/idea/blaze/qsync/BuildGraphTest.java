@@ -20,7 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Output;
 import com.google.idea.blaze.qsync.query.Query;
-import com.google.idea.blaze.qsync.query.QueryOutputSummarizer;
+import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -46,7 +46,7 @@ public class BuildGraphTest {
       };
 
   private static Query.Summary getQuerySummary(TestData genQueryName) throws IOException {
-    return QueryOutputSummarizer.summarize(TestData.getPathFor(genQueryName).toFile());
+    return QuerySummary.create(TestData.getPathFor(genQueryName).toFile()).getProto();
   }
 
   @Test

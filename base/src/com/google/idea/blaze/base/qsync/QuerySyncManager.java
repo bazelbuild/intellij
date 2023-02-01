@@ -33,7 +33,10 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
+import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.BuildGraph;
+import com.google.idea.blaze.qsync.BuildGraphData;
+import com.google.idea.blaze.qsync.query.QueryState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -56,6 +59,9 @@ public class QuerySyncManager {
   private final DependencyBuilder builder;
   private final DependencyCache cache;
 
+  private final Object stateLock = new Object();
+  private QueryState queryState;
+
   public static QuerySyncManager getInstance(Project project) {
     return ServiceManager.getService(project, QuerySyncManager.class);
   }
@@ -66,7 +72,7 @@ public class QuerySyncManager {
     this.builder = new DependencyBuilder();
     this.cache = new DependencyCache(project);
     this.dependencyTracker = new DependencyTracker(project, graph, builder, cache);
-    this.projectQuerier = new ProjectQuerier(project, graph);
+    this.projectQuerier = new ProjectQuerier(project);
     this.projectUpdater = new ProjectUpdater(project, graph);
   }
 
@@ -89,7 +95,44 @@ public class QuerySyncManager {
         "Importing project",
         context -> {
           try {
-            projectQuerier.rebuild(context);
+            QueryState state = projectQuerier.fullQuery(context);
+            synchronized (stateLock) {
+              this.queryState = state;
+            }
+            BuildGraphData graphData =
+                new BlazeQueryParser(context).parse(state.queryOutput().getProto());
+            graph.setCurrent(context, graphData);
+            for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
+              syncListener.afterSync(project, context);
+            }
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        });
+  }
+
+  public void deltaSync() {
+    run(
+        "Updating project structure",
+        "Refreshing project",
+        context -> {
+          try {
+            QueryState state;
+            synchronized (stateLock) {
+              state = queryState;
+            }
+            QueryState newState = projectQuerier.update(state, context);
+            if (newState == state) {
+              // nothing changed.
+              return;
+            }
+
+            synchronized (stateLock) {
+              this.queryState = newState;
+            }
+            BuildGraphData graphData =
+                new BlazeQueryParser(context).parse(newState.queryOutput().getProto());
+            graph.setCurrent(context, graphData);
             for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
               syncListener.afterSync(project, context);
             }

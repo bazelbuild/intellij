@@ -16,8 +16,13 @@
 package com.google.idea.blaze.base.qsync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
 import static java.util.stream.Collectors.joining;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem;
@@ -34,12 +39,13 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.base.sync.workspace.WorkingSet;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.google.idea.blaze.common.PrintOutput;
-import com.google.idea.blaze.qsync.BlazeQueryParser;
-import com.google.idea.blaze.qsync.BuildGraph;
-import com.google.idea.blaze.qsync.BuildGraphData;
-import com.google.idea.blaze.qsync.query.Query;
-import com.google.idea.blaze.qsync.query.QueryOutputSummarizer;
+import com.google.idea.blaze.qsync.query.AffectedPackages;
+import com.google.idea.blaze.qsync.query.QueryState;
+import com.google.idea.blaze.qsync.query.QuerySummary;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,32 +55,168 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 /** An object that knows how to */
 public class ProjectQuerier {
 
-  private final Project project;
-  private final BuildGraph graph;
+  private final Logger logger = Logger.getInstance(getClass());
 
-  public ProjectQuerier(Project project, BuildGraph buildGraph) {
+  private final Project project;
+  private final BlazeImportSettings settings;
+  private final WorkspaceRoot workspaceRoot;
+
+  public ProjectQuerier(Project project) {
     this.project = project;
-    this.graph = buildGraph;
+    settings = BlazeImportSettingsManager.getInstance(project).getImportSettings();
+    workspaceRoot = WorkspaceRoot.fromImportSettings(settings);
   }
 
-  public void rebuild(BlazeContext context) throws IOException {
-
-    BlazeImportSettings settings =
-        BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    WorkspaceRoot root = WorkspaceRoot.fromImportSettings(settings);
+  /**
+   * Performs a full query for the project, starting from scratch.
+   *
+   * <p>This includes reloading the project view.
+   */
+  public QueryState fullQuery(BlazeContext context) throws IOException {
 
     ProjectViewSet projectViewSet =
         checkNotNull(ProjectViewManager.getInstance(project).reloadProjectView(context));
     ImportRoots ir =
-        ImportRoots.builder(root, settings.getBuildSystem()).add(projectViewSet).build();
+        ImportRoots.builder(workspaceRoot, settings.getBuildSystem()).add(projectViewSet).build();
 
-    List<String> includes = getValidDirectories(context, root, ir.rootDirectories());
-    List<String> excludes = getValidDirectories(context, root, ir.excludeDirectories());
+    QueryState.Builder state = QueryState.builder();
+
+    Optional<ListenableFuture<String>> upstreamVersion = Optional.empty();
+    Optional<ListenableFuture<WorkingSet>> workingSet = Optional.empty();
+    BlazeVcsHandler vcsHandler = BlazeVcsHandler.vcsHandlerForProject(project);
+    if (vcsHandler != null) {
+      upstreamVersion =
+          vcsHandler.getUpstreamVersion(
+              project, context, workspaceRoot, BlazeExecutor.getInstance().getExecutor());
+      workingSet =
+          Optional.of(
+              vcsHandler.getWorkingSet(
+                  project, context, workspaceRoot, BlazeExecutor.getInstance().getExecutor()));
+    }
+
+    List<Path> includes = getValidDirectories(context, workspaceRoot, ir.rootDirectories());
+    List<Path> excludes = getValidDirectories(context, workspaceRoot, ir.excludeDirectories());
+    state.includePaths(includes).excludePaths(excludes);
+
+    // Convert root directories into blaze target patterns:
+    ImmutableList<String> includeTargets =
+        includes.stream().map(path -> String.format("//%s/...", path)).collect(toImmutableList());
+    ImmutableList<String> excludeTargets =
+        excludes.stream().map(path -> String.format("//%s/...", path)).collect(toImmutableList());
+
+    QuerySummary querySummary = runQuery(includeTargets, excludeTargets, context);
+    state.queryOutput(querySummary);
+
+    if (upstreamVersion.isPresent() && workingSet.isPresent()) {
+      try {
+        state
+            .upstreamRevision(getUninterruptibly(upstreamVersion.get()))
+            .workingSet(getUninterruptibly(workingSet.get()).toWorkspaceFileChanges());
+      } catch (ExecutionException e) {
+        // We can continue without the VCS state, but it means that when we update later on
+        // we have to re-run the entire query rather than performing an minimal update.
+        logger.warn("Failed to get VCS state", e);
+        context.output(
+            PrintOutput.output("WARNING: Could not VCS state, future updates may be suboptimal"));
+        if (e.getCause().getMessage() != null) {
+          context.output(PrintOutput.output("Cause: %s", e.getCause().getMessage()));
+        }
+      }
+    }
+    return state.build();
+  }
+
+  /**
+   * Performs a delta query to update the state based on the state from the last query run, if
+   * possible. The project view is not reloaded.
+   *
+   * <p>There are various cases when we will fall back to {@link #fullQuery(BlazeContext)},
+   * including:
+   *
+   * <ul>
+   *   <li>if the VCS state is not available for any reason
+   *   <li>if the upstream revision has changed
+   * </ul>
+   */
+  public QueryState update(QueryState previousState, BlazeContext context) throws IOException {
+    // if we failed to get the upstream revision or working set, we can't do a delta update.
+    // Fall back to a full query.
+    if (!previousState.canPerformDeltaUpdate()) {
+      context.output(PrintOutput.output("No VCS state from last query: performing full query"));
+      return fullQuery(context);
+    }
+
+    Optional<ListenableFuture<String>> upstreamVersionFuture = Optional.empty();
+    Optional<ListenableFuture<WorkingSet>> workingSetFuture = Optional.empty();
+    BlazeVcsHandler vcsHandler = BlazeVcsHandler.vcsHandlerForProject(project);
+    if (vcsHandler != null) {
+      upstreamVersionFuture =
+          vcsHandler.getUpstreamVersion(
+              project, context, workspaceRoot, BlazeExecutor.getInstance().getExecutor());
+      workingSetFuture =
+          Optional.of(
+              vcsHandler.getWorkingSet(
+                  project, context, workspaceRoot, BlazeExecutor.getInstance().getExecutor()));
+    }
+    if (upstreamVersionFuture.isEmpty() || workingSetFuture.isEmpty()) {
+      context.output(
+          PrintOutput.output("VCS doesn't support delta updates: performing full query"));
+      return fullQuery(context);
+    }
+    String upstream;
+    WorkingSet workingSet;
+    try {
+      upstream = getUninterruptibly(upstreamVersionFuture.get());
+      workingSet = getUninterruptibly(workingSetFuture.get());
+    } catch (ExecutionException e) {
+      logger.warn("Failed to get VCS state", e.getCause());
+      context.output(PrintOutput.output("WARNING: Could not VCS state, performing full query"));
+      if (e.getCause().getMessage() != null) {
+        context.output(PrintOutput.output("Cause: %s", e.getCause().getMessage()));
+      }
+      return fullQuery(context);
+    }
+
+    AffectedPackages affected =
+        previousState.deltaUpdate(upstream, workingSet.toWorkspaceFileChanges(), context);
+    if (affected == null) {
+      return fullQuery(context);
+    }
+
+    if (affected.isEmpty()) {
+      // this implies that the user was in a clean client, and still is.
+      context.output(PrintOutput.output("Nothing has changed, nothing to do."));
+      return previousState;
+    }
+    QuerySummary partialQuery =
+        runQuery(
+            affected.getModifiedPackages().stream()
+                .map(p -> String.format("//%s", p))
+                .collect(toImmutableList()),
+            ImmutableList.of(),
+            context);
+    QuerySummary newState =
+        previousState.queryOutput().applyDelta(partialQuery, affected.getDeletedPackages());
+
+    return QueryState.builder()
+        .workingSet(workingSet.toWorkspaceFileChanges())
+        .upstreamRevision(upstream)
+        .includePaths(previousState.includePaths())
+        .excludePaths(previousState.excludePaths())
+        .queryOutput(newState)
+        .build();
+  }
+
+  public QuerySummary runQuery(
+      List<String> includeTargets, List<String> excludeTargets, BlazeContext context)
+      throws IOException {
 
     BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
@@ -84,9 +226,9 @@ public class ProjectQuerier {
     StringBuilder targets = new StringBuilder();
     targets.append("(");
     targets.append(
-        includes.stream().map(w -> String.format("//%s/...:*", w)).collect(joining(" + ")));
-    for (String excluded : excludes) {
-      targets.append(String.format(" - //%s/...:*", excluded));
+        includeTargets.stream().map(w -> String.format("%s:*", w)).collect(joining(" + ")));
+    for (String excluded : excludeTargets) {
+      targets.append(String.format(" - %s:*", excluded));
     }
     targets.append(")");
 
@@ -102,7 +244,7 @@ public class ProjectQuerier {
     LineProcessingOutputStream lpos =
         LineProcessingOutputStream.of(
             BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
-    ExternalTask.builder(root)
+    ExternalTask.builder(workspaceRoot)
         .addBlazeCommand(builder)
         .context(context)
         .stdout(out)
@@ -110,25 +252,24 @@ public class ProjectQuerier {
         .build()
         .run();
 
-    Query.Summary summary = QueryOutputSummarizer.summarize(protoFile);
+    QuerySummary summary = QuerySummary.create(protoFile);
     context.output(
         PrintOutput.output(
             "Summarized %d query bytes into %s of summary",
-            protoFile.length(), summary.toByteArray().length));
-    BuildGraphData graphData = new BlazeQueryParser(context).parse(summary);
-    graph.setCurrent(context, graphData);
+            protoFile.length(), summary.getProto().toByteArray().length));
+    return summary;
   }
 
-  private static List<String> getValidDirectories(
+  private static List<Path> getValidDirectories(
       BlazeContext context, WorkspaceRoot workspaceRoot, Collection<WorkspacePath> ir)
       throws IOException {
-    ArrayList<String> strings = new ArrayList<>();
+    ArrayList<Path> strings = new ArrayList<>();
     for (WorkspacePath rootDirectory : ir) {
       String root = rootDirectory.toString();
       Path workspacePath = workspaceRoot.directory().toPath();
       Path candidate = workspacePath.resolve(root);
       if (isValid(context, candidate)) {
-        strings.add(workspacePath.relativize(candidate).toString());
+        strings.add(workspacePath.relativize(candidate));
       }
     }
     return strings;
