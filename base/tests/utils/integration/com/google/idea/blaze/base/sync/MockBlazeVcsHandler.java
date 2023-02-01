@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.sync;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -26,10 +27,24 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.intellij.openapi.project.Project;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /** Provides a {@link BlazeVcsHandler} for integration tests. */
 public class MockBlazeVcsHandler implements BlazeVcsHandler {
+
+  private final WorkingSet workingSet;
+  private final ImmutableMap<WorkspacePath, String> upstreamContent;
+
+  public MockBlazeVcsHandler() {
+    workingSet = new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of());
+    upstreamContent = ImmutableMap.of();
+  }
+
+  public MockBlazeVcsHandler(WorkingSet workingSet, Map<WorkspacePath, String> upstreamContent) {
+    this.workingSet = workingSet;
+    this.upstreamContent = ImmutableMap.copyOf(upstreamContent);
+  }
 
   @Override
   public String getVcsName() {
@@ -47,8 +62,6 @@ public class MockBlazeVcsHandler implements BlazeVcsHandler {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       ListeningExecutorService executor) {
-    WorkingSet workingSet =
-        new WorkingSet(ImmutableList.of(), ImmutableList.of(), ImmutableList.of());
     return Futures.immediateFuture(workingSet);
   }
 
@@ -59,7 +72,7 @@ public class MockBlazeVcsHandler implements BlazeVcsHandler {
       WorkspaceRoot workspaceRoot,
       WorkspacePath path,
       ListeningExecutorService executor) {
-    return Futures.immediateFuture("");
+    return Futures.immediateFuture(upstreamContent.getOrDefault(path, ""));
   }
 
   @Nullable
