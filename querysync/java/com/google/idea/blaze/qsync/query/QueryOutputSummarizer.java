@@ -69,6 +69,10 @@ public class QueryOutputSummarizer {
               rule.addAllSources(a.getStringListValueList());
             } else if (a.getName().equals("deps")) {
               rule.addAllDeps(a.getStringListValueList());
+            } else if (a.getName().equals("exports")) {
+              // This is not strictly correct, as source files of rule with 'export' do not
+              // depend on exported targets.
+              rule.addAllDeps(a.getStringListValueList());
             } else if (a.getName().equals("idl_srcs")) {
               rule.addAllIdlSources(a.getStringListValueList());
             }

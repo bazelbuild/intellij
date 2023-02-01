@@ -94,6 +94,10 @@ def _collect_dependencies_impl(target, ctx):
     for dep in ctx.rule.attr.deps:
         if DependenciesInfo in dep:
             trs.append(dep[DependenciesInfo].compile_time_jars)
+    if hasattr(ctx.rule.attr, "exports"):
+        for dep in ctx.rule.attr.exports:
+            if DependenciesInfo in dep:
+                trs.append(dep[DependenciesInfo].compile_time_jars)
 
     if included and ctx.attr.generate_aidl_classes and generates_idl_jar(target):
         idl_jar = target[AndroidIdeInfo].idl_class_jar
@@ -106,7 +110,7 @@ def _collect_dependencies_impl(target, ctx):
 collect_dependencies = aspect(
     implementation = _collect_dependencies_impl,
     provides = [DependenciesInfo],
-    attr_aspects = ["deps"],
+    attr_aspects = ["deps", "exports"],
     required_providers = [[JavaInfo]],
     attrs = {
         "include": attr.string(
