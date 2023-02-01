@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.vcs.git;
 
+import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -30,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Vcs diff provider for git */
@@ -81,6 +83,15 @@ public class GitBlazeVcsHandler implements BlazeVcsHandler {
     return executor.submit(() -> getGitUpstreamContent(workspaceRoot, path));
   }
 
+  @Override
+  public Optional<ListenableFuture<String>> getUpstreamVersion(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ListeningExecutorService executor) {
+    return Optional.of(executor.submit(() -> getUpstreamSha(workspaceRoot)));
+  }
+
   private static String getGitUpstreamContent(WorkspaceRoot workspaceRoot, WorkspacePath path) {
     String upstreamSha = getUpstreamSha(workspaceRoot, false);
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -117,25 +128,41 @@ public class GitBlazeVcsHandler implements BlazeVcsHandler {
 
   /**
    * Returns the git commit SHA corresponding to the most recent commit in the current branch which
-   * matches a commit in the currently-tracked remote branch.
+   * matches a commit in the currently-tracked remote branch, or null if that fails for any reason.
    */
   @Nullable
   public static String getUpstreamSha(WorkspaceRoot workspaceRoot, boolean suppressErrors) {
+    try {
+      return getUpstreamSha(workspaceRoot);
+    } catch (VcsException e) {
+      if (!suppressErrors) {
+        logger.error(e.getMessage());
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Returns the git commit SHA corresponding to the most recent commit in the current branch which
+   * matches a commit in the currently-tracked remote branch.
+   *
+   * @throws VcsException if we cannot get the SHA.
+   */
+  public static String getUpstreamSha(WorkspaceRoot workspaceRoot) throws VcsException {
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
+    String[] args = new String[] {"git", "rev-parse", "@{u}"};
     int retVal =
-        ExternalTask.builder(workspaceRoot)
-            .args("git", "rev-parse", "@{u}")
-            .stdout(stdout)
-            .stderr(stderr)
-            .build()
-            .run();
+        ExternalTask.builder(workspaceRoot).args(args).stdout(stdout).stderr(stderr).build().run();
     if (retVal != 0) {
-      if (!suppressErrors) {
-        logger.error(stderr);
-      }
-      return null;
+      throw new VcsException(
+          "Could not obtain upstream sha: `"
+              + Joiner.on(' ').join(args)
+              + "` exited with "
+              + retVal
+              + "; stderr: "
+              + stderr);
     }
     return StringUtil.trimEnd(stdout.toString(), "\n");
   }

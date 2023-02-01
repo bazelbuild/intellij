@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Provides a diff against the version control system. */
@@ -46,13 +47,30 @@ public interface BlazeVcsHandler {
     return null;
   }
 
+  /**
+   * Exception that may be thrown from a future returned by {@link BlazeVcsHandler} if an operation
+   * fails.
+   */
+  class VcsException extends Exception {
+    public VcsException(String message) {
+      super(message);
+    }
+
+    public VcsException(String message, Throwable cause) {
+      super(message, cause);
+    }
+  }
+
   /** Returns the name of this VCS, eg. "git" or "hg" */
   String getVcsName();
 
   /** Returns whether this vcs handler can manage this project */
   boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot);
 
-  /** Returns the working set of modified files compared to some "upstream". */
+  /**
+   * Returns the working set of modified files compared to the base/upstream revision, as returned
+   * by {@link #getUpstreamVersion}.
+   */
   ListenableFuture<WorkingSet> getWorkingSet(
       Project project,
       BlazeContext context,
@@ -65,6 +83,22 @@ public interface BlazeVcsHandler {
       BlazeContext context,
       WorkspaceRoot workspaceRoot,
       WorkspacePath path,
+      ListeningExecutorService executor);
+
+  /**
+   * Returns the upstream/base version that the client is based on.
+   *
+   * <p>The upstream version is an opaque string that should only be tested for equality. All files
+   * in the workspace that differ compared to the base revision are returned by {@link
+   * #getWorkingSet}.
+   *
+   * @return The upstream version as a future, or empty if ths VCS does not support this
+   *     functionality.
+   */
+  Optional<ListenableFuture<String>> getUpstreamVersion(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
       ListeningExecutorService executor);
 
   /** Optionally creates a sync handler to perform vcs-specific computation during sync. */
