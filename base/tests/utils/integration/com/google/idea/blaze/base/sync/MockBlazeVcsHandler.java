@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
 import com.intellij.openapi.project.Project;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Provides a {@link BlazeVcsHandler} for integration tests. */
@@ -73,6 +74,15 @@ public class MockBlazeVcsHandler implements BlazeVcsHandler {
       WorkspacePath path,
       ListeningExecutorService executor) {
     return Futures.immediateFuture(upstreamContent.getOrDefault(path, ""));
+  }
+
+  @Override
+  public Optional<ListenableFuture<String>> getUpstreamVersion(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ListeningExecutorService executor) {
+    return Optional.of(Futures.immediateFuture(""));
   }
 
   @Nullable

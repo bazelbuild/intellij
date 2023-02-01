@@ -24,6 +24,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.intellij.openapi.project.Project;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -59,6 +60,15 @@ public class FallbackBlazeVcsHandler implements BlazeVcsHandler {
       WorkspacePath path,
       ListeningExecutorService executor) {
     return Futures.immediateFuture("");
+  }
+
+  @Override
+  public Optional<ListenableFuture<String>> getUpstreamVersion(
+      Project project,
+      BlazeContext context,
+      WorkspaceRoot workspaceRoot,
+      ListeningExecutorService executor) {
+    return Optional.empty();
   }
 
   @Nullable
