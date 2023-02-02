@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
@@ -30,26 +29,24 @@ import com.intellij.openapi.project.Project;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-/** Provides a diff against the version control system. */
-public interface BlazeVcsHandler {
-  ExtensionPointName<BlazeVcsHandler> EP_NAME =
+/** VCS handler provider. Provides the state of the VCS system. */
+public interface BlazeVcsHandlerProvider {
+  ExtensionPointName<BlazeVcsHandlerProvider> EP_NAME =
       ExtensionPointName.create("com.google.idea.blaze.VcsHandler");
 
   @Nullable
+  static BlazeVcsHandlerProvider vcsHandlerProviderForProject(Project project) {
+    return BlazeVcsHandlerCache.vcsHandlerProviderForProject(project);
+  }
+
+  @Nullable
   static BlazeVcsHandler vcsHandlerForProject(Project project) {
-    BuildSystemName buildSystemName = Blaze.getBuildSystemName(project);
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
-    for (BlazeVcsHandler candidate : BlazeVcsHandler.EP_NAME.getExtensions()) {
-      if (candidate.handlesProject(buildSystemName, workspaceRoot)) {
-        return candidate;
-      }
-    }
-    return null;
+    return BlazeVcsHandlerCache.vcsHandlerForProject(project);
   }
 
   /**
-   * Exception that may be thrown from a future returned by {@link BlazeVcsHandler} if an operation
-   * fails.
+   * Exception that may be thrown from a future returned by {@link BlazeVcsHandlerProvider} if an
+   * operation fails.
    */
   class VcsException extends Exception {
     public VcsException(String message) {
@@ -67,43 +64,39 @@ public interface BlazeVcsHandler {
   /** Returns whether this vcs handler can manage this project */
   boolean handlesProject(BuildSystemName buildSystemName, WorkspaceRoot workspaceRoot);
 
-  /**
-   * Returns the working set of modified files compared to the base/upstream revision, as returned
-   * by {@link #getUpstreamVersion}.
-   */
-  ListenableFuture<WorkingSet> getWorkingSet(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ListeningExecutorService executor);
+  BlazeVcsHandler getHandlerForProject(Project p);
 
-  /** Returns the original file content of a file path from "upstream". */
-  ListenableFuture<String> getUpstreamContent(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      WorkspacePath path,
-      ListeningExecutorService executor);
+  /** VCS handler for a project. */
+  interface BlazeVcsHandler {
 
-  /**
-   * Returns the upstream/base version that the client is based on.
-   *
-   * <p>The upstream version is an opaque string that should only be tested for equality. All files
-   * in the workspace that differ compared to the base revision are returned by {@link
-   * #getWorkingSet}.
-   *
-   * @return The upstream version as a future, or empty if ths VCS does not support this
-   *     functionality.
-   */
-  Optional<ListenableFuture<String>> getUpstreamVersion(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ListeningExecutorService executor);
+    /**
+     * Returns the working set of modified files compared to the base/upstream revision, as returned
+     * by {@link #getUpstreamVersion}.
+     */
+    ListenableFuture<WorkingSet> getWorkingSet(
+        BlazeContext context, ListeningExecutorService executor);
 
-  /** Optionally creates a sync handler to perform vcs-specific computation during sync. */
-  @Nullable
-  BlazeVcsSyncHandler createSyncHandler(Project project, WorkspaceRoot workspaceRoot);
+    /** Returns the original file content of a file path from "upstream". */
+    ListenableFuture<String> getUpstreamContent(
+        BlazeContext context, WorkspacePath path, ListeningExecutorService executor);
+
+    /**
+     * Returns the upstream/base version that the client is based on.
+     *
+     * <p>The upstream version is an opaque string that should only be tested for equality. All
+     * files in the workspace that differ compared to the base revision are returned by {@link
+     * #getWorkingSet}.
+     *
+     * @return The upstream version as a future, or empty if ths VCS does not support this
+     *     functionality.
+     */
+    Optional<ListenableFuture<String>> getUpstreamVersion(
+        BlazeContext context, ListeningExecutorService executor);
+
+    /** Optionally creates a sync handler to perform vcs-specific computation during sync. */
+    @Nullable
+    BlazeVcsSyncHandler createSyncHandler();
+  }
 
   /** Sync handler that performs VCS specific computation. */
   interface BlazeVcsSyncHandler {

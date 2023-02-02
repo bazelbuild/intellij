@@ -25,7 +25,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
-import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,9 +35,9 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Vcs diff provider for git */
-public class GitBlazeVcsHandler implements BlazeVcsHandler {
+public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
 
-  private static final Logger logger = Logger.getInstance(GitBlazeVcsHandler.class);
+  private static final Logger logger = Logger.getInstance(GitBlazeVcsHandlerProvider.class);
 
   @Override
   public String getVcsName() {
@@ -52,44 +52,48 @@ public class GitBlazeVcsHandler implements BlazeVcsHandler {
   }
 
   @Override
-  public ListenableFuture<WorkingSet> getWorkingSet(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ListeningExecutorService executor) {
-    return executor.submit(
-        () -> {
-          String upstreamSha = getUpstreamSha(workspaceRoot, false);
-          if (upstreamSha == null) {
-            return null;
-          }
-          return GitWorkingSetProvider.calculateWorkingSet(workspaceRoot, upstreamSha, context);
-        });
+  public BlazeVcsHandler getHandlerForProject(Project project) {
+    return new GitBlazeVcsHandler(project);
   }
 
-  @Nullable
-  @Override
-  public BlazeVcsSyncHandler createSyncHandler(Project project, WorkspaceRoot workspaceRoot) {
-    return null;
-  }
+  static class GitBlazeVcsHandler implements BlazeVcsHandler {
 
-  @Override
-  public ListenableFuture<String> getUpstreamContent(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      WorkspacePath path,
-      ListeningExecutorService executor) {
-    return executor.submit(() -> getGitUpstreamContent(workspaceRoot, path));
-  }
+    private final WorkspaceRoot workspaceRoot;
 
-  @Override
-  public Optional<ListenableFuture<String>> getUpstreamVersion(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ListeningExecutorService executor) {
-    return Optional.of(executor.submit(() -> getUpstreamSha(workspaceRoot)));
+    GitBlazeVcsHandler(Project project) {
+      this.workspaceRoot = WorkspaceRoot.fromProject(project);
+    }
+
+    @Override
+    public ListenableFuture<WorkingSet> getWorkingSet(
+        BlazeContext context, ListeningExecutorService executor) {
+      return executor.submit(
+          () -> {
+            String upstreamSha = getUpstreamSha(workspaceRoot, false);
+            if (upstreamSha == null) {
+              return null;
+            }
+            return GitWorkingSetProvider.calculateWorkingSet(workspaceRoot, upstreamSha, context);
+          });
+    }
+
+    @Nullable
+    @Override
+    public BlazeVcsSyncHandler createSyncHandler() {
+      return null;
+    }
+
+    @Override
+    public ListenableFuture<String> getUpstreamContent(
+        BlazeContext context, WorkspacePath path, ListeningExecutorService executor) {
+      return executor.submit(() -> getGitUpstreamContent(workspaceRoot, path));
+    }
+
+    @Override
+    public Optional<ListenableFuture<String>> getUpstreamVersion(
+        BlazeContext context, ListeningExecutorService executor) {
+      return Optional.of(executor.submit(() -> getUpstreamSha(workspaceRoot)));
+    }
   }
 
   private static String getGitUpstreamContent(WorkspaceRoot workspaceRoot, WorkspacePath path) {
