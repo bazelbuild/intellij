@@ -200,4 +200,9 @@ public class CleanProjectTargetsSyncAction extends BlazeProjectSyncAction {
     config.setTargets(updated);
     return false;
   }
+
+  @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.HIDDEN;
+  }
 }

@@ -88,4 +88,9 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
     notification.setImportant(true);
     Notifications.Bus.notify(notification, project);
   }
+
+  @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.HIDDEN;
+  }
 }

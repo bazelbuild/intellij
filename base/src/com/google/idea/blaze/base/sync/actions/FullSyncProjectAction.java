@@ -31,4 +31,9 @@ public class FullSyncProjectAction extends BlazeProjectSyncAction {
   protected void runSync(Project project, AnActionEvent e) {
     BlazeSyncManager.getInstance(project).fullProjectSync(/* reason= */ "FullSyncProjectAction");
   }
+
+  @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.HIDDEN;
+  }
 }
