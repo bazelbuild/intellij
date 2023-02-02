@@ -17,7 +17,6 @@ jobs:
       pull-requests: write
     name: Track and close stale issues/PRs
     runs-on: ubuntu-latest
-    if: github.repository == 'bazelbuild/intellij'
 
     steps:
     - name: Track and close stale issues/PRs
