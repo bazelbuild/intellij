@@ -34,6 +34,8 @@ public enum TestData {
       Path.of(
           "querysync/javatests/com/google/idea/blaze/qsync/testdata");
 
+  public static final String ROOT_PACKAGE = "//" + ROOT;
+
   public static Path getPathFor(TestData name) {
     return RunfilesPaths.resolve(ROOT).resolve(name.toString().toLowerCase(Locale.ROOT));
   }
