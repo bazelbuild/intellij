@@ -39,7 +39,7 @@ import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.BuildGraph;
 import com.google.idea.blaze.qsync.BuildGraphData;
 import com.google.idea.blaze.qsync.query.Query;
-import com.google.idea.blaze.qsync.query.QueryOutputSummarizer;
+import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -110,7 +110,7 @@ public class ProjectQuerier {
         .build()
         .run();
 
-    Query.Summary summary = QueryOutputSummarizer.summarize(protoFile);
+    Query.Summary summary = QuerySummary.create(protoFile).getProto();
     context.output(
         PrintOutput.output(
             "Summarized %d query bytes into %s of summary",
