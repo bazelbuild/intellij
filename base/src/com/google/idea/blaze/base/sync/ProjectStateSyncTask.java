@@ -49,7 +49,8 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.PrintOutput;
 import com.intellij.openapi.project.Project;
 import java.util.Collections;
@@ -85,7 +86,7 @@ final class ProjectStateSyncTask {
       throw new SyncFailedException();
     }
 
-    BlazeVcsHandler vcsHandler = BlazeVcsHandler.vcsHandlerForProject(project);
+    BlazeVcsHandler vcsHandler = BlazeVcsHandlerProvider.vcsHandlerForProject(project);
     if (vcsHandler == null) {
       String message = "Could not find a VCS handler";
       IssueOutput.error(message).submit(context);
@@ -124,8 +125,7 @@ final class ProjectStateSyncTask {
                 workspaceRoot,
                 syncFlags);
 
-    ListenableFuture<WorkingSet> workingSetFuture =
-        vcsHandler.getWorkingSet(project, context, workspaceRoot, executor);
+    ListenableFuture<WorkingSet> workingSetFuture = vcsHandler.getWorkingSet(context, executor);
 
     BlazeInfo blazeInfo =
         FutureUtil.waitForFuture(context, blazeInfoFuture)
@@ -202,8 +202,7 @@ final class ProjectStateSyncTask {
 
     for (int i = 0; i < 3; ++i) {
       WorkspacePathResolver vcsWorkspacePathResolver = null;
-      BlazeVcsHandler.BlazeVcsSyncHandler vcsSyncHandler =
-          vcsHandler.createSyncHandler(project, workspaceRoot);
+      BlazeVcsHandlerProvider.BlazeVcsSyncHandler vcsSyncHandler = vcsHandler.createSyncHandler();
       if (vcsSyncHandler != null) {
         boolean ok =
             Scope.push(
@@ -230,7 +229,7 @@ final class ProjectStateSyncTask {
       }
 
       if (vcsSyncHandler != null) {
-        BlazeVcsHandler.BlazeVcsSyncHandler.ValidationResult validationResult =
+        BlazeVcsHandlerProvider.BlazeVcsSyncHandler.ValidationResult validationResult =
             vcsSyncHandler.validateProjectView(context, projectViewSet);
         switch (validationResult) {
           case OK:
