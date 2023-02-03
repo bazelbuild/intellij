@@ -118,13 +118,6 @@ public class BlazeNativeAndroidDebuggerBase extends NativeAndroidDebugger {
       super(project, factory);
     }
 
-    // Only required for #api203
-    @Nullable
-    public String getPackageNameOverride() {
-      // "package name override" is not required in blaze projects.
-      return null;
-    }
-
     /** Don't validate anything. */
     @Override
     public List<ValidationError> validate(@Nullable Executor executor) {

@@ -17,7 +17,6 @@ package com.google.idea.blaze.base.wizard2;
 
 import com.google.idea.blaze.base.help.BlazeHelpHandler;
 import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.sdkcompat.general.BaseSdkCompat;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
@@ -42,7 +41,7 @@ abstract class BlazeNewProjectWizard extends AbstractWizard<ProjectImportWizardS
 
     builder = new BlazeProjectImportBuilder();
     context = new WizardContext(null, getDisposable());
-    BaseSdkCompat.setContextWizard(context, this);
+    context.putUserData(AbstractWizard.KEY, this);
     context.setProjectBuilder(builder);
     for (ProjectImportWizardStep step : getSteps(context)) {
       addStep(step);
