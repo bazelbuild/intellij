@@ -196,7 +196,7 @@ intellij_integration_test_suite(
             "tests/integrationtests/as213/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
         ],
         "android-studio-2022.1": [
-            "tests/integrationtests/asdev/com/google/idea/blaze/android/functional/BlazeInstrumentationTestApkBuildStepIntegrationTest.java",
+            "tests/integrationtests/as221/com/google/idea/blaze/android/functional/BlazeInstrumentationTestApkBuildStepIntegrationTest.java",
             "tests/integrationtests/as221/com/google/idea/blaze/android/functional/MobileInstallBuildStepIntegrationTest.java",
             "tests/integrationtests/as221/com/google/idea/blaze/android/functional/FullApkBuildStepIntegrationTest.java",
             "tests/integrationtests/as221/com/google/idea/blaze/android/run/AvailableDebuggersTest.java",
