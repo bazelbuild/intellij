@@ -226,6 +226,8 @@ def intellij_integration_test_suite(
     args.append("--main_advice_classpath=./%s/%s_protoeditor_resource_fix" % (native.package_name(), name))
     data.append(name + "_protoeditor_resource_fix")
 
+    tags.append("requires-net:external")
+
     native.java_test(
         name = name,
         size = size,
