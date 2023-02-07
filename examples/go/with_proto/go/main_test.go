@@ -12,9 +12,9 @@ func TestFlagMacros(t *testing.T) {
 		error      string
 	}{
 		{
-			envVar:     "FILE_NAME",
-			validation: func(expanded string) bool { return expanded == "main_test.go" },
-			error:      "Expected value to be 'main_test.go'",
+			envVar:     "PROJECT_NAME",
+			validation: func(expanded string) bool { return expanded == "with_proto" },
+			error:      "Expected value to be 'with_proto'",
 		},
 		{
 			envVar:     "WORKSPACE_ROOT",
