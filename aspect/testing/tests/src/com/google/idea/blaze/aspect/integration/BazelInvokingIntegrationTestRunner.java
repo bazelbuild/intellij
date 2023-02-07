@@ -76,10 +76,11 @@ public class BazelInvokingIntegrationTestRunner {
             ImmutableList.of(OutputGroup.INFO),
             ImmutableList.of(LanguageClass.GENERIC),
             aspectStrategyBazel));
+    ImmutableList<String> command = args.build();
 
     ProcessBuilder processBuilder =
         new ProcessBuilder()
-            .command(args.build())
+            .command(command)
             .directory(Paths.get(System.getenv("BIT_WORKSPACE_DIR")).toFile());
     Process bazelInvocation = processBuilder.start();
     int exitCode = bazelInvocation.waitFor();
@@ -88,8 +89,8 @@ public class BazelInvokingIntegrationTestRunner {
     if (exitCode != 0) {
       exitWithError(
           String.format(
-              "Bazel invocation failed: exit code (%d), invocation result (%s).",
-              exitCode, invocationOutput));
+              "Bazel invocation (%s) failed: exit code (%d), invocation result err: (%s) out: (%s).",
+              command, exitCode, invocationOutput, new String(bazelInvocation.getInputStream().readAllBytes())));
     }
 
     // Bazel's output goes into stderr by default, even on success.
