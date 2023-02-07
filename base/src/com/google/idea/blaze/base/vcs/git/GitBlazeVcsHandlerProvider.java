@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.vcs.git;
 
+import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -24,18 +25,19 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
-import com.google.idea.blaze.base.vcs.BlazeVcsHandler;
+import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Vcs diff provider for git */
-public class GitBlazeVcsHandler implements BlazeVcsHandler {
+public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
 
-  private static final Logger logger = Logger.getInstance(GitBlazeVcsHandler.class);
+  private static final Logger logger = Logger.getInstance(GitBlazeVcsHandlerProvider.class);
 
   @Override
   public String getVcsName() {
@@ -50,35 +52,48 @@ public class GitBlazeVcsHandler implements BlazeVcsHandler {
   }
 
   @Override
-  public ListenableFuture<WorkingSet> getWorkingSet(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ListeningExecutorService executor) {
-    return executor.submit(
-        () -> {
-          String upstreamSha = getUpstreamSha(workspaceRoot, false);
-          if (upstreamSha == null) {
-            return null;
-          }
-          return GitWorkingSetProvider.calculateWorkingSet(workspaceRoot, upstreamSha, context);
-        });
+  public BlazeVcsHandler getHandlerForProject(Project project) {
+    return new GitBlazeVcsHandler(project);
   }
 
-  @Nullable
-  @Override
-  public BlazeVcsSyncHandler createSyncHandler(Project project, WorkspaceRoot workspaceRoot) {
-    return null;
-  }
+  static class GitBlazeVcsHandler implements BlazeVcsHandler {
 
-  @Override
-  public ListenableFuture<String> getUpstreamContent(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      WorkspacePath path,
-      ListeningExecutorService executor) {
-    return executor.submit(() -> getGitUpstreamContent(workspaceRoot, path));
+    private final WorkspaceRoot workspaceRoot;
+
+    GitBlazeVcsHandler(Project project) {
+      this.workspaceRoot = WorkspaceRoot.fromProject(project);
+    }
+
+    @Override
+    public ListenableFuture<WorkingSet> getWorkingSet(
+        BlazeContext context, ListeningExecutorService executor) {
+      return executor.submit(
+          () -> {
+            String upstreamSha = getUpstreamSha(workspaceRoot, false);
+            if (upstreamSha == null) {
+              return null;
+            }
+            return GitWorkingSetProvider.calculateWorkingSet(workspaceRoot, upstreamSha, context);
+          });
+    }
+
+    @Nullable
+    @Override
+    public BlazeVcsSyncHandler createSyncHandler() {
+      return null;
+    }
+
+    @Override
+    public ListenableFuture<String> getUpstreamContent(
+        BlazeContext context, WorkspacePath path, ListeningExecutorService executor) {
+      return executor.submit(() -> getGitUpstreamContent(workspaceRoot, path));
+    }
+
+    @Override
+    public Optional<ListenableFuture<String>> getUpstreamVersion(
+        BlazeContext context, ListeningExecutorService executor) {
+      return Optional.of(executor.submit(() -> getUpstreamSha(workspaceRoot)));
+    }
   }
 
   private static String getGitUpstreamContent(WorkspaceRoot workspaceRoot, WorkspacePath path) {
@@ -117,25 +132,41 @@ public class GitBlazeVcsHandler implements BlazeVcsHandler {
 
   /**
    * Returns the git commit SHA corresponding to the most recent commit in the current branch which
-   * matches a commit in the currently-tracked remote branch.
+   * matches a commit in the currently-tracked remote branch, or null if that fails for any reason.
    */
   @Nullable
   public static String getUpstreamSha(WorkspaceRoot workspaceRoot, boolean suppressErrors) {
+    try {
+      return getUpstreamSha(workspaceRoot);
+    } catch (VcsException e) {
+      if (!suppressErrors) {
+        logger.error(e.getMessage());
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Returns the git commit SHA corresponding to the most recent commit in the current branch which
+   * matches a commit in the currently-tracked remote branch.
+   *
+   * @throws VcsException if we cannot get the SHA.
+   */
+  public static String getUpstreamSha(WorkspaceRoot workspaceRoot) throws VcsException {
     ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
+    String[] args = new String[] {"git", "rev-parse", "@{u}"};
     int retVal =
-        ExternalTask.builder(workspaceRoot)
-            .args("git", "rev-parse", "@{u}")
-            .stdout(stdout)
-            .stderr(stderr)
-            .build()
-            .run();
+        ExternalTask.builder(workspaceRoot).args(args).stdout(stdout).stderr(stderr).build().run();
     if (retVal != 0) {
-      if (!suppressErrors) {
-        logger.error(stderr);
-      }
-      return null;
+      throw new VcsException(
+          "Could not obtain upstream sha: `"
+              + Joiner.on(' ').join(args)
+              + "` exited with "
+              + retVal
+              + "; stderr: "
+              + stderr);
     }
     return StringUtil.trimEnd(stdout.toString(), "\n");
   }

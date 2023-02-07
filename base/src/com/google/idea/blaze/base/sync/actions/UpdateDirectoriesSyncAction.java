@@ -39,4 +39,9 @@ public class UpdateDirectoriesSyncAction extends BlazeProjectSyncAction {
         .setText(text)
         .commit();
   }
+
+  @Override
+  protected QuerySyncStatus querySyncSupport() {
+    return QuerySyncStatus.HIDDEN;
+  }
 }

@@ -210,6 +210,7 @@ def _repackaged_files_impl(ctx):
             files = input_files,
             prefix = prefix,
             strip_prefix = ctx.attr.strip_prefix,
+            executable = ctx.attr.executable,
         ),
     ]
 
@@ -219,10 +220,11 @@ _repackaged_files = rule(
         "srcs": attr.label_list(mandatory = True, allow_files = True),
         "prefix": attr.string(mandatory = True),
         "strip_prefix": attr.string(mandatory = True),
+        "executable": attr.bool(mandatory = False),
     },
 )
 
-def repackaged_files(name, srcs, prefix, strip_prefix = ".", **kwargs):
+def repackaged_files(name, srcs, prefix, strip_prefix = ".", executable = False, **kwargs):
     """Assembles files together so that they can be packaged as an IntelliJ plugin.
 
     A cut-down version of the internal 'pkgfilegroup' rule.
@@ -237,7 +239,7 @@ def repackaged_files(name, srcs, prefix, strip_prefix = ".", **kwargs):
           is used. Default is "."
       **kwargs: Any further arguments to be passed to the target
     """
-    _repackaged_files(name = name, srcs = srcs, prefix = prefix, strip_prefix = strip_prefix, **kwargs)
+    _repackaged_files(name = name, srcs = srcs, prefix = prefix, strip_prefix = strip_prefix, executable = executable, **kwargs)
 
 def _strip_external_workspace_prefix(short_path):
     """If this target is sitting in an external workspace, return the workspace-relative path."""
@@ -277,12 +279,12 @@ def _plugin_deploy_zip_impl(ctx):
         data = target[repackaged_files_data]
         input_files = depset(transitive = [input_files, data.files])
         for f in data.files.to_list():
-            exec_path_to_zip_path[f.path] = output_path(f, data)
+            exec_path_to_zip_path[f.path] = (output_path(f, data), data.executable)
 
     args = []
     args.extend(["--output", zip_file.path])
-    for exec_path, zip_path in exec_path_to_zip_path.items():
-        args.extend([exec_path, zip_path])
+    for exec_path, (zip_path, exec) in exec_path_to_zip_path.items():
+        args.extend([exec_path, zip_path, "True" if exec else "False"])
     ctx.actions.run(
         executable = ctx.executable._zip_plugin_files,
         arguments = args,

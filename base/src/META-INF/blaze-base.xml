@@ -427,7 +427,7 @@
                     interface="com.google.idea.blaze.base.prefetch.PrefetchFileSource"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.PsiFileProvider" interface="com.google.idea.blaze.base.lang.buildfile.search.PsiFileProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.VcsHandler"
-                    interface="com.google.idea.blaze.base.vcs.BlazeVcsHandler"/>
+                    interface="com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildFlagsProvider" interface="com.google.idea.blaze.base.command.BuildFlagsProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildSystemProvider" interface="com.google.idea.blaze.base.bazel.BuildSystemProvider"/>
     <extensionPoint qualifiedName="com.google.idea.blaze.BuildifierBinaryProvider" interface="com.google.idea.blaze.base.buildmodifier.BuildifierBinaryProvider"/>
@@ -493,8 +493,8 @@
     <SyncPlugin implementation="com.google.idea.blaze.base.sync.libraries.ExternalLibraryManager$SyncPlugin"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.command.BuildFlagsProviderImpl"/>
     <BuildFlagsProvider implementation="com.google.idea.blaze.base.run.coverage.CoverageBuildFlagsProvider"/>
-    <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandler"/>
-    <VcsHandler implementation="com.google.idea.blaze.base.vcs.FallbackBlazeVcsHandler" order="last" id="fallback"/>
+    <VcsHandler implementation="com.google.idea.blaze.base.vcs.git.GitBlazeVcsHandlerProvider"/>
+    <VcsHandler implementation="com.google.idea.blaze.base.vcs.FallbackBlazeVcsHandlerProvider" order="last" id="fallback"/>
     <BuildSystemProvider implementation="com.google.idea.blaze.base.bazel.BazelBuildSystemProvider" id="BazelBuildSystemProvider" order="last"/>
     <BuildifierBinaryProvider implementation="com.google.idea.blaze.base.buildmodifier.DefaultBuildifierBinaryProvider"/>
     <BuildResultHelperProvider order="last" implementation="com.google.idea.blaze.base.command.buildresult.BuildResultHelperBep$Provider"/>

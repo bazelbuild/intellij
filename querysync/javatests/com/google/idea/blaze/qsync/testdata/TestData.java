@@ -22,6 +22,7 @@ import java.util.Locale;
 public enum TestData {
   ANDROID_AIDL_SOURCE_QUERY,
   ANDROID_LIB_QUERY,
+  JAVA_EXPORTED_DEP_QUERY,
   JAVA_LIBRARY_EXTERNAL_DEP_QUERY,
   JAVA_LIBRARY_INTERNAL_DEP_QUERY,
   JAVA_LIBRARY_MULTI_TARGETS,
@@ -32,6 +33,8 @@ public enum TestData {
   private static final Path ROOT =
       Path.of(
           "querysync/javatests/com/google/idea/blaze/qsync/testdata");
+
+  public static final String ROOT_PACKAGE = "//" + ROOT;
 
   public static Path getPathFor(TestData name) {
     return RunfilesPaths.resolve(ROOT).resolve(name.toString().toLowerCase(Locale.ROOT));

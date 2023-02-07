@@ -276,7 +276,7 @@ public final class FastBuildCompilerFactoryImplTest {
             + "\n"
             + "final class Main {\n"
             + "  private static void main(String[] args) {\n"
-            + "    Runnable r = () -> {};\n"
+            + "    var x = 100;\n"
             + "  }\n"
             + "}\n";
     StringWriter javacOutput = new StringWriter();
@@ -285,13 +285,13 @@ public final class FastBuildCompilerFactoryImplTest {
               JavaToolchainInfo.create(
                   /* javacJars= */ ImmutableList.of(),
                   /* bootJars= */ ImmutableList.of(),
-                  /* sourceVersion= */ "7",
+                  /* sourceVersion= */ "8",
                   /* targetVersion= */ "8"))
           .compile(createBlazeContext(javacOutput), createCompileInstructions(java).build());
       fail("Should have thrown FastBuildIncrementalCompileException");
     } catch (FastBuildIncrementalCompileException e) {
-      assertThat(javacOutput.toString()).contains("lambda");
-      assertThat(javacOutput.toString()).contains("-source");
+      // Compiler error expected on line 7, because var is not supported in java 8
+      assertThat(javacOutput.toString()).contains("7: error: cannot find symbol");
     }
   }
 

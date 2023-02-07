@@ -24,8 +24,11 @@ import com.google.idea.blaze.base.projectview.section.sections.SyncFlagsSection;
 import com.google.idea.blaze.base.projectview.section.sections.TestFlagsSection;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
+import java.util.ArrayList;
 import java.util.List;
 
 /** The collection of all the Bazel flag strings we use. */
@@ -121,11 +124,20 @@ public final class BlazeFlags {
 
   /** Expands any macros in the passed build flags. */
   public static List<String> expandBuildFlags(List<String> flags) {
+    // The code below depends on there being a globally registered `MacroManager`.
+    // `MacroManager` is a final class with a private constructor, and therefore it can't be mocked.
+    // We have tests that manipulate flags, but are not interested in exercising this code.
+    // Therefore, we return early in those cases.
+    if (MacroManager.getInstance() == null) {
+      return flags;
+    }
     // This built-in IntelliJ class will do macro expansion using
     // both your environment and your Settings > Behavior > Path Variables
-    ParametersList parametersList = new ParametersList();
-    parametersList.addAll(flags);
-    return parametersList.getList();
+    List<String> expandedFlags = new ArrayList<>();
+    for (String flag : flags) {
+        expandedFlags.add(ProgramParametersConfigurator.expandMacros(flag));
+    }
+    return expandedFlags;
   }
 
   private BlazeFlags() {}

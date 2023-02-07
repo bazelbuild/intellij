@@ -24,13 +24,14 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.intellij.openapi.project.Project;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
  * Used for bazel projects, when no other vcs handler can be found. Fallback to returning a null
  * working set.
  */
-public class FallbackBlazeVcsHandler implements BlazeVcsHandler {
+public class FallbackBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
 
   @Override
   public String getVcsName() {
@@ -43,27 +44,34 @@ public class FallbackBlazeVcsHandler implements BlazeVcsHandler {
   }
 
   @Override
-  public ListenableFuture<WorkingSet> getWorkingSet(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      ListeningExecutorService executor) {
-    return Futures.immediateFuture(null);
+  public BlazeVcsHandler getHandlerForProject(Project p) {
+    return new FallbackBlazeVcsHandler();
   }
 
-  @Override
-  public ListenableFuture<String> getUpstreamContent(
-      Project project,
-      BlazeContext context,
-      WorkspaceRoot workspaceRoot,
-      WorkspacePath path,
-      ListeningExecutorService executor) {
-    return Futures.immediateFuture("");
-  }
+  static class FallbackBlazeVcsHandler implements BlazeVcsHandler {
 
-  @Nullable
-  @Override
-  public BlazeVcsSyncHandler createSyncHandler(Project project, WorkspaceRoot workspaceRoot) {
-    return null;
+    @Override
+    public ListenableFuture<WorkingSet> getWorkingSet(
+        BlazeContext context, ListeningExecutorService executor) {
+      return Futures.immediateFuture(null);
+    }
+
+    @Override
+    public ListenableFuture<String> getUpstreamContent(
+        BlazeContext context, WorkspacePath path, ListeningExecutorService executor) {
+      return Futures.immediateFuture("");
+    }
+
+    @Override
+    public Optional<ListenableFuture<String>> getUpstreamVersion(
+        BlazeContext context, ListeningExecutorService executor) {
+      return Optional.empty();
+    }
+
+    @Nullable
+    @Override
+    public BlazeVcsSyncHandler createSyncHandler() {
+      return null;
+    }
   }
 }
