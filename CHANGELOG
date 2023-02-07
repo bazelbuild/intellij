@@ -1,3 +1,8 @@
+v2023.02.07
+===========
+* fix(run): Properly expand IntelliJ macros in run configurations #4368
+* Bug fixes and internal cleanup.
+
 v2023.01.24
 ===========
 * Allow for more flexibility when reporting test failures #2148
