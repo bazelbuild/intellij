@@ -53,7 +53,7 @@ public class ImportRootsTest extends BlazeIntegrationTestCase {
             .addAll(
                 BuildSystemProvider.getBuildSystemProvider(BuildSystemName.Bazel)
                     .buildArtifactDirectories(workspaceRoot))
-            .add(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY)
+            .addAll(BlazeDataStorage.ALL_PROJECT_SUBDIRECTORIES)
             .build();
 
     assertThat(importRoots.rootDirectories()).containsExactly(new WorkspacePath(""));

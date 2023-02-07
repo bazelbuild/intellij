@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.projectview;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -139,7 +140,9 @@ public final class ImportRoots {
     }
 
     private void excludeProjectDataSubDirectory() {
-      excludeDirectoriesBuilder.add(new WorkspacePath(BlazeDataStorage.PROJECT_DATA_SUBDIRECTORY));
+          excludeDirectoriesBuilder.addAll( BlazeDataStorage.ALL_PROJECT_SUBDIRECTORIES.stream()
+                          .map(d -> new WorkspacePath(d))
+                          .collect(toImmutableList()));
     }
 
     private void excludeBazelIgnoredPaths() {
