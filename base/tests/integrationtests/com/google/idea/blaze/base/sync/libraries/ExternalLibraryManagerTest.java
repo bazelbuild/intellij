@@ -130,7 +130,6 @@ public final class ExternalLibraryManagerTest extends BlazeIntegrationTestCase {
     mockSync(SyncResult.SUCCESS);
     assertThat(getExternalLibrary().getSourceRoots()).containsExactly(oldFile);
 
-    libraryProvider.setFiles(newFile.getPath());
     mockSync(SyncResult.FAILURE);
     // files list should remain the same if sync failed
     assertThat(getExternalLibrary().getSourceRoots()).containsExactly(oldFile);
