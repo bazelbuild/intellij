@@ -91,6 +91,9 @@ public class QuerySummary {
               // This is not strictly correct, as source files of rule with 'export' do not
               // depend on exported targets.
               rule.addAllDeps(a.getStringListValueList());
+            } else if (a.getName().equals("$junit")) {
+              // android_local_test depends on junit implicitly using the _junit attribute.
+              rule.addDeps(a.getStringValue());
             } else if (a.getName().equals("idl_srcs")) {
               rule.addAllIdlSources(a.getStringListValueList());
             }

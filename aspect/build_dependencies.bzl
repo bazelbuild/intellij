@@ -91,7 +91,14 @@ def _collect_dependencies_impl(target, ctx):
     trs = []
     if not included:
         trs = [target[JavaInfo].compile_jars]
-    for dep in ctx.rule.attr.deps:
+
+    deps = []
+    if hasattr(ctx.rule.attr, "deps"):
+        deps += ctx.rule.attr.deps
+    if hasattr(ctx.rule.attr, "_junit"):
+        deps.append(ctx.rule.attr._junit)
+
+    for dep in deps:
         if DependenciesInfo in dep:
             trs.append(dep[DependenciesInfo].compile_time_jars)
     if hasattr(ctx.rule.attr, "exports"):
@@ -110,7 +117,7 @@ def _collect_dependencies_impl(target, ctx):
 collect_dependencies = aspect(
     implementation = _collect_dependencies_impl,
     provides = [DependenciesInfo],
-    attr_aspects = ["deps", "exports"],
+    attr_aspects = ["deps", "exports", "_junit"],
     required_providers = [[JavaInfo]],
     attrs = {
         "include": attr.string(
