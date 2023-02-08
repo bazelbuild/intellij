@@ -43,8 +43,8 @@ http_archive(
 http_archive(
     name = "intellij_ce_2022_3",
     build_file = "@//intellij_platform_sdk:BUILD.idea223",
-    sha256 = "f6ea9aee6dec73b55ea405b37402394095be3c658d1c2707a8f30ac848974eac",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2022.3/ideaIC-2022.3.zip",
+    sha256 = "b66f8c4a82a9303dfc8f490e4a617f4b597349496a817395a1fdd993a0493b63",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIC/2022.3.2/ideaIC-2022.3.2.zip",
 )
 
 # The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
@@ -84,8 +84,8 @@ http_archive(
 http_archive(
     name = "intellij_ue_2022_3",
     build_file = "@//intellij_platform_sdk:BUILD.ue223",
-    sha256 = "0b17ea16e70290d912b6be246460907643c23f33ae2c22331084818025c2b297",
-    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2022.3/ideaIU-2022.3.zip",
+    sha256 = "24893ff00cfd8010c3de1a780426af5ecdbb33b9c65f3fb3f1ce841b51f1565b",
+    url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/idea/ideaIU/2022.3.2/ideaIU-2022.3.2.zip",
 )
 
 # The plugin api for clion_2021_2. This is required to build CLwB, and run integration tests.
