@@ -17,14 +17,25 @@ package com.google.idea.blaze.plugin.run;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PathsList;
+
 import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Boilerplate for running an IJ application with an additional plugin, copied from
@@ -32,6 +43,7 @@ import java.io.File;
  */
 public class IntellijWithPluginClasspathHelper {
 
+  private static Logger logger = Logger.getInstance(IntellijWithPluginClasspathHelper.class);
   private static final ImmutableList<String> IJ_LIBRARIES =
       ImmutableList.of(
           "log4j.jar",
@@ -63,6 +75,8 @@ public class IntellijWithPluginClasspathHelper {
           "groovy.jar",
           "jsp-base.jar"
       );
+
+  // #api222 remove once we drop support for 2022.2. Newer versions should use product-info.json
   private static void addIntellijLibraries(JavaParameters params, Sdk ideaJdk) {
     String libPath = ideaJdk.getHomePath() + File.separator + "lib";
     PathsList list = params.getClassPath();
@@ -78,6 +92,23 @@ public class IntellijWithPluginClasspathHelper {
     }
 
     list.addFirst(((JavaSdkType) ideaJdk.getSdkType()).getToolsPath(ideaJdk));
+  }
+
+  private static void addIntellijLibrariesFromProductInfoJson(JavaParameters params, Sdk ideaJdk, ProductInfoJson.LaunchInfo launchInfo) {
+    String libPath = ideaJdk.getHomePath() + File.separator + "lib";
+    PathsList list = params.getClassPath();
+    addLibrariesToList(ImmutableList.copyOf(launchInfo.bootClassPathJarNames), libPath, list);
+    list.addFirst(((JavaSdkType) ideaJdk.getSdkType()).getToolsPath(ideaJdk));
+  }
+
+  public static ProductInfoJson getProductInfoJson(Sdk ideaJdk) {
+    Path productJsonPath = Paths.get(ideaJdk.getHomePath(), "product-info.json");
+    Gson gson = new Gson();
+    try (Reader reader = Files.newBufferedReader(productJsonPath)) {
+      return gson.fromJson(reader, ProductInfoJson.class);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static void addLibrariesToList(ImmutableList<String> ijLibraries, String libPath, PathsList list) {
@@ -117,8 +148,37 @@ public class IntellijWithPluginClasspathHelper {
     params.setWorkingDirectory(ideaJdk.getHomePath() + File.separator + "bin" + File.separator);
     params.setJdk(ideaJdk);
 
-    addIntellijLibraries(params, ideaJdk);
-
+    BuildNumber buildNumber = BuildNumber.fromString(IdeaJdkHelper.getBuildNumber(ideaJdk));
+    if(buildNumber != null && buildNumber.getBaselineVersion() > 223) {
+      ProductInfoJson productInfoJson = getProductInfoJson(ideaJdk);
+      String os = System.getProperty("os.name");
+      String arch = System.getProperty("os.arch");
+      Optional<ProductInfoJson.LaunchInfo> launchInfo = productInfoJson.launch.stream().filter(l -> Objects.equals(l.os, os) && Objects.equals(l.arch, arch)).findFirst();
+      if(launchInfo.isPresent()) {
+          addIntellijLibrariesFromProductInfoJson(params, ideaJdk, launchInfo.get());
+          for (String productInfoJsonParams : launchInfo.get().additionalJvmArguments) {
+              vm.add(productInfoJsonParams);
+          }
+      } else {
+          logger.error(String.format("Could not find 'launch' settings in product-info.json for os:'%s' and arch:'%s'", os, arch));
+      }
+    } else { // #api223 Drop together with support for 2022.3
+      addIntellijLibraries(params, ideaJdk);
+    }
     params.setMainClass("com.intellij.idea.Main");
   }
+}
+
+
+/**
+ * Class used only to deserialize product-info.json, that's why there are public fields.
+ */
+class ProductInfoJson {
+  static class LaunchInfo {
+    public List<String> bootClassPathJarNames;
+    public List<String> additionalJvmArguments;
+    public String os;
+    public String arch;
+  }
+  public List<LaunchInfo> launch;
 }
