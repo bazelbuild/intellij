@@ -1,0 +1,20 @@
+# This workflow adds not stale label to only copybara[bot] PRs to avoid stale workflow 
+#
+# You can adjust the behavior by modifying this file.
+# For more information, see:
+# https://github.com/actions-ecosystem/action-add-labels
+name: Add not stale label to copybara-service pr
+
+on:
+  pull_request:
+    types: opened
+
+jobs:
+  add_labels:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: github.actor == 'copybara-service[bot]'
+        with:
+          labels: not stale
