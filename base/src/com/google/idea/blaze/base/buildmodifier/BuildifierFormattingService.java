@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.buildmodifier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
@@ -115,11 +116,15 @@ public final class BuildifierFormattingService extends AsyncDocumentFormattingSe
         process = new ProcessBuilder(args).start();
         process.getOutputStream().write(request.getDocumentText().getBytes(UTF_8));
         process.getOutputStream().close();
-
         BufferedReader reader =
             new BufferedReader(new InputStreamReader(process.getInputStream(), UTF_8));
         String formattedText = CharStreams.toString(reader);
-        if (process.exitValue() == 0) {
+        boolean exited = process.waitFor(10, SECONDS);
+
+        if (!exited) {
+          process.destroyForcibly();
+          request.onError("Error running buildifier", "process timed out.");
+        } else if (process.exitValue() == 0) {
           request.onTextReady(formattedText);
         } else {
           request.onError(
@@ -128,14 +133,11 @@ public final class BuildifierFormattingService extends AsyncDocumentFormattingSe
                   + request.getContext().getContainingFile().getName()
                   + " have syntax errors?");
         }
-      } catch (IOException e) {
-        request.onError("Error running buildifier", e.getMessage());
-      }
-      try {
-        process.waitFor();
       } catch (InterruptedException e) {
         process.destroy();
         Thread.currentThread().interrupt();
+      } catch (IOException e) {
+        request.onError("Error running buildifier", e.getMessage());
       }
     }
 
