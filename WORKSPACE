@@ -124,8 +124,8 @@ http_archive(
 http_archive(
     name = "clion_2022_3",
     build_file = "@//intellij_platform_sdk:BUILD.clion223",
-    sha256 = "9b8870f37c16288e6bc6f654b561756271250f9e107299cd8da879c57ce5c5d9",
-    url = "https://download.jetbrains.com/cpp/CLion-2022.3.tar.gz",
+    sha256 = "896e9cc5b908aa51e091201c320f6f08033f9064382e44b107fccc554ed94895",
+    url = "https://download.jetbrains.com/cpp/CLion-2022.3.2.tar.gz",
 )
 
 _PYTHON_CE_BUILD_FILE = """
