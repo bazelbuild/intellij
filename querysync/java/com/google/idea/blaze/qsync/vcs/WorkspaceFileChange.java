@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.query;
+package com.google.idea.blaze.qsync.vcs;
 
 import java.nio.file.Path;
 
@@ -33,5 +33,25 @@ public final class WorkspaceFileChange {
   public WorkspaceFileChange(Operation operation, Path workspaceRelativePath) {
     this.operation = operation;
     this.workspaceRelativePath = workspaceRelativePath;
+  }
+
+  /**
+   * Invert this change. For an add, returns a corresponding delete, and for a delete returns a
+   * corresponding add. For a modify, return this.
+   *
+   * <p>This is used when performing delta updates to correctly handle files that have been
+   * reverted, i.e. are no longer in the working set.
+   */
+  public WorkspaceFileChange invert() {
+    switch (operation) {
+      case DELETE:
+        return new WorkspaceFileChange(Operation.ADD, workspaceRelativePath);
+      case ADD:
+        return new WorkspaceFileChange(Operation.DELETE, workspaceRelativePath);
+      case MODIFY:
+        return this;
+    }
+    throw new IllegalStateException(
+        "Invalid operation " + operation + " for " + workspaceRelativePath);
   }
 }
