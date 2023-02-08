@@ -39,7 +39,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
-/** Converts a {@link com.google.idea.blaze.qsync.BuildGraph} instance into a project proto. */
+/** Converts a {@link BuildGraphData} instance into a project proto. */
 public class GraphToProjectConverter {
 
   private final PackageReader packageReader;
