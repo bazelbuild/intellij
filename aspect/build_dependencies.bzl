@@ -88,23 +88,28 @@ def _collect_dependencies_impl(target, ctx):
     if included and ctx.rule.kind in ctx.attr.always_build_rules.split(","):
         included = False
 
-    trs = []
-    if not included:
-        trs = [target[JavaInfo].compile_jars]
-
     deps = []
     if hasattr(ctx.rule.attr, "deps"):
         deps += ctx.rule.attr.deps
+    if hasattr(ctx.rule.attr, "exports"):
+        deps += ctx.rule.attr.exports
     if hasattr(ctx.rule.attr, "_junit"):
         deps.append(ctx.rule.attr._junit)
 
-    for dep in deps:
-        if DependenciesInfo in dep:
-            trs.append(dep[DependenciesInfo].compile_time_jars)
-    if hasattr(ctx.rule.attr, "exports"):
-        for dep in ctx.rule.attr.exports:
-            if DependenciesInfo in dep:
-                trs.append(dep[DependenciesInfo].compile_time_jars)
+    info_deps = [dep[DependenciesInfo] for dep in deps if DependenciesInfo in dep]
+
+    trs = []
+    if not included:
+        if info_deps:
+            trs = [target[JavaInfo].compile_jars]
+        else:
+            # For JavaInfo libraries which we don't follow any dependencies
+            # we attribute all the transitive jars to them. This includes
+            # all the proto variants.
+            trs = [target[JavaInfo].transitive_compile_time_jars]
+
+    for info in info_deps:
+        trs.append(info.compile_time_jars)
 
     if included and ctx.attr.generate_aidl_classes and generates_idl_jar(target):
         idl_jar = target[AndroidIdeInfo].idl_class_jar
