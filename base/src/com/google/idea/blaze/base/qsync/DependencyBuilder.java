@@ -15,10 +15,15 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
+import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem;
@@ -27,6 +32,7 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
+import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
@@ -41,10 +47,13 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
+import com.google.protobuf.TextFormat;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -57,7 +66,7 @@ public class DependencyBuilder {
 
   public DependencyBuilder() {}
 
-  public ImmutableList<OutputArtifact> build(
+  public OutputInfo build(
       Project project,
       BlazeContext context,
       Set<String> buildTargets,
@@ -110,6 +119,7 @@ public class DependencyBuilder {
                   String.format("--aspects_parameters=always_build_rules=%s", alwaysBuildRuleTypes))
               .addBlazeFlags("--aspects_parameters=generate_aidl_classes=True")
               .addBlazeFlags("--output_groups=ij_query_sync")
+              .addBlazeFlags("--output_groups=artifact_info_file")
               .addBlazeFlags("--noexperimental_run_validations")
               .build();
 
@@ -123,9 +133,33 @@ public class DependencyBuilder {
           .stderr(lpos)
           .build()
           .run();
-      ParsedBepOutput buildOutput = buildResultHelper.getBuildOutput();
+      return createOutputInfo(buildResultHelper.getBuildOutput());
+    }
+  }
 
-      return buildOutput.getOutputGroupArtifacts("ij_query_sync", x -> true);
+  private OutputInfo createOutputInfo(ParsedBepOutput parsedBepOutput) throws IOException {
+    ImmutableList<OutputArtifact> artifacts =
+        parsedBepOutput.getOutputGroupArtifacts("ij_query_sync", x -> true);
+    ImmutableList<OutputArtifact> artifactInfoFiles =
+        parsedBepOutput.getOutputGroupArtifacts("artifact_info_file", x -> true);
+    ImmutableSet.Builder<ArtifactTrackerData.TargetToDeps> artifactInfoFilesBuilder =
+        ImmutableSet.builder();
+    for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
+      artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
+    }
+    return OutputInfo.create(
+        artifacts.stream().collect(toImmutableMap(OutputArtifact::getKey, Functions.identity())),
+        artifactInfoFilesBuilder.build());
+  }
+
+  private ArtifactTrackerData.TargetToDeps readArtifactInfoFile(BlazeArtifact file)
+      throws IOException {
+    try (InputStream inputStream = file.getInputStream()) {
+      ArtifactTrackerData.TargetToDeps.Builder builder =
+          ArtifactTrackerData.TargetToDeps.newBuilder();
+      TextFormat.Parser parser = TextFormat.Parser.newBuilder().build();
+      parser.merge(new InputStreamReader(inputStream, UTF_8), builder);
+      return builder.build();
     }
   }
 

@@ -82,6 +82,24 @@ java_proto_library(
 )
 
 proto_library(
+    name = "artifact_tracker_data_proto",
+    srcs = ["artifact_tracker_data.proto"],
+    deps = [
+        ":project_data_proto",
+        "//third_party/bazel/src/main/protobuf:build_proto",
+    ],
+)
+
+java_proto_library(
+    name = "artifact_tracker_data_java_proto",
+    visibility = combine_visibilities(
+        ASPECT_PROTO_VISIBILITY,
+        PLUGIN_PACKAGES_VISIBILITY,
+    ),
+    deps = [":artifact_tracker_data_proto"],
+)
+
+proto_library(
     name = "intellij_plugin_target_deploy_info_proto",
     srcs = ["intellij_plugin_target_deploy_info.proto"],
 )
@@ -97,6 +115,7 @@ java_library(
     name = "proto_deps",
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     exports = [
+        ":artifact_tracker_data_java_proto",
         ":common_java_proto",
         ":fast_build_info_java_proto",
         ":intellij_ide_info_java_proto",

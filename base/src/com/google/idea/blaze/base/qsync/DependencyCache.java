@@ -15,67 +15,38 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.common.PrintOutput;
+import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
+import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
 import com.intellij.openapi.project.Project;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import org.jetbrains.annotations.NotNull;
 
 /** A local cache of project dependencies. */
 public class DependencyCache {
-
-  private final Project project;
+  private final ArtifactTracker artifactTracker;
 
   public DependencyCache(Project project) {
-    this.project = project;
+    artifactTracker = new ArtifactTracker(project);
   }
 
-  @NotNull
-  private Path labelToLib(String target) throws IOException {
-    Path libs = Paths.get(project.getBasePath()).resolve(".blaze/libraries");
-    Files.createDirectories(libs);
-    return libs.resolve(labelToFile(target));
+  /* Cleans up all cache files and reset Artifact map. */
+  public void invalidateAll() throws IOException {
+    artifactTracker.clear();
   }
 
-  private String labelToFile(String label) {
-    return label.replaceAll("/", "_").replace(":", "_") + label.hashCode() + ".jar";
+  /* Invalidates all cached jars and the artifact map of a target. */
+  public void invalidate(String target) throws IOException {
+    artifactTracker.removeDepsOf(target);
   }
 
-  public ArrayList<File> addArchive(BlazeContext context, OutputArtifact zip) throws IOException {
-    ArrayList<File> newFiles = new ArrayList<>();
-    long now = System.nanoTime();
-    int total = 0;
-    int skipped = 0;
-    try (InputStream lis = zip.getInputStream();
-        ZipInputStream zis = new ZipInputStream(lis)) {
-      ZipEntry entry = null;
-      while ((entry = zis.getNextEntry()) != null) {
-        Path libFile = labelToLib(entry.getName());
-        total++;
-        if (Files.exists(libFile)) {
-          skipped++;
-          continue;
-        }
-        Files.copy(zis, libFile, StandardCopyOption.REPLACE_EXISTING);
-        newFiles.add(libFile.toFile());
-      }
-    }
-    long elapsedMs = (System.nanoTime() - now) / 1000000L;
-    context.output(
-        PrintOutput.log(
-            String.format(
-                "Copied %d (skipped %d total %d) artifacts in %d ms",
-                total - skipped, skipped, total, elapsedMs)));
-    return newFiles;
+  /* Returns all jar files of one target. */
+  public ImmutableSet<Path> get(String target) {
+    return artifactTracker.get(target);
+  }
+
+  /* Caches new Artifacts to local. */
+  public UpdateResult update(OutputInfo outputInfo) throws IOException {
+    return artifactTracker.add(outputInfo);
   }
 }
