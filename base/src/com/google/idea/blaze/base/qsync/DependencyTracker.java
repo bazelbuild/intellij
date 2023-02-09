@@ -15,15 +15,14 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -35,8 +34,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -113,18 +112,24 @@ public class DependencyTracker {
       return;
     }
 
-    ImmutableList<OutputArtifact> artifacts =
-        builder.build(project, context, buildTargets, ir, workspaceRoot);
-
-    ArrayList<File> newFiles = new ArrayList<>();
-    for (OutputArtifact l : artifacts) {
-      newFiles.addAll(cache.addArchive(context, l));
-    }
+    OutputInfo outputInfo = builder.build(project, context, buildTargets, ir, workspaceRoot);
 
     syncedTargets.addAll(targets);
+    long now = System.nanoTime();
+    UpdateResult updateResult = cache.update(outputInfo);
+    long elapsedMs = (System.nanoTime() - now) / 1000000L;
+    context.output(
+        PrintOutput.log(
+            String.format(
+                "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
+                elapsedMs, updateResult.updatedFiles().size(), updateResult.removedKeys().size())));
 
     context.output(PrintOutput.log("Refreshing Vfs..."));
-    VfsUtil.markDirtyAndRefresh(true, false, false, newFiles.toArray(new File[] {}));
+    VfsUtil.markDirtyAndRefresh(
+        true,
+        false,
+        false,
+        updateResult.updatedFiles().stream().map(Path::toFile).toArray(File[]::new));
     context.output(PrintOutput.log("Done"));
   }
 }
