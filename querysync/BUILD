@@ -23,6 +23,8 @@ test_suite(
         "//querysync/javatests/com/google/idea/blaze/qsync:AffectedPackagesTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:BuildGraphTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:GraphToProjectConverterTest",
+        "//querysync/javatests/com/google/idea/blaze/qsync:PartialProjectUpdateTest",
+        "//querysync/javatests/com/google/idea/blaze/qsync:ProjectRefresherTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTest",
     ],
 )

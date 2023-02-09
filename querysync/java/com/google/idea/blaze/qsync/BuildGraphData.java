@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
  * to the project structure.
  */
 @AutoValue
-public abstract class BuildGraphData {
+abstract class BuildGraphData {
 
   /** A map from target to file on disk for all source files */
   abstract ImmutableMap<String, Location> locations();
@@ -77,7 +77,7 @@ public abstract class BuildGraphData {
     return new AutoValue_BuildGraphData.Builder().transitiveSourceDeps(Maps.newHashMap());
   }
 
-  public static final BuildGraphData EMPTY =
+  static final BuildGraphData EMPTY =
       builder()
           .sourceOwner(ImmutableMap.of())
           .ruleDeps(ImmutableMap.of())
@@ -160,23 +160,14 @@ public abstract class BuildGraphData {
     return transitiveDeps;
   }
 
-  /**
-   * Given a path to a file it returns the target that owns the file. Note that in general there
-   * could be multiple targets that compile a file, but we try to choose the smallest one, as it
-   * would have everything the file needs to be compiled.
-   */
-  public String getTargetOwner(String path) {
+  String getTargetOwner(String path) {
     // TODO make the parameter a Path
     String syncTarget = fileToTarget().get(Path.of(path));
     return sourceOwner().get(syncTarget);
   }
 
-  /**
-   * For a given path to a file, returns all the targets outside the project that this file needs to
-   * be edited fully.
-   */
   @Nullable
-  public ImmutableSet<String> getFileDependencies(String path) {
+  ImmutableSet<String> getFileDependencies(String path) {
     String target = getTargetOwner(path);
     if (target == null) {
       return null;
@@ -185,7 +176,7 @@ public abstract class BuildGraphData {
   }
 
   /** Returns a list of all the source files of the project, relative to the workspace root. */
-  public List<Path> getJavaSourceFiles() {
+  List<Path> getJavaSourceFiles() {
     List<Path> files = new ArrayList<>();
     for (String src : javaSources()) {
       Location location = locations().get(src);
@@ -197,14 +188,14 @@ public abstract class BuildGraphData {
     return files;
   }
 
-  public List<Path> getAllSourceFiles() {
+  List<Path> getAllSourceFiles() {
     List<Path> files = new ArrayList<>();
     files.addAll(fileToTarget().keySet());
     return files;
   }
 
   /** Returns a list of source files owned by an Android target, relative to the workspace root. */
-  public List<Path> getAndroidSourceFiles() {
+  List<Path> getAndroidSourceFiles() {
     List<Path> files = new ArrayList<>();
     for (String source : javaSources()) {
       String owningTarget = sourceOwner().get(source);

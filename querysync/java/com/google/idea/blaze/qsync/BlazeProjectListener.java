@@ -18,8 +18,8 @@ package com.google.idea.blaze.qsync;
 import com.google.idea.blaze.common.Context;
 import java.io.IOException;
 
-/** A listener interface for new build graphs. */
-public interface BuildGraphListener {
-  /** A new build graph has been created, replacing any existing instance. */
-  void graphCreated(Context context, BuildGraphData instance) throws IOException;
+/** A listener interface for new project snapshots. */
+public interface BlazeProjectListener {
+  /** A new snapshot has been created, replacing any existing instance. */
+  void graphCreated(Context context, BlazeProjectSnapshot instance) throws IOException;
 }

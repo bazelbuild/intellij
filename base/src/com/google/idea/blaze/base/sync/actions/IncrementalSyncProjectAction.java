@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.sync.actions;
 
+import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
@@ -36,8 +38,12 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
 
   @Override
   protected void runSync(Project project, AnActionEvent e) {
-    BlazeSyncManager.getInstance(project)
-        .incrementalProjectSync(/* reason= */ "IncrementalSyncProjectAction");
+    if (QuerySync.isEnabled()) {
+      QuerySyncManager.getInstance(project).deltaSync();
+    } else {
+      BlazeSyncManager.getInstance(project)
+          .incrementalProjectSync(/* reason= */ "IncrementalSyncProjectAction");
+    }
   }
 
   @Override
@@ -49,9 +55,12 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
     Project project = e.getProject();
     Presentation presentation = e.getPresentation();
     BlazeSyncStatus statusHelper = BlazeSyncStatus.getInstance(project);
+    presentation.setEnabled(!statusHelper.syncInProgress());
+    if (QuerySync.isEnabled()) {
+      return;
+    }
     BlazeSyncStatus.SyncStatus status = statusHelper.getStatus();
     presentation.setIcon(getIcon(status));
-    presentation.setEnabled(!statusHelper.syncInProgress());
 
     if (status == BlazeSyncStatus.SyncStatus.DIRTY
         && !BlazeUserSettings.getInstance().getSyncStatusPopupShown()) {
@@ -91,6 +100,6 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
 
   @Override
   protected QuerySyncStatus querySyncSupport() {
-    return QuerySyncStatus.HIDDEN;
+    return QuerySyncStatus.SUPPORTED;
   }
 }
