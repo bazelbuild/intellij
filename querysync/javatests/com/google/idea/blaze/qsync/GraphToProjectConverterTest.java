@@ -16,12 +16,12 @@
 package com.google.idea.blaze.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.EMPTY_PACKAGE_READER;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.common.Output;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -32,15 +32,6 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class GraphToProjectConverterTest {
 
-  private static final Context TEST_CONTEXT =
-      new Context() {
-        @Override
-        public <T extends Output> void output(T output) {}
-
-        @Override
-        public void setHasError() {}
-      };
-
   @Test
   public void testCalculateRootSources_singleSource_atImportRoot() throws IOException {
 
@@ -50,7 +41,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
-            TEST_CONTEXT,
+            NOOP_CONTEXT,
             ImmutableList.of(Path.of("java/com/test")),
             ImmutableList.of());
 
@@ -68,7 +59,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
-            TEST_CONTEXT,
+            NOOP_CONTEXT,
             ImmutableList.of(Path.of("java/com/test")),
             ImmutableList.of());
 
@@ -88,7 +79,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
-            TEST_CONTEXT,
+            NOOP_CONTEXT,
             ImmutableList.of(Path.of("java/com/test")),
             ImmutableList.of());
 
@@ -108,7 +99,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
-            TEST_CONTEXT,
+            NOOP_CONTEXT,
             ImmutableList.of(Path.of("java/com/app"), Path.of("java/com/lib")),
             ImmutableList.of());
 
@@ -132,7 +123,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
-            TEST_CONTEXT,
+            NOOP_CONTEXT,
             ImmutableList.of(Path.of("java/com/test")),
             ImmutableList.of());
 
@@ -157,7 +148,7 @@ public class GraphToProjectConverterTest {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
             sourcePackages::get,
-            TEST_CONTEXT,
+            NOOP_CONTEXT,
             ImmutableList.of(Path.of("java/com/test")),
             ImmutableList.of());
 
@@ -213,7 +204,7 @@ public class GraphToProjectConverterTest {
   public void testCalculateAndroidSourcePackages_rootWithEmptyPrefix() {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
-            s -> null, TEST_CONTEXT, ImmutableList.of(), ImmutableList.of());
+            EMPTY_PACKAGE_READER, NOOP_CONTEXT, ImmutableList.of(), ImmutableList.of());
 
     ImmutableList<Path> androidSourceFiles =
         ImmutableList.of(
@@ -230,7 +221,7 @@ public class GraphToProjectConverterTest {
   public void testCalculateAndroidSourcePackages_emptyRootWithPrefix() {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
-            s -> null, TEST_CONTEXT, ImmutableList.of(), ImmutableList.of());
+            EMPTY_PACKAGE_READER, NOOP_CONTEXT, ImmutableList.of(), ImmutableList.of());
 
     ImmutableList<Path> androidSourceFiles =
         ImmutableList.of(
@@ -248,7 +239,7 @@ public class GraphToProjectConverterTest {
   public void testCalculateAndroidSourcePackages_emptyRootAndNonEmptyRoot() {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
-            s -> null, TEST_CONTEXT, ImmutableList.of(), ImmutableList.of());
+            EMPTY_PACKAGE_READER, NOOP_CONTEXT, ImmutableList.of(), ImmutableList.of());
 
     ImmutableList<Path> androidSourceFiles =
         ImmutableList.of(
