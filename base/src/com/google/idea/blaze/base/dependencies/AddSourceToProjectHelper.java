@@ -336,7 +336,7 @@ class AddSourceToProjectHelper {
   @Nullable
   static LocationContext getContext(Project project, VirtualFile file) {
     if (QuerySync.isEnabled()) {
-      // TODO(b/260643753) understand usages of this, and implement using BuildGraph instead
+      // TODO(b/260643753) understand usages of this, and implement using BlazeProject instead
       // Note the return type LocationContext includes BlazeProjectData to callers will need to
       // change too.
       return null;

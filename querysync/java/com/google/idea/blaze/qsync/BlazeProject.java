@@ -21,34 +21,37 @@ import com.google.idea.blaze.common.Context;
 import java.io.IOException;
 import java.util.List;
 
-/** Keeps a reference to the most up-to date {@link BuildGraphData} instance. */
-public class BuildGraph {
+/** Keeps a reference to the most up-to date {@link BlazeProjectSnapshot} instance. */
+public class BlazeProject {
 
   private final Object lock = new Object();
-  private BuildGraphData currentInstance = BuildGraphData.EMPTY;
+  private BlazeProjectSnapshot currentInstance = BlazeProjectSnapshot.EMPTY;
 
-  private final List<BuildGraphListener> listeners = Lists.newArrayList();
+  private final List<BlazeProjectListener> listeners = Lists.newArrayList();
 
-  public BuildGraph() {}
+  public BlazeProject() {}
 
-  public void addListener(BuildGraphListener listener) {
+  public void addListener(BlazeProjectListener listener) {
     synchronized (lock) {
       listeners.add(listener);
     }
   }
 
-  public void setCurrent(Context context, BuildGraphData graphData) throws IOException {
-    ImmutableList<BuildGraphListener> listeners;
+  public void setCurrent(Context context, BlazeProjectSnapshot newInstance) throws IOException {
+    ImmutableList<BlazeProjectListener> listeners;
     synchronized (lock) {
-      currentInstance = graphData;
+      if (currentInstance == newInstance) {
+        return;
+      }
+      currentInstance = newInstance;
       listeners = ImmutableList.copyOf(this.listeners);
     }
-    for (BuildGraphListener l : listeners) {
-      l.graphCreated(context, graphData);
+    for (BlazeProjectListener l : listeners) {
+      l.graphCreated(context, newInstance);
     }
   }
 
-  public BuildGraphData getCurrent() {
+  public BlazeProjectSnapshot getCurrent() {
     synchronized (lock) {
       return currentInstance;
     }

@@ -36,7 +36,7 @@ public class BuildGraphTest {
   private static final Path TESTDATA_ROOT = TEST_ROOT.resolve("testdata");
 
   private static Query.Summary getQuerySummary(TestData genQueryName) throws IOException {
-    return QuerySummary.create(TestData.getPathFor(genQueryName).toFile()).getProto();
+    return QuerySummary.create(TestData.getPathFor(genQueryName).toFile()).proto();
   }
 
   @Test

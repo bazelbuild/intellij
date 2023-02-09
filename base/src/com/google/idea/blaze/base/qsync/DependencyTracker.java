@@ -29,7 +29,7 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.common.PrintOutput;
-import com.google.idea.blaze.qsync.BuildGraph;
+import com.google.idea.blaze.qsync.BlazeProject;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,15 +50,18 @@ public class DependencyTracker {
 
   private final Project project;
 
-  private final BuildGraph graph;
+  private final BlazeProject blazeProject;
   private final Set<String> syncedTargets = new HashSet<>();
   private final DependencyBuilder builder;
   private final DependencyCache cache;
 
   public DependencyTracker(
-      Project project, BuildGraph graph, DependencyBuilder builder, DependencyCache cache) {
+      Project project,
+      BlazeProject blazeProject,
+      DependencyBuilder builder,
+      DependencyCache cache) {
     this.project = project;
-    this.graph = graph;
+    this.blazeProject = blazeProject;
     this.builder = builder;
     this.cache = cache;
   }
@@ -71,7 +74,7 @@ public class DependencyTracker {
     String rel =
         Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath())).toString();
 
-    ImmutableSet<String> targets = graph.getCurrent().getFileDependencies(rel);
+    ImmutableSet<String> targets = blazeProject.getCurrent().getFileDependencies(rel);
     if (targets == null) {
       return null;
     }
@@ -93,8 +96,8 @@ public class DependencyTracker {
     Set<String> targets = new HashSet<>();
     Set<String> buildTargets = new HashSet<>();
     for (WorkspacePath path : paths) {
-      buildTargets.add(graph.getCurrent().getTargetOwner(path.toString()));
-      ImmutableSet<String> t = graph.getCurrent().getFileDependencies(path.toString());
+      buildTargets.add(blazeProject.getCurrent().getTargetOwner(path.toString()));
+      ImmutableSet<String> t = blazeProject.getCurrent().getFileDependencies(path.toString());
       if (t != null) {
         targets.addAll(t);
       }

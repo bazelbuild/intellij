@@ -35,7 +35,8 @@ import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.common.PrintOutput;
-import com.google.idea.blaze.qsync.BuildGraph;
+import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -54,7 +55,7 @@ public class QuerySyncManager {
   private final Logger logger = Logger.getInstance(getClass());
 
   private final Project project;
-  private final BuildGraph graph;
+  private final BlazeProject graph;
   private final DependencyTracker dependencyTracker;
   private final ProjectQuerier projectQuerier;
   private final ProjectUpdater projectUpdater;
@@ -67,11 +68,11 @@ public class QuerySyncManager {
 
   public QuerySyncManager(Project project) {
     this.project = project;
-    this.graph = new BuildGraph();
+    this.graph = new BlazeProject();
     this.builder = new DependencyBuilder();
     this.cache = new DependencyCache(project);
     this.dependencyTracker = new DependencyTracker(project, graph, builder, cache);
-    this.projectQuerier = new ProjectQuerier(project, graph);
+    this.projectQuerier = new ProjectQuerier(project);
     this.projectUpdater = new ProjectUpdater(project, graph);
   }
 
@@ -97,20 +98,27 @@ public class QuerySyncManager {
         });
   }
 
+  private void sync(BlazeContext context, boolean full) {
+    try {
+      BlazeProjectSnapshot newProject =
+          full
+              ? projectQuerier.fullQuery(context)
+              : projectQuerier.update(graph.getCurrent(), context);
+      graph.setCurrent(context, newProject);
+      for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
+        syncListener.afterSync(project, context);
+      }
+    } catch (IOException e) {
+      onError("Project sync failed", e, context);
+    }
+  }
+
   public void initialProjectSync() {
-    run(
-        "Initiating project sync",
-        "Importing project",
-        context -> {
-          try {
-            projectQuerier.rebuild(context);
-            for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
-              syncListener.afterSync(project, context);
-            }
-          } catch (IOException e) {
-            onError("Project sync failed", e, context);
-          }
-        });
+    run("Initiating project sync", "Importing project", context -> sync(context, true));
+  }
+
+  public void deltaSync() {
+    run("Updating project structure", "Refreshing project", context -> sync(context, false));
   }
 
   private void run(String title, String subTitle, ScopedOperation operation) {

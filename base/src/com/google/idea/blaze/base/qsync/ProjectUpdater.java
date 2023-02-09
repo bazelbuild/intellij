@@ -27,16 +27,12 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
-import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.util.UrlUtil;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
-import com.google.idea.blaze.qsync.BuildGraph;
-import com.google.idea.blaze.qsync.BuildGraphData;
-import com.google.idea.blaze.qsync.BuildGraphListener;
-import com.google.idea.blaze.qsync.GraphToProjectConverter;
-import com.google.idea.blaze.qsync.PackageStatementParser;
-import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
+import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.BlazeProjectListener;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.common.util.Transactions;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -64,11 +60,11 @@ import java.util.Set;
 import java.util.function.Function;
 
 /** An object that monitors the build graph and applies the changes to the project structure. */
-public class ProjectUpdater implements BuildGraphListener {
+public class ProjectUpdater implements BlazeProjectListener {
 
   private Project project;
 
-  public ProjectUpdater(Project project, BuildGraph graph) {
+  public ProjectUpdater(Project project, BlazeProject graph) {
     this.project = project;
     graph.addListener(this);
   }
@@ -85,26 +81,14 @@ public class ProjectUpdater implements BuildGraphListener {
   }
 
   @Override
-  public void graphCreated(Context context, BuildGraphData graph) throws IOException {
+  public void graphCreated(Context context, BlazeProjectSnapshot graph) throws IOException {
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
 
     ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-    ImportRoots ir =
-        ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
-            .add(projectViewSet)
-            .build();
 
-    GraphToProjectConverter converter =
-        new GraphToProjectConverter(
-            new WorkspaceResolvingPackageReader(workspaceRoot.path(), new PackageStatementParser()),
-            context,
-            ir.rootPaths(),
-            ir.excludePaths());
-    ProjectProto.Project proto = converter.createProject(graph);
-
-    updateProjectModel(proto, importSettings, projectViewSet, workspaceRoot, context);
+    updateProjectModel(graph.project(), importSettings, projectViewSet, workspaceRoot, context);
   }
 
   private void updateProjectModel(
