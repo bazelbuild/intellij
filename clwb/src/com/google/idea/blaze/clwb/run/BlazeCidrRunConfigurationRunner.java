@@ -117,7 +117,7 @@ public class BlazeCidrRunConfigurationRunner implements BlazeCommandRunConfigura
         ImmutableList<String> extraClangFlags = isClangBuild() && !Registry.is("bazel.trim.absolute.path.disabled")
                 ? ImmutableList.of(
                 "--copt=-fdebug-compilation-dir=" + WorkspaceRoot.fromProject(env.getProject()),
-                "--linkopt=-Wl,-oso_prefix .")
+                "--linkopt=-Wl,-oso_prefix,.")
                 : ImmutableList.of();
         extraDebugFlags =
                 Streams.concat(
