@@ -63,6 +63,10 @@ public class QuerySummary {
     this.proto = proto;
   }
 
+  public static QuerySummary create(Query.Summary proto) {
+    return new QuerySummary(proto);
+  }
+
   public static QuerySummary create(InputStream protoInputStream) throws IOException {
     Map<String, Query.SourceFile> sourceFileMap = Maps.newHashMap();
     Map<String, Query.Rule> ruleMap = Maps.newHashMap();
@@ -104,7 +108,7 @@ public class QuerySummary {
           break;
       }
     }
-    return new QuerySummary(
+    return create(
         Query.Summary.newBuilder().putAllSourceFiles(sourceFileMap).putAllRules(ruleMap).build());
   }
 

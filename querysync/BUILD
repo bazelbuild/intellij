@@ -20,6 +20,7 @@ java_library(
 test_suite(
     name = "querysync_tests",
     tests = [
+        "//querysync/javatests/com/google/idea/blaze/qsync:AffectedPackagesTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:BuildGraphTest",
         "//querysync/javatests/com/google/idea/blaze/qsync:GraphToProjectConverterTest",
         "//querysync/javatests/com/google/idea/blaze/qsync/query:QuerySummaryTest",
