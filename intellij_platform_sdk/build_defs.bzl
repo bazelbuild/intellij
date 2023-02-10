@@ -482,3 +482,34 @@ def no_mockito_extensions(name, jars, **kwargs):
         jars = output_jars,
         **kwargs
     )
+
+# Since 2022.3, JVM 17 is required to start IntelliJ
+# https://blog.jetbrains.com/platform/2022/08/intellij-project-migrates-to-java-17/
+def java_version_flags():
+    java11 = ["-source", "11", "-target", "11"]
+    java17 = ["-source", "17", "-target", "17"]
+    return select_for_plugin_api({
+        "intellij-2021.3": java11,
+        "intellij-2021.3-mac": java11,
+        "intellij-2022.1": java11,
+        "intellij-2022.1-mac": java11,
+        "intellij-2022.2": java11,
+        "intellij-2022.2-mac": java11,
+        "intellij-ue-2021.3": java11,
+        "intellij-ue-2021.3-mac": java11,
+        "intellij-ue-2022.1": java11,
+        "intellij-ue-2022.1-mac": java11,
+        "intellij-ue-2022.2": java11,
+        "intellij-ue-2022.2-mac": java11,
+        "android-studio-2021.3": java11,
+        "android-studio-2022.1": java11,
+        "android-studio-2022.2": java11,
+        "android-studio-dev": java11,
+        "clion-2021.3": java11,
+        "clion-2021.3-mac": java11,
+        "clion-2022.1": java11,
+        "clion-2022.1-mac": java11,
+        "clion-2022.2": java11,
+        "clion-2022.2-mac": java11,
+        "default": java17,
+    })

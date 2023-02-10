@@ -15,6 +15,8 @@ load(
     "INTELLIJ_PLUGINS_VISIBILITY",
     "PLUGIN_PACKAGES_VISIBILITY",
 )
+load("//intellij_platform_sdk:build_defs.bzl", "java_version_flags")
+
 
 licenses(["notice"])
 
@@ -436,6 +438,7 @@ java_library(
         "@com_google_guava_guava//jar",
         "@junit//jar",
     ],
+    javacopts = java_version_flags()
 )
 
 stamped_plugin_xml(
