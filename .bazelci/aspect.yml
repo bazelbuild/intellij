@@ -13,6 +13,7 @@ tasks:
       - --notrim_test_configuration
     test_targets:
       - //aspect/testing/...
+    skip_use_bazel_version_for_test: true
   Aspect-internal-beta:
     name: Aspect Tests for IJ Internal Beta
     platform: ubuntu1804
@@ -26,6 +27,7 @@ tasks:
       - --notrim_test_configuration
     test_targets:
       - //aspect/testing/...
+    skip_use_bazel_version_for_test: true
   Aspect-internal-under-dev:
     name: Aspect Tests for IJ Internal Under Development
     platform: ubuntu1804
@@ -41,6 +43,7 @@ tasks:
       - //aspect/testing/...
     soft_fail:
       - exit_status: 1
+    skip_use_bazel_version_for_test: true
   Aspect-oss-oldest-stable:
     name: Aspect Tests for IJ OSS Oldest Stable
     platform: ubuntu1804
@@ -54,6 +57,7 @@ tasks:
       - --notrim_test_configuration
     test_targets:
       - //aspect/testing/...
+    skip_use_bazel_version_for_test: true
   Aspect-oss-latest-stable:
     name: Aspect Tests for IJ OSS Latest Stable
     platform: ubuntu1804
@@ -67,6 +71,7 @@ tasks:
       - --notrim_test_configuration
     test_targets:
       - //aspect/testing/...
+    skip_use_bazel_version_for_test: true
   Aspect-oss-under-dev:
     name: Aspect Tests for IJ OSS Under Development
     platform: ubuntu1804
@@ -82,3 +87,4 @@ tasks:
       - //aspect/testing/...
     soft_fail:
       - exit_status: 1
+    skip_use_bazel_version_for_test: true
