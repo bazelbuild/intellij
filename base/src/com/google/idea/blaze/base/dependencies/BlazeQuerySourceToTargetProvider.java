@@ -183,7 +183,7 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
     String expr = "\"" + Joiner.on("\"+\"").join(sources) + "\"";
     String packageName = getPackageName(project, context, type, expr);
     String rdepsQuery =
-        String.format("kind(\".*_test\", rdeps(%s:all, %s, 2))", packageName, sources.toArray()[0]);
+        String.format("kind(\".*_test\", rdeps(%s:all, %s))", packageName, sources.toArray()[0]);
     BlazeCommand command =
         getBlazeCommand(
             project, type, rdepsQuery, ImmutableList.of("--output=label_kind"), context);
