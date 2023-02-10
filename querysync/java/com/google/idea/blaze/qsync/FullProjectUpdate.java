@@ -56,7 +56,7 @@ public class FullProjectUpdate implements ProjectUpdate {
     this.queryParser = new BlazeQueryParser(context);
     this.graphToProjectConverter =
         new GraphToProjectConverter(
-            packageReader, context, this.projectIncludes, this.projectIncludes);
+            packageReader, context, this.projectIncludes, this.projectExcludes);
   }
 
   @Override
