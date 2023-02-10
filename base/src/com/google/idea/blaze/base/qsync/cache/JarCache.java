@@ -87,7 +87,7 @@ public class JarCache {
   }
 
   public void initialize() {
-    if (Files.exists(cacheDir)) {
+    if (!Files.exists(cacheDir)) {
       FileOperationProvider ops = FileOperationProvider.getInstance();
       ops.mkdirs(cacheDir.toFile());
       if (!ops.isDirectory(cacheDir.toFile())) {
