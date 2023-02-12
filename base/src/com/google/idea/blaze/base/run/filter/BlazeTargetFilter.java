@@ -42,7 +42,7 @@ public class BlazeTargetFilter implements Filter {
 
   // See Bazel's LabelValidator class. Whitespace character intentionally not included here.
   private static final String PACKAGE_NAME_CHARS = "a-zA-Z0-9/\\-\\._$()";
-  private static final String TARGET_CHARS = "a-zA-Z0-9+,=~#()$_@\\-/";
+  private static final String TARGET_CHARS = "a-zA-Z0-9+,.=~#()$_@\\-/";
 
   // ignore '//' preceded by text (e.g. https://...)
   // format: ([@external_workspace]//package:rule)
