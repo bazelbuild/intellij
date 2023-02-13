@@ -37,7 +37,7 @@ public class BlazeKotlinDebuggingSetupHandler implements BlazeJavaDebuggingSetup
   static final Key<AtomicReference<String>> COROUTINES_LIB_PATH = Key.create("coroutines.lib.path");
 
   @Override
-  public void setUpDebugging(ExecutionEnvironment env) {
+  public boolean setUpDebugging(ExecutionEnvironment env) {
       BlazeCommandRunConfiguration config =
           BlazeCommandRunConfigurationRunner.getConfiguration(env);
       Optional<ArtifactLocation> libArtifact =
@@ -46,6 +46,7 @@ public class BlazeKotlinDebuggingSetupHandler implements BlazeJavaDebuggingSetup
       libArtifact
           .flatMap(artifact -> getCoroutinesDebuggingLib(artifact, config))
           .ifPresent(path -> env.getCopyableUserData(COROUTINES_LIB_PATH).set(path));
+    return true;
   }
 
   @Override

@@ -31,8 +31,11 @@ public interface BlazeJavaDebuggingSetupHandler {
    * Prepare the environment for debugging java-like targets.
    *
    * <p>This can include building binaries to be used during debugging.
+   *
+   * <p>Returns true if the environment is set up successfully, and returns false if the task failed
+   * or was cancelled
    */
-  void setUpDebugging(ExecutionEnvironment environment);
+  boolean setUpDebugging(ExecutionEnvironment environment);
 
   /**
    * Returns the handler's environment data storage key.
@@ -56,9 +59,12 @@ public interface BlazeJavaDebuggingSetupHandler {
     }
   }
 
-  static void setUpJavaDebugging(ExecutionEnvironment env) {
+  static boolean setUpJavaDebugging(ExecutionEnvironment env) {
     for (BlazeJavaDebuggingSetupHandler handler : EP_NAME.getExtensionList()) {
-      handler.setUpDebugging(env);
+      if (!handler.setUpDebugging(env)) {
+        return false;
+      }
     }
+    return true;
   }
 }
