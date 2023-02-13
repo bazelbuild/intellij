@@ -79,6 +79,7 @@ final class BlazeConfigurationResolver {
             Blaze.getBuildSystemProvider(project),
             WorkspaceRoot.fromProject(project),
             blazeProjectData.getBlazeInfo().getExecutionRoot(),
+            blazeProjectData.getBlazeInfo().getOutputBase(),
             blazeProjectData.getWorkspacePathResolver());
     ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap =
         BlazeConfigurationToolchainResolver.buildToolchainLookupMap(
