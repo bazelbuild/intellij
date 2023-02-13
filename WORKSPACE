@@ -191,7 +191,7 @@ http_archive(
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
-    jars = glob(["go/lib/*.jar"]),
+    jars = glob(["go*/lib/*.jar"]),
     visibility = ["//visibility:public"],
 )
 """

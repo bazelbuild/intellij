@@ -39,11 +39,11 @@ java_import(
     jars = glob([
         "clion-*/plugins/c-plugin/lib/*.jar",
         "clion-*/plugins/cidr-base-plugin/lib/*.jar",
-        "clion-*/plugins/cidr-debugger-plugin/lib/*.jar",
         "clion-*/plugins/clion/lib/*.jar",
         "clion-*/plugins/clion-test-google/lib/*.jar",
         "clion-*/plugins/clion-test-catch/lib/*.jar",
         "clion-*/plugins/clion-test-boost/lib/*.jar",
+        "clion-*/plugins/nativeDebug-plugin/lib/*.jar",
     ]),
 )
 
@@ -58,8 +58,16 @@ filegroup(
 )
 
 java_import(
+    name = "javascript-impl",
+    jars = glob(["clion-*/plugins/javascript-impl/lib/*.jar"]),
+)
+
+java_import(
     name = "javascript",
-    jars = glob(["clion-*/plugins/JavaScriptLanguage/lib/*.jar"]),
+    jars = glob([
+      "clion-*/plugins/javascript-impl/lib/*.jar",
+      "clion-*/plugins/JavaScriptLanguage/lib/*.jar",
+    ]),
 )
 
 java_import(

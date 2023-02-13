@@ -44,7 +44,7 @@ java_import(
 
 java_import(
     name = "coverage",
-    jars = glob(["plugins/coverage/lib/*.jar"]),
+    jars = glob(["plugins/java-coverage/lib/*.jar"]),
 )
 
 java_import(
@@ -54,7 +54,7 @@ java_import(
 
 java_import(
     name = "hg4idea",
-    jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
+    jars = glob(["plugins/vcs-hg/lib/vcs-hg.jar"]),
 )
 
 filegroup(
@@ -63,14 +63,22 @@ filegroup(
 )
 
 java_import(
+    name = "javascript-impl",
+    jars = glob(["plugins/javascript-impl/lib/*.jar"]),
+)
+
+java_import(
     name = "javascript",
-    jars = glob(["plugins/JavaScriptLanguage/lib/*.jar"]),
+    jars = glob([
+      "plugins/javascript-impl/lib/*.jar",
+      "plugins/JavaScriptLanguage/lib/*.jar",
+    ]),
 )
 
 java_import(
     name = "css",
     jars = glob([
-        "plugins/CSS/lib/*.jar",
+        "plugins/css-impl/lib/*.jar",
         "plugins/platform-images/lib/*.jar",
     ]),
 )
@@ -87,7 +95,7 @@ java_import(
 
 java_import(
     name = "intellilang",
-    jars = glob(["plugins/IntelliLang/lib/*.jar"]),
+    jars = glob(["plugins/platform-langInjection/lib/*.jar"]),
 )
 
 java_import(
@@ -119,7 +127,7 @@ java_import(
     name = "shared_indexes",
     jars = [
         "plugins/indexing-shared/lib/indexing-shared.jar",
-        "plugins/indexing-shared-ultimate/lib/indexing-shared-ultimate.jar",
+        "plugins/indexing-shared-ultimate-plugin-bundled/lib/indexing-shared-ultimate-plugin-bundled.jar",
     ],
 )
 
