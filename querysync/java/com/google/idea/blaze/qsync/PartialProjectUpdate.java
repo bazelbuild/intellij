@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.Query.SourceFile;
@@ -96,13 +97,6 @@ class PartialProjectUpdate implements ProjectUpdate {
         .build();
   }
 
-  private static Path blazePackageFromTargetName(String target) {
-    Preconditions.checkState(target.startsWith("//"), "Invalid target: %s", target);
-    int colonPos = target.indexOf(':');
-    Preconditions.checkState(colonPos > 1, "Invalid target: %s", target);
-    return Path.of(target.substring(2, colonPos));
-  }
-
   /**
    * Calculates the effective query output, based on an earlier full query output, the output from a
    * partial query, and any deleted packages.
@@ -110,30 +104,31 @@ class PartialProjectUpdate implements ProjectUpdate {
   @VisibleForTesting
   Query.Summary applyDelta() {
     // copy all unaffected rules / source files to result:
-    Map<String, SourceFile> newSourceFiles = Maps.newHashMap();
-    for (Map.Entry<String, SourceFile> sfEntry :
-        previousState.queryOutput().proto().getSourceFilesMap().entrySet()) {
-      Path buildPackage = blazePackageFromTargetName(sfEntry.getKey());
+    Map<Label, SourceFile> newSourceFiles = Maps.newHashMap();
+    for (Map.Entry<Label, SourceFile> sfEntry :
+        previousState.queryOutput().getSourceFilesMap().entrySet()) {
+      Path buildPackage = sfEntry.getKey().getPackage();
       if (!(deletedPackages.contains(buildPackage)
           || partialQuery.getPackages().contains(buildPackage))) {
         newSourceFiles.put(sfEntry.getKey(), sfEntry.getValue());
       }
     }
-    Map<String, Query.Rule> newRules = Maps.newHashMap();
-    for (Map.Entry<String, Query.Rule> ruleEntry :
-        previousState.queryOutput().proto().getRulesMap().entrySet()) {
-      Path buildPackage = blazePackageFromTargetName(ruleEntry.getKey());
+    Map<Label, Query.Rule> newRules = Maps.newHashMap();
+    for (Map.Entry<Label, Query.Rule> ruleEntry :
+        previousState.queryOutput().getRulesMap().entrySet()) {
+      Path buildPackage = ruleEntry.getKey().getPackage();
       if (!(deletedPackages.contains(buildPackage)
           || partialQuery.getPackages().contains(buildPackage))) {
         newRules.put(ruleEntry.getKey(), ruleEntry.getValue());
       }
     }
     // now add all rules / source files from the delta
-    newSourceFiles.putAll(partialQuery.proto().getSourceFilesMap());
-    newRules.putAll(partialQuery.proto().getRulesMap());
-    return Query.Summary.newBuilder()
+    newSourceFiles.putAll(partialQuery.getSourceFilesMap());
+    newRules.putAll(partialQuery.getRulesMap());
+    return QuerySummary.newBuilder()
         .putAllSourceFiles(newSourceFiles)
         .putAllRules(newRules)
-        .build();
+        .build()
+        .proto();
   }
 }
