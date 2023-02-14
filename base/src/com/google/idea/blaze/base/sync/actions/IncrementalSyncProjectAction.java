@@ -40,7 +40,7 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
   @Override
   protected void runSync(Project project, AnActionEvent e) {
     if (QuerySync.isEnabled()) {
-      if ((e.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.SHIFT_DOWN_MASK)) != 0) {
+      if ((e.getInputEvent().getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0) {
         QuerySyncManager.getInstance(project).initialProjectSync();
       } else {
         QuerySyncManager.getInstance(project).deltaSync();
