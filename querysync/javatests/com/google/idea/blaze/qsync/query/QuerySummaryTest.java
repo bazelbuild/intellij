@@ -19,6 +19,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
 import static com.google.idea.blaze.qsync.query.QuerySummaryTestUtil.createProtoForPackages;
 
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -37,18 +38,18 @@ public class QuerySummaryTest {
   public void testCreate_javaLibrary_noDeps() throws IOException {
     QuerySummary qs =
         QuerySummary.create(TestData.getPathFor(TestData.JAVA_LIBRARY_NO_DEPS_QUERY).toFile());
-    assertThat(qs.proto().getRulesMap().keySet())
-        .containsExactly(TestData.ROOT_PACKAGE + "/nodeps:nodeps");
-    Query.Rule rule = qs.proto().getRulesMap().get(TestData.ROOT_PACKAGE + "/nodeps:nodeps");
+    Label nodeps = Label.of(TestData.ROOT_PACKAGE + "/nodeps:nodeps");
+    assertThat(qs.getRulesMap().keySet()).containsExactly(nodeps);
+    Query.Rule rule = qs.getRulesMap().get(nodeps);
     assertThat(rule.getRuleClass()).isEqualTo("java_library");
     assertThat(rule.getSourcesCount()).isEqualTo(1);
     assertThat(targetName(rule.getSources(0))).isEqualTo("TestClassNoDeps.java");
     assertThat(rule.getDepsCount()).isEqualTo(0);
     assertThat(rule.getIdlSourcesCount()).isEqualTo(0);
-    assertThat(qs.proto().getSourceFilesMap().keySet())
+    assertThat(qs.getSourceFilesMap().keySet())
         .containsExactly(
-            TestData.ROOT_PACKAGE + "/nodeps:TestClassNoDeps.java",
-            TestData.ROOT_PACKAGE + "/nodeps:BUILD");
+            new Label(TestData.ROOT_PACKAGE + "/nodeps:TestClassNoDeps.java"),
+            new Label(TestData.ROOT_PACKAGE + "/nodeps:BUILD"));
   }
 
   @Test

@@ -34,6 +34,10 @@ public class Label {
 
   private final String label;
 
+  public static Label of(String label) {
+    return new Label(label);
+  }
+
   public Label(String label) {
     // If this is causing problems, it's probably time to support explicit workspace names here.
     // Users of getPackage() may need to be updated to check the workspace too:
