@@ -1,5 +1,7 @@
 # Integration tests for the plugin's Skylark aspect
 
+package(default_applicable_licenses = ["//third_party/intellij/bazel:license"])
+
 licenses(["notice"])
 
 # To prevent versioning conflicts when developing internally, we always use the same

@@ -3,6 +3,8 @@ load(
     "intellij_aspect_test_fixture",
 )
 
+package(default_applicable_licenses = ["//third_party/intellij/bazel:license"])
+
 licenses(["notice"])
 
 java_library(
