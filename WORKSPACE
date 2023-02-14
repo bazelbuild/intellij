@@ -389,6 +389,14 @@ http_archive(
     url = "https://android-build",
 )
 
+# The plugin api for android_studio_2022_3 android_studio. This is required to build ASwB and run integration tests
+http_archive(
+    name = "android_studio_2022_3",
+    build_file = "@//intellij_platform_sdk:BUILD.android_studio223",
+    sha256 = "3f2c2c2676aa919973fdb37f0c4510b02794002917660c46dd90aa6b0a448ec1",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2022.3.1.4/android-studio-2022.3.1.4-linux.tar.gz",
+)
+
 # LICENSE: Common Public License 1.0
 jvm_maven_import_external(
     name = "junit",
