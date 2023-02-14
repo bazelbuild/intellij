@@ -70,8 +70,7 @@ public class DependencyTracker {
   public Set<String> getPendingTargets(Project project, VirtualFile vf) {
     BlazeImportSettings settings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    String rel =
-        Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath())).toString();
+    Path rel = Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath()));
 
     ImmutableSet<String> targets = blazeProject.getCurrent().getFileDependencies(rel);
     if (targets == null) {
@@ -95,8 +94,8 @@ public class DependencyTracker {
     Set<String> targets = new HashSet<>();
     Set<String> buildTargets = new HashSet<>();
     for (WorkspacePath path : paths) {
-      buildTargets.add(blazeProject.getCurrent().getTargetOwner(path.toString()));
-      ImmutableSet<String> t = blazeProject.getCurrent().getFileDependencies(path.toString());
+      buildTargets.add(blazeProject.getCurrent().getTargetOwner(path.asPath()));
+      ImmutableSet<String> t = blazeProject.getCurrent().getFileDependencies(path.asPath());
       if (t != null) {
         targets.addAll(t);
       }
