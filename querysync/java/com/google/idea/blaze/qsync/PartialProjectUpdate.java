@@ -86,7 +86,7 @@ class PartialProjectUpdate implements ProjectUpdate {
   @Override
   public BlazeProjectSnapshot createBlazeProject() throws IOException {
     Preconditions.checkNotNull(partialQuery, "queryOutput");
-    Query.Summary effectiveQuery = applyDelta();
+    QuerySummary effectiveQuery = applyDelta();
     BuildGraphData graph = queryParser.parse(effectiveQuery);
     ProjectProto.Project project = graphToProjectConverter.createProject(graph);
     return previousState.toBuilder()
@@ -102,7 +102,7 @@ class PartialProjectUpdate implements ProjectUpdate {
    * partial query, and any deleted packages.
    */
   @VisibleForTesting
-  Query.Summary applyDelta() {
+  QuerySummary applyDelta() {
     // copy all unaffected rules / source files to result:
     Map<Label, SourceFile> newSourceFiles = Maps.newHashMap();
     for (Map.Entry<Label, SourceFile> sfEntry :
@@ -128,7 +128,6 @@ class PartialProjectUpdate implements ProjectUpdate {
     return QuerySummary.newBuilder()
         .putAllSourceFiles(newSourceFiles)
         .putAllRules(newRules)
-        .build()
-        .proto();
+        .build();
   }
 }

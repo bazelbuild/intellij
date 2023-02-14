@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.intellij.openapi.project.Project;
@@ -50,7 +51,7 @@ public class DependencyTracker {
   private final Project project;
 
   private final BlazeProject blazeProject;
-  private final Set<String> syncedTargets = new HashSet<>();
+  private final Set<Label> syncedTargets = new HashSet<>();
   private final DependencyBuilder builder;
   private final DependencyCache cache;
 
@@ -67,12 +68,12 @@ public class DependencyTracker {
 
   /** Recursively get all the transitive deps outside the project */
   @Nullable
-  public Set<String> getPendingTargets(Project project, VirtualFile vf) {
+  public Set<Label> getPendingTargets(Project project, VirtualFile vf) {
     BlazeImportSettings settings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     Path rel = Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath()));
 
-    ImmutableSet<String> targets = blazeProject.getCurrent().getFileDependencies(rel);
+    ImmutableSet<Label> targets = blazeProject.getCurrent().getFileDependencies(rel);
     if (targets == null) {
       return null;
     }
@@ -91,11 +92,11 @@ public class DependencyTracker {
     ImportRoots ir =
         ImportRoots.builder(workspaceRoot, settings.getBuildSystem()).add(projectViewSet).build();
 
-    Set<String> targets = new HashSet<>();
-    Set<String> buildTargets = new HashSet<>();
+    Set<Label> targets = new HashSet<>();
+    Set<Label> buildTargets = new HashSet<>();
     for (WorkspacePath path : paths) {
       buildTargets.add(blazeProject.getCurrent().getTargetOwner(path.asPath()));
-      ImmutableSet<String> t = blazeProject.getCurrent().getFileDependencies(path.asPath());
+      ImmutableSet<Label> t = blazeProject.getCurrent().getFileDependencies(path.asPath());
       if (t != null) {
         targets.addAll(t);
       }

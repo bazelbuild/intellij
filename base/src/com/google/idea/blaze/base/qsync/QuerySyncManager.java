@@ -34,6 +34,7 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
@@ -171,7 +172,7 @@ public class QuerySyncManager {
   }
 
   public boolean isReadyForAnalysis(PsiFile psiFile) {
-    Set<String> pendingTargets =
+    Set<Label> pendingTargets =
         dependencyTracker.getPendingTargets(project, psiFile.getVirtualFile());
     int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
     return unsynced == 0;

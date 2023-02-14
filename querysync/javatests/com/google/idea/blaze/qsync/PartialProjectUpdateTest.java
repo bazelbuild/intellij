@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth8.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.emptyProjectBuilder;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
@@ -103,15 +104,16 @@ public class PartialProjectUpdateTest {
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package1")),
             ImmutableSet.of());
     queryStrategy.setQueryOutput(delta);
-    Query.Summary applied = queryStrategy.applyDelta();
+    QuerySummary applied = queryStrategy.applyDelta();
     assertThat(applied.getRulesMap().keySet())
-        .containsExactly("//my/build/package1:newrule", "//my/build/package2:rule");
+        .containsExactly(
+            Label.of("//my/build/package1:newrule"), Label.of("//my/build/package2:rule"));
     assertThat(applied.getSourceFilesMap().keySet())
         .containsExactly(
-            "//my/build/package1:NewClass.java",
-            "//my/build/package1:BUILD",
-            "//my/build/package2:Class2.java",
-            "//my/build/package2:BUILD");
+            Label.of("//my/build/package1:NewClass.java"),
+            Label.of("//my/build/package1:BUILD"),
+            Label.of("//my/build/package2:Class2.java"),
+            Label.of("//my/build/package2:BUILD"));
   }
 
   @Test
@@ -169,10 +171,12 @@ public class PartialProjectUpdateTest {
             /* deletedPackages= */ ImmutableSet.of(Path.of("my/build/package1")));
     assertThat(queryStrategy.getQuerySpec()).isEmpty();
     queryStrategy.setQueryOutput(QuerySummary.EMPTY);
-    Query.Summary applied = queryStrategy.applyDelta();
-    assertThat(applied.getRulesMap().keySet()).containsExactly("//my/build/package2:rule");
+    QuerySummary applied = queryStrategy.applyDelta();
+    assertThat(applied.getRulesMap().keySet())
+        .containsExactly(Label.of("//my/build/package2:rule"));
     assertThat(applied.getSourceFilesMap().keySet())
-        .containsExactly("//my/build/package2:Class2.java", "//my/build/package2:BUILD");
+        .containsExactly(
+            Label.of("//my/build/package2:Class2.java"), Label.of("//my/build/package2:BUILD"));
   }
 
   @Test
@@ -228,14 +232,15 @@ public class PartialProjectUpdateTest {
             /* modifiedPackages= */ ImmutableSet.of(Path.of("my/build/package2")),
             ImmutableSet.of());
     queryStrategy.setQueryOutput(delta);
-    Query.Summary applied = queryStrategy.applyDelta();
+    QuerySummary applied = queryStrategy.applyDelta();
     assertThat(applied.getRulesMap().keySet())
-        .containsExactly("//my/build/package1:rule", "//my/build/package2:rule");
+        .containsExactly(
+            Label.of("//my/build/package1:rule"), Label.of("//my/build/package2:rule"));
     assertThat(applied.getSourceFilesMap().keySet())
         .containsExactly(
-            "//my/build/package1:Class1.java",
-            "//my/build/package1:BUILD",
-            "//my/build/package2:Class2.java",
-            "//my/build/package2:BUILD");
+            Label.of("//my/build/package1:Class1.java"),
+            Label.of("//my/build/package1:BUILD"),
+            Label.of("//my/build/package2:Class2.java"),
+            Label.of("//my/build/package2:BUILD"));
   }
 }
