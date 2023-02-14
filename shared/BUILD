@@ -10,3 +10,10 @@ java_library(
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     exports = ["//shared/java/com/google/idea/blaze/common"],
 )
+
+test_suite(
+    name = "tests",
+    tests = [
+        "//shared/javatests/com/google/idea/blaze/common:LabelTest",
+    ],
+)
