@@ -160,14 +160,13 @@ abstract class BuildGraphData {
     return transitiveDeps;
   }
 
-  String getTargetOwner(String path) {
-    // TODO make the parameter a Path
-    String syncTarget = fileToTarget().get(Path.of(path));
+  String getTargetOwner(Path path) {
+    String syncTarget = fileToTarget().get(path);
     return sourceOwner().get(syncTarget);
   }
 
   @Nullable
-  ImmutableSet<String> getFileDependencies(String path) {
+  ImmutableSet<String> getFileDependencies(Path path) {
     String target = getTargetOwner(path);
     if (target == null) {
       return null;

@@ -86,8 +86,10 @@ public abstract class BlazeProjectSnapshot {
    * Given a path to a file it returns the target that owns the file. Note that in general there
    * could be multiple targets that compile a file, but we try to choose the smallest one, as it
    * would have everything the file needs to be compiled.
+   *
+   * @param path a workspace relative path.
    */
-  public String getTargetOwner(String path) {
+  public String getTargetOwner(Path path) {
     return graph().getTargetOwner(path);
   }
 
@@ -96,7 +98,7 @@ public abstract class BlazeProjectSnapshot {
    * be edited fully.
    */
   @Nullable
-  public ImmutableSet<String> getFileDependencies(String path) {
+  public ImmutableSet<String> getFileDependencies(Path path) {
     return graph().getFileDependencies(path);
   }
 
