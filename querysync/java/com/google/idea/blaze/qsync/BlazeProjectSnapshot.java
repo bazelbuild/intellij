@@ -19,6 +19,7 @@ import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
@@ -89,7 +90,7 @@ public abstract class BlazeProjectSnapshot {
    *
    * @param path a workspace relative path.
    */
-  public String getTargetOwner(Path path) {
+  public Label getTargetOwner(Path path) {
     return graph().getTargetOwner(path);
   }
 
@@ -98,7 +99,7 @@ public abstract class BlazeProjectSnapshot {
    * be edited fully.
    */
   @Nullable
-  public ImmutableSet<String> getFileDependencies(Path path) {
+  public ImmutableSet<Label> getFileDependencies(Path path) {
     return graph().getFileDependencies(path);
   }
 

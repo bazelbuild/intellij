@@ -15,13 +15,17 @@
  */
 package com.google.idea.blaze.qsync;
 
+import static com.google.idea.blaze.common.Label.toLabelList;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BuildGraphData.Location;
 import com.google.idea.blaze.qsync.query.Query;
+import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,28 +65,28 @@ public class BlazeQueryParser {
     return JAVA_RULE_TYPES.contains(ruleClass) || ANDROID_RULE_TYPES.contains(ruleClass);
   }
 
-  public BuildGraphData parse(Query.Summary query) {
+  public BuildGraphData parse(QuerySummary query) {
     context.output(PrintOutput.log("Analyzing project structure..."));
 
     Set<Path> packages = new HashSet<>();
     long now = System.nanoTime();
 
     BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
-    Map<String, String> sourceOwner = Maps.newHashMap();
-    Map<String, Set<String>> ruleDeps = Maps.newHashMap();
-    Set<String> projectDeps = Sets.newHashSet();
+    Map<Label, Label> sourceOwner = Maps.newHashMap();
+    Map<Label, Set<Label>> ruleDeps = Maps.newHashMap();
+    Set<Label> projectDeps = Sets.newHashSet();
 
     // A hacky collection the project state. This is the equivalent of the targetmap data:
 
     // An aggregation of all the dependencies of java rules
-    Set<String> deps = new HashSet<>();
+    Set<Label> deps = new HashSet<>();
     // All the project targets the aspect needs to build
-    Set<String> projectTargetsToBuild = new HashSet<>();
+    Set<Label> projectTargetsToBuild = new HashSet<>();
     // Counts of all kinds of rules
     Map<String, Integer> ruleCount = new HashMap<>();
     // All the direct dependencies from source files to things it needs outside the project
-    Map<String, Set<String>> sourceDeps = new HashMap<>();
-    for (Map.Entry<String, Query.SourceFile> sourceFileEntry :
+    Map<Label, Set<Label>> sourceDeps = new HashMap<>();
+    for (Map.Entry<Label, Query.SourceFile> sourceFileEntry :
         query.getSourceFilesMap().entrySet()) {
       Location l = new Location(sourceFileEntry.getValue().getLocation());
       if (l.file.endsWith(Path.of("BUILD"))) {
@@ -91,20 +95,20 @@ public class BlazeQueryParser {
       graphBuilder.locationsBuilder().put(sourceFileEntry.getKey(), l);
       graphBuilder.fileToTargetBuilder().put(l.file, sourceFileEntry.getKey());
     }
-    for (Map.Entry<String, Query.Rule> ruleEntry : query.getRulesMap().entrySet()) {
+    for (Map.Entry<Label, Query.Rule> ruleEntry : query.getRulesMap().entrySet()) {
       String ruleClass = ruleEntry.getValue().getRuleClass();
       ruleCount.compute(ruleClass, (k, v) -> (v == null ? 0 : v) + 1);
       if (isJavaRule(ruleClass)) {
-        ImmutableSet<String> thisSources =
-            ImmutableSet.copyOf(ruleEntry.getValue().getSourcesList());
-        Set<String> thisDeps = Sets.newHashSet(ruleEntry.getValue().getDepsList());
+        ImmutableSet<Label> thisSources =
+            ImmutableSet.copyOf(toLabelList(ruleEntry.getValue().getSourcesList()));
+        Set<Label> thisDeps = Sets.newHashSet(toLabelList(ruleEntry.getValue().getDepsList()));
         ruleDeps.computeIfAbsent(ruleEntry.getKey(), x -> Sets.newHashSet()).addAll(thisDeps);
-        for (String thisSource : thisSources) {
+        for (Label thisSource : thisSources) {
           // TODO Consider replace sourceDeps with a map of:
           //   (source target) -> (rules the include it)
           // This would involve modifying the "fewer dependencies" logic below, but may yield
           // a cleaner solution.
-          Set<String> currentDeps = sourceDeps.get(thisSource);
+          Set<Label> currentDeps = sourceDeps.get(thisSource);
           if (currentDeps == null) {
             sourceDeps.put(thisSource, thisDeps);
             sourceOwner.put(thisSource, ruleEntry.getKey());
@@ -132,10 +136,10 @@ public class BlazeQueryParser {
         projectTargetsToBuild.add(ruleEntry.getKey());
       }
     }
-    int nTargets = query.getRulesCount();
+    int nTargets = query.proto().getRulesCount();
 
     // Calculate all the dependencies outside the project.
-    for (String dep : deps) {
+    for (Label dep : deps) {
       if (!ruleDeps.containsKey(dep)) {
         projectDeps.add(dep);
       }
@@ -148,7 +152,7 @@ public class BlazeQueryParser {
     // to an external rule we should consider it too. There is an implementation for it
     // in #transitiveDeps but that is done for one target, we have to do it for all before hand
     // here
-    for (Entry<String, Set<String>> entry : sourceDeps.entrySet()) {
+    for (Entry<Label, Set<Label>> entry : sourceDeps.entrySet()) {
       entry.getValue().retainAll(projectDeps);
     }
 
@@ -181,8 +185,8 @@ public class BlazeQueryParser {
             "Of which %d are to targets outside the project", graph.projectDeps().size()));
 
     int maxDeps = 0;
-    String worstSource = null;
-    for (Entry<String, Set<String>> e : sourceDeps.entrySet()) {
+    Label worstSource = null;
+    for (Entry<Label, Set<Label>> e : sourceDeps.entrySet()) {
       if (e.getValue().size() > maxDeps) {
         maxDeps = e.getValue().size();
         worstSource = e.getKey();

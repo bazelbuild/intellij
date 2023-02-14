@@ -15,8 +15,12 @@
  */
 package com.google.idea.blaze.common;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import java.nio.file.Path;
+import java.util.List;
 
 /**
  * Represents an absolute build target label.
@@ -36,6 +40,10 @@ public class Label {
 
   public static Label of(String label) {
     return new Label(label);
+  }
+
+  public static ImmutableList<Label> toLabelList(List<String> labels) {
+    return labels.stream().map(Label::of).collect(toImmutableList());
   }
 
   public Label(String label) {

@@ -20,6 +20,7 @@ import static java.util.Arrays.stream;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor.PsiFileAndName;
+import com.google.idea.blaze.common.Label;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewNodeDecorator;
@@ -57,7 +58,7 @@ public class QuerySyncNodeDecorator implements ProjectViewNodeDecorator {
 
     PsiFile file = psiFileAndName.psiFile;
     VirtualFile vf = file.getVirtualFile();
-    Set<String> targets =
+    Set<Label> targets =
         QuerySyncManager.getInstance(project).getDependencyTracker().getPendingTargets(project, vf);
     if (targets != null && !targets.isEmpty()) {
       data.clearText();

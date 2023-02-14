@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
@@ -46,6 +47,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.protobuf.TextFormat;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -69,7 +71,7 @@ public class DependencyBuilder {
   public OutputInfo build(
       Project project,
       BlazeContext context,
-      Set<String> buildTargets,
+      Set<Label> buildTargets,
       ImportRoots ir,
       WorkspaceRoot workspaceRoot)
       throws IOException, GetArtifactsException {
@@ -108,7 +110,7 @@ public class DependencyBuilder {
 
       BlazeCommand builder =
           BlazeCommand.builder(invoker, BlazeCommandName.BUILD)
-              .addBlazeFlags(buildTargets.toArray(new String[] {}))
+              .addBlazeFlags(buildTargets.stream().map(Label::toString).collect(toImmutableList()))
               .addBlazeFlags(buildResultHelper.getBuildFlags())
               .addBlazeFlags(additionalBlazeFlags)
               .addBlazeFlags(

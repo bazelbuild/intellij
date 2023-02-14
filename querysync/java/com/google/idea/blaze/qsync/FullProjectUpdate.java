@@ -78,7 +78,7 @@ public class FullProjectUpdate implements ProjectUpdate {
   public BlazeProjectSnapshot createBlazeProject() throws IOException {
     Preconditions.checkNotNull(queryOutput, "queryOutput");
     Preconditions.checkNotNull(vcsState, "vcsState");
-    BuildGraphData graph = queryParser.parse(queryOutput.proto());
+    BuildGraphData graph = queryParser.parse(queryOutput);
     ProjectProto.Project project = graphToProjectConverter.createProject(graph);
     return BlazeProjectSnapshot.builder()
         .projectIncludes(projectIncludes)
