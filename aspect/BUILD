@@ -7,8 +7,6 @@ load(
     "define_flag_hack",
 )
 
-package(default_applicable_licenses = ["//third_party/intellij/bazel:license"])
-
 licenses(["notice"])
 
 # Files needed at runtime for blaze-invoking integration tests
