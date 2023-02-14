@@ -1,3 +1,5 @@
+package(default_applicable_licenses = ["//third_party/intellij/bazel:license"])
+
 proto_library(
     name = "project",
     srcs = ["project.proto"],

@@ -1,3 +1,5 @@
+package(default_applicable_licenses = ["//third_party/intellij/bazel:license"])
+
 java_library(
     name = "internaldep",
     srcs = ["TestClassInternalDep.java"],
