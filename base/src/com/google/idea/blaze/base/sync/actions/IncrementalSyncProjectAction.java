@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import icons.BlazeIcons;
+import java.awt.event.InputEvent;
 import javax.swing.Icon;
 
 /** Syncs the project with BUILD files. */
@@ -39,7 +40,11 @@ public class IncrementalSyncProjectAction extends BlazeProjectSyncAction {
   @Override
   protected void runSync(Project project, AnActionEvent e) {
     if (QuerySync.isEnabled()) {
-      QuerySyncManager.getInstance(project).deltaSync();
+      if ((e.getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.SHIFT_DOWN_MASK)) != 0) {
+        QuerySyncManager.getInstance(project).initialProjectSync();
+      } else {
+        QuerySyncManager.getInstance(project).deltaSync();
+      }
     } else {
       BlazeSyncManager.getInstance(project)
           .incrementalProjectSync(/* reason= */ "IncrementalSyncProjectAction");
