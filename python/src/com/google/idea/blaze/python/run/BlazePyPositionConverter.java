@@ -16,7 +16,6 @@
 package com.google.idea.blaze.python.run;
 
 import com.google.idea.blaze.base.io.AbsolutePathPatcher.AbsolutePathPatcherUtil;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -108,18 +107,19 @@ public class BlazePyPositionConverter implements PyPositionConverter {
 
   /** Convert from 1- to 0-indexed line numbering, and account for continuation lines */
   private static int convertLocalLineToRemote(VirtualFile file, int line) {
-    AccessToken lock = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      final Document document = FileDocumentManager.getInstance().getDocument(file);
-      if (document != null) {
-        while (PyDebugSupportUtils.isContinuationLine(document, line)) {
-          line++;
-        }
-      }
-      return line + 1;
-    } finally {
-      lock.finish();
-    }
+    return ApplicationManager.getApplication()
+        .runReadAction(
+            (Computable<Integer>)
+                () -> {
+                  int lineNumber = line;
+                  final Document document = FileDocumentManager.getInstance().getDocument(file);
+                  if (document != null) {
+                    while (PyDebugSupportUtils.isContinuationLine(document, lineNumber)) {
+                      lineNumber++;
+                    }
+                  }
+                  return lineNumber + 1;
+                });
   }
 
   /** Convert from 0- to 1-indexed line numbering, and account for continuation lines */
