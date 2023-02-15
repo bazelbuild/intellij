@@ -486,6 +486,12 @@ public class BlazeAndroidWorkspaceImporter {
       if(target.toString().equals("@maven//:androidx_core_core")) {
         resourcePackage = "androidx.core";
       }
+      if(target.toString().equals("@maven//:androidx_constraintlayout_constraintlayout")) {
+        resourcePackage = "androidx.constraintlayout";
+      }
+      if(target.toString().equals("@maven//:androidx_appcompat_appcompat")) {
+        resourcePackage = "androidx.appcompat";
+      }
 
       if (!aarLibraries.containsKey(libraryKey)) {
         // aar_import should only have one jar (a merged jar from the AAR's jars).
