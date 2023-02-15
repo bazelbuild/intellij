@@ -3,8 +3,6 @@ load(
     "PLUGIN_PACKAGES_VISIBILITY",
 )
 
-package(default_applicable_licenses = ["//third_party/intellij/bazel:license"])
-
 licenses(["notice"])
 
 java_library(

@@ -1,9 +1,6 @@
 load(":scope_util.bzl", "scopeForAndroidPackage", "scopeForJavaPackage")
 
-package(
-    default_applicable_licenses = ["//third_party/intellij/bazel:license"],
-    default_visibility = ["//querysync/javatests/com/google/idea/blaze/qsync:__subpackages__"],
-)
+package(default_visibility = ["//querysync/javatests/com/google/idea/blaze/qsync:__subpackages__"])
 
 genquery(
     name = "java_library_no_deps_query",

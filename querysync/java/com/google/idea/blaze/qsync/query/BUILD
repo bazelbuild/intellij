@@ -1,11 +1,8 @@
-package(
-    default_applicable_licenses = ["//third_party/intellij/bazel:license"],
-    default_visibility = [
-        "//querysync:__subpackages__",
-        "//querysync/java/com/google/idea/blaze/qsync:__pkg__",
-        "//querysync/javatests/com/google/idea/blaze/qsync:__pkg__",
-    ],
-)
+package(default_visibility = [
+    "//querysync:__subpackages__",
+    "//querysync/java/com/google/idea/blaze/qsync:__pkg__",
+    "//querysync/javatests/com/google/idea/blaze/qsync:__pkg__",
+])
 
 proto_library(
     name = "querysummary",

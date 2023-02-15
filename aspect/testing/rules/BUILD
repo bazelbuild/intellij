@@ -6,8 +6,6 @@ load(
     "ASPECT_TEST_RULES_VISIBILITY_TO_TESTS",
 )
 
-package(default_applicable_licenses = ["//third_party/intellij/bazel:license"])
-
 licenses(["notice"])
 
 proto_library(
