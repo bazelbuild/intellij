@@ -793,6 +793,26 @@ java_library(
     ),
 )
 
+java_library(
+    name = "git4idea",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":git4idea"],
+    ),
+)
+
+java_library(
+    name = "cwm",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":cwm"],
+    ),
+)
+
 filegroup(
     name = "application_info_json",
     srcs = select_from_plugin_api_directory(
