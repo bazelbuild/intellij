@@ -30,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A cache that handles caching files locally and maintains an in-memory cache of the same files.
@@ -76,7 +75,6 @@ public class LocalDirectoryCache extends SimpleForwardingCache<String, File> {
     putAll(cacheMap);
   }
 
-  @Nullable
   public File get(String key) throws ExecutionException {
     return get(
         key,
@@ -85,6 +83,8 @@ public class LocalDirectoryCache extends SimpleForwardingCache<String, File> {
           if (latestValue.containsKey(key)) {
             // Refresh the whole cache map as we have retrieved all files.
             refresh(latestValue);
+          } else {
+            throw new IOException("Failed to find file from cache directory for key " + key);
           }
           return latestValue.get(key);
         });
