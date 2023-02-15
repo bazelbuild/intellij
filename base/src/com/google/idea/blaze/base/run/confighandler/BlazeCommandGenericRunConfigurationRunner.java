@@ -38,6 +38,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.run.BlazeBeforeRunCommandHelper;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.run.processhandler.LineProcessingProcessAdapter;
@@ -80,7 +81,9 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import java.io.File;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -93,6 +96,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class BlazeCommandGenericRunConfigurationRunner
     implements BlazeCommandRunConfigurationRunner {
+
+  private static final Logger logger = Logger.getInstance(BlazeCommandGenericRunConfigurationRunner.class);
 
   @Override
   public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment) {
@@ -150,7 +155,14 @@ public final class BlazeCommandGenericRunConfigurationRunner
       BuildInvoker invoker =
           Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
       ProcessHandler processHandler;
-      WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
+      String customWorkspace = handlerState.getBlazeWorkspaceState().getBlazeWorkspace();
+      WorkspaceRoot workspaceRoot;
+      if(customWorkspace == null) {
+        workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
+      } else {
+        logger.info("customWorkspace is " + customWorkspace);
+        workspaceRoot = new WorkspaceRoot(new File(customWorkspace));
+      }
       try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
         BlazeTestUiSession testUiSession = null;
         BlazeCommand.Builder blazeCommand =
