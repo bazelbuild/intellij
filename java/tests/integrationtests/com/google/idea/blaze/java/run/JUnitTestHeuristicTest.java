@@ -21,6 +21,7 @@ import com.google.idea.blaze.base.BlazeIntegrationTestCase;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.java.utils.JUnitTestUtils;
 import com.intellij.psi.PsiFile;
 import java.io.File;
 import org.junit.Before;
@@ -33,22 +34,32 @@ import org.junit.runners.JUnit4;
 public class JUnitTestHeuristicTest extends BlazeIntegrationTestCase {
 
   @Before
-  public final void doSetup() {
-    // required for IntelliJ to recognize annotations, JUnit version, etc.
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/runner/RunWith.java"),
-        "package org.junit.runner;"
-            + "public @interface RunWith {"
-            + "    Class<? extends Runner> value();"
-            + "}");
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/Test.java"),
-        "package org.junit;",
-        "public @interface Test {}");
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/runners/JUnit4.java"),
-        "package org.junit.runners;",
-        "public class JUnit4 {}");
+  public final void doSetup() throws Throwable {
+    JUnitTestUtils.setupForJUnitTests(workspace, fileSystem);
+  }
+
+  @Test
+  public void testMatchesJunit5Annotation() {
+    PsiFile psiFile =
+        workspace.createPsiFile(
+            new WorkspacePath("java/com/google/lib/JavaClass.java"),
+            "package com.google.lib;",
+            "import org.junit.jupiter.api.Test;",
+            "public class JavaClass {",
+            "  @Test",
+            "  public void testMethod1() {}",
+            "  @Test",
+            "  public void testMethod2() {}",
+            "}");
+    File file = new File(psiFile.getVirtualFile().getPath());
+    TargetInfo target =
+        TargetIdeInfo.builder()
+            .setLabel("//foo:AllJUnit5Tests")
+            .setKind("java_test")
+            .build()
+            .toTargetInfo();
+    assertThat(new JUnitTestHeuristic().matchesSource(getProject(), target, psiFile, file, null))
+        .isTrue();
   }
 
   @Test

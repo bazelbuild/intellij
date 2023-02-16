@@ -26,8 +26,9 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducerTestCase;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.java.run.producers.BlazeJUnitTestFilterFlags.JUnitVersion;
+import com.google.idea.blaze.java.utils.BlazeJUnitRunConfigurationProducerTestCase;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -38,48 +39,20 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import java.util.List;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
 
-/** Integration tests for {@link BlazeJavaAbstractTestCaseConfigurationProducer}. */
-@RunWith(JUnit4.class)
+/** Integration tests for {@link BlazeJavaAbstractTestCaseConfigurationProducer}.
+ *  Parameters are provided by the base class.
+ */
+@RunWith(Parameterized.class)
 public class BlazeJavaAbstractTestCaseConfigurationProducerTest
-    extends BlazeRunConfigurationProducerTestCase {
-
-  @Before
-  public final void setup() {
-    // required for IntelliJ to recognize annotations, JUnit version, etc.
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/runner/RunWith.java"),
-        "package org.junit.runner;"
-            + "public @interface RunWith {"
-            + "    Class<? extends Runner> value();"
-            + "}");
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/Test.java"),
-        "package org.junit;",
-        "public @interface Test {}");
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/runners/JUnit4.java"),
-        "package org.junit.runners;",
-        "public class JUnit4 {}");
-  }
+    extends BlazeJUnitRunConfigurationProducerTestCase {
 
   @Test
   public void testIgnoreTestClassWithNoTestSubclasses() throws Throwable {
-    PsiFile javaFile =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public class TestClass {",
-            "  @org.junit.Test",
-            "  public void testMethod1() {}",
-            "  @org.junit.Test",
-            "  public void testMethod2() {}",
-            "}");
+    PsiFile javaFile = createAndIndexGenericJUnitTestFile();
 
     PsiClass javaClass = ((PsiClassOwner) javaFile).getClasses()[0];
     assertThat(javaClass).isNotNull();
@@ -93,17 +66,7 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
 
   @Test
   public void testIgnoreAbstractTestClassWithNoTestSubclasses() throws Throwable {
-    PsiFile javaFile =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public abstract class TestClass {",
-            "  @org.junit.Test",
-            "  public void testMethod1() {}",
-            "  @org.junit.Test",
-            "  public void testMethod2() {}",
-            "}");
+    PsiFile javaFile = createAndIndexGenericJUnitTestFile();
 
     PsiClass javaClass = ((PsiClassOwner) javaFile).getClasses()[0];
     assertThat(javaClass).isNotNull();
@@ -167,17 +130,33 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
             "package com.google.test;",
             "public abstract class AbstractTestCase {}");
 
-    createAndIndexFile(
-        new WorkspacePath("java/com/google/test/TestClass.java"),
-        "package com.google.test;",
-        "import com.google.test.AbstractTestCase;",
-        "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-        "public class TestClass extends AbstractTestCase {",
-        "  @org.junit.Test",
-        "  public void testMethod1() {}",
-        "  @org.junit.Test",
-        "  public void testMethod2() {}",
-        "}");
+    if (jUnitVersionUnderTest == JUnitVersion.JUNIT_5) {
+      createAndIndexFile(
+          new WorkspacePath("java/com/google/test/TestClass.java"),
+          "package com.google.test;",
+          "import com.google.test.AbstractTestCase;",
+          "@org.junit.platform.commons.annotation.Testable",
+          "public class TestClass extends AbstractTestCase {",
+          "  @org.junit.jupiter.api.Test",
+          "  public void testMethod1() {}",
+          "  @org.junit.jupiter.api.Test",
+          "  public void testMethod2() {}",
+          "}");
+    } else if (jUnitVersionUnderTest == JUnitVersion.JUNIT_4) {
+      createAndIndexFile(
+          new WorkspacePath("java/com/google/test/TestClass.java"),
+          "package com.google.test;",
+          "import com.google.test.AbstractTestCase;",
+          "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+          "public class TestClass extends AbstractTestCase {",
+          "  @org.junit.Test",
+          "  public void testMethod1() {}",
+          "  @org.junit.Test",
+          "  public void testMethod2() {}",
+          "}");
+    } else {
+      throw new RuntimeException("JUnit Version (" + jUnitVersionUnderTest.toString() + ") should never be tested!");
+    }
 
     PsiClass javaClass = ((PsiClassOwner) abstractClassFile).getClasses()[0];
     assertThat(javaClass).isNotNull();
@@ -221,23 +200,42 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
 
   @Test
   public void testConfigurationCreatedFromMethodInAbstractClass() throws Throwable {
-    PsiFile abstractClassFile =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/AbstractTestCase.java"),
-            "package com.google.test;",
-            "public abstract class AbstractTestCase {",
-            "  @org.junit.Test",
-            "  public void testMethod() {}",
-            "}");
+    PsiFile abstractClassFile = null;
+    if (jUnitVersionUnderTest == JUnitVersion.JUNIT_5) {
+      abstractClassFile = createAndIndexFile(
+              new WorkspacePath("java/com/google/test/AbstractTestCase.java"),
+              "package com.google.test;",
+              "public abstract class AbstractTestCase {",
+              "  @org.junit.jupiter.api.Test",
+              "  public void testMethod() {}",
+              "}");
+      createAndIndexFile(
+          new WorkspacePath("java/com/google/test/TestClass.java"),
+          "package com.google.test;",
+          "import com.google.test.AbstractTestCase;",
+          "@org.junit.platform.commons.annotation.Testable",
+          "public class TestClass extends AbstractTestCase {}");
+    } else if (jUnitVersionUnderTest == JUnitVersion.JUNIT_4) {
+      abstractClassFile = createAndIndexFile(
+          new WorkspacePath("java/com/google/test/AbstractTestCase.java"),
+          "package com.google.test;",
+          "public abstract class AbstractTestCase {",
+          "  @org.junit.Test",
+          "  public void testMethod() {}",
+          "}");
+      createAndIndexFile(
+          new WorkspacePath("java/com/google/test/TestClass.java"),
+          "package com.google.test;",
+          "import com.google.test.AbstractTestCase;",
+          "import org.junit.runner.RunWith;",
+          "import org.junit.runners.JUnit4;",
+          "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
+          "public class TestClass extends AbstractTestCase {}");
+    } else {
+      throw new RuntimeException("JUnit Version (" + jUnitVersionUnderTest.toString() + ") should never be tested!");
+    }
 
-    createAndIndexFile(
-        new WorkspacePath("java/com/google/test/TestClass.java"),
-        "package com.google.test;",
-        "import com.google.test.AbstractTestCase;",
-        "import org.junit.runner.RunWith;",
-        "import org.junit.runners.JUnit4;",
-        "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-        "public class TestClass extends AbstractTestCase {}");
+    setUpRepositoryAndTarget();
 
     PsiClass javaClass = ((PsiClassOwner) abstractClassFile).getClasses()[0];
     PsiMethod method = PsiUtils.findFirstChildOfClassRecursive(javaClass, PsiMethod.class);
@@ -257,19 +255,6 @@ public class BlazeJavaAbstractTestCaseConfigurationProducerTest
     BlazeCommandRunConfiguration blazeConfig = (BlazeCommandRunConfiguration) config;
     assertThat(blazeConfig.getTargets()).isEmpty();
     assertThat(blazeConfig.getName()).isEqualTo("Choose subclass for AbstractTestCase.testMethod");
-
-    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
-    builder.setTargetMap(
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setKind("java_test")
-                    .setLabel("//java/com/google/test:TestClass")
-                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
-                    .build())
-            .build());
-    registerProjectService(
-        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
 
     BlazeJavaAbstractTestCaseConfigurationProducer.chooseSubclass(
         fromContext, context, EmptyRunnable.INSTANCE);

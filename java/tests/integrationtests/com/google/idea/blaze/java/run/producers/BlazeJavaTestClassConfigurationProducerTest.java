@@ -27,10 +27,10 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.google.idea.blaze.base.run.producers.BlazeRunConfigurationProducerTestCase;
 import com.google.idea.blaze.base.run.producers.TestContextRunConfigurationProducer;
 import com.google.idea.blaze.base.run.state.BlazeCommandRunConfigurationCommonState;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.java.utils.BlazeJUnitRunConfigurationProducerTestCase;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.psi.PsiClass;
@@ -38,61 +38,22 @@ import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiFile;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import org.junit.runners.Parameterized;
 
-/** Integration tests for producing run configurations from java test classes. */
-@RunWith(JUnit4.class)
+/**
+ * Integration tests for producing run configurations from java test classes.
+ * Parameters are provided by the base class.
+ */
+@RunWith(Parameterized.class)
 public class BlazeJavaTestClassConfigurationProducerTest
-    extends BlazeRunConfigurationProducerTestCase {
-
-  @Before
-  public final void setup() {
-    // required for IntelliJ to recognize annotations, JUnit version, etc.
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/runner/RunWith.java"),
-        "package org.junit.runner;"
-            + "public @interface RunWith {"
-            + "    Class<? extends Runner> value();"
-            + "}");
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/Test.java"),
-        "package org.junit;",
-        "public @interface Test {}");
-    workspace.createPsiFile(
-        new WorkspacePath("org/junit/runners/JUnit4.java"),
-        "package org.junit.runners;",
-        "public class JUnit4 {}");
-  }
+    extends BlazeJUnitRunConfigurationProducerTestCase {
 
   @Test
   public void testProducedFromPsiFile() throws Throwable {
-    PsiFile javaFile =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public class TestClass {",
-            "  @org.junit.Test",
-            "  public void testMethod1() {}",
-            "  @org.junit.Test",
-            "  public void testMethod2() {}",
-            "}");
-
-    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
-    builder.setTargetMap(
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setKind("java_test")
-                    .setLabel("//java/com/google/test:TestClass")
-                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
-                    .build())
-            .build());
-    registerProjectService(
-        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+    PsiFile javaFile = createAndIndexGenericJUnitTestFile();
+    setUpRepositoryAndTarget();
 
     ConfigurationContext context = createContextFromPsi(javaFile);
     List<ConfigurationFromContext> configurations = context.getConfigurationsFromContext();
@@ -113,30 +74,8 @@ public class BlazeJavaTestClassConfigurationProducerTest
 
   @Test
   public void testProducedFromPsiClass() throws Throwable {
-    PsiFile javaFile =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public class TestClass {",
-            "  @org.junit.Test",
-            "  public void testMethod1() {}",
-            "  @org.junit.Test",
-            "  public void testMethod2() {}",
-            "}");
-
-    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
-    builder.setTargetMap(
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setKind("java_test")
-                    .setLabel("//java/com/google/test:TestClass")
-                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
-                    .build())
-            .build());
-    registerProjectService(
-        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+    PsiFile javaFile = createAndIndexGenericJUnitTestFile();
+    setUpRepositoryAndTarget();
 
     PsiClass javaClass = ((PsiClassOwner) javaFile).getClasses()[0];
     assertThat(javaClass).isNotNull();
@@ -213,28 +152,8 @@ public class BlazeJavaTestClassConfigurationProducerTest
 
   @Test
   public void testConfigFromContextRecognizesItsOwnConfig() throws Throwable {
-    PsiFile javaFile =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public class TestClass {",
-            "  @org.junit.Test",
-            "  public void testMethod() {}",
-            "}");
-
-    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
-    builder.setTargetMap(
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setKind("java_test")
-                    .setLabel("//java/com/google/test:TestClass")
-                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
-                    .build())
-            .build());
-    registerProjectService(
-        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+    PsiFile javaFile = createAndIndexGenericJUnitTestFile();
+    setUpRepositoryAndTarget();
 
     ConfigurationContext context = createContextFromPsi(javaFile);
     BlazeCommandRunConfiguration config =
@@ -247,28 +166,8 @@ public class BlazeJavaTestClassConfigurationProducerTest
 
   @Test
   public void testConfigWithDifferentLabelIgnored() throws Throwable {
-    PsiFile javaFile =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public class TestClass {",
-            "  @org.junit.Test",
-            "  public void testMethod() {}",
-            "}");
-
-    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
-    builder.setTargetMap(
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setKind("java_test")
-                    .setLabel("//java/com/google/test:TestClass")
-                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
-                    .build())
-            .build());
-    registerProjectService(
-        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+    PsiFile javaFile = createAndIndexGenericJUnitTestFile();
+    setUpRepositoryAndTarget();
 
     ConfigurationContext context = createContextFromPsi(javaFile);
     BlazeCommandRunConfiguration config =
@@ -284,28 +183,8 @@ public class BlazeJavaTestClassConfigurationProducerTest
 
   @Test
   public void testConfigWithDifferentFilterIgnored() throws Throwable {
-    PsiFile javaFile =
-        createAndIndexFile(
-            new WorkspacePath("java/com/google/test/TestClass.java"),
-            "package com.google.test;",
-            "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)",
-            "public class TestClass {",
-            "  @org.junit.Test",
-            "  public void testMethod() {}",
-            "}");
-
-    MockBlazeProjectDataBuilder builder = MockBlazeProjectDataBuilder.builder(workspaceRoot);
-    builder.setTargetMap(
-        TargetMapBuilder.builder()
-            .addTarget(
-                TargetIdeInfo.builder()
-                    .setKind("java_test")
-                    .setLabel("//java/com/google/test:TestClass")
-                    .addSource(sourceRoot("java/com/google/test/TestClass.java"))
-                    .build())
-            .build());
-    registerProjectService(
-        BlazeProjectDataManager.class, new MockBlazeProjectDataManager(builder.build()));
+    PsiFile javaFile = createAndIndexGenericJUnitTestFile();
+    setUpRepositoryAndTarget();
 
     ConfigurationContext context = createContextFromPsi(javaFile);
     BlazeCommandRunConfiguration config =
