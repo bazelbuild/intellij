@@ -14,7 +14,6 @@ load(
 _DEP_ATTRS = ["deps", "exports", "runtime_deps", "_java_toolchain"]
 
 def _fast_build_info_impl(target, ctx):
-    undo_unambiguous_label_stringification = ctx.attr.undo_unambiguous_label_stringification
     dep_targets = _get_all_dep_targets(target, ctx)
     dep_outputs = _get_all_dep_outputs(dep_targets)
 
@@ -22,8 +21,8 @@ def _fast_build_info_impl(target, ctx):
 
     info = {
         "workspace_name": ctx.workspace_name,
-        "label": stringify_label(target.label, undo_unambiguous_label_stringification),
-        "dependencies": [stringify_label(t.label, undo_unambiguous_label_stringification) for t in dep_targets],
+        "label": stringify_label(target.label),
+        "dependencies": [stringify_label(t.label) for t in dep_targets],
     }
 
     write_output = False
@@ -33,7 +32,7 @@ def _fast_build_info_impl(target, ctx):
         write_output = True
         info["data"] = [
             struct(
-                label = stringify_label(datadep.label, undo_unambiguous_label_stringification),
+                label = stringify_label(datadep.label),
                 artifacts = [artifact_location(file) for file in datadep.files.to_list()],
             )
             for datadep in ctx.rule.attr.data
@@ -66,9 +65,9 @@ def _fast_build_info_impl(target, ctx):
         if hasattr(ctx.rule.attr, "use_launcher") and not ctx.rule.attr.use_launcher:
             launcher = None
         elif hasattr(ctx.rule.attr, "_java_launcher") and ctx.rule.attr._java_launcher:
-            launcher = stringify_label(ctx.rule.attr._java_launcher.label, undo_unambiguous_label_stringification)
+            launcher = stringify_label(ctx.rule.attr._java_launcher.label)
         elif hasattr(ctx.rule.attr, "_javabase") and ctx.rule.attr._javabase:
-            launcher = stringify_label(ctx.rule.attr._javabase.label, undo_unambiguous_label_stringification)
+            launcher = stringify_label(ctx.rule.attr._javabase.label)
         java_info = {
             "sources": sources_from_target(ctx),
             "test_class": getattr(ctx.rule.attr, "test_class", None),
@@ -130,14 +129,4 @@ def _has_ide_fast_build(target):
 fast_build_info_aspect = aspect(
     attr_aspects = _DEP_ATTRS,
     implementation = _fast_build_info_impl,
-    attrs = {
-        # If undo_unambiguous_label_stringification is set to true, remove the `@` or `@@`
-        # from the beginning of targets labels obtained by str(target.label) otherwise use the
-        # result of str(target.label) directly.
-        # This attribute should be true only during tests.
-        # This attribute is added as a workaround to keep the test code similar for internal and
-        # external tests until --incompatible_unambiguous_label_stringification Blaze flag
-        # is enabled internally.
-        "undo_unambiguous_label_stringification": attr.string(default = "False", values = ["True", "False"]),
-    },
 )
