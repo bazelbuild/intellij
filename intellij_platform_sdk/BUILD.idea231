@@ -89,6 +89,16 @@ java_import(
     ],
 )
 
+java_import(
+    name = "git4idea",
+    jars = glob(["plugins/vcs-git/lib/*.jar"]),
+)
+
+java_import(
+    name = "cwm",
+    jars = glob(["plugins/cwm-plugin/lib/*.jar"]),
+)
+
 # The plugins required by IJwB. We need to include them
 # when running integration tests.
 java_import(
