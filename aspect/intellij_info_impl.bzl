@@ -240,29 +240,19 @@ def _is_language_specific_proto_library(ctx, target):
         return True
     return False
 
-def stringify_label(label, undo_unambiguous_label_stringification):
-    """Stringifies a label.  If undo_unambiguous_label_stringification is true, make sure any leading '@'s are stripped from main repo labels.
-
-    Args:
-        label: the label to stringify
-        undo_unambiguous_label_stringification: whether to remove the leading @/@@ or not
-
-    Returns:
-        strangified target label
-    """
+def stringify_label(label):
+    """Stringifies a label, making sure any leading '@'s are stripped from main repo labels."""
     s = str(label)
-    if undo_unambiguous_label_stringification == "False":
-        return s
 
     # If the label is in the main repo, make sure any leading '@'s are stripped so that tests are
     # okay with the fixture setups.
     return s.lstrip("@") if s.startswith("@@//") or s.startswith("@//") else s
 
-def make_target_key(label, aspect_ids, undo_unambiguous_label_stringification):
+def make_target_key(label, aspect_ids):
     """Returns a TargetKey proto struct from a target."""
     return struct_omit_none(
         aspect_ids = tuple(aspect_ids) if aspect_ids else None,
-        label = stringify_label(label, undo_unambiguous_label_stringification),
+        label = stringify_label(label),
     )
 
 def make_dep(dep, dependency_type):
@@ -275,6 +265,13 @@ def make_dep(dep, dependency_type):
 def make_deps(deps, dependency_type):
     """Returns a list of Dependency proto structs."""
     return [make_dep(dep, dependency_type) for dep in deps]
+
+def make_dep_from_label(label, dependency_type):
+    """Returns a Dependency proto struct from a label."""
+    return struct(
+        dependency_type = dependency_type,
+        target = struct(label = stringify_label(label)),
+    )
 
 def update_sync_output_groups(groups_dict, key, new_set):
     """Updates all sync-relevant output groups associated with 'key'.
@@ -1112,7 +1109,7 @@ def intellij_info_aspect_impl(target, ctx, semantics):
     file_name = file_name + ".intellij-info.txt"
     ide_info_file = ctx.actions.declare_file(file_name)
 
-    target_key = make_target_key(target.label, aspect_ids, ctx.attr.undo_unambiguous_label_stringification)
+    target_key = make_target_key(target.label, aspect_ids)
     ide_info = dict(
         build_file_artifact_location = build_file_artifact_location(ctx),
         features = ctx.features,
@@ -1196,14 +1193,6 @@ def make_intellij_info_aspect(aspect_impl, semantics):
             executable = True,
             allow_files = True,
         ),
-        # If undo_unambiguous_label_stringification is set to true, remove the `@` or `@@`
-        # from the beginning of targets labels obtained by str(target.label) otherwise use the
-        # result of str(target.label) directly.
-        # This attribute should be true only during tests.
-        # This attribute is added as a workaround to keep the test code similar for internal and
-        # external tests until --incompatible_unambiguous_label_stringification Blaze flag
-        # is enabled internally.
-        "undo_unambiguous_label_stringification": attr.string(default = "False", values = ["True", "False"]),
     }
 
     # add attrs required by semantics

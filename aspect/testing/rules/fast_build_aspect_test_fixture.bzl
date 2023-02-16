@@ -47,7 +47,6 @@ _fast_build_aspect_test_fixture = rule(
             executable = True,
             allow_files = True,
         ),
-        "undo_unambiguous_label_stringification": attr.string(default = "True", values = ["True", "False"]),
     },
 )
 
