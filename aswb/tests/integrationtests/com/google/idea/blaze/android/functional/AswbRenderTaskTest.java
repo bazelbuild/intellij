@@ -124,7 +124,7 @@ public class AswbRenderTaskTest extends BlazeAndroidIntegrationTestCase {
         "  java/com/foo",
         "targets:",
         "  //java/com/foo:foo",
-        "android_sdk_platform: android-29");
+        "android_sdk_platform: android-stable");
 
     setTargetMap(
         android_library("//java/com/foo:foo")
@@ -160,7 +160,7 @@ public class AswbRenderTaskTest extends BlazeAndroidIntegrationTestCase {
         "  java/com/bar",
         "targets:",
         "  //java/com/foo:foo",
-        "android_sdk_platform: android-29");
+        "android_sdk_platform: android-stable");
 
     setTargetMap(
         android_library("//java/com/foo:foo")
@@ -194,7 +194,7 @@ public class AswbRenderTaskTest extends BlazeAndroidIntegrationTestCase {
         "  java/com/foo",
         "targets:",
         "  //java/com/foo:foo",
-        "android_sdk_platform: android-29");
+        "android_sdk_platform: android-stable");
 
     NbAndroidTarget bar =
         android_library("//java/com/bar:bar")
