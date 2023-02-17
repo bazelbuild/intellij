@@ -35,4 +35,8 @@ public interface LibraryFilesProvider {
    * OrderRootType.SOURCES.
    */
   ImmutableList<File> getSourceFiles(BlazeProjectData blazeProjectData);
+
+  default boolean supportAnchors() {
+    return false;
+  }
 }
