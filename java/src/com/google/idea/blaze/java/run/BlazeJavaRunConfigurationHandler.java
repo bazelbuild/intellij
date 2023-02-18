@@ -114,7 +114,9 @@ public final class BlazeJavaRunConfigurationHandler implements BlazeCommandRunCo
         return true;
       }
 
-      BlazeJavaDebuggingSetupHandler.setUpJavaDebugging(env);
+      if (!BlazeJavaDebuggingSetupHandler.setUpJavaDebugging(env)) {
+        return false;
+      }
 
       try {
         ClassFileManifestBuilder.buildManifest(env, null);
