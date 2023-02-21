@@ -16,8 +16,10 @@
 
 package com.google.idea.blaze.android.run.runner;
 
+import com.android.tools.idea.execution.common.AndroidSessionInfo;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.editor.DeployTarget;
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -35,6 +37,15 @@ public interface BlazeAndroidDeviceSelector {
         @Nullable DeployTarget deployTarget, @Nullable DeviceFutures deviceFutures) {
       this.deployTarget = deployTarget;
       this.deviceFutures = deviceFutures;
+    }
+
+    // Only for back compat
+    @VisibleForTesting
+    public DeviceSession(
+        @Nullable DeployTarget deployTarget,
+        @Nullable DeviceFutures deviceFutures,
+        @Nullable AndroidSessionInfo sessionInfo) {
+      this(deployTarget, deviceFutures);
     }
   }
 

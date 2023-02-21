@@ -81,22 +81,22 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2021.3": glob([
-            "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/functional/*.java",
-            "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/*.java",
-        ]),
-        "android-studio-2022.1": glob([
-            "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/functional/*.java",
-            "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/*.java",
-        ]),
-        "android-studio-2022.2": glob([
-            "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/functional/*.java",
-            "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/*.java",
-        ]),
-        "android-studio-dev": glob([
-            "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/functional/*.java",
-            "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/*.java",
-        ]),
+        "android-studio-2021.3": [
+            "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
+            "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
+        ],
+        "android-studio-2022.1": [
+            "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
+            "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
+        ],
+        "android-studio-2022.2": [
+            "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
+            "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
+        ],
+        "android-studio-dev": [
+            "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
+            "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
+        ],
     }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
@@ -188,35 +188,7 @@ intellij_integration_test_suite(
             "tests/integrationtests/com/google/idea/blaze/android/functional/AswbRenderTaskTest.java",  # b/177371104
             "tests/integrationtests/com/google/idea/blaze/android/functional/AswbMergedManifestTest.java",  #b/222322106
         ],
-    ) + select_for_plugin_api({
-        "android-studio-2021.3": [
-            "tests/integrationtests/as213/com/google/idea/blaze/android/functional/MobileInstallBuildStepIntegrationTest.java",
-            "tests/integrationtests/as213/com/google/idea/blaze/android/functional/FullApkBuildStepIntegrationTest.java",
-            "tests/integrationtests/as213/com/google/idea/blaze/android/run/AvailableDebuggersTest.java",
-            "tests/integrationtests/as213/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
-        ],
-        "android-studio-2022.1": [
-            "tests/integrationtests/as221/com/google/idea/blaze/android/functional/BlazeInstrumentationTestApkBuildStepIntegrationTest.java",
-            "tests/integrationtests/as221/com/google/idea/blaze/android/functional/MobileInstallBuildStepIntegrationTest.java",
-            "tests/integrationtests/as221/com/google/idea/blaze/android/functional/FullApkBuildStepIntegrationTest.java",
-            "tests/integrationtests/as221/com/google/idea/blaze/android/run/AvailableDebuggersTest.java",
-            "tests/integrationtests/as221/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
-        ],
-        "android-studio-2022.2": [
-            "tests/integrationtests/as222/com/google/idea/blaze/android/functional/BlazeInstrumentationTestApkBuildStepIntegrationTest.java",
-            "tests/integrationtests/as222/com/google/idea/blaze/android/functional/MobileInstallBuildStepIntegrationTest.java",
-            "tests/integrationtests/as222/com/google/idea/blaze/android/functional/FullApkBuildStepIntegrationTest.java",
-            "tests/integrationtests/as222/com/google/idea/blaze/android/run/AvailableDebuggersTest.java",
-            "tests/integrationtests/as222/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
-        ],
-        "android-studio-dev": [
-            "tests/integrationtests/asdev/com/google/idea/blaze/android/functional/BlazeInstrumentationTestApkBuildStepIntegrationTest.java",
-            "tests/integrationtests/asdev/com/google/idea/blaze/android/functional/MobileInstallBuildStepIntegrationTest.java",
-            "tests/integrationtests/asdev/com/google/idea/blaze/android/functional/FullApkBuildStepIntegrationTest.java",
-            "tests/integrationtests/asdev/com/google/idea/blaze/android/run/AvailableDebuggersTest.java",
-            "tests/integrationtests/asdev/com/google/idea/blaze/android/run/DebuggerInfoProviderTest.java",
-        ],
-    }),
+    ),
     additional_class_rules = select_for_plugin_api({
         "android-studio-2022.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-dev": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
