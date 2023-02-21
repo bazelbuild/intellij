@@ -15,8 +15,6 @@
  */
 package com.google.idea.blaze.android.run;
 
-import com.android.tools.idea.BaseAsCompat;
-import com.android.tools.idea.run.tasks.LaunchResult;
 import com.google.common.base.StandardSystemProperty;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -77,8 +75,7 @@ public class LaunchMetrics {
     EventLoggingService.getInstance().logEvent(LaunchMetrics.class, "BuildTiming", metrics);
   }
 
-  public static void logDeploymentTime(
-      String launchId, Duration duration, LaunchResult launchResult) {
+  public static void logDeploymentTime(String launchId, Duration duration, boolean wasSuccessful) {
     if (!launchMetricsEnabled.getValue()) {
       return;
     }
@@ -90,7 +87,7 @@ public class LaunchMetrics {
             KEY_DEPLOY_DURATION_MILLIS,
             Long.toString(duration.toMillis()),
             KEY_DEPLOY_STATUS,
-            Boolean.toString(BaseAsCompat.wasSuccessfulLaunch(launchResult)));
+            Boolean.toString(wasSuccessful));
     EventLoggingService.getInstance().logEvent(LaunchMetrics.class, "DeployTiming", metrics);
   }
 
