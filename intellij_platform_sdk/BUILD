@@ -370,6 +370,21 @@ config_setting(
 )
 
 config_setting(
+    name = "android-studio-2022.3",
+    values = {
+        "define": "ij_product=android-studio-2022.3",
+    },
+)
+
+config_setting(
+    name = "android-studio-2022.3-mac",
+    values = {
+        "cpu": "darwin_x86_64",
+        "define": "ij_product=android-studio-2022.3",
+    },
+)
+
+config_setting(
     name = "clion-latest",
     values = {
         "define": "ij_product=clion-latest",
@@ -593,6 +608,7 @@ java_library(
         "android-studio-2021.3": ["@jsr305_annotations//jar"],
         "android-studio-2022.1": ["@jsr305_annotations//jar"],
         "android-studio-2022.2": ["@jsr305_annotations//jar"],
+        "android-studio-2022.3": ["@jsr305_annotations//jar"],
         "android-studio-dev": ["@jsr305_annotations//jar"],
         # We default to intellij-latest when no plugin api is selected.
         "default": [":bundled_jsr305"],

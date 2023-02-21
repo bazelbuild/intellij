@@ -93,6 +93,10 @@ java_library(
             "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
+        "android-studio-2022.3": [
+            "tests/utils/sdkcompat/as223/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
+            "tests/utils/sdkcompat/as223/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
+        ],
         "android-studio-dev": [
             "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
@@ -122,6 +126,7 @@ java_library(
         "android-studio-2021.3": glob(["sdkcompat/as213/**/*.java"]),
         "android-studio-2022.1": glob(["sdkcompat/as221/**/*.java"]),
         "android-studio-2022.2": glob(["sdkcompat/as222/**/*.java"]),
+        "android-studio-2022.3": glob(["sdkcompat/as223/**/*.java"]),
         "android-studio-dev": glob(["sdkcompat/asdev/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
@@ -191,6 +196,7 @@ intellij_integration_test_suite(
     ),
     additional_class_rules = select_for_plugin_api({
         "android-studio-2022.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
+        "android-studio-2022.3": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-dev": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "default": [],
     }),
