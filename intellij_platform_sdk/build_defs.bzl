@@ -133,6 +133,10 @@ DIRECT_IJ_PRODUCTS = {
         ide = "android-studio",
         directory = "android_studio_2022_2",
     ),
+    "android-studio-2022.3": struct(
+        ide = "android-studio",
+        directory = "android_studio_2022_3",
+    ),
     "android-studio-dev": struct(
         ide = "android-studio",
         directory = "android_studio_dev",
