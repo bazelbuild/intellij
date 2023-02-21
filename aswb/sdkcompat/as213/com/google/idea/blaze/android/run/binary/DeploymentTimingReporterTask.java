@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
+import com.android.tools.idea.BaseAsCompat;
 import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.tasks.LaunchContext;
 import com.android.tools.idea.run.tasks.LaunchResult;
@@ -54,7 +55,8 @@ public class DeploymentTimingReporterTask implements LaunchTask {
   public LaunchResult run(LaunchContext launchContext) {
     Stopwatch s = Stopwatch.createStarted();
     LaunchResult launchResult = deployTask.run(launchContext);
-    LaunchMetrics.logDeploymentTime(launchId, s.elapsed(), launchResult);
+    LaunchMetrics.logDeploymentTime(
+        launchId, s.elapsed(), BaseAsCompat.wasSuccessfulLaunch(launchResult));
     return launchResult;
   }
 

@@ -22,7 +22,6 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.tasks.LaunchContext;
-import com.android.tools.idea.run.tasks.LaunchResult;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
@@ -151,7 +150,7 @@ class StockAndroidTestLaunchTask implements LaunchTask {
   }
 
   @SuppressWarnings("FutureReturnValueIgnored")
-  public LaunchResult run(@NotNull LaunchContext launchContext) {
+  public void run(@NotNull LaunchContext launchContext) {
     ConsolePrinter printer = launchContext.getConsolePrinter();
     IDevice device = launchContext.getDevice();
     printer.stdout("Running tests\n");
@@ -170,8 +169,8 @@ class StockAndroidTestLaunchTask implements LaunchTask {
         runner.setMethodName(configState.getClassName(), configState.getMethodName());
         break;
       default:
-        LOG.error(String.format("Unrecognized testing type: %d", configState.getTestingType()));
-        return LaunchResult.error("", getDescription());
+        throw new RuntimeException(
+            String.format("Unrecognized testing type: %d", configState.getTestingType()));
     }
     runner.setDebug(waitForDebugger);
     runner.setRunOptions(configState.getExtraOptions());
@@ -197,11 +196,10 @@ class StockAndroidTestLaunchTask implements LaunchTask {
                   ((AndroidProcessHandler) processHandler).detachDevice(launchContext.getDevice());
                 }
               } catch (Exception e) {
-                LOG.info(e);
                 printer.stderr("Error: Unexpected exception while running tests: " + e);
+                launchContext.getProcessHandler().destroyProcess();
               }
             });
-    return LaunchResult.success();
   }
   @NotNull
   @Override

@@ -15,14 +15,8 @@
  */
 package com.android.tools.idea;
 
-import com.android.tools.idea.run.tasks.LaunchResult;
-
 /** Simple compat utilities across various versions of AS plugin SDK. */
 public class BaseAsCompat {
-  // #api212
-  public static boolean wasSuccessfulLaunch(LaunchResult launchResult) {
-    return launchResult.getResult() == LaunchResult.Result.SUCCESS;
-  }
 
   private BaseAsCompat() {}
 }
