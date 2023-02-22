@@ -31,7 +31,6 @@ import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
-import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
@@ -156,10 +155,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   @Override
   @Nullable
   public LaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions,
-      @Nullable Integer userId,
-      String contributorsAmStartOptions,
-      LaunchStatus launchStatus)
+      LaunchOptions launchOptions, @Nullable Integer userId, String contributorsAmStartOptions)
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {
       case BLAZE_TEST:
@@ -186,7 +182,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
           throw new ExecutionException(e);
         }
         return StockAndroidTestLaunchTask.getStockTestLaunchTask(
-            configState, applicationIdProvider, launchOptions.isDebug(), deployInfo, launchStatus);
+            configState, applicationIdProvider, launchOptions.isDebug(), deployInfo, project);
     }
     throw new AssertionError();
   }
