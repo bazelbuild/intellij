@@ -20,11 +20,11 @@ import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.util.Optional;
 
 /** Query strategy used when no update is necessary. Simply returns the previous project state. */
-class NoopProjectUpdate implements ProjectUpdate {
+class NoopProjectRefresh implements RefreshOperation {
 
   private final BlazeProjectSnapshot project;
 
-  public NoopProjectUpdate(BlazeProjectSnapshot project) {
+  public NoopProjectRefresh(BlazeProjectSnapshot project) {
     this.project = project;
   }
 

@@ -36,7 +36,7 @@ import java.util.Optional;
  * <p>When instantiating this class directly for new project creation, you must call {@link
  * #setVcsState(Optional)} before {@link #createBlazeProject()}.
  */
-public class FullProjectUpdate implements ProjectUpdate {
+public class FullProjectUpdate implements RefreshOperation {
 
   private final BlazeQueryParser queryParser;
   private final ImmutableList<Path> projectIncludes;

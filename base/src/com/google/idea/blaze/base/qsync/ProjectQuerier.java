@@ -43,7 +43,7 @@ import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.FullProjectUpdate;
 import com.google.idea.blaze.qsync.PackageStatementParser;
 import com.google.idea.blaze.qsync.ProjectRefresher;
-import com.google.idea.blaze.qsync.ProjectUpdate;
+import com.google.idea.blaze.qsync.RefreshOperation;
 import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
@@ -164,16 +164,17 @@ public class ProjectQuerier {
       }
     }
 
-    ProjectUpdate update = projectRefresher.startPartialUpdate(context, previousState, vcsState);
+    RefreshOperation refresh =
+        projectRefresher.startPartialRefresh(context, previousState, vcsState);
 
-    Optional<QuerySpec> spec = update.getQuerySpec();
+    Optional<QuerySpec> spec = refresh.getQuerySpec();
     if (spec.isPresent()) {
       InputStream queryStream = runQuery(spec.get().getQueryArgs(), context);
-      update.setQueryOutput(QuerySummary.create(queryStream));
+      refresh.setQueryOutput(QuerySummary.create(queryStream));
     } else {
-      update.setQueryOutput(QuerySummary.EMPTY);
+      refresh.setQueryOutput(QuerySummary.EMPTY);
     }
-    return update.createBlazeProject();
+    return refresh.createBlazeProject();
   }
 
   private Optional<ListenableFuture<VcsState>> getVcsState(BlazeContext context) {

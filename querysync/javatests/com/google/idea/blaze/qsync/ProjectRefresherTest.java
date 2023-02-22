@@ -38,13 +38,13 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testCreateRefreshQueryStrategy_upstreamRevisionChange() {
+  public void testStartPartialRefresh_upstreamRevisionChange() {
     BlazeProjectSnapshot project =
         emptyProjectBuilder().vcsState(Optional.of(new VcsState("1", ImmutableSet.of()))).build();
 
-    ProjectUpdate update =
+    RefreshOperation update =
         createRefresher()
-            .startPartialUpdate(
+            .startPartialRefresh(
                 QuerySyncTestUtils.NOOP_CONTEXT,
                 project,
                 Optional.of(new VcsState("2", ImmutableSet.of())));
@@ -52,7 +52,7 @@ public class ProjectRefresherTest {
   }
 
   @Test
-  public void testCreateRefreshQueryStrategy_buildFileAddedThenReverted() {
+  public void testStartPartialRefresh_buildFileAddedThenReverted() {
     BlazeProjectSnapshot project =
         emptyProjectBuilder()
             .queryOutput(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
@@ -66,21 +66,21 @@ public class ProjectRefresherTest {
             .projectIncludes(ImmutableList.of(Path.of("package")))
             .build();
 
-    ProjectUpdate update =
+    RefreshOperation update =
         createRefresher()
-            .startPartialUpdate(
+            .startPartialRefresh(
                 QuerySyncTestUtils.NOOP_CONTEXT,
                 project,
                 Optional.of(new VcsState("1", ImmutableSet.of())));
 
-    assertThat(update).isInstanceOf(PartialProjectUpdate.class);
-    PartialProjectUpdate partialQuery = (PartialProjectUpdate) update;
+    assertThat(update).isInstanceOf(PartialProjectRefresh.class);
+    PartialProjectRefresh partialQuery = (PartialProjectRefresh) update;
     assertThat(partialQuery.deletedPackages).containsExactly(Path.of("package/path"));
     assertThat(partialQuery.modifiedPackages).isEmpty();
   }
 
   @Test
-  public void testCreateRefreshQueryStrategy_buildFileDeletedThenReverted() {
+  public void testStartPartialRefresh_buildFileDeletedThenReverted() {
     BlazeProjectSnapshot project =
         emptyProjectBuilder()
             .vcsState(
@@ -93,21 +93,21 @@ public class ProjectRefresherTest {
             .projectIncludes(ImmutableList.of(Path.of("package")))
             .build();
 
-    ProjectUpdate update =
+    RefreshOperation update =
         createRefresher()
-            .startPartialUpdate(
+            .startPartialRefresh(
                 QuerySyncTestUtils.NOOP_CONTEXT,
                 project,
                 Optional.of(new VcsState("1", ImmutableSet.of())));
 
-    assertThat(update).isInstanceOf(PartialProjectUpdate.class);
-    PartialProjectUpdate partialQuery = (PartialProjectUpdate) update;
+    assertThat(update).isInstanceOf(PartialProjectRefresh.class);
+    PartialProjectRefresh partialQuery = (PartialProjectRefresh) update;
     assertThat(partialQuery.deletedPackages).isEmpty();
     assertThat(partialQuery.modifiedPackages).containsExactly(Path.of("package/path"));
   }
 
   @Test
-  public void testCreateRefreshQueryStrategy_buildFileModifiedThenReverted() {
+  public void testStartPartialRefresh_buildFileModifiedThenReverted() {
     BlazeProjectSnapshot project =
         emptyProjectBuilder()
             .queryOutput(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
@@ -121,15 +121,15 @@ public class ProjectRefresherTest {
             .projectIncludes(ImmutableList.of(Path.of("package")))
             .build();
 
-    ProjectUpdate update =
+    RefreshOperation update =
         createRefresher()
-            .startPartialUpdate(
+            .startPartialRefresh(
                 QuerySyncTestUtils.NOOP_CONTEXT,
                 project,
                 Optional.of(new VcsState("1", ImmutableSet.of())));
 
-    assertThat(update).isInstanceOf(PartialProjectUpdate.class);
-    PartialProjectUpdate partialQuery = (PartialProjectUpdate) update;
+    assertThat(update).isInstanceOf(PartialProjectRefresh.class);
+    PartialProjectRefresh partialQuery = (PartialProjectRefresh) update;
     assertThat(partialQuery.deletedPackages).isEmpty();
     assertThat(partialQuery.modifiedPackages).containsExactly(Path.of("package/path"));
   }

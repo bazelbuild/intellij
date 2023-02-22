@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 /**
- * Represents a method for updating the {@link BlazeProjectSnapshot}.
+ * Represents an operation that is refreshing a {@link BlazeProjectSnapshot}.
  *
  * <p>To use this interface:
  *
@@ -32,7 +32,7 @@ import java.util.Optional;
  *   <li>Call {@link #createBlazeProject()} to get the updated project snapshot.
  * </ol>
  */
-public interface ProjectUpdate {
+public interface RefreshOperation {
 
   /** Returns the spec of the query to be run for this strategy. */
   Optional<QuerySpec> getQuerySpec();
