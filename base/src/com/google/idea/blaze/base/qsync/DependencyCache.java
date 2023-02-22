@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
+import com.google.idea.blaze.common.Label;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -36,12 +37,12 @@ public class DependencyCache {
   }
 
   /* Invalidates all cached jars and the artifact map of a target. */
-  public void invalidate(String target) throws IOException {
+  public void invalidate(Label target) throws IOException {
     artifactTracker.removeDepsOf(target);
   }
 
   /* Returns all jar files of one target. */
-  public ImmutableSet<Path> get(String target) {
+  public ImmutableSet<Path> get(Label target) {
     return artifactTracker.get(target);
   }
 

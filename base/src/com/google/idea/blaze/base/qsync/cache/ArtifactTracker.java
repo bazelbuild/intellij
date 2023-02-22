@@ -29,6 +29,7 @@ import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.common.Label;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -53,9 +54,9 @@ import java.util.Set;
  * thrown in this case to inform users to trigger another sync and try to re-sync this target again.
  */
 public class ArtifactTracker {
-  private final SetMultimap<String, String> topLevelTargetToDeps = HashMultimap.create();
-  // TODO(xinruiy): switch to label after cl/508358143 submitted
-  private final SetMultimap<String, String> targetToArtifacts = HashMultimap.create();
+  private final SetMultimap<Label, Label> topLevelTargetToDeps = HashMultimap.create();
+
+  private final SetMultimap<Label, String> targetToArtifacts = HashMultimap.create();
   private final JarCache jarCache;
 
   public ArtifactTracker(Project project) {
@@ -69,9 +70,9 @@ public class ArtifactTracker {
   }
 
   /** Returns all local copy of artifacts that are needed by a top-level target. */
-  public ImmutableSet<Path> get(String toplevelTarget) {
+  public ImmutableSet<Path> get(Label toplevelTarget) {
     ImmutableSet.Builder<Path> result = ImmutableSet.builder();
-    for (String dep : topLevelTargetToDeps.get(toplevelTarget)) {
+    for (Label dep : topLevelTargetToDeps.get(toplevelTarget)) {
       for (String artifact : targetToArtifacts.get(dep)) {
         Optional<Path> cachedFile = jarCache.get(artifact);
         if (cachedFile.isPresent()) {
@@ -116,16 +117,16 @@ public class ArtifactTracker {
    * artifact paths are the keys that used to decide if an artifact has been cached.
    */
   public ArtifactDiff diffArtifacts(ArtifactTrackerData.TargetToDeps newArtifactInfo) {
-    String topLevelTarget = newArtifactInfo.getTarget();
+    Label topLevelTarget = Label.of(newArtifactInfo.getTarget());
     List<TargetToDirectArtifact> newDeps = newArtifactInfo.getDepsList();
-    SetMultimap<String, String> depsToTopLevelTarget =
+    SetMultimap<Label, Label> depsToTopLevelTarget =
         Multimaps.invertFrom(topLevelTargetToDeps, HashMultimap.create());
     ImmutableSet.Builder<String> toUpdateArtifacts = ImmutableSet.builder();
-    Set<String> toRemoveTargets = new HashSet<>();
+    Set<Label> toRemoveTargets = new HashSet<>();
 
     // The target that only used by current top level target, it may be removed if it's not used
     // in new build. Collect it here and check if it's used by newArtifactInfo in next step.
-    for (String dep : topLevelTargetToDeps.get(topLevelTarget)) {
+    for (Label dep : topLevelTargetToDeps.get(topLevelTarget)) {
       //  The target that only used by current top level target
       if (depsToTopLevelTarget.get(dep).size() == 1) {
         toRemoveTargets.add(dep);
@@ -133,7 +134,7 @@ public class ArtifactTracker {
     }
 
     for (TargetToDirectArtifact dep : newDeps) {
-      String target = dep.getTarget();
+      Label target = Label.of(dep.getTarget());
       List<String> artifactPathsList = dep.getArtifactPathsList();
       toRemoveTargets.remove(target);
       Set<String> oldArtifactPathsList = targetToArtifacts.get(target);
@@ -156,24 +157,24 @@ public class ArtifactTracker {
    */
   private void updateMaps(
       ArtifactTrackerData.TargetToDeps artifactInfo, ImmutableSet<String> removedArtifacts) {
-    String topLevelTarget = artifactInfo.getTarget();
+    Label topLevelTarget = Label.of(artifactInfo.getTarget());
     List<TargetToDirectArtifact> newDeps = artifactInfo.getDepsList();
-    SetMultimap<String, String> depsToTopLevelTarget =
+    SetMultimap<Label, Label> depsToTopLevelTarget =
         Multimaps.invertFrom(topLevelTargetToDeps, HashMultimap.create());
-    SetMultimap<String, String> artifactsToTargets =
+    SetMultimap<String, Label> artifactsToTargets =
         Multimaps.invertFrom(targetToArtifacts, HashMultimap.create());
 
     for (TargetToDirectArtifact dep : newDeps) {
-      String target = dep.getTarget();
+      Label target = Label.of(dep.getTarget());
       targetToArtifacts.putAll(target, dep.getArtifactPathsList());
       topLevelTargetToDeps.put(topLevelTarget, target);
     }
 
     for (String artifact : removedArtifacts) {
-      for (String dep : artifactsToTargets.get(artifact)) {
+      for (Label dep : artifactsToTargets.get(artifact)) {
         targetToArtifacts.remove(dep, artifact);
         if (!targetToArtifacts.containsKey(dep)) {
-          for (String target : depsToTopLevelTarget.get(dep)) {
+          for (Label target : depsToTopLevelTarget.get(dep)) {
             topLevelTargetToDeps.remove(target, dep);
           }
         }
@@ -191,14 +192,14 @@ public class ArtifactTracker {
    * Removes artifacts that used by topLevelTarget from cache. Even if other top level targets
    * depend on them, these artifacts and their direct targets will be removed from the map.
    */
-  public void removeDepsOf(String topLevelTarget) throws IOException {
+  public void removeDepsOf(Label topLevelTarget) throws IOException {
     // TODO(xinruiy): remove this function if it's not used in the future
     Set<String> toRemoveArtifacts = new HashSet<>();
-    for (String dep : topLevelTargetToDeps.get(topLevelTarget)) {
+    for (Label dep : topLevelTargetToDeps.get(topLevelTarget)) {
       toRemoveArtifacts.addAll(targetToArtifacts.get(dep));
     }
     updateMaps(
-        TargetToDeps.newBuilder().setTarget(topLevelTarget).build(),
+        TargetToDeps.newBuilder().setTarget(topLevelTarget.toString()).build(),
         jarCache.remove(toRemoveArtifacts));
   }
 
