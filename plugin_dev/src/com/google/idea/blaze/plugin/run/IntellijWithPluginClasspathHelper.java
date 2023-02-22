@@ -25,6 +25,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PathsList;
 import java.io.File;
+import java.util.Objects;
 
 /**
  * Boilerplate for running an IJ application with an additional plugin, copied from
@@ -46,17 +47,37 @@ public class IntellijWithPluginClasspathHelper {
   private static final ImmutableList<String> IJ_LIBRARIES_AFTER_2022_1 =
       ImmutableList.of("util_rt.jar");
 
+  private static final ImmutableList<String> ASWB_LIBRARIES_AFTER_2022_3 =
+      ImmutableList.of(
+          "app.jar",
+          "3rd-party-rt.jar",
+          "resources.jar",
+          "jps-model.jar",
+          "forms_rt.jar",
+          "protobuf.jar",
+          "stats.jar",
+          "annotations.jar");
+
   private static void addIntellijLibraries(JavaParameters params, Sdk ideaJdk) {
     String libPath = ideaJdk.getHomePath() + File.separator + "lib";
     PathsList list = params.getClassPath();
     for (String lib : IJ_LIBRARIES) {
       list.addFirst(libPath + File.separator + lib);
     }
+    String buildNumberStr = IdeaJdkHelper.getBuildNumber(ideaJdk);
+    BuildNumber buildNumber = BuildNumber.fromString(buildNumberStr);
+    if (buildNumber != null) {
+      if (buildNumber.getBaselineVersion() >= 221) {
+        for (String lib : IJ_LIBRARIES_AFTER_2022_1) {
+          list.addFirst(libPath + File.separator + lib);
+        }
+      }
 
-    BuildNumber buildNumber = BuildNumber.fromString(IdeaJdkHelper.getBuildNumber(ideaJdk));
-    if (buildNumber != null && buildNumber.getBaselineVersion() >= 221) {
-      for (String lib : IJ_LIBRARIES_AFTER_2022_1) {
-        list.addFirst(libPath + File.separator + lib);
+      if (buildNumber.getBaselineVersion() >= 223
+          && Objects.equals(IdeaJdkHelper.getPlatformPrefix(buildNumberStr), "AndroidStudio")) {
+        for (String lib : ASWB_LIBRARIES_AFTER_2022_3) {
+          list.addFirst(libPath + File.separator + lib);
+        }
       }
     }
 
