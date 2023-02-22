@@ -76,21 +76,38 @@ public class IntellijWithPluginClasspathHelper {
           "jsp-base.jar"
       );
 
+  private static final ImmutableList<String> ASWB_LIBRARIES_AFTER_2022_3 =
+      ImmutableList.of(
+          "app.jar",
+          "3rd-party-rt.jar",
+          "resources.jar",
+          "jps-model.jar",
+          "forms_rt.jar",
+          "protobuf.jar",
+          "stats.jar",
+          "annotations.jar"
+      );
+
   // #api222 remove once we drop support for 2022.2. Newer versions should use product-info.json
   private static void addIntellijLibraries(JavaParameters params, Sdk ideaJdk) {
     String libPath = ideaJdk.getHomePath() + File.separator + "lib";
     PathsList list = params.getClassPath();
     addLibrariesToList(IJ_LIBRARIES, libPath, list);
 
-    BuildNumber buildNumber = BuildNumber.fromString(IdeaJdkHelper.getBuildNumber(ideaJdk));
-    if (buildNumber != null && buildNumber.getBaselineVersion() >= 221) {
-      addLibrariesToList(IJ_LIBRARIES_AFTER_2022_1, libPath, list);
-    }
-
-    if(buildNumber != null && buildNumber.getBaselineVersion() >= 223) {
-      addLibrariesToList(IJ_LIBRARIES_AFTER_2022_3, libPath, list);
-    }
-
+    String buildNumberStr = IdeaJdkHelper.getBuildNumber(ideaJdk);
+    BuildNumber buildNumber = BuildNumber.fromString(buildNumberStr);
+    if (buildNumber != null) {
+      if (buildNumber.getBaselineVersion() >= 221) {
+        addLibrariesToList(IJ_LIBRARIES_AFTER_2022_1, libPath, list);
+      }
+      if (buildNumber.getBaselineVersion() >= 223) {
+        if (Objects.equals(IdeaJdkHelper.getPlatformPrefix(buildNumberStr),
+                "AndroidStudio")) {
+          addLibrariesToList(ASWB_LIBRARIES_AFTER_2022_3, libPath, list);
+        } else {
+          addLibrariesToList(IJ_LIBRARIES_AFTER_2022_3, libPath, list);
+        }
+      }
     list.addFirst(((JavaSdkType) ideaJdk.getSdkType()).getToolsPath(ideaJdk));
   }
 
