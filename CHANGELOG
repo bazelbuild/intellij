@@ -1,3 +1,7 @@
+v2023.02.22
+===========
+
+
 v2023.02.07
 ===========
 * fix(run): Properly expand IntelliJ macros in run configurations #4368
