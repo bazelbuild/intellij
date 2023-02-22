@@ -26,7 +26,6 @@ import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
-import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.common.collect.ImmutableList;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -58,8 +57,7 @@ public interface BlazeAndroidRunContext {
   LaunchTask getApplicationLaunchTask(
       LaunchOptions launchOptions,
       @Nullable Integer userId,
-      @NotNull String contributorsAmStartOptions,
-      LaunchStatus launchStatus)
+      @NotNull String contributorsAmStartOptions)
       throws ExecutionException;
 
   /** Returns the task to connect the debugger. */

@@ -25,6 +25,7 @@ import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.LaunchTaskRunner;
 import com.android.tools.idea.run.configuration.execution.AndroidComplicationConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutorRunProfileState;
@@ -38,7 +39,6 @@ import com.android.tools.idea.run.editor.DeployTargetState;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.android.run.BlazeAndroidRunState;
 import com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallBuildStep;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -153,7 +153,14 @@ public final class BlazeAndroidRunConfigurationRunner
     env.putCopyableUserData(RUN_CONTEXT_KEY, runContext);
     env.putCopyableUserData(DEVICE_SESSION_KEY, deviceSession);
 
-    return new BlazeAndroidRunState(env, launchOptionsBuilder, deviceSession, runContext);
+    LaunchTaskRunner runner =
+        new LaunchTaskRunner(
+            runContext.getConsoleProvider(),
+            runContext.getApplicationIdProvider(),
+            env,
+            deployTarget,
+            runContext.getLaunchTasksProvider(launchOptionsBuilder));
+    return new AndroidConfigurationExecutorRunProfileState(runner);
   }
 
   private RunProfileState getWearExecutor(

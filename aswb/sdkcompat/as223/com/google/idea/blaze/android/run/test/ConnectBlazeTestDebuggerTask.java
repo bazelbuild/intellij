@@ -20,24 +20,19 @@ import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.execution.common.debug.DebugSessionStarter;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionUtil;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import java.io.OutputStream;
-import java.util.function.Function;
-import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
 
 /** Connects the blaze debugger during execution. */
 class ConnectBlazeTestDebuggerTask<S extends AndroidDebuggerState> implements ConnectDebuggerTask {
-  private static final Logger LOG = Logger.getInstance(ConnectBlazeTestDebuggerTask.class);
+
   private final BlazeAndroidTestRunContext runContext;
   private final AndroidDebugger<S> myAndroidDebugger;
   private final S myAndroidDebuggerState;
@@ -50,6 +45,7 @@ class ConnectBlazeTestDebuggerTask<S extends AndroidDebuggerState> implements Co
     myAndroidDebugger = androidDebugger;
     myAndroidDebuggerState = androidDebuggerState;
   }
+
   /**
    * Wires up listeners to automatically reconnect the debugger for each test method. When you
    * `blaze test` an android_test in debug mode, it kills the instrumentation process between each
@@ -60,13 +56,15 @@ class ConnectBlazeTestDebuggerTask<S extends AndroidDebuggerState> implements Co
    * @return Promise with debug session or error
    */
   @Override
-  public @NotNull Promise<XDebugSessionImpl> perform(
+  public @NotNull XDebugSessionImpl perform(
       @NotNull IDevice device,
       @NotNull String applicationId,
       @NotNull ExecutionEnvironment environment,
-      @NotNull ProcessHandler oldProcessHandler) {
+      @NotNull ProgressIndicator progressIndicator,
+      ConsoleView console) {
     final ProcessHandler masterProcessHandler =
         new ProcessHandler() {
+
           @Override
           protected void destroyProcessImpl() {
             notifyProcessTerminated(0);
@@ -87,44 +85,21 @@ class ConnectBlazeTestDebuggerTask<S extends AndroidDebuggerState> implements Co
             return null;
           }
         };
-    Promise<XDebugSessionImpl> debugSessionPromise =
-        DebugSessionStarter.INSTANCE
-            .attachReattachingDebuggerToStartedProcess(
-                device,
-                applicationId,
-                masterProcessHandler,
-                environment,
-                myAndroidDebugger,
-                myAndroidDebuggerState,
-                /* destroyRunningProcess= */ x -> Unit.INSTANCE,
-                null,
-                Long.MAX_VALUE)
-            .onSuccess(
-                session -> {
-                  oldProcessHandler.detachProcess();
-                  session.showSessionTab();
-                })
-            .onError(
-                it -> {
-                  if (it instanceof ExecutionException) {
-                    ExecutionUtil.handleExecutionError(
-                        environment.getProject(),
-                        ToolWindowId.DEBUG,
-                        it,
-                        "Error running " + environment.getRunProfile().getName(),
-                        it.getMessage(),
-                        Function.identity(),
-                        null);
-                  } else {
-                    Logger.getInstance(this.getClass()).error(it);
-                  }
-                });
     runContext.addLaunchTaskCompleteListener(
         () -> {
           masterProcessHandler.notifyTextAvailable(
               "Test run completed.\n", ProcessOutputTypes.STDOUT);
           masterProcessHandler.detachProcess();
         });
-    return debugSessionPromise;
+    return DebugSessionStarter.INSTANCE.attachReattachingDebuggerToStartedProcess(
+        device,
+        applicationId,
+        masterProcessHandler,
+        environment,
+        myAndroidDebugger,
+        myAndroidDebuggerState,
+        progressIndicator,
+        console,
+        Long.MAX_VALUE);
   }
 }

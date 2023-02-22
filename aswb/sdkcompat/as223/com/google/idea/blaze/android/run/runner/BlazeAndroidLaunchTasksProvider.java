@@ -146,7 +146,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
 
       LaunchTask appLaunchTask =
           runContext.getApplicationLaunchTask(
-              launchOptions, userId, String.join(" ", amStartOptions.build()), launchStatus);
+              launchOptions, userId, String.join(" ", amStartOptions.build()));
       if (appLaunchTask != null) {
         launchTasks.add(appLaunchTask);
         if (isLiveEditEnabled.getValue()) {

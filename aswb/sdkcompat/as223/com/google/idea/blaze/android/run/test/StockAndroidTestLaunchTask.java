@@ -17,20 +17,22 @@ package com.google.idea.blaze.android.run.test;
 
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
+import com.android.tools.idea.execution.common.RunConfigurationNotifier;
 import com.android.tools.idea.execution.common.processhandler.AndroidProcessHandler;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.tasks.LaunchContext;
 import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import java.util.List;
@@ -44,6 +46,7 @@ class StockAndroidTestLaunchTask implements LaunchTask {
   private final String instrumentationTestRunner;
   private final String testApplicationId;
   private final boolean waitForDebugger;
+
   StockAndroidTestLaunchTask(
       BlazeAndroidTestRunConfigurationState configState,
       String runner,
@@ -54,27 +57,29 @@ class StockAndroidTestLaunchTask implements LaunchTask {
     this.waitForDebugger = waitForDebugger;
     this.testApplicationId = testPackage;
   }
+
   @Nullable
   public static LaunchTask getStockTestLaunchTask(
       BlazeAndroidTestRunConfigurationState configState,
       ApplicationIdProvider applicationIdProvider,
       boolean waitForDebugger,
       BlazeAndroidDeployInfo deployInfo,
-      LaunchStatus launchStatus) {
+      Project project)
+      throws ExecutionException {
     String testPackage;
     try {
       testPackage = applicationIdProvider.getTestPackageName();
-      if (testPackage == null) {
-        launchStatus.terminateLaunch("Unable to determine test package name", true);
-        return null;
-      }
     } catch (ApkProvisionException e) {
-      launchStatus.terminateLaunch("Unable to determine test package name", true);
-      return null;
+      throw new ExecutionException("Unable to determine test package name. " + e.getMessage());
+    }
+    if (testPackage == null) {
+      throw new ExecutionException("Unable to determine test package name.");
     }
     List<String> availableRunners = getRunnersFromManifest(deployInfo);
     if (availableRunners.isEmpty()) {
-      launchStatus.terminateLaunch(
+      RunConfigurationNotifier.INSTANCE.notifyError(
+          project,
+          "",
           String.format(
               "No instrumentation test runner is defined in the manifest.\n"
                   + "At least one instrumentation tag must be defined for the\n"
@@ -90,43 +95,48 @@ class StockAndroidTestLaunchTask implements LaunchTask {
                   + "    </instrumentation>\n"
                   + "\n"
                   + "</manifest>",
-              testPackage),
-          true);
+              testPackage));
       // Note: Gradle users will never see the above message, so don't mention Gradle here.
       // Even if no runners are defined in build.gradle, Gradle will add a default to the manifest.
-      return null;
+      throw new ExecutionException("No instrumentation test runner is defined in the manifest.");
     }
     String runner = configState.getInstrumentationRunnerClass();
     if (!StringUtil.isEmpty(runner)) {
-      if (!availableRunners.contains(runner)) {
-        launchStatus.terminateLaunch(
-            String.format(
-                "Instrumentation test runner \"%2$s\"\n"
-                    + "is not defined for the \"%1$s\" package in the manifest.\n"
-                    + "Clear the 'Specific instrumentation runner' field in your configuration\n"
-                    + "to default to \"%3$s\",\n"
-                    + "or add the runner to your AndroidManifest.xml:\n"
-                    + "\n"
-                    + "<manifest\n"
-                    + "    package=\"%1$s\"\n"
-                    + "    xmlns:android=\"http://schemas.android.com/apk/res/android\">\n"
-                    + "\n"
-                    + "    <instrumentation\n"
-                    + "        android:name=\"%2$s\"\n"
-                    + "        android:targetPackage=\"%1$s\">\n"
-                    + "    </instrumentation>\n"
-                    + "\n"
-                    + "</manifest>",
-                testPackage, runner, availableRunners.get(0)),
-            true);
-        return null;
-      }
-    } else {
       // Default to the first available runner.
       runner = availableRunners.get(0);
     }
+    if (!availableRunners.contains(runner)) {
+      RunConfigurationNotifier.INSTANCE.notifyError(
+          project,
+          "",
+          String.format(
+              "Instrumentation test runner \"%2$s\"\n"
+                  + "is not defined for the \"%1$s\" package in the manifest.\n"
+                  + "Clear the 'Specific instrumentation runner' field in your configuration\n"
+                  + "to default to \"%3$s\",\n"
+                  + "or add the runner to your AndroidManifest.xml:\n"
+                  + "\n"
+                  + "<manifest\n"
+                  + "    package=\"%1$s\"\n"
+                  + "    xmlns:android=\"http://schemas.android.com/apk/res/android\">\n"
+                  + "\n"
+                  + "    <instrumentation\n"
+                  + "        android:name=\"%2$s\"\n"
+                  + "        android:targetPackage=\"%1$s\">\n"
+                  + "    </instrumentation>\n"
+                  + "\n"
+                  + "</manifest>",
+              testPackage, runner, availableRunners.get(0)));
+      throw new ExecutionException(
+          String.format(
+              "Instrumentation test runner \"%2$s\" is not defined for the \"%1$s\" package in the"
+                  + " manifest.",
+              testPackage, runner));
+    }
+
     return new StockAndroidTestLaunchTask(configState, runner, testPackage, waitForDebugger);
   }
+
   private static ImmutableList<String> getRunnersFromManifest(
       final BlazeAndroidDeployInfo deployInfo) {
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
@@ -140,10 +150,12 @@ class StockAndroidTestLaunchTask implements LaunchTask {
     }
     return ImmutableList.of();
   }
+
   @Override
   public String getDescription() {
     return "Launching instrumentation runner";
   }
+
   @Override
   public int getDuration() {
     return 2;
@@ -201,10 +213,10 @@ class StockAndroidTestLaunchTask implements LaunchTask {
               }
             });
   }
+
   @NotNull
   @Override
   public String getId() {
     return ID;
   }
 }
-
