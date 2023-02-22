@@ -306,6 +306,6 @@ def intellij_plugin(name, deps, plugin_xml, optional_plugin_xmls = [], jar_name 
     native.java_import(
         name = name,
         jars = [jar_target_name],
-        tags = ["intellij-plugin"] + extra_tags,
+        tags = ["intellij-plugin"] + kwargs.pop("tags", []),
         **kwargs
     )
