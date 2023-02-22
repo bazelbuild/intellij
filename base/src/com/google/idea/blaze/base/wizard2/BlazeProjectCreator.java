@@ -52,7 +52,11 @@ class BlazeProjectCreator {
 
   void createFromWizard() {
     try {
-      doCreate();
+      doCreate(
+          projectBuilder,
+          wizardContext.getProjectFileDirectory(),
+          wizardContext.getProjectName(),
+          wizardContext.getProjectStorageFormat());
     } catch (final IOException e) {
       logger.error("Project creation failed", e);
       ApplicationManager.getApplication()
@@ -61,21 +65,24 @@ class BlazeProjectCreator {
     }
   }
 
-  private void doCreate() throws IOException {
-    String projectFilePath = wizardContext.getProjectFileDirectory();
+  private static void doCreate(
+      ProjectBuilder projectBuilder,
+      String projectFilePath,
+      String projectName,
+      StorageScheme projectStorageFormat)
+      throws IOException {
 
     File projectDir = new File(projectFilePath).getParentFile();
     logger.assertTrue(
         projectDir != null,
         "Cannot create project in '" + projectFilePath + "': no parent file exists");
     FileUtil.ensureExists(projectDir);
-    if (wizardContext.getProjectStorageFormat() == StorageScheme.DIRECTORY_BASED) {
+    if (projectStorageFormat == StorageScheme.DIRECTORY_BASED) {
       final File ideaDir = new File(projectFilePath, Project.DIRECTORY_STORE_FOLDER);
       FileUtil.ensureExists(ideaDir);
     }
 
-    String name = wizardContext.getProjectName();
-    Project newProject = projectBuilder.createProject(name, projectFilePath);
+    Project newProject = projectBuilder.createProject(projectName, projectFilePath);
     if (newProject == null) {
       return;
     }
