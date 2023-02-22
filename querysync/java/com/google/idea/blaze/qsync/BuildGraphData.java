@@ -17,9 +17,11 @@ package com.google.idea.blaze.qsync;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.Label;
@@ -50,12 +52,6 @@ abstract class BuildGraphData {
   /** From source target to the rule that builds it. If multiple one is picked. */
   abstract ImmutableMap<Label, Label> sourceOwner();
   /**
-   * All the dependencies from source files to things it needs outside the project
-   *
-   * <p>TODO: this should be moved to a separate class so it's lifecycle is decoupled from the graph
-   */
-  abstract Map<Label, ImmutableSet<Label>> transitiveSourceDeps();
-  /**
    * All the dependencies of a java rule.
    *
    * <p>Note that we don't use a MultiMap here as that does not allow us to distinguish between a
@@ -75,7 +71,7 @@ abstract class BuildGraphData {
   }
 
   static Builder builder() {
-    return new AutoValue_BuildGraphData.Builder().transitiveSourceDeps(Maps.newHashMap());
+    return new AutoValue_BuildGraphData.Builder();
   }
 
   static final BuildGraphData EMPTY =
@@ -95,8 +91,6 @@ abstract class BuildGraphData {
     public abstract ImmutableMap.Builder<Path, Label> fileToTargetBuilder();
 
     public abstract Builder sourceOwner(Map<Label, Label> value);
-
-    public abstract Builder transitiveSourceDeps(Map<Label, ImmutableSet<Label>> value);
 
     public abstract ImmutableMap.Builder<Label, ImmutableSet<Label>> ruleDepsBuilder();
 
@@ -141,24 +135,25 @@ abstract class BuildGraphData {
     }
   }
 
-  /** Recursively get all the transitive deps outside the project */
-  private ImmutableSet<Label> getTargetDependencies(Label target) {
-    ImmutableSet<Label> transitiveDeps = transitiveSourceDeps().get(target);
-    if (transitiveDeps != null) {
-      return transitiveDeps;
-    }
+  private final LoadingCache<Label, ImmutableSet<Label>> transitiveDeps =
+      CacheBuilder.newBuilder()
+          .build(CacheLoader.from(this::calculateTransitiveExternalDependencies));
+
+  private ImmutableSet<Label> getTransitiveExternalDependencies(Label target) {
+    return transitiveDeps.getUnchecked(target);
+  }
+
+  private ImmutableSet<Label> calculateTransitiveExternalDependencies(Label target) {
     ImmutableSet.Builder<Label> builder = ImmutableSet.builder();
     // There are no cycles in blaze, so we can recursively call down
     if (!ruleDeps().containsKey(target)) {
       builder.add(target);
     } else {
       for (Label dep : ruleDeps().get(target)) {
-        builder.addAll(getTargetDependencies(dep));
+        builder.addAll(getTransitiveExternalDependencies(dep));
       }
     }
-    transitiveDeps = Sets.intersection(builder.build(), projectDeps()).immutableCopy();
-    transitiveSourceDeps().put(target, transitiveDeps);
-    return transitiveDeps;
+    return Sets.intersection(builder.build(), projectDeps()).immutableCopy();
   }
 
   Label getTargetOwner(Path path) {
@@ -172,7 +167,7 @@ abstract class BuildGraphData {
     if (target == null) {
       return null;
     }
-    return getTargetDependencies(target);
+    return getTransitiveExternalDependencies(target);
   }
 
   /** Returns a list of all the source files of the project, relative to the workspace root. */
