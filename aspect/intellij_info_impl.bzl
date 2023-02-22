@@ -205,10 +205,6 @@ def collect_targets_from_attrs(rule_attrs, attrs):
         _collect_target_from_attr(rule_attrs, attr_name, result)
     return [target for target in result if is_valid_aspect_target(target)]
 
-def targets_to_labels(targets):
-    """Returns a set of label strings for the given targets."""
-    return depset([str(target.label) for target in targets])
-
 def list_omit_none(value):
     """Returns a list of the value, or the empty list if None."""
     return [value] if value else []
@@ -411,9 +407,9 @@ def collect_go_info(target, ctx, semantics, ide_info, ide_info_file, output_grou
     library_labels = []
     if ctx.rule.kind == "go_test" or ctx.rule.kind == "go_appengine_test":
         if getattr(ctx.rule.attr, "library", None) != None:
-            library_labels = [str(ctx.rule.attr.library.label)]
+            library_labels = [stringify_label(ctx.rule.attr.library.label)]
         elif getattr(ctx.rule.attr, "embed", None) != None:
-            library_labels = [str(library.label) for library in ctx.rule.attr.embed]
+            library_labels = [stringify_label(library.label) for library in ctx.rule.attr.embed]
 
     ide_info["go_ide_info"] = struct_omit_none(
         import_path = import_path,
