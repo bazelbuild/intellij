@@ -69,9 +69,9 @@ java_test(
 )
 
 java_test(
-    name = "PartialProjectUpdateTest",
+    name = "PartialProjectRefreshTest",
     size = "small",
-    srcs = ["PartialProjectUpdateTest.java"],
+    srcs = ["PartialProjectRefreshTest.java"],
     deps = [
         ":TestUtils",
         "//querysync/java/com/google/idea/blaze/qsync",

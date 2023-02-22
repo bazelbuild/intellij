@@ -29,8 +29,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Project refresher creates an appropriate {@link ProjectUpdate} based on the project and current
- * VCS state.
+ * Project refresher creates an appropriate {@link RefreshOperation} based on the project and
+ * current VCS state.
  */
 public class ProjectRefresher {
 
@@ -45,7 +45,7 @@ public class ProjectRefresher {
     return new FullProjectUpdate(context, projectIncludes, projectExcludes, packageReader);
   }
 
-  public ProjectUpdate startPartialUpdate(
+  public RefreshOperation startPartialRefresh(
       Context context, BlazeProjectSnapshot currentProject, Optional<VcsState> latestVcsState) {
     if (!currentProject.vcsState().isPresent()) {
       context.output(PrintOutput.output("No VCS state from last query: performing full query"));
@@ -96,9 +96,9 @@ public class ProjectRefresher {
     if (affected.isEmpty()) {
       // this implies that the user was in a clean client, and still is.
       context.output(PrintOutput.output("Nothing has changed, nothing to do."));
-      return new NoopProjectUpdate(currentProject);
+      return new NoopProjectRefresh(currentProject);
     }
-    return new PartialProjectUpdate(
+    return new PartialProjectRefresh(
         context,
         packageReader,
         currentProject,
@@ -107,7 +107,7 @@ public class ProjectRefresher {
         affected.getDeletedPackages());
   }
 
-  private ProjectUpdate fullUpdate(
+  private RefreshOperation fullUpdate(
       Context context, BlazeProjectSnapshot currentProject, Optional<VcsState> latestVcsState) {
     FullProjectUpdate fullQuery =
         new FullProjectUpdate(

@@ -37,9 +37,9 @@ import java.util.Optional;
  * working set.
  *
  * <p>Instance of this class will be returned from {@link
- * ProjectRefresher#startPartialUpdate(Context, BlazeProjectSnapshot, Optional)} when appropriate.
+ * ProjectRefresher#startPartialRefresh(Context, BlazeProjectSnapshot, Optional)} when appropriate.
  */
-class PartialProjectUpdate implements ProjectUpdate {
+class PartialProjectRefresh implements RefreshOperation {
 
   private final BlazeProjectSnapshot previousState;
   private final BlazeQueryParser queryParser;
@@ -49,7 +49,7 @@ class PartialProjectUpdate implements ProjectUpdate {
   @VisibleForTesting final ImmutableSet<Path> deletedPackages;
   private QuerySummary partialQuery;
 
-  PartialProjectUpdate(
+  PartialProjectRefresh(
       Context context,
       PackageReader packageReader,
       BlazeProjectSnapshot previousState,

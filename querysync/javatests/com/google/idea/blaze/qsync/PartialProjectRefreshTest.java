@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class PartialProjectUpdateTest {
+public class PartialProjectRefreshTest {
 
   @Test
   public void testApplyDelta_replacePackage() {
@@ -95,8 +95,8 @@ public class PartialProjectUpdateTest {
                     Query.SourceFile.newBuilder().setLocation("my/build/package1/BUILD").build())
                 .build());
 
-    PartialProjectUpdate queryStrategy =
-        new PartialProjectUpdate(
+    PartialProjectRefresh queryStrategy =
+        new PartialProjectRefresh(
             QuerySyncTestUtils.NOOP_CONTEXT,
             QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
@@ -161,8 +161,8 @@ public class PartialProjectUpdateTest {
                 .build());
     BlazeProjectSnapshot baseProject = emptyProjectBuilder().queryOutput(base).build();
 
-    PartialProjectUpdate queryStrategy =
-        new PartialProjectUpdate(
+    PartialProjectRefresh queryStrategy =
+        new PartialProjectRefresh(
             QuerySyncTestUtils.NOOP_CONTEXT,
             QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
@@ -223,8 +223,8 @@ public class PartialProjectUpdateTest {
                         .build())
                 .build());
 
-    PartialProjectUpdate queryStrategy =
-        new PartialProjectUpdate(
+    PartialProjectRefresh queryStrategy =
+        new PartialProjectRefresh(
             QuerySyncTestUtils.NOOP_CONTEXT,
             QuerySyncTestUtils.EMPTY_PACKAGE_READER,
             baseProject,
