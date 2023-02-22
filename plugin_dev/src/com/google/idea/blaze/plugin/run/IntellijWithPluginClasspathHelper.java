@@ -108,6 +108,7 @@ public class IntellijWithPluginClasspathHelper {
           addLibrariesToList(IJ_LIBRARIES_AFTER_2022_3, libPath, list);
         }
       }
+    }
     list.addFirst(((JavaSdkType) ideaJdk.getSdkType()).getToolsPath(ideaJdk));
   }
 
