@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
@@ -43,6 +44,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.serviceContainer.NonInjectable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -70,11 +72,30 @@ public class QuerySyncManager {
   public QuerySyncManager(Project project) {
     this.project = project;
     this.graph = new BlazeProject();
-    this.builder = new DependencyBuilder();
+    this.builder = new BazelBinaryDependencyBuilder(project);
     this.cache = new DependencyCache(project);
     this.dependencyTracker = new DependencyTracker(project, graph, builder, cache);
-    this.projectQuerier = new ProjectQuerier(project);
+    this.projectQuerier = ProjectQuerierImpl.create(project);
     this.projectUpdater = new ProjectUpdater(project, graph);
+  }
+
+  @VisibleForTesting
+  @NonInjectable
+  public QuerySyncManager(
+      Project project,
+      BlazeProject graph,
+      DependencyTracker dependencyTracker,
+      ProjectQuerier projectQuerier,
+      ProjectUpdater projectUpdater,
+      DependencyBuilder builder,
+      DependencyCache cache) {
+    this.project = project;
+    this.graph = graph;
+    this.dependencyTracker = dependencyTracker;
+    this.projectQuerier = projectQuerier;
+    this.projectUpdater = projectUpdater;
+    this.builder = builder;
+    this.cache = cache;
   }
 
   /** Log & display a message to the user when a user-initiated action fails. */
