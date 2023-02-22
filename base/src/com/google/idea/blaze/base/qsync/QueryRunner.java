@@ -15,21 +15,15 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.sync.projectview.ImportRoots;
-import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.query.QuerySpec;
 import java.io.IOException;
-import java.util.Set;
+import java.io.InputStream;
 
-/** A query sync service that knows how to build dependencies for given targets */
-public interface DependencyBuilder {
+/** A query sync service that knows how to run queries on bazel projects. */
+public interface QueryRunner {
 
-  OutputInfo build(
-      BlazeContext context,
-      Set<Label> buildTargets,
-      ImportRoots importRoots,
-      WorkspaceRoot workspaceRoot)
-      throws IOException, GetArtifactsException;
+  @MustBeClosed
+  InputStream runQuery(QuerySpec query, BlazeContext context) throws IOException;
 }

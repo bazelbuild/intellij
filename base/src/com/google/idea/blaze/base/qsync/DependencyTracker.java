@@ -112,7 +112,7 @@ public class DependencyTracker {
       return;
     }
 
-    OutputInfo outputInfo = builder.build(project, context, buildTargets, ir, workspaceRoot);
+    OutputInfo outputInfo = builder.build(context, buildTargets, ir, workspaceRoot);
 
     syncedTargets.addAll(targets);
     long now = System.nanoTime();
