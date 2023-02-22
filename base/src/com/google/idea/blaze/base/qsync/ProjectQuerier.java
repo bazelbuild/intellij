@@ -18,8 +18,8 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.util.concurrent.Uninterruptibles.getUninterruptibly;
 
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
@@ -37,9 +37,7 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
-import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
-import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider.BlazeVcsHandler;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.FullProjectUpdate;
@@ -106,7 +104,7 @@ public class ProjectQuerier {
             getValidDirectories(context, ir.rootDirectories()),
             getValidDirectories(context, ir.excludeDirectories()));
 
-    ListenableFuture<Optional<VcsState>> vcsStateFuture = getVcsState(context);
+    Optional<ListenableFuture<VcsState>> vcsStateFuture = getVcsState(context);
     // TODO if we throw between here and when we get this future, perhaps we should cancel it?
 
     QuerySpec querySpec = fullQuery.getQuerySpec().get();
@@ -116,7 +114,9 @@ public class ProjectQuerier {
 
     Optional<VcsState> vcsState = Optional.empty();
     try {
-      vcsState = getUninterruptibly(vcsStateFuture);
+      if (vcsStateFuture.isPresent()) {
+        vcsState = Optional.of(getUninterruptibly(vcsStateFuture.get()));
+      }
     } catch (ExecutionException e) {
       // We can continue without the VCS state, but it means that when we update later on
       // we have to re-run the entire query rather than performing an minimal update.
@@ -150,7 +150,12 @@ public class ProjectQuerier {
 
     Optional<VcsState> vcsState = Optional.empty();
     try {
-      vcsState = getUninterruptibly(getVcsState(context));
+      Optional<ListenableFuture<VcsState>> stateFuture = getVcsState(context);
+      // conceptually, this is stateFuture.map(Uninterruptibles::getUninterruptibly) but the
+      // declared exception prevents us doing it so concisely.
+      if (stateFuture.isPresent()) {
+        vcsState = Optional.of(Uninterruptibles.getUninterruptibly(stateFuture.get()));
+      }
     } catch (ExecutionException e) {
       logger.warn("Failed to get VCS state", e.getCause());
       context.output(PrintOutput.output("WARNING: Could not get VCS state"));
@@ -171,27 +176,9 @@ public class ProjectQuerier {
     return update.createBlazeProject();
   }
 
-  private ListenableFuture<Optional<VcsState>> getVcsState(BlazeContext context) {
-    BlazeVcsHandler vcsHandler = BlazeVcsHandlerProvider.vcsHandlerForProject(project);
-    if (vcsHandler == null) {
-      return Futures.immediateFuture(Optional.empty());
-    }
-    Optional<ListenableFuture<String>> upstreamRev =
-        vcsHandler.getUpstreamVersion(context, BlazeExecutor.getInstance().getExecutor());
-    if (!upstreamRev.isPresent()) {
-      return Futures.immediateFuture(Optional.empty());
-    }
-    ListenableFuture<String> upstreamFuture = upstreamRev.get();
-    ListenableFuture<WorkingSet> workingSet =
-        vcsHandler.getWorkingSet(context, BlazeExecutor.getInstance().getExecutor());
-    return Futures.whenAllSucceed(upstreamFuture, workingSet)
-        .call(
-            () ->
-                Optional.of(
-                    new VcsState(
-                        Futures.getDone(upstreamFuture),
-                        Futures.getDone(workingSet).toWorkspaceFileChanges())),
-            BlazeExecutor.getInstance().getExecutor());
+  private Optional<ListenableFuture<VcsState>> getVcsState(BlazeContext context) {
+    return Optional.ofNullable(BlazeVcsHandlerProvider.vcsHandlerForProject(project))
+        .flatMap(h -> h.getVcsState(context, BlazeExecutor.getInstance().getExecutor()));
   }
 
   private InputStream runQuery(List<String> queryArgs, BlazeContext context) throws IOException {

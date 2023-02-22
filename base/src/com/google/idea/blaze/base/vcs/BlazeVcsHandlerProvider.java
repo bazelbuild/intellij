@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.vcs;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
@@ -24,6 +25,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.qsync.vcs.VcsState;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
@@ -96,6 +98,24 @@ public interface BlazeVcsHandlerProvider {
     /** Optionally creates a sync handler to perform vcs-specific computation during sync. */
     @Nullable
     BlazeVcsSyncHandler createSyncHandler();
+
+    default Optional<ListenableFuture<VcsState>> getVcsState(
+        BlazeContext context, ListeningExecutorService executor) {
+      Optional<ListenableFuture<String>> upstreamRev = getUpstreamVersion(context, executor);
+      if (!upstreamRev.isPresent()) {
+        return Optional.empty();
+      }
+      ListenableFuture<String> upstreamFuture = upstreamRev.get();
+      ListenableFuture<WorkingSet> workingSet = getWorkingSet(context, executor);
+      return Optional.of(
+          Futures.whenAllSucceed(upstreamFuture, workingSet)
+              .call(
+                  () ->
+                      new VcsState(
+                          Futures.getDone(upstreamFuture),
+                          Futures.getDone(workingSet).toWorkspaceFileChanges()),
+                  executor));
+    }
   }
 
   /** Sync handler that performs VCS specific computation. */
