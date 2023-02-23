@@ -48,9 +48,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2023_1. This is required to build IJwB and run integration tests.
-IC_231_SHA = "9b1f27d16c868d424e4b824d603acaacb4b65470d2c6197873b808d9a98cb5db"
+IC_231_SHA = "386f19a9509346009eb91e2172f75f440aaac92552e47c91007c9226e6deebe0"
 
-IC_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/231.7515.13-EAP-SNAPSHOT/ideaIC-231.7515.13-EAP-SNAPSHOT.zip"
+IC_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/231.7665.28-EAP-SNAPSHOT/ideaIC-231.7665.28-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2023_1",
@@ -101,9 +101,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ue_2022_3. This is required to run UE-specific integration tests.
-IU_231_SHA = "d2e114e821c02a4e60e74aca28cd293f8ab54249b3b89ab5f4cb9108c9968b8a"
+IU_231_SHA = "3998f985abff3bf8768d3c1e03be078121a19ccce53b83da0b55d00b944dcc73"
 
-IU_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/231.7515.13-EAP-SNAPSHOT/ideaIU-231.7515.13-EAP-SNAPSHOT.zip"
+IU_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/231.7665.28-EAP-SNAPSHOT/ideaIU-231.7665.28-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2023_1",
@@ -223,9 +223,9 @@ http_archive(
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/223.7571.182/PythonCore-223.7571.182.zip",
 )
 
-PYTHON_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/231.7515.13/PythonCore-231.7515.13.zip"
+PYTHON_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/231.7665.28/PythonCore-231.7665.28.zip"
 
-PYTHON_PLUGIN_231_SHA = "98793106e5757382239e0f94e30a200e0391696000045527c361498b3df6da2f"
+PYTHON_PLUGIN_231_SHA = "2bdd9c4768c7d2b3db0365b4ed514eebbcc1b0af689c1bc2358d28b0e65d40a7"
 
 http_archive(
     name = "python_2023_1",
@@ -288,9 +288,9 @@ http_archive(
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/223.7571.182/org.jetbrains.plugins.go-223.7571.182.zip",
 )
 
-GO_PLUGIN_231_SHA = "a6a53357dc20e8c4ee785fb4f77071dcb37f15c6fb4f07658917d4fac55af6d8"
+GO_PLUGIN_231_SHA = "4066196316fae19a0a3977be778933ee7d5c4f80471b346ebf6c6b0fe72e6c87"
 
-GO_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/231.7515.13/org.jetbrains.plugins.go-231.7515.13.zip"
+GO_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/231.7665.28/org.jetbrains.plugins.go-231.7665.28.zip"
 
 http_archive(
     name = "go_2023_1",
