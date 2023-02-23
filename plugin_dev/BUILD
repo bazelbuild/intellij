@@ -72,6 +72,9 @@ intellij_plugin(
     name = "plugin_dev_integration_test_plugin",
     testonly = 1,
     plugin_xml = ":plugin_dev_plugin_xml",
+    tags = [
+        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
+    ],
     deps = [
         ":plugin_library",
         "//base:plugin_library",

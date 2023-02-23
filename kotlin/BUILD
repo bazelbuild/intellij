@@ -64,6 +64,9 @@ intellij_plugin(
     testonly = 1,
     optional_plugin_xmls = [":optional_xml"],
     plugin_xml = ":kotlin_plugin_xml",
+    tags = [
+        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
+    ],
     deps = [
         ":plugin_library",
         "//base:plugin_library",
