@@ -83,14 +83,15 @@ def _collect_dependencies_impl(target, ctx):
             target_to_artifacts = {
                 label: [_output_relative_path(f.path) for f in target[JavaInfo].transitive_compile_time_jars.to_list()],
             }
+    elif ctx.attr.generate_aidl_classes and generates_idl_jar(target):
+        target_to_artifacts[label] = []
+        idl_jar = target[AndroidIdeInfo].idl_class_jar
+        trs.append(depset([idl_jar]))
+        target_to_artifacts[label].append(_output_relative_path(idl_jar.path))
 
     for info in info_deps:
         trs.append(info.compile_time_jars)
         target_to_artifacts.update(info.target_to_artifacts)
-
-    if included and ctx.attr.generate_aidl_classes and generates_idl_jar(target):
-        idl_jar = target[AndroidIdeInfo].idl_class_jar
-        trs.append(depset([idl_jar]))
 
     cj = depset([], transitive = trs)
     return [
