@@ -26,6 +26,7 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
 
   private static final ImmutableList<String> KOTLIN_PRODUCERS =
       ImmutableList.of(
+          "org.jetbrains.kotlin.idea.gradleCodeInsightCommon.native.KotlinNativeRunConfigurationProducer",
           "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer",
           "org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestMethodGradleConfigurationProducer",
           "org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer",
