@@ -24,4 +24,13 @@ public abstract class ProjectRootManagerExWrapper extends ProjectRootManagerEx {
   @Override
   public void makeRootsChange(
       @NotNull Runnable runnable, @NotNull RootsChangeRescanningInfo rootsChangeRescanningInfo) {}
+
+  @Override
+  public @NotNull AutoCloseable withRootsChange(
+      @NotNull RootsChangeRescanningInfo rootsChangeRescanningInfo) {
+    return new AutoCloseable() {
+      @Override
+      public void close() throws Exception {}
+    };
+  }
 }
