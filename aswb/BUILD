@@ -258,6 +258,9 @@ intellij_integration_test_suite(
 intellij_plugin(
     name = "aswb_bazel",
     plugin_xml = ":stamped_plugin_xml",
+    tags = [
+        "incomplete-deps",  # remove this suppression and add any missing deps, see go/java-import-deps-checking-lsc
+    ],
     deps = [
         ":plugin_library",
         "//base:plugin_library",
