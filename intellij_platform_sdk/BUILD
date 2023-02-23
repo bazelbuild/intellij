@@ -641,6 +641,7 @@ java_library(
         "intellij-2022.1": ["@jsr305_annotations//jar"],
         "intellij-2022.2": ["@jsr305_annotations//jar"],
         "intellij-2022.3": ["@jsr305_annotations//jar"],
+        "intellij-2023.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2021.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.1": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.2": ["@jsr305_annotations//jar"],
