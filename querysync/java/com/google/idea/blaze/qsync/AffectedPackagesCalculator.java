@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.qsync;
 
+import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.joining;
 
@@ -29,6 +30,7 @@ import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -52,43 +54,39 @@ public abstract class AffectedPackagesCalculator {
   }
 
   public AffectedPackages getAffectedPackages() {
-    List<WorkspaceFileChange> included = Lists.newArrayList();
-    List<WorkspaceFileChange> excluded = Lists.newArrayList();
-    boolean incomplete = false;
+    List<WorkspaceFileChange> projectChanges = Lists.newArrayList();
+    List<WorkspaceFileChange> nonProjectChanges = Lists.newArrayList();
+    AffectedPackages.Builder result = AffectedPackages.builder();
     for (WorkspaceFileChange change : changedFiles()) {
-      if (isIncluded(change.workspaceRelativePath)) {
-        included.add(change);
+      if (isIncludedInProject(change.workspaceRelativePath)) {
+        projectChanges.add(change);
       } else {
-        excluded.add(change);
+        nonProjectChanges.add(change);
       }
     }
-    if (!excluded.isEmpty()) {
+    if (!nonProjectChanges.isEmpty()) {
       // TODO should we have some better user messaging here, with the option to perform a full
       //  re-sync?
-      incomplete = true;
+      result.setIncomplete(true);
       context()
           .output(
               PrintOutput.output(
                   "Edited %d files outside of your project view, this may cause your project to be"
                       + " out of sync. Files:\n  %s",
-                  excluded.size(),
-                  excluded.stream()
+                  nonProjectChanges.size(),
+                  nonProjectChanges.stream()
                       .map(c -> c.workspaceRelativePath)
                       .map(Path::toString)
                       .collect(joining("\n  "))));
     }
 
-    ImmutableSet.Builder<Path> affectedPackages = ImmutableSet.builder();
-    ImmutableSet.Builder<Path> deletedPackages = ImmutableSet.builder();
-
+    // Find BUILD files that have been directly affected by edits.
     ImmutableList<WorkspaceFileChange> buildFileChanges =
-        included.stream()
+        projectChanges.stream()
             .filter(c -> c.workspaceRelativePath.getFileName().toString().equals("BUILD"))
             .collect(toImmutableList());
     if (!buildFileChanges.isEmpty()) {
-      context()
-          .output(
-              PrintOutput.log("Edited %d BUILD files, updating project.", buildFileChanges.size()));
+      context().output(PrintOutput.log("Edited %d BUILD files", buildFileChanges.size()));
       for (WorkspaceFileChange c : buildFileChanges) {
         Path buildPackage = c.workspaceRelativePath.getParent();
         if (c.operation != Operation.ADD) {
@@ -100,34 +98,78 @@ public abstract class AffectedPackagesCalculator {
                         "Modified BUILD file %s not in a known package; your project may be out of"
                             + " sync",
                         c.workspaceRelativePath));
-            incomplete = true;
+            result.setIncomplete(true);
           }
         }
         switch (c.operation) {
           case ADD:
             // Adding a new BUILD files also affects the parent package (if any).
-            affectedPackages.add(buildPackage);
-            lastQuery().getParentPackage(buildPackage).ifPresent(affectedPackages::add);
+            result.addAffectedPackage(buildPackage);
+            lastQuery().getParentPackage(buildPackage).ifPresent(result::addAffectedPackage);
             break;
           case DELETE:
             // Deleting a build package only affects the parent (if any).
-            deletedPackages.add(buildPackage);
-            lastQuery().getParentPackage(buildPackage).ifPresent(affectedPackages::add);
+            result.addDeletedPackage(buildPackage);
+            lastQuery().getParentPackage(buildPackage).ifPresent(result::addAffectedPackage);
             break;
           case MODIFY:
-            affectedPackages.add(buildPackage);
+            result.addAffectedPackage(buildPackage);
             break;
         }
       }
     }
-    // TODO also process changes to file other that BUILD files?
-    // Ignoring modifications to source files seems ok (the IDE should pick them up), but adding/
-    // removing source files may matter? What about changes to .bzl files?
 
-    return AffectedPackages.create(affectedPackages.build(), deletedPackages.build(), incomplete);
+    // Find BUILD files that have been affected by edits to a subinclude (.bzl file)
+    ImmutableList<Path> affectedBySubinclude =
+        changedFiles().stream()
+            .map(c -> c.workspaceRelativePath)
+            .flatMap(path -> lastQuery().getReverseSubincludeMap().get(path).stream())
+            .filter(Objects::nonNull)
+            .filter(path -> path.endsWith("BUILD"))
+            .collect(toImmutableList());
+
+    long nonProjectBuildAffectedCount =
+        affectedBySubinclude.stream().filter(not(this::isIncludedInProject)).count();
+    if (nonProjectBuildAffectedCount > 0) {
+      context()
+          .output(
+              PrintOutput.log(
+                  "%d BUILD files outside of your project view are affected by changes to their"
+                      + " includes; your project may be out of sync",
+                  nonProjectBuildAffectedCount));
+      result.setIncomplete(true);
+    }
+    affectedBySubinclude =
+        affectedBySubinclude.stream().filter(this::isIncludedInProject).collect(toImmutableList());
+    if (!affectedBySubinclude.isEmpty()) {
+      context()
+          .output(
+              PrintOutput.log(
+                  "%d BUILD files affected by changes to .bzl files they load",
+                  affectedBySubinclude.size()));
+      for (Path buildFile : affectedBySubinclude) {
+        Path buildPackage = buildFile.getParent();
+        if (!lastQuery().getPackages().contains(buildPackage)) {
+          context()
+              .output(
+                  PrintOutput.log(
+                      "Affected BUILD file %s not in a known package; your project may be out of"
+                          + " sync",
+                      buildFile));
+          result.setIncomplete(true);
+        }
+        result.addAffectedPackage(buildPackage);
+      }
+    }
+
+    // TODO also process changes to file other than BUILD files?
+    // Ignoring modifications to source files seems ok (the IDE should pick them up), but adding/
+    // removing source files may matter?
+
+    return result.build();
   }
 
-  private boolean isIncluded(Path file) {
+  private boolean isIncludedInProject(Path file) {
     for (Path includePath : projectIncludes()) {
       if (file.startsWith(includePath)) {
         for (Path excludePath : projectExcludes()) {

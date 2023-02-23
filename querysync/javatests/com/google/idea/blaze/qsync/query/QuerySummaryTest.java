@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth8.assertThat;
 import static com.google.idea.blaze.qsync.query.QuerySummaryTestUtil.createProtoForPackages;
 
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.query.Query.SourceFile;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -104,4 +105,18 @@ public class QuerySummaryTest {
         .hasValue(Path.of("my/build/package"));
   }
 
+  @Test
+  public void testBuildIncludes() throws IOException {
+    QuerySummary qs =
+        QuerySummary.create(TestData.getPathFor(TestData.BUILDINCLUDES_QUERY).toFile());
+    Label buildLabel = Label.of(TestData.ROOT_PACKAGE + "/buildincludes:BUILD");
+    assertThat(qs.getSourceFilesMap()).containsKey(buildLabel);
+    SourceFile buildSrc = qs.getSourceFilesMap().get(buildLabel);
+    assertThat(buildSrc.getSubincludeList())
+        .containsExactly(TestData.ROOT_PACKAGE + "/buildincludes:includes.bzl");
+    assertThat(qs.getReverseSubincludeMap())
+        .containsExactly(
+            TestData.ROOT.resolve("buildincludes/includes.bzl"),
+            TestData.ROOT.resolve("buildincludes/BUILD"));
+  }
 }

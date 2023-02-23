@@ -38,12 +38,31 @@ abstract class AffectedPackages {
    */
   public abstract boolean isIncomplete();
 
-  static AffectedPackages create(
-      ImmutableSet<Path> modifiedPackages, ImmutableSet<Path> deletedPackages, boolean incomplete) {
-    return new AutoValue_AffectedPackages(modifiedPackages, deletedPackages, incomplete);
+  static Builder builder() {
+    return new AutoValue_AffectedPackages.Builder().setIncomplete(false);
   }
 
   public boolean isEmpty() {
     return getModifiedPackages().isEmpty() && getDeletedPackages().isEmpty();
+  }
+
+  @AutoValue.Builder
+  abstract static class Builder {
+
+    public abstract ImmutableSet.Builder<Path> modifiedPackagesBuilder();
+
+    public void addAffectedPackage(Path packagePath) {
+      modifiedPackagesBuilder().add(packagePath);
+    }
+
+    public abstract ImmutableSet.Builder<Path> deletedPackagesBuilder();
+
+    public void addDeletedPackage(Path packagePath) {
+      deletedPackagesBuilder().add(packagePath);
+    }
+
+    public abstract Builder setIncomplete(boolean value);
+
+    public abstract AffectedPackages build();
   }
 }

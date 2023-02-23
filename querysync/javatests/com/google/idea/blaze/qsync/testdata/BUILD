@@ -78,12 +78,21 @@ genquery(
         scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/exports:exported-collect"),
 )
 
+genquery(
+    name = "buildincludes_query",
+    expression = "//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes:*",
+    opts = ["--output=streamed_proto"],
+    scope =
+        scopeForJavaPackage("//querysync/javatests/com/google/idea/blaze/qsync/testdata/buildincludes:mylib"),
+)
+
 java_library(
     name = "testdata",
     srcs = ["TestData.java"],
     data = [
         ":android_aidl_source_query",
         ":android_lib_query",
+        ":buildincludes_query",
         ":java_exported_dep_query",
         ":java_library_external_dep_query",
         ":java_library_internal_dep_query",

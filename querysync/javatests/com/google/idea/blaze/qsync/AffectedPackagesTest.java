@@ -20,8 +20,10 @@ import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.query.QuerySummaryTestUtil.createProtoForPackages;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.qsync.query.QuerySummary;
+import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
 import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation;
 import java.nio.file.Path;
@@ -186,5 +188,58 @@ public class AffectedPackagesTest {
     assertThat(affected.isIncomplete()).isTrue();
     assertThat(affected.getModifiedPackages()).isEmpty();
     assertThat(affected.getDeletedPackages()).isEmpty();
+  }
+
+  @Test
+  public void testModifyBzlFile_included() {
+    QuerySummary summary =
+        QuerySummary.create(
+            QuerySummaryTestUtil.createProtoForPackagesAndIncludes(
+                ImmutableList.of("//my/build/package1:rule", "//my/build/package2:rule"),
+                ImmutableMultimap.<String, String>builder()
+                    .put("//my/build/package1:BUILD", "//my/build/package1:macro.bzl")
+                    .put("//my/build/package2:BUILD", "//my/build/package1:macro.bzl")
+                    .build()));
+
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(summary)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(
+                        Operation.MODIFY, Path.of("my/build/package1/macro.bzl"))))
+            .build()
+            .getAffectedPackages();
+    assertThat(affected.isIncomplete()).isFalse();
+    assertThat(affected.getModifiedPackages())
+        .containsExactly(Path.of("my/build/package1"), Path.of("my/build/package2"));
+  }
+
+  @Test
+  public void testModifyBzlFile_excluded() {
+    QuerySummary summary =
+        QuerySummary.create(
+            QuerySummaryTestUtil.createProtoForPackagesAndIncludes(
+                ImmutableList.of("//my/build/package:rule"),
+                ImmutableMultimap.of(
+                    "//my/build/package:BUILD", "//other/build/package1:macro.bzl")));
+
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(summary)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(
+                        Operation.MODIFY, Path.of("other/build/package1/macro.bzl"))))
+            .build()
+            .getAffectedPackages();
+    // we edited a bzl file outside of the project:
+    assertThat(affected.isIncomplete()).isTrue();
+    // but we can know that it affected a BUILD file inside a project:
+    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
   }
 }
