@@ -61,7 +61,7 @@ public class BuildFileFormatOnSaveHandler extends FileDocumentManagerAdapter {
       return;
     }
     // DO not use formatter here, instead we format the entire file.
-    BlazeFileType type = ((BuildFile) psiFile).getBlazeFileType();
+    BuildFile buildFile = (BuildFile) psiFile;
     ListenableFuture<Void> future =
         FileBasedFormattingSynchronizer.applyReplacements(
             psiFile,
@@ -72,7 +72,7 @@ public class BuildFileFormatOnSaveHandler extends FileDocumentManagerAdapter {
               }
               ImmutableList<TextRange> toFormat =
                   ImmutableList.of(TextRange.allOf(fileContents.getInitialFileContents()));
-              Replacements replacements = getReplacements(type, fileContents, toFormat);
+              Replacements replacements = getReplacements(buildFile, fileContents, toFormat);
               return new Formatter.Result<>(null, replacements);
             });
     FormatUtils.formatWithProgressDialog(project, "Running buildifier", future);

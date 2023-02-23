@@ -21,6 +21,7 @@ import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import com.google.idea.blaze.base.formatter.FormatUtils.FileContentsProvider;
 import com.google.idea.blaze.base.formatter.FormatUtils.Replacements;
+import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -52,7 +53,7 @@ public class BuildFileFormatter {
    */
   @Nullable
   static Replacements getReplacements(
-      BlazeFileType fileType, FileContentsProvider fileContents, Collection<TextRange> ranges) {
+      BuildFile buildFile, FileContentsProvider fileContents, Collection<TextRange> ranges) {
     String buildifierBinaryPath = getBuildifierBinaryPath();
     if (buildifierBinaryPath == null) {
       return null;
@@ -65,7 +66,7 @@ public class BuildFileFormatter {
     try {
       for (TextRange range : ranges) {
         String input = range.substring(text);
-        String result = formatText(buildifierBinaryPath, fileType, input);
+        String result = formatText(buildifierBinaryPath, buildFile, input);
         if (result == null) {
           return null;
         }
@@ -85,8 +86,8 @@ public class BuildFileFormatter {
    */
   @Nullable
   private static String formatText(
-      String buildifierBinaryPath, BlazeFileType fileType, String inputText) throws IOException {
-    Process process = new ProcessBuilder(buildifierBinaryPath, fileTypeArg(fileType)).start();
+      String buildifierBinaryPath, BuildFile buildFile, String inputText) throws IOException {
+    Process process = new ProcessBuilder(BuildifierFormattingService.getCommandLineArgs(buildifierBinaryPath, buildFile)).start();
     process.getOutputStream().write(inputText.getBytes(UTF_8));
     process.getOutputStream().close();
 
@@ -100,9 +101,5 @@ public class BuildFileFormatter {
       Thread.currentThread().interrupt();
     }
     return process.exitValue() != 0 ? null : formattedText;
-  }
-
-  private static String fileTypeArg(BlazeFileType fileType) {
-    return fileType == BlazeFileType.SkylarkExtension ? "--type=bzl" : "--type=build";
   }
 }
