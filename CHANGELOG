@@ -1,3 +1,10 @@
+v2023.02.22
+===========
+* Fix ambiguous labels for Go #4470
+* Fix issue with passing of oso_prefix flag with a space when using fish shell on MacOS #4404
+* Resolve external paths to their workspaces #4063
+* Fix broken task names in "Bazel" window in 2023.1 #4400
+
 v2023.02.07
 ===========
 * fix(run): Properly expand IntelliJ macros in run configurations #4368
