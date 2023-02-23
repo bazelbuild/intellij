@@ -145,7 +145,7 @@ java_import(
             "android-studio/plugins/gradle/lib/*.jar",
             "android-studio/plugins/gradle-java/lib/*.jar",
             "android-studio/plugins/Groovy/lib/*.jar",
-            "android-studio/plugins/IntelliLang/lib/*.jar",
+            "android-studio/plugins/platform-langInjection/lib/*.jar",
             "android-studio/plugins/java-i18n/lib/*.jar",
             "android-studio/plugins/junit/lib/*.jar",
             "android-studio/plugins/properties/lib/*.jar",
