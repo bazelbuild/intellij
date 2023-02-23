@@ -17,12 +17,17 @@ package com.google.idea.blaze.qsync.query;
 
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.common.collect.Multimaps.flatteningToMultimap;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.SetMultimap;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build;
 import com.google.devtools.build.lib.query2.proto.proto2api.Build.Target;
 import com.google.idea.blaze.common.Label;
@@ -73,6 +78,7 @@ public abstract class QuerySummary {
           Query.SourceFile sourceFile =
               Query.SourceFile.newBuilder()
                   .setLocation(target.getSourceFile().getLocation())
+                  .addAllSubinclude(target.getSourceFile().getSubincludeList())
                   .build();
           sourceFileMap.put(target.getSourceFile().getName(), sourceFile);
           break;
@@ -146,6 +152,26 @@ public abstract class QuerySummary {
   @Memoized
   public ImmutableSet<Path> getPackages() {
     return getRulesMap().keySet().stream().map(Label::getPackage).collect(toImmutableSet());
+  }
+
+  /**
+   * Returns a map of .bzl file labels to BUILD file labels that include them.
+   *
+   * <p>This is used to determine, for example, which build files include a given .bzl file.
+   */
+  @Memoized
+  public ImmutableMultimap<Path, Path> getReverseSubincludeMap() {
+    SetMultimap<Path, Path> includes =
+        getSourceFilesMap().entrySet().stream()
+            .collect(
+                flatteningToMultimap(
+                    e -> e.getKey().toFilePath(),
+                    e ->
+                        e.getValue().getSubincludeList().stream()
+                            .map(Label::of)
+                            .map(Label::toFilePath),
+                    HashMultimap::create));
+    return ImmutableMultimap.copyOf(Multimaps.invertFrom(includes, HashMultimap.create()));
   }
 
   /**

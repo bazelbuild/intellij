@@ -16,6 +16,8 @@ message Summary {
 
 message SourceFile {
   string location = 1;
+  // Subincludes of a source file, taken from blaze_query.SourceFile.subinclude
+  repeated string subinclude = 2;
 }
 
 message Rule {

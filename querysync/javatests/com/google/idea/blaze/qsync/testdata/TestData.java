@@ -28,9 +28,10 @@ public enum TestData {
   JAVA_LIBRARY_MULTI_TARGETS,
   JAVA_LIBRARY_NO_DEPS_QUERY,
   JAVA_LIBRARY_PROTO_DEP_QUERY,
-  JAVA_LIBRARY_TRANSITIVE_DEP_QUERY;
+  JAVA_LIBRARY_TRANSITIVE_DEP_QUERY,
+  BUILDINCLUDES_QUERY;
 
-  private static final Path ROOT =
+  public static final Path ROOT =
       Path.of(
           "querysync/javatests/com/google/idea/blaze/qsync/testdata");
 

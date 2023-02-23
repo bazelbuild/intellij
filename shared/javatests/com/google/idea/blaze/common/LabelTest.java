@@ -66,4 +66,10 @@ public class LabelTest {
   public void testNew_explicitWorkspace() {
     assertThrows(IllegalArgumentException.class, () -> new Label("@workspace//package/path:rule"));
   }
+
+  @Test
+  public void testToFilePath() {
+    assertThat(new Label("//package/path:BUILD").toFilePath())
+        .isEqualTo(Path.of("package/path/BUILD"));
+  }
 }

@@ -42,6 +42,10 @@ public class Label {
     return new Label(label);
   }
 
+  public static Label fromPackageAndName(Path packagePath, Path name) {
+    return of(String.format("//%s:%s", packagePath, name));
+  }
+
   public static ImmutableList<Label> toLabelList(List<String> labels) {
     return labels.stream().map(Label::of).collect(toImmutableList());
   }
@@ -64,6 +68,11 @@ public class Label {
   public Path getName() {
     // this should be safe thanks to the asserts in the constructor.
     return Path.of(label.substring(label.indexOf(':') + 1));
+  }
+
+  /** When this label refers to a source file, returns the workspace relative path to that file. */
+  public Path toFilePath() {
+    return getPackage().resolve(getName());
   }
 
   @Override
