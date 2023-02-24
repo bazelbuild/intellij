@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.android.projectsystem;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.android.ide.common.util.PathString;
 import com.android.projectmodel.ExternalAndroidLibrary;
 import com.android.projectmodel.ExternalLibraryImpl;
@@ -33,24 +35,51 @@ import com.google.idea.blaze.base.model.BlazeLibrary;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
 import com.google.idea.blaze.base.sync.SyncCache;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 
 /** Blaze implementation of {@link AndroidModuleSystem}. */
 public class BlazeModuleSystem extends BlazeModuleSystemBase {
-  private final AndroidExternalLibraryManager androidExternalLibraryManager;
+
+  private static final Logger logger = Logger.getInstance(BlazeModuleSystem.class);
+  private AndroidExternalLibraryManager androidExternalLibraryManager = null;
 
   BlazeModuleSystem(Module module) {
     super(module);
-    androidExternalLibraryManager = new AndroidExternalLibraryManager(ImmutableList::of);
+    if (QuerySync.isEnabled()) {
+      androidExternalLibraryManager =
+          new AndroidExternalLibraryManager(
+              () -> {
+                Path aarDirectory = ArtifactTracker.getExternalAarDirectory(module.getProject());
+                // This can be called by the IDE as the user navigates the project and so might be
+                // called before a sync has been completed and the project structure has been set
+                // up.
+                if (!aarDirectory.toFile().exists()) {
+                  logger.warn("Aar library directory not created yet");
+                  return ImmutableList.of();
+                }
+                try (Stream<Path> stream = Files.list(aarDirectory)) {
+                  return stream.collect(toImmutableList());
+                } catch (IOException ioe) {
+                  throw new UncheckedIOException("Could not list aars", ioe);
+                }
+              });
+    }
   }
 
   public Collection<ExternalAndroidLibrary> getDependentLibraries() {

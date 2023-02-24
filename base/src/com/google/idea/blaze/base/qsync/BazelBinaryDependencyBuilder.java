@@ -16,11 +16,9 @@
 package com.google.idea.blaze.base.qsync;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
-import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -124,7 +122,8 @@ public class BazelBinaryDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags(
                   String.format("--aspects_parameters=always_build_rules=%s", alwaysBuildRuleTypes))
               .addBlazeFlags("--aspects_parameters=generate_aidl_classes=True")
-              .addBlazeFlags("--output_groups=ij_query_sync")
+              .addBlazeFlags("--output_groups=qsync_jars")
+              .addBlazeFlags("--output_groups=qsync_aars")
               .addBlazeFlags("--output_groups=artifact_info_file")
               .addBlazeFlags("--noexperimental_run_validations")
               .build();
@@ -144,18 +143,16 @@ public class BazelBinaryDependencyBuilder implements DependencyBuilder {
   }
 
   private OutputInfo createOutputInfo(ParsedBepOutput parsedBepOutput) throws IOException {
-    ImmutableList<OutputArtifact> artifacts =
-        parsedBepOutput.getOutputGroupArtifacts("ij_query_sync", x -> true);
+    ImmutableList<OutputArtifact> jars = parsedBepOutput.getOutputGroupArtifacts("qsync_jars");
+    ImmutableList<OutputArtifact> aars = parsedBepOutput.getOutputGroupArtifacts("qsync_aars");
     ImmutableList<OutputArtifact> artifactInfoFiles =
-        parsedBepOutput.getOutputGroupArtifacts("artifact_info_file", x -> true);
+        parsedBepOutput.getOutputGroupArtifacts("artifact_info_file");
     ImmutableSet.Builder<ArtifactTrackerData.TargetToDeps> artifactInfoFilesBuilder =
         ImmutableSet.builder();
     for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
       artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
     }
-    return OutputInfo.create(
-        artifacts.stream().collect(toImmutableMap(OutputArtifact::getKey, Functions.identity())),
-        artifactInfoFilesBuilder.build());
+    return OutputInfo.create(artifactInfoFilesBuilder.build(), jars, aars);
   }
 
   private ArtifactTrackerData.TargetToDeps readArtifactInfoFile(BlazeArtifact file)
