@@ -19,6 +19,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -48,6 +49,8 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 import javax.annotation.Nullable;
 
 /** Local cache of the jars referenced by the project. */
@@ -64,20 +67,26 @@ public class JarCache {
   // copy of an artifact.
   private ImmutableMap<String, Path> cacheState = ImmutableMap.of();
 
-  private final Path cacheDir;
+  private final Path jarDir;
+  private final Path aarDir;
 
-  public JarCache(Path cacheDir) {
-    this.cacheDir = cacheDir;
+  public JarCache(Path jarDir, Path aarDir) {
+    this.jarDir = jarDir;
+    this.aarDir = aarDir;
   }
 
   /** Updates in memory state, and returns the currently cached files. */
   @CanIgnoreReturnValue
   private ImmutableMap<String, Path> readFileState() {
     FileOperationProvider ops = FileOperationProvider.getInstance();
-    try (Stream<Path> stream = Files.list(cacheDir)) {
+    try (Stream<Path> stream = getArtifactStream()) {
       ImmutableMap<String, Path> cacheState =
           stream
-              .filter(file -> ops.isFile(file.toFile()) && file.getFileName().endsWith(".jar"))
+              .filter(
+                  file ->
+                      ops.isFile(file.toFile())
+                          && (file.getFileName().endsWith(".jar")
+                              || file.getFileName().endsWith(".aar")))
               .collect(toImmutableMap(path -> path.getFileName().toString(), f -> f));
       this.cacheState = cacheState;
     } catch (IOException e) {
@@ -86,22 +95,37 @@ public class JarCache {
     return cacheState;
   }
 
-  public void initialize() {
-    if (!Files.exists(cacheDir)) {
-      FileOperationProvider ops = FileOperationProvider.getInstance();
-      ops.mkdirs(cacheDir.toFile());
-      if (!ops.isDirectory(cacheDir.toFile())) {
-        throw new IllegalArgumentException(
-            "Cache Directory '" + cacheDir + "' is not a valid directory");
-      }
+  private Stream<Path> getArtifactStream() throws IOException {
+    try (Stream<Path> jarStream = Files.list(jarDir);
+        Stream<Path> aarStream = Files.list(aarDir)) {
+      return Stream.concat(jarStream, aarStream);
     }
+  }
+
+  public void initialize() {
+    ensureDirectoryExists(jarDir);
+    ensureDirectoryExists(aarDir);
     readFileState();
   }
 
-  public ImmutableSet<Path> cache(Collection<OutputArtifact> toUpdateArtifacts) throws IOException {
+  private void ensureDirectoryExists(Path directory) {
+    if (!Files.exists(directory)) {
+      FileOperationProvider ops = FileOperationProvider.getInstance();
+      ops.mkdirs(directory.toFile());
+      if (!ops.isDirectory(directory.toFile())) {
+        throw new IllegalArgumentException(
+            "Cache Directory '" + directory + "' is not a valid directory");
+      }
+    }
+  }
+
+  public ImmutableSet<Path> cache(Collection<OutputArtifact> jars, Collection<OutputArtifact> aars)
+      throws IOException {
     try {
       // update cache files, and remove files if required
-      ImmutableList<ListenableFuture<Path>> futures = copyLocally(toUpdateArtifacts);
+      ImmutableList<ListenableFuture<Path>> futures =
+          FluentIterable.concat(copyLocally(jars, jarDir), copyLocally(aars, aarDir, true))
+              .toList();
       return ImmutableSet.copyOf(Uninterruptibles.getUninterruptibly(Futures.allAsList(futures)));
     } catch (ExecutionException e) {
       if (e.getCause() instanceof IOException) {
@@ -115,14 +139,23 @@ public class JarCache {
   }
 
   private ImmutableList<ListenableFuture<Path>> copyLocally(
-      Collection<OutputArtifact> toUpdateArtifacts) {
+      Collection<OutputArtifact> toUpdateArtifacts, Path cacheDir) {
+    return copyLocally(toUpdateArtifacts, cacheDir, false);
+  }
+
+  private ImmutableList<ListenableFuture<Path>> copyLocally(
+      Collection<OutputArtifact> toUpdateArtifacts, Path cacheDir, boolean shouldExtract) {
     ImmutableList.Builder<ListenableFuture<Path>> tasks = ImmutableList.builder();
     for (OutputArtifact toUpdateArtifact : toUpdateArtifacts) {
       tasks.add(
           EXECUTOR.submit(
               () -> {
                 Path destination = cacheDir.resolve(cacheKeyForArtifact(toUpdateArtifact.getKey()));
-                copyLocally(toUpdateArtifact, destination);
+                if (shouldExtract) {
+                  extract(toUpdateArtifact, destination);
+                } else {
+                  copyLocally(toUpdateArtifact, destination);
+                }
                 return destination;
               }));
     }
@@ -145,11 +178,27 @@ public class JarCache {
     }
   }
 
+  private void extract(BlazeArtifact output, Path destination) throws IOException {
+    Files.createDirectories(destination);
+    try (InputStream inputStream = output.getInputStream();
+        ZipInputStream zis = new ZipInputStream(inputStream)) {
+      ZipEntry entry;
+      while ((entry = zis.getNextEntry()) != null) {
+        if (entry.isDirectory()) {
+          Files.createDirectories(destination.resolve(entry.getName()));
+        } else {
+          Files.copy(
+              zis, destination.resolve(entry.getName()), StandardCopyOption.REPLACE_EXISTING);
+        }
+      }
+    }
+  }
+
   public void cleanupCacheDir() throws IOException {
     FileOperationProvider ops = FileOperationProvider.getInstance();
-    if (ops.exists(cacheDir.toFile())) {
+    if (ops.exists(jarDir.toFile())) {
       try {
-        ops.deleteDirectoryContents(cacheDir.toFile(), true);
+        ops.deleteDirectoryContents(jarDir.toFile(), true);
       } finally {
         readFileState();
       }
@@ -166,7 +215,8 @@ public class JarCache {
                   if (file.isPresent()) {
                     return EXECUTOR.submit(
                         () -> {
-                          Files.deleteIfExists(file.get());
+                          FileOperationProvider fop = FileOperationProvider.getInstance();
+                          fop.deleteRecursively(file.get().toFile());
                           return artifactKey;
                         });
                   }
@@ -197,7 +247,8 @@ public class JarCache {
   }
 
   private static String cacheKeyForArtifact(String artifactKey) {
-    return cacheKeyInternal(artifactKey) + ".jar";
+    return String.format(
+        "%s.%s", cacheKeyInternal(artifactKey), FileUtil.getExtension(artifactKey, "jar"));
   }
 
   private static String cacheKeyInternal(String artifactKey) {

@@ -29,9 +29,10 @@ import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import com.google.common.collect.Queues;
 import com.google.common.collect.SetMultimap;
-import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEventId.NamedSetOfFilesId;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.NamedSetOfFiles;
+import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.OutputGroup;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -42,6 +43,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
@@ -66,8 +68,8 @@ public final class ParsedBepOutput {
   }
 
   /**
-   * Parses BEP events into {@link ParsedBepOutput}. String references in {@link
-   * BuildEventStreamProtos.NamedSetOfFiles} are interned to conserve memory.
+   * Parses BEP events into {@link ParsedBepOutput}. String references in {@link NamedSetOfFiles}
+   * are interned to conserve memory.
    *
    * <p>BEP protos often contain many duplicate strings both within a single stream and across
    * shards running in parallel, so a {@link Interner} is used to share references.
@@ -80,7 +82,7 @@ public final class ParsedBepOutput {
       interner = Interners.newStrongInterner();
     }
 
-    BuildEventStreamProtos.BuildEvent event;
+    BuildEvent event;
     Map<String, String> configIdToMnemonic = new HashMap<>();
     Set<String> topLevelFileSets = new HashSet<>();
     Map<String, FileSet.Builder> fileSets = new LinkedHashMap<>();
@@ -161,7 +163,7 @@ public final class ParsedBepOutput {
         stream.getBytesConsumed());
   }
 
-  private static List<String> getFileSets(BuildEventStreamProtos.OutputGroup group) {
+  private static List<String> getFileSets(OutputGroup group) {
     return group.getFileSetsList().stream()
         .map(NamedSetOfFilesId::getId)
         .collect(Collectors.toList());
@@ -198,7 +200,7 @@ public final class ParsedBepOutput {
         .filter(e -> e.getValue().isValid(configIdToMnemonic))
         .collect(
             toImmutableMap(
-                Map.Entry::getKey, e -> e.getValue().build(configIdToMnemonic, startTimeMillis)));
+                Entry::getKey, e -> e.getValue().build(configIdToMnemonic, startTimeMillis)));
   }
 
   @Nullable public final String buildId;
@@ -278,6 +280,10 @@ public final class ParsedBepOutput {
         .filter(o -> pathFilter.test(o.getRelativePath()))
         .distinct()
         .collect(toImmutableList());
+  }
+
+  public ImmutableList<OutputArtifact> getOutputGroupArtifacts(String outputGroup) {
+    return getOutputGroupArtifacts(outputGroup, s -> true);
   }
 
   /**
@@ -371,10 +377,7 @@ public final class ParsedBepOutput {
     }
   }
 
-  /**
-   * Returns a copy of a {@link BuildEventStreamProtos.NamedSetOfFiles} with interned string
-   * references.
-   */
+  /** Returns a copy of a {@link NamedSetOfFiles} with interned string references. */
   private static NamedSetOfFiles internNamedSet(
       NamedSetOfFiles namedSet, Interner<String> interner) {
     return namedSet.toBuilder()
