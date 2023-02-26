@@ -103,6 +103,10 @@ public abstract class BlazeProjectSnapshot {
     return graph().getFileDependencies(path);
   }
 
+  public String getTargetKind(Label target) {
+    return graph().targetToKind().get(target);
+  }
+
   @AutoValue.Builder
   abstract static class Builder {
 

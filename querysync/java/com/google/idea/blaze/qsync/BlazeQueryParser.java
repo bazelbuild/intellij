@@ -97,6 +97,7 @@ public class BlazeQueryParser {
     }
     for (Map.Entry<Label, Query.Rule> ruleEntry : query.getRulesMap().entrySet()) {
       String ruleClass = ruleEntry.getValue().getRuleClass();
+      graphBuilder.targetToKindBuilder().put(ruleEntry.getKey(), ruleClass);
       ruleCount.compute(ruleClass, (k, v) -> (v == null ? 0 : v) + 1);
       if (isJavaRule(ruleClass)) {
         ImmutableSet<Label> thisSources =

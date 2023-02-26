@@ -17,9 +17,13 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
@@ -33,6 +37,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
+import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.common.Label;
@@ -107,6 +112,10 @@ public class QuerySyncManager {
     }
   }
 
+  public BlazeProject getBlazeProject() {
+    return graph;
+  }
+
   public void build(List<WorkspacePath> wps) {
     run(
         "Building dependencies",
@@ -127,6 +136,22 @@ public class QuerySyncManager {
               ? projectQuerier.fullQuery(context)
               : projectQuerier.update(graph.getCurrent(), context);
       graph.setCurrent(context, newProject);
+      // TODO: Revisit SyncListeners once we switch fully to qsync
+      BlazeImportSettings settings =
+          BlazeImportSettingsManager.getInstance(project).getImportSettings();
+      ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+      BlazeProjectData data = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+      for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
+        syncListener.onSyncComplete(
+            project,
+            context,
+            settings,
+            projectViewSet,
+            ImmutableSet.of(),
+            data,
+            SyncMode.FULL,
+            SyncResult.SUCCESS);
+      }
       for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
         syncListener.afterSync(project, context);
       }
@@ -197,5 +222,9 @@ public class QuerySyncManager {
         dependencyTracker.getPendingTargets(project, psiFile.getVirtualFile());
     int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
     return unsynced == 0;
+  }
+
+  public String getTargetKind(Label target) {
+    return graph.getCurrent().getTargetKind(target);
   }
 }
