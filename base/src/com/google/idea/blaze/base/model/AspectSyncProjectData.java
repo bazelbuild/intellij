@@ -18,7 +18,11 @@ package com.google.idea.blaze.base.model;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
+import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
+import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.aspects.BlazeIdeInterfaceState;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
@@ -35,6 +39,7 @@ import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.concurrent.Immutable;
+import org.jetbrains.annotations.Nullable;
 
 /** The top-level object serialized to cache. */
 @Immutable
@@ -106,6 +111,23 @@ public final class AspectSyncProjectData implements BlazeProjectData {
         .setWorkspaceLanguageSettings(workspaceLanguageSettings.toProto())
         .setSyncState(syncState.toProto())
         .build();
+  }
+
+  @Nullable
+  @Override
+  public TargetInfo getTargetInfo(Label label) {
+    TargetMap map = getTargetMap();
+    // look for a plain target first
+    TargetIdeInfo target = map.get(TargetKey.forPlainTarget(label));
+    if (target != null) {
+      return target.toTargetInfo();
+    }
+    // otherwise just return any matching target
+    return map.targets().stream()
+        .filter(t -> Objects.equals(label, t.getKey().getLabel()))
+        .findFirst()
+        .map(TargetIdeInfo::toTargetInfo)
+        .orElse(null);
   }
 
   @Override

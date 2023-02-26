@@ -16,15 +16,21 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import javax.annotation.Nullable;
 
 /** Interface to persistent project data. */
 public interface BlazeProjectData {
 
-  // TODO: Many of the methods herein are aspect-sync specific, and should probably not appear in
+  @Nullable
+  TargetInfo getTargetInfo(Label label);
+
+  // TODO: Many of the following methods are aspect-sync specific, and should probably not appear in
   //  this interface.
 
   ProjectTargetData getTargetData();

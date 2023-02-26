@@ -63,6 +63,8 @@ abstract class BuildGraphData {
 
   abstract ImmutableSet<Label> androidTargets();
 
+  abstract ImmutableMap<Label, String> targetToKind();
+
   @Override
   public final String toString() {
     // The default autovalue toString() implementation can result in a very large string which
@@ -93,6 +95,8 @@ abstract class BuildGraphData {
     public abstract Builder sourceOwner(Map<Label, Label> value);
 
     public abstract ImmutableMap.Builder<Label, ImmutableSet<Label>> ruleDepsBuilder();
+
+    public abstract ImmutableMap.Builder<Label, String> targetToKindBuilder();
 
     @CanIgnoreReturnValue
     public Builder ruleDeps(Map<Label, Set<Label>> value) {

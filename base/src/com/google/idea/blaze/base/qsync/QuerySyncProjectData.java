@@ -16,28 +16,44 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.command.info.BlazeInfo;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
+import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.qsync.BlazeProject;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nullable;
 
 /** Implementation of {@link BlazeProjectData} specific to querysync. */
 public class QuerySyncProjectData implements BlazeProjectData {
 
   private final WorkspacePathResolver workspacePathResolver;
+  private final BlazeProject blazeProject;
 
   QuerySyncProjectData(Project project, BlazeImportSettings importSettings) {
+    blazeProject = QuerySyncManager.getInstance(project).getBlazeProject();
     workspacePathResolver =
         new WorkspacePathResolverImpl(WorkspaceRoot.fromImportSettings(importSettings));
+  }
+
+  @Nullable
+  @Override
+  public TargetInfo getTargetInfo(Label label) {
+    String kind =
+        blazeProject
+            .getCurrent()
+            .getTargetKind(com.google.idea.blaze.common.Label.of(label.toString()));
+    return kind != null ? TargetInfo.builder(label, kind).build() : null;
   }
 
   @Override
