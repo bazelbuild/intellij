@@ -16,9 +16,12 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyKey;
 import javax.annotation.Nullable;
 
 /**
@@ -30,16 +33,37 @@ import javax.annotation.Nullable;
  */
 public class QuerySyncProjectDataManager implements BlazeProjectDataManager {
 
+  private static final NotNullLazyKey<QuerySyncProjectDataManager, Project>
+      PROJECT_DATA_MANAGER_KEY =
+          NotNullLazyKey.create(
+              "QuerySyncProjectDataManager", QuerySyncProjectDataManager::createForProject);
+
+  private static QuerySyncProjectDataManager createForProject(Project project) {
+    return new QuerySyncProjectDataManager(project);
+  }
+
+  public static QuerySyncProjectDataManager forProject(Project project) {
+    return PROJECT_DATA_MANAGER_KEY.getValue(project);
+  }
+
   private final Project project;
   private volatile QuerySyncProjectData projectData;
 
-  public QuerySyncProjectDataManager(Project project) {
+  private QuerySyncProjectDataManager(Project project) {
     this.project = project;
+  }
+
+  public void onProjectLoaded(ProjectViewSet projectViewSet) {
+    this.projectData =
+        projectData.toBuilder()
+            .setWorkspaceLanguageSettings(
+                LanguageSupport.createWorkspaceLanguageSettings(projectViewSet))
+            .build();
   }
 
   @Nullable
   @Override
-  public BlazeProjectData getBlazeProjectData() {
+  public QuerySyncProjectData getBlazeProjectData() {
     return projectData;
   }
 
@@ -47,12 +71,14 @@ public class QuerySyncProjectDataManager implements BlazeProjectDataManager {
   @Override
   public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
     // TODO(b/260231317): implement loading if necessary
-    projectData = new QuerySyncProjectData(project, importSettings);
+    projectData = QuerySyncProjectData.create(project, importSettings);
+
     return projectData;
   }
 
   @Override
   public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
-    // TODO(b/260231317): implement if necessary
+    // TODO(b/260231317): implement saving if necessary
+    this.projectData = (QuerySyncProjectData) projectData;
   }
 }

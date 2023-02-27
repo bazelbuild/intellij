@@ -56,6 +56,10 @@ public final class Label extends TargetExpression {
     return ProjectDataInterner.intern(new Label(fullLabel));
   }
 
+  public static Label create(com.google.idea.blaze.common.Label label) {
+    return ProjectDataInterner.intern(new Label(label.toString()));
+  }
+
   private Label(String label) {
     super(label);
   }

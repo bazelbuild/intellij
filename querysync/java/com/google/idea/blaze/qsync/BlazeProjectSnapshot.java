@@ -108,6 +108,10 @@ public abstract class BlazeProjectSnapshot {
     return graph().targetToKind().get(target);
   }
 
+  public ImmutableSet<Label> getAllTargets() {
+    return queryOutput().getRulesMap().keySet();
+  }
+
   @AutoValue.Builder
   abstract static class Builder {
 

@@ -15,6 +15,10 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
+import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -31,30 +35,50 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
+import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
 /** Implementation of {@link BlazeProjectData} specific to querysync. */
-public class QuerySyncProjectData implements BlazeProjectData {
+@AutoValue
+public abstract class QuerySyncProjectData implements BlazeProjectData {
 
-  private final WorkspacePathResolver workspacePathResolver;
-  private final BlazeProject blazeProject;
-
-  QuerySyncProjectData(Project project, BlazeImportSettings importSettings) {
-    blazeProject = QuerySyncManager.getInstance(project).getBlazeProject();
-    workspacePathResolver =
-        new WorkspacePathResolverImpl(WorkspaceRoot.fromImportSettings(importSettings));
+  public static QuerySyncProjectData create(Project project, BlazeImportSettings importSettings) {
+    return builder()
+        .setBlazeProject(QuerySyncManager.getInstance(project).getBlazeProject())
+        .setWorkspacePathResolver(
+            new WorkspacePathResolverImpl(WorkspaceRoot.fromImportSettings(importSettings)))
+        .setWorkspaceLanguageSettings(null)
+        .build();
   }
+
+  public static Builder builder() {
+    return new AutoValue_QuerySyncProjectData.Builder().setWorkspaceLanguageSettings(null);
+  }
+
+  public abstract Builder toBuilder();
 
   @Nullable
   @Override
   public TargetInfo getTargetInfo(Label label) {
     String kind =
-        blazeProject
+        getBlazeProject()
             .getCurrent()
             .getTargetKind(com.google.idea.blaze.common.Label.of(label.toString()));
     return kind != null ? TargetInfo.builder(label, kind).build() : null;
   }
+
+  @Override
+  public ImmutableSet<Label> getTargetsOfKind(Predicate<String> kindPredicate) {
+    BlazeProjectSnapshot projectSnapshot = getBlazeProject().getCurrent();
+    return projectSnapshot.getAllTargets().stream()
+        .filter(l -> kindPredicate.test(projectSnapshot.getTargetKind(l)))
+        .map(Label::create)
+        .collect(toImmutableSet());
+  }
+
+  abstract BlazeProject getBlazeProject();
 
   @Override
   public ProjectTargetData getTargetData() {
@@ -77,9 +101,7 @@ public class QuerySyncProjectData implements BlazeProjectData {
   }
 
   @Override
-  public WorkspacePathResolver getWorkspacePathResolver() {
-    return workspacePathResolver;
-  }
+  public abstract WorkspacePathResolver getWorkspacePathResolver();
 
   @Override
   public ArtifactLocationDecoder getArtifactLocationDecoder() {
@@ -87,9 +109,8 @@ public class QuerySyncProjectData implements BlazeProjectData {
   }
 
   @Override
-  public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
-    return null;
-  }
+  @Nullable
+  public abstract WorkspaceLanguageSettings getWorkspaceLanguageSettings();
 
   @Override
   public RemoteOutputArtifacts getRemoteOutputs() {
@@ -99,5 +120,17 @@ public class QuerySyncProjectData implements BlazeProjectData {
   @Override
   public SyncState getSyncState() {
     throw new NotSupportedWithQuerySyncException("getSyncState");
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+
+    public abstract Builder setBlazeProject(BlazeProject value);
+
+    public abstract Builder setWorkspacePathResolver(WorkspacePathResolver value);
+
+    public abstract Builder setWorkspaceLanguageSettings(WorkspaceLanguageSettings value);
+
+    public abstract QuerySyncProjectData build();
   }
 }

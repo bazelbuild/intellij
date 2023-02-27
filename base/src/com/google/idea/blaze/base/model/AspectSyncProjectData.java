@@ -15,7 +15,10 @@
  */
 package com.google.idea.blaze.base.model;
 
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -36,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.concurrent.Immutable;
@@ -128,6 +132,15 @@ public final class AspectSyncProjectData implements BlazeProjectData {
         .findFirst()
         .map(TargetIdeInfo::toTargetInfo)
         .orElse(null);
+  }
+
+  @Override
+  public ImmutableSet<Label> getTargetsOfKind(Predicate<String> kindPredicate) {
+    return getTargetMap().targets().stream()
+        .filter(ideInfo -> kindPredicate.test(ideInfo.getKind().getKindString()))
+        .map(TargetIdeInfo::getKey)
+        .map(TargetKey::getLabel)
+        .collect(toImmutableSet());
   }
 
   @Override

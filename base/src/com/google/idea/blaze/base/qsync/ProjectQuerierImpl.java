@@ -65,6 +65,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
   private final Path workspaceRoot;
   private final ProjectRefresher projectRefresher;
   private final QueryRunner queryRunner;
+  private final QuerySyncProjectDataManager projectDataManager;
 
   @VisibleForTesting
   public ProjectQuerierImpl(
@@ -72,13 +73,16 @@ public class ProjectQuerierImpl implements ProjectQuerier {
       BuildSystemName buildSystem,
       Path workspaceRoot,
       QueryRunner queryRunner,
-      ProjectRefresher projectRefresher) {
+      ProjectRefresher projectRefresher,
+      QuerySyncProjectDataManager projectDataManager) {
     this.project = project;
     this.buildSystem = buildSystem;
     this.workspaceRoot = workspaceRoot;
     this.projectRefresher = projectRefresher;
     this.queryRunner = queryRunner;
+    this.projectDataManager = projectDataManager;
   }
+  ;
 
   public static ProjectQuerier create(Project project) {
     BlazeImportSettings settings =
@@ -88,8 +92,16 @@ public class ProjectQuerierImpl implements ProjectQuerier {
         new ProjectRefresher(
             new WorkspaceResolvingPackageReader(workspaceRoot, new PackageStatementParser()));
     QueryRunner queryRunner = new BazelBinaryQueryRunner(project, workspaceRoot);
+    QuerySyncProjectDataManager projectDataManager =
+        QuerySyncProjectDataManager.forProject(project);
+
     return new ProjectQuerierImpl(
-        project, settings.getBuildSystem(), workspaceRoot, queryRunner, projectRefresher);
+        project,
+        settings.getBuildSystem(),
+        workspaceRoot,
+        queryRunner,
+        projectRefresher,
+        projectDataManager);
   }
 
   /**
@@ -102,6 +114,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
 
     ProjectViewSet projectViewSet =
         checkNotNull(ProjectViewManager.getInstance(project).reloadProjectView(context));
+    projectDataManager.onProjectLoaded(projectViewSet);
     ImportRoots ir =
         ImportRoots.builder(WorkspaceRoot.fromProject(project), buildSystem)
             .add(projectViewSet)
@@ -209,6 +222,13 @@ public class ProjectQuerierImpl implements ProjectQuerier {
   private static boolean isValid(BlazeContext context, Path candidate) throws IOException {
     if (Files.exists(candidate.resolve("BUILD"))) {
       return true;
+    }
+    if (!Files.isDirectory(candidate)) {
+      context.output(
+          PrintOutput.output(
+              "Directory specified in project does not exist or is not a directory: %s",
+              candidate));
+      return false;
     }
     boolean valid = false;
     try (Stream<Path> stream = Files.list(candidate)) {

@@ -29,7 +29,7 @@ public class DelegatingBlazeProjectDataManager implements BlazeProjectDataManage
 
   public DelegatingBlazeProjectDataManager(Project project) {
     if (QuerySync.isEnabled()) {
-      delegate = new QuerySyncProjectDataManager(project);
+      delegate = QuerySyncProjectDataManager.forProject(project);
     } else {
       delegate = new AspectSyncProjectDataManager(project);
     }

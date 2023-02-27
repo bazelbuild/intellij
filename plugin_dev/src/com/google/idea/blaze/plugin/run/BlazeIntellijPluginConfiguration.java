@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.plugin.run;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -23,8 +22,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Ordering;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
@@ -370,11 +367,7 @@ public class BlazeIntellijPluginConfiguration extends LocatableConfigurationBase
     if (projectData == null) {
       return ImmutableSet.of();
     }
-    return projectData.getTargetMap().targets().stream()
-        .filter(IntellijPluginRule::isPluginTarget)
-        .map(TargetIdeInfo::getKey)
-        .map(TargetKey::getLabel)
-        .collect(toImmutableSet());
+    return projectData.getTargetsOfKind(IntellijPluginRule::isPluginTargetKind);
   }
 
   @Override
