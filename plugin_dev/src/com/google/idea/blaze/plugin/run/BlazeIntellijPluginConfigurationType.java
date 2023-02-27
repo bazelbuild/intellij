@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.run.BlazeRunConfigurationFactory;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.plugin.IntellijPluginRule;
+import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -50,6 +51,11 @@ import javax.swing.Icon;
  * IntelliJ application
  */
 public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
+
+  // Experiment flag for the new, more portable plugin deployer. The new deployer will work off-corp
+  // allowing fully remote plugin development.
+  static final boolean PORTABLE_DEPLOYER_ENABLED =
+      new BoolExperiment("plugin.dev.new.deployer", false).getValue();
 
   private final BlazeIntellijPluginConfigurationFactory factory =
       new BlazeIntellijPluginConfigurationFactory(this);
@@ -106,13 +112,18 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
     }
 
     @Override
-    public BlazeIntellijPluginConfiguration createTemplateConfiguration(Project project) {
+    public RunConfiguration createTemplateConfiguration(Project project) {
 
-      BlazeIntellijPluginConfiguration config =
-          new BlazeIntellijPluginConfiguration(
-              project, this, "Unnamed", findExamplePluginTarget(project));
-      config.vmParameters = currentVmOptions.getValue();
-      return config;
+      if (PORTABLE_DEPLOYER_ENABLED) {
+        // TODO
+        throw new IllegalStateException("Not implemented yet");
+      } else {
+        BlazeIntellijPluginConfiguration config =
+            new BlazeIntellijPluginConfiguration(
+                project, this, "Unnamed", findExamplePluginTarget(project));
+        config.vmParameters = currentVmOptions.getValue();
+        return config;
+      }
     }
 
     private static Label findExamplePluginTarget(Project project) {
