@@ -124,6 +124,7 @@ public class BazelBinaryDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags("--aspects_parameters=generate_aidl_classes=True")
               .addBlazeFlags("--output_groups=qsync_jars")
               .addBlazeFlags("--output_groups=qsync_aars")
+              .addBlazeFlags("--output_groups=qsync_gensrcs")
               .addBlazeFlags("--output_groups=artifact_info_file")
               .addBlazeFlags("--noexperimental_run_validations")
               .build();
@@ -145,6 +146,8 @@ public class BazelBinaryDependencyBuilder implements DependencyBuilder {
   private OutputInfo createOutputInfo(ParsedBepOutput parsedBepOutput) throws IOException {
     ImmutableList<OutputArtifact> jars = parsedBepOutput.getOutputGroupArtifacts("qsync_jars");
     ImmutableList<OutputArtifact> aars = parsedBepOutput.getOutputGroupArtifacts("qsync_aars");
+    ImmutableList<OutputArtifact> generatedSources =
+        parsedBepOutput.getOutputGroupArtifacts("qsync_gensrcs");
     ImmutableList<OutputArtifact> artifactInfoFiles =
         parsedBepOutput.getOutputGroupArtifacts("artifact_info_file");
     ImmutableSet.Builder<ArtifactTrackerData.TargetToDeps> artifactInfoFilesBuilder =
@@ -152,7 +155,7 @@ public class BazelBinaryDependencyBuilder implements DependencyBuilder {
     for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
       artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
     }
-    return OutputInfo.create(artifactInfoFilesBuilder.build(), jars, aars);
+    return OutputInfo.create(artifactInfoFilesBuilder.build(), jars, aars, generatedSources);
   }
 
   private ArtifactTrackerData.TargetToDeps readArtifactInfoFile(BlazeArtifact file)

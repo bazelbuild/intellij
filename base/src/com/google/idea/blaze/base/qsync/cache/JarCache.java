@@ -48,6 +48,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -69,10 +70,12 @@ public class JarCache {
 
   private final Path jarDir;
   private final Path aarDir;
+  private final Path gensrcDir;
 
-  public JarCache(Path jarDir, Path aarDir) {
+  public JarCache(Path jarDir, Path aarDir, Path gensrcDir) {
     this.jarDir = jarDir;
     this.aarDir = aarDir;
+    this.gensrcDir = gensrcDir;
   }
 
   /** Updates in memory state, and returns the currently cached files. */
@@ -105,6 +108,7 @@ public class JarCache {
   public void initialize() {
     ensureDirectoryExists(jarDir);
     ensureDirectoryExists(aarDir);
+    ensureDirectoryExists(gensrcDir);
     readFileState();
   }
 
@@ -119,12 +123,19 @@ public class JarCache {
     }
   }
 
-  public ImmutableSet<Path> cache(Collection<OutputArtifact> jars, Collection<OutputArtifact> aars)
+  public ImmutableSet<Path> cache(
+      Collection<OutputArtifact> jars,
+      Collection<OutputArtifact> aars,
+      Collection<OutputArtifact> generatedSources)
       throws IOException {
     try {
       // update cache files, and remove files if required
       ImmutableList<ListenableFuture<Path>> futures =
-          FluentIterable.concat(copyLocally(jars, jarDir), copyLocally(aars, aarDir, true))
+          FluentIterable.concat(
+                  copyLocally(jars, jarDir),
+                  copyLocally(aars, aarDir, x -> true),
+                  copyLocally(
+                      generatedSources, gensrcDir, source -> source.getKey().endsWith(".srcjar")))
               .toList();
       return ImmutableSet.copyOf(Uninterruptibles.getUninterruptibly(Futures.allAsList(futures)));
     } catch (ExecutionException e) {
@@ -140,18 +151,20 @@ public class JarCache {
 
   private ImmutableList<ListenableFuture<Path>> copyLocally(
       Collection<OutputArtifact> toUpdateArtifacts, Path cacheDir) {
-    return copyLocally(toUpdateArtifacts, cacheDir, false);
+    return copyLocally(toUpdateArtifacts, cacheDir, x -> false);
   }
 
   private ImmutableList<ListenableFuture<Path>> copyLocally(
-      Collection<OutputArtifact> toUpdateArtifacts, Path cacheDir, boolean shouldExtract) {
+      Collection<OutputArtifact> toUpdateArtifacts,
+      Path cacheDir,
+      Predicate<OutputArtifact> shouldExtract) {
     ImmutableList.Builder<ListenableFuture<Path>> tasks = ImmutableList.builder();
     for (OutputArtifact toUpdateArtifact : toUpdateArtifacts) {
       tasks.add(
           EXECUTOR.submit(
               () -> {
                 Path destination = cacheDir.resolve(cacheKeyForArtifact(toUpdateArtifact.getKey()));
-                if (shouldExtract) {
+                if (shouldExtract.test(toUpdateArtifact)) {
                   extract(toUpdateArtifact, destination);
                 } else {
                   copyLocally(toUpdateArtifact, destination);
@@ -187,6 +200,8 @@ public class JarCache {
         if (entry.isDirectory()) {
           Files.createDirectories(destination.resolve(entry.getName()));
         } else {
+          // Srcjars do not contain separate directory entries
+          Files.createDirectories(destination.resolve(entry.getName()).getParent());
           Files.copy(
               zis, destination.resolve(entry.getName()), StandardCopyOption.REPLACE_EXISTING);
         }
