@@ -24,7 +24,6 @@ import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
@@ -150,8 +149,9 @@ public abstract class QuerySummary {
    * <p>The packages are workspace relative paths that contain a BUILD file.
    */
   @Memoized
-  public ImmutableSet<Path> getPackages() {
-    return getRulesMap().keySet().stream().map(Label::getPackage).collect(toImmutableSet());
+  public PackageSet getPackages() {
+    return new PackageSet(
+        getRulesMap().keySet().stream().map(Label::getPackage).collect(toImmutableSet()));
   }
 
   /**
@@ -181,15 +181,7 @@ public abstract class QuerySummary {
    * parent if there are paths that are not build packages (e.g. contain no BUILD file).
    */
   public Optional<Path> getParentPackage(Path buildPackage) {
-    ImmutableSet<Path> packages = getPackages();
-    Path packagePath = buildPackage.getParent();
-    while (packagePath != null) {
-      if (packages.contains(packagePath)) {
-        return Optional.of(packagePath);
-      }
-      packagePath = packagePath.getParent();
-    }
-    return Optional.empty();
+    return getPackages().getParentPackage(buildPackage);
   }
 
   /**

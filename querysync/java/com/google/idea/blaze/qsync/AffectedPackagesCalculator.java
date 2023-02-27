@@ -20,17 +20,20 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.joining;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -85,6 +88,8 @@ public abstract class AffectedPackagesCalculator {
         projectChanges.stream()
             .filter(c -> c.workspaceRelativePath.getFileName().toString().equals("BUILD"))
             .collect(toImmutableList());
+    PackageSet.Builder addedPackages = new PackageSet.Builder();
+    PackageSet.Builder deletedPackages = new PackageSet.Builder();
     if (!buildFileChanges.isEmpty()) {
       context().output(PrintOutput.log("Edited %d BUILD files", buildFileChanges.size()));
       for (WorkspaceFileChange c : buildFileChanges) {
@@ -105,11 +110,15 @@ public abstract class AffectedPackagesCalculator {
           case ADD:
             // Adding a new BUILD files also affects the parent package (if any).
             result.addAffectedPackage(buildPackage);
+            if (!lastQuery().getPackages().contains(buildPackage)) {
+              addedPackages.add(buildPackage);
+            }
             lastQuery().getParentPackage(buildPackage).ifPresent(result::addAffectedPackage);
             break;
           case DELETE:
             // Deleting a build package only affects the parent (if any).
             result.addDeletedPackage(buildPackage);
+            deletedPackages.add(buildPackage);
             lastQuery().getParentPackage(buildPackage).ifPresent(result::addAffectedPackage);
             break;
           case MODIFY:
@@ -162,9 +171,49 @@ public abstract class AffectedPackagesCalculator {
       }
     }
 
-    // TODO also process changes to file other than BUILD files?
-    // Ignoring modifications to source files seems ok (the IDE should pick them up), but adding/
-    // removing source files may matter?
+    ImmutableList<WorkspaceFileChange> nonBuildEdits =
+        projectChanges.stream()
+            .filter(c -> !c.workspaceRelativePath.getFileName().toString().equals("BUILD"))
+            .collect(toImmutableList());
+
+    // Calculate the set of effective packages, taking into account added/deleted BUILD files.
+    // When processing added/deleted source files, we need to know what package they're in now,
+    // rather than at the time of the last query.
+    PackageSet effectivePackages =
+        lastQuery()
+            .getPackages()
+            .addPackages(addedPackages.build())
+            .deletePackages(deletedPackages.build());
+
+    // Process adds/deletes to non-BUILD files. We don't need to worry about modifications, since
+    // they shouldn't effect the build graph structure, and the IDE will pick them up as usual.
+    nonBuildEdits.stream()
+        .filter(c -> c.operation != Operation.MODIFY)
+        .map(c -> c.workspaceRelativePath)
+        .map(effectivePackages::findIncludingPackage)
+        .flatMap(Optional::stream)
+        .forEach(result::addAffectedPackage);
+
+    // warn about adds/modifications to files outside of any build package
+    ImmutableList<Path> unownedSources =
+        nonBuildEdits.stream()
+            .filter(c -> c.operation != Operation.DELETE)
+            .map(c -> c.workspaceRelativePath)
+            .filter(path -> effectivePackages.findIncludingPackage(path).isEmpty())
+            .collect(toImmutableList());
+    if (!unownedSources.isEmpty()) {
+      // We don't mark the result as incomplete here, as this does not result in the IDE state
+      // being out of sync with the build files: merely that the build files themselves may
+      // have a problem.
+      context()
+          .output(
+              PrintOutput.output(
+                  "%d files is not in any known build package. Please check your build rules.\n"
+                      + "Files:\n"
+                      + "  %s",
+                  unownedSources.size(), Joiner.on("\n  ").join(unownedSources)));
+      result.setUnownedSources(unownedSources);
+    }
 
     return result.build();
   }
