@@ -210,6 +210,13 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     if (Files.exists(candidate.resolve("BUILD"))) {
       return true;
     }
+    if (!Files.isDirectory(candidate)) {
+      context.output(
+          PrintOutput.output(
+              "Directory specified in project does not exist or is not a directory: %s",
+              candidate));
+      return false;
+    }
     boolean valid = false;
     try (Stream<Path> stream = Files.list(candidate)) {
       for (Path child : stream.toArray(Path[]::new)) {
