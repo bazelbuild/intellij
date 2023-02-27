@@ -242,4 +242,205 @@ public class AffectedPackagesTest {
     // but we can know that it affected a BUILD file inside a project:
     assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
   }
+
+  @Test
+  public void testModifySourceFile_included() {
+    QuerySummary query = QuerySummary.create(createProtoForPackages("//my/build/package:rule"));
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(
+                        Operation.MODIFY, Path.of("my/build/package/NewClass.java"))))
+            .build()
+            .getAffectedPackages();
+    assertThat(affected.isIncomplete()).isFalse();
+    assertThat(affected.getModifiedPackages()).isEmpty();
+  }
+
+  @Test
+  public void testAddSourceFile_included() {
+    QuerySummary query =
+        QuerySummary.create(createProtoForPackages("//my/build/package:rule", "//my/build:rule"));
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(
+                        Operation.ADD, Path.of("my/build/package/NewClass.java"))))
+            .build()
+            .getAffectedPackages();
+    assertThat(affected.isIncomplete()).isFalse();
+    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
+  }
+
+  @Test
+  public void testAddSourceFile_included_packageSubdirectory() {
+    QuerySummary query =
+        QuerySummary.create(createProtoForPackages("//my/build/package:rule", "//my/build:rule"));
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(
+                        Operation.ADD, Path.of("my/build/package/lib/NewClass.java"))))
+            .build()
+            .getAffectedPackages();
+    assertThat(affected.isIncomplete()).isFalse();
+    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
+  }
+
+  @Test
+  public void testAddSourceFile_noPackage() {
+    QuerySummary query = QuerySummary.create(createProtoForPackages("//my/build/package:rule"));
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(Operation.ADD, Path.of("my/build/NewClass.java"))))
+            .build()
+            .getAffectedPackages();
+    assertThat(affected.isIncomplete()).isFalse();
+    assertThat(affected.getModifiedPackages()).isEmpty();
+    assertThat(affected.getUnownedSources()).containsExactly(Path.of("my/build/NewClass.java"));
+  }
+
+  @Test
+  public void testAddSourceFile_withNewSiblingPackage() {
+    QuerySummary query = QuerySummary.create(createProtoForPackages("//my/build/package:rule"));
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(Operation.ADD, Path.of("my/build/newpackage/BUILD")),
+                    new WorkspaceFileChange(
+                        Operation.ADD, Path.of("my/build/newpackage/NewClass.java"))))
+            .build()
+            .getAffectedPackages();
+    assertThat(affected.isIncomplete()).isFalse();
+    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/newpackage"));
+    assertThat(affected.getUnownedSources()).isEmpty();
+  }
+
+  @Test
+  public void testAddSourceFile_withNewChildPackage() {
+    QuerySummary query = QuerySummary.create(createProtoForPackages("//my/build/package:rule"));
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(Operation.ADD, Path.of("my/build/package/lib/BUILD")),
+                    new WorkspaceFileChange(
+                        Operation.ADD, Path.of("my/build/package/lib/NewClass.java"))))
+            .build()
+            .getAffectedPackages();
+    assertThat(affected.isIncomplete()).isFalse();
+    assertThat(affected.getModifiedPackages())
+        .containsExactly(Path.of("my/build/package"), Path.of("my/build/package/lib"));
+    assertThat(affected.getUnownedSources()).isEmpty();
+  }
+
+  @Test
+  public void testDeleteSourceFile() {
+    QuerySummary query =
+        QuerySummary.create(createProtoForPackages("//my/build/package:rule", "//my/build:rule"));
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(
+                        Operation.DELETE, Path.of("my/build/package/NewClass.java"))))
+            .build()
+            .getAffectedPackages();
+    assertThat(affected.isIncomplete()).isFalse();
+    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
+  }
+
+  @Test
+  public void testDeleteSourceFileAndPackage() {
+    QuerySummary query = QuerySummary.create(createProtoForPackages("//my/build/package:rule"));
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(Operation.DELETE, Path.of("my/build/package/BUILD")),
+                    new WorkspaceFileChange(
+                        Operation.DELETE, Path.of("my/build/package/NewClass.java"))))
+            .build()
+            .getAffectedPackages();
+    assertThat(affected.isIncomplete()).isFalse();
+    assertThat(affected.getModifiedPackages()).isEmpty();
+    assertThat(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package"));
+    assertThat(affected.getUnownedSources()).isEmpty();
+  }
+
+  @Test
+  public void testDeleteBuildFileAndAddSourceInSamePackage() {
+    QuerySummary query =
+        QuerySummary.create(
+            createProtoForPackages("//my/build/package/lib:rule", "//my/build/package:rule"));
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(
+                        Operation.DELETE, Path.of("my/build/package/lib/BUILD")),
+                    new WorkspaceFileChange(
+                        Operation.ADD, Path.of("my/build/package/lib/NewClass.java"))))
+            .build()
+            .getAffectedPackages();
+    assertThat(affected.isIncomplete()).isFalse();
+    assertThat(affected.getModifiedPackages()).containsExactly(Path.of("my/build/package"));
+    assertThat(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package/lib"));
+    assertThat(affected.getUnownedSources()).isEmpty();
+  }
+
+  @Test
+  public void testDeleteBuildFileAndAddUnownedSourceInSamePackage() {
+    QuerySummary query = QuerySummary.create(createProtoForPackages("//my/build/package:rule"));
+    AffectedPackages affected =
+        AffectedPackagesCalculator.builder()
+            .context(NOOP_CONTEXT)
+            .lastQuery(query)
+            .projectIncludes(ImmutableList.of(Path.of("my/build")))
+            .changedFiles(
+                ImmutableSet.of(
+                    new WorkspaceFileChange(Operation.DELETE, Path.of("my/build/package/BUILD")),
+                    new WorkspaceFileChange(
+                        Operation.ADD, Path.of("my/build/package/NewClass.java"))))
+            .build()
+            .getAffectedPackages();
+    assertThat(affected.isIncomplete()).isFalse();
+    assertThat(affected.getModifiedPackages()).isEmpty();
+    assertThat(affected.getDeletedPackages()).containsExactly(Path.of("my/build/package"));
+    assertThat(affected.getUnownedSources())
+        .containsExactly(Path.of("my/build/package/NewClass.java"));
+  }
 }

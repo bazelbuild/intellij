@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.query.PackageSet;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.vcs.VcsState;
@@ -79,7 +80,7 @@ public abstract class BlazeProjectSnapshot {
    *
    * <p>The packages are workspace relative paths that contain a BUILD file.
    */
-  public ImmutableSet<Path> getPackages() {
+  public PackageSet getPackages() {
     return queryOutput().getPackages();
   }
 
