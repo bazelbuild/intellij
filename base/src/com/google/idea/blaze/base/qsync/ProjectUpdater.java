@@ -48,6 +48,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
 import java.io.File;
@@ -164,8 +165,9 @@ public class ProjectUpdater implements BlazeProjectListener {
                             sfSpec.getPackagePrefix(), sfSpec.getIsGenerated());
                 JavaSourceRootType rootType =
                     sfSpec.getIsTest() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-                contentEntry.addSourceFolder(
-                    UrlUtil.pathToIdeaUrl(sourceFolderPath), rootType, properties);
+                SourceFolder unused =
+                    contentEntry.addSourceFolder(
+                        UrlUtil.pathToIdeaUrl(sourceFolderPath), rootType, properties);
               }
               for (String exclude : ceSpec.getExcludesList()) {
                 contentEntry.addExcludeFolder(
