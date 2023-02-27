@@ -24,7 +24,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <configurationType implementation="com.google.idea.blaze.plugin.run.BlazeIntellijPluginConfigurationType"/>
-    <stepsBeforeRunProvider implementation="com.google.idea.blaze.plugin.run.BuildPluginBeforeRunTaskProvider"/>
+    <stepsBeforeRunProvider implementation="com.google.idea.blaze.plugin.run.BuildPluginBeforeRunTaskProviderWrapper"/>
   </extensions>
 
 </idea-plugin>
