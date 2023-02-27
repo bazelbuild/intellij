@@ -66,7 +66,7 @@ class PartialProjectRefresh implements RefreshOperation {
             packageReader,
             context,
             previousState.projectIncludes(),
-            previousState.projectIncludes());
+            previousState.projectExcludes());
   }
 
   @Override
