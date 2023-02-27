@@ -48,7 +48,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.Library.ModifiableModel;
 import java.io.File;
@@ -56,8 +55,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 /** An object that monitors the build graph and applies the changes to the project structure. */
 public class ProjectUpdater implements BlazeProjectListener {
@@ -68,7 +71,6 @@ public class ProjectUpdater implements BlazeProjectListener {
     this.project = project;
     graph.addListener(this);
   }
-
 
   public static ModuleType<?> mapModuleType(ProjectProto.ModuleType type) {
     switch (type) {
@@ -99,6 +101,7 @@ public class ProjectUpdater implements BlazeProjectListener {
       Context context) {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     File imlDirectory = new File(BlazeDataStorage.getProjectDataDir(importSettings), "modules");
+    Path projectDirectory = Paths.get(Objects.requireNonNull(project.getBasePath()));
     Transactions.submitWriteActionTransactionAndWait(
         () -> {
           for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
@@ -135,16 +138,34 @@ public class ProjectUpdater implements BlazeProjectListener {
               roots.removeContentEntry(entry);
             }
             for (ProjectProto.ContentEntry ceSpec : moduleSpec.getContentEntriesList()) {
+              Path contentEntryBasePath;
+              switch (ceSpec.getRoot().getBase()) {
+                case PROJECT:
+                  contentEntryBasePath = projectDirectory;
+                  break;
+                case WORKSPACE:
+                  contentEntryBasePath = workspaceRoot.path();
+                  break;
+                default:
+                  throw new IllegalStateException(
+                      "Unrecognized content root base type " + ceSpec.getRoot().getBase());
+              }
 
               ContentEntry contentEntry =
                   roots.addContentEntry(
-                      UrlUtil.pathToIdeaUrl(workspaceRoot.absolutePathFor(ceSpec.getRoot())));
+                      UrlUtil.pathToIdeaUrl(
+                          contentEntryBasePath.resolve(ceSpec.getRoot().getPath())));
               for (ProjectProto.SourceFolder sfSpec : ceSpec.getSourcesList()) {
-                SourceFolder sourceFolder =
-                    contentEntry.addSourceFolder(
-                        UrlUtil.pathToIdeaUrl(workspaceRoot.absolutePathFor(sfSpec.getPath())),
-                        sfSpec.getIsTest());
-                sourceFolder.setPackagePrefix(sfSpec.getPackagePrefix());
+                Path sourceFolderPath = contentEntryBasePath.resolve(sfSpec.getPath());
+
+                JavaSourceRootProperties properties =
+                    JpsJavaExtensionService.getInstance()
+                        .createSourceRootProperties(
+                            sfSpec.getPackagePrefix(), sfSpec.getIsGenerated());
+                JavaSourceRootType rootType =
+                    sfSpec.getIsTest() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
+                contentEntry.addSourceFolder(
+                    UrlUtil.pathToIdeaUrl(sourceFolderPath), rootType, properties);
               }
               for (String exclude : ceSpec.getExcludesList()) {
                 contentEntry.addExcludeFolder(
@@ -233,5 +254,4 @@ public class ProjectUpdater implements BlazeProjectListener {
     }
     return removedLibCount;
   }
-
 }

@@ -120,6 +120,11 @@ public class BlazeQueryParser {
               sourceOwner.put(thisSource, ruleEntry.getKey());
             }
           }
+
+          // Require build step for targets with generated sources.
+          if (!query.getSourceFilesMap().containsKey(thisSource)) {
+            projectTargetsToBuild.add(ruleEntry.getKey());
+          }
         }
         graphBuilder.javaSourcesBuilder().addAll(thisSources);
         deps.addAll(thisDeps);

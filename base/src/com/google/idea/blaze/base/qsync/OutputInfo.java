@@ -31,10 +31,13 @@ public abstract class OutputInfo {
 
   public abstract ImmutableList<OutputArtifact> getAars();
 
+  public abstract ImmutableList<OutputArtifact> getGeneratedSources();
+
   public static OutputInfo create(
       ImmutableSet<ArtifactTrackerData.TargetToDeps> artifactInfos,
       ImmutableList<OutputArtifact> jars,
-      ImmutableList<OutputArtifact> aars) {
-    return new AutoValue_OutputInfo(artifactInfos, jars, aars);
+      ImmutableList<OutputArtifact> aars,
+      ImmutableList<OutputArtifact> generatedSources) {
+    return new AutoValue_OutputInfo(artifactInfos, jars, aars, generatedSources);
   }
 }

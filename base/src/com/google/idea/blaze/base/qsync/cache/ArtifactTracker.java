@@ -59,6 +59,7 @@ public class ArtifactTracker {
 
   private static final String LIBRARY_DIRECTORY = "libraries";
   private static final String AAR_DIRECTORY = "aars";
+  public static final String GEN_SRC_DIRECTORY = "generated";
 
   private final JarCache jarCache;
 
@@ -66,7 +67,8 @@ public class ArtifactTracker {
     jarCache =
         new JarCache(
             getProjectDirectory(project).resolve(LIBRARY_DIRECTORY),
-            getExternalAarDirectory(project));
+            getExternalAarDirectory(project),
+            getProjectDirectory(project).resolve(GEN_SRC_DIRECTORY));
     initialize();
   }
 
@@ -112,6 +114,9 @@ public class ArtifactTracker {
                     .collect(toImmutableSet()),
                 outputInfo.getAars().stream()
                     .filter(aar -> artifactsToUpdate.contains(aar.getKey()))
+                    .collect(toImmutableSet()),
+                outputInfo.getGeneratedSources().stream()
+                    .filter(source -> artifactsToUpdate.contains(source.getKey()))
                     .collect(toImmutableSet())));
       } finally {
         updateMaps(artifactInfo, removed);

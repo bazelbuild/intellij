@@ -28,6 +28,7 @@ import com.google.common.collect.Lists;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -158,6 +159,7 @@ public class GraphToProjectConverter {
         PrintOutput.log(
             String.format("Detected %d android resource packages", androidSourcePackages.size())));
 
+    // TODO(b/270751571): remove hard-coded paths
     ProjectProto.Library depsLib =
         ProjectProto.Library.newBuilder()
             .setName(".dependencies")
@@ -167,6 +169,7 @@ public class GraphToProjectConverter {
                     .setRecursive(false))
             .build();
 
+    // TODO(b/270751571): remove hard-coded paths
     ProjectProto.Module.Builder workspaceModule =
         ProjectProto.Module.newBuilder()
             .setName(".workspace")
@@ -176,11 +179,32 @@ public class GraphToProjectConverter {
                 androidResourceDirectories.stream().map(Path::toString).collect(toImmutableList()))
             .addAllAndroidSourcePackages(androidSourcePackages);
 
+    // TODO(b/270751571): remove hard-coded paths
+    String generatedSourcePath = ".blaze/generated";
+    ProjectProto.ContentEntry genSourcesContentEntry =
+        ProjectProto.ContentEntry.newBuilder()
+            .setRoot(
+                ProjectProto.ContentRoot.newBuilder()
+                    .setBase(Base.PROJECT)
+                    .setPath(generatedSourcePath))
+            .addSources(
+                ProjectProto.SourceFolder.newBuilder()
+                    .setPath(generatedSourcePath)
+                    .setIsTest(false)
+                    .setIsGenerated(true)
+                    .build())
+            .build();
+    workspaceModule.addContentEntries(genSourcesContentEntry);
+
     ListMultimap<Path, Path> excludesByRootDirectory =
         sortExcludesByRootDirectory(importRoots, excludePaths);
     for (Path dir : importRoots) {
       ProjectProto.ContentEntry.Builder contentEntry =
-          ProjectProto.ContentEntry.newBuilder().setRoot(dir.toString());
+          ProjectProto.ContentEntry.newBuilder()
+              .setRoot(
+                  ProjectProto.ContentRoot.newBuilder()
+                      .setPath(dir.toString())
+                      .setBase(Base.WORKSPACE));
       Map<String, String> sourceRootsWithPrefixes = rootToPrefix.get(dir.toString());
       for (Entry<String, String> entry : sourceRootsWithPrefixes.entrySet()) {
         Path path = dir.resolve(entry.getKey());
