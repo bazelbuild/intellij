@@ -148,11 +148,18 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
           .syncEnded(lastSyncResultCache.lastSyncResult);
     }
 
+    /** Called after sync. Only used in new query-sync * */
     @Override
     public void afterSync(Project project, BlazeContext context) {
       LastSyncResultCache lastSyncResultCache = LastSyncResultCache.getInstance(project);
 
-      lastSyncResultCache.lastSyncResult = ProjectSystemSyncManager.SyncResult.SUCCESS;
+      if (context.isCancelled()) {
+        lastSyncResultCache.lastSyncResult = SyncResult.CANCELLED;
+      } else if (context.hasErrors()) {
+        lastSyncResultCache.lastSyncResult = SyncResult.FAILURE;
+      } else {
+        lastSyncResultCache.lastSyncResult = SyncResult.SUCCESS;
+      }
 
       project
           .getMessageBus()

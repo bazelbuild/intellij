@@ -144,6 +144,7 @@ public class QuerySyncManager {
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       BlazeProjectData data = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
       for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
+        // A callback shared between the old and query sync implementations.
         syncListener.onSyncComplete(
             project,
             context,
@@ -154,11 +155,13 @@ public class QuerySyncManager {
             SyncMode.FULL,
             SyncResult.SUCCESS);
       }
-      for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
-        syncListener.afterSync(project, context);
-      }
     } catch (IOException e) {
       onError("Project sync failed", e, context);
+    } finally {
+      for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
+        // A query sync specific callback.
+        syncListener.afterSync(project, context);
+      }
     }
   }
 
