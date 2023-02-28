@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.wizard2;
 
 import com.google.common.collect.ImmutableList;
-import com.google.idea.blaze.base.sync.NewSync;
 import com.intellij.openapi.Disposable;
 
 /** Provides bazel options for the wizard. */
@@ -31,15 +30,10 @@ public class BazelWizardOptionProvider implements BlazeWizardOptionProvider {
   @Override
   public ImmutableList<BlazeSelectProjectViewOption> getSelectProjectViewOptions(
       BlazeNewProjectBuilder builder) {
-    ImmutableList.Builder<BlazeSelectProjectViewOption> options = ImmutableList.builder();
-    options
-        .add(new CreateFromScratchProjectViewOption())
-        .add(new ImportFromWorkspaceProjectViewOption(builder))
-        .add(new GenerateFromBuildFileSelectProjectViewOption(builder))
-        .add(new CopyExternalProjectViewOption(builder));
-    if (NewSync.isEnabled()) {
-      options.add(new GenerateFromProjectProto(builder));
-    }
-    return options.build();
+    return ImmutableList.of(
+        new CreateFromScratchProjectViewOption(),
+        new ImportFromWorkspaceProjectViewOption(builder),
+        new GenerateFromBuildFileSelectProjectViewOption(builder),
+        new CopyExternalProjectViewOption(builder));
   }
 }

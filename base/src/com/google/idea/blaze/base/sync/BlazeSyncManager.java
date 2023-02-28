@@ -102,13 +102,6 @@ public class BlazeSyncManager {
       throw new IllegalStateException(
           String.format("Attempt to sync non-%s project.", Blaze.buildSystemName(project)));
     }
-    if (importSettings.getProjectProtoFile() != null) {
-      NewSync newSync = NewSync.getNewSync();
-      if (newSync != null) {
-        newSync.run(project, importSettings);
-        return;
-      }
-    }
 
     // an additional call to 'sync started'. This disables the sync actions while we wait for
     // 'runWhenSmart'

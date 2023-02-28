@@ -72,7 +72,6 @@ public final class BlazeNewProjectBuilder {
   private String projectName;
   private String projectDataDirectory;
   private WorkspaceRoot workspaceRoot;
-  private String projectProtoFile;
 
   public BlazeNewProjectBuilder() {
     this.userSettings = BlazeWizardUserSettingsStorage.getInstance().copyUserSettings();
@@ -130,10 +129,6 @@ public final class BlazeNewProjectBuilder {
     return projectDataDirectory;
   }
 
-  public String getProjectProtoFile() {
-    return projectProtoFile;
-  }
-
   @Nullable
   public BuildSystemName getBuildSystem() {
     return workspaceData != null ? workspaceData.buildSystem() : null;
@@ -166,12 +161,6 @@ public final class BlazeNewProjectBuilder {
   @CanIgnoreReturnValue
   public BlazeNewProjectBuilder setProjectViewFile(File projectViewFile) {
     this.projectViewFile = projectViewFile;
-    return this;
-  }
-
-  @CanIgnoreReturnValue
-  public BlazeNewProjectBuilder setProjectProtoFile(String projectProtoFile) {
-    this.projectProtoFile = projectProtoFile;
     return this;
   }
 
@@ -213,13 +202,8 @@ public final class BlazeNewProjectBuilder {
     }
 
     try {
-      if (projectProtoFile != null) {
-        // TODO(mathewi): should we still populate the project view? Seems like we shouldn't
-        //  strictly need it, but its absence may break many assumptions elsewhere.
-      } else {
-        ProjectViewStorageManager.getInstance()
-            .writeProjectView(ProjectViewParser.projectViewToString(projectView), projectViewFile);
-      }
+      ProjectViewStorageManager.getInstance()
+          .writeProjectView(ProjectViewParser.projectViewToString(projectView), projectViewFile);
     } catch (IOException e) {
       throw new BlazeProjectCommitException("Could not create project view file", e);
     }
@@ -245,7 +229,6 @@ public final class BlazeNewProjectBuilder {
         projectName,
         projectDataDirectory,
         Optional.ofNullable(projectViewFile).map(File::getPath).orElse(null),
-        projectProtoFile,
         getBuildSystem());
   }
 }
