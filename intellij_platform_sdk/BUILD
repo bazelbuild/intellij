@@ -775,6 +775,16 @@ java_library(
     ),
 )
 
+java_library(
+    name = "terminal_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [":terminal"],
+        clion = [":terminal"],
+        intellij = [":terminal"],
+    ),
+)
+
 # Bundled plugins required by integration tests
 java_library(
     name = "bundled_plugins",
@@ -810,6 +820,7 @@ java_library(
     ),
 )
 
+# IntelliJ Git4Idea plugin
 java_library(
     name = "git4idea",
     neverlink = 1,
@@ -821,12 +832,75 @@ java_library(
 )
 
 java_library(
+    name = "git4idea_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":git4idea"],
+    ),
+)
+
+# JetBrains com.jetbrains.codeWithMe plugin
+java_library(
     name = "cwm",
     neverlink = 1,
     exports = select_from_plugin_api_directory(
         android_studio = [],
         clion = [],
         intellij = [":cwm"],
+    ),
+)
+
+java_library(
+    name = "cwm_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":cwm"],
+    ),
+)
+
+# IntelliJ maven plugin
+java_library(
+    name = "maven",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":maven"],
+    ),
+)
+
+java_library(
+    name = "maven_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":maven"],
+    ),
+)
+
+# IntelliJ maven model plugin
+java_library(
+    name = "maven_model",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":maven_model"],
+    ),
+)
+
+java_library(
+    name = "maven_model_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":maven_model"],
     ),
 )
 
