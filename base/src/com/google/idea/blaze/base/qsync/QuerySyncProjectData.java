@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.auto.value.AutoValue;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -25,36 +26,50 @@ import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import com.google.idea.blaze.qsync.BlazeProject;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import javax.annotation.Nullable;
 
-/** Implementation of {@link BlazeProjectData} specific to querysync. */
-public class QuerySyncProjectData implements BlazeProjectData {
+/**
+ * Implementation of {@link BlazeProjectData} specific to querysync. Stores the project structure at
+ * a point in time.
+ */
+@AutoValue
+public abstract class QuerySyncProjectData implements BlazeProjectData {
 
-  private final WorkspacePathResolver workspacePathResolver;
-  private final BlazeProject blazeProject;
+  public static final QuerySyncProjectData EMPTY =
+      new AutoValue_QuerySyncProjectData.Builder()
+          .setBlazeProject(BlazeProjectSnapshot.EMPTY)
+          .setBlazeImportSettings(null)
+          .setProjectViewSet(ProjectViewSet.builder().build())
+          .setWorkspaceRoot(null)
+          .setWorkspacePathResolver(null)
+          .setWorkspaceLanguageSettings(null)
+          .build();
 
-  QuerySyncProjectData(Project project, BlazeImportSettings importSettings) {
-    blazeProject = QuerySyncManager.getInstance(project).getBlazeProject();
-    workspacePathResolver =
-        new WorkspacePathResolverImpl(WorkspaceRoot.fromImportSettings(importSettings));
-  }
+  public abstract Builder toBuilder();
 
   @Nullable
   @Override
   public TargetInfo getTargetInfo(Label label) {
     String kind =
-        blazeProject
-            .getCurrent()
-            .getTargetKind(com.google.idea.blaze.common.Label.of(label.toString()));
+        getBlazeProject().getTargetKind(com.google.idea.blaze.common.Label.of(label.toString()));
     return kind != null ? TargetInfo.builder(label, kind).build() : null;
   }
+
+  abstract BlazeProjectSnapshot getBlazeProject();
+
+  @Nullable
+  abstract BlazeImportSettings getBlazeImportSettings();
+
+  abstract ProjectViewSet getProjectViewSet();
+
+  @Nullable
+  abstract WorkspaceRoot getWorkspaceRoot();
 
   @Override
   public ProjectTargetData getTargetData() {
@@ -77,9 +92,8 @@ public class QuerySyncProjectData implements BlazeProjectData {
   }
 
   @Override
-  public WorkspacePathResolver getWorkspacePathResolver() {
-    return workspacePathResolver;
-  }
+  @Nullable
+  public abstract WorkspacePathResolver getWorkspacePathResolver();
 
   @Override
   public ArtifactLocationDecoder getArtifactLocationDecoder() {
@@ -87,9 +101,8 @@ public class QuerySyncProjectData implements BlazeProjectData {
   }
 
   @Override
-  public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
-    return null;
-  }
+  @Nullable
+  public abstract WorkspaceLanguageSettings getWorkspaceLanguageSettings();
 
   @Override
   public RemoteOutputArtifacts getRemoteOutputs() {
@@ -99,5 +112,24 @@ public class QuerySyncProjectData implements BlazeProjectData {
   @Override
   public SyncState getSyncState() {
     throw new NotSupportedWithQuerySyncException("getSyncState");
+  }
+
+  /** Builder for #{@link QuerySyncProjectData}. */
+  @AutoValue.Builder
+  public abstract static class Builder {
+
+    public abstract Builder setBlazeProject(BlazeProjectSnapshot value);
+
+    public abstract Builder setBlazeImportSettings(BlazeImportSettings value);
+
+    public abstract Builder setProjectViewSet(ProjectViewSet value);
+
+    public abstract Builder setWorkspaceRoot(WorkspaceRoot value);
+
+    public abstract Builder setWorkspacePathResolver(WorkspacePathResolver value);
+
+    public abstract Builder setWorkspaceLanguageSettings(WorkspaceLanguageSettings value);
+
+    public abstract QuerySyncProjectData build();
   }
 }

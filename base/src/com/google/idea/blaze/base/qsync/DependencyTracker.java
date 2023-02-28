@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
-import com.google.idea.blaze.qsync.BlazeProject;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,18 +49,18 @@ public class DependencyTracker {
 
   private final Project project;
 
-  private final BlazeProject blazeProject;
+  private final QuerySyncProjectDataManager projectDataManager;
   private final Set<Label> syncedTargets = new HashSet<>();
   private final DependencyBuilder builder;
   private final DependencyCache cache;
 
   public DependencyTracker(
       Project project,
-      BlazeProject blazeProject,
+      QuerySyncProjectDataManager projectDataManager,
       DependencyBuilder builder,
       DependencyCache cache) {
     this.project = project;
-    this.blazeProject = blazeProject;
+    this.projectDataManager = projectDataManager;
     this.builder = builder;
     this.cache = cache;
   }
@@ -73,7 +72,7 @@ public class DependencyTracker {
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     Path rel = Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath()));
 
-    ImmutableSet<Label> targets = blazeProject.getCurrent().getFileDependencies(rel);
+    ImmutableSet<Label> targets = projectDataManager.getCurrentProject().getFileDependencies(rel);
     if (targets == null) {
       return null;
     }
@@ -95,8 +94,9 @@ public class DependencyTracker {
     Set<Label> targets = new HashSet<>();
     Set<Label> buildTargets = new HashSet<>();
     for (WorkspacePath path : paths) {
-      buildTargets.add(blazeProject.getCurrent().getTargetOwner(path.asPath()));
-      ImmutableSet<Label> t = blazeProject.getCurrent().getFileDependencies(path.asPath());
+      buildTargets.add(projectDataManager.getCurrentProject().getTargetOwner(path.asPath()));
+      ImmutableSet<Label> t =
+          projectDataManager.getCurrentProject().getFileDependencies(path.asPath());
       if (t != null) {
         targets.addAll(t);
       }

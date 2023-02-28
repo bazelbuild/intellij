@@ -45,7 +45,6 @@ import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
-import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,7 +64,7 @@ public class QuerySyncManager {
   private final Logger logger = Logger.getInstance(getClass());
 
   private final Project project;
-  private final BlazeProject graph;
+  private final QuerySyncProjectDataManager projectDataManager;
   private final DependencyTracker dependencyTracker;
   private final ProjectQuerier projectQuerier;
   private final ProjectUpdater projectUpdater;
@@ -78,26 +77,26 @@ public class QuerySyncManager {
 
   public QuerySyncManager(Project project) {
     this.project = project;
-    this.graph = new BlazeProject();
+    this.projectDataManager = new QuerySyncProjectDataManager();
     this.builder = new BazelBinaryDependencyBuilder(project);
     this.cache = new DependencyCache(project);
-    this.dependencyTracker = new DependencyTracker(project, graph, builder, cache);
-    this.projectQuerier = ProjectQuerierImpl.create(project);
-    this.projectUpdater = new ProjectUpdater(project, graph);
+    this.dependencyTracker = new DependencyTracker(project, projectDataManager, builder, cache);
+    this.projectQuerier = ProjectQuerierImpl.create(project, projectDataManager);
+    this.projectUpdater = new ProjectUpdater(project);
   }
 
   @VisibleForTesting
   @NonInjectable
   public QuerySyncManager(
       Project project,
-      BlazeProject graph,
+      QuerySyncProjectDataManager projectDataManager,
       DependencyTracker dependencyTracker,
       ProjectQuerier projectQuerier,
       ProjectUpdater projectUpdater,
       DependencyBuilder builder,
       DependencyCache cache) {
     this.project = project;
-    this.graph = graph;
+    this.projectDataManager = projectDataManager;
     this.dependencyTracker = dependencyTracker;
     this.projectQuerier = projectQuerier;
     this.projectUpdater = projectUpdater;
@@ -114,8 +113,8 @@ public class QuerySyncManager {
     }
   }
 
-  public BlazeProject getBlazeProject() {
-    return graph;
+  public QuerySyncProjectDataManager getProjectDataManager() {
+    return projectDataManager;
   }
 
   private ListenableFuture<Boolean> build(List<WorkspacePath> wps) {
@@ -136,8 +135,9 @@ public class QuerySyncManager {
       BlazeProjectSnapshot newProject =
           full
               ? projectQuerier.fullQuery(context)
-              : projectQuerier.update(graph.getCurrent(), context);
-      graph.setCurrent(context, newProject);
+              : projectQuerier.update(projectDataManager.getCurrentProject(), context);
+      projectDataManager.setProjectSnapshot(newProject);
+      projectUpdater.onProjectCreated(context, projectDataManager.getBlazeProjectData());
       // TODO: Revisit SyncListeners once we switch fully to qsync
       BlazeImportSettings settings =
           BlazeImportSettingsManager.getInstance(project).getImportSettings();
@@ -236,7 +236,4 @@ public class QuerySyncManager {
     return unsynced == 0;
   }
 
-  public String getTargetKind(Label target) {
-    return graph.getCurrent().getTargetKind(target);
-  }
 }

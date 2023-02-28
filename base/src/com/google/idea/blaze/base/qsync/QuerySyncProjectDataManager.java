@@ -16,30 +16,46 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.intellij.openapi.project.Project;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
+import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link BlazeProjectDataManager} specific to querysync.
- *
- * <p>TODO: it's not yet clear how useful this class is for querysync. This is currently a pragmatic
- * approach to get more IDE functionality working with querysync. The ideal long term design is not
- * yet determined.
  */
 public class QuerySyncProjectDataManager implements BlazeProjectDataManager {
 
-  private final Project project;
   private volatile QuerySyncProjectData projectData;
 
-  public QuerySyncProjectDataManager(Project project) {
-    this.project = project;
+  QuerySyncProjectDataManager() {
+    projectData = QuerySyncProjectData.EMPTY;
+  }
+
+  public void setProjectSnapshot(BlazeProjectSnapshot snapshot) {
+    projectData = projectData.toBuilder().setBlazeProject(snapshot).build();
+  }
+
+  public void onProjectLoaded(ProjectViewSet projectViewSet) {
+    projectData =
+        projectData.toBuilder()
+            .setProjectViewSet(projectViewSet)
+            .setWorkspaceLanguageSettings(
+                LanguageSupport.createWorkspaceLanguageSettings(projectViewSet))
+            .build();
+  }
+
+  public BlazeProjectSnapshot getCurrentProject() {
+    return projectData.getBlazeProject();
   }
 
   @Nullable
   @Override
-  public BlazeProjectData getBlazeProjectData() {
+  public QuerySyncProjectData getBlazeProjectData() {
     return projectData;
   }
 
@@ -47,12 +63,19 @@ public class QuerySyncProjectDataManager implements BlazeProjectDataManager {
   @Override
   public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
     // TODO(b/260231317): implement loading if necessary
-    projectData = new QuerySyncProjectData(project, importSettings);
+    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
+    projectData =
+        projectData.toBuilder()
+            .setBlazeImportSettings(importSettings)
+            .setWorkspaceRoot(workspaceRoot)
+            .setWorkspacePathResolver(new WorkspacePathResolverImpl(workspaceRoot))
+            .build();
     return projectData;
   }
 
   @Override
   public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
-    // TODO(b/260231317): implement if necessary
+    // TODO(b/260231317): implement saving if necessary
+    this.projectData = (QuerySyncProjectData) projectData;
   }
 }
