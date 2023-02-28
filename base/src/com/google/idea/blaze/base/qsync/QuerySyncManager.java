@@ -18,6 +18,9 @@ package com.google.idea.blaze.base.qsync;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -55,7 +58,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Future;
 
 /** The project component for a query based sync. */
 public class QuerySyncManager {
@@ -116,8 +118,8 @@ public class QuerySyncManager {
     return graph;
   }
 
-  public void build(List<WorkspacePath> wps) {
-    run(
+  private ListenableFuture<Boolean> build(List<WorkspacePath> wps) {
+    return run(
         "Building dependencies",
         "Building...",
         context -> {
@@ -160,22 +162,25 @@ public class QuerySyncManager {
     }
   }
 
-  public void initialProjectSync() {
-    run("Initiating project sync", "Importing project", context -> sync(context, true));
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> initialProjectSync() {
+    return run("Initiating project sync", "Importing project", context -> sync(context, true));
   }
 
-  public void deltaSync() {
-    run("Updating project structure", "Refreshing project", context -> sync(context, false));
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> deltaSync() {
+    return run("Updating project structure", "Refreshing project", context -> sync(context, false));
   }
 
-  private void run(String title, String subTitle, ScopedOperation operation) {
+  private ListenableFuture<Boolean> run(String title, String subTitle, ScopedOperation operation) {
+    SettableFuture<Boolean> result = SettableFuture.create();
     BlazeSyncStatus.getInstance(project).syncStarted();
     DumbService.getInstance(project)
         .runWhenSmart(
             () -> {
-              Future<Void> unusedFuture =
+              ListenableFuture<Boolean> innerResultFuture =
                   ProgressiveTaskWithProgressIndicator.builder(project, title)
-                      .submitTask(
+                      .submitTaskWithResult(
                           indicator ->
                               Scope.root(
                                   context -> {
@@ -194,8 +199,11 @@ public class QuerySyncManager {
                                     // TODO cancel on exceptions
                                     BlazeSyncStatus.getInstance(project)
                                         .syncEnded(SyncMode.FULL, SyncResult.SUCCESS);
+                                    return !context.hasErrors();
                                   }));
+              result.setFuture(innerResultFuture);
             });
+    return result;
   }
 
   public void build(BlazeContext context, List<WorkspacePath> wps)
@@ -208,13 +216,14 @@ public class QuerySyncManager {
     return dependencyTracker;
   }
 
-  public void enableAnalysis(PsiFile psiFile) {
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> enableAnalysis(PsiFile psiFile) {
     BlazeImportSettings settings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
 
     Path path = Paths.get(psiFile.getVirtualFile().getPath());
     String rel = Paths.get(settings.getWorkspaceRoot()).relativize(path).toString();
-    build(List.of(WorkspacePath.createIfValid(rel)));
+    return build(List.of(WorkspacePath.createIfValid(rel)));
   }
 
   public boolean isReadyForAnalysis(PsiFile psiFile) {
