@@ -56,7 +56,7 @@ public class QuerySummaryTest {
   @Test
   public void testGetPackages_singleRule() {
     QuerySummary summary = QuerySummary.create(createProtoForPackages("//my/build/package:rule"));
-    assertThat(summary.getPackages().set()).containsExactly(Path.of("my/build/package"));
+    assertThat(summary.getPackages().asPathSet()).containsExactly(Path.of("my/build/package"));
   }
 
   @Test
@@ -64,7 +64,7 @@ public class QuerySummaryTest {
     QuerySummary summary =
         QuerySummary.create(
             createProtoForPackages("//my/build/package:rule1", "//my/build/package:rule2"));
-    assertThat(summary.getPackages().set()).containsExactly(Path.of("my/build/package"));
+    assertThat(summary.getPackages().asPathSet()).containsExactly(Path.of("my/build/package"));
   }
 
   @Test
@@ -76,7 +76,7 @@ public class QuerySummaryTest {
                 "//my/build/package:rule2",
                 "//my/build/package2:rule1",
                 "//my/build/package2:rule2"));
-    assertThat(summary.getPackages().set())
+    assertThat(summary.getPackages().asPathSet())
         .containsExactly(Path.of("my/build/package"), Path.of("my/build/package2"));
   }
 
