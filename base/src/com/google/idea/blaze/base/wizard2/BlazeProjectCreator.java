@@ -36,13 +36,42 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.swing.SwingUtilities;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
-class BlazeProjectCreator {
+/** A class that knows how to create IDE projects described by a {@link ProjectBuilder}. */
+@VisibleForTesting
+public class BlazeProjectCreator {
   private static final Logger logger = Logger.getInstance(BlazeProjectCreator.class);
 
   private final ProjectBuilder projectBuilder;
 
-  BlazeProjectCreator(ProjectBuilder projectBuilder) {
+  /**
+   * A descriptor and reference to a created IDE project together with some metadata that knows how
+   * to open the project in the IDE.
+   */
+  @VisibleForTesting
+  public static class CreatedProjectDescriptor {
+    public final Path ideaProjectPath;
+    public final Project project;
+
+    public CreatedProjectDescriptor(Path ideaProjectPath, Project project) {
+      this.ideaProjectPath = ideaProjectPath;
+      this.project = project;
+    }
+
+    @VisibleForTesting
+    public void openProject() {
+      ProjectManagerEx.getInstanceEx()
+          .openProject(ideaProjectPath, BaseSdkCompat.createOpenProjectTask(project));
+
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        SaveAndSyncHandler.getInstance().scheduleProjectSave(project);
+      }
+    }
+  }
+
+  public BlazeProjectCreator(ProjectBuilder projectBuilder) {
     this.projectBuilder = projectBuilder;
   }
 
@@ -50,6 +79,20 @@ class BlazeProjectCreator {
       String projectFilePath, String projectName, StorageScheme projectStorageFormat)
       throws IOException {
 
+    CreatedProjectDescriptor createdProjectDescriptor =
+        createProject(projectFilePath, projectName, projectStorageFormat);
+    if (createdProjectDescriptor == null) {
+      return;
+    }
+
+    createdProjectDescriptor.openProject();
+  }
+
+  @Nullable
+  @VisibleForTesting
+  public BlazeProjectCreator.CreatedProjectDescriptor createProject(
+      String projectFilePath, String projectName, StorageScheme projectStorageFormat)
+      throws IOException {
     File projectDir = new File(projectFilePath).getParentFile();
     logger.assertTrue(
         projectDir != null,
@@ -62,7 +105,7 @@ class BlazeProjectCreator {
 
     Project newProject = projectBuilder.createProject(projectName, projectFilePath);
     if (newProject == null) {
-      return;
+      return null;
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -70,7 +113,7 @@ class BlazeProjectCreator {
     }
 
     if (!projectBuilder.validate(null, newProject)) {
-      return;
+      return null;
     }
 
     projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
@@ -106,11 +149,6 @@ class BlazeProjectCreator {
     Path path = Paths.get(projectFilePath);
     ProjectUtil.updateLastProjectLocation(path);
 
-    ProjectManagerEx.getInstanceEx()
-        .openProject(path, BaseSdkCompat.createOpenProjectTask(newProject));
-
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      SaveAndSyncHandler.getInstance().scheduleProjectSave(newProject);
-    }
+    return new CreatedProjectDescriptor(path, newProject);
   }
 }
