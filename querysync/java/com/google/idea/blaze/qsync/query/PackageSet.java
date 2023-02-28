@@ -40,7 +40,7 @@ public class PackageSet {
   }
 
   @VisibleForTesting
-  public ImmutableSet<Path> set() {
+  public ImmutableSet<Path> asPathSet() {
     return packages;
   }
 
