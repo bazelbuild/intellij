@@ -175,7 +175,8 @@ public interface BlazeSyncPlugin {
       WorkspaceRoot workspaceRoot,
       Module workspaceModule,
       Set<String> androidResourceDirectories,
-      Set<String> androidSourcePackages) {}
+      Set<String> androidSourcePackages,
+      WorkspaceLanguageSettings workspaceLanguageSettings) {}
 
   /**
    * Updates in-memory state that isn't serialized by IntelliJ.

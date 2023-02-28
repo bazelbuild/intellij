@@ -27,6 +27,8 @@ import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.util.UrlUtil;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
@@ -187,6 +189,9 @@ public class ProjectUpdater implements BlazeProjectListener {
               entry.setExported(false);
             }
 
+            WorkspaceLanguageSettings workspaceLanguageSettings =
+                LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
+
             for (BlazeSyncPlugin syncPlugin : BlazeSyncPlugin.EP_NAME.getExtensions()) {
               // TODO update ProjectProto.Module and updateProjectStructure() to allow a more
               // suitable
@@ -198,7 +203,8 @@ public class ProjectUpdater implements BlazeProjectListener {
                   workspaceRoot,
                   module,
                   ImmutableSet.copyOf(moduleSpec.getAndroidResourceDirectoriesList()),
-                  ImmutableSet.copyOf(moduleSpec.getAndroidSourcePackagesList()));
+                  ImmutableSet.copyOf(moduleSpec.getAndroidSourcePackagesList()),
+                  workspaceLanguageSettings);
             }
             roots.commit();
           }

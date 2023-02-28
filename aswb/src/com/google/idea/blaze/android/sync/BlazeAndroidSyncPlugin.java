@@ -60,6 +60,7 @@ import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.SourceFolderProvider;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.libraries.LibrarySource;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkingSet;
@@ -172,6 +173,9 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
   @Override
   public void updateProjectSdk(Project project, Context context, ProjectViewSet projectViewSet) {
     if (QuerySync.isEnabled()) {
+      if (!isAndroidWorkspace(LanguageSupport.createWorkspaceLanguageSettings(projectViewSet))) {
+        return;
+      }
       AndroidSdkPlatform androidSdkPlatform =
           AndroidSdkFromProjectView.getAndroidSdkPlatform(context, projectViewSet);
       Sdk sdk = BlazeSdkProvider.getInstance().findSdk(androidSdkPlatform.androidSdk);
@@ -234,7 +238,12 @@ public class BlazeAndroidSyncPlugin implements BlazeSyncPlugin {
       WorkspaceRoot workspaceRoot,
       Module workspaceModule,
       Set<String> androidResourceDirectories,
-      Set<String> androidSourcePackages) {
+      Set<String> androidSourcePackages,
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
+
+    if (!isAndroidWorkspace(workspaceLanguageSettings)) {
+      return;
+    }
 
     // Attach AndroidFacet to workspace modules
     AndroidFacetModuleCustomizer.createAndroidFacet(workspaceModule, false);
