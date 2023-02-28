@@ -181,32 +181,42 @@ public class QuerySyncManager {
     DumbService.getInstance(project)
         .runWhenSmart(
             () -> {
-              ListenableFuture<Boolean> innerResultFuture =
-                  ProgressiveTaskWithProgressIndicator.builder(project, title)
-                      .submitTaskWithResult(
-                          indicator ->
-                              Scope.root(
-                                  context -> {
-                                    Task task = new Task(project, subTitle, Task.Type.SYNC);
-                                    BlazeScope scope =
-                                        new ToolWindowScope.Builder(project, task)
-                                            .setProgressIndicator(indicator)
-                                            .showSummaryOutput()
-                                            .setPopupBehavior(FocusBehavior.ALWAYS)
-                                            .build();
-                                    context
-                                        .push(new ProgressIndicatorScope(indicator))
-                                        .push(scope)
-                                        .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS));
-                                    operation.execute(context);
-                                    // TODO cancel on exceptions
-                                    BlazeSyncStatus.getInstance(project)
-                                        .syncEnded(SyncMode.FULL, SyncResult.SUCCESS);
-                                    return !context.hasErrors();
-                                  }));
-              result.setFuture(innerResultFuture);
+              try {
+                ListenableFuture<Boolean> innerResultFuture =
+                    createAndSubmitRunTask(title, subTitle, operation);
+                result.setFuture(innerResultFuture);
+              } catch (Throwable t) {
+                result.setException(t);
+                throw t;
+              }
             });
     return result;
+  }
+
+  private ListenableFuture<Boolean> createAndSubmitRunTask(
+      String title, String subTitle, ScopedOperation operation) {
+    return ProgressiveTaskWithProgressIndicator.builder(project, title)
+        .submitTaskWithResult(
+            indicator ->
+                Scope.root(
+                    context -> {
+                      Task task = new Task(project, subTitle, Task.Type.SYNC);
+                      BlazeScope scope =
+                          new ToolWindowScope.Builder(project, task)
+                              .setProgressIndicator(indicator)
+                              .showSummaryOutput()
+                              .setPopupBehavior(FocusBehavior.ALWAYS)
+                              .build();
+                      context
+                          .push(new ProgressIndicatorScope(indicator))
+                          .push(scope)
+                          .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS));
+                      operation.execute(context);
+                      // TODO cancel on exceptions
+                      BlazeSyncStatus.getInstance(project)
+                          .syncEnded(SyncMode.FULL, SyncResult.SUCCESS);
+                      return !context.hasErrors();
+                    }));
   }
 
   public void build(BlazeContext context, List<WorkspacePath> wps)
