@@ -31,13 +31,6 @@ public final class BlazeImportSettings {
 
   private String projectViewFile;
 
-  // Prototype: import project from project proto generated in advance.
-  // This will only ever be non-null if the prototype is enabled via experiment
-  // "sync.prototype.project.proto.enabled" AND the user selected the option to import from project
-  // proto in the project creation wizard. All prototype functionality should be gated on this
-  // being non-null to ensure prototype code does not cause problems when not enabled.
-  private String projectProtoFile;
-
   // default for backwards compatibility with existing projects
   private BuildSystemName buildSystem = BuildSystemName.Blaze;
 
@@ -51,23 +44,12 @@ public final class BlazeImportSettings {
       String projectDataDirectory,
       String projectViewFile,
       BuildSystemName buildSystemName) {
-    this(workspaceRoot, projectName, projectDataDirectory, projectViewFile, null, buildSystemName);
-  }
-
-  public BlazeImportSettings(
-      String workspaceRoot,
-      String projectName,
-      String projectDataDirectory,
-      String projectViewFile,
-      String projectProtoFile,
-      BuildSystemName buildSystemName) {
     this.workspaceRoot = workspaceRoot;
     this.projectName = projectName;
     this.projectDataDirectory = projectDataDirectory;
     this.locationHash = createLocationHash(projectName);
     this.projectViewFile = projectViewFile;
     this.buildSystem = buildSystemName;
-    this.projectProtoFile = projectProtoFile;
   }
 
   private static String createLocationHash(String projectName) {
@@ -101,10 +83,6 @@ public final class BlazeImportSettings {
   @SuppressWarnings("unused")
   public String getProjectViewFile() {
     return projectViewFile;
-  }
-
-  public String getProjectProtoFile() {
-    return projectProtoFile;
   }
 
   /** The build system used for the project. */
