@@ -101,7 +101,7 @@ class StockAndroidTestLaunchTask implements LaunchTask {
       throw new ExecutionException("No instrumentation test runner is defined in the manifest.");
     }
     String runner = configState.getInstrumentationRunnerClass();
-    if (!StringUtil.isEmpty(runner)) {
+    if (StringUtil.isEmpty(runner)) {
       // Default to the first available runner.
       runner = availableRunners.get(0);
     }
