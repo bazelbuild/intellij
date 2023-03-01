@@ -128,10 +128,8 @@ final class ProjectViewManagerImpl extends ProjectViewManager {
     // otherwise try to compute the workspace path resolver from scratch
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);
     BlazeVcsHandler vcsHandler = BlazeVcsHandlerProvider.vcsHandlerForProject(project);
-    if (vcsHandler == null) {
-      return null;
-    }
-    BlazeVcsHandlerProvider.BlazeVcsSyncHandler vcsSyncHandler = vcsHandler.createSyncHandler();
+    BlazeVcsHandlerProvider.BlazeVcsSyncHandler vcsSyncHandler =
+        vcsHandler != null ? vcsHandler.createSyncHandler() : null;
     if (vcsSyncHandler == null) {
       return new WorkspacePathResolverImpl(workspaceRoot);
     }
