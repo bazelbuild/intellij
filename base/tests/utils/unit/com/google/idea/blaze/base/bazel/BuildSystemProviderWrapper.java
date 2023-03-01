@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import com.intellij.openapi.project.Project;
 import java.util.Optional;
 import java.util.function.Supplier;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -42,7 +43,7 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
 
   private final Supplier<BuildSystemProvider> innerProvider;
   private BuildSystemProvider inner;
-  private BuildSystemWrapper buildSystem;
+  private BuildSystem buildSystem;
   private Supplier<BuildResultHelper> buildResultHelperSupplier;
   private BuildBinaryType buildBinaryType;
   private SyncStrategy syncStrategy;
@@ -94,13 +95,18 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
   private synchronized BuildSystemProvider inner() {
     if (inner == null) {
       inner = innerProvider.get();
-      buildSystem = new BuildSystemWrapper(inner.getBuildSystem());
+      buildSystem = createBuildSystemWrapper(inner.getBuildSystem());
     }
     return inner;
   }
 
+  @NotNull
+  protected BuildSystem createBuildSystemWrapper(BuildSystem innerBuildSystem) {
+    return new BuildSystemWrapper(innerBuildSystem);
+  }
+
   @Override
-  public BuildSystem getBuildSystem() {
+  public final BuildSystem getBuildSystem() {
     inner(); // ensure buildSystem is initialized
     return buildSystem;
   }
@@ -252,7 +258,7 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
     }
 
     @Override
-    public BuildInvokerWrapper getBuildInvoker(Project project, BlazeContext context) {
+    public BuildInvoker getBuildInvoker(Project project, BlazeContext context) {
       return new BuildInvokerWrapper(inner.getBuildInvoker(project, context));
     }
 
