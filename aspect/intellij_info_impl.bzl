@@ -841,7 +841,7 @@ def _collect_android_ide_info(target, ctx, semantics, ide_info, ide_info_file, o
 
     instruments = None
     if hasattr(ctx.rule.attr, "instruments") and ctx.rule.attr.instruments:
-        instruments = str(ctx.rule.attr.instruments.label)
+        instruments = stringify_label(ctx.rule.attr.instruments.label)
 
     render_resolve_jar = None
     if android_semantics and hasattr(android_semantics, "build_render_resolve_jar"):
@@ -886,7 +886,7 @@ def _collect_android_instrumentation_info(target, ctx, semantics, ide_info, ide_
         return False
 
     android_instrumentation_info = struct_omit_none(
-        test_app = str(ctx.rule.attr.test_app.label),
+        test_app = stringify_label(ctx.rule.attr.test_app.label),
         target_device = str(ctx.rule.attr.target_device.label),
     )
     ide_info["android_instrumentation_info"] = android_instrumentation_info
