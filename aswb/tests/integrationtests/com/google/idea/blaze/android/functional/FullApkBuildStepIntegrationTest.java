@@ -52,7 +52,9 @@ import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.common.experiments.ExperimentService;
 import com.google.idea.common.experiments.MockExperimentService;
 import com.google.idea.testing.ServiceHelper;
+import com.intellij.testFramework.ExtensionTestUtil;
 import java.io.File;
+import java.util.ArrayList;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -264,6 +266,45 @@ public class FullApkBuildStepIntegrationTest extends BlazeAndroidIntegrationTest
     assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
     assertThat(externalTaskInterceptor.command)
         .contains("--output_groups=+android_deploy_info,+ndk_symbolization");
+    assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
+  }
+
+  @Test
+  public void build_withoutNativeSymbols() throws Exception {
+    // Unregister all EPs of NativeSymbolFinder
+    ExtensionTestUtil.maskExtensions(
+        NativeSymbolFinder.EP_NAME,
+        /* newExtensions= */ new ArrayList<>(),
+        getTestRootDisposable());
+
+    BlazeAndroidDeployInfo mockDeployInfo = mock(BlazeAndroidDeployInfo.class);
+    File apkFile = new File("/path/to/apk");
+    when(mockDeployInfo.getApksToDeploy()).thenReturn(ImmutableList.of(apkFile));
+    File lib = new File("/path/to/symbol");
+    File altLib = new File("/path/to/alt/symbol");
+    ImmutableList<File> symbolFiles = ImmutableList.of(lib, altLib);
+    when(mockDeployInfo.getSymbolFiles()).thenReturn(symbolFiles);
+
+    BlazeApkDeployInfoProtoHelper helper = mock(BlazeApkDeployInfoProtoHelper.class);
+    AndroidDeployInfo fakeProto = AndroidDeployInfo.getDefaultInstance();
+    when(helper.readDeployInfoProtoForTarget(eq(buildTarget), any(BuildResultHelper.class), any()))
+        .thenReturn(fakeProto);
+    // Expect symbol files to be passed to Helper when building DeployInfo.
+    when(helper.extractDeployInfoAndInvalidateManifests(
+            eq(getProject()), eq(new File(getExecRoot())), eq(fakeProto), eq(ImmutableList.of())))
+        .thenReturn(mockDeployInfo);
+
+    // Perform
+    FullApkBuildStep buildStep =
+        new FullApkBuildStep(getProject(), buildTarget, blazeFlags, true, helper);
+    buildStep.build(context, new DeviceSession(null, null, null));
+
+    // Verify
+    assertThat(buildStep.getDeployInfo()).isNotNull();
+    assertThat(buildStep.getDeployInfo().getApksToDeploy()).containsExactly(apkFile);
+    assertThat(buildStep.getDeployInfo().getSymbolFiles()).isEqualTo(symbolFiles);
+    assertThat(externalTaskInterceptor.command).contains(buildTarget.toString());
+    assertThat(externalTaskInterceptor.command).contains("--output_groups=+android_deploy_info");
     assertThat(externalTaskInterceptor.command).containsAllIn(blazeFlags);
   }
 
