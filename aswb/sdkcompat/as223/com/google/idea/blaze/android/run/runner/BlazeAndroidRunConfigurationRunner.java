@@ -158,7 +158,7 @@ public final class BlazeAndroidRunConfigurationRunner
             runContext.getConsoleProvider(),
             runContext.getApplicationIdProvider(),
             env,
-            deployTarget,
+            deviceFutures,
             runContext.getLaunchTasksProvider(launchOptionsBuilder));
     return new AndroidConfigurationExecutorRunProfileState(runner);
   }
@@ -192,11 +192,12 @@ public final class BlazeAndroidRunConfigurationRunner
     ApkProvider apkProvider =
         BlazeApkProviderService.getInstance()
             .getApkProvider(env.getProject(), runContext.getBuildStep());
+    DeviceFutures deviceFutures = deployTarget.getDevices(env.getProject());
 
     if (launchOptions instanceof TileLaunchOptions) {
       configurationExecutor =
           new AndroidTileConfigurationExecutor(
-              env, deployTarget, settings, appIdProvider, apkProvider) {
+              env, deviceFutures, settings, appIdProvider, apkProvider) {
             @NotNull
             @Override
             public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)
@@ -210,7 +211,7 @@ public final class BlazeAndroidRunConfigurationRunner
     } else if (launchOptions instanceof WatchFaceLaunchOptions) {
       configurationExecutor =
           new AndroidWatchFaceConfigurationExecutor(
-              env, deployTarget, settings, appIdProvider, apkProvider) {
+              env, deviceFutures, settings, appIdProvider, apkProvider) {
             @NotNull
             @Override
             public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)
@@ -224,7 +225,7 @@ public final class BlazeAndroidRunConfigurationRunner
     } else if (launchOptions instanceof ComplicationLaunchOptions) {
       configurationExecutor =
           new AndroidComplicationConfigurationExecutor(
-              env, deployTarget, settings, appIdProvider, apkProvider) {
+              env, deviceFutures, settings, appIdProvider, apkProvider) {
             @NotNull
             @Override
             public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)

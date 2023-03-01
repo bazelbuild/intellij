@@ -82,22 +82,27 @@ java_library(
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
         "android-studio-2021.3": [
+            "tests/utils/sdkcompat/as213/com/android/tools/idea/sdk/IdeSdksCompat.java",
             "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
         "android-studio-2022.1": [
+            "tests/utils/sdkcompat/as221/com/android/tools/idea/sdk/IdeSdksCompat.java",
             "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
         "android-studio-2022.2": [
+            "tests/utils/sdkcompat/as222/com/android/tools/idea/sdk/IdeSdksCompat.java",
             "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
         "android-studio-2022.3": [
+            "tests/utils/sdkcompat/as223/com/android/tools/idea/sdk/IdeSdksCompat.java",
             "tests/utils/sdkcompat/as223/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as223/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
         "android-studio-dev": [
+            "tests/utils/sdkcompat/asdev/com/android/tools/idea/sdk/IdeSdksCompat.java",
             "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/asdev/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
@@ -110,7 +115,7 @@ java_library(
         "//base:unit_test_utils",
         "//cpp",
         "//intellij_platform_sdk:jsr305",
-        "//intellij_platform_sdk:plugin_api_for_tests",
+        "//intellij_platform_sdk:plugin_api_for_tests",  # unuseddeps: keep
         "//intellij_platform_sdk:test_libs",
         "//java",
         "//testing:lib",

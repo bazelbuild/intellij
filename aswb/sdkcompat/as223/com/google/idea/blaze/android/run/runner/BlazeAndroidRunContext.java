@@ -19,7 +19,6 @@ import com.android.ddmlib.IDevice;
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApplicationIdProvider;
-import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.ProfilerState;
@@ -66,7 +65,7 @@ public interface BlazeAndroidRunContext {
       AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState);
 
   @Nullable
-  Integer getUserId(IDevice device, ConsolePrinter consolePrinter) throws ExecutionException;
+  Integer getUserId(IDevice device) throws ExecutionException;
 
   String getAmStartOptions();
 

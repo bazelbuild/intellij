@@ -24,7 +24,6 @@ import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
-import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.editor.ProfilerState;
@@ -196,8 +195,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
         return new ConnectBlazeTestDebuggerTask(this, androidDebugger, androidDebuggerState);
       case NON_BLAZE:
       case MOBILE_INSTALL:
-        return getBaseDebuggerTask(
-            androidDebugger, androidDebuggerState, env, facet, applicationIdProvider);
+        return getBaseDebuggerTask(androidDebugger, androidDebuggerState, env, facet, 30);
     }
     throw new AssertionError();
   }
@@ -219,7 +217,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
 
   @Nullable
   @Override
-  public Integer getUserId(IDevice device, ConsolePrinter consolePrinter) {
+  public Integer getUserId(IDevice device) {
     return null;
   }
 

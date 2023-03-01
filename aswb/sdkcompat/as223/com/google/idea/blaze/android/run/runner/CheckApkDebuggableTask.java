@@ -18,7 +18,7 @@ package com.google.idea.blaze.android.run.runner;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.android.ddmlib.IDevice;
-import com.android.tools.idea.run.ConsolePrinter;
+import com.android.tools.idea.execution.common.RunConfigurationNotifier;
 import com.android.tools.idea.run.tasks.LaunchContext;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.google.common.annotations.VisibleForTesting;
@@ -29,6 +29,8 @@ import com.google.devrel.gmscore.tools.apk.arsc.XmlAttribute;
 import com.google.devrel.gmscore.tools.apk.arsc.XmlChunk;
 import com.google.devrel.gmscore.tools.apk.arsc.XmlStartElementChunk;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
+import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +43,7 @@ public class CheckApkDebuggableTask implements LaunchTask {
   private static final String ID = "APK_DEBUGGABILITY_CHECKER";
   private final BlazeAndroidDeployInfo deployInfo;
 
-  public CheckApkDebuggableTask(BlazeAndroidDeployInfo deployInfo) {
+  public CheckApkDebuggableTask(Project project, BlazeAndroidDeployInfo deployInfo) {
     this.deployInfo = deployInfo;
   }
 
@@ -61,9 +63,9 @@ public class CheckApkDebuggableTask implements LaunchTask {
   }
 
   @Override
-  public void run(@NotNull LaunchContext launchContext) {
+  public void run(@NotNull LaunchContext launchContext) throws ExecutionException {
     checkApkDebuggableTaskDelegate(
-        deployInfo, launchContext.getDevice(), launchContext.getConsolePrinter());
+        launchContext.getEnv().getProject(), deployInfo, launchContext.getDevice());
   }
 
   /**
@@ -73,7 +75,8 @@ public class CheckApkDebuggableTask implements LaunchTask {
    */
   @VisibleForTesting
   public static void checkApkDebuggableTaskDelegate(
-      BlazeAndroidDeployInfo deployInfo, IDevice device, ConsolePrinter consolePrinter) {
+      Project project, BlazeAndroidDeployInfo deployInfo, IDevice device)
+      throws ExecutionException {
     if (isDebugDevice(device)) {
       return;
     }
@@ -92,9 +95,9 @@ public class CheckApkDebuggableTask implements LaunchTask {
               + ". Debugger may not attach properly or attach at all."
               + " Please ensure \"android:debuggable\" attribute is set to true or"
               + " overridden to true via manifest overrides.";
-      consolePrinter.stderr(message);
+      RunConfigurationNotifier.INSTANCE.notifyWarning(project, "", message);
     } catch (IOException e) {
-      consolePrinter.stderr("Could not read deploy apks: " + e.getMessage());
+      throw new ExecutionException("Could not read deploy apks: " + e.getMessage());
     }
   }
 

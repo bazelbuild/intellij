@@ -25,7 +25,6 @@ import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContributor;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
-import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.tasks.ClearLogcatTask;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
@@ -34,7 +33,6 @@ import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.tasks.ShowLogcatTask;
 import com.android.tools.idea.run.tasks.StartLiveUpdateMonitoringTask;
-import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.ndk.run.editor.AutoAndroidDebuggerState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -73,23 +71,17 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
 
   @NotNull
   @Override
-  public List<LaunchTask> getTasks(
-      @NotNull IDevice device,
-      @NotNull LaunchStatus launchStatus,
-      @NotNull ConsolePrinter consolePrinter)
-      throws ExecutionException {
+  public List<LaunchTask> getTasks(@NotNull IDevice device) throws ExecutionException {
     final List<LaunchTask> launchTasks = Lists.newArrayList();
 
     String packageName;
     try {
       packageName = applicationIdProvider.getPackageName();
     } catch (ApkProvisionException e) {
-      LOG.error(e);
-      launchStatus.terminateLaunch("Unable to determine application id: " + e, true);
-      return ImmutableList.of();
+      throw new ExecutionException("Unable to determine application id: " + e);
     }
 
-    Integer userId = runContext.getUserId(device, consolePrinter);
+    Integer userId = runContext.getUserId(device);
     String userIdFlags = UserIdHelper.getFlagsFromUserId(userId);
     String skipVerification =
         ApkVerifierTracker.getSkipVerificationInstallationFlag(device, packageName);
@@ -120,13 +112,11 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       ImmutableList<LaunchTask> deployTasks = runContext.getDeployTasks(device, launchOptions);
       launchTasks.addAll(deployTasks);
     }
-    if (launchStatus.isLaunchTerminated()) {
-      return ImmutableList.copyOf(launchTasks);
-    }
 
     try {
       if (launchOptions.isDebug()) {
-        launchTasks.add(new CheckApkDebuggableTask(runContext.getBuildStep().getDeployInfo()));
+        launchTasks.add(
+            new CheckApkDebuggableTask(project, runContext.getBuildStep().getDeployInfo()));
       }
 
       ImmutableList.Builder<String> amStartOptions = ImmutableList.builder();
@@ -156,12 +146,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
         }
       }
     } catch (ApkProvisionException e) {
-      LOG.error(e);
-      launchStatus.terminateLaunch("Unable to determine application id: " + e, true);
-      return ImmutableList.of();
-    } catch (ExecutionException e) {
-      launchStatus.terminateLaunch(e.getMessage(), true);
-      return ImmutableList.of();
+      throw new ExecutionException("Unable to determine application id: " + e);
     }
 
     if (!launchOptions.isDebug() && launchOptions.isOpenLogcatAutomatically()) {
@@ -201,10 +186,6 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     }
   }
 
-  @Override
-  public String getLaunchTypeDisplayName() {
-    return "Launch";
-  }
 
   private boolean isNativeDebuggingEnabled(LaunchOptions launchOptions) {
     Object flag = launchOptions.getExtraOption(NATIVE_DEBUGGING_ENABLED);

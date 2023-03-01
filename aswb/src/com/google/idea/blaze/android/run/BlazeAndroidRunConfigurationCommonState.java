@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.run;
 
 import com.android.tools.idea.run.ValidationError;
+import com.android.tools.idea.run.ValidationErrorCompat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.run.state.DebuggerSettingsState;
@@ -115,7 +116,7 @@ public class BlazeAndroidRunConfigurationCommonState implements RunConfiguration
     if (isNativeDebuggingEnabled()
         && !blazeProjectData.getWorkspaceLanguageSettings().isLanguageActive(LanguageClass.C)) {
       errors.add(
-          ValidationError.fatal(
+          ValidationErrorCompat.fatal(
               "Native debugging requires C language support.",
               () ->
                   AdditionalLanguagesHelper.enableLanguageSupport(
