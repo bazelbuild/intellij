@@ -15,34 +15,25 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import com.android.tools.idea.profilers.ProfileRunExecutor;
+import com.android.tools.idea.run.configuration.AndroidConfigurationProgramRunner;
 import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutor;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.runners.AsyncProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.application.ActionsKt;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import java.util.Collections;
+import java.util.List;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
 
 /** Program runner for configurations from {@link BlazeAndroidTestRunConfigurationHandler}. */
-public class BlazeAndroidTestProgramRunner extends AsyncProgramRunner<RunnerSettings> {
+public class BlazeAndroidTestProgramRunner extends AndroidConfigurationProgramRunner {
   @Override
   public boolean canRun(String executorId, RunProfile profile) {
     BlazeAndroidRunConfigurationHandler handler =
@@ -57,60 +48,33 @@ public class BlazeAndroidTestProgramRunner extends AsyncProgramRunner<RunnerSett
         || DefaultDebugExecutor.EXECUTOR_ID.equals(executorId);
   }
 
-  private RunContentDescriptor doExecute(
-      final RunProfileState state, final ExecutionEnvironment env) throws ExecutionException {
-    ExecutionResult result = state.execute(env.getExecutor(), this);
-    return ActionsKt.invokeAndWaitIfNeeded(
-        ModalityState.NON_MODAL,
-        () -> new RunContentBuilder(result, env).showRunContent(env.getContentToReuse()));
+  @Override
+  public String getRunnerId() {
+    return "AndroidTestProgramRunner";
+  }
+
+  @Override
+  protected boolean canRunWithMultipleDevices(@NotNull String executorId) {
+    return true;
   }
 
   @NotNull
   @Override
-  protected Promise<RunContentDescriptor> execute(
-      @NotNull ExecutionEnvironment environment, @NotNull RunProfileState state) {
-    FileDocumentManager.getInstance().saveAllDocuments();
-
-    AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
-    ProgressManager.getInstance()
-        .run(
-            new Task.Backgroundable(environment.getProject(), "Launching ${runProfile.name}") {
-              @Override
-              public void run(ProgressIndicator indicator) {
-                try {
-                  RunContentDescriptor descriptor;
-                  if (state instanceof AndroidConfigurationExecutor) {
-                    AndroidConfigurationExecutor configurationExecutor =
-                        (AndroidConfigurationExecutor) state;
-                    Executor executor = environment.getExecutor();
-                    if (executor.getId().equals(DefaultDebugExecutor.EXECUTOR_ID)) {
-                      descriptor = configurationExecutor.debug(indicator);
-                    } else if (executor.getId().equals(DefaultRunExecutor.EXECUTOR_ID)
-                        || executor.getId().equals(ProfileRunExecutor.EXECUTOR_ID)) {
-                      descriptor = configurationExecutor.run(indicator);
-                    } else {
-                      throw new ExecutionException("Unsupported executor");
-                    }
-                  } else {
-                    descriptor = doExecute(state, environment);
-                  }
-                  promise.setResult(descriptor);
-                } catch (ExecutionException e) {
-                  var unused = promise.setError(e);
-                }
-              }
-
-              @Override
-              public void onCancel() {
-                super.onCancel();
-                promise.setResult(null);
-              }
-            });
-    return promise;
+  protected List<String> getSupportedConfigurationTypeIds() {
+    return Collections.singletonList(BlazeCommandRunConfigurationType.getInstance().getId());
   }
 
+  @NotNull
   @Override
-  public String getRunnerId() {
-    return "AndroidTestProgramRunner";
+  protected Function1<ProgressIndicator, RunContentDescriptor> getRunner(
+      @NotNull ExecutionEnvironment environment, @NotNull RunProfileState state) {
+    final AndroidConfigurationExecutor state1 = (AndroidConfigurationExecutor) state;
+    if (DefaultDebugExecutor.EXECUTOR_ID.equals(environment.getExecutor().getId())) {
+      return state1::debug;
+    }
+    if (DefaultRunExecutor.EXECUTOR_ID.equals(environment.getExecutor().getId())) {
+      return state1::run;
+    }
+    throw new RuntimeException("Unsupported executor");
   }
 }
