@@ -19,7 +19,7 @@ import com.android.tools.idea.run.editor.AndroidDebugger;
 import com.android.tools.idea.run.editor.AndroidDebuggerInfoProvider;
 import com.android.tools.idea.run.editor.AndroidDebuggerState;
 import com.android.tools.idea.run.editor.AndroidJavaDebugger;
-import com.google.idea.blaze.android.cppimpl.debug.BlazeNativeAndroidDebugger;
+import com.android.tools.idea.run.editor.AndroidDebuggerInfoProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.test.BlazeAndroidTestRunConfigurationState;
 import com.google.idea.blaze.base.model.BlazeProjectData;
@@ -45,7 +45,7 @@ public class BlazeCommandAndroidDebuggerInfoProvider implements AndroidDebuggerI
   @SuppressWarnings("rawtypes") // List includes multiple AndroidDebuggerState types.
   public List<AndroidDebugger> getAndroidDebuggers(RunConfiguration configuration) {
     if (getCommonState(configuration) != null) {
-      return Arrays.asList(new BlazeNativeAndroidDebugger(), new AndroidJavaDebugger());
+      return Arrays.asList(new AndroidJavaDebugger());
     }
     return Collections.emptyList();
   }
