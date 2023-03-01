@@ -13,9 +13,9 @@ internal class GreetingTest {
   fun testGetGreeting() =
     runTest(UnconfinedTestDispatcher()) {
       val startTime = currentTime
-      val greeting = Greeting.getGreeting(7)
+      val greeting = Greeting.getGreeting(8)
       val totalTime = currentTime - startTime
-      assertThat(totalTime).isEqualTo(7000)
-      assertThat(greeting).isEqualTo("Hello from Coroutine 7")
+      assertThat(totalTime).isEqualTo(8000)
+      assertThat(greeting).isEqualTo("Hello from Coroutine 8")
     }
 }
