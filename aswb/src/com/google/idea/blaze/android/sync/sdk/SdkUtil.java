@@ -39,6 +39,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidPlatformsCompat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +68,7 @@ public class SdkUtil {
     if (sdk == null) {
       return null;
     }
-    return AndroidPlatform.getInstance(sdk);
+    return AndroidPlatformsCompat.getInstance(sdk);
   }
 
   /** Opens the SDK manager settings page */

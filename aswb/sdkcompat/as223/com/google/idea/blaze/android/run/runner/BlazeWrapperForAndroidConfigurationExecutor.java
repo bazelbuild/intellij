@@ -15,8 +15,9 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
+import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutor;
-import com.android.tools.idea.run.editor.DeployTarget;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,24 +39,20 @@ public class BlazeWrapperForAndroidConfigurationExecutor implements AndroidConfi
 
   @NotNull
   @Override
-  public DeployTarget getDeployTarget() {
-    return delegateExecutor.getDeployTarget();
+  public DeviceFutures getDeviceFutures() {
+    return delegateExecutor.getDeviceFutures();
   }
 
   @NotNull
   @Override
-  public RunContentDescriptor run(@NotNull ProgressIndicator indicator) {
-    return delegateExecutor.run(indicator);
-  }
-
-  @Override
-  public RunContentDescriptor runAsInstantApp(@NotNull ProgressIndicator indicator) {
+  public RunContentDescriptor run(@NotNull ProgressIndicator indicator) throws ExecutionException {
     return delegateExecutor.run(indicator);
   }
 
   @NotNull
   @Override
-  public RunContentDescriptor debug(@NotNull ProgressIndicator indicator) {
+  public RunContentDescriptor debug(@NotNull ProgressIndicator indicator)
+      throws ExecutionException {
     return delegateExecutor.debug(indicator);
   }
 

@@ -21,7 +21,7 @@ import com.android.tools.idea.execution.common.RunConfigurationNotifier;
 import com.android.tools.idea.execution.common.processhandler.AndroidProcessHandler;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
-import com.android.tools.idea.run.ConsolePrinter;
+import com.android.tools.idea.run.configuration.execution.ExecutionUtils;
 import com.android.tools.idea.run.tasks.LaunchContext;
 import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
@@ -30,6 +30,7 @@ import com.google.idea.blaze.android.manifest.ManifestParser;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -163,9 +164,9 @@ class StockAndroidTestLaunchTask implements LaunchTask {
 
   @SuppressWarnings("FutureReturnValueIgnored")
   public void run(@NotNull LaunchContext launchContext) {
-    ConsolePrinter printer = launchContext.getConsolePrinter();
+    ConsoleView console = launchContext.getConsoleView();
     IDevice device = launchContext.getDevice();
-    printer.stdout("Running tests\n");
+    ExecutionUtils.println(console, "Running tests\n");
     final RemoteAndroidTestRunner runner =
         new RemoteAndroidTestRunner(testApplicationId, instrumentationTestRunner, device);
     switch (configState.getTestingType()) {
@@ -186,14 +187,14 @@ class StockAndroidTestLaunchTask implements LaunchTask {
     }
     runner.setDebug(waitForDebugger);
     runner.setRunOptions(configState.getExtraOptions());
-    printer.stdout("$ adb shell " + runner.getAmInstrumentCommand());
+    ExecutionUtils.printShellCommand(console, runner.getAmInstrumentCommand());
     // run in a separate thread as this will block until the tests complete
     ApplicationManager.getApplication()
         .executeOnPooledThread(
             () -> {
               try {
                 // This issues "am instrument" command and blocks execution.
-                runner.run(new AndroidTestListener(printer));
+                runner.run(new AndroidTestListener(console));
                 // Detach the device from the android process handler manually as soon as "am
                 // instrument" command finishes. This is required because the android process
                 // handler may overlook target process especially when the test
@@ -208,8 +209,8 @@ class StockAndroidTestLaunchTask implements LaunchTask {
                   ((AndroidProcessHandler) processHandler).detachDevice(launchContext.getDevice());
                 }
               } catch (Exception e) {
-                printer.stderr("Error: Unexpected exception while running tests: " + e);
-                launchContext.getProcessHandler().destroyProcess();
+                ExecutionUtils.printlnError(
+                    console, "Error: Unexpected exception while running tests: " + e);
               }
             });
   }

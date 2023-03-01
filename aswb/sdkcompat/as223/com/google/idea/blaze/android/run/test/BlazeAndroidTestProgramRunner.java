@@ -20,6 +20,7 @@ import com.android.tools.idea.run.configuration.execution.AndroidConfigurationEx
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfigurationType;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -29,7 +30,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import java.util.Collections;
 import java.util.List;
-import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 
 /** Program runner for configurations from {@link BlazeAndroidTestRunConfigurationHandler}. */
@@ -66,14 +66,17 @@ public class BlazeAndroidTestProgramRunner extends AndroidConfigurationProgramRu
 
   @NotNull
   @Override
-  protected Function1<ProgressIndicator, RunContentDescriptor> getRunner(
-      @NotNull ExecutionEnvironment environment, @NotNull RunProfileState state) {
+  protected RunContentDescriptor run(
+      @NotNull ExecutionEnvironment environment,
+      @NotNull RunProfileState state,
+      @NotNull ProgressIndicator indicator)
+      throws ExecutionException {
     final AndroidConfigurationExecutor state1 = (AndroidConfigurationExecutor) state;
     if (DefaultDebugExecutor.EXECUTOR_ID.equals(environment.getExecutor().getId())) {
-      return state1::debug;
+      return state1.debug(indicator);
     }
     if (DefaultRunExecutor.EXECUTOR_ID.equals(environment.getExecutor().getId())) {
-      return state1::run;
+      return state1.run(indicator);
     }
     throw new RuntimeException("Unsupported executor");
   }
