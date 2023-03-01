@@ -164,15 +164,16 @@ public class FullApkBuildStep implements ApkBuildStep {
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
       List<NativeSymbolFinder> nativeSymbolFinderList =
           NativeSymbolFinder.EP_NAME.getExtensionList();
-      command
-          .addTargets(label)
-          .addBlazeFlags("--output_groups=+android_deploy_info")
-          .addBlazeFlags(
-              nativeSymbolFinderList.stream()
-                  .map(NativeSymbolFinder::getAdditionalBuildFlags)
-                  .collect(joining(" ")))
-          .addBlazeFlags(buildFlags)
-          .addBlazeFlags(buildResultHelper.getBuildFlags());
+      command.addTargets(label).addBlazeFlags("--output_groups=+android_deploy_info");
+
+      if (!nativeSymbolFinderList.isEmpty()) {
+        command.addBlazeFlags(
+            nativeSymbolFinderList.stream()
+                .map(NativeSymbolFinder::getAdditionalBuildFlags)
+                .collect(joining(" ")));
+      }
+
+      command.addBlazeFlags(buildFlags).addBlazeFlags(buildResultHelper.getBuildFlags());
 
       SaveUtil.saveAllFiles();
       int retVal =
