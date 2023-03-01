@@ -26,6 +26,14 @@ no_mockito_extensions(
 )
 
 java_import(
+    name = "android",
+    jars = glob([
+        "plugins/android/lib/*.jar",
+        "plugins/android-layoutlib/lib/*.jar",
+    ]),
+)
+
+java_import(
     name = "guava",
     jars = ["lib/3rd-party-rt.jar"],
 )
