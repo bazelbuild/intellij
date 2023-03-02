@@ -21,7 +21,9 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Output;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.query.QuerySummary;
+import com.google.idea.blaze.qsync.testdata.TestData;
 import com.google.idea.blaze.qsync.vcs.VcsState;
+import java.io.IOException;
 import java.util.Optional;
 
 /** Helpers for unit tests. */
@@ -51,5 +53,9 @@ public class QuerySyncTestUtils {
         .graph(BuildGraphData.EMPTY)
         .vcsState(Optional.empty())
         .project(ProjectProto.Project.getDefaultInstance());
+  }
+
+  public static QuerySummary getQuerySummary(TestData genQueryName) throws IOException {
+    return QuerySummary.create(TestData.getPathFor(genQueryName).toFile());
   }
 }
