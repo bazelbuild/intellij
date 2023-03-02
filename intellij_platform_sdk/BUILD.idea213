@@ -15,18 +15,20 @@ java_import(
             "lib/testFramework.jar",
         ],
     ),
-    tags = ["intellij-provided-by-sdk"],
+    tags = ["intellij-provided-by-sdk", "incomplete-deps"],
     exports = [":jars_without_mockito_extensions"],
     deps = ["@error_prone_annotations//jar"],
 )
 
 no_mockito_extensions(
     name = "jars_without_mockito_extensions",
+    tags = ["incomplete-deps"],
     jars = ["lib/testFramework.jar"],
 )
 
 java_import(
     name = "guava",
+    tags = ["incomplete-deps"],
     jars = ["lib/3rd-party-rt.jar"],
 )
 
@@ -34,26 +36,31 @@ java_library(name = "jsr305")  # not bundled
 
 java_import(
     name = "java",
+    tags = ["incomplete-deps"],
     jars = glob(["plugins/java/lib/*.jar"]),
 )
 
 java_import(
     name = "platform_images",
+    tags = ["incomplete-deps"],
     jars = glob(["plugins/platform-images/lib/*.jar"]),
 )
 
 java_import(
     name = "devkit",
+    tags = ["incomplete-deps"],
     jars = glob(["plugins/devkit/lib/devkit.jar"]),
 )
 
 java_import(
     name = "coverage",
+    tags = ["incomplete-deps"],
     jars = glob(["plugins/coverage/lib/*.jar"]),
 )
 
 java_import(
     name = "hg4idea",
+    tags = ["incomplete-deps"],
     jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
 )
 
@@ -64,6 +71,7 @@ java_import(
 
 java_import(
     name = "kotlin",
+    tags = ["incomplete-deps"],
     jars = glob(["plugins/Kotlin/lib/*.jar"]),
 )
 
@@ -73,16 +81,19 @@ filegroup(
 
 java_import(
     name = "junit",
+    tags = ["incomplete-deps"],
     jars = glob(["plugins/junit/lib/*.jar"]),
 )
 
 java_import(
     name = "terminal",
+    tags = ["incomplete-deps"],
     jars = glob(["plugins/terminal/lib/terminal.jar"]),
 )
 
 java_import(
     name = "shared_indexes",
+    tags = ["incomplete-deps"],
     jars = [
         "plugins/indexing-shared/lib/indexing-shared.jar",
     ],
@@ -90,11 +101,13 @@ java_import(
 
 java_import(
     name = "git4idea",
+    tags = ["incomplete-deps"],
     jars = glob(["plugins/git4idea/lib/*.jar"]),
 )
 
 java_import(
     name = "cwm",
+    tags = ["incomplete-deps"],
     jars = glob(["plugins/cwm-plugin/lib/*.jar"]),
 )
 
@@ -108,7 +121,7 @@ java_import(
         "plugins/junit/lib/*.jar",
         "plugins/properties/lib/*.jar",
     ]),
-    tags = ["intellij-provided-by-sdk"],
+    tags = ["intellij-provided-by-sdk", "incomplete-deps"],
 )
 
 filegroup(
