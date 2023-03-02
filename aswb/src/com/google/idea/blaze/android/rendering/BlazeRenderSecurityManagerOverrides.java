@@ -16,6 +16,7 @@
 package com.google.idea.blaze.android.rendering;
 
 import com.android.tools.idea.rendering.RenderSecurityManagerOverrides;
+import org.jetbrains.annotations.NotNull;
 
 /** Overrides some security restrictions used by the render sandbox. */
 public class BlazeRenderSecurityManagerOverrides implements RenderSecurityManagerOverrides {
@@ -23,5 +24,10 @@ public class BlazeRenderSecurityManagerOverrides implements RenderSecurityManage
   public boolean allowsPropertiesAccess() {
     // System properties access is needed for SystemPropertyExperimentLoader
     return true;
+  }
+
+  //@Override #idea only
+  public boolean allowsLibraryLinking(@NotNull String lib) {
+    return false;
   }
 }
