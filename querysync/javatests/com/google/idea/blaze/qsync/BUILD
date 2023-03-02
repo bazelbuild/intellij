@@ -6,6 +6,7 @@ java_library(
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/java/com/google/idea/blaze/qsync/vcs",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
         "@com_google_guava_guava//jar",
     ],
@@ -17,7 +18,6 @@ java_test(
     deps = [
         ":TestUtils",
         "//querysync/java/com/google/idea/blaze/qsync",
-        "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "//shared",
         "@junit//jar",
@@ -31,6 +31,8 @@ java_test(
     deps = [
         ":TestUtils",
         "//querysync/java/com/google/idea/blaze/qsync",
+        "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
+        "//querysync/javatests/com/google/idea/blaze/qsync/testdata",
         "@com_google_guava_guava//jar",
         "@junit//jar",
         "@truth//jar",

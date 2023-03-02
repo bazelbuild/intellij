@@ -18,10 +18,14 @@ package com.google.idea.blaze.qsync;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.EMPTY_PACKAGE_READER;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
+import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
+import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
@@ -255,5 +259,66 @@ public class GraphToProjectConverterTest {
     ImmutableSet<String> androidResourcePackages =
         converter.computeAndroidSourcePackages(androidSourceFiles, rootToPrefix);
     assertThat(androidResourcePackages).containsExactly("com.example.foo", "com.example.bar");
+  }
+
+  @Test
+  public void testConvertProject_emptyProject() throws IOException {
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            EMPTY_PACKAGE_READER, NOOP_CONTEXT, ImmutableList.of(), ImmutableList.of());
+    ProjectProto.Project project = converter.createProject(BuildGraphData.EMPTY);
+    assertThat(project.getModulesCount()).isEqualTo(1);
+
+    ProjectProto.Module workspaceModule = project.getModules(0);
+    assertThat(workspaceModule.getName()).isEqualTo(".workspace");
+
+    assertThat(workspaceModule.getContentEntriesCount()).isEqualTo(1);
+    ProjectProto.ContentEntry generatedSourceRoot = workspaceModule.getContentEntries(0);
+    assertThat(generatedSourceRoot.getRoot().getBase()).isEqualTo(Base.PROJECT);
+    assertThat(generatedSourceRoot.getRoot().getPath()).isEqualTo(".blaze/generated");
+
+    assertThat(generatedSourceRoot.getSourcesCount()).isEqualTo(1);
+    ProjectProto.SourceFolder generatedSourceFolder = generatedSourceRoot.getSources(0);
+    assertThat(generatedSourceFolder.getPath()).isEqualTo(".blaze/generated");
+    assertThat(generatedSourceFolder.getIsGenerated()).isTrue();
+    assertThat(generatedSourceFolder.getIsTest()).isFalse();
+  }
+
+  @Test
+  public void testConvertProject_buildGraphWithSingleImportRoot() throws IOException {
+    Path workspaceImportDirectory = TestData.ROOT.resolve("nodeps");
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            EMPTY_PACKAGE_READER,
+            NOOP_CONTEXT,
+            ImmutableList.of(workspaceImportDirectory),
+            ImmutableList.of());
+
+    BuildGraphData buildGraphData =
+        new BlazeQueryParser(NOOP_CONTEXT)
+            .parse(getQuerySummary(TestData.JAVA_LIBRARY_NO_DEPS_QUERY));
+    ProjectProto.Project project = converter.createProject(buildGraphData);
+
+    // Sanity check
+    assertThat(project.getModulesCount()).isEqualTo(1);
+    ProjectProto.Module workspaceModule = project.getModules(0);
+
+    assertThat(workspaceModule.getContentEntriesCount()).isEqualTo(2);
+
+    // Sanity check
+    ProjectProto.ContentEntry generatedSourceRoot = workspaceModule.getContentEntries(0);
+    assertThat(generatedSourceRoot.getRoot().getBase()).isEqualTo(Base.PROJECT);
+    assertThat(generatedSourceRoot.getRoot().getPath()).isEqualTo(".blaze/generated");
+    assertThat(generatedSourceRoot.getSourcesCount()).isEqualTo(1);
+
+    ProjectProto.ContentEntry javaContentEntry = workspaceModule.getContentEntries(1);
+    assertThat(javaContentEntry.getRoot().getBase()).isEqualTo(Base.WORKSPACE);
+    assertThat(javaContentEntry.getRoot().getPath()).isEqualTo(workspaceImportDirectory.toString());
+    assertThat(javaContentEntry.getSourcesCount()).isEqualTo(1);
+
+    ProjectProto.SourceFolder javaSource = javaContentEntry.getSources(0);
+    assertThat(javaSource.getPath()).isEqualTo(workspaceImportDirectory.toString());
+    assertThat(javaSource.getIsGenerated()).isFalse();
+    assertThat(javaSource.getIsTest()).isFalse();
   }
 }
