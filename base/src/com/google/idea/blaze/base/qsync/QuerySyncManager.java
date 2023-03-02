@@ -245,8 +245,4 @@ public class QuerySyncManager {
     int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
     return unsynced == 0;
   }
-
-  public String getTargetKind(Label target) {
-    return graph.getCurrent().getTargetKind(target);
-  }
 }
