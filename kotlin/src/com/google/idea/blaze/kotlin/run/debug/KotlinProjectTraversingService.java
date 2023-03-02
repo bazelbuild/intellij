@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.notification.NotificationGroupManager;
@@ -82,6 +83,10 @@ public final class KotlinProjectTraversingService {
       notify(
           "Cannot view coroutines debugging panel: no applicable KotlinxCoroutinesLibFinder"
               + " EP found.");
+      return Optional.empty();
+    }
+    // TODO(b/271477324): implement for query sync
+    if (QuerySync.isEnabled()) {
       return Optional.empty();
     }
     return findKotlinxCoroutinesTransitiveDep(
