@@ -20,10 +20,12 @@ import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.util.SwapInfo;
 import com.android.tools.idea.run.util.SwapInfo.SwapType;
+import com.android.tools.idea.gradle.util.EmbeddedDistributionPaths;
 import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import java.util.Collection;
 
 /** Compat class for {@link DeployTask} */
@@ -42,7 +44,8 @@ public class DeployTasksCompat {
         packages,
         launchOptions.getPmInstallOptions(/*device=*/ null),
         launchOptions.getInstallOnAllUsers(),
-        launchOptions.getAlwaysInstallWithPm());
+        launchOptions.getAlwaysInstallWithPm(),
+        () -> EmbeddedDistributionPaths.getInstance().findEmbeddedInstaller());
   }
 
   public static LaunchTask getDeployTask(
@@ -51,6 +54,7 @@ public class DeployTasksCompat {
       LaunchOptions launchOptions,
       Collection<ApkInfo> packages) {
     if (updateCodeViaJvmti.getValue()) {
+      Computable<String> installPathProvider = () -> EmbeddedDistributionPaths.getInstance().findEmbeddedInstaller();
       // Set the appropriate action based on which deployment we're doing.
       SwapInfo swapInfo = env.getUserData(SwapInfo.SWAP_INFO_KEY);
       SwapInfo.SwapType swapType = swapInfo == null ? null : swapInfo.getType();
@@ -59,13 +63,15 @@ public class DeployTasksCompat {
             project,
             packages,
             DeploymentConfiguration.getInstance().APPLY_CHANGES_FALLBACK_TO_RUN,
-            false);
+            false,
+            installPathProvider);
       } else if (swapType == SwapType.APPLY_CODE_CHANGES) {
         return new ApplyCodeChangesTask(
             project,
             packages,
             DeploymentConfiguration.getInstance().APPLY_CODE_CHANGES_FALLBACK_TO_RUN,
-            false);
+            false,
+            installPathProvider);
       }
     }
     return BlazeAndroidDeploymentService.getInstance(project)
