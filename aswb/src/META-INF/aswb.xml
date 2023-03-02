@@ -16,9 +16,7 @@
 <idea-plugin>
   <vendor>Google</vendor>
 
-  <depends>com.intellij.modules.androidstudio</depends>
   <depends>org.jetbrains.android</depends>
-  <depends>com.google.gct.test.recorder</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <programRunner implementation="com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryProgramRunner" order="first"/>
@@ -108,10 +106,6 @@
   <extensions defaultExtensionNs="com.android.rendering">
     <renderErrorContributor implementation="com.google.idea.blaze.android.rendering.BlazeRenderErrorContributor$BlazeProvider"/>
     <renderSecurityManagerOverrides implementation="com.google.idea.blaze.android.rendering.BlazeRenderSecurityManagerOverrides"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.google.gct.testrecorder.run">
-    <testRecorderRunConfigurationProxyProvider implementation="com.google.idea.blaze.android.run.testrecorder.TestRecorderBlazeCommandRunConfigurationProxyProvider" />
   </extensions>
 
   <extensions defaultExtensionNs="com.android.tools.idea.run.editor">

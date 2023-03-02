@@ -49,9 +49,18 @@ optional_plugin_xml(
     plugin_xml = "src/META-INF/ndk_contents.xml",
 )
 
+optional_plugin_xml(
+    name = "optional_test_recorder_xml",
+    module = "com.google.gct.test.recorder",
+    plugin_xml = "src/META-INF/test_recorder_contents.xml",
+)
+
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = [":optional_ndk_xml"],
+    optional_plugin_xmls = [
+        ":optional_ndk_xml",
+        ":optional_test_recorder_xml",
+    ],
     plugin_xmls = ["src/META-INF/aswb.xml"],
     visibility = ASWB_PLUGIN_PACKAGES_VISIBILITY,
     deps = [":aswb_lib"],
