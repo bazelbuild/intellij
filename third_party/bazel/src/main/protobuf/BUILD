@@ -1,4 +1,4 @@
-load("@com_google_protobuf//:protobuf.bzl", "py_proto_library")
+load("@rules_python//python:proto.bzl", "py_proto_library")
 load("@rules_proto//proto:defs.bzl", "proto_library")
 
 package(default_visibility = ["//visibility:public"])
@@ -39,10 +39,7 @@ proto_library(
 
 py_proto_library(
     name = "analysis_v2_py_proto",
-    srcs = ["analysis_v2.proto"],
-    default_runtime = "//third_party/protobuf:protobuf_python",
-    protoc = "//third_party/protobuf:protoc",
-    deps = [":build_pb_py"],
+    deps = [":analysis_v2_proto"],
 )
 
 java_proto_library(
@@ -138,9 +135,7 @@ cc_proto_library(
 
 py_proto_library(
     name = "build_pb_py",
-    srcs = ["build.proto"],
-    default_runtime = "//third_party/protobuf:protobuf_python",
-    protoc = "//third_party/protobuf:protoc",
+    deps = [":build_proto"],
 )
 
 cc_proto_library(
