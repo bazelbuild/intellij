@@ -123,6 +123,7 @@ public class DependencyTracker {
             String.format(
                 "Updated cache in %d ms: updated %d artifacts, removed %d artifacts",
                 elapsedMs, updateResult.updatedFiles().size(), updateResult.removedKeys().size())));
+    cache.saveState();
 
     context.output(PrintOutput.log("Refreshing Vfs..."));
     VfsUtil.markDirtyAndRefresh(
