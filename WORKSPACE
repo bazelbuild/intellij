@@ -570,8 +570,8 @@ bazel_integration_test_rules_dependencies()
 load("@contrib_rules_bazel_integration_test//bazel_integration_test:defs.bzl", "bazel_binaries")
 
 bazel_binaries(versions = [
-    "6.0.0",
     "1.2.0",
+    "6.0.0",
 ])
 
 # LICENSE: The Apache Software License, Version 2.0
