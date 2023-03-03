@@ -28,3 +28,7 @@ message TargetToDeps {
   string target = 1;
   repeated TargetToDirectArtifact deps = 2;
 }
+
+message TargetToDepsList {
+  repeated TargetToDeps target_to_deps = 1;
+}
