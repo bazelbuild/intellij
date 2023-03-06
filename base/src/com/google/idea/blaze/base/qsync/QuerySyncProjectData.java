@@ -49,11 +49,11 @@ public class QuerySyncProjectData implements BlazeProjectData {
   @Nullable
   @Override
   public TargetInfo getTargetInfo(Label label) {
-    String kind =
-        blazeProject
-            .getCurrent()
-            .getTargetKind(com.google.idea.blaze.common.Label.of(label.toString()));
-    return kind != null ? TargetInfo.builder(label, kind).build() : null;
+    return blazeProject
+        .getCurrent()
+        .map(s -> s.getTargetKind(com.google.idea.blaze.common.Label.of(label.toString())))
+        .map(kind -> TargetInfo.builder(label, kind).build())
+        .orElse(null);
   }
 
   @Override

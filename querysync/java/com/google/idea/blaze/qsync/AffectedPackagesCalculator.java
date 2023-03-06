@@ -53,7 +53,7 @@ public abstract class AffectedPackagesCalculator {
   abstract ImmutableSet<WorkspaceFileChange> changedFiles();
 
   static Builder builder() {
-    return new AutoValue_AffectedPackagesCalculator.Builder().projectExcludes(ImmutableList.of());
+    return new AutoValue_AffectedPackagesCalculator.Builder().projectExcludes(ImmutableSet.of());
   }
 
   public AffectedPackages getAffectedPackages() {
@@ -238,9 +238,9 @@ public abstract class AffectedPackagesCalculator {
 
     public abstract Builder context(Context value);
 
-    public abstract Builder projectIncludes(ImmutableList<Path> value);
+    public abstract Builder projectIncludes(ImmutableSet<Path> value);
 
-    public abstract Builder projectExcludes(ImmutableList<Path> value);
+    public abstract Builder projectExcludes(ImmutableSet<Path> value);
 
     public abstract Builder lastQuery(QuerySummary value);
 

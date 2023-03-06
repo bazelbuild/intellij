@@ -15,20 +15,21 @@
  */
 package com.google.idea.blaze.qsync;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.PostQuerySyncData;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.vcs.VcsState;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 
 /**
- * A query strategy based on a query of all targets in the project.
+ * A project update based on a query of all targets in the project.
  *
  * <p>This strategy is used when creating a new project from scratch, or when updating the project
  * if a partial query cannot be used.
@@ -38,55 +39,46 @@ import java.util.Optional;
  */
 public class FullProjectUpdate implements RefreshOperation {
 
+  private final Context context;
+  private final Path workspaceRoot;
   private final BlazeQueryParser queryParser;
-  private final ImmutableList<Path> projectIncludes;
-  private final ImmutableList<Path> projectExcludes;
+  private final ProjectDefinition projectDefinition;
   private final GraphToProjectConverter graphToProjectConverter;
 
-  private QuerySummary queryOutput;
-  private Optional<VcsState> vcsState;
+  private final PostQuerySyncData.Builder result;
 
   public FullProjectUpdate(
-      Context context,
-      List<Path> projectIncludes,
-      List<Path> projectExcludes,
-      PackageReader packageReader) {
-    this.projectIncludes = ImmutableList.copyOf(projectIncludes);
-    this.projectExcludes = ImmutableList.copyOf(projectExcludes);
+      Context context, Path workspaceRoot, ProjectDefinition spec, PackageReader packageReader) {
+    this.context = context;
+    this.workspaceRoot = workspaceRoot;
+    this.result = PostQuerySyncData.builder().setSyncSpec(spec);
+    this.projectDefinition = spec;
     this.queryParser = new BlazeQueryParser(context);
     this.graphToProjectConverter =
-        new GraphToProjectConverter(
-            packageReader, context, this.projectIncludes, this.projectExcludes);
+        new GraphToProjectConverter(packageReader, context, projectDefinition);
   }
 
   @Override
-  public Optional<QuerySpec> getQuerySpec() {
-    return Optional.of(
-        QuerySpec.builder().includePaths(projectIncludes).excludePaths(projectExcludes).build());
+  public Optional<QuerySpec> getQuerySpec() throws IOException {
+    QuerySpec querySpec = projectDefinition.deriveQuerySpec(context, workspaceRoot);
+    result.setQuerySpec(querySpec);
+    return Optional.of(querySpec);
   }
 
   @Override
   public void setQueryOutput(QuerySummary output) {
-    this.queryOutput = output;
+    result.setQuerySummary(output);
   }
 
   public void setVcsState(Optional<VcsState> state) {
-    this.vcsState = state;
+    result.setVcsState(state);
   }
 
   @Override
   public BlazeProjectSnapshot createBlazeProject() throws IOException {
-    Preconditions.checkNotNull(queryOutput, "queryOutput");
-    Preconditions.checkNotNull(vcsState, "vcsState");
-    BuildGraphData graph = queryParser.parse(queryOutput);
+    PostQuerySyncData newData = result.build();
+    BuildGraphData graph = queryParser.parse(newData.querySummary());
     ProjectProto.Project project = graphToProjectConverter.createProject(graph);
-    return BlazeProjectSnapshot.builder()
-        .projectIncludes(projectIncludes)
-        .projectExcludes(projectExcludes)
-        .queryOutput(queryOutput)
-        .vcsState(vcsState)
-        .graph(graph)
-        .project(project)
-        .build();
+    return BlazeProjectSnapshot.builder().queryData(newData).graph(graph).project(project).build();
   }
 }

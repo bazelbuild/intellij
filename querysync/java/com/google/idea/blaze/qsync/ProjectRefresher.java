@@ -21,10 +21,11 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.qsync.project.PostQuerySyncData;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.vcs.VcsState;
 import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -35,26 +36,27 @@ import java.util.Optional;
 public class ProjectRefresher {
 
   private final PackageReader packageReader;
+  private final Path workspaceRoot;
 
-  public ProjectRefresher(PackageReader packageReader) {
+  public ProjectRefresher(PackageReader packageReader, Path workspaceRoot) {
     this.packageReader = packageReader;
+    this.workspaceRoot = workspaceRoot;
   }
 
-  public FullProjectUpdate startFullUpdate(
-      Context context, List<Path> projectIncludes, List<Path> projectExcludes) {
-    return new FullProjectUpdate(context, projectIncludes, projectExcludes, packageReader);
+  public FullProjectUpdate startFullUpdate(Context context, ProjectDefinition spec) {
+    return new FullProjectUpdate(context, workspaceRoot, spec, packageReader);
   }
 
   public RefreshOperation startPartialRefresh(
-      Context context, BlazeProjectSnapshot currentProject, Optional<VcsState> latestVcsState) {
+      Context context, PostQuerySyncData currentProject, Optional<VcsState> latestVcsState) {
     if (!currentProject.vcsState().isPresent()) {
       context.output(PrintOutput.output("No VCS state from last query: performing full query"));
-      return fullUpdate(context, currentProject, latestVcsState);
+      return fullUpdate(context, currentProject.syncSpec(), latestVcsState);
     }
     if (!latestVcsState.isPresent()) {
       context.output(
           PrintOutput.output("VCS doesn't support delta updates: performing full query"));
-      return fullUpdate(context, currentProject, latestVcsState);
+      return fullUpdate(context, currentProject.syncSpec(), latestVcsState);
     }
     if (!Objects.equals(
         currentProject.vcsState().get().upstreamRevision, latestVcsState.get().upstreamRevision)) {
@@ -63,7 +65,7 @@ public class ProjectRefresher {
               "Upstream revision has changed %s -> %s: performing full query",
               currentProject.vcsState().get().upstreamRevision,
               latestVcsState.get().upstreamRevision));
-      return fullUpdate(context, currentProject, latestVcsState);
+      return fullUpdate(context, currentProject.syncSpec(), latestVcsState);
     }
     // Build the effective working set. This includes the working set as was when the original
     // sync query was run, as it's possible that files have been reverted since then but the
@@ -85,19 +87,14 @@ public class ProjectRefresher {
     AffectedPackages affected =
         AffectedPackagesCalculator.builder()
             .context(context)
-            .projectIncludes(currentProject.projectIncludes())
-            .projectExcludes(currentProject.projectExcludes())
+            .projectIncludes(currentProject.syncSpec().projectIncludes())
+            .projectExcludes(currentProject.syncSpec().projectExcludes())
             .changedFiles(Sets.union(latestVcsState.get().workingSet, revertedChanges))
-            .lastQuery(currentProject.queryOutput())
+            .lastQuery(currentProject.querySummary())
             .build()
             .getAffectedPackages();
     // TODO check affected.isIncomplete() and offer (or just do?) a full sync in that case.
 
-    if (affected.isEmpty()) {
-      // this implies that the user was in a clean client, and still is.
-      context.output(PrintOutput.output("Nothing has changed, nothing to do."));
-      return new NoopProjectRefresh(currentProject);
-    }
     return new PartialProjectRefresh(
         context,
         packageReader,
@@ -108,13 +105,8 @@ public class ProjectRefresher {
   }
 
   private RefreshOperation fullUpdate(
-      Context context, BlazeProjectSnapshot currentProject, Optional<VcsState> latestVcsState) {
-    FullProjectUpdate fullQuery =
-        new FullProjectUpdate(
-            context,
-            currentProject.projectIncludes(),
-            currentProject.projectExcludes(),
-            packageReader);
+      Context context, ProjectDefinition projectDefinition, Optional<VcsState> latestVcsState) {
+    FullProjectUpdate fullQuery = startFullUpdate(context, projectDefinition);
     fullQuery.setVcsState(latestVcsState);
     return fullQuery;
   }

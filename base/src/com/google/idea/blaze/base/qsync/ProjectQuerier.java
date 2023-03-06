@@ -16,7 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import java.io.IOException;
 
 /**

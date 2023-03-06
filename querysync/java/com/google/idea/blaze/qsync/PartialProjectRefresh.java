@@ -21,6 +21,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.Query.SourceFile;
@@ -41,10 +44,10 @@ import java.util.Optional;
  */
 class PartialProjectRefresh implements RefreshOperation {
 
-  private final BlazeProjectSnapshot previousState;
+  private final PostQuerySyncData previousState;
   private final BlazeQueryParser queryParser;
   private final GraphToProjectConverter graphToProjectConverter;
-  private final Optional<VcsState> vcsState;
+  private final PostQuerySyncData.Builder newState;
   @VisibleForTesting final ImmutableSet<Path> modifiedPackages;
   @VisibleForTesting final ImmutableSet<Path> deletedPackages;
   private QuerySummary partialQuery;
@@ -52,30 +55,36 @@ class PartialProjectRefresh implements RefreshOperation {
   PartialProjectRefresh(
       Context context,
       PackageReader packageReader,
-      BlazeProjectSnapshot previousState,
-      Optional<VcsState> vcsState,
+      PostQuerySyncData previousState,
+      Optional<VcsState> currentVcsState,
       ImmutableSet<Path> modifiedPackages,
       ImmutableSet<Path> deletedPackages) {
     this.previousState = previousState;
-    this.vcsState = vcsState;
+    this.newState =
+        PostQuerySyncData.builder()
+            .setVcsState(currentVcsState)
+            .setSyncSpec(previousState.syncSpec());
     this.modifiedPackages = modifiedPackages;
     this.deletedPackages = deletedPackages;
     this.queryParser = new BlazeQueryParser(context);
     this.graphToProjectConverter =
-        new GraphToProjectConverter(
-            packageReader,
-            context,
-            previousState.projectIncludes(),
-            previousState.projectExcludes());
+        new GraphToProjectConverter(packageReader, context, previousState.syncSpec());
   }
 
-  @Override
-  public Optional<QuerySpec> getQuerySpec() {
+  private Optional<QuerySpec> createQuerySpec() {
     if (modifiedPackages.isEmpty()) {
       // this can happen if the user just deletes a build file that doesn't have a parent package.
       return Optional.empty();
     }
+    // TODO should we also consider excludes here?
     return Optional.of(QuerySpec.builder().includePackages(modifiedPackages).build());
+  }
+
+  @Override
+  public Optional<QuerySpec> getQuerySpec() {
+    Optional<QuerySpec> querySpec = createQuerySpec();
+    newState.setQuerySpec(querySpec.orElse(QuerySpec.EMPTY));
+    return querySpec;
   }
 
   @Override
@@ -87,11 +96,11 @@ class PartialProjectRefresh implements RefreshOperation {
   public BlazeProjectSnapshot createBlazeProject() throws IOException {
     Preconditions.checkNotNull(partialQuery, "queryOutput");
     QuerySummary effectiveQuery = applyDelta();
+    PostQuerySyncData postQuerySyncData = newState.setQuerySummary(effectiveQuery).build();
     BuildGraphData graph = queryParser.parse(effectiveQuery);
     ProjectProto.Project project = graphToProjectConverter.createProject(graph);
-    return previousState.toBuilder()
-        .vcsState(vcsState)
-        .queryOutput(effectiveQuery)
+    return BlazeProjectSnapshot.builder()
+        .queryData(postQuerySyncData)
         .graph(graph)
         .project(project)
         .build();
@@ -106,7 +115,7 @@ class PartialProjectRefresh implements RefreshOperation {
     // copy all unaffected rules / source files to result:
     Map<Label, SourceFile> newSourceFiles = Maps.newHashMap();
     for (Map.Entry<Label, SourceFile> sfEntry :
-        previousState.queryOutput().getSourceFilesMap().entrySet()) {
+        previousState.querySummary().getSourceFilesMap().entrySet()) {
       Path buildPackage = sfEntry.getKey().getPackage();
       if (!(deletedPackages.contains(buildPackage)
           || partialQuery.getPackages().contains(buildPackage))) {
@@ -115,7 +124,7 @@ class PartialProjectRefresh implements RefreshOperation {
     }
     Map<Label, Query.Rule> newRules = Maps.newHashMap();
     for (Map.Entry<Label, Query.Rule> ruleEntry :
-        previousState.queryOutput().getRulesMap().entrySet()) {
+        previousState.querySummary().getRulesMap().entrySet()) {
       Path buildPackage = ruleEntry.getKey().getPackage();
       if (!(deletedPackages.contains(buildPackage)
           || partialQuery.getPackages().contains(buildPackage))) {

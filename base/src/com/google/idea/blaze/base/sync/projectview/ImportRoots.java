@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.base.sync.projectview;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableCollection;
@@ -173,20 +173,20 @@ public final class ImportRoots {
   }
 
   /** Returns the import roots, as paths relative to the workspace root. */
-  public ImmutableList<Path> rootPaths() {
+  public ImmutableSet<Path> rootPaths() {
     return projectDirectories.rootDirectories.stream()
         .map(WorkspacePath::asPath)
-        .collect(toImmutableList());
+        .collect(toImmutableSet());
   }
 
   public Set<WorkspacePath> excludeDirectories() {
     return projectDirectories.excludeDirectories;
   }
 
-  public ImmutableList<Path> excludePaths() {
+  public ImmutableSet<Path> excludePaths() {
     return projectDirectories.excludeDirectories.stream()
         .map(WorkspacePath::asPath)
-        .collect(toImmutableList());
+        .collect(toImmutableSet());
   }
 
   /** Returns true if this rule should be imported as source. */

@@ -23,6 +23,8 @@ import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.testdata.TestData;
@@ -46,8 +48,7 @@ public class GraphToProjectConverterTest {
         new GraphToProjectConverter(
             sourcePackages::get,
             NOOP_CONTEXT,
-            ImmutableList.of(Path.of("java/com/test")),
-            ImmutableList.of());
+            ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
     Map<String, Map<String, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
@@ -64,8 +65,7 @@ public class GraphToProjectConverterTest {
         new GraphToProjectConverter(
             sourcePackages::get,
             NOOP_CONTEXT,
-            ImmutableList.of(Path.of("java/com/test")),
-            ImmutableList.of());
+            ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
     Map<String, Map<String, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
@@ -84,8 +84,7 @@ public class GraphToProjectConverterTest {
         new GraphToProjectConverter(
             sourcePackages::get,
             NOOP_CONTEXT,
-            ImmutableList.of(Path.of("java/com/test")),
-            ImmutableList.of());
+            ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
     Map<String, Map<String, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
@@ -104,8 +103,9 @@ public class GraphToProjectConverterTest {
         new GraphToProjectConverter(
             sourcePackages::get,
             NOOP_CONTEXT,
-            ImmutableList.of(Path.of("java/com/app"), Path.of("java/com/lib")),
-            ImmutableList.of());
+            ProjectDefinition.create(
+                ImmutableSet.of(Path.of("java/com/app"), Path.of("java/com/lib")),
+                ImmutableSet.of()));
 
     Map<String, Map<String, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
@@ -128,8 +128,7 @@ public class GraphToProjectConverterTest {
         new GraphToProjectConverter(
             sourcePackages::get,
             NOOP_CONTEXT,
-            ImmutableList.of(Path.of("java/com/test")),
-            ImmutableList.of());
+            ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
     Map<String, Map<String, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
@@ -153,8 +152,7 @@ public class GraphToProjectConverterTest {
         new GraphToProjectConverter(
             sourcePackages::get,
             NOOP_CONTEXT,
-            ImmutableList.of(Path.of("java/com/test")),
-            ImmutableList.of());
+            ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
     Map<String, Map<String, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
@@ -208,7 +206,9 @@ public class GraphToProjectConverterTest {
   public void testCalculateAndroidSourcePackages_rootWithEmptyPrefix() {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
-            EMPTY_PACKAGE_READER, NOOP_CONTEXT, ImmutableList.of(), ImmutableList.of());
+            EMPTY_PACKAGE_READER,
+            NOOP_CONTEXT,
+            ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of()));
 
     ImmutableList<Path> androidSourceFiles =
         ImmutableList.of(
@@ -225,7 +225,9 @@ public class GraphToProjectConverterTest {
   public void testCalculateAndroidSourcePackages_emptyRootWithPrefix() {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
-            EMPTY_PACKAGE_READER, NOOP_CONTEXT, ImmutableList.of(), ImmutableList.of());
+            EMPTY_PACKAGE_READER,
+            NOOP_CONTEXT,
+            ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of()));
 
     ImmutableList<Path> androidSourceFiles =
         ImmutableList.of(
@@ -243,7 +245,9 @@ public class GraphToProjectConverterTest {
   public void testCalculateAndroidSourcePackages_emptyRootAndNonEmptyRoot() {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
-            EMPTY_PACKAGE_READER, NOOP_CONTEXT, ImmutableList.of(), ImmutableList.of());
+            EMPTY_PACKAGE_READER,
+            NOOP_CONTEXT,
+            ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of()));
 
     ImmutableList<Path> androidSourceFiles =
         ImmutableList.of(
@@ -265,7 +269,9 @@ public class GraphToProjectConverterTest {
   public void testConvertProject_emptyProject() throws IOException {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
-            EMPTY_PACKAGE_READER, NOOP_CONTEXT, ImmutableList.of(), ImmutableList.of());
+            EMPTY_PACKAGE_READER,
+            NOOP_CONTEXT,
+            ProjectDefinition.create(ImmutableSet.of(), ImmutableSet.of()));
     ProjectProto.Project project = converter.createProject(BuildGraphData.EMPTY);
     assertThat(project.getModulesCount()).isEqualTo(1);
 
@@ -291,8 +297,7 @@ public class GraphToProjectConverterTest {
         new GraphToProjectConverter(
             EMPTY_PACKAGE_READER,
             NOOP_CONTEXT,
-            ImmutableList.of(workspaceImportDirectory),
-            ImmutableList.of());
+            ProjectDefinition.create(ImmutableSet.of(workspaceImportDirectory), ImmutableSet.of()));
 
     BuildGraphData buildGraphData =
         new BlazeQueryParser(NOOP_CONTEXT)

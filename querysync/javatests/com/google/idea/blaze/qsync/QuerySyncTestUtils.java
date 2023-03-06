@@ -15,11 +15,9 @@
  */
 package com.google.idea.blaze.qsync;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Output;
-import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import com.google.idea.blaze.qsync.vcs.VcsState;
@@ -45,15 +43,6 @@ public class QuerySyncTestUtils {
   public static final Optional<VcsState> CLEAN_VCS_STATE =
       Optional.of(new VcsState("1", ImmutableSet.of()));
 
-  public static BlazeProjectSnapshot.Builder emptyProjectBuilder() {
-    return BlazeProjectSnapshot.builder()
-        .projectIncludes(ImmutableList.of())
-        .projectExcludes(ImmutableList.of())
-        .queryOutput(QuerySummary.EMPTY)
-        .graph(BuildGraphData.EMPTY)
-        .vcsState(Optional.empty())
-        .project(ProjectProto.Project.getDefaultInstance());
-  }
 
   public static QuerySummary getQuerySummary(TestData genQueryName) throws IOException {
     return QuerySummary.create(TestData.getPathFor(genQueryName).toFile());

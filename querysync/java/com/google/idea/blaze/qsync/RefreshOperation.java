@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.qsync;
 
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.io.IOException;
@@ -35,7 +36,7 @@ import java.util.Optional;
 public interface RefreshOperation {
 
   /** Returns the spec of the query to be run for this strategy. */
-  Optional<QuerySpec> getQuerySpec();
+  Optional<QuerySpec> getQuerySpec() throws IOException;
 
   /** Passes the output from the query specified by {@link #getQuerySpec()}. */
   void setQueryOutput(QuerySummary output);

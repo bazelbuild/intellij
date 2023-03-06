@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync;
+package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.NOOP_CONTEXT;
 import static com.google.idea.blaze.qsync.QuerySyncTestUtils.getQuerySummary;
 
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.nio.file.Path;
 import org.junit.Test;

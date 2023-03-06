@@ -18,14 +18,17 @@ package com.google.idea.blaze.qsync;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 /** Keeps a reference to the most up-to date {@link BlazeProjectSnapshot} instance. */
 public class BlazeProject {
 
   private final Object lock = new Object();
-  private BlazeProjectSnapshot currentInstance = BlazeProjectSnapshot.EMPTY;
+  @Nullable private BlazeProjectSnapshot currentInstance = null;
 
   private final List<BlazeProjectListener> listeners = Lists.newArrayList();
 
@@ -51,9 +54,9 @@ public class BlazeProject {
     }
   }
 
-  public BlazeProjectSnapshot getCurrent() {
+  public Optional<BlazeProjectSnapshot> getCurrent() {
     synchronized (lock) {
-      return currentInstance;
+      return Optional.ofNullable(currentInstance);
     }
   }
 }

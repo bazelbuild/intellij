@@ -16,10 +16,10 @@
 package com.google.idea.blaze.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.blaze.qsync.QuerySyncTestUtils.emptyProjectBuilder;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.qsync.project.PostQuerySyncData;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
 import com.google.idea.blaze.qsync.vcs.VcsState;
 import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
@@ -34,13 +34,15 @@ import org.junit.runners.JUnit4;
 public class ProjectRefresherTest {
 
   private ProjectRefresher createRefresher() {
-    return new ProjectRefresher(QuerySyncTestUtils.EMPTY_PACKAGE_READER);
+    return new ProjectRefresher(QuerySyncTestUtils.EMPTY_PACKAGE_READER, Path.of("/"));
   }
 
   @Test
   public void testStartPartialRefresh_upstreamRevisionChange() {
-    BlazeProjectSnapshot project =
-        emptyProjectBuilder().vcsState(Optional.of(new VcsState("1", ImmutableSet.of()))).build();
+    PostQuerySyncData project =
+        PostQuerySyncData.EMPTY.toBuilder()
+            .setVcsState(Optional.of(new VcsState("1", ImmutableSet.of())))
+            .build();
 
     RefreshOperation update =
         createRefresher()
@@ -53,17 +55,18 @@ public class ProjectRefresherTest {
 
   @Test
   public void testStartPartialRefresh_buildFileAddedThenReverted() {
-    BlazeProjectSnapshot project =
-        emptyProjectBuilder()
-            .queryOutput(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
-            .vcsState(
+    PostQuerySyncData project =
+        PostQuerySyncData.EMPTY.toBuilder()
+            .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
+            .setVcsState(
                 Optional.of(
                     new VcsState(
                         "1",
                         ImmutableSet.of(
                             new WorkspaceFileChange(
                                 Operation.ADD, Path.of("package/path/BUILD"))))))
-            .projectIncludes(ImmutableList.of(Path.of("package")))
+            .setSyncSpec(
+                ProjectDefinition.create(ImmutableSet.of(Path.of("package")), ImmutableSet.of()))
             .build();
 
     RefreshOperation update =
@@ -81,16 +84,17 @@ public class ProjectRefresherTest {
 
   @Test
   public void testStartPartialRefresh_buildFileDeletedThenReverted() {
-    BlazeProjectSnapshot project =
-        emptyProjectBuilder()
-            .vcsState(
+    PostQuerySyncData project =
+        PostQuerySyncData.EMPTY.toBuilder()
+            .setVcsState(
                 Optional.of(
                     new VcsState(
                         "1",
                         ImmutableSet.of(
                             new WorkspaceFileChange(
                                 Operation.DELETE, Path.of("package/path/BUILD"))))))
-            .projectIncludes(ImmutableList.of(Path.of("package")))
+            .setSyncSpec(
+                ProjectDefinition.create(ImmutableSet.of(Path.of("package")), ImmutableSet.of()))
             .build();
 
     RefreshOperation update =
@@ -108,17 +112,18 @@ public class ProjectRefresherTest {
 
   @Test
   public void testStartPartialRefresh_buildFileModifiedThenReverted() {
-    BlazeProjectSnapshot project =
-        emptyProjectBuilder()
-            .queryOutput(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
-            .vcsState(
+    PostQuerySyncData project =
+        PostQuerySyncData.EMPTY.toBuilder()
+            .setQuerySummary(QuerySummaryTestUtil.createProtoForPackages("//package/path:rule"))
+            .setVcsState(
                 Optional.of(
                     new VcsState(
                         "1",
                         ImmutableSet.of(
                             new WorkspaceFileChange(
                                 Operation.MODIFY, Path.of("package/path/BUILD"))))))
-            .projectIncludes(ImmutableList.of(Path.of("package")))
+            .setSyncSpec(
+                ProjectDefinition.create(ImmutableSet.of(Path.of("package")), ImmutableSet.of()))
             .build();
 
     RefreshOperation update =
