@@ -46,7 +46,9 @@ import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.PostQuerySyncData;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -59,7 +61,25 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 
-/** The project component for a query based sync. */
+/**
+ * The project component for a query based sync.
+ *
+ * <p>This class manages sync'ing the intelliJ project state to the state of the Bazel project in
+ * the workspace, as well as building dependencies of the project.
+ *
+ * <p>The sync'd state of a project is represented by {@link BlazeProjectSnapshot}. During the sync
+ * process, different parts of that are available at different phases:
+ *
+ * <ul>
+ *   <li>{@link ProjectDefinition}: the input to the sync process that can be created from the
+ *       project configuration. This class remained unchanged throughout sync.
+ *   <li>{@link PostQuerySyncData}: the state after the query invocation has been made, or after a
+ *       delta has been applied to that. This class is the input and output to the partial update
+ *       operation, and also contains the data that will be persisted to disk over an IDE restart.
+ *   <li>{@link BlazeProjectSnapshot}: the full project state, created in the last phase of sync
+ *       from {@link PostQuerySyncData}.
+ * </ul>
+ */
 public class QuerySyncManager {
 
   private final Logger logger = Logger.getInstance(getClass());
@@ -134,9 +154,9 @@ public class QuerySyncManager {
   private void sync(BlazeContext context, boolean full) {
     try {
       BlazeProjectSnapshot newProject =
-          full
+          full || graph.getCurrent().isEmpty()
               ? projectQuerier.fullQuery(context)
-              : projectQuerier.update(graph.getCurrent(), context);
+              : projectQuerier.update(graph.getCurrent().get(), context);
       graph.setCurrent(context, newProject);
       // TODO: Revisit SyncListeners once we switch fully to qsync
       BlazeImportSettings settings =

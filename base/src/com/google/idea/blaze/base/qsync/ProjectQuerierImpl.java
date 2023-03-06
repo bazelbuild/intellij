@@ -22,7 +22,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -33,12 +32,13 @@ import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.common.PrintOutput;
-import com.google.idea.blaze.qsync.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.FullProjectUpdate;
 import com.google.idea.blaze.qsync.PackageStatementParser;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.RefreshOperation;
 import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.vcs.VcsState;
@@ -46,14 +46,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Stream;
 
 /** An object that knows how to */
 public class ProjectQuerierImpl implements ProjectQuerier {
@@ -86,7 +81,8 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     Path workspaceRoot = WorkspaceRoot.fromImportSettings(settings).path();
     ProjectRefresher projectRefresher =
         new ProjectRefresher(
-            new WorkspaceResolvingPackageReader(workspaceRoot, new PackageStatementParser()));
+            new WorkspaceResolvingPackageReader(workspaceRoot, new PackageStatementParser()),
+            workspaceRoot);
     QueryRunner queryRunner = new BazelBinaryQueryRunner(project, workspaceRoot);
     return new ProjectQuerierImpl(
         project, settings.getBuildSystem(), workspaceRoot, queryRunner, projectRefresher);
@@ -106,12 +102,9 @@ public class ProjectQuerierImpl implements ProjectQuerier {
         ImportRoots.builder(WorkspaceRoot.fromProject(project), buildSystem)
             .add(projectViewSet)
             .build();
+    ProjectDefinition spec = ProjectDefinition.create(ir.rootPaths(), ir.excludePaths());
 
-    FullProjectUpdate fullQuery =
-        projectRefresher.startFullUpdate(
-            context,
-            getValidDirectories(context, ir.rootDirectories()),
-            getValidDirectories(context, ir.excludeDirectories()));
+    FullProjectUpdate fullQuery = projectRefresher.startFullUpdate(context, spec);
 
     Optional<ListenableFuture<VcsState>> vcsStateFuture = getVcsState(context);
     // TODO if we throw between here and when we get this future, perhaps we should cancel it?
@@ -175,7 +168,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     }
 
     RefreshOperation refresh =
-        projectRefresher.startPartialRefresh(context, previousState, vcsState);
+        projectRefresher.startPartialRefresh(context, previousState.queryData(), vcsState);
 
     Optional<QuerySpec> spec = refresh.getQuerySpec();
     if (spec.isPresent()) {
@@ -193,44 +186,4 @@ public class ProjectQuerierImpl implements ProjectQuerier {
         .flatMap(h -> h.getVcsState(context, BlazeExecutor.getInstance().getExecutor()));
   }
 
-  private List<Path> getValidDirectories(BlazeContext context, Collection<WorkspacePath> ir)
-      throws IOException {
-    ArrayList<Path> paths = new ArrayList<>();
-    for (WorkspacePath rootDirectory : ir) {
-      String root = rootDirectory.toString();
-      Path candidate = workspaceRoot.resolve(root);
-      if (isValid(context, candidate)) {
-        paths.add(workspaceRoot.relativize(candidate));
-      }
-    }
-    return paths;
-  }
-
-  private static boolean isValid(BlazeContext context, Path candidate) throws IOException {
-    if (Files.exists(candidate.resolve("BUILD"))) {
-      return true;
-    }
-    if (!Files.isDirectory(candidate)) {
-      context.output(
-          PrintOutput.output(
-              "Directory specified in project does not exist or is not a directory: %s",
-              candidate));
-      return false;
-    }
-    boolean valid = false;
-    try (Stream<Path> stream = Files.list(candidate)) {
-      for (Path child : stream.toArray(Path[]::new)) {
-        if (Files.isDirectory(child)) {
-          boolean validChild = isValid(context, child);
-          valid = valid || validChild;
-        } else {
-          if (child.toString().endsWith(".java") || child.toString().endsWith(".kt")) {
-            context.output(
-                PrintOutput.log("WARNING: Sources found outside BUILD packages: " + child));
-          }
-        }
-      }
-    }
-    return valid;
-  }
 }

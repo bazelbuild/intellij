@@ -28,6 +28,8 @@ import java.util.Collection;
 @AutoValue
 public abstract class QuerySpec {
 
+  public static final QuerySpec EMPTY = builder().build();
+
   /** The set of package patterns to include. */
   abstract ImmutableList<String> includes();
 
@@ -71,11 +73,12 @@ public abstract class QuerySpec {
     abstract ImmutableList.Builder<String> excludesBuilder();
 
     @CanIgnoreReturnValue
-    public Builder includePaths(Collection<Path> includes) {
+    public Builder includePath(Path include) {
       // Convert root directories into blaze target patterns:
-      includes.stream().map(p -> String.format("//%s/...", p)).forEach(includesBuilder()::add);
+      includesBuilder().add(String.format("//%s/...", include));
       return this;
     }
+
 
     @CanIgnoreReturnValue
     public Builder excludePaths(Collection<Path> excludes) {

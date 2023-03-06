@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,6 +40,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -73,10 +75,11 @@ public class DependencyTracker {
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
     Path rel = Paths.get(settings.getWorkspaceRoot()).relativize(Paths.get(vf.getPath()));
 
-    ImmutableSet<Label> targets = blazeProject.getCurrent().getFileDependencies(rel);
-    if (targets == null) {
+    Optional<BlazeProjectSnapshot> currentSnapshot = blazeProject.getCurrent();
+    if (currentSnapshot.isEmpty()) {
       return null;
     }
+    ImmutableSet<Label> targets = currentSnapshot.get().getFileDependencies(rel);
     return Sets.difference(targets, syncedTargets).immutableCopy();
   }
 
@@ -92,11 +95,16 @@ public class DependencyTracker {
     ImportRoots ir =
         ImportRoots.builder(workspaceRoot, settings.getBuildSystem()).add(projectViewSet).build();
 
+    BlazeProjectSnapshot snapshot =
+        blazeProject
+            .getCurrent()
+            .orElseThrow(() -> new IllegalStateException("Sync is not yet complete"));
+
     Set<Label> targets = new HashSet<>();
     Set<Label> buildTargets = new HashSet<>();
     for (WorkspacePath path : paths) {
-      buildTargets.add(blazeProject.getCurrent().getTargetOwner(path.asPath()));
-      ImmutableSet<Label> t = blazeProject.getCurrent().getFileDependencies(path.asPath());
+      buildTargets.add(snapshot.getTargetOwner(path.asPath()));
+      ImmutableSet<Label> t = snapshot.getFileDependencies(path.asPath());
       if (t != null) {
         targets.addAll(t);
       }
@@ -104,9 +112,7 @@ public class DependencyTracker {
 
     int size = targets.size();
     targets.removeIf(syncedTargets::contains);
-    context.output(
-        PrintOutput.log(
-            String.format("Removing already synced targets %d", size - targets.size())));
+    context.output(PrintOutput.log("Removing already synced targets %d", size - targets.size()));
 
     if (targets.isEmpty()) {
       return;

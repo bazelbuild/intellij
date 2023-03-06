@@ -16,6 +16,7 @@
 package com.google.idea.blaze.qsync;
 
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import java.io.IOException;
 
 /** A listener interface for new project snapshots. */

@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync;
+package com.google.idea.blaze.qsync.project;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -41,12 +42,12 @@ import javax.annotation.Nullable;
  * to the project structure.
  */
 @AutoValue
-abstract class BuildGraphData {
+public abstract class BuildGraphData {
 
   /** A map from target to file on disk for all source files */
-  abstract ImmutableMap<Label, Location> locations();
+  public abstract ImmutableMap<Label, Location> locations();
   /** A set of all the targets that show up in java rules 'src' attributes */
-  abstract ImmutableSet<Label> javaSources();
+  public abstract ImmutableSet<Label> javaSources();
   /** A map from a file path to its target */
   abstract ImmutableMap<Path, Label> fileToTarget();
   /** From source target to the rule that builds it. If multiple one is picked. */
@@ -59,7 +60,7 @@ abstract class BuildGraphData {
    */
   abstract ImmutableMap<Label, ImmutableSet<Label>> ruleDeps();
   /** All dependencies external to this project */
-  abstract ImmutableSet<Label> projectDeps();
+  public abstract ImmutableSet<Label> projectDeps();
 
   abstract ImmutableSet<Label> androidTargets();
 
@@ -72,19 +73,21 @@ abstract class BuildGraphData {
     return getClass().getSimpleName() + "@" + Integer.toHexString(System.identityHashCode(this));
   }
 
-  static Builder builder() {
+  public static Builder builder() {
     return new AutoValue_BuildGraphData.Builder();
   }
 
-  static final BuildGraphData EMPTY =
+  @VisibleForTesting
+  public static final BuildGraphData EMPTY =
       builder()
           .sourceOwner(ImmutableMap.of())
           .ruleDeps(ImmutableMap.of())
           .projectDeps(ImmutableSet.of())
           .build();
 
+  /** Builder for {@link BuildGraphData}. */
   @AutoValue.Builder
-  abstract static class Builder {
+  public abstract static class Builder {
 
     public abstract ImmutableMap.Builder<Label, Location> locationsBuilder();
 
@@ -175,7 +178,7 @@ abstract class BuildGraphData {
   }
 
   /** Returns a list of all the source files of the project, relative to the workspace root. */
-  List<Path> getJavaSourceFiles() {
+  public List<Path> getJavaSourceFiles() {
     List<Path> files = new ArrayList<>();
     for (Label src : javaSources()) {
       Location location = locations().get(src);
@@ -187,14 +190,14 @@ abstract class BuildGraphData {
     return files;
   }
 
-  List<Path> getAllSourceFiles() {
+  public List<Path> getAllSourceFiles() {
     List<Path> files = new ArrayList<>();
     files.addAll(fileToTarget().keySet());
     return files;
   }
 
   /** Returns a list of source files owned by an Android target, relative to the workspace root. */
-  List<Path> getAndroidSourceFiles() {
+  public List<Path> getAndroidSourceFiles() {
     List<Path> files = new ArrayList<>();
     for (Label source : javaSources()) {
       Label owningTarget = sourceOwner().get(source);

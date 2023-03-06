@@ -17,10 +17,10 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth8.assertThat;
-import static com.google.idea.blaze.qsync.QuerySyncTestUtils.emptyProjectBuilder;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.query.Query;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import java.nio.file.Path;
@@ -74,7 +74,8 @@ public class PartialProjectRefreshTest {
                         .setLocation("my/build/package2/BUILD:1:1")
                         .build())
                 .build());
-    BlazeProjectSnapshot baseProject = emptyProjectBuilder().queryOutput(base).build();
+    PostQuerySyncData baseProject =
+        PostQuerySyncData.EMPTY.toBuilder().setQuerySummary(base).build();
 
     QuerySummary delta =
         QuerySummary.create(
@@ -159,7 +160,8 @@ public class PartialProjectRefreshTest {
                         .setLocation("my/build/package2/BUILD:1:1")
                         .build())
                 .build());
-    BlazeProjectSnapshot baseProject = emptyProjectBuilder().queryOutput(base).build();
+    PostQuerySyncData baseProject =
+        PostQuerySyncData.EMPTY.toBuilder().setQuerySummary(base).build();
 
     PartialProjectRefresh queryStrategy =
         new PartialProjectRefresh(
@@ -201,7 +203,8 @@ public class PartialProjectRefreshTest {
                         .setLocation("my/build/package1/BUILD:1:1")
                         .build())
                 .build());
-    BlazeProjectSnapshot baseProject = emptyProjectBuilder().queryOutput(base).build();
+    PostQuerySyncData baseProject =
+        PostQuerySyncData.EMPTY.toBuilder().setQuerySummary(base).build();
     QuerySummary delta =
         QuerySummary.create(
             Query.Summary.newBuilder()

@@ -20,13 +20,13 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import java.io.IOException;
@@ -46,18 +46,13 @@ public class GraphToProjectConverter {
   private final PackageReader packageReader;
   private final Context context;
 
-  private final ImmutableList<Path> importRoots;
-  private final ImmutableList<Path> excludePaths;
+  private final ProjectDefinition projectDefinition;
 
   public GraphToProjectConverter(
-      PackageReader packageReader,
-      Context context,
-      ImmutableList<Path> importRoots,
-      ImmutableList<Path> excludePaths) {
+      PackageReader packageReader, Context context, ProjectDefinition projectDefinition) {
     this.packageReader = packageReader;
     this.context = context;
-    this.importRoots = importRoots;
-    this.excludePaths = excludePaths;
+    this.projectDefinition = projectDefinition;
   }
 
   @VisibleForTesting
@@ -84,7 +79,7 @@ public class GraphToProjectConverter {
 
     // Group per root:
     Map<String, Map<String, Path>> rootDirs = new HashMap<>();
-    for (Path root : importRoots) {
+    for (Path root : projectDefinition.projectIncludes()) {
       Map<String, Path> inRoot = new TreeMap<>(); // Must be sorted to do prefix later
       for (Entry<Path, Path> entry : dirs.entrySet()) {
         Path rel = entry.getKey();
@@ -197,8 +192,8 @@ public class GraphToProjectConverter {
     workspaceModule.addContentEntries(genSourcesContentEntry);
 
     ListMultimap<Path, Path> excludesByRootDirectory =
-        sortExcludesByRootDirectory(importRoots, excludePaths);
-    for (Path dir : importRoots) {
+        projectDefinition.getExcludesByRootDirectory();
+    for (Path dir : projectDefinition.projectIncludes()) {
       ProjectProto.ContentEntry.Builder contentEntry =
           ProjectProto.ContentEntry.newBuilder()
               .setRoot(
@@ -296,27 +291,4 @@ public class GraphToProjectConverter {
     return androidSourcePackages.build();
   }
 
-  public static ListMultimap<Path, Path> sortExcludesByRootDirectory(
-      Collection<Path> rootDirectories, Collection<Path> excludedDirectories) {
-
-    ListMultimap<Path, Path> result = ArrayListMultimap.create();
-    for (Path exclude : excludedDirectories) {
-      rootDirectories.stream()
-          .filter(rootDirectory -> isUnderRootDirectory(rootDirectory, exclude))
-          .findFirst()
-          .ifPresent(foundWorkspacePath -> result.put(foundWorkspacePath, exclude));
-    }
-    return result;
-  }
-
-  private static boolean isUnderRootDirectory(Path rootDirectory, Path relativePath) {
-    // TODO this can probably be cleaned up (or removed?) by using Path API properly.
-    if (rootDirectory.toString().equals(".") || rootDirectory.toString().isEmpty()) {
-      return true;
-    }
-    String rootDirectoryString = rootDirectory.toString();
-    return relativePath.startsWith(rootDirectoryString)
-        && (relativePath.toString().length() == rootDirectoryString.length()
-            || (relativePath.toString().charAt(rootDirectoryString.length()) == '/'));
-  }
 }

@@ -1,7 +1,5 @@
 package(default_visibility = [
     "//querysync:__subpackages__",
-    "//querysync/java/com/google/idea/blaze/qsync:__pkg__",
-    "//querysync/javatests/com/google/idea/blaze/qsync:__pkg__",
 ])
 
 proto_library(
