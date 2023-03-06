@@ -255,7 +255,7 @@ public final class BuildPhaseSyncTask {
         .setParallelBuilds(syncBuildInvoker.supportsParallelism());
 
     BlazeBuildOutputs blazeBuildResult =
-        getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker);
+        getBlazeBuildResult(context, viewSet, shardedTargets, syncBuildInvoker, parallel);
     resultBuilder.setBuildResult(blazeBuildResult);
     buildStats
         .setBuildResult(blazeBuildResult.buildResult)
@@ -413,7 +413,8 @@ public final class BuildPhaseSyncTask {
       BlazeContext parentContext,
       ProjectViewSet projectViewSet,
       ShardedTargetList shardedTargets,
-      BuildInvoker invoker) {
+      BuildInvoker invoker,
+      boolean invokeParallel) {
 
     return Scope.push(
         parentContext,
@@ -439,7 +440,8 @@ public final class BuildPhaseSyncTask {
               shardedTargets,
               projectState.getLanguageSettings(),
               ImmutableSet.of(OutputGroup.RESOLVE, OutputGroup.INFO),
-              BlazeInvocationContext.SYNC_CONTEXT);
+              BlazeInvocationContext.SYNC_CONTEXT,
+              invokeParallel);
         });
   }
 }

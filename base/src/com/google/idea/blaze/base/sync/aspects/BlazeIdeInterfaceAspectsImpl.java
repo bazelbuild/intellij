@@ -571,7 +571,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       ImmutableSet<OutputGroup> outputGroups,
-      BlazeInvocationContext blazeInvocationContext) {
+      BlazeInvocationContext blazeInvocationContext,
+      boolean invokeParallel) {
     AspectStrategy aspectStrategy = AspectStrategy.getInstance(blazeVersion);
 
     final Ref<BlazeBuildOutputs> combinedResult = new Ref<>();
@@ -633,7 +634,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                           targets,
                           aspectStrategy,
                           outputGroups,
-                          additionalBlazeFlags);
+                          additionalBlazeFlags,
+                          invokeParallel);
 
                   if (result.buildResult.outOfMemory()) {
                     logger.warn(
@@ -715,7 +717,8 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       List<? extends TargetExpression> targets,
       AspectStrategy aspectStrategy,
       ImmutableSet<OutputGroup> outputGroups,
-      List<String> additionalBlazeFlags) {
+      List<String> additionalBlazeFlags,
+      boolean invokeParallel) {
 
     boolean onlyDirectDeps =
         viewSet.getScalarValue(AutomaticallyDeriveTargetsSection.KEY).orElse(false);
@@ -724,6 +727,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
 
       BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.BUILD);
       builder
+          .setInvokeParallel(invokeParallel)
           .addTargets(targets)
           .addBlazeFlags(BlazeFlags.KEEP_GOING)
           .addBlazeFlags(buildResultHelper.getBuildFlags())

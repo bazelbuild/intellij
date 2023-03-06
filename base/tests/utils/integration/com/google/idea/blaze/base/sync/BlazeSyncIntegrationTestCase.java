@@ -339,7 +339,8 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         ShardedTargetList shardedTargets,
         WorkspaceLanguageSettings workspaceLanguageSettings,
         ImmutableSet<OutputGroup> outputGroups,
-        BlazeInvocationContext blazeInvocationContext) {
+        BlazeInvocationContext blazeInvocationContext,
+        boolean invokeParallel) {
       return BlazeBuildOutputs.noOutputs(BuildResult.SUCCESS);
     }
   }
