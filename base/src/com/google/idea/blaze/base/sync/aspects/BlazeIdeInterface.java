@@ -70,5 +70,6 @@ public interface BlazeIdeInterface {
       ShardedTargetList shardedTargets,
       WorkspaceLanguageSettings workspaceLanguageSettings,
       ImmutableSet<OutputGroup> outputGroups,
-      BlazeInvocationContext blazeInvocationContext);
+      BlazeInvocationContext blazeInvocationContext,
+      boolean invokeParallel);
 }

@@ -84,6 +84,7 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
 
   private BuildResult issueBuild(
       BlazeCommand.Builder blazeCommandBuilder, WorkspaceRoot workspaceRoot, BlazeContext context) {
+    blazeCommandBuilder.addBlazeFlags(getExtraBuildFlags(blazeCommandBuilder));
     int retVal =
         ExternalTask.builder(workspaceRoot)
             .addBlazeCommand(blazeCommandBuilder.build())

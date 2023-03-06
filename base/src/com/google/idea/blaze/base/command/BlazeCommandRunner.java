@@ -15,12 +15,14 @@
  */
 package com.google.idea.blaze.base.command;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.intellij.openapi.project.Project;
+import java.util.List;
 
 /** Runs a blaze command */
 public interface BlazeCommandRunner {
@@ -50,5 +52,10 @@ public interface BlazeCommandRunner {
   /** Allows enabling the use of command runner for restricted set of users. */
   default boolean shouldUseForLocalTests() {
     return false;
+  }
+
+  /** Get a list of additional build flags. */
+  default List<String> getExtraBuildFlags(BlazeCommand.Builder blazeCommandBuilder) {
+    return ImmutableList.of();
   }
 }
