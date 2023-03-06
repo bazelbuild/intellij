@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
+import com.intellij.icons.AllIcons.Actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -28,7 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.JBUI;
-import icons.BlazeIcons;
 import javax.swing.JComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +79,7 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     @NotNull
     public JComponent createCustomComponent(
         @NotNull Presentation presentation, @NotNull String place) {
-      presentation.setIcon(BlazeIcons.Logo);
+      presentation.setIcon(Actions.Compile);
       return new ActionButton(this, presentation, place, JBUI.size(16));
     }
   }
