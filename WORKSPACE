@@ -317,8 +317,8 @@ http_archive(
 http_archive(
     name = "android_studio_2022_3",
     build_file = "@//intellij_platform_sdk:BUILD.android_studio223",
-    sha256 = "5584d26479e5c231ceb339b87c07f7c7744d044a3f087f8125bf4ff94f6fb888",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2022.3.1.7/android-studio-2022.3.1.7-linux.tar.gz",
+    sha256 = "3face014d1862064e18fb5490854e64f66f9e16a512c8b52476481b21611cee4",
+    url = "https://dl.google.com/dl/android/studio/ide-zips/2022.3.1.8/android-studio-2022.3.1.8-linux.tar.gz",
 )
 
 # LICENSE: Common Public License 1.0
