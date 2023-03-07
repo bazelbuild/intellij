@@ -30,6 +30,8 @@ public interface BlazeProjectData {
   @Nullable
   TargetInfo getTargetInfo(Label label);
 
+  WorkspaceLanguageSettings getWorkspaceLanguageSettings();
+
   // TODO: Many of the following methods are aspect-sync specific, and should probably not appear in
   //  this interface.
 
@@ -44,8 +46,6 @@ public interface BlazeProjectData {
   WorkspacePathResolver getWorkspacePathResolver();
 
   ArtifactLocationDecoder getArtifactLocationDecoder();
-
-  WorkspaceLanguageSettings getWorkspaceLanguageSettings();
 
   RemoteOutputArtifacts getRemoteOutputs();
 
