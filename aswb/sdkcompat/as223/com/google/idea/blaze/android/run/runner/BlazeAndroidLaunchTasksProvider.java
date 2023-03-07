@@ -149,7 +149,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       throw new ExecutionException("Unable to determine application id: " + e);
     }
 
-    if (!launchOptions.isDebug() && launchOptions.isOpenLogcatAutomatically()) {
+    if (launchOptions.isOpenLogcatAutomatically()) {
       launchTasks.add(new ShowLogcatTask(project, packageName));
     }
 
