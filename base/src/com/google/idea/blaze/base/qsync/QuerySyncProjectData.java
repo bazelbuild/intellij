@@ -39,11 +39,16 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   private final WorkspacePathResolver workspacePathResolver;
   private final BlazeProject blazeProject;
+  private final WorkspaceLanguageSettings workspaceLanguageSettings;
 
-  QuerySyncProjectData(Project project, BlazeImportSettings importSettings) {
+  QuerySyncProjectData(
+      Project project,
+      BlazeImportSettings importSettings,
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
     blazeProject = QuerySyncManager.getInstance(project).getBlazeProject();
     workspacePathResolver =
         new WorkspacePathResolverImpl(WorkspaceRoot.fromImportSettings(importSettings));
+    this.workspaceLanguageSettings = workspaceLanguageSettings;
   }
 
   @Nullable
@@ -88,7 +93,7 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   @Override
   public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
-    return null;
+    return workspaceLanguageSettings;
   }
 
   @Override

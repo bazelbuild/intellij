@@ -15,9 +15,14 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
+import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
@@ -46,8 +51,11 @@ public class QuerySyncProjectDataManager implements BlazeProjectDataManager {
   @Nullable
   @Override
   public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
+    WorkspaceLanguageSettings workspaceLanguageSettings =
+        LanguageSupport.createWorkspaceLanguageSettings(
+            checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet()));
     // TODO(b/260231317): implement loading if necessary
-    projectData = new QuerySyncProjectData(project, importSettings);
+    projectData = new QuerySyncProjectData(project, importSettings, workspaceLanguageSettings);
     return projectData;
   }
 
