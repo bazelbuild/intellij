@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -88,7 +89,6 @@ public class QuerySyncManager {
   private final BlazeProject graph;
   private final DependencyTracker dependencyTracker;
   private final ProjectQuerier projectQuerier;
-  private final ProjectUpdater projectUpdater;
   private final DependencyBuilder builder;
   private final DependencyCache cache;
 
@@ -103,7 +103,6 @@ public class QuerySyncManager {
     this.cache = new DependencyCache(project);
     this.dependencyTracker = new DependencyTracker(project, graph, builder, cache);
     this.projectQuerier = ProjectQuerierImpl.create(project);
-    this.projectUpdater = new ProjectUpdater(project, graph);
   }
 
   @VisibleForTesting
@@ -120,7 +119,6 @@ public class QuerySyncManager {
     this.graph = graph;
     this.dependencyTracker = dependencyTracker;
     this.projectQuerier = projectQuerier;
-    this.projectUpdater = projectUpdater;
     this.builder = builder;
     this.cache = cache;
   }
@@ -256,13 +254,12 @@ public class QuerySyncManager {
 
     Path path = Paths.get(psiFile.getVirtualFile().getPath());
     String rel = Paths.get(settings.getWorkspaceRoot()).relativize(path).toString();
-    return build(List.of(WorkspacePath.createIfValid(rel)));
+    return build(ImmutableList.of(WorkspacePath.createIfValid(rel)));
   }
 
   public boolean isReadyForAnalysis(PsiFile psiFile) {
     Set<Label> pendingTargets =
         dependencyTracker.getPendingTargets(project, psiFile.getVirtualFile());
-    int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
-    return unsynced == 0;
+    return pendingTargets.isEmpty();
   }
 }

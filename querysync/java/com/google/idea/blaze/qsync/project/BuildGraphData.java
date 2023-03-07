@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 
 /**
  * The build graph of all the rules that make up the project.
@@ -168,11 +167,10 @@ public abstract class BuildGraphData {
     return sourceOwner().get(syncTarget);
   }
 
-  @Nullable
   ImmutableSet<Label> getFileDependencies(Path path) {
     Label target = getTargetOwner(path);
     if (target == null) {
-      return null;
+      return ImmutableSet.of();
     }
     return getTransitiveExternalDependencies(target);
   }

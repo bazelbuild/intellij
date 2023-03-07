@@ -42,7 +42,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * A file that tracks what files in the project can be analyzed and what is the status of their
@@ -69,7 +68,6 @@ public class DependencyTracker {
   }
 
   /** Recursively get all the transitive deps outside the project */
-  @Nullable
   public Set<Label> getPendingTargets(Project project, VirtualFile vf) {
     BlazeImportSettings settings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
@@ -77,7 +75,7 @@ public class DependencyTracker {
 
     Optional<BlazeProjectSnapshot> currentSnapshot = blazeProject.getCurrent();
     if (currentSnapshot.isEmpty()) {
-      return null;
+      return ImmutableSet.of();
     }
     ImmutableSet<Label> targets = currentSnapshot.get().getFileDependencies(rel);
     return Sets.difference(targets, syncedTargets).immutableCopy();

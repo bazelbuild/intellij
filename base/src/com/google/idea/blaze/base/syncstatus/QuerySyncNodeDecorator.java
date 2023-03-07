@@ -60,7 +60,7 @@ public class QuerySyncNodeDecorator implements ProjectViewNodeDecorator {
     VirtualFile vf = file.getVirtualFile();
     Set<Label> targets =
         QuerySyncManager.getInstance(project).getDependencyTracker().getPendingTargets(project, vf);
-    if (targets != null && !targets.isEmpty()) {
+    if (!targets.isEmpty()) {
       data.clearText();
       data.addText(vf.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       data.addText(String.format("(%s)", targets.size()), SimpleTextAttributes.GRAY_ATTRIBUTES);

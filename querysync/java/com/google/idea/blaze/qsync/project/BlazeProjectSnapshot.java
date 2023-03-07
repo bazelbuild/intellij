@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.query.PackageSet;
 import java.nio.file.Path;
-import javax.annotation.Nullable;
 
 /**
  * A fully sync'd project at a point in time. This consists of:
@@ -70,7 +69,6 @@ public abstract class BlazeProjectSnapshot {
    * For a given path to a file, returns all the targets outside the project that this file needs to
    * be edited fully.
    */
-  @Nullable
   public ImmutableSet<Label> getFileDependencies(Path path) {
     return graph().getFileDependencies(path);
   }
