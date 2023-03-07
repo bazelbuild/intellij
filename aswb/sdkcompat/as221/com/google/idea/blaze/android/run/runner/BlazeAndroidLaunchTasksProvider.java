@@ -157,7 +157,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       return ImmutableList.of();
     }
 
-    if (!launchOptions.isDebug() && launchOptions.isOpenLogcatAutomatically()) {
+    if (launchOptions.isOpenLogcatAutomatically()) {
       launchTasks.add(new ShowLogcatTask(project, packageName));
     }
 
