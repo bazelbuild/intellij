@@ -62,21 +62,52 @@ def declares_android_resources(target, ctx):
     return hasattr(ctx.rule.attr, "resource_files") and len(ctx.rule.attr.resource_files) > 0
 
 def _collect_dependencies_impl(target, ctx):
+    return _collect_dependencies_core_impl(
+        target,
+        ctx,
+        ctx.attr.include,
+        ctx.attr.exclude,
+        ctx.attr.always_build_rules,
+        ctx.attr.generate_aidl_classes,
+    )
+
+def _collect_all_dependencies_for_tests_impl(target, ctx):
+    return _collect_dependencies_core_impl(
+        target,
+        ctx,
+        include = None,
+        exclude = None,
+        always_build_rules = None,
+        generate_aidl_classes = None,
+    )
+
+def _collect_dependencies_core_impl(
+        target,
+        ctx,
+        include,
+        exclude,
+        always_build_rules,
+        generate_aidl_classes):
     label = str(target.label)
     included = False
-    for inc in ctx.attr.include.split(","):
-        if label.startswith(inc):
-            if label[len(inc)] in [":", "/"]:
-                included = True
-                break
-    if included and len(ctx.attr.exclude) > 0:
-        for exc in ctx.attr.exclude.split(","):
+    if not include:
+        # include can only be empty only when used from collect_all_dependencies_for_tests
+        # aspect, which is meant to be used in tests only.
+        included = False
+    else:
+        for inc in include.split(","):
+            if label.startswith(inc):
+                if label[len(inc)] in [":", "/"]:
+                    included = True
+                    break
+    if included and len(exclude) > 0:
+        for exc in exclude.split(","):
             if label.startswith(exc):
                 if label[len(exc)] in [":", "/"]:
                     included = False
                     break
 
-    if included and ctx.rule.kind in ctx.attr.always_build_rules.split(","):
+    if included and ctx.rule.kind in always_build_rules.split(","):
         included = False
 
     deps = []
@@ -114,7 +145,7 @@ def _collect_dependencies_impl(target, ctx):
             target_to_artifacts[label].append(_output_relative_path(target[AndroidIdeInfo].aar.path))
 
     else:
-        if ctx.attr.generate_aidl_classes and generates_idl_jar(target):
+        if generate_aidl_classes and generates_idl_jar(target):
             target_to_artifacts[label] = []
             idl_jar = target[AndroidIdeInfo].idl_class_jar
             trs.append(depset([idl_jar]))
@@ -188,4 +219,19 @@ collect_dependencies = aspect(
             default = False,
         ),
     },
+)
+
+collect_all_dependencies_for_tests = aspect(
+    doc = """
+    A variant of collect_dependencies aspect used by query sync integration
+    tests.
+
+    The difference is that collect_all_dependencies does not apply
+    include/exclude directory filtering, which is applied in the test framework
+    instead. See: test_project.bzl for more details.
+    """,
+    implementation = _collect_all_dependencies_for_tests_impl,
+    provides = [DependenciesInfo],
+    attr_aspects = ["deps", "exports", "_junit"],
+    required_providers = [[JavaInfo]],
 )
