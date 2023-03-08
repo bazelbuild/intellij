@@ -1,3 +1,9 @@
+v2023.03.07
+===========
+* Internal cleanup.
+* Fix (Failed Android apk target build: https://github.com/bazelbuild/intellij/issues/4462)
+* Support leading `@` in instrumentation test targets labels (https://github.com/bazelbuild/intellij/pull/4530)
+
 v2023.02.22
 ===========
 * Internal cleanup.
