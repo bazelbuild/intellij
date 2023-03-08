@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharStreams;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
-import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.formatting.service.AsyncDocumentFormattingService;
 import com.intellij.formatting.service.AsyncFormattingRequest;
@@ -47,9 +46,10 @@ public final class BuildifierFormattingService extends AsyncDocumentFormattingSe
   @Override
   @Nullable
   protected FormattingTask createFormattingTask(AsyncFormattingRequest request) {
+    BuildFile buildFile = (BuildFile) request.getContext().getContainingFile();
     return binaryPath
         .get()
-        .map(binary -> getCommandLineArgs(request, binary))
+        .map(binary -> BuildFileFormatter.getCommandLineArgs(binary, buildFile))
         .map(args -> new BuildifierFormattingTask(request, args))
         .orElse(null);
   }
@@ -86,18 +86,6 @@ public final class BuildifierFormattingService extends AsyncDocumentFormattingSe
       }
     }
     return Optional.empty();
-  }
-
-  private static ImmutableList<String> getCommandLineArgs(
-      AsyncFormattingRequest request, String binary) {
-    ImmutableList.Builder<String> cmd = ImmutableList.builder();
-    cmd.add(binary);
-    BlazeFileType type = ((BuildFile) request.getContext().getContainingFile()).getBlazeFileType();
-    return cmd.add(fileTypeArg(type)).build();
-  }
-
-  private static String fileTypeArg(BlazeFileType fileType) {
-    return fileType == BlazeFileType.SkylarkExtension ? "--type=bzl" : "--type=build";
   }
 
   private static final class BuildifierFormattingTask implements FormattingTask {
