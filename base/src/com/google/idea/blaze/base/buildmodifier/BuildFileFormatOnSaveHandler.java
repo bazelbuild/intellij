@@ -25,7 +25,6 @@ import com.google.idea.blaze.base.formatter.FormatUtils;
 import com.google.idea.blaze.base.formatter.FormatUtils.FileContentsProvider;
 import com.google.idea.blaze.base.formatter.FormatUtils.Replacements;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
-import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;

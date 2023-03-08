@@ -23,10 +23,7 @@ import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharStreams;
-import com.google.idea.blaze.base.bazel.BazelWorkspaceRootProvider;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
-import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
 import com.intellij.formatting.service.AsyncDocumentFormattingService;
 import com.intellij.formatting.service.AsyncFormattingRequest;
@@ -34,8 +31,6 @@ import com.intellij.psi.PsiFile;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
@@ -48,20 +43,13 @@ public final class BuildifierFormattingService extends AsyncDocumentFormattingSe
 
   static final Supplier<Optional<String>> binaryPath = Suppliers.memoize(() -> getBinary());
 
-  static ImmutableList<String> getCommandLineArgs(String binary, BuildFile buildFile) {
-    ImmutableList.Builder<String> cmd = ImmutableList.builder();
-    cmd.add(binary);
-    BlazeFileType type = buildFile.getBlazeFileType();
-    return cmd.add(fileTypeArg(type)).addAll(pathArg(buildFile)).build();
-  }
-
   @Override
   @Nullable
   protected FormattingTask createFormattingTask(AsyncFormattingRequest request) {
     BuildFile buildFile = (BuildFile) request.getContext().getContainingFile();
     return binaryPath
         .get()
-        .map(binary -> getCommandLineArgs(binary, buildFile))
+        .map(binary -> BuildFileFormatter.getCommandLineArgs(binary, buildFile))
         .map(args -> new BuildifierFormattingTask(request, args))
         .orElse(null);
   }
@@ -98,26 +86,6 @@ public final class BuildifierFormattingService extends AsyncDocumentFormattingSe
       }
     }
     return Optional.empty();
-  }
-
-  private static String fileTypeArg(BlazeFileType fileType) {
-    return fileType == BlazeFileType.SkylarkExtension ? "--type=bzl" : "--type=build";
-  }
-
-  private static Iterable<String> pathArg(@Nullable BuildFile buildFile) {
-    if (buildFile == null) {
-      return Collections.emptyList();
-    } else {
-      Path pathToFormat = buildFile.getVirtualFile().toNioPath();
-      WorkspaceRoot root = BazelWorkspaceRootProvider.INSTANCE.findWorkspaceRoot(pathToFormat.toFile());
-
-      if (root == null) {
-        return Collections.emptyList();
-      } else {
-        Path relativePath = root.path().relativize(pathToFormat);
-        return Collections.singletonList("--path=" + relativePath);
-      }
-    }
   }
 
   private static final class BuildifierFormattingTask implements FormattingTask {

@@ -18,17 +18,22 @@ package com.google.idea.blaze.base.buildmodifier;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
+import com.google.idea.blaze.base.bazel.BazelWorkspaceRootProvider;
 import com.google.idea.blaze.base.formatter.FormatUtils.FileContentsProvider;
 import com.google.idea.blaze.base.formatter.FormatUtils.Replacements;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile.BlazeFileType;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Collections;
 import javax.annotation.Nullable;
 
 /** Formats BUILD files using 'buildifier' */
@@ -80,6 +85,33 @@ public class BuildFileFormatter {
     return null;
   }
 
+  static ImmutableList<String> getCommandLineArgs(String binary, BuildFile buildFile) {
+    ImmutableList.Builder<String> cmd = ImmutableList.builder();
+    cmd.add(binary);
+    BlazeFileType type = buildFile.getBlazeFileType();
+    return cmd.add(fileTypeArg(type)).addAll(pathArg(buildFile)).build();
+  }
+
+  private static String fileTypeArg(BlazeFileType fileType) {
+    return fileType == BlazeFileType.SkylarkExtension ? "--type=bzl" : "--type=build";
+  }
+
+  private static Iterable<String> pathArg(@Nullable BuildFile buildFile) {
+    if (buildFile == null) {
+      return Collections.emptyList();
+    } else {
+      Path pathToFormat = buildFile.getVirtualFile().toNioPath();
+      WorkspaceRoot root = BazelWorkspaceRootProvider.INSTANCE.findWorkspaceRoot(pathToFormat.toFile());
+
+      if (root == null) {
+        return Collections.emptyList();
+      } else {
+        Path relativePath = root.path().relativize(pathToFormat);
+        return Collections.singletonList("--path=" + relativePath);
+      }
+    }
+  }
+
   /**
    * Passes the input text to buildifier, returning the formatted output text, or null if formatting
    * failed.
@@ -87,7 +119,7 @@ public class BuildFileFormatter {
   @Nullable
   private static String formatText(
       String buildifierBinaryPath, BuildFile buildFile, String inputText) throws IOException {
-    Process process = new ProcessBuilder(BuildifierFormattingService.getCommandLineArgs(buildifierBinaryPath, buildFile)).start();
+    Process process = new ProcessBuilder(getCommandLineArgs(buildifierBinaryPath, buildFile)).start();
     process.getOutputStream().write(inputText.getBytes(UTF_8));
     process.getOutputStream().close();
 
