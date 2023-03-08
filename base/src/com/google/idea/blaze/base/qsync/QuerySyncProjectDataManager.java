@@ -19,6 +19,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -52,8 +54,7 @@ public class QuerySyncProjectDataManager implements BlazeProjectDataManager {
   @Override
   public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
     WorkspaceLanguageSettings workspaceLanguageSettings =
-        LanguageSupport.createWorkspaceLanguageSettings(
-            checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet()));
+        LanguageSupport.createWorkspaceLanguageSettings(checkNotNull(getProjectViewSet(project)));
     // TODO(b/260231317): implement loading if necessary
     projectData = new QuerySyncProjectData(project, importSettings, workspaceLanguageSettings);
     return projectData;
@@ -62,5 +63,16 @@ public class QuerySyncProjectDataManager implements BlazeProjectDataManager {
   @Override
   public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
     // TODO(b/260231317): implement if necessary
+  }
+
+  private static ProjectViewSet getProjectViewSet(Project project) {
+    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
+    if (projectViewSet != null) {
+      return projectViewSet;
+    }
+    return Scope.root(
+        context -> {
+          return ProjectViewManager.getInstance(project).reloadProjectView(context);
+        });
   }
 }
