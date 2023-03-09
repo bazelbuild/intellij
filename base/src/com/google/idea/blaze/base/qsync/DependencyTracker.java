@@ -80,6 +80,9 @@ public class DependencyTracker {
       return null;
     }
     ImmutableSet<Label> targets = currentSnapshot.get().getFileDependencies(rel);
+    if (targets == null) {
+      return null;
+    }
     return Sets.difference(targets, syncedTargets).immutableCopy();
   }
 
