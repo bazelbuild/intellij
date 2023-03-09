@@ -83,10 +83,10 @@ public abstract class QuerySpec {
       return this;
     }
 
-
     @CanIgnoreReturnValue
-    public Builder excludePaths(Collection<Path> excludes) {
-      excludes.stream().map(p -> String.format("//%s/...", p)).forEach(excludesBuilder()::add);
+    public Builder excludePath(Path exclude) {
+      // Convert root directories into blaze target patterns:
+      excludesBuilder().add(String.format("//%s/...", exclude));
       return this;
     }
 
