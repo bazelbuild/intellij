@@ -15,6 +15,8 @@
  */
 package com.google.idea.blaze.base.toolwindow;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 import com.google.common.base.Preconditions;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.common.ui.properties.ChangeListener;
@@ -26,6 +28,8 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.LoadingNode;
 import com.intellij.ui.RelativeFont;
@@ -47,6 +51,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -62,6 +67,7 @@ import javax.swing.tree.TreeSelectionModel;
 
 /** The view that represents the tree of the hierarchy of tasks. */
 final class TasksTreeView extends AbstractView<Tree> {
+  private static final Logger logger = Logger.getInstance(TasksTreeView.class);
   private final TasksTreeModel model;
   private final Disposable parentDisposable;
   private Tree tree;
@@ -149,16 +155,26 @@ final class TasksTreeView extends AbstractView<Tree> {
   }
 
   private void invalidateTreeAt(Task task) {
-    taskToTreePath(task)
-        .ifPresentOrElse(
-            path -> treeStructureModel.invalidate(path, true), treeStructureModel::invalidate);
+    ApplicationManager.getApplication()
+        .executeOnPooledThread(
+            () ->
+                taskToTreePath(task)
+                    .ifPresentOrElse(
+                        path -> treeStructureModel.invalidate(path, true),
+                        treeStructureModel::invalidate));
   }
 
   private Optional<TreePath> taskToTreePath(Task task) {
     try {
-      return treeStructureModel.getInvoker().compute(() -> taskToTreePathInternal(task)).get();
+      return treeStructureModel
+          .getInvoker()
+          .compute(() -> taskToTreePathInternal(task))
+          .get(500, MILLISECONDS);
     } catch (InterruptedException | ExecutionException e) {
       throw new IllegalStateException("Failed to compute selected path", e);
+    } catch (TimeoutException e) {
+      logger.warn("Timed out computing tree path");
+      return Optional.empty();
     }
   }
 
