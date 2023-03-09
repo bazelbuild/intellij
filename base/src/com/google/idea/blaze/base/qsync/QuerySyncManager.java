@@ -86,6 +86,7 @@ public class QuerySyncManager {
 
   private final Project project;
   private final BlazeProject graph;
+  private final QuerySyncProjectDataManager projectDataManager;
   private final DependencyTracker dependencyTracker;
   private final ProjectQuerier projectQuerier;
   private final ProjectUpdater projectUpdater;
@@ -99,6 +100,7 @@ public class QuerySyncManager {
   public QuerySyncManager(Project project) {
     this.project = project;
     this.graph = new BlazeProject();
+    this.projectDataManager = new QuerySyncProjectDataManager(project);
     this.builder = new BazelBinaryDependencyBuilder(project);
     this.cache = new DependencyCache(project);
     this.dependencyTracker = new DependencyTracker(project, graph, builder, cache);
@@ -111,6 +113,7 @@ public class QuerySyncManager {
   public QuerySyncManager(
       Project project,
       BlazeProject graph,
+      QuerySyncProjectDataManager projectDataManager,
       DependencyTracker dependencyTracker,
       ProjectQuerier projectQuerier,
       ProjectUpdater projectUpdater,
@@ -118,6 +121,7 @@ public class QuerySyncManager {
       DependencyCache cache) {
     this.project = project;
     this.graph = graph;
+    this.projectDataManager = projectDataManager;
     this.dependencyTracker = dependencyTracker;
     this.projectQuerier = projectQuerier;
     this.projectUpdater = projectUpdater;
@@ -136,6 +140,10 @@ public class QuerySyncManager {
 
   public BlazeProject getBlazeProject() {
     return graph;
+  }
+
+  public QuerySyncProjectDataManager getProjectDataManager() {
+    return projectDataManager;
   }
 
   private ListenableFuture<Boolean> build(List<WorkspacePath> wps) {
