@@ -17,15 +17,23 @@ package com.google.idea.blaze.plugin.run;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PathsList;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Boilerplate for running an IJ application with an additional plugin, copied from
@@ -58,6 +66,8 @@ public class IntellijWithPluginClasspathHelper {
           "stats.jar",
           "annotations.jar");
 
+  private static final Logger logger = Logger.getInstance(IntellijWithPluginClasspathHelper.class);
+
   private static void addIntellijLibraries(JavaParameters params, Sdk ideaJdk) {
     String libPath = ideaJdk.getHomePath() + File.separator + "lib";
     PathsList list = params.getClassPath();
@@ -82,6 +92,42 @@ public class IntellijWithPluginClasspathHelper {
     }
 
     list.addFirst(((JavaSdkType) ideaJdk.getSdkType()).getToolsPath(ideaJdk));
+  }
+
+  private static class ProductInfo {
+    List<Launch> launch;
+  }
+
+  private static class Launch {
+    List<String> additionalJvmArguments;
+    List<String> bootClassPathJarNames;
+  }
+
+  @Nullable
+  static Launch readLaunchInfo(Sdk ideaJdk) {
+    Path info = Paths.get(ideaJdk.getHomePath()).resolve("product-info.json");
+    if (Files.exists(info)) {
+      try {
+        String json = Files.readString(info);
+        ProductInfo productInfo = new Gson().fromJson(json, ProductInfo.class);
+        if (productInfo == null) {
+          logger.warn("Cannot parse product-info.json");
+          return null;
+        }
+        if (productInfo.launch.isEmpty()) {
+          logger.warn("No launch objects found in product-info.json");
+          return null;
+        }
+        if (productInfo.launch.size() > 1) {
+          logger.warn("Multiple launch objects found product-info.json");
+          return null;
+        }
+        return productInfo.launch.get(0);
+      } catch (IOException e) {
+        logger.error("Error parsing product-info.json", e);
+      }
+    }
+    return null;
   }
 
   public static void addRequiredVmParams(
@@ -115,7 +161,19 @@ public class IntellijWithPluginClasspathHelper {
     params.setWorkingDirectory(ideaJdk.getHomePath() + File.separator + "bin" + File.separator);
     params.setJdk(ideaJdk);
 
-    addIntellijLibraries(params, ideaJdk);
+    Launch launch = readLaunchInfo(ideaJdk);
+    if (launch != null && launch.bootClassPathJarNames != null) {
+      for (String name : launch.bootClassPathJarNames) {
+        params.getClassPath().add(libPath + File.separator + name);
+      }
+    } else {
+      // Fall back to known libraries
+      addIntellijLibraries(params, ideaJdk);
+    }
+
+    if (launch != null && launch.additionalJvmArguments != null) {
+      vm.addAll(launch.additionalJvmArguments);
+    }
 
     params.setMainClass("com.intellij.idea.Main");
   }
