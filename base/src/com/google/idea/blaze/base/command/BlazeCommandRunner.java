@@ -22,9 +22,12 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.intellij.openapi.project.Project;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import javax.annotation.Nullable;
 
-/** Runs a blaze command */
+/** Runs a blaze command. */
 public interface BlazeCommandRunner {
 
   /**
@@ -49,6 +52,20 @@ public interface BlazeCommandRunner {
       WorkspaceRoot workspaceRoot,
       BlazeContext context);
 
+  /**
+   * Runs a blaze query command.
+   *
+   * @return {@link InputStream} from the stdout of the blaze invocation using the given {@link
+   *     BuildResultHelper} and null if the query fails
+   */
+  @Nullable
+  InputStream runQuery(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      WorkspaceRoot workspaceRoot,
+      BlazeContext context)
+      throws IOException;
   /** Allows enabling the use of command runner for restricted set of users. */
   default boolean shouldUseForLocalTests() {
     return false;
