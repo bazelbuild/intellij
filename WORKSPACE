@@ -152,9 +152,9 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2022.3/clion-2022.3.zip",
 )
 
-CLION_231_SHA = "53f01a3712649c5d0ea3bc9a00051f4abe37849be6437e7d2dd473ab4760c37c"
+CLION_231_SHA = "46bd06d26f4a63c6046e3fc10c667351e8823fbe3c53cb609041c9993166370b"
 
-CLION_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/231.7864.77-EAP-SNAPSHOT/clion-231.7864.77-EAP-SNAPSHOT.zip"
+CLION_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/231.8109.4-EAP-SNAPSHOT/clion-231.8109.4-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2023_1",
@@ -345,9 +345,9 @@ http_archive(
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2022.3.13/org.intellij.scala-2022.3.13.zip",
 )
 
-SCALA_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.1.10/org.intellij.scala-2023.1.10.zip"
+SCALA_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.1.11/org.intellij.scala-2023.1.11.zip"
 
-SCALA_PLUGIN_231_SHA = "b7f86e84d8b837d5f753881f80a90aa3996bf9db50da5312ae8ce2acee9443bf"
+SCALA_PLUGIN_231_SHA = "d93f3273fdc6f3294a76cc33480be51a020ac4deb87ebb13f48bd22db69a8fca"
 
 http_archive(
     name = "scala_2023_1",
