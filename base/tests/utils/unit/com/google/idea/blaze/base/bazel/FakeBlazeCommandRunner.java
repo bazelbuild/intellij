@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.intellij.openapi.project.Project;
+import java.io.InputStream;
 
 /**
  * A fake for {@link BlazeCommandRunner} that doesn't execute the build, but returns results from
@@ -57,6 +58,16 @@ public final class FakeBlazeCommandRunner implements BlazeCommandRunner {
       WorkspaceRoot workspaceRoot,
       BlazeContext context) {
     return BlazeTestResults.NO_RESULTS;
+  }
+
+  @Override
+  public InputStream runQuery(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      WorkspaceRoot workspaceRoot,
+      BlazeContext context) {
+    return InputStream.nullInputStream();
   }
 
   public BlazeCommand getIssuedCommand() {
