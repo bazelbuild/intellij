@@ -146,6 +146,10 @@ public class QuerySyncManager {
     return graph;
   }
 
+  public DependencyCache getDependencyCache() {
+    return cache;
+  }
+
   public QuerySyncProjectDataManager getProjectDataManager() {
     return projectDataManager;
   }
