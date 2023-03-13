@@ -24,41 +24,57 @@ import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
-import com.google.idea.blaze.qsync.BlazeProject;
-import com.intellij.openapi.project.Project;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
 /** Implementation of {@link BlazeProjectData} specific to querysync. */
 public class QuerySyncProjectData implements BlazeProjectData {
 
   private final WorkspacePathResolver workspacePathResolver;
-  private final BlazeProject blazeProject;
+  private final Optional<BlazeProjectSnapshot> blazeProject;
   private final WorkspaceLanguageSettings workspaceLanguageSettings;
 
   QuerySyncProjectData(
-      Project project,
-      BlazeImportSettings importSettings,
+      WorkspacePathResolver workspacePathResolver,
       WorkspaceLanguageSettings workspaceLanguageSettings) {
-    blazeProject = QuerySyncManager.getInstance(project).getBlazeProject();
-    workspacePathResolver =
-        new WorkspacePathResolverImpl(WorkspaceRoot.fromImportSettings(importSettings));
+    this(Optional.empty(), workspacePathResolver, workspaceLanguageSettings);
+  }
+
+  private QuerySyncProjectData(
+      Optional<BlazeProjectSnapshot> projectSnapshot,
+      WorkspacePathResolver workspacePathResolver,
+      WorkspaceLanguageSettings workspaceLanguageSettings) {
+    this.blazeProject = projectSnapshot;
+    this.workspacePathResolver = workspacePathResolver;
     this.workspaceLanguageSettings = workspaceLanguageSettings;
+  }
+
+  public QuerySyncProjectData withSnapshot(BlazeProjectSnapshot newSnapshot) {
+    return new QuerySyncProjectData(
+        Optional.of(newSnapshot), workspacePathResolver, workspaceLanguageSettings);
   }
 
   @Nullable
   @Override
   public TargetInfo getTargetInfo(Label label) {
     return blazeProject
-        .getCurrent()
         .map(s -> s.getTargetKind(com.google.idea.blaze.common.Label.of(label.toString())))
         .map(kind -> TargetInfo.builder(label, kind).build())
         .orElse(null);
+  }
+
+  @Override
+  public WorkspacePathResolver getWorkspacePathResolver() {
+    return workspacePathResolver;
+  }
+
+  @Override
+  public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
+    return workspaceLanguageSettings;
   }
 
   @Override
@@ -82,18 +98,8 @@ public class QuerySyncProjectData implements BlazeProjectData {
   }
 
   @Override
-  public WorkspacePathResolver getWorkspacePathResolver() {
-    return workspacePathResolver;
-  }
-
-  @Override
   public ArtifactLocationDecoder getArtifactLocationDecoder() {
     throw new NotSupportedWithQuerySyncException("getTargetMap");
-  }
-
-  @Override
-  public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
-    return workspaceLanguageSettings;
   }
 
   @Override

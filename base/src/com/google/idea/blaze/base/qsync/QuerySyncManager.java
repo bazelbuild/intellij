@@ -59,6 +59,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -86,6 +87,7 @@ public class QuerySyncManager {
 
   private final Project project;
   private final BlazeProject graph;
+  private final QuerySyncProjectDataManager projectDataManager;
   private final DependencyTracker dependencyTracker;
   private final ProjectQuerier projectQuerier;
   private final ProjectUpdater projectUpdater;
@@ -97,13 +99,17 @@ public class QuerySyncManager {
   }
 
   public QuerySyncManager(Project project) {
+    ProjectDeps.Builder projectDepsBuilder = ProjectDeps.builder(project);
     this.project = project;
     this.graph = new BlazeProject();
+    this.projectDataManager = new QuerySyncProjectDataManager(projectDepsBuilder);
     this.builder = new BazelBinaryDependencyBuilder(project);
     this.cache = new DependencyCache(project);
     this.dependencyTracker = new DependencyTracker(project, graph, builder, cache);
-    this.projectQuerier = ProjectQuerierImpl.create(project);
+    this.projectQuerier =
+        ProjectQuerierImpl.create(project, projectDepsBuilder.getWorkspaceRoot().path());
     this.projectUpdater = new ProjectUpdater(project, graph);
+    graph.addListener(projectDataManager);
   }
 
   @VisibleForTesting
@@ -111,6 +117,7 @@ public class QuerySyncManager {
   public QuerySyncManager(
       Project project,
       BlazeProject graph,
+      QuerySyncProjectDataManager projectDataManager,
       DependencyTracker dependencyTracker,
       ProjectQuerier projectQuerier,
       ProjectUpdater projectUpdater,
@@ -118,6 +125,7 @@ public class QuerySyncManager {
       DependencyCache cache) {
     this.project = project;
     this.graph = graph;
+    this.projectDataManager = projectDataManager;
     this.dependencyTracker = dependencyTracker;
     this.projectQuerier = projectQuerier;
     this.projectUpdater = projectUpdater;
@@ -138,6 +146,10 @@ public class QuerySyncManager {
     return graph;
   }
 
+  public QuerySyncProjectDataManager getProjectDataManager() {
+    return projectDataManager;
+  }
+
   private ListenableFuture<Boolean> build(List<WorkspacePath> wps) {
     return run(
         "Building dependencies",
@@ -155,7 +167,8 @@ public class QuerySyncManager {
     try {
       BlazeProjectSnapshot newProject =
           full || graph.getCurrent().isEmpty()
-              ? projectQuerier.fullQuery(context)
+              ? projectQuerier.fullQuery(
+                  projectDataManager.getProjectDefinition(Optional.of(context)), context)
               : projectQuerier.update(graph.getCurrent().get(), context);
       graph.setCurrent(context, newProject);
       // TODO: Revisit SyncListeners once we switch fully to qsync

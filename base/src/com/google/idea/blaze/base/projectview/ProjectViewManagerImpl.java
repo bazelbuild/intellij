@@ -20,7 +20,6 @@ import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
-import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
@@ -118,12 +117,10 @@ final class ProjectViewManagerImpl extends ProjectViewManager {
   @Nullable
   private static WorkspacePathResolver computeWorkspacePathResolver(
       Project project, BlazeContext context) {
-    if (!QuerySync.isEnabled()) {
-      BlazeProjectData projectData =
-          BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
-      if (projectData != null) {
-        return projectData.getWorkspacePathResolver();
-      }
+    BlazeProjectData projectData =
+        BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (projectData != null) {
+      return projectData.getWorkspacePathResolver();
     }
     // otherwise try to compute the workspace path resolver from scratch
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromProject(project);

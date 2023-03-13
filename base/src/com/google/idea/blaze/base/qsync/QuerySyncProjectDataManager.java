@@ -15,15 +15,16 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
+import com.google.common.base.Preconditions;
 import com.google.idea.blaze.base.model.BlazeProjectData;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
-import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
-import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
-import com.intellij.openapi.project.Project;
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.qsync.BlazeProjectListener;
+import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -33,13 +34,34 @@ import javax.annotation.Nullable;
  * approach to get more IDE functionality working with querysync. The ideal long term design is not
  * yet determined.
  */
-public class QuerySyncProjectDataManager implements BlazeProjectDataManager {
+public class QuerySyncProjectDataManager implements BlazeProjectDataManager, BlazeProjectListener {
 
-  private final Project project;
+  private final ProjectDeps.Builder projectDepsBuilder;
+  private volatile ProjectDeps projectDeps;
   private volatile QuerySyncProjectData projectData;
 
-  public QuerySyncProjectDataManager(Project project) {
-    this.project = project;
+  public QuerySyncProjectDataManager(ProjectDeps.Builder projectDepsBuilder) {
+    this.projectDepsBuilder = projectDepsBuilder;
+  }
+
+  private synchronized void ensureProjectDepsCreated(BlazeContext context) {
+    if (projectDeps == null) {
+      projectDeps = projectDepsBuilder.build(context);
+      projectData =
+          new QuerySyncProjectData(
+              projectDeps.workspacePathResolver(), projectDeps.workspaceLanguageSettings());
+    }
+  }
+
+  @Override
+  public void graphCreated(Context context, BlazeProjectSnapshot instance) {
+    Preconditions.checkNotNull(projectData);
+    projectData = projectData.withSnapshot(instance);
+  }
+
+  synchronized ProjectDefinition getProjectDefinition(Optional<BlazeContext> optionalContext) {
+    ensureProjectDepsCreated(optionalContext.orElseGet(BlazeContext::create));
+    return projectDeps.projectDefinition();
   }
 
   @Nullable
@@ -51,11 +73,7 @@ public class QuerySyncProjectDataManager implements BlazeProjectDataManager {
   @Nullable
   @Override
   public BlazeProjectData loadProject(BlazeImportSettings importSettings) {
-    WorkspaceLanguageSettings workspaceLanguageSettings =
-        LanguageSupport.createWorkspaceLanguageSettings(
-            checkNotNull(ProjectViewManager.getInstance(project).getProjectViewSet()));
     // TODO(b/260231317): implement loading if necessary
-    projectData = new QuerySyncProjectData(project, importSettings, workspaceLanguageSettings);
     return projectData;
   }
 
