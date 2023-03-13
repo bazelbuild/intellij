@@ -16,17 +16,12 @@
 package com.google.idea.blaze.plugin;
 
 import com.google.idea.blaze.base.dependencies.TargetInfo;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.model.primitives.GenericBlazeRules.RuleTypes;
 import com.google.idea.blaze.base.model.primitives.Kind;
 import javax.annotation.Nullable;
 
 /** Utility methods for intellij_plugin blaze targets */
 public class IntellijPluginRule {
-
-  public static boolean isPluginTarget(TargetIdeInfo target) {
-    return isPluginTargetKind(target.getKind());
-  }
 
   public static boolean isPluginTarget(TargetInfo target) {
     return isPluginTargetKind(target.getKind());

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.qsync.project;
 
 import com.google.auto.value.AutoValue;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.qsync.query.PackageSet;
@@ -77,6 +78,11 @@ public abstract class BlazeProjectSnapshot {
 
   public String getTargetKind(Label target) {
     return graph().targetToKind().get(target);
+  }
+
+  /** Returns all targets and their kinds in the form of a map from label to kind. */
+  public ImmutableMap<Label, String> getTargetKinds() {
+    return graph().targetToKind();
   }
 
   /** Builder for {@link BlazeProjectSnapshot}. */

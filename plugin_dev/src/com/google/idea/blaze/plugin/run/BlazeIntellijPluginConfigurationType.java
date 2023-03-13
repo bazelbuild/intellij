@@ -18,8 +18,7 @@ package com.google.idea.blaze.plugin.run;
 import static java.util.stream.Collectors.toCollection;
 
 import com.google.common.base.Splitter;
-import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
-import com.google.idea.blaze.base.ideinfo.TargetKey;
+import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspaceType;
@@ -68,7 +67,7 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
           .isWorkspaceType(WorkspaceType.INTELLIJ_PLUGIN)) {
         return false;
       }
-      TargetIdeInfo target = blazeProjectData.getTargetMap().get(TargetKey.forPlainTarget(label));
+      TargetInfo target = blazeProjectData.getTargetInfo(label);
       return target != null && IntellijPluginRule.isPluginTarget(target);
     }
 
@@ -132,10 +131,9 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
       if (projectData == null) {
         return null;
       }
-      return projectData.getTargetMap().targets().stream()
+      return projectData.targets().stream()
           .filter(IntellijPluginRule::isPluginTarget)
-          .map(TargetIdeInfo::getKey)
-          .map(TargetKey::getLabel)
+          .map(info -> info.label)
           .findFirst()
           .orElse(null);
     }
