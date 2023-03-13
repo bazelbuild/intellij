@@ -63,6 +63,12 @@ public abstract class QuerySummary {
 
   public abstract Query.Summary proto();
 
+  /** Do not generate toString, this object is too large */
+  @Override
+  public final String toString() {
+    return super.toString();
+  }
+
   public static QuerySummary create(Query.Summary proto) {
     return new AutoValue_QuerySummary(proto);
   }
