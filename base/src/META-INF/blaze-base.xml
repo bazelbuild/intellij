@@ -149,7 +149,7 @@
       <!--Add single menu items anchored after this bookmark-->
       <group id="Blaze.MenuFooter"/>
     </group>
-
+`
     <group id="Blaze.MainToolBarActionGroup">
       <add-to-group group-id="MainToolBar" anchor="before" relative-to-action="HelpTopics" />
       <add-to-group group-id="NavBarToolBarOthers" anchor="last"/>
@@ -165,6 +165,10 @@
       <reference ref="Blaze.AddSourceToProject"/>
       <reference ref="Blaze.OpenCorrespondingBuildFile"/>
       <reference ref="Blaze.CopyBlazeTargetPathAction"/>
+    </group>
+    <group id="Internal.Blaze" text="Blaze" popup="true" internal="true">
+      <action internal="true" id="Blaze.QSync.CleanDependencies" class="com.google.idea.blaze.base.qsync.action.CleanDependencies" text="QSync - Clean Dependencies" />
+      <add-to-group group-id="Internal"/>
     </group>
   </actions>
 
