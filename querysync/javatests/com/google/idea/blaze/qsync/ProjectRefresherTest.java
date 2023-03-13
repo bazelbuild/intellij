@@ -65,7 +65,7 @@ public class ProjectRefresherTest {
                         ImmutableSet.of(
                             new WorkspaceFileChange(
                                 Operation.ADD, Path.of("package/path/BUILD"))))))
-            .setSyncSpec(
+            .setProjectDefinition(
                 ProjectDefinition.create(ImmutableSet.of(Path.of("package")), ImmutableSet.of()))
             .build();
 
@@ -93,7 +93,7 @@ public class ProjectRefresherTest {
                         ImmutableSet.of(
                             new WorkspaceFileChange(
                                 Operation.DELETE, Path.of("package/path/BUILD"))))))
-            .setSyncSpec(
+            .setProjectDefinition(
                 ProjectDefinition.create(ImmutableSet.of(Path.of("package")), ImmutableSet.of()))
             .build();
 
@@ -122,7 +122,7 @@ public class ProjectRefresherTest {
                         ImmutableSet.of(
                             new WorkspaceFileChange(
                                 Operation.MODIFY, Path.of("package/path/BUILD"))))))
-            .setSyncSpec(
+            .setProjectDefinition(
                 ProjectDefinition.create(ImmutableSet.of(Path.of("package")), ImmutableSet.of()))
             .build();
 
