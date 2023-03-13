@@ -63,12 +63,12 @@ class PartialProjectRefresh implements RefreshOperation {
     this.newState =
         PostQuerySyncData.builder()
             .setVcsState(currentVcsState)
-            .setSyncSpec(previousState.syncSpec());
+            .setProjectDefinition(previousState.projectDefinition());
     this.modifiedPackages = modifiedPackages;
     this.deletedPackages = deletedPackages;
     this.queryParser = new BlazeQueryParser(context);
     this.graphToProjectConverter =
-        new GraphToProjectConverter(packageReader, context, previousState.syncSpec());
+        new GraphToProjectConverter(packageReader, context, previousState.projectDefinition());
   }
 
   private Optional<QuerySpec> createQuerySpec() {

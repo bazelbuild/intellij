@@ -51,12 +51,12 @@ public class ProjectRefresher {
       Context context, PostQuerySyncData currentProject, Optional<VcsState> latestVcsState) {
     if (!currentProject.vcsState().isPresent()) {
       context.output(PrintOutput.output("No VCS state from last query: performing full query"));
-      return fullUpdate(context, currentProject.syncSpec(), latestVcsState);
+      return fullUpdate(context, currentProject.projectDefinition(), latestVcsState);
     }
     if (!latestVcsState.isPresent()) {
       context.output(
           PrintOutput.output("VCS doesn't support delta updates: performing full query"));
-      return fullUpdate(context, currentProject.syncSpec(), latestVcsState);
+      return fullUpdate(context, currentProject.projectDefinition(), latestVcsState);
     }
     if (!Objects.equals(
         currentProject.vcsState().get().upstreamRevision, latestVcsState.get().upstreamRevision)) {
@@ -65,7 +65,7 @@ public class ProjectRefresher {
               "Upstream revision has changed %s -> %s: performing full query",
               currentProject.vcsState().get().upstreamRevision,
               latestVcsState.get().upstreamRevision));
-      return fullUpdate(context, currentProject.syncSpec(), latestVcsState);
+      return fullUpdate(context, currentProject.projectDefinition(), latestVcsState);
     }
     // Build the effective working set. This includes the working set as was when the original
     // sync query was run, as it's possible that files have been reverted since then but the
@@ -87,8 +87,8 @@ public class ProjectRefresher {
     AffectedPackages affected =
         AffectedPackagesCalculator.builder()
             .context(context)
-            .projectIncludes(currentProject.syncSpec().projectIncludes())
-            .projectExcludes(currentProject.syncSpec().projectExcludes())
+            .projectIncludes(currentProject.projectDefinition().projectIncludes())
+            .projectExcludes(currentProject.projectDefinition().projectExcludes())
             .changedFiles(Sets.union(latestVcsState.get().workingSet, revertedChanges))
             .lastQuery(currentProject.querySummary())
             .build()
