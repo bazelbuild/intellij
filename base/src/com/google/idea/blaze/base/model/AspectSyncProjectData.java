@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.model;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
@@ -128,6 +129,13 @@ public final class AspectSyncProjectData implements BlazeProjectData {
         .findFirst()
         .map(TargetIdeInfo::toTargetInfo)
         .orElse(null);
+  }
+
+  @Override
+  public ImmutableList<TargetInfo> targets() {
+    return getTargetMap().targets().stream()
+        .map(TargetIdeInfo::toTargetInfo)
+        .collect(ImmutableList.toImmutableList());
   }
 
   @Override

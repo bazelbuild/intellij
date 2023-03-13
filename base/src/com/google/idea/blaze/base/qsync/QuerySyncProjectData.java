@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -65,6 +66,16 @@ public class QuerySyncProjectData implements BlazeProjectData {
         .map(s -> s.getTargetKind(com.google.idea.blaze.common.Label.of(label.toString())))
         .map(kind -> TargetInfo.builder(label, kind).build())
         .orElse(null);
+  }
+
+  @Override
+  public ImmutableList<TargetInfo> targets() {
+    if (blazeProject.isPresent()) {
+      return blazeProject.get().getTargetKinds().entrySet().stream()
+          .map(e -> TargetInfo.builder(Label.create(e.getKey().toString()), e.getValue()).build())
+          .collect(ImmutableList.toImmutableList());
+    }
+    return ImmutableList.of();
   }
 
   @Override
