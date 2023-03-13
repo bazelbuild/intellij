@@ -538,6 +538,48 @@ config_setting(
     },
 )
 
+config_setting(
+    name = "intellij-cc-oldest-stable",
+    values = {
+        "define": "ij_product=intellij-cc-oldest-stable",
+    },
+)
+
+config_setting(
+    name = "intellij-cc-latest-stable",
+    values = {
+        "define": "ij_product=intellij-cc-latest-stable",
+    },
+)
+
+config_setting(
+    name = "intellij-cc-under-dev",
+    values = {
+        "define": "ij_product=intellij-cc-under-dev",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-cc-oldest-stable",
+    values = {
+        "define": "ij_product=intellij-ue-cc-oldest-stable",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-cc-latest-stable",
+    values = {
+        "define": "ij_product=intellij-ue-cc-latest-stable",
+    },
+)
+
+config_setting(
+    name = "intellij-ue-cc-under-dev",
+    values = {
+        "define": "ij_product=intellij-ue-cc-under-dev",
+    },
+)
+
 # The purpose of this rule is to hide the versioning
 # complexity from users of this api.
 # There will be additional versions added in the future
