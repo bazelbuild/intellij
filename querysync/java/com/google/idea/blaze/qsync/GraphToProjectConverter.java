@@ -92,8 +92,6 @@ public class GraphToProjectConverter {
     }
 
     Map<String, Map<String, String>> rootToPrefix = new HashMap<>();
-    long now = System.nanoTime();
-    long filesRead = 0;
     for (Entry<String, Map<String, Path>> entry : rootDirs.entrySet()) {
       String root = entry.getKey();
       Map<String, String> thisRootDirPrefixes = new HashMap<>();
@@ -101,16 +99,12 @@ public class GraphToProjectConverter {
       for (Entry<String, Path> relToFile : entry.getValue().entrySet()) {
         if (lastRel == null || !relToFile.getKey().startsWith(lastRel)) {
           String[] relToPrefix = calculatePrefix(relToFile.getKey(), relToFile.getValue());
-          filesRead++;
           lastRel = relToPrefix[0];
           thisRootDirPrefixes.put(relToPrefix[0], relToPrefix[1]);
         }
       }
       rootToPrefix.put(root, thisRootDirPrefixes);
     }
-    long elapsedMs = (System.nanoTime() - now) / 1000000L;
-    context.output(
-        PrintOutput.log((String.format("Read %d files in %d ms", filesRead, elapsedMs))));
     return rootToPrefix;
   }
 
@@ -141,18 +135,12 @@ public class GraphToProjectConverter {
   public ProjectProto.Project createProject(BuildGraphData graph) throws IOException {
     Map<String, Map<String, String>> rootToPrefix =
         calculateRootSources(graph.getJavaSourceFiles());
-    ImmutableSet<Path> androidResourceDirectories =
-        computeAndroidResourceDirectories(graph.getAllSourceFiles());
-    ImmutableSet<String> androidSourcePackages =
+    ImmutableSet<Path> dirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
+    ImmutableSet<String> pkgs =
         computeAndroidSourcePackages(graph.getAndroidSourceFiles(), rootToPrefix);
 
-    context.output(
-        PrintOutput.log(
-            String.format(
-                "Detected %d android resource directories", androidResourceDirectories.size())));
-    context.output(
-        PrintOutput.log(
-            String.format("Detected %d android resource packages", androidSourcePackages.size())));
+    context.output(PrintOutput.log("%-10d Android resource directories", dirs.size()));
+    context.output(PrintOutput.log("%-10d Android resource packages", pkgs.size()));
 
     // TODO(b/270751571): remove hard-coded paths
     ProjectProto.Library depsLib =
@@ -171,8 +159,8 @@ public class GraphToProjectConverter {
             .setType(ProjectProto.ModuleType.MODULE_TYPE_DEFAULT)
             .addLibraryName(depsLib.getName())
             .addAllAndroidResourceDirectories(
-                androidResourceDirectories.stream().map(Path::toString).collect(toImmutableList()))
-            .addAllAndroidSourcePackages(androidSourcePackages);
+                dirs.stream().map(Path::toString).collect(toImmutableList()))
+            .addAllAndroidSourcePackages(pkgs);
 
     // TODO(b/270751571): remove hard-coded paths
     String generatedSourcePath = ".blaze/generated";
@@ -290,5 +278,4 @@ public class GraphToProjectConverter {
     }
     return androidSourcePackages.build();
   }
-
 }
