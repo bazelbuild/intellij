@@ -190,6 +190,12 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     return ImmutableList.of();
   }
 
+  @Override
+  public Collection<String> getBootClasspath(@NotNull Module module) {
+    // TODO: b/266586669
+    return ImmutableList.of();
+  }
+
   private static boolean hasPackageName(AndroidFacet facet, String packageName) {
     String nameFromFacet = PackageNameUtils.getPackageName(facet.getModule());
     if (nameFromFacet == null) {

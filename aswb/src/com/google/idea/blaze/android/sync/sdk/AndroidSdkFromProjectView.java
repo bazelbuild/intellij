@@ -33,11 +33,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
-import org.jetbrains.android.sdk.AndroidPlatform;
-import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
+import org.jetbrains.android.sdk.AndroidPlatformCompat;
 
 /** Calculates AndroidSdkPlatform. */
-public class AndroidSdkFromProjectView {
+public final class AndroidSdkFromProjectView {
   private static final Joiner COMMA_JOINER = Joiner.on(", ");
   public static final String NO_SDK_ERROR_TEMPLATE =
       "No such android_sdk_platform: '%s'. "
@@ -134,14 +133,8 @@ public class AndroidSdkFromProjectView {
   }
 
   private static int getAndroidSdkApiLevel(Sdk sdk) {
-    int androidSdkApiLevel = 1;
-    AndroidSdkAdditionalData additionalData = (AndroidSdkAdditionalData) sdk.getSdkAdditionalData();
-    if (additionalData != null) {
-      AndroidPlatform androidPlatform = additionalData.getAndroidPlatform();
-      if (androidPlatform != null) {
-        androidSdkApiLevel = androidPlatform.getApiLevel();
-      }
-    }
-    return androidSdkApiLevel;
+    return AndroidPlatformCompat.getApiLevel(sdk);
   }
+
+  private AndroidSdkFromProjectView() {}
 }

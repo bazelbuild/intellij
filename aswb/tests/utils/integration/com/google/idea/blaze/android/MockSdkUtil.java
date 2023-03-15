@@ -30,7 +30,7 @@ import com.intellij.util.containers.MultiMap;
 import java.io.File;
 import java.io.IOException;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
-import org.jetbrains.android.sdk.AndroidSdkData;
+import org.jetbrains.android.sdk.AndroidSdkDataCompat;
 import org.jetbrains.android.sdk.AndroidSdkType;
 
 /**
@@ -141,7 +141,7 @@ public class MockSdkUtil {
       workspace.createFile(new WorkspacePath(workspacePathToAndroid, "data/annotations.zip"));
     }
     String sdkHomeDir = workspace.createDirectory(SDK_DIR).getPath();
-    AndroidSdkData.getSdkData(new File(sdkHomeDir), true);
+    AndroidSdkDataCompat.getSdkData(new File(sdkHomeDir), true);
     MockSdk sdk =
         new MockSdk(
             sdkName,

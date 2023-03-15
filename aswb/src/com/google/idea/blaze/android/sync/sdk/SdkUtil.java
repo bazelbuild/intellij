@@ -42,7 +42,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import java.util.Optional;
-import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidPlatformCompat;
 import org.jetbrains.android.sdk.AndroidPlatformsCompat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,7 +70,7 @@ public class SdkUtil {
   }
 
   @Nullable
-  public static AndroidPlatform getAndroidPlatform(@NotNull Project project) {
+  public static AndroidPlatformCompat getAndroidPlatform(@NotNull Project project) {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {

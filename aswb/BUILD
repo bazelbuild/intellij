@@ -66,7 +66,23 @@ stamped_plugin_xml(
 java_library(
     name = "unit_test_utils",
     testonly = 1,
-    srcs = glob(["tests/utils/unit/**/*.java"]),
+    srcs = glob(["tests/utils/unit/**/*.java"]) + select_for_plugin_api({
+        "android-studio-2021.3": [
+            "tests/utils/sdkcompat/as213/com/android/tools/idea/rendering/RenderResultCompat.java",
+        ],
+        "android-studio-2022.1": [
+            "tests/utils/sdkcompat/as221/com/android/tools/idea/rendering/RenderResultCompat.java",
+        ],
+        "android-studio-2022.2": [
+            "tests/utils/sdkcompat/as222/com/android/tools/idea/rendering/RenderResultCompat.java",
+        ],
+        "android-studio-2022.3": [
+            "tests/utils/sdkcompat/as223/com/android/tools/idea/rendering/RenderResultCompat.java",
+        ],
+        "android-studio-dev": [
+            "tests/utils/sdkcompat/asdev/com/android/tools/idea/rendering/RenderResultCompat.java",
+        ],
+    }),
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
         ":aswb_lib",
@@ -110,6 +126,7 @@ java_library(
     visibility = TEST_ASWB_SUBPACKAGES_VISIBILITY,
     deps = [
         ":aswb_lib",
+        ":unit_test_utils",
         "//base",
         "//base:integration_test_utils",
         "//base:unit_test_utils",

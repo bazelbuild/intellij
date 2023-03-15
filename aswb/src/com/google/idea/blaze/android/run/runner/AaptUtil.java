@@ -30,7 +30,7 @@ import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidPlatformCompat;
 
 /** A collection of utilities for extracting information from APKs using aapt. */
 public final class AaptUtil {
@@ -69,12 +69,12 @@ public final class AaptUtil {
     if (!apk.exists()) {
       throw new AaptUtilException("apk file does not exist: " + apk);
     }
-    AndroidPlatform androidPlatform = SdkUtil.getAndroidPlatform(project);
+    AndroidPlatformCompat androidPlatform = SdkUtil.getAndroidPlatform(project);
     if (androidPlatform == null) {
       throw new AaptUtilException(
           "Could not find Android platform sdk for project " + project.getName());
     }
-    BuildToolInfo toolInfo = androidPlatform.getSdkData().getLatestBuildTool(true);
+    BuildToolInfo toolInfo = androidPlatform.getLatestBuildTool(true);
     if (toolInfo == null) {
       throw new AaptUtilException(
           "Could not find Android sdk build-tools for project " + project.getName());
