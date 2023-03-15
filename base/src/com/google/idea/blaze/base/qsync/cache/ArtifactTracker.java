@@ -16,6 +16,9 @@
 package com.google.idea.blaze.base.qsync.cache;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DIRECTORY;
+import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_SRC_DIRECTORY;
+import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.LIBRARY_DIRECTORY;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.HashMultimap;
@@ -62,10 +65,6 @@ import java.util.zip.GZIPOutputStream;
 public class ArtifactTracker {
   private final SetMultimap<Label, Label> topLevelTargetToDeps = HashMultimap.create();
   private final SetMultimap<Label, String> targetToArtifacts = HashMultimap.create();
-
-  private static final String LIBRARY_DIRECTORY = "libraries";
-  private static final String AAR_DIRECTORY = "aars";
-  public static final String GEN_SRC_DIRECTORY = "generated";
 
   private final JarCache jarCache;
   private final Path persistentFile;
