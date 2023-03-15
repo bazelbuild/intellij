@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.android.sdk;
+package com.android.tools.idea.rendering;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.psi.PsiFile;
 
-/** Compat shim class for {@link AndroidPlatforms} */
-public class AndroidPlatformsCompat {
-  private AndroidPlatformsCompat() {}
-
-  public static AndroidPlatformCompat getInstance(Sdk sdk) {
-    return new AndroidPlatformCompat(AndroidPlatform.getInstance(sdk));
+/** Compat class for {@link RenderResult} */
+public final class RenderResultCompat {
+  public static RenderResult createBlank(PsiFile file) {
+    return RenderResults.createBlank(file);
   }
 
-  public static AndroidPlatformCompat getInstance(Module module) {
-    return new AndroidPlatformCompat(AndroidPlatform.getInstance(module));
-  }
+  private RenderResultCompat() {}
 }

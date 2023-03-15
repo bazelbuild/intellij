@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import com.android.tools.idea.rendering.RenderErrorContributor;
 import com.android.tools.idea.rendering.RenderErrorModelFactory;
 import com.android.tools.idea.rendering.RenderResult;
+import com.android.tools.idea.rendering.RenderResultCompat;
 import com.android.tools.idea.rendering.errors.ui.RenderErrorModel;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
@@ -155,7 +156,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     when(projectFileIndex.getModuleForFile(virtualFile)).thenReturn(module);
     PsiFile file = new MockPsiFile(virtualFile, new MockPsiManager(project));
     file.putUserData(ModuleUtilCore.KEY_MODULE, module);
-    RenderResult result = RenderResult.createBlank(file);
+    RenderResult result = RenderResultCompat.createBlank(file);
     RenderErrorModel errorModel = RenderErrorModelFactory.createErrorModel(null, result, null);
     assertThat(errorModel.getIssues()).isEmpty();
   }
@@ -330,7 +331,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     when(projectFileIndex.getModuleForFile(virtualFile)).thenReturn(module);
     PsiFile file = new MockPsiFile(virtualFile, new MockPsiManager(project));
     file.putUserData(ModuleUtilCore.KEY_MODULE, module);
-    RenderResult result = RenderResult.createBlank(file);
+    RenderResult result = RenderResultCompat.createBlank(file);
     result
         .getLogger()
         .addBrokenClass("com.google.example.CustomView", new Exception("resource not found"));
@@ -342,7 +343,7 @@ public class BlazeRenderErrorContributorTest extends BlazeTestCase {
     when(projectFileIndex.getModuleForFile(virtualFile)).thenReturn(module);
     PsiFile file = new MockPsiFile(virtualFile, new MockPsiManager(project));
     file.putUserData(ModuleUtilCore.KEY_MODULE, module);
-    RenderResult result = RenderResult.createBlank(file);
+    RenderResult result = RenderResultCompat.createBlank(file);
     for (String className : classNames) {
       result.getLogger().addMissingClass(className);
     }

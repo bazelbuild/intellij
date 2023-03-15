@@ -22,11 +22,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 public class AndroidPlatformsCompat {
   private AndroidPlatformsCompat() {}
 
-  public static AndroidPlatform getInstance(Sdk sdk) {
-    return AndroidPlatforms.getInstance(sdk);
+  public static AndroidPlatformCompat getInstance(Sdk sdk) {
+    return new AndroidPlatformCompat(AndroidPlatforms.getInstance(sdk));
   }
 
-  public static AndroidPlatform getInstance(Module module) {
-    return AndroidPlatforms.getInstance(module);
+  public static AndroidPlatformCompat getInstance(Module module) {
+    return new AndroidPlatformCompat(AndroidPlatforms.getInstance(module));
   }
 }
