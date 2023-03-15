@@ -209,7 +209,7 @@ public class JarCache {
     }
   }
 
-  public void cleanupCacheDir() throws IOException {
+  public void clear() throws IOException {
     FileOperationProvider ops = FileOperationProvider.getInstance();
     if (ops.exists(jarDir.toFile())) {
       try {

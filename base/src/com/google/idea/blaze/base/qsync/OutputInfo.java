@@ -18,14 +18,14 @@ package com.google.idea.blaze.base.qsync;
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 
 /** A data class that collecting and converting output group artifacts. */
 @AutoValue
 public abstract class OutputInfo {
 
-  public abstract ImmutableSet<ArtifactTrackerData.TargetToDeps> getArtifactInfos();
+  public abstract ImmutableSet<BuildArtifacts> getArtifacts();
 
   public abstract ImmutableList<OutputArtifact> getJars();
 
@@ -34,10 +34,10 @@ public abstract class OutputInfo {
   public abstract ImmutableList<OutputArtifact> getGeneratedSources();
 
   public static OutputInfo create(
-      ImmutableSet<ArtifactTrackerData.TargetToDeps> artifactInfos,
+      ImmutableSet<BuildArtifacts> artifacts,
       ImmutableList<OutputArtifact> jars,
       ImmutableList<OutputArtifact> aars,
       ImmutableList<OutputArtifact> generatedSources) {
-    return new AutoValue_OutputInfo(artifactInfos, jars, aars, generatedSources);
+    return new AutoValue_OutputInfo(artifacts, jars, aars, generatedSources);
   }
 }

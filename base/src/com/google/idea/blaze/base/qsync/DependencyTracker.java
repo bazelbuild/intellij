@@ -53,7 +53,6 @@ public class DependencyTracker {
   private final Project project;
 
   private final BlazeProject blazeProject;
-  private final Set<Label> syncedTargets = new HashSet<>();
   private final DependencyBuilder builder;
   private final DependencyCache cache;
 
@@ -83,7 +82,8 @@ public class DependencyTracker {
     if (targets == null) {
       return null;
     }
-    return Sets.difference(targets, syncedTargets).immutableCopy();
+    Set<Label> cachedTargets = cache.getCachedTargets();
+    return Sets.difference(targets, cachedTargets).immutableCopy();
   }
 
   public void buildDependenciesForFile(BlazeContext context, List<WorkspacePath> paths)
@@ -113,19 +113,10 @@ public class DependencyTracker {
       }
     }
 
-    int size = targets.size();
-    targets.removeIf(syncedTargets::contains);
-    context.output(PrintOutput.log("Removing already synced targets %d", size - targets.size()));
-
-    if (targets.isEmpty()) {
-      return;
-    }
-
     OutputInfo outputInfo = builder.build(context, buildTargets, ir, workspaceRoot);
 
-    syncedTargets.addAll(targets);
     long now = System.nanoTime();
-    UpdateResult updateResult = cache.update(outputInfo);
+    UpdateResult updateResult = cache.update(targets, outputInfo);
     long elapsedMs = (System.nanoTime() - now) / 1000000L;
     context.output(
         PrintOutput.log(
