@@ -22,7 +22,7 @@ import static java.util.stream.Collectors.joining;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.devtools.intellij.qsync.ArtifactTrackerData;
+import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem;
@@ -150,19 +150,16 @@ public class BazelBinaryDependencyBuilder implements DependencyBuilder {
         parsedBepOutput.getOutputGroupArtifacts("qsync_gensrcs");
     ImmutableList<OutputArtifact> artifactInfoFiles =
         parsedBepOutput.getOutputGroupArtifacts("artifact_info_file");
-    ImmutableSet.Builder<ArtifactTrackerData.TargetToDeps> artifactInfoFilesBuilder =
-        ImmutableSet.builder();
+    ImmutableSet.Builder<BuildArtifacts> artifactInfoFilesBuilder = ImmutableSet.builder();
     for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
       artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
     }
     return OutputInfo.create(artifactInfoFilesBuilder.build(), jars, aars, generatedSources);
   }
 
-  private ArtifactTrackerData.TargetToDeps readArtifactInfoFile(BlazeArtifact file)
-      throws IOException {
+  private BuildArtifacts readArtifactInfoFile(BlazeArtifact file) throws IOException {
     try (InputStream inputStream = file.getInputStream()) {
-      ArtifactTrackerData.TargetToDeps.Builder builder =
-          ArtifactTrackerData.TargetToDeps.newBuilder();
+      BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
       TextFormat.Parser parser = TextFormat.Parser.newBuilder().build();
       parser.merge(new InputStreamReader(inputStream, UTF_8), builder);
       return builder.build();

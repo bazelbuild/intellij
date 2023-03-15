@@ -17,13 +17,12 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.common.Label;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
-import java.nio.file.Path;
+import java.util.Set;
 
 /** A local cache of project dependencies. */
 public class DependencyCache {
@@ -44,23 +43,17 @@ public class DependencyCache {
     artifactTrackerProvider.get().clear();
   }
 
-  /* Invalidates all cached jars and the artifact map of a target. */
-  public void invalidate(Label target) throws IOException {
-    artifactTrackerProvider.get().removeDepsOf(target);
-  }
-
-  /* Returns all jar files of one target. */
-  public ImmutableSet<Path> get(Label target) {
-    return artifactTrackerProvider.get().get(target);
-  }
-
   /* Caches new Artifacts to local. */
-  public UpdateResult update(OutputInfo outputInfo) throws IOException {
-    return artifactTrackerProvider.get().add(outputInfo);
+  public UpdateResult update(Set<Label> targets, OutputInfo outputInfo) throws IOException {
+    return artifactTrackerProvider.get().add(targets, outputInfo);
   }
 
   /* Save artifact info to disk. */
   public void saveState() throws IOException {
     artifactTrackerProvider.get().saveToDisk();
+  }
+
+  public Set<Label> getCachedTargets() {
+    return artifactTrackerProvider.get().getCachedTargets();
   }
 }

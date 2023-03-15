@@ -19,16 +19,14 @@ package blaze;
 // option java_api_version = 2;
 option java_package = "com.google.devtools.intellij.qsync";
 
-message TargetToDirectArtifact {
+// The artifacts built for a given target
+message TargetArtifacts {
   string target = 1;
   repeated string artifact_paths = 2;
 }
 
-message TargetToDeps {
-  string target = 1;
-  repeated TargetToDirectArtifact deps = 2;
-}
-
-message TargetToDepsList {
-  repeated TargetToDeps target_to_deps = 1;
+// The list of all targets built and their artifacts. Note that because
+// of aliases, many targets can point to the same path on disk.
+message BuildArtifacts {
+  repeated TargetArtifacts artifacts = 1;
 }
