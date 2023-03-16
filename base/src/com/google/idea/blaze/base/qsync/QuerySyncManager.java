@@ -167,13 +167,12 @@ public class QuerySyncManager {
         });
   }
 
-  private void sync(BlazeContext context, boolean full) {
+  private void sync(BlazeContext context, Optional<PostQuerySyncData> lastQuery) {
     try {
       BlazeProjectSnapshot newProject =
-          full || graph.getCurrent().isEmpty()
-              ? projectQuerier.fullQuery(
-                  projectDataManager.getProjectDefinition(Optional.of(context)), context)
-              : projectQuerier.update(graph.getCurrent().get(), context);
+          lastQuery.isEmpty()
+              ? projectQuerier.fullQuery(projectDataManager.getProjectDefinition(context), context)
+              : projectQuerier.update(lastQuery.get(), context);
       graph.setCurrent(context, newProject);
       // TODO: Revisit SyncListeners once we switch fully to qsync
       BlazeImportSettings settings =
@@ -203,13 +202,27 @@ public class QuerySyncManager {
   }
 
   @CanIgnoreReturnValue
-  public ListenableFuture<Boolean> initialProjectSync() {
-    return run("Initiating project sync", "Importing project", context -> sync(context, true));
+  public ListenableFuture<Boolean> onStartup() {
+    return run(
+        "Loading project",
+        "Initializing project structure",
+        context -> sync(context, projectDataManager.loadFromDisk(context)));
+  }
+
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> fullSync() {
+    return run(
+        "Updating project structure",
+        "Re-importing project",
+        context -> sync(context, Optional.empty()));
   }
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> deltaSync() {
-    return run("Updating project structure", "Refreshing project", context -> sync(context, false));
+    return run(
+        "Updating project structure",
+        "Refreshing project",
+        context -> sync(context, graph.getCurrent().map(BlazeProjectSnapshot::queryData)));
   }
 
   private ListenableFuture<Boolean> run(String title, String subTitle, ScopedOperation operation) {

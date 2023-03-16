@@ -64,7 +64,6 @@ public class FullProjectUpdate implements RefreshOperation {
   @Override
   public Optional<QuerySpec> getQuerySpec() throws IOException {
     QuerySpec querySpec = projectDefinition.deriveQuerySpec(context, workspaceRoot);
-    result.setQuerySpec(querySpec);
     return Optional.of(querySpec);
   }
 
