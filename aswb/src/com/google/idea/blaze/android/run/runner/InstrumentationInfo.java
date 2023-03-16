@@ -23,6 +23,8 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.Label;
+import com.google.idea.blaze.base.qsync.QuerySync;
+import com.google.idea.blaze.base.qsync.QuerySyncProjectData;
 import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import javax.annotation.Nullable;
 
@@ -75,6 +77,17 @@ public class InstrumentationInfo {
   public static InstrumentationInfo getInstrumentationInfo(
       Label instrumentationTestLabel, BlazeProjectData projectData)
       throws InstrumentationParserException {
+    if (QuerySync.isEnabled()) {
+      QuerySyncProjectData querySyncProjectData = (QuerySyncProjectData) projectData;
+      Label testApp = querySyncProjectData.getTestAppFor(instrumentationTestLabel);
+      if (testApp == null) {
+        String msg = "Unable to identify target \"" + instrumentationTestLabel + "\".";
+        throw new InstrumentationParserException(msg);
+      }
+      Label targetApp = querySyncProjectData.getInstrumentsFor(testApp);
+      return new InstrumentationInfo(targetApp, testApp);
+    }
+
     // The following extracts the dependency info required during an instrumentation test.
     // To disambiguate, we try to follow the same terminology as used by the
     // android_instrumentation_test rule docs:

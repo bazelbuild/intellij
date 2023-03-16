@@ -66,6 +66,10 @@ public abstract class BuildGraphData {
 
   abstract ImmutableMap<Label, String> targetToKind();
 
+  abstract ImmutableMap<Label, Label> targetToTestApp();
+
+  abstract ImmutableMap<Label, Label> targetToInstruments();
+
   @Override
   public final String toString() {
     // The default autovalue toString() implementation can result in a very large string which
@@ -100,6 +104,10 @@ public abstract class BuildGraphData {
     public abstract ImmutableMap.Builder<Label, ImmutableSet<Label>> ruleDepsBuilder();
 
     public abstract ImmutableMap.Builder<Label, String> targetToKindBuilder();
+
+    public abstract ImmutableMap.Builder<Label, Label> targetToTestAppBuilder();
+
+    public abstract ImmutableMap.Builder<Label, Label> targetToInstrumentsBuilder();
 
     @CanIgnoreReturnValue
     public Builder ruleDeps(Map<Label, Set<Label>> value) {
