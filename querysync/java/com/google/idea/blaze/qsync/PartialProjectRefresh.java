@@ -83,7 +83,6 @@ class PartialProjectRefresh implements RefreshOperation {
   @Override
   public Optional<QuerySpec> getQuerySpec() {
     Optional<QuerySpec> querySpec = createQuerySpec();
-    newState.setQuerySpec(querySpec.orElse(QuerySpec.EMPTY));
     return querySpec;
   }
 

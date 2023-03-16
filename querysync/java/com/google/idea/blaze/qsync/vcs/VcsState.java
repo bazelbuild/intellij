@@ -16,6 +16,7 @@
 package com.google.idea.blaze.qsync.vcs;
 
 import com.google.common.collect.ImmutableSet;
+import java.util.Objects;
 
 /** State of the projects VCS at a point in time. */
 public class VcsState {
@@ -33,5 +34,27 @@ public class VcsState {
   public VcsState(String upstreamRevision, ImmutableSet<WorkspaceFileChange> workingSet) {
     this.upstreamRevision = upstreamRevision;
     this.workingSet = workingSet;
+  }
+
+  @Override
+  public String toString() {
+    return "VcsState{upstreamRevision='" + upstreamRevision + "', workingSet=" + workingSet + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof VcsState)) {
+      return false;
+    }
+    VcsState that = (VcsState) o;
+    return upstreamRevision.equals(that.upstreamRevision) && workingSet.equals(that.workingSet);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(upstreamRevision, workingSet);
   }
 }

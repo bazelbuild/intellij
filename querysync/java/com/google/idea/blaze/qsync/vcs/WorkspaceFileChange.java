@@ -16,6 +16,7 @@
 package com.google.idea.blaze.qsync.vcs;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 /** Represents an edit to a file in the user's workspace. */
 public final class WorkspaceFileChange {
@@ -53,5 +54,27 @@ public final class WorkspaceFileChange {
     }
     throw new IllegalStateException(
         "Invalid operation " + operation + " for " + workspaceRelativePath);
+  }
+
+  @Override
+  public String toString() {
+    return "WorkspaceFileChange{" + operation + ' ' + workspaceRelativePath + '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof WorkspaceFileChange)) {
+      return false;
+    }
+    WorkspaceFileChange that = (WorkspaceFileChange) o;
+    return operation == that.operation && workspaceRelativePath.equals(that.workspaceRelativePath);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(operation, workspaceRelativePath);
   }
 }

@@ -107,6 +107,10 @@ public class ProjectDeps {
       this.workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     }
 
+    public Project getProject() {
+      return project;
+    }
+
     public BlazeImportSettings getSettings() {
       return importSettings;
     }
