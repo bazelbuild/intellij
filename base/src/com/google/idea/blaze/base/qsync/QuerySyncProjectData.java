@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.dependencies.TargetInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
-import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
 import com.google.idea.blaze.base.model.SyncState;
 import com.google.idea.blaze.base.model.primitives.Label;
@@ -86,11 +85,6 @@ public class QuerySyncProjectData implements BlazeProjectData {
   @Override
   public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
     return workspaceLanguageSettings;
-  }
-
-  @Override
-  public ProjectTargetData getTargetData() {
-    throw new NotSupportedWithQuerySyncException("getTargetData");
   }
 
   @Override
