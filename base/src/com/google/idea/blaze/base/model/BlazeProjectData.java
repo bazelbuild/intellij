@@ -23,6 +23,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.common.BuildTarget;
 import javax.annotation.Nullable;
 
 /** Interface to persistent project data. */
@@ -30,6 +31,10 @@ public interface BlazeProjectData {
 
   @Nullable
   TargetInfo getTargetInfo(Label label);
+
+  /** Only supported for query-sync */
+  @Nullable
+  BuildTarget getBuildTarget(Label label);
 
   WorkspacePathResolver getWorkspacePathResolver();
 

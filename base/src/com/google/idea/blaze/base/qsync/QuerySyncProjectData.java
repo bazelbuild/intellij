@@ -27,6 +27,7 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
@@ -62,16 +63,26 @@ public class QuerySyncProjectData implements BlazeProjectData {
   @Override
   public TargetInfo getTargetInfo(Label label) {
     return blazeProject
-        .map(s -> s.getTargetKind(com.google.idea.blaze.common.Label.of(label.toString())))
-        .map(kind -> TargetInfo.builder(label, kind).build())
+        .map(BlazeProjectSnapshot::getTargetMap)
+        .map(map -> map.get(com.google.idea.blaze.common.Label.of(label.toString())))
+        .map(target -> TargetInfo.builder(label, target.kind()).build())
+        .orElse(null);
+  }
+
+  @Nullable
+  @Override
+  public BuildTarget getBuildTarget(Label label) {
+    return blazeProject
+        .map(BlazeProjectSnapshot::getTargetMap)
+        .map(map -> map.get(com.google.idea.blaze.common.Label.of(label.toString())))
         .orElse(null);
   }
 
   @Override
   public ImmutableList<TargetInfo> targets() {
     if (blazeProject.isPresent()) {
-      return blazeProject.get().getTargetKinds().entrySet().stream()
-          .map(e -> TargetInfo.builder(Label.create(e.getKey().toString()), e.getValue()).build())
+      return blazeProject.get().getTargetMap().values().stream()
+          .map(t -> TargetInfo.builder(Label.create(t.label().toString()), t.kind()).build())
           .collect(ImmutableList.toImmutableList());
     }
     return ImmutableList.of();
@@ -85,28 +96,6 @@ public class QuerySyncProjectData implements BlazeProjectData {
   @Override
   public WorkspaceLanguageSettings getWorkspaceLanguageSettings() {
     return workspaceLanguageSettings;
-  }
-
-  /** Retrieves "test_app" attribute for the specified target, if it exists. */
-  @Nullable
-  public Label getTestAppFor(Label label) {
-    return blazeProject
-        .map(BlazeProjectSnapshot::getTargetToTestApp)
-        .map(map -> map.get(com.google.idea.blaze.common.Label.of(label.toString())))
-        .map(com.google.idea.blaze.common.Label::toString)
-        .map(Label::create)
-        .orElse(null);
-  }
-
-  /** Returns "instruments" attribute for the specified target, if it exists. */
-  @Nullable
-  public Label getInstrumentsFor(Label label) {
-    return blazeProject
-        .map(BlazeProjectSnapshot::getTargetToInstruments)
-        .map(map -> map.get(com.google.idea.blaze.common.Label.of(label.toString())))
-        .map(com.google.idea.blaze.common.Label::toString)
-        .map(Label::create)
-        .orElse(null);
   }
 
   @Override
