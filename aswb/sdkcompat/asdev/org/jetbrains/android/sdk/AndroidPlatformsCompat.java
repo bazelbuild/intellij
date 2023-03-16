@@ -23,10 +23,10 @@ public class AndroidPlatformsCompat {
   private AndroidPlatformsCompat() {}
 
   public static AndroidPlatformCompat getInstance(Sdk sdk) {
-    return new AndroidPlatformCompat(AndroidPlatform.getInstance(sdk));
+    return new AndroidPlatformCompat(AndroidPlatforms.getInstance(sdk));
   }
 
   public static AndroidPlatformCompat getInstance(Module module) {
-    return new AndroidPlatformCompat(AndroidPlatform.getInstance(module));
+    return new AndroidPlatformCompat(AndroidPlatforms.getInstance(module));
   }
 }

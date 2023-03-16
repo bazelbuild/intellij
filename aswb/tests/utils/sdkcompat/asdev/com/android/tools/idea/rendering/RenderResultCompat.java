@@ -20,7 +20,7 @@ import com.intellij.psi.PsiFile;
 /** Compat class for {@link RenderResult} */
 public final class RenderResultCompat {
   public static RenderResult createBlank(PsiFile file) {
-    return RenderResult.createBlank(file);
+    return RenderResults.createBlank(file);
   }
 
   private RenderResultCompat() {}

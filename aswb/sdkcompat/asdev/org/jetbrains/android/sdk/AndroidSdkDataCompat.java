@@ -16,6 +16,7 @@
 package org.jetbrains.android.sdk;
 
 import com.android.sdklib.IAndroidTarget;
+import com.android.tools.sdk.AndroidSdkData;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.File;
 

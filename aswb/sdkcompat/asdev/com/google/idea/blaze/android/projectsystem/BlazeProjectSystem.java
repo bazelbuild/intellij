@@ -184,6 +184,12 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
   }
 
   @Override
+  public Collection<String> getBootClasspath(@NotNull Module module) {
+    // TODO: b/266586669
+    return ImmutableList.of();
+  }
+
+  @Override
   public Collection<Module> getSubmodules() {
     return ImmutableList.of();
   }

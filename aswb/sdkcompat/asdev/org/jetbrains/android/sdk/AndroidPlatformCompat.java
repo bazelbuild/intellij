@@ -16,6 +16,7 @@
 package org.jetbrains.android.sdk;
 
 import com.android.sdklib.BuildToolInfo;
+import com.android.tools.sdk.AndroidPlatform;
 import com.intellij.openapi.projectRoots.Sdk;
 
 /** Compat class for {@link AndroidPlatform} */

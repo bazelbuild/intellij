@@ -40,8 +40,7 @@ public final class BaseSdkTestCompat {
 
   /** #api223: inline into ServiceHelper */
   public static void unregisterComponent(ComponentManager componentManager, Class<?> componentKey) {
-    ((ComponentManagerImpl) componentManager.getPicoContainer())
-        .unregisterComponent(componentKey.getName());
+    ((ComponentManagerImpl) componentManager).unregisterComponent(componentKey);
   }
 
   /** #api213: inline into tests */
