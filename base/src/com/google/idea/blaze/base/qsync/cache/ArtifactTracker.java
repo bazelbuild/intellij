@@ -63,12 +63,13 @@ public class ArtifactTracker {
   private final JarCache jarCache;
   private final Path persistentFile;
 
-  public ArtifactTracker(Project project) {
+  public ArtifactTracker(Project project, ArtifactFetcher artifactFetcher) {
     jarCache =
         new JarCache(
             getProjectDirectory(project).resolve(LIBRARY_DIRECTORY),
             getExternalAarDirectory(project),
-            getProjectDirectory(project).resolve(GEN_SRC_DIRECTORY));
+            getProjectDirectory(project).resolve(GEN_SRC_DIRECTORY),
+            artifactFetcher);
     persistentFile = getProjectDirectory(project).resolve(".artifact.info");
   }
 
