@@ -59,7 +59,7 @@ public class QuerySyncNodeDecorator implements ProjectViewNodeDecorator {
     PsiFile file = psiFileAndName.psiFile;
     VirtualFile vf = file.getVirtualFile();
     Set<Label> targets =
-        QuerySyncManager.getInstance(project).getDependencyTracker().getPendingTargets(project, vf);
+        QuerySyncManager.getInstance(project).getDependencyTracker().getPendingTargets(vf);
     if (targets != null && !targets.isEmpty()) {
       data.clearText();
       data.addText(vf.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);

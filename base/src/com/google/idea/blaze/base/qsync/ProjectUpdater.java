@@ -21,10 +21,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
-import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -32,7 +30,6 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.util.UrlUtil;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
-import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.BlazeProjectListener;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectProto;
@@ -69,10 +66,19 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 public class ProjectUpdater implements BlazeProjectListener {
 
   private Project project;
+  private final BlazeImportSettings importSettings;
+  private final ProjectViewSet projectViewSet;
+  private final WorkspaceRoot workspaceRoot;
 
-  public ProjectUpdater(Project project, BlazeProject graph) {
+  public ProjectUpdater(
+      Project project,
+      BlazeImportSettings importSettings,
+      ProjectViewSet projectViewSet,
+      WorkspaceRoot workspaceRoot) {
     this.project = project;
-    graph.addListener(this);
+    this.importSettings = importSettings;
+    this.projectViewSet = projectViewSet;
+    this.workspaceRoot = workspaceRoot;
   }
 
   public static ModuleType<?> mapModuleType(ProjectProto.ModuleType type) {
@@ -87,21 +93,11 @@ public class ProjectUpdater implements BlazeProjectListener {
 
   @Override
   public void graphCreated(Context context, BlazeProjectSnapshot graph) throws IOException {
-    BlazeImportSettings importSettings =
-        BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
 
-    ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
-
-    updateProjectModel(graph.project(), importSettings, projectViewSet, workspaceRoot, context);
+    updateProjectModel(graph.project(), context);
   }
 
-  private void updateProjectModel(
-      ProjectProto.Project spec,
-      BlazeImportSettings importSettings,
-      ProjectViewSet projectViewSet,
-      WorkspaceRoot workspaceRoot,
-      Context context) {
+  private void updateProjectModel(ProjectProto.Project spec, Context context) {
     ModuleManager moduleManager = ModuleManager.getInstance(project);
     File imlDirectory = new File(BlazeDataStorage.getProjectDataDir(importSettings), "modules");
     Path projectDirectory = Paths.get(Objects.requireNonNull(project.getBasePath()));

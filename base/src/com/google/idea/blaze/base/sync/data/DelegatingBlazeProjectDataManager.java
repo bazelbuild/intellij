@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.sync.data;
 
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.qsync.QuerySync;
-import com.google.idea.blaze.base.qsync.QuerySyncManager;
+import com.google.idea.blaze.base.qsync.QuerySyncProjectDataManager;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
@@ -29,7 +29,7 @@ public class DelegatingBlazeProjectDataManager implements BlazeProjectDataManage
 
   public DelegatingBlazeProjectDataManager(Project project) {
     if (QuerySync.isEnabled()) {
-      delegate = QuerySyncManager.getInstance(project).getProjectDataManager();
+      delegate = new QuerySyncProjectDataManager(project);
     } else {
       delegate = new AspectSyncProjectDataManager(project);
     }
@@ -50,6 +50,5 @@ public class DelegatingBlazeProjectDataManager implements BlazeProjectDataManage
   @Override
   public void saveProject(BlazeImportSettings importSettings, BlazeProjectData projectData) {
     delegate.saveProject(importSettings, projectData);
-    }
-
+  }
 }

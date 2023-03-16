@@ -29,12 +29,10 @@ import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
-import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.common.Label;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -63,14 +61,14 @@ public class ArtifactTracker {
   private final JarCache jarCache;
   private final Path persistentFile;
 
-  public ArtifactTracker(Project project, ArtifactFetcher artifactFetcher) {
+  public ArtifactTracker(BlazeImportSettings importSettings, ArtifactFetcher artifactFetcher) {
     jarCache =
         new JarCache(
-            getProjectDirectory(project).resolve(LIBRARY_DIRECTORY),
-            getExternalAarDirectory(project),
-            getProjectDirectory(project).resolve(GEN_SRC_DIRECTORY),
+            getProjectDirectory(importSettings).resolve(LIBRARY_DIRECTORY),
+            getExternalAarDirectory(importSettings),
+            getProjectDirectory(importSettings).resolve(GEN_SRC_DIRECTORY),
             artifactFetcher);
-    persistentFile = getProjectDirectory(project).resolve(".artifact.info");
+    persistentFile = getProjectDirectory(importSettings).resolve(".artifact.info");
   }
 
   public void initialize() {
@@ -174,20 +172,12 @@ public class ArtifactTracker {
   }
 
   /** Returns directory of project. */
-  private static Path getProjectDirectory(Project project) {
-    BlazeImportSettings importSettings =
-        BlazeImportSettingsManager.getInstance(project).getImportSettings();
-
-    if (importSettings == null) {
-      throw new IllegalArgumentException(
-          String.format("Could not get directory for project '%s'", project.getName()));
-    }
-
+  private static Path getProjectDirectory(BlazeImportSettings importSettings) {
     return BlazeDataStorage.getProjectDataDir(importSettings).toPath();
   }
 
-  public static Path getExternalAarDirectory(Project project) {
-    return getProjectDirectory(project).resolve(AAR_DIRECTORY);
+  public static Path getExternalAarDirectory(BlazeImportSettings importSettings) {
+    return getProjectDirectory(importSettings).resolve(AAR_DIRECTORY);
   }
 
   public Set<Label> getCachedTargets() {
