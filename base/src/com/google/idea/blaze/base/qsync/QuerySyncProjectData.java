@@ -61,16 +61,6 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   @Nullable
   @Override
-  public TargetInfo getTargetInfo(Label label) {
-    return blazeProject
-        .map(BlazeProjectSnapshot::getTargetMap)
-        .map(map -> map.get(com.google.idea.blaze.common.Label.of(label.toString())))
-        .map(target -> TargetInfo.builder(label, target.kind()).build())
-        .orElse(null);
-  }
-
-  @Nullable
-  @Override
   public BuildTarget getBuildTarget(Label label) {
     return blazeProject
         .map(BlazeProjectSnapshot::getTargetMap)

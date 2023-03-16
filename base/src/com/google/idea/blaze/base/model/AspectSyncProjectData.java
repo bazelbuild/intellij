@@ -115,9 +115,7 @@ public final class AspectSyncProjectData implements BlazeProjectData {
         .build();
   }
 
-  @Nullable
-  @Override
-  public TargetInfo getTargetInfo(Label label) {
+  private TargetInfo getTargetInfo(Label label) {
     TargetMap map = getTargetMap();
     // look for a plain target first
     TargetIdeInfo target = map.get(TargetKey.forPlainTarget(label));
@@ -135,7 +133,14 @@ public final class AspectSyncProjectData implements BlazeProjectData {
   @Nullable
   @Override
   public BuildTarget getBuildTarget(Label label) {
-    throw new UnsupportedOperationException("Unsupported for aspect sync");
+    TargetInfo targetInfo = getTargetInfo(label);
+    if (targetInfo == null) {
+      return null;
+    }
+    return BuildTarget.builder()
+        .setLabel(com.google.idea.blaze.common.Label.of(targetInfo.label.toString()))
+        .setKind(targetInfo.kindString)
+        .build();
   }
 
   @Override
