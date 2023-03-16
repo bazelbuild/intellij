@@ -34,7 +34,7 @@ import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
-import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
@@ -324,7 +324,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
         SyncProjectState projectState,
         BlazeSyncBuildResult buildResult,
         boolean mergeWithOldState,
-        @Nullable BlazeProjectData oldProjectData) {
+        @Nullable AspectSyncProjectData oldProjectData) {
       return new ProjectTargetData(targetMap, null, RemoteOutputArtifacts.fromProjectData(null));
     }
 

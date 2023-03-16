@@ -40,8 +40,6 @@ public interface BlazeProjectData {
   // TODO: Many of the following methods are aspect-sync specific, and should probably not appear in
   //  this interface.
 
-  ProjectTargetData getTargetData();
-
   TargetMap getTargetMap();
 
   BlazeInfo getBlazeInfo();

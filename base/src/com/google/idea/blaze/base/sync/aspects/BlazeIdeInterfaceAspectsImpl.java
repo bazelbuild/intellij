@@ -51,7 +51,7 @@ import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
 import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.lang.AdditionalLanguagesHelper;
-import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.RemoteOutputArtifacts;
@@ -135,7 +135,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       SyncProjectState projectState,
       BlazeSyncBuildResult buildResult,
       boolean mergeWithOldState,
-      @Nullable BlazeProjectData oldProjectData) {
+      @Nullable AspectSyncProjectData oldProjectData) {
     TargetMapAndInterfaceState state =
         updateTargetMap(
             project,
@@ -178,7 +178,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       SyncProjectState projectState,
       BlazeSyncBuildResult buildResult,
       boolean mergeWithOldState,
-      @Nullable BlazeProjectData oldProjectData) {
+      @Nullable AspectSyncProjectData oldProjectData) {
     // If there was a partial error, make a best-effort attempt to sync. Retain
     // any old state that we have in an attempt not to lose too much code.
     if (buildResult.getBuildResult().buildResult.status == BuildResult.Status.BUILD_ERROR

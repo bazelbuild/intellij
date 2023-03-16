@@ -35,6 +35,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.prefetch.PrefetchStats;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -151,10 +152,17 @@ final class ProjectUpdateSyncTask {
   }
 
   @Nullable
-  private static BlazeProjectData getOldProjectData(Project project, SyncMode syncMode) {
-    return syncMode == SyncMode.FULL
-        ? null
-        : BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+  private static AspectSyncProjectData getOldProjectData(Project project, SyncMode syncMode) {
+    if (syncMode == SyncMode.FULL) {
+      return null;
+    }
+    Preconditions.checkState(!QuerySync.isEnabled(), "This should only happen in legacy sync");
+    BlazeProjectData data = BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
+    if (data == null) {
+      return null;
+    }
+    Preconditions.checkState(data instanceof AspectSyncProjectData, "Invalid project data type");
+    return (AspectSyncProjectData) data;
   }
 
   private void run(BlazeContext context) throws SyncCanceledException, SyncFailedException {

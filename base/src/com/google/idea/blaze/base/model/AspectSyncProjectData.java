@@ -138,7 +138,6 @@ public final class AspectSyncProjectData implements BlazeProjectData {
         .collect(ImmutableList.toImmutableList());
   }
 
-  @Override
   public ProjectTargetData getTargetData() {
     return targetData;
   }
