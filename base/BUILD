@@ -405,6 +405,22 @@ java_library(
 )
 
 java_library(
+    name = "artifact_fetcher",
+    srcs = [
+        "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
+        "src/com/google/idea/blaze/base/qsync/cache/ArtifactFetcher.java",
+        "src/com/google/idea/blaze/base/settings/BuildBinaryType.java",
+    ],
+    neverlink = 1,
+    visibility = G3PLUGINS_VISIBILITY,
+    deps = [
+        ":base",
+        "//intellij_platform_sdk:jsr305",
+        "//intellij_platform_sdk:plugin_api",
+    ],
+)
+
+java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]),

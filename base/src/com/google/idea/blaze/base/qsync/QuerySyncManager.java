@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -27,6 +28,8 @@ import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
+import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher;
+import com.google.idea.blaze.base.qsync.cache.FileApiArtifactFetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
@@ -34,9 +37,11 @@ import com.google.idea.blaze.base.scope.ScopedOperation;
 import com.google.idea.blaze.base.scope.scopes.ProblemsViewScope;
 import com.google.idea.blaze.base.scope.scopes.ProgressIndicatorScope;
 import com.google.idea.blaze.base.scope.scopes.ToolWindowScope;
+import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
+import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
@@ -51,6 +56,7 @@ import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -82,7 +88,8 @@ import java.util.Set;
  * </ul>
  */
 public class QuerySyncManager {
-
+  private static final ExtensionPointName<ArtifactFetcher> EP_NAME =
+      ExtensionPointName.create("com.google.idea.blaze.qsync.ArtifactFetcher");
   private final Logger logger = Logger.getInstance(getClass());
 
   private final Project project;
@@ -104,7 +111,7 @@ public class QuerySyncManager {
     this.graph = new BlazeProject();
     this.projectDataManager = new QuerySyncProjectDataManager(projectDepsBuilder);
     this.builder = new BazelBinaryDependencyBuilder(project);
-    this.cache = new DependencyCache(project);
+    this.cache = new DependencyCache(project, createArtifactFetcher());
     this.dependencyTracker = new DependencyTracker(project, graph, builder, cache);
     this.projectQuerier =
         ProjectQuerierImpl.create(project, projectDepsBuilder.getWorkspaceRoot().path());
@@ -131,6 +138,23 @@ public class QuerySyncManager {
     this.projectUpdater = projectUpdater;
     this.builder = builder;
     this.cache = cache;
+  }
+
+  private ArtifactFetcher createArtifactFetcher() {
+    Preconditions.checkState(
+        EP_NAME.getExtensions().length <= 1, "There are too many artifact fetchers");
+    ArtifactFetcher defaultArtifactFetcher = new FileApiArtifactFetcher();
+    BuildBinaryType buildBinaryType =
+        Blaze.getBuildSystemProvider(project)
+            .getBuildSystem()
+            .getDefaultInvoker(project, BlazeContext.create())
+            .getType();
+    for (ArtifactFetcher artifactFetcher : EP_NAME.getExtensions()) {
+      if (artifactFetcher.isEnabled(buildBinaryType)) {
+        return artifactFetcher;
+      }
+    }
+    return defaultArtifactFetcher;
   }
 
   /** Log & display a message to the user when a user-initiated action fails. */
@@ -165,6 +189,12 @@ public class QuerySyncManager {
             onError("Failed to build dependencies " + Joiner.on(' ').join(wps), e, context);
           }
         });
+  }
+
+  public void build(BlazeContext context, List<WorkspacePath> wps)
+      throws IOException, GetArtifactsException {
+
+    dependencyTracker.buildDependenciesForFile(context, wps);
   }
 
   private void sync(BlazeContext context, Optional<PostQuerySyncData> lastQuery) {
@@ -267,12 +297,6 @@ public class QuerySyncManager {
                           .syncEnded(SyncMode.FULL, SyncResult.SUCCESS);
                       return !context.hasErrors();
                     }));
-  }
-
-  public void build(BlazeContext context, List<WorkspacePath> wps)
-      throws IOException, GetArtifactsException {
-
-    dependencyTracker.buildDependenciesForFile(context, wps);
   }
 
   public DependencyTracker getDependencyTracker() {

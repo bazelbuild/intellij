@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.common.Label;
@@ -28,11 +29,11 @@ import java.util.Set;
 public class DependencyCache {
   private final Supplier<ArtifactTracker> artifactTrackerProvider;
 
-  public DependencyCache(Project project) {
+  public DependencyCache(Project project, ArtifactFetcher artifactFetcher) {
     artifactTrackerProvider =
         Suppliers.memoize(
             () -> {
-              ArtifactTracker artifactTracker = new ArtifactTracker(project);
+              ArtifactTracker artifactTracker = new ArtifactTracker(project, artifactFetcher);
               artifactTracker.initialize();
               return artifactTracker;
             });

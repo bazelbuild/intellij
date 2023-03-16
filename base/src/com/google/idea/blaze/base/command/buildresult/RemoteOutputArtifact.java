@@ -18,6 +18,11 @@ package com.google.idea.blaze.base.command.buildresult;
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -56,6 +61,13 @@ public interface RemoteOutputArtifact
   String getHashId();
 
   long getSyncTimeMillis();
+
+  @Override
+  default void copyTo(Path dest) throws IOException {
+    try (InputStream stream = getInputStream()) {
+      Files.copy(stream, dest, StandardCopyOption.REPLACE_EXISTING);
+    }
+  }
 
   /** Converts ProjectData.OutputArtifact to RemoteOutputArtifact. */
   interface Parser {
