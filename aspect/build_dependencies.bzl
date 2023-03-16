@@ -151,6 +151,18 @@ def _collect_dependencies_core_impl(
             trs.append(depset([idl_jar]))
             target_to_artifacts[label].append(_output_relative_path(idl_jar.path))
 
+        # Add generated java_outputs (e.g. from annotation processing
+        generated_class_jars = []
+        for java_output in target[JavaInfo].java_outputs:
+            if java_output.generated_class_jar:
+                generated_class_jars.append(java_output.generated_class_jar)
+        if generated_class_jars > 0:
+            if label not in target_to_artifacts:
+                target_to_artifacts[label] = []
+            trs.append(depset(generated_class_jars))
+            for jar in generated_class_jars:
+                target_to_artifacts[label].append(_output_relative_path(jar.path))
+
         # Add generated sources for included targets
         if hasattr(ctx.rule.attr, "srcs"):
             for src in ctx.rule.attr.srcs:

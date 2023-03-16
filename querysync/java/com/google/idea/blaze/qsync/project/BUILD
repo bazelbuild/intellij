@@ -38,7 +38,6 @@ java_library(
         "//querysync/java/com/google/idea/blaze/qsync/vcs",
         "//shared",
         "//third_party/auto_value",
-        "//third_party/java/protobuf:protobuf_lite",
         "@com_google_guava_guava//jar",
         "@com_google_protobuf//:protobuf_java",
         "@error_prone_annotations//jar",
