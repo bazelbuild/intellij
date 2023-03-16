@@ -156,7 +156,7 @@ def _collect_dependencies_core_impl(
         for java_output in target[JavaInfo].java_outputs:
             if java_output.generated_class_jar:
                 generated_class_jars.append(java_output.generated_class_jar)
-        if generated_class_jars > 0:
+        if generated_class_jars:
             if label not in target_to_artifacts:
                 target_to_artifacts[label] = []
             trs.append(depset(generated_class_jars))
