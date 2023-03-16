@@ -30,10 +30,6 @@ import javax.annotation.Nullable;
 public interface BlazeProjectData {
 
   @Nullable
-  TargetInfo getTargetInfo(Label label);
-
-  /** Only supported for query-sync */
-  @Nullable
   BuildTarget getBuildTarget(Label label);
 
   WorkspacePathResolver getWorkspacePathResolver();

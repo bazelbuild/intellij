@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceType;
 import com.google.idea.blaze.base.run.BlazeRunConfigurationFactory;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.plugin.IntellijPluginRule;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.diagnostic.VMOptions;
@@ -67,8 +68,11 @@ public class BlazeIntellijPluginConfigurationType implements ConfigurationType {
           .isWorkspaceType(WorkspaceType.INTELLIJ_PLUGIN)) {
         return false;
       }
-      TargetInfo target = blazeProjectData.getTargetInfo(label);
-      return target != null && IntellijPluginRule.isPluginTarget(target);
+      BuildTarget target = blazeProjectData.getBuildTarget(label);
+      if (target == null) {
+        return false;
+      }
+      return IntellijPluginRule.isPluginTarget(TargetInfo.builder(label, target.kind()).build());
     }
 
     @Override
