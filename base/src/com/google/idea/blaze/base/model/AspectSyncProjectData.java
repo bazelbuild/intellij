@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoderImpl;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.common.BuildTarget;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -129,6 +130,12 @@ public final class AspectSyncProjectData implements BlazeProjectData {
         .findFirst()
         .map(TargetIdeInfo::toTargetInfo)
         .orElse(null);
+  }
+
+  @Nullable
+  @Override
+  public BuildTarget getBuildTarget(Label label) {
+    throw new UnsupportedOperationException("Unsupported for aspect sync");
   }
 
   @Override

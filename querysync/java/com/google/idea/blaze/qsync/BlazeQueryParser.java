@@ -20,6 +20,7 @@ import static com.google.idea.blaze.common.Label.toLabelList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
@@ -97,23 +98,19 @@ public class BlazeQueryParser {
     }
     for (Map.Entry<Label, Query.Rule> ruleEntry : query.getRulesMap().entrySet()) {
       String ruleClass = ruleEntry.getValue().getRuleClass();
-      graphBuilder.targetToKindBuilder().put(ruleEntry.getKey(), ruleClass);
       ruleCount.compute(ruleClass, (k, v) -> (v == null ? 0 : v) + 1);
 
+      BuildTarget.Builder buildTarget =
+          BuildTarget.builder().setLabel(ruleEntry.getKey()).setKind(ruleClass);
       if (ruleEntry.getValue().containsOtherAttributes("test_app")) {
-        graphBuilder
-            .targetToTestAppBuilder()
-            .put(
-                ruleEntry.getKey(),
-                Label.of(ruleEntry.getValue().getOtherAttributesOrThrow("test_app")));
+        buildTarget.setTestApp(
+            Label.of(ruleEntry.getValue().getOtherAttributesOrThrow("test_app")));
       }
       if (ruleEntry.getValue().containsOtherAttributes("instruments")) {
-        graphBuilder
-            .targetToInstrumentsBuilder()
-            .put(
-                ruleEntry.getKey(),
-                Label.of(ruleEntry.getValue().getOtherAttributesOrThrow("instruments")));
+        buildTarget.setInstruments(
+            Label.of(ruleEntry.getValue().getOtherAttributesOrThrow("instruments")));
       }
+      graphBuilder.targetMapBuilder().put(ruleEntry.getKey(), buildTarget.build());
 
       if (isJavaRule(ruleClass)) {
         ImmutableSet<Label> thisSources =
