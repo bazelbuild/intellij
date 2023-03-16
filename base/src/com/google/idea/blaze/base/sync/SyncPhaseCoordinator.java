@@ -35,12 +35,14 @@ import com.google.idea.blaze.base.issueparser.BlazeIssueParser;
 import com.google.idea.blaze.base.logging.EventLoggingService;
 import com.google.idea.blaze.base.logging.utils.BuildPhaseSyncStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
+import com.google.idea.blaze.base.model.AspectSyncProjectData;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.model.ProjectTargetData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.Scope;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
@@ -314,20 +316,26 @@ final class SyncPhaseCoordinator {
   }
 
   @Nullable
-  private BlazeProjectData getOldProjectData(BlazeContext context, SyncMode mode) {
+  private AspectSyncProjectData getOldProjectData(BlazeContext context, SyncMode mode) {
     if (mode == SyncMode.FULL) {
       return null;
     }
     BlazeImportSettings importSettings =
         BlazeImportSettingsManager.getInstance(project).getImportSettings();
-    BlazeProjectData blazeProjectData =
+    Preconditions.checkState(!QuerySync.isEnabled(), "This should only happen in legacy sync");
+
+    BlazeProjectData data =
         BlazeProjectDataManager.getInstance(project).loadProject(importSettings);
-    if (blazeProjectData == null && mode != SyncMode.NO_BUILD) {
+    if (data == null && mode != SyncMode.NO_BUILD) {
       context.output(
           new StatusOutput(
               "Couldn't load previously cached project data; full sync will be needed"));
     }
-    return blazeProjectData;
+    if (data == null) {
+      return null;
+    }
+    Preconditions.checkState(data instanceof AspectSyncProjectData, "Invalid project data type");
+    return (AspectSyncProjectData) data;
   }
 
   private void doFilterProjectTargets(
@@ -341,7 +349,7 @@ final class SyncPhaseCoordinator {
       if (!context.shouldContinue()) {
         return;
       }
-      BlazeProjectData oldProjectData = getOldProjectData(context, params.syncMode());
+      AspectSyncProjectData oldProjectData = getOldProjectData(context, params.syncMode());
       if (oldProjectData == null) {
         String message = "Can't filter project targets: project has never been synced.";
         context.output(PrintOutput.error(message));
