@@ -151,7 +151,7 @@ public class KotlinTestContextProviderTest extends BlazeRunConfigurationProducer
             TestBlazeCall.create(
                 BlazeCommandName.TEST,
                 TargetExpression.fromStringSafe("//com/google/test:TestClass"),
-                "--test_filter=com.google.test.TestClass"));
+                "--test_filter=com.google.test#TestClass"));
   }
 
   @Test

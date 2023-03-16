@@ -86,8 +86,18 @@ class KotlinTestContextProvider implements TestContextProvider {
 
   @Nullable
   private static String getTestFilter(KtClass testClass, @Nullable KtNamedFunction testMethod) {
-    FqName fqName = testMethod != null ? testMethod.getFqName() : testClass.getFqName();
-    return fqName != null ? fqName.toString() : null;
+    FqName testClassFqName = testClass.getFqName();
+    if (testClassFqName == null) {
+      return null;
+    }
+    if (testMethod == null) {
+      return testClassFqName.toString();
+    }
+    FqName testMethodFqName = testMethod.getFqName();
+    if (testMethodFqName == null || !testMethodFqName.toString().startsWith(testClassFqName.toString())) {
+      return testClassFqName.toString();
+    }
+    return testMethodFqName.toString().replace(testClassFqName + ".", testClassFqName + "#");
   }
 
   @Nullable
@@ -95,6 +105,6 @@ class KotlinTestContextProvider implements TestContextProvider {
     if (testMethod == null) {
       return testClass.getName();
     }
-    return testClass.getName() + "." + testMethod.getName();
+    return testClass.getName() + "#" + testMethod.getName();
   }
 }
