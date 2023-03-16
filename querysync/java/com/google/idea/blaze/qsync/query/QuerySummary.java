@@ -24,6 +24,7 @@ import com.google.auto.value.extension.memoized.Memoized;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
@@ -60,6 +61,10 @@ import java.util.Optional;
 public abstract class QuerySummary {
 
   public static final QuerySummary EMPTY = create(Query.Summary.getDefaultInstance());
+
+  // Other rule attributes needed by query sync. Only supports attributes with single-string values
+  private static final ImmutableSet<String> OTHER_ATTRIBUTES =
+      ImmutableSet.of("test_app", "instruments");
 
   public abstract Query.Summary proto();
 
@@ -107,6 +112,8 @@ public abstract class QuerySummary {
               rule.addDeps(a.getStringValue());
             } else if (a.getName().equals("idl_srcs")) {
               rule.addAllIdlSources(a.getStringListValueList());
+            } else if (OTHER_ATTRIBUTES.contains(a.getName()) && !a.getStringValue().isEmpty()) {
+              rule.putOtherAttributes(a.getName(), a.getStringValue());
             }
           }
           ruleMap.put(target.getRule().getName(), rule.build());

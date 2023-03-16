@@ -87,6 +87,28 @@ public class QuerySyncProjectData implements BlazeProjectData {
     return workspaceLanguageSettings;
   }
 
+  /** Retrieves "test_app" attribute for the specified target, if it exists. */
+  @Nullable
+  public Label getTestAppFor(Label label) {
+    return blazeProject
+        .map(BlazeProjectSnapshot::getTargetToTestApp)
+        .map(map -> map.get(com.google.idea.blaze.common.Label.of(label.toString())))
+        .map(com.google.idea.blaze.common.Label::toString)
+        .map(Label::create)
+        .orElse(null);
+  }
+
+  /** Returns "instruments" attribute for the specified target, if it exists. */
+  @Nullable
+  public Label getInstrumentsFor(Label label) {
+    return blazeProject
+        .map(BlazeProjectSnapshot::getTargetToInstruments)
+        .map(map -> map.get(com.google.idea.blaze.common.Label.of(label.toString())))
+        .map(com.google.idea.blaze.common.Label::toString)
+        .map(Label::create)
+        .orElse(null);
+  }
+
   @Override
   public TargetMap getTargetMap() {
     throw new NotSupportedWithQuerySyncException("getTargetMap");

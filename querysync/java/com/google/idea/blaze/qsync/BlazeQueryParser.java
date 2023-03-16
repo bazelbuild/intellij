@@ -99,6 +99,22 @@ public class BlazeQueryParser {
       String ruleClass = ruleEntry.getValue().getRuleClass();
       graphBuilder.targetToKindBuilder().put(ruleEntry.getKey(), ruleClass);
       ruleCount.compute(ruleClass, (k, v) -> (v == null ? 0 : v) + 1);
+
+      if (ruleEntry.getValue().containsOtherAttributes("test_app")) {
+        graphBuilder
+            .targetToTestAppBuilder()
+            .put(
+                ruleEntry.getKey(),
+                Label.of(ruleEntry.getValue().getOtherAttributesOrThrow("test_app")));
+      }
+      if (ruleEntry.getValue().containsOtherAttributes("instruments")) {
+        graphBuilder
+            .targetToInstrumentsBuilder()
+            .put(
+                ruleEntry.getKey(),
+                Label.of(ruleEntry.getValue().getOtherAttributesOrThrow("instruments")));
+      }
+
       if (isJavaRule(ruleClass)) {
         ImmutableSet<Label> thisSources =
             ImmutableSet.copyOf(toLabelList(ruleEntry.getValue().getSourcesList()));

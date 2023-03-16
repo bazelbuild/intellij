@@ -25,4 +25,6 @@ message Rule {
   repeated string sources = 2;
   repeated string deps = 3;
   repeated string idl_sources = 4;
+  // Other single-field attributes required by query sync
+  map<string, string> other_attributes = 5;
 }

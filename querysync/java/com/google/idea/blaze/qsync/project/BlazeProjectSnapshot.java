@@ -85,6 +85,14 @@ public abstract class BlazeProjectSnapshot {
     return graph().targetToKind();
   }
 
+  public ImmutableMap<Label, Label> getTargetToTestApp() {
+    return graph().targetToTestApp();
+  }
+
+  public ImmutableMap<Label, Label> getTargetToInstruments() {
+    return graph().targetToInstruments();
+  }
+
   /** Builder for {@link BlazeProjectSnapshot}. */
   @AutoValue.Builder
   public abstract static class Builder {
