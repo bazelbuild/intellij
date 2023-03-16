@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.common.PrintOutput;
@@ -62,12 +63,13 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     this.queryRunner = queryRunner;
   }
 
-  public static ProjectQuerier create(Project project, Path workspaceRoot) {
+  public static ProjectQuerier create(
+      Project project, BuildSystem buildSystem, Path workspaceRoot) {
     ProjectRefresher projectRefresher =
         new ProjectRefresher(
             new WorkspaceResolvingPackageReader(workspaceRoot, new PackageStatementParser()),
             workspaceRoot);
-    QueryRunner queryRunner = new BazelBinaryQueryRunner(project, workspaceRoot);
+    QueryRunner queryRunner = new BazelBinaryQueryRunner(project, buildSystem, workspaceRoot);
     return new ProjectQuerierImpl(project, queryRunner, projectRefresher);
   }
 

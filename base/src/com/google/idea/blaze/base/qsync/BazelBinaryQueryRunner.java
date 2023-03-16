@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedInputStream;
@@ -38,10 +37,12 @@ import java.nio.file.Path;
 /** The default implementation of QueryRunner. */
 public class BazelBinaryQueryRunner implements QueryRunner {
   private final Project project;
+  private final BuildSystem buildSystem;
   private final Path workspaceRoot;
 
-  public BazelBinaryQueryRunner(Project project, Path workspaceRoot) {
+  public BazelBinaryQueryRunner(Project project, BuildSystem buildSystem, Path workspaceRoot) {
     this.project = project;
+    this.buildSystem = buildSystem;
     this.workspaceRoot = workspaceRoot;
   }
 
@@ -49,7 +50,6 @@ public class BazelBinaryQueryRunner implements QueryRunner {
   @MustBeClosed
   public InputStream runQuery(QuerySpec query, BlazeContext context) throws IOException {
 
-    BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
 
     BlazeCommand builder =

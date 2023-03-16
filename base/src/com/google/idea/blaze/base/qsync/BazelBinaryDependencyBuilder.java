@@ -42,7 +42,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
-import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.common.Label;
@@ -65,19 +64,24 @@ import java.util.Set;
 public class BazelBinaryDependencyBuilder implements DependencyBuilder {
 
   private final Project project;
+  private final BuildSystem buildSystem;
+  private final ImportRoots importRoots;
+  private final WorkspaceRoot workspaceRoot;
 
-  public BazelBinaryDependencyBuilder(Project project) {
+  public BazelBinaryDependencyBuilder(
+      Project project,
+      BuildSystem buildSystem,
+      ImportRoots importRoots,
+      WorkspaceRoot workspaceRoot) {
     this.project = project;
+    this.buildSystem = buildSystem;
+    this.importRoots = importRoots;
+    this.workspaceRoot = workspaceRoot;
   }
 
   @Override
-  public OutputInfo build(
-      BlazeContext context,
-      Set<Label> buildTargets,
-      ImportRoots importRoots,
-      WorkspaceRoot workspaceRoot)
+  public OutputInfo build(BlazeContext context, Set<Label> buildTargets)
       throws IOException, GetArtifactsException {
-    BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
 

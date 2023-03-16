@@ -15,46 +15,36 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.common.Label;
-import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.util.Set;
 
 /** A local cache of project dependencies. */
 public class DependencyCache {
-  private final Supplier<ArtifactTracker> artifactTrackerProvider;
+  private final ArtifactTracker artifactTracker;
 
-  public DependencyCache(Project project, ArtifactFetcher artifactFetcher) {
-    artifactTrackerProvider =
-        Suppliers.memoize(
-            () -> {
-              ArtifactTracker artifactTracker = new ArtifactTracker(project, artifactFetcher);
-              artifactTracker.initialize();
-              return artifactTracker;
-            });
+  public DependencyCache(ArtifactTracker artifactTracker) {
+    this.artifactTracker = artifactTracker;
   }
 
   /* Cleans up all cache files and reset Artifact map. */
   public void invalidateAll() throws IOException {
-    artifactTrackerProvider.get().clear();
+    artifactTracker.clear();
   }
 
   /* Caches new Artifacts to local. */
   public UpdateResult update(Set<Label> targets, OutputInfo outputInfo) throws IOException {
-    return artifactTrackerProvider.get().add(targets, outputInfo);
+    return artifactTracker.add(targets, outputInfo);
   }
 
   /* Save artifact info to disk. */
   public void saveState() throws IOException {
-    artifactTrackerProvider.get().saveToDisk();
+    artifactTracker.saveToDisk();
   }
 
   public Set<Label> getCachedTargets() {
-    return artifactTrackerProvider.get().getCachedTargets();
+    return artifactTracker.getCachedTargets();
   }
 }

@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -28,6 +29,9 @@ import java.util.List;
 
 /** Copy a bunch of artifacts. */
 public interface ArtifactFetcher {
+  ExtensionPointName<ArtifactFetcher> EP_NAME =
+      ExtensionPointName.create("com.google.idea.blaze.qsync.ArtifactFetcher");
+
   ListeningExecutorService EXECUTOR =
       MoreExecutors.listeningDecorator(
           AppExecutorUtil.createBoundedApplicationPoolExecutor("ArtifactBulkCopyExecutor", 128));
