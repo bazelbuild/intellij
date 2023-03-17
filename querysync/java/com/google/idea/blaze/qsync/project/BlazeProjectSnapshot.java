@@ -64,6 +64,7 @@ public abstract class BlazeProjectSnapshot {
    *
    * @param path a workspace relative path.
    */
+  @Nullable
   public Label getTargetOwner(Path path) {
     return graph().getTargetOwner(path);
   }
