@@ -199,7 +199,9 @@ public class QuerySyncManager {
   }
 
   public boolean isReadyForAnalysis(PsiFile psiFile) {
-    assertProjectLoaded();
+    if (loadedProject == null) {
+      return false;
+    }
     return loadedProject.isReadyForAnalysis(psiFile);
   }
 }
