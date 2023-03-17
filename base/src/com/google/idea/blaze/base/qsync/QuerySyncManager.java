@@ -44,6 +44,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.NonInjectable;
 import java.io.IOException;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * The project component for a query based sync.
@@ -184,9 +185,9 @@ public class QuerySyncManager {
                     }));
   }
 
+  @Nullable
   public DependencyTracker getDependencyTracker() {
-    assertProjectLoaded();
-    return loadedProject.getDependencyTracker();
+    return loadedProject == null ? null : loadedProject.getDependencyTracker();
   }
 
   @CanIgnoreReturnValue
