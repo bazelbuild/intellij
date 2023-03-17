@@ -26,11 +26,12 @@ import com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContributor;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.android.tools.idea.run.blaze.BlazeLaunchTaskWrapper;
+import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
 import com.android.tools.idea.run.tasks.ClearLogcatTask;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.DismissKeyguardTask;
-import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.tasks.ShowLogcatTask;
 import com.android.tools.idea.run.tasks.StartLiveUpdateMonitoringTask;
 import com.android.tools.ndk.run.editor.AutoAndroidDebuggerState;
@@ -47,7 +48,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** Normal launch tasks provider. #api4.1 */
-public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
+public class BlazeAndroidLaunchTasksProvider implements BlazeLaunchTasksProvider {
   public static final String NATIVE_DEBUGGING_ENABLED = "NATIVE_DEBUGGING_ENABLED";
   private static final Logger LOG = Logger.getInstance(BlazeAndroidLaunchTasksProvider.class);
   private static final BoolExperiment isLiveEditEnabled =
@@ -71,8 +72,8 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
 
   @NotNull
   @Override
-  public List<LaunchTask> getTasks(@NotNull IDevice device) throws ExecutionException {
-    final List<LaunchTask> launchTasks = Lists.newArrayList();
+  public List<BlazeLaunchTask> getTasks(@NotNull IDevice device) throws ExecutionException {
+    final List<BlazeLaunchTask> launchTasks = Lists.newArrayList();
 
     String packageName;
     try {
@@ -102,14 +103,16 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       launchTasks.add(new BlazeAndroidOpenProfilerWindowTask(project));
     }
 
+    // TODO(kovalp): Check if there's any drawback to add these tasks with BlazeLaunchTaskWrapper
+    // since it's different with ag/21610897
     if (launchOptions.isClearLogcatBeforeStart()) {
-      launchTasks.add(new ClearLogcatTask(project));
+      launchTasks.add(new BlazeLaunchTaskWrapper(new ClearLogcatTask(project)));
     }
 
-    launchTasks.add(new DismissKeyguardTask());
+    launchTasks.add(new BlazeLaunchTaskWrapper(new DismissKeyguardTask()));
 
     if (launchOptions.isDeploy()) {
-      ImmutableList<LaunchTask> deployTasks = runContext.getDeployTasks(device, launchOptions);
+      ImmutableList<BlazeLaunchTask> deployTasks = runContext.getDeployTasks(device, launchOptions);
       launchTasks.addAll(deployTasks);
     }
 
@@ -130,19 +133,20 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
                 device,
                 runContext.getExecutor()));
         launchTasks.add(
-            new AndroidProfilerLaunchTaskContributor.AndroidProfilerToolWindowLaunchTask(
-                project, packageName));
+            new BlazeLaunchTaskWrapper(
+                new AndroidProfilerLaunchTaskContributor.AndroidProfilerToolWindowLaunchTask(
+                    project, packageName)));
       }
-
-      LaunchTask appLaunchTask =
+      BlazeLaunchTask appLaunchTask =
           runContext.getApplicationLaunchTask(
               launchOptions, userId, String.join(" ", amStartOptions.build()));
       if (appLaunchTask != null) {
         launchTasks.add(appLaunchTask);
         if (isLiveEditEnabled.getValue()) {
           launchTasks.add(
-              new StartLiveUpdateMonitoringTask(
-                  LiveEditService.getInstance(project).getCallback(packageName, device)));
+              new BlazeLaunchTaskWrapper(
+                  new StartLiveUpdateMonitoringTask(
+                      LiveEditService.getInstance(project).getCallback(packageName, device))));
         }
       }
     } catch (ApkProvisionException e) {
@@ -150,7 +154,7 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
     }
 
     if (launchOptions.isOpenLogcatAutomatically()) {
-      launchTasks.add(new ShowLogcatTask(project, packageName));
+      launchTasks.add(new BlazeLaunchTaskWrapper(new ShowLogcatTask(project, packageName)));
     }
 
     return ImmutableList.copyOf(launchTasks);
@@ -185,7 +189,6 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       return runContext.getDebuggerTask(debugger, debugger.createState());
     }
   }
-
 
   private boolean isNativeDebuggingEnabled(LaunchOptions launchOptions) {
     Object flag = launchOptions.getExtraOption(NATIVE_DEBUGGING_ENABLED);

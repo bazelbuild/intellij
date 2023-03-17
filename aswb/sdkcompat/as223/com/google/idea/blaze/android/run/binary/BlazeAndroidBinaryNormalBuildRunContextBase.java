@@ -26,10 +26,10 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.DeployTasksCompat;
-import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
@@ -120,7 +120,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
   }
 
   @Override
-  public LaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
+  public BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
       throws ExecutionException {
     return new BlazeAndroidLaunchTasksProvider(
         project, this, applicationIdProvider, launchOptionsBuilder);
@@ -138,11 +138,11 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContextBase
 
   @Nullable
   @Override
-  public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
+  public ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
-    LaunchTask deployTask =
-        DeployTasksCompat.getDeployTask(
-            project, env, launchOptions, getApkInfoToInstall(device, launchOptions, apkProvider));
+    BlazeLaunchTask deployTask =
+        DeployTasksCompat.createDeployTask(
+            project, getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions);
     return ImmutableList.of(new DeploymentTimingReporterTask(launchId, deployTask));
   }
 

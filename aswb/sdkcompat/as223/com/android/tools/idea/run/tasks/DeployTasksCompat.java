@@ -15,14 +15,11 @@
  */
 package com.android.tools.idea.run.tasks;
 
-import com.android.tools.idea.deploy.DeploymentConfiguration;
 import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.LaunchOptions;
-import com.android.tools.idea.run.util.SwapInfo;
-import com.android.tools.idea.run.util.SwapInfo.SwapType;
-import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.android.tools.idea.run.blaze.BlazeLaunchTaskWrapper;
 import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 
@@ -33,42 +30,17 @@ public class DeployTasksCompat {
 
   private DeployTasksCompat() {}
 
-  public static LaunchTask createDeployTask(
+  public static BlazeLaunchTask createDeployTask(
       Project project, Collection<ApkInfo> packages, LaunchOptions launchOptions) {
     // We don't have a device information, fallback to the most conservative
     // install option.
-    return new DeployTask(
-        project,
-        packages,
-        launchOptions.getPmInstallOptions(/*device=*/ null),
-        launchOptions.getInstallOnAllUsers(),
-        launchOptions.getAlwaysInstallWithPm());
-  }
-
-  public static LaunchTask getDeployTask(
-      Project project,
-      ExecutionEnvironment env,
-      LaunchOptions launchOptions,
-      Collection<ApkInfo> packages) {
-    if (updateCodeViaJvmti.getValue()) {
-      // Set the appropriate action based on which deployment we're doing.
-      SwapInfo swapInfo = env.getUserData(SwapInfo.SWAP_INFO_KEY);
-      SwapInfo.SwapType swapType = swapInfo == null ? null : swapInfo.getType();
-      if (swapType == SwapType.APPLY_CHANGES) {
-        return new ApplyChangesTask(
+    return new BlazeLaunchTaskWrapper(
+        new DeployTask(
             project,
             packages,
-            DeploymentConfiguration.getInstance().APPLY_CHANGES_FALLBACK_TO_RUN,
-            false);
-      } else if (swapType == SwapType.APPLY_CODE_CHANGES) {
-        return new ApplyCodeChangesTask(
-            project,
-            packages,
-            DeploymentConfiguration.getInstance().APPLY_CODE_CHANGES_FALLBACK_TO_RUN,
-            false);
-      }
-    }
-    return BlazeAndroidDeploymentService.getInstance(project)
-        .getDeployTask(packages, launchOptions);
+            launchOptions.getPmInstallOptions(/* device= */ null),
+            launchOptions.getInstallOnAllUsers(),
+            launchOptions.getAlwaysInstallWithPm()));
   }
 }
+

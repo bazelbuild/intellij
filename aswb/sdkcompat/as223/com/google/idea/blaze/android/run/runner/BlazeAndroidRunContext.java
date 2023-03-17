@@ -21,10 +21,10 @@ import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
-import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.google.common.collect.ImmutableList;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -44,16 +44,16 @@ public interface BlazeAndroidRunContext {
 
   ApplicationIdProvider getApplicationIdProvider() throws ExecutionException;
 
-  LaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
+  BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
       throws ExecutionException;
 
   /** Returns the tasks to deploy the application. */
-  ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
+  ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException;
 
   /** Returns the task to launch the application. */
   @Nullable
-  LaunchTask getApplicationLaunchTask(
+  BlazeLaunchTask getApplicationLaunchTask(
       LaunchOptions launchOptions,
       @Nullable Integer userId,
       @NotNull String contributorsAmStartOptions)

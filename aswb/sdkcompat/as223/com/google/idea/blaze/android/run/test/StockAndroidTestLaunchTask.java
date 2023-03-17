@@ -21,9 +21,9 @@ import com.android.tools.idea.execution.common.RunConfigurationNotifier;
 import com.android.tools.idea.execution.common.processhandler.AndroidProcessHandler;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
+import com.android.tools.idea.run.blaze.BlazeLaunchContext;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.configuration.execution.ExecutionUtils;
-import com.android.tools.idea.run.tasks.LaunchContext;
-import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.testartifacts.instrumented.AndroidTestListener;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.manifest.ManifestParser;
@@ -40,7 +40,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-class StockAndroidTestLaunchTask implements LaunchTask {
+class StockAndroidTestLaunchTask implements BlazeLaunchTask {
   private static final String ID = "STOCK_ANDROID_TEST";
   private static final Logger LOG = Logger.getInstance(StockAndroidTestLaunchTask.class);
   private final BlazeAndroidTestRunConfigurationState configState;
@@ -60,7 +60,7 @@ class StockAndroidTestLaunchTask implements LaunchTask {
   }
 
   @Nullable
-  public static LaunchTask getStockTestLaunchTask(
+  public static BlazeLaunchTask getStockTestLaunchTask(
       BlazeAndroidTestRunConfigurationState configState,
       ApplicationIdProvider applicationIdProvider,
       boolean waitForDebugger,
@@ -152,18 +152,8 @@ class StockAndroidTestLaunchTask implements LaunchTask {
     return ImmutableList.of();
   }
 
-  @Override
-  public String getDescription() {
-    return "Launching instrumentation runner";
-  }
-
-  @Override
-  public int getDuration() {
-    return 2;
-  }
-
   @SuppressWarnings("FutureReturnValueIgnored")
-  public void run(@NotNull LaunchContext launchContext) {
+  public void run(@NotNull BlazeLaunchContext launchContext) {
     ConsoleView console = launchContext.getConsoleView();
     IDevice device = launchContext.getDevice();
     ExecutionUtils.println(console, "Running tests\n");
@@ -213,11 +203,5 @@ class StockAndroidTestLaunchTask implements LaunchTask {
                     console, "Error: Unexpected exception while running tests: " + e);
               }
             });
-  }
-
-  @NotNull
-  @Override
-  public String getId() {
-    return ID;
   }
 }

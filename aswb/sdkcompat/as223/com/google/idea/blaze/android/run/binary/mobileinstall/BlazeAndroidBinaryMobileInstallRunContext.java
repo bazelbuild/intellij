@@ -23,8 +23,8 @@ import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
-import com.android.tools.idea.run.tasks.LaunchTask;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
@@ -54,7 +54,7 @@ public class BlazeAndroidBinaryMobileInstallRunContext
 
   @SuppressWarnings("unchecked") // upstream API
   @Override
-  public LaunchTask getApplicationLaunchTask(
+  public BlazeLaunchTask getApplicationLaunchTask(
       LaunchOptions launchOptions, @Nullable Integer userId, String contributorsAmStartOptions)
       throws ExecutionException {
 

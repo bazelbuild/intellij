@@ -19,8 +19,8 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.android.ddmlib.IDevice;
 import com.android.tools.idea.execution.common.RunConfigurationNotifier;
-import com.android.tools.idea.run.tasks.LaunchContext;
-import com.android.tools.idea.run.tasks.LaunchTask;
+import com.android.tools.idea.run.blaze.BlazeLaunchContext;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.devrel.gmscore.tools.apk.arsc.BinaryResourceFile;
@@ -39,7 +39,7 @@ import java.util.zip.ZipFile;
 import org.jetbrains.annotations.NotNull;
 
 /** Checks APKs to see if they are debuggable and warn the user if they aren't. */
-public class CheckApkDebuggableTask implements LaunchTask {
+public class CheckApkDebuggableTask implements BlazeLaunchTask {
   private static final String ID = "APK_DEBUGGABILITY_CHECKER";
   private final BlazeAndroidDeployInfo deployInfo;
 
@@ -48,22 +48,7 @@ public class CheckApkDebuggableTask implements LaunchTask {
   }
 
   @Override
-  public String getDescription() {
-    return "Checking debug attribute in APKs";
-  }
-
-  @Override
-  public int getDuration() {
-    return 2; // See com.android.tools.idea.run.tasks.LaunchTaskDurations for related magic numbers.
-  }
-
-  @Override
-  public String getId() {
-    return ID;
-  }
-
-  @Override
-  public void run(@NotNull LaunchContext launchContext) throws ExecutionException {
+  public void run(@NotNull BlazeLaunchContext launchContext) throws ExecutionException {
     checkApkDebuggableTaskDelegate(
         launchContext.getEnv().getProject(), deployInfo, launchContext.getDevice());
   }
