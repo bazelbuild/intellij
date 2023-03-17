@@ -25,7 +25,7 @@ import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchOptions;
-import com.android.tools.idea.run.LaunchTaskRunner;
+import com.android.tools.idea.run.blaze.BlazeAndroidConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidComplicationConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutorRunProfileState;
@@ -153,13 +153,14 @@ public final class BlazeAndroidRunConfigurationRunner
     env.putCopyableUserData(RUN_CONTEXT_KEY, runContext);
     env.putCopyableUserData(DEVICE_SESSION_KEY, deviceSession);
 
-    LaunchTaskRunner runner =
-        new LaunchTaskRunner(
+    BlazeAndroidConfigurationExecutor runner =
+        new BlazeAndroidConfigurationExecutor(
             runContext.getConsoleProvider(),
             runContext.getApplicationIdProvider(),
             env,
             deviceFutures,
-            runContext.getLaunchTasksProvider(launchOptionsBuilder));
+            runContext.getLaunchTasksProvider(launchOptionsBuilder),
+            LaunchOptions.builder().build());
     return new AndroidConfigurationExecutorRunProfileState(runner);
   }
 

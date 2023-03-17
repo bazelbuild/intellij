@@ -15,10 +15,9 @@
  */
 package com.google.idea.blaze.android.run.test;
 
+import com.android.tools.idea.run.blaze.BlazeLaunchContext;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.configuration.execution.ExecutionUtils;
-import com.android.tools.idea.run.tasks.LaunchContext;
-import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.tasks.LaunchTaskDurations;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -63,7 +62,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
  * An Android application launcher that invokes `blaze test` on an android_test target, and sets up
  * process handling and debugging for the test run.
  */
-public class BlazeAndroidTestLaunchTask implements LaunchTask {
+public class BlazeAndroidTestLaunchTask implements BlazeLaunchTask {
   private static final String ID = "BLAZE_ANDROID_TEST";
 
   // Uses a local device/emulator attached to adb to run an android_test.
@@ -104,19 +103,8 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
     this.testResultsHolder = testResultsHolder;
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
-    return String.format("Running %s tests", Blaze.buildSystemName(project));
-  }
-
-  @Override
-  public int getDuration() {
-    return LaunchTaskDurations.LAUNCH_ACTIVITY;
-  }
-
-  @Override
-  public void run(@NotNull LaunchContext launchContext)
+  public void run(@NotNull BlazeLaunchContext launchContext)
       throws com.intellij.execution.ExecutionException {
     BlazeExecutor blazeExecutor = BlazeExecutor.getInstance();
 
@@ -243,12 +231,6 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
     if (!debug) {
       waitAndSetUpForKillingBlazeOnStop(processHandler);
     }
-  }
-
-  @NotNull
-  @Override
-  public String getId() {
-    return ID;
   }
 
   /**
