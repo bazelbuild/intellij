@@ -37,6 +37,7 @@ import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.SnapshotSerializer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -189,7 +190,11 @@ public class QuerySyncProject {
   }
 
   public boolean isReadyForAnalysis(PsiFile psiFile) {
-    Set<Label> pendingTargets = dependencyTracker.getPendingTargets(psiFile.getVirtualFile());
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) {
+      return true;
+    }
+    Set<Label> pendingTargets = dependencyTracker.getPendingTargets(virtualFile);
     int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
     return unsynced == 0;
   }
