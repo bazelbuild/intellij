@@ -24,6 +24,7 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
@@ -41,6 +42,8 @@ import javax.annotation.Nullable;
  * dependencies.
  */
 public class DependencyTracker {
+
+  private static final Logger logger = Logger.getInstance(DependencyTracker.class);
 
   private final Path workspaceRoot;
   private final BlazeProject blazeProject;
@@ -86,7 +89,12 @@ public class DependencyTracker {
     Set<Label> targets = new HashSet<>();
     Set<Label> buildTargets = new HashSet<>();
     for (Path path : paths) {
-      buildTargets.add(snapshot.getTargetOwner(path));
+      Label targetOwner = snapshot.getTargetOwner(path);
+      if (targetOwner != null) {
+        buildTargets.add(targetOwner);
+      } else {
+        logger.warn(String.format("No target owner found for file %s", path));
+      }
       ImmutableSet<Label> t = snapshot.getFileDependencies(path);
       if (t != null) {
         targets.addAll(t);
