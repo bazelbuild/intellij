@@ -15,12 +15,14 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.AAR_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_SRC_DIRECTORY;
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.LIBRARY_DIRECTORY;
 
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
@@ -40,10 +42,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -58,21 +58,37 @@ public class ArtifactTracker {
 
   private final SetMultimap<Label, Path> artifacts = HashMultimap.create();
 
-  private final JarCache jarCache;
+  private final FileCache jarCache;
+  private final FileCache aarCache;
+  private final FileCache generatedSrcFileCache;
   private final Path persistentFile;
 
   public ArtifactTracker(BlazeImportSettings importSettings, ArtifactFetcher artifactFetcher) {
     jarCache =
-        new JarCache(
-            getProjectDirectory(importSettings).resolve(LIBRARY_DIRECTORY),
-            getExternalAarDirectory(importSettings),
-            getProjectDirectory(importSettings).resolve(GEN_SRC_DIRECTORY),
-            artifactFetcher);
+        new FileCache(
+            /* cacheDir= */ getProjectDirectory(importSettings).resolve(LIBRARY_DIRECTORY),
+            /* toCacheFileExtension= */ ImmutableSet.of("jar"),
+            /* extractAfterFetch= */ false,
+            /* artifactFetcher= */ artifactFetcher);
+    aarCache =
+        new FileCache(
+            /* cacheDir= */ getExternalAarDirectory(importSettings),
+            /* toCacheFileExtension= */ ImmutableSet.of("aar"),
+            /* extractAfterFetch= */ true,
+            /* artifactFetcher= */ artifactFetcher);
+    generatedSrcFileCache =
+        new FileCache(
+            /* cacheDir= */ getProjectDirectory(importSettings).resolve(GEN_SRC_DIRECTORY),
+            /* toCacheFileExtension= */ ImmutableSet.of("java", "kt", "srcjar"),
+            /* extractAfterFetch= */ true,
+            /* artifactFetcher= */ artifactFetcher);
     persistentFile = getProjectDirectory(importSettings).resolve(".artifact.info");
   }
 
   public void initialize() {
     jarCache.initialize();
+    aarCache.initialize();
+    generatedSrcFileCache.initialize();
     loadFromDisk();
   }
 
@@ -96,9 +112,8 @@ public class ArtifactTracker {
   public void saveToDisk() throws IOException {
     BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
     for (Entry<Label, Collection<Path>> entry : artifacts.asMap().entrySet()) {
-      List<String> paths =
-          entry.getValue().stream().map(Path::toString).collect(Collectors.toList());
-      ;
+      ImmutableList<String> paths =
+          entry.getValue().stream().map(Path::toString).collect(toImmutableList());
       builder.addArtifacts(
           TargetArtifacts.newBuilder()
               .setTarget(entry.getKey().toString())
@@ -117,10 +132,11 @@ public class ArtifactTracker {
     ImmutableSet.Builder<Path> updatedBuilder = ImmutableSet.builder();
     ImmutableSet.Builder<String> removedBuilder = ImmutableSet.builder();
 
+    updatedBuilder
+        .addAll(jarCache.cache(outputInfo.getJars()))
+        .addAll(aarCache.cache(outputInfo.getAars()))
+        .addAll(generatedSrcFileCache.cache(outputInfo.getGeneratedSources()));
     for (BuildArtifacts artifacts : outputInfo.getArtifacts()) {
-      updatedBuilder.addAll(
-          jarCache.cache(
-              outputInfo.getJars(), outputInfo.getAars(), outputInfo.getGeneratedSources()));
       updateMaps(targets, artifacts);
     }
     return UpdateResult.create(updatedBuilder.build(), removedBuilder.build());
@@ -146,10 +162,8 @@ public class ArtifactTracker {
       logger.warn("Target " + label + " was not built.");
     }
     for (TargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
-      List<Path> paths =
-          targetArtifacts.getArtifactPathsList().stream()
-              .map(Path::of)
-              .collect(Collectors.toList());
+      ImmutableList<Path> paths =
+          targetArtifacts.getArtifactPathsList().stream().map(Path::of).collect(toImmutableList());
       Label label = Label.of(targetArtifacts.getTarget());
       if (targets.contains(label)) {
         artifacts.putAll(label, paths);
@@ -169,6 +183,8 @@ public class ArtifactTracker {
   public void clear() throws IOException {
     artifacts.clear();
     jarCache.clear();
+    aarCache.clear();
+    generatedSrcFileCache.clear();
   }
 
   /** Returns directory of project. */

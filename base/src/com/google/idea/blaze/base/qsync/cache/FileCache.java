@@ -33,6 +33,7 @@ import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.IOException;
@@ -45,19 +46,20 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import javax.annotation.Nullable;
 
 /** Local cache of the jars referenced by the project. */
-public class JarCache {
+public class FileCache {
 
   private static final ListeningExecutorService EXECUTOR =
       MoreExecutors.listeningDecorator(
           AppExecutorUtil.createBoundedApplicationPoolExecutor("JarCacheExecutor", 128));
-  private static final Logger logger = Logger.getInstance(JarCache.class);
+  private static final Logger logger = Logger.getInstance(FileCache.class);
+  private static final ImmutableSet<String> ZIP_FILE_EXTENSION =
+      ImmutableSet.of("aar", "jar", "srcjar");
 
   // TODO(xinruiy): check if need to provide multi-threading support.
   // Map from local cache key to the local cached file. The local cache key is generated from the
@@ -65,16 +67,19 @@ public class JarCache {
   // copy of an artifact.
   private ImmutableMap<String, Path> cacheState = ImmutableMap.of();
 
-  private final Path jarDir;
-  private final Path aarDir;
-  private final Path gensrcDir;
-
+  private final Path cacheDir;
+  private final ImmutableSet<String> toCacheFileExtensions;
+  private final boolean extractAfterFetch;
   private final ArtifactFetcher artifactFetcher;
 
-  public JarCache(Path jarDir, Path aarDir, Path gensrcDir, ArtifactFetcher artifactFetcher) {
-    this.jarDir = jarDir;
-    this.aarDir = aarDir;
-    this.gensrcDir = gensrcDir;
+  public FileCache(
+      Path cacheDir,
+      ImmutableSet<String> toCacheFileExtension,
+      boolean extractAfterFetch,
+      ArtifactFetcher artifactFetcher) {
+    this.cacheDir = cacheDir;
+    this.extractAfterFetch = extractAfterFetch;
+    this.toCacheFileExtensions = toCacheFileExtension;
     this.artifactFetcher = artifactFetcher;
   }
 
@@ -82,14 +87,14 @@ public class JarCache {
   @CanIgnoreReturnValue
   private ImmutableMap<String, Path> readFileState() {
     FileOperationProvider ops = FileOperationProvider.getInstance();
-    try (Stream<Path> stream = getArtifactStream()) {
+    try (Stream<Path> stream = Files.list(cacheDir)) {
       ImmutableMap<String, Path> cacheState =
           stream
               .filter(
                   file ->
                       ops.isFile(file.toFile())
-                          && (file.getFileName().endsWith(".jar")
-                              || file.getFileName().endsWith(".aar")))
+                          && toCacheFileExtensions.contains(
+                              FileUtilRt.getExtension(file.getFileName().toString())))
               .collect(toImmutableMap(path -> path.getFileName().toString(), f -> f));
       this.cacheState = cacheState;
     } catch (IOException e) {
@@ -98,17 +103,8 @@ public class JarCache {
     return cacheState;
   }
 
-  private Stream<Path> getArtifactStream() throws IOException {
-    try (Stream<Path> jarStream = Files.list(jarDir);
-        Stream<Path> aarStream = Files.list(aarDir)) {
-      return Stream.concat(jarStream, aarStream);
-    }
-  }
-
   public void initialize() {
-    ensureDirectoryExists(jarDir);
-    ensureDirectoryExists(aarDir);
-    ensureDirectoryExists(gensrcDir);
+    ensureDirectoryExists(cacheDir);
     readFileState();
   }
 
@@ -123,43 +119,20 @@ public class JarCache {
     }
   }
 
-  public ImmutableSet<Path> cache(
-      ImmutableList<OutputArtifact> jars,
-      ImmutableList<OutputArtifact> aars,
-      ImmutableList<OutputArtifact> generatedSources)
-      throws IOException {
+  public ImmutableSet<Path> cache(ImmutableList<OutputArtifact> artifacts) throws IOException {
     try {
-      // update cache files, and remove files if required
-      ListenableFuture<List<Path>> copyJarFuture =
-          artifactFetcher.copy(getLocalPathMap(jars, jarDir));
-      // TODO(b/273321128): The logic of extract aars and source jars does not make sense to me. But
-      // it's not related with the bulk copy cl, so leave the trivial operations for now.
-      // The problem of the logic including:
-      // 1. source jar should not be extracted. It only need to be listed as source library in
-      // library table.
-      // 2. ideally aars and jars should be maintained separately as they are not in same logic
-      // (e.g. jars does not ask for extracting and aars may need lint and attach extra source
-      // jars). If not, this class should be renamed to a more general name as it's not for jar
-      // only.
-      ListenableFuture<List<Path>> copyAarFuture =
-          artifactFetcher.copy(getLocalPathMap(aars, aarDir));
-      ListenableFuture<List<Path>> copySourceJarFuture =
-          artifactFetcher.copy(getLocalPathMap(generatedSources, gensrcDir));
-
-      return ImmutableSet.<Path>builder()
-          .addAll(Uninterruptibles.getUninterruptibly(copyJarFuture))
-          .addAll(extract(Uninterruptibles.getUninterruptibly(copyAarFuture), x -> true))
-          .addAll(
-              extract(
-                  Uninterruptibles.getUninterruptibly(copySourceJarFuture),
-                  path -> path.getFileName().endsWith(".srcjar")))
-          .build();
-
+      ListenableFuture<List<Path>> copyArtifactFuture =
+          artifactFetcher.copy(getLocalPathMap(artifacts, cacheDir));
+      List<Path> files = Uninterruptibles.getUninterruptibly(copyArtifactFuture);
+      if (extractAfterFetch) {
+        files = extract(files);
+      }
+      return ImmutableSet.copyOf(files);
     } catch (ExecutionException e) {
       if (e.getCause() instanceof IOException) {
         throw (IOException) e.getCause();
       }
-      throw new JarCacheOperationException(
+      throw new FileCacheOperationException(
           "Failed to copy jars to cache with unexpected exceptions.", e);
     } finally {
       readFileState();
@@ -175,16 +148,17 @@ public class JarCache {
                 outputArtifact -> dir.resolve(cacheKeyForArtifact(outputArtifact.getKey()))));
   }
 
-  private ImmutableList<Path> extract(Collection<Path> sourcePaths, Predicate<Path> shouldExtract)
-      throws IOException {
+  private ImmutableList<Path> extract(Collection<Path> sourcePaths) throws IOException {
     ImmutableList.Builder<Path> result = ImmutableList.builder();
     for (Path sourcePath : sourcePaths) {
-      if (shouldExtract.test(sourcePath)) {
+      if (ZIP_FILE_EXTENSION.contains(
+          FileUtilRt.getExtension(sourcePath.getFileName().toString()))) {
         Path tmpPath = sourcePath.resolveSibling(sourcePath.getFileName() + ".tmp");
         // Since we will keep using same file name for extracted directory, we need to rename source
         // file
         Files.move(sourcePath, tmpPath);
         result.add(extract(tmpPath, sourcePath));
+        Files.delete(tmpPath);
       }
     }
     return result.build();
@@ -206,15 +180,14 @@ public class JarCache {
         }
       }
     }
-    Files.delete(source);
     return destination;
   }
 
   public void clear() throws IOException {
     FileOperationProvider ops = FileOperationProvider.getInstance();
-    if (ops.exists(jarDir.toFile())) {
+    if (ops.exists(cacheDir.toFile())) {
       try {
-        ops.deleteDirectoryContents(jarDir.toFile(), true);
+        ops.deleteDirectoryContents(cacheDir.toFile(), true);
       } finally {
         readFileState();
       }
@@ -245,15 +218,16 @@ public class JarCache {
       if (e.getCause() instanceof IOException) {
         throw (IOException) e.getCause();
       }
-      throw new JarCacheOperationException("Failed to remove cache with unexpected exceptions.", e);
+      throw new FileCacheOperationException(
+          "Failed to remove cache with unexpected exceptions.", e);
     } finally {
       readFileState();
     }
   }
 
   @Nullable
-  public Optional<Path> get(OutputArtifact jar) {
-    return get(artifactKey(jar));
+  public Optional<Path> get(OutputArtifact artifact) {
+    return get(artifactKey(artifact));
   }
 
   @Nullable
@@ -264,7 +238,7 @@ public class JarCache {
 
   private static String cacheKeyForArtifact(String artifactKey) {
     return String.format(
-        "%s.%s", cacheKeyInternal(artifactKey), FileUtil.getExtension(artifactKey, "jar"));
+        "%s.%s", cacheKeyInternal(artifactKey), FileUtilRt.getExtension(artifactKey));
   }
 
   private static String cacheKeyInternal(String artifactKey) {
@@ -278,10 +252,10 @@ public class JarCache {
     return artifact.getKey();
   }
 
-  // TODO(xinruiy): We create JarCacheOperationException for handling unexpect exception during
+  // TODO(xinruiy): We create FileCacheOperationException for handling unexpect exception during
   // copy/ remove files. We need to revisit it when we improve all exception handling in the future.
-  static class JarCacheOperationException extends RuntimeException {
-    public JarCacheOperationException(String message, Throwable e) {
+  static class FileCacheOperationException extends RuntimeException {
+    public FileCacheOperationException(String message, Throwable e) {
       super(message, e);
     }
   }
