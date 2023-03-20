@@ -23,8 +23,6 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
-import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -35,13 +33,12 @@ import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
-import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.common.Label;
@@ -61,14 +58,14 @@ import java.util.List;
 import java.util.Set;
 
 /** An object that knows how to build dependencies for given targets */
-public class BazelBinaryDependencyBuilder implements DependencyBuilder {
+public class BazelDependencyBuilder implements DependencyBuilder {
 
   private final Project project;
   private final BuildSystem buildSystem;
   private final ImportRoots importRoots;
   private final WorkspaceRoot workspaceRoot;
 
-  public BazelBinaryDependencyBuilder(
+  public BazelDependencyBuilder(
       Project project,
       BuildSystem buildSystem,
       ImportRoots importRoots,
@@ -91,11 +88,11 @@ public class BazelBinaryDependencyBuilder implements DependencyBuilder {
       Path aspect = Paths.get(plugin.getPath().toString(), "aspect", "build_dependencies.bzl");
       String includes =
           importRoots.rootDirectories().stream()
-              .map(BazelBinaryDependencyBuilder::directoryToLabel)
+              .map(BazelDependencyBuilder::directoryToLabel)
               .collect(joining(","));
       String excludes =
           importRoots.excludeDirectories().stream()
-              .map(BazelBinaryDependencyBuilder::directoryToLabel)
+              .map(BazelDependencyBuilder::directoryToLabel)
               .collect(joining(","));
       Files.copy(
           aspect,
@@ -114,7 +111,7 @@ public class BazelBinaryDependencyBuilder implements DependencyBuilder {
               context,
               BlazeInvocationContext.OTHER_CONTEXT);
 
-      BlazeCommand builder =
+      BlazeCommand.Builder builder =
           BlazeCommand.builder(invoker, BlazeCommandName.BUILD)
               .addBlazeFlags(buildTargets.stream().map(Label::toString).collect(toImmutableList()))
               .addBlazeFlags(buildResultHelper.getBuildFlags())
@@ -130,30 +127,25 @@ public class BazelBinaryDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags("--output_groups=qsync_aars")
               .addBlazeFlags("--output_groups=qsync_gensrcs")
               .addBlazeFlags("--output_groups=artifact_info_file")
-              .addBlazeFlags("--noexperimental_run_validations")
-              .build();
+              .addBlazeFlags("--noexperimental_run_validations");
 
-      LineProcessingOutputStream lpos =
-          LineProcessingOutputStream.of(
-              BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
-      ExternalTask.builder(workspaceRoot)
-          .addBlazeCommand(builder)
-          .context(context)
-          .stdout(lpos)
-          .stderr(lpos)
-          .build()
-          .run();
-      return createOutputInfo(buildResultHelper.getBuildOutput());
+      BlazeBuildOutputs outputs =
+          invoker
+              .getCommandRunner()
+              .run(project, builder, buildResultHelper, workspaceRoot, context);
+      return createOutputInfo(outputs);
     }
   }
 
-  private OutputInfo createOutputInfo(ParsedBepOutput parsedBepOutput) throws IOException {
-    ImmutableList<OutputArtifact> jars = parsedBepOutput.getOutputGroupArtifacts("qsync_jars");
-    ImmutableList<OutputArtifact> aars = parsedBepOutput.getOutputGroupArtifacts("qsync_aars");
+  private OutputInfo createOutputInfo(BlazeBuildOutputs blazeBuildOutputs) throws IOException {
+    ImmutableList<OutputArtifact> jars =
+        blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_jars"));
+    ImmutableList<OutputArtifact> aars =
+        blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_aars"));
     ImmutableList<OutputArtifact> generatedSources =
-        parsedBepOutput.getOutputGroupArtifacts("qsync_gensrcs");
+        blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_gensrcs"));
     ImmutableList<OutputArtifact> artifactInfoFiles =
-        parsedBepOutput.getOutputGroupArtifacts("artifact_info_file");
+        blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("artifact_info_file"));
     ImmutableSet.Builder<BuildArtifacts> artifactInfoFilesBuilder = ImmutableSet.builder();
     for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
       artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));

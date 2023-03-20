@@ -93,7 +93,7 @@ public class ProjectLoader {
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
 
     DependencyBuilder dependencyBuilder =
-        new BazelBinaryDependencyBuilder(project, buildSystem, importRoots, workspaceRoot);
+        new BazelDependencyBuilder(project, buildSystem, importRoots, workspaceRoot);
 
     BlazeProject graph = new BlazeProject();
     ArtifactFetcher artifactFetcher = createArtifactFetcher(buildSystem);
