@@ -74,6 +74,9 @@ public class LocalFileOutputArtifact implements OutputArtifact, LocalFileArtifac
 
   @Override
   public void copyTo(Path dest) throws IOException {
+    if (Files.exists(dest) && Files.isDirectory(dest)) {
+      FileOperationProvider.getInstance().deleteRecursively(dest.toFile(), true);
+    }
     Files.copy(
         Paths.get(getFile().getPath()),
         dest,
