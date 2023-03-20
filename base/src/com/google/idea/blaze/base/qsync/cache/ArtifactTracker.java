@@ -21,10 +21,8 @@ import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.GEN_SR
 import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.LIBRARY_DIRECTORY;
 
 import com.google.auto.value.AutoValue;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
@@ -40,8 +38,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
@@ -56,7 +56,9 @@ public class ArtifactTracker {
 
   private static final Logger logger = Logger.getInstance(ArtifactTracker.class);
 
-  private final SetMultimap<Label, Path> artifacts = HashMultimap.create();
+  // The artifacts in the cahce. Note that artifacts that do not produce files are also stored here.
+  // So, it is not the same for a label not to be present, than a label to have an empty list.
+  private final HashMap<Label, List<Path>> artifacts = new HashMap<>();
 
   private final FileCache jarCache;
   private final FileCache aarCache;
@@ -101,7 +103,9 @@ public class ArtifactTracker {
       BuildArtifacts saved = BuildArtifacts.parseFrom(stream, ExtensionRegistry.getEmptyRegistry());
       for (TargetArtifacts arts : saved.getArtifactsList()) {
         for (String path : arts.getArtifactPathsList()) {
-          artifacts.put(Label.of(arts.getTarget()), Path.of(path));
+          Label label = Label.of(arts.getTarget());
+          List<Path> value = artifacts.computeIfAbsent(label, k -> new ArrayList<>());
+          value.add(Path.of(path));
         }
       }
     } catch (IOException e) {
@@ -111,7 +115,7 @@ public class ArtifactTracker {
 
   public void saveToDisk() throws IOException {
     BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
-    for (Entry<Label, Collection<Path>> entry : artifacts.asMap().entrySet()) {
+    for (Entry<Label, List<Path>> entry : artifacts.entrySet()) {
       ImmutableList<String> paths =
           entry.getValue().stream().map(Path::toString).collect(toImmutableList());
       builder.addArtifacts(
@@ -152,7 +156,7 @@ public class ArtifactTracker {
     Set<Label> built = new HashSet<>();
     for (TargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
       Label label = Label.of(targetArtifacts.getTarget());
-      artifacts.removeAll(label);
+      artifacts.remove(label);
       if (targets.contains(label)) {
         built.add(label);
       }
@@ -166,7 +170,8 @@ public class ArtifactTracker {
           targetArtifacts.getArtifactPathsList().stream().map(Path::of).collect(toImmutableList());
       Label label = Label.of(targetArtifacts.getTarget());
       if (targets.contains(label)) {
-        artifacts.putAll(label, paths);
+        List<Path> value = artifacts.computeIfAbsent(label, k -> new ArrayList<>());
+        value.addAll(paths);
       } else {
         // This can happen when there is an alias, we expect the alias name to be built,
         // but we see the 'actual' label being built instead.
@@ -174,7 +179,8 @@ public class ArtifactTracker {
         // artifacts to all the labels that we didn't see.
         logger.warn("Target " + label + " was unexpectedly built.");
         for (Label notBuiltLabel : notBuilt) {
-          artifacts.putAll(notBuiltLabel, paths);
+          List<Path> value = artifacts.computeIfAbsent(notBuiltLabel, k -> new ArrayList<>());
+          value.addAll(paths);
         }
       }
     }
