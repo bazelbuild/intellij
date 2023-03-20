@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.devtools.intellij.model.ProjectData;
 import com.google.idea.blaze.base.ideinfo.ProtoWrapper;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,6 +65,9 @@ public interface RemoteOutputArtifact
 
   @Override
   default void copyTo(Path dest) throws IOException {
+    if (Files.exists(dest) && Files.isDirectory(dest)) {
+      FileOperationProvider.getInstance().deleteRecursively(dest.toFile(), true);
+    }
     try (InputStream stream = getInputStream()) {
       Files.copy(stream, dest, StandardCopyOption.REPLACE_EXISTING);
     }
