@@ -531,53 +531,10 @@ config_setting(
 )
 
 config_setting(
-    name = "intellij-cc-oldest-stable",
-    values = {
-        "define": "ij_product=intellij-cc-oldest-stable",
-    },
-)
-
-config_setting(
     name = "clion-2023.1-mac",
     values = {
         "cpu": "darwin_x86_64",
         "define": "ij_product=clion-2023.1",
-    },
-)
-
-config_setting(
-    name = "intellij-cc-latest-stable",
-    values = {
-        "define": "ij_product=intellij-cc-latest-stable",
-    },
-)
-
-config_setting(
-    name = "intellij-cc-under-dev",
-    values = {
-        "define": "ij_product=intellij-cc-under-dev",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-cc-oldest-stable",
-    values = {
-        "define": "ij_product=intellij-ue-cc-oldest-stable",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-cc-latest-stable",
-    values = {
-        "define": "ij_product=intellij-ue-cc-latest-stable",
-    },
-)
-
-config_setting(
-    name = "intellij-ue-cc-under-dev",
-    values = {
-        "define": "ij_product=intellij-ue-cc-under-dev",
->>>>>>> 1717e8282 (Internal change.)
     },
 )
 
