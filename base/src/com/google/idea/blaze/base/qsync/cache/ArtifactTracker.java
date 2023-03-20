@@ -177,7 +177,6 @@ public class ArtifactTracker {
         // but we see the 'actual' label being built instead.
         // Here for all the targets that we did not expect to be built, we add their
         // artifacts to all the labels that we didn't see.
-        logger.warn("Target " + label + " was unexpectedly built.");
         for (Label notBuiltLabel : notBuilt) {
           List<Path> value = artifacts.computeIfAbsent(notBuiltLabel, k -> new ArrayList<>());
           value.addAll(paths);
