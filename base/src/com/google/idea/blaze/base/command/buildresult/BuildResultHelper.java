@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -105,8 +106,8 @@ public interface BuildResultHelper extends AutoCloseable {
    * @param completedBuildId build id.
    * @return a list of message on stdout.
    */
-  default ImmutableList<String> getStdout(String completedBuildId) throws GetStdoutException {
-    return ImmutableList.of();
+  default InputStream getStdout(String completedBuildId) throws GetStdoutException {
+    return InputStream.nullInputStream();
   }
 
   /**
@@ -118,8 +119,8 @@ public interface BuildResultHelper extends AutoCloseable {
    * @param completedBuildId build id.
    * @return a list of message on stderr.
    */
-  default ImmutableList<String> getStderr(String completedBuildId) throws GetStderrException {
-    return ImmutableList.of();
+  default InputStream getStderr(String completedBuildId) throws GetStderrException {
+    return InputStream.nullInputStream();
   }
 
   /**

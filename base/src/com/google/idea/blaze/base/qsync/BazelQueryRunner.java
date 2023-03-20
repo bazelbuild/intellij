@@ -16,60 +16,41 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.errorprone.annotations.MustBeClosed;
-import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.intellij.openapi.project.Project;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 
 /** The default implementation of QueryRunner. */
-public class BazelBinaryQueryRunner implements QueryRunner {
+public class BazelQueryRunner implements QueryRunner {
   private final Project project;
+  private final WorkspaceRoot workspaceRoot;
   private final BuildSystem buildSystem;
-  private final Path workspaceRoot;
 
-  public BazelBinaryQueryRunner(Project project, BuildSystem buildSystem, Path workspaceRoot) {
+  public BazelQueryRunner(Project project, BuildSystem buildSystem, Path workspaceRoot) {
     this.project = project;
     this.buildSystem = buildSystem;
-    this.workspaceRoot = workspaceRoot;
+    this.workspaceRoot = new WorkspaceRoot(workspaceRoot.toFile());
   }
 
   @Override
   @MustBeClosed
   public InputStream runQuery(QuerySpec query, BlazeContext context) throws IOException {
-
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
-
-    BlazeCommand builder =
-        BlazeCommand.builder(invoker, BlazeCommandName.QUERY)
-            .addBlazeFlags(query.getQueryArgs())
-            .build();
-
-    File protoFile = new File("/tmp/q.proto");
-    FileOutputStream out = new FileOutputStream(protoFile);
-    LineProcessingOutputStream lpos =
-        LineProcessingOutputStream.of(
-            BlazeConsoleLineProcessorProvider.getAllStderrLineProcessors(context));
-    ExternalTask.builder(workspaceRoot.toFile())
-        .addBlazeCommand(builder)
-        .context(context)
-        .stdout(out)
-        .stderr(lpos)
-        .build()
-        .run();
-
-    return new BufferedInputStream(new FileInputStream(protoFile));
+    BlazeCommand.Builder commandBuilder = BlazeCommand.builder(invoker, BlazeCommandName.QUERY);
+    commandBuilder.addBlazeFlags(query.getQueryArgs());
+    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
+      return invoker
+          .getCommandRunner()
+          .runQuery(project, commandBuilder, buildResultHelper, workspaceRoot, context);
+    }
   }
 }

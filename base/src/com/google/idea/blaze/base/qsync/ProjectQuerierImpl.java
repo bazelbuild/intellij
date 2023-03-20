@@ -69,7 +69,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
         new ProjectRefresher(
             new WorkspaceResolvingPackageReader(workspaceRoot, new PackageStatementParser()),
             workspaceRoot);
-    QueryRunner queryRunner = new BazelBinaryQueryRunner(project, buildSystem, workspaceRoot);
+    QueryRunner queryRunner = new BazelQueryRunner(project, buildSystem, workspaceRoot);
     return new ProjectQuerierImpl(project, queryRunner, projectRefresher);
   }
 
