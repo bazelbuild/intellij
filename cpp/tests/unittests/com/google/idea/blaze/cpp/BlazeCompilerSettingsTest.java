@@ -26,6 +26,7 @@ import com.google.idea.blaze.base.model.MockBlazeProjectDataBuilder;
 import com.google.idea.blaze.base.model.MockBlazeProjectDataManager;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -53,7 +54,8 @@ public class BlazeCompilerSettingsTest extends BlazeTestCase {
 
     BlazeImportSettingsManager importSettingsManager = new BlazeImportSettingsManager(project);
     BlazeImportSettings importSettings =
-        new BlazeImportSettings("/root", "", "", "", BuildSystemName.Bazel);
+        new BlazeImportSettings(
+            "/root", "", "", "", BuildSystemName.Bazel, ProjectType.ASPECT_SYNC);
     importSettingsManager.setImportSettings(importSettings);
     projectServices.register(BlazeImportSettingsManager.class, importSettingsManager);
 
