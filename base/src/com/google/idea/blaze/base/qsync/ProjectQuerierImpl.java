@@ -21,15 +21,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.FullProjectUpdate;
-import com.google.idea.blaze.qsync.PackageStatementParser;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.RefreshOperation;
-import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -40,7 +37,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
@@ -55,22 +51,10 @@ public class ProjectQuerierImpl implements ProjectQuerier {
 
   @VisibleForTesting
   public ProjectQuerierImpl(
-      Project project,
-      QueryRunner queryRunner,
-      ProjectRefresher projectRefresher) {
+      Project project, QueryRunner queryRunner, ProjectRefresher projectRefresher) {
     this.project = project;
     this.projectRefresher = projectRefresher;
     this.queryRunner = queryRunner;
-  }
-
-  public static ProjectQuerier create(
-      Project project, BuildSystem buildSystem, Path workspaceRoot) {
-    ProjectRefresher projectRefresher =
-        new ProjectRefresher(
-            new WorkspaceResolvingPackageReader(workspaceRoot, new PackageStatementParser()),
-            workspaceRoot);
-    QueryRunner queryRunner = new BazelQueryRunner(project, buildSystem, workspaceRoot);
-    return new ProjectQuerierImpl(project, queryRunner, projectRefresher);
   }
 
   /**
@@ -162,5 +146,4 @@ public class ProjectQuerierImpl implements ProjectQuerier {
     }
     return refresh.createBlazeProject();
   }
-
 }

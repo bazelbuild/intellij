@@ -39,6 +39,9 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.PackageStatementParser;
+import com.google.idea.blaze.qsync.ProjectRefresher;
+import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
@@ -60,7 +63,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ProjectLoader {
 
-  private final Project project;
+  protected final Project project;
 
   public ProjectLoader(Project project) {
     this.project = project;
@@ -106,7 +109,7 @@ public class ProjectLoader {
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
 
     DependencyBuilder dependencyBuilder =
-        new BazelDependencyBuilder(project, buildSystem, importRoots, workspaceRoot);
+        createDependencyBuilder(workspaceRoot, importRoots, buildSystem);
 
     BlazeProject graph = new BlazeProject();
     ArtifactFetcher artifactFetcher = createArtifactFetcher(buildSystem);
@@ -115,8 +118,12 @@ public class ProjectLoader {
     DependencyCache dependencyCache = new DependencyCache(artifactTracker);
     DependencyTracker dependencyTracker =
         new DependencyTracker(workspaceRoot.path(), graph, dependencyBuilder, dependencyCache);
-    ProjectQuerier projectQuerier =
-        ProjectQuerierImpl.create(project, buildSystem, workspaceRoot.path());
+    ProjectRefresher projectRefresher =
+        new ProjectRefresher(
+            new WorkspaceResolvingPackageReader(workspaceRoot.path(), new PackageStatementParser()),
+            workspaceRoot.path());
+    QueryRunner queryRunner = createQueryRunner(workspaceRoot, buildSystem);
+    ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner);
     ProjectUpdater projectUpdater =
         new ProjectUpdater(project, importSettings, projectViewSet, workspaceRoot);
     graph.addListener(projectUpdater);
@@ -148,6 +155,20 @@ public class ProjectLoader {
     //   the BuildGraphData etc.
     loadedProject.sync(context, loadedSnapshot);
     return loadedProject;
+  }
+
+  private ProjectQuerierImpl createProjectQuerier(
+      ProjectRefresher projectRefresher, QueryRunner queryRunner) {
+    return new ProjectQuerierImpl(project, queryRunner, projectRefresher);
+  }
+
+  protected QueryRunner createQueryRunner(WorkspaceRoot workspaceRoot, BuildSystem buildSystem) {
+    return new BazelQueryRunner(project, buildSystem, workspaceRoot.path());
+  }
+
+  protected DependencyBuilder createDependencyBuilder(
+      WorkspaceRoot workspaceRoot, ImportRoots importRoots, BuildSystem buildSystem) {
+    return new BazelDependencyBuilder(project, buildSystem, importRoots, workspaceRoot);
   }
 
   public Optional<PostQuerySyncData> loadFromDisk(Path snapshotFilePath) throws IOException {
