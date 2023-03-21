@@ -16,6 +16,7 @@
 package com.google.idea.blaze.base.qsync;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
@@ -93,7 +94,7 @@ public class QuerySyncManager {
     try {
       QuerySyncProject newProject = loader.loadProject(context);
       if (!context.hasErrors()) {
-        loadedProject = newProject;
+        loadedProject = Preconditions.checkNotNull(newProject);
       }
     } catch (IOException e) {
       onError("Failed to load project", e, context);

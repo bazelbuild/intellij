@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.io.VirtualFileSystemProvider;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.SyncCache;
@@ -73,7 +74,7 @@ public class BlazeGoTreeStructureProviderTest {
   @Rule public IntellijRule intellij = new IntellijRule();
   @Rule public TemporaryFolder folder = new TemporaryFolder();
   private static final BlazeImportSettings DUMMY_IMPORT_SETTINGS =
-      new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze);
+      new BlazeImportSettings("", "", "", "", BuildSystemName.Blaze, ProjectType.ASPECT_SYNC);
   @Mock private SyncCache syncCache;
 
   private ConcurrentHashMap<File, String> fileToImportPathMap;

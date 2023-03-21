@@ -51,6 +51,7 @@ import com.google.idea.blaze.base.scope.ErrorCollector;
 import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -251,11 +252,12 @@ public class RenderJarCacheTest {
     File projectDataDir = temporaryFolder.newFolder("project_data");
     importSettingsManager.setImportSettings(
         new BlazeImportSettings(
-            /*workspaceRoot=*/ "",
+            /* workspaceRoot= */ "",
             intellijRule.getProject().getName(),
             projectDataDir.getAbsolutePath(),
-            /*projectViewFile=*/ "",
-            BuildSystemName.Blaze));
+            /* projectViewFile= */ "",
+            BuildSystemName.Blaze,
+            ProjectType.ASPECT_SYNC));
     intellijRule.registerProjectService(BlazeImportSettingsManager.class, importSettingsManager);
   }
 

@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.cache.FileApiArtifactFetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
@@ -36,6 +37,7 @@ import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
@@ -48,6 +50,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.zip.GZIPInputStream;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Loads a project, either from saved state or from a {@code .blazeproject} file, yielding a {@link
@@ -63,10 +66,20 @@ public class ProjectLoader {
     this.project = project;
   }
 
+  @Nullable
   public QuerySyncProject loadProject(BlazeContext context) throws IOException {
     BlazeImportSettings importSettings =
         Preconditions.checkNotNull(
             BlazeImportSettingsManager.getInstance(project).getImportSettings());
+    if (importSettings.getProjectType() != ProjectType.QUERY_SYNC) {
+      context.output(
+          PrintOutput.error(
+              "The project uses a legacy project structure not compatible with this version of"
+                  + " Android Studio. Please reimport into a newly created project. Learn more at"
+                  + " go/querysync"));
+      context.setHasError();
+      return null;
+    }
 
     Path snapshotFilePath = getSnapshotFilePath(importSettings);
     Optional<PostQuerySyncData> loadedSnapshot = loadFromDisk(snapshotFilePath);

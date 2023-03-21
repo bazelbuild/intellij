@@ -50,6 +50,7 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
+import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.google.idea.blaze.base.sync.BlazeSyncPlugin;
@@ -140,7 +141,12 @@ public class UnpackedAarsTest extends BlazeTestCase {
       File projectDataDirectory = folder.newFolder("projectdata");
       BlazeImportSettings dummyImportSettings =
           new BlazeImportSettings(
-              "", "", projectDataDirectory.getAbsolutePath(), "", BuildSystemName.Bazel);
+              "",
+              "",
+              projectDataDirectory.getAbsolutePath(),
+              "",
+              BuildSystemName.Bazel,
+              ProjectType.ASPECT_SYNC);
       BlazeImportSettingsManager.getInstance(project).setImportSettings(dummyImportSettings);
     } catch (IOException e) {
       throw new AssertionError("Fail to create directory for test", e);
