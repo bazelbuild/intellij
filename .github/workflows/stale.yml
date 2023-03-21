@@ -46,10 +46,10 @@ jobs:
           This pull request has been automatically closed due to inactivity. If you're still interested in pursuing this, please reach out
           to the triage team (`@bazelbuild/triage`). Thanks!
         stale-issue-label: 'stale'
-        exempt-issue-labels: 'not stale,awaiting-maintainer,P0,P1,copybara-exported'
+        exempt-issue-labels: 'not stale,awaiting-maintainer,P0,P1'
         close-issue-reason: "not_planned"
         stale-pr-label: 'stale'
-        exempt-pr-labels: 'not stale,awaiting-review,P0,P1'
+        exempt-pr-labels: 'not stale,awaiting-review,P0,P1,copybara-exported'
         exempt-draft-pr: true
         operations-per-run: 500
         ascending: true
