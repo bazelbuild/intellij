@@ -89,7 +89,12 @@ def _collect_dependencies_core_impl(
         always_build_rules,
         generate_aidl_classes):
     if JavaInfo not in target:
-        return DependenciesInfo(compile_time_jars = depset(), target_to_artifacts = {}, aars = depset(), gensrcs = depset())
+        return [DependenciesInfo(
+            compile_time_jars = None,
+            target_to_artifacts = None,
+            aars = None,
+            gensrcs = None,
+        )]
     label = str(target.label)
     included = False
     if not include:
@@ -120,7 +125,7 @@ def _collect_dependencies_core_impl(
     if hasattr(ctx.rule.attr, "_junit"):
         deps.append(ctx.rule.attr._junit)
 
-    info_deps = [dep[DependenciesInfo] for dep in deps if DependenciesInfo in dep]
+    info_deps = [dep[DependenciesInfo] for dep in deps if DependenciesInfo in dep and dep[DependenciesInfo].target_to_artifacts]
 
     trs = []
     target_to_artifacts = {}
