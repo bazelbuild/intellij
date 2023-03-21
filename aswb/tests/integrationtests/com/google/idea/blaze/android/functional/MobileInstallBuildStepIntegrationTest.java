@@ -71,6 +71,7 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     assertThat(externalTaskInterceptor.getContext()).isEqualTo(context);
     assertThat(externalTaskInterceptor.getCommand()).containsAllIn(blazeFlags);
     assertThat(externalTaskInterceptor.getCommand()).containsAllIn(execFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAllOf("--adb_arg=-P ", "--adb_arg=0");
     assertThat(externalTaskInterceptor.getCommand())
         .containsAnyOf("serial-number", "serial-number:tcp:0");
     assertThat(externalTaskInterceptor.getCommand()).contains(buildTarget.toString());
@@ -109,6 +110,7 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     assertThat(externalTaskInterceptor.getContext()).isEqualTo(context);
     assertThat(externalTaskInterceptor.getCommand()).containsAllIn(blazeFlags);
     assertThat(externalTaskInterceptor.getCommand()).containsAllIn(execFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAllOf("--adb_arg=-P ", "--adb_arg=0");
     assertThat(externalTaskInterceptor.getCommand()).contains("--device");
     // workaround for inconsistent stateful AndroidDebugBridge class.
     assertThat(externalTaskInterceptor.getCommand())
@@ -184,6 +186,7 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
     assertThat(externalTaskInterceptor.getContext()).isEqualTo(context);
     assertThat(externalTaskInterceptor.getCommand()).containsAllIn(blazeFlags);
     assertThat(externalTaskInterceptor.getCommand()).containsAllIn(execFlags);
+    assertThat(externalTaskInterceptor.getCommand()).containsAllOf("--adb_arg=-P ", "--adb_arg=0");
     assertThat(externalTaskInterceptor.getCommand()).contains("--device");
     // workaround for inconsistent stateful AndroidDebugBridge class.
     assertThat(externalTaskInterceptor.getCommand())
