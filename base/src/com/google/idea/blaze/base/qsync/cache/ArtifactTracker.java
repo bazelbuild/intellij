@@ -190,6 +190,7 @@ public class ArtifactTracker {
     jarCache.clear();
     aarCache.clear();
     generatedSrcFileCache.clear();
+    saveToDisk();
   }
 
   /** Returns directory of project. */
