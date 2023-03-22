@@ -24,13 +24,15 @@ import com.google.idea.blaze.base.formatter.FileBasedFormattingSynchronizer.Form
 import com.google.idea.blaze.base.formatter.FormatUtils;
 import com.google.idea.blaze.base.formatter.FormatUtils.FileContentsProvider;
 import com.google.idea.blaze.base.formatter.FormatUtils.Replacements;
+import com.google.idea.blaze.base.lang.buildfile.language.BuildFileType;
 import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -44,7 +46,12 @@ public class BuildFileFormatOnSaveHandler extends FileDocumentManagerAdapter {
     if (!BlazeUserSettings.getInstance().getFormatBuildFilesOnSave() || !document.isWritable()) {
       return;
     }
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
+    if (virtualFile == null || !virtualFile.getFileType().equals(BuildFileType.INSTANCE)) {
+      // Do not guess projects for unrelated files as it might write error messages to log files.
+      return;
+    }
+    for (Project project : ProjectLocator.getInstance().getProjectsForFile(virtualFile)) {
       PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (psiFile != null) {
         formatBuildFile(project, psiFile);
