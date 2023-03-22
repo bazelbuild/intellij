@@ -98,7 +98,7 @@ def _collect_dependencies_core_impl(
     label = str(target.label)
     included = False
     if not include:
-        # include can only be empty only when used from collect_all_dependencies_for_tests
+        # include can only be empty when used from collect_all_dependencies_for_tests
         # aspect, which is meant to be used in tests only.
         included = False
     else:
