@@ -15,22 +15,31 @@
  */
 package com.google.idea.blaze.qsync.project;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.auto.value.AutoValue;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Queues;
 import com.google.common.collect.Sets;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Label;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,12 +69,57 @@ public abstract class BuildGraphData {
    * rule with no dependencies vs a rules that does not exist.
    */
   abstract ImmutableMap<Label, ImmutableSet<Label>> ruleDeps();
+  /**
+   * All the runtime dependencies of a java rule.
+   *
+   * <p>Note that we don't use a MultiMap here as that does not allow us to distinguish between a
+   * rule with no runtime dependencies vs a rules that does not exist.
+   */
+  abstract ImmutableMap<Label, ImmutableSet<Label>> ruleRuntimeDeps();
   /** All dependencies external to this project */
   public abstract ImmutableSet<Label> projectDeps();
 
   abstract ImmutableSet<Label> androidTargets();
 
   abstract ImmutableMap<Label, BuildTarget> targetMap();
+
+  /**
+   * All in-project targets with a direct compile or runtime dependency on a specified target, which
+   * may be external.
+   */
+  abstract ImmutableMultimap<Label, Label> reverseDeps();
+
+  /**
+   * Returns all in project targets that depend on the source file at {@code sourcePath} via an
+   * in-project dependency chain. Used to determine possible test targets for a given file.
+   *
+   * <p>If project target A depends on external target B, and external target B depends on project
+   * target C, target A is *not* included in {@code getReverseDeps} for a source file in target C.
+   */
+  public Collection<BuildTarget> getReverseDepsForSource(Path sourcePath) {
+
+    Label targetOwner = getTargetOwner(sourcePath);
+
+    if (targetOwner == null) {
+      return ImmutableList.of();
+    }
+
+    Queue<Label> toVisit = Queues.newArrayDeque();
+    Set<Label> visited = Sets.newHashSet();
+
+    toVisit.add(targetOwner);
+    while (!toVisit.isEmpty()) {
+      Label next = toVisit.remove();
+      if (visited.add(next)) {
+        toVisit.addAll(reverseDeps().get(next));
+      }
+    }
+
+    return visited.stream()
+        .map(label -> targetMap().get(label))
+        .filter(Objects::nonNull)
+        .collect(toImmutableList());
+  }
 
   @Override
   public final String toString() {
@@ -100,13 +154,35 @@ public abstract class BuildGraphData {
 
     public abstract ImmutableMap.Builder<Label, ImmutableSet<Label>> ruleDepsBuilder();
 
+    public abstract ImmutableMap.Builder<Label, ImmutableSet<Label>> ruleRuntimeDepsBuilder();
+
     public abstract ImmutableMap.Builder<Label, BuildTarget> targetMapBuilder();
+
+    public abstract ImmutableMultimap.Builder<Label, Label> reverseDepsBuilder();
 
     @CanIgnoreReturnValue
     public Builder ruleDeps(Map<Label, Set<Label>> value) {
       ImmutableMap.Builder<Label, ImmutableSet<Label>> builder = ruleDepsBuilder();
       for (Label key : value.keySet()) {
         builder.put(key, ImmutableSet.copyOf(value.get(key)));
+      }
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder ruleRuntimeDeps(Map<Label, Set<Label>> value) {
+      ImmutableMap.Builder<Label, ImmutableSet<Label>> builder = ruleRuntimeDepsBuilder();
+      for (Label key : value.keySet()) {
+        builder.put(key, ImmutableSet.copyOf(value.get(key)));
+      }
+      return this;
+    }
+
+    @CanIgnoreReturnValue
+    public Builder reverseDeps(Multimap<Label, Label> value) {
+      ImmutableMultimap.Builder<Label, Label> builder = reverseDepsBuilder();
+      for (Label key : value.keySet()) {
+        builder.putAll(key, value.get(key));
       }
       return this;
     }
@@ -164,7 +240,7 @@ public abstract class BuildGraphData {
     return Sets.intersection(builder.build(), projectDeps()).immutableCopy();
   }
 
-  Label getTargetOwner(Path path) {
+  public Label getTargetOwner(Path path) {
     Label syncTarget = fileToTarget().get(path);
     return sourceOwner().get(syncTarget);
   }

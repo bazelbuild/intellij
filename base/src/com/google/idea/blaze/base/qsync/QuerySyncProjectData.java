@@ -29,6 +29,8 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Optional;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,11 +70,25 @@ public class QuerySyncProjectData implements BlazeProjectData {
         .orElse(null);
   }
 
+  /**
+   * Returns all in project targets that depend on the source file at {@code sourcePath} via an
+   * in-project dependency chain.
+   *
+   * <p>If project target A depends on external target B, and external target B depends on project
+   * target C, target A is *not* included in {@code getReverseDeps} for a source file in target C.
+   */
+  public Collection<BuildTarget> getReverseDeps(Path sourcePath) {
+    return blazeProject
+        .map(BlazeProjectSnapshot::graph)
+        .map(graph -> graph.getReverseDepsForSource(sourcePath))
+        .orElse(ImmutableList.of());
+  }
+
   @Override
   public ImmutableList<TargetInfo> targets() {
     if (blazeProject.isPresent()) {
       return blazeProject.get().getTargetMap().values().stream()
-          .map(t -> TargetInfo.builder(Label.create(t.label().toString()), t.kind()).build())
+          .map(TargetInfo::fromBuildTarget)
           .collect(ImmutableList.toImmutableList());
     }
     return ImmutableList.of();

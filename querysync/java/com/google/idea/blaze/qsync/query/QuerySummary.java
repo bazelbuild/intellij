@@ -66,6 +66,24 @@ public abstract class QuerySummary {
   private static final ImmutableSet<String> OTHER_ATTRIBUTES =
       ImmutableSet.of("test_app", "instruments");
 
+  // Compile-time dependency attributes
+  private static final ImmutableSet<String> DEPENDENCY_ATTRIBUTES =
+      ImmutableSet.of(
+          // android_local_test depends on junit implicitly using the _junit attribute.
+          "$junit",
+          "deps",
+          // This is not strictly correct, as source files of rule with 'export' do not
+          // depend on exported targets.
+          "exports");
+
+  // Runtime dependency attributes
+  private static final ImmutableSet<String> RUNTIME_DEP_ATTRIBUTES =
+      ImmutableSet.of(
+          // From android_binary rules used in android_instrumentation_tests
+          "instruments",
+          // From android_instrumentation_test rules
+          "test_app");
+
   public abstract Query.Summary proto();
 
   /** Do not generate toString, this object is too large */
@@ -101,18 +119,23 @@ public abstract class QuerySummary {
           for (Build.Attribute a : target.getRule().getAttributeList()) {
             if (a.getName().equals("srcs")) {
               rule.addAllSources(a.getStringListValueList());
-            } else if (a.getName().equals("deps")) {
-              rule.addAllDeps(a.getStringListValueList());
-            } else if (a.getName().equals("exports")) {
-              // This is not strictly correct, as source files of rule with 'export' do not
-              // depend on exported targets.
-              rule.addAllDeps(a.getStringListValueList());
-            } else if (a.getName().equals("$junit")) {
-              // android_local_test depends on junit implicitly using the _junit attribute.
-              rule.addDeps(a.getStringValue());
+            } else if (DEPENDENCY_ATTRIBUTES.contains(a.getName())) {
+              if (a.hasStringValue()) {
+                rule.addDeps(a.getStringValue());
+              } else {
+                rule.addAllDeps(a.getStringListValueList());
+              }
+            } else if (RUNTIME_DEP_ATTRIBUTES.contains(a.getName())) {
+              if (a.hasStringValue()) {
+                rule.addRuntimeDeps(a.getStringValue());
+              } else {
+                rule.addAllRuntimeDeps(a.getStringListValueList());
+              }
             } else if (a.getName().equals("idl_srcs")) {
               rule.addAllIdlSources(a.getStringListValueList());
-            } else if (OTHER_ATTRIBUTES.contains(a.getName()) && !a.getStringValue().isEmpty()) {
+            }
+
+            if (OTHER_ATTRIBUTES.contains(a.getName()) && a.hasStringValue()) {
               rule.putOtherAttributes(a.getName(), a.getStringValue());
             }
           }

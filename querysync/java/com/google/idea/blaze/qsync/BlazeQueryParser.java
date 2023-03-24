@@ -17,9 +17,12 @@ package com.google.idea.blaze.qsync;
 
 import static com.google.idea.blaze.common.Label.toLabelList;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Streams;
 import com.google.idea.blaze.common.BuildTarget;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Label;
@@ -75,6 +78,7 @@ public class BlazeQueryParser {
     BuildGraphData.Builder graphBuilder = BuildGraphData.builder();
     Map<Label, Label> sourceOwner = Maps.newHashMap();
     Map<Label, Set<Label>> ruleDeps = Maps.newHashMap();
+    Map<Label, Set<Label>> ruleRuntimeDeps = Maps.newHashMap();
     Set<Label> projectDeps = Sets.newHashSet();
 
     // A hacky collection the project state. This is the equivalent of the targetmap data:
@@ -117,6 +121,12 @@ public class BlazeQueryParser {
             ImmutableSet.copyOf(toLabelList(ruleEntry.getValue().getSourcesList()));
         Set<Label> thisDeps = Sets.newHashSet(toLabelList(ruleEntry.getValue().getDepsList()));
         ruleDeps.computeIfAbsent(ruleEntry.getKey(), x -> Sets.newHashSet()).addAll(thisDeps);
+
+        Set<Label> thisRuntimeDeps =
+            Sets.newHashSet(toLabelList(ruleEntry.getValue().getRuntimeDepsList()));
+        ruleRuntimeDeps
+            .computeIfAbsent(ruleEntry.getKey(), x -> Sets.newHashSet())
+            .addAll(thisRuntimeDeps);
         for (Label thisSource : thisSources) {
           // TODO Consider replace sourceDeps with a map of:
           //   (source target) -> (rules the include it)
@@ -179,7 +189,13 @@ public class BlazeQueryParser {
     context.output(PrintOutput.log("%-10d Targets (%d ms):", nTargets, elapsedMs));
 
     BuildGraphData graph =
-        graphBuilder.sourceOwner(sourceOwner).ruleDeps(ruleDeps).projectDeps(projectDeps).build();
+        graphBuilder
+            .sourceOwner(sourceOwner)
+            .ruleDeps(ruleDeps)
+            .ruleRuntimeDeps(ruleRuntimeDeps)
+            .projectDeps(projectDeps)
+            .reverseDeps(caclulateReverseDeps(ruleDeps, ruleRuntimeDeps))
+            .build();
 
     context.output(PrintOutput.log("%-10d Source files", graph.locations().size()));
     context.output(PrintOutput.log("%-10d Java sources", graph.javaSources().size()));
@@ -188,5 +204,18 @@ public class BlazeQueryParser {
     context.output(PrintOutput.log("%-10d External dependencies", graph.projectDeps().size()));
 
     return graph;
+  }
+
+  private ImmutableMultimap<Label, Label> caclulateReverseDeps(
+      Map<Label, Set<Label>> ruleDeps, Map<Label, Set<Label>> ruleRuntimeDeps) {
+    ArrayListMultimap<Label, Label> map = ArrayListMultimap.create();
+    Streams.concat(ruleDeps.entrySet().stream(), ruleRuntimeDeps.entrySet().stream())
+        .forEach(
+            entry -> {
+              for (Label dep : entry.getValue()) {
+                map.put(dep, entry.getKey());
+              }
+            });
+    return ImmutableMultimap.copyOf(map);
   }
 }
