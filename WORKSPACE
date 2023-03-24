@@ -48,9 +48,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ce_2023_1. This is required to build IJwB and run integration tests.
-IC_231_SHA = "581fb34941e9585939c3eee83c8f0e2e23ba838e2908085bdf3501e14be36963"
+IC_231_SHA = "8564686a3da705938e9c9fc9b5d5833d77eb953b93012c22bab6d318d172f181"
 
-IC_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/231.8109.90-EAP-SNAPSHOT/ideaIC-231.8109.90-EAP-SNAPSHOT.zip"
+IC_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/231.8109.144-EAP-SNAPSHOT/ideaIC-231.8109.144-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ce_2023_1",
@@ -101,9 +101,9 @@ http_archive(
 )
 
 # The plugin api for intellij_ue_2022_3. This is required to run UE-specific integration tests.
-IU_231_SHA = "a5e86563e4b411c00e17e01f7cac8cd9c1d28b1c77b269229623cf79affa9a34"
+IU_231_SHA = "818b8304b6d3b3c2f9e67eff37f8000061f9fc9d16db1e1f175df22441416172"
 
-IU_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/231.8109.90-EAP-SNAPSHOT/ideaIU-231.8109.90-EAP-SNAPSHOT.zip"
+IU_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/231.8109.144-EAP-SNAPSHOT/ideaIU-231.8109.144-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "intellij_ue_2023_1",
@@ -152,9 +152,9 @@ http_archive(
     url = "https://www.jetbrains.com/intellij-repository/releases/com/jetbrains/intellij/clion/clion/2022.3/clion-2022.3.zip",
 )
 
-CLION_231_SHA = "4cc01a45115f701af89a3fa29e33fc190d1c414c957988420352098d50d1a00a"
+CLION_231_SHA = "c1c2efe875275bf106cb85e9ac8bcf364d0f9c8b86ecbfb9047ccc24d56e4a34"
 
-CLION_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/231.8109.80-EAP-SNAPSHOT/clion-231.8109.80-EAP-SNAPSHOT.zip"
+CLION_231_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/231.8109.141-EAP-SNAPSHOT/clion-231.8109.141-EAP-SNAPSHOT.zip"
 
 http_archive(
     name = "clion_2023_1",
@@ -223,9 +223,9 @@ http_archive(
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/223.7571.182/PythonCore-223.7571.182.zip",
 )
 
-PYTHON_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/231.8109.90/PythonCore-231.8109.90.zip"
+PYTHON_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/231.8109.144/PythonCore-231.8109.144.zip"
 
-PYTHON_PLUGIN_231_SHA = "2d52a550b968c1569e15e701a0f38500f89eeba3416461a72f2906a8d8f74f90"
+PYTHON_PLUGIN_231_SHA = "90b75d0e4919f424fabc81e83cc83da9305ed73b60d73a4653353685ec89f47f"
 
 http_archive(
     name = "python_2023_1",
@@ -288,9 +288,9 @@ http_archive(
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/223.7571.182/org.jetbrains.plugins.go-223.7571.182.zip",
 )
 
-GO_PLUGIN_231_SHA = "190b99b706bd2bddd7fa514e8617647601cc15e7c4cec43700af699d337a820f"
+GO_PLUGIN_231_SHA = "9787391fcc3a3c3021380cb00e46b3e54d5a82f892f3cb358c2c8ef9dfe89407"
 
-GO_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/231.8109.90/org.jetbrains.plugins.go-231.8109.90.zip"
+GO_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/231.8109.144/org.jetbrains.plugins.go-231.8109.144.zip"
 
 http_archive(
     name = "go_2023_1",
@@ -345,9 +345,9 @@ http_archive(
     url = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2022.3.13/org.intellij.scala-2022.3.13.zip",
 )
 
-SCALA_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.1.11/org.intellij.scala-2023.1.11.zip"
+SCALA_PLUGIN_231_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.1.13/org.intellij.scala-2023.1.13.zip"
 
-SCALA_PLUGIN_231_SHA = "d93f3273fdc6f3294a76cc33480be51a020ac4deb87ebb13f48bd22db69a8fca"
+SCALA_PLUGIN_231_SHA = "f923e888ae4acd9ed33a0b9fc3e4b093eb7041f1a848db605718da99c3372806"
 
 http_archive(
     name = "scala_2023_1",
