@@ -15,11 +15,17 @@
  */
 package com.android.tools.idea.run;
 
+import com.android.tools.idea.run.ValidationError;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.options.ConfigurationQuickFix;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /** Compat class for {@link ValidationError} */
 public class ValidationErrorCompat {
-  private ValidationErrorCompat() {}
-
-  public static ValidationError fatal(String message, Runnable quickFick) {
-    return ValidationError.fatal(message, quickFick);
+  public static @NotNull ValidationError fatal(@NotNull String message, @Nullable Runnable quickfix) {
+    return ValidationError.fatal(message, dataContext -> quickfix.run());
   }
+
+  private ValidationErrorCompat() {}
 }
