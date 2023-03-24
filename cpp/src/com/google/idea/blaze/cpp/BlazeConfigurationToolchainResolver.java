@@ -45,6 +45,7 @@ import com.google.idea.blaze.base.scope.scopes.TimingScope.EventType;
 import com.google.idea.blaze.base.sync.BlazeSyncManager;
 import com.google.idea.blaze.base.sync.workspace.ExecutionRootPathResolver;
 import com.google.idea.blaze.cpp.CompilerVersionChecker.VersionCheckException;
+import com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider.XcodeCompilerSettingsException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.NavigatableAdapter;
@@ -55,6 +56,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -187,19 +189,24 @@ public final class BlazeConfigurationToolchainResolver {
         .anyMatch(s -> s.startsWith("//tools/osx/crosstool"));
   }
 
-  /** Returns the compiler settings for each toolchain. */
+  /**
+   * Returns the compiler settings for each toolchain.
+   */
   static ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> buildCompilerSettingsMap(
       BlazeContext context,
       Project project,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ExecutionRootPathResolver executionRootPathResolver,
-      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
+      ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings,
+      Optional<XcodeCompilerSettings> xcodeCompilerSettings
+  ) {
     return Scope.push(
         context,
         childContext -> {
           childContext.push(new TimingScope("Build compiler settings map", EventType.Other));
           return doBuildCompilerSettingsMap(
-              context, project, toolchainLookupMap, executionRootPathResolver, oldCompilerSettings);
+              context, project, toolchainLookupMap, executionRootPathResolver,
+              xcodeCompilerSettings, oldCompilerSettings);
         });
   }
 
@@ -208,6 +215,7 @@ public final class BlazeConfigurationToolchainResolver {
       Project project,
       ImmutableMap<TargetKey, CToolchainIdeInfo> toolchainLookupMap,
       ExecutionRootPathResolver executionRootPathResolver,
+      Optional<XcodeCompilerSettings> xcodeCompilerSettings,
       ImmutableMap<CToolchainIdeInfo, BlazeCompilerSettings> oldCompilerSettings) {
     Set<CToolchainIdeInfo> toolchains = new HashSet<>(toolchainLookupMap.values());
     List<ListenableFuture<Map.Entry<CToolchainIdeInfo, BlazeCompilerSettings>>>
@@ -226,7 +234,7 @@ public final class BlazeConfigurationToolchainResolver {
                   return null;
                 }
                 String compilerVersion =
-                    getCompilerVersion(project, context, executionRootPathResolver, cppExecutable);
+                    getCompilerVersion(project, context, executionRootPathResolver, xcodeCompilerSettings, cppExecutable);
                 if (compilerVersion == null) {
                   return null;
                 }
@@ -239,6 +247,7 @@ public final class BlazeConfigurationToolchainResolver {
                     createBlazeCompilerSettings(
                         project,
                         toolchain,
+                        xcodeCompilerSettings,
                         executionRootPathResolver.getExecutionRoot(),
                         cppExecutable,
                         compilerVersion);
@@ -274,11 +283,13 @@ public final class BlazeConfigurationToolchainResolver {
       Project project,
       BlazeContext context,
       ExecutionRootPathResolver executionRootPathResolver,
+      Optional<XcodeCompilerSettings> xcodeCompilerSettings,
       File cppExecutable) {
     File executionRoot = executionRootPathResolver.getExecutionRoot();
+    ImmutableMap<String, String> compilerEnvFlags = XcodeCompilerSettingsProvider.getInstance().asEnvironmentVariables(xcodeCompilerSettings);
     try {
       return CompilerVersionChecker.getInstance()
-          .checkCompilerVersion(executionRoot, cppExecutable);
+          .checkCompilerVersion(executionRoot, cppExecutable, compilerEnvFlags);
     } catch (VersionCheckException e) {
       switch (e.kind) {
         case MISSING_EXEC_ROOT:
@@ -323,12 +334,15 @@ public final class BlazeConfigurationToolchainResolver {
   private static BlazeCompilerSettings createBlazeCompilerSettings(
       Project project,
       CToolchainIdeInfo toolchainIdeInfo,
+      Optional<XcodeCompilerSettings> xcodeCompilerSettings,
       File executionRoot,
       File cppExecutable,
       String compilerVersion) {
+    ImmutableMap<String, String> compilerWrapperEnvVars =
+        XcodeCompilerSettingsProvider.getInstance().asEnvironmentVariables(xcodeCompilerSettings);
     File compilerWrapper =
         CompilerWrapperProvider.getInstance()
-            .createCompilerExecutableWrapper(executionRoot, cppExecutable);
+            .createCompilerExecutableWrapper(executionRoot, cppExecutable, compilerWrapperEnvVars);
     if (compilerWrapper == null) {
       return null;
     }
@@ -337,16 +351,35 @@ public final class BlazeConfigurationToolchainResolver {
 
     ImmutableList.Builder<String> cppFlagsBuilder = ImmutableList.builder();
     cppFlagsBuilder.addAll(toolchainIdeInfo.getCppCompilerOptions());
+
+    ImmutableMap.Builder<String, String> compilerEnv = ImmutableMap.builder();
+    compilerEnv.putAll(compilerWrapperEnvVars);
     return new BlazeCompilerSettings(
         project,
         compilerWrapper,
         compilerWrapper,
         cFlagsBuilder.build(),
         cppFlagsBuilder.build(),
-        compilerVersion);
+        compilerVersion,
+        compilerEnv.build());
   }
 
   private static <T> ListenableFuture<T> submit(Callable<T> callable) {
     return BlazeExecutor.getInstance().submit(callable);
+  }
+
+  public static Optional<XcodeCompilerSettings> resolveXcodeCompilerSettings(BlazeContext context,
+      Project project) {
+    return Scope.push(
+        context,
+        childContext -> {
+          childContext.push(new TimingScope("Resolve Xcode information", EventType.Other));
+          try {
+            return XcodeCompilerSettingsProvider.getInstance().fromContext(context, project);
+          } catch (XcodeCompilerSettingsException e) {
+            IssueOutput.warn(String.format("There was an error fetching the Xcode information from the build: %s\n\nSome C++ functionality may not be available.", e.toString()));
+            return Optional.empty();
+          }
+        });
   }
 }

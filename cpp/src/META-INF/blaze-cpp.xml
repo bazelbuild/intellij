@@ -51,5 +51,7 @@
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerVersionCheckerImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.cpp.CompilerWrapperProvider"
                         serviceImplementation="com.google.idea.blaze.cpp.CompilerWrapperProviderImpl"/>
+    <applicationService serviceInterface="com.google.idea.blaze.cpp.XcodeCompilerSettingsProvider"
+                        serviceImplementation="com.google.idea.blaze.cpp.XcodeCompilerSettingsProviderImpl"/>
   </extensions>
 </idea-plugin>
