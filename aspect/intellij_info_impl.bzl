@@ -651,7 +651,11 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
     # Custom lint checks are incorporated as java plugins. We collect them here and register them with the IDE so that the IDE can also run the same checks.
     plugin_processor_jar_files = []
     if hasattr(ctx.rule.attr, "_android_lint_plugins"):
-        plugin_processor_jar_files += [jar for p in getattr(ctx.rule.attr, "_android_lint_plugins", []) for jar in p[JavaInfo].transitive_runtime_jars.to_list()]
+        plugin_processor_jar_files += [
+            jar
+            for p in getattr(ctx.rule.attr, "_android_lint_plugins", [])
+            for jar in _android_lint_plugin_jars(p)
+        ]
 
     if hasattr(java, "annotation_processing") and java.annotation_processing and hasattr(java.annotation_processing, "processor_classpath"):
         plugin_processor_jar_files += java.annotation_processing.processor_classpath.to_list()
@@ -681,6 +685,12 @@ def collect_java_info(target, ctx, semantics, ide_info, ide_info_file, output_gr
         update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_compile_time_jars)
         update_set_in_dict(output_groups, "intellij-resolve-java-direct-deps", java.transitive_source_jars)
     return True
+
+def _android_lint_plugin_jars(target):
+    if JavaInfo in target:
+        return target[JavaInfo].transitive_runtime_jars.to_list()
+    else:
+        return []
 
 def _package_manifest_file_argument(f):
     artifact = artifact_location(f)
