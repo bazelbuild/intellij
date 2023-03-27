@@ -175,8 +175,15 @@ public class IntellijWithPluginClasspathHelper {
       addIntellijLibraries(params, ideaJdk);
     }
 
+    String appPackage = Path.of(ideaJdk.getHomePath()).getParent().toString();
     if (launch != null && launch.additionalJvmArguments != null) {
-      vm.addAll(launch.additionalJvmArguments);
+      for (String arg : launch.additionalJvmArguments) {
+        if (SystemInfo.isMac) {
+          // Perform replacements that are done by the mac launcher here
+          arg = arg.replace("$APP_PACKAGE", appPackage);
+        }
+        vm.addAll(arg);
+      }
     }
 
     params.setMainClass("com.intellij.idea.Main");
