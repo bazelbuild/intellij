@@ -47,6 +47,7 @@ public interface RemoteOutputArtifact
         .setRelativePath(getRelativePath())
         .setId(getHashId())
         .setSyncStartTimeMillis(getSyncTimeMillis())
+        .setFileLength(getLength())
         .build();
   }
 
