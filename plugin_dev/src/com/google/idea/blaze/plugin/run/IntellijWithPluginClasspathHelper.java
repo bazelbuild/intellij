@@ -105,7 +105,11 @@ public class IntellijWithPluginClasspathHelper {
 
   @Nullable
   static Launch readLaunchInfo(Sdk ideaJdk) {
-    Path info = Paths.get(ideaJdk.getHomePath()).resolve("product-info.json");
+    Path location = Paths.get(ideaJdk.getHomePath());
+    if (SystemInfo.isMac) {
+      location = location.resolve("Resources");
+    }
+    Path info = location.resolve("product-info.json");
     if (Files.exists(info)) {
       try {
         String json = Files.readString(info);
