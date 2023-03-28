@@ -309,7 +309,7 @@ http_archive(
 http_archive(
     name = "android_studio_dev",
     build_file = "@//intellij_platform_sdk:BUILD.android_studiodev",
-    sha256 = "5d927ea5bffcc1e2278553cacb0cac62c9dd5c5ee55a31a72a73cfd45c8b3b5c",
+    sha256 = "1f58ac895c28ecc52ede74af1efea2d53356033e18e6dfcfa08a29c2f76a5ce0",
     url = "https://android-build",
 )
 
