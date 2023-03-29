@@ -68,6 +68,9 @@ test_suite(
     tests = [
         "//aswb:integration_tests",
         "//aswb:unit_tests",
+        # copybara:strip_begin(test projects are incompatible)
+        # "//aswb/testdata/projects:test_projects_test",
+        # copybara:strip_end
         "//base:integration_tests",
         "//base:unit_tests",
         "//cpp:integration_tests",
