@@ -96,13 +96,13 @@ intellij_unit_test_suite(
     runtime_deps = ["//intellij_platform_sdk:test_libs"],
     deps = [
         ":cpp",
-        "@com_google_guava_guava//jar",
         "//base",
         "//base:unit_test_utils",
         "//common/experiments",
         "//common/experiments:unit_test_utils",
         "//intellij_platform_sdk:plugin_api_for_tests",
         "//intellij_platform_sdk:test_libs",
+        "@com_google_guava_guava//jar",
         "@junit//jar",
     ] + select_for_ide(
         clion = [":clion_sysprop_rule"],
