@@ -130,9 +130,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags("--noexperimental_run_validations");
 
       BlazeBuildOutputs outputs =
-          invoker
-              .getCommandRunner()
-              .run(project, builder, buildResultHelper, workspaceRoot, context);
+          invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
       return createOutputInfo(outputs);
     }
   }

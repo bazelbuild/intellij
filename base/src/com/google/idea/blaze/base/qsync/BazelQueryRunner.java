@@ -21,24 +21,20 @@ import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 
 /** The default implementation of QueryRunner. */
 public class BazelQueryRunner implements QueryRunner {
   private final Project project;
-  private final WorkspaceRoot workspaceRoot;
   private final BuildSystem buildSystem;
 
-  public BazelQueryRunner(Project project, BuildSystem buildSystem, Path workspaceRoot) {
+  public BazelQueryRunner(Project project, BuildSystem buildSystem) {
     this.project = project;
     this.buildSystem = buildSystem;
-    this.workspaceRoot = new WorkspaceRoot(workspaceRoot.toFile());
   }
 
   @Override
@@ -50,7 +46,7 @@ public class BazelQueryRunner implements QueryRunner {
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
       return invoker
           .getCommandRunner()
-          .runQuery(project, commandBuilder, buildResultHelper, workspaceRoot, context);
+          .runQuery(project, commandBuilder, buildResultHelper, context);
     }
   }
 }

@@ -58,10 +58,10 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      WorkspaceRoot workspaceRoot,
       BlazeContext context) {
 
-    BuildResult buildResult = issueBuild(blazeCommandBuilder, workspaceRoot, context);
+    BuildResult buildResult =
+        issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), context);
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeBuildOutputs.noOutputs(buildResult);
     }
@@ -84,9 +84,9 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      WorkspaceRoot workspaceRoot,
       BlazeContext context) {
-    BuildResult buildResult = issueBuild(blazeCommandBuilder, workspaceRoot, context);
+    BuildResult buildResult =
+        issueBuild(blazeCommandBuilder, WorkspaceRoot.fromProject(project), context);
     if (buildResult.status == Status.FATAL_ERROR) {
       return BlazeTestResults.NO_RESULTS;
     }
@@ -105,7 +105,6 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      WorkspaceRoot workspaceRoot,
       BlazeContext context)
       throws FileNotFoundException {
     File outputFile = BuildEventProtocolUtils.createTempOutputFile();

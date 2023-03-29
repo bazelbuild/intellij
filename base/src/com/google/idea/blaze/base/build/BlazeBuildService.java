@@ -215,7 +215,6 @@ public class BlazeBuildService {
                         BlazeBuildTargetSharder.expandAndShardTargets(
                             project,
                             context,
-                            workspaceRoot,
                             projectView,
                             projectData.getWorkspacePathResolver(),
                             targets,

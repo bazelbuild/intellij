@@ -386,7 +386,6 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
     return BlazeBuildTargetSharder.expandAndShardTargets(
         getProject(),
         BlazeContext.create(),
-        workspaceRoot,
         ProjectViewSet.builder().add(projectView).build(),
         new WorkspacePathResolverImpl(workspaceRoot),
         targets,
@@ -418,7 +417,6 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
         Project project,
         BlazeCommand.Builder blazeCommandBuilder,
         BuildResultHelper buildResultHelper,
-        WorkspaceRoot workspaceRoot,
         BlazeContext context)
         throws IOException {
       if (this.failure) {

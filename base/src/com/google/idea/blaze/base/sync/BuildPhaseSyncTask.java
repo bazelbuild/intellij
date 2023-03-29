@@ -196,7 +196,6 @@ public final class BuildPhaseSyncTask {
         BlazeBuildTargetSharder.expandAndShardTargets(
             project,
             context,
-            workspaceRoot,
             viewSet,
             projectState.getWorkspacePathResolver(),
             targets,
