@@ -28,15 +28,8 @@ import com.google.idea.blaze.base.projectview.ProjectViewSet.ProjectViewFile;
 import com.google.idea.blaze.base.projectview.ProjectViewStorageManager;
 import com.google.idea.blaze.base.projectview.ProjectViewVerifier;
 import com.google.idea.blaze.base.projectview.parser.ProjectViewParser;
-import com.google.idea.blaze.base.projectview.section.ProjectViewDefaultValueProvider;
-import com.google.idea.blaze.base.projectview.section.ScalarSection;
-import com.google.idea.blaze.base.projectview.section.SectionKey;
-import com.google.idea.blaze.base.projectview.section.SectionParser;
-import com.google.idea.blaze.base.projectview.section.sections.DirectoryEntry;
-import com.google.idea.blaze.base.projectview.section.sections.DirectorySection;
-import com.google.idea.blaze.base.projectview.section.sections.ImportSection;
-import com.google.idea.blaze.base.projectview.section.sections.Sections;
-import com.google.idea.blaze.base.projectview.section.sections.TargetSection;
+import com.google.idea.blaze.base.projectview.section.*;
+import com.google.idea.blaze.base.projectview.section.sections.*;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.OutputSink.Propagation;
 import com.google.idea.blaze.base.scope.Scope;
@@ -52,10 +45,7 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.ui.BlazeValidationError;
 import com.google.idea.blaze.base.ui.BlazeValidationResult;
 import com.google.idea.blaze.base.ui.UiUtil;
-import com.google.idea.blaze.base.wizard2.BlazeNewProjectBuilder;
-import com.google.idea.blaze.base.wizard2.BlazeSelectProjectViewOption;
-import com.google.idea.blaze.base.wizard2.ProjectDataDirectoryValidator;
-import com.google.idea.blaze.base.wizard2.WorkspaceTypeData;
+import com.google.idea.blaze.base.wizard2.*;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.icons.AllIcons.General;
 import com.intellij.ide.RecentProjectsManager;
@@ -77,8 +67,7 @@ import java.awt.Component;
 import java.awt.GridBagLayout;
 import java.io.File;
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import javax.annotation.Nullable;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -208,6 +197,7 @@ public final class BlazeEditProjectViewControl {
     WorkspaceRoot workspaceRoot = workspaceData.workspaceRoot();
     WorkspacePath workspacePath = projectViewOption.getSharedProjectView();
     String initialProjectViewText = projectViewOption.getInitialProjectViewText();
+    HashMap<String, String> overrideFlags = builder.getOverrideFlags();
     boolean allowAddDefaultValues =
         projectViewOption.allowAddDefaultProjectViewValues()
             && allowAddprojectViewDefaultValues.getValue();
@@ -231,6 +221,7 @@ public final class BlazeEditProjectViewControl {
           workspacePathResolver,
           workspacePath,
           initialProjectViewText,
+          overrideFlags,
           allowAddDefaultValues);
       this.isInitialising = false;
     }
@@ -238,17 +229,9 @@ public final class BlazeEditProjectViewControl {
 
   private static String modifyInitialProjectView(
       BuildSystemName buildSystemName,
-      String initialProjectViewText,
+      ProjectView projectView,
+      ProjectViewSet projectViewSet,
       WorkspacePathResolver workspacePathResolver) {
-    BlazeContext context = BlazeContext.create();
-    ProjectViewParser projectViewParser = new ProjectViewParser(context, workspacePathResolver);
-    projectViewParser.parseProjectView(initialProjectViewText);
-    ProjectViewSet projectViewSet = projectViewParser.getResult();
-    ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
-    if (projectViewFile == null) {
-      return initialProjectViewText;
-    }
-    ProjectView projectView = projectViewFile.projectView;
 
     // Sort default value providers to match the section order
     List<SectionKey<?, ?>> sectionKeys =
@@ -265,15 +248,42 @@ public final class BlazeEditProjectViewControl {
     return ProjectViewParser.projectViewToString(projectView);
   }
 
+  private ProjectView addOverrideFlags(ProjectView projectView, HashMap<String, String> overrideFlags) {
+    if (overrideFlags.isEmpty()) {
+      return projectView;
+    }
+
+    ArrayList<String> fullFlags = renderOverrideFlags(overrideFlags);
+    for (String flag : fullFlags) {
+      projectView = projectView.builder(projectView)
+              .add(ListSection.builder(BuildFlagsSection.KEY).add(flag))
+              .add(ListSection.builder(SyncFlagsSection.KEY).add(flag))
+              .add(ListSection.builder(TestFlagsSection.KEY).add(flag))
+              .build();
+    }
+    return projectView;
+  }
+
+  private static ArrayList<String> renderOverrideFlags(HashMap<String, String> overrideFlags) {
+    ArrayList<String> fullFlags = new ArrayList();
+    for(Map.Entry<String, String> entry : overrideFlags.entrySet()) {
+      String name = entry.getKey();
+      String path = entry.getValue();
+      fullFlags.add("--override_repository=" + name + "=" + path);
+    }
+    return fullFlags;
+  }
+
   private void init(
       BuildSystemName buildSystemName,
       WorkspacePathResolver workspacePathResolver,
       @Nullable WorkspacePath sharedProjectView,
       @Nullable String initialProjectViewText,
+      @Nullable HashMap overrideFlags,
       boolean allowAddDefaultValues) {
     if (allowAddDefaultValues && initialProjectViewText != null) {
       initialProjectViewText =
-          modifyInitialProjectView(buildSystemName, initialProjectViewText, workspacePathResolver);
+          modifyInitialProjectView(buildSystemName, mkProjectView(initialProjectViewText),mkProjectViewSet(initialProjectViewText), workspacePathResolver);
     }
     this.workspacePathResolver = workspacePathResolver;
 
@@ -301,6 +311,9 @@ public final class BlazeEditProjectViewControl {
       logger.assertTrue(projectViewText != null);
     }
 
+    ProjectView pv = addOverrideFlags(mkProjectView(projectViewText), overrideFlags);
+    projectViewText = ProjectViewParser.projectViewToString(pv);
+
     projectViewUi.init(
         workspacePathResolver,
         projectViewText,
@@ -308,6 +321,19 @@ public final class BlazeEditProjectViewControl {
         sharedProjectView,
         sharedProjectView != null,
         false /* allowEditShared - not allowed during import */);
+  }
+
+  private ProjectViewSet mkProjectViewSet(String initialProjectViewText) {
+    BlazeContext context = BlazeContext.create();
+    ProjectViewParser projectViewParser = new ProjectViewParser(context, workspacePathResolver);
+    projectViewParser.parseProjectView(initialProjectViewText);
+    return projectViewParser.getResult();
+  }
+
+  private ProjectView mkProjectView(String initialProjectViewText) {
+    ProjectViewSet projectViewSet= mkProjectViewSet(initialProjectViewText);
+    ProjectViewFile projectViewFile = projectViewSet.getTopLevelProjectViewFile();
+    return projectViewFile.projectView;
   }
 
   private void updateDefaultProjectNameUiState() {
@@ -590,21 +616,26 @@ public final class BlazeEditProjectViewControl {
 
     // If we're using a shared project view, synthesize a local one that imports the shared one
     ProjectViewSet parseResult = projectViewUi.parseProjectView(Lists.newArrayList());
+    ArrayList<String> fullFlags = renderOverrideFlags(builder.getOverrideFlags());
 
     final ProjectView projectView;
     final ProjectViewSet projectViewSet;
     if (useSharedProjectView && selectProjectViewOption.getSharedProjectView() != null) {
-      projectView =
-          ProjectView.builder()
-              .add(
-                  ScalarSection.builder(ImportSection.KEY)
-                      .set(selectProjectViewOption.getSharedProjectView()))
-              .build();
+      ProjectView pv =
+              ProjectView.builder()
+                      .add(
+                              ScalarSection.builder(ImportSection.KEY)
+                                      .set(selectProjectViewOption.getSharedProjectView()))
+                      .build();
+
+      pv = addOverrideFlags(pv, builder.getOverrideFlags());
+      projectView = pv;
+
       projectViewSet =
-          ProjectViewSet.builder()
-              .addAll(parseResult.getProjectViewFiles())
-              .add(localProjectViewFile, projectView)
-              .build();
+              ProjectViewSet.builder()
+                      .addAll(parseResult.getProjectViewFiles())
+                      .add(localProjectViewFile, projectView)
+                      .build();
     } else {
       ProjectViewSet.ProjectViewFile projectViewFile = parseResult.getTopLevelProjectViewFile();
       assert projectViewFile != null;

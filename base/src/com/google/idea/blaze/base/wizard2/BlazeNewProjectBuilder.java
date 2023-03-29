@@ -35,9 +35,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import javax.annotation.Nullable;
 
 /** Contains the state to build a new project throughout the new project wizard process. */
@@ -72,6 +70,7 @@ public final class BlazeNewProjectBuilder {
   private String projectName;
   private String projectDataDirectory;
   private WorkspaceRoot workspaceRoot;
+  private HashMap<String, String> overrideFlags = new HashMap<>();
 
   public BlazeNewProjectBuilder() {
     this.userSettings = BlazeWizardUserSettingsStorage.getInstance().copyUserSettings();
@@ -180,6 +179,15 @@ public final class BlazeNewProjectBuilder {
   public BlazeNewProjectBuilder setProjectDataDirectory(String projectDataDirectory) {
     this.projectDataDirectory = projectDataDirectory;
     return this;
+  }
+
+  public BlazeNewProjectBuilder addOverrideFlags(String overrideFlagsName, String overrideFlagsPath){
+    this.overrideFlags.put(overrideFlagsName, overrideFlagsPath);
+    return this;
+  }
+
+  public HashMap<String, String> getOverrideFlags (){
+    return overrideFlags;
   }
 
   /** Commits the project. May report errors. */
