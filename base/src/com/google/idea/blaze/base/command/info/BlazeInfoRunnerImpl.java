@@ -16,94 +16,74 @@
 package com.google.idea.blaze.base.command.info;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
-import com.google.idea.blaze.base.async.process.ExternalTask;
-import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import java.io.ByteArrayOutputStream;
+import com.intellij.openapi.project.Project;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import javax.annotation.Nullable;
 
 class BlazeInfoRunnerImpl extends BlazeInfoRunner {
   @Override
-  public ListenableFuture<String> runBlazeInfo(
+  public ListenableFuture<byte[]> runBlazeInfoGetBytes(
+      Project project,
+      BuildInvoker invoker,
       BlazeContext context,
-      String binaryPath,
-      WorkspaceRoot workspaceRoot,
       List<String> blazeFlags,
       String key) {
     return BlazeExecutor.getInstance()
         .submit(
-            () ->
-                runBlazeInfo(binaryPath, workspaceRoot, key, blazeFlags, context)
-                    .toString()
-                    .trim());
+            () -> {
+              BlazeCommand.Builder builder = BlazeCommand.builder(invoker, BlazeCommandName.INFO);
+              builder.addBlazeFlags(blazeFlags);
+              if (key != null) {
+                builder.addBlazeFlags(key);
+              }
+              try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
+                  InputStream blazeInfoStream =
+                      invoker
+                          .getCommandRunner()
+                          .runBlazeInfo(project, builder, buildResultHelper, context)) {
+                return blazeInfoStream.readAllBytes();
+              }
+            });
   }
 
   @Override
-  public ListenableFuture<byte[]> runBlazeInfoGetBytes(
+  public ListenableFuture<String> runBlazeInfo(
+      Project project,
+      BuildInvoker invoker,
       BlazeContext context,
-      String binaryPath,
-      WorkspaceRoot workspaceRoot,
       List<String> blazeFlags,
       String key) {
-    return BlazeExecutor.getInstance()
-        .submit(
-            () -> runBlazeInfo(binaryPath, workspaceRoot, key, blazeFlags, context).toByteArray());
+    return Futures.transform(
+        runBlazeInfoGetBytes(project, invoker, context, blazeFlags, key),
+        bytes -> new String(bytes, StandardCharsets.UTF_8).trim(),
+        BlazeExecutor.getInstance().getExecutor());
   }
 
   @Override
   public ListenableFuture<BlazeInfo> runBlazeInfo(
+      Project project,
+      BuildInvoker invoker,
       BlazeContext context,
       BuildSystemName buildSystemName,
-      String binaryPath,
-      WorkspaceRoot workspaceRoot,
       List<String> blazeFlags) {
-    return BlazeExecutor.getInstance()
-        .submit(
-            () -> {
-              String blazeInfoString =
-                  runBlazeInfo(binaryPath, workspaceRoot, /* key= */ null, blazeFlags, context)
-                      .toString()
-                      .trim();
-              ImmutableMap<String, String> blazeInfoMap = parseBlazeInfoResult(blazeInfoString);
-              return BlazeInfo.create(buildSystemName, blazeInfoMap);
-            });
+    return Futures.transform(
+        runBlazeInfoGetBytes(project, invoker, context, blazeFlags, /* key= */ null),
+        bytes ->
+            BlazeInfo.create(
+                buildSystemName,
+                parseBlazeInfoResult(new String(bytes, StandardCharsets.UTF_8).trim())),
+        BlazeExecutor.getInstance().getExecutor());
   }
-
-  private static ByteArrayOutputStream runBlazeInfo(
-      String binaryPath,
-      WorkspaceRoot workspaceRoot,
-      @Nullable String key,
-      List<String> blazeFlags,
-      BlazeContext context)
-      throws BlazeInfoException {
-    BlazeCommand.Builder builder = BlazeCommand.builder(binaryPath, BlazeCommandName.INFO);
-    if (key != null) {
-      builder.addBlazeFlags(key);
-    }
-    BlazeCommand command = builder.addBlazeFlags(blazeFlags).build();
-    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-    int exitCode =
-        ExternalTask.builder(workspaceRoot)
-            .addBlazeCommand(command)
-            .context(context)
-            .stdout(stdout)
-            .stderr(LineProcessingOutputStream.of(new PrintOutputLineProcessor(context)))
-            .build()
-            .run();
-    if (exitCode != 0) {
-      throw new BlazeInfoException(exitCode, stdout.toString());
-    }
-    return stdout;
-  }
-
   private static ImmutableMap<String, String> parseBlazeInfoResult(String blazeInfoString) {
     ImmutableMap.Builder<String, String> blazeInfoMapBuilder = ImmutableMap.builder();
     String[] blazeInfoLines = blazeInfoString.split("\n");

@@ -16,7 +16,9 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.common.collect.ImmutableList;
+import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.info.BlazeInfoException;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -66,6 +68,14 @@ public interface BlazeCommandRunner {
       WorkspaceRoot workspaceRoot,
       BlazeContext context)
       throws IOException;
+
+  @MustBeClosed
+  InputStream runBlazeInfo(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BlazeInfoException;
   /** Allows enabling the use of command runner for restricted set of users. */
   default boolean shouldUseForLocalTests() {
     return false;

@@ -16,10 +16,11 @@
 package com.google.idea.blaze.base.command.info;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import java.util.List;
 
 /** Runs the blaze info command. The results may be cached in the workspace. */
@@ -35,9 +36,9 @@ public abstract class BlazeInfoRunner {
    * @return The blaze info value associated with the specified key
    */
   public abstract ListenableFuture<String> runBlazeInfo(
+      Project project,
+      BuildInvoker invoker,
       BlazeContext context,
-      String binaryPath,
-      WorkspaceRoot workspaceRoot,
       List<String> blazeFlags,
       String key);
 
@@ -47,9 +48,9 @@ public abstract class BlazeInfoRunner {
    * @return The blaze info value associated with the specified key
    */
   public abstract ListenableFuture<byte[]> runBlazeInfoGetBytes(
+      Project project,
+      BuildInvoker invoker,
       BlazeContext context,
-      String binaryPath,
-      WorkspaceRoot workspaceRoot,
       List<String> blazeFlags,
       String key);
 
@@ -61,9 +62,9 @@ public abstract class BlazeInfoRunner {
    * @return The blaze info data fields.
    */
   public abstract ListenableFuture<BlazeInfo> runBlazeInfo(
+      Project project,
+      BuildInvoker invoker,
       BlazeContext context,
       BuildSystemName buildSystemName,
-      String binaryPath,
-      WorkspaceRoot workspaceRoot,
       List<String> blazeFlags);
 }

@@ -201,9 +201,11 @@ public final class BuildPluginBeforeRunTaskProvider
                   ListenableFuture<String> executionRootFuture =
                       BlazeInfoRunner.getInstance()
                           .runBlazeInfo(
+                              project,
+                              Blaze.getBuildSystemProvider(project)
+                                  .getBuildSystem()
+                                  .getDefaultInvoker(project, context),
                               context,
-                              binaryPath,
-                              workspaceRoot,
                               config.getBlazeFlagsState().getFlagsForExternalProcesses(),
                               BlazeInfo.EXECUTION_ROOT_KEY);
 
