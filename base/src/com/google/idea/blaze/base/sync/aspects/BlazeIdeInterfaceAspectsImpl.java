@@ -625,7 +625,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
                       runBuildForTargets(
                           project,
                           childContext,
-                          workspaceRoot,
                           invoker,
                           projectViewSet,
                           workspaceLanguageSettings.getActiveLanguages(),
@@ -708,7 +707,6 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
   private static BlazeBuildOutputs runBuildForTargets(
       Project project,
       BlazeContext context,
-      WorkspaceRoot workspaceRoot,
       BuildInvoker invoker,
       ProjectViewSet viewSet,
       ImmutableSet<LanguageClass> activeLanguages,
@@ -741,9 +739,7 @@ public class BlazeIdeInterfaceAspectsImpl implements BlazeIdeInterface {
       aspectStrategy.addAspectAndOutputGroups(
           builder, outputGroups, activeLanguages, onlyDirectDeps);
 
-      return invoker
-          .getCommandRunner()
-          .run(project, builder, buildResultHelper, workspaceRoot, context);
+      return invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
     }
   }
 }

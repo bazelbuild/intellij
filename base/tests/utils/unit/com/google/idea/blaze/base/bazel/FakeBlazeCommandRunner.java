@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.info.BlazeInfoException;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
@@ -42,7 +41,6 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      WorkspaceRoot workspaceRoot,
       BlazeContext context) {
     command = blazeCommandBuilder.build();
     try {
@@ -58,7 +56,6 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      WorkspaceRoot workspaceRoot,
       BlazeContext context) {
     return BlazeTestResults.NO_RESULTS;
   }
@@ -68,7 +65,6 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      WorkspaceRoot workspaceRoot,
       BlazeContext context)
       throws IOException {
     return InputStream.nullInputStream();

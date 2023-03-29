@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.command.BlazeInvocationContext.ContextType;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
 import com.google.idea.blaze.base.query.BlazeQueryOutputBaseProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -227,7 +226,6 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
                               project,
                               blazeCommand,
                               buildResultHelper,
-                              WorkspaceRoot.fromProject(project),
                               context)));
     } catch (ExecutionException e) {
       context.output(

@@ -27,7 +27,6 @@ import com.google.idea.blaze.base.command.BlazeCommandName;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.Blaze;
@@ -104,7 +103,6 @@ public class BlazeQueryDirectoryToTargetProvider implements DirectoryToTargetPro
                               project,
                               command,
                               helper,
-                              WorkspaceRoot.fromProject(project),
                               context))
               .get();
       new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))

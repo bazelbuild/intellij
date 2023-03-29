@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.model.primitives.TargetExpression;
 import com.google.idea.blaze.base.model.primitives.WildcardTargetPattern;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.prefetch.PrefetchService;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.query.BlazeQueryLabelKindParser;
@@ -136,7 +135,6 @@ public class WildcardTargetExpander {
   static ExpandedTargetsResult expandToSingleTargets(
       Project project,
       BlazeContext parentContext,
-      WorkspaceRoot workspaceRoot,
       BuildInvoker buildBinary,
       ProjectViewSet projectViewSet,
       List<TargetExpression> allTargets) {
@@ -145,15 +143,13 @@ public class WildcardTargetExpander {
         context -> {
           context.push(new TimingScope("ExpandTargetsQuery", EventType.BlazeInvocation));
           context.setPropagatesErrors(false);
-          return doExpandToSingleTargets(
-              project, context, workspaceRoot, buildBinary, projectViewSet, allTargets);
+          return doExpandToSingleTargets(project, context, buildBinary, projectViewSet, allTargets);
         });
   }
 
   private static ExpandedTargetsResult doExpandToSingleTargets(
       Project project,
       BlazeContext context,
-      WorkspaceRoot workspaceRoot,
       BuildInvoker buildBinary,
       ProjectViewSet projectViewSet,
       List<TargetExpression> allTargets) {
@@ -171,13 +167,7 @@ public class WildcardTargetExpander {
                   "Expanding wildcard target patterns, shard %s of %s", i + 1, shards.size())));
       ExpandedTargetsResult result =
           queryIndividualTargets(
-              project,
-              context,
-              workspaceRoot,
-              buildBinary,
-              handledRulesPredicate,
-              shard,
-              excludeManualTargets);
+              project, context, buildBinary, handledRulesPredicate, shard, excludeManualTargets);
       output = output == null ? result : ExpandedTargetsResult.merge(output, result);
       if (output.buildResult.status == Status.FATAL_ERROR) {
         return output;
@@ -211,7 +201,6 @@ public class WildcardTargetExpander {
   private static ExpandedTargetsResult queryIndividualTargets(
       Project project,
       BlazeContext context,
-      WorkspaceRoot workspaceRoot,
       BuildInvoker buildBinary,
       Predicate<String> handledRulesPredicate,
       List<TargetExpression> targetPatterns,
@@ -238,9 +227,7 @@ public class WildcardTargetExpander {
     BlazeQueryLabelKindParser outputProcessor = new BlazeQueryLabelKindParser(filter);
     try (BuildResultHelper buildResultHelper = buildBinary.createBuildResultHelper()) {
       InputStream queryResultStream =
-          buildBinary
-              .getCommandRunner()
-              .runQuery(project, builder, buildResultHelper, workspaceRoot, context);
+          buildBinary.getCommandRunner().runQuery(project, builder, buildResultHelper, context);
       verify(queryResultStream != null);
       new BufferedReader(new InputStreamReader(queryResultStream, UTF_8))
           .lines()

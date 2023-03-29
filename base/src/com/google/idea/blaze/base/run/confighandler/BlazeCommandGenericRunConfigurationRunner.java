@@ -223,8 +223,7 @@ public final class BlazeCommandGenericRunConfigurationRunner
                     () ->
                         invoker
                             .getCommandRunner()
-                            .runTest(
-                                project, blazeCommand, buildResultHelper, workspaceRoot, context));
+                            .runTest(project, blazeCommand, buildResultHelper, context));
         Futures.addCallback(
             blazeTestResultsFuture,
             new FutureCallback<BlazeTestResults>() {

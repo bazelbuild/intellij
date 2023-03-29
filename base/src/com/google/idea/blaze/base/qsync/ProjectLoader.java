@@ -122,7 +122,7 @@ public class ProjectLoader {
         new ProjectRefresher(
             new WorkspaceResolvingPackageReader(workspaceRoot.path(), new PackageStatementParser()),
             workspaceRoot.path());
-    QueryRunner queryRunner = createQueryRunner(workspaceRoot, buildSystem);
+    QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner);
     ProjectUpdater projectUpdater =
         new ProjectUpdater(project, importSettings, projectViewSet, workspaceRoot);
@@ -162,8 +162,8 @@ public class ProjectLoader {
     return new ProjectQuerierImpl(project, queryRunner, projectRefresher);
   }
 
-  protected QueryRunner createQueryRunner(WorkspaceRoot workspaceRoot, BuildSystem buildSystem) {
-    return new BazelQueryRunner(project, buildSystem, workspaceRoot.path());
+  protected QueryRunner createQueryRunner(BuildSystem buildSystem) {
+    return new BazelQueryRunner(project, buildSystem);
   }
 
   protected DependencyBuilder createDependencyBuilder(
