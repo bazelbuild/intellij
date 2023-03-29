@@ -15,18 +15,20 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.google.idea.blaze.base.wizard2.ui.BlazeAddOverrideFlagsControl;
 import com.google.idea.blaze.base.wizard2.ui.BlazeSelectProjectViewControl;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.options.ConfigurationException;
-import java.awt.BorderLayout;
+import java.awt.*;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 class BlazeSelectProjectViewImportWizardStep extends ProjectImportWizardStep {
 
-  private final JPanel component = new JPanel(new BorderLayout());
+  private final JPanel component = new JPanel(new GridLayout(2,1));
   private BlazeSelectProjectViewControl control;
+  private BlazeAddOverrideFlagsControl flagControl;
   private boolean settingsInitialised;
 
   public BlazeSelectProjectViewImportWizardStep(WizardContext context) {
@@ -50,11 +52,14 @@ class BlazeSelectProjectViewImportWizardStep extends ProjectImportWizardStep {
   private void init() {
     control = new BlazeSelectProjectViewControl(getProjectBuilder());
     this.component.add(control.getUiComponent());
+    flagControl = new BlazeAddOverrideFlagsControl(getProjectBuilder());
+    this.component.add(flagControl.getUiComponent());
     settingsInitialised = true;
   }
 
   @Override
   public void validateAndUpdateModel() throws ConfigurationException {
+    flagControl.validateAndUpdateModel(getProjectBuilder());
     control.validateAndUpdateModel(getProjectBuilder());
   }
 
