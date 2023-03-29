@@ -408,8 +408,10 @@ java_library(
 java_library(
     name = "artifact_fetcher",
     srcs = [
+        "src/com/google/idea/blaze/base/command/buildresult/LocalFileOutputArtifact.java",
         "src/com/google/idea/blaze/base/command/buildresult/OutputArtifact.java",
         "src/com/google/idea/blaze/base/qsync/cache/ArtifactFetcher.java",
+        "src/com/google/idea/blaze/base/qsync/cache/FileApiArtifactFetcher.java",
         "src/com/google/idea/blaze/base/settings/BuildBinaryType.java",
     ],
     neverlink = 1,
