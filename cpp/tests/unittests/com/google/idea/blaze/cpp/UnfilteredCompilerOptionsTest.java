@@ -101,4 +101,27 @@ public class UnfilteredCompilerOptionsTest extends BlazeTestCase {
     assertThat(defines).containsExactly("MACRO1=1", "MACRO2").inOrder();
     assertThat(flags).containsExactly("-fno-exceptions", "-Werror", "-Wall").inOrder();
   }
+
+  @Test
+  public void testFlagAndValueInSameString() {
+    // This is a functionality considered by the parser, so it should be tested.
+    ImmutableList<String> unfilteredOptions =
+        ImmutableList.of(
+            "-I foo/headers1",
+            "-isystem foo/headers2");
+    UnfilteredCompilerOptions compilerOptions =
+        UnfilteredCompilerOptions.builder()
+            .registerSingleOrSplitOption("-I")
+            .registerSingleOrSplitOption("-isystem")
+            .build(unfilteredOptions);
+
+    List<String> bigIIncludes = compilerOptions.getExtractedOptionValues("-I");
+    assertThat(bigIIncludes)
+        .containsExactly("foo/headers1")
+        .inOrder();
+    List<String> systemIncludes = compilerOptions.getExtractedOptionValues("-isystem");
+    assertThat(systemIncludes)
+        .containsExactly("foo/headers2")
+        .inOrder();
+  }
 }
