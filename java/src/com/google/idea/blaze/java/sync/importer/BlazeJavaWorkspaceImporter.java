@@ -376,6 +376,9 @@ public final class BlazeJavaWorkspaceImporter {
     if (relPath.endsWith("-ijar.jar")) {
       return relPath.substring(0, relPath.length() - "-ijar.jar".length()) + "-src.jar";
     }
+    if (relPath.endsWith(".jar")) {
+      return relPath.substring(0, relPath.length() - ".jar".length()) + "-sources.jar";
+    }
     return null;
   }
 }
