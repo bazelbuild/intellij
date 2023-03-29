@@ -54,7 +54,7 @@ public class BlazeLightResourceClassService implements LightResourceClassService
   // (PsiElementFinderImpl has 'order="first"').
   // Put under experiment just in case we find a problem w/ other element finders.
   private static final BoolExperiment createStubResourcePackages =
-      new BoolExperiment("create.stub.resource.packages", true);
+      new BoolExperiment("create.stub.resource.packages", false); // this breaks resource finding in code
 
   private final Project project;
 

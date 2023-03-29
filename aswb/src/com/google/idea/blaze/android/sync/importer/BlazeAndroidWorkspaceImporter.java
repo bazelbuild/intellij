@@ -470,29 +470,6 @@ public class BlazeAndroidWorkspaceImporter {
       String libraryKey =
           LibraryKey.libraryNameFromArtifactLocation(target.getAndroidAarIdeInfo().getAar());
 
-      //TODO: Should not be hardcoded, this is temp workaround, the package should be inferred properly, possibly from the manifest.xml?
-      if(target.toString().equals("@maven//:androidx_lifecycle_lifecycle_runtime")) {
-        resourcePackage = "androidx.lifecycle.runtime";
-      }
-      if(target.toString().equals("@maven//:androidx_savedstate_savedstate")) {
-        resourcePackage = "androidx.savedstate";
-      }
-      if(target.toString().equals("@maven//:androidx_lifecycle_lifecycle_viewmodel")) {
-        resourcePackage = "androidx.lifecycle.viewmodel";
-      }
-      if(target.toString().equals("@maven//:androidx_compose_ui_ui")) {
-        resourcePackage = "androidx.compose.ui";
-      }
-      if(target.toString().equals("@maven//:androidx_core_core")) {
-        resourcePackage = "androidx.core";
-      }
-      if(target.toString().equals("@maven//:androidx_constraintlayout_constraintlayout")) {
-        resourcePackage = "androidx.constraintlayout";
-      }
-      if(target.toString().equals("@maven//:androidx_appcompat_appcompat")) {
-        resourcePackage = "androidx.appcompat";
-      }
-
       if (!aarLibraries.containsKey(libraryKey)) {
         // aar_import should only have one jar (a merged jar from the AAR's jars).
         LibraryArtifact firstJar = target.getJavaIdeInfo().getJars().iterator().next();

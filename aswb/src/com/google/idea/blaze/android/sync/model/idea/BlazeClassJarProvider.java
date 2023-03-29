@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import com.android.tools.idea.model.ClassJarProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.libraries.RenderJarCache;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
 import com.google.idea.blaze.android.targetmaps.TargetToBinaryMap;
@@ -194,7 +195,7 @@ public class BlazeClassJarProvider implements ClassJarProvider {
   }
 
     List<File> getAllExternalLibraires(TargetMap targetMap, ArtifactLocationDecoder decoder) {
-        ImmutableList.Builder<File> results = ImmutableList.builder();
+        ImmutableSet.Builder<JavaIdeInfo> infos = ImmutableSet.builder();
         for (TargetIdeInfo target : targetMap.targets()) {
             for (TargetKey dependencyTargetKey :
                     TransitiveDependencyMap.getInstance(project).getTransitiveDependencies(target.getKey())) {
@@ -206,19 +207,28 @@ public class BlazeClassJarProvider implements ClassJarProvider {
                 // Add all import jars as external libraries.
                 JavaIdeInfo javaIdeInfo = dependencyTarget.getJavaIdeInfo();
                 if (javaIdeInfo != null) {
-                    for (LibraryArtifact jar : javaIdeInfo.getJars()) {
-                        ArtifactLocation classJar = jar.getClassJar();
-                        if (classJar != null) {
-                            results.add(
-                                    Preconditions.checkNotNull(
-                                            OutputArtifactResolver.resolve(project, decoder, classJar),
-                                            "Fail to find file %s",
-                                            classJar.getRelativePath()));
-                        }
-                    }
+                    infos.add(javaIdeInfo);
+                }
+            }
+            JavaIdeInfo javaIdeInfo = target.getJavaIdeInfo();
+            if (javaIdeInfo != null) {
+                infos.add(javaIdeInfo);
+            }
+        }
+        ImmutableList.Builder<File> results = ImmutableList.builder();
+        for (JavaIdeInfo javaIdeInfo : infos.build()) {
+            for (LibraryArtifact jar : javaIdeInfo.getJars()) {
+                ArtifactLocation classJar = jar.getClassJar();
+                if (classJar != null) {
+                    results.add(
+                            Preconditions.checkNotNull(
+                                    OutputArtifactResolver.resolve(project, decoder, classJar),
+                                    "Fail to find file %s",
+                                    classJar.getRelativePath()));
                 }
             }
         }
+
         return results.build();
     }
 }

@@ -23,8 +23,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.android.libraries.RenderJarCache;
+import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.android.sync.model.idea.BlazeClassJarProvider;
 import com.google.idea.blaze.android.targetmaps.TargetToBinaryMap;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -34,6 +36,7 @@ import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.BlazeSyncModificationTracker;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
+import com.google.idea.blaze.base.sync.projectstructure.ModuleFinder;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,8 +45,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import java.io.File;
+import java.util.Optional;
 import java.util.regex.Pattern;
+
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -74,7 +83,7 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
    */
   @VisibleForTesting
   static final BoolExperiment resolveResourceClasses =
-      new BoolExperiment("aswb.resolve.resources.render.jar", false);
+      new BoolExperiment("aswb.resolve.resources.render.jar", true);
 
   private static final Logger log = Logger.getInstance(RenderJarClassFileFinder.class);
 
@@ -85,6 +94,8 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
 
   private final Module module;
   private final Project project;
+
+  private final BlazeClassJarProvider blazeProvider;
 
   // tracks the binary targets that depend resource targets
   // will be recalculated after every sync
@@ -101,6 +112,7 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
   public RenderJarClassFileFinder(Module module) {
     this.module = module;
     this.project = module.getProject();
+    this.blazeProvider = new BlazeClassJarProvider(this.project);
     this.isWorkspaceModule = BlazeDataStorage.WORKSPACE_MODULE_NAME.equals(module.getName());
   }
 
@@ -173,7 +185,36 @@ public class RenderJarClassFileFinder implements ClassFileFinder {
       }
     }
 
+    // TODO: look into BlazeLightResourceClassService?
+
+    VirtualFile moduleClass = findFQCNInModule(fqcn, this.module);
+    if (moduleClass == null) {
+      moduleClass = findFQCNInModule(fqcn, null);
+    }
+    if (moduleClass != null) {
+      return moduleClass;
+    }
+
     log.warn(String.format("Could not find class `%1$s` (module: `%2$s`)", fqcn, module.getName()));
+    return null;
+  }
+
+  @Nullable
+  private VirtualFile findFQCNInModule(String fqcn, @Nullable Module module) {
+    if (module == null) {
+      module = ModuleFinder.getInstance(this.project)
+              .findModuleByName(BlazeDataStorage.WORKSPACE_MODULE_NAME);
+    }
+    for (File jar : this.blazeProvider.getModuleExternalLibraries(module)) {
+      VirtualFile vf = VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(jar);
+      if (vf == null) {
+        continue;
+      }
+      VirtualFile foundClass = findClassInJar(vf, fqcn);
+      if (foundClass != null) {
+        return foundClass;
+      }
+    }
     return null;
   }
 
