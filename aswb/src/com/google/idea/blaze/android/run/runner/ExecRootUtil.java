@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
-import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.scope.output.StatusOutput;
@@ -66,9 +65,11 @@ public final class ExecRootUtil {
     ListenableFuture<String> execRootFuture =
         BlazeInfoRunner.getInstance()
             .runBlazeInfo(
+                project,
+                Blaze.getBuildSystemProvider(project)
+                    .getBuildSystem()
+                    .getDefaultInvoker(project, context),
                 context,
-                Blaze.getBuildSystemProvider(project).getBinaryPath(project),
-                WorkspaceRoot.fromProject(project),
                 buildFlags,
                 BlazeInfo.EXECUTION_ROOT_KEY);
     try {

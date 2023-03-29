@@ -16,11 +16,14 @@
 package com.google.idea.blaze.base.command;
 
 import com.google.common.collect.Interner;
+import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
+import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolUtils;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.command.info.BlazeInfoException;
 import com.google.idea.blaze.base.console.BlazeConsoleLineProcessorProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
@@ -38,7 +41,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -126,6 +131,45 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       return null;
     }
     return new BufferedInputStream(new FileInputStream(outputFile));
+  }
+
+  @Override
+  @MustBeClosed
+  public InputStream runBlazeInfo(
+      Project project,
+      BlazeCommand.Builder blazeCommandBuilder,
+      BuildResultHelper buildResultHelper,
+      BlazeContext context)
+      throws BlazeInfoException {
+    File outputFile = BuildEventProtocolUtils.createTempOutputFile();
+    try (FileOutputStream out = new FileOutputStream(outputFile);
+        OutputStream stderr =
+            LineProcessingOutputStream.of(new PrintOutputLineProcessor(context))) {
+      int exitCode =
+          ExternalTask.builder(WorkspaceRoot.fromProject(project))
+              .addBlazeCommand(blazeCommandBuilder.build())
+              .context(context)
+              .stdout(out)
+              .stderr(stderr)
+              .build()
+              .run();
+      if (exitCode != 0) {
+        // TODO(akhildixit): Fix converting out and stderr to string
+        throw new BlazeInfoException(
+            String.format(
+                "Blaze info failed with exit code %d: \nStdout: %s \nStderr: %s",
+                exitCode, out, stderr));
+      }
+    } catch (IOException e) {
+      throw new BlazeInfoException(
+          String.format("Error writing blaze info to file %s", outputFile.getPath()), e);
+    }
+    try {
+      return new BufferedInputStream(new FileInputStream(outputFile));
+    } catch (FileNotFoundException e) {
+      throw new BlazeInfoException(
+          String.format("Error reading blaze info from file %s", outputFile.getPath()), e);
+    }
   }
 
   private BuildResult issueBuild(

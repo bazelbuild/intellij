@@ -336,10 +336,12 @@ final class FastBuildServiceImpl implements FastBuildService, ProjectComponent {
     ListenableFuture<BlazeInfo> blazeInfoFuture =
         BlazeInfoRunner.getInstance()
             .runBlazeInfo(
+                project,
+                Blaze.getBuildSystemProvider(project)
+                    .getBuildSystem()
+                    .getDefaultInvoker(project, context),
                 context,
                 buildSystemName,
-                buildParameters.blazeBinary(),
-                WorkspaceRoot.fromProject(project),
                 buildParameters.infoFlags());
     BlazeInfo info =
         FutureUtil.waitForFuture(context, blazeInfoFuture)

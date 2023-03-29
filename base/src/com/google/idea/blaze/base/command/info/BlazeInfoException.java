@@ -20,20 +20,11 @@ import javax.annotation.concurrent.Immutable;
 /** Exception occuring during blaze info */
 @Immutable
 public final class BlazeInfoException extends Exception {
-  private final int exitCode;
-  private final String stdout;
-
-  public BlazeInfoException(int exitCode, String stdout) {
-    this.exitCode = exitCode;
-    this.stdout = stdout;
+  public BlazeInfoException(String message) {
+    super(message);
   }
 
-  @Override
-  public String getMessage() {
-    return "blaze info failed with exit code: " + exitCode;
-  }
-
-  public String getStdout() {
-    return stdout;
+  public BlazeInfoException(String message, Throwable cause) {
+    super(message, cause);
   }
 }
