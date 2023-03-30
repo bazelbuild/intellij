@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -118,33 +119,35 @@ public class BlazeProjectCreator {
 
     projectBuilder.commit(newProject, null, ModulesProvider.EMPTY_MODULES_PROVIDER);
 
-    StartupManager.getInstance(newProject)
-        .runAfterOpened(
+    class MyStartup implements Runnable, DumbAware {
+      @Override
+      public void run() {
+        // ensure the dialog is shown after all startup activities are done
+        SwingUtilities.invokeLater(
             () -> {
-              // ensure the dialog is shown after all startup activities are done
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(
-                  () -> {
-                    if (newProject.isDisposed()
-                        || ApplicationManager.getApplication().isUnitTestMode()) {
-                      return;
-                    }
-                    ApplicationManager.getApplication()
-                        .invokeLater(
-                            () -> {
-                              if (newProject.isDisposed()) {
-                                return;
-                              }
-                              final ToolWindow toolWindow =
-                                  ToolWindowManager.getInstance(newProject)
-                                      .getToolWindow(ToolWindowId.PROJECT_VIEW);
-                              if (toolWindow != null) {
-                                toolWindow.activate(null);
-                              }
-                            },
-                            ModalityState.NON_MODAL);
-                  });
+              if (newProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
+                return;
+              }
+              ApplicationManager.getApplication()
+                  .invokeLater(
+                      () -> {
+                        if (newProject.isDisposed()) {
+                          return;
+                        }
+                        final ToolWindow toolWindow =
+                            ToolWindowManager.getInstance(newProject)
+                                .getToolWindow(ToolWindowId.PROJECT_VIEW);
+                        if (toolWindow != null) {
+                          toolWindow.activate(null);
+                        }
+                      },
+                      ModalityState.NON_MODAL);
             });
+      }
+    }
+
+    //noinspection deprecation
+    StartupManager.getInstance(newProject).registerPostStartupActivity(new MyStartup());
 
     Path path = Paths.get(projectFilePath);
     ProjectUtil.updateLastProjectLocation(path);
