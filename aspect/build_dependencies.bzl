@@ -148,8 +148,10 @@ def _collect_dependencies_core_impl(
                 label: [_output_relative_path(f.path) for f in target[JavaInfo].transitive_compile_time_jars.to_list()],
             }
         if declares_android_resources(target, ctx):
-            aar_files.append(target[AndroidIdeInfo].aar)
-            target_to_artifacts[label].append(_output_relative_path(target[AndroidIdeInfo].aar.path))
+            aar = target[AndroidIdeInfo].aar
+            if aar:
+                aar_files.append(aar)
+                target_to_artifacts[label].append(_output_relative_path(aar.path))
 
     else:
         if generate_aidl_classes and generates_idl_jar(target):
