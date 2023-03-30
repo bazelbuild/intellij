@@ -15,7 +15,7 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
-import com.android.tool.idea.BaseAsCompat;
+import com.android.tools.idea.BaseAsCompat;
 import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.tasks.LaunchContext;
 import com.android.tools.idea.run.tasks.LaunchResult;
