@@ -15,16 +15,29 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.language.semantics;
 
+import com.google.idea.blaze.base.lang.buildfile.sync.BuildLanguageSpecService;
 import com.google.idea.blaze.base.lang.buildfile.sync.LanguageSpecResult;
 import com.google.idea.blaze.base.model.BlazeProjectData;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.intellij.openapi.project.Project;
+import javax.annotation.Nullable;
 
 /** Calls 'blaze info build-language', to retrieve the language spec. */
 public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider {
 
+  @Nullable
   @Override
   public BuildLanguageSpec getLanguageSpec(Project project) {
+    if (QuerySync.isEnabled()) {
+      BuildLanguageSpecService buildLanguageSpecService =
+          project.getService(BuildLanguageSpecService.class);
+      if (buildLanguageSpecService != null) {
+        return buildLanguageSpecService.getLanguageSpec();
+      } else {
+        return null;
+      }
+    }
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {
