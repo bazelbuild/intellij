@@ -51,6 +51,10 @@ class BlazeTestSystemProperties {
     setSandboxPath("idea.home.path", new File(sandbox, "home"));
     setSandboxPath("idea.config.path", new File(sandbox, "config"));
     setSandboxPath("idea.system.path", new File(sandbox, "system"));
+    String testUndeclaredOutputsDir = System.getenv("TEST_UNDECLARED_OUTPUTS_DIR");
+    if (testUndeclaredOutputsDir != null) {
+      setSandboxPath("idea.log.path", new File(testUndeclaredOutputsDir, "logs"));
+    }
 
     setSandboxPath("java.util.prefs.userRoot", new File(sandbox, "userRoot"));
     setSandboxPath("java.util.prefs.systemRoot", new File(sandbox, "systemRoot"));
