@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 public class AswbTestUtils {
   /** {@link com.google.idea.testing.BlazeTestSystemPropertiesRule#configureSystemProperties()} */
@@ -27,7 +28,7 @@ public class AswbTestUtils {
 
   private AswbTestUtils() {}
 
-  static void symlinkToSandboxHome(String target, String customLink) {
+  public static void symlinkToSandboxHome(String target, String customLink) {
     try {
       File file = recursivelySearchForTargetFolder(getWorkspaceRoot(), target);
       if (file == null) {
@@ -35,6 +36,9 @@ public class AswbTestUtils {
       }
       Path targetPath = file.toPath();
       Path linkName = Paths.get(System.getProperty("java.io.tmpdir"), customLink);
+      if (Files.exists(linkName) && Objects.equals(Files.readSymbolicLink(linkName), targetPath)) {
+        return;
+      }
       Files.createDirectories(linkName.getParent());
       Files.createSymbolicLink(linkName, targetPath);
     } catch (IOException e) {
