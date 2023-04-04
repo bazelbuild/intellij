@@ -1,7 +1,7 @@
 v2023.04.04
 ===========
-
-
+* Superclass method test runs run the correct method #4632
+* Internal cleanup.
 
 v2023.03.21
 ===========
