@@ -121,7 +121,7 @@ public class QuerySyncProjectData implements BlazeProjectData {
 
   @Override
   public ArtifactLocationDecoder getArtifactLocationDecoder() {
-    throw new NotSupportedWithQuerySyncException("getTargetMap");
+    throw new NotSupportedWithQuerySyncException("getArtifactLocationDecoder");
   }
 
   @Override
