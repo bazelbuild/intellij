@@ -169,7 +169,7 @@ public class IntellijWithPluginClasspathHelper {
     BuildNumber buildNumber = BuildNumber.fromString(IdeaJdkHelper.getBuildNumber(ideaJdk));
     if(buildNumber != null && buildNumber.getBaselineVersion() > 223) {
       ProductInfoJson productInfoJson = getProductInfoJson(ideaJdk);
-      String os = System.getProperty("os.name");
+      String os = resolveOsName();
       String arch = System.getProperty("os.arch");
       Optional<ProductInfoJson.LaunchInfo> launchInfo = productInfoJson.launch.stream().filter(l -> Objects.equals(l.os, os) && Objects.equals(l.arch, arch)).findFirst();
       if(launchInfo.isPresent()) {
@@ -184,6 +184,20 @@ public class IntellijWithPluginClasspathHelper {
       addIntellijLibraries(params, ideaJdk);
     }
     params.setMainClass("com.intellij.idea.Main");
+  }
+
+  /**
+   * See https://github.com/JetBrains/intellij-community/blob/7015a269e1d7aeeb876a6b86f67ce16c131030da/platform/build-scripts/src/org/jetbrains/intellij/build/product-info.schema.json#L55-L57
+   */
+  private static String resolveOsName() {
+    String osName = System.getProperty("os.name");
+    if(Objects.equals(osName, "Linux"))
+      return "Linux";
+    if(Objects.equals(osName, "Mac OS X"))
+      return "macOS";
+    if(osName.startsWith("Windows"))
+      return "Windows";
+    throw new RuntimeException("Could not map Java property 'os.name' to product-info.json schema");
   }
 }
 
