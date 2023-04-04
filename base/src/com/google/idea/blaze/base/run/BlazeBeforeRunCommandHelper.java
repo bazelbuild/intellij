@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.run;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -46,6 +47,7 @@ import com.google.idea.blaze.base.toolwindow.Task;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -57,6 +59,8 @@ import java.util.List;
  */
 public final class BlazeBeforeRunCommandHelper {
   private static final String TASK_TITLE = "Blaze before run task";
+  // A vm option overriding the directory used for the Bazel run script.
+  private static final String BAZEL_RUN_SCRIPT_VM_OVERRIDE = "bazel.run.script.path";
 
   private BlazeBeforeRunCommandHelper() {}
 
@@ -163,7 +167,14 @@ public final class BlazeBeforeRunCommandHelper {
 
   /** Creates a temporary output file to write the shell script to. */
   public static Path createScriptPathFile() throws IOException {
-    Path tempDir = TempDirectoryProvider.getInstance().getTempDirectory();
+    Path tempDir;
+    String dirPath = System.getProperty(BAZEL_RUN_SCRIPT_VM_OVERRIDE);
+    if (Strings.isNullOrEmpty(dirPath)) {
+      tempDir = TempDirectoryProvider.getInstance().getTempDirectory();
+    } else {
+      tempDir = Paths.get(dirPath);
+    }
+
     Path tempFile =
         FileOperationProvider.getInstance().createTempFile(tempDir, "blaze-script-", "");
     tempFile.toFile().deleteOnExit();
