@@ -36,6 +36,7 @@ import com.google.idea.blaze.android.resources.BlazeLightResourceClassService;
 import com.google.idea.blaze.android.sync.model.idea.BlazeAndroidModel;
 import com.google.idea.blaze.android.sync.model.idea.BlazeClassJarProvider;
 import com.google.idea.blaze.base.build.BlazeBuildService;
+import com.google.idea.blaze.base.qsync.QuerySync;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -136,13 +137,23 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
 
       private SourceProviders createForModel(BlazeAndroidModel model) {
         NamedIdeaSourceProvider mainSourceProvider = model.getDefaultSourceProvider();
-        return new SourceProvidersImpl(
-            mainSourceProvider,
-            ImmutableList.of(mainSourceProvider),
-            ImmutableList.of(mainSourceProvider),
-            ImmutableList.of(mainSourceProvider),
-            ImmutableList.of(mainSourceProvider),
-            ImmutableList.of(mainSourceProvider));
+        if (QuerySync.isEnabled()) {
+          return new SourceProvidersImpl(
+              mainSourceProvider,
+              ImmutableList.of(mainSourceProvider),
+              ImmutableList.of(),
+              ImmutableList.of(),
+              ImmutableList.of(),
+              ImmutableList.of(mainSourceProvider));
+        } else {
+          return new SourceProvidersImpl(
+              mainSourceProvider,
+              ImmutableList.of(mainSourceProvider),
+              ImmutableList.of(mainSourceProvider),
+              ImmutableList.of(mainSourceProvider),
+              ImmutableList.of(mainSourceProvider),
+              ImmutableList.of(mainSourceProvider));
+        }
       }
     };
   }
