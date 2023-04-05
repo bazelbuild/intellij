@@ -28,6 +28,7 @@ import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
@@ -72,6 +73,7 @@ public class QuerySyncProject {
   private final ProjectViewSet projectViewSet;
   private final WorkspacePathResolver workspacePathResolver;
   private final WorkspaceLanguageSettings workspaceLanguageSettings;
+  private final QuerySyncSourceToTargetMap sourceToTargetMap;
 
   private volatile QuerySyncProjectData projectData;
 
@@ -87,7 +89,8 @@ public class QuerySyncProject {
       ProjectDefinition projectDefinition,
       ProjectViewSet projectViewSet,
       WorkspacePathResolver workspacePathResolver,
-      WorkspaceLanguageSettings workspaceLanguageSettings) {
+      WorkspaceLanguageSettings workspaceLanguageSettings,
+      QuerySyncSourceToTargetMap sourceToTargetMap) {
     this.project = project;
     this.snapshotFilePath = snapshotFilePath;
     this.snapshotHolder = snapshotHolder;
@@ -100,6 +103,7 @@ public class QuerySyncProject {
     this.projectViewSet = projectViewSet;
     this.workspacePathResolver = workspacePathResolver;
     this.workspaceLanguageSettings = workspaceLanguageSettings;
+    this.sourceToTargetMap = sourceToTargetMap;
     projectData = new QuerySyncProjectData(workspacePathResolver, workspaceLanguageSettings);
   }
 
@@ -127,6 +131,10 @@ public class QuerySyncProject {
 
   public DependencyCache getDependencyCache() {
     return dependencyCache;
+  }
+
+  public SourceToTargetMap getSourceToTargetMap() {
+    return sourceToTargetMap;
   }
 
   public void fullSync(BlazeContext context) {

@@ -34,10 +34,10 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /** Maps source files to their respective targets */
-public class SourceToTargetMapImpl implements SourceToTargetMap {
+public class AspectSyncSourceToTargetMap implements SourceToTargetMap {
   private final Project project;
 
-  public SourceToTargetMapImpl(Project project) {
+  public AspectSyncSourceToTargetMap(Project project) {
     this.project = project;
   }
 
@@ -71,7 +71,9 @@ public class SourceToTargetMapImpl implements SourceToTargetMap {
   @Nullable
   private synchronized ImmutableMultimap<File, TargetKey> getSourceToTargetMap() {
     return SyncCache.getInstance(project)
-        .get(SourceToTargetMapImpl.class, SourceToTargetMapImpl::computeSourceToTargetMap);
+        .get(
+            AspectSyncSourceToTargetMap.class,
+            AspectSyncSourceToTargetMap::computeSourceToTargetMap);
   }
 
   @SuppressWarnings("unused")
