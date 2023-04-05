@@ -20,32 +20,20 @@ import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.google.idea.common.experiments.FeatureRolloutExperiment;
 
 /** Verifies that the available Bazel version is supported by this plugin. */
 public class BazelVersionChecker implements BuildSystemVersionChecker {
 
-  // version 0.23 introduced a backwards-incompatible change to the Py struct providers.
-  // See: https://github.com/bazelbuild/bazel/issues/7298
-  private static final BazelVersion OLDEST_SUPPORTED_VERSION = new BazelVersion(0, 23, 0);
-
   // version 1.2.0 introduced experimental_run_validations flag which is used in
   // {@code BlazeIdeInterfaceAspectsImpl}
-  private static final BazelVersion NEW_OLDEST_SUPPORTED_VERSION = new BazelVersion(1, 2, 0);
-
-  static final FeatureRolloutExperiment NEW_OLDEST_BAZEL_VERSION_ENABLED =
-      new FeatureRolloutExperiment("new.oldest.bazel.version.enabled");
+  private static final BazelVersion OLDEST_SUPPORTED_VERSION = new BazelVersion(1, 2, 0);
 
   @Override
   public boolean versionSupported(BlazeContext context, BlazeVersionData version) {
     if (version.buildSystem() != BuildSystemName.Bazel) {
       return true;
     }
-    BazelVersion oldestBazelVersion = OLDEST_SUPPORTED_VERSION;
-    if (NEW_OLDEST_BAZEL_VERSION_ENABLED.isEnabled()) {
-      oldestBazelVersion = NEW_OLDEST_SUPPORTED_VERSION;
-    }
-    if (version.bazelIsAtLeastVersion(oldestBazelVersion)) {
+    if (version.bazelIsAtLeastVersion(OLDEST_SUPPORTED_VERSION)) {
       return true;
     }
     IssueOutput.error(
@@ -53,7 +41,7 @@ public class BazelVersionChecker implements BuildSystemVersionChecker {
                 "Bazel version %s is not supported by this version of the Bazel plugin. "
                     + "Please upgrade to Bazel version %s+.\n"
                     + "Upgrade instructions are available at https://bazel.build",
-                version, oldestBazelVersion))
+                version, OLDEST_SUPPORTED_VERSION))
         .submit(context);
     return false;
   }
