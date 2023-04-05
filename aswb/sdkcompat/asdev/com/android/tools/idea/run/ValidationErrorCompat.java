@@ -20,6 +20,6 @@ public class ValidationErrorCompat {
   private ValidationErrorCompat() {}
 
   public static ValidationError fatal(String message, Runnable quickFick) {
-    return ValidationError.fatal(message, quickFick);
+    return ValidationError.fatal(message, (dataContext) -> quickFick.run());
   }
 }

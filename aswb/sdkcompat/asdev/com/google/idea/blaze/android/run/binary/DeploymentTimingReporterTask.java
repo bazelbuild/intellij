@@ -15,68 +15,31 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
-import com.android.tools.idea.BaseAsCompat;
-import com.android.tools.idea.run.ApkInfo;
-import com.android.tools.idea.run.tasks.LaunchContext;
-import com.android.tools.idea.run.tasks.LaunchResult;
-import com.android.tools.idea.run.tasks.LaunchTask;
+import com.android.tools.idea.run.blaze.BlazeLaunchContext;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.google.common.base.Stopwatch;
 import com.google.idea.blaze.android.run.LaunchMetrics;
-import com.google.wireless.android.sdk.stats.LaunchTaskDetail;
-import java.util.Collection;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.execution.ExecutionException;
 
 /** A wrapper launch task that wraps the given deployment task and logs the deployment latency. */
-public class DeploymentTimingReporterTask implements LaunchTask {
-  private final LaunchTask deployTask;
+public class DeploymentTimingReporterTask implements BlazeLaunchTask {
+  private final BlazeLaunchTask deployTask;
   private final String launchId;
 
-  public DeploymentTimingReporterTask(String launchId, LaunchTask deployTask) {
+  public DeploymentTimingReporterTask(String launchId, BlazeLaunchTask deployTask) {
     this.launchId = launchId;
     this.deployTask = deployTask;
   }
 
   @Override
-  public String getDescription() {
-    return deployTask.getDescription();
-  }
-
-  @Override
-  public int getDuration() {
-    return deployTask.getDuration();
-  }
-
-  @Override
-  public boolean shouldRun(LaunchContext launchContext) {
-    return deployTask.shouldRun(launchContext);
-  }
-
-  @Override
-  public LaunchResult run(LaunchContext launchContext) {
+  public void run(BlazeLaunchContext launchContext) throws ExecutionException {
     Stopwatch s = Stopwatch.createStarted();
-    LaunchResult launchResult = deployTask.run(launchContext);
-    LaunchMetrics.logDeploymentTime(
-        launchId, s.elapsed(), BaseAsCompat.wasSuccessfulLaunch(launchResult));
-    return launchResult;
-  }
-
-  @Override
-  public String getId() {
-    return deployTask.getId();
-  }
-
-  @Override
-  public Collection<ApkInfo> getApkInfos() {
-    return deployTask.getApkInfos();
-  }
-
-  @Override
-  public Collection<LaunchTaskDetail> getSubTaskDetails() {
-    return deployTask.getSubTaskDetails();
-  }
-
-  @TestOnly
-  public LaunchTask getWrappedTask() {
-    return deployTask;
+    try {
+      deployTask.run(launchContext);
+      LaunchMetrics.logDeploymentTime(launchId, s.elapsed(), true);
+    } catch (ExecutionException e) {
+      LaunchMetrics.logDeploymentTime(launchId, s.elapsed(), false);
+      throw e;
+    }
   }
 }

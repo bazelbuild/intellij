@@ -16,10 +16,11 @@
 package org.jetbrains.android.sdk;
 
 import com.android.sdklib.IAndroidTarget;
+import com.android.tools.sdk.AndroidSdkData;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.io.File;
 
-/** Compat class for {@link AndroidSdkData} */
+/** Compat class for {@link com.android.tools.sdk.AndroidSdkData} */
 public class AndroidSdkDataCompat {
   AndroidSdkData androidSdkData;
 

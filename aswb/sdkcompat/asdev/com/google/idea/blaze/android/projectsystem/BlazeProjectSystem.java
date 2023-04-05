@@ -47,6 +47,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElementFinder;
 import com.intellij.psi.search.GlobalSearchScope;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,6 +55,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Base class to implement common methods in {@link AndroidProjectSystem} for blaze with different
@@ -204,11 +206,23 @@ public class BlazeProjectSystem implements AndroidProjectSystem {
     return ImmutableList.of();
   }
 
+  @Override
+  public Collection<String> getBootClasspath(@NotNull Module module) {
+    // TODO: b/266586669
+    return ImmutableList.of();
+  }
+
   private static boolean hasPackageName(AndroidFacet facet, String packageName) {
     String nameFromFacet = PackageNameUtils.getPackageName(facet.getModule());
     if (nameFromFacet == null) {
       return false;
     }
     return nameFromFacet.equals(packageName);
+  }
+
+  @NotNull
+  // @Override #api223
+  public List<File> desugarLibraryConfigFiles(@NotNull Project project) {
+    return ImmutableList.of();
   }
 }

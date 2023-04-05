@@ -15,13 +15,16 @@
  */
 package com.google.idea.blaze.android.run.binary.mobileinstall;
 
+import static com.android.tools.idea.run.tasks.DefaultConnectDebuggerTaskKt.getBaseDebuggerTask;
 
+import com.android.tools.idea.execution.common.debug.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
-import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.util.LaunchStatus;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryApplicationLaunchTaskProvider;
 import com.google.idea.blaze.android.run.binary.BlazeAndroidBinaryRunConfigurationState;
 import com.google.idea.blaze.android.run.binary.UserIdHelper;
@@ -36,7 +39,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Run Context for mobile install launches, #api4.0 compat. */
-public abstract class BlazeAndroidBinaryMobileInstallRunContext
+public class BlazeAndroidBinaryMobileInstallRunContext
     extends BlazeAndroidBinaryMobileInstallRunContextBase {
   public BlazeAndroidBinaryMobileInstallRunContext(
       Project project,
@@ -49,12 +52,10 @@ public abstract class BlazeAndroidBinaryMobileInstallRunContext
     super(project, facet, runConfiguration, env, configState, buildStep, launchId);
   }
 
+  @SuppressWarnings("unchecked") // upstream API
   @Override
-  public LaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions,
-      @Nullable Integer userId,
-      String contributorsAmStartOptions,
-      LaunchStatus launchStatus)
+  public BlazeLaunchTask getApplicationLaunchTask(
+      LaunchOptions launchOptions, @Nullable Integer userId, String contributorsAmStartOptions)
       throws ExecutionException {
 
     String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
@@ -63,7 +64,7 @@ public abstract class BlazeAndroidBinaryMobileInstallRunContext
     }
 
     final StartActivityFlagsProvider startActivityFlagsProvider =
-        new DefaultStartActivityFlagsProvider(launchOptions.isDebug(), extraFlags);
+        new DefaultStartActivityFlagsProvider(project, launchOptions.isDebug(), extraFlags);
     BlazeAndroidDeployInfo deployInfo;
     try {
       deployInfo = buildStep.getDeployInfo();
@@ -75,8 +76,15 @@ public abstract class BlazeAndroidBinaryMobileInstallRunContext
         applicationIdProvider,
         deployInfo.getMergedManifest(),
         configState,
-        startActivityFlagsProvider,
-        launchStatus);
+        startActivityFlagsProvider);
+  }
+
+  @Nullable
+  @Override
+  @SuppressWarnings("unchecked")
+  public ConnectDebuggerTask getDebuggerTask(
+      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState) {
+    return getBaseDebuggerTask(androidDebugger, androidDebuggerState, env, facet);
   }
 
   @Override

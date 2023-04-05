@@ -24,17 +24,15 @@ import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
-import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.ConsoleProvider;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
 import com.android.tools.idea.run.editor.ProfilerState;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
-import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.tasks.LaunchTasksProvider;
-import com.android.tools.idea.run.util.LaunchStatus;
+import com.android.tools.idea.run.tasks.DeployTasksCompat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.idea.blaze.android.run.BlazeAndroidDeploymentService;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
@@ -137,29 +135,27 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
   }
 
   @Override
-  public LaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder) {
+  public BlazeLaunchTasksProvider getLaunchTasksProvider(LaunchOptions.Builder launchOptionsBuilder)
+      throws ExecutionException {
     return new BlazeAndroidLaunchTasksProvider(
         project, this, applicationIdProvider, launchOptionsBuilder);
   }
 
   @Override
-  public ImmutableList<LaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
+  public ImmutableList<BlazeLaunchTask> getDeployTasks(IDevice device, LaunchOptions launchOptions)
       throws ExecutionException {
     if (configState.getLaunchMethod() != AndroidTestLaunchMethod.NON_BLAZE) {
       return ImmutableList.of();
     }
     return ImmutableList.of(
-        BlazeAndroidDeploymentService.getInstance(project)
-            .getDeployTask(getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
+        DeployTasksCompat.createDeployTask(
+            project, getApkInfoToInstall(device, launchOptions, apkProvider), launchOptions));
   }
 
   @Override
   @Nullable
-  public LaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions,
-      @Nullable Integer userId,
-      String contributorsAmStartOptions,
-      LaunchStatus launchStatus)
+  public BlazeLaunchTask getApplicationLaunchTask(
+      LaunchOptions launchOptions, @Nullable Integer userId, String contributorsAmStartOptions)
       throws ExecutionException {
     switch (configState.getLaunchMethod()) {
       case BLAZE_TEST:
@@ -186,7 +182,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
           throw new ExecutionException(e);
         }
         return StockAndroidTestLaunchTask.getStockTestLaunchTask(
-            configState, applicationIdProvider, launchOptions.isDebug(), deployInfo, launchStatus);
+            configState, applicationIdProvider, launchOptions.isDebug(), deployInfo, project);
     }
     throw new AssertionError();
   }
@@ -200,8 +196,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
         return new ConnectBlazeTestDebuggerTask(this, androidDebugger, androidDebuggerState);
       case NON_BLAZE:
       case MOBILE_INSTALL:
-        return getBaseDebuggerTask(
-            androidDebugger, androidDebuggerState, env, facet, applicationIdProvider);
+        return getBaseDebuggerTask(androidDebugger, androidDebuggerState, env, facet, 30);
     }
     throw new AssertionError();
   }
@@ -223,7 +218,7 @@ public class BlazeAndroidTestRunContext implements BlazeAndroidRunContext {
 
   @Nullable
   @Override
-  public Integer getUserId(IDevice device, ConsolePrinter consolePrinter) {
+  public Integer getUserId(IDevice device) {
     return null;
   }
 

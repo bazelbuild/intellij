@@ -18,12 +18,13 @@ package com.google.idea.blaze.android.run.binary;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.android.tools.idea.run.blaze.BlazeLaunchTaskWrapper;
 import com.android.tools.idea.run.tasks.AndroidDeepLinkLaunchTask;
 import com.android.tools.idea.run.tasks.DefaultActivityLaunchTask;
-import com.android.tools.idea.run.tasks.LaunchTask;
 import com.android.tools.idea.run.tasks.SpecificActivityLaunchTask;
-import com.android.tools.idea.run.util.LaunchStatus;
 import com.google.idea.blaze.android.manifest.ManifestParser;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.diagnostic.Logger;
 
 /** Provides the launch task for android_binary */
@@ -31,44 +32,35 @@ public class BlazeAndroidBinaryApplicationLaunchTaskProvider {
   private static final Logger LOG =
       Logger.getInstance(BlazeAndroidBinaryApplicationLaunchTaskProvider.class);
 
-  public static LaunchTask getApplicationLaunchTask(
+  public static BlazeLaunchTask getApplicationLaunchTask(
       ApplicationIdProvider applicationIdProvider,
       ManifestParser.ParsedManifest mergedManifestParsedManifest,
       BlazeAndroidBinaryRunConfigurationState configState,
-      StartActivityFlagsProvider startActivityFlagsProvider,
-      LaunchStatus launchStatus) {
+      StartActivityFlagsProvider startActivityFlagsProvider)
+      throws ExecutionException {
     try {
       String applicationId = applicationIdProvider.getPackageName();
-
-      final LaunchTask launchTask;
 
       switch (configState.getMode()) {
         case BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEFAULT_ACTIVITY:
           BlazeDefaultActivityLocator activityLocator =
               new BlazeDefaultActivityLocator(mergedManifestParsedManifest);
-          launchTask =
+          return new BlazeLaunchTaskWrapper(
               new DefaultActivityLaunchTask(
-                  applicationId, activityLocator, startActivityFlagsProvider);
-          break;
+                  applicationId, activityLocator, startActivityFlagsProvider));
         case BlazeAndroidBinaryRunConfigurationState.LAUNCH_SPECIFIC_ACTIVITY:
-          launchTask =
+          return new BlazeLaunchTaskWrapper(
               new SpecificActivityLaunchTask(
-                  applicationId, configState.getActivityClass(), startActivityFlagsProvider);
-          break;
+                  applicationId, configState.getActivityClass(), startActivityFlagsProvider));
         case BlazeAndroidBinaryRunConfigurationState.LAUNCH_DEEP_LINK:
-          launchTask =
-              new AndroidDeepLinkLaunchTask(configState.getDeepLink(), startActivityFlagsProvider);
-          break;
+          return new BlazeLaunchTaskWrapper(
+              new AndroidDeepLinkLaunchTask(configState.getDeepLink(), startActivityFlagsProvider));
         case BlazeAndroidBinaryRunConfigurationState.DO_NOTHING:
         default:
-          launchTask = null;
-          break;
+          return null;
       }
-      return launchTask;
     } catch (ApkProvisionException e) {
-      LOG.error(e);
-      launchStatus.terminateLaunch("Unable to identify application id", true);
-      return null;
+      throw new ExecutionException("Unable to identify application id");
     }
   }
 }

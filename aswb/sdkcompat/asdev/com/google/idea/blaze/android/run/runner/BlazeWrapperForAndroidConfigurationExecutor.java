@@ -15,13 +15,13 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
+import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutor;
-import com.android.tools.idea.run.editor.DeployTarget;
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
 
 /** Implementation of {@code AndroidConfigurationExecutor} specific for Blaze project. */
 public class BlazeWrapperForAndroidConfigurationExecutor implements AndroidConfigurationExecutor {
@@ -39,37 +39,32 @@ public class BlazeWrapperForAndroidConfigurationExecutor implements AndroidConfi
 
   @NotNull
   @Override
-  public DeployTarget getDeployTarget() {
-    return delegateExecutor.getDeployTarget();
+  public DeviceFutures getDeviceFutures() {
+    return delegateExecutor.getDeviceFutures();
   }
 
   @NotNull
   @Override
-  public Promise<RunContentDescriptor> run(@NotNull ProgressIndicator indicator) {
+  public RunContentDescriptor run(@NotNull ProgressIndicator indicator) throws ExecutionException {
     return delegateExecutor.run(indicator);
   }
 
   @NotNull
   @Override
-  public Promise<RunContentDescriptor> runAsInstantApp(@NotNull ProgressIndicator indicator) {
-    throw new RuntimeException("Run as instant is not supported for blaze");
-  }
-
-  @NotNull
-  @Override
-  public Promise<RunContentDescriptor> debug(@NotNull ProgressIndicator indicator) {
+  public RunContentDescriptor debug(@NotNull ProgressIndicator indicator)
+      throws ExecutionException {
     return delegateExecutor.debug(indicator);
   }
 
   @NotNull
   @Override
-  public Promise<RunContentDescriptor> applyChanges(@NotNull ProgressIndicator indicator) {
+  public RunContentDescriptor applyChanges(@NotNull ProgressIndicator indicator) {
     throw new RuntimeException("Apply code changes is not supported for blaze");
   }
 
   @NotNull
   @Override
-  public Promise<RunContentDescriptor> applyCodeChanges(@NotNull ProgressIndicator indicator) {
+  public RunContentDescriptor applyCodeChanges(@NotNull ProgressIndicator indicator) {
     throw new RuntimeException("Apply changes is not supported for blaze");
   }
 }

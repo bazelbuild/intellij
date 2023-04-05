@@ -26,6 +26,6 @@ public class IdeSdksCompat {
   private IdeSdksCompat() {}
 
   public static List<Sdk> setAndroidSdkPath(File file, Sdk javaSdk, @Nullable Project project) {
-    return IdeSdks.getInstance().setAndroidSdkPath(file, javaSdk, project);
+    return IdeSdks.getInstance().setAndroidSdkPath(file);
   }
 }

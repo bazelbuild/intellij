@@ -6,7 +6,6 @@ import com.intellij.openapi.fileChooser.ex.FileLookup;
 import com.intellij.openapi.fileChooser.ex.LocalFsFinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessorBase;
 import com.intellij.ui.EditorNotificationProvider;
@@ -97,6 +96,7 @@ public final class BaseSdkCompat {
   }
 
   public static String getX11WindowManagerName() {
-    return X11UiUtil.getWmName();
+    // TODO(b/266782325): Investigate if i3 still crashes for system notifications.
+    return "";
   }
 }

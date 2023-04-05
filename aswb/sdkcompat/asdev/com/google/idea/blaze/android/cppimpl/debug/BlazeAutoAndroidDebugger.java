@@ -17,15 +17,15 @@ package com.google.idea.blaze.android.cppimpl.debug;
 
 import com.android.ddmlib.Client;
 import com.android.tools.ndk.run.editor.AutoAndroidDebuggerState;
+import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
-import org.jetbrains.concurrency.Promise;
 
 /** Shim for #api212 compat. */
 public class BlazeAutoAndroidDebugger extends BlazeAutoAndroidDebuggerBase {
   @Override
-  public Promise<XDebugSession> attachToClient(
-      Project project, Client client, AutoAndroidDebuggerState state) {
+  public XDebugSession attachToClient(
+      Project project, Client client, AutoAndroidDebuggerState state) throws ExecutionException {
     if (isNativeProject(project)) {
       log.info("Project has native development enabled. Attaching native debugger.");
       return nativeDebugger.attachToClient(project, client, state);

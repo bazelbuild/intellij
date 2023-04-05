@@ -15,7 +15,6 @@
  */
 package org.jetbrains.android.sdk;
 
-import com.android.tools.idea.sdk.AndroidSdks;
 import com.intellij.openapi.projectRoots.Sdk;
 
 /** Compat shim class for {@link AndroidSdkAdditionalData} */
@@ -23,6 +22,6 @@ public class AndroidSdkAdditionalDataCompat {
   private AndroidSdkAdditionalDataCompat() {}
 
   public static AndroidSdkAdditionalData from(Sdk sdk) {
-    return AndroidSdks.getInstance().getAndroidSdkAdditionalData(sdk);
+    return AndroidSdkAdditionalData.from(sdk);
   }
 }
