@@ -15,12 +15,16 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
+import static com.android.tools.idea.run.tasks.DefaultConnectDebuggerTaskKt.getBaseDebuggerTask;
+
+import com.android.tools.idea.execution.common.debug.AndroidDebugger;
+import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.activity.DefaultStartActivityFlagsProvider;
 import com.android.tools.idea.run.activity.StartActivityFlagsProvider;
-import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.util.LaunchStatus;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
 import com.intellij.execution.ExecutionException;
@@ -32,7 +36,7 @@ import javax.annotation.Nullable;
 import org.jetbrains.android.facet.AndroidFacet;
 
 /** Compat for #api212 */
-public abstract class BlazeAndroidBinaryNormalBuildRunContext
+public class BlazeAndroidBinaryNormalBuildRunContext
     extends BlazeAndroidBinaryNormalBuildRunContextBase {
   BlazeAndroidBinaryNormalBuildRunContext(
       Project project,
@@ -46,11 +50,8 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContext
   }
 
   @Override
-  public LaunchTask getApplicationLaunchTask(
-      LaunchOptions launchOptions,
-      @Nullable Integer userId,
-      String contributorsAmStartOptions,
-      LaunchStatus launchStatus)
+  public BlazeLaunchTask getApplicationLaunchTask(
+      LaunchOptions launchOptions, @Nullable Integer userId, String contributorsAmStartOptions)
       throws ExecutionException {
     String extraFlags = UserIdHelper.getFlagsFromUserId(userId);
     if (!contributorsAmStartOptions.isEmpty()) {
@@ -58,7 +59,7 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContext
     }
 
     final StartActivityFlagsProvider startActivityFlagsProvider =
-        new DefaultStartActivityFlagsProvider(launchOptions.isDebug(), extraFlags);
+        new DefaultStartActivityFlagsProvider(project, launchOptions.isDebug(), extraFlags);
 
     BlazeAndroidDeployInfo deployInfo;
     try {
@@ -71,8 +72,15 @@ public abstract class BlazeAndroidBinaryNormalBuildRunContext
         applicationIdProvider,
         deployInfo.getMergedManifest(),
         configState,
-        startActivityFlagsProvider,
-        launchStatus);
+        startActivityFlagsProvider);
+  }
+
+  @Nullable
+  @Override
+  @SuppressWarnings("unchecked")
+  public ConnectDebuggerTask getDebuggerTask(
+      AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState) {
+    return getBaseDebuggerTask(androidDebugger, androidDebuggerState, env, facet);
   }
 
   @Override

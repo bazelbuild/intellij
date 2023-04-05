@@ -19,22 +19,19 @@ import static com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContribu
 
 import com.android.ddmlib.IDevice;
 import com.android.tools.deployer.ApkVerifierTracker;
-import com.android.tools.idea.editors.literals.LiveEditService;
 import com.android.tools.idea.execution.common.debug.AndroidDebugger;
 import com.android.tools.idea.execution.common.debug.AndroidDebuggerState;
 import com.android.tools.idea.profilers.AndroidProfilerLaunchTaskContributor;
 import com.android.tools.idea.run.ApkProvisionException;
 import com.android.tools.idea.run.ApplicationIdProvider;
-import com.android.tools.idea.run.ConsolePrinter;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.android.tools.idea.run.blaze.BlazeLaunchTaskWrapper;
+import com.android.tools.idea.run.blaze.BlazeLaunchTasksProvider;
 import com.android.tools.idea.run.tasks.ClearLogcatTask;
 import com.android.tools.idea.run.tasks.ConnectDebuggerTask;
 import com.android.tools.idea.run.tasks.DismissKeyguardTask;
-import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.tasks.LaunchTasksProvider;
 import com.android.tools.idea.run.tasks.ShowLogcatTask;
-import com.android.tools.idea.run.tasks.StartLiveUpdateMonitoringTask;
-import com.android.tools.idea.run.util.LaunchStatus;
 import com.android.tools.ndk.run.editor.AutoAndroidDebuggerState;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -49,7 +46,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** Normal launch tasks provider. #api4.1 */
-public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
+public class BlazeAndroidLaunchTasksProvider implements BlazeLaunchTasksProvider {
   public static final String NATIVE_DEBUGGING_ENABLED = "NATIVE_DEBUGGING_ENABLED";
   private static final Logger LOG = Logger.getInstance(BlazeAndroidLaunchTasksProvider.class);
   private static final BoolExperiment isLiveEditEnabled =
@@ -73,23 +70,17 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
 
   @NotNull
   @Override
-  public List<LaunchTask> getTasks(
-      @NotNull IDevice device,
-      @NotNull LaunchStatus launchStatus,
-      @NotNull ConsolePrinter consolePrinter)
-      throws ExecutionException {
-    final List<LaunchTask> launchTasks = Lists.newArrayList();
+  public List<BlazeLaunchTask> getTasks(@NotNull IDevice device) throws ExecutionException {
+    final List<BlazeLaunchTask> launchTasks = Lists.newArrayList();
 
     String packageName;
     try {
       packageName = applicationIdProvider.getPackageName();
     } catch (ApkProvisionException e) {
-      LOG.error(e);
-      launchStatus.terminateLaunch("Unable to determine application id: " + e, true);
-      return ImmutableList.of();
+      throw new ExecutionException("Unable to determine application id: " + e);
     }
 
-    Integer userId = runContext.getUserId(device, consolePrinter);
+    Integer userId = runContext.getUserId(device);
     String userIdFlags = UserIdHelper.getFlagsFromUserId(userId);
     String skipVerification =
         ApkVerifierTracker.getSkipVerificationInstallationFlag(device, packageName);
@@ -110,23 +101,23 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       launchTasks.add(new BlazeAndroidOpenProfilerWindowTask(project));
     }
 
+    // TODO(kovalp): Check if there's any drawback to add these tasks with BlazeLaunchTaskWrapper
+    // since it's different with ag/21610897
     if (launchOptions.isClearLogcatBeforeStart()) {
-      launchTasks.add(new ClearLogcatTask(project));
+      launchTasks.add(new BlazeLaunchTaskWrapper(new ClearLogcatTask(project)));
     }
 
-    launchTasks.add(new DismissKeyguardTask());
+    launchTasks.add(new BlazeLaunchTaskWrapper(new DismissKeyguardTask()));
 
     if (launchOptions.isDeploy()) {
-      ImmutableList<LaunchTask> deployTasks = runContext.getDeployTasks(device, launchOptions);
+      ImmutableList<BlazeLaunchTask> deployTasks = runContext.getDeployTasks(device, launchOptions);
       launchTasks.addAll(deployTasks);
-    }
-    if (launchStatus.isLaunchTerminated()) {
-      return ImmutableList.copyOf(launchTasks);
     }
 
     try {
       if (launchOptions.isDebug()) {
-        launchTasks.add(new CheckApkDebuggableTask(runContext.getBuildStep().getDeployInfo()));
+        launchTasks.add(
+            new CheckApkDebuggableTask(project, runContext.getBuildStep().getDeployInfo()));
       }
 
       ImmutableList.Builder<String> amStartOptions = ImmutableList.builder();
@@ -140,32 +131,24 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
                 device,
                 runContext.getExecutor()));
         launchTasks.add(
-            new AndroidProfilerLaunchTaskContributor.AndroidProfilerToolWindowLaunchTask(
-                project, packageName));
+            new BlazeLaunchTaskWrapper(
+                new AndroidProfilerLaunchTaskContributor.AndroidProfilerToolWindowLaunchTask(
+                    project, packageName)));
       }
-
-      LaunchTask appLaunchTask =
+      BlazeLaunchTask appLaunchTask =
           runContext.getApplicationLaunchTask(
-              launchOptions, userId, String.join(" ", amStartOptions.build()), launchStatus);
+              launchOptions, userId, String.join(" ", amStartOptions.build()));
       if (appLaunchTask != null) {
         launchTasks.add(appLaunchTask);
-        if (isLiveEditEnabled.getValue()) {
-          launchTasks.add(
-              new StartLiveUpdateMonitoringTask(
-                  LiveEditService.getInstance(project).getCallback(packageName, device)));
-        }
+        // TODO(arvindanekal): live edit api get changed and we cannot get apk here to create live
+        // edit, live edit team or Arvind need to fix this
       }
     } catch (ApkProvisionException e) {
-      LOG.error(e);
-      launchStatus.terminateLaunch("Unable to determine application id: " + e, true);
-      return ImmutableList.of();
-    } catch (ExecutionException e) {
-      launchStatus.terminateLaunch(e.getMessage(), true);
-      return ImmutableList.of();
+      throw new ExecutionException("Unable to determine application id: " + e);
     }
 
     if (launchOptions.isOpenLogcatAutomatically()) {
-      launchTasks.add(new ShowLogcatTask(project, packageName));
+      launchTasks.add(new BlazeLaunchTaskWrapper(new ShowLogcatTask(project, packageName)));
     }
 
     return ImmutableList.copyOf(launchTasks);
@@ -199,11 +182,6 @@ public class BlazeAndroidLaunchTasksProvider implements LaunchTasksProvider {
       AndroidDebugger<AndroidDebuggerState> debugger = debuggerService.getDebugger();
       return runContext.getDebuggerTask(debugger, debugger.createState());
     }
-  }
-
-  @Override
-  public String getLaunchTypeDisplayName() {
-    return "Launch";
   }
 
   private boolean isNativeDebuggingEnabled(LaunchOptions launchOptions) {

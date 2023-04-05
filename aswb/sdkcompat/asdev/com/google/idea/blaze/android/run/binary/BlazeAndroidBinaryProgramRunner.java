@@ -15,26 +15,33 @@
  */
 package com.google.idea.blaze.android.run.binary;
 
+import static com.intellij.openapi.application.ModalityState.NON_MODAL;
 
 import com.android.tools.idea.profilers.ProfileRunExecutor;
-import com.android.tools.idea.run.AndroidProgramRunner;
-import com.android.tools.idea.run.AndroidSessionInfoCompat;
+import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutor;
 import com.google.idea.blaze.android.run.BlazeAndroidRunConfigurationHandler;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.AsyncProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.application.ActionsKt;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
 
 /** Program runner for configurations from {@link BlazeAndroidBinaryRunConfigurationHandler}. */
-public class BlazeAndroidBinaryProgramRunner extends AndroidProgramRunner {
+public class BlazeAndroidBinaryProgramRunner extends AsyncProgramRunner<RunnerSettings> {
   @Override
   public boolean canRun(String executorId, RunProfile profile) {
     BlazeAndroidRunConfigurationHandler handler =
@@ -48,37 +55,56 @@ public class BlazeAndroidBinaryProgramRunner extends AndroidProgramRunner {
   }
 
   @Override
-  protected boolean canRunWithMultipleDevices(String executorId) {
-    return false;
+  protected Promise<RunContentDescriptor> execute(
+      ExecutionEnvironment environment, RunProfileState state) {
+    FileDocumentManager.getInstance().saveAllDocuments();
+
+    AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
+
+    ProgressManager.getInstance()
+        .run(
+            new Task.Backgroundable(environment.getProject(), "Launching ${runProfile.name}") {
+              @Override
+              public void run(ProgressIndicator indicator) {
+                try {
+                  RunContentDescriptor descriptor;
+                  if (state instanceof AndroidConfigurationExecutor) {
+                    AndroidConfigurationExecutor configurationExecutor =
+                        (AndroidConfigurationExecutor) state;
+                    Executor executor = environment.getExecutor();
+                    if (executor.getId().equals(DefaultDebugExecutor.EXECUTOR_ID)) {
+                      descriptor = configurationExecutor.debug(indicator);
+                    } else if (executor.getId().equals(DefaultRunExecutor.EXECUTOR_ID)
+                        || executor.getId().equals(ProfileRunExecutor.EXECUTOR_ID)) {
+                      descriptor = configurationExecutor.run(indicator);
+                    } else {
+                      throw new ExecutionException("Unsupported executor");
+                    }
+                  } else {
+                    descriptor = doExecute(state, environment);
+                  }
+                  promise.setResult(descriptor);
+                } catch (ExecutionException e) {
+                  var unused = promise.setError(e);
+                }
+              }
+
+              @Override
+              public void onCancel() {
+                super.onCancel();
+                promise.setResult(null);
+              }
+            });
+
+    return promise;
   }
 
-  @Override
-  protected RunContentDescriptor doExecute(
+  private RunContentDescriptor doExecute(
       final RunProfileState state, final ExecutionEnvironment env) throws ExecutionException {
-    FileDocumentManager.getInstance().saveAllDocuments();
     ExecutionResult result = state.execute(env.getExecutor(), this);
-    RunContentDescriptor descriptor =
-        new RunContentBuilder(result, env).showRunContent(env.getContentToReuse());
-
-    if (descriptor != null) {
-      ProcessHandler processHandler = descriptor.getProcessHandler();
-      assert processHandler != null;
-
-      RunProfile runProfile = env.getRunProfile();
-      RunConfiguration runConfiguration =
-          (runProfile instanceof RunConfiguration) ? (RunConfiguration) runProfile : null;
-
-      // The created AndroidSessionInfo is already added to userdata by #create.
-      AndroidSessionInfoCompat.create(
-          processHandler,
-          descriptor,
-          runConfiguration,
-          env.getExecutor().getId(),
-          env.getExecutor().getActionName(),
-          env.getExecutionTarget());
-    }
-
-    return descriptor;
+    return ActionsKt.invokeAndWaitIfNeeded(
+        NON_MODAL,
+        () -> new RunContentBuilder(result, env).showRunContent(env.getContentToReuse()));
   }
 
   @Override

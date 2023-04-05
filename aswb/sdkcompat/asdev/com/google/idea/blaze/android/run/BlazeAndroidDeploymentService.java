@@ -17,9 +17,9 @@ package com.google.idea.blaze.android.run;
 
 import com.android.tools.idea.run.ApkInfo;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.tasks.DeployTask;
 import com.android.tools.idea.run.tasks.DeployTasksCompat;
-import com.android.tools.idea.run.tasks.LaunchTask;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
@@ -31,7 +31,7 @@ public interface BlazeAndroidDeploymentService {
   }
 
   /** Returns a {@link DeployTask} to deploy the given files and launch options. */
-  LaunchTask getDeployTask(Collection<ApkInfo> packages, LaunchOptions launchOptions);
+  BlazeLaunchTask getDeployTask(Collection<ApkInfo> packages, LaunchOptions launchOptions);
 
   /** A default implementation that uses {@link DeployTasksCompat#createDeployTask}. */
   class DefaultDeploymentService implements BlazeAndroidDeploymentService {
@@ -42,7 +42,8 @@ public interface BlazeAndroidDeploymentService {
     }
 
     @Override
-    public LaunchTask getDeployTask(Collection<ApkInfo> packages, LaunchOptions launchOptions) {
+    public BlazeLaunchTask getDeployTask(
+        Collection<ApkInfo> packages, LaunchOptions launchOptions) {
       return DeployTasksCompat.createDeployTask(project, packages, launchOptions);
     }
   }

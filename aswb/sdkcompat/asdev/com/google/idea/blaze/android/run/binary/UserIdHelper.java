@@ -20,8 +20,9 @@ import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.IDevice;
 import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.TimeoutException;
-import com.android.tools.idea.run.ConsolePrinter;
+import com.android.tools.idea.execution.common.RunConfigurationNotifier;
 import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,19 +30,23 @@ import javax.annotation.Nullable;
 
 /** Helpers for user id */
 public final class UserIdHelper {
+  private UserIdHelper() {}
+
   private static final Pattern USER_ID_REGEX =
       Pattern.compile("UserInfo\\{([0-9]+):Work profile:[0-9]+\\}");
 
   @Nullable
   public static Integer getUserIdFromConfigurationState(
-      IDevice device, ConsolePrinter consolePrinter, BlazeAndroidBinaryRunConfigurationState state)
+      Project project, IDevice device, BlazeAndroidBinaryRunConfigurationState state)
       throws ExecutionException {
     if (state.useWorkProfileIfPresent()) {
       try {
         Integer userId = getWorkProfileId(device);
         if (userId == null) {
-          consolePrinter.stderr(
-              "Could not locate work profile on selected device. Launching default user.\n");
+          RunConfigurationNotifier.INSTANCE.notifyWarning(
+              project,
+              "",
+              "Could not locate work profile on selected device. Launching default user.");
         }
         return userId;
       } catch (TimeoutException

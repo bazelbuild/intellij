@@ -47,7 +47,6 @@ public class BlazeAndroidBinaryNormalBuildRunContextCompat
   @SuppressWarnings("unchecked")
   public ConnectDebuggerTask getDebuggerTask(
       AndroidDebugger androidDebugger, AndroidDebuggerState androidDebuggerState) {
-    return getBaseDebuggerTask(
-        androidDebugger, androidDebuggerState, env, facet, applicationIdProvider);
+    return getBaseDebuggerTask(androidDebugger, androidDebuggerState, env, facet);
   }
 }

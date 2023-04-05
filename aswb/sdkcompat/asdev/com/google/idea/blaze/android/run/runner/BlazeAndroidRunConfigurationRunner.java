@@ -25,6 +25,7 @@ import com.android.tools.idea.run.ApkProvider;
 import com.android.tools.idea.run.ApplicationIdProvider;
 import com.android.tools.idea.run.DeviceFutures;
 import com.android.tools.idea.run.LaunchOptions;
+import com.android.tools.idea.run.blaze.BlazeAndroidConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidComplicationConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutor;
 import com.android.tools.idea.run.configuration.execution.AndroidConfigurationExecutorRunProfileState;
@@ -38,7 +39,6 @@ import com.android.tools.idea.run.editor.DeployTargetState;
 import com.android.tools.idea.run.util.LaunchUtils;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.android.run.BlazeAndroidRunState;
 import com.google.idea.blaze.android.run.binary.mobileinstall.MobileInstallBuildStep;
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkProviderService;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -153,7 +153,15 @@ public final class BlazeAndroidRunConfigurationRunner
     env.putCopyableUserData(RUN_CONTEXT_KEY, runContext);
     env.putCopyableUserData(DEVICE_SESSION_KEY, deviceSession);
 
-    return new BlazeAndroidRunState(env, launchOptionsBuilder, deviceSession, runContext);
+    BlazeAndroidConfigurationExecutor runner =
+        new BlazeAndroidConfigurationExecutor(
+            runContext.getConsoleProvider(),
+            runContext.getApplicationIdProvider(),
+            env,
+            deviceFutures,
+            runContext.getLaunchTasksProvider(launchOptionsBuilder),
+            LaunchOptions.builder().build());
+    return new AndroidConfigurationExecutorRunProfileState(runner);
   }
 
   private RunProfileState getWearExecutor(
@@ -185,11 +193,12 @@ public final class BlazeAndroidRunConfigurationRunner
     ApkProvider apkProvider =
         BlazeApkProviderService.getInstance()
             .getApkProvider(env.getProject(), runContext.getBuildStep());
+    DeviceFutures deviceFutures = deployTarget.getDevices(env.getProject());
 
     if (launchOptions instanceof TileLaunchOptions) {
       configurationExecutor =
           new AndroidTileConfigurationExecutor(
-              env, deployTarget, settings, appIdProvider, apkProvider) {
+              env, deviceFutures, settings, appIdProvider, apkProvider) {
             @NotNull
             @Override
             public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)
@@ -203,7 +212,7 @@ public final class BlazeAndroidRunConfigurationRunner
     } else if (launchOptions instanceof WatchFaceLaunchOptions) {
       configurationExecutor =
           new AndroidWatchFaceConfigurationExecutor(
-              env, deployTarget, settings, appIdProvider, apkProvider) {
+              env, deviceFutures, settings, appIdProvider, apkProvider) {
             @NotNull
             @Override
             public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)
@@ -217,7 +226,7 @@ public final class BlazeAndroidRunConfigurationRunner
     } else if (launchOptions instanceof ComplicationLaunchOptions) {
       configurationExecutor =
           new AndroidComplicationConfigurationExecutor(
-              env, deployTarget, settings, appIdProvider, apkProvider) {
+              env, deviceFutures, settings, appIdProvider, apkProvider) {
             @NotNull
             @Override
             public ApplicationDeployer getApplicationDeployer(@NotNull ConsoleView console)

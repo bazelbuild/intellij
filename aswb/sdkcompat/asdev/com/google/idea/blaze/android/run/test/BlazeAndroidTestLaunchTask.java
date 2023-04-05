@@ -15,13 +15,9 @@
  */
 package com.google.idea.blaze.android.run.test;
 
-import com.android.tools.idea.run.ConsolePrinter;
-import com.android.tools.idea.run.tasks.LaunchContext;
-import com.android.tools.idea.run.tasks.LaunchResult;
-import com.android.tools.idea.run.tasks.LaunchTask;
-import com.android.tools.idea.run.tasks.LaunchTaskDurations;
-import com.android.tools.idea.run.util.LaunchStatus;
-import com.android.tools.idea.run.util.ProcessHandlerLaunchStatus;
+import com.android.tools.idea.run.blaze.BlazeLaunchContext;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
+import com.android.tools.idea.run.configuration.execution.ExecutionUtils;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.ExternalTask;
@@ -53,11 +49,11 @@ import com.google.idea.blaze.java.AndroidBlazeRules.RuleTypes;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -66,7 +62,7 @@ import org.jetbrains.ide.PooledThreadExecutor;
  * An Android application launcher that invokes `blaze test` on an android_test target, and sets up
  * process handling and debugging for the test run.
  */
-public class BlazeAndroidTestLaunchTask implements LaunchTask {
+public class BlazeAndroidTestLaunchTask implements BlazeLaunchTask {
   private static final String ID = "BLAZE_ANDROID_TEST";
 
   // Uses a local device/emulator attached to adb to run an android_test.
@@ -107,24 +103,12 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
     this.testResultsHolder = testResultsHolder;
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
-    return String.format("Running %s tests", Blaze.buildSystemName(project));
-  }
-
-  @Override
-  public int getDuration() {
-    return LaunchTaskDurations.LAUNCH_ACTIVITY;
-  }
-
-  @Override
-  public LaunchResult run(@NotNull LaunchContext launchContext) {
+  public void run(@NotNull BlazeLaunchContext launchContext)
+      throws com.intellij.execution.ExecutionException {
     BlazeExecutor blazeExecutor = BlazeExecutor.getInstance();
 
-    ProcessHandlerLaunchStatus processHandlerLaunchStatus =
-        (ProcessHandlerLaunchStatus) launchContext.getLaunchStatus();
-    final ProcessHandler processHandler = processHandlerLaunchStatus.getProcessHandler();
+    final ProcessHandler processHandler = launchContext.getProcessHandler();
 
     blazeResult =
         blazeExecutor.submit(
@@ -193,26 +177,27 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
                         commandBuilder.addBlazeFlags(TEST_DEBUG, BlazeFlags.NO_CACHE_TEST_RESULTS);
                       }
 
-                      ConsolePrinter printer = launchContext.getConsolePrinter();
+                      ConsoleView console = launchContext.getConsoleView();
                       LineProcessingOutputStream.LineProcessor stdoutLineProcessor =
                           line -> {
-                            printer.stdout(line);
+                            ExecutionUtils.println(console, line);
                             return true;
                           };
                       LineProcessingOutputStream.LineProcessor stderrLineProcessor =
                           line -> {
-                            printer.stderr(line);
+                            ExecutionUtils.println(console, line);
                             return true;
                           };
 
-                      printer.stdout(
+                      ExecutionUtils.println(
+                          console,
                           String.format("Starting %s test...\n", Blaze.buildSystemName(project)));
 
                       int retVal;
                       try (BuildResultHelper buildResultHelper = new BuildResultHelperBep()) {
                         commandBuilder.addBlazeFlags(buildResultHelper.getBuildFlags());
                         BlazeCommand command = commandBuilder.build();
-                        printer.stdout(command + "\n");
+                        ExecutionUtils.println(console, command + "\n");
 
                         retVal =
                             ExternalTask.builder(WorkspaceRoot.fromProject(project))
@@ -244,15 +229,8 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
 
     // The debug case is set up in ConnectBlazeTestDebuggerTask
     if (!debug) {
-      waitAndSetUpForKillingBlazeOnStop(processHandler, launchContext.getLaunchStatus());
+      waitAndSetUpForKillingBlazeOnStop(processHandler);
     }
-    return LaunchResult.success();
-  }
-
-  @NotNull
-  @Override
-  public String getId() {
-    return ID;
   }
 
   /**
@@ -261,31 +239,22 @@ public class BlazeAndroidTestLaunchTask implements LaunchTask {
    * from launch() (this matches the behavior of the stock ddmlib runner).
    */
   @SuppressWarnings("Interruption")
-  private void waitAndSetUpForKillingBlazeOnStop(
-      @NotNull final ProcessHandler processHandler, @NotNull final LaunchStatus launchStatus) {
+  private void waitAndSetUpForKillingBlazeOnStop(@NotNull final ProcessHandler processHandler) {
     processHandler.addProcessListener(
         new ProcessAdapter() {
           @Override
           public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
             blazeResult.cancel(true /* mayInterruptIfRunning */);
-            launchStatus.terminateLaunch("Test run stopped.\n", true);
           }
         });
 
     try {
       blazeResult.get();
-      launchStatus.terminateLaunch("Tests ran to completion.\n", true);
-    } catch (CancellationException e) {
-      // The user has canceled the test.
-      launchStatus.terminateLaunch("Test run stopped.\n", true);
     } catch (InterruptedException e) {
       // We've been interrupted - cancel the underlying Blaze process.
       blazeResult.cancel(true /* mayInterruptIfRunning */);
-      launchStatus.terminateLaunch("Test run stopped.\n", true);
     } catch (ExecutionException e) {
       LOG.error(e);
-      launchStatus.terminateLaunch(
-          "Test run stopped due to internal exception. Please file a bug report.\n", true);
     }
   }
 

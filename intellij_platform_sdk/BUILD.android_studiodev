@@ -113,7 +113,7 @@ filegroup(
 
 java_import(
     name = "coverage",
-    jars = glob(["android-studio/plugins/coverage/lib/*.jar"]),
+    jars = glob(["android-studio/plugins/java-coverage/lib/*.jar"]),
 )
 
 java_import(
@@ -123,7 +123,7 @@ java_import(
 
 java_import(
     name = "hg4idea",
-    jars = ["android-studio/plugins/hg4idea/lib/hg4idea.jar"],
+    jars = ["android-studio/plugins/plugins/vcs-hg/lib/vcs-hg.jar"],
 )
 
 java_import(
@@ -145,7 +145,7 @@ java_import(
             "android-studio/plugins/gradle/lib/*.jar",
             "android-studio/plugins/gradle-java/lib/*.jar",
             "android-studio/plugins/Groovy/lib/*.jar",
-            "android-studio/plugins/IntelliLang/lib/*.jar",
+            "android-studio/plugins/platform-langInjection/lib/*.jar",
             "android-studio/plugins/java-i18n/lib/*.jar",
             "android-studio/plugins/junit/lib/*.jar",
             "android-studio/plugins/properties/lib/*.jar",

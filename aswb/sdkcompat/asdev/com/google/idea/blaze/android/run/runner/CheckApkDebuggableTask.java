@@ -18,10 +18,9 @@ package com.google.idea.blaze.android.run.runner;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.android.ddmlib.IDevice;
-import com.android.tools.idea.run.ConsolePrinter;
-import com.android.tools.idea.run.tasks.LaunchContext;
-import com.android.tools.idea.run.tasks.LaunchResult;
-import com.android.tools.idea.run.tasks.LaunchTask;
+import com.android.tools.idea.execution.common.RunConfigurationNotifier;
+import com.android.tools.idea.run.blaze.BlazeLaunchContext;
+import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.devrel.gmscore.tools.apk.arsc.BinaryResourceFile;
@@ -30,6 +29,8 @@ import com.google.devrel.gmscore.tools.apk.arsc.XmlAttribute;
 import com.google.devrel.gmscore.tools.apk.arsc.XmlChunk;
 import com.google.devrel.gmscore.tools.apk.arsc.XmlStartElementChunk;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
+import com.intellij.execution.ExecutionException;
+import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,34 +39,18 @@ import java.util.zip.ZipFile;
 import org.jetbrains.annotations.NotNull;
 
 /** Checks APKs to see if they are debuggable and warn the user if they aren't. */
-public class CheckApkDebuggableTask implements LaunchTask {
+public class CheckApkDebuggableTask implements BlazeLaunchTask {
   private static final String ID = "APK_DEBUGGABILITY_CHECKER";
   private final BlazeAndroidDeployInfo deployInfo;
 
-  public CheckApkDebuggableTask(BlazeAndroidDeployInfo deployInfo) {
+  public CheckApkDebuggableTask(Project project, BlazeAndroidDeployInfo deployInfo) {
     this.deployInfo = deployInfo;
   }
 
   @Override
-  public String getDescription() {
-    return "Checking debug attribute in APKs";
-  }
-
-  @Override
-  public int getDuration() {
-    return 2; // See com.android.tools.idea.run.tasks.LaunchTaskDurations for related magic numbers.
-  }
-
-  @Override
-  public String getId() {
-    return ID;
-  }
-
-  @Override
-  public LaunchResult run(@NotNull LaunchContext launchContext) {
+  public void run(@NotNull BlazeLaunchContext launchContext) throws ExecutionException {
     checkApkDebuggableTaskDelegate(
-        deployInfo, launchContext.getDevice(), launchContext.getConsolePrinter());
-    return LaunchResult.success(); // Don't block deployment.
+        launchContext.getEnv().getProject(), deployInfo, launchContext.getDevice());
   }
 
   /**
@@ -75,7 +60,8 @@ public class CheckApkDebuggableTask implements LaunchTask {
    */
   @VisibleForTesting
   public static void checkApkDebuggableTaskDelegate(
-      BlazeAndroidDeployInfo deployInfo, IDevice device, ConsolePrinter consolePrinter) {
+      Project project, BlazeAndroidDeployInfo deployInfo, IDevice device)
+      throws ExecutionException {
     if (isDebugDevice(device)) {
       return;
     }
@@ -94,9 +80,9 @@ public class CheckApkDebuggableTask implements LaunchTask {
               + ". Debugger may not attach properly or attach at all."
               + " Please ensure \"android:debuggable\" attribute is set to true or"
               + " overridden to true via manifest overrides.";
-      consolePrinter.stderr(message);
+      RunConfigurationNotifier.INSTANCE.notifyWarning(project, "", message);
     } catch (IOException e) {
-      consolePrinter.stderr("Could not read deploy apks: " + e.getMessage());
+      throw new ExecutionException("Could not read deploy apks: " + e.getMessage());
     }
   }
 
