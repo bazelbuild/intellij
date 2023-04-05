@@ -32,6 +32,7 @@ import com.google.idea.blaze.base.settings.BlazeUserSettings.FocusBehavior;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
+import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
@@ -124,6 +125,11 @@ public class QuerySyncManager {
   public DependencyCache getDependencyCache() {
     assertProjectLoaded();
     return loadedProject.getDependencyCache();
+  }
+
+  public SourceToTargetMap getSourceToTargetMap() {
+    assertProjectLoaded();
+    return loadedProject.getSourceToTargetMap();
   }
 
   @CanIgnoreReturnValue

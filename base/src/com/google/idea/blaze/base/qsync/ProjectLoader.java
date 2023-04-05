@@ -127,6 +127,8 @@ public class ProjectLoader {
     ProjectUpdater projectUpdater =
         new ProjectUpdater(project, importSettings, projectViewSet, workspaceRoot);
     graph.addListener(projectUpdater);
+    QuerySyncSourceToTargetMap sourceToTargetMap =
+        new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
 
     ProjectDefinition projectDefinition =
         loadedSnapshot
@@ -148,7 +150,8 @@ public class ProjectLoader {
             projectDefinition,
             projectViewSet,
             workspacePathResolver,
-            workspaceLanguageSettings);
+            workspaceLanguageSettings,
+            sourceToTargetMap);
     // If we don't want to do a sync on startup, some more logic will be needed here:
     // - in the case of a new project (loadedSnapshot is empty), do a full sync
     // - when loadedSnapshot is not empty, we need to re-run the final stage of sync to regenerate
