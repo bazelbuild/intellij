@@ -1,0 +1,6 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <backgroundPostStartupActivity
+                implementation="com.google.idea.blaze.clwb.run.producers.RunConfigurationProducerSuppressor$Catch"/>
+    </extensions>
+</idea-plugin>

@@ -17,9 +17,6 @@
   <vendor>Google</vendor>
 
   <depends>com.intellij.modules.clion</depends>
-  <depends>org.jetbrains.plugins.clion.test.boost</depends>
-  <depends>org.jetbrains.plugins.clion.test.catch</depends>
-  <depends>org.jetbrains.plugins.clion.test.google</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <consoleFilterProvider implementation="com.google.idea.blaze.clwb.run.BlazeCppPathConsoleFilter$Provider"/>
@@ -28,7 +25,6 @@
 
     <editorNotificationProvider implementation="com.google.idea.blaze.plugin.CMakeNotificationFilter" />
     <moduleType id="BLAZE_CPP_MODULE" implementationClass="com.google.idea.blaze.clwb.BlazeCppModuleType"/>
-    <postStartupActivity implementation="com.google.idea.blaze.clwb.run.producers.NonBlazeProducerSuppressor"/>
     <actionConfigurationCustomizer implementation="com.google.idea.blaze.plugin.ClwbHideMakeActions"/>
   </extensions>
 

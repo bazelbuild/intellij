@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.clwb.run.producers;
 
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.intellij.execution.RunConfigurationProducerService;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -24,27 +23,41 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.jetbrains.cidr.cpp.execution.testing.boost.CMakeBoostTestRunConfigurationProducer;
 import com.jetbrains.cidr.cpp.execution.testing.google.CMakeGoogleTestRunConfigurationProducer;
 import com.jetbrains.cidr.cpp.execution.testing.tcatch.CMakeCatchTestRunConfigurationProducer;
+import org.jetbrains.annotations.NotNull;
 
 /** Suppresses certain non-Blaze configuration producers in Blaze projects. */
-public class NonBlazeProducerSuppressor implements StartupActivity {
+public abstract class RunConfigurationProducerSuppressor implements StartupActivity.Background {
 
-  private static final ImmutableList<Class<? extends RunConfigurationProducer<?>>>
-      PRODUCERS_TO_SUPPRESS =
-          ImmutableList.of(
-              CMakeGoogleTestRunConfigurationProducer.class,
-              CMakeCatchTestRunConfigurationProducer.class,
-              CMakeBoostTestRunConfigurationProducer.class);
+  @NotNull
+  protected abstract Class<? extends RunConfigurationProducer<?>> producerType();
 
   @Override
-  public void runActivity(Project project) {
+  public void runActivity(@NotNull Project project) {
     if (Blaze.isBlazeProject(project)) {
-      suppressProducers(project);
+      RunConfigurationProducerService producerService =
+              RunConfigurationProducerService.getInstance(project);
+      producerService.addIgnoredProducer(producerType());
     }
   }
 
-  private static void suppressProducers(Project project) {
-    RunConfigurationProducerService producerService =
-        RunConfigurationProducerService.getInstance(project);
-    PRODUCERS_TO_SUPPRESS.forEach(producerService::addIgnoredProducer);
+  public static class Boost extends RunConfigurationProducerSuppressor {
+    @Override
+    protected Class<? extends RunConfigurationProducer<?>> producerType() {
+      return CMakeBoostTestRunConfigurationProducer.class;
+    }
+  }
+
+  public static class Catch extends RunConfigurationProducerSuppressor {
+    @Override
+    protected Class<? extends RunConfigurationProducer<?>> producerType() {
+      return CMakeCatchTestRunConfigurationProducer.class;
+    }
+  }
+
+  public static class Google extends RunConfigurationProducerSuppressor {
+    @Override
+    protected Class<? extends RunConfigurationProducer<?>> producerType() {
+      return CMakeGoogleTestRunConfigurationProducer.class;
+    }
   }
 }

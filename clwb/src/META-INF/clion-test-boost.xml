@@ -1,0 +1,6 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <backgroundPostStartupActivity
+                implementation="com.google.idea.blaze.clwb.run.producers.RunConfigurationProducerSuppressor$Boost"/>
+    </extensions>
+</idea-plugin>

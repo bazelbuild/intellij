@@ -7,6 +7,7 @@ load(
     "//build_defs:build_defs.bzl",
     "intellij_plugin",
     "intellij_plugin_library",
+    "optional_plugin_xml",
     "plugin_deploy_zip",
     "repackaged_files",
     "stamped_plugin_xml",
@@ -27,9 +28,32 @@ load(
 
 licenses(["notice"])
 
+optional_plugin_xml(
+    name = "optional_bundled_boost_plugin",
+    module = "org.jetbrains.plugins.clion.test.boost",
+    plugin_xml = "src/META-INF/clion-test-boost.xml",
+)
+
+optional_plugin_xml(
+    name = "optional_bundled_catch_plugin",
+    module = "org.jetbrains.plugins.clion.test.catch",
+    plugin_xml = "src/META-INF/clion-test-catch.xml",
+)
+
+optional_plugin_xml(
+    name = "optional_bundled_gtest_plugin",
+    module = "org.jetbrains.plugins.clion.test.google",
+    plugin_xml = "src/META-INF/clion-test-google.xml",
+)
+
 intellij_plugin_library(
     name = "plugin_library",
     plugin_xmls = ["src/META-INF/clwb.xml"],
+    optional_plugin_xmls = [
+        ":optional_bundled_boost_plugin",
+        ":optional_bundled_catch_plugin",
+        ":optional_bundled_gtest_plugin",
+        ],
     visibility = PLUGIN_PACKAGES_VISIBILITY,
     deps = [":clwb_lib"],
 )
