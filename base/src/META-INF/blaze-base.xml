@@ -168,6 +168,7 @@
     </group>
     <group id="Internal.Blaze" text="Blaze" popup="true" internal="true">
       <action internal="true" id="Blaze.QSync.CleanDependencies" class="com.google.idea.blaze.base.qsync.action.CleanDependencies" text="QSync - Clean Dependencies" />
+      <action internal="true" id="Blaze.QSync.ReloadProject" class="com.google.idea.blaze.base.qsync.action.ReloadProject" text="QSync - Reload project" />
       <add-to-group group-id="Internal"/>
     </group>
   </actions>

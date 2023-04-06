@@ -94,6 +94,11 @@ public class QuerySyncManager {
     this.loader = loader;
   }
 
+  @CanIgnoreReturnValue
+  public ListenableFuture<Boolean> reloadProject() {
+    return run("Loading project", "Re-loading project", this::loadProject);
+  }
+
   public void loadProject(BlazeContext context) {
     try {
       QuerySyncProject newProject = loader.loadProject(context);
