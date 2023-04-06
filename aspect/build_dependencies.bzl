@@ -90,10 +90,10 @@ def _collect_dependencies_core_impl(
         generate_aidl_classes):
     if JavaInfo not in target:
         return [DependenciesInfo(
-            compile_time_jars = None,
-            target_to_artifacts = None,
-            aars = None,
-            gensrcs = None,
+            compile_time_jars = depset(),
+            target_to_artifacts = {},
+            aars = depset(),
+            gensrcs = depset(),
         )]
     label = str(target.label)
     included = False
