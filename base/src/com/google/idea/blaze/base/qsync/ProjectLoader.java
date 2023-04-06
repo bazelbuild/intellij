@@ -130,12 +130,15 @@ public class ProjectLoader {
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
 
+    ProjectDefinition latestProjectDef =
+        ProjectDefinition.create(importRoots.rootPaths(), importRoots.excludePaths());
+    // don't use the snapshot if the project definition has changed, since a full re-load will be
+    // necessary in that case:
+    loadedSnapshot =
+        loadedSnapshot.filter(snapshot -> snapshot.projectDefinition().equals(latestProjectDef));
+
     ProjectDefinition projectDefinition =
-        loadedSnapshot
-            .map(PostQuerySyncData::projectDefinition)
-            .orElseGet(
-                () ->
-                    ProjectDefinition.create(importRoots.rootPaths(), importRoots.excludePaths()));
+        loadedSnapshot.map(PostQuerySyncData::projectDefinition).orElse(latestProjectDef);
 
     QuerySyncProject loadedProject =
         new QuerySyncProject(
