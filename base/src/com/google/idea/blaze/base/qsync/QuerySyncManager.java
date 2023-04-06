@@ -17,7 +17,10 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
@@ -150,7 +153,23 @@ public class QuerySyncManager {
 
   private ListenableFuture<Boolean> run(String title, String subTitle, ScopedOperation operation) {
     SettableFuture<Boolean> result = SettableFuture.create();
-    BlazeSyncStatus.getInstance(project).syncStarted();
+    BlazeSyncStatus syncStatus = BlazeSyncStatus.getInstance(project);
+    syncStatus.syncStarted();
+    Futures.addCallback(
+        result,
+        new FutureCallback<Boolean>() {
+          @Override
+          public void onSuccess(Boolean success) {
+            syncStatus.syncEnded(SyncMode.FULL, success ? SyncResult.SUCCESS : SyncResult.FAILURE);
+          }
+
+          @Override
+          public void onFailure(Throwable throwable) {
+            logger.error("Sync failed", throwable);
+            syncStatus.syncEnded(SyncMode.FULL, SyncResult.FAILURE);
+          }
+        },
+        MoreExecutors.directExecutor());
     DumbService.getInstance(project)
         .runWhenSmart(
             () -> {
@@ -185,9 +204,6 @@ public class QuerySyncManager {
                           .push(scope)
                           .push(new ProblemsViewScope(project, FocusBehavior.ALWAYS));
                       operation.execute(context);
-                      // TODO cancel on exceptions
-                      BlazeSyncStatus.getInstance(project)
-                          .syncEnded(SyncMode.FULL, SyncResult.SUCCESS);
                       return !context.hasErrors();
                     }));
   }
