@@ -23,8 +23,15 @@ import com.intellij.openapi.project.Project;
 /** Calls 'blaze info build-language', to retrieve the language spec. */
 public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider {
 
+  private final Project project;
+
+  // Instantiated by IntelliJ
+  public BuildLanguageSpecProviderImpl(Project project) {
+    this.project = project;
+  }
+
   @Override
-  public BuildLanguageSpec getLanguageSpec(Project project) {
+  public BuildLanguageSpec getLanguageSpec() {
     BlazeProjectData blazeProjectData =
         BlazeProjectDataManager.getInstance(project).getBlazeProjectData();
     if (blazeProjectData == null) {

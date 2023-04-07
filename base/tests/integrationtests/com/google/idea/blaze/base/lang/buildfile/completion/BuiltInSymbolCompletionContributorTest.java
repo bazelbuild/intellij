@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.lang.buildfile.psi.BuildFile;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,12 +36,12 @@ public class BuiltInSymbolCompletionContributorTest extends BuildFileIntegration
 
   @Before
   public final void before() {
-    registerApplicationService(
+    registerProjectService(
         BuildLanguageSpecProvider.class,
         new BuildLanguageSpecProvider() {
           @Nullable
           @Override
-          public BuildLanguageSpec getLanguageSpec(Project project) {
+          public BuildLanguageSpec getLanguageSpec() {
             return null;
           }
         });

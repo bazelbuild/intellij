@@ -15,15 +15,14 @@
  */
 package com.google.idea.blaze.base.lang.buildfile.language.semantics;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
 /** Provides a BuildLanguageSpec for the given project. */
 public interface BuildLanguageSpecProvider {
 
-  static BuildLanguageSpecProvider getInstance() {
-    return ServiceManager.getService(BuildLanguageSpecProvider.class);
+  static BuildLanguageSpecProvider getInstance(Project project) {
+    return project.getService(BuildLanguageSpecProvider.class);
   }
 
   /**
@@ -31,5 +30,5 @@ public interface BuildLanguageSpecProvider {
    * for the project (i.e. because BlazeImportSettings has not been set).
    */
   @Nullable
-  BuildLanguageSpec getLanguageSpec(Project project);
+  BuildLanguageSpec getLanguageSpec();
 }

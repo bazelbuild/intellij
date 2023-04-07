@@ -95,7 +95,7 @@ public class BuiltInFunctionCompletionContributor extends CompletionContributor 
             ImmutableSet<String> builtInNames =
                 BuiltInNamesProvider.getBuiltInFunctionNames(project);
             BuildLanguageSpec spec =
-                BuildLanguageSpecProvider.getInstance().getLanguageSpec(project);
+                BuildLanguageSpecProvider.getInstance(project).getLanguageSpec();
             for (String ruleName : builtInNames) {
               result.addElement(
                   LookupElementBuilder.create(ruleName)
