@@ -43,9 +43,18 @@ optional_plugin_xml(
     plugin_xml = "src/META-INF/ndk_contents.xml",
 )
 
+optional_plugin_xml(
+    name = "optional_gct_xml",
+    module = "com.android.tools.ndk",
+    plugin_xml = "src/META-INF/gct_contents.xml",
+)
+
 intellij_plugin_library(
     name = "plugin_library",
-    optional_plugin_xmls = [":optional_ndk_xml"],
+    optional_plugin_xmls = [
+        ":optional_ndk_xml",
+        ":optional_gct_xml",
+        ],
     plugin_xmls = ["src/META-INF/aswb.xml"],
     visibility = ASWB_PLUGIN_PACKAGES_VISIBILITY,
     deps = [":aswb_lib"],
