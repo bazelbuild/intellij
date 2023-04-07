@@ -243,7 +243,7 @@
     <projectService serviceImplementation="com.google.idea.blaze.base.sync.status.BlazeSyncStatusStateManager"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.settings.BlazeUserSettings" id="BlazeUserSettings"/>
     <applicationService serviceImplementation="com.google.idea.blaze.base.sync.autosync.AutoSyncSettings" order="after BlazeUserSettings"/>
-    <applicationService serviceInterface="com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider"
+    <projectService serviceInterface="com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProvider"
                         serviceImplementation="com.google.idea.blaze.base.lang.buildfile.language.semantics.BuildLanguageSpecProviderImpl"/>
     <applicationService serviceInterface="com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProvider"
                         serviceImplementation="com.google.idea.blaze.base.sync.projectstructure.ModuleEditorProviderImpl"/>

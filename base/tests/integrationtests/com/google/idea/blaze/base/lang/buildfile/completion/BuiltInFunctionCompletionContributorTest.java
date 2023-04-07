@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.testing.ServiceHelper;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import javax.annotation.Nullable;
 import org.junit.Before;
@@ -46,7 +45,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
   @Before
   public final void before() {
     specProvider = new MockBuildLanguageSpecProvider();
-    registerApplicationService(BuildLanguageSpecProvider.class, specProvider);
+    registerProjectService(BuildLanguageSpecProvider.class, specProvider);
   }
 
   @Test
@@ -224,7 +223,7 @@ public class BuiltInFunctionCompletionContributorTest extends BuildFileIntegrati
 
     @Nullable
     @Override
-    public BuildLanguageSpec getLanguageSpec(Project project) {
+    public BuildLanguageSpec getLanguageSpec() {
       return languageSpec;
     }
   }

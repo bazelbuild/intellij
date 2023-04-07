@@ -34,7 +34,7 @@ public class BuiltInRuleAnnotator extends BuildAnnotator {
   @Override
   public void visitFuncallExpression(FuncallExpression node) {
     BuildLanguageSpec spec =
-        BuildLanguageSpecProvider.getInstance().getLanguageSpec(node.getProject());
+        BuildLanguageSpecProvider.getInstance(node.getProject()).getLanguageSpec();
     if (spec == null) {
       return;
     }
