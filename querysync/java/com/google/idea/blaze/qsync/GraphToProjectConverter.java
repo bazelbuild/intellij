@@ -58,7 +58,7 @@ public class GraphToProjectConverter {
   }
 
   @VisibleForTesting
-  public Map<String, Map<String, String>> calculateRootSources(Collection<Path> files)
+  public Map<Path, Map<Path, String>> calculateRootSources(Collection<Path> files)
       throws IOException {
 
     Map<Path, Path> allDirs = new TreeMap<>();
@@ -80,29 +80,30 @@ public class GraphToProjectConverter {
     }
 
     // Group per root:
-    Map<String, Map<String, Path>> rootDirs = new HashMap<>();
+    Map<Path, Map<Path, Path>> rootDirs = new HashMap<>();
     for (Path root : projectDefinition.projectIncludes()) {
-      Map<String, Path> inRoot = new TreeMap<>(); // Must be sorted to do prefix later
+      Map<Path, Path> inRoot = new TreeMap<>(); // Must be sorted to do prefix later
       for (Entry<Path, Path> entry : dirs.entrySet()) {
         Path rel = entry.getKey();
         if (rel.startsWith(root)) {
           Path relToRoot = root.relativize(rel);
-          inRoot.put(relToRoot.toString(), entry.getValue());
+          inRoot.put(relToRoot, entry.getValue());
         }
       }
-      rootDirs.put(root.toString(), inRoot);
+      rootDirs.put(root, inRoot);
     }
 
-    Map<String, Map<String, String>> rootToPrefix = new HashMap<>();
-    for (Entry<String, Map<String, Path>> entry : rootDirs.entrySet()) {
-      String root = entry.getKey();
-      Map<String, String> thisRootDirPrefixes = new HashMap<>();
+    Map<Path, Map<Path, String>> rootToPrefix = new HashMap<>();
+    for (Entry<Path, Map<Path, Path>> entry : rootDirs.entrySet()) {
+      Path root = entry.getKey();
+      Map<Path, String> thisRootDirPrefixes = new HashMap<>();
       String lastRel = null;
-      for (Entry<String, Path> relToFile : entry.getValue().entrySet()) {
+      for (Entry<Path, Path> relToFile : entry.getValue().entrySet()) {
         if (lastRel == null || !relToFile.getKey().startsWith(lastRel)) {
-          String[] relToPrefix = calculatePrefix(relToFile.getKey(), relToFile.getValue());
+          String[] relToPrefix =
+              calculatePrefix(relToFile.getKey().toString(), relToFile.getValue());
           lastRel = relToPrefix[0];
-          thisRootDirPrefixes.put(relToPrefix[0], relToPrefix[1]);
+          thisRootDirPrefixes.put(Path.of(relToPrefix[0]), relToPrefix[1]);
         }
       }
       rootToPrefix.put(root, thisRootDirPrefixes);
@@ -135,8 +136,7 @@ public class GraphToProjectConverter {
   }
 
   public ProjectProto.Project createProject(BuildGraphData graph) throws IOException {
-    Map<String, Map<String, String>> rootToPrefix =
-        calculateRootSources(graph.getJavaSourceFiles());
+    Map<Path, Map<Path, String>> rootToPrefix = calculateRootSources(graph.getJavaSourceFiles());
     ImmutableSet<Path> dirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
     ImmutableSet<String> pkgs =
         computeAndroidSourcePackages(graph.getAndroidSourceFiles(), rootToPrefix);
@@ -195,8 +195,8 @@ public class GraphToProjectConverter {
                   ProjectProto.ContentRoot.newBuilder()
                       .setPath(dir.toString())
                       .setBase(Base.WORKSPACE));
-      Map<String, String> sourceRootsWithPrefixes = rootToPrefix.get(dir.toString());
-      for (Entry<String, String> entry : sourceRootsWithPrefixes.entrySet()) {
+      Map<Path, String> sourceRootsWithPrefixes = rootToPrefix.get(dir);
+      for (Entry<Path, String> entry : sourceRootsWithPrefixes.entrySet()) {
         Path path = dir.resolve(entry.getKey());
         contentEntry.addSources(
             ProjectProto.SourceFolder.newBuilder()
@@ -244,18 +244,19 @@ public class GraphToProjectConverter {
    */
   @VisibleForTesting
   public ImmutableSet<String> computeAndroidSourcePackages(
-      List<Path> androidSourceFiles, Map<String, Map<String, String>> rootToPrefix) {
+      List<Path> androidSourceFiles, Map<Path, Map<Path, String>> rootToPrefix) {
     ImmutableSet.Builder<String> androidSourcePackages = ImmutableSet.builder();
     for (Path androidSourceFile : androidSourceFiles) {
       boolean found = false;
-      for (Entry<String, Map<String, String>> root : rootToPrefix.entrySet()) {
+      for (Entry<Path, Map<Path, String>> root : rootToPrefix.entrySet()) {
         if (androidSourceFile.startsWith(root.getKey())) {
-          String inRoot = androidSourceFile.toString().substring(root.getKey().length() + 1);
-          Map<String, String> sourceDirs = root.getValue();
-          for (Entry<String, String> prefixes : sourceDirs.entrySet()) {
-            if (inRoot.startsWith(prefixes.getKey())) {
+          String inRoot =
+              androidSourceFile.toString().substring(root.getKey().toString().length() + 1);
+          Map<Path, String> sourceDirs = root.getValue();
+          for (Entry<Path, String> prefixes : sourceDirs.entrySet()) {
+            if (inRoot.startsWith(prefixes.getKey().toString())) {
               found = true;
-              String inSource = inRoot.substring(prefixes.getKey().length());
+              String inSource = inRoot.substring(prefixes.getKey().toString().length());
               int ix = inSource.lastIndexOf('/');
               String suffix = ix != -1 ? inSource.substring(0, ix) : "";
               if (suffix.startsWith("/")) {
