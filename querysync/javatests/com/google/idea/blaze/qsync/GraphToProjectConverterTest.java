@@ -35,6 +35,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+@SuppressWarnings("DuplicateExpressions")
 @RunWith(JUnit4.class)
 public class GraphToProjectConverterTest {
 
@@ -50,10 +51,10 @@ public class GraphToProjectConverterTest {
             NOOP_CONTEXT,
             ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
-    Map<String, Map<String, String>> rootSources =
+    Map<Path, Map<Path, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
-    assertThat(rootSources.keySet()).containsExactly("java/com/test");
-    assertThat(rootSources.get("java/com/test")).containsExactly("", "com.test");
+    assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
+    assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
   }
 
   @Test
@@ -67,10 +68,10 @@ public class GraphToProjectConverterTest {
             NOOP_CONTEXT,
             ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
-    Map<String, Map<String, String>> rootSources =
+    Map<Path, Map<Path, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
-    assertThat(rootSources.keySet()).containsExactly("java/com/test");
-    assertThat(rootSources.get("java/com/test")).containsExactly("", "com.test");
+    assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
+    assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
   }
 
   @Test
@@ -86,10 +87,10 @@ public class GraphToProjectConverterTest {
             NOOP_CONTEXT,
             ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
-    Map<String, Map<String, String>> rootSources =
+    Map<Path, Map<Path, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
-    assertThat(rootSources.keySet()).containsExactly("java/com/test");
-    assertThat(rootSources.get("java/com/test")).containsExactly("", "com.test");
+    assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
+    assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
   }
 
   @Test
@@ -107,11 +108,12 @@ public class GraphToProjectConverterTest {
                 ImmutableSet.of(Path.of("java/com/app"), Path.of("java/com/lib")),
                 ImmutableSet.of()));
 
-    Map<String, Map<String, String>> rootSources =
+    Map<Path, Map<Path, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
-    assertThat(rootSources.keySet()).containsExactly("java/com/app", "java/com/lib");
-    assertThat(rootSources.get("java/com/app")).containsExactly("", "com.app");
-    assertThat(rootSources.get("java/com/lib")).containsExactly("", "com.lib");
+    assertThat(rootSources.keySet())
+        .containsExactly(Path.of("java/com/app"), Path.of("java/com/lib"));
+    assertThat(rootSources.get(Path.of("java/com/app"))).containsExactly(Path.of(""), "com.app");
+    assertThat(rootSources.get(Path.of("java/com/lib"))).containsExactly(Path.of(""), "com.lib");
   }
 
   @Test
@@ -130,13 +132,13 @@ public class GraphToProjectConverterTest {
             NOOP_CONTEXT,
             ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
-    Map<String, Map<String, String>> rootSources =
+    Map<Path, Map<Path, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
-    assertThat(rootSources.keySet()).containsExactly("java/com/test");
-    assertThat(rootSources.get("java/com/test"))
+    assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
+    assertThat(rootSources.get(Path.of("java/com/test")))
         .containsExactly(
-            "", "com.test",
-            "package1", "com.test.oddpackage");
+            Path.of(""), "com.test",
+            Path.of("package1"), "com.test.oddpackage");
   }
 
   @Test
@@ -154,13 +156,13 @@ public class GraphToProjectConverterTest {
             NOOP_CONTEXT,
             ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
-    Map<String, Map<String, String>> rootSources =
+    Map<Path, Map<Path, String>> rootSources =
         converter.calculateRootSources(sourcePackages.keySet());
-    assertThat(rootSources.keySet()).containsExactly("java/com/test");
-    assertThat(rootSources.get("java/com/test"))
+    assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
+    assertThat(rootSources.get(Path.of("java/com/test")))
         .containsExactly(
-            "repackaged", "",
-            "", "com.test");
+            Path.of("repackaged"), "",
+            Path.of(""), "com.test");
   }
 
   @Test
@@ -213,8 +215,8 @@ public class GraphToProjectConverterTest {
     ImmutableList<Path> androidSourceFiles =
         ImmutableList.of(
             Path.of("java/com/example/foo/Foo.java"), Path.of("java/com/example/bar/Bar.java"));
-    ImmutableMap<String, Map<String, String>> rootToPrefix =
-        ImmutableMap.of("java/com/example", ImmutableMap.of("", "com.example"));
+    Map<Path, Map<Path, String>> rootToPrefix =
+        ImmutableMap.of(Path.of("java/com/example"), ImmutableMap.of(Path.of(""), "com.example"));
 
     ImmutableSet<String> androidResourcePackages =
         converter.computeAndroidSourcePackages(androidSourceFiles, rootToPrefix);
@@ -233,8 +235,8 @@ public class GraphToProjectConverterTest {
         ImmutableList.of(
             Path.of("some_project/java/com/example/foo/Foo.java"),
             Path.of("some_project/java/com/example/bar/Bar.java"));
-    ImmutableMap<String, Map<String, String>> rootToPrefix =
-        ImmutableMap.of("some_project", ImmutableMap.of("java", ""));
+    Map<Path, Map<Path, String>> rootToPrefix =
+        ImmutableMap.of(Path.of("some_project"), ImmutableMap.of(Path.of("java"), ""));
 
     ImmutableSet<String> androidResourcePackages =
         converter.computeAndroidSourcePackages(androidSourceFiles, rootToPrefix);
@@ -253,12 +255,12 @@ public class GraphToProjectConverterTest {
         ImmutableList.of(
             Path.of("some_project/java/com/example/foo/Foo.java"),
             Path.of("java/com/example/bar/Bar.java"));
-    ImmutableMap<String, Map<String, String>> rootToPrefix =
+    Map<Path, Map<Path, String>> rootToPrefix =
         ImmutableMap.of(
-            "some_project",
-            ImmutableMap.of("java", ""),
-            "java/com/example",
-            ImmutableMap.of("", "com.example"));
+            Path.of("some_project"),
+            ImmutableMap.of(Path.of("java"), ""),
+            Path.of("java/com/example"),
+            ImmutableMap.of(Path.of(""), "com.example"));
 
     ImmutableSet<String> androidResourcePackages =
         converter.computeAndroidSourcePackages(androidSourceFiles, rootToPrefix);
