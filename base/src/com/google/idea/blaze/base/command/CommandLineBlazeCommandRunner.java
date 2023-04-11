@@ -185,4 +185,14 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
             .run();
     return BuildResult.fromExitCode(retVal);
   }
+
+  @Override
+  public Optional<Integer> getMaxCommandLineLength() {
+    // Return a conservative value.
+    // `getconf ARG_MAX` returns large values (1048576 on mac, 2097152 on linux) but this is
+    // much larger than the actual command line limit seen in practice.
+    // On linux, `xargs --show-limits` says "Size of command buffer we are actually using: 131072"
+    // so choose a value somewhere south of that, which seems to work.
+    return Optional.of(130000);
+  }
 }

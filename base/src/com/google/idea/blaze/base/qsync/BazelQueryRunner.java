@@ -15,17 +15,21 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
+import com.google.idea.blaze.base.command.BlazeCommandRunner;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.qsync.query.QuerySpec;
+import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 /** The default implementation of QueryRunner. */
 public class BazelQueryRunner implements QueryRunner {
@@ -38,15 +42,28 @@ public class BazelQueryRunner implements QueryRunner {
   }
 
   @Override
-  @MustBeClosed
-  public InputStream runQuery(QuerySpec query, BlazeContext context) throws IOException {
+  public QuerySummary runQuery(QuerySpec query, BlazeContext context) throws IOException {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
+    BlazeCommandRunner commandRunner = invoker.getCommandRunner();
+
     BlazeCommand.Builder commandBuilder = BlazeCommand.builder(invoker, BlazeCommandName.QUERY);
-    commandBuilder.addBlazeFlags(query.getQueryArgs());
-    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-      return invoker
-          .getCommandRunner()
-          .runQuery(project, commandBuilder, buildResultHelper, context);
+    commandBuilder.addBlazeFlags(query.getQueryFlags());
+    String queryExp = query.getQueryExpression();
+    if (commandRunner.getMaxCommandLineLength().map(max -> queryExp.length() > max).orElse(false)) {
+      // Query is too long, write it to a file.
+      Path tmpFile =
+          Files.createTempFile(
+              Files.createDirectories(Path.of(project.getBasePath(), "tmp")), "query", ".txt");
+      tmpFile.toFile().deleteOnExit();
+      Files.writeString(tmpFile, queryExp, StandardOpenOption.WRITE);
+      commandBuilder.addBlazeFlags("--query_file", tmpFile.toString());
+    } else {
+      commandBuilder.addBlazeFlags(queryExp);
+    }
+    try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper();
+        InputStream in =
+            commandRunner.runQuery(project, commandBuilder, buildResultHelper, context)) {
+      return QuerySummary.create(in);
     }
   }
 }

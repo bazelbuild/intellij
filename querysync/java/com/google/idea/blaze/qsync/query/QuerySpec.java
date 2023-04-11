@@ -38,18 +38,18 @@ public abstract class QuerySpec {
 
   // LINT.IfChanges
   @Memoized
-  public ImmutableList<String> getQueryArgs() {
+  public ImmutableList<String> getQueryFlags() {
+    return ImmutableList.of("--output=streamed_proto", "--relative_locations=true");
+  }
+
+  @Memoized
+  public String getQueryExpression() {
     // This is the main query, note the use of :* that means that the query output has
     // all the files in that directory too. So we can identify all that is reachable.
-    StringBuilder targets =
-        new StringBuilder()
-            .append("(")
-            .append(includes().stream().map(s -> String.format("%s:*", s)).collect(joining(" + ")))
-            .append(excludes().stream().map(s -> String.format(" - %s:*", s)).collect(joining()))
-            .append(")");
-
-    return ImmutableList.of(
-        "--output=streamed_proto", "--relative_locations=true", targets.toString());
+    return "("
+        + includes().stream().map(s -> String.format("%s:*", s)).collect(joining(" + "))
+        + excludes().stream().map(s -> String.format(" - %s:*", s)).collect(joining())
+        + ")";
   }
   // LINT.ThenChange(
   //   //depot/google3/aswb/testdata/projects/test_projects.bzl
