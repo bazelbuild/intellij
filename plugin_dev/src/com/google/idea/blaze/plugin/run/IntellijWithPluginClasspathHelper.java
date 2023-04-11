@@ -36,6 +36,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Boilerplate for running an IJ application with an additional plugin, copied from
@@ -120,13 +121,24 @@ public class IntellijWithPluginClasspathHelper {
   }
 
   public static ProductInfoJson getProductInfoJson(Sdk ideaJdk) {
-    Path productJsonPath = Paths.get(ideaJdk.getHomePath(), "product-info.json");
+    Path productJsonPath = findProductInfoJson(ideaJdk);
     Gson gson = new Gson();
     try (Reader reader = Files.newBufferedReader(productJsonPath)) {
       return gson.fromJson(reader, ProductInfoJson.class);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  private static Path findProductInfoJson(Sdk ideaJdk) {
+    final String PRODUCT_INFO_JSON = "product-info.json";
+    return Stream.of(
+                    Paths.get(ideaJdk.getHomePath(), PRODUCT_INFO_JSON),
+                    Paths.get(ideaJdk.getHomePath(), "Resources", PRODUCT_INFO_JSON)
+            )
+            .filter(p -> p.toFile().exists())
+            .findFirst()
+            .orElseThrow(() -> new RuntimeException("Could not find " + PRODUCT_INFO_JSON + " file in " + ideaJdk.getHomePath()));
   }
 
   private static void addLibrariesToList(ImmutableList<String> ijLibraries, String libPath, PathsList list) {
@@ -175,7 +187,11 @@ public class IntellijWithPluginClasspathHelper {
       if(launchInfo.isPresent()) {
           addIntellijLibrariesFromProductInfoJson(params, ideaJdk, launchInfo.get());
           for (String productInfoJsonParams : launchInfo.get().additionalJvmArguments) {
-              vm.add(productInfoJsonParams);
+            // same logic as in Gradle Plugin https://github.com/JetBrains/gradle-intellij-plugin/blob/78fb3adbfafa804d08c637edca6e1655caddc539/src/main/kotlin/org/jetbrains/intellij/utils.kt#L108
+            String resolvedParam = productInfoJsonParams
+                    .replace("$APP_PACKAGE", ideaJdk.getHomePath())
+                    .replace("Contents/Contents", "Contents"); //
+            vm.add(resolvedParam);
           }
       } else {
           logger.error(String.format("Could not find 'launch' settings in product-info.json for os:'%s' and arch:'%s'", os, arch));
