@@ -148,10 +148,10 @@ def _collect_dependencies_core_impl(
                 label: [_output_relative_path(f.path) for f in target[JavaInfo].transitive_compile_time_jars.to_list()],
             }
         if declares_android_resources(target, ctx):
-            aar = target[AndroidIdeInfo].aar
-            if aar:
-                aar_files.append(aar)
-                target_to_artifacts[label].append(_output_relative_path(aar.path))
+            ide_aar = _get_ide_aar_file(target, ctx)
+            if ide_aar:
+                aar_files.append(ide_aar)
+                target_to_artifacts[label].append(_output_relative_path(ide_aar.path))
 
     else:
         if generate_aidl_classes and generates_idl_jar(target):
@@ -203,6 +203,91 @@ def _collect_dependencies_core_impl(
         ),
     ]
 
+def _get_ide_aar_file(target, ctx):
+    """
+    Builds a resource only .aar file for the ide.
+
+    The IDE requires just resource files and the manifest from the IDE.
+    Moreover, there are cases when the existing rules fail to build a full .aar
+    file from a library, on which other targets can still depend.
+
+    The function builds a minimalistic .aar file that contains resources and the
+    manifest only.
+    """
+    full_aar = target[AndroidIdeInfo].aar
+    if full_aar:
+        resource_files = _collect_resource_files(ctx)
+        resource_map = _build_aar_file_map(target[AndroidIdeInfo].manifest, resource_files)
+        aar = ctx.actions.declare_file(full_aar.short_path.removesuffix(".aar") + "_ide/" + full_aar.basename)
+        _package_ide_aar(ctx, aar, resource_map)
+        return aar
+    else:
+        return None
+
+def _collect_resource_files(ctx):
+    """
+    Collects the list of resource files from the target rule attributes.
+    """
+
+    # Unfortunately, there are no suitable bazel providers that describe
+    # resource files used a target.
+    # However, AndroidIdeInfo returns a reference to a so-called resource APK
+    # file, which contains everything the IDE needs to load resources from a
+    # given library. However, this format is currently supported by Android
+    # Studio in the namespaced resource mode. We should consider conditionally
+    # enabling support in Android Studio and use them in ASwB, instead of
+    # building special .aar files for the IDE.
+    resource_files = []
+    for t in ctx.rule.attr.resource_files:
+        for f in t.files.to_list():
+            resource_files.append(f)
+    return resource_files
+
+def _build_aar_file_map(manifest_file, resource_files):
+    """
+    Build the list of files and their paths as they have to appear in .aar.
+    """
+    file_map = {}
+    file_map["AndroidManifest.xml"] = manifest_file
+    for f in resource_files:
+        res_dir_path = f.short_path \
+            .removeprefix(android_common.resource_source_directory(f)) \
+            .removeprefix("/")
+        if res_dir_path:
+            res_dir_path = "res/" + res_dir_path
+            file_map[res_dir_path] = f
+    return file_map
+
+_CONTROL_FILE_ENTRY = '''entry {
+  zip_path: "%s"
+  exec_path: "%s"
+}'''
+
+def _package_ide_aar(ctx, aar, file_map):
+    """
+    Declares a file and defines actions to build .aar according to file_map.
+
+    The IDE.aar file is produces by an aspect and therefore it cannot define
+    additional targets and thus cannot use genzip() rule. This function reuses
+    //tools/genzip:build_zip tool, which is used by getzip() rule.
+    """
+    actions = ctx.actions
+    control_file = actions.declare_file(".control", sibling = aar)
+    control_content = ['output_filename: "%s"' % aar.path]
+    files = []
+    for aar_dir_path, f in file_map.items():
+        files.append(f)
+        control_content.append(_CONTROL_FILE_ENTRY % (aar_dir_path, f.path))
+    control_content.append("compression: STORED")
+    actions.write(control_file, "\n".join(control_content))
+    actions.run(
+        mnemonic = "GenerateIdeAar",
+        executable = ctx.executable._build_zip,
+        inputs = files + [control_file],
+        outputs = [aar],
+        arguments = ["--control", control_file.path],
+    )
+
 def _output_relative_path(path):
     """Get file path relative to the output path.
 
@@ -238,6 +323,12 @@ collect_dependencies = aspect(
             doc = "If True, generates classes for aidl files included as source for the project targets",
             default = False,
         ),
+        "_build_zip": attr.label(
+            allow_files = True,
+            cfg = "exec",
+            executable = True,
+            default = "@//tools/genzip:build_zip",
+        ),
     },
 )
 
@@ -253,4 +344,12 @@ collect_all_dependencies_for_tests = aspect(
     implementation = _collect_all_dependencies_for_tests_impl,
     provides = [DependenciesInfo],
     attr_aspects = ["deps", "exports", "_junit"],
+    attrs = {
+        "_build_zip": attr.label(
+            allow_files = True,
+            cfg = "exec",
+            executable = True,
+            default = "@//tools/genzip:build_zip",
+        ),
+    },
 )
