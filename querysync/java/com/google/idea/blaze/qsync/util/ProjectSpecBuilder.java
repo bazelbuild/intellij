@@ -1,0 +1,98 @@
+/*
+ * Copyright 2023 The Bazel Authors. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.google.idea.blaze.qsync.util;
+
+import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Output;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.qsync.BlazeQueryParser;
+import com.google.idea.blaze.qsync.GraphToProjectConverter;
+import com.google.idea.blaze.qsync.PackageReader;
+import com.google.idea.blaze.qsync.PackageStatementParser;
+import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
+import com.google.idea.blaze.qsync.project.BuildGraphData;
+import com.google.idea.blaze.qsync.project.PostQuerySyncData;
+import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
+import com.google.protobuf.TextFormat;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.zip.GZIPInputStream;
+
+/**
+ * Command line tool to run project proto creation logic on a project snapshot.
+ *
+ * <p>To use this, you current directory must be your workspace root. Then:
+ *
+ * <ol>
+ *   <li>{@code blaze build
+ *       //querysync/java/com/google/idea/blaze/qsync/util:project_spec_builder}
+ *   <li>{@code
+ *       blaze-bin/querysync/java/com/google/idea/blaze/qsync/util/project_spec_builder
+ *       /path/to/project/.blaze/qsyncdata.gz}
+ * </ol>
+ *
+ * <p>It will print the project proto to stdout in text format.
+ *
+ * <p>Note, you cannot just `blaze run` the target, as blaze runs it in a different directory. It
+ * must be run from your workspace root for the package reading code to be able to find the source
+ * files.
+ */
+public class ProjectSpecBuilder {
+
+  private final Context context =
+      new Context() {
+        @Override
+        public <T extends Output> void output(T output) {
+          if (output instanceof PrintOutput) {
+            System.err.println(((PrintOutput) output).getText());
+          }
+        }
+
+        @Override
+        public void setHasError() {
+          error = true;
+        }
+      };
+
+  private final File snapshotFile;
+  private final PackageReader packageReader;
+  boolean error = false;
+
+  public static void main(String[] args) throws IOException {
+    System.exit(new ProjectSpecBuilder(new File(args[0])).run());
+  }
+
+  private ProjectSpecBuilder(File snapshotFile) {
+    this.snapshotFile = snapshotFile;
+    this.packageReader =
+        new WorkspaceResolvingPackageReader(
+            Paths.get("").toAbsolutePath(), new PackageStatementParser());
+  }
+
+  private int run() throws IOException {
+    PostQuerySyncData snapshot =
+        new SnapshotDeserializer()
+            .readFrom(new GZIPInputStream(new FileInputStream(snapshotFile)))
+            .getSyncData();
+    BuildGraphData buildGraph = new BlazeQueryParser(context).parse(snapshot.querySummary());
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(packageReader, context, snapshot.projectDefinition());
+    System.out.println(TextFormat.printer().printToString(converter.createProject(buildGraph)));
+    return error ? 1 : 0;
+  }
+}
