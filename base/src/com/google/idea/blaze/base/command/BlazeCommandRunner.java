@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Runs a blaze command. */
@@ -80,5 +81,9 @@ public interface BlazeCommandRunner {
   /** Get a list of additional build flags. */
   default List<String> getExtraBuildFlags(BlazeCommand.Builder blazeCommandBuilder) {
     return ImmutableList.of();
+  }
+
+  default Optional<Integer> getMaxCommandLineLength() {
+    return Optional.empty();
   }
 }
