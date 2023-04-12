@@ -140,7 +140,7 @@ public class GitBlazeVcsHandlerProvider implements BlazeVcsHandlerProvider {
       return getUpstreamSha(workspaceRoot);
     } catch (VcsException e) {
       if (!suppressErrors) {
-        logger.error(e.getMessage());
+        logger.warn(e.getMessage());
       }
       return null;
     }
