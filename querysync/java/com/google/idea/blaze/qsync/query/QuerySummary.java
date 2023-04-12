@@ -133,6 +133,8 @@ public abstract class QuerySummary {
               }
             } else if (a.getName().equals("idl_srcs")) {
               rule.addAllIdlSources(a.getStringListValueList());
+            } else if (a.getName().equals("resource_files")) {
+              rule.addAllResourceFiles(a.getStringListValueList());
             }
 
             if (OTHER_ATTRIBUTES.contains(a.getName()) && a.hasStringValue()) {
