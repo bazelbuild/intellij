@@ -106,8 +106,8 @@ public interface BuildResultHelper extends AutoCloseable {
    * @param completedBuildId build id.
    * @return a list of message on stdout.
    */
-  default InputStream getStdout(String completedBuildId) throws GetStdoutException {
-    return InputStream.nullInputStream();
+  default BuildIoStream getStdout(String completedBuildId) throws GetStdoutException {
+    return new BuildIoStream(0, InputStream.nullInputStream());
   }
 
   /**
@@ -119,8 +119,8 @@ public interface BuildResultHelper extends AutoCloseable {
    * @param completedBuildId build id.
    * @return a list of message on stderr.
    */
-  default InputStream getStderr(String completedBuildId) throws GetStderrException {
-    return InputStream.nullInputStream();
+  default BuildIoStream getStderr(String completedBuildId) throws GetStderrException {
+    return new BuildIoStream(0, InputStream.nullInputStream());
   }
 
   /**
