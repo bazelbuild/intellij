@@ -142,6 +142,30 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
+  public void testCalculateRootSources_multiSource_rootPrefix() throws IOException {
+    // TODO(b/277384417) this test will fail if we remove the x from 'jxavatests' because
+    //  java will be a prefix of java test
+    ImmutableMap<Path, String> sourcePackages =
+        ImmutableMap.of(
+            Path.of("third_party/java/com/test/Class1.java"), "com.test",
+            Path.of("third_party/jxavatests/com/test/Class2.java"), "com.test");
+
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            sourcePackages::get,
+            NOOP_CONTEXT,
+            ProjectDefinition.create(ImmutableSet.of(Path.of("third_party")), ImmutableSet.of()));
+
+    Map<Path, Map<Path, String>> rootSources =
+        converter.calculateRootSources(sourcePackages.keySet());
+    assertThat(rootSources.keySet()).containsExactly(Path.of("third_party"));
+    assertThat(rootSources.get(Path.of("third_party")))
+        .containsExactly(
+            Path.of("java"), "",
+            Path.of("jxavatests"), "");
+  }
+
+  @Test
   public void testCalculateRootSources_multiSource_repackagedSource() throws IOException {
     // TODO(b/266538303) This test would fail if the lexicographic order of `repackaged` and
     //  `somepackage` was reversed, due to issues in GraphToProjectConverter
