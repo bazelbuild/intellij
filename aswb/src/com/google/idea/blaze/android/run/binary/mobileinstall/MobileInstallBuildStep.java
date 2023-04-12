@@ -186,7 +186,8 @@ public class MobileInstallBuildStep implements ApkBuildStep {
                         + " to the default adb server.")
                 .submit(context);
           } else {
-            deviceFlag += ":tcp:" + adbAddr.getPort();
+            command.addBlazeFlags(
+                BlazeFlags.ADB_ARG + "-P ", BlazeFlags.ADB_ARG + adbAddr.getPort());
           }
         }
         command.addBlazeFlags(BlazeFlags.DEVICE, deviceFlag);
