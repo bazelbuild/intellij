@@ -24,7 +24,6 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
@@ -42,8 +41,6 @@ import javax.annotation.Nullable;
  * dependencies.
  */
 public class DependencyTracker {
-
-  private static final Logger logger = Logger.getInstance(DependencyTracker.class);
 
   private final Path workspaceRoot;
   private final BlazeProject blazeProject;
@@ -93,7 +90,14 @@ public class DependencyTracker {
       if (targetOwner != null) {
         buildTargets.add(targetOwner);
       } else {
-        logger.warn(String.format("No target owner found for file %s", path));
+        context.output(
+            PrintOutput.error(
+                "File %s does not seem to be part of a build rule that the IDE supports.", path));
+        context.output(
+            PrintOutput.error(
+                "If this is a newly added supported rule, please re-sync your project."));
+        context.setHasError();
+        return;
       }
       ImmutableSet<Label> t = snapshot.getFileDependencies(path);
       if (t != null) {
