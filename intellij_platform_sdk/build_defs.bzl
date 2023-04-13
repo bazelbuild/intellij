@@ -3,13 +3,13 @@
 # The current indirect ij_product mapping (eg. "intellij-latest")
 INDIRECT_IJ_PRODUCTS = {
     # Indirect ij_product mapping for internal Blaze Plugin
-    "intellij-latest": "intellij-2022.1",
-    "intellij-latest-mac": "intellij-2022.1-mac",
-    "intellij-beta": "intellij-2022.1",
+    "intellij-latest": "intellij-2022.3",
+    "intellij-latest-mac": "intellij-2022.3-mac",
+    "intellij-beta": "intellij-2022.3",
     "intellij-under-dev": "intellij-2022.3",
-    "intellij-ue-latest": "intellij-ue-2022.1",
-    "intellij-ue-latest-mac": "intellij-ue-2022.1-mac",
-    "intellij-ue-beta": "intellij-ue-2022.1",
+    "intellij-ue-latest": "intellij-ue-2022.3",
+    "intellij-ue-latest-mac": "intellij-ue-2022.3-mac",
+    "intellij-ue-beta": "intellij-ue-2022.3",
     "intellij-ue-under-dev": "intellij-ue-2022.3",
     "android-studio-latest": "android-studio-2022.2",
     "android-studio-latest-mac": "android-studio-2022.2-mac",
@@ -19,9 +19,9 @@ INDIRECT_IJ_PRODUCTS = {
     "android-studio-canary-mac": "android-studio-2022.3-mac",
     "android-studio-dev": "android-studio-dev",
     "android-studio-dev-mac": "android-studio-dev-mac",
-    "clion-latest": "clion-2022.1",
-    "clion-latest-mac": "clion-2022.1-mac",
-    "clion-beta": "clion-2022.1",
+    "clion-latest": "clion-2022.3",
+    "clion-latest-mac": "clion-2022.3-mac",
+    "clion-beta": "clion-2022.3",
     "clion-under-dev": "clion-2022.3",
     # Indirect ij_product mapping for Bazel Plugin OSS
     # The old names for -oss-oldest-stable and -oss-latest-stable were
@@ -39,8 +39,8 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-oss-latest-stable": "clion-2023.1",
     "clion-oss-under-dev": "clion-2023.1",
     # Indirect ij_product mapping for Cloud Code Plugin OSS
-    "intellij-cc-oldest-stable": "intellij-2022.1",
-    "intellij-cc-latest-stable": "intellij-2022.2",
+    "intellij-cc-oldest-stable": "intellij-2022.2",
+    "intellij-cc-latest-stable": "intellij-2022.3",
     "intellij-cc-under-dev": "intellij-2022.3",
     "intellij-ue-cc-oldest-stable": "intellij-ue-2022.1",
     "intellij-ue-cc-latest-stable": "intellij-ue-2022.2",
