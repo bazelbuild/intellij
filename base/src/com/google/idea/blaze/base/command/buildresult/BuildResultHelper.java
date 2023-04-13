@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.command.buildresult;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Interner;
+import com.google.idea.blaze.base.bazel.BuildException;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import java.io.InputStream;
@@ -165,9 +166,17 @@ public interface BuildResultHelper extends AutoCloseable {
   void close();
 
   /** Indicates a failure to get artifact information */
-  class GetArtifactsException extends Exception {
+  class GetArtifactsException extends BuildException {
+    public GetArtifactsException(Throwable cause) {
+      super(cause);
+    }
+
     public GetArtifactsException(String message) {
       super(message);
+    }
+
+    public GetArtifactsException(String message, Throwable cause) {
+      super(message, cause);
     }
   }
 
@@ -193,9 +202,13 @@ public interface BuildResultHelper extends AutoCloseable {
     }
   }
   /** Indicates a failure to get stdout messages */
-  class GetStdoutException extends Exception {
+  class GetStdoutException extends BuildException {
     public GetStdoutException(String message) {
       super(message);
+    }
+
+    public GetStdoutException(String message, Throwable cause) {
+      super(message, cause);
     }
   }
 }

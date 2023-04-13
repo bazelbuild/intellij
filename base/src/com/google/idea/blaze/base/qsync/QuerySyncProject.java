@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.bazel.BuildException;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
@@ -107,10 +107,22 @@ public class QuerySyncProject {
     projectData = new QuerySyncProjectData(workspacePathResolver, workspaceLanguageSettings);
   }
 
+  private boolean isExceptionError(Exception e) {
+    if (e instanceof BuildException) {
+      return ((BuildException) e).isIdeError();
+    }
+    return true;
+  }
+
   /** Log & display a message to the user when a user-initiated action fails. */
   private void onError(String description, Exception e, BlazeContext context) {
-    logger.error(description, e);
-    context.output(PrintOutput.error(description + ": " + e.getClass().getSimpleName()));
+    if (isExceptionError(e)) {
+      logger.error(description, e);
+      context.output(PrintOutput.error(description + ": " + e.getClass().getSimpleName()));
+    } else {
+      logger.info(description, e);
+      context.output(PrintOutput.error(description));
+    }
     context.setHasError();
     if (e.getMessage() != null) {
       context.output(PrintOutput.error("Cause: " + e.getMessage()));
@@ -178,8 +190,7 @@ public class QuerySyncProject {
     }
   }
 
-  public void build(BlazeContext context, List<Path> wps)
-      throws IOException, GetArtifactsException {
+  public void build(BlazeContext context, List<Path> wps) throws IOException, BuildException {
     getDependencyTracker().buildDependenciesForFile(context, wps);
   }
 
@@ -192,7 +203,7 @@ public class QuerySyncProject {
       Path path = Paths.get(psiFile.getVirtualFile().getPath());
       String rel = workspaceRoot.path().relativize(path).toString();
       build(context, ImmutableList.of(WorkspacePath.createIfValid(rel).asPath()));
-    } catch (IOException | GetArtifactsException e) {
+    } catch (IOException | BuildException e) {
       onError("Failed to build dependencies", e, context);
     }
   }
