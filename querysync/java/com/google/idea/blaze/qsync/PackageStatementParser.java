@@ -32,13 +32,14 @@ public class PackageStatementParser implements PackageReader {
 
   @Override
   public String readPackage(Path path) throws IOException {
-    BufferedReader javaReader =
-        new BufferedReader(new InputStreamReader(new FileInputStream(path.toFile()), UTF_8));
-    String javaLine;
-    while ((javaLine = javaReader.readLine()) != null) {
-      Matcher packageMatch = PACKAGE_PATTERN.matcher(javaLine);
-      if (packageMatch.find()) {
-        return packageMatch.group(1);
+    try (InputStreamReader in = new InputStreamReader(new FileInputStream(path.toFile()), UTF_8)) {
+      BufferedReader javaReader = new BufferedReader(in);
+      String javaLine;
+      while ((javaLine = javaReader.readLine()) != null) {
+        Matcher packageMatch = PACKAGE_PATTERN.matcher(javaLine);
+        if (packageMatch.find()) {
+          return packageMatch.group(1);
+        }
       }
     }
     return "";
