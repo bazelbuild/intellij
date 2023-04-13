@@ -904,6 +904,27 @@ java_library(
     ),
 )
 
+# IntelliJ yaml plugin
+java_library(
+    name = "yaml",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":yaml"],
+    ),
+)
+
+java_library(
+    name = "yaml_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":yaml"],
+    ),
+)
+
 filegroup(
     name = "application_info_json",
     srcs = select_from_plugin_api_directory(
