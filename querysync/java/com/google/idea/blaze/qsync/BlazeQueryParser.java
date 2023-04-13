@@ -201,6 +201,7 @@ public class BlazeQueryParser {
             .ruleDeps(ruleDeps)
             .ruleRuntimeDeps(ruleRuntimeDeps)
             .projectDeps(projectDeps)
+            .packages(packages)
             .reverseDeps(caclulateReverseDeps(ruleDeps, ruleRuntimeDeps))
             .build();
 
