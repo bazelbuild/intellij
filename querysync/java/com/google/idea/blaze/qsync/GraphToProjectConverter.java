@@ -19,7 +19,8 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
@@ -34,13 +35,18 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /** Converts a {@link BuildGraphData} instance into a project proto. */
 public class GraphToProjectConverter {
@@ -57,86 +63,209 @@ public class GraphToProjectConverter {
     this.projectDefinition = projectDefinition;
   }
 
+  /**
+   * Calculates the source roots for all files in the project. While the vast majority of projects
+   * will fall into the standard java/javatest packages, there are projects that do not conform with
+   * this convention.
+   *
+   * <p>Mapping blaze projects to .imls will always be an aproximation, because blaze does not
+   * impose any restrictions on how the source files are on disk. IntelliJ does.
+   *
+   * <p>The code in .imls is organized as follows (simplified view):
+   *
+   * <p>A project is a collection of modules. (For now we only have one module, so we do not model
+   * dependencies yet). A module is a collection of content roots. A content root, is a directory
+   * were code of different kind is located. Inside a content root there can be different source
+   * roots. A source root is a directory inside the content root, that has a coherent group of
+   * source files. A source root can be test only. Source roots can be nested. These source files
+   * *must* be organized in a package-friendly directory structure. Most importantly, the directory
+   * structure does not have to start at the root of the package, for that source roots can have a
+   * package prefix that is a applied to the inner structure.
+   *
+   * <p>The algorithm implemented here makes one assumption over the code. All source files within
+   * the same blaze package that are children of other source files, are correctly structured. This
+   * is evidently not true for the general case, but even the most complex projects in our
+   * repository follow this rule. And this is a rule, easy to workaround by a user if it doesn't
+   * hold on their project.
+   *
+   * <pre>
+   * The algorithm works as follows:
+   *   1.- The top-most source files (most one per directory) is chosen per blaze package.
+   *   2.- Read the actual package of each java file, and use that as the directories prefix.
+   *   3.- Split all the packages by content root.
+   *   4.- Merge compatible packages. This is a heuristic step, where each source root
+   *       is bubbled up as far as possible, merging compatible siblings. For a better description
+   *       see the comment on that function.
+   * </pre>
+   *
+   * @param srcFiles all the files that should be included.
+   * @param buildFiles the BUILD files to create source roots for.
+   * @return the content roots in the following form : Content Root -> Source Root -> package
+   *     prefix. A content root contains multiple source roots, each one with a package prefix.
+   */
   @VisibleForTesting
-  public Map<Path, Map<Path, String>> calculateRootSources(Collection<Path> files)
-      throws IOException {
+  public Map<Path, Map<Path, String>> calculateRootSources(
+      Collection<Path> srcFiles, ImmutableSet<Path> buildFiles) throws IOException {
 
-    Map<Path, Path> allDirs = new TreeMap<>();
-    // Map directories to a source file they contain
-    for (Path file : files) {
-      allDirs.putIfAbsent(file.getParent(), file);
-    }
+    // A map from package to the file chosen to represent it.
+    ImmutableList<Path> chosenFiles = chooseTopLevelFiles(srcFiles, buildFiles);
 
-    // Keep only one
-    Map<Path, Path> dirs = new HashMap<>();
-    // They are sorted, so prefixes should work:
-    Map.Entry<Path, Path>[] dirsArray = allDirs.entrySet().toArray(new Map.Entry[0]);
-    int last = -1;
-    for (int i = 0; i < dirsArray.length; i++) {
-      if (last == -1 || !dirsArray[i].getKey().startsWith(dirsArray[last].getKey())) {
-        dirs.put(dirsArray[i].getKey(), dirsArray[i].getValue());
-        last = i;
-      }
-    }
+    // A map from a directory to its prefix
+    ImmutableMap<Path, String> prefixes = readPackages(chosenFiles);
 
-    // Group per root:
-    Map<Path, Map<Path, Path>> rootDirs = new HashMap<>();
-    for (Path root : projectDefinition.projectIncludes()) {
-      Map<Path, Path> inRoot = new TreeMap<>(); // Must be sorted to do prefix later
-      for (Entry<Path, Path> entry : dirs.entrySet()) {
-        Path rel = entry.getKey();
-        if (rel.startsWith(root)) {
-          Path relToRoot = root.relativize(rel);
-          inRoot.put(relToRoot, entry.getValue());
-        }
-      }
-      rootDirs.put(root, inRoot);
-    }
+    // All packages split by their content roots
+    Map<Path, Map<Path, String>> rootToPrefix = splitByRoot(prefixes);
 
-    Map<Path, Map<Path, String>> rootToPrefix = new HashMap<>();
-    for (Entry<Path, Map<Path, Path>> entry : rootDirs.entrySet()) {
-      Path root = entry.getKey();
-      Map<Path, String> thisRootDirPrefixes = new HashMap<>();
-      String lastRel = null;
-      for (Entry<Path, Path> relToFile : entry.getValue().entrySet()) {
-        if (lastRel == null || !relToFile.getKey().startsWith(lastRel)) {
-          String[] relToPrefix =
-              calculatePrefix(relToFile.getKey().toString(), relToFile.getValue());
-          lastRel = relToPrefix[0];
-          thisRootDirPrefixes.put(Path.of(relToPrefix[0]), relToPrefix[1]);
-        }
-      }
-      rootToPrefix.put(root, thisRootDirPrefixes);
-    }
+    // Merging packages that can share the same prefix
+    mergeCompatibleSourceRoots(rootToPrefix);
+
     return rootToPrefix;
   }
 
-  private String[] calculatePrefix(String rel, Path path) throws IOException {
-    String pkg = Preconditions.checkNotNull(packageReader.readPackage(path), path);
+  @VisibleForTesting
+  Map<Path, Map<Path, String>> splitByRoot(Map<Path, String> prefixes) {
+    Map<Path, Map<Path, String>> split = new HashMap<>();
+    for (Path root : projectDefinition.projectIncludes()) {
+      Map<Path, String> inRoot = new HashMap<>();
+      for (Entry<Path, String> pkg : prefixes.entrySet()) {
+        Path rel = pkg.getKey();
+        if (rel.startsWith(root)) {
+          Path relToRoot = root.relativize(rel);
+          inRoot.put(relToRoot, pkg.getValue());
+        }
+      }
+      split.put(root, inRoot);
+    }
+    return split;
+  }
 
-    String pkgAsDir = "/" + pkg.replaceAll("\\.", "/");
-    rel = "/" + rel;
-    String suffix = Strings.commonSuffix(pkgAsDir, rel);
+  private ImmutableMap<Path, String> readPackages(Collection<Path> files) throws IOException {
+    long now = System.currentTimeMillis();
+    ImmutableMap.Builder<Path, String> javaPackages = ImmutableMap.builder();
+    for (Path file : files) {
+      javaPackages.put(file.getParent(), packageReader.readPackage(file));
+    }
+    long elapsed = System.currentTimeMillis() - now;
+    context.output(PrintOutput.log("%-10d Java files read (%d ms)", files.size(), elapsed));
+    return javaPackages.build();
+  }
 
-    int ix = suffix.indexOf('/');
-    if (ix == -1) {
-      suffix = "";
-    } else {
-      suffix = suffix.substring(ix);
+  @VisibleForTesting
+  protected static ImmutableList<Path> chooseTopLevelFiles(
+      Collection<Path> files, ImmutableSet<Path> buildFiles) {
+
+    Set<Path> packages = buildFiles.stream().map(Path::getParent).collect(Collectors.toSet());
+
+    // A map from directory to the candidate chosen to represent that directory
+    Map<Path, Path> candidates =
+        files.stream()
+            .collect(
+                Collectors.toMap(
+                    Path::getParent,
+                    Function.identity(),
+                    BinaryOperator.minBy(Comparator.comparing(Path::getFileName))));
+
+    // Filter the files that are top level files only
+    return candidates.values().stream()
+        .filter(file -> isTopLevel(packages, candidates, file))
+        .collect(ImmutableList.toImmutableList());
+  }
+
+  private static boolean isTopLevel(Set<Path> packages, Map<Path, Path> candidates, Path file) {
+    Path dir = relativeParentOf(file);
+    while (dir != null) {
+      Path existing = candidates.get(dir);
+      if (existing != null && existing != file) {
+        return false;
+      }
+      if (packages.contains(dir)) {
+        return true;
+      }
+      dir = relativeParentOf(dir);
     }
-    rel = rel.substring(0, rel.length() - suffix.length());
-    pkgAsDir = pkgAsDir.substring(0, pkgAsDir.length() - suffix.length());
-    if (pkgAsDir.startsWith("/")) {
-      pkgAsDir = pkgAsDir.substring(1);
+    return false;
+  }
+
+  @Nullable
+  private static Path relativeParentOf(Path path) {
+    Preconditions.checkState(!path.isAbsolute());
+    if (path.toString().isEmpty()) {
+      return null;
     }
-    if (rel.startsWith("/")) {
-      rel = rel.substring(1);
+    Path parent = path.getParent();
+    return parent == null ? Path.of("") : parent;
+  }
+
+  private static String lastSubpackageOf(String pkg) {
+    return pkg.substring(pkg.lastIndexOf('.') + 1);
+  }
+
+  private static String parentPackageOf(String pkg) {
+    int ix = pkg.lastIndexOf('.');
+    return ix == -1 ? "" : pkg.substring(0, ix);
+  }
+
+  /**
+   * Merges source roots that are compatible. Consider the following example, where source roots are
+   * written like "directory" ["prefix"]:
+   *
+   * <pre>
+   *   1.- Two sibling roots:
+   *     "a/b/c/d" ["com.google.d"]
+   *     "a/b/c/e" ["com.google.e"]
+   *   Can be merged to:
+   *     "a/b/c" ["com.google"]
+   *
+   *   2.- Nested roots:
+   *     "a/b/c/d" ["com.google.d"]
+   *     "a/b/c/d/e" ["com.google.d.e"]
+   *   Can be merged to:
+   *     "a/b/c" ["com.google"]
+   * </pre>
+   *
+   * This function works by trying to move a source root up as far as possible (until it reaches the
+   * content root). When it finds a source root above, there can be two scenarios: a) the parent
+   * source root is compatible (like example 2 above), in which case they are merged. b) the parent
+   * root is not compatible, in which case it needs to stop there and cannot be moved further up.
+   * This is true even if the parent source root is later moved up.
+   */
+  @VisibleForTesting
+  static void mergeCompatibleSourceRoots(Map<Path, Map<Path, String>> srcRoots) {
+    for (Entry<Path, Map<Path, String>> contentRoot : srcRoots.entrySet()) {
+      Map<Path, String> sourceRoots = contentRoot.getValue();
+      Set<Path> directories = new TreeSet<>(sourceRoots.keySet());
+      for (Path directory : directories) {
+        String prefix = sourceRoots.remove(directory);
+        while (!prefix.isEmpty()
+            && lastSubpackageOf(prefix).equals(directory.getFileName().toString())) {
+          Path parentDirectory = relativeParentOf(directory);
+          String parentPrefix = parentPackageOf(prefix);
+          String existing = sourceRoots.get(parentDirectory);
+          if (existing != null) {
+            if (existing.equals(parentPrefix)) {
+              // Exists and it's the same it would have been, go up and merge both
+              // Note that if the existing was or not already processed does not matter
+              directory = parentDirectory;
+              prefix = parentPrefix;
+              break;
+            } else {
+              // The roots are not compatible, stop here
+              break;
+            }
+          } else {
+            // We can move one up, and keep trying
+            directory = parentDirectory;
+            prefix = parentPrefix;
+          }
+        }
+        sourceRoots.putIfAbsent(directory, prefix);
+      }
     }
-    return new String[] {rel, pkgAsDir.replaceAll("/", ".")};
   }
 
   public ProjectProto.Project createProject(BuildGraphData graph) throws IOException {
-    Map<Path, Map<Path, String>> rootToPrefix = calculateRootSources(graph.getJavaSourceFiles());
+    Map<Path, Map<Path, String>> rootToPrefix =
+        calculateRootSources(graph.getJavaSourceFiles(), graph.packages());
     ImmutableSet<Path> dirs = computeAndroidResourceDirectories(graph.getAllSourceFiles());
     ImmutableSet<String> pkgs =
         computeAndroidSourcePackages(graph.getAndroidSourceFiles(), rootToPrefix);

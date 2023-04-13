@@ -58,6 +58,8 @@ public abstract class BuildGraphData {
   public abstract ImmutableMap<Label, Location> locations();
   /** A set of all the targets that show up in java rules 'src' attributes */
   public abstract ImmutableSet<Label> javaSources();
+  /** A set of all the BUILD files */
+  public abstract ImmutableSet<Path> packages();
   /** A map from a file path to its target */
   abstract ImmutableMap<Path, Label> fileToTarget();
   /** From source target to the rule that builds it. If multiple one is picked. */
@@ -138,6 +140,7 @@ public abstract class BuildGraphData {
           .sourceOwner(ImmutableMap.of())
           .ruleDeps(ImmutableMap.of())
           .projectDeps(ImmutableSet.of())
+          .packages(ImmutableSet.of())
           .build();
 
   /** Builder for {@link BuildGraphData}. */
@@ -190,6 +193,8 @@ public abstract class BuildGraphData {
     public abstract Builder projectDeps(Set<Label> value);
 
     public abstract ImmutableSet.Builder<Label> androidTargetsBuilder();
+
+    public abstract Builder packages(Set<Path> value);
 
     public abstract BuildGraphData build();
   }

@@ -30,6 +30,8 @@ import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,8 +42,95 @@ import org.junit.runners.JUnit4;
 public class GraphToProjectConverterTest {
 
   @Test
-  public void testCalculateRootSources_singleSource_atImportRoot() throws IOException {
+  public void testChooseFilePerPackage() {
+    ImmutableSet<Path> buildFiles =
+        ImmutableSet.of(
+            Path.of("java/com/test/BUILD"),
+            Path.of("java/com/test/nested/BUILD"),
+            Path.of("java/com/double/BUILD"),
+            Path.of("java/com/multiple/BUILD"));
+    ImmutableSet<Path> files =
+        ImmutableSet.of(
+            Path.of("java/com/test/Class1.java"),
+            Path.of("java/com/test/nested/Nested.java"),
+            Path.of("java/com/double/nest1/BothThis.java"),
+            Path.of("java/com/double/nest2/AndThis.java"),
+            Path.of("java/com/multiple/AThis.java"),
+            Path.of("java/com/multiple/BNotThis.java"),
+            Path.of("java/com/multiple/nest/BNorThis.java"));
 
+    List<Path> chosenFiles = GraphToProjectConverter.chooseTopLevelFiles(files, buildFiles);
+
+    assertThat(chosenFiles)
+        .containsExactly(
+            Path.of("java/com/test/Class1.java"),
+            Path.of("java/com/test/nested/Nested.java"),
+            Path.of("java/com/double/nest1/BothThis.java"),
+            Path.of("java/com/double/nest2/AndThis.java"),
+            Path.of("java/com/multiple/AThis.java"));
+  }
+
+  @Test
+  public void testSplitByRoot() {
+    ImmutableMap<Path, String> sourcePackages =
+        ImmutableMap.of(Path.of("java/com/test/Class1.java"), "com.test");
+
+    ImmutableSet<Path> roots = ImmutableSet.of(Path.of("java"), Path.of("javatests"));
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            sourcePackages::get, NOOP_CONTEXT, ProjectDefinition.create(roots, ImmutableSet.of()));
+
+    ImmutableMap<Path, String> prefixes =
+        ImmutableMap.of(
+            Path.of("java/com/test"), "com.test",
+            Path.of("java/com/test/nested"), "com.test.nested",
+            Path.of("java/com/root"), "",
+            Path.of("javatests/com/one"), "prefix.com",
+            Path.of("javatests/com/two"), "other.prefix");
+
+    Map<Path, Map<Path, String>> split = converter.splitByRoot(prefixes);
+
+    assertThat(split.keySet()).containsExactlyElementsIn(roots);
+    assertThat(split.get(Path.of("java")))
+        .containsExactly(
+            Path.of("com/test"), "com.test",
+            Path.of("com/test/nested"), "com.test.nested",
+            Path.of("com/root"), "");
+    assertThat(split.get(Path.of("javatests")))
+        .containsExactly(
+            Path.of("com/one"), "prefix.com",
+            Path.of("com/two"), "other.prefix");
+  }
+
+  @Test
+  public void testMergeCompatibleSourceRoots() {
+    Map<Path, Map<Path, String>> roots = new HashMap<>();
+    Map<Path, String> java = new HashMap<>();
+    java.put(Path.of("a/b/c/d"), "com.google.d");
+    java.put(Path.of("a/b/c/e"), "com.google.e");
+    roots.put(Path.of("java"), java);
+
+    Map<Path, String> javatests = new HashMap<>();
+    javatests.put(Path.of("compatible/a/b/c/d"), "com.google.d");
+    javatests.put(Path.of("compatible/a/b/c/d/e"), "com.google.d.e");
+    javatests.put(Path.of("incompatible/a"), "com.odd");
+    javatests.put(Path.of("incompatible/a/b/c"), "com.google.a.b.c");
+    roots.put(Path.of("javatests"), javatests);
+
+    GraphToProjectConverter.mergeCompatibleSourceRoots(roots);
+
+    assertThat(roots.keySet()).containsExactly(Path.of("java"), Path.of("javatests"));
+    assertThat(roots.get(Path.of("java"))).containsExactly(Path.of("a/b/c"), "com.google");
+    assertThat(roots.get(Path.of("javatests")))
+        .containsExactly(
+            Path.of("compatible/a/b/c"), "com.google",
+            Path.of("incompatible/a"), "com.odd",
+            Path.of("incompatible/a/b"), "com.google.a.b");
+  }
+
+  @Test
+  public void testCalculateRootSources_singleSource_atImportRoot() throws IOException {
+    ImmutableSet<Path> packages = ImmutableSet.of(Path.of("java/com/test/BUILD"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(Path.of("java/com/test/Class1.java"), "com.test");
 
@@ -52,13 +141,14 @@ public class GraphToProjectConverterTest {
             ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet());
+        converter.calculateRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
   }
 
   @Test
   public void testCalculateRootSources_singleSource_belowImportRoot() throws IOException {
+    ImmutableSet<Path> packages = ImmutableSet.of(Path.of("java/com/test/BUILD"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(Path.of("java/com/test/subpackage/Class1.java"), "com.test.subpackage");
 
@@ -69,13 +159,14 @@ public class GraphToProjectConverterTest {
             ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet());
+        converter.calculateRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
   }
 
   @Test
   public void testCalculateRootSources_multiSource_belowImportRoot() throws IOException {
+    ImmutableSet<Path> packages = ImmutableSet.of(Path.of("java/com/test/BUILD"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("java/com/test/package1/Class1.java"), "com.test.package1",
@@ -88,13 +179,15 @@ public class GraphToProjectConverterTest {
             ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet());
+        converter.calculateRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
   }
 
   @Test
   public void testCalculateRootSources_multiRoots() throws IOException {
+    ImmutableSet<Path> packages =
+        ImmutableSet.of(Path.of("java/com/app/BUILD"), Path.of("java/com/lib/BUILD"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("java/com/app/AppClass.java"), "com.app",
@@ -109,7 +202,7 @@ public class GraphToProjectConverterTest {
                 ImmutableSet.of()));
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet());
+        converter.calculateRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet())
         .containsExactly(Path.of("java/com/app"), Path.of("java/com/lib"));
     assertThat(rootSources.get(Path.of("java/com/app"))).containsExactly(Path.of(""), "com.app");
@@ -118,9 +211,8 @@ public class GraphToProjectConverterTest {
 
   @Test
   public void testCalculateRootSources_multiSource_packageMismatch() throws IOException {
-    // TODO(b/266538303) this test will fail if we swap `package1` and `package2` (i.e. such that
-    //  their lexigraphic order is reversed), due to issues in GraphToProjectConverter. Fix those
-    //  issues and add more test cases accordingly
+    ImmutableSet<Path> packages =
+        ImmutableSet.of(Path.of("java/com/test/BUILD"), Path.of("java/com/test/package1/BUILD"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("java/com/test/package2/Class1.java"), "com.test.package2",
@@ -133,7 +225,7 @@ public class GraphToProjectConverterTest {
             ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet());
+        converter.calculateRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test")))
         .containsExactly(
@@ -142,13 +234,81 @@ public class GraphToProjectConverterTest {
   }
 
   @Test
+  public void testCalculateRootSources_multiSource_samePrefix() throws IOException {
+    ImmutableSet<Path> packages =
+        ImmutableSet.of(
+            Path.of("java/com/test/package1/BUILD"), Path.of("java/com/test/package2/BUILD"));
+    ImmutableMap<Path, String> sourcePackages =
+        ImmutableMap.of(
+            Path.of("java/com/test/package2/Class1.java"), "com.test.package2",
+            Path.of("java/com/test/package1/Class2.java"), "com.test.package1");
+
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            sourcePackages::get,
+            NOOP_CONTEXT,
+            ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
+
+    Map<Path, Map<Path, String>> rootSources =
+        converter.calculateRootSources(sourcePackages.keySet(), packages);
+    assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
+    assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
+  }
+
+  @Test
+  public void testCalculateRootSources_multiSource_nextedPrefixCompatible() throws IOException {
+    ImmutableSet<Path> packages =
+        ImmutableSet.of(Path.of("java/com/test/BUILD"), Path.of("java/com/test/package/BUILD"));
+    ImmutableMap<Path, String> sourcePackages =
+        ImmutableMap.of(
+            Path.of("java/com/test/Class1.java"), "com.test",
+            Path.of("java/com/test/package/Class2.java"), "com.test.package");
+
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            sourcePackages::get,
+            NOOP_CONTEXT,
+            ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
+
+    Map<Path, Map<Path, String>> rootSources =
+        converter.calculateRootSources(sourcePackages.keySet(), packages);
+    assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
+    assertThat(rootSources.get(Path.of("java/com/test"))).containsExactly(Path.of(""), "com.test");
+  }
+
+  @Test
+  public void testCalculateRootSources_multiSource_nestedPrefixIncompatible() throws IOException {
+    ImmutableSet<Path> packages =
+        ImmutableSet.of(Path.of("java/com/test/BUILD"), Path.of("java/com/test/package/BUILD"));
+    ImmutableMap<Path, String> sourcePackages =
+        ImmutableMap.of(
+            Path.of("java/com/test/Class1.java"), "com.test.odd",
+            Path.of("java/com/test/package/Class2.java"), "com.test.package");
+
+    GraphToProjectConverter converter =
+        new GraphToProjectConverter(
+            sourcePackages::get,
+            NOOP_CONTEXT,
+            ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
+
+    Map<Path, Map<Path, String>> rootSources =
+        converter.calculateRootSources(sourcePackages.keySet(), packages);
+    assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
+    assertThat(rootSources.get(Path.of("java/com/test")))
+        .containsExactly(
+            Path.of(""), "com.test.odd",
+            Path.of("package"), "com.test.package");
+  }
+
+  @Test
   public void testCalculateRootSources_multiSource_rootPrefix() throws IOException {
-    // TODO(b/277384417) this test will fail if we remove the x from 'jxavatests' because
-    //  java will be a prefix of java test
+    ImmutableSet<Path> packages =
+        ImmutableSet.of(Path.of("third_party/java/BUILD"), Path.of("third_party/javatests/BUILD"));
+
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("third_party/java/com/test/Class1.java"), "com.test",
-            Path.of("third_party/jxavatests/com/test/Class2.java"), "com.test");
+            Path.of("third_party/javatests/com/test/Class2.java"), "com.test");
 
     GraphToProjectConverter converter =
         new GraphToProjectConverter(
@@ -157,18 +317,18 @@ public class GraphToProjectConverterTest {
             ProjectDefinition.create(ImmutableSet.of(Path.of("third_party")), ImmutableSet.of()));
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet());
+        converter.calculateRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("third_party"));
     assertThat(rootSources.get(Path.of("third_party")))
         .containsExactly(
             Path.of("java"), "",
-            Path.of("jxavatests"), "");
+            Path.of("javatests"), "");
   }
 
   @Test
   public void testCalculateRootSources_multiSource_repackagedSource() throws IOException {
-    // TODO(b/266538303) This test would fail if the lexicographic order of `repackaged` and
-    //  `somepackage` was reversed, due to issues in GraphToProjectConverter
+    ImmutableSet<Path> packages =
+        ImmutableSet.of(Path.of("java/com/test/BUILD"), Path.of("java/com/test/repackaged/BUILD"));
     ImmutableMap<Path, String> sourcePackages =
         ImmutableMap.of(
             Path.of("java/com/test/repackaged/com/foo/Class1.java"), "com.foo",
@@ -181,7 +341,7 @@ public class GraphToProjectConverterTest {
             ProjectDefinition.create(ImmutableSet.of(Path.of("java/com/test")), ImmutableSet.of()));
 
     Map<Path, Map<Path, String>> rootSources =
-        converter.calculateRootSources(sourcePackages.keySet());
+        converter.calculateRootSources(sourcePackages.keySet(), packages);
     assertThat(rootSources.keySet()).containsExactly(Path.of("java/com/test"));
     assertThat(rootSources.get(Path.of("java/com/test")))
         .containsExactly(
