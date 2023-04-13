@@ -39,8 +39,8 @@ INDIRECT_IJ_PRODUCTS = {
     "clion-oss-latest-stable": "clion-2023.1",
     "clion-oss-under-dev": "clion-2023.1",
     # Indirect ij_product mapping for Cloud Code Plugin OSS
-    "intellij-cc-oldest-stable": "intellij-2022.2",
-    "intellij-cc-latest-stable": "intellij-2022.3",
+    "intellij-cc-oldest-stable": "intellij-2022.1",
+    "intellij-cc-latest-stable": "intellij-2022.2",
     "intellij-cc-under-dev": "intellij-2022.3",
     "intellij-ue-cc-oldest-stable": "intellij-ue-2022.1",
     "intellij-ue-cc-latest-stable": "intellij-ue-2022.2",
