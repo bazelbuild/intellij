@@ -26,7 +26,6 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.intellij.openapi.project.Project;
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -66,7 +65,7 @@ public class FakeBlazeCommandRunner implements BlazeCommandRunner {
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
       BlazeContext context)
-      throws IOException {
+      throws BuildException {
     return InputStream.nullInputStream();
   }
 

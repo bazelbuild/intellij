@@ -180,7 +180,7 @@ public class QuerySyncProject {
             SyncMode.FULL,
             SyncResult.SUCCESS);
       }
-    } catch (IOException e) {
+    } catch (BuildException | IOException e) {
       onError("Project sync failed", e, context);
     } finally {
       for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {

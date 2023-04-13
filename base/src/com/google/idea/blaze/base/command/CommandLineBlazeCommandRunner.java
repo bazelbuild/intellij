@@ -20,6 +20,9 @@ import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.async.process.PrintOutputLineProcessor;
+import com.google.idea.blaze.base.bazel.BazelExitCodeException;
+import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
+import com.google.idea.blaze.base.bazel.BuildException;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolUtils;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
@@ -49,9 +52,6 @@ import javax.annotation.Nullable;
 
 /** {@inheritDoc} Start a build via local binary. */
 public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
-
-  private static final int SUCCESS_EXIT_CODE = 0;
-  private static final int PARTIAL_SUCCESS_EXIT_CODE = 3;
 
   @Override
   public BlazeBuildOutputs run(
@@ -106,30 +106,29 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
       BlazeContext context)
-      throws FileNotFoundException {
+      throws BuildException {
     File outputFile = BuildEventProtocolUtils.createTempOutputFile();
-    FileOutputStream out = new FileOutputStream(outputFile);
-    int retVal =
-        ExternalTask.builder(WorkspaceRoot.fromProject(project))
-            .addBlazeCommand(blazeCommandBuilder.build())
-            .context(context)
-            .stdout(out)
-            .stderr(
-                LineProcessingOutputStream.of(
-                    line -> {
-                      // errors are expected, so limit logging to info level
-                      Logger.getInstance(this.getClass()).info(line);
-                      return true;
-                    }))
-            .build()
-            .run();
-    if (retVal != SUCCESS_EXIT_CODE && retVal != PARTIAL_SUCCESS_EXIT_CODE) {
-      // A return value of 3 indicates that the query completed, but there were some
-      // errors in the query, like querying a directory with no build files / no targets.
-      // Instead of returning null, we allow returning the parsed targets, if any.
-      return null;
+    try (FileOutputStream out = new FileOutputStream(outputFile)) {
+      int retVal =
+          ExternalTask.builder(WorkspaceRoot.fromProject(project))
+              .addBlazeCommand(blazeCommandBuilder.build())
+              .context(context)
+              .stdout(out)
+              .stderr(
+                  LineProcessingOutputStream.of(
+                      line -> {
+                        // errors are expected, so limit logging to info level
+                        Logger.getInstance(this.getClass()).info(line);
+                        return true;
+                      }))
+              .build()
+              .run();
+      BazelExitCodeException.throwIfFailed(
+          blazeCommandBuilder, retVal, ThrowOption.ALLOW_PARTIAL_SUCCESS);
+      return new BufferedInputStream(new FileInputStream(outputFile));
+    } catch (IOException e) {
+      throw new BuildException(e);
     }
-    return new BufferedInputStream(new FileInputStream(outputFile));
   }
 
   @Override

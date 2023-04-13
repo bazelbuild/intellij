@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.BlazeTestCase;
 import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.bazel.BazelBuildSystemProvider;
+import com.google.idea.blaze.base.bazel.BuildException;
 import com.google.idea.blaze.base.bazel.BuildSystem.SyncStrategy;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.bazel.FakeBlazeCommandRunner;
@@ -418,9 +419,9 @@ public class BlazeBuildTargetSharderTest extends BlazeTestCase {
         BlazeCommand.Builder blazeCommandBuilder,
         BuildResultHelper buildResultHelper,
         BlazeContext context)
-        throws IOException {
+        throws BuildException {
       if (this.failure) {
-        throw new IOException();
+        throw new BuildException("failure");
       }
       return new ByteArrayInputStream(
           String.join(System.lineSeparator(), outputMessages).getBytes(UTF_8));

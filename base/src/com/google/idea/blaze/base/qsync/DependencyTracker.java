@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
+import com.google.idea.blaze.base.bazel.BuildException;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
@@ -76,7 +76,7 @@ public class DependencyTracker {
   }
 
   public void buildDependenciesForFile(BlazeContext context, List<Path> paths)
-      throws IOException, GetArtifactsException {
+      throws IOException, BuildException {
 
     BlazeProjectSnapshot snapshot =
         blazeProject

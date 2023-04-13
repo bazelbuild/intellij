@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.idea.blaze.base.bazel.BuildException;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -42,7 +43,8 @@ public class BazelQueryRunner implements QueryRunner {
   }
 
   @Override
-  public QuerySummary runQuery(QuerySpec query, BlazeContext context) throws IOException {
+  public QuerySummary runQuery(QuerySpec query, BlazeContext context)
+      throws IOException, BuildException {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     BlazeCommandRunner commandRunner = invoker.getCommandRunner();
 
