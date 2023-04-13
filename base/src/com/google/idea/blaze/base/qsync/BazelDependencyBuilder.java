@@ -23,6 +23,8 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
+import com.google.idea.blaze.base.bazel.BazelExitCodeException;
+import com.google.idea.blaze.base.bazel.BuildException;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -31,7 +33,6 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -78,7 +79,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
 
   @Override
   public OutputInfo build(BlazeContext context, Set<Label> buildTargets)
-      throws IOException, GetArtifactsException {
+      throws IOException, BuildException {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
 
@@ -131,6 +132,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
 
       BlazeBuildOutputs outputs =
           invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
+      BazelExitCodeException.throwIfFailed(builder, outputs.buildResult);
       return createOutputInfo(outputs);
     }
   }

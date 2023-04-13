@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
+import com.google.idea.blaze.base.bazel.BuildException;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.vcs.BlazeVcsHandlerProvider;
 import com.google.idea.blaze.common.PrintOutput;
@@ -63,7 +64,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
    */
   @Override
   public BlazeProjectSnapshot fullQuery(ProjectDefinition projectDef, BlazeContext context)
-      throws IOException {
+      throws IOException, BuildException {
 
     FullProjectUpdate fullQuery = projectRefresher.startFullUpdate(context, projectDef);
 
@@ -112,7 +113,7 @@ public class ProjectQuerierImpl implements ProjectQuerier {
    */
   @Override
   public BlazeProjectSnapshot update(PostQuerySyncData previousState, BlazeContext context)
-      throws IOException {
+      throws IOException, BuildException {
 
     Optional<VcsState> vcsState = Optional.empty();
     try {
