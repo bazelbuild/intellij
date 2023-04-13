@@ -80,6 +80,11 @@ class BazelBuildSystem implements BuildSystem {
   }
 
   @Override
+  public Optional<BuildInvoker> getLocalBuildInvoker(Project project, BlazeContext context) {
+    return Optional.of(getBuildInvoker(project, context));
+  }
+
+  @Override
   public SyncStrategy getSyncStrategy(Project project) {
     return SyncStrategy.SERIAL;
   }

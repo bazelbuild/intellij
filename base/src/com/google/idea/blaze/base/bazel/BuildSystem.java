@@ -90,6 +90,9 @@ public interface BuildSystem {
   /** Get a Blaze invoker. */
   BuildInvoker getBuildInvoker(Project project, BlazeContext context);
 
+  /** Get a Blaze invoker that only run build locally. */
+  Optional<BuildInvoker> getLocalBuildInvoker(Project project, BlazeContext context);
+
   /**
    * Get a Blaze invoker that supports multiple calls in parallel, if this build system supports it.
    *

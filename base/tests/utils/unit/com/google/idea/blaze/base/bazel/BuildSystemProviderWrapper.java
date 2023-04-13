@@ -264,11 +264,12 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
 
     @Override
     public Optional<BuildInvoker> getParallelBuildInvoker(Project project, BlazeContext context) {
-      Optional<BuildInvoker> invoker = inner.getParallelBuildInvoker(project, context);
-      if (invoker.isPresent()) {
-        invoker = Optional.of(new BuildInvokerWrapper(invoker.get()));
-      }
-      return invoker;
+      return inner.getParallelBuildInvoker(project, context).map(i -> new BuildInvokerWrapper(i));
+    }
+
+    @Override
+    public Optional<BuildInvoker> getLocalBuildInvoker(Project project, BlazeContext context) {
+      return inner.getLocalBuildInvoker(project, context).map(i -> new BuildInvokerWrapper(i));
     }
 
     @Override
