@@ -17,9 +17,19 @@ package com.google.idea.blaze.qsync;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 /** Calculates the package for a java source file. */
 public interface PackageReader {
 
-  public String readPackage(Path path) throws IOException;
+  String readPackage(Path path) throws IOException;
+
+  default List<String> readPackages(List<Path> paths) throws IOException {
+    List<String> ret = new ArrayList<>(paths.size());
+    for (Path path : paths) {
+      ret.add(readPackage(path));
+    }
+    return ret;
+  }
 }
