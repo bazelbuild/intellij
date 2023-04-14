@@ -18,6 +18,8 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
@@ -40,12 +42,14 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverImpl;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.PackageStatementParser;
+import com.google.idea.blaze.qsync.ParallelPackageReader;
 import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -119,9 +123,7 @@ public class ProjectLoader {
     DependencyTracker dependencyTracker =
         new DependencyTracker(workspaceRoot.path(), graph, dependencyBuilder, dependencyCache);
     ProjectRefresher projectRefresher =
-        new ProjectRefresher(
-            new WorkspaceResolvingPackageReader(workspaceRoot.path(), new PackageStatementParser()),
-            workspaceRoot.path());
+        new ProjectRefresher(createPackageReader(workspaceRoot), workspaceRoot.path());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
     ProjectQuerier projectQuerier = createProjectQuerier(projectRefresher, queryRunner);
     ProjectUpdater projectUpdater =
@@ -161,6 +163,16 @@ public class ProjectLoader {
     //   the BuildGraphData etc.
     loadedProject.sync(context, loadedSnapshot);
     return loadedProject;
+  }
+
+  private static ParallelPackageReader createPackageReader(WorkspaceRoot workspaceRoot) {
+    ListeningExecutorService executor =
+        MoreExecutors.listeningDecorator(
+            AppExecutorUtil.createBoundedApplicationPoolExecutor("ParallelPackageReader", 128));
+
+    return new ParallelPackageReader(
+        executor,
+        new WorkspaceResolvingPackageReader(workspaceRoot.path(), new PackageStatementParser()));
   }
 
   private ProjectQuerierImpl createProjectQuerier(

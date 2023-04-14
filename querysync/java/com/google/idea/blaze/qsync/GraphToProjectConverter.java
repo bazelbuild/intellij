@@ -34,10 +34,12 @@ import com.google.idea.blaze.qsync.project.ProjectProto.ContentRoot.Base;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -141,13 +143,18 @@ public class GraphToProjectConverter {
 
   private ImmutableMap<Path, String> readPackages(Collection<Path> files) throws IOException {
     long now = System.currentTimeMillis();
-    ImmutableMap.Builder<Path, String> javaPackages = ImmutableMap.builder();
-    for (Path file : files) {
-      javaPackages.put(file.getParent(), packageReader.readPackage(file));
-    }
+    ArrayList<Path> allFiles = new ArrayList<>(files);
+    List<String> allPackages = packageReader.readPackages(allFiles);
     long elapsed = System.currentTimeMillis() - now;
     context.output(PrintOutput.log("%-10d Java files read (%d ms)", files.size(), elapsed));
-    return javaPackages.build();
+
+    ImmutableMap.Builder<Path, String> prefixes = ImmutableMap.builder();
+    Iterator<Path> i = allFiles.iterator();
+    Iterator<String> j = allPackages.iterator();
+    while (i.hasNext() && j.hasNext()) {
+      prefixes.put(i.next().getParent(), j.next());
+    }
+    return prefixes.build();
   }
 
   @VisibleForTesting
