@@ -96,26 +96,26 @@ def _collect_dependencies_core_impl(
             gensrcs = depset(),
         )]
     label = str(target.label)
-    included = False
-    if not include:
-        # include can only be empty when used from collect_all_dependencies_for_tests
-        # aspect, which is meant to be used in tests only.
-        included = False
-    else:
+
+    must_build = True
+
+    # include can only be empty when used from collect_all_dependencies_for_tests
+    # aspect, which is meant to be used in tests only.
+    if include:
         for inc in include.split(","):
             if label.startswith(inc):
                 if label[len(inc)] in [":", "/"]:
-                    included = True
+                    must_build = False
                     break
-    if included and len(exclude) > 0:
+    if not must_build and len(exclude) > 0:
         for exc in exclude.split(","):
             if label.startswith(exc):
                 if label[len(exc)] in [":", "/"]:
-                    included = False
+                    must_build = True
                     break
 
-    if included and ctx.rule.kind in always_build_rules.split(","):
-        included = False
+    if not must_build and ctx.rule.kind in always_build_rules.split(","):
+        must_build = True
 
     deps = []
     if hasattr(ctx.rule.attr, "deps"):
@@ -128,37 +128,32 @@ def _collect_dependencies_core_impl(
     info_deps = [dep[DependenciesInfo] for dep in deps if DependenciesInfo in dep and dep[DependenciesInfo].target_to_artifacts]
 
     trs = []
-    target_to_artifacts = {}
     aar_files = []
     aar_trs = []
     gensrc_files = []
     gensrc_trs = []
-    if not included:
+
+    if must_build:
+        # For rules that we do not follow dependencies of (either because they don't
+        # have further dependencies with JavaInfo or do so in attributes we don't care)
+        # we gather all their transitive dependencies. If they have dependencies, we
+        # only gather their own compile jars and continue down the tree.
+        # This is done primarily for rules like proto, where they don't have dependencies
+        # and add their "toolchain" classes to transitive deps.
         if info_deps:
             trs = [target[JavaInfo].compile_jars]
-            target_to_artifacts = {
-                label: [_output_relative_path(f.path) for f in target[JavaInfo].compile_jars.to_list()],
-            }
         else:
-            # For JavaInfo libraries which we don't follow any dependencies
-            # we attribute all the transitive jars to them. This includes
-            # all the proto variants.
             trs = [target[JavaInfo].transitive_compile_time_jars]
-            target_to_artifacts = {
-                label: [_output_relative_path(f.path) for f in target[JavaInfo].transitive_compile_time_jars.to_list()],
-            }
         if declares_android_resources(target, ctx):
             ide_aar = _get_ide_aar_file(target, ctx)
             if ide_aar:
                 aar_files.append(ide_aar)
-                target_to_artifacts[label].append(_output_relative_path(ide_aar.path))
 
     else:
         if generate_aidl_classes and generates_idl_jar(target):
-            target_to_artifacts[label] = []
             idl_jar = target[AndroidIdeInfo].idl_class_jar
             trs.append(depset([idl_jar]))
-            target_to_artifacts[label].append(_output_relative_path(idl_jar.path))
+            must_build = True
 
         # Add generated java_outputs (e.g. from annotation processing
         generated_class_jars = []
@@ -166,11 +161,8 @@ def _collect_dependencies_core_impl(
             if java_output.generated_class_jar:
                 generated_class_jars.append(java_output.generated_class_jar)
         if generated_class_jars:
-            if label not in target_to_artifacts:
-                target_to_artifacts[label] = []
             trs.append(depset(generated_class_jars))
-            for jar in generated_class_jars:
-                target_to_artifacts[label].append(_output_relative_path(jar.path))
+            must_build = True
 
         # Add generated sources for included targets
         if hasattr(ctx.rule.attr, "srcs"):
@@ -178,12 +170,12 @@ def _collect_dependencies_core_impl(
                 for file in src.files.to_list():
                     if not file.is_source:
                         gensrc_files.append(file)
+                        must_build = True
 
-            if len(gensrc_files) > 0:
-                if label not in target_to_artifacts:
-                    target_to_artifacts[label] = []
-                for file in gensrc_files:
-                    target_to_artifacts[label].append(_output_relative_path(file.path))
+    target_to_artifacts = {}
+    if must_build:
+        artifacts = depset(gensrc_files + aar_files, transitive = trs).to_list()
+        target_to_artifacts[label] = [_output_relative_path(file.path) for file in artifacts]
 
     for info in info_deps:
         trs.append(info.compile_time_jars)
