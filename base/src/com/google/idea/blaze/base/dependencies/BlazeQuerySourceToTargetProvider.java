@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.CharStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
@@ -44,6 +45,7 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.project.Project;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Collection;
@@ -206,7 +208,16 @@ public class BlazeQuerySourceToTargetProvider implements SourceToTargetProvider 
     BlazeCommand.Builder commandBuilder =
         getBlazeCommandBuilder(project, type, expr, ImmutableList.of("--output=package"), context);
     InputStream queryResultStream = runQuery(project, commandBuilder, context);
-    return queryResultStream == null ? null : queryResultStream.toString().trim();
+    try {
+      return queryResultStream == null
+          ? null
+          : CharStreams.toString(new InputStreamReader(queryResultStream, UTF_8)).trim();
+    } catch (IOException e) {
+      context.output(
+          PrintOutput.log(
+              String.format("Failed to execute blaze query: %s", e.getCause().getMessage())));
+      throw new BlazeQuerySourceToTargetException(e.getCause().getMessage(), e);
+    }
   }
 
   @Nullable
