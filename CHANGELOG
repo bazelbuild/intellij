@@ -1,3 +1,9 @@
+v2023.04.18
+===========
+* Fix mobile install step: https://github.com/bazelbuild/intellij/pull/4669
+* Fix partial query fails to read input stream:  https://github.com/bazelbuild/intellij/pull/4739
+* Internal cleanup
+
 v2023.04.04
 ===========
 Internal cleanup.
