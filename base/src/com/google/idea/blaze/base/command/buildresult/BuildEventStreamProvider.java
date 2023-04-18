@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.command.buildresult;
 import com.google.common.io.CountingInputStream;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos;
 import com.google.devtools.build.lib.buildeventstream.BuildEventStreamProtos.BuildEvent;
+import com.google.idea.blaze.exception.BuildException;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.annotation.Nullable;
@@ -26,7 +27,7 @@ import javax.annotation.Nullable;
 public interface BuildEventStreamProvider {
 
   /** An exception parsing a stream of build events. */
-  class BuildEventStreamException extends Exception {
+  class BuildEventStreamException extends BuildException {
     public BuildEventStreamException(String message, Throwable e) {
       super(message, e);
     }

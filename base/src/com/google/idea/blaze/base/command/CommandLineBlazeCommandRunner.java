@@ -48,7 +48,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 /** {@inheritDoc} Start a build via local binary. */
 public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
@@ -99,7 +98,6 @@ public class CommandLineBlazeCommandRunner implements BlazeCommandRunner {
     }
   }
 
-  @Nullable
   @Override
   public InputStream runQuery(
       Project project,
