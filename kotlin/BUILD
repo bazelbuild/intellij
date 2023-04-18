@@ -36,6 +36,7 @@ java_library(
         "//java",
         "//proto:proto_deps",
         "//sdkcompat",
+        "//shared",
     ],
 )
 
