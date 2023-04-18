@@ -29,7 +29,7 @@ final class BazelFastBuildAspectStrategy extends FastBuildAspectStrategy {
   @Override
   protected List<String> getAspectFlags() {
     return ImmutableList.of(
-        "--aspects=@intellij_aspect//:fast_build_info.bzl%fast_build_info_aspect",
+        "--aspects=@intellij_aspect//:fast_build_info_bundled.bzl%fast_build_info_aspect",
         getAspectRepositoryOverrideFlag());
   }
 
