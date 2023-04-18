@@ -1,3 +1,12 @@
+v2023.04.18
+===========
+* Remove the dependencies on CLion's bundled plugins for Boost tests and Catch tests. #4715
+* plugin_dev: Fix run configuration on Mac OS X #4702
+* fix(clion): Correctly parse copts with spaces in a single string. #4654
+* Fixes Allow setting custom blaze-script file location #4253
+* Fixes Internal errors when synchronizing on a newly created git branch #4609
+* Fixes Partial Query fails on test targets due to input stream reader issue #4738
+
 v2023.04.04
 ===========
 * Superclass method test runs run the correct method #4632
