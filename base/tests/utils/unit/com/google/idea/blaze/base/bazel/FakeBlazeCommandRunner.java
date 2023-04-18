@@ -25,6 +25,7 @@ import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.google.idea.blaze.exception.BuildException;
 import com.intellij.openapi.project.Project;
 import java.io.InputStream;
 
