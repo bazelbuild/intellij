@@ -88,9 +88,6 @@ public class ProjectLoader {
       return null;
     }
 
-    Path snapshotFilePath = getSnapshotFilePath(importSettings);
-    Optional<PostQuerySyncData> loadedSnapshot = loadFromDisk(snapshotFilePath);
-
     WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
     // TODO we may need to get the WorkspacePathResolver from the VcsHandler, as the old sync
     // does inside ProjectStateSyncTask.computeWorkspacePathResolverAndProjectView
@@ -134,6 +131,9 @@ public class ProjectLoader {
 
     ProjectDefinition latestProjectDef =
         ProjectDefinition.create(importRoots.rootPaths(), importRoots.excludePaths());
+
+    Path snapshotFilePath = getSnapshotFilePath(importSettings);
+    Optional<PostQuerySyncData> loadedSnapshot = loadFromDisk(snapshotFilePath);
     // don't use the snapshot if the project definition has changed, since a full re-load will be
     // necessary in that case:
     loadedSnapshot =
@@ -157,11 +157,6 @@ public class ProjectLoader {
             workspacePathResolver,
             workspaceLanguageSettings,
             sourceToTargetMap);
-    // If we don't want to do a sync on startup, some more logic will be needed here:
-    // - in the case of a new project (loadedSnapshot is empty), do a full sync
-    // - when loadedSnapshot is not empty, we need to re-run the final stage of sync to regenerate
-    //   the BuildGraphData etc.
-    loadedProject.sync(context, loadedSnapshot);
     return loadedProject;
   }
 
