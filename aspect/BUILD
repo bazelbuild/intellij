@@ -32,9 +32,9 @@ filegroup(
         "WORKSPACE",
         "artifacts.bzl",
         "build_dependencies.bzl",
-        "fast_build_info.bzl",
+        "fast_build_info_bundled.bzl",
         "intellij_info_bundled.bzl",
-        "intellij_info_impl.bzl",
+        "intellij_info_impl_bundled.bzl",
         "java_classpath.bzl",
         "make_variables.bzl",
         ":BUILD.bazel",
@@ -62,13 +62,34 @@ _dev_aspect_path = package_name()
 # Changes:
 #   //.../aspect/tools:tool_name -> //:tool_name_bin
 #   //.../aspect:flag_hack -> //:flag_hack
+#   :intellij_info_impl.bzl -> :intellij_info_impl_bundled.bzl
 genrule(
     name = "modify_tools_path",
     srcs = ["intellij_info.bzl"],
     outs = ["intellij_info_bundled.bzl"],
     cmd = "cat $(SRCS) >$@ && " +
           "sed -i -e 's,//%s/tools:\" + tool_name,//:\" + tool_name + \"_bin\",g' $@ && " % _dev_aspect_path +
-          "sed -i -e 's,//%s:flag_hack,//:flag_hack,g' $@" % _dev_aspect_path,
+          "sed -i -e 's,//%s:flag_hack,//:flag_hack,g' $@  && " % _dev_aspect_path +
+          "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
+)
+
+# Removes internal only content from bundled aspect files as they cannot access
+# by bazel no matter it's build from git repo or internal repo.
+genrule(
+    name = "create_intellij_info_impl_bundle",
+    srcs = ["intellij_info_impl.bzl"],
+    outs = ["intellij_info_impl_bundled.bzl"],
+    cmd = "cat $(SRCS) >$@ && " +
+          "sed -i -e '/BUNDLED-IGNORE-BEGIN/,/BUNDLED-IGNORE-END/d' $@",
+)
+
+# Makes bundled fast_build_info.bzl use bundled intellij_info_impl.bzl
+genrule(
+    name = "create_fast_build_info_bundle",
+    srcs = ["fast_build_info.bzl"],
+    outs = ["fast_build_info_bundled.bzl"],
+    cmd = "cat $(SRCS) >$@ && " +
+          "sed -i -e 's,:intellij_info_impl.bzl,:intellij_info_impl_bundled.bzl,g' $@",
 )
 
 define_flag_hack()
