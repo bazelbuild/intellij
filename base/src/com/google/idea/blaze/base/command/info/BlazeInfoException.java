@@ -15,11 +15,12 @@
  */
 package com.google.idea.blaze.base.command.info;
 
+import com.google.idea.blaze.exception.BuildException;
 import javax.annotation.concurrent.Immutable;
 
 /** Exception occuring during blaze info */
 @Immutable
-public final class BlazeInfoException extends Exception {
+public final class BlazeInfoException extends BuildException {
   public BlazeInfoException(String message) {
     super(message);
   }

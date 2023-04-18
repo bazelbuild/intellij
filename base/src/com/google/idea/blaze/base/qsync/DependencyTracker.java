@@ -17,11 +17,11 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.idea.blaze.base.bazel.BuildException;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.intellij.openapi.vfs.VfsUtil;

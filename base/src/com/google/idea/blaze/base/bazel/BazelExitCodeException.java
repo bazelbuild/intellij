@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
+import com.google.idea.blaze.exception.BuildException;
 
 /**
  * Exception to be used when a build invocation returns a non-zero exit code.

@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.qsync;
 
-import com.google.idea.blaze.base.bazel.BuildException;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
