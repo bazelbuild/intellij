@@ -107,7 +107,7 @@ public interface BuildResultHelper extends AutoCloseable {
    * @param completedBuildId build id.
    * @return a list of message on stdout.
    */
-  default InputStream getStdout(String completedBuildId) throws GetStdoutException {
+  default InputStream getStdout(String completedBuildId) throws BuildException {
     return InputStream.nullInputStream();
   }
 
@@ -120,7 +120,7 @@ public interface BuildResultHelper extends AutoCloseable {
    * @param completedBuildId build id.
    * @return a list of message on stderr.
    */
-  default InputStream getStderr(String completedBuildId) throws GetStderrException {
+  default InputStream getStderr(String completedBuildId) throws BuildException {
     return InputStream.nullInputStream();
   }
 
@@ -192,23 +192,6 @@ public interface BuildResultHelper extends AutoCloseable {
 
     public GetFlagsException(Throwable cause) {
       super(cause);
-    }
-  }
-
-  /** Indicates a failure to get stderr messages */
-  class GetStderrException extends Exception {
-    public GetStderrException(String message) {
-      super(message);
-    }
-  }
-  /** Indicates a failure to get stdout messages */
-  class GetStdoutException extends BuildException {
-    public GetStdoutException(String message) {
-      super(message);
-    }
-
-    public GetStdoutException(String message, Throwable cause) {
-      super(message, cause);
     }
   }
 }
