@@ -56,7 +56,7 @@ public class ArtifactTracker {
 
   private static final Logger logger = Logger.getInstance(ArtifactTracker.class);
 
-  // The artifacts in the cahce. Note that artifacts that do not produce files are also stored here.
+  // The artifacts in the cache. Note that artifacts that do not produce files are also stored here.
   // So, it is not the same for a label not to be present, than a label to have an empty list.
   private final HashMap<Label, List<Path>> artifacts = new HashMap<>();
 
@@ -101,11 +101,11 @@ public class ArtifactTracker {
     artifacts.clear();
     try (InputStream stream = new GZIPInputStream(Files.newInputStream(persistentFile))) {
       BuildArtifacts saved = BuildArtifacts.parseFrom(stream, ExtensionRegistry.getEmptyRegistry());
-      for (TargetArtifacts arts : saved.getArtifactsList()) {
-        for (String path : arts.getArtifactPathsList()) {
-          Label label = Label.of(arts.getTarget());
-          List<Path> value = artifacts.computeIfAbsent(label, k -> new ArrayList<>());
-          value.add(Path.of(path));
+      for (TargetArtifacts targetArtifact : saved.getArtifactsList()) {
+        Label label = Label.of(targetArtifact.getTarget());
+        List<Path> artifactPathList = artifacts.computeIfAbsent(label, k -> new ArrayList<>());
+        for (String path : targetArtifact.getArtifactPathsList()) {
+          artifactPathList.add(Path.of(path));
         }
       }
     } catch (IOException e) {
