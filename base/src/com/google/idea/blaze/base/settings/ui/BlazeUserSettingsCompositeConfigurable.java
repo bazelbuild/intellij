@@ -30,6 +30,7 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.ui.components.panels.VerticalLayout;
 import java.util.Arrays;
 import java.util.List;
+import javax.annotation.Nullable;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 
@@ -88,4 +89,25 @@ public class BlazeUserSettingsCompositeConfigurable
           .forEach(helper::registerText);
     }
   }
+
+  /**
+   * Used if the settings are not applicable for the user's configuration. This ensures that no
+   * artifacts affect the UI.
+   */
+  public static final UnnamedConfigurable EMPTY_CONFIGURABLE =
+      new UnnamedConfigurable() {
+        @Override
+        @Nullable
+        public JComponent createComponent() {
+          return null;
+        }
+
+        @Override
+        public boolean isModified() {
+          return false;
+        }
+
+        @Override
+        public void apply() {}
+      };
 }
