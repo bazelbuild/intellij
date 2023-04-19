@@ -53,12 +53,16 @@ public class BazelExitCodeException extends BuildException {
   public static void throwIfFailed(
       BlazeCommand.Builder command, int exitCode, ThrowOption... options)
       throws BazelExitCodeException {
+    throwIfFailed("Command: " + command.build(), exitCode, options);
+  }
+
+  public static void throwIfFailed(String message, int exitCode, ThrowOption... options)
+      throws BazelExitCodeException {
     if (allowExitCode(exitCode, options)) {
       return;
     }
     throw new BazelExitCodeException(
-        String.format("Build command failed with %d.\nCommand: %s", exitCode, command.build()),
-        exitCode);
+        String.format("Build command failed with %d.\n%s", exitCode, message), exitCode);
   }
 
   private static boolean allowExitCode(int exitCode, ThrowOption... options) {
