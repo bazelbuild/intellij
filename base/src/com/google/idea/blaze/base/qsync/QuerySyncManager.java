@@ -115,6 +115,10 @@ public class QuerySyncManager {
     return Optional.ofNullable(loadedProject);
   }
 
+  public boolean isProjectLoaded() {
+    return loadedProject != null;
+  }
+
   private void assertProjectLoaded() {
     if (loadedProject == null) {
       throw new IllegalStateException("Project not loaded yet");
