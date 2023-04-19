@@ -30,7 +30,7 @@ public interface ComposeStatusProvider {
    * Checks the result of {@link #composeEnabled} from all registered extensions and returns true if
    * any of the extensions return true
    */
-  static boolean isComposeEnabled(Project project) {
-    return EP_NAME.extensions().anyMatch(e -> e.composeEnabled(project));
+  static boolean isComposeEnabled(Project projec) {
+    return EP_NAME.extensions().anyMatch(e -> e.composeEnabled(projec));
   }
 }

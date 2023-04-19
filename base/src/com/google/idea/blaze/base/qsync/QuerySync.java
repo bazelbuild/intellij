@@ -39,7 +39,7 @@ public class QuerySync {
     if (isEnabled()) {
       NotSupportedWithQuerySyncException e = new NotSupportedWithQuerySyncException(reason);
       // make sure the exception doesn't get silently swallowed later:
-      logger.error(e);
+      logger.warn(e);
       throw e;
     }
   }
