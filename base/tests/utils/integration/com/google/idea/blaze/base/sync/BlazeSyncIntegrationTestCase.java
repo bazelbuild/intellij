@@ -257,7 +257,7 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
             .submit(
                 () -> {
                   SyncPhaseCoordinator.getInstance(getProject()).runSync(syncParams, true, context);
-                  context.endScope();
+                  context.close();
                 });
     while (!future.isDone()) {
       IdeEventQueue.getInstance().flushQueue();
