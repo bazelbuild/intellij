@@ -235,8 +235,7 @@ public class MobileInstallBuildStep implements ApkBuildStep {
               project, context, BlazeBuildOutputs.noOutputs(BuildResult.fromExitCode(exitCode)));
 
       context.output(new StatusOutput("Reading deployment information..."));
-      String executionRoot =
-          ExecRootUtil.getExecutionRoot(buildResultHelper, project, blazeFlags, context);
+      String executionRoot = ExecRootUtil.getExecutionRoot(invoker, context);
       if (executionRoot == null) {
         IssueOutput.error("Could not locate execroot!").submit(context);
         return;

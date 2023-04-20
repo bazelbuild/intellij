@@ -30,7 +30,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -46,16 +45,14 @@ public class BlazeApkDeployInfoProtoHelper {
   public AndroidDeployInfo readDeployInfoProtoForTarget(
       Label target, BuildResultHelper buildResultHelper, Predicate<String> pathFilter)
       throws GetDeployInfoException {
-    ImmutableList<File> deployInfoFiles;
+    ImmutableList<OutputArtifact> outputArtifacts;
     try {
-      deployInfoFiles =
-          BlazeArtifact.getLocalFiles(
-              buildResultHelper.getBuildArtifactsForTarget(target, pathFilter));
+      outputArtifacts = buildResultHelper.getBuildArtifactsForTarget(target, pathFilter);
     } catch (GetArtifactsException e) {
       throw new GetDeployInfoException(e.getMessage());
     }
 
-    if (deployInfoFiles.isEmpty()) {
+    if (outputArtifacts.isEmpty()) {
       Logger log = Logger.getInstance(BlazeApkDeployInfoProtoHelper.class.getName());
       try {
         ParsedBepOutput bepOutput = buildResultHelper.getBuildOutput();
@@ -82,15 +79,15 @@ public class BlazeApkDeployInfoProtoHelper {
           "No deploy info proto artifact found.  Was android_deploy_info in the output groups?");
     }
 
-    if (deployInfoFiles.size() > 1) {
+    if (outputArtifacts.size() > 1) {
       throw new GetDeployInfoException(
           "More than one deploy info proto artifact found: "
-              + deployInfoFiles.stream()
-                  .map(File::getPath)
+              + outputArtifacts.stream()
+                  .map(OutputArtifact::getRelativePath)
                   .collect(Collectors.joining(", ", "[", "]")));
     }
 
-    try (InputStream inputStream = new FileInputStream(deployInfoFiles.get(0))) {
+    try (InputStream inputStream = outputArtifacts.get(0).getInputStream()) {
       return AndroidDeployInfo.parseFrom(inputStream);
     } catch (IOException e) {
       throw new GetDeployInfoException(e.getMessage());

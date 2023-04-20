@@ -33,9 +33,8 @@ import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelpe
 import com.google.idea.blaze.android.run.deployinfo.BlazeApkDeployInfoProtoHelper.GetDeployInfoException;
 import com.google.idea.blaze.android.run.runner.BlazeAndroidDeviceSelector.DeviceSession;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
+import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import java.io.File;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -286,8 +285,8 @@ public final class MobileInstallBuildStepIntegrationTest extends MobileInstallBu
   @Test
   public void nullExecRoot() throws Exception {
     // Return null execroot
-    when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(new ParsedBepOutput(null, null, null, null, 0, BuildResult.SUCCESS, 0));
+    // the only way for execroot to be null is for getBlazeInfo() to throw an exception
+    BuildSystemProviderWrapper.getInstance(getProject()).setThrowExceptionOnGetBlazeInfo(true);
 
     // Mobile-install build step requires only one device be active.  DeviceFutures class is final,
     // so we have to make one with a stub AndroidDevice.

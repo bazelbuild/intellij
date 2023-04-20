@@ -35,14 +35,10 @@ import com.google.idea.blaze.base.async.process.ExternalTask;
 import com.google.idea.blaze.base.async.process.ExternalTaskProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
 import com.google.idea.blaze.base.bazel.BuildSystemProviderWrapper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.buildresult.ParsedBepOutput;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleColoredComponent;
 import com.google.common.util.concurrent.Futures;
@@ -55,9 +51,6 @@ import org.junit.Before;
 
 /** Base class for integration tests for Mobile install build step. */
 public class MobileInstallBuildStepTestCase extends BlazeAndroidIntegrationTestCase {
-  /** Exposed to test methods to toggle presence of execroot */
-  protected BuildResultHelper mockBuildResultHelper;
-
   protected Label buildTarget;
   protected ImmutableList<String> blazeFlags;
   protected ImmutableList<String> execFlags;
@@ -90,22 +83,10 @@ public class MobileInstallBuildStepTestCase extends BlazeAndroidIntegrationTestC
     execFlags = ImmutableList.of("some_exec_flag", "other_exec_flag");
   }
 
-  /** Setup build result helper to return BEP output with test execroot by default. */
+  /** Setup build system provider with {@link BuildSystemProviderWrapper} */
   @Before
-  public void setupBuildResultHelperProvider() throws GetArtifactsException {
-    mockBuildResultHelper = mock(BuildResultHelper.class);
-    when(mockBuildResultHelper.getBuildOutput())
-        .thenReturn(
-            new ParsedBepOutput(
-                /*buildId=*/ null,
-                /*localExecRoot=*/ getExecRoot(),
-                /*fileSets=*/ null,
-                /*targetFileSets=*/ null,
-                /*syncStartTimeMillis=*/ 0,
-                /*buildResult=*/ BuildResult.SUCCESS,
-                /*bepBytesConsumed=*/ 0));
+  public void setupBuildSystemProvider() {
     BuildSystemProviderWrapper buildSystem = new BuildSystemProviderWrapper(() -> getProject());
-    buildSystem.setBuildResultHelperSupplier(() -> mockBuildResultHelper);
     registerExtensionFirst(BuildSystemProvider.EP_NAME, buildSystem);
   }
 

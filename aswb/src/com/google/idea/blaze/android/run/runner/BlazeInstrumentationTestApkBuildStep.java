@@ -125,8 +125,7 @@ public class BlazeInstrumentationTestApkBuildStep implements ApkBuildStep {
       }
       try {
         context.output(new StatusOutput("Reading deployment information..."));
-        String executionRoot =
-            ExecRootUtil.getExecutionRoot(buildResultHelper, project, buildFlags, context);
+        String executionRoot = ExecRootUtil.getExecutionRoot(invoker, context);
         if (executionRoot == null) {
           IssueOutput.error("Could not locate execroot!").submit(context);
           return;

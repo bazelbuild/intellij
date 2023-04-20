@@ -15,73 +15,31 @@
  */
 package com.google.idea.blaze.android.run.runner;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper.GetArtifactsException;
-import com.google.idea.blaze.base.command.info.BlazeInfo;
-import com.google.idea.blaze.base.command.info.BlazeInfoRunner;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
-import com.google.idea.blaze.base.scope.output.StatusOutput;
-import com.google.idea.blaze.base.settings.Blaze;
-import com.google.idea.common.experiments.BoolExperiment;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import java.util.concurrent.ExecutionException;
+import com.google.idea.blaze.base.sync.SyncScope.SyncFailedException;
 import javax.annotation.Nullable;
 
 /** Utility for fetching execroot. */
 public final class ExecRootUtil {
-  /** Enables using blaze info as fallback for fetching execroot. */
-  private static final BoolExperiment useBlazeInfoAsExecrootFallback =
-      new BoolExperiment("enable.execroot.fallback", false);
-
-  private static final Logger log = Logger.getInstance(ExecRootUtil.class);
-
   /**
    * Returns the execroot of the given project.
    *
-   * <p>This method tries to get the execroot from BEP output. In the event where BEP isn't reliable
-   * for obtaining the execroot, enabling {@link #useBlazeInfoAsExecrootFallback} will cause this
-   * method to also obtain the execroot using blaze info.
+   * <p>This method tries to obtain the execroot using blaze info.
    */
   @Nullable
-  public static String getExecutionRoot(
-      BuildResultHelper buildResultHelper,
-      Project project,
-      ImmutableList<String> buildFlags,
-      BlazeContext context)
+  public static String getExecutionRoot(BuildInvoker invoker, BlazeContext context)
       throws GetArtifactsException {
-    String executionRoot = buildResultHelper.getBuildOutput().getLocalExecRoot();
-    if (executionRoot != null) {
-      return executionRoot;
-    } else if (!useBlazeInfoAsExecrootFallback.getValue()) {
+    try {
+      return invoker.getBlazeInfo().getExecutionRoot().getAbsolutePath();
+    } catch (SyncFailedException e) {
+      IssueOutput.error("Could not obtain exec root from blaze info: " + e.getMessage())
+          .submit(context);
+      context.setHasError();
       return null;
     }
-
-    log.warn("Could not get execroot from BEP. Falling back to using blaze info.");
-    context.output(new StatusOutput("Fetching project output directory..."));
-    ListenableFuture<String> execRootFuture =
-        BlazeInfoRunner.getInstance()
-            .runBlazeInfo(
-                project,
-                Blaze.getBuildSystemProvider(project)
-                    .getBuildSystem()
-                    .getDefaultInvoker(project, context),
-                context,
-                buildFlags,
-                BlazeInfo.EXECUTION_ROOT_KEY);
-    try {
-      return execRootFuture.get();
-    } catch (InterruptedException e) {
-      IssueOutput.warn("Build cancelled.").submit(context);
-      context.setCancelled();
-    } catch (ExecutionException e) {
-      IssueOutput.error(e.getMessage()).submit(context);
-      context.setHasError();
-    }
-    return null;
   }
 
   private ExecRootUtil() {}

@@ -44,7 +44,7 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
   private final Supplier<BuildSystemProvider> innerProvider;
   private BuildSystemProvider inner;
   private BuildSystem buildSystem;
-  private Supplier<BuildResultHelper> buildResultHelperSupplier;
+  private boolean throwExceptionOnGetBlazeInfo;
   private BuildBinaryType buildBinaryType;
   private SyncStrategy syncStrategy;
 
@@ -90,6 +90,15 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
           }
           throw new IllegalStateException("No BuildSystemProvider found");
         };
+  }
+
+  public static BuildSystemProviderWrapper getInstance(Project project) {
+    BuildSystemProvider provider = Blaze.getBuildSystemProvider(project);
+    if (provider instanceof BuildSystemProviderWrapper) {
+      return (BuildSystemProviderWrapper) provider;
+    }
+    throw new IllegalStateException(
+        "BuildSystemProvider not an instance of BuildSystemProviderWrapper");
   }
 
   private synchronized BuildSystemProvider inner() {
@@ -160,17 +169,14 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
   }
 
   /**
-   * Sets a supplier for {@link BuildResultHelper} instances to be return by {@code
-   * getBuildSystem().getBuildInvoker().createBuildResultProvider()}.
+   * Sets a boolean value to toggle the outcome of getBlazeInfo() to be returned by {@code
+   * getBuildSystem().getBuildInvoker().getBlazeInfo()}.
    *
-   * <p>If not set, or set to {@code null}, the {@link BuildResultHelper} will be provided by the
-   * wrapped instance.
-   *
-   * @param supplier A supplier that will be called for each call to {@link
-   *     BuildInvoker#createBuildResultHelper}.
+   * <p>If not set, or set to {@code false}, the {@link BlazeInfo} will be provided by the wrapped
+   * instance.
    */
-  public void setBuildResultHelperSupplier(Supplier<BuildResultHelper> supplier) {
-    buildResultHelperSupplier = supplier;
+  public void setThrowExceptionOnGetBlazeInfo(boolean throwExceptionOnGetBlazeInfo) {
+    this.throwExceptionOnGetBlazeInfo = throwExceptionOnGetBlazeInfo;
   }
 
   /**
@@ -221,15 +227,15 @@ public class BuildSystemProviderWrapper implements BuildSystemProvider {
 
     @Override
     public BlazeInfo getBlazeInfo() throws SyncFailedException {
+      if (throwExceptionOnGetBlazeInfo) {
+        throw new SyncFailedException();
+      }
       return inner.getBlazeInfo();
     }
 
     @Override
     @MustBeClosed
     public BuildResultHelper createBuildResultHelper() {
-      if (buildResultHelperSupplier != null) {
-        return buildResultHelperSupplier.get();
-      }
       return inner.createBuildResultHelper();
     }
 
