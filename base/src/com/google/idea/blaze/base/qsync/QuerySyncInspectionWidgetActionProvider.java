@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -52,7 +53,8 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     return new BuildDependencies(editor);
   }
 
-  private static class BuildDependencies extends AnAction implements CustomComponentAction {
+  private static class BuildDependencies extends AnAction
+      implements CustomComponentAction, DumbAware {
 
     private final Editor editor;
 
@@ -71,7 +73,10 @@ public class QuerySyncInspectionWidgetActionProvider implements InspectionWidget
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setEnabled(!BlazeSyncStatus.getInstance(e.getProject()).syncInProgress());
+      Project project = e.getProject();
+      presentation.setEnabled(
+          QuerySyncManager.getInstance(project).isProjectLoaded()
+              && !BlazeSyncStatus.getInstance(project).syncInProgress());
       super.update(e);
     }
 

@@ -43,7 +43,6 @@ import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.serviceContainer.NonInjectable;
@@ -180,18 +179,14 @@ public class QuerySyncManager {
           }
         },
         MoreExecutors.directExecutor());
-    DumbService.getInstance(project)
-        .runWhenSmart(
-            () -> {
-              try {
-                ListenableFuture<Boolean> innerResultFuture =
-                    createAndSubmitRunTask(title, subTitle, operation);
-                result.setFuture(innerResultFuture);
-              } catch (Throwable t) {
-                result.setException(t);
-                throw t;
-              }
-            });
+    try {
+      ListenableFuture<Boolean> innerResultFuture =
+          createAndSubmitRunTask(title, subTitle, operation);
+      result.setFuture(innerResultFuture);
+    } catch (Throwable t) {
+      result.setException(t);
+      throw t;
+    }
     return result;
   }
 
