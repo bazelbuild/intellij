@@ -55,6 +55,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -81,6 +82,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
   public OutputInfo build(BlazeContext context, Set<Label> buildTargets)
       throws IOException, BuildException {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
+    String localAspectFile = String.format(".aswb-%d.bzl", Instant.now().toEpochMilli());
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
 
       IdeaPluginDescriptor plugin =
@@ -97,7 +99,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .collect(joining(","));
       Files.copy(
           aspect,
-          workspaceRoot.directory().toPath().resolve(".aswb.bzl"),
+          workspaceRoot.directory().toPath().resolve(localAspectFile),
           StandardCopyOption.REPLACE_EXISTING);
       String alwaysBuildRuleTypes = Joiner.on(",").join(BlazeQueryParser.ALWAYS_BUILD_RULE_TYPES);
 
@@ -118,7 +120,11 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags(buildResultHelper.getBuildFlags())
               .addBlazeFlags(additionalBlazeFlags)
               .addBlazeFlags(
-                  "--aspects=//:.aswb.bzl%collect_dependencies,//:.aswb.bzl%package_dependencies")
+                  "--aspects=//:"
+                      + localAspectFile
+                      + "%collect_dependencies,//:"
+                      + localAspectFile
+                      + "%package_dependencies")
               .addBlazeFlags(String.format("--aspects_parameters=include=%s", includes))
               .addBlazeFlags(String.format("--aspects_parameters=exclude=%s", excludes))
               .addBlazeFlags(
@@ -134,6 +140,9 @@ public class BazelDependencyBuilder implements DependencyBuilder {
           invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
       BazelExitCodeException.throwIfFailed(builder, outputs.buildResult);
       return createOutputInfo(outputs);
+    } finally {
+      // Clean up the aspect file
+      Files.delete(workspaceRoot.directory().toPath().resolve(localAspectFile));
     }
   }
 
