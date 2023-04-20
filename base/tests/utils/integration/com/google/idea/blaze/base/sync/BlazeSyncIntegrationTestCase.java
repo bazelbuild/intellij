@@ -312,7 +312,6 @@ public abstract class BlazeSyncIntegrationTestCase extends BlazeIntegrationTestC
       this.results.putAll(results);
     }
   }
-
   private static class MockBlazeIdeInterface implements BlazeIdeInterface {
     private TargetMap targetMap = new TargetMap(ImmutableMap.of());
 
