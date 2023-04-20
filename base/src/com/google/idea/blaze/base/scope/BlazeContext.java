@@ -20,6 +20,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.SyncScope.SyncCanceledException;
 import com.google.idea.blaze.common.Context;
@@ -31,7 +32,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /** Scoped operation context. */
-public class BlazeContext implements Context {
+public class BlazeContext implements Context, AutoCloseable {
 
   @Nullable private BlazeContext parentContext;
 
@@ -61,6 +62,7 @@ public class BlazeContext implements Context {
     return new BlazeContext(null);
   }
 
+  @MustBeClosed
   public static BlazeContext create(BlazeContext parentContext) {
     BlazeContext context = new BlazeContext(parentContext);
     if (parentContext != null) {
@@ -77,7 +79,8 @@ public class BlazeContext implements Context {
   }
 
   /** Ends the context scope. */
-  public void endScope() {
+  @Override
+  public void close() {
     if (isEnding || holdCount > 0) {
       return;
     }
@@ -139,7 +142,7 @@ public class BlazeContext implements Context {
 
   public void release() {
     if (--holdCount == 0) {
-      endScope();
+      close();
     }
   }
 

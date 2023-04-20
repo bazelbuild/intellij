@@ -154,7 +154,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
     assertThat(
             manager.shouldForceFullSync(projectData, projectState, SyncMode.INCREMENTAL, context))
         .isFalse();
-    context.endScope();
+    context.close();
   }
 
   @Test
@@ -168,7 +168,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
     assertThat(
             manager.shouldForceFullSync(projectData, projectState, SyncMode.INCREMENTAL, context))
         .isTrue();
-    context.endScope();
+    context.close();
   }
 
   @Test
@@ -181,7 +181,7 @@ public class BlazeSyncManagerTest extends BlazeTestCase {
     assertThat(
             manager.shouldForceFullSync(projectData, projectState, SyncMode.INCREMENTAL, context))
         .isFalse();
-    context.endScope();
+    context.close();
   }
 
   private SyncProjectState getMockProjectStateWithLanguages(

@@ -46,7 +46,7 @@ public final class Scope {
       logger.error(e);
       throw e;
     } finally {
-      context.endScope();
+      context.close();
     }
   }
 
@@ -63,7 +63,7 @@ public final class Scope {
       logger.error(e);
       throw e;
     } finally {
-      context.endScope();
+      context.close();
     }
   }
 }

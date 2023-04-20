@@ -178,7 +178,7 @@ public final class FastBuildConfigurationRunner implements BlazeCommandRunConfig
       }
     }
     // Fall-through for all exceptions. If no exception was thrown, we return from the try{} block.
-    context.endScope();
+    context.close();
     return false;
   }
 

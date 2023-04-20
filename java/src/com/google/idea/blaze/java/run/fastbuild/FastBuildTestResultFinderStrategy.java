@@ -51,7 +51,7 @@ final class FastBuildTestResultFinderStrategy implements BlazeTestResultFinderSt
     blazeContext.output(FastBuildLogOutput.milliseconds("run_test_class_time_ms", timer));
     // This is the very last interaction we have with the test runner framework, so end the scope
     // here (which writes out the log data).
-    blazeContext.endScope();
+    blazeContext.close();
     return BlazeTestResults.fromFlatList(
         ImmutableList.of(
             BlazeTestResult.create(
