@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
@@ -45,8 +46,8 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.protobuf.TextFormat;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
 import java.io.InputStream;
@@ -82,11 +83,9 @@ public class BazelDependencyBuilder implements DependencyBuilder {
       throws IOException, BuildException {
     BuildInvoker invoker = buildSystem.getDefaultInvoker(project, context);
     try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
-
-      IdeaPluginDescriptor plugin =
-          PluginManager.getPlugin(
-              PluginManager.getPluginByClassName(AspectStrategy.class.getName()));
-      Path aspect = Paths.get(plugin.getPath().toString(), "aspect", "build_dependencies.bzl");
+      PluginDescriptor plugin = checkNotNull(PluginManager.getPluginByClass(AspectStrategy.class));
+      Path aspect =
+          Paths.get(plugin.getPluginPath().toString(), "aspect", "build_dependencies.bzl");
       String includes =
           importRoots.rootDirectories().stream()
               .map(BazelDependencyBuilder::directoryToLabel)
