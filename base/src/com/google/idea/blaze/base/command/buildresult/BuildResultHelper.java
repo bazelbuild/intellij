@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Interner;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.run.testlogs.BlazeTestResults;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.exception.BuildException;
 import java.io.InputStream;
 import java.util.List;
@@ -107,7 +108,8 @@ public interface BuildResultHelper extends AutoCloseable {
    * @param completedBuildId build id.
    * @return a list of message on stdout.
    */
-  default InputStream getStdout(String completedBuildId) throws BuildException {
+  default InputStream getStdout(String completedBuildId, BlazeContext context)
+      throws BuildException {
     return InputStream.nullInputStream();
   }
 
