@@ -26,9 +26,18 @@ public class NonBlazeProducerSuppressor implements StartupActivity {
 
   private static final ImmutableList<String> PRODUCERS_TO_SUPPRESS =
       ImmutableList.of(
+          // Gutter icons in different cpp files of different tests.
           "com.jetbrains.cidr.cpp.execution.testing.boost.CMakeBoostTestRunConfigurationProducer",
           "com.jetbrains.cidr.cpp.execution.testing.google.CMakeGoogleTestRunConfigurationProducer",
-          "com.jetbrains.cidr.cpp.execution.testing.tcatch.CMakeCatchTestRunConfigurationProducer");
+          "com.jetbrains.cidr.cpp.execution.testing.tcatch.CMakeCatchTestRunConfigurationProducer",
+
+          // Gutter icons in CMake files.
+          "com.jetbrains.cidr.cpp.execution.CMakeTargetRunConfigurationProducer",
+          "com.jetbrains.cidr.cpp.execution.debugger.CMakeRunConfigurationProducer",
+
+          // Gutter icons that sometimes appear in `cpp` files with a `main` function.
+          "com.jetbrains.cidr.cpp.runfile.CppFileTargetRunConfigurationProducer"
+      );
 
   @Override
   public void runActivity(Project project) {
