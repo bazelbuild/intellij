@@ -32,11 +32,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /** Scoped operation context. */
-public class BlazeContext implements Context, AutoCloseable {
+public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
 
   @Nullable private BlazeContext parentContext;
 
-  private final List<BlazeScope> scopes = Lists.newArrayList();
+  private final List<Scope<? super BlazeContext>> scopes = Lists.newArrayList();
 
   // List of all active child contexts.
   private final List<BlazeContext> childContexts =
@@ -72,7 +72,8 @@ public class BlazeContext implements Context, AutoCloseable {
   }
 
   @CanIgnoreReturnValue
-  public BlazeContext push(BlazeScope scope) {
+  @Override
+  public BlazeContext push(Scope<? super BlazeContext> scope) {
     scopes.add(scope);
     scope.onScopeBegin(this);
     return this;
@@ -155,12 +156,13 @@ public class BlazeContext implements Context, AutoCloseable {
   }
 
   @Nullable
-  public <T extends BlazeScope> T getScope(Class<T> scopeClass) {
+  @Override
+  public <T extends Context.Scope<?>> T getScope(Class<T> scopeClass) {
     return getScope(scopeClass, scopes.size());
   }
 
   @Nullable
-  private <T extends BlazeScope> T getScope(Class<T> scopeClass, int endIndex) {
+  private <T extends Context.Scope<?>> T getScope(Class<T> scopeClass, int endIndex) {
     for (int i = endIndex - 1; i >= 0; i--) {
       if (scopes.get(i).getClass() == scopeClass) {
         return scopeClass.cast(scopes.get(i));
@@ -192,7 +194,7 @@ public class BlazeContext implements Context, AutoCloseable {
    *     startingScope} to the root.
    */
   @VisibleForTesting
-  <T extends BlazeScope> List<T> getScopes(Class<T> scopeClass) {
+  <T extends Scope<?>> List<T> getScopes(Class<T> scopeClass) {
     List<T> scopesCollector = Lists.newArrayList();
     getScopes(scopesCollector, scopeClass, scopes.size());
     return scopesCollector;
@@ -210,7 +212,7 @@ public class BlazeContext implements Context, AutoCloseable {
    *     list.
    */
   @VisibleForTesting
-  <T extends BlazeScope> List<T> getScopes(Class<T> scopeClass, BlazeScope startingScope) {
+  <T extends Scope<?>> List<T> getScopes(Class<T> scopeClass, Scope<?> startingScope) {
     List<T> scopesCollector = Lists.newArrayList();
     int index = scopes.indexOf(startingScope);
     if (index == -1) {
@@ -224,10 +226,9 @@ public class BlazeContext implements Context, AutoCloseable {
 
   /** Add matching scopes to {@param scopesCollector}. Search from {@param maxIndex} - 1 to 0. */
   @VisibleForTesting
-  <T extends BlazeScope> void getScopes(
-      List<T> scopesCollector, Class<T> scopeClass, int maxIndex) {
+  <T extends Scope<?>> void getScopes(List<T> scopesCollector, Class<T> scopeClass, int maxIndex) {
     for (int i = maxIndex - 1; i >= 0; --i) {
-      BlazeScope scope = scopes.get(i);
+      Scope<?> scope = scopes.get(i);
       if (scopeClass.isInstance(scope)) {
         scopesCollector.add(scopeClass.cast(scope));
       }

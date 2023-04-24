@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2023 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.base.scope;
+package com.google.idea.blaze.qsync;
 
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Output;
 
-/**
- * A scoped facet of a scoped operation.
- *
- * <p>Attaches to a blaze context and starts and ends with it.
- */
-public interface BlazeScope extends Context.Scope<BlazeContext> {
-  /** Called when the scope is added to the context. */
-  @Override
-  default void onScopeBegin(BlazeContext context) {}
+/** A basic, non-functional {@link Context} implementation for use in tests. */
+class NoopContext implements Context<NoopContext> {
 
-  /** Called when the context scope is ending. */
   @Override
-  default void onScopeEnd(BlazeContext context) {}
+  public NoopContext push(Scope<? super NoopContext> scope) {
+    return null;
+  }
+
+  @Override
+  public <T extends Scope<?>> T getScope(Class<T> scopeClass) {
+    return null;
+  }
+
+  @Override
+  public <T extends Output> void output(T output) {}
+
+  @Override
+  public void setHasError() {}
 }

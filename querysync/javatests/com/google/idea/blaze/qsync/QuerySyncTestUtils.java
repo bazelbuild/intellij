@@ -17,7 +17,6 @@ package com.google.idea.blaze.qsync;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.common.Output;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.testdata.TestData;
 import com.google.idea.blaze.qsync.vcs.VcsState;
@@ -29,14 +28,7 @@ public class QuerySyncTestUtils {
 
   private QuerySyncTestUtils() {}
 
-  public static final Context NOOP_CONTEXT =
-      new Context() {
-        @Override
-        public <T extends Output> void output(T output) {}
-
-        @Override
-        public void setHasError() {}
-      };
+  public static final Context<?> NOOP_CONTEXT = new NoopContext();
 
   public static final PackageReader EMPTY_PACKAGE_READER = p -> "";
 

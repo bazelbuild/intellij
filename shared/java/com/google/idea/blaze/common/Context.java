@@ -16,7 +16,24 @@
 package com.google.idea.blaze.common;
 
 /** Context interface, used to track operation specific state and output. */
-public interface Context {
+public interface Context<C extends Context<C>> {
+
+  /**
+   * A scoped facet of a scoped operation.
+   *
+   * <p>Attaches to a context and starts and ends with it.
+   */
+  interface Scope<C extends Context<?>> {
+    /** Called when the scope is added to the context. */
+    void onScopeBegin(C context);
+
+    /** Called when the context scope is ending. */
+    void onScopeEnd(C context);
+  }
+
+  C push(Scope<? super C> scope);
+
+  <T extends Scope<?>> T getScope(Class<T> scopeClass);
 
   /**
    * Sends an output message.
