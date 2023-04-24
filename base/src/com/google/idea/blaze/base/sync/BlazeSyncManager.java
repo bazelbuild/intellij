@@ -55,7 +55,6 @@ import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.PrintOutput.OutputType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
@@ -80,7 +79,7 @@ public class BlazeSyncManager {
   }
 
   public static BlazeSyncManager getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeSyncManager.class);
+    return project.getService(BlazeSyncManager.class);
   }
 
   public static void printAndLogError(String errorMessage, Context context) {

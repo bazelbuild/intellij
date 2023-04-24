@@ -24,7 +24,6 @@ import com.google.idea.blaze.android.cppimpl.debug.BlazeAutoAndroidDebugger;
 import com.google.idea.blaze.android.run.deployinfo.BlazeAndroidDeployInfo;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
 
@@ -32,7 +31,7 @@ import javax.annotation.Nullable;
 public interface BlazeAndroidDebuggerService {
 
   static BlazeAndroidDebuggerService getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeAndroidDebuggerService.class);
+    return project.getService(BlazeAndroidDebuggerService.class);
   }
 
   /** Returns the standard debugger for non-native (Java) debugging. */

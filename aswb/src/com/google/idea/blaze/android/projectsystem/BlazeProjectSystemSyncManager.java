@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.sync.BlazeSyncParams;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.messages.MessageBusConnection;
@@ -173,7 +172,7 @@ public class BlazeProjectSystemSyncManager implements ProjectSystemSyncManager {
     SyncResult lastSyncResult = SyncResult.UNKNOWN;
 
     public static LastSyncResultCache getInstance(Project project) {
-      return ServiceManager.getService(project, LastSyncResultCache.class);
+      return project.getService(LastSyncResultCache.class);
     }
 
     /**

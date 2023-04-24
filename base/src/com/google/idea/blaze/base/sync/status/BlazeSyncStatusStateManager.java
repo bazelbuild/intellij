@@ -16,7 +16,6 @@
 package com.google.idea.blaze.base.sync.status;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -31,7 +30,7 @@ public class BlazeSyncStatusStateManager
   private volatile BlazeSyncStatusState myState = new BlazeSyncStatusState();
 
   public static BlazeSyncStatusStateManager getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeSyncStatusStateManager.class);
+    return project.getService(BlazeSyncStatusStateManager.class);
   }
 
   public boolean isDirty() {

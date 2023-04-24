@@ -79,7 +79,6 @@ import com.google.idea.blaze.base.toolwindow.Task;
 import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.common.util.ConcurrencyUtil;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -106,7 +105,7 @@ final class SyncPhaseCoordinator {
   private static final Logger logger = Logger.getInstance(SyncPhaseCoordinator.class);
 
   static SyncPhaseCoordinator getInstance(Project project) {
-    return ServiceManager.getService(project, SyncPhaseCoordinator.class);
+    return project.getService(SyncPhaseCoordinator.class);
   }
 
   private enum SyncPhase {

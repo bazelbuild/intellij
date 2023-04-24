@@ -49,7 +49,6 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.base.sync.libraries.BlazeLibraryCollector;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.common.PrintOutput;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.File;
@@ -90,7 +89,7 @@ public class UnpackedAars {
   private final AarCache aarCache;
 
   public static UnpackedAars getInstance(Project project) {
-    return ServiceManager.getService(project, UnpackedAars.class);
+    return project.getService(UnpackedAars.class);
   }
 
   public UnpackedAars(Project project) {

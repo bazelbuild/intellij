@@ -24,7 +24,6 @@ import com.google.idea.blaze.base.build.BlazeBuildService;
 import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
@@ -136,7 +135,7 @@ public class BlazeProjectSystemBuildManager implements ProjectSystemBuildManager
   /** Caches the Build result from the most recent build */
   static final class LastBuildResultCache {
     private static LastBuildResultCache getInstance(Project project) {
-      return ServiceManager.getService(project, LastBuildResultCache.class);
+      return project.getService(LastBuildResultCache.class);
     }
 
     private BuildResult lastBuildResult = BuildResult.createUnknownBuildResult();

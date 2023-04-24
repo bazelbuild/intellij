@@ -52,7 +52,6 @@ import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -89,7 +88,7 @@ public final class RemoteOutputsCache {
       new BoolExperiment("blaze.base.filecache.remoteOutputsCache.sha256.enable", true);
 
   public static RemoteOutputsCache getInstance(Project project) {
-    return ServiceManager.getService(project, RemoteOutputsCache.class);
+    return project.getService(RemoteOutputsCache.class);
   }
 
   private static final Logger logger = Logger.getInstance(RemoteOutputsCache.class);
