@@ -17,7 +17,7 @@ package com.google.idea.blaze.base.projectview;
 
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import java.io.File;
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -68,7 +68,7 @@ public abstract class ProjectViewStorageManager {
   }
 
   public static ProjectViewStorageManager getInstance() {
-    return ServiceManager.getService(ProjectViewStorageManager.class);
+    return ApplicationManager.getApplication().getService(ProjectViewStorageManager.class);
   }
 
   @Nullable

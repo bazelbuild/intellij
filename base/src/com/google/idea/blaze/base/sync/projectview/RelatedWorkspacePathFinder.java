@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,7 +28,7 @@ import java.nio.file.Paths;
 public final class RelatedWorkspacePathFinder {
 
   public static RelatedWorkspacePathFinder getInstance() {
-    return ServiceManager.getService(RelatedWorkspacePathFinder.class);
+    return ApplicationManager.getApplication().getService(RelatedWorkspacePathFinder.class);
   }
 
   public ImmutableSet<WorkspacePath> findRelatedWorkspaceDirectories(

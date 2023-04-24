@@ -47,7 +47,7 @@ import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.common.artifact.ArtifactState;
 import com.google.idea.blaze.common.artifact.BlazeArtifact;
 import com.google.idea.blaze.common.artifact.OutputArtifactWithoutDigest;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -67,7 +67,7 @@ public class PackageManifestReader {
   private static final Logger logger = Logger.getInstance(PackageManifestReader.class);
 
   public static PackageManifestReader getInstance() {
-    return ServiceManager.getService(PackageManifestReader.class);
+    return ApplicationManager.getApplication().getService(PackageManifestReader.class);
   }
 
   private ImmutableMap<String, ArtifactState> artifactState;

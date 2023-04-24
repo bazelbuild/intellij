@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.logging.utils.HighlightStats;
 import com.google.idea.blaze.base.logging.utils.SyncStats;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.google.idea.blaze.base.logging.utils.querysync.QuerySyncActionStats;
 import java.time.Duration;
 import java.util.Collection;
@@ -35,7 +35,8 @@ import javax.annotation.Nullable;
 public interface EventLoggingService {
 
   static EventLoggingService getInstance() {
-    EventLoggingService service = ServiceManager.getService(EventLoggingService.class);
+    EventLoggingService service =
+        ApplicationManager.getApplication().getService(EventLoggingService.class);
     return service != null ? service : new NoopEventLoggingService();
   }
 
