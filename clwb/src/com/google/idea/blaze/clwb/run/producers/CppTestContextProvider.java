@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.clwb.run.producers;
 
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -41,37 +40,13 @@ import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-/** Provides run configurations related to C/C++ test classes in Blaze. */
+/**
+ * Provides run configurations related to C/C++ test classes in Blaze.
+ */
 class CppTestContextProvider implements TestContextProvider {
-  @Nullable
-  @Override
-  public RunConfigurationContext getTestContext(ConfigurationContext context) {
-    PsiElement element = selectedPsiElement(context);
-    if (element == null) {
-      return null;
-    }
-    PsiFile file = element.getContainingFile();
-    if (file == null) {
-      return null;
-    }
 
-    // Test each test context provider and return the one that matches.
-
-    // Is it a Gtest?
-    RunConfigurationContext gTestContext = getGTestContext(element, file, context);
-    if (gTestContext != null) {
-      return gTestContext;
-    }
-
-    // Is it just a main function inside a `cc_test`?
-    RunConfigurationContext bazelTargetContext = getBazelTargetContext(element, file, context);
-    if (bazelTargetContext != null) {
-      return bazelTargetContext;
-    }
-    return null;
-  }
-
-  private static RunConfigurationContext getBazelTargetContext(PsiElement element, PsiFile file, ConfigurationContext context) {
+  private static RunConfigurationContext getBazelTargetContext(PsiElement element, PsiFile file,
+      ConfigurationContext context) {
     // Ensure we're in a main function, as defined by the C++ standard:
     //   - https://en.cppreference.com/w/cpp/language/main_function
     if (!(element.getContext() instanceof OCDeclarator)) {
@@ -92,7 +67,7 @@ class CppTestContextProvider implements TestContextProvider {
     // We pass null as the test size because the TestTargetHeuristicts that we expect to accept this
     // don't care about the test size.
     ListenableFuture<TargetInfo> targetFuture = TestTargetHeuristic.targetFutureForPsiElement(
-      element, null);
+        element, null);
     if (targetFuture == null
         || targetFuture.isCancelled()
         || (targetFuture.isDone() && FuturesUtil.getIgnoringErrors(targetFuture) == null)) {
@@ -115,7 +90,8 @@ class CppTestContextProvider implements TestContextProvider {
         .build();
   }
 
-  private static RunConfigurationContext getGTestContext(PsiElement element, PsiFile file, ConfigurationContext context) {
+  private static RunConfigurationContext getGTestContext(PsiElement element, PsiFile file,
+      ConfigurationContext context) {
     GoogleTestLocation test = GoogleTestLocation.findGoogleTest(element, context.getProject());
     if (test == null) {
       return null;
@@ -138,7 +114,9 @@ class CppTestContextProvider implements TestContextProvider {
         .build();
   }
 
-  /** The single selected {@link PsiElement}. Returns null if multiple elements are selected. */
+  /**
+   * The single selected {@link PsiElement}. Returns null if multiple elements are selected.
+   */
   @Nullable
   private static PsiElement selectedPsiElement(ConfigurationContext context) {
     PsiElement[] psi = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context.getDataContext());
@@ -147,5 +125,30 @@ class CppTestContextProvider implements TestContextProvider {
     }
     Location<?> location = context.getLocation();
     return location != null ? location.getPsiElement() : null;
+  }
+
+  @Nullable
+  @Override
+  public RunConfigurationContext getTestContext(ConfigurationContext context) {
+    PsiElement element = selectedPsiElement(context);
+    if (element == null) {
+      return null;
+    }
+    PsiFile file = element.getContainingFile();
+    if (file == null) {
+      return null;
+    }
+
+    // Test each test context provider and return the one that matches.
+
+    // Is it a Gtest?
+    RunConfigurationContext gTestContext = getGTestContext(element, file, context);
+    if (gTestContext != null) {
+      return gTestContext;
+    }
+
+    // Is it just a main function inside a `cc_test`?
+    RunConfigurationContext bazelTargetContext = getBazelTargetContext(element, file, context);
+    return bazelTargetContext;
   }
 }
