@@ -19,7 +19,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildSystemName;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import java.util.List;
 
@@ -27,7 +27,7 @@ import java.util.List;
 public abstract class BlazeInfoRunner {
 
   public static BlazeInfoRunner getInstance() {
-    return ServiceManager.getService(BlazeInfoRunner.class);
+    return ApplicationManager.getApplication().getService(BlazeInfoRunner.class);
   }
 
   /**

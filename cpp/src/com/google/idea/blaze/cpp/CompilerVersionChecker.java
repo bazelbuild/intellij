@@ -15,14 +15,14 @@
  */
 package com.google.idea.blaze.cpp;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import java.io.File;
 
 /** Runs a compiler to check its version. */
 public interface CompilerVersionChecker {
 
   static CompilerVersionChecker getInstance() {
-    return ServiceManager.getService(CompilerVersionChecker.class);
+    return ApplicationManager.getApplication().getService(CompilerVersionChecker.class);
   }
 
   /** Indicates failure to check compiler version */
