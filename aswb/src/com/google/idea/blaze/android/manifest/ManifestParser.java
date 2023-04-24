@@ -26,7 +26,6 @@ import static com.android.xml.AndroidManifest.NODE_INSTRUMENTATION;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.run.DefaultActivityLocatorCompat;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import java.io.IOException;
@@ -46,7 +45,7 @@ public class ManifestParser {
   private static final Logger log = Logger.getInstance(ManifestParser.class);
 
   public static ManifestParser getInstance(Project project) {
-    return ServiceManager.getService(project, ManifestParser.class);
+    return project.getService(ManifestParser.class);
   }
 
   /** Container class for common manifest attributes required by the blaze plugin. */

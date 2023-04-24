@@ -58,7 +58,6 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.java.settings.BlazeJavaUserSettings;
 import com.google.idea.blaze.java.sync.model.BlazeJarLibrary;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -86,7 +85,7 @@ import javax.annotation.Nullable;
 public class JarCache {
 
   public static JarCache getInstance(Project project) {
-    return ServiceManager.getService(project, JarCache.class);
+    return project.getService(JarCache.class);
   }
 
   private static final Logger logger = Logger.getInstance(JarCache.class);

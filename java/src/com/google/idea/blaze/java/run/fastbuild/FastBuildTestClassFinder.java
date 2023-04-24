@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.idea.blaze.java.fastbuild.FastBuildBlazeData.JavaInfo;
 import com.intellij.execution.ExecutionException;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -44,7 +43,7 @@ final class FastBuildTestClassFinder {
   }
 
   static FastBuildTestClassFinder getInstance(Project project) {
-    return ServiceManager.getService(project, FastBuildTestClassFinder.class);
+    return project.getService(FastBuildTestClassFinder.class);
   }
 
   String getTestClass(Label label, JavaInfo targetJavaInfo) throws ExecutionException {

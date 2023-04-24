@@ -18,7 +18,6 @@ package com.google.idea.blaze.android.projectsystem;
 import com.android.projectmodel.ExternalAndroidLibrary;
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 
 /** Project Level service to dedup instances of {@link ExternalAndroidLibrary}. */
@@ -26,7 +25,7 @@ public class ExternalLibraryInterner {
   private Interner<ExternalAndroidLibrary> externalLibraryInterner = Interners.newWeakInterner();
 
   public static ExternalLibraryInterner getInstance(Project project) {
-    return ServiceManager.getService(project, ExternalLibraryInterner.class);
+    return project.getService(ExternalLibraryInterner.class);
   }
 
   public ExternalAndroidLibrary intern(ExternalAndroidLibrary externalLibrary) {

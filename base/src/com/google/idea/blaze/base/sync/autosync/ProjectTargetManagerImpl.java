@@ -32,7 +32,6 @@ import com.google.idea.blaze.base.sync.projectview.TargetExpressionList;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,7 +41,7 @@ import javax.annotation.Nullable;
 class ProjectTargetManagerImpl implements ProjectTargetManager {
 
   static ProjectTargetManagerImpl getImpl(Project project) {
-    return ServiceManager.getService(project, ProjectTargetManagerImpl.class);
+    return project.getService(ProjectTargetManagerImpl.class);
   }
 
   private final Project project;

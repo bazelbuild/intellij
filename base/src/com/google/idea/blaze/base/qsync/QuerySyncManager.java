@@ -41,7 +41,6 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -78,7 +77,7 @@ public class QuerySyncManager {
   private volatile QuerySyncProject loadedProject;
 
   public static QuerySyncManager getInstance(Project project) {
-    return ServiceManager.getService(project, QuerySyncManager.class);
+    return project.getService(QuerySyncManager.class);
   }
 
   public QuerySyncManager(Project project) {

@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.sync.projectview;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import javax.annotation.Nullable;
@@ -36,7 +35,7 @@ public interface WorkspaceFileFinder {
   interface Provider {
 
     static Provider getInstance(Project project) {
-      return ServiceManager.getService(project, Provider.class);
+      return project.getService(Provider.class);
     }
 
     /**

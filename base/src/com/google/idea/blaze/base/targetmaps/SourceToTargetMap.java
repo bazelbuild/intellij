@@ -19,7 +19,6 @@ import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
 import com.google.idea.blaze.base.model.primitives.Label;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 
@@ -27,7 +26,7 @@ import java.io.File;
 public interface SourceToTargetMap {
 
   static SourceToTargetMap getInstance(Project project) {
-    return ServiceManager.getService(project, SourceToTargetMap.class);
+    return project.getService(SourceToTargetMap.class);
   }
 
   /** Returns a set of targets that will cause the file to build */

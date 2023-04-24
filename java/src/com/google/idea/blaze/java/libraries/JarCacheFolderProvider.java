@@ -21,7 +21,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Optional;
@@ -29,7 +28,7 @@ import java.util.Optional;
 /** Provides {@link File} instance to store local JAR cache. */
 public class JarCacheFolderProvider {
   public static JarCacheFolderProvider getInstance(Project project) {
-    return ServiceManager.getService(project, JarCacheFolderProvider.class);
+    return project.getService(JarCacheFolderProvider.class);
   }
 
   private static final String JAR_CACHE_FOLDER_NAME = "libraries";

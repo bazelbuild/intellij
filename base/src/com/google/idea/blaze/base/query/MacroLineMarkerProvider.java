@@ -30,7 +30,6 @@ import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -214,7 +213,7 @@ public class MacroLineMarkerProvider implements LineMarkerProvider {
 
   static class FileDataProvider {
     static FileDataProvider getInstance(Project project) {
-      return ServiceManager.getService(project, FileDataProvider.class);
+      return project.getService(FileDataProvider.class);
     }
 
     private static final Logger logger = Logger.getInstance(FileDataProvider.class);

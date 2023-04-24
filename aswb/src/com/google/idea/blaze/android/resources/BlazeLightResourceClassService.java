@@ -27,7 +27,6 @@ import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.common.experiments.BoolExperiment;
 import com.google.idea.common.experiments.FeatureRolloutExperiment;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -68,7 +67,7 @@ public class BlazeLightResourceClassService implements LightResourceClassService
   private PsiManager psiManager;
 
   public static BlazeLightResourceClassService getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeLightResourceClassService.class);
+    return project.getService(BlazeLightResourceClassService.class);
   }
 
   private BlazeLightResourceClassService(Project project) {

@@ -39,7 +39,6 @@ import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
 import com.google.idea.blaze.base.syncstatus.SyncStatusContributor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
@@ -60,7 +59,7 @@ import javax.annotation.Nullable;
 /** Class to log unresolved resource symbols per project. */
 class ProjectUnresolvedResourceStatsCollector implements Disposable {
   static ProjectUnresolvedResourceStatsCollector getInstance(Project project) {
-    return ServiceManager.getService(project, ProjectUnresolvedResourceStatsCollector.class);
+    return project.getService(ProjectUnresolvedResourceStatsCollector.class);
   }
 
   private final WorkspacePathResolverProvider workspacePathResolverProvider;

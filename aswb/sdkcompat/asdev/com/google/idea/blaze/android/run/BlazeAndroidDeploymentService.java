@@ -20,14 +20,13 @@ import com.android.tools.idea.run.LaunchOptions;
 import com.android.tools.idea.run.blaze.BlazeLaunchTask;
 import com.android.tools.idea.run.tasks.DeployTask;
 import com.android.tools.idea.run.tasks.DeployTasksCompat;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import java.util.Collection;
 
 /** A service that provides {@link DeployTask}. */
 public interface BlazeAndroidDeploymentService {
   static BlazeAndroidDeploymentService getInstance(Project project) {
-    return ServiceManager.getService(project, BlazeAndroidDeploymentService.class);
+    return project.getService(BlazeAndroidDeploymentService.class);
   }
 
   /** Returns a {@link DeployTask} to deploy the given files and launch options. */

@@ -29,7 +29,6 @@ import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.workspace.WorkspaceHelper;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolverProvider;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -49,7 +48,7 @@ import javax.annotation.Nullable;
 public class BuildReferenceManager {
 
   public static BuildReferenceManager getInstance(Project project) {
-    return ServiceManager.getService(project, BuildReferenceManager.class);
+    return project.getService(BuildReferenceManager.class);
   }
 
   private final Project project;
