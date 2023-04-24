@@ -15,9 +15,6 @@
  */
 package com.google.idea.blaze.qsync.util;
 
-import com.google.idea.blaze.common.Context;
-import com.google.idea.blaze.common.Output;
-import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
 import com.google.idea.blaze.qsync.GraphToProjectConverter;
 import com.google.idea.blaze.qsync.PackageReader;
@@ -54,24 +51,10 @@ import java.util.zip.GZIPInputStream;
  */
 public class ProjectSpecBuilder {
 
-  private final Context context =
-      new Context() {
-        @Override
-        public <T extends Output> void output(T output) {
-          if (output instanceof PrintOutput) {
-            System.err.println(((PrintOutput) output).getText());
-          }
-        }
-
-        @Override
-        public void setHasError() {
-          error = true;
-        }
-      };
+  private final CliContext context = new CliContext();
 
   private final File snapshotFile;
   private final PackageReader packageReader;
-  boolean error = false;
 
   public static void main(String[] args) throws IOException {
     System.exit(new ProjectSpecBuilder(new File(args[0])).run());
@@ -93,6 +76,6 @@ public class ProjectSpecBuilder {
     GraphToProjectConverter converter =
         new GraphToProjectConverter(packageReader, context, snapshot.projectDefinition());
     System.out.println(TextFormat.printer().printToString(converter.createProject(buildGraph)));
-    return error ? 1 : 0;
+    return context.hasError() ? 1 : 0;
   }
 }

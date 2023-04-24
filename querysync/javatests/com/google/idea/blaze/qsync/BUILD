@@ -1,6 +1,9 @@
 java_library(
     name = "TestUtils",
-    srcs = ["QuerySyncTestUtils.java"],
+    srcs = [
+        "NoopContext.java",
+        "QuerySyncTestUtils.java",
+    ],
     visibility = [":__subpackages__"],
     deps = [
         "//querysync/java/com/google/idea/blaze/qsync",
