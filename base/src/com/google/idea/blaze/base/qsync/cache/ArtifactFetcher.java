@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
+import com.google.idea.blaze.common.Context;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.IOException;
@@ -37,8 +38,8 @@ public interface ArtifactFetcher {
           AppExecutorUtil.createBoundedApplicationPoolExecutor("ArtifactBulkCopyExecutor", 128));
 
   /** Copies a bunch of artifact to destination. */
-  ListenableFuture<List<Path>> copy(ImmutableMap<OutputArtifact, Path> artifactToDest)
-      throws IOException;
+  ListenableFuture<List<Path>> copy(
+      ImmutableMap<OutputArtifact, Path> artifactToDest, Context<?> context) throws IOException;
 
   boolean isEnabled(BuildBinaryType buildBinaryType);
 }

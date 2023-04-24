@@ -34,10 +34,13 @@ import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
+import com.google.idea.blaze.common.DownloadTrackingScope;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -140,12 +143,20 @@ public class ArtifactTracker {
    */
   public UpdateResult add(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
       throws BuildException {
-
     try (BlazeContext context = BlazeContext.create(outerContext)) {
-      ListenableFuture<ImmutableSet<Path>> jars = jarCache.cache(outputInfo.getJars());
-      ListenableFuture<ImmutableSet<Path>> aars = aarCache.cache(outputInfo.getAars());
+      DownloadTrackingScope downloads = new DownloadTrackingScope();
+      context.push(downloads);
+      ListenableFuture<ImmutableSet<Path>> jars = jarCache.cache(outputInfo.getJars(), context);
+      ListenableFuture<ImmutableSet<Path>> aars = aarCache.cache(outputInfo.getAars(), context);
       ListenableFuture<ImmutableSet<Path>> genSrcs =
-          generatedSrcFileCache.cache(outputInfo.getGeneratedSources());
+          generatedSrcFileCache.cache(outputInfo.getGeneratedSources(), context);
+      if (downloads.getFileCount() > 0) {
+        context.output(
+            PrintOutput.log(
+                "Downloading %d build artifacts (%s)",
+                downloads.getFileCount(), StringUtil.formatFileSize(downloads.getTotalBytes())));
+      }
+
       ListenableFuture<?> cacheFetches = Futures.allAsList(jars, aars, genSrcs);
       context.addCancellationHandler(() -> cacheFetches.cancel(false));
       Uninterruptibles.getUninterruptibly(cacheFetches);
