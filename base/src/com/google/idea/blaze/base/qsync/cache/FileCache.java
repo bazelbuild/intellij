@@ -31,6 +31,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -120,10 +121,10 @@ public class FileCache {
     }
   }
 
-  public ListenableFuture<ImmutableSet<Path>> cache(ImmutableList<OutputArtifact> artifacts)
-      throws IOException {
+  public ListenableFuture<ImmutableSet<Path>> cache(
+      ImmutableList<OutputArtifact> artifacts, BlazeContext context) throws IOException {
     ListenableFuture<List<Path>> copyArtifactFuture =
-        artifactFetcher.copy(getLocalPathMap(artifacts, cacheDir));
+        artifactFetcher.copy(getLocalPathMap(artifacts, cacheDir), context);
     if (extractAfterFetch) {
       copyArtifactFuture =
           Futures.transform(copyArtifactFuture, this::extract, ArtifactFetcher.EXECUTOR);
@@ -156,8 +157,7 @@ public class FileCache {
             FileUtilRt.getExtension(sourcePath.getFileName().toString()))) {
           Path tmpPath = sourcePath.resolveSibling(sourcePath.getFileName() + ".tmp");
           // Since we will keep using same file name for extracted directory, we need to rename
-          // source
-          // file
+          // source file
           Files.move(sourcePath, tmpPath);
           result.add(extract(tmpPath, sourcePath));
           Files.delete(tmpPath);
