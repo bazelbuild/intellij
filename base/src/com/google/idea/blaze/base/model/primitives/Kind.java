@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.devtools.intellij.ideinfo.IntellijIdeInfo;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import java.util.Arrays;
 import java.util.Collection;
@@ -91,7 +91,7 @@ public abstract class Kind {
   @VisibleForTesting
   public static final class ApplicationState {
     private static ApplicationState getService() {
-      return ServiceManager.getService(ApplicationState.class);
+      return ApplicationManager.getApplication().getService(ApplicationState.class);
     }
 
     /** An internal map of all known rule types. */

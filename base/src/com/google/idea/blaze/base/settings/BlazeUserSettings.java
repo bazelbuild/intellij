@@ -17,8 +17,8 @@ package com.google.idea.blaze.base.settings;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.idea.blaze.base.logging.LoggedSettingsProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -86,7 +86,7 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private String fastBuildJavaBinaryPathInRunFiles = "";
 
   public static BlazeUserSettings getInstance() {
-    return ServiceManager.getService(BlazeUserSettings.class);
+    return ApplicationManager.getApplication().getService(BlazeUserSettings.class);
   }
 
   @Override

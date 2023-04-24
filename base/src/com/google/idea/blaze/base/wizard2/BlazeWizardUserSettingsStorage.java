@@ -15,8 +15,8 @@
  */
 package com.google.idea.blaze.base.wizard2;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import javax.annotation.Nullable;
@@ -28,7 +28,7 @@ public class BlazeWizardUserSettingsStorage
   private BlazeWizardUserSettings state = new BlazeWizardUserSettings();
 
   static BlazeWizardUserSettingsStorage getInstance() {
-    return ServiceManager.getService(BlazeWizardUserSettingsStorage.class);
+    return ApplicationManager.getApplication().getService(BlazeWizardUserSettingsStorage.class);
   }
 
   @Nullable

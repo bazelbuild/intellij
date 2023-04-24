@@ -22,7 +22,7 @@ import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.google.idea.blaze.common.PrintOutput;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.BufferedReader;
 import java.io.File;
@@ -39,7 +39,7 @@ public class JavaSourcePackageReader extends JavaPackageReader {
   private static final Logger logger = Logger.getInstance(JavaSourcePackageReader.class);
 
   public static JavaSourcePackageReader getInstance() {
-    return ServiceManager.getService(JavaSourcePackageReader.class);
+    return ApplicationManager.getApplication().getService(JavaSourcePackageReader.class);
   }
 
   // Package declaration of java-like languages.

@@ -17,13 +17,13 @@ package com.google.idea.blaze.android.run.deployinfo;
 
 import com.android.tools.idea.run.ApkProvider;
 import com.google.idea.blaze.android.run.runner.ApkBuildStep;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
 /** Service to provide ApkProviders that source APKs from {@link ApkBuildStep}. */
 public interface BlazeApkProviderService {
   static BlazeApkProviderService getInstance() {
-    return ServiceManager.getService(BlazeApkProviderService.class);
+    return ApplicationManager.getApplication().getService(BlazeApkProviderService.class);
   }
 
   /** Returns an APK provider that sources APKs from the given {@link ApkBuildStep}. */
