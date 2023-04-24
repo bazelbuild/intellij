@@ -17,7 +17,9 @@ package com.google.idea.blaze.base.qsync;
 
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.exception.BuildException;
 import java.io.IOException;
 import java.util.Set;
 
@@ -35,8 +37,9 @@ public class DependencyCache {
   }
 
   /* Caches new Artifacts to local. */
-  public UpdateResult update(Set<Label> targets, OutputInfo outputInfo) throws IOException {
-    return artifactTracker.add(targets, outputInfo);
+  public UpdateResult update(Set<Label> targets, OutputInfo outputInfo, BlazeContext context)
+      throws BuildException {
+    return artifactTracker.add(targets, outputInfo, context);
   }
 
   /* Save artifact info to disk. */

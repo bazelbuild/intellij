@@ -108,7 +108,7 @@ public class DependencyTracker {
     OutputInfo outputInfo = builder.build(context, buildTargets);
 
     long now = System.nanoTime();
-    UpdateResult updateResult = cache.update(targets, outputInfo);
+    UpdateResult updateResult = cache.update(targets, outputInfo, context);
     long elapsedMs = (System.nanoTime() - now) / 1000000L;
     context.output(
         PrintOutput.log(

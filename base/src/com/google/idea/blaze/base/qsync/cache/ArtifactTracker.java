@@ -25,12 +25,17 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
 import com.google.idea.blaze.base.qsync.OutputInfo;
+import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.exception.BuildException;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.diagnostic.Logger;
 import java.io.IOException;
@@ -44,6 +49,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -132,18 +138,32 @@ public class ArtifactTracker {
    * Merges TargetToDeps into tracker maps and cache necessary OutputArtifact to local. The
    * artifacts will not be added into tracker if it's failed to be cached.
    */
-  public UpdateResult add(Set<Label> targets, OutputInfo outputInfo) throws IOException {
-    ImmutableSet.Builder<Path> updatedBuilder = ImmutableSet.builder();
-    ImmutableSet.Builder<String> removedBuilder = ImmutableSet.builder();
+  public UpdateResult add(Set<Label> targets, OutputInfo outputInfo, BlazeContext outerContext)
+      throws BuildException {
 
-    updatedBuilder
-        .addAll(jarCache.cache(outputInfo.getJars()))
-        .addAll(aarCache.cache(outputInfo.getAars()))
-        .addAll(generatedSrcFileCache.cache(outputInfo.getGeneratedSources()));
-    for (BuildArtifacts artifacts : outputInfo.getArtifacts()) {
-      updateMaps(targets, artifacts);
+    try (BlazeContext context = BlazeContext.create(outerContext)) {
+      ListenableFuture<ImmutableSet<Path>> jars = jarCache.cache(outputInfo.getJars());
+      ListenableFuture<ImmutableSet<Path>> aars = aarCache.cache(outputInfo.getAars());
+      ListenableFuture<ImmutableSet<Path>> genSrcs =
+          generatedSrcFileCache.cache(outputInfo.getGeneratedSources());
+      ListenableFuture<?> cacheFetches = Futures.allAsList(jars, aars, genSrcs);
+      context.addCancellationHandler(() -> cacheFetches.cancel(false));
+      Uninterruptibles.getUninterruptibly(cacheFetches);
+      ImmutableSet<Path> updated =
+          ImmutableSet.<Path>builder()
+              .addAll(Futures.getDone(jars))
+              .addAll(Futures.getDone(aars))
+              .addAll(Futures.getDone(genSrcs))
+              .build();
+
+      for (BuildArtifacts artifacts : outputInfo.getArtifacts()) {
+        updateMaps(targets, artifacts);
+      }
+      return UpdateResult.create(updated, ImmutableSet.of());
+    } catch (ExecutionException | IOException e) {
+      throw new BuildException(e);
     }
-    return UpdateResult.create(updatedBuilder.build(), removedBuilder.build());
+
   }
 
   /**

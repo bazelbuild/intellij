@@ -174,8 +174,12 @@ public class QuerySyncManager {
 
           @Override
           public void onFailure(Throwable throwable) {
-            logger.error("Sync failed", throwable);
-            syncStatus.syncEnded(SyncMode.FULL, SyncResult.FAILURE);
+            if (result.isCancelled()) {
+              syncStatus.syncEnded(SyncMode.FULL, SyncResult.CANCELLED);
+            } else {
+              logger.error("Sync failed", throwable);
+              syncStatus.syncEnded(SyncMode.FULL, SyncResult.FAILURE);
+            }
           }
         },
         MoreExecutors.directExecutor());
