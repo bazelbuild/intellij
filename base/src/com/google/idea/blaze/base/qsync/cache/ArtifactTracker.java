@@ -23,8 +23,6 @@ import static com.google.idea.blaze.qsync.project.BlazeProjectDataStorage.LIBRAR
 import com.google.auto.value.AutoValue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.google.common.collect.Sets.SetView;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -48,7 +46,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -184,34 +181,17 @@ public class ArtifactTracker {
    * @param newArtifacts the artifacts that were actually built. From (blaze build)
    */
   private void updateMaps(Set<Label> targets, BuildArtifacts newArtifacts) {
-    Set<Label> built = new HashSet<>();
-    for (TargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
-      Label label = Label.of(targetArtifacts.getTarget());
-      artifacts.remove(label);
-      if (targets.contains(label)) {
-        built.add(label);
-      }
-    }
-    SetView<Label> notBuilt = Sets.difference(targets, built);
-    for (Label label : notBuilt) {
-      logger.warn("Target " + label + " was not built.");
-    }
     for (TargetArtifacts targetArtifacts : newArtifacts.getArtifactsList()) {
       ImmutableList<Path> paths =
           targetArtifacts.getArtifactPathsList().stream().map(Path::of).collect(toImmutableList());
       Label label = Label.of(targetArtifacts.getTarget());
-      if (targets.contains(label)) {
-        List<Path> value = artifacts.computeIfAbsent(label, k -> new ArrayList<>());
-        value.addAll(paths);
-      } else {
-        // This can happen when there is an alias, we expect the alias name to be built,
-        // but we see the 'actual' label being built instead.
-        // Here for all the targets that we did not expect to be built, we add their
-        // artifacts to all the labels that we didn't see.
-        for (Label notBuiltLabel : notBuilt) {
-          List<Path> value = artifacts.computeIfAbsent(notBuiltLabel, k -> new ArrayList<>());
-          value.addAll(paths);
-        }
+      artifacts.put(label, paths);
+    }
+    for (Label label : targets) {
+      if (!artifacts.containsKey(label)) {
+        logger.warn(
+            "Target " + label + "was not built. If the target is an alias, this is expected");
+        artifacts.put(label, new ArrayList<>());
       }
     }
   }
