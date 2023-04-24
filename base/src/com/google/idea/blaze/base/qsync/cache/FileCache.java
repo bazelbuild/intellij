@@ -38,6 +38,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -119,24 +120,23 @@ public class FileCache {
     }
   }
 
-  public ImmutableSet<Path> cache(ImmutableList<OutputArtifact> artifacts) throws IOException {
-    try {
-      ListenableFuture<List<Path>> copyArtifactFuture =
-          artifactFetcher.copy(getLocalPathMap(artifacts, cacheDir));
-      List<Path> files = Uninterruptibles.getUninterruptibly(copyArtifactFuture);
-      if (extractAfterFetch) {
-        files = extract(files);
-      }
-      return ImmutableSet.copyOf(files);
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof IOException) {
-        throw (IOException) e.getCause();
-      }
-      throw new FileCacheOperationException(
-          "Failed to copy jars to cache with unexpected exceptions.", e);
-    } finally {
-      readFileState();
+  public ListenableFuture<ImmutableSet<Path>> cache(ImmutableList<OutputArtifact> artifacts)
+      throws IOException {
+    ListenableFuture<List<Path>> copyArtifactFuture =
+        artifactFetcher.copy(getLocalPathMap(artifacts, cacheDir));
+    if (extractAfterFetch) {
+      copyArtifactFuture =
+          Futures.transform(copyArtifactFuture, this::extract, ArtifactFetcher.EXECUTOR);
     }
+    return Futures.transform(
+        copyArtifactFuture,
+        list -> {
+          // we do this in a transform to ensure it is run before the future completes, even though
+          // it doesn't directly modify the return value.
+          readFileState();
+          return ImmutableSet.copyOf(list);
+        },
+        ArtifactFetcher.EXECUTOR);
   }
 
   private ImmutableMap<OutputArtifact, Path> getLocalPathMap(
@@ -148,20 +148,25 @@ public class FileCache {
                 outputArtifact -> dir.resolve(cacheKeyForArtifact(outputArtifact.getKey()))));
   }
 
-  private ImmutableList<Path> extract(Collection<Path> sourcePaths) throws IOException {
-    ImmutableList.Builder<Path> result = ImmutableList.builder();
-    for (Path sourcePath : sourcePaths) {
-      if (ZIP_FILE_EXTENSION.contains(
-          FileUtilRt.getExtension(sourcePath.getFileName().toString()))) {
-        Path tmpPath = sourcePath.resolveSibling(sourcePath.getFileName() + ".tmp");
-        // Since we will keep using same file name for extracted directory, we need to rename source
-        // file
-        Files.move(sourcePath, tmpPath);
-        result.add(extract(tmpPath, sourcePath));
-        Files.delete(tmpPath);
+  private ImmutableList<Path> extract(Collection<Path> sourcePaths) {
+    try {
+      ImmutableList.Builder<Path> result = ImmutableList.builder();
+      for (Path sourcePath : sourcePaths) {
+        if (ZIP_FILE_EXTENSION.contains(
+            FileUtilRt.getExtension(sourcePath.getFileName().toString()))) {
+          Path tmpPath = sourcePath.resolveSibling(sourcePath.getFileName() + ".tmp");
+          // Since we will keep using same file name for extracted directory, we need to rename
+          // source
+          // file
+          Files.move(sourcePath, tmpPath);
+          result.add(extract(tmpPath, sourcePath));
+          Files.delete(tmpPath);
+        }
       }
+      return result.build();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
-    return result.build();
   }
 
   private Path extract(Path source, Path destination) throws IOException {

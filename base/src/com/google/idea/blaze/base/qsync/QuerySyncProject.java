@@ -49,6 +49,7 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -116,7 +117,11 @@ public class QuerySyncProject {
 
   /** Log & display a message to the user when a user-initiated action fails. */
   private void onError(String description, Exception e, BlazeContext context) {
-    if (isExceptionError(e)) {
+    if (e instanceof CancellationException) {
+      logger.info(description + ": cancelled.", e);
+      context.output(PrintOutput.error("Cancelled"));
+      return;
+    } else if (isExceptionError(e)) {
       logger.error(description, e);
       context.output(PrintOutput.error(description + ": " + e.getClass().getSimpleName()));
     } else {
@@ -180,7 +185,7 @@ public class QuerySyncProject {
             SyncMode.FULL,
             SyncResult.SUCCESS);
       }
-    } catch (BuildException | IOException e) {
+    } catch (CancellationException | BuildException | IOException e) {
       onError("Project sync failed", e, context);
     } finally {
       for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
@@ -203,7 +208,7 @@ public class QuerySyncProject {
       Path path = Paths.get(psiFile.getVirtualFile().getPath());
       String rel = workspaceRoot.path().relativize(path).toString();
       build(context, ImmutableList.of(WorkspacePath.createIfValid(rel).asPath()));
-    } catch (IOException | BuildException e) {
+    } catch (CancellationException | IOException | BuildException e) {
       onError("Failed to build dependencies", e, context);
     }
   }
