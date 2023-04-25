@@ -36,8 +36,12 @@ import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
 import com.google.protobuf.ExtensionRegistry;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task.Backgroundable;
 import com.intellij.openapi.project.Project;
 import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /** Calls 'blaze info build-language', to retrieve the language spec. */
 public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider {
@@ -180,7 +184,17 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
       }
       BuildLanguageSpecProviderImpl provider =
           (BuildLanguageSpecProviderImpl) buildLanguageSpecProvider;
-      provider.fetchLanguageSpecIfNeeded(context);
+
+      ProgressManager.getInstance()
+          .run(
+              new Backgroundable(project, "Fetching BUILD language spec") {
+                @Override
+                public void run(@NotNull ProgressIndicator progressIndicator) {
+                  // Invocations are run in a separate context as they are not crucial or useful for
+                  // the core sync query.
+                  provider.fetchLanguageSpecIfNeeded(BlazeContext.create());
+                }
+              });
     }
   }
 }
