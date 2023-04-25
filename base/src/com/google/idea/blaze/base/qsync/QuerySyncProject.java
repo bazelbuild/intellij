@@ -218,7 +218,8 @@ public class QuerySyncProject {
     if (virtualFile == null) {
       return true;
     }
-    Set<Label> pendingTargets = dependencyTracker.getPendingTargets(virtualFile);
+    Set<Label> pendingTargets =
+        dependencyTracker.getPendingTargets(workspaceRoot.relativize(psiFile.getVirtualFile()));
     int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
     return unsynced == 0;
   }

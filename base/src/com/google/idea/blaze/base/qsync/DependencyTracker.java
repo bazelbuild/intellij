@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
@@ -25,11 +26,9 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -42,17 +41,14 @@ import javax.annotation.Nullable;
  */
 public class DependencyTracker {
 
-  private final Path workspaceRoot;
   private final BlazeProject blazeProject;
   private final DependencyBuilder builder;
   private final DependencyCache cache;
 
   public DependencyTracker(
-      Path workspaceRoot,
       BlazeProject blazeProject,
       DependencyBuilder builder,
       DependencyCache cache) {
-    this.workspaceRoot = workspaceRoot;
     this.blazeProject = blazeProject;
     this.builder = builder;
     this.cache = cache;
@@ -60,14 +56,14 @@ public class DependencyTracker {
 
   /** Recursively get all the transitive deps outside the project */
   @Nullable
-  public Set<Label> getPendingTargets(VirtualFile vf) {
-    Path rel = workspaceRoot.relativize(Paths.get(vf.getPath()));
+  public Set<Label> getPendingTargets(Path workspaceRelativePath) {
+    Preconditions.checkState(!workspaceRelativePath.isAbsolute(), workspaceRelativePath);
 
     Optional<BlazeProjectSnapshot> currentSnapshot = blazeProject.getCurrent();
     if (currentSnapshot.isEmpty()) {
       return null;
     }
-    ImmutableSet<Label> targets = currentSnapshot.get().getFileDependencies(rel);
+    ImmutableSet<Label> targets = currentSnapshot.get().getFileDependencies(workspaceRelativePath);
     if (targets == null) {
       return null;
     }
@@ -75,8 +71,13 @@ public class DependencyTracker {
     return Sets.difference(targets, cachedTargets).immutableCopy();
   }
 
-  public void buildDependenciesForFile(BlazeContext context, List<Path> paths)
+  /**
+   * Builds the external dependencies of the given files, putting the resultant libraries in the
+   * shared library directory so that they are picked up by the IDE.
+   */
+  public void buildDependenciesForFile(BlazeContext context, List<Path> workspaceRelativePaths)
       throws IOException, BuildException {
+    workspaceRelativePaths.forEach(path -> Preconditions.checkState(!path.isAbsolute(), path));
 
     BlazeProjectSnapshot snapshot =
         blazeProject
@@ -85,21 +86,22 @@ public class DependencyTracker {
 
     Set<Label> targets = new HashSet<>();
     Set<Label> buildTargets = new HashSet<>();
-    for (Path path : paths) {
-      Label targetOwner = snapshot.getTargetOwner(path);
+    for (Path workspaceRelativePath : workspaceRelativePaths) {
+      Label targetOwner = snapshot.getTargetOwner(workspaceRelativePath);
       if (targetOwner != null) {
         buildTargets.add(targetOwner);
       } else {
         context.output(
             PrintOutput.error(
-                "File %s does not seem to be part of a build rule that the IDE supports.", path));
+                "File %s does not seem to be part of a build rule that the IDE supports.",
+                workspaceRelativePath));
         context.output(
             PrintOutput.error(
                 "If this is a newly added supported rule, please re-sync your project."));
         context.setHasError();
         return;
       }
-      ImmutableSet<Label> t = snapshot.getFileDependencies(path);
+      ImmutableSet<Label> t = snapshot.getFileDependencies(workspaceRelativePath);
       if (t != null) {
         targets.addAll(t);
       }
