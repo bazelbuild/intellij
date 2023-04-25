@@ -17,6 +17,7 @@ package com.google.idea.blaze.base.syncstatus;
 
 import static java.util.Arrays.stream;
 
+import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.qsync.DependencyTracker;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.qsync.QuerySyncManager;
@@ -63,7 +64,7 @@ public class QuerySyncNodeDecorator implements ProjectViewNodeDecorator {
     if (deps == null) {
       return;
     }
-    Set<Label> targets = deps.getPendingTargets(vf);
+    Set<Label> targets = deps.getPendingTargets(WorkspaceRoot.fromProject(project).relativize(vf));
     if (targets != null && !targets.isEmpty()) {
       data.clearText();
       data.addText(vf.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
