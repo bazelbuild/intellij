@@ -25,7 +25,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.async.executor.BlazeExecutor;
 import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
-import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
@@ -63,7 +62,6 @@ import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
 import com.google.idea.blaze.base.settings.BlazeUserSettings;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.common.PrintOutput.OutputType;
-import com.google.idea.common.experiments.BoolExperiment;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -95,8 +93,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class BlazeCommandGenericRunConfigurationRunner
     implements BlazeCommandRunConfigurationRunner {
-  private static final BoolExperiment useRabbitForTestCommands =
-      new BoolExperiment("localtests.userabbit", false);
 
   @Override
   public RunProfileState getRunProfileState(Executor executor, ExecutionEnvironment environment) {
@@ -150,13 +146,9 @@ public final class BlazeCommandGenericRunConfigurationRunner
 
       ProjectViewSet projectViewSet = ProjectViewManager.getInstance(project).getProjectViewSet();
       assert projectViewSet != null;
-
-      BuildSystem buildSystem = Blaze.getBuildSystemProvider(project).getBuildSystem();
       BlazeContext context = BlazeContext.create();
       BuildInvoker invoker =
-          getCommand().equals(BlazeCommandName.TEST) && useRabbitForTestCommands.getValue()
-              ? buildSystem.getParallelBuildInvoker(project, context).orElseThrow()
-              : buildSystem.getBuildInvoker(project, context);
+          Blaze.getBuildSystemProvider(project).getBuildSystem().getBuildInvoker(project, context);
       ProcessHandler processHandler;
       WorkspaceRoot workspaceRoot = WorkspaceRoot.fromImportSettings(importSettings);
       try (BuildResultHelper buildResultHelper = invoker.createBuildResultHelper()) {
