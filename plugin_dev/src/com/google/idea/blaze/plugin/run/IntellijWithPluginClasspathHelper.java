@@ -178,6 +178,7 @@ public class IntellijWithPluginClasspathHelper {
     String appPackage = Path.of(ideaJdk.getHomePath()).getParent().toString();
     if (launch != null && launch.additionalJvmArguments != null) {
       for (String arg : launch.additionalJvmArguments) {
+        arg = arg.replace("$IDE_HOME", ideaJdk.getHomePath());
         if (SystemInfo.isMac) {
           // Perform replacements that are done by the mac launcher here
           arg = arg.replace("$APP_PACKAGE", appPackage);
