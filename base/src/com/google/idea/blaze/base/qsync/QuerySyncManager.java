@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.async.executor.ProgressiveTaskWithProgressIndicator;
+import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.scope.BlazeScope;
 import com.google.idea.blaze.base.scope.Scope;
@@ -37,6 +38,7 @@ import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.base.sync.status.BlazeSyncStatus;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.base.toolwindow.Task;
+import com.google.idea.blaze.base.util.SaveUtil;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
@@ -150,13 +152,22 @@ public class QuerySyncManager {
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> fullSync() {
-    return run("Updating project structure", "Re-importing project", loadedProject::fullSync);
+    if (projectDefinitionHasChanged()) {
+      return run("Updating project structure", "Re-importing project", this::loadProject);
+
+    } else {
+      return run("Updating project structure", "Re-importing project", loadedProject::fullSync);
+    }
   }
 
   @CanIgnoreReturnValue
   public ListenableFuture<Boolean> deltaSync() {
     assertProjectLoaded();
-    return run("Updating project structure", "Refreshing project", loadedProject::deltaSync);
+    if (projectDefinitionHasChanged()) {
+      return run("Updating project structure", "Re-importing project", this::loadProject);
+    } else {
+      return run("Updating project structure", "Refreshing project", loadedProject::deltaSync);
+    }
   }
 
   private ListenableFuture<Boolean> run(String title, String subTitle, ScopedOperation operation) {
@@ -235,5 +246,17 @@ public class QuerySyncManager {
       return false;
     }
     return loadedProject.isReadyForAnalysis(psiFile);
+  }
+
+  /**
+   * Loads the {@link ProjectViewSet} and checks if the {@link ProjectDefinition} for the project
+   * has changed.
+   *
+   * @return true if the {@link ProjectDefinition} has changed.
+   */
+  private boolean projectDefinitionHasChanged() {
+    // Ensure edits to the project view and any imports have been saved
+    SaveUtil.saveAllFiles();
+    return !loadedProject.isDefinitionCurrent();
   }
 }

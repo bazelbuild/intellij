@@ -95,10 +95,10 @@ public class ProjectLoader {
     // implementations of WorkspacePathResolver exists. Perhaps they are performance
     // optimizations?
     WorkspacePathResolver workspacePathResolver = new WorkspacePathResolverImpl(workspaceRoot);
+
+    ProjectViewManager projectViewManager = ProjectViewManager.getInstance(project);
     ProjectViewSet projectViewSet =
-        checkNotNull(
-            ProjectViewManager.getInstance(project)
-                .reloadProjectView(context, workspacePathResolver));
+        checkNotNull(projectViewManager.reloadProjectView(context, workspacePathResolver));
     ImportRoots importRoots =
         ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
             .add(projectViewSet)
@@ -156,7 +156,8 @@ public class ProjectLoader {
             projectViewSet,
             workspacePathResolver,
             workspaceLanguageSettings,
-            sourceToTargetMap);
+            sourceToTargetMap,
+            projectViewManager);
     return loadedProject;
   }
 
