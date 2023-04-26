@@ -25,7 +25,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /** Reads experiment values from the resource file attached to the class. */
-public class DefaultValuesExperimentLoader extends HashingExperimentLoader {
+public class DefaultValuesExperimentLoader implements ExperimentLoader {
 
   private static final Logger logger = Logger.getInstance(FileExperimentLoader.class);
 
@@ -41,7 +41,7 @@ public class DefaultValuesExperimentLoader extends HashingExperimentLoader {
   }
 
   @Override
-  public ImmutableMap<String, String> getUnhashedExperiments() {
+  public ImmutableMap<String, String> getExperiments() {
     return experiments;
   }
 

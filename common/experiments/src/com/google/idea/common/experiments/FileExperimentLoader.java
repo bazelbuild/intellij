@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Properties;
 
 /** Reads experiments from a property file. */
-class FileExperimentLoader extends HashingExperimentLoader {
+class FileExperimentLoader implements ExperimentLoader {
 
   private static final Logger logger = Logger.getInstance(FileExperimentLoader.class);
 
@@ -45,7 +45,7 @@ class FileExperimentLoader extends HashingExperimentLoader {
   }
 
   @Override
-  public ImmutableMap<String, String> getUnhashedExperiments() {
+  public ImmutableMap<String, String> getExperiments() {
     return experiments;
   }
 

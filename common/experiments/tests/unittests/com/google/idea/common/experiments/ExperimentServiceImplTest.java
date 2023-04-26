@@ -170,7 +170,7 @@ public class ExperimentServiceImplTest {
         .isEqualTo("two");
   }
 
-  private static class MapExperimentLoader extends HashingExperimentLoader {
+  private static class MapExperimentLoader implements ExperimentLoader {
 
     private final Map<String, String> map;
 
@@ -183,7 +183,7 @@ public class ExperimentServiceImplTest {
     }
 
     @Override
-    public ImmutableMap<String, String> getUnhashedExperiments() {
+    public ImmutableMap<String, String> getExperiments() {
       return ImmutableMap.copyOf(map);
     }
 
