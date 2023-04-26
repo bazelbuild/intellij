@@ -67,12 +67,6 @@ java_library(
     name = "unit_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/unit/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2021.3": [
-            "tests/utils/sdkcompat/as213/com/android/tools/idea/rendering/RenderResultCompat.java",
-        ],
-        "android-studio-2022.1": [
-            "tests/utils/sdkcompat/as221/com/android/tools/idea/rendering/RenderResultCompat.java",
-        ],
         "android-studio-2022.2": [
             "tests/utils/sdkcompat/as222/com/android/tools/idea/rendering/RenderResultCompat.java",
         ],
@@ -97,16 +91,6 @@ java_library(
     name = "integration_test_utils",
     testonly = 1,
     srcs = glob(["tests/utils/integration/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2021.3": [
-            "tests/utils/sdkcompat/as213/com/android/tools/idea/sdk/IdeSdksCompat.java",
-            "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
-            "tests/utils/sdkcompat/as213/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
-        ],
-        "android-studio-2022.1": [
-            "tests/utils/sdkcompat/as221/com/android/tools/idea/sdk/IdeSdksCompat.java",
-            "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
-            "tests/utils/sdkcompat/as221/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
-        ],
         "android-studio-2022.2": [
             "tests/utils/sdkcompat/as222/com/android/tools/idea/sdk/IdeSdksCompat.java",
             "tests/utils/sdkcompat/as222/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
@@ -145,8 +129,6 @@ java_library(
 java_library(
     name = "aswb_lib",
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
-        "android-studio-2021.3": glob(["sdkcompat/as213/**/*.java"]),
-        "android-studio-2022.1": glob(["sdkcompat/as221/**/*.java"]),
         "android-studio-2022.2": glob(["sdkcompat/as222/**/*.java"]),
         "android-studio-2022.3": glob(["sdkcompat/as223/**/*.java"]),
         "android-studio-dev": glob(["sdkcompat/asdev/**/*.java"]),
@@ -290,7 +272,7 @@ intellij_plugin(
         "//dart:plugin_library",
         "//java:plugin_library",
         "//kotlin:plugin_library",
-        "//plugin_dev:plugin_library_for_aswb",
+        "//plugin_dev:plugin_library",
         "//python:plugin_library",
         "//skylark:plugin_library",
         "//terminal:plugin_library",
