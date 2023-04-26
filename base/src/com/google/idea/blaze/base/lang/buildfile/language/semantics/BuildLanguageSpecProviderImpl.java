@@ -30,6 +30,7 @@ import com.google.idea.blaze.base.lang.buildfile.sync.LanguageSpecResult;
 import com.google.idea.blaze.base.model.BlazeProjectData;
 import com.google.idea.blaze.base.qsync.QuerySync;
 import com.google.idea.blaze.base.scope.BlazeContext;
+import com.google.idea.blaze.base.scope.output.IssueOutput;
 import com.google.idea.blaze.base.settings.Blaze;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.data.BlazeProjectDataManager;
@@ -93,7 +94,10 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
   }
 
   private void fetchLanguageSpecIfNeeded(BlazeContext context) {
-    ListenableFuture<String> releaseFuture = fetchBlazeRelease(context);
+    // Invocations are run in a separate context as the info commands are not crucial or useful for
+    // the core sync query.
+    BlazeContext fetchContext = BlazeContext.create();
+    ListenableFuture<String> releaseFuture = fetchBlazeRelease(fetchContext);
 
     Futures.addCallback(
         releaseFuture,
@@ -102,7 +106,7 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
           public void onSuccess(String releaseResult) {
             String previousBlazeRelease = getBlazeRelease();
             if (previousBlazeRelease == null || !previousBlazeRelease.equals(releaseResult)) {
-              ListenableFuture<BuildLanguageSpec> specFuture = fetchBuildLanguageSpec(context);
+              ListenableFuture<BuildLanguageSpec> specFuture = fetchBuildLanguageSpec(fetchContext);
               Futures.addCallback(
                   specFuture,
                   new FutureCallback<BuildLanguageSpec>() {
@@ -114,6 +118,11 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
                     @Override
                     public void onFailure(Throwable throwable) {
                       logger.error("Failed to fetch build language spec", throwable);
+                      context.output(
+                          IssueOutput.error(
+                                  "Failed to obtain Build language spec. Build language support may"
+                                      + " be limited.")
+                              .build());
                     }
                   },
                   BlazeExecutor.getInstance().getExecutor());
@@ -123,6 +132,12 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
           @Override
           public void onFailure(Throwable throwable) {
             logger.error("Could not fetch blaze version", throwable);
+            context.output(
+                IssueOutput.error(
+                        String.format(
+                            "Failed to obtain %s version. Build language support may be limited.",
+                            Blaze.buildSystemName(project)))
+                    .build());
           }
         },
         BlazeExecutor.getInstance().getExecutor());
@@ -190,9 +205,7 @@ public class BuildLanguageSpecProviderImpl implements BuildLanguageSpecProvider 
               new Backgroundable(project, "Fetching BUILD language spec") {
                 @Override
                 public void run(@NotNull ProgressIndicator progressIndicator) {
-                  // Invocations are run in a separate context as they are not crucial or useful for
-                  // the core sync query.
-                  provider.fetchLanguageSpecIfNeeded(BlazeContext.create());
+                  provider.fetchLanguageSpecIfNeeded(context);
                 }
               });
     }
