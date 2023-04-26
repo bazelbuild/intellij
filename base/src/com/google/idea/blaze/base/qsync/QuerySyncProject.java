@@ -15,16 +15,20 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.sync.SyncListener;
 import com.google.idea.blaze.base.sync.SyncMode;
 import com.google.idea.blaze.base.sync.SyncResult;
+import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
@@ -76,6 +80,8 @@ public class QuerySyncProject {
   private final WorkspaceLanguageSettings workspaceLanguageSettings;
   private final QuerySyncSourceToTargetMap sourceToTargetMap;
 
+  private final ProjectViewManager projectViewManager;
+
   private volatile QuerySyncProjectData projectData;
 
   public QuerySyncProject(
@@ -91,7 +97,8 @@ public class QuerySyncProject {
       ProjectViewSet projectViewSet,
       WorkspacePathResolver workspacePathResolver,
       WorkspaceLanguageSettings workspaceLanguageSettings,
-      QuerySyncSourceToTargetMap sourceToTargetMap) {
+      QuerySyncSourceToTargetMap sourceToTargetMap,
+      ProjectViewManager projectViewManager) {
     this.project = project;
     this.snapshotFilePath = snapshotFilePath;
     this.snapshotHolder = snapshotHolder;
@@ -105,6 +112,7 @@ public class QuerySyncProject {
     this.workspacePathResolver = workspacePathResolver;
     this.workspaceLanguageSettings = workspaceLanguageSettings;
     this.sourceToTargetMap = sourceToTargetMap;
+    this.projectViewManager = projectViewManager;
     projectData = new QuerySyncProjectData(workspacePathResolver, workspaceLanguageSettings);
   }
 
@@ -222,6 +230,26 @@ public class QuerySyncProject {
         dependencyTracker.getPendingTargets(workspaceRoot.relativize(psiFile.getVirtualFile()));
     int unsynced = pendingTargets == null ? 0 : pendingTargets.size();
     return unsynced == 0;
+  }
+
+  /**
+   * Reloads the project view and checks it against the stored {@link ProjectDefinition}.
+   *
+   * @return true if the stored {@link ProjectDefinition} matches that derived from the {@link
+   *     ProjectViewSet}
+   */
+  public boolean isDefinitionCurrent() {
+    ProjectViewSet projectViewSet =
+        checkNotNull(
+            projectViewManager.reloadProjectView(BlazeContext.create(), workspacePathResolver));
+    ImportRoots importRoots =
+        ImportRoots.builder(workspaceRoot, importSettings.getBuildSystem())
+            .add(projectViewSet)
+            .build();
+    ProjectDefinition projectDefinition =
+        ProjectDefinition.create(importRoots.rootPaths(), importRoots.excludePaths());
+
+    return this.projectDefinition.equals(projectDefinition);
   }
 
   private void writeToDisk(BlazeProjectSnapshot snapshot) throws IOException {
