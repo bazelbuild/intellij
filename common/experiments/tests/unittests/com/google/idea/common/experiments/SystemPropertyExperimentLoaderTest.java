@@ -16,7 +16,6 @@
 package com.google.idea.common.experiments;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.common.experiments.ExperimentNameHashes.hashExperimentName;
 
 import org.junit.After;
 import org.junit.Before;
@@ -45,6 +44,6 @@ public class SystemPropertyExperimentLoaderTest {
   @Test
   public void testGetExperiment() {
     ExperimentLoader loader = new SystemPropertyExperimentLoader();
-    assertThat(loader.getExperiments().get(hashExperimentName(EXPERIMENT))).isEqualTo(VALUE);
+    assertThat(loader.getExperiments()).containsEntry(EXPERIMENT, VALUE);
   }
 }
