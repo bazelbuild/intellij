@@ -356,23 +356,6 @@ http_archive(
     url = SCALA_PLUGIN_231_URL,
 )
 
-# The plugin api for android_studio_2021_3. This is required to build ASwB,
-# and run integration tests.
-http_archive(
-    name = "android_studio_2021_3",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio213",
-    sha256 = "89adb0ce0ffa46b7894e7bfedb142b1f5d52c43c171e6a6cb9a95a49f77756ca",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2021.3.1.17/android-studio-2021.3.1.17-linux.tar.gz",
-)
-
-# The plugin api for android_studio_2022_1 android_studio. This is required to build ASwB and run integration tests
-http_archive(
-    name = "android_studio_2022_1",
-    build_file = "@//intellij_platform_sdk:BUILD.android_studio221",
-    sha256 = "d058a197f596dfb17a20278db80bc5918b98e2cdb18ec6b980d9936f392592bd",
-    url = "https://dl.google.com/dl/android/studio/ide-zips/2022.1.1.18/android-studio-2022.1.1.18-linux.tar.gz",
-)
-
 # The plugin api for android_studio_2022_2 android_studio. This is required to build ASwB and run integration tests
 http_archive(
     name = "android_studio_2022_2",

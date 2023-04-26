@@ -354,36 +354,6 @@ config_setting(
 )
 
 config_setting(
-    name = "android-studio-2021.3",
-    values = {
-        "define": "ij_product=android-studio-2021.3",
-    },
-)
-
-config_setting(
-    name = "android-studio-2021.3-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-2021.3",
-    },
-)
-
-config_setting(
-    name = "android-studio-2022.1",
-    values = {
-        "define": "ij_product=android-studio-2022.1",
-    },
-)
-
-config_setting(
-    name = "android-studio-2022.1-mac",
-    values = {
-        "cpu": "darwin_x86_64",
-        "define": "ij_product=android-studio-2022.1",
-    },
-)
-
-config_setting(
     name = "android-studio-2022.2",
     values = {
         "define": "ij_product=android-studio-2022.2",
@@ -689,8 +659,6 @@ java_library(
         "intellij-ue-2022.2": ["@jsr305_annotations//jar"],
         "intellij-ue-2022.3": ["@jsr305_annotations//jar"],
         "intellij-ue-2023.1": ["@jsr305_annotations//jar"],
-        "android-studio-2021.3": ["@jsr305_annotations//jar"],
-        "android-studio-2022.1": ["@jsr305_annotations//jar"],
         "android-studio-2022.2": ["@jsr305_annotations//jar"],
         "android-studio-2022.3": ["@jsr305_annotations//jar"],
         "android-studio-dev": ["@jsr305_annotations//jar"],
