@@ -15,14 +15,12 @@ java_import(
     jars = glob(
         [
             "android-studio/lib/*.jar",
-            "android-studio/plugins/cidr-base-plugin/lib/*.jar",
-            "android-studio/plugins/c-plugin/lib/*.jar",
         ],
         exclude = [
             # mockito-extensions needs to be removed from these jars.
-            "android-studio/lib/app.jar",
+            "android-studio/lib/testFramework.jar",
         ],
-    ) + ["android-studio/plugins/c-clangd/lib/c-clangd.jar"],
+    ),
     tags = ["intellij-provided-by-sdk"],
     deps = [
         # guava v20+ requires this at compile-time when using annotation processors.
@@ -41,7 +39,7 @@ java_library(
 no_mockito_extensions(
     name = "jars_without_mockito_extensions",
     jars = [
-        "android-studio/lib/app.jar",
+        "android-studio/lib/testFramework.jar",
     ],
 )
 
