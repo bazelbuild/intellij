@@ -73,6 +73,8 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
   private boolean showPerformanceWarnings = false;
   private boolean collapseProjectView = true;
 
+  private boolean javascriptTestrunnersEnabled = false;
+
   private boolean selectNewestChildTask = false;
   private boolean formatBuildFilesOnSave = true;
   private boolean showAddFileToProjectNotification = true;
@@ -191,6 +193,14 @@ public class BlazeUserSettings implements PersistentStateComponent<BlazeUserSett
 
   public void setCollapseProjectView(boolean collapseProjectView) {
     this.collapseProjectView = collapseProjectView;
+  }
+
+  public boolean isJavascriptTestrunnersEnabled() {
+    return javascriptTestrunnersEnabled;
+  }
+
+  public void setJavascriptTestrunnersEnabled(boolean javascriptTestrunnersEnabled) {
+    this.javascriptTestrunnersEnabled = javascriptTestrunnersEnabled;
   }
 
   public boolean getSelectNewestChildTask() {
