@@ -97,7 +97,7 @@ public class BlazeUserSettingsConfigurable extends AutoConfigurable {
               .componentFactory(LabeledComponent.comboBoxFactory(FocusBehavior.class));
 
   private static final ConfigurableSetting<?, ?>  ALLOW_JAVASCRIPT_TESTS =
-          setting("Enable Javascript test configuration producers")
+          setting("Enable Javascript test configuration producers (Requires application restart to take effect)")
                   .getter(BlazeUserSettings::isJavascriptTestrunnersEnabled)
                   .setter(BlazeUserSettings::setJavascriptTestrunnersEnabled)
                   .componentFactory(SimpleComponent::createCheckBox);
