@@ -85,7 +85,7 @@ public class BlazeAndroidBinaryProgramRunner extends AsyncProgramRunner<RunnerSe
                   }
                   promise.setResult(descriptor);
                 } catch (ExecutionException e) {
-                  var unused = promise.setError(e);
+                  boolean unused = promise.setError(e);
                 }
               }
 
