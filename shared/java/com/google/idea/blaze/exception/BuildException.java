@@ -34,10 +34,12 @@ public class BuildException extends Exception {
   }
 
   /**
-   * Indicates if this exception is caused by an IDE error/bug, of if it is expected as part of
+   * Indicates if this exception is caused by an IDE error/bug, or if it is expected as part of
    * normal IDE operation (e.g. a build error caused by an error in the users build file).
    *
-   * <p>This method may be overridden by subclasses to return false.
+   * <p>This method may be overridden by subclasses to return false. Any implementations that return
+   * false from here should ensure that the exception has a user facing message, to inform the user
+   * what went wrong and how they can fix it.
    */
   public boolean isIdeError() {
     return true;

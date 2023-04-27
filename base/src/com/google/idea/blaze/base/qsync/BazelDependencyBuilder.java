@@ -17,14 +17,19 @@ package com.google.idea.blaze.base.qsync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimaps;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
+import com.google.idea.blaze.base.bazel.BazelExitCode;
 import com.google.idea.blaze.base.bazel.BazelExitCodeException;
+import com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
@@ -43,12 +48,15 @@ import com.google.idea.blaze.base.sync.aspects.BlazeBuildOutputs;
 import com.google.idea.blaze.base.sync.aspects.strategy.AspectStrategy;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.common.Label;
+import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeQueryParser;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.protobuf.TextFormat;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -58,21 +66,25 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /** An object that knows how to build dependencies for given targets */
 public class BazelDependencyBuilder implements DependencyBuilder {
 
   private final Project project;
+  private final ProjectDefinition projectDefinition;
   private final BuildSystem buildSystem;
   private final ImportRoots importRoots;
   private final WorkspaceRoot workspaceRoot;
 
   public BazelDependencyBuilder(
       Project project,
+      ProjectDefinition projectDefinition,
       BuildSystem buildSystem,
       ImportRoots importRoots,
       WorkspaceRoot workspaceRoot) {
     this.project = project;
+    this.projectDefinition = projectDefinition;
     this.buildSystem = buildSystem;
     this.importRoots = importRoots;
     this.workspaceRoot = workspaceRoot;
@@ -127,16 +139,83 @@ public class BazelDependencyBuilder implements DependencyBuilder {
               .addBlazeFlags("--output_groups=qsync_aars")
               .addBlazeFlags("--output_groups=qsync_gensrcs")
               .addBlazeFlags("--output_groups=artifact_info_file")
-              .addBlazeFlags("--noexperimental_run_validations");
+              .addBlazeFlags("--noexperimental_run_validations")
+              .addBlazeFlags("--keep_going");
 
       BlazeBuildOutputs outputs =
           invoker.getCommandRunner().run(project, builder, buildResultHelper, context);
-      BazelExitCodeException.throwIfFailed(builder, outputs.buildResult);
-      return createOutputInfo(outputs);
+      BazelExitCodeException.throwIfFailed(
+          builder,
+          outputs.buildResult,
+          ThrowOption.ALLOW_PARTIAL_SUCCESS,
+          ThrowOption.ALLOW_BUILD_FAILURE);
+
+      // we do this first, before the additional error reporting below, to ensure that the user sees
+      // a single coherent error.
+      OutputInfo outputInfo = createOutputInfo(outputs);
+
+      boolean errors = false;
+      if (!outputs.getTargetsWithErrors().isEmpty()) {
+        errors = true;
+        ImmutableListMultimap<Boolean, Label> targetsByInclusion =
+            Multimaps.index(
+                outputs.getTargetsWithErrors().stream()
+                    .map(Object::toString)
+                    .map(Label::of)
+                    .collect(toImmutableSet()),
+                projectDefinition::isIncluded);
+        if (targetsByInclusion.containsKey(false)) {
+          ImmutableList<?> targets = targetsByInclusion.get(false);
+          context.output(
+              PrintOutput.error(
+                  "%d external %s had build errors: \n  %s",
+                  targets.size(),
+                  StringUtil.pluralize("dependency", targets.size()),
+                  targets.stream()
+                      .limit(10)
+                      .map(Object::toString)
+                      .collect(Collectors.joining("\n  "))));
+          if (targets.size() > 10) {
+            context.output(PrintOutput.log("and %d more.", targets.size() - 10));
+          }
+        }
+        if (targetsByInclusion.containsKey(true)) {
+          ImmutableList<?> targets = targetsByInclusion.get(true);
+          context.output(
+              PrintOutput.output(
+                  "%d project %s had build errors: \n  %s",
+                  targets.size(),
+                  StringUtil.pluralize("target", targets.size()),
+                  targets.stream()
+                      .limit(10)
+                      .map(Object::toString)
+                      .collect(Collectors.joining("\n  "))));
+          if (targets.size() > 10) {
+            context.output(PrintOutput.log("and %d more.", targets.size() - 10));
+          }
+        }
+
+      } else if (outputs.buildResult.exitCode != BazelExitCode.SUCCESS) {
+        // This will happen if there is an error in a build file, as no build actions are attempted
+        // in that case.
+        errors = true;
+        context.output(PrintOutput.error("There were build errors."));
+      }
+      if (errors) {
+        context.output(
+            PrintOutput.error(
+                "Your dependencies may be incomplete. If you see unresolved symbols, please fix the"
+                    + " above build errors and try again."));
+        // TODO(mathewi) It would be nice to indicate that there was a non-fatal error here, e.g.
+        //   a context.setHasWarnings() on similar. Calling setHasError() shows the task as failed
+        //   which is misleading, but neither did it fully succeed.
+      }
+
+      return outputInfo;
     }
   }
 
-  private OutputInfo createOutputInfo(BlazeBuildOutputs blazeBuildOutputs) throws IOException {
+  private OutputInfo createOutputInfo(BlazeBuildOutputs blazeBuildOutputs) throws BuildException {
     ImmutableList<OutputArtifact> jars =
         blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_jars"));
     ImmutableList<OutputArtifact> aars =
@@ -145,6 +224,10 @@ public class BazelDependencyBuilder implements DependencyBuilder {
         blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_gensrcs"));
     ImmutableList<OutputArtifact> artifactInfoFiles =
         blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("artifact_info_file"));
+    if (jars.size() + aars.size() + generatedSources.size() + artifactInfoFiles.size() == 0) {
+      throw new NoDependenciesBuiltException(
+          "Build produced no usable outputs. Please fix any build errors and retry.");
+    }
     ImmutableSet.Builder<BuildArtifacts> artifactInfoFilesBuilder = ImmutableSet.builder();
     for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
       artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
@@ -152,12 +235,14 @@ public class BazelDependencyBuilder implements DependencyBuilder {
     return OutputInfo.create(artifactInfoFilesBuilder.build(), jars, aars, generatedSources);
   }
 
-  private BuildArtifacts readArtifactInfoFile(BlazeArtifact file) throws IOException {
+  private BuildArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {
     try (InputStream inputStream = file.getInputStream()) {
       BuildArtifacts.Builder builder = BuildArtifacts.newBuilder();
       TextFormat.Parser parser = TextFormat.Parser.newBuilder().build();
       parser.merge(new InputStreamReader(inputStream, UTF_8), builder);
       return builder.build();
+    } catch (IOException e) {
+      throw new BuildException(e);
     }
   }
 

@@ -21,6 +21,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ListMultimap;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import java.io.IOException;
@@ -116,6 +117,14 @@ public abstract class ProjectDefinition {
           .ifPresent(foundWorkspacePath -> result.put(foundWorkspacePath, exclude));
     }
     return result;
+  }
+
+  public boolean isIncluded(Label target) {
+    if (projectIncludes().stream().filter(target.getPackage()::startsWith).findAny().isEmpty()) {
+      // not in any included directory
+      return false;
+    }
+    return projectExcludes().stream().filter(target.getPackage()::startsWith).findAny().isEmpty();
   }
 
   private static boolean isUnderRootDirectory(Path rootDirectory, Path relativePath) {

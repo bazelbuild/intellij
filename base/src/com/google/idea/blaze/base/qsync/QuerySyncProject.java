@@ -134,11 +134,10 @@ public class QuerySyncProject {
       context.output(PrintOutput.error(description + ": " + e.getClass().getSimpleName()));
     } else {
       logger.info(description, e);
-      context.output(PrintOutput.error(description));
     }
     context.setHasError();
     if (e.getMessage() != null) {
-      context.output(PrintOutput.error("Cause: " + e.getMessage()));
+      context.output(PrintOutput.error(e.getMessage()));
     }
   }
 
