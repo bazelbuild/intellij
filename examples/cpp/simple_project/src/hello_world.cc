@@ -1,6 +1,7 @@
-#include "lib/greeting_lib.h"
 #include <iostream>
 #include <string>
+#include <vector>
+#include "src/lib/greeting_lib.h"
 
 int main(int argc, char** argv) {
     std::vector<std::string> names;
