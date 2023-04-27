@@ -15,9 +15,13 @@
  */
 package com.google.idea.blaze.base.bazel;
 
+import static com.google.idea.blaze.base.bazel.BazelExitCode.BUILD_FAILED;
+import static com.google.idea.blaze.base.bazel.BazelExitCode.PARTIAL_SUCCESS;
+import static com.google.idea.blaze.base.bazel.BazelExitCode.SUCCESS;
+import static com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption.ALLOW_BUILD_FAILURE;
 import static com.google.idea.blaze.base.bazel.BazelExitCodeException.ThrowOption.ALLOW_PARTIAL_SUCCESS;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
 import com.google.idea.blaze.base.sync.aspects.BuildResult.Status;
@@ -31,12 +35,10 @@ import com.google.idea.blaze.exception.BuildException;
  */
 public class BazelExitCodeException extends BuildException {
 
-  private static final int SUCCESS_EXIT_CODE = 0;
-  private static final int PARTIAL_SUCCESS_EXIT_CODE = 3;
-
   /** Options that may be passed to {@link #throwIfFailed} to modify its behavior. */
   public enum ThrowOption {
     ALLOW_PARTIAL_SUCCESS,
+    ALLOW_BUILD_FAILURE,
   }
 
   private final int exitCode;
@@ -66,11 +68,14 @@ public class BazelExitCodeException extends BuildException {
   }
 
   private static boolean allowExitCode(int exitCode, ThrowOption... options) {
-    if (exitCode == SUCCESS_EXIT_CODE) {
+    if (exitCode == SUCCESS) {
       return true;
     }
-    if (exitCode == PARTIAL_SUCCESS_EXIT_CODE
-        && ImmutableList.copyOf(options).contains(ALLOW_PARTIAL_SUCCESS)) {
+    ImmutableSet<ThrowOption> optionSet = ImmutableSet.copyOf(options);
+    if (exitCode == PARTIAL_SUCCESS && optionSet.contains(ALLOW_PARTIAL_SUCCESS)) {
+      return true;
+    }
+    if (exitCode == BUILD_FAILED && optionSet.contains(ALLOW_BUILD_FAILURE)) {
       return true;
     }
     return false;

@@ -109,8 +109,21 @@ public class ProjectLoader {
     WorkspaceLanguageSettings workspaceLanguageSettings =
         LanguageSupport.createWorkspaceLanguageSettings(projectViewSet);
 
+    ProjectDefinition latestProjectDef =
+        ProjectDefinition.create(importRoots.rootPaths(), importRoots.excludePaths());
+
+    Path snapshotFilePath = getSnapshotFilePath(importSettings);
+    Optional<PostQuerySyncData> loadedSnapshot = loadFromDisk(snapshotFilePath);
+    // don't use the snapshot if the project definition has changed, since a full re-load will be
+    // necessary in that case:
+    loadedSnapshot =
+        loadedSnapshot.filter(snapshot -> snapshot.projectDefinition().equals(latestProjectDef));
+
+    ProjectDefinition projectDefinition =
+        loadedSnapshot.map(PostQuerySyncData::projectDefinition).orElse(latestProjectDef);
+
     DependencyBuilder dependencyBuilder =
-        createDependencyBuilder(workspaceRoot, importRoots, buildSystem);
+        createDependencyBuilder(workspaceRoot, projectDefinition, importRoots, buildSystem);
 
     BlazeProject graph = new BlazeProject();
     ArtifactFetcher artifactFetcher = createArtifactFetcher(buildSystem);
@@ -129,18 +142,6 @@ public class ProjectLoader {
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
 
-    ProjectDefinition latestProjectDef =
-        ProjectDefinition.create(importRoots.rootPaths(), importRoots.excludePaths());
-
-    Path snapshotFilePath = getSnapshotFilePath(importSettings);
-    Optional<PostQuerySyncData> loadedSnapshot = loadFromDisk(snapshotFilePath);
-    // don't use the snapshot if the project definition has changed, since a full re-load will be
-    // necessary in that case:
-    loadedSnapshot =
-        loadedSnapshot.filter(snapshot -> snapshot.projectDefinition().equals(latestProjectDef));
-
-    ProjectDefinition projectDefinition =
-        loadedSnapshot.map(PostQuerySyncData::projectDefinition).orElse(latestProjectDef);
 
     QuerySyncProject loadedProject =
         new QuerySyncProject(
@@ -181,8 +182,12 @@ public class ProjectLoader {
   }
 
   protected DependencyBuilder createDependencyBuilder(
-      WorkspaceRoot workspaceRoot, ImportRoots importRoots, BuildSystem buildSystem) {
-    return new BazelDependencyBuilder(project, buildSystem, importRoots, workspaceRoot);
+      WorkspaceRoot workspaceRoot,
+      ProjectDefinition projectDefinition,
+      ImportRoots importRoots,
+      BuildSystem buildSystem) {
+    return new BazelDependencyBuilder(
+        project, projectDefinition, buildSystem, importRoots, workspaceRoot);
   }
 
   public Optional<PostQuerySyncData> loadFromDisk(Path snapshotFilePath) throws IOException {

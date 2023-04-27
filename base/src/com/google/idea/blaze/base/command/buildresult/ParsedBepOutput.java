@@ -20,6 +20,7 @@ import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -37,6 +38,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
+import com.intellij.openapi.diagnostic.Logger;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,6 +56,20 @@ import javax.annotation.Nullable;
 
 /** A data class representing blaze's build event protocol (BEP) output for a build. */
 public final class ParsedBepOutput {
+
+  @VisibleForTesting
+  public static final ParsedBepOutput EMPTY =
+      new ParsedBepOutput(
+          "build-id",
+          null,
+          ImmutableMap.of(),
+          ImmutableSetMultimap.of(),
+          0,
+          BuildResult.SUCCESS,
+          0,
+          ImmutableSet.of());
+
+  private static final Logger logger = Logger.getInstance(ParsedBepOutput.class);
 
   /** Parses BEP events into {@link ParsedBepOutput} */
   public static ParsedBepOutput parseBepArtifacts(InputStream bepStream)
@@ -87,6 +103,7 @@ public final class ParsedBepOutput {
     Set<String> topLevelFileSets = new HashSet<>();
     Map<String, FileSet.Builder> fileSets = new LinkedHashMap<>();
     ImmutableSetMultimap.Builder<String, String> targetToFileSets = ImmutableSetMultimap.builder();
+    ImmutableSet.Builder<Label> targetsWithErrors = ImmutableSet.builder();
     String localExecRoot = null;
     String buildId = null;
     long startTimeMillis = 0L;
@@ -110,7 +127,30 @@ public final class ParsedBepOutput {
               (k, v) ->
                   v != null ? v.setNamedSet(namedSet) : FileSet.builder().setNamedSet(namedSet));
           continue;
+        case ACTION_COMPLETED:
+          Preconditions.checkState(event.hasAction());
+          if (!event.getAction().getSuccess()) {
+            targetsWithErrors.add(Label.create(event.getId().getActionCompleted().getLabel()));
+          }
+          logger.info(
+              "Action completed:\n label:"
+                  + event.getId().getActionCompleted().getLabel()
+                  + "\n  config:"
+                  + event.getId().getActionCompleted().getConfiguration().getId()
+                  + "\n  success:"
+                  + event.getAction().getSuccess());
+          break;
         case TARGET_COMPLETED:
+          logger.info(
+              "Target complete:\n  label:"
+                  + event.getId().getTargetCompleted().getLabel()
+                  + "\n  aspect:"
+                  + event.getId().getTargetCompleted().getAspect()
+                  + "\n  config:"
+                  + event.getId().getTargetCompleted().getConfiguration().getId()
+                  + "\n  success="
+                  + event.getCompleted().getSuccess());
+
           String label = event.getId().getTargetCompleted().getLabel();
           String configId = event.getId().getTargetCompleted().getConfiguration().getId();
 
@@ -160,7 +200,8 @@ public final class ParsedBepOutput {
         targetToFileSets.build(),
         startTimeMillis,
         buildResult,
-        stream.getBytesConsumed());
+        stream.getBytesConsumed(),
+        targetsWithErrors.build());
   }
 
   private static List<String> getFileSets(OutputGroup group) {
@@ -218,16 +259,17 @@ public final class ParsedBepOutput {
 
   private final BuildResult buildResult;
   private final long bepBytesConsumed;
+  private final ImmutableSet<Label> targetsWithErrors;
 
-  @VisibleForTesting
-  public ParsedBepOutput(
+  private ParsedBepOutput(
       @Nullable String buildId,
       @Nullable String localExecRoot,
       ImmutableMap<String, FileSet> fileSets,
       ImmutableSetMultimap<String, String> targetFileSets,
       long syncStartTimeMillis,
       BuildResult buildResult,
-      long bepBytesConsumed) {
+      long bepBytesConsumed,
+      ImmutableSet<Label> targetsWithErrors) {
     this.buildId = buildId;
     this.localExecRoot = localExecRoot;
     this.fileSets = fileSets;
@@ -235,6 +277,7 @@ public final class ParsedBepOutput {
     this.syncStartTimeMillis = syncStartTimeMillis;
     this.buildResult = buildResult;
     this.bepBytesConsumed = bepBytesConsumed;
+    this.targetsWithErrors = targetsWithErrors;
   }
 
   /** Returns the local execroot. */
@@ -294,6 +337,11 @@ public final class ParsedBepOutput {
     return fileSets.values().stream()
         .flatMap(FileSet::toPerArtifactData)
         .collect(toImmutableMap(d -> d.artifact.getKey(), d -> d, BepArtifactData::update));
+  }
+
+  /** Returns the set of build targets that had an error. */
+  public ImmutableSet<Label> getTargetsWithErrors() {
+    return targetsWithErrors;
   }
 
   private static ImmutableList<OutputArtifact> parseFiles(
