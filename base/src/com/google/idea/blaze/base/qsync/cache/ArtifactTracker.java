@@ -176,7 +176,6 @@ public class ArtifactTracker {
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
-
   }
 
   /**
@@ -216,6 +215,10 @@ public class ArtifactTracker {
 
   public static Path getExternalAarDirectory(BlazeImportSettings importSettings) {
     return getProjectDirectory(importSettings).resolve(AAR_DIRECTORY);
+  }
+
+  public List<Path> getGeneratedSourceDirectories() throws IOException {
+    return generatedSrcFileCache.getSubdirectories();
   }
 
   public Set<Label> getCachedTargets() {

@@ -33,6 +33,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 /** Local cache of the .jar, .aars and other artifacts referenced by the project. */
@@ -58,6 +59,9 @@ public class FileCache {
      * process it to form the final cache layout.
      */
     OutputArtifactDestination getOutputArtifactDestination(OutputArtifact outputArtifact);
+
+    /** Returns a list of paths for artifact subdirectories in this specific cache layout. */
+    List<Path> getSubdirectories() throws IOException;
   }
 
   /**
@@ -196,5 +200,13 @@ public class FileCache {
 
   public void clear() throws IOException {
     cacheDirectoryManager.clear();
+  }
+
+  public Path getDirectory() {
+    return cacheDirectoryManager.cacheDirectory;
+  }
+
+  public List<Path> getSubdirectories() throws IOException {
+    return cacheLayout.getSubdirectories();
   }
 }

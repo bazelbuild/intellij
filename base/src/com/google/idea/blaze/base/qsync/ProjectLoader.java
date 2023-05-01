@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.bazel.BuildSystem;
@@ -47,7 +48,9 @@ import com.google.idea.blaze.qsync.ProjectRefresher;
 import com.google.idea.blaze.qsync.WorkspaceResolvingPackageReader;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.ProjectProtoAugmenter;
 import com.google.idea.blaze.qsync.project.SnapshotDeserializer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import java.io.File;
@@ -68,6 +71,7 @@ import org.jetbrains.annotations.Nullable;
 public class ProjectLoader {
 
   protected final Project project;
+  private static final Logger logger = Logger.getInstance(ProjectLoader.class);
 
   public ProjectLoader(Project project) {
     this.project = project;
@@ -130,8 +134,20 @@ public class ProjectLoader {
     ArtifactTracker artifactTracker = new ArtifactTracker(importSettings, artifactFetcher);
     artifactTracker.initialize();
     DependencyCache dependencyCache = new DependencyCache(artifactTracker);
+
+    ImmutableList<ProjectProtoAugmenter> projectProtoAugmenters =
+        ImmutableList.of(
+            new GeneratedSourcesProjectProtoAugmenter(
+                augmentContext -> {
+                  try {
+                    return artifactTracker.getGeneratedSourceDirectories();
+                  } catch (IOException e) {
+                    logger.error("Could not list files in generated sources directory", e);
+                    return ImmutableList.of();
+                  }
+                }));
     DependencyTracker dependencyTracker =
-        new DependencyTracker(graph, dependencyBuilder, dependencyCache);
+        new DependencyTracker(graph, dependencyBuilder, dependencyCache, projectProtoAugmenters);
     ProjectRefresher projectRefresher =
         new ProjectRefresher(createPackageReader(workspaceRoot), workspaceRoot.path());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
@@ -141,7 +157,6 @@ public class ProjectLoader {
     graph.addListener(projectUpdater);
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
-
 
     QuerySyncProject loadedProject =
         new QuerySyncProject(

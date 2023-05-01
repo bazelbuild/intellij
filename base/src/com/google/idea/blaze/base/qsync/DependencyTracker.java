@@ -32,6 +32,8 @@ import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.google.idea.blaze.qsync.project.ProjectProtoAugmenter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import java.io.File;
@@ -53,13 +55,17 @@ public class DependencyTracker {
   private final DependencyBuilder builder;
   private final DependencyCache cache;
 
+  private final List<ProjectProtoAugmenter> projectProtoAugmenters;
+
   public DependencyTracker(
       BlazeProject blazeProject,
       DependencyBuilder builder,
-      DependencyCache cache) {
+      DependencyCache cache,
+      List<ProjectProtoAugmenter> projectProtoAugmenters) {
     this.blazeProject = blazeProject;
     this.builder = builder;
     this.cache = cache;
+    this.projectProtoAugmenters = projectProtoAugmenters;
   }
 
   /** Recursively get all the transitive deps outside the project */
@@ -83,8 +89,8 @@ public class DependencyTracker {
    * Builds the external dependencies of the given files, putting the resultant libraries in the
    * shared library directory so that they are picked up by the IDE.
    */
-  public void buildDependenciesForFile(BlazeContext context, List<Path> workspaceRelativePaths)
-      throws IOException, BuildException {
+  public BlazeProjectSnapshot buildDependenciesForFile(
+      BlazeContext context, List<Path> workspaceRelativePaths) throws IOException, BuildException {
     workspaceRelativePaths.forEach(path -> Preconditions.checkState(!path.isAbsolute(), path));
 
     BlazeProjectSnapshot snapshot =
@@ -107,7 +113,7 @@ public class DependencyTracker {
             PrintOutput.error(
                 "If this is a newly added supported rule, please re-sync your project."));
         context.setHasError();
-        return;
+        return updateSnapshot(context, snapshot);
       }
       ImmutableSet<Label> t = snapshot.getFileDependencies(workspaceRelativePath);
       if (t != null) {
@@ -182,5 +188,18 @@ public class DependencyTracker {
         false,
         updateResult.updatedFiles().stream().map(Path::toFile).toArray(File[]::new));
     context.output(PrintOutput.log("Done"));
+    return updateSnapshot(context, snapshot);
+  }
+
+  public BlazeProjectSnapshot updateSnapshot(BlazeContext context, BlazeProjectSnapshot snapshot) {
+    ProjectProto.Project projectProto = snapshot.project();
+    for (ProjectProtoAugmenter augmenter : projectProtoAugmenters) {
+      projectProto = augmenter.augment(context, projectProto);
+    }
+    return BlazeProjectSnapshot.builder()
+        .queryData(snapshot.queryData())
+        .graph(snapshot.graph())
+        .project(projectProto)
+        .build();
   }
 }

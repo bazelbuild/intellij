@@ -15,12 +15,18 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.qsync.cache.FileCache.CacheLayout;
 import com.google.idea.blaze.base.qsync.cache.FileCache.OutputArtifactDestination;
 import com.intellij.openapi.util.io.FileUtilRt;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * A cache layout implementation building its cache directory in a way that can be consumed by the
@@ -81,5 +87,14 @@ public class DefaultCacheLayout implements CacheLayout {
 
   private boolean shouldExtractFile(Path sourcePath) {
     return zipFileExtensions.contains(FileUtilRt.getExtension(sourcePath.getFileName().toString()));
+  }
+
+  @Override
+  public List<Path> getSubdirectories() throws IOException {
+    try (Stream<Path> pathStream = Files.list(cacheDirectory)) {
+      return pathStream
+          .filter(p -> Files.isDirectory(p) && !p.getFileName().toString().equals(PACKED_FILES_DIR))
+          .collect(toImmutableList());
+    }
   }
 }

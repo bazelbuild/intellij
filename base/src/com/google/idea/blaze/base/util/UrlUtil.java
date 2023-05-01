@@ -40,6 +40,12 @@ public class UrlUtil {
     return pathToUrl(FileUtil.toSystemIndependentName(path.toString()));
   }
 
+  public static String pathToIdeaDirectoryUrl(Path path) {
+    return VirtualFileManager.constructUrl(
+        VirtualFileSystemProvider.getInstance().getSystem().getProtocol(),
+        FileUtil.toSystemIndependentName(path.toString()));
+  }
+
   public static String pathToUrl(String filePath) {
     filePath = FileUtil.toSystemIndependentName(filePath);
     if (filePath.endsWith(".srcjar") || filePath.endsWith(".jar")) {

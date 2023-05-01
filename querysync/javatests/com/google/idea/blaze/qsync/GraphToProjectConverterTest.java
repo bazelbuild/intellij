@@ -464,16 +464,7 @@ public class GraphToProjectConverterTest {
     ProjectProto.Module workspaceModule = project.getModules(0);
     assertThat(workspaceModule.getName()).isEqualTo(".workspace");
 
-    assertThat(workspaceModule.getContentEntriesCount()).isEqualTo(1);
-    ProjectProto.ContentEntry generatedSourceRoot = workspaceModule.getContentEntries(0);
-    assertThat(generatedSourceRoot.getRoot().getBase()).isEqualTo(Base.PROJECT);
-    assertThat(generatedSourceRoot.getRoot().getPath()).isEqualTo(".blaze/generated");
-
-    assertThat(generatedSourceRoot.getSourcesCount()).isEqualTo(1);
-    ProjectProto.SourceFolder generatedSourceFolder = generatedSourceRoot.getSources(0);
-    assertThat(generatedSourceFolder.getPath()).isEqualTo(".blaze/generated");
-    assertThat(generatedSourceFolder.getIsGenerated()).isTrue();
-    assertThat(generatedSourceFolder.getIsTest()).isFalse();
+    assertThat(workspaceModule.getContentEntriesCount()).isEqualTo(0);
   }
 
   @Test
@@ -494,15 +485,9 @@ public class GraphToProjectConverterTest {
     assertThat(project.getModulesCount()).isEqualTo(1);
     ProjectProto.Module workspaceModule = project.getModules(0);
 
-    assertThat(workspaceModule.getContentEntriesCount()).isEqualTo(2);
+    assertThat(workspaceModule.getContentEntriesCount()).isEqualTo(1);
 
-    // Sanity check
-    ProjectProto.ContentEntry generatedSourceRoot = workspaceModule.getContentEntries(0);
-    assertThat(generatedSourceRoot.getRoot().getBase()).isEqualTo(Base.PROJECT);
-    assertThat(generatedSourceRoot.getRoot().getPath()).isEqualTo(".blaze/generated");
-    assertThat(generatedSourceRoot.getSourcesCount()).isEqualTo(1);
-
-    ProjectProto.ContentEntry javaContentEntry = workspaceModule.getContentEntries(1);
+    ProjectProto.ContentEntry javaContentEntry = workspaceModule.getContentEntries(0);
     assertThat(javaContentEntry.getRoot().getBase()).isEqualTo(Base.WORKSPACE);
     assertThat(javaContentEntry.getRoot().getPath()).isEqualTo(workspaceImportDirectory.toString());
     assertThat(javaContentEntry.getSourcesCount()).isEqualTo(1);
