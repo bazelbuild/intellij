@@ -504,8 +504,6 @@ def java_version_flags():
         "intellij-ue-2022.1-mac": java11,
         "intellij-ue-2022.2": java11,
         "intellij-ue-2022.2-mac": java11,
-        "android-studio-2021.3": java11,
-        "android-studio-2022.1": java11,
         "android-studio-2022.2": java11,
         "android-studio-dev": java11,
         "clion-2021.3": java11,
