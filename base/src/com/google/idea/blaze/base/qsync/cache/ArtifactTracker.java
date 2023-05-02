@@ -187,7 +187,7 @@ public class ArtifactTracker {
     for (Label label : targets) {
       if (!artifacts.containsKey(label)) {
         logger.warn(
-            "Target " + label + "was not built. If the target is an alias, this is expected");
+            "Target " + label + " was not built. If the target is an alias, this is expected");
         artifacts.put(label, new ArrayList<>());
       }
     }
