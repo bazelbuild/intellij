@@ -83,11 +83,10 @@ final class TasksToolWindowServiceImpl implements TasksToolWindowService, Dispos
 
   /** Update the state and the view when task finishes */
   @Override
-  public void finishTask(Task task, boolean hasErrors, boolean isCancelled) {
+  public void finishTask(Task task, Task.Status status) {
 
     task.setEndTime(timeSource.now());
-    task.setCancelled(isCancelled);
-    task.setHasErrors(hasErrors);
+    task.setStatus(status);
     ApplicationManager.getApplication().invokeLater(() -> tabs.finishTask(task));
   }
 

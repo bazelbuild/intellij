@@ -52,6 +52,7 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
   private int holdCount;
   private boolean hasErrors;
+  private boolean hasWarnings;
   private boolean propagatesErrors = true;
 
   private BlazeContext(@Nullable BlazeContext parentContext) {
@@ -94,6 +95,9 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
       parentContext.removeChildContext(this);
       if (hasErrors && propagatesErrors) {
         parentContext.setHasError();
+      }
+      if (hasWarnings && propagatesErrors) {
+        parentContext.setHasWarnings();
       }
     }
   }
@@ -276,9 +280,17 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
     this.hasErrors = true;
   }
 
+  public void setHasWarnings() {
+    hasWarnings = true;
+  }
+
   /** Returns true if there were errors */
   public boolean hasErrors() {
     return hasErrors;
+  }
+
+  public boolean hasWarnings() {
+    return hasWarnings;
   }
 
   public boolean isRoot() {

@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.toolwindow;
 import static com.google.common.truth.Truth8.assertThat;
 
 import com.google.common.collect.ImmutableList;
+import com.google.idea.blaze.base.toolwindow.Task.Status;
 import com.google.idea.testing.IntellijRule;
 import java.time.Instant;
 import org.junit.Before;
@@ -50,7 +51,7 @@ public class TasksToolWindowServiceTest {
 
   @Test
   public void testFinishTask() {
-    service.finishTask(task, false, false);
+    service.finishTask(task, Status.FINISHED);
     assertThat(task.getEndTime()).hasValue(NOW_INSTANT);
   }
 }
