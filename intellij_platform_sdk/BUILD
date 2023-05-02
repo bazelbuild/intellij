@@ -935,6 +935,27 @@ java_library(
     ),
 )
 
+# IntelliJ gradle plugin
+java_library(
+    name = "gradle",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":gradle"],
+    ),
+)
+
+java_library(
+    name = "gradle_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [":gradle"],
+    ),
+)
+
 filegroup(
     name = "application_info_json",
     srcs = select_from_plugin_api_directory(
