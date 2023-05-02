@@ -956,6 +956,29 @@ java_library(
     ),
 )
 
+# IntelliJ DatabaseTools plugin
+java_library(
+    name = "database_tools",
+    neverlink = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [],
+        intellij_ue = [":database_tools"],
+    ),
+)
+
+java_library(
+    name = "database_tools_for_tests",
+    testonly = 1,
+    exports = select_from_plugin_api_directory(
+        android_studio = [],
+        clion = [],
+        intellij = [],
+        intellij_ue = [":database_tools"],
+    ),
+)
+
 filegroup(
     name = "application_info_json",
     srcs = select_from_plugin_api_directory(
