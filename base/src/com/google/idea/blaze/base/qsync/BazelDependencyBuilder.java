@@ -206,9 +206,7 @@ public class BazelDependencyBuilder implements DependencyBuilder {
             PrintOutput.error(
                 "Your dependencies may be incomplete. If you see unresolved symbols, please fix the"
                     + " above build errors and try again."));
-        // TODO(mathewi) It would be nice to indicate that there was a non-fatal error here, e.g.
-        //   a context.setHasWarnings() on similar. Calling setHasError() shows the task as failed
-        //   which is misleading, but neither did it fully succeed.
+        context.setHasWarnings();
       }
 
       return outputInfo;

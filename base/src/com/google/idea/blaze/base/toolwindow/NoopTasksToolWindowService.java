@@ -44,7 +44,7 @@ public final class NoopTasksToolWindowService implements TasksToolWindowService 
   public void state(Task task, StateUpdate output) {}
 
   @Override
-  public void finishTask(Task task, boolean hasErrors, boolean isCancelled) {}
+  public void finishTask(Task task, Task.Status status) {}
 
   @Override
   public void moveTask(Task task, Task newParent) {}
