@@ -73,21 +73,29 @@ public class ArtifactTracker {
 
   public ArtifactTracker(BlazeImportSettings importSettings, ArtifactFetcher artifactFetcher) {
     jarCache =
-        new FileCache(
-            /* cacheDir= */ getProjectDirectory(importSettings).resolve(LIBRARY_DIRECTORY),
-            /* extractAfterFetch= */ false,
-            /* artifactFetcher= */ artifactFetcher);
+        createFileCache(
+            artifactFetcher,
+            getProjectDirectory(importSettings).resolve(LIBRARY_DIRECTORY),
+            ImmutableSet.of());
     aarCache =
-        new FileCache(
-            /* cacheDir= */ getExternalAarDirectory(importSettings),
-            /* extractAfterFetch= */ true,
-            /* artifactFetcher= */ artifactFetcher);
+        createFileCache(
+            artifactFetcher, getExternalAarDirectory(importSettings), ImmutableSet.of("aar"));
     generatedSrcFileCache =
-        new FileCache(
-            /* cacheDir= */ getProjectDirectory(importSettings).resolve(GEN_SRC_DIRECTORY),
-            /* extractAfterFetch= */ true,
-            /* artifactFetcher= */ artifactFetcher);
+        createFileCache(
+            artifactFetcher,
+            getProjectDirectory(importSettings).resolve(GEN_SRC_DIRECTORY),
+            ImmutableSet.of("jar", "srcjar"));
     persistentFile = getProjectDirectory(importSettings).resolve(".artifact.info");
+  }
+
+  private static FileCache createFileCache(
+      ArtifactFetcher artifactFetcher,
+      Path cacheDirectory,
+      ImmutableSet<String> zipFileExtensions) {
+    return new FileCache(
+        artifactFetcher,
+        new CacheDirectoryManager(cacheDirectory),
+        new DefaultCacheLayout(cacheDirectory, zipFileExtensions));
   }
 
   public void initialize() {
