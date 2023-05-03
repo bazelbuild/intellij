@@ -38,7 +38,8 @@ public interface BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      BlazeContext context);
+      BlazeContext context)
+      throws BuildException;
 
   /**
    * Runs a blaze test command, parses the test results into a {@link BlazeTestResults} object using
@@ -48,7 +49,8 @@ public interface BlazeCommandRunner {
       Project project,
       BlazeCommand.Builder blazeCommandBuilder,
       BuildResultHelper buildResultHelper,
-      BlazeContext context);
+      BlazeContext context)
+      throws BuildException;
 
   /**
    * Runs a blaze query command.
