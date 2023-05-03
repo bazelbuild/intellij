@@ -1,3 +1,9 @@
+v2023.05.02
+===========
+* Fix gdbserver wrapper passing incorrect arguments #4783
+* fix(cc): Run main function-style tests in CLion #4786
+* remove-suppression-of-jest-run-configuration #4647
+
 v2023.04.18
 ===========
 * Remove the dependencies on CLion's bundled plugins for Boost tests and Catch tests. #4715
