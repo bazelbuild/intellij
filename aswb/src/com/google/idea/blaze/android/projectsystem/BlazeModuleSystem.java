@@ -77,7 +77,8 @@ public class BlazeModuleSystem extends BlazeModuleSystemBase {
                   logger.warn("Aar library directory not created yet");
                   return ImmutableList.of();
                 }
-                try (Stream<Path> stream = Files.list(aarDirectory)) {
+                try (Stream<Path> stream =
+                    Files.list(aarDirectory).filter(it -> !it.getFileName().startsWith("."))) {
                   return stream.collect(toImmutableList());
                 } catch (IOException ioe) {
                   throw new UncheckedIOException("Could not list aars", ioe);
