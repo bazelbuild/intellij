@@ -17,6 +17,9 @@ package com.google.idea.common.experiments;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.ApplicationManager;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Reads experiments. */
@@ -47,4 +50,29 @@ public interface ExperimentService {
 
   /** Triggers an asynchronous refresh of the cached experiments. */
   void notifyExperimentsChanged();
+
+  /** Returns a report of experiments for bug reports. */
+  List<ExperimentValue> getOverrides(String key);
+
+  /** Returns the overrides in a log line format */
+  default String getOverridesLog(Experiment ex) {
+    ArrayList<ExperimentValue> overrides = new ArrayList<>();
+    List<ExperimentValue> values = getOverrides(ex.getKey());
+    if (values != null) {
+      overrides.addAll(values);
+    }
+    String def = ex.getRawDefault();
+    if (def != null) {
+      overrides.add(ExperimentValue.create("default", ex.getKey(), def));
+    }
+
+    if (ex.isOverridden(overrides)) {
+      List<String> details =
+          overrides.stream()
+              .map(value -> String.format("%s [%s]", ex.renderValue(value.value()), value.id()))
+              .collect(Collectors.toList());
+      return String.format("%s: %s", ex.getKey(), String.join(", ", details));
+    }
+    return "";
+  }
 }

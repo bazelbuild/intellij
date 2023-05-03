@@ -32,4 +32,14 @@ public class BoolExperiment extends Experiment {
   public String getLogValue() {
     return String.valueOf(getValue());
   }
+
+  @Override
+  public String getRawDefault() {
+    return defaultValue ? "1" : "0";
+  }
+
+  @Override
+  public String renderValue(String value) {
+    return "1".equals(value) ? "true" : "false";
+  }
 }

@@ -15,7 +15,9 @@
  */
 package com.google.idea.common.experiments;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -76,5 +78,13 @@ public class OverridingExperimentService implements ExperimentService {
   public void notifyExperimentsChanged() {
     delegate.notifyExperimentsChanged();
     overrideWithService.notifyExperimentsChanged();
+  }
+
+  @Override
+  public List<ExperimentValue> getOverrides(String key) {
+    ImmutableList.Builder<ExperimentValue> ret = ImmutableList.builder();
+    ret.addAll(delegate.getOverrides(key));
+    ret.addAll(overrideWithService.getOverrides(key));
+    return ret.build();
   }
 }

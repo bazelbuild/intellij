@@ -41,6 +41,11 @@ public class DefaultValuesExperimentLoader implements ExperimentLoader {
   }
 
   @Override
+  public String getId() {
+    return resourceName;
+  }
+
+  @Override
   public ImmutableMap<String, String> getExperiments() {
     return experiments;
   }

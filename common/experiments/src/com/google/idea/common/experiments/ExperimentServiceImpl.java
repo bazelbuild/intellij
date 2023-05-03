@@ -49,6 +49,7 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
   private final AtomicInteger experimentScopeCounter = new AtomicInteger(0);
 
   private volatile Map<String, String> experiments = ImmutableMap.of();
+  private volatile Map<String, List<ExperimentValue>> overrides = ImmutableMap.of();
   private final Map<String, Experiment> queriedExperiments = new ConcurrentHashMap<>();
 
   ExperimentServiceImpl() {
@@ -146,15 +147,35 @@ public class ExperimentServiceImpl implements ApplicationComponent, ExperimentSe
   }
 
   private void refreshExperiments() {
-    experiments =
+    List<ExperimentValue> values =
         services.stream()
-            .flatMap(service -> service.getExperiments().entrySet().stream())
+            .flatMap(
+                service ->
+                    service.getExperiments().entrySet().stream()
+                        .map(
+                            e -> ExperimentValue.create(service.getId(), e.getKey(), e.getValue())))
+            .collect(Collectors.toUnmodifiableList());
+
+    experiments =
+        values.stream()
             .collect(
-                Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first));
+                Collectors.toUnmodifiableMap(
+                    ExperimentValue::key, ExperimentValue::value, (first, second) -> first));
+
+    overrides =
+        ImmutableMap.copyOf(
+            values.stream()
+                .collect(
+                    Collectors.groupingBy(ExperimentValue::key, Collectors.toUnmodifiableList())));
   }
 
   @Override
   public ImmutableMap<String, Experiment> getAllQueriedExperiments() {
     return ImmutableMap.copyOf(queriedExperiments);
+  }
+
+  @Override
+  public List<ExperimentValue> getOverrides(String key) {
+    return overrides.get(key);
   }
 }

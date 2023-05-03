@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The Bazel Authors. All rights reserved.
+ * Copyright 2023 The Bazel Authors. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,22 @@
  */
 package com.google.idea.common.experiments;
 
-/** Integer valued experiment. */
-public class IntExperiment extends Experiment {
-  private final int defaultValue;
+import com.google.auto.value.AutoValue;
 
-  public IntExperiment(String key, int defaultValue) {
-    super(key);
-    this.defaultValue = defaultValue;
+/**
+ * Represents a {@code value} for a given experiment of {@code key}, created by a given loader with
+ * {@code id}
+ */
+@AutoValue
+public abstract class ExperimentValue {
+
+  public static ExperimentValue create(String id, String key, String value) {
+    return new AutoValue_ExperimentValue(id, key, value);
   }
 
-  public int getValue() {
-    return ExperimentService.getInstance().getExperimentInt(this, defaultValue);
-  }
+  public abstract String id();
 
-  @Override
-  public String getLogValue() {
-    return String.valueOf(getValue());
-  }
+  public abstract String key();
 
-  @Override
-  public String getRawDefault() {
-    return String.valueOf(defaultValue);
-  }
+  public abstract String value();
 }

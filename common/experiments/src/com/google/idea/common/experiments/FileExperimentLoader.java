@@ -49,6 +49,11 @@ class FileExperimentLoader implements ExperimentLoader {
     return experiments;
   }
 
+  @Override
+  public String getId() {
+    return this.file.toString();
+  }
+
   @SuppressWarnings("unchecked") // Properties is Map<Object, Object>, we cast to strings
   private void reloadExperiments() {
     if (!file.exists()) {

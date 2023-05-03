@@ -38,6 +38,11 @@ final class SystemPropertyExperimentLoader implements ExperimentLoader {
     // Nothing to do.
   }
 
+  @Override
+  public String getId() {
+    return "system property";
+  }
+
   private static ImmutableMap<String, String> cacheSystemProperties() {
     Properties properties = System.getProperties();
     return properties.stringPropertyNames().stream()

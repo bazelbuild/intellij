@@ -15,6 +15,10 @@
  */
 package com.google.idea.common.experiments;
 
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+
 /** Experiment class. */
 public abstract class Experiment {
   private final String key;
@@ -29,4 +33,15 @@ public abstract class Experiment {
 
   /** Returns a string representation of the experiment value for logging. */
   public abstract String getLogValue();
+
+  public String renderValue(String value) {
+    return value;
+  }
+
+  @Nullable
+  public abstract String getRawDefault();
+
+  public boolean isOverridden(List<ExperimentValue> values) {
+    return values.stream().map(ExperimentValue::value).collect(Collectors.toSet()).size() > 1;
+  }
 }
