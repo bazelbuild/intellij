@@ -18,6 +18,7 @@ package com.google.idea.blaze.base.qsync.cache;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.hash.Hashing;
+import com.google.common.io.MoreFiles;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtil;
@@ -53,7 +54,10 @@ class CacheDirectoryManager {
    * <p>Both in-memory and on-disk storage is cleared.
    */
   public void clear() throws IOException {
-    Files.deleteIfExists(cacheDirectory);
+    if (Files.exists(cacheDirectory)) {
+      //noinspection UnstableApiUsage
+      MoreFiles.deleteRecursively(cacheDirectory);
+    }
     initialize();
   }
 
