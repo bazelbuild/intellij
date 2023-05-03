@@ -464,7 +464,11 @@ final class SyncPhaseCoordinator {
       }
     } catch (Throwable e) {
       logSyncError(context, e);
-      context.onException(e);
+      if (e instanceof SyncCanceledException || e instanceof ProcessCanceledException) {
+        context.setCancelled();
+      } else {
+        context.setHasError();
+      }
       finishSync(
           params,
           startTime,
