@@ -15,9 +15,15 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static java.util.stream.Collectors.joining;
+
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
+import com.google.idea.blaze.base.bazel.BazelExitCode;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
@@ -25,6 +31,8 @@ import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
+import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import java.io.File;
 import java.io.IOException;
@@ -108,6 +116,54 @@ public class DependencyTracker {
     }
 
     OutputInfo outputInfo = builder.build(context, buildTargets);
+
+    if (outputInfo.isEmpty()) {
+      throw new NoDependenciesBuiltException(
+          "Build produced no usable outputs. Please fix any build errors and retry.");
+    }
+
+    if (!outputInfo.getTargetsWithErrors().isEmpty()) {
+      ProjectDefinition projectDefinition = snapshot.queryData().projectDefinition();
+      context.setHasWarnings();
+      ImmutableListMultimap<Boolean, Label> targetsByInclusion =
+          Multimaps.index(outputInfo.getTargetsWithErrors(), projectDefinition::isIncluded);
+      if (targetsByInclusion.containsKey(false)) {
+        ImmutableList<?> errorTargets = targetsByInclusion.get(false);
+        context.output(
+            PrintOutput.error(
+                "%d external %s had build errors: \n  %s",
+                errorTargets.size(),
+                StringUtil.pluralize("dependency", errorTargets.size()),
+                errorTargets.stream().limit(10).map(Object::toString).collect(joining("\n  "))));
+        if (errorTargets.size() > 10) {
+          context.output(PrintOutput.log("and %d more.", errorTargets.size() - 10));
+        }
+      }
+      if (targetsByInclusion.containsKey(true)) {
+        ImmutableList<?> errorTargets = targetsByInclusion.get(true);
+        context.output(
+            PrintOutput.output(
+                "%d project %s had build errors: \n  %s",
+                errorTargets.size(),
+                StringUtil.pluralize("target", errorTargets.size()),
+                errorTargets.stream().limit(10).map(Object::toString).collect(joining("\n  "))));
+        if (errorTargets.size() > 10) {
+          context.output(PrintOutput.log("and %d more.", errorTargets.size() - 10));
+        }
+      }
+    } else if (outputInfo.getExitCode() != BazelExitCode.SUCCESS) {
+      // This will happen if there is an error in a build file, as no build actions are attempted
+      // in that case.
+      context.setHasWarnings();
+      context.output(PrintOutput.error("There were build errors."));
+    }
+    if (context.hasWarnings()) {
+      context.output(
+          PrintOutput.error(
+              "Your dependencies may be incomplete. If you see unresolved symbols, please fix the"
+                  + " above build errors and try again."));
+      context.setHasWarnings();
+    }
 
     long now = System.nanoTime();
     UpdateResult updateResult = cache.update(targets, outputInfo, context);
