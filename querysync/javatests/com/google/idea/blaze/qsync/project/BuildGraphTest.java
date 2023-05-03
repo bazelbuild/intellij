@@ -163,5 +163,7 @@ public class BuildGraphTest {
     assertThat(graph.getAndroidSourceFiles())
         .containsExactly(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java"));
     assertThat(graph.projectDeps()).containsExactly(Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
+    assertThat(graph.getFileDependencies(TESTDATA_ROOT.resolve("aidl/TestAndroidAidlClass.java")))
+        .containsExactly(Label.of("//" + TESTDATA_ROOT + "/aidl:aidl"));
   }
 }

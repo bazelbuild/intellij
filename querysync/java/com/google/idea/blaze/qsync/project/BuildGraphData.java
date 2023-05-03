@@ -238,6 +238,9 @@ public abstract class BuildGraphData {
     if (!ruleDeps().containsKey(target)) {
       builder.add(target);
     } else {
+      if (projectDeps().contains(target)) {
+        builder.add(target);
+      }
       for (Label dep : ruleDeps().get(target)) {
         builder.addAll(getTransitiveExternalDependencies(dep));
       }
