@@ -27,4 +27,6 @@ public interface ExperimentLoader {
   Map<String, String> getExperiments();
 
   void initialize();
+
+  String getId();
 }
