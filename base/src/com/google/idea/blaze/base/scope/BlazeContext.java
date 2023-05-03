@@ -24,13 +24,19 @@ import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.sync.SyncResult;
 import com.google.idea.blaze.common.Context;
 import com.google.idea.blaze.common.Output;
+import com.google.idea.blaze.common.PrintOutput;
+import com.google.idea.blaze.exception.BuildException;
+import com.intellij.openapi.diagnostic.Logger;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /** Scoped operation context. */
 public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
+
+  private static final Logger logger = Logger.getInstance(BlazeContext.class);
 
   @Nullable private BlazeContext parentContext;
 
@@ -321,5 +327,37 @@ public class BlazeContext implements Context<BlazeContext>, AutoCloseable {
       return SyncResult.FAILURE;
     }
     return SyncResult.SUCCESS;
+  }
+
+  /**
+   * Log & display a message to the user when a user-initiated action fails.
+   *
+   * @param description A user readable failure message, including the high level IDE operation that
+   *     failed.
+   * @param t The exception that caused the failure.
+   */
+  public void handleException(String description, Throwable t) {
+    if (t instanceof CancellationException) {
+      logger.info(description + ": cancelled.", t);
+      output(PrintOutput.error("Cancelled"));
+      setCancelled();
+      return;
+    } else if (isExceptionError(t)) {
+      logger.error(description, t);
+      output(PrintOutput.error(description + ": " + t.getClass().getSimpleName()));
+    } else {
+      logger.info(description, t);
+    }
+    setHasError();
+    if (t.getMessage() != null) {
+      output(PrintOutput.error(t.getMessage()));
+    }
+  }
+
+  private boolean isExceptionError(Throwable e) {
+    if (e instanceof BuildException) {
+      return ((BuildException) e).isIdeError();
+    }
+    return true;
   }
 }

@@ -33,14 +33,12 @@ import com.google.idea.blaze.base.sync.projectview.WorkspaceLanguageSettings;
 import com.google.idea.blaze.base.sync.workspace.WorkspacePathResolver;
 import com.google.idea.blaze.base.targetmaps.SourceToTargetMap;
 import com.google.idea.blaze.common.Label;
-import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.SnapshotSerializer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -63,8 +61,6 @@ import java.util.zip.GZIPOutputStream;
  * project state to the rest of the plugin and IDE.
  */
 public class QuerySyncProject {
-
-  private final Logger logger = Logger.getInstance(getClass());
 
   private final Path snapshotFilePath;
   private final Project project;
@@ -114,31 +110,6 @@ public class QuerySyncProject {
     this.sourceToTargetMap = sourceToTargetMap;
     this.projectViewManager = projectViewManager;
     projectData = new QuerySyncProjectData(workspacePathResolver, workspaceLanguageSettings);
-  }
-
-  private boolean isExceptionError(Exception e) {
-    if (e instanceof BuildException) {
-      return ((BuildException) e).isIdeError();
-    }
-    return true;
-  }
-
-  /** Log & display a message to the user when a user-initiated action fails. */
-  private void onError(String description, Exception e, BlazeContext context) {
-    if (e instanceof CancellationException) {
-      logger.info(description + ": cancelled.", e);
-      context.output(PrintOutput.error("Cancelled"));
-      return;
-    } else if (isExceptionError(e)) {
-      logger.error(description, e);
-      context.output(PrintOutput.error(description + ": " + e.getClass().getSimpleName()));
-    } else {
-      logger.info(description, e);
-    }
-    context.setHasError();
-    if (e.getMessage() != null) {
-      context.output(PrintOutput.error(e.getMessage()));
-    }
   }
 
   public QuerySyncProjectData getProjectData() {
@@ -193,7 +164,7 @@ public class QuerySyncProject {
             SyncResult.SUCCESS);
       }
     } catch (CancellationException | BuildException | IOException e) {
-      onError("Project sync failed", e, context);
+      context.handleException("Project sync failed", e);
     } finally {
       for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
         // A query sync specific callback.
@@ -216,7 +187,7 @@ public class QuerySyncProject {
       String rel = workspaceRoot.path().relativize(path).toString();
       build(context, ImmutableList.of(WorkspacePath.createIfValid(rel).asPath()));
     } catch (CancellationException | IOException | BuildException e) {
-      onError("Failed to build dependencies", e, context);
+      context.handleException("Failed to build dependencies", e);
     }
   }
 
