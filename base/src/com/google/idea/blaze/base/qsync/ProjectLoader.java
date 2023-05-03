@@ -123,7 +123,7 @@ public class ProjectLoader {
         loadedSnapshot.map(PostQuerySyncData::projectDefinition).orElse(latestProjectDef);
 
     DependencyBuilder dependencyBuilder =
-        createDependencyBuilder(workspaceRoot, projectDefinition, importRoots, buildSystem);
+        createDependencyBuilder(workspaceRoot, importRoots, buildSystem);
 
     BlazeProject graph = new BlazeProject();
     ArtifactFetcher artifactFetcher = createArtifactFetcher(buildSystem);
@@ -182,12 +182,8 @@ public class ProjectLoader {
   }
 
   protected DependencyBuilder createDependencyBuilder(
-      WorkspaceRoot workspaceRoot,
-      ProjectDefinition projectDefinition,
-      ImportRoots importRoots,
-      BuildSystem buildSystem) {
-    return new BazelDependencyBuilder(
-        project, projectDefinition, buildSystem, importRoots, workspaceRoot);
+      WorkspaceRoot workspaceRoot, ImportRoots importRoots, BuildSystem buildSystem) {
+    return new BazelDependencyBuilder(project, buildSystem, importRoots, workspaceRoot);
   }
 
   public Optional<PostQuerySyncData> loadFromDisk(Path snapshotFilePath) throws IOException {
