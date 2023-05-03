@@ -15,15 +15,19 @@
  */
 package com.google.idea.blaze.base.qsync.cache;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.hash.Hashing;
+import com.google.common.io.MoreFiles;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.base.scope.BlazeContext;
@@ -37,16 +41,18 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Collection;
-import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-/** Local cache of the jars referenced by the project. */
+/** Local cache of the .jar, .aars and other artifacts referenced by the project. */
+@SuppressWarnings("InvalidBlockTag")
 public class FileCache {
 
   private static final ImmutableSet<String> ZIP_FILE_EXTENSION =
       ImmutableSet.of("aar", "jar", "srcjar");
+  private static final String PACKED_FILES_DIR = ".zips";
 
   private final Path cacheDir;
   private final boolean extractAfterFetch;
@@ -73,47 +79,167 @@ public class FileCache {
     }
   }
 
+  /**
+   * Caches {@code artifacts} in the local cache and returns paths that the IDE should use to find
+   * them.
+   *
+   * @noinspection UnstableApiUsage
+   */
   public ListenableFuture<ImmutableSet<Path>> cache(
       ImmutableList<OutputArtifact> artifacts, BlazeContext context) throws IOException {
-    ListenableFuture<List<Path>> copyArtifactFuture =
-        artifactFetcher.copy(getLocalPathMap(artifacts, cacheDir), context);
-    if (extractAfterFetch) {
-      copyArtifactFuture =
-          Futures.transform(copyArtifactFuture, this::extract, ArtifactFetcher.EXECUTOR);
-    }
+    ListenableFuture<ImmutableList<Path>> copyArtifactFuture =
+        Futures.transform(
+            Futures.transformAsync(
+                prepareDestinationPathsAndDirectories(artifacts),
+                artifactToDestinationMap -> fetchArtifacts(context, artifactToDestinationMap),
+                MoreExecutors.directExecutor()),
+            this::maybeExtract,
+            ArtifactFetcher.EXECUTOR);
     return Futures.transform(copyArtifactFuture, ImmutableSet::copyOf, ArtifactFetcher.EXECUTOR);
   }
 
-  private ImmutableMap<OutputArtifact, Path> getLocalPathMap(
+  /** A record that describes the location of an output artifact in cache directories. */
+  private static class OutputArtifactDestination {
+
+    /**
+     * The location where in the cache directory the representation of the artifact for the IDE
+     * should be placed.
+     */
+    public final Path finalDestination;
+
+    /**
+     * The location where in the cache directory the artifact file itself should be placed.
+     *
+     * <p>The final and copy destinations are the same if the artifact file needs not to be
+     * extracted.
+     */
+    public final Path copyDestination;
+
+    public OutputArtifactDestination(Path finalDestination, Path copyDestination) {
+      this.finalDestination = finalDestination;
+      this.copyDestination = copyDestination;
+    }
+
+    public boolean needsExtracting() {
+      return !Objects.equals(finalDestination, copyDestination);
+    }
+  }
+
+  /**
+   * Fetches the output artifacts requested in {@code artifactToDestinationMap}.
+   *
+   * @return {@link OutputArtifactDestination}'s from the original request.
+   */
+  private ListenableFuture<Collection<OutputArtifactDestination>> fetchArtifacts(
+      BlazeContext context,
+      ImmutableMap<OutputArtifact, OutputArtifactDestination> artifactToDestinationMap)
+      throws IOException {
+    final ImmutableMap<OutputArtifact, Path> artifactToDestinationPathMap =
+        ImmutableMap.copyOf(
+            Maps.transformEntries(artifactToDestinationMap, (k, v) -> v.copyDestination));
+    return Futures.transform(
+        artifactFetcher.copy(artifactToDestinationPathMap, context),
+        fetchedArtifactFileList -> {
+          final ImmutableSet<Path> fetchedArtifactFiles =
+              ImmutableSet.copyOf(fetchedArtifactFileList);
+          return Maps.filterEntries(
+                  artifactToDestinationMap,
+                  entry -> fetchedArtifactFiles.contains(entry.getValue().copyDestination))
+              .values();
+        },
+        MoreExecutors.directExecutor());
+  }
+
+  /**
+   * Builds a map describing where artifact files should be copied to and where their content should
+   * be extracted to.
+   */
+  private ListenableFuture<ImmutableMap<OutputArtifact, OutputArtifactDestination>>
+      prepareDestinationPathsAndDirectories(ImmutableList<OutputArtifact> artifacts) {
+    return ArtifactFetcher.EXECUTOR.submit(
+        () -> {
+          final ImmutableMap<OutputArtifact, OutputArtifactDestination> pathMap =
+              getLocalPathMap(artifacts, cacheDir);
+          // Make sure target directories exists regardless of the cache directory layout, which may
+          // include directories like `.zips` etc.
+          final ImmutableList<Path> copyDestinationDirectories =
+              pathMap.values().stream()
+                  .map(it -> it.copyDestination.getParent())
+                  .distinct()
+                  .collect(toImmutableList());
+          for (Path directory : copyDestinationDirectories) {
+            Files.createDirectories(directory);
+          }
+          return pathMap;
+        });
+  }
+
+  /**
+   * Maps output artifacts to the paths of local files the artifacts should be copied to.
+   *
+   * <p>Output artifacts that needs to be extracted for being used in the IDE are placed into
+   * sub-directories under {@code dir} in which their content will be extracted later.
+   *
+   * <p>When artifact files are extracted, the final file system layout looks like:
+   *
+   * <pre>
+   *     aars/
+   *         .zips/
+   *             file.zip-like.aar                # the zip file being extracted
+   *         file.zip-like.aar/
+   *             file.txt                         # a file from file.zip-like.aar
+   *             res/                             # a directory from file.zip-like.aar
+   *                 layout/
+   *                     main.xml
+   * </pre>
+   */
+  private ImmutableMap<OutputArtifact, OutputArtifactDestination> getLocalPathMap(
       ImmutableList<OutputArtifact> outputArtifacts, Path dir) {
     return outputArtifacts.stream()
         .collect(
             toImmutableMap(
                 Function.identity(),
-                outputArtifact -> dir.resolve(cacheKeyForArtifact(outputArtifact.getKey()))));
+                outputArtifact -> {
+                  String key = cacheKeyForArtifact(outputArtifact.getKey());
+                  final Path finalDestination = dir.resolve(key);
+                  final Path copyDestination =
+                      shouldExtractFile(Path.of(outputArtifact.getRelativePath()))
+                          ? dir.resolve(PACKED_FILES_DIR).resolve(key)
+                          : finalDestination;
+                  return new OutputArtifactDestination(finalDestination, copyDestination);
+                }));
   }
 
-  private ImmutableList<Path> extract(Collection<Path> sourcePaths) {
+  /**
+   * Extracts zip-like files in the {@code sourcePaths} into the final destination directories.
+   *
+   * <p>Any existing files and directories at the destination paths are deleted.
+   */
+  private ImmutableList<Path> maybeExtract(Collection<OutputArtifactDestination> destinations) {
+    ImmutableList.Builder<Path> result = ImmutableList.builder();
     try {
-      ImmutableList.Builder<Path> result = ImmutableList.builder();
-      for (Path sourcePath : sourcePaths) {
-        if (ZIP_FILE_EXTENSION.contains(
-            FileUtilRt.getExtension(sourcePath.getFileName().toString()))) {
-          Path tmpPath = sourcePath.resolveSibling(sourcePath.getFileName() + ".tmp");
-          // Since we will keep using same file name for extracted directory, we need to rename
-          // source file
-          Files.move(sourcePath, tmpPath);
-          result.add(extract(tmpPath, sourcePath));
-          Files.delete(tmpPath);
+      for (OutputArtifactDestination destination : destinations) {
+        if (destination.needsExtracting()) {
+          if (Files.exists(destination.finalDestination)) {
+            MoreFiles.deleteRecursively(destination.finalDestination);
+          }
+          extract(destination.copyDestination, destination.finalDestination);
         }
+        result.add(destination.finalDestination);
       }
-      return result.build();
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
+    return result.build();
   }
 
-  private Path extract(Path source, Path destination) throws IOException {
+  private boolean shouldExtractFile(Path sourcePath) {
+    return extractAfterFetch
+        && ZIP_FILE_EXTENSION.contains(
+            FileUtilRt.getExtension(sourcePath.getFileName().toString()));
+  }
+
+  private void extract(Path source, Path destination) throws IOException {
     Files.createDirectories(destination);
     try (InputStream inputStream = Files.newInputStream(source);
         ZipInputStream zis = new ZipInputStream(inputStream)) {
@@ -129,7 +255,6 @@ public class FileCache {
         }
       }
     }
-    return destination;
   }
 
   public void clear() throws IOException {
