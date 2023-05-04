@@ -863,7 +863,7 @@ java_library(
     exports = select_from_plugin_api_directory(
         android_studio = [],
         clion = [],
-        intellij = [":maven"],
+        intellij = [":maven_bundled_plugins"],
     ),
 )
 
