@@ -29,10 +29,13 @@ java_library(
         "intellij-ue-2022.3": ["//sdkcompat/v223"],
         "intellij-2023.1": ["//sdkcompat/v231"],
         "intellij-ue-2023.1": ["//sdkcompat/v231"],
+        "intellij-2023.2": ["//sdkcompat/v232"],
+        "intellij-ue-2023.2": ["//sdkcompat/v232"],
         "clion-2021.3": ["//sdkcompat/v213"],
         "clion-2022.1": ["//sdkcompat/v221"],
         "clion-2022.2": ["//sdkcompat/v222"],
         "clion-2022.3": ["//sdkcompat/v223"],
         "clion-2023.1": ["//sdkcompat/v231"],
+        "clion-2023.2": ["//sdkcompat/v232"],
     }),
 )

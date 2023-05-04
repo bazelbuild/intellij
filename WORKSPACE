@@ -59,6 +59,18 @@ http_archive(
     url = IC_231_URL,
 )
 
+# The plugin api for intellij_ce_2023_1. This is required to build IJwB and run integration tests.
+IC_232_SHA = "724f28f0896d1b2d8a9c60ffc01ecdad70c68eedba8265a4b5d4674b676b9c76"
+
+IC_232_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIC/232.5150.116-EAP-SNAPSHOT/ideaIC-232.5150.116-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "intellij_ce_2023_2",
+    build_file = "@//intellij_platform_sdk:BUILD.idea232",
+    sha256 = IC_232_SHA,
+    url = IC_232_URL,
+)
+
 # The plugin api for IntelliJ UE 2021.2. This is required to run UE-specific
 # integration tests.
 http_archive(
@@ -112,6 +124,18 @@ http_archive(
     url = IU_231_URL,
 )
 
+# The plugin api for intellij_ue_2022_3. This is required to run UE-specific integration tests.
+IU_232_SHA = "057210966cd37b444165a7223b05a3a82b812a7f818babc49d11f931641d79f2"
+
+IU_232_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/ideaIU/232.5150.116-EAP-SNAPSHOT/ideaIU-232.5150.116-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "intellij_ue_2023_2",
+    build_file = "@//intellij_platform_sdk:BUILD.ue232",
+    sha256 = IU_232_SHA,
+    url = IU_232_URL,
+)
+
 # The plugin api for clion_2021_2. This is required to build CLwB, and run integration tests.
 http_archive(
     name = "clion_2021_2",
@@ -161,6 +185,17 @@ http_archive(
     build_file = "@//intellij_platform_sdk:BUILD.clion231",
     sha256 = CLION_231_SHA,
     url = CLION_231_URL,
+)
+
+CLION_232_SHA = "b77c879a7a6280c21b3d40874dcd211075c9dc4f5b8f8122c90d52a7a5a7cfc0"
+
+CLION_232_URL = "https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/clion/clion/232.5150.115-EAP-SNAPSHOT/clion-232.5150.115-EAP-SNAPSHOT.zip"
+
+http_archive(
+    name = "clion_2023_2",
+    build_file = "@//intellij_platform_sdk:BUILD.clion232",
+    sha256 = CLION_232_SHA,
+    url = CLION_232_URL,
 )
 
 _PYTHON_CE_BUILD_FILE = """
@@ -234,6 +269,17 @@ http_archive(
     url = PYTHON_PLUGIN_231_URL,
 )
 
+PYTHON_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/PythonCore/232.5150.116/PythonCore-232.5150.116.zip"
+
+PYTHON_PLUGIN_232_SHA = "5ffadb0101f98293f258ae746fc61650e372ac4811ecf52c9619fcfba369e07d"
+
+http_archive(
+    name = "python_2023_2",
+    build_file_content = _PYTHON_CE_BUILD_FILE,
+    sha256 = PYTHON_PLUGIN_232_SHA,
+    url = PYTHON_PLUGIN_232_URL,
+)
+
 _GO_BUILD_FILE = """
 java_import(
     name = "go",
@@ -299,6 +345,17 @@ http_archive(
     url = GO_PLUGIN_231_URL,
 )
 
+GO_PLUGIN_232_SHA = "d626b42e73ebf6be43711ce25be8883368e868f3259d07b6e903bb391f4deced"
+
+GO_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.jetbrains.plugins.go/232.5150.116/org.jetbrains.plugins.go-232.5150.116.zip"
+
+http_archive(
+    name = "go_2023_2",
+    build_file_content = _GO_BUILD_FILE_223,
+    sha256 = GO_PLUGIN_232_SHA,
+    url = GO_PLUGIN_232_URL,
+)
+
 _SCALA_BUILD_FILE = """
 java_import(
     name = "scala",
@@ -354,6 +411,17 @@ http_archive(
     build_file_content = _SCALA_BUILD_FILE,
     sha256 = SCALA_PLUGIN_231_SHA,
     url = SCALA_PLUGIN_231_URL,
+)
+
+SCALA_PLUGIN_232_URL = "https://plugins.jetbrains.com/maven/com/jetbrains/plugins/org.intellij.scala/2023.2.2/org.intellij.scala-2023.2.2.zip"
+
+SCALA_PLUGIN_232_SHA = "fb6e5115ff773041c278500c342eb859b5f74dd0c02617495c02fd1e0efd73cc"
+
+http_archive(
+    name = "scala_2023_2",
+    build_file_content = _SCALA_BUILD_FILE,
+    sha256 = SCALA_PLUGIN_232_SHA,
+    url = SCALA_PLUGIN_232_URL,
 )
 
 # The plugin api for android_studio_2022_2 android_studio. This is required to build ASwB and run integration tests
@@ -429,6 +497,14 @@ jvm_maven_import_external(
     name = "mockito",
     artifact = "org.mockito:mockito-core:3.3.0",
     artifact_sha256 = "fc1a1f2d1d64566bc31ee36d8214059f2adbe303d9109e5cc0e99685741c57c2",
+    licenses = ["notice"],  # Apache 2.0
+    server_urls = ["https://repo1.maven.org/maven2"],
+)
+
+jvm_maven_import_external(
+    name = "objenesis",
+    artifact = "org.objenesis:objenesis:3.3",
+    artifact_sha256 = "02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb",
     licenses = ["notice"],  # Apache 2.0
     server_urls = ["https://repo1.maven.org/maven2"],
 )

@@ -1,0 +1,147 @@
+# Description:
+#
+# Plugin source jars for IntelliJ UE, accessed remotely.
+
+load("@//intellij_platform_sdk:build_defs.bzl", "no_mockito_extensions")
+
+package(default_visibility = ["//visibility:public"])
+
+java_import(
+    name = "sdk",
+    jars = glob(
+        ["lib/*.jar"],
+        exclude = [
+            # mockito-extensions needs to be removed from this jar.
+            "lib/testFramework.jar",
+        ],
+    ),
+    tags = ["intellij-provided-by-sdk"],
+    exports = [":jars_without_mockito_extensions"],
+    deps = ["@error_prone_annotations//jar"],
+)
+
+no_mockito_extensions(
+    name = "jars_without_mockito_extensions",
+    jars = ["lib/testFramework.jar"],
+)
+
+java_import(
+    name = "guava",
+    jars = ["lib/lib.jar"], #todo
+)
+
+java_library(name = "jsr305")  # not bundled
+
+java_import(
+    name = "java",
+    jars = glob(["plugins/java/lib/*.jar"]) + ["plugins/java/lib/resources/jdkAnnotations.jar"],
+)
+
+java_import(
+    name = "platform_images",
+    jars = glob(["plugins/platform-images/lib/*.jar"]),
+)
+
+java_import(
+    name = "coverage",
+    jars = glob(["plugins/coverage/lib/*.jar"]),
+)
+
+java_import(
+    name = "devkit",
+    jars = glob(["plugins/devkit/lib/devkit.jar"]),
+)
+
+java_import(
+    name = "hg4idea",
+    jars = glob(["plugins/hg4idea/lib/hg4idea.jar"]),
+)
+
+java_import(
+    name = "javascript",
+    jars = glob(["plugins/javascript-impl/lib/*.jar"]),
+)
+
+java_import(
+    name = "css",
+    jars = glob([
+        "plugins/css-impl/lib/*.jar",
+        "plugins/platform-images/lib/*.jar",
+    ]),
+)
+
+java_import(
+    name = "tslint",
+    jars = glob(["plugins/tslint/lib/*.jar"]),
+)
+
+java_import(
+    name = "angular",
+    jars = glob(["plugins/AngularJS/lib/*.jar"]),
+)
+
+java_import(
+    name = "intellilang",
+    jars = glob(["plugins/IntelliLang/lib/*.jar"]),
+)
+
+java_import(
+    name = "kotlin",
+    jars = glob(["plugins/Kotlin/lib/*.jar"]),
+)
+
+filegroup(
+    name = "kotlinc_version",
+    srcs = ["plugins/Kotlin/kotlinc/build.txt"],
+)
+
+java_import(
+    name = "junit",
+    jars = glob(["plugins/junit/lib/*.jar"]),
+)
+
+java_import(
+    name = "terminal",
+    jars = glob(["plugins/terminal/lib/terminal.jar"]),
+)
+
+java_import(
+    name = "protoeditor",
+    jars = glob(["plugins/protoeditor/lib/*.jar"]),
+)
+
+java_import(
+    name = "shared_indexes",
+    jars = [
+        "plugins/indexing-shared/lib/indexing-shared.jar",
+        "plugins/indexing-shared-ultimate/lib/indexing-shared-ultimate.jar",
+    ],
+)
+
+java_import(
+    name = "git4idea",
+    jars = glob(["plugins/vcs-git/lib/*.jar"]),
+)
+
+java_import(
+    name = "cwm",
+    jars = glob(["plugins/cwm-plugin/lib/*.jar"]),
+)
+
+# The plugins required by IJwB. We need to include them
+# when running integration tests.
+java_import(
+    name = "bundled_plugins",
+    jars = glob([
+        "plugins/devkit/lib/*.jar",
+        "plugins/java-i18n/lib/*.jar",
+        "plugins/junit/lib/*.jar",
+        "plugins/properties/lib/*.jar",
+    ]),
+    tags = ["intellij-provided-by-sdk"],
+)
+
+filegroup(
+    name = "application_info_json",
+    srcs = ["product-info.json"],
+)

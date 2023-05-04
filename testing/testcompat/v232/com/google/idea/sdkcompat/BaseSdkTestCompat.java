@@ -24,9 +24,10 @@ import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.ui.CoreIconManager;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.icons.CoreIconManager;
 
+import javax.swing.*;
 import java.util.List;
 
 /**
@@ -58,12 +59,12 @@ public final class BaseSdkTestCompat {
   }
 
   /** #api231 */
-  public static void activateIconManager(IconManager iconManager) throws Throwable {
-    IconManager.activate(iconManager);
+  public static void activateIconManager(IconManager iconManager) {
+    IconManager.Companion.activate(iconManager);
   }
 
   /** #api231 */
   public static void deactivateIconManager() {
-    IconManager.deactivate();
+    IconManager.Companion.deactivate();
   }
 }
