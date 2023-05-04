@@ -41,6 +41,7 @@ java_library(
         "//sdkcompat",
         "//shared",
         "//shared:exception",
+        "//shared:vcs",
         "//third_party/auto_value",
         "@error_prone_annotations//jar",
     ],

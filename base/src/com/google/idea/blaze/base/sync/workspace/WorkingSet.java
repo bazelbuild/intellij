@@ -18,8 +18,8 @@ package com.google.idea.blaze.base.sync.workspace;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
-import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
-import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
 import java.io.Serializable;
 
 /** Computes the working set of files of directories from source control. */

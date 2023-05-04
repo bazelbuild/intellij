@@ -17,10 +17,10 @@ package com.google.idea.blaze.qsync.project;
 
 import com.google.common.collect.ImmutableBiMap;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
 import com.google.idea.blaze.qsync.query.QuerySummary;
-import com.google.idea.blaze.qsync.vcs.VcsState;
-import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
-import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation;
 import com.google.protobuf.AbstractMessageLite;
 import java.nio.file.Path;
 

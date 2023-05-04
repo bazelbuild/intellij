@@ -16,14 +16,14 @@
 package com.google.idea.blaze.qsync.project;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation.ADD;
-import static com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation.DELETE;
-import static com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation.MODIFY;
+import static com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation.ADD;
+import static com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation.DELETE;
+import static com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation.MODIFY;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.common.vcs.VcsState;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
-import com.google.idea.blaze.qsync.vcs.VcsState;
-import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Path;

@@ -17,9 +17,9 @@ package com.google.idea.blaze.qsync;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.testdata.TestData;
-import com.google.idea.blaze.qsync.vcs.VcsState;
 import java.io.IOException;
 import java.util.Optional;
 
