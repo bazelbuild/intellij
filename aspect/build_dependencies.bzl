@@ -153,6 +153,11 @@ def _collect_dependencies_core_impl(
         if generate_aidl_classes and generates_idl_jar(target):
             idl_jar = target[AndroidIdeInfo].idl_class_jar
             trs.append(depset([idl_jar]))
+
+            # An AIDL base jar needed for resolving base classes for aidl generated stubs,
+            if hasattr(ctx.rule.attr, "_android_sdk"):
+                android_sdk_info = getattr(ctx.rule.attr, "_android_sdk")[AndroidSdkInfo]
+                trs.append(android_sdk_info.aidl_lib.files)
             must_build = True
 
         # Add generated java_outputs (e.g. from annotation processing
