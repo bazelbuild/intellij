@@ -73,6 +73,9 @@ java_library(
         "android-studio-2022.3": [
             "tests/utils/sdkcompat/as223/com/android/tools/idea/rendering/RenderResultCompat.java",
         ],
+        "android-studio-2023.1": [
+            "tests/utils/sdkcompat/as231/com/android/tools/idea/rendering/RenderResultCompat.java",
+        ],
         "android-studio-dev": [
             "tests/utils/sdkcompat/asdev/com/android/tools/idea/rendering/RenderResultCompat.java",
         ],
@@ -100,6 +103,11 @@ java_library(
             "tests/utils/sdkcompat/as223/com/android/tools/idea/sdk/IdeSdksCompat.java",
             "tests/utils/sdkcompat/as223/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
             "tests/utils/sdkcompat/as223/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
+        ],
+        "android-studio-2023.1": [
+            "tests/utils/sdkcompat/as231/com/android/tools/idea/sdk/IdeSdksCompat.java",
+            "tests/utils/sdkcompat/as231/com/google/idea/blaze/android/functional/AndroidDeviceCompat.java",
+            "tests/utils/sdkcompat/as231/com/google/idea/blaze/android/tools/idea/run/editor/AndroidDebuggerCompat.java",
         ],
         "android-studio-dev": [
             "tests/utils/sdkcompat/asdev/com/android/tools/idea/sdk/IdeSdksCompat.java",
@@ -131,6 +139,7 @@ java_library(
     srcs = glob(["src/**/*.java"]) + select_for_plugin_api({
         "android-studio-2022.2": glob(["sdkcompat/as222/**/*.java"]),
         "android-studio-2022.3": glob(["sdkcompat/as223/**/*.java"]),
+        "android-studio-2023.1": glob(["sdkcompat/as231/**/*.java"]),
         "android-studio-dev": glob(["sdkcompat/asdev/**/*.java"]),
     }),
     resources = glob(["resources/**/*"]),
@@ -201,6 +210,7 @@ intellij_integration_test_suite(
     additional_class_rules = select_for_plugin_api({
         "android-studio-2022.2": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-2022.3": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
+        "android-studio-2023.1": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "android-studio-dev": ["com.google.idea.blaze.android.NormalIntegrationTestSetupRule"],
         "default": [],
     }),
