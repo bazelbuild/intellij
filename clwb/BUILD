@@ -38,7 +38,7 @@ intellij_plugin_library(
 
 optional_plugin_xml(
     name = "optional_clwb_oclang",
-    module = "com.intellij.modules.cidr.lang",
+    module = ["com.intellij.modules.cidr.lang"],
     plugin_xml = "src/META-INF/clwb-oclang.xml",
 )
 

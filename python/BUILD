@@ -35,7 +35,7 @@ java_library(
 
 optional_plugin_xml(
     name = "optional_xml",
-    module = "com.intellij.modules.python",
+    module = ["com.intellij.modules.python"],
     plugin_xml = "src/META-INF/python-contents.xml",
 )
 

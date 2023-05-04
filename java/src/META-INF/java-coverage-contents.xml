@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2017 The Bazel Authors. All rights reserved.
+  ~ Copyright 2023 The Bazel Authors. All rights reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -14,12 +14,7 @@
   ~ limitations under the License.
   -->
 <idea-plugin>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <coverageEngine implementation="com.google.idea.blaze.java.run.coverage.BlazeCoverageEngine"/>
-    <coverageRunner implementation="com.google.idea.blaze.java.run.coverage.BlazeCoverageRunner"/>
-    <programRunner implementation="com.google.idea.blaze.java.run.coverage.BlazeCoverageProgramRunner"/>
-    <projectService serviceImplementation="com.google.idea.blaze.java.run.coverage.BlazeCoverageAnnotator"/>
-  </extensions>
-
+    <extensions defaultExtensionNs="com.intellij">
+        <projectViewNodeDecorator implementation="com.google.idea.blaze.java.run.coverage.BlazeCoverageProjectViewClassDecorator"/>
+    </extensions>
 </idea-plugin>
