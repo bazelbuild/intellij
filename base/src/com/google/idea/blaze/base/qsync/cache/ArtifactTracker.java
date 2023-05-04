@@ -28,6 +28,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.BuildArtifacts;
 import com.google.devtools.intellij.qsync.ArtifactTrackerData.TargetArtifacts;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.qsync.OutputInfo;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
@@ -71,7 +72,8 @@ public class ArtifactTracker {
   private final FileCache generatedSrcFileCache;
   private final Path persistentFile;
 
-  public ArtifactTracker(BlazeImportSettings importSettings, ArtifactFetcher artifactFetcher) {
+  public ArtifactTracker(
+      BlazeImportSettings importSettings, ArtifactFetcher<OutputArtifact> artifactFetcher) {
     jarCache =
         createFileCache(
             artifactFetcher,
@@ -89,7 +91,7 @@ public class ArtifactTracker {
   }
 
   private static FileCache createFileCache(
-      ArtifactFetcher artifactFetcher,
+      ArtifactFetcher<OutputArtifact> artifactFetcher,
       Path cacheDirectory,
       ImmutableSet<String> zipFileExtensions) {
     return new FileCache(
@@ -176,7 +178,6 @@ public class ArtifactTracker {
     } catch (ExecutionException | IOException e) {
       throw new BuildException(e);
     }
-
   }
 
   /**

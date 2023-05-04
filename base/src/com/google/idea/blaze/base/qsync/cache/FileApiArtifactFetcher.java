@@ -19,21 +19,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
-import com.google.idea.blaze.base.settings.BuildBinaryType;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.common.Context;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 
 /** Implementation of {@link ArtifactFetcher} that copy file via file api. */
-public class FileApiArtifactFetcher implements ArtifactFetcher {
+public class FileApiArtifactFetcher implements ArtifactFetcher<LocalFileOutputArtifact> {
   @Override
   public ListenableFuture<List<Path>> copy(
-      ImmutableMap<OutputArtifact, Path> artifactToDest, Context<?> context) throws IOException {
+      ImmutableMap<? extends LocalFileOutputArtifact, Path> artifactToDest, Context<?> context) {
     ImmutableList.Builder<ListenableFuture<Path>> tasks = ImmutableList.builder();
-    for (Map.Entry<OutputArtifact, Path> entry : artifactToDest.entrySet()) {
+    for (Entry<? extends LocalFileOutputArtifact, Path> entry : artifactToDest.entrySet()) {
       tasks.add(
           EXECUTOR.submit(
               () -> {
@@ -46,7 +44,7 @@ public class FileApiArtifactFetcher implements ArtifactFetcher {
   }
 
   @Override
-  public boolean isEnabled(BuildBinaryType buildBinaryType) {
-    return true;
+  public Class<LocalFileOutputArtifact> supportedArtifactType() {
+    return LocalFileOutputArtifact.class;
   }
 }

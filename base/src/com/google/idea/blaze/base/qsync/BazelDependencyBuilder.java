@@ -35,7 +35,9 @@ import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact;
 import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
+import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
 import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
+import com.google.idea.blaze.base.command.buildresult.RemoteOutputArtifact;
 import com.google.idea.blaze.base.model.primitives.WorkspacePath;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
@@ -51,6 +53,7 @@ import com.google.protobuf.TextFormat;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -146,13 +149,17 @@ public class BazelDependencyBuilder implements DependencyBuilder {
 
   private OutputInfo createOutputInfo(BlazeBuildOutputs blazeBuildOutputs) throws BuildException {
     ImmutableList<OutputArtifact> jars =
-        blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_jars"));
+        translateOutputArtifacts(
+            blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_jars")));
     ImmutableList<OutputArtifact> aars =
-        blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_aars"));
+        translateOutputArtifacts(
+            blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_aars")));
     ImmutableList<OutputArtifact> generatedSources =
-        blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_gensrcs"));
+        translateOutputArtifacts(
+            blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("qsync_gensrcs")));
     ImmutableList<OutputArtifact> artifactInfoFiles =
-        blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("artifact_info_file"));
+        translateOutputArtifacts(
+            blazeBuildOutputs.getOutputGroupArtifacts(s -> s.contains("artifact_info_file")));
     ImmutableSet.Builder<BuildArtifacts> artifactInfoFilesBuilder = ImmutableSet.builder();
     for (OutputArtifact artifactInfoFile : artifactInfoFiles) {
       artifactInfoFilesBuilder.add(readArtifactInfoFile(artifactInfoFile));
@@ -167,6 +174,27 @@ public class BazelDependencyBuilder implements DependencyBuilder {
             .map(Label::of)
             .collect(toImmutableSet()),
         blazeBuildOutputs.buildResult.exitCode);
+  }
+
+  private ImmutableList<OutputArtifact> translateOutputArtifacts(
+      ImmutableList<OutputArtifact> artifacts) {
+    return artifacts.stream()
+        .map(BazelDependencyBuilder::translateOutputArtifact)
+        .collect(ImmutableList.toImmutableList());
+  }
+
+  private static OutputArtifact translateOutputArtifact(OutputArtifact it) {
+    if (!(it instanceof RemoteOutputArtifact)) {
+      return it;
+    }
+    RemoteOutputArtifact remoteOutputArtifact = (RemoteOutputArtifact) it;
+    String hashId = remoteOutputArtifact.getHashId();
+    if (!(hashId.startsWith("/google_src") || hashId.startsWith("/google/src"))) {
+      return it;
+    }
+    File srcfsArtifact = new File(hashId.replaceFirst("/google_src", "/google/src"));
+    return new LocalFileOutputArtifact(
+        srcfsArtifact, it.getRelativePath(), it.getConfigurationMnemonic());
   }
 
   private BuildArtifacts readArtifactInfoFile(BlazeArtifact file) throws BuildException {
