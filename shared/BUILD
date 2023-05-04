@@ -22,6 +22,14 @@ java_library(
     ],
 )
 
+java_library(
+    name = "vcs",
+    visibility = PLUGIN_PACKAGES_VISIBILITY,
+    exports = [
+        "//shared/java/com/google/idea/blaze/common/vcs",
+    ],
+)
+
 test_suite(
     name = "tests",
     tests = [

@@ -16,6 +16,7 @@
 package com.google.idea.blaze.qsync;
 
 import com.google.idea.blaze.common.Context;
+import com.google.idea.blaze.common.vcs.VcsState;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.BuildGraphData;
 import com.google.idea.blaze.qsync.project.PostQuerySyncData;
@@ -23,7 +24,6 @@ import com.google.idea.blaze.qsync.project.ProjectDefinition;
 import com.google.idea.blaze.qsync.project.ProjectProto;
 import com.google.idea.blaze.qsync.query.QuerySpec;
 import com.google.idea.blaze.qsync.query.QuerySummary;
-import com.google.idea.blaze.qsync.vcs.VcsState;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;

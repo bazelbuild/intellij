@@ -22,10 +22,10 @@ import static com.google.idea.blaze.qsync.query.QuerySummaryTestUtil.createProto
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange;
+import com.google.idea.blaze.common.vcs.WorkspaceFileChange.Operation;
 import com.google.idea.blaze.qsync.query.QuerySummary;
 import com.google.idea.blaze.qsync.query.QuerySummaryTestUtil;
-import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange;
-import com.google.idea.blaze.qsync.vcs.WorkspaceFileChange.Operation;
 import java.nio.file.Path;
 import org.junit.Test;
 import org.junit.runner.RunWith;

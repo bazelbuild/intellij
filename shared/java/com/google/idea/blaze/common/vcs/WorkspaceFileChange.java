@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.idea.blaze.qsync.vcs;
+package com.google.idea.blaze.common.vcs;
 
 import java.nio.file.Path;
 import java.util.Objects;

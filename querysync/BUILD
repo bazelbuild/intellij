@@ -14,7 +14,6 @@ java_library(
         "//querysync/java/com/google/idea/blaze/qsync/project:project_java_proto",
         "//querysync/java/com/google/idea/blaze/qsync/query",
         "//querysync/java/com/google/idea/blaze/qsync/query:querysummary_java_proto",
-        "//querysync/java/com/google/idea/blaze/qsync/vcs",
     ],
 )
 
