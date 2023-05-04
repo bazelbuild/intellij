@@ -38,6 +38,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -327,6 +328,10 @@ public interface ExternalTask {
 
   static Builder builder(File workingDirectory) {
     return new Builder(workingDirectory);
+  }
+
+  static Builder builder(Path workingDirectory) {
+    return new Builder(workingDirectory.toFile());
   }
 
   static Builder builder(WorkspaceRoot workspaceRoot) {
