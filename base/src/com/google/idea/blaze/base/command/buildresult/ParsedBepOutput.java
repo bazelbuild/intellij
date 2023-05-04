@@ -38,7 +38,6 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.idea.blaze.base.command.buildresult.BuildEventStreamProvider.BuildEventStreamException;
 import com.google.idea.blaze.base.model.primitives.Label;
 import com.google.idea.blaze.base.sync.aspects.BuildResult;
-import com.intellij.openapi.diagnostic.Logger;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -68,8 +67,6 @@ public final class ParsedBepOutput {
           BuildResult.SUCCESS,
           0,
           ImmutableSet.of());
-
-  private static final Logger logger = Logger.getInstance(ParsedBepOutput.class);
 
   /** Parses BEP events into {@link ParsedBepOutput} */
   public static ParsedBepOutput parseBepArtifacts(InputStream bepStream)
@@ -132,25 +129,8 @@ public final class ParsedBepOutput {
           if (!event.getAction().getSuccess()) {
             targetsWithErrors.add(Label.create(event.getId().getActionCompleted().getLabel()));
           }
-          logger.info(
-              "Action completed:\n label:"
-                  + event.getId().getActionCompleted().getLabel()
-                  + "\n  config:"
-                  + event.getId().getActionCompleted().getConfiguration().getId()
-                  + "\n  success:"
-                  + event.getAction().getSuccess());
           break;
         case TARGET_COMPLETED:
-          logger.info(
-              "Target complete:\n  label:"
-                  + event.getId().getTargetCompleted().getLabel()
-                  + "\n  aspect:"
-                  + event.getId().getTargetCompleted().getAspect()
-                  + "\n  config:"
-                  + event.getId().getTargetCompleted().getConfiguration().getId()
-                  + "\n  success="
-                  + event.getCompleted().getSuccess());
-
           String label = event.getId().getTargetCompleted().getLabel();
           String configId = event.getId().getTargetCompleted().getConfiguration().getId();
 
