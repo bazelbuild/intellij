@@ -9,6 +9,7 @@ java_library(
     srcs = glob([
         "com/google/idea/sdkcompat/general/**",
         "com/google/idea/sdkcompat/logging/**",
+        "com/google/idea/sdkcompat/vcs/**",
     ]) + select_for_ide(
         android_studio = glob([
             "com/google/idea/sdkcompat/cpp/**",

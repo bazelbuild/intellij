@@ -25,6 +25,7 @@ java_library(
         "clion-2023.1": ["@clion_2023_1//:python"],
         "android-studio-2022.2": ["@python_2022_2//:python"],
         "android-studio-2022.3": ["@python_2022_3//:python"],
+        "android-studio-2023.1": ["@python_2023_1//:python"],
         "android-studio-dev": ["@python_asdev//:python"],
     }),
 )
@@ -49,6 +50,7 @@ filegroup(
         "clion-2023.1": ["@clion_2023_1//:python_helpers"],
         "android-studio-2022.2": ["@python_2022_2//:python_helpers"],
         "android-studio-2022.3": ["@python_2022_3//:python_helpers"],
+        "android-studio-2023.1": ["@python_2023_1//:python_helpers"],
         "android-studio-dev": ["@python_asdev//:python_helpers"],
     }),
     visibility = ["//visibility:private"],
