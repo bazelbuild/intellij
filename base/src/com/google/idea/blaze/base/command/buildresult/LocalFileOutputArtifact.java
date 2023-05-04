@@ -15,7 +15,6 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
-
 import com.google.errorprone.annotations.MustBeClosed;
 import com.google.idea.blaze.base.command.buildresult.BlazeArtifact.LocalFileArtifact;
 import com.google.idea.blaze.base.filecache.ArtifactState;
@@ -72,7 +71,6 @@ public class LocalFileOutputArtifact implements OutputArtifact, LocalFileArtifac
     return new BufferedInputStream(new FileInputStream(file));
   }
 
-  @Override
   public void copyTo(Path dest) throws IOException {
     if (Files.exists(dest) && Files.isDirectory(dest)) {
       FileOperationProvider.getInstance().deleteRecursively(dest.toFile(), true);

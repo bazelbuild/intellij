@@ -86,12 +86,12 @@ public class FileCache {
     Path prepareFinalLayout() throws IOException;
   }
 
-  private final ArtifactFetcher artifactFetcher;
+  private final ArtifactFetcher<OutputArtifact> artifactFetcher;
   private final CacheDirectoryManager cacheDirectoryManager;
   private final CacheLayout cacheLayout;
 
   public FileCache(
-      ArtifactFetcher artifactFetcher,
+      ArtifactFetcher<OutputArtifact> artifactFetcher,
       CacheDirectoryManager cacheDirectoryManager,
       CacheLayout cacheLayout) {
     this.artifactFetcher = artifactFetcher;
@@ -130,8 +130,7 @@ public class FileCache {
    */
   private ListenableFuture<Collection<OutputArtifactDestination>> fetchArtifacts(
       BlazeContext context,
-      ImmutableMap<OutputArtifact, OutputArtifactDestination> artifactToDestinationMap)
-      throws IOException {
+      ImmutableMap<OutputArtifact, OutputArtifactDestination> artifactToDestinationMap) {
     final ImmutableMap<OutputArtifact, Path> artifactToDestinationPathMap =
         ImmutableMap.copyOf(
             Maps.transformEntries(artifactToDestinationMap, (k, v) -> v.getCopyDestination()));

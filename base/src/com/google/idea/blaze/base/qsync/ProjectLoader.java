@@ -18,21 +18,21 @@ package com.google.idea.blaze.base.qsync;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.idea.blaze.base.bazel.BuildSystem;
 import com.google.idea.blaze.base.bazel.BuildSystemProvider;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifact;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
 import com.google.idea.blaze.base.projectview.ProjectViewManager;
 import com.google.idea.blaze.base.projectview.ProjectViewSet;
 import com.google.idea.blaze.base.qsync.cache.ArtifactFetcher;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
-import com.google.idea.blaze.base.qsync.cache.FileApiArtifactFetcher;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BlazeImportSettings;
 import com.google.idea.blaze.base.settings.BlazeImportSettings.ProjectType;
 import com.google.idea.blaze.base.settings.BlazeImportSettingsManager;
-import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.sync.data.BlazeDataStorage;
 import com.google.idea.blaze.base.sync.projectview.ImportRoots;
 import com.google.idea.blaze.base.sync.projectview.LanguageSupport;
@@ -126,7 +126,7 @@ public class ProjectLoader {
         createDependencyBuilder(workspaceRoot, importRoots, buildSystem);
 
     BlazeProject graph = new BlazeProject();
-    ArtifactFetcher artifactFetcher = createArtifactFetcher(buildSystem);
+    ArtifactFetcher<OutputArtifact> artifactFetcher = createArtifactFetcher();
     ArtifactTracker artifactTracker = new ArtifactTracker(importSettings, artifactFetcher);
     artifactTracker.initialize();
     DependencyCache dependencyCache = new DependencyCache(artifactTracker);
@@ -141,7 +141,6 @@ public class ProjectLoader {
     graph.addListener(projectUpdater);
     QuerySyncSourceToTargetMap sourceToTargetMap =
         new QuerySyncSourceToTargetMap(graph, workspaceRoot.path());
-
 
     QuerySyncProject loadedProject =
         new QuerySyncProject(
@@ -200,18 +199,8 @@ public class ProjectLoader {
     return BlazeDataStorage.getProjectDataDir(importSettings).toPath().resolve("qsyncdata.gz");
   }
 
-  private ArtifactFetcher createArtifactFetcher(BuildSystem buildSystem) {
-    Preconditions.checkState(
-        ArtifactFetcher.EP_NAME.getExtensions().length <= 1,
-        "There are too many artifact fetchers");
-    ArtifactFetcher defaultArtifactFetcher = new FileApiArtifactFetcher();
-    BuildBinaryType buildBinaryType =
-        buildSystem.getDefaultInvoker(project, BlazeContext.create()).getType();
-    for (ArtifactFetcher artifactFetcher : ArtifactFetcher.EP_NAME.getExtensions()) {
-      if (artifactFetcher.isEnabled(buildBinaryType)) {
-        return artifactFetcher;
-      }
-    }
-    return defaultArtifactFetcher;
+  private ArtifactFetcher<OutputArtifact> createArtifactFetcher() {
+    return new DynamicallyDispatchingArtifactFetcher(
+        ImmutableList.copyOf(ArtifactFetcher.EP_NAME.getExtensions()));
   }
 }

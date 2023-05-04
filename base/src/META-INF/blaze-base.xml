@@ -570,4 +570,7 @@
     <ExperimentLoader implementation="com.google.idea.common.experiments.UserOverridesExperimentLoader" order="after SystemPropertyExperimentLoader" id="UserOverridesExperimentLoader"/>
     <ExperimentLoader implementation="com.google.idea.common.experiments.DefaultValuesExperimentLoader" order="last" id="DefaultValuesExperimentLoader"/>
   </extensions>
+  <extensions defaultExtensionNs="com.google.idea.blaze.qsync">
+    <ArtifactFetcher implementation="com.google.idea.blaze.base.qsync.cache.FileApiArtifactFetcher"/>
+  </extensions>
 </idea-plugin>

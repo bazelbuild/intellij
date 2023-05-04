@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.io.FileOperationProvider;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Collection;
 
 /** A blaze build artifact, either a source or output (generated) artifact. */
@@ -56,10 +55,6 @@ public interface BlazeArtifact {
   /** A buffered input stream providing the contents of this artifact. */
   @MustBeClosed
   BufferedInputStream getInputStream() throws IOException;
-
-  default void copyTo(Path dest) throws IOException {
-    throw new UnsupportedOperationException("The artifact should not be copied.");
-  }
 
   /** A file artifact available on the local file system. */
   interface LocalFileArtifact extends BlazeArtifact {
