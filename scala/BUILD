@@ -33,7 +33,7 @@ java_library(
 
 optional_plugin_xml(
     name = "optional_xml",
-    module = "org.intellij.scala",
+    module = ["org.intellij.scala"],
     plugin_xml = "src/META-INF/scala-contents.xml",
 )
 

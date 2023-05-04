@@ -16,7 +16,7 @@ file.
 optional_plugin_xml(
   name = "optional_python_xml",
   plugin_xml = "my_optional_python_plugin.xml",
-  module = "com.idea.python.module.id",
+  module = ["com.idea.python.module.id"],
 )
 
 intellij_plugin_library(
@@ -53,7 +53,7 @@ optional_plugin_xml = rule(
     implementation = _optional_plugin_xml_impl,
     attrs = {
         "plugin_xml": attr.label(mandatory = True, allow_single_file = [".xml"]),
-        "module": attr.string(mandatory = True),
+        "module": attr.string_list(mandatory = True),
     },
 )
 
@@ -109,6 +109,56 @@ def _merge_plugin_xmls(ctx):
     )
     return merged_file
 
+def _synthetic_plugin_id(modules):
+    return "___".join(modules)
+
+def _synthetic_dep_file(ctx, modules):
+    synthname = ctx.actions.declare_file("synthetic_"+ "_".join(modules[:-1]) + ".xml")
+    file = _filename_for_module_dependency(_synthetic_plugin_id(modules))
+    ctx.actions.write(
+        synthname,
+        """
+        <idea-plugin>
+           <depends optional="true" config-file="{0}">{1}</depends>
+        </idea-plugin>
+        """.format (file, modules[-1]))
+    return synthname
+
+"""
+IntelliJ allows plugins to have code that is executed only if a particular external plugin is active. In order to do
+this, one have to create a separate config XML file and include it with <depends optional=true> directive.
+
+Unfortunately, the directive does not cover case when one wants to write code dependent on more than one plugin
+i. e. make it active only if all required plugins are installed and enabled.
+
+A trick to overcome this limitation is to create a synthetic file, which only purpose is to be conditionally activated
+by a `<depends>first_plugin</depends>` directive on the and contain another <depends>second_plugin</depends> directive
+for the second plugin.
+
+Te purpose of `_create_dependency_file_chain` method is to implement this trick. It receives a `_OptionalPluginXmlInfo`
+structure, which contains the xml file and N of its plugin dependencies. Then it creates actions to generate N-1
+.xml files that make up the dependency chain.
+
+It returns a dictionary, which values are the file names (including the original one from the provider), and its keys
+are either module names, or synthetic module names it depends on. If a file is expected to contain a code
+dependent on plugin.A and plugin.B, then its synthetic module name will be `module.A___module.B`.
+
+Once the file is processed through _merge_xml_binary, its content is copied to `optional-module.A___module.B.xml' file.
+This file will be included in `optional-module.A.xml` file via a dependents directive like this:
+```
+<depends optional="true" config-file="optional-module.A___module.B.xml">module.B</depends>
+```
+
+https://plugins.jetbrains.com/docs/intellij/plugin-dependencies.html#optional-plugin-dependencies
+"""
+def _create_dependency_file_chain(ctx, xml):
+    module = sorted(xml.module)
+    chained_files_dict = {}
+    for i in range(1, len(module) + 1):
+        synthname = _synthetic_dep_file(ctx, module[:(i+1)]) if i < len(module) else xml.plugin_xml
+        chained_files_dict[_synthetic_plugin_id(module[:i])] = synthname
+    return chained_files_dict
+
 def _merge_optional_plugin_xmls(ctx):
     # Collect optional plugin xmls for both deps and the optional_plugin_xmls attribute
     module_to_xmls = {}
@@ -123,9 +173,10 @@ def _merge_optional_plugin_xmls(ctx):
     )
     for provider in optional_plugin_xml_providers:
         for xml in provider.optional_plugin_xmls:
-            module = xml.module
-            plugin_xmls = module_to_xmls.setdefault(module, [])
-            plugin_xmls.append(xml.plugin_xml)
+            dependency_file_chain = _create_dependency_file_chain(ctx, xml)
+            for module, plugin_xml in dependency_file_chain.items():
+                plugin_xmls = module_to_xmls.setdefault(module, [])
+                plugin_xmls.append(plugin_xml)
 
     # Merge xmls with the same module dependency
     module_to_merged_xmls = {}
