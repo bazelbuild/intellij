@@ -21,6 +21,8 @@ import com.google.idea.blaze.base.command.buildresult.BuildResultHelper;
 import com.google.idea.blaze.base.command.info.BlazeInfo;
 import com.google.idea.blaze.base.model.BlazeVersionData;
 import com.google.idea.blaze.base.model.primitives.WorkspaceRoot;
+import com.google.idea.blaze.base.run.BlazeCommandRunConfiguration;
+import com.google.idea.blaze.base.run.ExecutorType;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.base.settings.BuildBinaryType;
 import com.google.idea.blaze.base.settings.BuildSystemName;
@@ -89,6 +91,14 @@ public interface BuildSystem {
 
   /** Get a Blaze invoker. */
   BuildInvoker getBuildInvoker(Project project, BlazeContext context);
+  /** Get a Blaze invoker specific to executor type and run config. */
+  default BuildInvoker getBuildInvoker(
+      Project project,
+      ExecutorType executorType,
+      BlazeCommandRunConfiguration runConfiguration,
+      BlazeContext context) {
+    return getBuildInvoker(project, context);
+  }
 
   /** Get a Blaze invoker that only run build locally. */
   Optional<BuildInvoker> getLocalBuildInvoker(Project project, BlazeContext context);
