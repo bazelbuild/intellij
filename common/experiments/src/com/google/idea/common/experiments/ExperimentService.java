@@ -75,4 +75,16 @@ public interface ExperimentService {
     }
     return "";
   }
+
+  /** Returns the overrides logs of all queried experiments */
+  default String getOverridesLog() {
+    String report = "";
+    for (Experiment ex : getAllQueriedExperiments().values()) {
+      String overrideLog = getOverridesLog(ex);
+      if (!overrideLog.isBlank()) {
+        report += overrideLog + "\n";
+      }
+    }
+    return report;
+  }
 }
