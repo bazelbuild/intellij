@@ -15,12 +15,14 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker;
 import com.google.idea.blaze.base.qsync.cache.ArtifactTracker.UpdateResult;
 import com.google.idea.blaze.base.scope.BlazeContext;
 import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.exception.BuildException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Set;
 
 /** A local cache of project dependencies. */
@@ -49,5 +51,13 @@ public class DependencyCache {
 
   public Set<Label> getCachedTargets() {
     return artifactTracker.getCachedTargets();
+  }
+
+  public Path getGenSrcCacheDirectory() {
+    return artifactTracker.getGenSrcCacheDirectory();
+  }
+
+  public ImmutableList<Path> getGenSrcSubfolders() throws IOException {
+    return artifactTracker.getGenSrcSubfolders();
   }
 }

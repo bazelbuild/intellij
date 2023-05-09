@@ -219,6 +219,14 @@ public class ArtifactTracker {
     return getProjectDirectory(importSettings).resolve(AAR_DIRECTORY);
   }
 
+  public Path getGenSrcCacheDirectory() {
+    return generatedSrcFileCache.getDirectory();
+  }
+
+  public ImmutableList<Path> getGenSrcSubfolders() throws IOException {
+    return generatedSrcFileCache.getSubdirectories();
+  }
+
   public Set<Label> getCachedTargets() {
     return artifacts.keySet();
   }

@@ -146,9 +146,8 @@ public class QuerySyncProject {
           lastQuery.isEmpty()
               ? projectQuerier.fullQuery(projectDefinition, context)
               : projectQuerier.update(lastQuery.get(), context);
-      snapshotHolder.setCurrent(context, newProject);
-      projectData = projectData.withSnapshot(newProject);
-      writeToDisk(newProject);
+      newProject = dependencyTracker.updateSnapshot(context, newProject);
+      onNewSnapshot(context, newProject);
 
       // TODO: Revisit SyncListeners once we switch fully to qsync
       for (SyncListener syncListener : SyncListener.EP_NAME.getExtensions()) {
@@ -175,6 +174,9 @@ public class QuerySyncProject {
 
   public void build(BlazeContext context, List<Path> wps) throws IOException, BuildException {
     getDependencyTracker().buildDependenciesForFile(context, wps);
+    BlazeProjectSnapshot newSnapshot =
+        getDependencyTracker().updateSnapshot(context, snapshotHolder.getCurrent().orElseThrow());
+    onNewSnapshot(context, newSnapshot);
   }
 
   public DependencyTracker getDependencyTracker() {
@@ -232,5 +234,12 @@ public class QuerySyncProject {
     try (OutputStream o = new GZIPOutputStream(new FileOutputStream(f))) {
       new SnapshotSerializer().visit(snapshot.queryData()).toProto().writeTo(o);
     }
+  }
+
+  private void onNewSnapshot(BlazeContext context, BlazeProjectSnapshot newSnapshot)
+      throws IOException {
+    snapshotHolder.setCurrent(context, newSnapshot);
+    projectData = projectData.withSnapshot(newSnapshot);
+    writeToDisk(newSnapshot);
   }
 }
