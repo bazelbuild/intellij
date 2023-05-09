@@ -77,4 +77,14 @@ public class BlazePyRunConfigurationRunnerTest extends BlazeIntegrationTestCase 
     assertThat(BlazePyRunConfigurationRunner.findExecutable(target, outputFiles)).isNull();
   }
 
+  @Test
+  public void testMultipleOutputFilesOnWindows() {
+    Label target = Label.create("//path/to/package:SomeTest");
+    ImmutableList<File> outputFiles =
+            ImmutableList.of(
+                    new File("blaze-bin/path/to/package/SomeTest.zip"),
+                    new File("blaze-bin/path/to/package/SomeTest.exe"));
+    assertThat(BlazePyRunConfigurationRunner.findExecutable(target, outputFiles))
+            .isEqualTo(new File("blaze-bin/path/to/package/SomeTest.exe"));
+  }
 }

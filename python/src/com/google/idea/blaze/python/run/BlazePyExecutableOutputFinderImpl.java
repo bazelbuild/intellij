@@ -16,7 +16,12 @@ public class BlazePyExecutableOutputFinderImpl implements BlazePyExecutableOutpu
     }
     String name = PathUtil.getFileName(target.targetName().toString());
     for (File file : outputs) {
-      if (file.getName().equals(name)) {
+      String fileName = file.getName();
+      if (fileName.equals(name)) {
+        return file;
+      }
+      int exeIndex = fileName.lastIndexOf(".exe");
+      if (exeIndex > 0 && fileName.substring(0, exeIndex).equals(name)) {
         return file;
       }
     }
