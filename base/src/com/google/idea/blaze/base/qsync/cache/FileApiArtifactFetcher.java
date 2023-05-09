@@ -20,8 +20,12 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.idea.blaze.base.command.buildresult.LocalFileOutputArtifact;
+import com.google.idea.blaze.base.io.FileOperationProvider;
 import com.google.idea.blaze.common.Context;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -36,7 +40,15 @@ public class FileApiArtifactFetcher implements ArtifactFetcher<LocalFileOutputAr
           EXECUTOR.submit(
               () -> {
                 Path dest = entry.getValue();
-                entry.getKey().copyTo(dest);
+                LocalFileOutputArtifact localFileOutputArtifact = entry.getKey();
+                if (Files.exists(dest) && Files.isDirectory(dest)) {
+                  FileOperationProvider.getInstance().deleteRecursively(dest.toFile(), true);
+                }
+                Files.copy(
+                    Paths.get(localFileOutputArtifact.getFile().getPath()),
+                    dest,
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.COPY_ATTRIBUTES);
                 return dest;
               }));
     }
