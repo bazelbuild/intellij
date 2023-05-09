@@ -23,7 +23,6 @@ import com.google.idea.blaze.base.async.process.LineProcessingOutputStream;
 import com.google.idea.blaze.base.bazel.BuildSystem.BuildInvoker;
 import com.google.idea.blaze.base.command.BlazeCommand;
 import com.google.idea.blaze.base.command.BlazeCommandName;
-import com.google.idea.blaze.base.command.BlazeCommandRunnerExperiments;
 import com.google.idea.blaze.base.command.BlazeFlags;
 import com.google.idea.blaze.base.command.BlazeInvocationContext;
 import com.google.idea.blaze.base.command.buildresult.BuildEventProtocolUtils;
@@ -67,7 +66,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -104,13 +102,15 @@ public final class BlazeJavaRunProfileState extends BlazeJavaDebuggableRunProfil
     BuildInvoker invoker =
         Blaze.getBuildSystemProvider(project)
             .getBuildSystem()
-            .getDefaultInvoker(project, BlazeContext.create());
+            .getBuildInvoker(
+                project,
+                getExecutorType(),
+                getConfiguration().getTargetKind(),
+                BlazeContext.create());
     BlazeTestUiSession testUiSession = null;
-    if (SystemInfo.isMac
-        && isLocalTest()
+    if (isLocalTest()
         && invoker.getCommandRunner().shouldUseForLocalTests()
-        && getExecutorType().isDebugType()
-        && BlazeCommandRunnerExperiments.supportLocalTestsDebuggingMac.isEnabled()) {
+        && getExecutorType().isDebugType()) {
       File downloadDir = getDownloadDir();
       WorkspaceRoot workspaceRoot =
           new WorkspaceRoot(
