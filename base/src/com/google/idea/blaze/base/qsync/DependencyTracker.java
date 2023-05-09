@@ -15,6 +15,7 @@
  */
 package com.google.idea.blaze.base.qsync;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.joining;
 
 import com.google.common.base.Preconditions;
@@ -30,13 +31,17 @@ import com.google.idea.blaze.common.Label;
 import com.google.idea.blaze.common.PrintOutput;
 import com.google.idea.blaze.exception.BuildException;
 import com.google.idea.blaze.qsync.BlazeProject;
+import com.google.idea.blaze.qsync.GeneratedSourceProjectUpdater;
 import com.google.idea.blaze.qsync.project.BlazeProjectSnapshot;
 import com.google.idea.blaze.qsync.project.ProjectDefinition;
+import com.google.idea.blaze.qsync.project.ProjectProto;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -49,14 +54,18 @@ import javax.annotation.Nullable;
  */
 public class DependencyTracker {
 
+  private final Project project;
+
   private final BlazeProject blazeProject;
   private final DependencyBuilder builder;
   private final DependencyCache cache;
 
   public DependencyTracker(
+      Project project,
       BlazeProject blazeProject,
       DependencyBuilder builder,
       DependencyCache cache) {
+    this.project = project;
     this.blazeProject = blazeProject;
     this.builder = builder;
     this.cache = cache;
@@ -182,5 +191,23 @@ public class DependencyTracker {
         false,
         updateResult.updatedFiles().stream().map(Path::toFile).toArray(File[]::new));
     context.output(PrintOutput.log("Done"));
+  }
+
+  public BlazeProjectSnapshot updateSnapshot(BlazeContext context, BlazeProjectSnapshot snapshot)
+      throws IOException {
+    ProjectProto.Project projectProto = snapshot.project();
+
+    Path genSrcCacheRelativeToProject =
+        Paths.get(checkNotNull(project.getBasePath())).relativize(cache.getGenSrcCacheDirectory());
+    ImmutableList<Path> subfolders = cache.getGenSrcSubfolders();
+    GeneratedSourceProjectUpdater updater =
+        new GeneratedSourceProjectUpdater(projectProto, genSrcCacheRelativeToProject, subfolders);
+
+    projectProto = updater.addGenSrcContentEntry(context);
+    return BlazeProjectSnapshot.builder()
+        .queryData(snapshot.queryData())
+        .graph(snapshot.graph())
+        .project(projectProto)
+        .build();
   }
 }

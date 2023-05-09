@@ -302,26 +302,6 @@ public class GraphToProjectConverter {
                 dirs.stream().map(Path::toString).collect(toImmutableList()))
             .addAllAndroidSourcePackages(pkgs);
 
-    String generatedSourcePath =
-        Paths.get(
-                BlazeProjectDataStorage.BLAZE_DATA_SUBDIRECTORY,
-                BlazeProjectDataStorage.GEN_SRC_DIRECTORY)
-            .toString();
-    ProjectProto.ContentEntry genSourcesContentEntry =
-        ProjectProto.ContentEntry.newBuilder()
-            .setRoot(
-                ProjectProto.ContentRoot.newBuilder()
-                    .setBase(Base.PROJECT)
-                    .setPath(generatedSourcePath))
-            .addSources(
-                ProjectProto.SourceFolder.newBuilder()
-                    .setPath(generatedSourcePath)
-                    .setIsTest(false)
-                    .setIsGenerated(true)
-                    .build())
-            .build();
-    workspaceModule.addContentEntries(genSourcesContentEntry);
-
     ListMultimap<Path, Path> excludesByRootDirectory =
         projectDefinition.getExcludesByRootDirectory();
     for (Path dir : projectDefinition.projectIncludes()) {

@@ -131,7 +131,7 @@ public class ProjectLoader {
     artifactTracker.initialize();
     DependencyCache dependencyCache = new DependencyCache(artifactTracker);
     DependencyTracker dependencyTracker =
-        new DependencyTracker(graph, dependencyBuilder, dependencyCache);
+        new DependencyTracker(project, graph, dependencyBuilder, dependencyCache);
     ProjectRefresher projectRefresher =
         new ProjectRefresher(createPackageReader(workspaceRoot), workspaceRoot.path());
     QueryRunner queryRunner = createQueryRunner(buildSystem);
