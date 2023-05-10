@@ -10,6 +10,16 @@ java_binary(
     ],
 )
 
+java_binary(
+    name = "query_summarizer",
+    srcs = ["QuerySummarizer.java"],
+    main_class = "com.google.idea.blaze.qsync.util.QuerySummarizer",
+    deps = [
+        "//querysync/java/com/google/idea/blaze/qsync/project:snapshot_java_proto",
+        "//querysync/java/com/google/idea/blaze/qsync/query",
+    ],
+)
+
 java_library(
     name = "cli_context",
     srcs = ["CliContext.java"],
