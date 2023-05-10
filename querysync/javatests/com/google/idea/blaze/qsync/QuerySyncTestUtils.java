@@ -33,8 +33,7 @@ public class QuerySyncTestUtils {
   public static final PackageReader EMPTY_PACKAGE_READER = p -> "";
 
   public static final Optional<VcsState> CLEAN_VCS_STATE =
-      Optional.of(new VcsState("1", ImmutableSet.of()));
-
+      Optional.of(new VcsState("1", ImmutableSet.of(), Optional.empty()));
 
   public static QuerySummary getQuerySummary(TestData genQueryName) throws IOException {
     return QuerySummary.create(TestData.getPathFor(genQueryName).toFile());

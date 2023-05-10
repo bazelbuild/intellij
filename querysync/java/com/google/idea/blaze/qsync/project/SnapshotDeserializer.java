@@ -73,7 +73,10 @@ public class SnapshotDeserializer {
                     c ->
                         new WorkspaceFileChange(
                             OP_MAP.get(c.getOperation()), Path.of(c.getWorkspaceRelativePath())))
-                .collect(toImmutableSet()));
+                .collect(toImmutableSet()),
+            proto.hasWorkspaceSnapshot()
+                ? Optional.of(Path.of(proto.getWorkspaceSnapshot().getPath()))
+                : Optional.empty());
     snapshot.setVcsState(Optional.of(state));
   }
 
